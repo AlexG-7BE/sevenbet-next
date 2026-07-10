@@ -45,6 +45,22 @@ npm run visual:qa
 
 The script checks important routes for one `h1`, horizontal overflow and saves screenshots.
 
+## AI and crawler access
+
+The site exposes:
+
+- `/robots.txt`
+- `/sitemap.xml`
+- `/llms.txt`
+
+Set the public production URL in Vercel:
+
+```text
+NEXT_PUBLIC_SITE_URL=https://your-domain.com
+```
+
+This keeps sitemap and AI-readable links canonical after deployment.
+
 ## Next Build Steps
 
 - Add persistent program progress with localStorage or user accounts.
