@@ -20,6 +20,7 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
   if (!casino) notFound();
 
   const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
+  const ratingPercent = Math.max(0, Math.min(100, casino.rating * 10));
 
   return (
     <section className="pageShell">
@@ -33,11 +34,11 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
           <h1>{casino.name}</h1>
           <p className="lead">{casino.description}</p>
           <div className="heroActions">
-            <Button href="/tools/budget-calculator" variant="primary">
-              Start with limit check
+            <Button href={casino.affiliateUrl} external variant="primary">
+              View offer
             </Button>
-            <Button href={casino.affiliateUrl} external variant="ghost">
-              Check eligibility
+            <Button href="/tools/budget-calculator" variant="ghost">
+              Start limit check
             </Button>
           </div>
 
@@ -69,6 +70,15 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
             <VerificationBadge verified={casino.isVerified} />
           </div>
           <h2>{casino.license}</h2>
+          <div className="ratingBlock">
+            <div>
+              <strong>{casino.rating}/10</strong>
+              <span>SevenBet rating</span>
+            </div>
+            <div className="ratingBar" aria-label={`SevenBet rating ${casino.rating} out of 10`}>
+              <span style={{ width: `${ratingPercent}%` }} />
+            </div>
+          </div>
           <div className="resultRows">
             <div>
               <span>Domain</span>

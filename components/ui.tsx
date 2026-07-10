@@ -106,7 +106,7 @@ export function Badge({
 }
 
 export function RiskBadge({ level = "low" }: { level?: "low" | "medium" | "high" }) {
-  const label = level === "high" ? "High risk" : level === "medium" ? "Review terms" : "Control friendly";
+  const label = level === "high" ? "High risk" : level === "medium" ? "Terms check" : "Low terms risk";
   return <Badge tone={level === "low" ? "green" : "warning"}>{label}</Badge>;
 }
 
@@ -117,16 +117,25 @@ export function VerificationBadge({
   verified?: boolean;
   label?: string;
 }) {
-  return <Badge tone={verified ? "green" : "warning"}>{label ?? (verified ? "Verified source" : "Needs review")}</Badge>;
+  return <Badge tone={verified ? "green" : "warning"}>{label ?? (verified ? "Verified casino" : "Needs review")}</Badge>;
 }
 
 export function OfferCard({ casino, rank }: { casino: Casino; rank?: number }) {
   const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
+  const ratingPercent = Math.max(0, Math.min(100, casino.rating * 10));
 
   return (
-    <Card className="offerCard">
+    <Card className={`offerCard ${rank === 1 ? "featuredOffer" : ""}`}>
       <div className="cardTopline">
-        {rank ? <span className="cardRank">{rank}</span> : <Badge tone="dark">{casino.rating}/10</Badge>}
+        <div className="casinoIdentity">
+          <div className="casinoLogo" aria-hidden="true">
+            {casino.name.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <span className="cardRank">{rank ? `#${rank}` : casino.rating.toFixed(1)}</span>
+            {rank === 1 && <Badge tone="warning">Editor&apos;s choice</Badge>}
+          </div>
+        </div>
         <div className="badgeCluster">
           <VerificationBadge verified={casino.isVerified} />
           <RiskBadge level={riskLevel} />
@@ -136,28 +145,46 @@ export function OfferCard({ casino, rank }: { casino: Casino; rank?: number }) {
         <h3>{casino.name}</h3>
         <p className="muted">{casino.bonusHeadline}</p>
       </div>
+      <div className="ratingBlock">
+        <div>
+          <strong>{casino.rating}/10</strong>
+          <span>SevenBet rating</span>
+        </div>
+        <div className="ratingBar" aria-hidden="true">
+          <span style={{ width: `${ratingPercent}%` }} />
+        </div>
+      </div>
       <div className="chips">
-        <Badge tone="dark">{casino.rating}/10</Badge>
         <Badge>{casino.license}</Badge>
         <Badge tone="green">x{casino.wagering}</Badge>
         <Badge>Min {formatMoney(casino.minDeposit)}</Badge>
+        {casino.payoutHours <= 24 && <Badge tone="green">Fast payout</Badge>}
+        {casino.wagering <= 30 && <Badge tone="warning">Low wagering</Badge>}
       </div>
       <div className="metricGrid">
         <div>
-          <span>Estimated payout</span>
+          <span>Payout speed</span>
           <strong>{casino.payoutHours}h</strong>
         </div>
         <div>
-          <span>Category</span>
+          <span>Min deposit</span>
+          <strong>{formatMoney(casino.minDeposit)}</strong>
+        </div>
+        <div>
+          <span>Wagering</span>
+          <strong>x{casino.wagering}</strong>
+        </div>
+        <div>
+          <span>Offer type</span>
           <strong>{casino.category}</strong>
         </div>
       </div>
       <div className="cardActions">
-        <Button href={`/casino/${casino.slug}`} variant="primary">
-          Review offer
+        <Button href={casino.affiliateUrl} external variant="primary">
+          View offer
         </Button>
-        <Button href={casino.affiliateUrl} external variant="ghost">
-          Check eligibility
+        <Button href={`/casino/${casino.slug}`} variant="ghost">
+          Read review
         </Button>
       </div>
     </Card>
@@ -166,6 +193,7 @@ export function OfferCard({ casino, rank }: { casino: Casino; rank?: number }) {
 
 export function CasinoCard({ casino }: { casino: Casino }) {
   const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
+  const ratingPercent = Math.max(0, Math.min(100, casino.rating * 10));
 
   return (
     <Card className="casinoCard">
@@ -182,11 +210,15 @@ export function CasinoCard({ casino }: { casino: Casino }) {
         </div>
         <h3>{casino.name}</h3>
         <p className="muted">{casino.tagline}</p>
+        <div className="ratingBar" aria-label={`SevenBet rating ${casino.rating} out of 10`}>
+          <span style={{ width: `${ratingPercent}%` }} />
+        </div>
         <div className="chips">
           <Badge tone="dark">{casino.rating}/10</Badge>
           <Badge>{casino.category}</Badge>
           <Badge>{casino.license}</Badge>
           <Badge tone="green">x{casino.wagering}</Badge>
+          {casino.payoutHours <= 24 && <Badge tone="green">Fast payout</Badge>}
         </div>
       </div>
       <div className="casinoCardOffer">
@@ -194,7 +226,7 @@ export function CasinoCard({ casino }: { casino: Casino }) {
         <strong>{casino.bonusHeadline}</strong>
         <small>Min deposit {formatMoney(casino.minDeposit)} · payout ~{casino.payoutHours}h</small>
       </div>
-      <Button href={`/casino/${casino.slug}`}>Compare terms</Button>
+      <Button href={`/casino/${casino.slug}`}>Read review</Button>
     </Card>
   );
 }
@@ -252,7 +284,7 @@ export function AffiliateDisclosure() {
       <VerificationBadge verified label="Affiliate disclosure" />
       <p>
         SevenBet may earn commission from sponsored links. 18+ only. We keep license, wagering, deposit and responsible
-        gambling signals visible before any operator transition.
+        gambling signals visible before any casino transition.
       </p>
     </Card>
   );
@@ -262,7 +294,7 @@ export function MethodologyBlock() {
   const items = [
     ["License first", "Operator and license status carry more weight than headline bonus value."],
     ["Terms visible", "Wagering, minimum deposit, payout speed and risk notes are shown before the click."],
-    ["Control-first ranking", "Offers are framed around budget, stop-loss and eligibility checks."],
+    ["Rating discipline", "Cards highlight rating, payout speed, wagering and verification context together."],
     ["Commercial clarity", "Sponsored links are disclosed and do not remove risk labels."],
   ];
 

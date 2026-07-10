@@ -17,6 +17,7 @@ const questions = [
 export default function SelfCheckPage() {
   const [checked, setChecked] = useState<boolean[]>(Array(questions.length).fill(false));
   const score = checked.filter(Boolean).length;
+  const progress = Math.round((score / questions.length) * 100);
   const result = useMemo(() => {
     if (score >= 5) {
       return {
@@ -52,8 +53,8 @@ export default function SelfCheckPage() {
           <div>
             <SectionHeader
               eyebrow="Self-check"
-              title="Check your state before reviewing offers."
-              intro="This is not a diagnosis. It is a protective filter before depositing or comparing operator terms."
+              title="Start limit check before opening casino offers."
+              intro="This is not a diagnosis. It is a responsible gambling filter before deposits or offer comparison."
             />
             <Card className="questionPanel">
               <div className="questionList">
@@ -77,6 +78,15 @@ export default function SelfCheckPage() {
 
           <Card className="resultPanel" tone={result.tone === "warning" ? "warning" : "soft"}>
             <Badge tone={result.tone}>{score}/8 checked</Badge>
+            <div className="ratingBlock">
+              <div>
+                <strong>{progress}%</strong>
+                <span>risk signal progress</span>
+              </div>
+              <div className="ratingBar" aria-label={`Self-check progress ${progress}%`}>
+                <span style={{ width: `${progress}%` }} />
+              </div>
+            </div>
             <h2>{result.title}</h2>
             <p className="muted">{result.text}</p>
             <Button href={result.href} variant="primary">

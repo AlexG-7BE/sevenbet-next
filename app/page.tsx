@@ -32,24 +32,24 @@ export default function HomePage() {
       <section className="heroShell">
         <Container className="heroGrid">
           <div className="heroCopy">
-            <Badge tone="green">Verified mindful gambling</Badge>
-            <h1>Compare verified casino offers. Start with control.</h1>
+            <Badge tone="green">Verified casino offers · 18+</Badge>
+            <h1>Compare top casino bonuses with terms made clear.</h1>
             <p className="lead">
-              SevenBet helps you set limits, check your risk state and compare welcome offers only after the decision
-              has clear boundaries.
+              SevenBet ranks casino offers by rating, license, wagering, minimum deposit and payout speed, with
+              responsible gambling context visible before every click.
             </p>
             <div className="heroActions">
-              <Button href="/self-check" variant="primary">
-                Start with limit check
+              <Button href="/bonuses" variant="primary">
+                Compare top bonuses
               </Button>
-              <Button href="/bonuses" variant="ghost">
-                Review verified offers
+              <Button href="/self-check" variant="ghost">
+                Start limit check
               </Button>
             </div>
             <div className="trustStrip">
-              <Badge>5 minutes · no account</Badge>
-              <Badge>Limits before deposits</Badge>
-              <Badge>18+ · sponsored links disclosed</Badge>
+              <Badge>Verified casinos</Badge>
+              <Badge>Fast payout signals</Badge>
+              <Badge>Sponsored links disclosed</Badge>
             </div>
           </div>
 
@@ -57,14 +57,14 @@ export default function HomePage() {
             <div className="consoleHeader">
               <div>
                 <p className="eyebrow">SevenBet verification engine</p>
-                <h2>Offer readiness check</h2>
+                <h2>Bonus comparison preview</h2>
               </div>
-              <Badge tone="green">Control-first</Badge>
+              <Badge tone="warning">Editor reviewed</Badge>
             </div>
             <div className="consoleMain">
               <div className="scoreOrb">
                 <strong>72%</strong>
-                <span>example control score</span>
+                <span>bonus clarity score</span>
               </div>
               <div className="consoleChecks">
                 <div>
@@ -72,8 +72,8 @@ export default function HomePage() {
                   <strong>Passed</strong>
                 </div>
                 <div>
-                  <span>Stop-loss</span>
-                  <strong>Passed</strong>
+                  <span>Fast payout</span>
+                  <strong>Visible</strong>
                 </div>
                 <div>
                   <span>Bonus terms</span>
@@ -90,7 +90,7 @@ export default function HomePage() {
                       {casino.rating}/10 · x{casino.wagering} wagering
                     </span>
                   </div>
-                  <Link href={`/casino/${casino.slug}`}>Review</Link>
+                  <Link href={`/casino/${casino.slug}`}>Read review</Link>
                 </article>
               ))}
             </div>
@@ -101,10 +101,10 @@ export default function HomePage() {
       <Section eyebrow="Start here" title="What do you want to do today?">
         <div className="entryGrid">
           {[
-            ["Check risk", "If there is any doubt, start with the self-check.", "/self-check", "2 min"],
-            ["Calculate limit", "Money, time and stop-loss before deposit.", "/tools/budget-calculator", "Safe cap"],
-            ["Review offers", "Compare wagering, min deposit and license.", "/bonuses", "Compare"],
-            ["Explore catalog", "Full database of operators and filters.", "/catalog", `${stats.total} sites`],
+            ["Compare bonuses", "Top rated offers with terms, license and payout signals.", "/bonuses", "Top offers"],
+            ["Check risk", "A quick responsible gambling check before deposits.", "/self-check", "2 min"],
+            ["Fast payout casinos", "Find offers where payout speed is visible.", "/catalog", "Scan list"],
+            ["Explore catalog", "Full database of casino operators and filters.", "/catalog", `${stats.total} sites`],
           ].map(([title, text, href, badge]) => (
             <Link className="entryCard card" href={href} key={href}>
               <Badge tone="green">{badge}</Badge>
@@ -229,10 +229,7 @@ export default function HomePage() {
         </div>
       </Section>
 
-      <Section
-        eyebrow="Verified marketplace"
-        title="Welcome offers with wagering, license and limits visible."
-      >
+      <Section eyebrow="Verified marketplace" title="Top casino bonuses with rating, risk and terms visible.">
         <div className="bonusGrid">
           {topCasinos.map((casino, index) => (
             <OfferCard casino={casino} key={casino.slug} rank={index + 1} />
@@ -298,7 +295,7 @@ export default function HomePage() {
           </Card>
         </div>
         <Button className="sectionButton" href="/catalog" variant="primary">
-          Open catalog
+          Explore casino catalog
         </Button>
       </Section>
 

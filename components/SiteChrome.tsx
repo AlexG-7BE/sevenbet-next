@@ -20,6 +20,9 @@ export function Header() {
             {label}
           </Link>
         ))}
+        <Link className="button gold navCta" href="/bonuses">
+          Compare bonuses
+        </Link>
       </nav>
     </header>
   );
@@ -35,7 +38,8 @@ export function Footer() {
             <span>SevenBet</span>
           </Link>
           <p className="muted">
-            Control-first casino comparison. Affiliate links are commercial, but limits come before deposits. 18+ only.
+            Premium casino bonus comparison with visible terms, ratings, affiliate disclosure and responsible gambling
+            context. 18+ only.
           </p>
           <p className="footerNotice">
             If gambling is affecting money, work or relationships, pause and use responsible gaming support before
@@ -59,6 +63,8 @@ export function Footer() {
           <h3>Legal</h3>
           <Link href="/responsible-gaming">Help resources</Link>
           <Link href="/bonus-guide">Terms explained</Link>
+          <Link href="/bonus-guide">Methodology</Link>
+          <Link href="/responsible-gaming">18+ notice</Link>
         </div>
       </div>
     </footer>

@@ -10,11 +10,11 @@ export default function CatalogPage() {
     <section className="pageShell">
       <Container>
         <div className="pageIntro">
-          <Badge tone="green">Full catalog</Badge>
-          <h1>Casino catalog for comparison after limits are set.</h1>
+          <Badge tone="green">Casino comparison catalog</Badge>
+          <h1>Browse verified casino offers with ratings and bonus terms.</h1>
           <p className="lead">
-            The first 80 profiles from the database. Each listing keeps rating, wagering, minimum deposit and license
-            visible before any operator decision.
+            The first 80 profiles from the database. Each listing keeps rating, wagering, minimum deposit, payout speed
+            and license visible before any casino transition.
           </p>
         </div>
 
@@ -39,12 +39,20 @@ export default function CatalogPage() {
 
         <AffiliateDisclosure />
 
+        <div className="catalogFilters" aria-label="Catalog filter preview">
+          {["Top rated", "Fast payout", "Low wagering", "Verified", "Crypto", "Live casino"].map((label) => (
+            <Badge tone={label === "Top rated" ? "warning" : "dark"} key={label}>
+              {label}
+            </Badge>
+          ))}
+        </div>
+
         <div className="catalogToolbar">
           <div>
             <p className="eyebrow">Marketplace view</p>
-            <h2>Compare terms before eligibility checks.</h2>
+            <h2>Compare bonuses, ratings and risk labels in one scan.</h2>
           </div>
-          <Badge>{casinos.length} visible profiles</Badge>
+          <Badge tone="warning">Last updated today · {casinos.length} profiles</Badge>
         </div>
 
         <div className="catalogList">
