@@ -518,6 +518,10 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 
 .comparePreview { display: grid; gap: 8px; margin-bottom: 16px; }
+.bonusCompareTable {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
 .compareRow {
   display: grid;
   grid-template-columns: 1fr 1.5fr .7fr .8fr 1fr;
@@ -527,6 +531,10 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   border: 1px solid var(--border);
   border-radius: 16px;
   background: rgba(255, 255, 255, .045);
+}
+.bonusCompareTable .compareRow {
+  min-width: 1320px;
+  grid-template-columns: 1fr .72fr 1.35fr .72fr .62fr .82fr .9fr 1.1fr 1.35fr .72fr .72fr;
 }
 .compareHead {
   background: transparent;
@@ -645,6 +653,42 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .resultPanel { padding: 24px; position: sticky; top: 96px; }
 .resultRows { display: grid; gap: 12px; margin: 16px 0; }
 .questionPanel { padding: 12px; }
+.assessmentIntro,
+.assessmentFlow {
+  display: grid;
+  gap: 16px;
+}
+.assessmentProgress { display: grid; gap: 16px; }
+.answerList {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+.answerButton {
+  width: 100%;
+  min-height: 48px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-weight: 850;
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.answerButton:hover,
+.answerButton.selected {
+  border-color: var(--border-emerald);
+  background: rgba(0, 226, 138, .10);
+}
+.answerButton:hover { transform: translateY(-1px); }
+.button:disabled,
+.answerButton:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none;
+}
 .questionItem {
   display: flex;
   gap: 12px;

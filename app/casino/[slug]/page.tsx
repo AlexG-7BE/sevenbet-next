@@ -1,17 +1,84 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
-  AffiliateDisclosure,
-  Badge,
-  Button,
-  Card,
-  Container,
-  RiskBadge,
-  VerificationBadge,
-} from "@/components/ui";
-import { getCasino, getCasinos, formatMoney } from "@/lib/data";
+  CasinoFaqSection,
+  CasinoReviewHero,
+  EditorialReviewSection,
+  getCasinoFaqItems,
+  LicensingSafetySection,
+  MethodologyDisclosureSection,
+  PaymentsSection,
+  ProsConsSection,
+  QuickOverview,
+  ResponsibleToolsSection,
+  SimilarCasinosSection,
+  REVIEW_DATE,
+  WageringSection,
+  WelcomeBonusSection,
+} from "@/components/CasinoReviewSections";
+import { CTA, Section } from "@/components/ui";
+import { getCasino, getCasinos, getTopCasinos } from "@/lib/data";
+import { absoluteUrl } from "@/lib/site";
 
 export function generateStaticParams() {
   return getCasinos().slice(0, 80).map((casino) => ({ slug: casino.slug }));
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const casino = getCasino(slug);
+  if (!casino) {
+    return { title: "Casino review | SevenBet" };
+  }
+
+  return {
+    title: `${casino.name} Review | SevenBet`,
+    description: `${casino.name} review with editor score, license, bonus terms, wagering, payments, withdrawal speed and responsible gambling information.`,
+  };
+}
+
+function reviewSchema(casino: NonNullable<ReturnType<typeof getCasino>>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Review",
+    itemReviewed: {
+      "@type": "Organization",
+      name: casino.name,
+      url: `https://${casino.domain}`,
+    },
+    author: {
+      "@type": "Organization",
+      name: "SevenBet",
+      url: absoluteUrl("/"),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "SevenBet",
+    },
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: casino.rating,
+      bestRating: 10,
+      worstRating: 0,
+    },
+    reviewBody: casino.description,
+    dateModified: REVIEW_DATE,
+  };
+}
+
+function faqSchema(casino: NonNullable<ReturnType<typeof getCasino>>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: getCasinoFaqItems(casino).map(([question, answer]) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
+  };
 }
 
 export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -19,114 +86,41 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
   const casino = getCasino(slug);
   if (!casino) notFound();
 
-  const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
-  const ratingPercent = Math.max(0, Math.min(100, casino.rating * 10));
+  const similarCasinos = getTopCasinos(8)
+    .filter((item) => item.slug !== casino.slug)
+    .slice(0, 3);
 
   return (
-    <section className="pageShell">
-      <Container className="detailGrid">
-        <div>
-          <div className="badgeCluster">
-            <Badge tone="green">{casino.category}</Badge>
-            <VerificationBadge verified={casino.isVerified} />
-            <RiskBadge level={riskLevel} />
-          </div>
-          <h1>{casino.name}</h1>
-          <p className="lead">{casino.description}</p>
-          <div className="heroActions">
-            <Button href={casino.affiliateUrl} external variant="primary">
-              View offer
-            </Button>
-            <Button href="/tools/budget-calculator" variant="ghost">
-              Start limit check
-            </Button>
-          </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(reviewSchema(casino)) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(casino)) }}
+      />
 
-          <AffiliateDisclosure />
+      <CasinoReviewHero casino={casino} />
+      <QuickOverview casino={casino} />
+      <WelcomeBonusSection casino={casino} />
+      <WageringSection casino={casino} />
+      <ProsConsSection casino={casino} />
+      <LicensingSafetySection casino={casino} />
+      <PaymentsSection casino={casino} />
+      <ResponsibleToolsSection />
+      <EditorialReviewSection casino={casino} />
+      <SimilarCasinosSection casinos={similarCasinos} />
+      <CasinoFaqSection casino={casino} />
+      <MethodologyDisclosureSection />
 
-          <div className="guideGrid twoCards">
-            <Card className="guideCard">
-              <h3>Overview</h3>
-              <p className="muted">{casino.tagline}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Licensing</h3>
-              <p className="muted">{casino.license} · {casino.licenseStatus}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Bonus</h3>
-              <p className="muted">{casino.bonusHeadline}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Wagering requirements</h3>
-              <p className="muted">x{casino.wagering} wagering · minimum deposit {formatMoney(casino.minDeposit)}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Payments</h3>
-              <p className="muted">{casino.payments.join(", ")}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Withdrawal speed</h3>
-              <p className="muted">Estimated payout signal: ~{casino.payoutHours}h. Verify final withdrawal rules on the operator website.</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Pros</h3>
-              <p className="muted">{casino.pros.join(", ")}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Cons</h3>
-              <p className="muted">{casino.cons.join(", ")}</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Responsible gambling tools</h3>
-              <p className="muted">Check deposit limits, time-outs, self-exclusion and support links before depositing.</p>
-            </Card>
-            <Card className="guideCard">
-              <h3>Review methodology</h3>
-              <p className="muted">SevenBet reviews license, terms, wagering, payment signals, withdrawal speed and responsible gambling context.</p>
-            </Card>
-          </div>
-        </div>
-
-        <Card className="resultPanel detailSidebar" tone="soft">
-          <div className="badgeCluster">
-            <Badge tone="dark">{casino.rating}/10</Badge>
-            <VerificationBadge verified={casino.isVerified} />
-          </div>
-          <h2>{casino.license}</h2>
-          <div className="ratingBlock">
-            <div>
-              <strong>{casino.rating}/10</strong>
-              <span>SevenBet rating</span>
-            </div>
-            <div className="ratingBar" aria-label={`SevenBet rating ${casino.rating} out of 10`}>
-              <span style={{ width: `${ratingPercent}%` }} />
-            </div>
-          </div>
-          <div className="resultRows">
-            <div>
-              <span>Domain</span>
-              <strong>{casino.domain}</strong>
-            </div>
-            <div>
-              <span>Wagering</span>
-              <strong>x{casino.wagering}</strong>
-            </div>
-            <div>
-              <span>Min deposit</span>
-              <strong>{formatMoney(casino.minDeposit)}</strong>
-            </div>
-            <div>
-              <span>Payout</span>
-              <strong>~{casino.payoutHours}h</strong>
-            </div>
-          </div>
-          <p className="muted">Before depositing, verify final terms on the operator website and keep your limit unchanged.</p>
-          <Button href="/casinos" variant="ghost">
-            Compare terms
-          </Button>
-        </Card>
-      </Container>
-    </section>
+      <Section eyebrow="Next step" title="Compare More Casinos">
+        <CTA
+          title="Review more casino profiles or read the methodology behind SevenBet reviews."
+          primary={{ href: "/casinos", label: "Browse Casino Comparisons" }}
+          secondary={{ href: "/methodology", label: "Read Review Methodology" }}
+        />
+      </Section>
+    </>
   );
 }
