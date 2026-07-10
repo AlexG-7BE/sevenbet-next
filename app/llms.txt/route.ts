@@ -10,18 +10,20 @@ export function GET() {
 
   const body = `# SevenBet
 
-SevenBet is a control-first casino comparison site. It helps users verify a mindful gambling plan before comparing welcome bonuses.
+SevenBet is a responsible gambling platform centered on the SevenBet 10-Step Control Program. Casino comparisons and bonus offers are secondary resources presented inside a control-first framework.
 
 ## Core Pages
 
-- [Home](${absoluteUrl("/")}) - verified-control marketplace entry point.
-- [Self-check](${absoluteUrl("/self-check")}) - risk signal checklist before bonuses.
+- [Home](${absoluteUrl("/")}) - program-first responsible gambling entry point.
+- [10-step program](${absoluteUrl("/program")}) - the primary SevenBet control program.
+- [Self-check](${absoluteUrl("/self-check")}) - structured self-assessment before casino comparison.
+- [Responsible gambling](${absoluteUrl("/responsible-gambling")}) - safety guidance, red flags and support routes.
 - [Budget calculator](${absoluteUrl("/tools/budget-calculator")}) - session limit and stop-loss calculator.
-- [10-step program](${absoluteUrl("/program")}) - mindful gambling control program.
-- [Best bonuses](${absoluteUrl("/bonuses")}) - welcome bonus comparison.
-- [Catalog](${absoluteUrl("/catalog")}) - casino database preview.
+- [Casino bonuses](${absoluteUrl("/bonuses")}) - secondary bonus comparison directory.
+- [Casino reviews](${absoluteUrl("/casinos")}) - reviewed casino profiles.
+- [Methodology](${absoluteUrl("/methodology")}) - review criteria and editorial process.
+- [Affiliate disclosure](${absoluteUrl("/affiliate-disclosure")}) - commercial relationship explanation.
 - [Bonus guide](${absoluteUrl("/bonus-guide")}) - wagering, max bet, expiry and withdrawal rules.
-- [Responsible gaming](${absoluteUrl("/responsible-gaming")}) - safety guidance and red flags.
 
 ## Top Casino Profiles
 

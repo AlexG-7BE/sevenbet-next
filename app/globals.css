@@ -628,6 +628,19 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
 .timelineItem { display: grid; grid-template-columns: 90px 1fr; gap: 16px; padding: 16px; border-left: 1px solid var(--border); }
 .timelineItem > span { color: var(--emerald); font-weight: 950; }
+.timelineCard {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+.timelineCard .ratingBar { grid-column: 1 / -1; }
+.timelineMeta { display: grid; gap: 10px; align-content: start; }
+.anchoredSection { position: relative; }
+.anchoredSection > span[id] {
+  position: absolute;
+  top: -96px;
+}
 .twoCol, .detailGrid { display: grid; grid-template-columns: 1fr 380px; gap: 24px; align-items: flex-start; }
 .resultPanel { padding: 24px; position: sticky; top: 96px; }
 .resultRows { display: grid; gap: 12px; margin: 16px 0; }
@@ -697,9 +710,11 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .faqGrid,
   .compareRow,
   .verificationPanel,
-  .ctaBlock {
+  .ctaBlock,
+  .timelineCard {
     grid-template-columns: 1fr;
   }
+  .timelineCard .ratingBar { grid-column: auto; }
   .compareHead { display: none; }
   .section { padding: 64px 0; }
   .pageShell { padding: 48px 0 72px; }

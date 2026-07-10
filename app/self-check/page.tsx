@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ResourceCards } from "@/components/PageTemplates";
 import { Badge, Button, Card, Container, CTA, SectionHeader } from "@/components/ui";
 
 const questions = [
@@ -24,7 +25,7 @@ export default function SelfCheckPage() {
         tone: "warning" as const,
         title: "High risk signal",
         text: "Today, it is better not to continue to offers. Start with responsible gaming tools, self-exclusion and support.",
-        href: "/responsible-gaming",
+        href: "/responsible-gambling",
         cta: "Open help resources",
       };
     }
@@ -98,11 +99,28 @@ export default function SelfCheckPage() {
 
       <section className="section">
         <Container>
+          <SectionHeader
+            eyebrow="Personalized education"
+            title="Recommended next resources"
+            intro="Use these as educational next steps. If gambling is already causing harm, prioritize support and self-exclusion tools."
+          />
+          <ResourceCards
+            items={[
+              { title: "10-Step Control Program", text: "Continue with daily tasks, progress checkpoints and personal play rules.", href: "/program", badge: "Primary" },
+              { title: "Deposit and session limits", text: "Estimate a safer cap before any casino comparison.", href: "/tools/budget-calculator", badge: "Tool" },
+              { title: "Bonus terms guide", text: "Learn wagering, max bet, expiry and withdrawal rules before comparing offers.", href: "/bonus-guide", badge: "Education" },
+            ]}
+          />
+        </Container>
+      </section>
+
+      <section className="section">
+        <Container>
           <CTA
             eyebrow="Responsible gambling"
             title="If the check feels uncomfortable, pause before any offer page."
             intro="A controlled decision can wait. Pressure, secrecy or chasing losses are reasons to step away."
-            primary={{ href: "/responsible-gaming", label: "Responsible gaming" }}
+            primary={{ href: "/responsible-gambling", label: "Responsible gaming" }}
             secondary={{ href: "/tools/budget-calculator", label: "Start with limit check" }}
           />
         </Container>

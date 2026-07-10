@@ -1,10 +1,12 @@
 import Link from "next/link";
 
 const nav = [
+  ["Program", "/program"],
   ["Self-check", "/self-check"],
-  ["10 Steps", "/program"],
+  ["Responsible Gambling", "/responsible-gambling"],
   ["Bonuses", "/bonuses"],
-  ["Catalog", "/catalog"],
+  ["Casino Reviews", "/casinos"],
+  ["Methodology", "/methodology"],
 ];
 
 export function Header() {
@@ -21,7 +23,7 @@ export function Header() {
           </Link>
         ))}
         <Link className="button gold navCta" href="/bonuses">
-          Compare bonuses
+          Compare offers
         </Link>
       </nav>
     </header>
@@ -47,24 +49,27 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <h3>Control</h3>
-          <Link href="/self-check">Self-check</Link>
-          <Link href="/program">10-step program</Link>
+          <h3>Program</h3>
+          <Link href="/program">10-Step Control Program</Link>
+          <Link href="/self-check">Self Assessment</Link>
           <Link href="/tools/budget-calculator">Budget calculator</Link>
-          <Link href="/responsible-gaming">Responsible gaming</Link>
+          <Link href="/responsible-gambling">Responsible Gambling</Link>
         </div>
         <div>
-          <h3>Offers</h3>
-          <Link href="/bonuses">Best bonuses</Link>
+          <h3>Casino comparison</h3>
+          <Link href="/bonuses">Casino Bonuses</Link>
+          <Link href="/casinos">Casino Reviews</Link>
           <Link href="/bonus-guide">Bonus guide</Link>
-          <Link href="/catalog">Catalog</Link>
+          <Link href="/catalog">Legacy catalog</Link>
         </div>
         <div>
-          <h3>Legal</h3>
-          <Link href="/responsible-gaming">Help resources</Link>
-          <Link href="/bonus-guide">Terms explained</Link>
-          <Link href="/bonus-guide">Methodology</Link>
-          <Link href="/responsible-gaming">18+ notice</Link>
+          <h3>Company</h3>
+          <Link href="/methodology">Methodology</Link>
+          <Link href="/affiliate-disclosure">Affiliate Disclosure</Link>
+          <Link href="/about">About SevenBet</Link>
+          <Link href="/faq">FAQ</Link>
+          <Link href="/privacy">Privacy</Link>
+          <Link href="/terms">Terms</Link>
         </div>
       </div>
     </footer>

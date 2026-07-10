@@ -46,20 +46,44 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
 
           <div className="guideGrid twoCards">
             <Card className="guideCard">
-              <h3>Offer</h3>
+              <h3>Overview</h3>
+              <p className="muted">{casino.tagline}</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Licensing</h3>
+              <p className="muted">{casino.license} · {casino.licenseStatus}</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Bonus</h3>
               <p className="muted">{casino.bonusHeadline}</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Wagering requirements</h3>
+              <p className="muted">x{casino.wagering} wagering · minimum deposit {formatMoney(casino.minDeposit)}</p>
             </Card>
             <Card className="guideCard">
               <h3>Payments</h3>
               <p className="muted">{casino.payments.join(", ")}</p>
             </Card>
             <Card className="guideCard">
-              <h3>Providers</h3>
-              <p className="muted">{casino.providers.join(", ")}</p>
+              <h3>Withdrawal speed</h3>
+              <p className="muted">Estimated payout signal: ~{casino.payoutHours}h. Verify final withdrawal rules on the operator website.</p>
             </Card>
             <Card className="guideCard">
-              <h3>Games</h3>
-              <p className="muted">{casino.gameTypes.join(", ")}</p>
+              <h3>Pros</h3>
+              <p className="muted">{casino.pros.join(", ")}</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Cons</h3>
+              <p className="muted">{casino.cons.join(", ")}</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Responsible gambling tools</h3>
+              <p className="muted">Check deposit limits, time-outs, self-exclusion and support links before depositing.</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Review methodology</h3>
+              <p className="muted">SevenBet reviews license, terms, wagering, payment signals, withdrawal speed and responsible gambling context.</p>
             </Card>
           </div>
         </div>
@@ -98,7 +122,7 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
             </div>
           </div>
           <p className="muted">Before depositing, verify final terms on the operator website and keep your limit unchanged.</p>
-          <Button href={`/catalog`} variant="ghost">
+          <Button href="/casinos" variant="ghost">
             Compare terms
           </Button>
         </Card>

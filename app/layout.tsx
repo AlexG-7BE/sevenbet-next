@@ -3,8 +3,8 @@ import { Footer, Header } from "@/components/SiteChrome";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SevenBet | Verified casino bonus comparison",
-  description: "Premium casino bonus comparison with ratings, wagering terms, payout signals and responsible gambling context.",
+  title: "SevenBet | 10-Step Control Program",
+  description: "Responsible gambling program with self-assessment, educational resources and transparent casino comparison.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

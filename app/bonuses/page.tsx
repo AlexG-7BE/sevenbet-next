@@ -2,6 +2,7 @@ import {
   AffiliateDisclosure,
   Badge,
   Button,
+  Card,
   Container,
   CTA,
   FAQ,
@@ -25,7 +26,7 @@ export default function BonusesPage() {
             intro="See casino rating, wagering, minimum deposit, license, risk labels and verification context before every sponsored transition."
           />
           <div className="heroActions">
-            <Button href="/catalog" variant="primary">
+            <Button href="/casinos" variant="primary">
               Explore all casinos
             </Button>
             <Button href="/bonus-guide" variant="ghost">
@@ -33,12 +34,29 @@ export default function BonusesPage() {
             </Button>
           </div>
           <AffiliateDisclosure />
+          <div className="catalogToolbar">
+            <div>
+              <p className="eyebrow">Directory controls</p>
+              <h2>Filter by terms, risk labels and payout signals.</h2>
+            </div>
+            <Badge tone="warning">Last updated today · Sort: rating first</Badge>
+          </div>
           <div className="catalogFilters" aria-label="Bonus category tabs">
             {["Editor picks", "Fast payout", "Low wagering", "High rating", "New player offers"].map((label) => (
               <Badge tone={label === "Editor picks" ? "warning" : "dark"} key={label}>
                 {label}
               </Badge>
             ))}
+          </div>
+          <div className="guideGrid twoCards pageGrid">
+            <Card className="guideCard">
+              <h3>Comparison details</h3>
+              <p className="muted">Cards show bonus terms, wagering, minimum deposit, payout speed, verification and review links.</p>
+            </Card>
+            <Card className="guideCard">
+              <h3>Responsible context</h3>
+              <p className="muted">Use the self-assessment or limit tools first if the offer changes your planned budget or session time.</p>
+            </Card>
           </div>
           <div className="bonusGrid pageGrid">
             {casinos.map((casino, index) => (
@@ -57,7 +75,7 @@ export default function BonusesPage() {
           title="Not sure about your budget or current state?"
           intro="Run a quick limit check before opening casino offer pages."
           primary={{ href: "/self-check", label: "Start with limit check" }}
-          secondary={{ href: "/responsible-gaming", label: "Responsible gaming" }}
+          secondary={{ href: "/responsible-gambling", label: "Responsible gaming" }}
         />
       </Section>
 
