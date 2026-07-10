@@ -52,3 +52,4 @@ The script checks important routes for one `h1`, horizontal overflow and saves s
 - Split casino data enrichment into CMS-ready fields.
 - Add country, payment and provider SEO pages.
 - Add editorial methodology and affiliate disclosure pages.
+# sevenbet-next
