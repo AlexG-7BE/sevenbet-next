@@ -1,3 +1,5 @@
+import { AffiliateDisclosure, Card, Container, CTA, MethodologyBlock, Section, SectionHeader } from "@/components/ui";
+
 const items = [
   ["Wagering", "x35 means the bonus amount must be wagered 35 times. Lower requirements are usually easier to control."],
   ["Max bet", "The maximum allowed bet while wagering a bonus. Breaking it can void winnings."],
@@ -9,20 +11,37 @@ const items = [
 
 export default function BonusGuidePage() {
   return (
-    <section className="pageShell">
-      <div className="container">
-        <p className="eyebrow">Bonus guide</p>
-        <h1>How to read casino bonuses without walking into a trap.</h1>
-        <p className="lead">A good bonus should not make you increase your deposit, bet size or session length.</p>
-        <div className="guideGrid">
-          {items.map(([title, text]) => (
-            <article className="guideCard" key={title}>
-              <h3>{title}</h3>
-              <p className="muted">{text}</p>
-            </article>
-          ))}
-        </div>
-      </div>
-    </section>
+    <>
+      <section className="pageShell">
+        <Container>
+          <SectionHeader
+            eyebrow="Terms guide"
+            title="How to read casino offers without walking into pressure."
+            intro="A good offer should not make you increase your deposit, bet size or session length."
+          />
+          <AffiliateDisclosure />
+          <div className="guideGrid pageGrid">
+            {items.map(([title, text]) => (
+              <Card className="guideCard" key={title}>
+                <h3>{title}</h3>
+                <p className="muted">{text}</p>
+              </Card>
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      <Section eyebrow="Methodology" title="What SevenBet checks before presenting offers.">
+        <MethodologyBlock />
+      </Section>
+
+      <Section eyebrow="Next step" title="Compare only after the boundaries are clear.">
+        <CTA
+          title="Set budget, stop-loss and session time before opening operator pages."
+          primary={{ href: "/tools/budget-calculator", label: "Start with limit check" }}
+          secondary={{ href: "/bonuses", label: "Review offers" }}
+        />
+      </Section>
+    </>
   );
 }

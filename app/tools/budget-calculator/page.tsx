@@ -42,7 +42,7 @@ export default function BudgetCalculatorPage() {
             <div><span>Stop-loss</span><strong>{formatMoney(result.stopLoss)}</strong></div>
             <div><span>Time cap</span><strong>45 min</strong></div>
           </div>
-          <Link className="button gold" href="/bonuses">View bonuses</Link>
+          <Link className="button gold" href="/bonuses">Review offers</Link>
         </aside>
       </div>
     </section>

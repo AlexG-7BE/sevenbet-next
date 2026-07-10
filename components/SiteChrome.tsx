@@ -10,11 +10,11 @@ const nav = [
 export function Header() {
   return (
     <header className="topbar">
-      <Link className="brand" href="/">
+      <Link className="brand" href="/" aria-label="SevenBet home">
         <span className="mark">7</span>
         <span>SevenBet</span>
       </Link>
-      <nav className="nav">
+      <nav className="nav" aria-label="Primary navigation">
         {nav.map(([label, href]) => (
           <Link key={href} href={href}>
             {label}
@@ -30,12 +30,16 @@ export function Footer() {
     <footer className="footer">
       <div className="container footerGrid">
         <div>
-          <Link className="brand" href="/">
+          <Link className="brand" href="/" aria-label="SevenBet home">
             <span className="mark">7</span>
             <span>SevenBet</span>
           </Link>
           <p className="muted">
             Control-first casino comparison. Affiliate links are commercial, but limits come before deposits. 18+ only.
+          </p>
+          <p className="footerNotice">
+            If gambling is affecting money, work or relationships, pause and use responsible gaming support before
+            reviewing offers.
           </p>
         </div>
         <div>
