@@ -548,6 +548,188 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 .methodCard { min-height: 192px; }
 .methodCard h3 { color: var(--text); }
+.learningCard,
+.categoryCard,
+.resourceCard,
+.learningPath {
+  min-height: 260px;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.learningCard .button,
+.categoryCard .button,
+.resourceCard .button {
+  justify-self: start;
+  margin-top: auto;
+}
+.pathLinks {
+  display: grid;
+  gap: 10px;
+  margin-top: auto;
+}
+.pathLinks .button {
+  justify-content: flex-start;
+  width: 100%;
+}
+.breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: 20px;
+  color: var(--subtle);
+  font-size: .88rem;
+  font-weight: 800;
+}
+.breadcrumbs a { color: var(--muted); }
+.breadcrumbs a:hover { color: var(--emerald); }
+.articleGrid,
+.relatedGrid {
+  display: grid;
+  gap: 16px;
+}
+.articleGrid { grid-template-columns: .82fr 1.18fr; }
+.articleSummary p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.72;
+}
+.cleanList {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+.cleanList li {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--muted);
+  line-height: 1.55;
+}
+.cleanList li::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 10px;
+  border-radius: 999px;
+  background: var(--emerald);
+}
+.articleBody .guideCard {
+  max-width: 880px;
+}
+.articleTips {
+  max-width: 980px;
+}
+.articleTips span {
+  border-color: var(--border-emerald);
+  background: rgba(0, 226, 138, .08);
+  color: #BFFFE3;
+}
+.relatedGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.relatedArticle {
+  display: grid;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .045);
+  box-shadow: var(--shadow-soft);
+  transition: transform .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.relatedArticle:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-emerald);
+  box-shadow: 0 18px 54px rgba(0, 0, 0, .30), 0 0 26px rgba(0, 226, 138, .08);
+}
+.relatedArticle span,
+.relatedArticle small {
+  color: var(--subtle);
+  font-size: .82rem;
+  font-weight: 850;
+}
+.relatedArticle strong {
+  color: var(--text);
+  line-height: 1.25;
+}
+.searchPanel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.searchPanel label {
+  color: var(--muted);
+  font-size: .86rem;
+  font-weight: 900;
+}
+.searchPanel input {
+  width: 100%;
+  min-height: 56px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+  padding: 16px 18px;
+  font-weight: 850;
+}
+.searchPanel input::placeholder {
+  color: var(--subtle);
+}
+.searchResults {
+  margin-top: 20px;
+}
+.learningSearchPanel {
+  gap: 16px;
+}
+.learningFilters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.learningFilters label {
+  display: grid;
+  gap: 8px;
+}
+.learningFilters select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+  padding: 12px 14px;
+  font-weight: 850;
+}
+.authorCard .resultRows {
+  margin-bottom: 0;
+}
+.glossaryCard {
+  min-height: 180px;
+}
+.faqAccordion {
+  display: grid;
+  gap: 12px;
+}
+.faqAccordion summary {
+  cursor: pointer;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 950;
+  line-height: 1.35;
+}
+.faqAccordion summary::marker {
+  color: var(--emerald);
+}
+.faqAccordion .button {
+  justify-self: start;
+}
+.categoryKnowledgeCard small {
+  line-height: 1.55;
+}
 .ctaBlock {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -755,7 +937,10 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .compareRow,
   .verificationPanel,
   .ctaBlock,
-  .timelineCard {
+  .timelineCard,
+  .articleGrid,
+  .relatedGrid,
+  .learningFilters {
     grid-template-columns: 1fr;
   }
   .timelineCard .ratingBar { grid-column: auto; }

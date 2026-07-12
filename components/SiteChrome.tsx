@@ -3,6 +3,7 @@ import Link from "next/link";
 const nav = [
   ["Program", "/program"],
   ["Self-check", "/self-check"],
+  ["Learn", "/learn"],
   ["Responsible Gambling", "/responsible-gambling"],
   ["Bonuses", "/bonuses"],
   ["Casino Reviews", "/casinos"],
@@ -52,6 +53,7 @@ export function Footer() {
           <h3>Program</h3>
           <Link href="/program">10-Step Control Program</Link>
           <Link href="/self-check">Self Assessment</Link>
+          <Link href="/learn">Learning Center</Link>
           <Link href="/tools/budget-calculator">Budget calculator</Link>
           <Link href="/responsible-gambling">Responsible Gambling</Link>
         </div>

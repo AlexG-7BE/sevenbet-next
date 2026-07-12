@@ -1,30 +1,66 @@
-import { PageHero, ResourceCards } from "@/components/PageTemplates";
-import { AffiliateDisclosure, MethodologyBlock, Section } from "@/components/ui";
+import type { Metadata } from "next";
+import {
+  MethodologyContent,
+  MethodologyHero,
+  methodologyFaqItems,
+} from "@/components/MethodologySections";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Methodology | How SevenBet Reviews Casinos and Bonuses",
+  description:
+    "SevenBet's editorial methodology for casino reviews, bonus comparisons, rating criteria, affiliate relationships, limitations, and corrections.",
+};
+
+function breadcrumbSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Methodology",
+        item: absoluteUrl("/methodology"),
+      },
+    ],
+  };
+}
+
+function faqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: methodologyFaqItems.map(([question, answer]) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
+  };
+}
 
 export default function MethodologyPage() {
   return (
     <>
-      <PageHero
-        eyebrow="Methodology"
-        title="How SevenBet reviews gambling decisions and casino information."
-        intro="Our primary review lens is responsible gambling. Casino comparisons are evaluated only after limits, risk context and clear terms are visible."
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
       />
-      <Section eyebrow="Review process" title="The criteria behind casino comparison.">
-        <MethodologyBlock />
-      </Section>
-      <Section eyebrow="Verification" title="What we try to make visible.">
-        <ResourceCards
-          items={[
-            { title: "Licensing", text: "License authority and operator signals are reviewed where data is available." },
-            { title: "Bonus terms", text: "Wagering, max bet, expiry, minimum deposit and withdrawal rules are prioritized over headline value." },
-            { title: "Payments", text: "Payment options and withdrawal speed are presented as comparison context." },
-            { title: "Responsible tools", text: "Deposit limits, time-outs, self-exclusion and support information are part of the review framework." },
-          ]}
-        />
-      </Section>
-      <Section eyebrow="Commercial independence" title="Affiliate links do not remove risk labels.">
-        <AffiliateDisclosure />
-      </Section>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
+      />
+      <MethodologyHero />
+      <MethodologyContent />
     </>
   );
 }

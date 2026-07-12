@@ -1,23 +1,62 @@
-import { PageHero, ResourceCards } from "@/components/PageTemplates";
-import { Section } from "@/components/ui";
+import type { Metadata } from "next";
+import { AboutContent, AboutHero, aboutFaqItems } from "@/components/AboutSections";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "About SevenBet | Educational Casino Guides and Editorial Reviews",
+  description:
+    "Learn what SevenBet is, why it exists, what it does, what it does not do, and how its editorial casino comparison platform works.",
+};
+
+function breadcrumbSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "About SevenBet",
+        item: absoluteUrl("/about"),
+      },
+    ],
+  };
+}
+
+function faqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: aboutFaqItems.map(([question, answer]) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
+  };
+}
 
 export default function AboutPage() {
   return (
     <>
-      <PageHero
-        eyebrow="About SevenBet"
-        title="A responsible gambling platform with casino comparison as a secondary tool."
-        intro="SevenBet exists to help people build control before gambling decisions, then understand casino information with more transparency."
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
       />
-      <Section eyebrow="Mission" title="Everything supports the 10-Step Control Program.">
-        <ResourceCards
-          items={[
-            { title: "Program-first", text: "The main product is a structured control program, not a bonus feed." },
-            { title: "Educational", text: "Guides explain wagering, limits, triggers and risky behavior in plain language." },
-            { title: "Transparent", text: "Affiliate disclosure, methodology and review criteria are easy to find." },
-          ]}
-        />
-      </Section>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
+      />
+      <AboutHero />
+      <AboutContent />
     </>
   );
 }

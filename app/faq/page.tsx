@@ -1,26 +1,85 @@
-import { PageHero } from "@/components/PageTemplates";
-import { FAQ, Section } from "@/components/ui";
+import type { Metadata } from "next";
+import { KnowledgeCenterContent } from "@/components/KnowledgeCenter";
+import { Breadcrumbs } from "@/components/ResponsibleGamblingHub";
+import { Badge, Button, Container } from "@/components/ui";
+import { knowledgeQuestions } from "@/lib/knowledge-center";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "SevenBet Help Center | Casino Bonuses, Reviews and Responsible Gambling FAQ",
+  description:
+    "Search SevenBet answers about the 10-Step Program, responsible gambling, casino bonuses, reviews, methodology, affiliate disclosure, payments, and licensing.",
+};
+
+function breadcrumbSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "SevenBet Help Center",
+        item: absoluteUrl("/faq"),
+      },
+    ],
+  };
+}
+
+function faqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: knowledgeQuestions.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
 
 export default function FAQPage() {
   return (
     <>
-      <PageHero
-        eyebrow="FAQ"
-        title="Common questions about SevenBet."
-        intro="Short answers about the control program, self-assessment, casino comparison and affiliate disclosure."
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
       />
-      <Section eyebrow="Questions" title="The essentials.">
-        <FAQ
-          items={[
-            ["Is SevenBet a casino?", "No. SevenBet does not operate casinos, accept deposits or provide gambling services."],
-            ["What is the main product?", "The SevenBet 10-Step Control Program is the primary product and user journey."],
-            ["Why include casino comparisons?", "They help users understand terms, licensing, wagering and payment details if comparison is appropriate."],
-            ["Does SevenBet earn commissions?", "SevenBet may earn commissions from some partner links. Affiliate disclosure remains visible."],
-            ["Is the self-check medical advice?", "No. It is educational decision support, not diagnosis or treatment."],
-            ["When should I avoid offers?", "Avoid offers when there is pressure, chasing losses, hidden spending, borrowing or broken limits."],
-          ]}
-        />
-      </Section>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
+      />
+      <section className="pageShell">
+        <Container>
+          <p className="eyebrow">Knowledge center</p>
+          <h1>SevenBet Help Center</h1>
+          <p className="lead">
+            Find answers about casino bonuses, responsible gambling, our 10-Step Program, casino reviews, affiliate
+            disclosure, and editorial methodology.
+          </p>
+          <div className="heroActions">
+            <Button href="#knowledge-search" variant="primary">Search Knowledge Base</Button>
+            <Button href="#categories" variant="ghost">Browse Categories</Button>
+          </div>
+          <Breadcrumbs />
+          <div className="trustStrip">
+            <Badge tone="green">Searchable answers</Badge>
+            <Badge>FAQ schema</Badge>
+            <Badge tone="dark">Internal guide links</Badge>
+            <Badge tone="warning">Reader-first explanations</Badge>
+          </div>
+        </Container>
+      </section>
+      <KnowledgeCenterContent />
     </>
   );
 }

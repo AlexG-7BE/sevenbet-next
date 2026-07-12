@@ -4,6 +4,7 @@ export const coreRoutes = [
   "",
   "/program",
   "/self-check",
+  "/learn",
   "/responsible-gambling",
   "/bonuses",
   "/casinos",

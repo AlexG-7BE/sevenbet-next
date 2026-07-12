@@ -1,54 +1,226 @@
-import { PageHero, ResourceCards } from "@/components/PageTemplates";
-import { CTA, FAQ, Section } from "@/components/ui";
+import type { Metadata } from "next";
+import { Breadcrumbs, CategoryCard, LearningCard, ResourceCard } from "@/components/ResponsibleGamblingHub";
+import { PageHero } from "@/components/PageTemplates";
+import { Badge, Button, Card, CTA, FAQ, Section } from "@/components/ui";
+import {
+  learningArticles,
+  learningCategories,
+  learningPaths,
+  practicalTools,
+  responsibleTools,
+} from "@/lib/responsible-gambling";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Responsible Gambling Learning Center | SevenBet",
+  description:
+    "Practical guides, educational articles and tools for budgeting, bonus terms, casino licensing and responsible gambling decisions.",
+};
+
+const featuredSlugs = [
+  "bonus-terms",
+  "budgeting",
+  "deposit-limits",
+  "reality-checks",
+  "cooling-off",
+  "self-exclusion",
+  "casino-licenses",
+  "payment-safety",
+];
+
+const hubFaqItems: Array<[string, string]> = [
+  [
+    "What is responsible gambling?",
+    "Responsible gambling means using planning, limits and information to support controlled, informed gambling decisions.",
+  ],
+  [
+    "What is a deposit limit?",
+    "A deposit limit sets the maximum amount that can be deposited during a chosen time period.",
+  ],
+  [
+    "What is self-exclusion?",
+    "Self-exclusion is a longer restriction on gambling access, usually managed through an operator or regulator tool.",
+  ],
+  [
+    "What is a wagering requirement?",
+    "A wagering requirement describes how much qualifying play may be required before bonus-related withdrawals are allowed.",
+  ],
+  [
+    "How do cooling-off periods work?",
+    "Cooling-off periods create a temporary pause from gambling access for a defined period.",
+  ],
+  [
+    "How can I compare casinos?",
+    "Compare licensing, bonus terms, payment methods, withdrawal speed and responsible gambling tools before any offer button.",
+  ],
+];
+
+function articleBySlug(slug: string) {
+  return learningArticles.find((article) => article.slug === slug);
+}
+
+function hubBreadcrumbSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: absoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Responsible Gambling",
+        item: absoluteUrl("/responsible-gambling"),
+      },
+    ],
+  };
+}
+
+function hubFaqSchema() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: hubFaqItems.map(([question, answer]) => ({
+      "@type": "Question",
+      name: question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: answer,
+      },
+    })),
+  };
+}
 
 export default function ResponsibleGamblingPage() {
+  const featuredArticles = featuredSlugs
+    .map((slug) => articleBySlug(slug))
+    .filter((article): article is (typeof learningArticles)[number] => Boolean(article));
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(hubBreadcrumbSchema()) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(hubFaqSchema()) }}
+      />
       <PageHero
         eyebrow="Responsible gambling"
-        title="If control is already lost, casino offers should not be the next step."
-        intro="Use limits, cool-off periods, self-exclusion information and external support when gambling affects money, work, relationships or mental health."
-        primary={{ href: "/self-check", label: "Complete self-assessment" }}
-        secondary={{ href: "/program", label: "Open 10-Step Program" }}
-      />
+        title="Responsible Gambling Learning Center"
+        intro="Practical guides, educational articles, and tools to help you better understand gambling decisions and industry terminology."
+        primary={{ href: "#featured-topics", label: "Start Learning" }}
+        secondary={{ href: "/program", label: "Start the 10-Step Program" }}
+      >
+        <Breadcrumbs />
+        <div className="trustStrip">
+          <Badge tone="green">Educational hub</Badge>
+          <Badge>10 learning guides</Badge>
+          <Badge tone="dark">No medical claims</Badge>
+        </div>
+      </PageHero>
 
-      <Section eyebrow="Resources" title="Responsible gambling tools and support routes.">
-        <ResourceCards
-          items={[
-            { title: "Deposit limits", text: "Set a maximum before gambling and avoid changing it during a session." },
-            { title: "Cool-off periods", text: "Use a pause when gambling feels emotional, automatic or connected to losses." },
-            { title: "Self-exclusion information", text: "If control is lost, self-exclusion may be a safer next action than another limit." },
-            { title: "External support", text: "Talk to someone you trust and seek local professional support if gambling is causing harm." },
-          ]}
-        />
+      <Section
+        eyebrow="Featured topics"
+        title="Start with the concepts that shape safer decisions."
+        intro="Each guide explains one topic in plain language and links to related resources across SevenBet."
+      >
+        <div id="featured-topics" className="guideGrid">
+          {featuredArticles.map((article) => (
+            <LearningCard article={article} key={article.slug} />
+          ))}
+        </div>
       </Section>
 
-      <Section eyebrow="Red flags" title="Do not continue to casino comparison if these are present.">
-        <ResourceCards
-          items={[
-            { title: "Chasing losses", text: "Trying to recover losses often leads to higher risk decisions." },
-            { title: "Hidden deposits", text: "Secrecy around money or time is a sign to pause and seek support." },
-            { title: "Borrowed money", text: "Do not gamble with borrowed money or money needed for essentials." },
-          ]}
-        />
+      <Section
+        eyebrow="Learning paths"
+        title="Choose a beginner-friendly path."
+        intro="These paths group articles into practical sequences based on what you want to understand first."
+      >
+        <div className="guideGrid">
+          {learningPaths.map((path) => (
+            <Card className="guideCard learningPath" key={path.title}>
+              <Badge tone="green">Path</Badge>
+              <h3>{path.title}</h3>
+              <p className="muted">{path.summary}</p>
+              <div className="pathLinks">
+                {path.links.map((slug) => {
+                  const article = articleBySlug(slug);
+                  if (!article) return null;
+                  return (
+                    <Button href={`/responsible-gambling/${article.slug}`} variant="ghost" key={slug}>
+                      {article.title}
+                    </Button>
+                  );
+                })}
+              </div>
+            </Card>
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Practical tools"
+        title="Use simple worksheets and checklists before opening an operator page."
+      >
+        <div className="guideGrid">
+          {practicalTools.map((tool) => (
+            <ResourceCard title={tool.title} description={tool.text} href={tool.href} key={tool.title} />
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Latest guides"
+        title="Recent educational articles."
+        intro="The learning center is organized around practical decisions: money, time, terms, tools and casino safety."
+      >
+        <div className="guideGrid">
+          {learningArticles.slice(0, 6).map((article) => (
+            <LearningCard article={article} key={article.slug} />
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Protection tools"
+        title="Responsible gambling resources and what they do."
+        intro="Availability varies by operator and jurisdiction. Review the exact rules on the casino website before relying on any tool."
+      >
+        <div className="guideGrid">
+          {responsibleTools.map((tool) => (
+            <ResourceCard title={tool.title} description={tool.description} href={tool.href} key={tool.title} />
+          ))}
+        </div>
+      </Section>
+
+      <Section
+        eyebrow="Content categories"
+        title="Browse by learning area."
+        intro="Use categories to move from broad education into specific guides."
+      >
+        <div className="guideGrid">
+          {learningCategories.map((category) => (
+            <CategoryCard category={category} key={category.id} />
+          ))}
+        </div>
       </Section>
 
       <Section eyebrow="FAQ" title="Responsible gambling basics.">
-        <FAQ
-          items={[
-            ["Is this medical advice?", "No. SevenBet provides educational decision support, not diagnosis or treatment."],
-            ["What should I do first?", "Pause, set the limit to zero for today and use available blocking or self-exclusion tools."],
-            ["Can I return later?", "Only after the decision is calm, budgeted and not connected to recovering losses."],
-            ["Should I compare bonuses under stress?", "No. Complete the self-assessment or use support resources instead."],
-          ]}
-        />
+        <FAQ items={hubFaqItems} />
       </Section>
 
-      <Section eyebrow="Pause path" title="A safer choice can be no gambling today.">
+      <Section eyebrow="Continue learning" title="Build the plan before comparing offers.">
         <CTA
-          title="If there is pressure, secrecy or financial harm, choose support first."
-          primary={{ href: "/self-check", label: "Complete self-assessment" }}
-          secondary={{ href: "/program", label: "Continue the program" }}
+          title="Continue Learning"
+          intro="Explore the guide library or start the SevenBet 10-Step Control Program before reviewing casino comparisons."
+          primary={{ href: "/responsible-gambling#featured-topics", label: "Explore All Guides" }}
+          secondary={{ href: "/program", label: "Start the 10-Step Program" }}
         />
       </Section>
     </>
