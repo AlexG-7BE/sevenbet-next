@@ -835,6 +835,141 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .resultPanel { padding: 24px; position: sticky; top: 96px; }
 .resultRows { display: grid; gap: 12px; margin: 16px 0; }
 .questionPanel { padding: 12px; }
+.programHeader {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.programHeaderStats {
+  display: grid;
+  gap: 12px;
+}
+.xpIndicator {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border-gold);
+  border-radius: 18px;
+  background: rgba(245, 196, 81, .10);
+}
+.xpIndicator span {
+  color: var(--subtle);
+  font-size: .82rem;
+  font-weight: 900;
+}
+.xpIndicator strong {
+  color: var(--gold);
+  font-size: 1.6rem;
+}
+.programTimeline {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+.timelineStep {
+  display: grid;
+  gap: 8px;
+  min-height: 132px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .045);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+.timelineStep:hover,
+.timelineStep.active {
+  border-color: var(--border-emerald);
+  background: rgba(0, 226, 138, .09);
+}
+.timelineStep.complete {
+  border-color: var(--border-gold);
+}
+.timelineStep span {
+  width: fit-content;
+  min-width: 34px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border-emerald);
+  border-radius: 999px;
+  padding: 6px 9px;
+  color: #BFFFE3;
+  font-size: .78rem;
+  font-weight: 950;
+}
+.timelineStep strong {
+  line-height: 1.25;
+}
+.timelineStep small {
+  color: var(--subtle);
+}
+.dashboardGrid,
+.programLessonGrid {
+  display: grid;
+  gap: 16px;
+}
+.dashboardGrid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, .65fr);
+}
+.programLessonGrid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.lessonCard {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+.reflectionInput {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+  padding: 16px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.reflectionInput::placeholder {
+  color: var(--subtle);
+}
+.quizFeedback {
+  box-shadow: none;
+}
+.achievementToast {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  max-width: min(420px, calc(100% - 32px));
+  padding: 16px;
+  border: 1px solid var(--border-gold);
+  border-radius: 20px;
+  background:
+    radial-gradient(circle at top left, rgba(245, 196, 81, .22), transparent 16rem),
+    var(--card);
+  box-shadow: var(--shadow);
+}
+.achievementToast strong {
+  color: var(--text);
+}
+.achievementToast button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+  cursor: pointer;
+}
 .assessmentIntro,
 .assessmentFlow {
   display: grid;
@@ -938,6 +1073,10 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .verificationPanel,
   .ctaBlock,
   .timelineCard,
+  .programHeader,
+  .programTimeline,
+  .dashboardGrid,
+  .programLessonGrid,
   .articleGrid,
   .relatedGrid,
   .learningFilters {
