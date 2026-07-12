@@ -1,0 +1,33 @@
+import { listCmsRecords } from "@/lib/cms/repository";
+import type { CmsEntity, CmsRecord } from "@/lib/cms/types";
+
+export type PublicCmsResource = "program" | "program-steps" | "lessons" | "articles" | "casinos" | "bonuses";
+
+const resourceToEntity: Record<PublicCmsResource, CmsEntity> = {
+  program: "program",
+  "program-steps": "program-step",
+  lessons: "lesson",
+  articles: "article",
+  casinos: "casino",
+  bonuses: "bonus",
+};
+
+export function isPublicCmsResource(value: string): value is PublicCmsResource {
+  return value in resourceToEntity;
+}
+
+export function isPublicRecord(record: CmsRecord) {
+  if (record.entity === "bonus") {
+    return record.status === "PUBLISHED" && record.offerStatus === "ACTIVE";
+  }
+  return record.status === "PUBLISHED";
+}
+
+export function listPublishedContent(resource: PublicCmsResource) {
+  const entity = resourceToEntity[resource];
+  return listCmsRecords(entity).filter(isPublicRecord);
+}
+
+export function publicEntityForResource(resource: PublicCmsResource) {
+  return resourceToEntity[resource];
+}

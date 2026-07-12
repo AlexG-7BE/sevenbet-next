@@ -61,8 +61,36 @@ NEXT_PUBLIC_SITE_URL=https://your-domain.com
 
 This keeps sitemap and AI-readable links canonical after deployment.
 
+## CMS Phase 1
+
+The project includes a Phase 1 headless CMS foundation:
+
+- admin preview shell at `/admin`;
+- temporary token gate through `SEVENBET_ADMIN_PREVIEW_TOKEN`;
+- admin CRUD API at `/api/admin/:entity`;
+- public read API at `/api/public/:resource`;
+- safe affiliate redirect route at `/go/:slug`;
+- Prisma schema and SQL migration under `prisma/`;
+- CMS architecture notes in `docs/cms-phase-1.md`.
+
+Run the lightweight CMS checks:
+
+```bash
+npm run cms:test
+```
+
+Open admin locally with:
+
+```text
+http://localhost:4173/admin?token=phase-1-local-admin
+```
+
+For production, set a long random `SEVENBET_ADMIN_PREVIEW_TOKEN` in the hosting environment before opening `/admin`.
+
 ## Next Build Steps
 
+- Replace the in-memory CMS repository with Prisma and PostgreSQL.
+- Add production admin authentication and invitations.
 - Add persistent program progress with localStorage or user accounts.
 - Add real filter/search state to `/catalog`.
 - Split casino data enrichment into CMS-ready fields.

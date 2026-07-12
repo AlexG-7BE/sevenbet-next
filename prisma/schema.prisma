@@ -1,0 +1,258 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EditorialStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum OfferStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+  AUTHOR
+  REVIEWER
+  AFFILIATE_MANAGER
+  ANALYST
+  SUPPORT
+}
+
+enum CmsBlockType {
+  TEXT
+  CALLOUT
+  VIDEO
+  IMAGE
+  QUIZ
+  SCENARIO
+  EXERCISE
+  CHECKLIST
+  SUMMARY
+  RESOURCE_LINK
+}
+
+model AdminUser {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  name      String
+  role      AdminRole @default(AUTHOR)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  auditLogs AuditLog[]
+}
+
+model Program {
+  id        String          @id @default(uuid())
+  slug      String          @unique
+  title     String
+  summary   String
+  status    EditorialStatus @default(DRAFT)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  createdBy String
+  updatedBy String
+
+  steps ProgramStep[]
+}
+
+model ProgramStep {
+  id               String          @id @default(uuid())
+  programId        String
+  slug             String          @unique
+  title            String
+  status           EditorialStatus @default(DRAFT)
+  order            Int
+  estimatedMinutes Int
+  xp               Int             @default(0)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  createdBy        String
+  updatedBy        String
+
+  program Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
+  lessons Lesson[]
+
+  @@index([programId, order])
+}
+
+model Lesson {
+  id            String          @id @default(uuid())
+  programStepId String
+  slug          String          @unique
+  title         String
+  status        EditorialStatus @default(DRAFT)
+  order         Int
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdBy     String
+  updatedBy     String
+
+  programStep ProgramStep   @relation(fields: [programStepId], references: [id], onDelete: Cascade)
+  blocks      LessonBlock[]
+}
+
+model LessonBlock {
+  id       String       @id @default(uuid())
+  lessonId String
+  type     CmsBlockType
+  order    Int
+  data     Json
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([lessonId, order])
+}
+
+model Article {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  title          String
+  excerpt        String
+  category       String
+  tags           String[]
+  status         EditorialStatus @default(DRAFT)
+  bodyBlocks     Json
+  seoTitle       String?
+  seoDescription String?
+  canonicalUrl   String?
+  readingTime    String?
+  difficulty     String?
+  publishedAt    DateTime?
+  lastReviewedAt DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String
+  updatedBy      String
+}
+
+model Casino {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  title          String
+  domain         String          @unique
+  operator       String?
+  editorScore    Float?
+  license        String?
+  country        String?
+  status         EditorialStatus @default(DRAFT)
+  publishedAt    DateTime?
+  lastReviewedAt DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String
+  updatedBy      String
+
+  bonuses        Bonus[]
+  affiliateLinks AffiliateLink[]
+}
+
+model Bonus {
+  id                 String          @id @default(uuid())
+  casinoId           String
+  slug               String          @unique
+  title              String
+  summary            String
+  amount             Int?
+  percentage         Int?
+  minimumDeposit     Int?
+  maximumBonus       Int?
+  wageringMultiplier Int?
+  termsUrl           String?
+  status             EditorialStatus @default(DRAFT)
+  offerStatus        OfferStatus     @default(DRAFT)
+  lastVerifiedAt     DateTime?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  createdBy          String
+  updatedBy          String
+
+  casino         Casino          @relation(fields: [casinoId], references: [id], onDelete: Cascade)
+  affiliateLinks AffiliateLink[]
+}
+
+model AffiliateLink {
+  id             String          @id @default(uuid())
+  slug           String          @unique
+  title          String
+  destinationUrl String
+  casinoId       String?
+  bonusId        String?
+  country        String?
+  language       String?
+  campaign       String?
+  priority       Int             @default(0)
+  status         EditorialStatus @default(DRAFT)
+  effectiveStart DateTime?
+  effectiveEnd   DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  createdBy      String
+  updatedBy      String
+
+  casino Casino? @relation(fields: [casinoId], references: [id], onDelete: SetNull)
+  bonus  Bonus?  @relation(fields: [bonusId], references: [id], onDelete: SetNull)
+}
+
+model ContentRevision {
+  id             String   @id @default(uuid())
+  entityType     String
+  entityId       String
+  revisionNumber Int
+  snapshot       Json
+  summary        String
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model AuditLog {
+  id         String    @id @default(uuid())
+  actorId    String
+  action     String
+  entityType String
+  entityId   String
+  summary    String
+  metadata   Json?
+  timestamp  DateTime  @default(now())
+
+  actor AdminUser @relation(fields: [actorId], references: [id], onDelete: Cascade)
+
+  @@index([entityType, entityId])
+  @@index([timestamp])
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  url       String
+  alt       String
+  mimeType  String
+  width     Int?
+  height    Int?
+  createdAt DateTime @default(now())
+}
+
+model SiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}
