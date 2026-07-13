@@ -32,6 +32,18 @@ export function isCmsEntity(value: string): value is CmsEntity {
   return cmsEntities.includes(value as CmsEntity);
 }
 
+const programManagedEntities: CmsEntity[] = [
+  "program",
+  "program-step",
+  "lesson",
+  "achievement",
+  "xp-rule",
+];
+
+export function isProgramManagedEntity(entity: CmsEntity) {
+  return programManagedEntities.includes(entity);
+}
+
 export function permissionForEntity(entity: CmsEntity, action: "create" | "read" | "update" | "delete"): CmsPermission {
   if (entity === "program" || entity === "program-step") {
     if (action === "read") return "program.view";

@@ -11,7 +11,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const limitParam = request.nextUrl.searchParams.get("limit");
   const limit = limitParam ? Math.max(1, Math.min(100, Number(limitParam))) : 100;
-  const records = listPublishedContent(resource).slice(0, limit);
+  const records = (await listPublishedContent(resource)).slice(0, limit);
 
   return NextResponse.json({
     ok: true,

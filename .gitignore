@@ -10,3 +10,6 @@ test-results
 .env
 .env.local
 .env.*.local
+
+tsconfig.tsbuildinfo
+*.before-uuid-fix

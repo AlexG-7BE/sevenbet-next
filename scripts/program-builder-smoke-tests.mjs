@@ -67,8 +67,9 @@ const middleware = readFileSync(new URL("../middleware.ts", import.meta.url), "u
 assert.match(middleware, /\/admin\/:path\*/, "draft preview must remain behind admin middleware");
 const builderRoute = readFileSync(new URL("../app/api/admin/programs/[programId]/builder/route.ts", import.meta.url), "utf8");
 assert.match(builderRoute, /expectedUpdatedAt/, "builder saves must support optimistic concurrency");
-const publishService = readFileSync(new URL("../lib/cms/program-builder.ts", import.meta.url), "utf8");
+const publishService = readFileSync(new URL("../lib/services/program-builder.service.ts", import.meta.url), "utf8");
 assert.match(publishService, /Publication blocked/, "publication must be blocked by critical validation errors");
-assert.match(publishService, /__sevenbetPublishedProgramSnapshots/, "draft and published snapshots must be isolated");
+assert.match(publishService, /programVersion\.findFirst/, "published snapshots must be loaded from PostgreSQL program versions");
+assert.match(publishService, /status: "PUBLISHED"/, "public snapshot lookup must require a published version");
 
 console.log("Program Builder smoke tests passed.");

@@ -1,6 +1,5 @@
 import { listCmsRecords } from "@/lib/cms/repository";
-import { getPublishedProgramSnapshot } from "@/lib/cms/program-builder";
-import type { CmsProgram } from "@/lib/cms/types";
+import { programBuilderService } from "@/lib/services";
 import type { CmsEntity, CmsRecord } from "@/lib/cms/types";
 
 export type PublicCmsResource = "program" | "program-steps" | "lessons" | "articles" | "casinos" | "bonuses";
@@ -25,14 +24,16 @@ export function isPublicRecord(record: CmsRecord) {
   return record.status === "PUBLISHED";
 }
 
-export function listPublishedContent(resource: PublicCmsResource) {
+export async function listPublishedContent(resource: PublicCmsResource): Promise<CmsRecord[]> {
   if (resource === "program" || resource === "program-steps" || resource === "lessons") {
-    const snapshots = (listCmsRecords("program") as CmsProgram[])
-      .map((program) => getPublishedProgramSnapshot(program.id))
-      .filter((snapshot) => Boolean(snapshot));
-    if (resource === "program") return snapshots.map((snapshot) => snapshot!.program);
-    if (resource === "program-steps") return snapshots.flatMap((snapshot) => snapshot!.steps.map(({ lessons: _lessons, ...step }) => step));
-    return snapshots.flatMap((snapshot) => snapshot!.steps.flatMap((step) => step.lessons));
+    const snapshot = await programBuilderService.getPublishedSnapshot();
+
+    if (!snapshot) return [];
+    if (resource === "program") return [snapshot.program];
+    if (resource === "program-steps") {
+      return snapshot.steps.map(({ lessons: _lessons, ...step }) => step);
+    }
+    return snapshot.steps.flatMap((step) => step.lessons);
   }
   const entity = resourceToEntity[resource];
   return listCmsRecords(entity).filter(isPublicRecord);

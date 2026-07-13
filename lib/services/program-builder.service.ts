@@ -252,6 +252,36 @@ function mapXpRule(rule: XpRule): CmsXpRule {
 }
 
 export class ProgramBuilderService {
+  async listAchievements(): Promise<CmsAchievement[]> {
+    const achievements = await prisma.achievement.findMany({
+      where: {
+        status: {
+          not: PrismaEditorialStatus.ARCHIVED,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return achievements.map(mapAchievement);
+  }
+
+  async listXpRules(): Promise<CmsXpRule[]> {
+    const rules = await prisma.xpRule.findMany({
+      where: {
+        status: {
+          not: PrismaEditorialStatus.ARCHIVED,
+        },
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+    });
+
+    return rules.map(mapXpRule);
+  }
+
   async getSnapshot(
     programId: string,
   ): Promise<ProgramBuilderSnapshot> {

@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isCmsEntity, permissionForEntity } from "@/lib/cms/entities";
+import { isCmsEntity, isProgramManagedEntity, permissionForEntity } from "@/lib/cms/entities";
 import { archiveCmsRecord, getCmsRecord, listRevisions, updateCmsRecord } from "@/lib/cms/repository";
 import type { CmsRecord } from "@/lib/cms/types";
 import { requireAdminPermission } from "@/lib/auth/admin";
@@ -13,6 +13,7 @@ function apiError(message: string, status = 400) {
 export async function GET(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
     requireAdminPermission(request, permissionForEntity(entityParam, "read"));
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
     const actor = requireAdminPermission(request, permissionForEntity(entityParam, "update"));
@@ -46,6 +48,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ entity: string; id: string }> }) {
   const { entity: entityParam, id } = await params;
   if (!isCmsEntity(entityParam)) return apiError("Unknown CMS entity", 404);
+  if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
     const actor = requireAdminPermission(request, permissionForEntity(entityParam, "delete"));

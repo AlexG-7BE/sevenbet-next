@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { AdminApiActions, AdminPageShell, AdminRecordTable, AdminStatCard } from "@/components/admin/AdminShell";
 import { Badge, Card } from "@/components/ui";
 import { entityLabels } from "@/lib/cms/entities";
@@ -7,11 +7,6 @@ import { listCmsRecords } from "@/lib/cms/repository";
 import type { CmsEntity } from "@/lib/cms/types";
 
 const sectionConfig: Record<string, { title: string; intro: string; entities: CmsEntity[] }> = {
-  program: {
-    title: "10-Step Program",
-    intro: "Edit the flagship learning program, step order, lesson blocks, quizzes, scenarios, XP and achievements.",
-    entities: ["program", "program-step", "lesson"],
-  },
   learning: {
     title: "Learning Center",
     intro: "Manage educational articles, categories, tags, difficulty, reading time, schema and internal links.",
@@ -60,6 +55,7 @@ export function generateStaticParams() {
 
 export default async function AdminSectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;
+  if (section === "program") redirect("/admin/programs");
   const config = sectionConfig[section];
   if (!config) notFound();
 
