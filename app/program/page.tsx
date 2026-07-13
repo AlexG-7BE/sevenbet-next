@@ -1,12 +1,17 @@
 import type { Metadata } from "next";
+
 import { ProgramExperience } from "@/components/ProgramExperience";
+import {
+  programBuilderService,
+  programSnapshotToPublicSteps,
+} from "@/lib/services";
 import { absoluteUrl } from "@/lib/site";
-import { getPublishedProgramSnapshot, programSnapshotToPublicSteps } from "@/lib/cms/program-builder";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "SevenBet 10-Step Control Program | Interactive Learning Experience",
+  title:
+    "SevenBet 10-Step Control Program | Interactive Learning Experience",
   description:
     "A guided educational program with saved progress, short lessons, scenario questions, quizzes, XP, achievements, and responsible gambling takeaways.",
   alternates: {
@@ -35,15 +40,25 @@ function breadcrumbSchema() {
   };
 }
 
-export default function ProgramPage() {
-  const snapshot = getPublishedProgramSnapshot("program_10_step_control");
-  const steps = snapshot ? programSnapshotToPublicSteps(snapshot) : undefined;
+export default async function ProgramPage() {
+  const snapshot =
+    await programBuilderService.getPublishedSnapshot();
+
+  const steps = snapshot
+    ? programSnapshotToPublicSteps(snapshot)
+    : undefined;
+
   return (
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            breadcrumbSchema(),
+          ),
+        }}
       />
+
       <ProgramExperience steps={steps} />
     </>
   );

@@ -348,7 +348,7 @@ export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBu
   function updateBlock(next: CmsBlock) { change((draft) => { for (const step of draft.steps) for (const lesson of step.lessons) { const index = lesson.blocks.findIndex((item) => item.id === next.id); if (index >= 0) lesson.blocks[index] = next; } }); }
 
   function addStep() {
-    const id = uid("program_step");
+    const id = crypto.randomUUID();
     const now = new Date().toISOString();
     change((draft) => draft.steps.push({
       id, entity: "program-step", programId: draft.program.id, slug: `step-${draft.steps.length + 1}-${id.slice(-5)}`, title: "New Step", shortTitle: "New Step",
@@ -361,7 +361,7 @@ export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBu
   }
 
   function addLesson(stepId: string) {
-    const id = uid("lesson");
+    const id = crypto.randomUUID();
     const now = new Date().toISOString();
     change((draft) => {
       const step = draft.steps.find((item) => item.id === stepId); if (!step) return;
@@ -376,7 +376,7 @@ export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBu
   }
 
   function addBlock(lessonId: string) {
-    const id = uid("block");
+    const id = crypto.randomUUID();
     change((draft) => { for (const step of draft.steps) { const lesson = step.lessons.find((item) => item.id === lessonId); if (lesson) lesson.blocks.push({ id, type: "TEXT", order: (lesson.blocks.length + 1) * 1000, internalLabel: "New text block", required: false, data: { text: "" } }); } });
     setSelection({ type: "block", id });
   }
@@ -398,20 +398,20 @@ export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBu
       const stepIndex = draft.steps.findIndex((item) => item.id === selection.id);
       if (stepIndex >= 0) {
         const copy = clone(draft.steps[stepIndex]);
-        copy.id = uid("program_step"); copy.slug = `${copy.slug}-copy-${copy.id.slice(-5)}`; copy.title += " Copy"; copy.prerequisites = []; copy.completionRules = [{ id: uid("rule"), type: "ALL_REQUIRED_LESSONS_COMPLETED", operator: "AND" }];
-        copy.lessons = copy.lessons.map((lesson) => ({ ...lesson, id: uid("lesson"), programStepId: copy.id, slug: `${lesson.slug}-copy-${copy.id.slice(-5)}`, prerequisites: [], completionRules: [{ id: uid("rule"), type: "ALL_REQUIRED_BLOCKS_VIEWED", operator: "AND" }], blocks: lesson.blocks.map((block) => ({ ...block, id: uid("block") })) }));
+        copy.id = crypto.randomUUID(); copy.slug = `${copy.slug}-copy-${copy.id.slice(-5)}`; copy.title += " Copy"; copy.prerequisites = []; copy.completionRules = [{ id: uid("rule"), type: "ALL_REQUIRED_LESSONS_COMPLETED", operator: "AND" }];
+        copy.lessons = copy.lessons.map((lesson) => ({ ...lesson, id: crypto.randomUUID(), programStepId: copy.id, slug: `${lesson.slug}-copy-${copy.id.slice(-5)}`, prerequisites: [], completionRules: [{ id: uid("rule"), type: "ALL_REQUIRED_BLOCKS_VIEWED", operator: "AND" }], blocks: lesson.blocks.map((block) => ({ ...block, id: crypto.randomUUID() })) }));
         draft.steps.splice(stepIndex + 1, 0, copy); setSelection({ type: "step", id: copy.id }); return;
       }
       for (const step of draft.steps) {
         const lessonIndex = step.lessons.findIndex((item) => item.id === selection.id);
         if (lessonIndex >= 0) {
-          const copy = clone(step.lessons[lessonIndex]); copy.id = uid("lesson"); copy.slug = `${copy.slug}-copy-${copy.id.slice(-5)}`; copy.title += " Copy"; copy.prerequisites = []; copy.completionRules = [{ id: uid("rule"), type: "ALL_REQUIRED_BLOCKS_VIEWED", operator: "AND" }]; copy.blocks = copy.blocks.map((block) => ({ ...block, id: uid("block") }));
+          const copy = clone(step.lessons[lessonIndex]); copy.id = crypto.randomUUID(); copy.slug = `${copy.slug}-copy-${copy.id.slice(-5)}`; copy.title += " Copy"; copy.prerequisites = []; copy.completionRules = [{ id: uid("rule"), type: "ALL_REQUIRED_BLOCKS_VIEWED", operator: "AND" }]; copy.blocks = copy.blocks.map((block) => ({ ...block, id: crypto.randomUUID() }));
           step.lessons.splice(lessonIndex + 1, 0, copy); setSelection({ type: "lesson", id: copy.id }); return;
         }
       }
       for (const step of draft.steps) for (const lesson of step.lessons) {
         const blockIndex = lesson.blocks.findIndex((item) => item.id === selection.id);
-        if (blockIndex >= 0) { const copy = clone(lesson.blocks[blockIndex]); copy.id = uid("block"); copy.internalLabel += " Copy"; lesson.blocks.splice(blockIndex + 1, 0, copy); setSelection({ type: "block", id: copy.id }); return; }
+        if (blockIndex >= 0) { const copy = clone(lesson.blocks[blockIndex]); copy.id = crypto.randomUUID(); copy.internalLabel += " Copy"; lesson.blocks.splice(blockIndex + 1, 0, copy); setSelection({ type: "block", id: copy.id }); return; }
       }
     });
   }

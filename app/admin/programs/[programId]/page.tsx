@@ -3,19 +3,19 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminPageShell, AdminStatCard } from "@/components/admin/AdminShell";
 import { Badge, Card } from "@/components/ui";
-import { getProgramRevisions, getProgramSnapshot } from "@/lib/cms/program-builder";
+import { programBuilderService } from "@/lib/services";
 import { validateProgramSnapshot } from "@/lib/cms/program-validation";
 
 export const metadata: Metadata = { title: "Program Dashboard | SevenBet CMS", robots: { index: false, follow: false } };
 
 export default async function ProgramDashboard({ params }: { params: Promise<{ programId: string }> }) {
   const { programId } = await params;
-  const snapshot = getProgramSnapshot(programId);
+  const snapshot = await programBuilderService.findSnapshot(programId);
   if (!snapshot) notFound();
   const validation = validateProgramSnapshot(snapshot);
   const lessons = snapshot.steps.flatMap((step) => step.lessons);
   const blocks = lessons.flatMap((lesson) => lesson.blocks.filter((block) => !block.archived));
-  const revisions = getProgramRevisions(programId);
+  const revisions = await programBuilderService.listRevisions(programId);
   return (
     <AdminPageShell title={snapshot.program.title} intro="Program health, workflow, versions and recent structural changes." actions={<div className="heroActions"><Link className="button ghost" href={`/admin/programs/${programId}/preview`}>Preview</Link><Link className="button gold" href={`/admin/programs/${programId}/builder`}>Open builder</Link></div>}>
       <div className="adminStatsGrid"><AdminStatCard label="Structure" value={`${snapshot.steps.length}/${lessons.length}`} note="Steps / lessons" /><AdminStatCard label="Blocks" value={blocks.length} note="Structured lesson blocks" /><AdminStatCard label="Validation" value={validation.errors} note={`${validation.warnings} warnings`}/><AdminStatCard label="Versions" value={`${snapshot.program.draftVersion}/${snapshot.program.publishedVersion}`} note="Draft / published" /></div>
