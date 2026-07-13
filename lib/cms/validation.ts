@@ -40,6 +40,35 @@ export function validateCmsRecord(record: Partial<CmsRecord>, entity: CmsEntity)
     errors.canonicalUrl = "Canonical URL must be a valid http(s) URL.";
   }
 
+  if (entity === "program" && "estimatedTotalMinutes" in record) {
+    if (typeof record.estimatedTotalMinutes !== "number" || record.estimatedTotalMinutes < 1) {
+      errors.estimatedTotalMinutes = "Estimated program duration must be at least one minute.";
+    }
+    if (record.canonicalUrl && !record.canonicalUrl.startsWith("/") && !isUrl(record.canonicalUrl)) {
+      errors.canonicalUrl = "Canonical URL must be a site path or valid http(s) URL.";
+    }
+  }
+
+  if (entity === "program-step" && "order" in record) {
+    if (typeof record.order !== "number" || record.order < 0) errors.order = "Step order must be non-negative.";
+    if (typeof record.xp === "number" && record.xp < 0) errors.xp = "Step XP cannot be negative.";
+  }
+
+  if (entity === "lesson" && "blocks" in record) {
+    if (typeof record.order !== "number" || record.order < 0) errors.order = "Lesson order must be non-negative.";
+    if (!Array.isArray(record.blocks)) errors.blocks = "Lesson blocks must be structured content.";
+  }
+
+  if (entity === "xp-rule" && "xp" in record) {
+    const xp = record.xp;
+    if (typeof xp !== "number" || xp < 0) errors.xp = "XP rule value must be non-negative.";
+    if (typeof xp === "number" && xp > 1000) errors.xp = "XP rule value exceeds the Phase 2 safety cap of 1000.";
+  }
+
+  if (entity === "achievement" && "xpReward" in record) {
+    if (typeof record.xpReward !== "number" || record.xpReward < 0) errors.xpReward = "Achievement XP cannot be negative.";
+  }
+
   if (entity === "casino" && "domain" in record && (!record.domain || record.domain.includes("://"))) {
     errors.domain = "Casino domain must be a normalized domain without protocol.";
   }

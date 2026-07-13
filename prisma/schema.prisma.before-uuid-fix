@@ -67,7 +67,7 @@ enum XpEventType {
 }
 
 model AdminUser {
-  id        String    @id @default(uuid()) @db.Uuid
+  id        String    @id @default(uuid())
   email     String    @unique
   name      String
   role      AdminRole @default(AUTHOR)
@@ -78,7 +78,7 @@ model AdminUser {
 }
 
 model Program {
-  id                           String          @id @default(uuid()) @db.Uuid
+  id                           String          @id @default(uuid())
   slug                         String          @unique
   internalName                 String
   title                        String
@@ -114,31 +114,31 @@ model Program {
 }
 
 model ProgramStep {
-  id                 String          @id @default(uuid()) @db.Uuid
-  programId          String          @db.Uuid
-  slug               String          @unique
-  title              String
-  shortTitle         String
-  description        String
-  learningObjective  String
-  status             EditorialStatus @default(DRAFT)
-  order              Int
-  estimatedMinutes   Int
-  xp                 Int             @default(0)
-  completionMessage  String
-  practicalTakeaway  String
-  prerequisites      Json
-  icon               String?
-  visibility         String          @default("PUBLIC")
-  unlockDelayHours   Int?
-  relatedGuideIds    String[]
+  id               String          @id @default(uuid())
+  programId        String
+  slug             String          @unique
+  title            String
+  shortTitle       String
+  description      String
+  learningObjective String
+  status           EditorialStatus @default(DRAFT)
+  order            Int
+  estimatedMinutes Int
+  xp               Int             @default(0)
+  completionMessage String
+  practicalTakeaway String
+  prerequisites    Json
+  icon              String?
+  visibility        String          @default("PUBLIC")
+  unlockDelayHours  Int?
+  relatedGuideIds   String[]
   relatedResourceIds String[]
-  completionRules    Json
-  archivedAt         DateTime?
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  createdBy          String
-  updatedBy          String
+  completionRules   Json
+  archivedAt        DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  createdBy        String
+  updatedBy        String
 
   program Program  @relation(fields: [programId], references: [id], onDelete: Cascade)
   lessons Lesson[]
@@ -147,43 +147,43 @@ model ProgramStep {
 }
 
 model Lesson {
-  id                        String          @id @default(uuid()) @db.Uuid
-  programStepId             String          @db.Uuid
-  slug                      String          @unique
-  title                     String
-  summary                   String
-  objective                 String
-  status                    EditorialStatus @default(DRAFT)
-  order                     Int
-  estimatedMinutes          Int
-  xp                        Int             @default(0)
-  required                  Boolean         @default(true)
-  retryPolicy               String          @default("UNLIMITED")
-  prerequisites             Json
-  completionRules           Json
-  takeaway                  String
-  recap                     String[]
-  relatedResourceIds        String[]
-  allowCommercialReferences Boolean         @default(false)
-  archivedAt                DateTime?
-  createdAt                 DateTime        @default(now())
-  updatedAt                 DateTime        @updatedAt
-  createdBy                 String
-  updatedBy                 String
+  id            String          @id @default(uuid())
+  programStepId String
+  slug          String          @unique
+  title         String
+  summary       String
+  objective     String
+  status        EditorialStatus @default(DRAFT)
+  order         Int
+  estimatedMinutes Int
+  xp            Int             @default(0)
+  required      Boolean         @default(true)
+  retryPolicy   String          @default("UNLIMITED")
+  prerequisites Json
+  completionRules Json
+  takeaway      String
+  recap         String[]
+  relatedResourceIds String[]
+  allowCommercialReferences Boolean @default(false)
+  archivedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdBy     String
+  updatedBy     String
 
   programStep ProgramStep   @relation(fields: [programStepId], references: [id], onDelete: Cascade)
   blocks      LessonBlock[]
 }
 
 model LessonBlock {
-  id            String       @id @default(uuid()) @db.Uuid
-  lessonId      String       @db.Uuid
-  type          CmsBlockType
-  order         Int
+  id       String       @id @default(uuid())
+  lessonId String
+  type     CmsBlockType
+  order    Int
   internalLabel String
-  required      Boolean      @default(false)
-  archived      Boolean      @default(false)
-  data          Json
+  required Boolean      @default(false)
+  archived Boolean      @default(false)
+  data     Json
 
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
 
@@ -191,15 +191,15 @@ model LessonBlock {
 }
 
 model ProgramVersion {
-  id           String    @id @default(uuid()) @db.Uuid
-  programId    String    @db.Uuid
-  version      Int
-  status       String
-  snapshot     Json
-  migrationMap Json?
-  publishedAt  DateTime?
-  createdAt    DateTime  @default(now())
-  createdBy    String
+  id              String   @id @default(uuid())
+  programId       String
+  version         Int
+  status          String
+  snapshot        Json
+  migrationMap    Json?
+  publishedAt     DateTime?
+  createdAt       DateTime @default(now())
+  createdBy       String
 
   program     Program             @relation(fields: [programId], references: [id], onDelete: Cascade)
   enrollments ProgramEnrollment[]
@@ -209,16 +209,16 @@ model ProgramVersion {
 }
 
 model ProgramEnrollment {
-  id               String    @id @default(uuid()) @db.Uuid
+  id               String   @id @default(uuid())
   userId           String
-  programId        String    @db.Uuid
-  programVersionId String    @db.Uuid
-  startedAt        DateTime  @default(now())
+  programId        String
+  programVersionId String
+  startedAt        DateTime @default(now())
   completedAt      DateTime?
-  currentStepId    String?   @db.Uuid
+  currentStepId    String?
 
-  program        Program                @relation(fields: [programId], references: [id], onDelete: Restrict)
-  programVersion ProgramVersion         @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
+  program        Program        @relation(fields: [programId], references: [id], onDelete: Restrict)
+  programVersion ProgramVersion @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
   progressEvents ProgramProgressEvent[]
 
   @@unique([userId, programId])
@@ -226,8 +226,8 @@ model ProgramEnrollment {
 }
 
 model ProgramProgressEvent {
-  id           String   @id @default(uuid()) @db.Uuid
-  enrollmentId String   @db.Uuid
+  id           String   @id @default(uuid())
+  enrollmentId String
   entityId     String
   entityType   String
   eventType    String
@@ -242,7 +242,7 @@ model ProgramProgressEvent {
 }
 
 model XpRule {
-  id             String          @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid())
   slug           String          @unique
   title          String
   eventType      XpEventType
@@ -261,9 +261,9 @@ model XpRule {
 }
 
 model UserXpEvent {
-  id        String      @id @default(uuid()) @db.Uuid
+  id        String      @id @default(uuid())
   userId    String
-  ruleId    String      @db.Uuid
+  ruleId    String
   awardKey  String
   eventType XpEventType
   xp        Int
@@ -274,33 +274,33 @@ model UserXpEvent {
 }
 
 model Achievement {
-  id             String          @id @default(uuid()) @db.Uuid
-  slug           String          @unique
-  internalName   String          @unique
-  title          String
-  description    String
-  icon           String
-  category       String
-  tier           String
-  xpReward       Int             @default(0)
-  active         Boolean         @default(true)
-  hidden         Boolean         @default(false)
-  triggerType    String
-  triggerConfig  Json
+  id            String          @id @default(uuid())
+  slug          String          @unique
+  internalName  String          @unique
+  title         String
+  description   String
+  icon          String
+  category      String
+  tier          String
+  xpReward      Int             @default(0)
+  active        Boolean         @default(true)
+  hidden        Boolean         @default(false)
+  triggerType   String
+  triggerConfig Json
   effectiveStart DateTime?
-  effectiveEnd   DateTime?
-  status         EditorialStatus @default(DRAFT)
-  archivedAt     DateTime?
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  createdBy      String
-  updatedBy      String
+  effectiveEnd  DateTime?
+  status        EditorialStatus @default(DRAFT)
+  archivedAt    DateTime?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  createdBy     String
+  updatedBy     String
 }
 
 model UserAchievement {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(uuid())
   userId        String
-  achievementId String   @db.Uuid
+  achievementId String
   awardKey      String
   awardedAt     DateTime @default(now())
 
@@ -309,7 +309,7 @@ model UserAchievement {
 }
 
 model Article {
-  id             String          @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid())
   slug           String          @unique
   title          String
   excerpt        String
@@ -331,7 +331,7 @@ model Article {
 }
 
 model Casino {
-  id             String          @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid())
   slug           String          @unique
   title          String
   domain         String          @unique
@@ -352,8 +352,8 @@ model Casino {
 }
 
 model Bonus {
-  id                 String          @id @default(uuid()) @db.Uuid
-  casinoId           String          @db.Uuid
+  id                 String          @id @default(uuid())
+  casinoId           String
   slug               String          @unique
   title              String
   summary            String
@@ -376,12 +376,12 @@ model Bonus {
 }
 
 model AffiliateLink {
-  id             String          @id @default(uuid()) @db.Uuid
+  id             String          @id @default(uuid())
   slug           String          @unique
   title          String
   destinationUrl String
-  casinoId       String?         @db.Uuid
-  bonusId        String?         @db.Uuid
+  casinoId       String?
+  bonusId        String?
   country        String?
   language       String?
   campaign       String?
@@ -399,7 +399,7 @@ model AffiliateLink {
 }
 
 model ContentRevision {
-  id             String   @id @default(uuid()) @db.Uuid
+  id             String   @id @default(uuid())
   entityType     String
   entityId       String
   revisionNumber Int
@@ -412,14 +412,14 @@ model ContentRevision {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  actorId    String   @db.Uuid
+  id         String    @id @default(uuid())
+  actorId    String
   action     String
   entityType String
   entityId   String
   summary    String
   metadata   Json?
-  timestamp  DateTime @default(now())
+  timestamp  DateTime  @default(now())
 
   actor AdminUser @relation(fields: [actorId], references: [id], onDelete: Cascade)
 
@@ -428,7 +428,7 @@ model AuditLog {
 }
 
 model MediaAsset {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid())
   url       String
   alt       String
   mimeType  String
@@ -438,7 +438,7 @@ model MediaAsset {
 }
 
 model SiteSetting {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(uuid())
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt

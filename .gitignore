@@ -4,3 +4,9 @@ out
 playwright-report
 test-results
 *.log
+.vercel
+.env*
+
+.env
+.env.local
+.env.*.local

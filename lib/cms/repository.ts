@@ -46,9 +46,12 @@ export function createCmsRecord(entity: CmsEntity, input: CmsRecord, actor: CmsU
   return input;
 }
 
-export function updateCmsRecord(entity: CmsEntity, id: string, input: Partial<CmsRecord>, actor: CmsUser) {
+export function updateCmsRecord(entity: CmsEntity, id: string, input: Partial<CmsRecord>, actor: CmsUser, expectedUpdatedAt?: string) {
   const index = records().findIndex((record) => record.entity === entity && record.id === id);
   if (index === -1) throw new Error("CMS record not found");
+  if (expectedUpdatedAt && records()[index].updatedAt !== expectedUpdatedAt) {
+    throw new Error("This content was changed by another editor. Reload before saving again.");
+  }
 
   const next = {
     ...records()[index],
@@ -88,6 +91,17 @@ export function listRevisions(entity: CmsEntity, id: string) {
 
 export function listAuditEntries() {
   return audit().slice().reverse();
+}
+
+export function addAuditEntry(entry: AuditLogEntry) {
+  audit().push(entry);
+  return entry;
+}
+
+export function restoreCmsRevision(entity: CmsEntity, id: string, revisionId: string, actor: CmsUser) {
+  const revision = revisions().find((item) => item.id === revisionId && item.entityType === entity && item.entityId === id);
+  if (!revision) throw new Error("Revision not found");
+  return updateCmsRecord(entity, id, revision.snapshot, actor);
 }
 
 export function resolveAffiliateLink(slug: string) {

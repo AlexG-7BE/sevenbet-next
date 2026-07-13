@@ -1,4 +1,5 @@
 export type ProgramStep = {
+  stableId?: string;
   day: number;
   title: string;
   focus: string;

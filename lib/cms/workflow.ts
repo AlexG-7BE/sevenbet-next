@@ -3,7 +3,7 @@ import type { AuditAction, EditorialStatus } from "@/lib/cms/types";
 export const editorialTransitions: Record<EditorialStatus, EditorialStatus[]> = {
   DRAFT: ["IN_REVIEW", "ARCHIVED"],
   IN_REVIEW: ["DRAFT", "APPROVED", "ARCHIVED"],
-  APPROVED: ["SCHEDULED", "PUBLISHED", "ARCHIVED"],
+  APPROVED: ["DRAFT", "SCHEDULED", "PUBLISHED", "ARCHIVED"],
   SCHEDULED: ["PUBLISHED", "DRAFT", "ARCHIVED"],
   PUBLISHED: ["DRAFT", "ARCHIVED"],
   ARCHIVED: ["DRAFT"],

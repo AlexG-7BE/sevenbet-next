@@ -97,3 +97,9 @@ For production, set a long random `SEVENBET_ADMIN_PREVIEW_TOKEN` in the hosting 
 - Add country, payment and provider SEO pages.
 - Add editorial methodology and affiliate disclosure pages.
 # sevenbet-next
+
+## CMS Phase 2: Program Builder
+
+The admin area now includes a visual Program Builder at `/admin/programs`. It supports structured steps, lessons and blocks, quiz/scenario/exercise editing, validation, workflow, draft preview, revisions, XP rules, achievements and progress-safe publication snapshots.
+
+Architecture and rollout details are documented in `docs/cms-phase-2-program-builder.md` and `docs/program-migration-report.md`.

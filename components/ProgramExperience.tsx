@@ -1,14 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { programSteps, type ProgramStep } from "@/lib/program";
+import { programSteps as fallbackProgramSteps, type ProgramStep } from "@/lib/program";
 import { Badge, Button, Card, Container, CTA, Section } from "@/components/ui";
 
 type ProgramState = {
   completedSteps: number[];
+  completedStepIds?: string[];
   xp: number;
   achievements: string[];
   activeStep: number;
+  activeStepId?: string;
   answers: Record<string, string>;
   quizAnswers: Record<number, number>;
   scenarioAnswers: Record<number, number>;
@@ -96,18 +98,22 @@ export function ProgressHeader({
 }
 
 export function ProgressTimeline({
+  steps,
   activeStep,
   completedSteps,
+  completedStepIds,
   onSelect,
 }: {
+  steps: ProgramStep[];
   activeStep: number;
   completedSteps: number[];
+  completedStepIds?: string[];
   onSelect: (step: number) => void;
 }) {
   return (
     <Card className="programTimeline">
-      {programSteps.map((step) => {
-        const completed = completedSteps.includes(step.day);
+      {steps.map((step) => {
+        const completed = step.stableId ? completedStepIds?.includes(step.stableId) || completedSteps.includes(step.day) : completedSteps.includes(step.day);
         return (
           <button
             className={`timelineStep ${activeStep === step.day ? "active" : ""} ${completed ? "complete" : ""}`}
@@ -233,14 +239,16 @@ export function AchievementToast({ achievement, onClose }: { achievement?: strin
 }
 
 export function Dashboard({
+  steps,
   state,
   onSelect,
 }: {
+  steps: ProgramStep[];
   state: ProgramState;
   onSelect: (step: number) => void;
 }) {
-  const completedCount = state.completedSteps.length;
-  const nextStep = programSteps.find((step) => !state.completedSteps.includes(step.day)) || programSteps[9];
+  const completedCount = state.completedStepIds?.length || state.completedSteps.length;
+  const nextStep = steps.find((step) => step.stableId ? !state.completedStepIds?.includes(step.stableId) : !state.completedSteps.includes(step.day)) || steps[steps.length - 1];
 
   return (
     <Section eyebrow="Dashboard" title="Your personal program dashboard.">
@@ -305,24 +313,26 @@ function stepXp(step: ProgramStep) {
   return step.xp.lesson + step.xp.scenario + step.xp.quiz + step.xp.guide;
 }
 
-export function ProgramExperience() {
+export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: ProgramStep[] }) {
   const [state, setState] = useState<ProgramState>(initialState);
   const [toast, setToast] = useState<string>();
-  const activeStep = programSteps.find((step) => step.day === state.activeStep) || programSteps[0];
+  const activeStep = steps.find((step) => step.stableId && step.stableId === state.activeStepId) || steps.find((step) => step.day === state.activeStep) || steps[0];
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     const parsed = saved ? JSON.parse(saved) as ProgramState : initialState;
     const diff = dayDifference(parsed.lastVisitDate);
     const nextStreak = diff === 1 ? (parsed.streak || 1) + 1 : diff === 0 ? (parsed.streak || 1) : 1;
-    setState({ ...initialState, ...parsed, streak: nextStreak, lastVisitDate: todayKey() });
-  }, []);
+    const completedStepIds = parsed.completedStepIds?.length ? parsed.completedStepIds : steps.filter((step) => parsed.completedSteps.includes(step.day)).map((step) => step.stableId).filter((id): id is string => Boolean(id));
+    const activeStepId = parsed.activeStepId || steps.find((step) => step.day === parsed.activeStep)?.stableId;
+    setState({ ...initialState, ...parsed, completedStepIds, activeStepId, streak: nextStreak, lastVisitDate: todayKey() });
+  }, [steps]);
 
   useEffect(() => {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   }, [state]);
 
-  const completedCount = state.completedSteps.length;
+  const completedCount = state.completedStepIds?.length || state.completedSteps.length;
   const selectedScenario = state.scenarioAnswers[activeStep.day];
   const selectedQuiz = state.quizAnswers[activeStep.day];
   const exerciseAnswer = state.answers[`exercise-${activeStep.day}`] || "";
@@ -335,20 +345,24 @@ export function ProgramExperience() {
   }
 
   function completeStep() {
-    if (!canComplete || state.completedSteps.includes(activeStep.day)) return;
+    const alreadyCompleted = activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day);
+    if (!canComplete || alreadyCompleted) return;
 
     const completedSteps = unique([...state.completedSteps, activeStep.day]).sort((a, b) => a - b);
+    const completedStepIds = activeStep.stableId ? unique([...(state.completedStepIds || []), activeStep.stableId]) : state.completedStepIds;
     const previousAchievements = state.achievements;
     const nextAchievements = unique([...previousAchievements, ...achievementsFor(completedSteps)]);
     const newAchievement = nextAchievements.find((achievement) => !previousAchievements.includes(achievement));
-    const nextStep = programSteps.find((step) => !completedSteps.includes(step.day));
+    const nextStep = steps.find((step) => step.stableId ? !completedStepIds?.includes(step.stableId) : !completedSteps.includes(step.day));
 
     setState((current) => ({
       ...current,
       completedSteps,
+      completedStepIds,
       achievements: nextAchievements,
       xp: current.xp + xpAvailable,
       activeStep: nextStep?.day || activeStep.day,
+      activeStepId: nextStep?.stableId || activeStep.stableId,
     }));
 
     if (newAchievement) setToast(newAchievement);
@@ -383,21 +397,23 @@ export function ProgramExperience() {
       </section>
 
       <div id="program-dashboard">
-        <Dashboard state={state} onSelect={(step) => updateState({ activeStep: step })} />
+        <Dashboard steps={steps} state={state} onSelect={(step) => updateState({ activeStep: step, activeStepId: steps.find((item) => item.day === step)?.stableId })} />
       </div>
 
       <Section eyebrow="Progress" title="Move through the steps at your own pace.">
         <ProgressHeader
           activeStep={state.activeStep}
           completedCount={completedCount}
-          total={programSteps.length}
+          total={steps.length}
           xp={state.xp}
           streak={state.streak}
         />
         <ProgressTimeline
+          steps={steps}
           activeStep={state.activeStep}
           completedSteps={state.completedSteps}
-          onSelect={(step) => updateState({ activeStep: step })}
+          completedStepIds={state.completedStepIds}
+          onSelect={(step) => updateState({ activeStep: step, activeStepId: steps.find((item) => item.day === step)?.stableId })}
         />
       </Section>
 
@@ -443,18 +459,18 @@ export function ProgramExperience() {
             </ul>
             <button
               className="button gold"
-              disabled={!canComplete || state.completedSteps.includes(activeStep.day)}
+              disabled={!canComplete || (activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day))}
               onClick={completeStep}
               type="button"
             >
-              {state.completedSteps.includes(activeStep.day) ? "Step completed" : `Complete step (+${xpAvailable} XP)`}
+              {(activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day)) ? "Step completed" : `Complete step (+${xpAvailable} XP)`}
             </button>
             {!canComplete && <p className="muted">Answer the exercise, scenario, and quiz to complete this step.</p>}
           </Card>
         </div>
       </Section>
 
-      {completedCount === 10 && <CompletionScreen onRestart={resetProgress} />}
+      {completedCount === steps.length && <CompletionScreen onRestart={resetProgress} />}
       <AchievementToast achievement={toast} onClose={() => setToast(undefined)} />
     </>
   );

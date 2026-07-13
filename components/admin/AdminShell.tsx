@@ -6,7 +6,9 @@ import type { AuditLogEntry, CmsEntity, CmsRecord } from "@/lib/cms/types";
 
 const adminNav: Array<{ href: string; label: string; entity?: CmsEntity }> = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/admin/program", label: "Program", entity: "program" },
+  { href: "/admin/programs", label: "Programs", entity: "program" },
+  { href: "/admin/achievements", label: "Achievements", entity: "achievement" },
+  { href: "/admin/xp-rules", label: "XP Rules", entity: "xp-rule" },
   { href: "/admin/learning", label: "Learning Center", entity: "article" },
   { href: "/admin/casinos", label: "Casinos", entity: "casino" },
   { href: "/admin/bonuses", label: "Bonuses", entity: "bonus" },
@@ -44,8 +46,8 @@ export function AdminPageShell({
               ))}
             </nav>
             <Card className="adminNotice" tone="soft">
-              <Badge tone="warning">Phase 1</Badge>
-              <p className="muted">Preview auth and in-memory storage are active until the Prisma repository is connected.</p>
+              <Badge tone="warning">Phase 2</Badge>
+              <p className="muted">Program Builder is active. Preview auth and in-memory storage remain temporary until PostgreSQL is connected.</p>
             </Card>
           </aside>
 

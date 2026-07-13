@@ -15,8 +15,21 @@ export type CmsPermission =
   | "article.edit"
   | "article.review"
   | "article.publish"
+  | "program.view"
+  | "program.create"
   | "program.edit"
+  | "program.review"
+  | "program.approve"
   | "program.publish"
+  | "program.archive"
+  | "program.restore_revision"
+  | "program.preview_draft"
+  | "lesson.edit"
+  | "quiz.edit"
+  | "scenario.edit"
+  | "exercise.edit"
+  | "achievement.manage"
+  | "xp.manage"
   | "casino.edit"
   | "bonus.edit"
   | "affiliate.manage"
@@ -28,6 +41,8 @@ export type CmsEntity =
   | "program"
   | "program-step"
   | "lesson"
+  | "achievement"
+  | "xp-rule"
   | "article"
   | "casino"
   | "bonus"
@@ -56,6 +71,31 @@ export type CmsBaseRecord = {
   createdBy: string;
   updatedBy: string;
   archivedAt?: string;
+  version?: number;
+};
+
+export type CompletionRuleType =
+  | "ALL_REQUIRED_BLOCKS_VIEWED"
+  | "QUIZ_COMPLETED"
+  | "MINIMUM_QUIZ_SCORE"
+  | "SCENARIO_ANSWERED"
+  | "EXERCISE_SUBMITTED"
+  | "TAKEAWAY_ACKNOWLEDGED"
+  | "ALL_REQUIRED_LESSONS_COMPLETED";
+
+export type CompletionRule = {
+  id: string;
+  type: CompletionRuleType;
+  operator: "AND" | "OR";
+  targetId?: string;
+  value?: number;
+};
+
+export type Prerequisite = {
+  id: string;
+  type: "STEP_COMPLETED" | "LESSON_COMPLETED" | "QUIZ_PASSED" | "EXERCISE_COMPLETED" | "AVAILABLE_AFTER";
+  targetId?: string;
+  availableAfter?: string;
 };
 
 export type CmsArticle = CmsBaseRecord & {
@@ -75,21 +115,64 @@ export type CmsArticle = CmsBaseRecord & {
 
 export type CmsProgram = CmsBaseRecord & {
   entity: "program";
+  internalName: string;
   summary: string;
+  introduction: string;
+  estimatedTotalMinutes: number;
+  language: string;
+  difficulty: "Beginner" | "Intermediate" | "Advanced";
+  coverImage?: string;
+  xpCompletionReward: number;
+  certificateEnabled: boolean;
+  registrationRequirementPoint: "NEVER" | "BEFORE_START" | "BEFORE_SAVE" | "BEFORE_COMPLETION";
+  progressSavingBehavior: "LOCAL" | "ACCOUNT" | "HYBRID";
+  completionRules: CompletionRule[];
+  seoTitle?: string;
+  seoDescription?: string;
+  socialImage?: string;
+  canonicalUrl?: string;
+  publishedVersion: number;
+  draftVersion: number;
+  publishedAt?: string;
+  scheduledPublishAt?: string;
 };
 
 export type CmsProgramStep = CmsBaseRecord & {
   entity: "program-step";
   programId: string;
   order: number;
+  shortTitle: string;
+  description: string;
+  learningObjective: string;
   estimatedMinutes: number;
   xp: number;
+  completionMessage: string;
+  practicalTakeaway: string;
+  prerequisites: Prerequisite[];
+  icon?: string;
+  visibility: "PUBLIC" | "REGISTERED" | "HIDDEN";
+  unlockDelayHours?: number;
+  relatedGuideIds: string[];
+  relatedResourceIds: string[];
+  completionRules: CompletionRule[];
 };
 
 export type CmsLesson = CmsBaseRecord & {
   entity: "lesson";
   programStepId: string;
   order: number;
+  summary: string;
+  objective: string;
+  estimatedMinutes: number;
+  xp: number;
+  required: boolean;
+  retryPolicy: "UNLIMITED" | "ONCE" | "NO_RETRY";
+  prerequisites: Prerequisite[];
+  completionRules: CompletionRule[];
+  takeaway: string;
+  recap: string[];
+  relatedResourceIds: string[];
+  allowCommercialReferences: boolean;
   blocks: CmsBlock[];
 };
 
@@ -131,40 +214,123 @@ export type CmsAffiliateLink = CmsBaseRecord & {
   effectiveEnd?: string;
 };
 
+export type XpEventType =
+  | "LESSON_COMPLETION"
+  | "STEP_COMPLETION"
+  | "QUIZ_COMPLETION"
+  | "QUIZ_PASSING"
+  | "SCENARIO_COMPLETION"
+  | "EXERCISE_COMPLETION"
+  | "PROGRAM_COMPLETION"
+  | "GUIDE_COMPLETION";
+
+export type CmsXpRule = CmsBaseRecord & {
+  entity: "xp-rule";
+  eventType: XpEventType;
+  targetId?: string;
+  xp: number;
+  active: boolean;
+  effectiveStart?: string;
+  effectiveEnd?: string;
+  awardKey: string;
+};
+
+export type CmsAchievement = CmsBaseRecord & {
+  entity: "achievement";
+  internalName: string;
+  description: string;
+  icon: string;
+  category: "PROGRAM" | "LEARNING" | "PLANNING" | "TOOLS";
+  tier: "COMMON" | "MILESTONE" | "ADVANCED";
+  xpReward: number;
+  active: boolean;
+  hidden: boolean;
+  triggerType: "FIRST_LESSON" | "STEP_COMPLETED" | "PROGRAM_COMPLETED" | "QUIZ_PASSED" | "QUIZ_COUNT" | "PLAN_CREATED" | "LEARNING_STREAK" | "GUIDE_COUNT";
+  triggerConfig: Record<string, CmsJsonValue>;
+  effectiveStart?: string;
+  effectiveEnd?: string;
+};
+
+export type CmsJsonValue = string | number | boolean | null | CmsJsonValue[] | { [key: string]: CmsJsonValue };
+
+export type CmsBlockType =
+  | "TEXT"
+  | "HEADING"
+  | "CALLOUT"
+  | "IMAGE"
+  | "VIDEO"
+  | "QUOTE"
+  | "CHECKLIST"
+  | "QUIZ"
+  | "SCENARIO"
+  | "EXERCISE"
+  | "REFLECTION"
+  | "PRACTICAL_TASK"
+  | "RESOURCE_LINK"
+  | "SUMMARY"
+  | "DIVIDER"
+  | "RESPONSIBLE_GAMBLING_NOTICE"
+  | "RELATED_COMPARISON";
+
 export type CmsBlock = {
   id: string;
-  type:
-    | "TEXT"
-    | "CALLOUT"
-    | "VIDEO"
-    | "IMAGE"
-    | "QUIZ"
-    | "SCENARIO"
-    | "EXERCISE"
-    | "CHECKLIST"
-    | "SUMMARY"
-    | "RESOURCE_LINK";
+  type: CmsBlockType;
   order: number;
-  data: Record<string, string | number | boolean | string[]>;
+  internalLabel: string;
+  required: boolean;
+  archived?: boolean;
+  data: Record<string, CmsJsonValue>;
 };
 
 export type CmsRecord =
   | CmsProgram
   | CmsProgramStep
   | CmsLesson
+  | CmsAchievement
+  | CmsXpRule
   | CmsArticle
   | CmsCasino
   | CmsBonus
   | CmsAffiliateLink;
 
+export type ProgramBuilderLesson = CmsLesson;
+export type ProgramBuilderStep = CmsProgramStep & { lessons: ProgramBuilderLesson[] };
+export type ProgramBuilderSnapshot = {
+  program: CmsProgram;
+  steps: ProgramBuilderStep[];
+  achievements: CmsAchievement[];
+  xpRules: CmsXpRule[];
+};
+
+export type ProgramValidationSeverity = "error" | "warning" | "suggestion";
+export type ProgramValidationIssue = {
+  id: string;
+  severity: ProgramValidationSeverity;
+  entityId: string;
+  path: string;
+  message: string;
+};
+
+export type ProgramValidationReport = {
+  ok: boolean;
+  issues: ProgramValidationIssue[];
+  errors: number;
+  warnings: number;
+  suggestions: number;
+};
+
 export type AuditAction =
   | "login"
   | "create"
   | "update"
+  | "reorder"
+  | "request_review"
+  | "request_changes"
   | "archive"
   | "publish"
   | "unpublish"
   | "approve"
+  | "preview"
   | "restore_revision"
   | "role_change"
   | "affiliate_link_change"
