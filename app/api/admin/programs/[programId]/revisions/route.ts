@@ -3,7 +3,10 @@ import {
   type NextRequest,
 } from "next/server";
 
-import { requireAdminPermission } from "@/lib/auth/admin";
+import {
+  adminAuthErrorResponse,
+  requireAdminPermission,
+} from "@/lib/auth/admin";
 import {
   ServiceError,
   programBuilderService,
@@ -12,6 +15,9 @@ import {
 export const dynamic = "force-dynamic";
 
 function errorResponse(error: unknown) {
+  const authResponse = adminAuthErrorResponse(error);
+  if (authResponse) return authResponse;
+
   if (error instanceof ServiceError) {
     return NextResponse.json(
       {
@@ -49,7 +55,7 @@ export async function GET(
   },
 ) {
   try {
-    requireAdminPermission(
+    await requireAdminPermission(
       request,
       "program.view",
     );
@@ -80,7 +86,7 @@ export async function POST(
   },
 ) {
   try {
-    const actor = requireAdminPermission(
+    const actor = await requireAdminPermission(
       request,
       "program.restore_revision",
     );

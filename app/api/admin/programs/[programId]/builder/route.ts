@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireAdminPermission } from "@/lib/auth/admin";
+import {
+  adminAuthErrorResponse,
+  requireAdminPermission,
+} from "@/lib/auth/admin";
 import { validateProgramSnapshot } from "@/lib/cms/program-validation";
 import type { ProgramBuilderSnapshot } from "@/lib/cms/types";
 import {
@@ -15,6 +18,9 @@ function errorResponse(
   error: unknown,
   fallbackMessage: string,
 ) {
+  const authResponse = adminAuthErrorResponse(error);
+  if (authResponse) return authResponse;
+
   if (error instanceof ServiceError) {
     return NextResponse.json(
       {
@@ -52,7 +58,7 @@ export async function GET(
   },
 ) {
   try {
-    requireAdminPermission(
+    await requireAdminPermission(
       request,
       "program.view",
     );
@@ -79,23 +85,6 @@ export async function GET(
       );
     }
 
-    if (
-      error instanceof Error &&
-      error.message
-        .toLowerCase()
-        .includes("unauthorized")
-    ) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: error.message,
-        },
-        {
-          status: 401,
-        },
-      );
-    }
-
     return errorResponse(
       error,
       "Unable to load program",
@@ -112,7 +101,7 @@ export async function PATCH(
   },
 ) {
   try {
-    const actor = requireAdminPermission(
+    const actor = await requireAdminPermission(
       request,
       "program.edit",
     );
@@ -152,6 +141,9 @@ export async function PATCH(
       source: "postgresql",
     });
   } catch (error) {
+    const authResponse = adminAuthErrorResponse(error);
+    if (authResponse) return authResponse;
+
     const message =
       error instanceof Error
         ? error.message

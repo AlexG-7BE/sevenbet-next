@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import { entityLabels } from "@/lib/cms/entities";
 import type { AuditLogEntry, CmsEntity, CmsRecord } from "@/lib/cms/types";
+import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
 
 const adminNav: Array<{ href: string; label: string; entity?: CmsEntity }> = [
   { href: "/admin", label: "Dashboard" },
@@ -45,9 +46,10 @@ export function AdminPageShell({
                 </Link>
               ))}
             </nav>
+            <AdminLogoutButton />
             <Card className="adminNotice" tone="soft">
-              <Badge tone="warning">Phase 2</Badge>
-              <p className="muted">Program Builder is active. Preview auth and in-memory storage remain temporary until PostgreSQL is connected.</p>
+              <Badge tone="green">Dual auth</Badge>
+              <p className="muted">Better Auth staff sessions are active. The preview token remains a temporary, environment-gated fallback.</p>
             </Card>
           </aside>
 

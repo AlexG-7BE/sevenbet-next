@@ -6,6 +6,8 @@ import { entityLabels } from "@/lib/cms/entities";
 import { listCmsRecords } from "@/lib/cms/repository";
 import type { CmsEntity } from "@/lib/cms/types";
 
+export const dynamic = "force-dynamic";
+
 const sectionConfig: Record<string, { title: string; intro: string; entities: CmsEntity[] }> = {
   learning: {
     title: "Learning Center",
@@ -48,10 +50,6 @@ export const metadata: Metadata = {
   title: "CMS Section | SevenBet",
   robots: { index: false, follow: false },
 };
-
-export function generateStaticParams() {
-  return Object.keys(sectionConfig).map((section) => ({ section }));
-}
 
 export default async function AdminSectionPage({ params }: { params: Promise<{ section: string }> }) {
   const { section } = await params;

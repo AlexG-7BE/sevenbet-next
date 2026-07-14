@@ -1,6 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { requireAdminPermission } from "@/lib/auth/admin";
+import {
+  adminAuthErrorResponse,
+  requireAdminPermission,
+} from "@/lib/auth/admin";
 import {
   ConflictError,
   NotFoundError,
@@ -15,6 +18,9 @@ function serviceErrorResponse(
   error: unknown,
   fallbackMessage: string,
 ) {
+  const authResponse = adminAuthErrorResponse(error);
+  if (authResponse) return authResponse;
+
   if (
     error instanceof ValidationError ||
     error instanceof ConflictError ||
@@ -50,7 +56,7 @@ function serviceErrorResponse(
 
 export async function GET(request: NextRequest) {
   try {
-    requireAdminPermission(request, "program.view");
+    await requireAdminPermission(request, "program.view");
 
     const records = await programService.listPrograms();
 
@@ -59,21 +65,6 @@ export async function GET(request: NextRequest) {
       records,
     });
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.toLowerCase().includes("unauthorized")
-    ) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: error.message,
-        },
-        {
-          status: 401,
-        },
-      );
-    }
-
     return serviceErrorResponse(
       error,
       "Unable to list programs",
@@ -83,7 +74,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const actor = requireAdminPermission(
+    const actor = await requireAdminPermission(
       request,
       "program.create",
     );
@@ -129,21 +120,6 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message.toLowerCase().includes("unauthorized")
-    ) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: error.message,
-        },
-        {
-          status: 401,
-        },
-      );
-    }
-
     return serviceErrorResponse(
       error,
       "Unable to create program",

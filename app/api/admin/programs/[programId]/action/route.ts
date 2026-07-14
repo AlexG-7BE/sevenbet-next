@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { EditorialStatus } from "@prisma/client";
 
-import { requireAdminPermission } from "@/lib/auth/admin";
+import {
+  adminAuthErrorResponse,
+  requireAdminPermission,
+} from "@/lib/auth/admin";
 import {
   ServiceError,
   programBuilderService,
@@ -10,6 +13,9 @@ import {
 export const dynamic = "force-dynamic";
 
 function errorResponse(error: unknown) {
+  const authResponse = adminAuthErrorResponse(error);
+  if (authResponse) return authResponse;
+
   if (error instanceof ServiceError) {
     return NextResponse.json(
       {
@@ -54,7 +60,7 @@ export async function POST(
     };
 
     if (body.action === "request-review") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.review",
       );
@@ -74,7 +80,7 @@ export async function POST(
     }
 
     if (body.action === "request-changes") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.review",
       );
@@ -94,7 +100,7 @@ export async function POST(
     }
 
     if (body.action === "approve") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.approve",
       );
@@ -114,7 +120,7 @@ export async function POST(
     }
 
     if (body.action === "publish") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.publish",
       );
@@ -133,7 +139,7 @@ export async function POST(
     }
 
     if (body.action === "archive") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.archive",
       );
@@ -152,7 +158,7 @@ export async function POST(
     }
 
     if (body.action === "duplicate") {
-      const actor = requireAdminPermission(
+      const actor = await requireAdminPermission(
         request,
         "program.create",
       );

@@ -2,7 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isCmsEntity, isProgramManagedEntity, permissionForEntity } from "@/lib/cms/entities";
 import { archiveCmsRecord, getCmsRecord, listRevisions, updateCmsRecord } from "@/lib/cms/repository";
 import type { CmsRecord } from "@/lib/cms/types";
-import { requireAdminPermission } from "@/lib/auth/admin";
+import {
+  adminAuthErrorResponse,
+  requireAdminPermission,
+} from "@/lib/auth/admin";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +19,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
-    requireAdminPermission(request, permissionForEntity(entityParam, "read"));
+    await requireAdminPermission(request, permissionForEntity(entityParam, "read"));
     const record = getCmsRecord(entityParam, id);
     if (!record) return apiError("CMS record not found", 404);
 
@@ -26,6 +29,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       revisions: listRevisions(entityParam, id),
     });
   } catch (error) {
+    const authResponse = adminAuthErrorResponse(error);
+    if (authResponse) return authResponse;
     return apiError(error instanceof Error ? error.message : "Unauthorized", 401);
   }
 }
@@ -36,11 +41,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
-    const actor = requireAdminPermission(request, permissionForEntity(entityParam, "update"));
+    const actor = await requireAdminPermission(request, permissionForEntity(entityParam, "update"));
     const input = (await request.json()) as Partial<CmsRecord>;
     const record = updateCmsRecord(entityParam, id, input, actor);
     return NextResponse.json({ ok: true, record, revisions: listRevisions(entityParam, id) });
   } catch (error) {
+    const authResponse = adminAuthErrorResponse(error);
+    if (authResponse) return authResponse;
     return apiError(error instanceof Error ? error.message : "Unable to update CMS record", 400);
   }
 }
@@ -51,10 +58,12 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
-    const actor = requireAdminPermission(request, permissionForEntity(entityParam, "delete"));
+    const actor = await requireAdminPermission(request, permissionForEntity(entityParam, "delete"));
     const record = archiveCmsRecord(entityParam, id, actor);
     return NextResponse.json({ ok: true, record });
   } catch (error) {
+    const authResponse = adminAuthErrorResponse(error);
+    if (authResponse) return authResponse;
     return apiError(error instanceof Error ? error.message : "Unable to archive CMS record", 400);
   }
 }
