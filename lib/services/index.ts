@@ -33,6 +33,9 @@ export {
   programBuilderService,
 } from "./program-builder.service";
 
+export * from "./xp.service";
+export * from "./achievement.service";
+
 export {
   programSnapshotToPublicSteps,
 } from "./program-public.mapper";

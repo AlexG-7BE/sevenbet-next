@@ -324,21 +324,28 @@ model XpRule {
   updatedAt      DateTime        @updatedAt
   createdBy      String
   updatedBy      String
+
+  userXpEvents UserXpEvent[]
 }
 
 model UserXpEvent {
-  id        String      @id @default(uuid()) @db.Uuid
-  userId    String
-  ruleId    String      @db.Uuid
-  awardKey  String
-  eventType XpEventType
-  xp        Int
-  createdAt DateTime    @default(now())
+  id            String      @id @default(uuid()) @db.Uuid
+  userId        String
+  ruleId        String?     @db.Uuid
+  achievementId String?     @db.Uuid
+  awardKey      String
+  eventType     XpEventType
+  xp            Int
+  createdAt     DateTime    @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rule        XpRule?      @relation(fields: [ruleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  achievement Achievement? @relation(fields: [achievementId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@unique([userId, awardKey])
   @@index([userId, createdAt])
+  @@index([ruleId])
+  @@index([achievementId])
 }
 
 model Achievement {
@@ -363,6 +370,9 @@ model Achievement {
   updatedAt      DateTime        @updatedAt
   createdBy      String
   updatedBy      String
+
+  userAchievements UserAchievement[]
+  xpEvents         UserXpEvent[]
 }
 
 model UserAchievement {
@@ -372,10 +382,12 @@ model UserAchievement {
   awardKey      String
   awardedAt     DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@unique([userId, awardKey])
   @@index([userId, awardedAt])
+  @@index([achievementId])
 }
 
 model Article {

@@ -49,22 +49,9 @@ export type RecordUserProgressEventInput = {
   metadata?: Prisma.InputJsonValue;
 };
 
-export type MergeUserProgressInput = {
-  userId: string;
-  programId: string;
-  enrollmentId: string;
-  markerEvent: Omit<
-    RecordUserProgressEventInput,
-    "userId" | "programId" | "enrollmentId"
-  >;
-  events: Array<
-    Omit<
-      RecordUserProgressEventInput,
-      "userId" | "programId" | "enrollmentId"
-    >
-  >;
-  currentStepId?: string;
-  completeProgram: boolean;
+export type RecordUserProgressEventResult = {
+  event: StoredProgressEvent;
+  created: boolean;
 };
 
 export interface UserProgressStore {
@@ -89,15 +76,12 @@ export interface UserProgressStore {
   }): Promise<UserProgressEnrollment | null>;
   recordEvent(
     input: RecordUserProgressEventInput,
-  ): Promise<StoredProgressEvent | null>;
+  ): Promise<RecordUserProgressEventResult | null>;
   completeEnrollment(input: {
     userId: string;
     programId: string;
     enrollmentId: string;
   }): Promise<UserProgressEnrollment | null>;
-  mergeProgress(
-    input: MergeUserProgressInput,
-  ): Promise<UserProgressEnrollment | null>;
 }
 
 const enrollmentInclude = {
@@ -118,10 +102,14 @@ const enrollmentInclude = {
 } satisfies Prisma.ProgramEnrollmentInclude;
 
 export class UserProgressRepository implements UserProgressStore {
+  constructor(
+    private readonly database: Prisma.TransactionClient = prisma,
+  ) {}
+
   async findPublishedProgram(
     programId: string,
   ): Promise<PublishedProgramProgressSource | null> {
-    const program = await prisma.program.findFirst({
+    const program = await this.database.program.findFirst({
       where: {
         id: programId,
         status: EditorialStatus.PUBLISHED,
@@ -136,7 +124,7 @@ export class UserProgressRepository implements UserProgressStore {
 
     if (!program) return null;
 
-    const version = await prisma.programVersion.findUnique({
+    const version = await this.database.programVersion.findUnique({
       where: {
         programId_version: {
           programId: program.id,
@@ -165,7 +153,7 @@ export class UserProgressRepository implements UserProgressStore {
     userId: string,
     programId: string,
   ): Promise<UserProgressEnrollment | null> {
-    return prisma.programEnrollment.findUnique({
+    return this.database.programEnrollment.findUnique({
       where: {
         userId_programId: { userId, programId },
       },
@@ -179,7 +167,7 @@ export class UserProgressRepository implements UserProgressStore {
     programVersionId: string;
     currentStepId?: string;
   }): Promise<UserProgressEnrollment> {
-    return prisma.programEnrollment.upsert({
+    return this.database.programEnrollment.upsert({
       where: {
         userId_programId: {
           userId: input.userId,
@@ -203,7 +191,7 @@ export class UserProgressRepository implements UserProgressStore {
     enrollmentId: string;
     currentStepId: string;
   }): Promise<UserProgressEnrollment | null> {
-    const result = await prisma.programEnrollment.updateMany({
+    const result = await this.database.programEnrollment.updateMany({
       where: {
         id: input.enrollmentId,
         userId: input.userId,
@@ -220,8 +208,8 @@ export class UserProgressRepository implements UserProgressStore {
 
   async recordEvent(
     input: RecordUserProgressEventInput,
-  ): Promise<StoredProgressEvent | null> {
-    const enrollment = await prisma.programEnrollment.findFirst({
+  ): Promise<RecordUserProgressEventResult | null> {
+    const enrollment = await this.database.programEnrollment.findFirst({
       where: {
         id: input.enrollmentId,
         userId: input.userId,
@@ -232,23 +220,26 @@ export class UserProgressRepository implements UserProgressStore {
 
     if (!enrollment) return null;
 
-    return prisma.programProgressEvent.upsert({
-      where: {
-        enrollmentId_eventKey: {
-          enrollmentId: enrollment.id,
-          eventKey: input.eventKey,
-        },
-      },
-      update: {},
-      create: {
+    const result = await this.database.programProgressEvent.createMany({
+      data: [{
         enrollmentId: enrollment.id,
         entityId: input.entityId,
         entityType: input.entityType,
         eventType: input.eventType,
         eventKey: input.eventKey,
         metadata: input.metadata,
+      }],
+      skipDuplicates: true,
+    });
+    const event = await this.database.programProgressEvent.findUnique({
+      where: {
+        enrollmentId_eventKey: {
+          enrollmentId: enrollment.id,
+          eventKey: input.eventKey,
+        },
       },
     });
+    return event ? { event, created: result.count === 1 } : null;
   }
 
   async completeEnrollment(input: {
@@ -256,7 +247,7 @@ export class UserProgressRepository implements UserProgressStore {
     programId: string;
     enrollmentId: string;
   }): Promise<UserProgressEnrollment | null> {
-    await prisma.programEnrollment.updateMany({
+    await this.database.programEnrollment.updateMany({
       where: {
         id: input.enrollmentId,
         userId: input.userId,
@@ -271,61 +262,6 @@ export class UserProgressRepository implements UserProgressStore {
     return this.findEnrollment(input.userId, input.programId);
   }
 
-  async mergeProgress(
-    input: MergeUserProgressInput,
-  ): Promise<UserProgressEnrollment | null> {
-    return prisma.$transaction(async (transaction) => {
-      const enrollment = await transaction.programEnrollment.findFirst({
-        where: {
-          id: input.enrollmentId,
-          userId: input.userId,
-          programId: input.programId,
-        },
-        select: { id: true },
-      });
-
-      if (!enrollment) return null;
-
-      const existingMarker = await transaction.programProgressEvent.findUnique({
-        where: {
-          enrollmentId_eventKey: {
-            enrollmentId: enrollment.id,
-            eventKey: input.markerEvent.eventKey,
-          },
-        },
-        select: { id: true },
-      });
-
-      if (!existingMarker) {
-        await transaction.programProgressEvent.createMany({
-          data: [...input.events, input.markerEvent].map((event) => ({
-            enrollmentId: enrollment.id,
-            entityId: event.entityId,
-            entityType: event.entityType,
-            eventType: event.eventType,
-            eventKey: event.eventKey,
-            metadata: event.metadata,
-          })),
-          skipDuplicates: true,
-        });
-
-        await transaction.programEnrollment.update({
-          where: { id: enrollment.id },
-          data: {
-            ...(input.currentStepId
-              ? { currentStepId: input.currentStepId }
-              : {}),
-            ...(input.completeProgram && { completedAt: new Date() }),
-          },
-        });
-      }
-
-      return transaction.programEnrollment.findUnique({
-        where: { id: enrollment.id },
-        include: enrollmentInclude,
-      });
-    });
-  }
 }
 
 export const userProgressRepository = new UserProgressRepository();

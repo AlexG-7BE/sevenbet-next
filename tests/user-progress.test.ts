@@ -35,15 +35,24 @@ import {
 } from "../lib/progress/orphan-check";
 import type { UserProgressResponse } from "../lib/progress/types";
 import type {
-  MergeUserProgressInput,
   PublishedProgramProgressSource,
   RecordUserProgressEventInput,
   StoredProgressEvent,
   UserProgressEnrollment,
   UserProgressStore,
 } from "../lib/repositories/user-progress.repository";
+import type {
+  CreateXpAwardInput,
+  EligibleXpRule,
+  StoredXpEvent,
+  XpStore,
+} from "../lib/repositories/xp.repository";
+import type { AchievementStore } from "../lib/repositories/achievement.repository";
+import type { RewardTransactionRunner } from "../lib/repositories/reward-transaction.repository";
+import { AchievementService } from "../lib/services/achievement.service";
 import { ValidationError } from "../lib/services/service-error";
 import { UserProgressService } from "../lib/services/user-progress.service";
+import { XpService } from "../lib/services/xp.service";
 
 const ids = {
   program: "10000000-0000-4000-8000-000000000001",
@@ -57,6 +66,7 @@ const ids = {
   exercise: "10000000-0000-4000-8000-000000000009",
   stepTwo: "10000000-0000-4000-8000-000000000010",
   lessonTwo: "10000000-0000-4000-8000-000000000011",
+  lessonXpRule: "10000000-0000-4000-8000-000000000012",
   unknown: "20000000-0000-4000-8000-000000000001",
 };
 
@@ -118,7 +128,19 @@ const publishedSnapshot = {
     },
   ],
   achievements: [],
-  xpRules: [],
+  xpRules: [
+    {
+      id: ids.lessonXpRule,
+      entity: "xp-rule",
+      slug: "lesson-completion",
+      title: "Lesson completion",
+      eventType: "LESSON_COMPLETION",
+      xp: 10,
+      active: true,
+      awardKey: "program-v1:lesson-completion",
+      status: "PUBLISHED",
+    },
+  ],
 } as unknown as Prisma.JsonValue;
 
 const clientSteps = [
@@ -203,7 +225,7 @@ class FakeProgressStore implements UserProgressStore {
     const existing = enrollment.progressEvents.find(
       (event) => event.eventKey === input.eventKey,
     );
-    if (existing) return existing;
+    if (existing) return { event: existing, created: false };
 
     this.eventSequence += 1;
     const event: StoredProgressEvent = {
@@ -217,7 +239,7 @@ class FakeProgressStore implements UserProgressStore {
       createdAt: new Date(`2026-07-14T00:01:${String(this.eventSequence).padStart(2, "0")}.000Z`),
     };
     enrollment.progressEvents.push(event);
-    return event;
+    return { event, created: true };
   }
 
   async completeEnrollment(input: {
@@ -231,28 +253,81 @@ class FakeProgressStore implements UserProgressStore {
     return enrollment;
   }
 
-  async mergeProgress(input: MergeUserProgressInput) {
-    const enrollment = await this.findEnrollment(input.userId, input.programId);
-    if (!enrollment || enrollment.id !== input.enrollmentId) return null;
-    const markerExists = enrollment.progressEvents.some(
-      (event) => event.eventKey === input.markerEvent.eventKey,
-    );
-    if (!markerExists) {
-      for (const event of [...input.events, input.markerEvent]) {
-        await this.recordEvent({
-          ...event,
-          userId: input.userId,
-          programId: input.programId,
-          enrollmentId: input.enrollmentId,
-        });
-      }
-      if (input.currentStepId) enrollment.currentStepId = input.currentStepId;
-      if (input.completeProgram) {
-        enrollment.completedAt = new Date("2026-07-14T00:03:00.000Z");
-      }
-    }
-    return enrollment;
+}
+
+class EmptyXpStore implements XpStore {
+  async findEligibleRules() { return []; }
+  async createAward(): Promise<never> { throw new Error("No XP rule expected"); }
+  async totalXp() { return 0; }
+}
+
+class LessonXpStore implements XpStore {
+  readonly awards = new Map<string, StoredXpEvent>();
+  readonly rule: EligibleXpRule = {
+    id: ids.lessonXpRule,
+    eventType: "LESSON_COMPLETION",
+    targetId: null,
+    xp: 10,
+    awardKey: "program-v1:lesson-completion",
+  };
+
+  async findEligibleRules(eventType: EligibleXpRule["eventType"]) {
+    return eventType === this.rule.eventType ? [this.rule] : [];
   }
+
+  async createAward(input: CreateXpAwardInput) {
+    const key = `${input.userId}:${input.awardKey}`;
+    const existing = this.awards.get(key);
+    if (existing) return { event: existing, created: false };
+    const event: StoredXpEvent = {
+      id: `50000000-0000-4000-8000-${String(this.awards.size + 1).padStart(12, "0")}`,
+      userId: input.userId,
+      ruleId: input.ruleId ?? null,
+      achievementId: input.achievementId ?? null,
+      eventType: input.eventType,
+      xp: input.xp,
+      createdAt: new Date("2026-07-14T00:00:00.000Z"),
+    };
+    this.awards.set(key, event);
+    return { event, created: true };
+  }
+
+  async totalXp(userId: string) {
+    return Array.from(this.awards.entries())
+      .filter(([key]) => key.startsWith(`${userId}:`))
+      .reduce((total, [, event]) => total + event.xp, 0);
+  }
+}
+
+class EmptyAchievementStore implements AchievementStore {
+  async findEligible() { return []; }
+  async createUnlock(): Promise<never> { throw new Error("No achievement expected"); }
+  async listUnlocked() { return []; }
+  async progressCounts() {
+    return { lessons: 0, steps: 0, quizzes: 0, passedQuizzes: 0, programs: 0 };
+  }
+}
+
+function createService(store = new FakeProgressStore()) {
+  const xpStore = new EmptyXpStore();
+  const achievementStore = new EmptyAchievementStore();
+  const xp = new XpService(xpStore);
+  const achievements = new AchievementService(achievementStore, xp);
+  const transactions: RewardTransactionRunner = {
+    run: (operation) => operation({ progress: store, xp: xpStore, achievements: achievementStore }),
+  };
+  return new UserProgressService(store, transactions, xp, achievements);
+}
+
+function createRewardedService(store: FakeProgressStore, xpStore: XpStore) {
+  const achievementStore = new EmptyAchievementStore();
+  const xp = new XpService(xpStore);
+  const achievements = new AchievementService(achievementStore, xp);
+  const transactions: RewardTransactionRunner = {
+    run: (operation) =>
+      operation({ progress: store, xp: xpStore, achievements: achievementStore }),
+  };
+  return new UserProgressService(store, transactions, xp, achievements);
 }
 
 function mergeBody(extra: Record<string, unknown> = {}) {
@@ -270,7 +345,7 @@ function mergeBody(extra: Record<string, unknown> = {}) {
 }
 
 test("all anonymous progress APIs return 401 before parsing input", async () => {
-  const service = new UserProgressService(new FakeProgressStore());
+  const service = createService();
   const dependencies = {
     requireUser: async () => {
       throw new AuthenticationRequiredError();
@@ -328,7 +403,7 @@ test("progress request bodies are limited before service input is parsed", async
     }),
     {
       requireUser: async () => ({ id: "user-one" }),
-      service: new UserProgressService(new FakeProgressStore()),
+      service: createService(),
     },
   );
   assert.equal(response.status, 413);
@@ -336,18 +411,21 @@ test("progress request bodies are limited before service input is parsed", async
 
 test("hydration returns only the current user's enrollment", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   await service.startProgram("user-one", { programId: ids.program });
   assert.equal(
-    (await service.getCurrentProgress("user-one", ids.program))?.source,
+    (await service.getCurrentProgress("user-one", ids.program)).progress?.source,
     "server",
   );
-  assert.equal(await service.getCurrentProgress("user-two", ids.program), null);
+  assert.equal(
+    (await service.getCurrentProgress("user-two", ids.program)).progress,
+    null,
+  );
 });
 
 test("starting a published program is idempotent", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   const first = await service.startProgram("user-one", { programId: ids.program });
   const second = await service.startProgram("user-one", { programId: ids.program });
   assert.deepEqual(second, first);
@@ -356,7 +434,7 @@ test("starting a published program is idempotent", async () => {
 
 test("server current step never moves backward", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   await service.startProgram("user-one", { programId: ids.program });
   await service.setCurrentStep("user-one", {
     programId: ids.program,
@@ -366,13 +444,13 @@ test("server current step never moves backward", async () => {
     programId: ids.program,
     stepId: ids.stepOne,
   });
-  assert.equal(result.currentStepId, ids.stepTwo);
+  assert.equal(result.progress?.currentStepId, ids.stepTwo);
   assert.equal(store.enrollment?.currentStepId, ids.stepTwo);
 });
 
 test("duplicate event keys do not create duplicate progress events", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   await service.startProgram("user-one", { programId: ids.program });
   await service.completeLesson("user-one", {
     programId: ids.program,
@@ -387,7 +465,7 @@ test("duplicate event keys do not create duplicate progress events", async () =>
 
 test("an enrollment owned by another user is not accessible", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   await service.startProgram("user-one", { programId: ids.program });
   await assert.rejects(
     service.completeLesson("user-two", {
@@ -399,7 +477,7 @@ test("an enrollment owned by another user is not accessible", async () => {
 });
 
 test("direct actions reject invalid lesson and block IDs", async () => {
-  const service = new UserProgressService(new FakeProgressStore());
+  const service = createService();
   await service.startProgram("user-one", { programId: ids.program });
   await assert.rejects(
     service.completeLesson("user-one", {
@@ -420,7 +498,7 @@ test("direct actions reject invalid lesson and block IDs", async () => {
 
 test("merge is explicit, ignores unknown IDs, and is idempotent", async () => {
   const store = new FakeProgressStore();
-  const service = new UserProgressService(store);
+  const service = createService(store);
   const local = normalizeLocalProgramState(
     { completedStepIds: [ids.stepOne], completedSteps: [1], activeStep: 2 },
     clientSteps,
@@ -457,6 +535,57 @@ test("merge is explicit, ignores unknown IDs, and is idempotent", async () => {
   assert.deepEqual(progress.progress.completedScenarioIds, [ids.scenario]);
   assert.deepEqual(progress.progress.completedExerciseIds, [ids.exercise]);
   assert.equal(progress.progress.currentStepId, ids.stepTwo);
+});
+
+test("repeated local merge does not duplicate server XP", async () => {
+  const store = new FakeProgressStore();
+  const xpStore = new LessonXpStore();
+  const service = createRewardedService(store, xpStore);
+  const request = () =>
+    new Request("http://localhost/api/program/progress/merge", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(mergeBody()),
+    });
+  const dependencies = {
+    requireUser: async () => ({ id: "user-one" }),
+    service,
+  };
+  const first = await handleMergeProgress(request(), dependencies);
+  const firstPayload = (await first.json()) as {
+    xp: { awardedNow: number; total: number };
+  };
+  const second = await handleMergeProgress(request(), dependencies);
+  const secondPayload = (await second.json()) as {
+    xp: { awardedNow: number; total: number };
+  };
+  assert.deepEqual(firstPayload.xp, { awardedNow: 10, total: 10 });
+  assert.deepEqual(secondPayload.xp, { awardedNow: 0, total: 10 });
+  assert.equal(xpStore.awards.size, 1);
+  const publicPayload = JSON.stringify(firstPayload);
+  for (const privateField of [
+    "awardKey",
+    "ruleId",
+    "achievementId",
+    "enrollmentId",
+    "userId",
+    "triggerConfig",
+  ]) {
+    assert.equal(publicPayload.includes(privateField), false);
+  }
+});
+
+test("authenticated hydration rejects attempts to select another user", async () => {
+  const response = await handleGetProgress(
+    new Request(
+      `http://localhost/api/program/progress?programId=${ids.program}&userId=user-two`,
+    ),
+    {
+      requireUser: async () => ({ id: "user-one" }),
+      service: createService(),
+    },
+  );
+  assert.equal(response.status, 422);
 });
 
 test("client hydration preserves local XP and answers while using server completion", () => {

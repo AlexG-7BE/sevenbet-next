@@ -2,9 +2,10 @@
 
 ## Current progress storage
 
-The public `ProgramExperience` remains an anonymous-first client experience. Its
-entire state is stored under `sevenbet-program-progress-v1` in `localStorage`.
-No `sessionStorage` progress state exists.
+The public `ProgramExperience` remains anonymous-first. Anonymous progress and
+offline fallback state use `sevenbet-program-progress-v1` in `localStorage`.
+Authenticated completion, XP, and achievements hydrate from PostgreSQL. No
+`sessionStorage` progress state exists.
 
 | State | Current source | PostgreSQL readiness |
 | --- | --- | --- |
@@ -14,12 +15,13 @@ No `sessionStorage` progress state exists.
 | Quiz result | `quizAnswers[day]` in localStorage | `quiz:<blockId>:submitted` events are supported |
 | Scenario result | `scenarioAnswers[day]` in localStorage | `scenario:<blockId>:submitted` events are supported |
 | Exercise/reflection | `answers[exercise-<day>]` in localStorage | `exercise:<blockId>:completed` events are supported |
-| XP | Calculated from static/public step copy and stored as `xp` in localStorage | `UserXpEvent` exists; no production XP engine is connected |
-| Achievements | Calculated by `achievementsFor()` and stored in localStorage | `UserAchievement` exists; no production achievement engine is connected |
+| XP | Local calculation for anonymous users; `SUM(UserXpEvent.xp)` for authenticated users | Server XP engine is connected to confirmed progress events |
+| Achievements | Local milestones for anonymous users; `UserAchievement` for authenticated users | Server achievement engine evaluates published triggers |
 | Learning streak | Browser date keys in localStorage | No server persistence in this phase |
 
-The dashboard reads the same local state. XP labels and achievement badges are
-currently educational UI calculations, not authoritative server awards.
+The dashboard labels browser and account sources separately. After successful
+authenticated hydration it displays only server XP and unlocked achievements;
+the browser copy remains available for anonymous fallback and voluntary merge.
 `ProgramProgressRepository` and `ProgramProgressService` predate this phase but
 were not used by a public route. The new `UserProgressRepository` and
 `UserProgressService` provide the authenticated foundation without changing the
@@ -32,7 +34,7 @@ Route / future server action
   -> requireCurrentUser() (Better Auth session.user.id)
   -> strict input parser (no userId/enrollmentId/version/XP fields)
   -> UserProgressService (published snapshot and ownership validation)
-  -> UserProgressRepository (ownership predicates and idempotent upserts)
+  -> transactional progress, XP, and achievement repositories
   -> Prisma / PostgreSQL
 ```
 
@@ -125,7 +127,6 @@ stronger. No enrollment or merge is created silently. A local decision marker
 prevents repeated prompts, while the original localStorage payload remains the
 anonymous/offline fallback. API failures leave client progress untouched.
 
-The next phase is the XP Engine. It should consume newly inserted progress
-events idempotently and derive awards from published `XpRule` records. Client XP
-and achievement values remain explicitly local until that engine and its
-backfill policy are production-ready.
+The authenticated XP and achievement engines are documented in
+`docs/server-reward-engines.md`. Anonymous XP and achievements remain local;
+authenticated totals and unlocks come only from server-authored events.

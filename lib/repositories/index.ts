@@ -16,9 +16,13 @@ export {
   UserProgressRepository,
   userProgressRepository,
   type PublishedProgramProgressSource,
-  type MergeUserProgressInput,
   type RecordUserProgressEventInput,
+  type RecordUserProgressEventResult,
   type StoredProgressEvent,
   type UserProgressEnrollment,
   type UserProgressStore,
 } from "./user-progress.repository";
+
+export * from "./xp.repository";
+export * from "./achievement.repository";
+export * from "./reward-transaction.repository";

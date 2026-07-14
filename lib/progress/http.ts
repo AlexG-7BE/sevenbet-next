@@ -15,6 +15,7 @@ import {
 } from "@/lib/progress/input";
 import { ServiceError } from "@/lib/services/service-error";
 import type { UserProgressService } from "@/lib/services/user-progress.service";
+import type { ServerProgramState } from "@/lib/progress/types";
 
 type CurrentUser = { id: string };
 
@@ -85,11 +86,11 @@ export async function handleGetProgress(
   try {
     const user = await dependencies.requireUser(request.headers);
     const input = parseProgressQuery(request.url);
-    const progress = await dependencies.service.getCurrentProgress(
+    const state = await dependencies.service.getCurrentProgress(
       user.id,
       input.programId,
     );
-    return NextResponse.json({ ok: true, progress });
+    return NextResponse.json({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }
@@ -102,8 +103,8 @@ export async function handleStartProgress(
   try {
     const user = await dependencies.requireUser(request.headers);
     const input = parseStartProgramBody(await readProgressJson(request));
-    const progress = await dependencies.service.startProgram(user.id, input);
-    return NextResponse.json({ ok: true, progress });
+    const state = await dependencies.service.startProgram(user.id, input);
+    return NextResponse.json({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }
@@ -117,13 +118,13 @@ async function handleProgressAction<T>(
     service: ProgressHandlerDependencies["service"],
     userId: string,
     input: T,
-  ) => Promise<unknown>,
+  ) => Promise<ServerProgramState>,
 ) {
   try {
     const user = await dependencies.requireUser(request.headers);
     const input = parse(await readProgressJson(request));
-    const progress = await action(dependencies.service, user.id, input);
-    return NextResponse.json({ ok: true, progress });
+    const state = await action(dependencies.service, user.id, input);
+    return NextResponse.json({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }

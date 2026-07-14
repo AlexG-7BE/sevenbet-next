@@ -860,6 +860,19 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 .programSaveStatus.saved { border-color: var(--border-emerald); }
 .programSaveStatus.error { border-color: rgba(255, 180, 174, .5); color: #ffb4ae; }
+.programStatusDismiss {
+  margin-left: 10px;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+.programStatusDismiss:focus-visible {
+  outline: 2px solid var(--emerald);
+  outline-offset: 3px;
+}
 .xpIndicator {
   display: flex;
   justify-content: space-between;

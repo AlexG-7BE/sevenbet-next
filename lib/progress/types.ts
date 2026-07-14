@@ -1,3 +1,5 @@
+import type { AchievementSummary } from "@/lib/rewards/types";
+
 export type UserProgressResponse = {
   programId: string;
   currentStepId: string | null;
@@ -8,6 +10,19 @@ export type UserProgressResponse = {
   completedExerciseIds: string[];
   completedAt: string | null;
   updatedAt: string;
+  source: "server";
+};
+
+export type ServerProgramState = {
+  progress: UserProgressResponse | null;
+  xp: {
+    awardedNow: number;
+    total: number;
+  };
+  achievements: {
+    newlyUnlocked: AchievementSummary[];
+    allUnlocked: AchievementSummary[];
+  };
   source: "server";
 };
 
