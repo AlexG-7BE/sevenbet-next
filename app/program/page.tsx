@@ -59,7 +59,10 @@ export default async function ProgramPage() {
         }}
       />
 
-      <ProgramExperience steps={steps} />
+      <ProgramExperience
+        programId={snapshot?.program.id}
+        steps={steps}
+      />
     </>
   );
 }

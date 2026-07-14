@@ -846,6 +846,20 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   display: grid;
   gap: 12px;
 }
+.programSaveStatus {
+  width: fit-content;
+  max-width: 100%;
+  margin: 16px 0 0;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--subtle);
+  background: rgba(255, 255, 255, .05);
+  font-size: .9rem;
+  font-weight: 750;
+}
+.programSaveStatus.saved { border-color: var(--border-emerald); }
+.programSaveStatus.error { border-color: rgba(255, 180, 174, .5); color: #ffb4ae; }
 .xpIndicator {
   display: flex;
   justify-content: space-between;

@@ -84,6 +84,10 @@ export function programSnapshotToPublicSteps(
 
     return {
       stableId: step.id,
+      lessonId: lesson?.id,
+      exerciseBlockId: exercise?.id,
+      scenarioBlockId: scenario?.id,
+      quizBlockId: quiz?.id,
       day: index + 1,
       title: step.title,
       focus: step.description,

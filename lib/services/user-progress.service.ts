@@ -6,8 +6,13 @@ import type {
   ProgramBuilderSnapshot,
   ProgramBuilderStep,
 } from "@/lib/cms/types";
+import type {
+  MergeLocalProgressInput,
+  UserProgressResponse,
+} from "@/lib/progress/types";
 import {
   userProgressRepository,
+  type MergeUserProgressInput,
   type PublishedProgramProgressSource,
   type UserProgressEnrollment,
   type UserProgressStore,
@@ -29,27 +34,6 @@ type EntityEventKind =
   | "exercise"
   | "step"
   | "program";
-
-export type UserProgressResponse = {
-  programId: string;
-  programVersion: number;
-  startedAt: string;
-  completedAt: string | null;
-  currentStepId: string | null;
-  completedLessonIds: string[];
-  completedStepIds: string[];
-  submittedQuizIds: string[];
-  submittedScenarioIds: string[];
-  completedExerciseIds: string[];
-  events: Array<{
-    entityId: string;
-    entityType: string;
-    eventType: string;
-    eventKey: string;
-    metadata: Prisma.JsonValue | null;
-    createdAt: string;
-  }>;
-};
 
 export function progressEventKey(
   kind: EntityEventKind,
@@ -98,7 +82,9 @@ function snapshotForEnrollment(enrollment: UserProgressEnrollment) {
 }
 
 function findStep(snapshot: ProgramBuilderSnapshot, stepId: string) {
-  const step = snapshot.steps.find((candidate) => candidate.id === stepId);
+  const step = snapshot.steps.find(
+    (candidate) => candidate.id === stepId && !candidate.archivedAt,
+  );
   if (!step) {
     throw new ValidationError("Step does not belong to this program", {
       stepId,
@@ -109,7 +95,10 @@ function findStep(snapshot: ProgramBuilderSnapshot, stepId: string) {
 
 function findLesson(snapshot: ProgramBuilderSnapshot, lessonId: string) {
   for (const step of snapshot.steps) {
-    const lesson = step.lessons.find((candidate) => candidate.id === lessonId);
+    if (step.archivedAt) continue;
+    const lesson = step.lessons.find(
+      (candidate) => candidate.id === lessonId && !candidate.archivedAt,
+    );
     if (lesson) return { step, lesson };
   }
 
@@ -120,8 +109,12 @@ function findLesson(snapshot: ProgramBuilderSnapshot, lessonId: string) {
 
 function findBlock(snapshot: ProgramBuilderSnapshot, blockId: string) {
   for (const step of snapshot.steps) {
+    if (step.archivedAt) continue;
     for (const lesson of step.lessons) {
-      const block = lesson.blocks.find((candidate) => candidate.id === blockId);
+      if (lesson.archivedAt) continue;
+      const block = lesson.blocks.find(
+        (candidate) => candidate.id === blockId && !candidate.archived,
+      );
       if (block) return { step, lesson, block };
     }
   }
@@ -146,6 +139,30 @@ function requiredBlockEventKey(block: CmsBlock) {
     return progressEventKey("exercise", block.id, "completed");
   }
   return null;
+}
+
+function dataRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function quizConfiguration(block: CmsBlock) {
+  const questions = Array.isArray(block.data.questions)
+    ? block.data.questions.map(dataRecord)
+    : [];
+  const firstQuestion = questions[0] ?? {};
+  const options = Array.isArray(firstQuestion.options)
+    ? firstQuestion.options.map(dataRecord)
+    : Array.isArray(block.data.options)
+      ? block.data.options.map(dataRecord)
+      : [];
+  const configuredCorrectIndex = block.data.correctIndex;
+  const correctIndex =
+    typeof configuredCorrectIndex === "number"
+      ? configuredCorrectIndex
+      : options.findIndex((option) => option.correct === true);
+  return { options, correctIndex };
 }
 
 function assertRequiredBlocksCompleted(
@@ -187,7 +204,6 @@ function assertStepCanComplete(
 }
 
 function toResponse(enrollment: UserProgressEnrollment): UserProgressResponse {
-  const keys = enrollment.progressEvents.map((event) => event.eventKey);
   const idsFor = (prefix: string, suffix: string) =>
     enrollment.progressEvents
       .filter(
@@ -197,31 +213,36 @@ function toResponse(enrollment: UserProgressEnrollment): UserProgressResponse {
       )
       .map((event) => event.entityId);
 
+  const updatedAt = [
+    enrollment.startedAt,
+    ...(enrollment.completedAt ? [enrollment.completedAt] : []),
+    ...enrollment.progressEvents.map((event) => event.createdAt),
+  ].reduce((latest, value) => (value > latest ? value : latest));
+
   return {
     programId: enrollment.programId,
-    programVersion: enrollment.programVersion.version,
-    startedAt: enrollment.startedAt.toISOString(),
-    completedAt: enrollment.completedAt?.toISOString() ?? null,
     currentStepId: enrollment.currentStepId,
-    completedLessonIds: idsFor("lesson", "completed"),
     completedStepIds: idsFor("step", "completed"),
-    submittedQuizIds: idsFor("quiz", "submitted"),
-    submittedScenarioIds: idsFor("scenario", "submitted"),
+    completedLessonIds: idsFor("lesson", "completed"),
+    completedQuizIds: idsFor("quiz", "submitted"),
+    completedScenarioIds: idsFor("scenario", "submitted"),
     completedExerciseIds: idsFor("exercise", "completed"),
-    events: enrollment.progressEvents.map((event) => ({
-      entityId: event.entityId,
-      entityType: event.entityType,
-      eventType: event.eventType,
-      eventKey: event.eventKey,
-      metadata: event.metadata,
-      createdAt: event.createdAt.toISOString(),
-    })),
+    completedAt: enrollment.completedAt?.toISOString() ?? null,
+    updatedAt: updatedAt.toISOString(),
+    source: "server",
   };
 }
 
 function firstStepId(source: PublishedProgramProgressSource) {
   const snapshot = readPublishedSnapshot(source.snapshot, source.programId);
-  return snapshot.steps.slice().sort((a, b) => a.order - b.order)[0]?.id;
+  return snapshot.steps
+    .filter((step) => !step.archivedAt)
+    .slice()
+    .sort((a, b) => a.order - b.order)[0]?.id;
+}
+
+function uniqueIds(values: string[]) {
+  return Array.from(new Set(values));
 }
 
 export class UserProgressService {
@@ -232,7 +253,9 @@ export class UserProgressService {
   async getCurrentProgress(userId: string, programId: string) {
     requireUuid(programId, "programId");
     const enrollment = await this.repository.findEnrollment(userId, programId);
-    return enrollment ? toResponse(enrollment) : null;
+    if (!enrollment) return null;
+    snapshotForEnrollment(enrollment);
+    return toResponse(enrollment);
   }
 
   async startProgram(userId: string, input: { programId: string }) {
@@ -262,13 +285,29 @@ export class UserProgressService {
     requireUuid(input.programId, "programId");
     requireUuid(input.stepId, "stepId");
     const enrollment = await this.requireEnrollment(userId, input.programId);
-    findStep(snapshotForEnrollment(enrollment), input.stepId);
+    const snapshot = snapshotForEnrollment(enrollment);
+    const targetStep = findStep(snapshot, input.stepId);
+    const currentStep = enrollment.currentStepId
+      ? snapshot.steps.find((step) => step.id === enrollment.currentStepId)
+      : undefined;
+
+    if (currentStep && currentStep.order >= targetStep.order) {
+      return toResponse(enrollment);
+    }
+
+    await this.recordEvent(enrollment, {
+      userId,
+      entityId: targetStep.id,
+      entityType: "STEP",
+      eventType: "CURRENT",
+      eventKey: `step:${targetStep.id}:current`,
+    });
 
     const updated = await this.repository.setCurrentStep({
       userId,
       programId: input.programId,
       enrollmentId: enrollment.id,
-      currentStepId: input.stepId,
+      currentStepId: targetStep.id,
     });
 
     if (!updated) throw new NotFoundError("Program enrollment");
@@ -290,13 +329,14 @@ export class UserProgressService {
     );
     assertRequiredBlocksCompleted(lesson, eventKeys);
 
-    return this.recordEvent(enrollment, {
+    await this.recordEvent(enrollment, {
       userId,
       entityId: lesson.id,
       entityType: "LESSON",
       eventType: "COMPLETED",
       eventKey: progressEventKey("lesson", lesson.id, "completed"),
     });
+    return this.refresh(userId, input.programId);
   }
 
   async saveQuizResult(
@@ -309,7 +349,7 @@ export class UserProgressService {
       input.blockId,
       ["QUIZ"],
     );
-    const options = Array.isArray(block.data.options) ? block.data.options : [];
+    const { options, correctIndex } = quizConfiguration(block);
     if (
       !Number.isInteger(input.answerIndex) ||
       input.answerIndex < 0 ||
@@ -317,15 +357,14 @@ export class UserProgressService {
     ) {
       throw new ValidationError("answerIndex is outside the quiz options");
     }
-    const correctIndex = block.data.correctIndex;
     const metadata: Prisma.InputJsonValue = {
       answerIndex: input.answerIndex,
-      ...(typeof correctIndex === "number"
+      ...(correctIndex >= 0
         ? { correct: input.answerIndex === correctIndex }
         : {}),
     };
 
-    return this.recordEvent(enrollment, {
+    await this.recordEvent(enrollment, {
       userId,
       entityId: block.id,
       entityType: "QUIZ",
@@ -333,6 +372,7 @@ export class UserProgressService {
       eventKey: progressEventKey("quiz", block.id, "submitted"),
       metadata,
     });
+    return this.refresh(userId, input.programId);
   }
 
   async saveScenarioResult(
@@ -345,7 +385,11 @@ export class UserProgressService {
       input.blockId,
       ["SCENARIO"],
     );
-    const options = Array.isArray(block.data.options) ? block.data.options : [];
+    const options = Array.isArray(block.data.choices)
+      ? block.data.choices
+      : Array.isArray(block.data.options)
+        ? block.data.options
+        : [];
     if (
       !Number.isInteger(input.answerIndex) ||
       input.answerIndex < 0 ||
@@ -354,7 +398,7 @@ export class UserProgressService {
       throw new ValidationError("answerIndex is outside the scenario options");
     }
 
-    return this.recordEvent(enrollment, {
+    await this.recordEvent(enrollment, {
       userId,
       entityId: block.id,
       entityType: "SCENARIO",
@@ -362,6 +406,7 @@ export class UserProgressService {
       eventKey: progressEventKey("scenario", block.id, "submitted"),
       metadata: { answerIndex: input.answerIndex },
     });
+    return this.refresh(userId, input.programId);
   }
 
   async saveExercise(
@@ -379,7 +424,7 @@ export class UserProgressService {
       throw new ValidationError("Exercise response must contain 1-4000 characters");
     }
 
-    return this.recordEvent(enrollment, {
+    await this.recordEvent(enrollment, {
       userId,
       entityId: block.id,
       entityType: block.type,
@@ -387,6 +432,7 @@ export class UserProgressService {
       eventKey: progressEventKey("exercise", block.id, "completed"),
       metadata: { response },
     });
+    return this.refresh(userId, input.programId);
   }
 
   async completeStep(
@@ -401,13 +447,166 @@ export class UserProgressService {
       new Set(enrollment.progressEvents.map((event) => event.eventKey)),
     );
 
-    return this.recordEvent(enrollment, {
+    await this.recordEvent(enrollment, {
       userId,
       entityId: step.id,
       entityType: "STEP",
       eventType: "COMPLETED",
       eventKey: progressEventKey("step", step.id, "completed"),
     });
+    return this.refresh(userId, input.programId);
+  }
+
+  async mergeLocalProgress(userId: string, input: MergeLocalProgressInput) {
+    requireUuid(input.programId, "programId");
+    let enrollment = await this.repository.findEnrollment(
+      userId,
+      input.programId,
+    );
+
+    if (!enrollment) {
+      const source = await this.repository.findPublishedProgram(input.programId);
+      if (!source) {
+        throw new NotFoundError("Published program", {
+          programId: input.programId,
+        });
+      }
+      enrollment = await this.repository.getOrCreateEnrollment({
+        userId,
+        programId: input.programId,
+        programVersionId: source.programVersionId,
+        currentStepId: firstStepId(source),
+      });
+    }
+
+    const snapshot = snapshotForEnrollment(enrollment);
+    const activeSteps = snapshot.steps
+      .filter((step) => !step.archivedAt)
+      .slice()
+      .sort((a, b) => a.order - b.order);
+    const activeLessons = activeSteps.flatMap((step) =>
+      step.lessons.filter((lesson) => !lesson.archivedAt),
+    );
+    const activeBlocks = activeLessons.flatMap((lesson) =>
+      lesson.blocks.filter((block) => !block.archived),
+    );
+    const stepIds = new Set(activeSteps.map((step) => step.id));
+    const lessonIds = new Set(activeLessons.map((lesson) => lesson.id));
+    const quizIds = new Set(
+      activeBlocks.filter((block) => block.type === "QUIZ").map((block) => block.id),
+    );
+    const scenarioIds = new Set(
+      activeBlocks
+        .filter((block) => block.type === "SCENARIO")
+        .map((block) => block.id),
+    );
+    const exerciseIds = new Set(
+      activeBlocks
+        .filter((block) =>
+          ["EXERCISE", "REFLECTION", "PRACTICAL_TASK"].includes(block.type),
+        )
+        .map((block) => block.id),
+    );
+
+    const accepted = {
+      steps: uniqueIds(input.completedStepIds).filter((id) => stepIds.has(id)),
+      lessons: uniqueIds(input.completedLessonIds).filter((id) =>
+        lessonIds.has(id),
+      ),
+      quizzes: uniqueIds(input.completedQuizIds).filter((id) => quizIds.has(id)),
+      scenarios: uniqueIds(input.completedScenarioIds).filter((id) =>
+        scenarioIds.has(id),
+      ),
+      exercises: uniqueIds(input.completedExerciseIds).filter((id) =>
+        exerciseIds.has(id),
+      ),
+    };
+    const events: MergeUserProgressInput["events"] = [
+      ...accepted.steps.map((id) => ({
+        entityId: id,
+        entityType: "STEP",
+        eventType: "COMPLETED",
+        eventKey: progressEventKey("step", id, "completed"),
+      })),
+      ...accepted.lessons.map((id) => ({
+        entityId: id,
+        entityType: "LESSON",
+        eventType: "COMPLETED",
+        eventKey: progressEventKey("lesson", id, "completed"),
+      })),
+      ...accepted.quizzes.map((id) => ({
+        entityId: id,
+        entityType: "QUIZ",
+        eventType: "SUBMITTED",
+        eventKey: progressEventKey("quiz", id, "submitted"),
+      })),
+      ...accepted.scenarios.map((id) => ({
+        entityId: id,
+        entityType: "SCENARIO",
+        eventType: "SUBMITTED",
+        eventKey: progressEventKey("scenario", id, "submitted"),
+      })),
+      ...accepted.exercises.map((id) => ({
+        entityId: id,
+        entityType: "EXERCISE",
+        eventType: "COMPLETED",
+        eventKey: progressEventKey("exercise", id, "completed"),
+      })),
+    ];
+
+    const existingCompletedSteps = enrollment.progressEvents
+      .filter(
+        (event) =>
+          event.eventKey.startsWith("step:") &&
+          event.eventKey.endsWith(":completed"),
+      )
+      .map((event) => event.entityId);
+    const allCompletedSteps = new Set([
+      ...existingCompletedSteps,
+      ...accepted.steps,
+    ]);
+    const currentCandidates = uniqueIds([
+      ...(enrollment.currentStepId ? [enrollment.currentStepId] : []),
+      ...(input.currentStepId && stepIds.has(input.currentStepId)
+        ? [input.currentStepId]
+        : []),
+      ...accepted.steps,
+    ]);
+    const currentStepId = activeSteps
+      .filter((step) => currentCandidates.includes(step.id))
+      .sort((a, b) => b.order - a.order)[0]?.id;
+    const completeProgram =
+      input.programCompleted &&
+      activeSteps.length > 0 &&
+      activeSteps.every((step) => allCompletedSteps.has(step.id));
+
+    if (completeProgram) {
+      events.push({
+        entityId: input.programId,
+        entityType: "PROGRAM",
+        eventType: "COMPLETED",
+        eventKey: progressEventKey("program", input.programId, "completed"),
+      });
+    }
+
+    const merged = await this.repository.mergeProgress({
+      userId,
+      programId: input.programId,
+      enrollmentId: enrollment.id,
+      markerEvent: {
+        entityId: input.programId,
+        entityType: "PROGRAM",
+        eventType: "ANONYMOUS_MERGE",
+        eventKey: `program:${input.programId}:anonymous-merge:v1`,
+        metadata: { version: 1 },
+      },
+      events,
+      currentStepId,
+      completeProgram,
+    });
+
+    if (!merged) throw new NotFoundError("Program enrollment");
+    return toResponse(merged);
   }
 
   async completeProgram(userId: string, input: { programId: string }) {
@@ -419,6 +618,7 @@ export class UserProgressService {
       enrollment.progressEvents.map((event) => event.eventKey),
     );
     const incompleteSteps = snapshot.steps
+      .filter((step) => !step.archivedAt)
       .filter(
         (step) =>
           !eventKeys.has(progressEventKey("step", step.id, "completed")),
@@ -494,6 +694,17 @@ export class UserProgressService {
     if (!event) throw new NotFoundError("Program enrollment");
     return event;
   }
+
+  private async refresh(userId: string, programId: string) {
+    const enrollment = await this.repository.findEnrollment(userId, programId);
+    if (!enrollment) throw new NotFoundError("Program enrollment");
+    return toResponse(enrollment);
+  }
 }
 
 export const userProgressService = new UserProgressService();
+
+export type {
+  MergeLocalProgressInput,
+  UserProgressResponse,
+} from "@/lib/progress/types";

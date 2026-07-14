@@ -1,5 +1,9 @@
 export type ProgramStep = {
   stableId?: string;
+  lessonId?: string;
+  exerciseBlockId?: string;
+  scenarioBlockId?: string;
+  quizBlockId?: string;
   day: number;
   title: string;
   focus: string;

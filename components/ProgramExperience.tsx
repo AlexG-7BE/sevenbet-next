@@ -1,35 +1,23 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { programSteps as fallbackProgramSteps, type ProgramStep } from "@/lib/program";
 import { Badge, Button, Card, Container, CTA, Section } from "@/components/ui";
-
-type ProgramState = {
-  completedSteps: number[];
-  completedStepIds?: string[];
-  xp: number;
-  achievements: string[];
-  activeStep: number;
-  activeStepId?: string;
-  answers: Record<string, string>;
-  quizAnswers: Record<number, number>;
-  scenarioAnswers: Record<number, number>;
-  lastVisitDate?: string;
-  streak: number;
-};
+import { useSession } from "@/lib/auth/client";
+import {
+  applyServerProgress,
+  buildLocalMergePayload,
+  hasLocalProgramProgress,
+  initialProgramState,
+  normalizeLocalProgramState,
+  preserveDeviceProgress,
+  resolveProgressAfterSave,
+  shouldOfferProgressMerge,
+  type ProgramClientState,
+} from "@/lib/progress/client-state";
+import type { UserProgressResponse } from "@/lib/progress/types";
 
 const STORAGE_KEY = "sevenbet-program-progress-v1";
-
-const initialState: ProgramState = {
-  completedSteps: [],
-  xp: 0,
-  achievements: [],
-  activeStep: 1,
-  answers: {},
-  quizAnswers: {},
-  scenarioAnswers: {},
-  streak: 1,
-};
 
 const achievementCopy: Record<string, string> = {
   first_step: "First Step Complete",
@@ -70,12 +58,14 @@ export function ProgressHeader({
   total,
   xp,
   streak,
+  source,
 }: {
   activeStep: number;
   completedCount: number;
   total: number;
   xp: number;
   streak: number;
+  source: "server" | "device";
 }) {
   const progress = Math.round((completedCount / total) * 100);
 
@@ -84,7 +74,11 @@ export function ProgressHeader({
       <div>
         <Badge tone="green">Step {activeStep} of {total}</Badge>
         <h2>{progress}% complete</h2>
-        <p className="muted">Progress is saved in this browser. Each step is designed to take 5-10 calm minutes.</p>
+        <p className="muted">
+          {source === "server"
+            ? "Completion progress is saved to your account."
+            : "Progress is saved in this browser."} Each step is designed to take 5-10 calm minutes.
+        </p>
       </div>
       <div className="programHeaderStats">
         <XPIndicator xp={xp} />
@@ -242,12 +236,15 @@ export function Dashboard({
   steps,
   state,
   onSelect,
+  source,
 }: {
   steps: ProgramStep[];
-  state: ProgramState;
+  state: ProgramClientState;
   onSelect: (step: number) => void;
+  source: "server" | "device";
 }) {
-  const completedCount = state.completedStepIds?.length || state.completedSteps.length;
+  const completedCount =
+    state.completedStepIds?.length || state.completedSteps.length;
   const nextStep = steps.find((step) => step.stableId ? !state.completedStepIds?.includes(step.stableId) : !state.completedSteps.includes(step.day)) || steps[steps.length - 1];
 
   return (
@@ -260,14 +257,15 @@ export function Dashboard({
           </div>
           <div className="verificationList">
             <div><span>Current progress</span><strong>{Math.round((completedCount / 10) * 100)}%</strong></div>
-            <div><span>Earned XP</span><strong>{state.xp}</strong></div>
+            <div><span>{source === "server" ? "Local educational XP" : "Earned XP"}</span><strong>{state.xp}</strong></div>
+            <div><span>Completion source</span><strong>{source === "server" ? "Account" : "This device"}</strong></div>
             <div><span>Recommended next lesson</span><strong>{nextStep.title}</strong></div>
             <div><span>Daily streak</span><strong>{state.streak >= 2 ? `${state.streak} days` : "Shown after consecutive days"}</strong></div>
           </div>
         </Card>
         <Card className="guideCard">
           <Badge tone="green">Achievements</Badge>
-          <h3>Earned badges</h3>
+          <h3>{source === "server" ? "Local achievement badges" : "Earned badges"}</h3>
           <div className="miniTasks">
             {state.achievements.length ? state.achievements.map((achievement) => (
               <span key={achievement}>{achievementCopy[achievement] || achievement}</span>
@@ -282,7 +280,13 @@ export function Dashboard({
   );
 }
 
-export function CompletionScreen({ onRestart }: { onRestart: () => void }) {
+export function CompletionScreen({
+  onRestart,
+  source,
+}: {
+  onRestart: () => void;
+  source: "server" | "device";
+}) {
   return (
     <Section eyebrow="Program complete" title="You completed the 10-Step Control Program.">
       <CTA
@@ -292,7 +296,9 @@ export function CompletionScreen({ onRestart }: { onRestart: () => void }) {
         secondary={{ href: "/casinos", label: "Browse Casino Reviews" }}
       />
       <div className="sectionButton">
-        <button className="button ghost" onClick={onRestart} type="button">Restart local progress</button>
+        <button className="button ghost" onClick={onRestart} type="button">
+          {source === "server" ? "Clear device-only answers" : "Restart local progress"}
+        </button>
       </div>
     </Section>
   );
@@ -313,26 +319,158 @@ function stepXp(step: ProgramStep) {
   return step.xp.lesson + step.xp.scenario + step.xp.quiz + step.xp.guide;
 }
 
-export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: ProgramStep[] }) {
-  const [state, setState] = useState<ProgramState>(initialState);
+async function progressRequest(path: string, body?: object) {
+  const response = await fetch(path, {
+    method: body ? "POST" : "GET",
+    credentials: "same-origin",
+    headers: body ? { "content-type": "application/json" } : undefined,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    error?: string;
+    progress?: UserProgressResponse | null;
+  };
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || "Progress could not be saved");
+  }
+  return payload.progress ?? null;
+}
+
+export function ProgramExperience({
+  steps = fallbackProgramSteps,
+  programId,
+}: {
+  steps?: ProgramStep[];
+  programId?: string;
+}) {
+  const { data: session, isPending: sessionPending } = useSession();
+  const [state, setState] = useState<ProgramClientState>(initialProgramState);
   const [toast, setToast] = useState<string>();
+  const [localReady, setLocalReady] = useState(false);
+  const [hydrationStatus, setHydrationStatus] = useState<
+    "idle" | "loading" | "ready"
+  >("idle");
+  const [serverProgress, setServerProgress] =
+    useState<UserProgressResponse | null>(null);
+  const [hasEnrollment, setHasEnrollment] = useState(false);
+  const [mergeOffer, setMergeOffer] = useState(false);
+  const [mergeDecision, setMergeDecision] = useState<
+    "saved" | "device" | null
+  >(null);
+  const [saveStatus, setSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [saveMessage, setSaveMessage] = useState("");
+  const localSnapshot = useRef<ProgramClientState>(initialProgramState);
+  const userId = session?.user.id;
+  const mergeMarkerKey =
+    userId && programId
+      ? `sevenbet-program-merge-v1:${userId}:${programId}`
+      : null;
   const activeStep = steps.find((step) => step.stableId && step.stableId === state.activeStepId) || steps.find((step) => step.day === state.activeStep) || steps[0];
 
   useEffect(() => {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = saved ? JSON.parse(saved) as ProgramState : initialState;
-    const diff = dayDifference(parsed.lastVisitDate);
-    const nextStreak = diff === 1 ? (parsed.streak || 1) + 1 : diff === 0 ? (parsed.streak || 1) : 1;
-    const completedStepIds = parsed.completedStepIds?.length ? parsed.completedStepIds : steps.filter((step) => parsed.completedSteps.includes(step.day)).map((step) => step.stableId).filter((id): id is string => Boolean(id));
-    const activeStepId = parsed.activeStepId || steps.find((step) => step.day === parsed.activeStep)?.stableId;
-    setState({ ...initialState, ...parsed, completedStepIds, activeStepId, streak: nextStreak, lastVisitDate: todayKey() });
+    let parsed: unknown = null;
+    try {
+      const saved = window.localStorage.getItem(STORAGE_KEY);
+      parsed = saved ? JSON.parse(saved) : null;
+    } catch {
+      parsed = null;
+    }
+    const normalized = normalizeLocalProgramState(parsed, steps);
+    const diff = dayDifference(normalized.lastVisitDate);
+    const nextState = {
+      ...normalized,
+      streak:
+        diff === 1
+          ? normalized.streak + 1
+          : diff === 0
+            ? normalized.streak
+            : 1,
+      lastVisitDate: todayKey(),
+    };
+    localSnapshot.current = nextState;
+    setState(nextState);
+    setLocalReady(true);
   }, [steps]);
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }, [state]);
+    if (
+      !localReady ||
+      (serverProgress && (mergeOffer || mergeDecision === "device"))
+    ) {
+      return;
+    }
+    const deviceState = serverProgress
+      ? preserveDeviceProgress(localSnapshot.current, state, steps)
+      : state;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(deviceState));
+    localSnapshot.current = deviceState;
+  }, [localReady, mergeDecision, mergeOffer, serverProgress, state, steps]);
 
-  const completedCount = state.completedStepIds?.length || state.completedSteps.length;
+  useEffect(() => {
+    if (!localReady || sessionPending) return;
+
+    if (!userId || !programId) {
+      setServerProgress(null);
+      setHasEnrollment(false);
+      setMergeOffer(false);
+      setHydrationStatus("ready");
+      setState(localSnapshot.current);
+      return;
+    }
+
+    let cancelled = false;
+    setServerProgress(null);
+    setHasEnrollment(false);
+    setMergeOffer(false);
+    setMergeDecision(null);
+    setState(localSnapshot.current);
+    setHydrationStatus("loading");
+    void progressRequest(
+      `/api/program/progress?programId=${encodeURIComponent(programId)}`,
+    )
+      .then((progress) => {
+        if (cancelled) return;
+        const decision = mergeMarkerKey
+          ? (window.localStorage.getItem(mergeMarkerKey) as
+              | "saved"
+              | "device"
+              | null)
+          : null;
+        setMergeDecision(decision);
+        setServerProgress(progress);
+        setHasEnrollment(Boolean(progress));
+        if (progress) {
+          setState((current) => applyServerProgress(current, progress, steps));
+        }
+        setMergeOffer(
+          !decision &&
+            shouldOfferProgressMerge(localSnapshot.current, progress, steps),
+        );
+        setHydrationStatus("ready");
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSaveStatus("error");
+        setSaveMessage("Account progress is unavailable. Device progress is still safe.");
+        setHydrationStatus("ready");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [localReady, mergeMarkerKey, programId, sessionPending, steps, userId]);
+
+  const progressSource = serverProgress ? "server" : "device";
+  const canonicalState =
+    progressSource === "server" && serverProgress
+      ? applyServerProgress(state, serverProgress, steps)
+      : state;
+  const completedCount =
+    canonicalState.completedStepIds?.length ||
+    canonicalState.completedSteps.length;
   const selectedScenario = state.scenarioAnswers[activeStep.day];
   const selectedQuiz = state.quizAnswers[activeStep.day];
   const exerciseAnswer = state.answers[`exercise-${activeStep.day}`] || "";
@@ -340,13 +478,185 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
 
   const xpAvailable = useMemo(() => stepXp(activeStep), [activeStep]);
 
-  function updateState(partial: Partial<ProgramState>) {
+  function updateState(partial: Partial<ProgramClientState>) {
     setState((current) => ({ ...current, ...partial }));
   }
 
+  async function saveAction(path: string, body: object) {
+    if (!hasEnrollment) return null;
+    setSaveStatus("saving");
+    setSaveMessage("Saving progress...");
+    try {
+      const progress = await progressRequest(path, body);
+      if (progress) {
+        setServerProgress(progress);
+        setState((current) => resolveProgressAfterSave(current, progress, steps));
+      }
+      setSaveStatus("saved");
+      setSaveMessage("Progress saved to your account.");
+      return progress;
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Could not save right now. Your device progress was not reset.");
+      return null;
+    }
+  }
+
+  async function startSavedProgress() {
+    if (!programId) return;
+    setSaveStatus("saving");
+    setSaveMessage("Starting saved progress...");
+    try {
+      const progress = await progressRequest("/api/program/progress/start", {
+        programId,
+      });
+      if (progress) {
+        setServerProgress(progress);
+        setHasEnrollment(true);
+        setState((current) => applyServerProgress(current, progress, steps));
+      }
+      setSaveStatus("saved");
+      setSaveMessage("Future completion progress will be saved to your account.");
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Could not start account saving. You can continue on this device.");
+    }
+  }
+
+  async function mergeProgress() {
+    if (!programId || !mergeMarkerKey) return;
+    setSaveStatus("saving");
+    setSaveMessage("Saving device progress to your account...");
+    try {
+      const progress = await progressRequest("/api/program/progress/merge", {
+        ...buildLocalMergePayload(programId, localSnapshot.current, steps),
+      });
+      if (progress) {
+        setServerProgress(progress);
+        setHasEnrollment(true);
+        setState((current) => applyServerProgress(current, progress, steps));
+      }
+      window.localStorage.setItem(mergeMarkerKey, "saved");
+      setMergeDecision("saved");
+      setMergeOffer(false);
+      setSaveStatus("saved");
+      setSaveMessage("Device progress was saved to your account.");
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Merge was not completed. Device progress remains unchanged.");
+    }
+  }
+
+  function keepProgressOnDevice() {
+    if (mergeMarkerKey) window.localStorage.setItem(mergeMarkerKey, "device");
+    setMergeDecision("device");
+    setMergeOffer(false);
+    setSaveStatus("idle");
+    setSaveMessage("The device copy was not merged and remains unchanged.");
+  }
+
+  function selectStep(day: number) {
+    const step = steps.find((item) => item.day === day);
+    updateState({ activeStep: day, activeStepId: step?.stableId });
+    const serverOrder = steps.findIndex(
+      (item) => item.stableId === serverProgress?.currentStepId,
+    );
+    const targetOrder = steps.findIndex((item) => item.day === day);
+    if (
+      hasEnrollment &&
+      programId &&
+      step?.stableId &&
+      targetOrder > serverOrder
+    ) {
+      void saveAction("/api/program/progress/current-step", {
+        programId,
+        stepId: step.stableId,
+      });
+    }
+  }
+
+  async function saveCompletedStep(
+    step: ProgramStep,
+    exerciseResponse: string,
+    scenarioAnswer: number,
+    quizAnswer: number,
+    programCompleted: boolean,
+  ) {
+    if (!hasEnrollment || !programId || !step.stableId) return;
+    setSaveStatus("saving");
+    setSaveMessage("Saving completed activities...");
+    try {
+      let progress: UserProgressResponse | null = null;
+      if (step.exerciseBlockId) {
+        progress = await progressRequest("/api/program/progress/exercise", {
+          programId,
+          blockId: step.exerciseBlockId,
+          response: exerciseResponse,
+        });
+      }
+      if (step.scenarioBlockId) {
+        progress = await progressRequest("/api/program/progress/scenario", {
+          programId,
+          blockId: step.scenarioBlockId,
+          answerIndex: scenarioAnswer,
+        });
+      }
+      if (step.quizBlockId) {
+        progress = await progressRequest("/api/program/progress/quiz", {
+          programId,
+          blockId: step.quizBlockId,
+          answerIndex: quizAnswer,
+        });
+      }
+      if (step.lessonId) {
+        progress = await progressRequest("/api/program/progress/lesson", {
+          programId,
+          lessonId: step.lessonId,
+        });
+      }
+      progress = await progressRequest("/api/program/progress/step", {
+        programId,
+        stepId: step.stableId,
+      });
+      if (programCompleted) {
+        progress = await progressRequest("/api/program/progress/complete", {
+          programId,
+        });
+      }
+      if (progress) {
+        setServerProgress(progress);
+        setState((current) => resolveProgressAfterSave(current, progress, steps));
+      }
+      setSaveStatus("saved");
+      setSaveMessage("Completion progress saved to your account.");
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Account save failed. Your device progress remains available.");
+    }
+  }
+
   function completeStep() {
-    const alreadyCompleted = activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day);
-    if (!canComplete || alreadyCompleted) return;
+    const alreadyCompleted = activeStep.stableId
+      ? state.completedStepIds?.includes(activeStep.stableId)
+      : state.completedSteps.includes(activeStep.day);
+    const completedOnServer = activeStep.stableId
+      ? serverProgress?.completedStepIds.includes(activeStep.stableId)
+      : false;
+    const needsAccountRetry = Boolean(
+      hasEnrollment && alreadyCompleted && !completedOnServer,
+    );
+    if (!canComplete || (alreadyCompleted && !needsAccountRetry)) return;
+
+    if (needsAccountRetry) {
+      void saveCompletedStep(
+        activeStep,
+        exerciseAnswer,
+        selectedScenario,
+        selectedQuiz,
+        state.completedSteps.length === steps.length,
+      );
+      return;
+    }
 
     const completedSteps = unique([...state.completedSteps, activeStep.day]).sort((a, b) => a - b);
     const completedStepIds = activeStep.stableId ? unique([...(state.completedStepIds || []), activeStep.stableId]) : state.completedStepIds;
@@ -366,11 +676,53 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
     }));
 
     if (newAchievement) setToast(newAchievement);
+
+    void saveCompletedStep(
+      activeStep,
+      exerciseAnswer,
+      selectedScenario,
+      selectedQuiz,
+      completedSteps.length === steps.length,
+    );
   }
 
   function resetProgress() {
     window.localStorage.removeItem(STORAGE_KEY);
-    setState({ ...initialState, lastVisitDate: todayKey() });
+    const reset = { ...initialProgramState, lastVisitDate: todayKey() };
+    localSnapshot.current = reset;
+    setState(
+      serverProgress ? applyServerProgress(reset, serverProgress, steps) : reset,
+    );
+  }
+
+  const waitingForHydration = Boolean(
+    !localReady ||
+      sessionPending ||
+      (userId && programId &&
+        (hydrationStatus === "idle" || hydrationStatus === "loading")),
+  );
+  const activeStepCompleted = activeStep.stableId
+    ? state.completedStepIds?.includes(activeStep.stableId)
+    : state.completedSteps.includes(activeStep.day);
+  const activeStepCompletedOnServer = activeStep.stableId
+    ? serverProgress?.completedStepIds.includes(activeStep.stableId)
+    : false;
+  const canRetryAccountSave = Boolean(
+    hasEnrollment && activeStepCompleted && !activeStepCompletedOnServer,
+  );
+
+  if (waitingForHydration) {
+    return (
+      <section className="pageShell">
+        <Container className="narrow">
+          <Card tone="soft">
+            <Badge tone="green">Program progress</Badge>
+            <h1>The SevenBet 10-Step Control Program</h1>
+            <p className="lead">Loading your saved progress...</p>
+          </Card>
+        </Container>
+      </section>
+    );
   }
 
   return (
@@ -389,15 +741,52 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
           </div>
           <div className="trustStrip">
             <Badge tone="green">5-10 minutes per step</Badge>
-            <Badge>Progress saved locally</Badge>
+            <Badge>{progressSource === "server" ? "Account progress active" : "Progress saved locally"}</Badge>
             <Badge tone="dark">Educational XP</Badge>
             <Badge tone="warning">No pressure to continue</Badge>
           </div>
         </Container>
       </section>
 
+      {mergeOffer && (
+        <Section eyebrow="Optional account saving" title="Save your progress to your account">
+          <Card className="verificationPanel" tone="soft">
+            <p className="muted">
+              You have progress on this device. Save verified completion facts to your account, or keep this device copy separate.
+            </p>
+            <div className="heroActions">
+              <button className="button gold" onClick={() => void mergeProgress()} type="button">
+                Save progress
+              </button>
+              <button className="button ghost" onClick={keepProgressOnDevice} type="button">
+                Keep on this device
+              </button>
+            </div>
+          </Card>
+        </Section>
+      )}
+
+      {userId && programId && !hasEnrollment && !mergeOffer && mergeDecision !== "device" && !hasLocalProgramProgress(state) && (
+        <Section eyebrow="Account progress" title="Save future progress across sessions">
+          <Card tone="soft">
+            <p className="muted">Starting account progress is optional. Nothing is created until you choose this action.</p>
+            <button className="button gold" onClick={() => void startSavedProgress()} type="button">
+              Start saved progress
+            </button>
+          </Card>
+        </Section>
+      )}
+
+      {(saveMessage || saveStatus !== "idle") && (
+        <Container>
+          <p className={`programSaveStatus ${saveStatus}`} role="status">
+            {saveMessage}
+          </p>
+        </Container>
+      )}
+
       <div id="program-dashboard">
-        <Dashboard steps={steps} state={state} onSelect={(step) => updateState({ activeStep: step, activeStepId: steps.find((item) => item.day === step)?.stableId })} />
+        <Dashboard steps={steps} state={canonicalState} source={progressSource} onSelect={selectStep} />
       </div>
 
       <Section eyebrow="Progress" title="Move through the steps at your own pace.">
@@ -407,13 +796,14 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
           total={steps.length}
           xp={state.xp}
           streak={state.streak}
+          source={progressSource}
         />
         <ProgressTimeline
           steps={steps}
           activeStep={state.activeStep}
-          completedSteps={state.completedSteps}
-          completedStepIds={state.completedStepIds}
-          onSelect={(step) => updateState({ activeStep: step, activeStepId: steps.find((item) => item.day === step)?.stableId })}
+          completedSteps={canonicalState.completedSteps}
+          completedStepIds={canonicalState.completedStepIds}
+          onSelect={selectStep}
         />
       </Section>
 
@@ -439,16 +829,40 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
           <ScenarioCard
             step={activeStep}
             selected={selectedScenario}
-            onSelect={(index) => updateState({
-              scenarioAnswers: { ...state.scenarioAnswers, [activeStep.day]: index },
-            })}
+            onSelect={(index) => {
+              updateState({
+                scenarioAnswers: {
+                  ...state.scenarioAnswers,
+                  [activeStep.day]: index,
+                },
+              });
+              if (hasEnrollment && programId && activeStep.scenarioBlockId) {
+                void saveAction("/api/program/progress/scenario", {
+                  programId,
+                  blockId: activeStep.scenarioBlockId,
+                  answerIndex: index,
+                });
+              }
+            }}
           />
           <QuizCard
             step={activeStep}
             selected={selectedQuiz}
-            onSelect={(index) => updateState({
-              quizAnswers: { ...state.quizAnswers, [activeStep.day]: index },
-            })}
+            onSelect={(index) => {
+              updateState({
+                quizAnswers: {
+                  ...state.quizAnswers,
+                  [activeStep.day]: index,
+                },
+              });
+              if (hasEnrollment && programId && activeStep.quizBlockId) {
+                void saveAction("/api/program/progress/quiz", {
+                  programId,
+                  blockId: activeStep.quizBlockId,
+                  answerIndex: index,
+                });
+              }
+            }}
           />
           <Card className="lessonCard" tone="soft">
             <Badge tone="green">Recap</Badge>
@@ -459,18 +873,22 @@ export function ProgramExperience({ steps = fallbackProgramSteps }: { steps?: Pr
             </ul>
             <button
               className="button gold"
-              disabled={!canComplete || (activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day))}
+              disabled={!canComplete || (activeStepCompleted && !canRetryAccountSave)}
               onClick={completeStep}
               type="button"
             >
-              {(activeStep.stableId ? state.completedStepIds?.includes(activeStep.stableId) : state.completedSteps.includes(activeStep.day)) ? "Step completed" : `Complete step (+${xpAvailable} XP)`}
+              {canRetryAccountSave
+                ? "Retry account save"
+                : activeStepCompleted
+                  ? "Step completed"
+                  : `Complete step (+${xpAvailable} XP)`}
             </button>
             {!canComplete && <p className="muted">Answer the exercise, scenario, and quiz to complete this step.</p>}
           </Card>
         </div>
       </Section>
 
-      {completedCount === steps.length && <CompletionScreen onRestart={resetProgress} />}
+      {completedCount === steps.length && <CompletionScreen onRestart={resetProgress} source={progressSource} />}
       <AchievementToast achievement={toast} onClose={() => setToast(undefined)} />
     </>
   );

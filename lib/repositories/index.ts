@@ -16,6 +16,7 @@ export {
   UserProgressRepository,
   userProgressRepository,
   type PublishedProgramProgressSource,
+  type MergeUserProgressInput,
   type RecordUserProgressEventInput,
   type StoredProgressEvent,
   type UserProgressEnrollment,

@@ -37,28 +37,29 @@ Route / future server action
 ```
 
 The client never chooses `userId`, `enrollmentId`, `programVersionId`, XP,
-achievement IDs, or completion truth. An enrollment is pinned to the published
-version selected by the server at start time. Later events are validated against
-that enrollment's immutable `ProgramVersion.snapshot`, not the editable draft.
+achievement IDs, event keys, or entity types. During an explicit local merge,
+the client may submit completion facts, but the server accepts only IDs found in
+the enrollment's published snapshot. An enrollment is pinned to the published
+version selected by the server at start time, not the editable draft.
 
 ## Endpoint and action contracts
 
-Only GET progress and POST start are exposed in this foundation. The remaining
-contracts define the next UI integration phase and should use the same handler,
-service, and repository pattern.
+All progress contracts below are now exposed through the same authenticated
+handler, service, and repository pattern. Each route resolves the Better Auth
+session before reading its payload and returns the normalized server DTO.
 
 | Action | Input | Authorization and validation | Idempotency and writes | Response / errors |
 | --- | --- | --- | --- | --- |
 | `GET /api/program/progress?programId=` | UUID query only | Better Auth user; reject `userId` and unknown query fields | Read own enrollment and ordered events | `{ok, progress|null}`; 401/422 |
 | `POST /api/program/progress/start` | `{programId}` | Better Auth user; program and exact current version must be published | Upsert on `(userId, programId)`; server selects version and first step | `{ok, progress}`; 401/404/422 |
 | `POST /api/program/progress/current-step` | `{programId, stepId}` | Step must exist in enrollment's published snapshot | Ownership-filtered update; repeating same step is safe | `{ok, progress}`; 401/404/422 |
-| `POST /api/program/progress/lesson/complete` | `{programId, lessonId}` | Lesson belongs to program; required interactive blocks are complete | `lesson:<lessonId>:completed`; unique per enrollment | `{ok, event}`; 401/404/409/422 |
+| `POST /api/program/progress/lesson` | `{programId, lessonId}` | Lesson belongs to program; required interactive blocks are complete | `lesson:<lessonId>:completed`; unique per enrollment | `{ok, progress}`; 401/404/409/422 |
 | `POST /api/program/progress/quiz` | `{programId, blockId, answerIndex}` | QUIZ block belongs to a lesson in the pinned snapshot; answer index is valid | `quiz:<blockId>:submitted`; first server event wins; correctness is derived server-side | `{ok, event}`; 401/404/422 |
 | `POST /api/program/progress/scenario` | `{programId, blockId, answerIndex}` | SCENARIO block belongs to the pinned snapshot | `scenario:<blockId>:submitted`; first event wins | `{ok, event}`; 401/404/422 |
 | `POST /api/program/progress/exercise` | `{programId, blockId, response}` | EXERCISE/REFLECTION/PRACTICAL_TASK block belongs to snapshot; 1-4000 characters | `exercise:<blockId>:completed`; first event wins | `{ok, event}`; 401/404/422 |
-| `POST /api/program/progress/step/complete` | `{programId, stepId}` | Step belongs to snapshot; required lessons are complete | `step:<stepId>:completed`; unique per enrollment | `{ok, event}`; 401/404/409/422 |
+| `POST /api/program/progress/step` | `{programId, stepId}` | Step belongs to snapshot; required lessons are complete | `step:<stepId>:completed`; unique per enrollment | `{ok, progress}`; 401/404/409/422 |
 | `POST /api/program/progress/complete` | `{programId}` | Every published step completion event exists | `program:<programId>:completed`, then set `completedAt` once | `{ok, progress}`; 401/404/409/422 |
-| `POST /api/program/progress/merge` | `{programId, currentStepId?, completedStepIds?, lessonIds?, quizAnswers?, scenarioAnswers?, exercises?}` | Better Auth user; every ID and answer validated against pinned snapshot; reject XP, achievements, version, enrollment, user ID | One transaction and marker `program:<programId>:anonymous-merge:v1`; server events win; insert only missing keys | `{ok, progress, merged}`; 401/404/409/422 |
+| `POST /api/program/progress/merge` | `{programId, currentStepId?, completedStepIds, completedLessonIds, completedQuizIds, completedScenarioIds, completedExerciseIds, programCompleted}` | Better Auth user; unknown or archived IDs are discarded; reject XP, achievements, version, enrollment, user ID | One transaction and marker `program:<programId>:anonymous-merge:v1`; server events win; insert only missing keys | `{ok, progress}`; 401/404/422 |
 
 Malformed JSON returns 400. Unexpected fields return 422. Missing authentication
 returns 401. An absent or foreign enrollment is returned as 404 without exposing
@@ -96,8 +97,8 @@ server event or double-award future XP.
    awards from newly inserted events only.
 7. Achievement IDs are not accepted. A future achievement engine derives unique
    awards from server events.
-8. The merge marker makes retries safe. The client clears or marks the local
-   payload as merged only after a successful transaction.
+8. The merge marker makes retries safe. The client marks the decision locally
+   after a successful transaction and does not delete the localStorage fallback.
 
 ## Foreign-key preflight and migration
 
@@ -118,9 +119,13 @@ The migration must be reviewed and applied manually only after a clean preflight
 
 ## Next UI phase
 
-The next phase should expose the remaining action routes, add a non-staff user
-login entry point, hydrate authenticated progress into `ProgramExperience`, and
-offer a deliberate local merge. The localStorage payload must remain the
-anonymous and offline fallback until production telemetry confirms the server
-path is reliable. XP and achievements should remain display-only until their
-server engines consume progress events idempotently.
+`ProgramExperience` now waits for Better Auth session resolution, hydrates an
+existing enrollment, and offers a deliberate merge only when the device copy is
+stronger. No enrollment or merge is created silently. A local decision marker
+prevents repeated prompts, while the original localStorage payload remains the
+anonymous/offline fallback. API failures leave client progress untouched.
+
+The next phase is the XP Engine. It should consume newly inserted progress
+events idempotently and derive awards from published `XpRule` records. Client XP
+and achievement values remain explicitly local until that engine and its
+backfill policy are production-ready.
