@@ -11,3 +11,13 @@ export {
   type CreateProgressEventInput,
   type EnrollmentWithProgress,
 } from "./program-progress.repository";
+
+export {
+  UserProgressRepository,
+  userProgressRepository,
+  type PublishedProgramProgressSource,
+  type RecordUserProgressEventInput,
+  type StoredProgressEvent,
+  type UserProgressEnrollment,
+  type UserProgressStore,
+} from "./user-progress.repository";

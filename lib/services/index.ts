@@ -22,6 +22,13 @@ export {
 } from "./program-progress.service";
 
 export {
+  UserProgressService,
+  userProgressService,
+  progressEventKey,
+  type UserProgressResponse,
+} from "./user-progress.service";
+
+export {
   ProgramBuilderService,
   programBuilderService,
 } from "./program-builder.service";
