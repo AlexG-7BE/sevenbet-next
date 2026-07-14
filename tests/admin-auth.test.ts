@@ -62,6 +62,15 @@ test("middleware redirects an anonymous admin page to login", () => {
   });
 });
 
+test("middleware allows the admin login page without a session", () => {
+  const response = middleware(
+    new NextRequest("http://localhost:4173/admin/login"),
+  );
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("x-middleware-next"), "1");
+});
+
 test("middleware allows a correctly gated legacy preview token", () => {
   withLegacyEnvironment(
     { enabled: "true", token: "configured-preview-token" },
@@ -128,6 +137,11 @@ test("admin callbacks reject external and non-admin destinations", () => {
   assert.equal(getSafeAdminCallback("//example.com/admin"), "/admin");
   assert.equal(getSafeAdminCallback("/catalog"), "/admin");
   assert.equal(getSafeAdminCallback("/administrator"), "/admin");
+  assert.equal(getSafeAdminCallback("/admin/login"), "/admin");
+  assert.equal(
+    getSafeAdminCallback("/admin/login?callbackUrl=%2Fadmin"),
+    "/admin",
+  );
   assert.equal(getSafeAdminCallback("/admin/programs?status=DRAFT"), "/admin/programs?status=DRAFT");
 });
 
