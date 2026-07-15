@@ -83,6 +83,14 @@ export interface CasinoPublishResult {
   version: CasinoVersion;
 }
 
+export interface CasinoRevisionWithAuthor {
+  revision: CasinoRevision;
+  author: {
+    name: string;
+    email: string;
+  } | null;
+}
+
 export interface CasinoStore {
   findAll(filters?: CasinoListFilters): Promise<CasinoListResult>;
   findById(id: string): Promise<CasinoAggregate | null>;
@@ -103,9 +111,15 @@ export interface CasinoStore {
     status: EditorialStatus,
     actorId: string,
     summary: string,
+    expectedUpdatedAt?: Date,
   ): Promise<CasinoAggregate>;
-  publishWithVersion(id: string, actorId: string): Promise<CasinoPublishResult>;
+  publishWithVersion(
+    id: string,
+    actorId: string,
+    expectedUpdatedAt?: Date,
+  ): Promise<CasinoPublishResult>;
   listRevisions(id: string): Promise<CasinoRevision[]>;
+  listRevisionsWithAuthors(id: string): Promise<CasinoRevisionWithAuthor[]>;
   listVersions(id: string): Promise<CasinoVersion[]>;
 }
 
@@ -289,6 +303,7 @@ export class CasinoRepository implements CasinoStore {
     status: EditorialStatus,
     actorId: string,
     summary: string,
+    expectedUpdatedAt?: Date,
   ) {
     return this.updateWithRevision(
       id,
@@ -301,13 +316,17 @@ export class CasinoRepository implements CasinoStore {
       },
       actorId,
       summary,
+      expectedUpdatedAt,
     );
   }
 
-  async publishWithVersion(id: string, actorId: string) {
+  async publishWithVersion(id: string, actorId: string, expectedUpdatedAt?: Date) {
     return prisma.$transaction(async (tx) => {
       const current = await findAggregate(tx, id);
       if (!current) throw new Error("CASINO_NOT_FOUND");
+      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        throw new Error("CASINO_EDIT_CONFLICT");
+      }
       if (
         current.status !== EditorialStatus.APPROVED &&
         current.status !== EditorialStatus.SCHEDULED
@@ -372,6 +391,28 @@ export class CasinoRepository implements CasinoStore {
       where: { casinoId: id },
       orderBy: { revisionNumber: "desc" },
     });
+  }
+
+  async listRevisionsWithAuthors(id: string) {
+    const revisions = await this.listRevisions(id);
+    const authors = await prisma.adminUser.findMany({
+      where: {
+        id: {
+          in: [...new Set(revisions.map((revision) => revision.createdBy))],
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    });
+    const authorsById = new Map(authors.map((author) => [author.id, author]));
+
+    return revisions.map((revision) => ({
+      revision,
+      author: authorsById.get(revision.createdBy) ?? null,
+    }));
   }
 
   async listVersions(id: string) {

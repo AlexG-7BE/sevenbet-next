@@ -1531,3 +1531,431 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
     min-width: 720px;
   }
 }
+
+/* Phase 3.2 Casino Builder */
+.casinoBuilder {
+  min-height: 100vh;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.casinoBuilderHeader {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 20px;
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  background: rgba(13, 27, 46, .96);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.casinoBuilderHeader h1 {
+  margin: 4px 0 10px;
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+}
+
+.casinoStatusBar {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .035);
+}
+
+.casinoStatusBar > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.casinoStatusBar button {
+  min-height: 38px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .045);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.casinoStatusBar button:hover:not(:disabled) {
+  border-color: var(--border-emerald);
+  color: var(--text);
+}
+
+.casinoStatusBar button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.casinoStatusBar small {
+  color: #ffd29a;
+}
+
+.casinoBuilderGrid {
+  display: grid;
+  grid-template-columns: minmax(240px, 290px) minmax(0, 1fr);
+  gap: 12px;
+  min-height: calc(100vh - 250px);
+}
+
+.casinoBuilderSidebar,
+.casinoBuilderEditor {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: rgba(17, 31, 53, .72);
+}
+
+.casinoBuilderSidebar {
+  position: sticky;
+  top: 146px;
+  align-self: start;
+  max-height: calc(100vh - 230px);
+  overflow: auto;
+}
+
+.casinoBuilderSidebar nav {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+}
+
+.casinoBuilderSidebar nav button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  color: var(--muted);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.casinoBuilderSidebar nav button:hover,
+.casinoBuilderSidebar nav button.active {
+  border-color: var(--border-emerald);
+  color: var(--text);
+  background: rgba(0, 226, 138, .08);
+}
+
+.casinoBuilderSidebar nav button span {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.casinoBuilderSidebar nav button strong,
+.casinoBuilderSidebar nav button small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.casinoBuilderSidebar nav button small {
+  color: var(--subtle);
+  font-size: .72rem;
+}
+
+.casinoBuilderSidebar nav button em {
+  min-width: 24px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, .07);
+  font-size: .7rem;
+  font-style: normal;
+  text-align: center;
+}
+
+.casinoBuilderEditor {
+  padding: 22px;
+}
+
+.casinoSectionLayout {
+  display: grid;
+  gap: 20px;
+}
+
+.casinoSectionLayout .builderSectionTitle p {
+  margin: 0;
+}
+
+.casinoSaveBar {
+  position: sticky;
+  bottom: 8px;
+  z-index: 18;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(13, 27, 46, .97);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(18px);
+}
+
+.casinoSaveBar > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.casinoSaveBar p {
+  margin: 0;
+  font-size: .85rem;
+}
+
+.casinoPlaceholder {
+  display: grid;
+  gap: 14px;
+}
+
+.casinoPlaceholder > .badge {
+  width: fit-content;
+}
+
+.casinoBuilderRecords {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.casinoBuilderRecords article {
+  display: grid;
+  grid-template-columns: minmax(160px, .7fr) minmax(0, 1fr);
+  gap: 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.casinoBuilderRecords article:first-child {
+  border-top: 0;
+}
+
+.casinoBuilderRecords span {
+  color: var(--muted);
+}
+
+.casinoPublishingGrid,
+.casinoPreviewGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.casinoFilters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 180px auto;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.casinoFilters input,
+.casinoFilters select {
+  width: 100%;
+  min-height: 44px;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, .055);
+  font: inherit;
+}
+
+.casinoAdminList {
+  display: grid;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.casinoAdminList article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.casinoAdminList article:first-child {
+  border-top: 0;
+}
+
+.casinoAdminList article > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.casinoPreviewHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 240px);
+  gap: 24px;
+  align-items: end;
+  padding: 72px 0 30px;
+}
+
+.casinoPreviewHero h1 {
+  margin: 8px 0 16px;
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  line-height: .96;
+}
+
+.casinoPreviewScore {
+  display: block;
+  margin: 10px 0;
+  font-size: 3.2rem;
+}
+
+.casinoDraftPreview {
+  min-height: 100vh;
+  padding-bottom: 72px;
+  background: var(--bg);
+}
+
+.casinoRevisionTable {
+  min-width: 820px;
+}
+
+.casinoRevisionRow {
+  display: grid;
+  grid-template-columns: 100px minmax(170px, 1fr) 180px 150px 140px;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 10px;
+  border-top: 1px solid var(--border);
+}
+
+.casinoRevisionRow:first-child {
+  border-top: 0;
+}
+
+.casinoRevisionRow.head {
+  color: var(--subtle);
+  font-size: .72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.casinoRevisionRow span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.casinoRevisionRow small {
+  overflow: hidden;
+  color: var(--subtle);
+  text-overflow: ellipsis;
+}
+
+.casinoBuilderState {
+  display: grid;
+  align-content: center;
+  gap: 14px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.casinoBuilderSkeleton {
+  min-height: 100px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .075), rgba(255, 255, 255, .035));
+  background-size: 200% 100%;
+  animation: casinoBuilderPulse 1.4s linear infinite;
+}
+
+.casinoBuilderSkeleton.tall {
+  min-height: 420px;
+}
+
+@keyframes casinoBuilderPulse {
+  to { background-position: -200% 0; }
+}
+
+@media (max-width: 900px) {
+  .casinoBuilder {
+    padding: 10px;
+  }
+
+  .casinoBuilderHeader,
+  .casinoSaveBar {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .casinoStatusBar,
+  .casinoBuilderGrid,
+  .casinoPublishingGrid,
+  .casinoPreviewGrid,
+  .casinoPreviewHero,
+  .casinoFilters,
+  .casinoAdminList article {
+    grid-template-columns: 1fr;
+  }
+
+  .casinoBuilderSidebar {
+    position: static;
+    max-height: none;
+  }
+
+  .casinoBuilderSidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .casinoStatusBar small {
+    grid-column: 1;
+  }
+
+  .casinoSaveBar > div {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .casinoAdminList article > div:last-child {
+    justify-content: flex-start;
+  }
+
+  .adminPanel:has(.casinoRevisionTable) {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .casinoBuilderSidebar nav,
+  .casinoBuilderRecords article,
+  .builderTwoCol {
+    grid-template-columns: 1fr;
+  }
+
+  .casinoBuilderEditor {
+    padding: 16px;
+  }
+}

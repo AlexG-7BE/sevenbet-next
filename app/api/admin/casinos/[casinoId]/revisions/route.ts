@@ -15,7 +15,7 @@ export async function GET(
   try {
     await requireAdminPermission(request, "casino.edit");
     const [revisions, versions] = await Promise.all([
-      casinoService.listRevisions(casinoId),
+      casinoService.getRevisionHistory(casinoId),
       casinoService.listVersions(casinoId),
     ]);
 

@@ -64,7 +64,11 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { ok: true, casino, source: "postgresql" },
+      {
+        ok: true,
+        casino: casinoService.toBuilderCasino(casino),
+        source: "postgresql",
+      },
       { status: 201 },
     );
   } catch (error) {

@@ -1,5 +1,10 @@
 import { EditorialStatus, Prisma } from "@prisma/client";
 
+import type {
+  CasinoBuilderCasino,
+  CasinoBuilderData,
+  CasinoRevisionHistoryItem,
+} from "@/lib/casino-builder/types";
 import {
   casinoRepository,
   type CasinoAggregate,
@@ -113,6 +118,16 @@ function cleanList(values: string[]) {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
+  return JSON.parse(JSON.stringify(casino)) as CasinoBuilderCasino;
+}
+
+function snapshotRecord(value: Prisma.JsonValue) {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Prisma.JsonObject
+    : {};
+}
+
 function repositoryError(error: unknown, id: string): never {
   if (error instanceof Error && error.message === "CASINO_NOT_FOUND") {
     throw new NotFoundError("Casino", { id });
@@ -145,6 +160,25 @@ export class CasinoService {
     const casino = await casinoRepository.findBySlug(normalizedSlug);
     if (!casino) throw new NotFoundError("Casino", { slug: normalizedSlug });
     return casino;
+  }
+
+  toBuilderCasino(casino: CasinoAggregate) {
+    return serializeCasino(casino);
+  }
+
+  async getBuilderData(id: string): Promise<CasinoBuilderData> {
+    const casino = await this.getCasinoById(id);
+    const [revisions, versions] = await Promise.all([
+      casinoRepository.listRevisions(id),
+      casinoRepository.listVersions(id),
+    ]);
+
+    return {
+      casino: serializeCasino(casino),
+      validation: this.validateForPublication(casino),
+      revisionCount: revisions.length,
+      versionCount: versions.length,
+    };
   }
 
   async getPublishedSnapshot(slug: string) {
@@ -302,9 +336,16 @@ export class CasinoService {
     return this.validateForPublication(await this.getCasinoById(id));
   }
 
-  async transitionWorkflow(id: string, target: EditorialStatus, actorId: string) {
+  async transitionWorkflow(
+    id: string,
+    target: EditorialStatus,
+    actorId: string,
+    expectedUpdatedAt?: Date,
+  ) {
     const casino = await this.getCasinoById(id);
-    if (target === EditorialStatus.PUBLISHED) return this.publishCasino(id, actorId);
+    if (target === EditorialStatus.PUBLISHED) {
+      throw new ValidationError("Use publishCasino for publication");
+    }
     if (target === EditorialStatus.SCHEDULED) {
       throw new ValidationError("Use scheduleCasino to provide a publication time");
     }
@@ -328,13 +369,19 @@ export class CasinoService {
         target,
         actorId,
         `Workflow changed from ${casino.status} to ${target}`,
+        expectedUpdatedAt,
       );
     } catch (error) {
       repositoryError(error, id);
     }
   }
 
-  async scheduleCasino(id: string, publishAt: Date, actorId: string) {
+  async scheduleCasino(
+    id: string,
+    publishAt: Date,
+    actorId: string,
+    expectedUpdatedAt?: Date,
+  ) {
     const casino = await this.getCasinoById(id);
     if (casino.status !== EditorialStatus.APPROVED) {
       throw new ConflictError("Only approved casinos can be scheduled", {
@@ -356,13 +403,14 @@ export class CasinoService {
         },
         actorId,
         `Scheduled publication for ${publishAt.toISOString()}`,
+        expectedUpdatedAt,
       );
     } catch (error) {
       repositoryError(error, id);
     }
   }
 
-  async publishCasino(id: string, actorId: string) {
+  async publishCasino(id: string, actorId: string, expectedUpdatedAt?: Date) {
     const casino = await this.getCasinoById(id);
     const validation = this.validateForPublication(casino);
     if (!validation.valid) {
@@ -379,7 +427,7 @@ export class CasinoService {
     }
 
     try {
-      return await casinoRepository.publishWithVersion(id, actorId);
+      return await casinoRepository.publishWithVersion(id, actorId, expectedUpdatedAt);
     } catch (error) {
       repositoryError(error, id);
     }
@@ -388,6 +436,29 @@ export class CasinoService {
   async listRevisions(id: string) {
     await this.getCasinoById(id);
     return casinoRepository.listRevisions(id);
+  }
+
+  async getRevisionHistory(id: string): Promise<CasinoRevisionHistoryItem[]> {
+    await this.getCasinoById(id);
+    const records = await casinoRepository.listRevisionsWithAuthors(id);
+
+    return records.map(({ revision, author }) => {
+      const snapshot = snapshotRecord(revision.snapshot);
+      return {
+        id: revision.id,
+        revisionNumber: revision.revisionNumber,
+        summary: revision.summary,
+        author: author?.name ?? revision.createdBy,
+        authorEmail: author?.email ?? null,
+        createdAt: revision.createdAt.toISOString(),
+        workflowStatus:
+          typeof snapshot.status === "string" ? snapshot.status : "UNKNOWN",
+        publishedVersion:
+          typeof snapshot.publishedVersion === "number"
+            ? snapshot.publishedVersion
+            : 0,
+      };
+    });
   }
 
   async listVersions(id: string) {

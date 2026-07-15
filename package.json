@@ -18,6 +18,7 @@
     "xp:test": "node --import tsx --test tests/xp-engine.test.ts",
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
     "casino:test": "node --import tsx --test tests/casino-foundation.test.ts",
+    "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

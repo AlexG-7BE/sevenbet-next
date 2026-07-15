@@ -27,8 +27,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
   try {
     await requireAdminPermission(request, "casino.edit");
-    const casino = await casinoService.getCasinoById(casinoId);
-    return NextResponse.json({ ok: true, casino, source: "postgresql" });
+    const data = await casinoService.getBuilderData(casinoId);
+    return NextResponse.json({ ok: true, ...data, source: "postgresql" });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to load casino");
   }
@@ -44,7 +44,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       lastReviewedAt?: string | null;
     };
 
-    const casino = await casinoService.updateCasino(casinoId, {
+    await casinoService.updateCasino(casinoId, {
       ...body,
       lastReviewedAt: optionalDate(body.lastReviewedAt, "lastReviewedAt"),
       expectedUpdatedAt: body.expectedUpdatedAt
@@ -53,7 +53,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       updatedBy: actor.id,
     });
 
-    return NextResponse.json({ ok: true, casino, source: "postgresql" });
+    const data = await casinoService.getBuilderData(casinoId);
+    return NextResponse.json({ ok: true, ...data, source: "postgresql" });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to update casino");
   }

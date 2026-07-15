@@ -1,11 +1,12 @@
 # Casino CMS Foundation
 
-Phase 3.1 introduces an additive PostgreSQL domain for casino editorial content. It does not switch the current public pages or admin UI to the new data source.
+Phase 3.1 introduced the additive PostgreSQL domain for casino editorial content. Phase 3.2 adds the Casino Builder shell without switching public casino pages to the new source.
 
 ## Compatibility boundary
 
 - Public `/casinos` and `/casino/[slug]` pages continue to read `data/casinos.json`.
-- The Phase 1 admin casino page continues to read the in-memory CMS repository.
+- `/admin/casinos` and its Builder routes read through `CasinoService` and the PostgreSQL repository.
+- The legacy generic casino API remains available only for compatibility while the old CMS entities are retired in a later phase.
 - Existing `Bonus` and `AffiliateLink` tables remain unchanged.
 - New structured offers use `CasinoBonus` and `CasinoAffiliateLink`.
 - The new server API is available under `/api/admin/casinos` after migration `0006_casino_foundation` is applied in a later controlled step.
@@ -129,13 +130,13 @@ URLs and domains are normalized before persistence. Content edits are accepted o
 | `POST` | `/api/admin/casinos/[casinoId]/action` | Review, approval, scheduling, publishing and archive workflow. |
 | `GET` | `/api/admin/casinos/[casinoId]/revisions` | Read revision and published-version history. |
 
-The endpoints use the existing Better Auth dual-auth guard and the existing `casino.edit` permission. More granular casino view, review and publish permissions can be introduced with the Builder UI phase.
+The endpoints use the existing Better Auth dual-auth guard and the existing `casino.edit` permission. More granular casino view, review and publish permissions can be introduced before the deep editor rollout.
 
 ## Deferred work
 
 - Apply migration `0006_casino_foundation` in a controlled deployment step.
 - Import or reconcile the static JSON and legacy CMS casino records.
 - Add child-entity mutation commands and restore-revision behavior.
-- Build the Casino Builder UI.
-- Switch admin and public reads only after import verification and parity tests.
+- Replace the read-only section placeholders with dedicated SEO, license, country, payment, provider, category, bonus, affiliate and media editors.
+- Switch public reads only after import verification and parity tests.
 - Add granular casino workflow permissions before production editor rollout.
