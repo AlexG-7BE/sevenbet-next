@@ -5,14 +5,30 @@ import { useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 
 import { Badge, Card } from "@/components/ui";
+import { GameCategoryEditor, GameProviderEditor, PaymentEditor } from "@/components/admin/casino-editors/CatalogueEditors";
+import { CountryEditor, LicenseEditor } from "@/components/admin/casino-editors/ComplianceEditors";
+import { EditorField } from "@/components/admin/casino-editors/EditorFields";
+import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
 import type {
   CasinoBuilderCasino,
   CasinoBuilderData,
   CasinoBuilderSection,
+  CasinoCoreDraft,
 } from "@/lib/casino-builder/types";
 
 type SaveState = "saved" | "unsaved" | "saving" | "error";
+
+function responseError(result: { error?: string; details?: unknown }, fallback: string) {
+  if (!Array.isArray(result.details)) return result.error || fallback;
+  const fieldErrors = result.details
+    .filter((entry): entry is { path: string; message: string } =>
+      Boolean(entry) && typeof entry === "object" && "path" in entry && "message" in entry,
+    )
+    .slice(0, 4)
+    .map((entry) => `${entry.path}: ${entry.message}`);
+  return fieldErrors.length ? `${result.error || fallback} · ${fieldErrors.join(" · ")}` : result.error || fallback;
+}
 
 function countForSection(section: CasinoBuilderSection, data: CasinoBuilderData) {
   const { casino } = data;
@@ -190,65 +206,6 @@ export function CasinoSaveBar({
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  type = "text",
-  hint,
-}: {
-  label: string;
-  value: string | number;
-  onChange: (value: string) => void;
-  type?: string;
-  hint?: string;
-}) {
-  return (
-    <label className="builderField">
-      <span>{label}</span>
-      <input type={type} value={value} onChange={(event) => onChange(event.target.value)} />
-      {hint && <small>{hint}</small>}
-    </label>
-  );
-}
-
-function TextArea({ label, value, onChange, rows = 4 }: { label: string; value: string; onChange: (value: string) => void; rows?: number }) {
-  return (
-    <label className="builderField">
-      <span>{label}</span>
-      <textarea rows={rows} value={value} onChange={(event) => onChange(event.target.value)} />
-    </label>
-  );
-}
-
-function GeneralSection({ casino, onChange }: { casino: CasinoBuilderCasino; onChange: (casino: CasinoBuilderCasino) => void }) {
-  const set = <K extends keyof CasinoBuilderCasino>(key: K, value: CasinoBuilderCasino[K]) => {
-    onChange({ ...casino, [key]: value });
-  };
-
-  return (
-    <CasinoSectionLayout title="General" description="Core identity and plain editorial fields. Rating and rich text controls are intentionally deferred." badge="Editable">
-      <div className="builderForm">
-        <div className="builderTwoCol">
-          <Field label="Internal name" value={casino.internalName ?? ""} onChange={(value) => set("internalName", value)} />
-          <Field label="Public title" value={casino.title} onChange={(value) => set("title", value)} />
-          <Field label="Slug" value={casino.slug} onChange={(value) => set("slug", value)} />
-          <Field label="Domain" value={casino.domain} onChange={(value) => set("domain", value)} />
-          <Field label="Website URL" value={casino.websiteUrl ?? ""} onChange={(value) => set("websiteUrl", value)} />
-          <Field label="Operator" value={casino.operator ?? ""} onChange={(value) => set("operator", value)} />
-          <Field label="Founded year" type="number" value={casino.foundedYear ?? ""} onChange={(value) => set("foundedYear", value ? Number(value) : null)} />
-          <Field label="Primary language" value={casino.language} onChange={(value) => set("language", value)} />
-          <Field label="Languages" value={casino.languages.join(", ")} onChange={(value) => set("languages", value.split(","))} hint="Comma-separated ISO language codes." />
-          <Field label="Currencies" value={casino.currencies.join(", ")} onChange={(value) => set("currencies", value.split(","))} hint="Comma-separated ISO currency codes." />
-        </div>
-        <Field label="Tagline" value={casino.tagline ?? ""} onChange={(value) => set("tagline", value)} />
-        <TextArea label="Editorial summary" value={casino.summary ?? ""} onChange={(value) => set("summary", value)} />
-        <TextArea label="Plain review description" rows={8} value={casino.description ?? ""} onChange={(value) => set("description", value)} />
-      </div>
-    </CasinoSectionLayout>
-  );
-}
-
 function PlaceholderNotice({ children }: { children: ReactNode }) {
   return (
     <Card className="casinoPlaceholder" tone="soft">
@@ -273,39 +230,9 @@ function RecordList({ records, empty }: { records: Array<{ id: string; title: st
   );
 }
 
-function ReadOnlySection({ section, data }: { section: Exclude<CasinoBuilderSection, "general" | "publishing" | "history">; data: CasinoBuilderData }) {
+function ReadOnlySection({ section, data }: { section: "bonuses" | "affiliate-links" | "media"; data: CasinoBuilderData }) {
   const { casino } = data;
   const config: Record<typeof section, { title: string; description: string; content: ReactNode }> = {
-    seo: {
-      title: "SEO",
-      description: "Current search, canonical and social metadata.",
-      content: <RecordList empty="No SEO record exists yet." records={casino.seo ? [{ id: casino.seo.id, title: casino.seo.title || "Untitled SEO record", detail: casino.seo.canonicalUrl || casino.seo.robots }] : []} />,
-    },
-    licenses: {
-      title: "Licenses",
-      description: "Licensing authorities and verification status.",
-      content: <RecordList empty="No licenses recorded." records={casino.licenses.map((item) => ({ id: item.id, title: item.authority, detail: `${item.status} · ${item.licenseNumber || "Number not recorded"}` }))} />,
-    },
-    countries: {
-      title: "Countries",
-      description: "Availability and restriction records.",
-      content: <RecordList empty="No country rules recorded." records={casino.countries.map((item) => ({ id: item.id, title: item.countryCode, detail: `${item.availability}${item.minimumAge ? ` · ${item.minimumAge}+` : ""}` }))} />,
-    },
-    payments: {
-      title: "Payments",
-      description: "Deposit and withdrawal method coverage.",
-      content: <RecordList empty="No payment methods recorded." records={casino.paymentMethods.map((item) => ({ id: item.id, title: item.name, detail: `${item.supportsDeposits ? "Deposits" : "No deposits"} · ${item.supportsWithdrawals ? "Withdrawals" : "No withdrawals"}` }))} />,
-    },
-    "game-providers": {
-      title: "Game Providers",
-      description: "Provider coverage and verification metadata.",
-      content: <RecordList empty="No game providers recorded." records={casino.gameProviders.map((item) => ({ id: item.id, title: item.name, detail: `${item.gameCount ?? "Unknown"} games${item.liveCasino ? " · Live casino" : ""}` }))} />,
-    },
-    "game-categories": {
-      title: "Game Categories",
-      description: "Ordered categories used by comparison pages.",
-      content: <RecordList empty="No game categories recorded." records={casino.gameCategories.map((item) => ({ id: item.id, title: item.name, detail: `${item.gameCount ?? "Unknown"} games${item.featured ? " · Featured" : ""}` }))} />,
-    },
     bonuses: {
       title: "Bonuses",
       description: "Structured welcome and promotional offer records.",
@@ -332,14 +259,17 @@ function ReadOnlySection({ section, data }: { section: Exclude<CasinoBuilderSect
 }
 
 function PublishingSection({ data }: { data: CasinoBuilderData }) {
+  const blockers = data.validation.issues.filter((issue) => issue.severity === "error");
+  const warnings = data.validation.issues.filter((issue) => issue.severity === "warning");
   return (
     <CasinoSectionLayout title="Publishing" description="Workflow status, immutable version pointers and publication validation." badge="Workflow ready">
       <div className="casinoPublishingGrid">
         <Card>
-          <Badge tone={data.validation.valid ? "green" : "warning"}>{data.validation.valid ? "Ready for review" : `${data.validation.issues.length} blockers`}</Badge>
+          <Badge tone={data.validation.valid ? "green" : "warning"}>{data.validation.valid ? "Ready for review" : `${blockers.length} blockers`}</Badge>
           <h3>Publication validation</h3>
-          {data.validation.issues.map((issue) => <p className="muted" key={`${issue.path}-${issue.message}`}><strong>{issue.path}:</strong> {issue.message}</p>)}
+          {data.validation.issues.map((issue) => <p className={issue.severity === "warning" ? "casinoEditorWarning" : "muted"} key={`${issue.code}-${issue.path}`}><strong>{issue.path}:</strong> {issue.message}</p>)}
           {!data.validation.issues.length && <p className="muted">No publication blockers found.</p>}
+          {warnings.length > 0 && <p className="muted">Warnings do not block workflow, but should be reviewed.</p>}
         </Card>
         <Card>
           <h3>Version pointers</h3>
@@ -410,7 +340,7 @@ export function CasinoBuilderLayout({
   async function readServerCopy() {
     const response = await fetch(`/api/admin/casinos/${data.casino.id}`, { cache: "no-store" });
     const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Unable to load casino");
+    if (!response.ok) throw new Error(responseError(result, "Unable to load casino"));
     const next: CasinoBuilderData = {
       casino: result.casino,
       validation: result.validation,
@@ -438,29 +368,40 @@ export function CasinoBuilderLayout({
     setSaveState("saving");
     setMessage("Saving draft and creating a revision...");
     const { casino } = data;
+    const draft: CasinoCoreDraft = {
+      slug: casino.slug,
+      internalName: casino.internalName,
+      title: casino.title,
+      domain: casino.domain,
+      websiteUrl: casino.websiteUrl,
+      operator: casino.operator,
+      tagline: casino.tagline,
+      summary: casino.summary,
+      description: casino.description,
+      foundedYear: casino.foundedYear,
+      language: casino.language,
+      languages: casino.languages,
+      currencies: casino.currencies,
+      editorScore: casino.editorScore,
+      generalMetadata: casino.generalMetadata,
+      licenses: casino.licenses,
+      countries: casino.countries,
+      paymentMethods: casino.paymentMethods,
+      gameProviders: casino.gameProviders,
+      gameCategories: casino.gameCategories,
+      seo: casino.seo,
+    };
     try {
       const response = await fetch(`/api/admin/casinos/${casino.id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          slug: casino.slug,
-          internalName: casino.internalName,
-          title: casino.title,
-          domain: casino.domain,
-          websiteUrl: casino.websiteUrl,
-          operator: casino.operator,
-          tagline: casino.tagline,
-          summary: casino.summary,
-          description: casino.description,
-          foundedYear: casino.foundedYear,
-          language: casino.language,
-          languages: casino.languages,
-          currencies: casino.currencies,
+          draft,
           expectedUpdatedAt: casino.updatedAt,
         }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Unable to save casino");
+      if (!response.ok) throw new Error(responseError(result, "Unable to save casino"));
       setData({
         casino: result.casino,
         validation: result.validation,
@@ -486,7 +427,7 @@ export function CasinoBuilderLayout({
         body: JSON.stringify({ action, expectedUpdatedAt: data.casino.updatedAt }),
       });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Workflow action failed");
+      if (!response.ok) throw new Error(responseError(result, "Workflow action failed"));
       setData((current) => ({ ...current, casino: result.casino }));
       await readServerCopy();
       setMessage(`Workflow action completed: ${action}.`);
@@ -509,11 +450,17 @@ export function CasinoBuilderLayout({
       <div className="casinoBuilderGrid">
         <CasinoSidebar activeSection={activeSection} data={data} onSelect={selectSection} />
         <main className="casinoBuilderEditor" aria-label={`${activeDefinition.label} editor`}>
-          {activeSection === "general" && <GeneralSection casino={data.casino} onChange={changeCasino} />}
+          {activeSection === "general" && <CasinoSectionLayout title="General" description="Identity, scores and internal editorial settings." badge="Editable"><GeneralEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "seo" && <CasinoSectionLayout title="SEO" description="Search, canonical, social and structured metadata." badge="Editable"><SeoEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "licenses" && <CasinoSectionLayout title="Licenses" description="Regulators, verification details and license lifecycle." badge="Editable"><LicenseEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "countries" && <CasinoSectionLayout title="Countries" description="Deterministic availability, legal age and locale rules." badge="Editable"><CountryEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "payments" && <CasinoSectionLayout title="Payments" description="Deposit and withdrawal capabilities, limits, fees and coverage." badge="Editable"><PaymentEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "game-providers" && <CasinoSectionLayout title="Game Providers" description="Provider coverage, verification and ordering." badge="Editable"><GameProviderEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "game-categories" && <CasinoSectionLayout title="Game Categories" description="Ordered catalogue categories and references." badge="Editable"><GameCategoryEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
-          {!(["general", "publishing", "history"] as CasinoBuilderSection[]).includes(activeSection) && (
-            <ReadOnlySection section={activeSection as Exclude<CasinoBuilderSection, "general" | "publishing" | "history">} data={data} />
+          {(["bonuses", "affiliate-links", "media"] as CasinoBuilderSection[]).includes(activeSection) && (
+            <ReadOnlySection section={activeSection as "bonuses" | "affiliate-links" | "media"} data={data} />
           )}
         </main>
       </div>
@@ -555,9 +502,9 @@ export function NewCasinoForm() {
 
   return (
     <form className="builderForm" onSubmit={submit}>
-      <Field label="Casino title" value={title} onChange={(value) => { setTitle(value); if (!slug) setSlug(slugify(value)); }} />
-      <Field label="Slug" value={slug} onChange={(value) => setSlug(slugify(value))} />
-      <Field label="Domain" value={domain} onChange={setDomain} hint="Enter the operator domain without a path." />
+      <EditorField label="Casino title" value={title} onChange={(value) => { setTitle(value); if (!slug) setSlug(slugify(value)); }} />
+      <EditorField label="Slug" value={slug} onChange={(value) => setSlug(slugify(value))} />
+      <EditorField label="Domain" value={domain} onChange={setDomain} hint="Enter the operator domain without a path." />
       {error && <p className="builderError" role="alert">{error}</p>}
       <button className="button gold" disabled={submitting} type="submit">
         {submitting ? "Creating..." : "Create casino draft"}

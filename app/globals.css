@@ -1736,6 +1736,132 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   width: fit-content;
 }
 
+.casinoEditorCollection,
+.casinoEditorRecord,
+.casinoEditorRecord > header > div:first-child,
+.casinoSeoPreview {
+  display: grid;
+  gap: 12px;
+}
+
+.casinoEditorToolbar,
+.casinoEditorRecord > header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.casinoEditorToolbar {
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.casinoEditorRecord {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.casinoEditorRecord.archived {
+  opacity: .66;
+  background: rgba(255, 255, 255, .012);
+}
+
+.casinoEditorRecord > header > div:first-child {
+  gap: 2px;
+}
+
+.casinoEditorRecord > header > div:first-child span {
+  color: var(--subtle);
+  font-size: .78rem;
+  text-transform: uppercase;
+}
+
+.casinoEditorRecord > header > div:last-child,
+.casinoEditorChecks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.casinoEditorRecord .button {
+  min-height: 38px;
+  padding: 8px 11px;
+}
+
+.casinoEditorRecord .button.danger {
+  color: #ffb4b4;
+}
+
+.casinoEditorCheckbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 44px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .035);
+  cursor: pointer;
+}
+
+.casinoEditorCheckbox input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: var(--emerald);
+}
+
+.casinoEditorCheckbox span {
+  display: grid;
+  gap: 2px;
+}
+
+.casinoEditorCheckbox small {
+  color: var(--subtle);
+}
+
+.casinoEditorWarning {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 188, 82, .25);
+  border-radius: 10px;
+  color: #ffd29a;
+  background: rgba(255, 188, 82, .07);
+}
+
+.casinoEditorEmpty {
+  padding: 32px;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  text-align: center;
+}
+
+.casinoSeoPreview {
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .03);
+}
+
+.casinoSeoPreview span {
+  color: var(--subtle);
+  font-size: .82rem;
+}
+
+.casinoSeoPreview strong {
+  color: #b9d7ff;
+  font-size: 1.25rem;
+}
+
+.casinoSeoPreview p {
+  max-width: 70ch;
+  margin: 0;
+  color: var(--muted);
+}
+
 .casinoBuilderRecords {
   display: grid;
   border: 1px solid var(--border);
@@ -1939,6 +2065,12 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
     flex-wrap: wrap;
   }
 
+  .casinoEditorToolbar,
+  .casinoEditorRecord > header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
   .casinoAdminList article > div:last-child {
     justify-content: flex-start;
   }
@@ -1957,5 +2089,15 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
   .casinoBuilderEditor {
     padding: 16px;
+  }
+
+  .casinoEditorRecord {
+    padding: 14px;
+  }
+
+  .casinoEditorToolbar .button,
+  .casinoEditorRecord > header > div:last-child,
+  .casinoEditorRecord > header > div:last-child .button {
+    width: 100%;
   }
 }

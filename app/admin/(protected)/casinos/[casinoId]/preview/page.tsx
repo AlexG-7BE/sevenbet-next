@@ -12,6 +12,7 @@ export const metadata: Metadata = {
 export default async function CasinoPreviewPage({ params }: { params: Promise<{ casinoId: string }> }) {
   const { casinoId } = await params;
   const { casino, validation } = await loadCasinoBuilderData(casinoId);
+  const blockers = validation.issues.filter((issue) => issue.severity === "error");
 
   return (
     <div className="adminPreview casinoDraftPreview">
@@ -31,7 +32,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
             <div className="badgeCluster">
               <Badge>{casino.domain}</Badge>
               <Badge>{casino.operator || "Operator not recorded"}</Badge>
-              <Badge tone={validation.valid ? "green" : "warning"}>{validation.valid ? "Publication checks passed" : `${validation.issues.length} blockers`}</Badge>
+              <Badge tone={validation.valid ? "green" : "warning"}>{validation.valid ? "Publication checks passed" : `${blockers.length} blockers`}</Badge>
             </div>
           </div>
           <Card>
@@ -43,9 +44,14 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
 
         <div className="casinoPreviewGrid">
           <Card><h2>Overview</h2><p className="muted">{casino.description || "No review description has been added."}</p></Card>
-          <Card><h2>Licensing</h2><p className="muted">{casino.licenses.length ? casino.licenses.map((item) => `${item.authority}: ${item.status}`).join(" · ") : "No structured licenses recorded."}</p></Card>
-          <Card><h2>Payments</h2><p className="muted">{casino.paymentMethods.length ? casino.paymentMethods.map((item) => item.name).join(", ") : "No payment methods recorded."}</p></Card>
+          <Card><h2>Licensing</h2><p className="muted">{casino.licenses.length ? casino.licenses.filter((item) => !item.archived).map((item) => `${item.authority}: ${item.status}${item.verified ? " · verified" : ""}`).join(" · ") : "No structured licenses recorded."}</p></Card>
+          <Card><h2>Countries</h2><p className="muted">{casino.countries.length ? casino.countries.filter((item) => !item.archived).map((item) => `${item.countryCode}: ${item.availability.replaceAll("_", " ")}`).join(" · ") : "No country availability records."}</p></Card>
+          <Card><h2>Payments</h2><p className="muted">{casino.paymentMethods.length ? casino.paymentMethods.filter((item) => !item.archived).map((item) => `${item.name} (${item.type.replaceAll("_", " ")})`).join(", ") : "No payment methods recorded."}</p></Card>
+          <Card><h2>Game providers</h2><p className="muted">{casino.gameProviders.length ? casino.gameProviders.filter((item) => !item.archived).map((item) => `${item.name}${item.gameCount === null ? "" : ` · ${item.gameCount} games`}`).join(", ") : "No game providers recorded."}</p></Card>
+          <Card><h2>Game categories</h2><p className="muted">{casino.gameCategories.length ? casino.gameCategories.filter((item) => !item.archived).map((item) => item.name).join(", ") : "No game categories recorded."}</p></Card>
           <Card><h2>Responsible gambling</h2><p className="muted">{casino.responsibleGamblingTools.length ? casino.responsibleGamblingTools.join(", ") : "No responsible gambling tools recorded."}</p></Card>
+          <Card><h2>Score breakdown</h2><p className="muted">Trust {casino.generalMetadata.trustScore ?? "--"} · UX {casino.generalMetadata.userExperienceScore ?? "--"} · Payments {casino.generalMetadata.paymentsScore ?? "--"} · Games {casino.generalMetadata.gamesScore ?? "--"} · Support {casino.generalMetadata.supportScore ?? "--"}</p></Card>
+          <Card><h2>SEO preview</h2><p><strong>{casino.seo?.title || casino.title}</strong></p><p className="muted">{casino.seo?.description || casino.summary || "No SEO description."}</p><p className="muted">{casino.seo?.canonicalUrl || casino.websiteUrl || casino.domain} · {casino.seo?.robots || "index,follow"}</p></Card>
         </div>
       </Container>
     </div>

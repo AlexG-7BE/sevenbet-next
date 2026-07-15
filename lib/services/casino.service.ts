@@ -1,10 +1,27 @@
-import { EditorialStatus, Prisma } from "@prisma/client";
+import { CasinoCountryAvailability, EditorialStatus, Prisma } from "@prisma/client";
 
 import type {
   CasinoBuilderCasino,
   CasinoBuilderData,
+  CasinoCoreDraft,
   CasinoRevisionHistoryItem,
 } from "@/lib/casino-builder/types";
+import {
+  isValidDomain,
+  normalizeCasinoCoreDraft,
+  normalizeDomain,
+  normalizeHttpUrl,
+  normalizeSlug,
+  parseStructuredData,
+  publicationWarnings,
+  validateCasinoCoreDraft,
+} from "@/lib/casino-builder/core-validation";
+import {
+  emptyGeneralMetadata,
+  readCasinoEditorMetadata,
+  writeCasinoEditorMetadata,
+  type CasinoEditorMetadata,
+} from "@/lib/casino-builder/editor-metadata";
 import {
   casinoRepository,
   type CasinoAggregate,
@@ -56,6 +73,8 @@ export interface UpdateCasinoInput {
 export interface CasinoValidationIssue {
   path: string;
   message: string;
+  severity: "error" | "warning";
+  code: string;
 }
 
 export interface CasinoValidationResult {
@@ -72,46 +91,8 @@ const allowedTransitions: Record<EditorialStatus, EditorialStatus[]> = {
   ARCHIVED: [EditorialStatus.DRAFT],
 };
 
-function normalizeSlug(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
-function normalizeDomain(value: string) {
-  const candidate = value.trim().toLowerCase();
-
-  try {
-    const parsed = new URL(candidate.includes("://") ? candidate : `https://${candidate}`);
-    return parsed.hostname.replace(/^www\./, "").replace(/\.$/, "");
-  } catch {
-    return "";
-  }
-}
-
-function isValidDomain(value: string) {
-  if (value.length > 253 || !value.includes(".")) return false;
-
-  return value.split(".").every(
-    (label) =>
-      label.length > 0 &&
-      label.length <= 63 &&
-      /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label),
-  );
-}
-
 function normalizeUrl(value: string | undefined, domain: string) {
-  const candidate = value?.trim() || `https://${domain}`;
-
-  try {
-    const parsed = new URL(candidate);
-    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
-    return parsed.toString().replace(/\/$/, "");
-  } catch {
-    return null;
-  }
+  return normalizeHttpUrl(value, `https://${domain}`);
 }
 
 function cleanList(values: string[]) {
@@ -119,7 +100,66 @@ function cleanList(values: string[]) {
 }
 
 function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
-  return JSON.parse(JSON.stringify(casino)) as CasinoBuilderCasino;
+  const serialized = JSON.parse(JSON.stringify(casino)) as Omit<CasinoBuilderCasino, "generalMetadata"> & {
+    reviewBlocks?: Prisma.JsonValue;
+  };
+  const metadata = readCasinoEditorMetadata(casino.reviewBlocks);
+  delete serialized.reviewBlocks;
+
+  serialized.licenses = serialized.licenses.map((record) => ({
+    ...record,
+    issuedAt: record.issuedAt ?? null,
+    expiresAt: record.expiresAt ?? null,
+    notes: record.notes ?? null,
+    verified: Boolean(record.lastVerifiedAt),
+    archived: metadata.licenses[record.id]?.archived ?? record.status === "ARCHIVED",
+  }));
+  serialized.countries = serialized.countries
+    .map((record) => ({
+      ...record,
+      currency: metadata.countries[record.id]?.currency ?? null,
+      language: metadata.countries[record.id]?.language ?? null,
+      priority: metadata.countries[record.id]?.priority ?? 0,
+      archived: metadata.countries[record.id]?.archived ?? false,
+    }))
+    .sort((a, b) => a.priority - b.priority || a.countryCode.localeCompare(b.countryCode));
+  serialized.paymentMethods = serialized.paymentMethods.map((record) => ({
+    ...record,
+    maximumDeposit: metadata.payments[record.id]?.maximumDeposit ?? null,
+    depositFee: metadata.payments[record.id]?.depositFee ?? null,
+    withdrawalFee: metadata.payments[record.id]?.withdrawalFee ?? null,
+    type: metadata.payments[record.id]?.type ?? (record.crypto ? "CRYPTO" : "OTHER"),
+    countries: metadata.payments[record.id]?.countries ?? [],
+    verified: metadata.payments[record.id]?.verified ?? false,
+    notes: metadata.payments[record.id]?.notes ?? null,
+    archived: metadata.payments[record.id]?.archived ?? false,
+  }));
+  serialized.gameProviders = serialized.gameProviders.map((record) => ({
+    ...record,
+    featured: metadata.providers[record.id]?.featured ?? false,
+    verified: Boolean(record.verifiedAt),
+    archived: metadata.providers[record.id]?.archived ?? false,
+  }));
+  serialized.gameCategories = serialized.gameCategories.map((record) => ({
+    ...record,
+    icon: metadata.categories[record.id]?.icon ?? null,
+    archived: metadata.categories[record.id]?.archived ?? false,
+  }));
+  serialized.seo = serialized.seo
+    ? {
+        ...serialized.seo,
+        structuredData: casino.seo?.structuredData
+          ? JSON.stringify(casino.seo.structuredData, null, 2)
+          : "",
+        robotsIndex: !serialized.seo.robots.includes("noindex"),
+        robotsFollow: !serialized.seo.robots.includes("nofollow"),
+      }
+    : null;
+
+  return {
+    ...serialized,
+    generalMetadata: { ...emptyGeneralMetadata, ...metadata.general },
+  };
 }
 
 function snapshotRecord(value: Prisma.JsonValue) {
@@ -142,6 +182,91 @@ function repositoryError(error: unknown, id: string): never {
     throw new ConflictError("Casino must be approved before publication", { id });
   }
   throw error;
+}
+
+function coreDraftFromCasino(casino: CasinoBuilderCasino): CasinoCoreDraft {
+  return {
+    slug: casino.slug,
+    internalName: casino.internalName,
+    title: casino.title,
+    domain: casino.domain,
+    websiteUrl: casino.websiteUrl,
+    operator: casino.operator,
+    tagline: casino.tagline,
+    summary: casino.summary,
+    description: casino.description,
+    foundedYear: casino.foundedYear,
+    language: casino.language,
+    languages: casino.languages,
+    currencies: casino.currencies,
+    editorScore: casino.editorScore,
+    generalMetadata: casino.generalMetadata,
+    licenses: casino.licenses,
+    countries: casino.countries,
+    paymentMethods: casino.paymentMethods,
+    gameProviders: casino.gameProviders,
+    gameCategories: casino.gameCategories,
+    seo: casino.seo,
+  };
+}
+
+function requireCoreDraftShape(value: CasinoCoreDraft) {
+  const isRecord = (record: unknown): record is Record<string, unknown> => Boolean(record) && typeof record === "object" && !Array.isArray(record);
+  const hasStrings = (record: unknown, keys: string[]) => isRecord(record) && keys.every((key) => typeof record[key] === "string");
+  if (
+    !value ||
+    typeof value !== "object" ||
+    !hasStrings(value, ["slug", "title", "domain", "language"]) ||
+    !isRecord(value.generalMetadata) ||
+    !Array.isArray(value.languages) ||
+    !value.languages.every((entry) => typeof entry === "string") ||
+    !Array.isArray(value.currencies) ||
+    !value.currencies.every((entry) => typeof entry === "string") ||
+    !Array.isArray(value.licenses) ||
+    !value.licenses.every((entry) => hasStrings(entry, ["id", "authority", "status"])) ||
+    !Array.isArray(value.countries) ||
+    !value.countries.every((entry) => hasStrings(entry, ["id", "countryCode", "availability"])) ||
+    !Array.isArray(value.paymentMethods) ||
+    !value.paymentMethods.every((entry) => hasStrings(entry, ["id", "methodKey", "name", "type"])) ||
+    !Array.isArray(value.gameProviders) ||
+    !value.gameProviders.every((entry) => hasStrings(entry, ["id", "providerKey", "name"])) ||
+    !Array.isArray(value.gameCategories)
+    || !value.gameCategories.every((entry) => hasStrings(entry, ["id", "categoryKey", "name"]))
+  ) {
+    throw new ValidationError("Casino core draft has an invalid shape");
+  }
+}
+
+function metadataFromDraft(draft: CasinoCoreDraft): CasinoEditorMetadata {
+  return {
+    version: 1,
+    general: draft.generalMetadata,
+    licenses: Object.fromEntries(draft.licenses.map((record) => [record.id, { archived: record.archived }])),
+    countries: Object.fromEntries(draft.countries.map((record) => [record.id, {
+      currency: record.currency,
+      language: record.language,
+      priority: record.priority,
+      archived: record.archived,
+    }])),
+    payments: Object.fromEntries(draft.paymentMethods.map((record) => [record.id, {
+      maximumDeposit: record.maximumDeposit,
+      depositFee: record.depositFee,
+      withdrawalFee: record.withdrawalFee,
+      type: record.type,
+      countries: record.countries,
+      verified: record.verified,
+      notes: record.notes,
+      archived: record.archived,
+    }])),
+    providers: Object.fromEntries(draft.gameProviders.map((record) => [record.id, {
+      featured: record.featured,
+      archived: record.archived,
+    }])),
+    categories: Object.fromEntries(draft.gameCategories.map((record) => [record.id, {
+      icon: record.icon,
+      archived: record.archived,
+    }])),
+  };
 }
 
 export class CasinoService {
@@ -316,20 +441,188 @@ export class CasinoService {
     }
   }
 
-  validateForPublication(casino: CasinoAggregate): CasinoValidationResult {
-    const issues: CasinoValidationIssue[] = [];
-    if (!casino.title.trim()) issues.push({ path: "title", message: "Title is required" });
-    if (!isValidDomain(casino.domain)) issues.push({ path: "domain", message: "A valid domain is required" });
-    if (!casino.summary?.trim()) issues.push({ path: "summary", message: "Editorial summary is required" });
-    if (!casino.description?.trim()) issues.push({ path: "description", message: "Review description is required" });
-    if (casino.editorScore === null) issues.push({ path: "editorScore", message: "Editor score is required" });
-    if (!casino.licenses.some((license) => license.status.toUpperCase() === "ACTIVE") && !casino.license?.trim()) {
-      issues.push({ path: "licenses", message: "At least one active or legacy license record is required" });
+  async saveCoreDraft(
+    id: string,
+    input: CasinoCoreDraft,
+    actorId: string,
+    expectedUpdatedAt?: Date,
+  ) {
+    requireCoreDraftShape(input);
+    const current = await this.getCasinoById(id);
+    if (current.status !== EditorialStatus.DRAFT) {
+      throw new ConflictError("Return the casino to draft before editing", {
+        id,
+        currentStatus: current.status,
+      });
     }
-    if (!casino.seo?.title?.trim()) issues.push({ path: "seo.title", message: "SEO title is required" });
-    if (!casino.seo?.description?.trim()) issues.push({ path: "seo.description", message: "SEO description is required" });
 
-    return { valid: issues.length === 0, issues };
+    const draft = normalizeCasinoCoreDraft(input);
+    const issues = validateCasinoCoreDraft(draft);
+    if (issues.length) {
+      throw new ValidationError("Casino draft contains invalid fields", issues);
+    }
+    if (await casinoRepository.existsBySlug(draft.slug, id)) {
+      throw new ConflictError("A casino with this slug already exists", { slug: draft.slug });
+    }
+    if (await casinoRepository.existsByDomain(draft.domain, id)) {
+      throw new ConflictError("A casino with this domain already exists", { domain: draft.domain });
+    }
+
+    const currentLicenses = new Map(current.licenses.map((record) => [record.id, record]));
+    const currentProviders = new Map(current.gameProviders.map((record) => [record.id, record]));
+    const metadata = metadataFromDraft(draft);
+    const structuredData = draft.seo ? parseStructuredData(draft.seo.structuredData) : null;
+
+    try {
+      return await casinoRepository.updateWithRevision(
+        id,
+        {
+          slug: draft.slug,
+          internalName: draft.internalName,
+          title: draft.title,
+          domain: draft.domain,
+          websiteUrl: draft.websiteUrl,
+          operator: draft.operator,
+          tagline: draft.tagline,
+          summary: draft.summary,
+          description: draft.description,
+          foundedYear: draft.foundedYear,
+          language: draft.language,
+          languages: draft.languages,
+          currencies: draft.currencies,
+          editorScore: draft.editorScore,
+          reviewBlocks: writeCasinoEditorMetadata(current.reviewBlocks, metadata),
+          updatedBy: actorId,
+          licenses: {
+            deleteMany: {},
+            create: draft.licenses.map((record) => ({
+              id: record.id,
+              authority: record.authority,
+              licenseNumber: record.licenseNumber,
+              jurisdiction: record.jurisdiction,
+              status: record.archived ? "ARCHIVED" : record.status,
+              verificationUrl: record.verificationUrl,
+              issuedAt: record.issuedAt ? new Date(record.issuedAt) : null,
+              expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+              lastVerifiedAt: record.verified
+                ? currentLicenses.get(record.id)?.lastVerifiedAt ?? new Date()
+                : null,
+              notes: record.notes,
+            })),
+          },
+          countries: {
+            deleteMany: {},
+            create: draft.countries.map((record) => ({
+              id: record.id,
+              countryCode: record.countryCode,
+              availability: record.availability as CasinoCountryAvailability,
+              minimumAge: record.minimumAge,
+              notes: record.notes,
+            })),
+          },
+          paymentMethods: {
+            deleteMany: {},
+            create: draft.paymentMethods.map((record) => ({
+              id: record.id,
+              methodKey: record.methodKey,
+              name: record.name,
+              supportsDeposits: record.supportsDeposits,
+              supportsWithdrawals: record.supportsWithdrawals,
+              currencies: record.currencies,
+              minimumDeposit: record.minimumDeposit,
+              minimumWithdrawal: record.minimumWithdrawal,
+              maximumWithdrawal: record.maximumWithdrawal,
+              depositProcessingTime: record.depositProcessingTime,
+              withdrawalTime: record.withdrawalTime,
+              fees: record.fees,
+              crypto: record.type === "CRYPTO" || record.crypto,
+              sortOrder: record.sortOrder,
+            })),
+          },
+          gameProviders: {
+            deleteMany: {},
+            create: draft.gameProviders.map((record) => ({
+              id: record.id,
+              providerKey: record.providerKey,
+              name: record.name,
+              websiteUrl: record.websiteUrl,
+              gameCount: record.gameCount,
+              liveCasino: record.liveCasino,
+              verifiedAt: record.verified
+                ? currentProviders.get(record.id)?.verifiedAt ?? new Date()
+                : null,
+              sortOrder: record.sortOrder,
+            })),
+          },
+          gameCategories: {
+            deleteMany: {},
+            create: draft.gameCategories.map((record) => ({
+              id: record.id,
+              categoryKey: record.categoryKey,
+              name: record.name,
+              gameCount: record.gameCount,
+              featured: record.featured,
+              sortOrder: record.sortOrder,
+            })),
+          },
+          seo: draft.seo
+            ? {
+                upsert: {
+                  create: {
+                    title: draft.seo.title,
+                    description: draft.seo.description,
+                    canonicalUrl: draft.seo.canonicalUrl,
+                    robots: draft.seo.robots,
+                    socialTitle: draft.seo.socialTitle,
+                    socialDescription: draft.seo.socialDescription,
+                    socialImage: draft.seo.socialImage,
+                    structuredData: structuredData ?? Prisma.DbNull,
+                  },
+                  update: {
+                    title: draft.seo.title,
+                    description: draft.seo.description,
+                    canonicalUrl: draft.seo.canonicalUrl,
+                    robots: draft.seo.robots,
+                    socialTitle: draft.seo.socialTitle,
+                    socialDescription: draft.seo.socialDescription,
+                    socialImage: draft.seo.socialImage,
+                    structuredData: structuredData ?? Prisma.DbNull,
+                  },
+                },
+              }
+            : current.seo
+              ? { delete: true }
+              : undefined,
+        },
+        actorId,
+        "Saved core casino editors",
+        expectedUpdatedAt,
+      );
+    } catch (error) {
+      repositoryError(error, id);
+    }
+  }
+
+  validateForPublication(casino: CasinoAggregate): CasinoValidationResult {
+    const builderCasino = serializeCasino(casino);
+    const draft = coreDraftFromCasino(builderCasino);
+    const issues: CasinoValidationIssue[] = publicationWarnings(draft);
+    const blocker = (path: string, message: string, code: string) => issues.push({ path, message, code, severity: "error" });
+    if (!casino.title.trim()) blocker("general.title", "Title is required", "TITLE_REQUIRED");
+    if (!isValidDomain(casino.domain)) blocker("general.domain", "A valid domain is required", "INVALID_DOMAIN");
+    if (!casino.summary?.trim()) blocker("general.summary", "Editorial summary is required", "SUMMARY_REQUIRED");
+    if (!casino.description?.trim()) blocker("general.description", "Review description is required", "DESCRIPTION_REQUIRED");
+    if (casino.editorScore === null) blocker("general.editorScore", "Editor score is required", "EDITOR_SCORE_REQUIRED");
+    if (!draft.licenses.some((license) => !license.archived && license.status === "ACTIVE") && !casino.license?.trim()) {
+      blocker("licenses", "At least one active or legacy license record is required", "ACTIVE_LICENSE_REQUIRED");
+    }
+    if (!draft.countries.some((country) => !country.archived && country.availability === CasinoCountryAvailability.AVAILABLE)) {
+      blocker("countries", "At least one active country is required", "ACTIVE_COUNTRY_REQUIRED");
+    }
+    if (!casino.seo?.title?.trim()) blocker("seo.title", "SEO title is required", "SEO_TITLE_REQUIRED");
+    if (!casino.seo?.description?.trim()) blocker("seo.description", "SEO description is required", "SEO_DESCRIPTION_REQUIRED");
+
+    return { valid: !issues.some((entry) => entry.severity === "error"), issues };
   }
 
   async validateCasino(id: string) {

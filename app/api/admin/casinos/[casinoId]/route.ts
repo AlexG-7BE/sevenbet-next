@@ -5,16 +5,15 @@ import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
 import {
   casinoService,
   ValidationError,
-  type UpdateCasinoInput,
 } from "@/lib/services";
+import type { SaveCasinoCoreDraftInput } from "@/lib/casino-builder/types";
 
 export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ casinoId: string }> };
 
-function optionalDate(value: string | null | undefined, field: string) {
+function optionalDate(value: string | undefined, field: string) {
   if (value === undefined) return undefined;
-  if (value === null) return null;
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     throw new ValidationError(`${field} must be a valid ISO date`);
@@ -39,19 +38,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   try {
     const actor = await requireAdminPermission(request, "casino.edit");
-    const body = (await request.json()) as Omit<UpdateCasinoInput, "updatedBy" | "expectedUpdatedAt" | "lastReviewedAt"> & {
-      expectedUpdatedAt?: string;
-      lastReviewedAt?: string | null;
-    };
+    const body = (await request.json()) as SaveCasinoCoreDraftInput;
 
-    await casinoService.updateCasino(casinoId, {
-      ...body,
-      lastReviewedAt: optionalDate(body.lastReviewedAt, "lastReviewedAt"),
-      expectedUpdatedAt: body.expectedUpdatedAt
-        ? optionalDate(body.expectedUpdatedAt, "expectedUpdatedAt") ?? undefined
-        : undefined,
-      updatedBy: actor.id,
-    });
+    await casinoService.saveCoreDraft(
+      casinoId,
+      body.draft,
+      actor.id,
+      optionalDate(body.expectedUpdatedAt, "expectedUpdatedAt"),
+    );
 
     const data = await casinoService.getBuilderData(casinoId);
     return NextResponse.json({ ok: true, ...data, source: "postgresql" });

@@ -19,6 +19,7 @@
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
     "casino:test": "node --import tsx --test tests/casino-foundation.test.ts",
     "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
+    "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

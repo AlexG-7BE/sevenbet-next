@@ -31,6 +31,10 @@ export interface CasinoBuilderCountry {
   availability: string;
   minimumAge: number | null;
   notes: string | null;
+  currency: string | null;
+  language: string | null;
+  priority: number;
+  archived: boolean;
 }
 
 export interface CasinoBuilderLicense {
@@ -40,7 +44,12 @@ export interface CasinoBuilderLicense {
   jurisdiction: string | null;
   status: string;
   verificationUrl: string | null;
+  issuedAt: string | null;
+  expiresAt: string | null;
   lastVerifiedAt: string | null;
+  notes: string | null;
+  verified: boolean;
+  archived: boolean;
 }
 
 export interface CasinoBuilderPaymentMethod {
@@ -53,9 +62,17 @@ export interface CasinoBuilderPaymentMethod {
   minimumDeposit: string | null;
   minimumWithdrawal: string | null;
   maximumWithdrawal: string | null;
+  maximumDeposit: string | null;
   depositProcessingTime: string | null;
   withdrawalTime: string | null;
   fees: string | null;
+  depositFee: string | null;
+  withdrawalFee: string | null;
+  type: string;
+  countries: string[];
+  verified: boolean;
+  notes: string | null;
+  archived: boolean;
   crypto: boolean;
   sortOrder: number;
 }
@@ -67,6 +84,9 @@ export interface CasinoBuilderGameProvider {
   websiteUrl: string | null;
   gameCount: number | null;
   liveCasino: boolean;
+  featured: boolean;
+  verified: boolean;
+  archived: boolean;
   verifiedAt: string | null;
   sortOrder: number;
 }
@@ -77,6 +97,8 @@ export interface CasinoBuilderGameCategory {
   name: string;
   gameCount: number | null;
   featured: boolean;
+  icon: string | null;
+  archived: boolean;
   sortOrder: number;
 }
 
@@ -131,6 +153,21 @@ export interface CasinoBuilderSeo {
   socialTitle: string | null;
   socialDescription: string | null;
   socialImage: string | null;
+  structuredData: string;
+  robotsIndex: boolean;
+  robotsFollow: boolean;
+}
+
+export interface CasinoBuilderGeneralMetadata {
+  trustScore: number | null;
+  userExperienceScore: number | null;
+  paymentsScore: number | null;
+  gamesScore: number | null;
+  supportScore: number | null;
+  responsibleGamblingScore: number | null;
+  featured: boolean;
+  recommended: boolean;
+  internalNotes: string | null;
 }
 
 export interface CasinoBuilderCasino {
@@ -149,6 +186,7 @@ export interface CasinoBuilderCasino {
   languages: string[];
   currencies: string[];
   editorScore: number | null;
+  generalMetadata: CasinoBuilderGeneralMetadata;
   license: string | null;
   country: string | null;
   pros: string[];
@@ -179,6 +217,8 @@ export interface CasinoBuilderCasino {
 export interface CasinoBuilderValidationIssue {
   path: string;
   message: string;
+  severity: "error" | "warning";
+  code: string;
 }
 
 export interface CasinoBuilderData {
@@ -189,6 +229,36 @@ export interface CasinoBuilderData {
   };
   revisionCount: number;
   versionCount: number;
+}
+
+export type CasinoCoreDraft = Pick<
+  CasinoBuilderCasino,
+  | "slug"
+  | "internalName"
+  | "title"
+  | "domain"
+  | "websiteUrl"
+  | "operator"
+  | "tagline"
+  | "summary"
+  | "description"
+  | "foundedYear"
+  | "language"
+  | "languages"
+  | "currencies"
+  | "editorScore"
+  | "generalMetadata"
+  | "licenses"
+  | "countries"
+  | "paymentMethods"
+  | "gameProviders"
+  | "gameCategories"
+  | "seo"
+>;
+
+export interface SaveCasinoCoreDraftInput {
+  draft: CasinoCoreDraft;
+  expectedUpdatedAt?: string;
 }
 
 export interface CasinoRevisionHistoryItem {
