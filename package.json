@@ -17,6 +17,7 @@
     "progress:test": "node --import tsx --test tests/user-progress.test.ts",
     "xp:test": "node --import tsx --test tests/xp-engine.test.ts",
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
+    "casino:test": "node --import tsx --test tests/casino-foundation.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

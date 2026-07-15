@@ -35,6 +35,7 @@ export {
 
 export * from "./xp.service";
 export * from "./achievement.service";
+export * from "./casino.service";
 
 export {
   programSnapshotToPublicSteps,

@@ -26,3 +26,4 @@ export {
 export * from "./xp.repository";
 export * from "./achievement.repository";
 export * from "./reward-transaction.repository";
+export * from "./casino.repository";
