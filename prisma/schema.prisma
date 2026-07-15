@@ -57,6 +57,38 @@ enum CasinoAffiliateLinkType {
   OTHER
 }
 
+enum AffiliateNetworkType {
+  EVERFLOW
+  INCOME_ACCESS
+  MYAFFILIATES
+  NETREFER
+  DIRECT
+  OTHER
+}
+
+enum AffiliateStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  EXPIRED
+  ARCHIVED
+}
+
+enum AffiliatePayoutModel {
+  CPA
+  CPL
+  REV_SHARE
+  HYBRID
+  FLAT
+  UNKNOWN
+}
+
+enum AffiliateGeoMode {
+  GLOBAL
+  ALLOW
+  BLOCK
+}
+
 enum AdminRole {
   SUPER_ADMIN
   ADMIN
@@ -479,19 +511,20 @@ model Casino {
   createdBy                String
   updatedBy                String
 
-  bonuses        Bonus[]
-  affiliateLinks AffiliateLink[]
-  versions       CasinoVersion[]
-  revisions      CasinoRevision[]
-  images         CasinoImage[]
-  countries      CasinoCountry[]
-  licenses       CasinoLicense[]
-  paymentMethods CasinoPaymentMethod[]
-  gameProviders  CasinoGameProvider[]
-  gameCategories CasinoGameCategory[]
-  casinoBonuses  CasinoBonus[]
-  casinoLinks    CasinoAffiliateLink[]
-  seo            CasinoSeo?
+  bonuses         Bonus[]
+  affiliateLinks  AffiliateLink[]
+  versions        CasinoVersion[]
+  revisions       CasinoRevision[]
+  images          CasinoImage[]
+  countries       CasinoCountry[]
+  licenses        CasinoLicense[]
+  paymentMethods  CasinoPaymentMethod[]
+  gameProviders   CasinoGameProvider[]
+  gameCategories  CasinoGameCategory[]
+  casinoBonuses   CasinoBonus[]
+  casinoLinks     CasinoAffiliateLink[]
+  affiliateOffers AffiliateOffer[]
+  seo             CasinoSeo?
 }
 
 model CasinoVersion {
@@ -670,8 +703,9 @@ model CasinoBonus {
   createdBy           String
   updatedBy           String
 
-  casino         Casino                @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  affiliateLinks CasinoAffiliateLink[]
+  casino          Casino                @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  affiliateLinks  CasinoAffiliateLink[]
+  affiliateOffers AffiliateOffer[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -703,6 +737,200 @@ model CasinoAffiliateLink {
 
   @@index([casinoId, status, priority])
   @@index([casinoBonusId])
+}
+
+model AffiliateNetwork {
+  id            String               @id @default(uuid()) @db.Uuid
+  name          String
+  slug          String               @unique
+  type          AffiliateNetworkType @default(OTHER)
+  websiteUrl    String?
+  apiCapable    Boolean              @default(false)
+  exportCapable Boolean              @default(false)
+  active        Boolean              @default(true)
+  notes         String?
+  archivedAt    DateTime?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  createdBy     String
+  updatedBy     String
+
+  programs AffiliateProgram[]
+
+  @@index([active, name])
+}
+
+model AffiliateProgram {
+  id                  String          @id @default(uuid()) @db.Uuid
+  networkId           String          @db.Uuid
+  externalProgramId   String?
+  name                String
+  operator            String
+  status              AffiliateStatus @default(DRAFT)
+  accountReference    String?
+  supportedCountries  String[]        @default([])
+  supportedCurrencies String[]        @default([])
+  notes               String?
+  archivedAt          DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  createdBy           String
+  updatedBy           String
+
+  network AffiliateNetwork @relation(fields: [networkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  offers  AffiliateOffer[]
+
+  @@unique([networkId, externalProgramId])
+  @@index([networkId, status])
+  @@index([operator])
+}
+
+model AffiliateOffer {
+  id                     String               @id @default(uuid()) @db.Uuid
+  programId              String               @db.Uuid
+  casinoId               String               @db.Uuid
+  casinoBonusId          String?              @db.Uuid
+  externalOfferId        String?
+  internalName           String
+  publicLabel            String
+  offerType              String
+  status                 AffiliateStatus      @default(DRAFT)
+  payoutModel            AffiliatePayoutModel @default(UNKNOWN)
+  payoutAmount           Decimal?             @db.Decimal(14, 2)
+  payoutCurrency         String?
+  revenueSharePercentage Decimal?             @db.Decimal(5, 2)
+  hybridTerms            String?
+  cookieDurationDays     Int?
+  geoMode                AffiliateGeoMode     @default(GLOBAL)
+  startAt                DateTime?
+  expiresAt              DateTime?
+  evergreen              Boolean              @default(false)
+  featured               Boolean              @default(false)
+  priority               Int                  @default(0)
+  terms                  String?
+  notes                  String?
+  archivedAt             DateTime?
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  createdBy              String
+  updatedBy              String
+
+  program       AffiliateProgram         @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino        Casino                   @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus   CasinoBonus?             @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  countries     AffiliateOfferCountry[]
+  currencies    AffiliateOfferCurrency[]
+  trackingLinks AffiliateTrackingLink[]
+  revisions     AffiliateOfferRevision[]
+
+  @@unique([programId, externalOfferId])
+  @@index([casinoId, status, priority])
+  @@index([casinoBonusId, status])
+  @@index([programId, status])
+  @@index([status, startAt, expiresAt])
+}
+
+model AffiliateOfferCountry {
+  id          String           @id @default(uuid()) @db.Uuid
+  offerId     String           @db.Uuid
+  countryCode String
+  mode        AffiliateGeoMode
+
+  offer AffiliateOffer @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([offerId, countryCode])
+  @@index([countryCode, mode])
+}
+
+model AffiliateOfferCurrency {
+  id           String @id @default(uuid()) @db.Uuid
+  offerId      String @db.Uuid
+  currencyCode String
+
+  offer AffiliateOffer @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([offerId, currencyCode])
+  @@index([currencyCode])
+}
+
+model AffiliateTrackingLink {
+  id                String           @id @default(uuid()) @db.Uuid
+  offerId           String           @db.Uuid
+  externalLinkId    String?
+  label             String
+  destinationUrl    String
+  trackingUrl       String
+  landingPage       String?
+  geoMode           AffiliateGeoMode @default(GLOBAL)
+  currencyCode      String?
+  deviceTarget      String           @default("ALL")
+  language          String?
+  promoCode         String?
+  campaign          String?
+  creativeReference String?
+  verifiedAt        DateTime?
+  lastCheckedAt     DateTime?
+  expiresAt         DateTime?
+  active            Boolean          @default(false)
+  priority          Int              @default(0)
+  source            String           @default("MANUAL")
+  archivedAt        DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  createdBy         String
+  updatedBy         String
+
+  offer     AffiliateOffer                  @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  countries AffiliateTrackingLinkCountry[]
+  revisions AffiliateTrackingLinkRevision[]
+
+  @@unique([offerId, externalLinkId])
+  @@index([offerId, active, priority])
+  @@index([currencyCode, active])
+  @@index([expiresAt])
+}
+
+model AffiliateTrackingLinkCountry {
+  id             String           @id @default(uuid()) @db.Uuid
+  trackingLinkId String           @db.Uuid
+  countryCode    String
+  mode           AffiliateGeoMode
+
+  trackingLink AffiliateTrackingLink @relation(fields: [trackingLinkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([trackingLinkId, countryCode])
+  @@index([countryCode, mode])
+}
+
+model AffiliateOfferRevision {
+  id             String   @id @default(uuid()) @db.Uuid
+  offerId        String   @db.Uuid
+  revisionNumber Int
+  snapshot       Json
+  summary        String
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  offer AffiliateOffer @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([offerId, revisionNumber])
+  @@index([offerId, createdAt])
+}
+
+model AffiliateTrackingLinkRevision {
+  id             String   @id @default(uuid()) @db.Uuid
+  trackingLinkId String   @db.Uuid
+  revisionNumber Int
+  destinationUrl String
+  trackingUrl    String
+  summary        String
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  trackingLink AffiliateTrackingLink @relation(fields: [trackingLinkId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([trackingLinkId, revisionNumber])
+  @@index([trackingLinkId, createdAt])
 }
 
 model CasinoSeo {
