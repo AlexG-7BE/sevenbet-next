@@ -91,6 +91,12 @@ export interface CasinoRevisionWithAuthor {
   } | null;
 }
 
+export interface CasinoBonusIdentity {
+  id: string;
+  casinoId: string;
+  slug: string;
+}
+
 export interface CasinoStore {
   findAll(filters?: CasinoListFilters): Promise<CasinoListResult>;
   findById(id: string): Promise<CasinoAggregate | null>;
@@ -99,6 +105,7 @@ export interface CasinoStore {
   create(data: Prisma.CasinoCreateInput, actorId: string): Promise<CasinoAggregate>;
   existsBySlug(slug: string, excludeCasinoId?: string): Promise<boolean>;
   existsByDomain(domain: string, excludeCasinoId?: string): Promise<boolean>;
+  findBonusIdentities(ids: string[], slugs: string[]): Promise<CasinoBonusIdentity[]>;
   updateWithRevision(
     id: string,
     data: Prisma.CasinoUpdateInput,
@@ -262,6 +269,19 @@ export class CasinoRepository implements CasinoStore {
     );
   }
 
+  async findBonusIdentities(ids: string[], slugs: string[]) {
+    if (!ids.length && !slugs.length) return [];
+    return prisma.casinoBonus.findMany({
+      where: {
+        OR: [
+          ...(ids.length ? [{ id: { in: ids } }] : []),
+          ...(slugs.length ? [{ slug: { in: slugs } }] : []),
+        ],
+      },
+      select: { id: true, casinoId: true, slug: true },
+    });
+  }
+
   async updateWithRevision(
     id: string,
     data: Prisma.CasinoUpdateInput,
@@ -310,6 +330,7 @@ export class CasinoRepository implements CasinoStore {
       {
         status,
         updatedBy: actorId,
+        casinoBonuses: { updateMany: { where: {}, data: { status } } },
         ...(status === EditorialStatus.ARCHIVED
           ? { archivedAt: new Date() }
           : { archivedAt: null }),
@@ -346,6 +367,10 @@ export class CasinoRepository implements CasinoStore {
           snapshot: snapshot({
             ...current,
             status: EditorialStatus.PUBLISHED,
+            casinoBonuses: current.casinoBonuses.map((bonus) => ({
+              ...bonus,
+              status: EditorialStatus.PUBLISHED,
+            })),
             publishedVersion: versionNumber,
             publishedAt,
             scheduledPublishAt: null,
@@ -367,6 +392,12 @@ export class CasinoRepository implements CasinoStore {
           scheduledPublishAt: null,
           archivedAt: null,
           updatedBy: actorId,
+          casinoBonuses: {
+            updateMany: {
+              where: {},
+              data: { status: EditorialStatus.PUBLISHED },
+            },
+          },
         },
         include: casinoAggregateInclude,
       });

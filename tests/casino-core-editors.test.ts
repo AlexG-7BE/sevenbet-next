@@ -129,6 +129,7 @@ function draft(): CasinoCoreDraft {
       archived: false,
       sortOrder: 1,
     }],
+    casinoBonuses: [],
   };
 }
 

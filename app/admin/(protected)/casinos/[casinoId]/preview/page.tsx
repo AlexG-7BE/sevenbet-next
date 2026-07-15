@@ -13,6 +13,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
   const { casinoId } = await params;
   const { casino, validation } = await loadCasinoBuilderData(casinoId);
   const blockers = validation.issues.filter((issue) => issue.severity === "error");
+  const activeBonuses = casino.casinoBonuses.filter((bonus) => bonus.offerStatus === "ACTIVE");
 
   return (
     <div className="adminPreview casinoDraftPreview">
@@ -41,6 +42,43 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
             <span className="muted">out of 10</span>
           </Card>
         </header>
+
+        <section className="casinoPreviewBonuses" aria-labelledby="draft-bonuses-title">
+          <div>
+            <p className="eyebrow">Active draft offers</p>
+            <h2 id="draft-bonuses-title">Bonus preview</h2>
+          </div>
+          {!activeBonuses.length && <Card><p className="muted">No active bonus offers are configured.</p></Card>}
+          <div className="casinoPreviewGrid">
+            {activeBonuses.map((bonus) => (
+              <Card key={bonus.id}>
+                <div className="badgeCluster">
+                  <Badge>{bonus.type.replaceAll("_", " ")}</Badge>
+                  {bonus.featured && <Badge tone="warning">Featured</Badge>}
+                  {bonus.exclusive && <Badge tone="green">Exclusive</Badge>}
+                </div>
+                <h3>{bonus.title}</h3>
+                <p className="muted">
+                  {[
+                    bonus.percentage ? `${bonus.percentage}%` : null,
+                    bonus.amount ? `${bonus.currency || ""} ${bonus.amount}`.trim() : null,
+                    bonus.maximumBonus ? `up to ${bonus.currency || ""} ${bonus.maximumBonus}`.trim() : null,
+                    bonus.freeSpins ? `${bonus.freeSpins} free spins` : null,
+                  ].filter(Boolean).join(" + ") || "Offer amount not recorded"}
+                </p>
+                <div className="builderMetrics">
+                  <span>Wagering <strong>{bonus.wageringMultiplier ? `${bonus.wageringMultiplier}x` : "--"}</strong></span>
+                  <span>Minimum deposit <strong>{bonus.minimumDeposit ? `${bonus.currency || ""} ${bonus.minimumDeposit}` : "--"}</strong></span>
+                  <span>Promo code <strong>{bonus.promoCode || "Not required"}</strong></span>
+                  <span>GEO <strong>{bonus.geoMode === "GLOBAL" ? "Global" : bonus.geoMode === "ALLOW" ? bonus.allowedCountries.join(", ") : `Except ${bonus.blockedCountries.join(", ")}`}</strong></span>
+                  <span>Expiry <strong>{bonus.evergreen ? "Evergreen" : bonus.expiresAt ? new Date(bonus.expiresAt).toLocaleDateString("en-US") : "Not set"}</strong></span>
+                </div>
+                <p>{bonus.shortTerms || "No short terms recorded."}</p>
+                {bonus.importantConditions.length > 0 && <p className="muted">{bonus.importantConditions.join(" · ")}</p>}
+              </Card>
+            ))}
+          </div>
+        </section>
 
         <div className="casinoPreviewGrid">
           <Card><h2>Overview</h2><p className="muted">{casino.description || "No review description has been added."}</p></Card>

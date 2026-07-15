@@ -7,6 +7,7 @@ import {
   ValidationError,
 } from "@/lib/services";
 import type { SaveCasinoCoreDraftInput } from "@/lib/casino-builder/types";
+import { readCasinoSaveBody } from "@/lib/casino-builder/http";
 
 export const dynamic = "force-dynamic";
 
@@ -38,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   try {
     const actor = await requireAdminPermission(request, "casino.edit");
-    const body = (await request.json()) as SaveCasinoCoreDraftInput;
+    const body: SaveCasinoCoreDraftInput = await readCasinoSaveBody(request);
 
     await casinoService.saveCoreDraft(
       casinoId,

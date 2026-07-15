@@ -1,4 +1,10 @@
-import { CasinoCountryAvailability, EditorialStatus, Prisma } from "@prisma/client";
+import {
+  CasinoBonusType,
+  CasinoCountryAvailability,
+  EditorialStatus,
+  OfferStatus,
+  Prisma,
+} from "@prisma/client";
 
 import type {
   CasinoBuilderCasino,
@@ -6,6 +12,12 @@ import type {
   CasinoCoreDraft,
   CasinoRevisionHistoryItem,
 } from "@/lib/casino-builder/types";
+import {
+  casinoBonusPublicationIssues,
+  normalizeCasinoBonusDrafts,
+  parseCasinoBonusDrafts,
+  validateCasinoBonusDrafts,
+} from "@/lib/casino-builder/bonus-validation";
 import {
   isValidDomain,
   normalizeCasinoCoreDraft,
@@ -145,6 +157,32 @@ function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
     icon: metadata.categories[record.id]?.icon ?? null,
     archived: metadata.categories[record.id]?.archived ?? false,
   }));
+  serialized.casinoBonuses = serialized.casinoBonuses.map((record) => {
+    const extension = metadata.bonuses[record.id];
+    return {
+      ...record,
+      internalName: extension?.internalName ?? record.title,
+      shortTerms: extension?.shortTerms ?? record.wageringText,
+      amount: extension?.amount ?? null,
+      wageringBase: extension?.wageringBase ?? "BONUS",
+      minimumOdds: extension?.minimumOdds ?? null,
+      maximumBet: extension?.maximumBet ?? null,
+      eligibleGames: extension?.eligibleGames ?? [],
+      excludedGames: extension?.excludedGames ?? [],
+      eligiblePaymentMethods: extension?.eligiblePaymentMethods ?? [],
+      excludedPaymentMethods: extension?.excludedPaymentMethods ?? [],
+      newPlayersOnly: extension?.newPlayersOnly ?? false,
+      existingPlayersAllowed: extension?.existingPlayersAllowed ?? true,
+      promoCode: extension?.promoCode ?? null,
+      evergreen: extension?.evergreen ?? false,
+      featured: extension?.featured ?? false,
+      exclusive: extension?.exclusive ?? false,
+      notes: extension?.notes ?? null,
+      geoMode: extension?.geoMode ?? "GLOBAL",
+      allowedCountries: extension?.allowedCountries ?? [],
+      blockedCountries: extension?.blockedCountries ?? [],
+    };
+  });
   serialized.seo = serialized.seo
     ? {
         ...serialized.seo,
@@ -206,6 +244,7 @@ function coreDraftFromCasino(casino: CasinoBuilderCasino): CasinoCoreDraft {
     paymentMethods: casino.paymentMethods,
     gameProviders: casino.gameProviders,
     gameCategories: casino.gameCategories,
+    casinoBonuses: casino.casinoBonuses.map(({ affiliateLinks: _affiliateLinks, lastVerifiedAt: _lastVerifiedAt, ...bonus }) => bonus),
     seo: casino.seo,
   };
 }
@@ -230,16 +269,20 @@ function requireCoreDraftShape(value: CasinoCoreDraft) {
     !value.paymentMethods.every((entry) => hasStrings(entry, ["id", "methodKey", "name", "type"])) ||
     !Array.isArray(value.gameProviders) ||
     !value.gameProviders.every((entry) => hasStrings(entry, ["id", "providerKey", "name"])) ||
-    !Array.isArray(value.gameCategories)
-    || !value.gameCategories.every((entry) => hasStrings(entry, ["id", "categoryKey", "name"]))
+    !Array.isArray(value.gameCategories) ||
+    !value.gameCategories.every((entry) => hasStrings(entry, ["id", "categoryKey", "name"])) ||
+    !Array.isArray(value.casinoBonuses)
   ) {
     throw new ValidationError("Casino core draft has an invalid shape");
   }
 }
 
-function metadataFromDraft(draft: CasinoCoreDraft): CasinoEditorMetadata {
+function metadataFromDraft(
+  draft: CasinoCoreDraft,
+  previous: CasinoEditorMetadata,
+): CasinoEditorMetadata {
   return {
-    version: 1,
+    version: 2,
     general: draft.generalMetadata,
     licenses: Object.fromEntries(draft.licenses.map((record) => [record.id, { archived: record.archived }])),
     countries: Object.fromEntries(draft.countries.map((record) => [record.id, {
@@ -266,6 +309,31 @@ function metadataFromDraft(draft: CasinoCoreDraft): CasinoEditorMetadata {
       icon: record.icon,
       archived: record.archived,
     }])),
+    bonuses: {
+      ...previous.bonuses,
+      ...Object.fromEntries(draft.casinoBonuses.map((record) => [record.id, {
+        internalName: record.internalName,
+        shortTerms: record.shortTerms,
+        amount: record.amount,
+        wageringBase: record.wageringBase,
+        minimumOdds: record.minimumOdds,
+        maximumBet: record.maximumBet,
+        eligibleGames: record.eligibleGames,
+        excludedGames: record.excludedGames,
+        eligiblePaymentMethods: record.eligiblePaymentMethods,
+        excludedPaymentMethods: record.excludedPaymentMethods,
+        newPlayersOnly: record.newPlayersOnly,
+        existingPlayersAllowed: record.existingPlayersAllowed,
+        promoCode: record.promoCode,
+        evergreen: record.evergreen,
+        featured: record.featured,
+        exclusive: record.exclusive,
+        notes: record.notes,
+        geoMode: record.geoMode,
+        allowedCountries: record.allowedCountries,
+        blockedCountries: record.blockedCountries,
+      }])),
+    },
   };
 }
 
@@ -456,8 +524,19 @@ export class CasinoService {
       });
     }
 
-    const draft = normalizeCasinoCoreDraft(input);
-    const issues = validateCasinoCoreDraft(draft);
+    let bonusDrafts;
+    try {
+      bonusDrafts = normalizeCasinoBonusDrafts(parseCasinoBonusDrafts(input.casinoBonuses));
+    } catch (error) {
+      throw new ValidationError(
+        error instanceof Error ? error.message : "Casino bonus payload is invalid",
+      );
+    }
+    const draft = normalizeCasinoCoreDraft({ ...input, casinoBonuses: bonusDrafts });
+    const issues = [
+      ...validateCasinoCoreDraft(draft),
+      ...validateCasinoBonusDrafts(draft.casinoBonuses, draft.countries),
+    ];
     if (issues.length) {
       throw new ValidationError("Casino draft contains invalid fields", issues);
     }
@@ -468,9 +547,32 @@ export class CasinoService {
       throw new ConflictError("A casino with this domain already exists", { domain: draft.domain });
     }
 
+    const bonusIdentities = await casinoRepository.findBonusIdentities(
+      draft.casinoBonuses.map((record) => record.id),
+      draft.casinoBonuses.map((record) => record.slug),
+    );
+    const draftsById = new Map(draft.casinoBonuses.map((record) => [record.id, record]));
+    for (const identity of bonusIdentities) {
+      const idMatch = draftsById.get(identity.id);
+      if (idMatch && identity.casinoId !== id) {
+        throw new ConflictError("A bonus cannot be moved between casinos", {
+          bonusId: identity.id,
+        });
+      }
+      const slugMatch = draft.casinoBonuses.find((record) => record.slug === identity.slug);
+      if (slugMatch && slugMatch.id !== identity.id) {
+        throw new ConflictError("A bonus with this slug already exists", {
+          slug: identity.slug,
+        });
+      }
+    }
+
     const currentLicenses = new Map(current.licenses.map((record) => [record.id, record]));
     const currentProviders = new Map(current.gameProviders.map((record) => [record.id, record]));
-    const metadata = metadataFromDraft(draft);
+    const metadata = metadataFromDraft(
+      draft,
+      readCasinoEditorMetadata(current.reviewBlocks),
+    );
     const structuredData = draft.seo ? parseStructuredData(draft.seo.structuredData) : null;
 
     try {
@@ -565,6 +667,57 @@ export class CasinoService {
               sortOrder: record.sortOrder,
             })),
           },
+          casinoBonuses: {
+            upsert: draft.casinoBonuses.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                slug: record.slug,
+                title: record.title,
+                summary: record.summary,
+                type: record.type as CasinoBonusType,
+                percentage: record.percentage,
+                minimumDeposit: record.minimumDeposit,
+                maximumBonus: record.maximumBonus,
+                currency: record.currency,
+                freeSpins: record.freeSpins,
+                wageringMultiplier: record.wageringMultiplier,
+                wageringText: record.shortTerms,
+                eligibility: record.eligibility,
+                importantConditions: record.importantConditions,
+                termsUrl: record.termsUrl,
+                startsAt: record.startsAt ? new Date(record.startsAt) : null,
+                expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+                status: EditorialStatus.DRAFT,
+                offerStatus: record.offerStatus as OfferStatus,
+                sortOrder: record.sortOrder,
+                createdBy: actorId,
+                updatedBy: actorId,
+              },
+              update: {
+                slug: record.slug,
+                title: record.title,
+                summary: record.summary,
+                type: record.type as CasinoBonusType,
+                percentage: record.percentage,
+                minimumDeposit: record.minimumDeposit,
+                maximumBonus: record.maximumBonus,
+                currency: record.currency,
+                freeSpins: record.freeSpins,
+                wageringMultiplier: record.wageringMultiplier,
+                wageringText: record.shortTerms,
+                eligibility: record.eligibility,
+                importantConditions: record.importantConditions,
+                termsUrl: record.termsUrl,
+                startsAt: record.startsAt ? new Date(record.startsAt) : null,
+                expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+                status: EditorialStatus.DRAFT,
+                offerStatus: record.offerStatus as OfferStatus,
+                sortOrder: record.sortOrder,
+                updatedBy: actorId,
+              },
+            })),
+          },
           seo: draft.seo
             ? {
                 upsert: {
@@ -595,7 +748,7 @@ export class CasinoService {
               : undefined,
         },
         actorId,
-        "Saved core casino editors",
+        "Saved casino aggregate editors",
         expectedUpdatedAt,
       );
     } catch (error) {
@@ -606,7 +759,11 @@ export class CasinoService {
   validateForPublication(casino: CasinoAggregate): CasinoValidationResult {
     const builderCasino = serializeCasino(casino);
     const draft = coreDraftFromCasino(builderCasino);
-    const issues: CasinoValidationIssue[] = publicationWarnings(draft);
+    const issues: CasinoValidationIssue[] = [
+      ...publicationWarnings(draft),
+      ...validateCasinoBonusDrafts(draft.casinoBonuses, draft.countries),
+      ...casinoBonusPublicationIssues(builderCasino.casinoBonuses),
+    ];
     const blocker = (path: string, message: string, code: string) => issues.push({ path, message, code, severity: "error" });
     if (!casino.title.trim()) blocker("general.title", "Title is required", "TITLE_REQUIRED");
     if (!isValidDomain(casino.domain)) blocker("general.domain", "A valid domain is required", "INVALID_DOMAIN");
@@ -692,6 +849,12 @@ export class CasinoService {
         {
           status: EditorialStatus.SCHEDULED,
           scheduledPublishAt: publishAt,
+          casinoBonuses: {
+            updateMany: {
+              where: {},
+              data: { status: EditorialStatus.SCHEDULED },
+            },
+          },
           updatedBy: actorId,
         },
         actorId,

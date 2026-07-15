@@ -6,10 +6,12 @@ import { useRouter } from "next/navigation";
 
 import { Badge, Card } from "@/components/ui";
 import { GameCategoryEditor, GameProviderEditor, PaymentEditor } from "@/components/admin/casino-editors/CatalogueEditors";
+import { BonusEditor } from "@/components/admin/casino-editors/BonusEditor";
 import { CountryEditor, LicenseEditor } from "@/components/admin/casino-editors/ComplianceEditors";
 import { EditorField } from "@/components/admin/casino-editors/EditorFields";
 import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
+import { casinoBonusToDraft } from "@/lib/casino-builder/bonus-validation";
 import type {
   CasinoBuilderCasino,
   CasinoBuilderData,
@@ -230,14 +232,9 @@ function RecordList({ records, empty }: { records: Array<{ id: string; title: st
   );
 }
 
-function ReadOnlySection({ section, data }: { section: "bonuses" | "affiliate-links" | "media"; data: CasinoBuilderData }) {
+function ReadOnlySection({ section, data }: { section: "affiliate-links" | "media"; data: CasinoBuilderData }) {
   const { casino } = data;
   const config: Record<typeof section, { title: string; description: string; content: ReactNode }> = {
-    bonuses: {
-      title: "Bonuses",
-      description: "Structured welcome and promotional offer records.",
-      content: <RecordList empty="No structured bonuses recorded." records={casino.casinoBonuses.map((item) => ({ id: item.id, title: item.title, detail: `${item.offerStatus} · ${item.wageringMultiplier ?? "Unknown"}x wagering` }))} />,
-    },
     "affiliate-links": {
       title: "Affiliate Links",
       description: "Managed destinations attached to the casino and its offers.",
@@ -389,6 +386,7 @@ export function CasinoBuilderLayout({
       paymentMethods: casino.paymentMethods,
       gameProviders: casino.gameProviders,
       gameCategories: casino.gameCategories,
+      casinoBonuses: casino.casinoBonuses.map(casinoBonusToDraft),
       seo: casino.seo,
     };
     try {
@@ -457,10 +455,11 @@ export function CasinoBuilderLayout({
           {activeSection === "payments" && <CasinoSectionLayout title="Payments" description="Deposit and withdrawal capabilities, limits, fees and coverage." badge="Editable"><PaymentEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "game-providers" && <CasinoSectionLayout title="Game Providers" description="Provider coverage, verification and ordering." badge="Editable"><GameProviderEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "game-categories" && <CasinoSectionLayout title="Game Categories" description="Ordered catalogue categories and references." badge="Editable"><GameCategoryEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
+          {activeSection === "bonuses" && <CasinoSectionLayout title="Bonuses" description="Offer terms, GEO availability, lifecycle and deterministic ordering." badge="Editable"><BonusEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
-          {(["bonuses", "affiliate-links", "media"] as CasinoBuilderSection[]).includes(activeSection) && (
-            <ReadOnlySection section={activeSection as "bonuses" | "affiliate-links" | "media"} data={data} />
+          {(["affiliate-links", "media"] as CasinoBuilderSection[]).includes(activeSection) && (
+            <ReadOnlySection section={activeSection as "affiliate-links" | "media"} data={data} />
           )}
         </main>
       </div>

@@ -122,8 +122,11 @@ export interface CasinoBuilderAffiliateLink {
 export interface CasinoBuilderBonus {
   id: string;
   slug: string;
+  internalName: string;
   title: string;
   summary: string;
+  shortTerms: string | null;
+  amount: string | null;
   type: string;
   percentage: string | null;
   minimumDeposit: string | null;
@@ -131,18 +134,37 @@ export interface CasinoBuilderBonus {
   currency: string | null;
   freeSpins: number | null;
   wageringMultiplier: string | null;
+  wageringBase: string;
+  minimumOdds: string | null;
+  maximumBet: string | null;
   wageringText: string | null;
   eligibility: string | null;
+  eligibleGames: string[];
+  excludedGames: string[];
+  eligiblePaymentMethods: string[];
+  excludedPaymentMethods: string[];
+  newPlayersOnly: boolean;
+  existingPlayersAllowed: boolean;
+  promoCode: string | null;
   importantConditions: string[];
   termsUrl: string | null;
   startsAt: string | null;
   expiresAt: string | null;
+  evergreen: boolean;
+  featured: boolean;
+  exclusive: boolean;
+  notes: string | null;
+  geoMode: "GLOBAL" | "ALLOW" | "BLOCK";
+  allowedCountries: string[];
+  blockedCountries: string[];
   status: EditorialStatus;
   offerStatus: string;
   lastVerifiedAt: string | null;
   sortOrder: number;
   affiliateLinks: CasinoBuilderAffiliateLink[];
 }
+
+export type CasinoBonusDraft = Omit<CasinoBuilderBonus, "affiliateLinks" | "lastVerifiedAt">;
 
 export interface CasinoBuilderSeo {
   id: string;
@@ -254,7 +276,7 @@ export type CasinoCoreDraft = Pick<
   | "gameProviders"
   | "gameCategories"
   | "seo"
->;
+> & { casinoBonuses: CasinoBonusDraft[] };
 
 export interface SaveCasinoCoreDraftInput {
   draft: CasinoCoreDraft;

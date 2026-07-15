@@ -1862,6 +1862,106 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   color: var(--muted);
 }
 
+.casinoBonusEditor,
+.casinoBonusRecord,
+.casinoBonusRecord > .builderForm,
+.casinoBonusPreview {
+  display: grid;
+  gap: 16px;
+}
+
+.casinoBonusToolbar,
+.casinoBonusRecord > summary,
+.casinoBonusActions,
+.casinoBonusSummary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.casinoBonusToolbar,
+.casinoBonusRecord > summary {
+  justify-content: space-between;
+}
+
+.casinoBonusFilters,
+.casinoBonusGeo {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.casinoBonusFilters {
+  flex: 1;
+}
+
+.casinoBonusRecord {
+  padding: 0 18px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .025);
+}
+
+.casinoBonusRecord.archived {
+  opacity: .66;
+}
+
+.casinoBonusRecord > summary {
+  min-height: 68px;
+  margin: 0 -18px;
+  padding: 14px 18px;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.casinoBonusRecord > summary > span:first-child {
+  display: grid;
+  flex: 1;
+  gap: 3px;
+}
+
+.casinoBonusRecord > summary small {
+  color: var(--subtle);
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+.casinoBonusActions {
+  flex-wrap: wrap;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.casinoBonusActions .button {
+  min-height: 38px;
+  padding: 8px 11px;
+}
+
+.casinoBonusSummary {
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+}
+
+.casinoBonusSummary span {
+  padding-right: 12px;
+  border-right: 1px solid var(--border);
+}
+
+.casinoBonusPreview {
+  padding: 18px;
+  border: 1px solid var(--border-emerald);
+  border-radius: 14px;
+  background: rgba(0, 226, 138, .045);
+}
+
+.casinoBonusPreview h3,
+.casinoBonusPreview p {
+  margin: 4px 0 0;
+}
+
 .casinoBuilderRecords {
   display: grid;
   border: 1px solid var(--border);
@@ -1962,6 +2062,16 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   min-height: 100vh;
   padding-bottom: 72px;
   background: var(--bg);
+}
+
+.casinoPreviewBonuses {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.casinoPreviewBonuses h2 {
+  margin: 4px 0 0;
 }
 
 .casinoRevisionTable {
@@ -2066,9 +2176,17 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   }
 
   .casinoEditorToolbar,
-  .casinoEditorRecord > header {
+  .casinoEditorRecord > header,
+  .casinoBonusToolbar,
+  .casinoBonusRecord > summary {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .casinoBonusFilters,
+  .casinoBonusGeo {
+    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .casinoAdminList article > div:last-child {

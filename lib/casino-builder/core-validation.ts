@@ -22,6 +22,10 @@ const paymentTypes = new Set(["CARD", "E_WALLET", "BANK_TRANSFER", "CRYPTO", "PR
 const availabilityValues = new Set(["AVAILABLE", "RESTRICTED", "NOT_AVAILABLE", "UNKNOWN"]);
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+export function isIsoCountryCode(value: string) {
+  return isoCountries.has(value);
+}
+
 function issue(path: string, message: string, code: string, severity: "error" | "warning" = "error"): CasinoBuilderValidationIssue {
   return { path, message, code, severity };
 }

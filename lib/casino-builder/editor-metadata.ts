@@ -3,7 +3,7 @@ import type { Prisma } from "@prisma/client";
 import type { CasinoBuilderGeneralMetadata } from "./types";
 
 export interface CasinoEditorMetadata {
-  version: 1;
+  version: 2;
   general: CasinoBuilderGeneralMetadata;
   licenses: Record<string, { archived: boolean }>;
   countries: Record<string, {
@@ -24,6 +24,28 @@ export interface CasinoEditorMetadata {
   }>;
   providers: Record<string, { featured: boolean; archived: boolean }>;
   categories: Record<string, { icon: string | null; archived: boolean }>;
+  bonuses: Record<string, {
+    internalName: string;
+    shortTerms: string | null;
+    amount: string | null;
+    wageringBase: string;
+    minimumOdds: string | null;
+    maximumBet: string | null;
+    eligibleGames: string[];
+    excludedGames: string[];
+    eligiblePaymentMethods: string[];
+    excludedPaymentMethods: string[];
+    newPlayersOnly: boolean;
+    existingPlayersAllowed: boolean;
+    promoCode: string | null;
+    evergreen: boolean;
+    featured: boolean;
+    exclusive: boolean;
+    notes: string | null;
+    geoMode: "GLOBAL" | "ALLOW" | "BLOCK";
+    allowedCountries: string[];
+    blockedCountries: string[];
+  }>;
 }
 
 const metadataKey = "__sevenbetCasinoEditor";
@@ -42,13 +64,14 @@ export const emptyGeneralMetadata: CasinoBuilderGeneralMetadata = {
 
 export function emptyCasinoEditorMetadata(): CasinoEditorMetadata {
   return {
-    version: 1,
+    version: 2,
     general: { ...emptyGeneralMetadata },
     licenses: {},
     countries: {},
     payments: {},
     providers: {},
     categories: {},
+    bonuses: {},
   };
 }
 
@@ -64,7 +87,7 @@ export function readCasinoEditorMetadata(value: Prisma.JsonValue | null): Casino
   const stored = value[metadataKey] as Partial<CasinoEditorMetadata>;
   const defaults = emptyCasinoEditorMetadata();
   return {
-    version: 1,
+    version: 2,
     general: isRecord(stored.general)
       ? { ...defaults.general, ...stored.general }
       : defaults.general,
@@ -73,6 +96,7 @@ export function readCasinoEditorMetadata(value: Prisma.JsonValue | null): Casino
     payments: isRecord(stored.payments) ? stored.payments as CasinoEditorMetadata["payments"] : {},
     providers: isRecord(stored.providers) ? stored.providers as CasinoEditorMetadata["providers"] : {},
     categories: isRecord(stored.categories) ? stored.categories as CasinoEditorMetadata["categories"] : {},
+    bonuses: isRecord(stored.bonuses) ? stored.bonuses as CasinoEditorMetadata["bonuses"] : {},
   };
 }
 
