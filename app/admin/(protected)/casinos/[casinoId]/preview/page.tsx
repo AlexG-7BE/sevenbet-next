@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { Badge, Card, Container } from "@/components/ui";
 import { loadCasinoBuilderData } from "@/lib/casino-builder/server";
+import { mediaService } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Draft Casino Preview | SevenBet CMS",
@@ -11,9 +12,18 @@ export const metadata: Metadata = {
 
 export default async function CasinoPreviewPage({ params }: { params: Promise<{ casinoId: string }> }) {
   const { casinoId } = await params;
-  const { casino, validation } = await loadCasinoBuilderData(casinoId);
+  const [{ casino, validation }, mediaResult] = await Promise.all([
+    loadCasinoBuilderData(casinoId),
+    mediaService.list({ casinoId, includeArchived: false, take: 200 }),
+  ]);
   const blockers = validation.issues.filter((issue) => issue.severity === "error");
   const activeBonuses = casino.casinoBonuses.filter((bonus) => bonus.offerStatus === "ACTIVE");
+  const media = mediaResult.records;
+  const logo = media.find((asset) => asset.type === "LOGO" && asset.featured) || media.find((asset) => asset.type === "LOGO");
+  const hero = media.find((asset) => asset.type === "HERO" && asset.featured) || media.find((asset) => asset.type === "HERO");
+  const socialImage = media.find((asset) => asset.type === "SOCIAL_IMAGE" && asset.featured);
+  const gallery = media.filter((asset) => asset.type === "GALLERY" || asset.type === "SCREENSHOT");
+  const bonusCreative = (bonusId: string) => media.find((asset) => asset.type === "BONUS_CREATIVE" && asset.casinoBonusId === bonusId && asset.featured);
 
   return (
     <div className="adminPreview casinoDraftPreview">
@@ -27,6 +37,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
       <Container>
         <header className="casinoPreviewHero">
           <div>
+            {logo && <img className="casinoPreviewLogo" alt={logo.altText} height={logo.height || 90} src={logo.publicUrl} width={logo.width || 220} />}
             <p className="eyebrow">Editorial casino preview</p>
             <h1>{casino.title}</h1>
             <p className="lead">{casino.summary || "No editorial summary has been added yet."}</p>
@@ -43,6 +54,10 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
           </Card>
         </header>
 
+        {hero && <figure className="casinoPreviewMediaHero"><img alt={hero.altText} height={hero.height || 520} src={hero.publicUrl} width={hero.width || 1200} />{hero.caption && <figcaption>{hero.caption}</figcaption>}</figure>}
+
+        {gallery.length > 0 && <section className="casinoPreviewMedia" aria-labelledby="draft-media-title"><div><p className="eyebrow">Managed assets</p><h2 id="draft-media-title">Gallery and screenshots</h2></div><div className="casinoPreviewMediaGrid">{gallery.map((asset) => <figure key={asset.id}><img alt={asset.altText} height={asset.height || 400} loading="lazy" src={asset.publicUrl} width={asset.width || 640} />{asset.caption && <figcaption>{asset.caption}</figcaption>}</figure>)}</div></section>}
+
         <section className="casinoPreviewBonuses" aria-labelledby="draft-bonuses-title">
           <div>
             <p className="eyebrow">Active draft offers</p>
@@ -52,6 +67,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
           <div className="casinoPreviewGrid">
             {activeBonuses.map((bonus) => (
               <Card key={bonus.id}>
+                {bonusCreative(bonus.id) && <img className="casinoPreviewBonusMedia" alt={bonusCreative(bonus.id)!.altText} height={bonusCreative(bonus.id)!.height || 360} loading="lazy" src={bonusCreative(bonus.id)!.publicUrl} width={bonusCreative(bonus.id)!.width || 640} />}
                 <div className="badgeCluster">
                   <Badge>{bonus.type.replaceAll("_", " ")}</Badge>
                   {bonus.featured && <Badge tone="warning">Featured</Badge>}
@@ -89,7 +105,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
           <Card><h2>Game categories</h2><p className="muted">{casino.gameCategories.length ? casino.gameCategories.filter((item) => !item.archived).map((item) => item.name).join(", ") : "No game categories recorded."}</p></Card>
           <Card><h2>Responsible gambling</h2><p className="muted">{casino.responsibleGamblingTools.length ? casino.responsibleGamblingTools.join(", ") : "No responsible gambling tools recorded."}</p></Card>
           <Card><h2>Score breakdown</h2><p className="muted">Trust {casino.generalMetadata.trustScore ?? "--"} · UX {casino.generalMetadata.userExperienceScore ?? "--"} · Payments {casino.generalMetadata.paymentsScore ?? "--"} · Games {casino.generalMetadata.gamesScore ?? "--"} · Support {casino.generalMetadata.supportScore ?? "--"}</p></Card>
-          <Card><h2>SEO preview</h2><p><strong>{casino.seo?.title || casino.title}</strong></p><p className="muted">{casino.seo?.description || casino.summary || "No SEO description."}</p><p className="muted">{casino.seo?.canonicalUrl || casino.websiteUrl || casino.domain} · {casino.seo?.robots || "index,follow"}</p></Card>
+          <Card><h2>SEO preview</h2>{socialImage && <img className="casinoPreviewSocialMedia" alt={socialImage.altText} height={socialImage.height || 360} loading="lazy" src={socialImage.publicUrl} width={socialImage.width || 640} />}<p><strong>{casino.seo?.title || casino.title}</strong></p><p className="muted">{casino.seo?.description || casino.summary || "No SEO description."}</p><p className="muted">{casino.seo?.canonicalUrl || casino.websiteUrl || casino.domain} · {casino.seo?.robots || "index,follow"}</p></Card>
         </div>
       </Container>
     </div>

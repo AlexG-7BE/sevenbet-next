@@ -32,6 +32,31 @@ enum CasinoImageKind {
   OTHER
 }
 
+enum MediaAssetType {
+  LOGO
+  FAVICON
+  HERO
+  SCREENSHOT
+  GALLERY
+  BONUS_CREATIVE
+  SOCIAL_IMAGE
+  AFFILIATE_CREATIVE
+  OTHER
+}
+
+enum MediaStorageProvider {
+  LOCAL
+  S3
+}
+
+enum MediaAssetStatus {
+  PROCESSING
+  ACTIVE
+  ARCHIVED
+  FAILED
+  STORAGE_DELETE_FAILED
+}
+
 enum CasinoCountryAvailability {
   AVAILABLE
   RESTRICTED
@@ -516,6 +541,7 @@ model Casino {
   versions        CasinoVersion[]
   revisions       CasinoRevision[]
   images          CasinoImage[]
+  mediaAssets     MediaAsset[]
   countries       CasinoCountry[]
   licenses        CasinoLicense[]
   paymentMethods  CasinoPaymentMethod[]
@@ -708,6 +734,7 @@ model CasinoBonus {
   affiliateLinks  CasinoAffiliateLink[]
   affiliateOffers AffiliateOffer[]
   redirectSlugs   AffiliateRedirectSlug[]
+  mediaAssets     MediaAsset[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -825,6 +852,7 @@ model AffiliateOffer {
   trackingLinks AffiliateTrackingLink[]
   revisions     AffiliateOfferRevision[]
   redirectSlugs AffiliateRedirectSlug[]
+  mediaAssets   MediaAsset[]
 
   @@unique([programId, externalOfferId])
   @@index([casinoId, status, priority])
@@ -1070,13 +1098,43 @@ model AuditLog {
 }
 
 model MediaAsset {
-  id        String   @id @default(uuid()) @db.Uuid
-  url       String
-  alt       String
-  mimeType  String
-  width     Int?
-  height    Int?
-  createdAt DateTime @default(now())
+  id               String               @id @default(uuid()) @db.Uuid
+  type             MediaAssetType       @default(OTHER)
+  storageProvider  MediaStorageProvider @default(LOCAL)
+  storageKey       String               @unique
+  publicUrl        String               @map("url")
+  originalFilename String
+  mimeType         String
+  width            Int?
+  height           Int?
+  sizeBytes        Int
+  altText          String               @map("alt")
+  title            String?
+  caption          String?
+  credit           String?
+  sortOrder        Int                  @default(0)
+  featured         Boolean              @default(false)
+  status           MediaAssetStatus     @default(ACTIVE)
+  checksum         String?
+  metadata         Json?
+  variants         Json?
+  createdBy        String
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  archivedAt       DateTime?
+  casinoId         String?              @db.Uuid
+  casinoBonusId    String?              @db.Uuid
+  affiliateOfferId String?              @db.Uuid
+
+  casino         Casino?         @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casinoBonus    CasinoBonus?    @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateOffer AffiliateOffer? @relation(fields: [affiliateOfferId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([casinoId, type, status, sortOrder])
+  @@index([casinoBonusId, type, status])
+  @@index([affiliateOfferId, type, status])
+  @@index([checksum])
+  @@index([status, updatedAt])
 }
 
 model SiteSetting {

@@ -10,6 +10,7 @@ import { BonusEditor } from "@/components/admin/casino-editors/BonusEditor";
 import { CountryEditor, LicenseEditor } from "@/components/admin/casino-editors/ComplianceEditors";
 import { EditorField } from "@/components/admin/casino-editors/EditorFields";
 import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
+import { MediaManager } from "@/components/admin/media/MediaManager";
 import { CasinoAffiliatePanel } from "@/components/admin/affiliate/AffiliateAdmin";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
 import { casinoBonusToDraft } from "@/lib/casino-builder/bonus-validation";
@@ -46,7 +47,6 @@ function countForSection(section: CasinoBuilderSection, data: CasinoBuilderData)
     "affiliate-links":
       casino.casinoLinks.length +
       casino.casinoBonuses.reduce((total, bonus) => total + bonus.affiliateLinks.length, 0),
-    media: casino.images.length,
     publishing: data.validation.issues.length,
     history: data.revisionCount,
   };
@@ -233,11 +233,10 @@ function RecordList({ records, empty }: { records: Array<{ id: string; title: st
   );
 }
 
-function ReadOnlySection({ data }: { data: CasinoBuilderData }) {
-  const { casino } = data;
+function MediaSection({ casinoId }: { casinoId: string }) {
   return (
     <CasinoSectionLayout title="Media" description="Logo, hero and screenshot assets.">
-      <PlaceholderNotice><RecordList empty="No media assets recorded." records={casino.images.map((item) => ({ id: item.id, title: item.alt || item.kind, detail: `${item.kind} · ${item.width ?? "?"}x${item.height ?? "?"}` }))} /></PlaceholderNotice>
+      <MediaManager casinoId={casinoId} />
     </CasinoSectionLayout>
   );
 }
@@ -446,7 +445,7 @@ export function CasinoBuilderLayout({
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
           {activeSection === "affiliate-links" && <CasinoSectionLayout title="Affiliate Offers" description="New-platform offers linked to this casino. Full editing stays in Affiliate Builder." badge="Integrated"><CasinoAffiliatePanel casinoId={data.casino.id} /></CasinoSectionLayout>}
-          {activeSection === "media" && <ReadOnlySection data={data} />}
+          {activeSection === "media" && <MediaSection casinoId={data.casino.id} />}
         </main>
       </div>
       <CasinoSaveBar state={saveState} message={message} onSave={save} onReload={reload} />

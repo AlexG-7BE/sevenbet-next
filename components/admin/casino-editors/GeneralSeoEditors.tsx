@@ -1,6 +1,7 @@
 "use client";
 
 import type { CasinoBuilderCasino, CasinoBuilderSeo } from "@/lib/casino-builder/types";
+import { MediaSelector } from "@/components/admin/media/MediaSelector";
 
 import { EditorCheckbox, EditorField, EditorTextArea, numberOrNull } from "./EditorFields";
 
@@ -83,6 +84,7 @@ export function SeoEditor({ casino, onChange }: { casino: CasinoBuilderCasino; o
         <EditorField label="Social image URL" type="url" value={seo.socialImage ?? ""} onChange={(value) => set("socialImage", value)} />
       </div>
       <EditorTextArea label="Social description" value={seo.socialDescription ?? ""} onChange={(value) => set("socialDescription", value)} />
+      <MediaSelector casinoId={casino.id} label="Social sharing image" type="SOCIAL_IMAGE" onSelectedUrl={(url) => set("socialImage", url)} />
       <div className="casinoEditorChecks">
         <EditorCheckbox label="Allow indexing" checked={seo.robotsIndex} onChange={(value) => set("robotsIndex", value)} />
         <EditorCheckbox label="Allow link following" checked={seo.robotsFollow} onChange={(value) => set("robotsFollow", value)} />

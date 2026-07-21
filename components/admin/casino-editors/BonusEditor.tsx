@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui";
+import { MediaSelector } from "@/components/admin/media/MediaSelector";
 import {
   casinoBonusGeoModes,
   casinoBonusOfferStatuses,
@@ -53,6 +54,7 @@ export function BonusEditor({ casino, onChange }: { casino: CasinoBuilderCasino;
   const [statusFilter, setStatusFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
+  const [mediaBonusId, setMediaBonusId] = useState("");
   const countryOptions = useMemo(() => [
     { label: "All countries", value: "" },
     ...casino.countries
@@ -131,10 +133,12 @@ export function BonusEditor({ casino, onChange }: { casino: CasinoBuilderCasino;
               <button className="button ghost" disabled={absoluteIndex === 0} type="button" onClick={() => move(record, -1)} aria-label={`Move ${record.title} up`}>Move up</button>
               <button className="button ghost" disabled={absoluteIndex === casino.casinoBonuses.length - 1} type="button" onClick={() => move(record, 1)} aria-label={`Move ${record.title} down`}>Move down</button>
               <button className="button ghost" type="button" onClick={() => duplicate(record)}>Duplicate</button>
+              <button className="button ghost" type="button" onClick={() => setMediaBonusId(mediaBonusId === record.id ? "" : record.id)}>{mediaBonusId === record.id ? "Close creative" : "Manage creative"}</button>
               <button className="button ghost" type="button" onClick={() => update(setCasinoBonusArchived(record, record.offerStatus !== "ARCHIVED"))}>{record.offerStatus === "ARCHIVED" ? "Restore" : "Archive"}</button>
             </div>
 
             <div className="builderForm">
+              {mediaBonusId === record.id && <MediaSelector casinoBonusId={record.id} casinoId={casino.id} label="Bonus creative" type="BONUS_CREATIVE" />}
               {expired && <p className="casinoEditorWarning">The configured expiry date is in the past.</p>}
               <div className="builderTwoCol">
                 <EditorField label="Internal name" value={record.internalName} onChange={(value) => update({ ...record, internalName: value })} />

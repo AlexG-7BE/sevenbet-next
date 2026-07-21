@@ -40,6 +40,7 @@ export * from "./affiliate-network.service";
 export * from "./affiliate-program.service";
 export * from "./affiliate-offer.service";
 export * from "./affiliate-redirect.service";
+export * from "./media.service";
 
 export {
   programSnapshotToPublicSteps,

@@ -33,6 +33,7 @@ export type CmsPermission =
   | "casino.edit"
   | "bonus.edit"
   | "affiliate.manage"
+  | "media.manage"
   | "user.view"
   | "analytics.view"
   | "settings.manage";

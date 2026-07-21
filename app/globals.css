@@ -1532,6 +1532,53 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   }
 }
 
+.mediaManager { display: grid; gap: 24px; }
+.mediaUploadPanel { display: grid; gap: 18px; }
+.mediaUploadFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.mediaUploadFields label, .mediaCard label { display: grid; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 700; }
+.mediaDropzone { min-height: 136px; border: 1px dashed var(--border-strong); border-radius: 16px; display: grid; place-content: center; gap: 6px; padding: 24px; text-align: center; background: var(--surface); }
+.mediaDropzone span { color: var(--muted); font-size: .85rem; }
+.mediaDropzone input { margin: 8px auto 0; max-width: 100%; }
+.mediaProgress { height: 8px; overflow: hidden; border-radius: 999px; background: var(--card-soft); }
+.mediaProgress span { display: block; height: 100%; border-radius: inherit; background: var(--emerald); transition: width .2s ease; }
+.mediaToolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.mediaGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.mediaDragItem { min-width: 0; }
+.mediaDragItem > .card { height: 100%; }
+.mediaCard { display: grid; align-content: start; gap: 13px; }
+.mediaCard.archived { opacity: .68; }
+.mediaPreview { aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--card-soft); }
+.mediaPreview img, .mediaSelectorGrid img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.mediaMeta { margin: 0; }
+.mediaCardActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.mediaSelector { display: grid; gap: 14px; }
+.mediaSelector p { margin: 4px 0 0; }
+.mediaSelectedSummary { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mediaSelectorUpload { display: grid; grid-template-columns: minmax(0, 1fr) minmax(180px, 1fr); gap: 10px; }
+.mediaSelectorGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.mediaSelectorGrid button { min-width: 0; border: 1px solid var(--border); border-radius: 10px; padding: 8px; background: var(--surface); color: var(--text); text-align: left; display: grid; gap: 6px; }
+.mediaSelectorGrid button.selected { border-color: var(--emerald); box-shadow: 0 0 0 2px rgba(0, 226, 138, .16); }
+.mediaSelectorGrid img { aspect-ratio: 16 / 9; border-radius: 6px; background: var(--card-soft); }
+.mediaSelectorGrid span { overflow-wrap: anywhere; font-size: .78rem; }
+.affiliateMediaGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.casinoPreviewLogo { width: min(220px, 60%); max-height: 90px; object-fit: contain; object-position: left center; margin-bottom: 20px; }
+.casinoPreviewMediaHero { margin: 0 0 48px; }
+.casinoPreviewMediaHero img { width: 100%; max-height: 520px; object-fit: cover; border-radius: 16px; border: 1px solid var(--border); }
+.casinoPreviewMediaHero figcaption, .casinoPreviewMedia figcaption { margin-top: 8px; color: var(--muted); font-size: .85rem; }
+.casinoPreviewMedia { margin-bottom: 48px; }
+.casinoPreviewMediaGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.casinoPreviewMediaGrid figure { margin: 0; }
+.casinoPreviewMediaGrid img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
+.casinoPreviewBonusMedia, .casinoPreviewSocialMedia { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; border-radius: 8px; margin-bottom: 14px; background: var(--card-soft); }
+
+@media (max-width: 760px) {
+  .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid { grid-template-columns: 1fr; }
+  .mediaToolbar { align-items: stretch; flex-direction: column; }
+  .mediaSelectorUpload { grid-template-columns: 1fr; }
+  .mediaSelectorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mediaCardActions .button { min-height: 44px; }
+}
+
 /* Phase 3.2 Casino Builder */
 .casinoBuilder {
   min-height: 100vh;

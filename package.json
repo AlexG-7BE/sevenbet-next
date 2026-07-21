@@ -24,6 +24,7 @@
     "affiliate:test": "node --import tsx --test tests/affiliate-platform-foundation.test.ts",
     "affiliate-builder:test": "node --import tsx --test tests/affiliate-builder.test.ts",
     "affiliate-redirect:test": "node --import tsx --test tests/affiliate-redirect-engine.test.ts",
+    "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
