@@ -7,16 +7,16 @@ const programInclude = { network: true, _count: { select: { offers: true } } } s
 export type AffiliateProgramAggregate = Prisma.AffiliateProgramGetPayload<{ include: typeof programInclude }>;
 
 export interface AffiliateProgramStore {
-  list(input?: { networkId?: string; status?: AffiliateStatus; search?: string }): Promise<AffiliateProgramAggregate[]>;
+  list(input?: { networkId?: string; status?: AffiliateStatus; search?: string; skip?: number; take?: number }): Promise<AffiliateProgramAggregate[]>;
   findById(id: string): Promise<AffiliateProgramAggregate | null>;
   existsExternalProgramId(networkId: string, externalProgramId: string, excludeId?: string): Promise<boolean>;
   create(input: AffiliateProgramInput, actorId: string): Promise<AffiliateProgramAggregate>;
-  update(id: string, input: AffiliateProgramInput, actorId: string): Promise<AffiliateProgramAggregate>;
+  update(id: string, input: AffiliateProgramInput, actorId: string, expectedUpdatedAt?: Date): Promise<AffiliateProgramAggregate>;
   archive(id: string, actorId: string): Promise<AffiliateProgramAggregate>;
 }
 
 export class AffiliateProgramRepository implements AffiliateProgramStore {
-  async list(input: { networkId?: string; status?: AffiliateStatus; search?: string } = {}) {
+  async list(input: { networkId?: string; status?: AffiliateStatus; search?: string; skip?: number; take?: number } = {}) {
     const search = input.search?.trim();
     return prisma.affiliateProgram.findMany({
       where: {
@@ -25,7 +25,9 @@ export class AffiliateProgramRepository implements AffiliateProgramStore {
         ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" } }, { operator: { contains: search, mode: "insensitive" } }, { externalProgramId: { contains: search, mode: "insensitive" } }] } : {}),
       },
       include: programInclude,
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { id: "asc" }],
+      skip: Math.max(input.skip ?? 0, 0),
+      take: Math.min(Math.max(input.take ?? 100, 1), 100),
     });
   }
 
@@ -45,8 +47,11 @@ export class AffiliateProgramRepository implements AffiliateProgramStore {
     });
   }
 
-  async update(id: string, input: AffiliateProgramInput, actorId: string) {
+  async update(id: string, input: AffiliateProgramInput, actorId: string, expectedUpdatedAt?: Date) {
     return prisma.$transaction(async (tx) => {
+      const current = await tx.affiliateProgram.findUnique({ where: { id }, select: { updatedAt: true } });
+      if (!current) throw new Error("AFFILIATE_PROGRAM_NOT_FOUND");
+      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) throw new Error("AFFILIATE_EDIT_CONFLICT");
       const program = await tx.affiliateProgram.update({
         where: { id },
         data: { ...input, archivedAt: input.status === AffiliateStatus.ARCHIVED ? new Date() : null, updatedBy: actorId },

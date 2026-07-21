@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
     const records = await affiliateNetworkService.list({
       search: request.nextUrl.searchParams.get("search") ?? undefined,
       active: active === null ? undefined : active === "true",
+      skip: Number.parseInt(request.nextUrl.searchParams.get("skip") ?? "0", 10) || 0,
+      take: Number.parseInt(request.nextUrl.searchParams.get("take") ?? "100", 10) || 100,
     });
     return NextResponse.json({ ok: true, records, source: "postgresql" });
   } catch (error) {

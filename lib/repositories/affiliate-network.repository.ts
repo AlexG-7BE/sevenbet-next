@@ -4,23 +4,25 @@ import type { AffiliateNetworkInput } from "@/lib/affiliate/types";
 import { prisma } from "@/lib/db/prisma";
 
 export interface AffiliateNetworkStore {
-  list(input?: { search?: string; active?: boolean }): Promise<AffiliateNetwork[]>;
+  list(input?: { search?: string; active?: boolean; skip?: number; take?: number }): Promise<AffiliateNetwork[]>;
   findById(id: string): Promise<AffiliateNetwork | null>;
   existsBySlug(slug: string, excludeId?: string): Promise<boolean>;
   create(input: AffiliateNetworkInput, actorId: string): Promise<AffiliateNetwork>;
-  update(id: string, input: AffiliateNetworkInput, actorId: string): Promise<AffiliateNetwork>;
+  update(id: string, input: AffiliateNetworkInput, actorId: string, expectedUpdatedAt?: Date): Promise<AffiliateNetwork>;
   archive(id: string, actorId: string): Promise<AffiliateNetwork>;
 }
 
 export class AffiliateNetworkRepository implements AffiliateNetworkStore {
-  async list(input: { search?: string; active?: boolean } = {}) {
+  async list(input: { search?: string; active?: boolean; skip?: number; take?: number } = {}) {
     const search = input.search?.trim();
     return prisma.affiliateNetwork.findMany({
       where: {
         ...(input.active === undefined ? {} : { active: input.active }),
         ...(search ? { OR: [{ name: { contains: search, mode: "insensitive" } }, { slug: { contains: search, mode: "insensitive" } }] } : {}),
       },
-      orderBy: [{ active: "desc" }, { name: "asc" }],
+      orderBy: [{ active: "desc" }, { name: "asc" }, { id: "asc" }],
+      skip: Math.max(input.skip ?? 0, 0),
+      take: Math.min(Math.max(input.take ?? 100, 1), 100),
     });
   }
 
@@ -40,8 +42,11 @@ export class AffiliateNetworkRepository implements AffiliateNetworkStore {
     });
   }
 
-  async update(id: string, input: AffiliateNetworkInput, actorId: string) {
+  async update(id: string, input: AffiliateNetworkInput, actorId: string, expectedUpdatedAt?: Date) {
     return prisma.$transaction(async (tx) => {
+      const current = await tx.affiliateNetwork.findUnique({ where: { id }, select: { updatedAt: true } });
+      if (!current) throw new Error("AFFILIATE_NETWORK_NOT_FOUND");
+      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) throw new Error("AFFILIATE_EDIT_CONFLICT");
       const network = await tx.affiliateNetwork.update({
         where: { id },
         data: {

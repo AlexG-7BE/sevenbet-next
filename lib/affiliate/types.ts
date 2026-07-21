@@ -29,6 +29,7 @@ export interface AffiliateTrackingLinkInput {
   lastCheckedAt?: Date | null;
   expiresAt?: Date | null;
   active: boolean;
+  archived?: boolean;
   priority: number;
   source?: string;
 }

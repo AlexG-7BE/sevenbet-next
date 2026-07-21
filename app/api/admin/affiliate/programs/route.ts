@@ -14,6 +14,8 @@ export async function GET(request: NextRequest) {
       networkId: request.nextUrl.searchParams.get("networkId") ?? undefined,
       status: affiliateStatusParam(request.nextUrl.searchParams.get("status")),
       search: request.nextUrl.searchParams.get("search") ?? undefined,
+      skip: Number.parseInt(request.nextUrl.searchParams.get("skip") ?? "0", 10) || 0,
+      take: Number.parseInt(request.nextUrl.searchParams.get("take") ?? "100", 10) || 100,
     });
     return NextResponse.json({ ok: true, records, source: "postgresql" });
   } catch (error) {

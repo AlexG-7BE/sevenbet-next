@@ -12,9 +12,14 @@ export async function GET(request: NextRequest) {
     await requireAdminPermission(request, "affiliate.manage");
     const records = await affiliateOfferService.list({
       programId: request.nextUrl.searchParams.get("programId") ?? undefined,
+      networkId: request.nextUrl.searchParams.get("networkId") ?? undefined,
       casinoId: request.nextUrl.searchParams.get("casinoId") ?? undefined,
       status: affiliateStatusParam(request.nextUrl.searchParams.get("status")),
+      countryCode: request.nextUrl.searchParams.get("country") ?? undefined,
+      currencyCode: request.nextUrl.searchParams.get("currency") ?? undefined,
       search: request.nextUrl.searchParams.get("search") ?? undefined,
+      skip: Number.parseInt(request.nextUrl.searchParams.get("skip") ?? "0", 10) || 0,
+      take: Number.parseInt(request.nextUrl.searchParams.get("take") ?? "100", 10) || 100,
     });
     return NextResponse.json({ ok: true, records, source: "postgresql" });
   } catch (error) {

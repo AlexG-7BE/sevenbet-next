@@ -1,3 +1,5 @@
+import { AffiliateStatus } from "@prisma/client";
+
 import type { AffiliateProgramInput } from "@/lib/affiliate/types";
 import { assertAffiliateStatusTransition, normalizeAffiliateProgram } from "@/lib/affiliate/validation";
 import { affiliateNetworkRepository, type AffiliateNetworkStore } from "@/lib/repositories/affiliate-network.repository";
@@ -36,12 +38,19 @@ export class AffiliateProgramService {
     return this.store.create(normalized, actorId);
   }
 
-  async update(id: string, input: AffiliateProgramInput | unknown, actorId: string) {
+  async update(id: string, input: AffiliateProgramInput | unknown, actorId: string, expectedUpdatedAt?: Date) {
     const current = await this.get(id);
     const normalized = normalizeAffiliateProgram({ ...current, ...(input as object) });
     assertAffiliateStatusTransition(current.status, normalized.status);
     await this.validate(normalized, id);
-    return this.store.update(id, normalized, actorId);
+    try {
+      return await this.store.update(id, normalized, actorId, expectedUpdatedAt);
+    } catch (error) {
+      if (error instanceof Error && error.message === "AFFILIATE_EDIT_CONFLICT") {
+        throw new ConflictError("This affiliate program was changed by another editor. Reload before saving.", { id });
+      }
+      throw error;
+    }
   }
 
   async archive(id: string, actorId: string) {
@@ -53,4 +62,3 @@ export class AffiliateProgramService {
 }
 
 export const affiliateProgramService = new AffiliateProgramService();
-import { AffiliateStatus } from "@prisma/client";

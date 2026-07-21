@@ -90,6 +90,8 @@ Migration 0007 creates only new enums, tables, indexes, and foreign keys. It doe
 
 Everflow, Income Access, MyAffiliates, and NetRefer adapters will map external network/program/offer/link IDs into these aggregates. API credentials remain outside PostgreSQL. Import runs must be idempotent by scoped external IDs and must never overwrite editorial notes or activate offers automatically.
 
-## Phase 3.6 Builder plan
+## Phase 3.6 Builder implementation
 
-Build list/detail editors for networks, programs, offers, targeting, and tracking links; keep tracking URLs server-rendered only when editing them; add optimistic concurrency; expose revision history; and provide a routing preview that explains candidate ranking without issuing a redirect.
+The protected Affiliate Builder now provides network, program, offer, and nested tracking-link editors. Mutations flow through Admin API, Service, Repository, and Prisma. Offer saves use one aggregate transaction, an `expectedUpdatedAt` concurrency token, an offer revision, tracking URL revisions, and `AuditLog` with the authenticated `AdminUser` UUID. Tracking URLs are returned only by protected offer detail and routing-preview endpoints; collection responses omit them.
+
+The Casino Builder links to this source of truth and never duplicates commercial mutation logic. Legacy records remain visible only through their existing paths and are not migrated by the Builder.

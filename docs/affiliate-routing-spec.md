@@ -48,3 +48,7 @@ Only stored HTTPS URLs may be selected. Redirect responses treat the URL as data
 ## Deferred engine
 
 Redirect execution is deferred until the new records have been populated and compared against legacy production redirects. This separation allows routing tests, shadow selection, monitoring, rollback, and a dedicated data migration before `/go/[slug]` changes source of truth.
+
+## Admin candidate preview
+
+Phase 3.6 implements a read-only preview under the protected Affiliate Builder. It accepts casino, optional bonus, country, and currency, then applies active/date/GEO/currency filters and the specificity order above. The result includes ordered candidates, priority, verification and expiry context, and one deterministic winner. It does not redirect, record clicks, mutate links, or change `/go/[slug]`.

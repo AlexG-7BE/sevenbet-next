@@ -10,6 +10,7 @@ import { BonusEditor } from "@/components/admin/casino-editors/BonusEditor";
 import { CountryEditor, LicenseEditor } from "@/components/admin/casino-editors/ComplianceEditors";
 import { EditorField } from "@/components/admin/casino-editors/EditorFields";
 import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
+import { CasinoAffiliatePanel } from "@/components/admin/affiliate/AffiliateAdmin";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
 import { casinoBonusToDraft } from "@/lib/casino-builder/bonus-validation";
 import type {
@@ -232,25 +233,11 @@ function RecordList({ records, empty }: { records: Array<{ id: string; title: st
   );
 }
 
-function ReadOnlySection({ section, data }: { section: "affiliate-links" | "media"; data: CasinoBuilderData }) {
+function ReadOnlySection({ data }: { data: CasinoBuilderData }) {
   const { casino } = data;
-  const config: Record<typeof section, { title: string; description: string; content: ReactNode }> = {
-    "affiliate-links": {
-      title: "Affiliate Links",
-      description: "Managed destinations attached to the casino and its offers.",
-      content: <RecordList empty="No structured affiliate links recorded." records={[...casino.casinoLinks, ...casino.casinoBonuses.flatMap((bonus) => bonus.affiliateLinks)].map((item) => ({ id: item.id, title: item.title, detail: `${item.status} · ${item.countryCode || "Global"}` }))} />,
-    },
-    media: {
-      title: "Media",
-      description: "Logo, hero and screenshot assets.",
-      content: <RecordList empty="No media assets recorded." records={casino.images.map((item) => ({ id: item.id, title: item.alt || item.kind, detail: `${item.kind} · ${item.width ?? "?"}x${item.height ?? "?"}` }))} />,
-    },
-  };
-  const current = config[section];
-
   return (
-    <CasinoSectionLayout title={current.title} description={current.description}>
-      <PlaceholderNotice>{current.content}</PlaceholderNotice>
+    <CasinoSectionLayout title="Media" description="Logo, hero and screenshot assets.">
+      <PlaceholderNotice><RecordList empty="No media assets recorded." records={casino.images.map((item) => ({ id: item.id, title: item.alt || item.kind, detail: `${item.kind} · ${item.width ?? "?"}x${item.height ?? "?"}` }))} /></PlaceholderNotice>
     </CasinoSectionLayout>
   );
 }
@@ -458,9 +445,8 @@ export function CasinoBuilderLayout({
           {activeSection === "bonuses" && <CasinoSectionLayout title="Bonuses" description="Offer terms, GEO availability, lifecycle and deterministic ordering." badge="Editable"><BonusEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
-          {(["affiliate-links", "media"] as CasinoBuilderSection[]).includes(activeSection) && (
-            <ReadOnlySection section={activeSection as "affiliate-links" | "media"} data={data} />
-          )}
+          {activeSection === "affiliate-links" && <CasinoSectionLayout title="Affiliate Offers" description="New-platform offers linked to this casino. Full editing stays in Affiliate Builder." badge="Integrated"><CasinoAffiliatePanel casinoId={data.casino.id} /></CasinoSectionLayout>}
+          {activeSection === "media" && <ReadOnlySection data={data} />}
         </main>
       </div>
       <CasinoSaveBar state={saveState} message={message} onSave={save} onReload={reload} />

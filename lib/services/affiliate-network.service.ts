@@ -7,7 +7,7 @@ import { ConflictError, NotFoundError } from "./service-error";
 export class AffiliateNetworkService {
   constructor(private readonly store: AffiliateNetworkStore = affiliateNetworkRepository) {}
 
-  list(input?: { search?: string; active?: boolean }) {
+  list(input?: Parameters<AffiliateNetworkStore["list"]>[0]) {
     return this.store.list(input);
   }
 
@@ -23,11 +23,18 @@ export class AffiliateNetworkService {
     return this.store.create(normalized, actorId);
   }
 
-  async update(id: string, input: AffiliateNetworkInput | unknown, actorId: string) {
+  async update(id: string, input: AffiliateNetworkInput | unknown, actorId: string, expectedUpdatedAt?: Date) {
     const current = await this.get(id);
     const normalized = normalizeAffiliateNetwork({ ...current, ...(input as object) });
     if (await this.store.existsBySlug(normalized.slug, id)) throw new ConflictError("Affiliate network slug already exists", { slug: normalized.slug });
-    return this.store.update(id, normalized, actorId);
+    try {
+      return await this.store.update(id, normalized, actorId, expectedUpdatedAt);
+    } catch (error) {
+      if (error instanceof Error && error.message === "AFFILIATE_EDIT_CONFLICT") {
+        throw new ConflictError("This affiliate network was changed by another editor. Reload before saving.", { id });
+      }
+      throw error;
+    }
   }
 
   async archive(id: string, actorId: string) {

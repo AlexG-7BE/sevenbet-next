@@ -2219,3 +2219,255 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
     width: 100%;
   }
 }
+
+.affiliateAdminLayout {
+  display: grid;
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.affiliateSidebar,
+.affiliateAdminContent,
+.affiliateSection,
+.affiliatePreview {
+  min-width: 0;
+}
+
+.affiliateSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-self: start;
+  position: sticky;
+  top: 20px;
+}
+
+.affiliateSidebar nav {
+  display: grid;
+  gap: 6px;
+}
+
+.affiliateSidebar nav a {
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  color: var(--muted);
+}
+
+.affiliateSidebar nav a:hover,
+.affiliateSidebar nav a.active {
+  color: var(--text);
+  border-color: var(--border);
+  background: var(--surface);
+}
+
+.affiliateAdminContent {
+  display: grid;
+  gap: 20px;
+}
+
+.affiliateHeader,
+.affiliateStatusBar,
+.affiliateSaveBar,
+.affiliateRecordHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.affiliateHeader h2,
+.affiliateSectionTitle h3 {
+  margin: 4px 0;
+}
+
+.affiliateStatusBar,
+.affiliateSaveBar {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.affiliateStatusBar small {
+  margin-left: auto;
+  color: var(--muted);
+}
+
+.affiliateSaveBar {
+  position: sticky;
+  bottom: 12px;
+  z-index: 20;
+  box-shadow: 0 12px 30px rgba(16, 32, 24, 0.1);
+}
+
+.affiliateSaveBar > div,
+.affiliateFilters,
+.affiliateRecordHeader .builderActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.affiliateSection {
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.affiliateSectionTitle {
+  margin-bottom: 18px;
+}
+
+.affiliateMetricGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.affiliateMetricGrid .card {
+  display: grid;
+  gap: 6px;
+}
+
+.affiliateMetricGrid strong {
+  font-size: 2rem;
+}
+
+.affiliateFilters {
+  padding: 12px;
+}
+
+.affiliateFilters input,
+.affiliateFilters select,
+.affiliateField input,
+.affiliateField select,
+.affiliateField textarea {
+  min-height: 44px;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.affiliateFilters input,
+.affiliateFilters select {
+  flex: 1 1 140px;
+}
+
+.affiliateField {
+  display: grid;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.affiliateField textarea {
+  resize: vertical;
+}
+
+.affiliateRecordList,
+.affiliateTrackingList,
+.affiliateCandidateList,
+.affiliateHistory {
+  display: grid;
+  gap: 10px;
+}
+
+.affiliateRecordList > .card,
+.affiliateCandidateList article {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.affiliateRecordList h3 {
+  margin: 8px 0 4px;
+}
+
+.affiliateTrackingList > .card {
+  display: grid;
+  gap: 16px;
+}
+
+.affiliateArchived {
+  opacity: 0.68;
+}
+
+.affiliateCandidateList article {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.affiliateCandidateList article.chosen {
+  border-color: var(--emerald);
+  background: var(--card-soft);
+}
+
+.affiliateCandidateList article > div {
+  display: grid;
+  gap: 5px;
+}
+
+.affiliateHistory {
+  padding-top: 12px;
+}
+
+.casinoAffiliatePanel {
+  display: grid;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .affiliateAdminLayout,
+  .affiliateMetricGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .affiliateSidebar {
+    grid-column: 1 / -1;
+    position: static;
+  }
+
+  .affiliateSidebar nav {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .affiliateAdminContent {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 640px) {
+  .affiliateAdminLayout,
+  .affiliateMetricGrid,
+  .affiliateSidebar nav {
+    grid-template-columns: 1fr;
+  }
+
+  .affiliateHeader,
+  .affiliateStatusBar,
+  .affiliateSaveBar,
+  .affiliateRecordList > .card,
+  .affiliateCandidateList article,
+  .affiliateRecordHeader {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .affiliateStatusBar small {
+    margin-left: 0;
+  }
+
+  .affiliateFilters > *,
+  .affiliateSaveBar > div,
+  .affiliateSaveBar .button {
+    width: 100%;
+  }
+}

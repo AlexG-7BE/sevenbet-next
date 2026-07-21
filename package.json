@@ -22,6 +22,7 @@
     "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",
     "casino-bonus:test": "node --import tsx --test tests/casino-bonus-builder.test.ts",
     "affiliate:test": "node --import tsx --test tests/affiliate-platform-foundation.test.ts",
+    "affiliate-builder:test": "node --import tsx --test tests/affiliate-builder.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

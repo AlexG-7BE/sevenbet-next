@@ -11,7 +11,10 @@ const offerAggregateInclude = {
   currencies: { orderBy: { currencyCode: Prisma.SortOrder.asc } },
   trackingLinks: {
     orderBy: [{ priority: Prisma.SortOrder.desc }, { updatedAt: Prisma.SortOrder.desc }],
-    include: { countries: { orderBy: { countryCode: Prisma.SortOrder.asc } } },
+    include: {
+      countries: { orderBy: { countryCode: Prisma.SortOrder.asc } },
+      revisions: { orderBy: { revisionNumber: Prisma.SortOrder.desc }, take: 10 },
+    },
   },
   revisions: { orderBy: { revisionNumber: Prisma.SortOrder.desc }, take: 20 },
 } satisfies Prisma.AffiliateOfferInclude;
@@ -20,6 +23,9 @@ const offerListInclude = {
   program: { select: { id: true, name: true, status: true, network: { select: { id: true, name: true, active: true } } } },
   casino: { select: { id: true, title: true, slug: true } },
   casinoBonus: { select: { id: true, title: true, slug: true } },
+  countries: { select: { countryCode: true, mode: true }, orderBy: { countryCode: Prisma.SortOrder.asc } },
+  currencies: { select: { currencyCode: true }, orderBy: { currencyCode: Prisma.SortOrder.asc } },
+  trackingLinks: { where: { active: true, archivedAt: null }, select: { id: true } },
   _count: { select: { trackingLinks: true } },
 } satisfies Prisma.AffiliateOfferInclude;
 
@@ -27,13 +33,13 @@ export type AffiliateOfferAggregate = Prisma.AffiliateOfferGetPayload<{ include:
 export type AffiliateOfferListItem = Prisma.AffiliateOfferGetPayload<{ include: typeof offerListInclude }>;
 
 export interface AffiliateOfferStore {
-  list(input?: { programId?: string; casinoId?: string; status?: AffiliateStatus; search?: string }): Promise<AffiliateOfferListItem[]>;
+  list(input?: { networkId?: string; programId?: string; casinoId?: string; status?: AffiliateStatus; countryCode?: string; currencyCode?: string; search?: string; skip?: number; take?: number }): Promise<AffiliateOfferListItem[]>;
   findById(id: string): Promise<AffiliateOfferAggregate | null>;
   existsExternalOfferId(programId: string, externalOfferId: string, excludeId?: string): Promise<boolean>;
   findDuplicateExternalLinkId(programId: string, externalLinkIds: string[], excludeOfferId?: string): Promise<string | null>;
   findCasinoBonus(casinoId: string, casinoBonusId?: string | null): Promise<{ casinoExists: boolean; bonusCasinoId: string | null }>;
   create(input: AffiliateOfferInput, actorId: string): Promise<AffiliateOfferAggregate>;
-  update(id: string, input: AffiliateOfferInput, actorId: string): Promise<AffiliateOfferAggregate>;
+  update(id: string, input: AffiliateOfferInput, actorId: string, expectedUpdatedAt?: Date): Promise<AffiliateOfferAggregate>;
   archive(id: string, actorId: string): Promise<AffiliateOfferAggregate>;
   listRevisions(id: string): Promise<AffiliateOfferAggregate["revisions"]>;
   listTrackingHistory(trackingLinkId: string): Promise<Array<{ id: string; revisionNumber: number; destinationUrl: string; trackingUrl: string; summary: string; createdBy: string; createdAt: Date }>>;
@@ -64,7 +70,7 @@ function linkData(link: AffiliateTrackingLinkInput, actorId: string) {
     active: link.active,
     priority: link.priority,
     source: link.source ?? "MANUAL",
-    archivedAt: link.active ? null : undefined,
+    archivedAt: link.archived ? new Date() : null,
     updatedBy: actorId,
   };
 }
@@ -75,17 +81,34 @@ async function createTrackingRevision(tx: Prisma.TransactionClient, link: Affili
 }
 
 export class AffiliateOfferRepository implements AffiliateOfferStore {
-  async list(input: { programId?: string; casinoId?: string; status?: AffiliateStatus; search?: string } = {}) {
+  async list(input: { networkId?: string; programId?: string; casinoId?: string; status?: AffiliateStatus; countryCode?: string; currencyCode?: string; search?: string; skip?: number; take?: number } = {}) {
     const search = input.search?.trim();
+    const countryCode = input.countryCode?.trim().toUpperCase();
+    const currencyCode = input.currencyCode?.trim().toUpperCase();
+    const and: Prisma.AffiliateOfferWhereInput[] = [];
+    if (countryCode) and.push({ OR: [
+      { geoMode: AffiliateGeoMode.GLOBAL },
+      { geoMode: AffiliateGeoMode.ALLOW, countries: { some: { countryCode, mode: AffiliateGeoMode.ALLOW } } },
+      { geoMode: AffiliateGeoMode.BLOCK, countries: { none: { countryCode, mode: AffiliateGeoMode.BLOCK } } },
+    ] });
+    if (currencyCode) and.push({ OR: [{ currencies: { none: {} } }, { currencies: { some: { currencyCode } } }] });
+    if (search) and.push({ OR: [
+      { internalName: { contains: search, mode: Prisma.QueryMode.insensitive } },
+      { publicLabel: { contains: search, mode: Prisma.QueryMode.insensitive } },
+      { externalOfferId: { contains: search, mode: Prisma.QueryMode.insensitive } },
+    ] });
     return prisma.affiliateOffer.findMany({
       where: {
+        ...(input.networkId ? { program: { networkId: input.networkId } } : {}),
         ...(input.programId ? { programId: input.programId } : {}),
         ...(input.casinoId ? { casinoId: input.casinoId } : {}),
         ...(input.status ? { status: input.status } : {}),
-        ...(search ? { OR: [{ internalName: { contains: search, mode: "insensitive" } }, { publicLabel: { contains: search, mode: "insensitive" } }, { externalOfferId: { contains: search, mode: "insensitive" } }] } : {}),
+        AND: and,
       },
       include: offerListInclude,
-      orderBy: [{ priority: "desc" }, { updatedAt: "desc" }],
+      orderBy: [{ priority: "desc" }, { updatedAt: "desc" }, { id: "asc" }],
+      skip: Math.max(input.skip ?? 0, 0),
+      take: Math.min(Math.max(input.take ?? 100, 1), 100),
     });
   }
 
@@ -139,10 +162,11 @@ export class AffiliateOfferRepository implements AffiliateOfferStore {
     });
   }
 
-  async update(id: string, input: AffiliateOfferInput, actorId: string) {
+  async update(id: string, input: AffiliateOfferInput, actorId: string, expectedUpdatedAt?: Date) {
     return prisma.$transaction(async (tx) => {
       const current = await tx.affiliateOffer.findUnique({ where: { id }, include: offerAggregateInclude });
       if (!current) throw new Error("AFFILIATE_OFFER_NOT_FOUND");
+      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) throw new Error("AFFILIATE_EDIT_CONFLICT");
       const latest = await tx.affiliateOfferRevision.findFirst({ where: { offerId: id }, orderBy: { revisionNumber: "desc" }, select: { revisionNumber: true } });
       await tx.affiliateOfferRevision.create({ data: { offerId: id, revisionNumber: (latest?.revisionNumber ?? 0) + 1, snapshot: jsonSnapshot(current), summary: "Updated affiliate offer and terms", createdBy: actorId } });
 

@@ -49,6 +49,15 @@ function decimalValue(value: unknown, field: string) {
   return String(number);
 }
 
+function nonNegativeInteger(value: unknown, field: string, fallback = 0) {
+  if (value === undefined || value === null || value === "") return fallback;
+  const number = Number(value);
+  if (!Number.isInteger(number) || number < 0) {
+    throw new ValidationError(`${field} must be a non-negative integer`, { field });
+  }
+  return number;
+}
+
 export function normalizeAffiliateSlug(value: unknown) {
   const slug = required(value, "slug")
     .toLowerCase()
@@ -134,7 +143,7 @@ export function normalizeAffiliateNetwork(input: unknown): AffiliateNetworkInput
   const value = input as Record<string, unknown>;
   const notes = optional(value.notes);
   assertNoSecrets(notes, "notes");
-  return {
+  const network: AffiliateNetworkInput = {
     name: required(value.name, "name"),
     slug: normalizeAffiliateSlug(value.slug),
     type: enumValue(value.type ?? AffiliateNetworkType.OTHER, Object.values(AffiliateNetworkType), "type"),
@@ -144,6 +153,10 @@ export function normalizeAffiliateNetwork(input: unknown): AffiliateNetworkInput
     active: value.active === undefined ? true : Boolean(value.active),
     notes,
   };
+  if ((network.apiCapable || network.exportCapable) && !network.websiteUrl) {
+    throw new ValidationError("A network website is required when API or export capability is enabled");
+  }
+  return network;
 }
 
 export function normalizeAffiliateProgram(input: unknown): AffiliateProgramInput {
@@ -190,7 +203,8 @@ function normalizeTrackingLink(input: unknown, index: number): AffiliateTracking
     lastCheckedAt: dateValue(value.lastCheckedAt, `trackingLinks[${index}].lastCheckedAt`),
     expiresAt,
     active: Boolean(value.active),
-    priority: Number.isInteger(value.priority) ? Number(value.priority) : 0,
+    archived: Boolean(value.archived ?? value.archivedAt),
+    priority: nonNegativeInteger(value.priority, `trackingLinks[${index}].priority`),
     source: optional(value.source) ?? "MANUAL",
   };
 }
@@ -256,7 +270,7 @@ export function normalizeAffiliateOffer(input: unknown): AffiliateOfferInput {
     expiresAt,
     evergreen,
     featured: Boolean(value.featured),
-    priority: Number.isInteger(value.priority) ? Number(value.priority) : 0,
+    priority: nonNegativeInteger(value.priority, "priority"),
     terms: optional(value.terms),
     notes,
     trackingLinks: Array.isArray(value.trackingLinks) ? value.trackingLinks.map(normalizeTrackingLink) : [],
