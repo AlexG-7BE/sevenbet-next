@@ -524,6 +524,7 @@ model Casino {
   casinoBonuses   CasinoBonus[]
   casinoLinks     CasinoAffiliateLink[]
   affiliateOffers AffiliateOffer[]
+  redirectSlugs   AffiliateRedirectSlug[]
   seo             CasinoSeo?
 }
 
@@ -703,9 +704,10 @@ model CasinoBonus {
   createdBy           String
   updatedBy           String
 
-  casino          Casino                @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  casino          Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   affiliateLinks  CasinoAffiliateLink[]
   affiliateOffers AffiliateOffer[]
+  redirectSlugs   AffiliateRedirectSlug[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -822,6 +824,7 @@ model AffiliateOffer {
   currencies    AffiliateOfferCurrency[]
   trackingLinks AffiliateTrackingLink[]
   revisions     AffiliateOfferRevision[]
+  redirectSlugs AffiliateRedirectSlug[]
 
   @@unique([programId, externalOfferId])
   @@index([casinoId, status, priority])
@@ -931,6 +934,46 @@ model AffiliateTrackingLinkRevision {
 
   @@unique([trackingLinkId, revisionNumber])
   @@index([trackingLinkId, createdAt])
+}
+
+model AffiliateRedirectSlug {
+  id               String    @id @default(uuid()) @db.Uuid
+  slug             String    @unique
+  casinoId         String    @db.Uuid
+  casinoBonusId    String?   @db.Uuid
+  affiliateOfferId String?   @db.Uuid
+  defaultCurrency  String?
+  defaultLanguage  String?
+  active           Boolean   @default(true)
+  archivedAt       DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  createdBy        String
+  updatedBy        String
+
+  casino         Casino                      @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus    CasinoBonus?                @relation(fields: [casinoBonusId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer AffiliateOffer?             @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  revisions      AffiliateRedirectRevision[]
+
+  @@index([casinoId, active])
+  @@index([casinoBonusId, active])
+  @@index([affiliateOfferId, active])
+}
+
+model AffiliateRedirectRevision {
+  id             String   @id @default(uuid()) @db.Uuid
+  redirectSlugId String   @db.Uuid
+  revisionNumber Int
+  snapshot       Json
+  summary        String
+  createdBy      String
+  createdAt      DateTime @default(now())
+
+  redirectSlug AffiliateRedirectSlug @relation(fields: [redirectSlugId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([redirectSlugId, revisionNumber])
+  @@index([redirectSlugId, createdAt])
 }
 
 model CasinoSeo {

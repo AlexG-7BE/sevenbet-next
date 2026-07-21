@@ -2410,6 +2410,25 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   background: var(--card-soft);
 }
 
+.affiliateRedirectCreate {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: end;
+}
+
+.affiliateRedirectList {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.affiliateRedirectUrl {
+  display: block;
+  margin-top: 12px;
+  overflow-wrap: anywhere;
+}
+
 .affiliateCandidateList article > div {
   display: grid;
   gap: 5px;
@@ -2469,5 +2488,9 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .affiliateSaveBar > div,
   .affiliateSaveBar .button {
     width: 100%;
+  }
+
+  .affiliateRedirectCreate {
+    grid-template-columns: 1fr;
   }
 }

@@ -125,3 +125,21 @@ export interface AffiliateReferenceData {
   programs: AffiliateProgramRecord[];
   casinos: Array<{ id: string; title: string; slug: string; domain: string }>;
 }
+
+export interface AffiliateRedirectSlugRecord {
+  id: string;
+  slug: string;
+  casinoId: string;
+  casinoBonusId: string | null;
+  affiliateOfferId: string | null;
+  defaultCurrency: string | null;
+  defaultLanguage: string | null;
+  active: boolean;
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  casino: { id: string; title: string; slug: string };
+  casinoBonus: { id: string; casinoId: string; title: string; slug: string } | null;
+  affiliateOffer: { id: string; casinoId: string; casinoBonusId: string | null; internalName: string } | null;
+  revisions: Array<{ id: string; revisionNumber: number; summary: string; createdAt: string }>;
+}

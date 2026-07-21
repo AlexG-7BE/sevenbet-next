@@ -27,6 +27,8 @@ The Program editor covers network, scoped external ID, operator, status, account
 
 The Offer editor covers program, immutable casino ownership, optional casino-owned bonus, payout model, dates, GEO, currencies, terms, priority, lifecycle, revisions, and nested tracking links. Tracking links support add, edit, duplicate, archive, restore, deterministic reordering, verification dates, targeting, and previous URL history.
 
+Phase 3.7 adds a Redirect URLs panel for saved offers. Staff can create a stable `/r/[slug]`, copy its public URL, archive or restore it, and test production candidate selection with country, currency, and language inputs. Slug creation and mutation require `affiliate.manage`; updates use `expectedUpdatedAt`, immutable revisions, and AuditLog.
+
 ## Casino integration
 
 The Casino Builder Affiliate Links tab queries new-platform offers by the current casino ID, displays network/program/status/bonus/link counts, and links to the full Offer editor. Quick create opens a draft prefilled with that casino. Existing offers cannot be moved across casinos.
@@ -37,4 +39,4 @@ The preview calls a protected read-only endpoint. It filters inactive, archived,
 
 ## Legacy coexistence
 
-`AffiliateLink`, `CasinoAffiliateLink`, and `/go/[slug]` are unchanged. The new Builder writes only the Phase 3.5 models. A future data migration and shadow-routing phase are prerequisites for changing the public redirect source.
+`AffiliateLink`, `CasinoAffiliateLink`, and `/go/[slug]` are unchanged. The new `/r/[slug]` route is independent and opt-in. Public casino/bonus links are not switched automatically, and no implicit fallback to legacy destinations is allowed.

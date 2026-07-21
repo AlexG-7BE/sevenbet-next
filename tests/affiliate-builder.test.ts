@@ -74,6 +74,7 @@ function offersForPreview() {
     trackingLinks: [{ ...baseLink, id: "link-global" }],
   }, {
     id: "offer-bonus", casinoId: "casino", casinoBonusId: "bonus", priority: 20, geoMode: "ALLOW" as const, countries: [{ countryCode: "GB", mode: "ALLOW" as const }], currencies: [{ currencyCode: "GBP" }],
+    casinoBonus: { casinoId: "casino" },
     program: { name: "Program", network: { name: "Network" } },
     trackingLinks: [{ ...baseLink, id: "link-bonus", label: "Bonus GB", geoMode: "ALLOW" as const, countries: [{ countryCode: "GB", mode: "ALLOW" as const }], currencyCode: "GBP", priority: 100 }],
   }];

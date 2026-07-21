@@ -92,3 +92,13 @@ export interface ActiveOfferQuery {
   currencyCode?: string;
   now?: Date;
 }
+
+export interface AffiliateRedirectSlugInput {
+  slug: string;
+  casinoId: string;
+  casinoBonusId?: string | null;
+  affiliateOfferId?: string | null;
+  defaultCurrency?: string | null;
+  defaultLanguage?: string | null;
+  active: boolean;
+}

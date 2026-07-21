@@ -2,7 +2,7 @@
 
 ## Scope
 
-This document defines candidate selection for the future affiliate redirect engine. Phase 3.5 does not change `/go/[slug]`, execute redirects, record clicks, or expose new tracking URLs publicly.
+This document defines candidate selection for the Phase 3.7 affiliate redirect engine. The new `/r/[slug]` route uses the PostgreSQL affiliate platform behind an explicit rollout flag. Legacy `/go/[slug]` remains unchanged.
 
 ## Candidate eligibility
 
@@ -43,12 +43,16 @@ The engine must not fall back across a blocked GEO, unsupported currency, paused
 
 ## URL handling
 
-Only stored HTTPS URLs may be selected. Redirect responses treat the URL as data, never executable code. Logs must record internal entity IDs and rule outcomes, not raw query strings, cookies, tracking tokens, or destination URLs.
+Only stored HTTP/HTTPS URLs may be considered and production requires HTTPS. Both destination and tracking URLs are parsed again immediately before redirect. Credentials, CRLF, backslashes, and `javascript:`, `data:`, `file:`, or `ftp:` URLs are rejected. Logs record only internal entity IDs, normalized routing hints, and rule outcomes, never raw query strings, cookies, tracking tokens, IP addresses, user agents, or destination URLs.
 
-## Deferred engine
+## Redirect execution
 
-Redirect execution is deferred until the new records have been populated and compared against legacy production redirects. This separation allows routing tests, shadow selection, monitoring, rollback, and a dedicated data migration before `/go/[slug]` changes source of truth.
+`/r/[slug]` issues a `302` only after a stable `AffiliateRedirectSlug` resolves to an eligible candidate. Responses use `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, and `X-Robots-Tag: noindex, nofollow, noarchive`. Unknown, archived, ineligible, or unsafe mappings return a generic 404. `AFFILIATE_REDIRECT_ENGINE_ENABLED` controls public rollout.
+
+Country comes from supported platform GEO headers. A public `country` query parameter is ignored. Local test overrides require a non-production runtime plus `AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE=true` and the dedicated `testCountry` parameter. Currency and language are validated preference hints and never establish GEO.
 
 ## Admin candidate preview
 
 Phase 3.6 implements a read-only preview under the protected Affiliate Builder. It accepts casino, optional bonus, country, and currency, then applies active/date/GEO/currency filters and the specificity order above. The result includes ordered candidates, priority, verification and expiry context, and one deterministic winner. It does not redirect, record clicks, mutate links, or change `/go/[slug]`.
+
+Phase 3.7 adds slug-based preview using the same candidate resolver as `/r/[slug]`. Protected responses omit destination and tracking URLs and expose a controlled failure reason when no winner exists.
