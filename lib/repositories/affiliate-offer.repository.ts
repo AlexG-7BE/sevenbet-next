@@ -1,4 +1,10 @@
-import { AffiliateGeoMode, AffiliateStatus, Prisma } from "@prisma/client";
+import {
+  AffiliateGeoMode,
+  AffiliateStatus,
+  EditorialStatus,
+  OfferStatus,
+  Prisma,
+} from "@prisma/client";
 
 import type { ActiveOfferQuery, AffiliateOfferInput, AffiliateTrackingLinkInput } from "@/lib/affiliate/types";
 import { prisma } from "@/lib/db/prisma";
@@ -215,7 +221,21 @@ export class AffiliateOfferRepository implements AffiliateOfferStore {
     return prisma.affiliateOffer.findMany({
       where: {
         casinoId: input.casinoId,
-        ...(input.casinoBonusId ? { OR: [{ casinoBonusId: input.casinoBonusId }, { casinoBonusId: null }] } : { casinoBonusId: null }),
+        casino: { status: EditorialStatus.PUBLISHED, archivedAt: null },
+        ...(input.casinoBonusId
+          ? {
+              OR: [
+                { casinoBonusId: null },
+                {
+                  casinoBonusId: input.casinoBonusId,
+                  casinoBonus: {
+                    status: EditorialStatus.PUBLISHED,
+                    offerStatus: OfferStatus.ACTIVE,
+                  },
+                },
+              ],
+            }
+          : { casinoBonusId: null }),
         status: AffiliateStatus.ACTIVE,
         archivedAt: null,
         program: { status: AffiliateStatus.ACTIVE, archivedAt: null, network: { active: true, archivedAt: null } },

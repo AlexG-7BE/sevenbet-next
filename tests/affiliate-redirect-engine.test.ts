@@ -204,6 +204,18 @@ test("admin routes require affiliate.manage and public requests are not audited"
   assert.doesNotMatch(readFileSync("app/r/[slug]/route.ts", "utf8"), /auditLog|cookie|user-agent|x-forwarded-for|request\.url/);
 });
 
+test("active redirect candidates require a published casino and active published bonus", () => {
+  const repository = readFileSync("lib/repositories/affiliate-offer.repository.ts", "utf8");
+  assert.match(
+    repository,
+    /casino:\s*\{ status: EditorialStatus\.PUBLISHED, archivedAt: null \}/,
+  );
+  assert.match(
+    repository,
+    /casinoBonus:\s*\{[\s\S]*?status: EditorialStatus\.PUBLISHED,[\s\S]*?offerStatus: OfferStatus\.ACTIVE/,
+  );
+});
+
 test("migration 0008 is additive, event-free, and legacy route remains independent", () => {
   const migration = readFileSync("prisma/migrations/0008_affiliate_redirect_foundation/migration.sql", "utf8");
   assert.match(migration, /CREATE TABLE "AffiliateRedirectSlug"/);
