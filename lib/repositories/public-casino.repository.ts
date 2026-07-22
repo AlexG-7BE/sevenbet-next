@@ -5,11 +5,21 @@ import type { PublicAffiliateRoute, PublishedCasinoSnapshotRecord } from "@/lib/
 
 export interface PublicCasinoStore {
   findPublishedBySlug(slug: string): Promise<PublishedCasinoSnapshotRecord | null>;
+  hasManagedSlug(slug: string): Promise<boolean>;
   listPublished(): Promise<PublishedCasinoSnapshotRecord[]>;
+  listManagedSlugs(): Promise<string[]>;
   listActiveAffiliateRoutes(casinoIds: string[]): Promise<PublicAffiliateRoute[]>;
 }
 
 export class PublicCasinoRepository implements PublicCasinoStore {
+  async hasManagedSlug(slug: string) {
+    return (await prisma.casino.count({ where: { slug } })) > 0;
+  }
+
+  async listManagedSlugs() {
+    return (await prisma.casino.findMany({ select: { slug: true } })).map((casino) => casino.slug);
+  }
+
   async listPublished(): Promise<PublishedCasinoSnapshotRecord[]> {
     const versions = await prisma.casinoVersion.findMany({
       where: { status: EditorialStatus.PUBLISHED, casino: { archivedAt: null, status: EditorialStatus.PUBLISHED } },

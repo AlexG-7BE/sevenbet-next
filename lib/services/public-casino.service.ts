@@ -51,6 +51,7 @@ export class PublicCasinoService {
           const casino = mapPublishedCasino(published, routes, { redirectEnabled: this.redirectEnabled(), now: this.options.now });
           if (casino) return casino;
         }
+        if (await this.repository.hasManagedSlug(slug)) return null;
       } catch {
         // A transient CMS failure must preserve the established public catalog without leaking database details.
       }
@@ -61,7 +62,10 @@ export class PublicCasinoService {
   async listCasinos(): Promise<PublicCasinoDTO[]> {
     if (!this.cmsEnabled()) return this.legacyCasinos.map(mapLegacyCasino);
     try {
-      const published = await this.repository.listPublished();
+      const [published, managedSlugs] = await Promise.all([
+        this.repository.listPublished(),
+        this.repository.listManagedSlugs(),
+      ]);
       const routes = this.redirectEnabled()
         ? await this.repository.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId))
         : [];
@@ -73,7 +77,8 @@ export class PublicCasinoService {
       for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
         if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
       }
-      for (const casino of this.legacyCasinos.map((entry) => this.legacyForMode(entry))) {
+      const managed = new Set(managedSlugs);
+      for (const casino of this.legacyCasinos.filter((entry) => !managed.has(entry.slug)).map((entry) => this.legacyForMode(entry))) {
         if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
       }
       return [...bySlug.values()].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));

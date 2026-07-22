@@ -63,10 +63,12 @@ function publishedRecord(patch: Partial<PublishedCasinoSnapshotRecord> = {}): Pu
   };
 }
 
-function store(records: PublishedCasinoSnapshotRecord[]): PublicCasinoStore {
+function store(records: PublishedCasinoSnapshotRecord[], managedSlugs = records.map((entry) => String((entry.snapshot as Record<string, unknown>).slug))): PublicCasinoStore {
   return {
     listPublished: async () => records,
+    listManagedSlugs: async () => managedSlugs,
     findPublishedBySlug: async (slug) => records.find((entry) => (entry.snapshot as Record<string, unknown>).slug === slug) ?? null,
+    hasManagedSlug: async (slug) => managedSlugs.includes(slug),
     listActiveAffiliateRoutes: async () => [
       { casinoId: records[0]?.casinoId ?? "", casinoBonusId: null, slug: "cms-10bet" },
       { casinoId: records[0]?.casinoId ?? "", casinoBonusId: "22222222-2222-4222-8222-222222222222", slug: "cms-10bet-welcome" },
@@ -92,6 +94,15 @@ test("draft and archived snapshots never become public", async () => {
   assert.equal(mapPublishedCasino(publishedRecord({ archivedAt: now }), [], { redirectEnabled: true, now }), null);
   const snapshot = { ...(publishedRecord().snapshot as Record<string, unknown>), status: "APPROVED" };
   assert.equal(mapPublishedCasino(publishedRecord({ snapshot }), [], { redirectEnabled: true, now }), null);
+});
+
+test("draft and archived CMS slugs cannot reappear through legacy fallback or sitemap data", async () => {
+  const legacy = getCasinos();
+  const managedSlug = legacy[0].slug;
+  const service = new PublicCasinoService(store([], [managedSlug]), legacy, { cmsEnabled: true, redirectEnabled: true, now });
+
+  assert.equal(await service.getCasino(managedSlug), null);
+  assert.equal((await service.listCasinos()).some((casino) => casino.slug === managedSlug), false);
 });
 
 test("the repository exposes a published version only while its current casino is published", () => {
