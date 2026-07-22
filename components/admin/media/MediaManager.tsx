@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { Badge, Card } from "@/components/ui";
 import { mediaJson, type MediaAssetAdminRecord, type MediaAssetTypeValue } from "@/lib/media/admin-types";
+import { mediaMetadataDraft, persistMediaMetadata } from "@/lib/media/editor-state";
 
 const uploadTypes: MediaAssetTypeValue[] = ["LOGO", "FAVICON", "HERO", "SCREENSHOT", "GALLERY", "SOCIAL_IMAGE", "OTHER"];
 
@@ -26,6 +27,62 @@ function uploadMedia(form: FormData, onProgress: (progress: number) => void) {
   });
 }
 
+function MediaMetadataEditor({
+  record,
+  casinoId,
+  disabled,
+  onError,
+  onSaved,
+  children,
+}: {
+  record: MediaAssetAdminRecord;
+  casinoId: string;
+  disabled: boolean;
+  onError: (message: string) => void;
+  onSaved: (record: MediaAssetAdminRecord) => void;
+  children: ReactNode;
+}) {
+  const [draft, setDraft] = useState(() => mediaMetadataDraft(record));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft(mediaMetadataDraft(record));
+  }, [record.altText, record.caption, record.id, record.updatedAt]);
+
+  async function saveMetadata(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const currentDraft = {
+      altText: String(form.get("altText") || ""),
+      caption: String(form.get("caption") || ""),
+    };
+
+    setDraft(currentDraft);
+    setSaving(true);
+    onError("");
+    try {
+      const saved = await persistMediaMetadata({ casinoId, draft: currentDraft, record, request: mediaJson });
+      setDraft(mediaMetadataDraft(saved));
+      onSaved(saved);
+    } catch (caught) {
+      onError(caught instanceof Error ? caught.message : "Unable to update media");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form className="mediaMetadataForm" onSubmit={(event) => void saveMetadata(event)}>
+      <label><span>Alternative text</span><input disabled={saving} maxLength={300} name="altText" value={draft.altText} onChange={(event) => setDraft((current) => ({ ...current, altText: event.target.value }))} /></label>
+      <label><span>Caption</span><input disabled={saving} maxLength={500} name="caption" value={draft.caption} onChange={(event) => setDraft((current) => ({ ...current, caption: event.target.value }))} /></label>
+      <div className="mediaCardActions">
+        <button className="button ghost" disabled={disabled || saving} type="submit">{saving ? "Saving..." : "Save metadata"}</button>
+        {children}
+      </div>
+    </form>
+  );
+}
+
 export function MediaManager({ casinoId }: { casinoId: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [records, setRecords] = useState<MediaAssetAdminRecord[]>([]);
@@ -35,7 +92,6 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
   const [caption, setCaption] = useState("");
   const [featured, setFeatured] = useState(true);
   const [file, setFile] = useState<File | null>(null);
-  const [drafts, setDrafts] = useState<Record<string, { altText: string; caption: string }>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -45,7 +101,6 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
   const load = useCallback(async () => {
     const result = await mediaJson<{ records: MediaAssetAdminRecord[] }>(`/api/admin/media?casinoId=${casinoId}&includeArchived=true&take=200`);
     setRecords(result.records);
-    setDrafts(Object.fromEntries(result.records.map((record) => [record.id, { altText: record.altText, caption: record.caption || "" }])));
     setError("");
     setLoading(false);
   }, [casinoId]);
@@ -53,6 +108,10 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
   useEffect(() => { void load().catch((caught) => { setError(caught instanceof Error ? caught.message : "Unable to load media"); setLoading(false); }); }, [load]);
 
   const visible = useMemo(() => records.filter((record) => filter === "ALL" || record.type === filter), [filter, records]);
+
+  function acceptSavedRecord(saved: MediaAssetAdminRecord) {
+    setRecords((current) => current.map((record) => record.id === saved.id ? saved : record));
+  }
 
   function chooseFile(next: File | null) {
     setFile(next);
@@ -158,7 +217,6 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
       {!loading && !visible.length && <Card><p className="muted">No media assets match this view.</p></Card>}
       <div className="mediaGrid">
         {visible.map((record) => {
-          const draft = drafts[record.id] || { altText: record.altText, caption: record.caption || "" };
           const group = records.filter((item) => item.type === record.type);
           const index = group.findIndex((item) => item.id === record.id);
           return (
@@ -167,17 +225,14 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
               <div className="mediaPreview"><img alt={record.altText} height={record.height || 360} loading="lazy" src={record.publicUrl} width={record.width || 640} /></div>
               <div className="badgeCluster"><Badge tone={record.status === "ACTIVE" ? "green" : "warning"}>{record.status}</Badge><Badge>{record.type}</Badge>{record.featured && <Badge tone="warning">Featured</Badge>}</div>
               <p className="muted mediaMeta">{record.width}x{record.height} · {bytes(record.sizeBytes)} · {record.storageProvider}</p>
-              <label><span>Alternative text</span><input maxLength={300} value={draft.altText} onChange={(event) => setDrafts((value) => ({ ...value, [record.id]: { ...draft, altText: event.target.value } }))} /></label>
-              <label><span>Caption</span><input maxLength={500} value={draft.caption} onChange={(event) => setDrafts((value) => ({ ...value, [record.id]: { ...draft, caption: event.target.value } }))} /></label>
-              <div className="mediaCardActions">
-                <button className="button ghost" disabled={busy === record.id || record.status === "ARCHIVED"} type="button" onClick={() => void update(record, draft)}>Save metadata</button>
+              <MediaMetadataEditor casinoId={casinoId} disabled={busy === record.id || record.status === "ARCHIVED"} onError={setError} onSaved={acceptSavedRecord} record={record}>
                 <button className="button ghost" disabled={busy === record.id || record.status === "ARCHIVED"} type="button" onClick={() => void update(record, { featured: !record.featured })}>{record.featured ? "Remove featured" : "Set featured"}</button>
                 {(record.featured || record.casinoBonusId || record.affiliateOfferId) && <button className="button ghost" disabled={busy === record.id} type="button" onClick={() => void update(record, { featured: false, casinoBonusId: null, affiliateOfferId: null })}>Unlink usages</button>}
                 <button aria-label={`Move ${record.altText} up`} className="button ghost" disabled={index <= 0 || Boolean(busy)} type="button" onClick={() => move(record, -1)}>Move up</button>
                 <button aria-label={`Move ${record.altText} down`} className="button ghost" disabled={index >= group.length - 1 || Boolean(busy)} type="button" onClick={() => move(record, 1)}>Move down</button>
                 <button className="button ghost" disabled={busy === record.id} type="button" onClick={() => void archive(record)}>{record.status === "ARCHIVED" ? "Restore" : "Archive"}</button>
                 {record.status === "ARCHIVED" && <button className="button ghost" disabled={busy === record.id} type="button" onClick={() => void remove(record)}>Delete permanently</button>}
-              </div>
+              </MediaMetadataEditor>
             </Card>
             </div>
           );

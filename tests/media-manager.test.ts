@@ -8,7 +8,9 @@ import { deflateSync } from "node:zlib";
 import { readFileSync } from "node:fs";
 
 import { getAdminAccessStatus } from "../lib/auth/policy";
+import { mediaMetadataDraft, persistMediaMetadata } from "../lib/media/editor-state";
 import { processImage } from "../lib/media/image-processing";
+import type { MediaAssetAdminRecord } from "../lib/media/admin-types";
 import { MediaValidationError, validateMediaUpload } from "../lib/media/image-validation";
 import { LocalStorageProvider, readLocalStorageObject } from "../lib/media/storage/local-storage.provider";
 import { assertStorageKey, type StorageProvider } from "../lib/media/storage/storage-provider";
@@ -46,6 +48,69 @@ function png(width = 1, height = 1, withText = false) {
 function expectValidationCode(callback: () => unknown, code: string) {
   assert.throws(callback, (error: unknown) => error instanceof MediaValidationError && error.code === code);
 }
+
+test("metadata save sends the current alt text and hydrates the persisted response", async () => {
+  const managerSource = readFileSync("components/admin/media/MediaManager.tsx", "utf8");
+  assert.match(managerSource, /name="altText" value=\{draft\.altText\} onChange=/);
+  assert.match(managerSource, /new FormData\(event\.currentTarget\)/);
+  assert.match(managerSource, /draft: currentDraft, record, request: mediaJson/);
+  assert.match(managerSource, /type="submit">\{saving \? "Saving\.\.\." : "Save metadata"\}/);
+  assert.doesNotMatch(managerSource, /const \[drafts, setDrafts\]/);
+
+  const original: MediaAssetAdminRecord = {
+    id: "11111111-1111-4111-8111-111111111111",
+    type: "LOGO",
+    storageProvider: "LOCAL",
+    storageKey: "casino/example/catalog/logo/image.png",
+    publicUrl: "http://localhost:4173/api/media/local/casino/example/catalog/logo/image.png",
+    originalFilename: "image.png",
+    mimeType: "image/png",
+    width: 320,
+    height: 180,
+    sizeBytes: 1024,
+    altText: "Old alternative text",
+    title: null,
+    caption: null,
+    credit: null,
+    sortOrder: 1000,
+    featured: true,
+    status: "ACTIVE",
+    checksum: "checksum",
+    metadata: null,
+    variants: null,
+    createdAt: "2026-07-22T08:00:00.000Z",
+    updatedAt: "2026-07-22T08:00:00.000Z",
+    archivedAt: null,
+    casinoId: "22222222-2222-4222-8222-222222222222",
+    casinoBonusId: null,
+    affiliateOfferId: null,
+  };
+  let persisted = original;
+  let requestPayload: Record<string, unknown> = {};
+  const editedDraft = { ...mediaMetadataDraft(original), altText: "New accessible casino logo" };
+
+  const saved = await persistMediaMetadata({
+    casinoId: original.casinoId!,
+    draft: editedDraft,
+    record: original,
+    request: async <T,>(_url: string, init?: RequestInit) => {
+      requestPayload = JSON.parse(String(init?.body));
+      persisted = {
+        ...persisted,
+        altText: String(requestPayload.altText),
+        caption: String(requestPayload.caption || "") || null,
+        updatedAt: "2026-07-22T08:05:00.000Z",
+      };
+      return { media: persisted } as T;
+    },
+  });
+
+  assert.equal(requestPayload.altText, "New accessible casino logo");
+  assert.equal(mediaMetadataDraft(saved).altText, "New accessible casino logo");
+
+  const reloadedFromServer = mediaMetadataDraft(persisted);
+  assert.equal(reloadedFromServer.altText, "New accessible casino logo");
+});
 
 test("validation detects content, dimensions, checksum, and strips PNG metadata", async () => {
   const source = png(2, 2, true);

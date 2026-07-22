@@ -1546,6 +1546,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .mediaDragItem { min-width: 0; }
 .mediaDragItem > .card { height: 100%; }
 .mediaCard { display: grid; align-content: start; gap: 13px; }
+.mediaMetadataForm { display: contents; }
 .mediaCard.archived { opacity: .68; }
 .mediaPreview { aspect-ratio: 16 / 9; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--card-soft); }
 .mediaPreview img, .mediaSelectorGrid img { width: 100%; height: 100%; object-fit: contain; display: block; }
