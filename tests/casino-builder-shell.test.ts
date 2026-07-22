@@ -62,3 +62,16 @@ test("builder UI uses the admin API and never imports Prisma", () => {
   assert.match(builder, /expectedUpdatedAt: casino\.updatedAt/);
   assert.match(builder, /beforeunload/);
 });
+
+test("archived casinos can be restored to draft through the guarded workflow API", () => {
+  const builder = readFileSync("components/admin/CasinoBuilder.tsx", "utf8");
+  const actionRoute = readFileSync("app/api/admin/casinos/[casinoId]/action/route.ts", "utf8");
+  const service = readFileSync("lib/services/casino.service.ts", "utf8");
+
+  assert.match(builder, /onAction\("restore"\)/);
+  assert.match(builder, /Restore to draft/);
+  assert.match(actionRoute, /body\.action === "restore"/);
+  assert.match(actionRoute, /EditorialStatus\.DRAFT/);
+  assert.match(actionRoute, /revalidatePublicCasino\(casino\.slug\)/);
+  assert.match(service, /ARCHIVED: \[EditorialStatus\.DRAFT\]/);
+});

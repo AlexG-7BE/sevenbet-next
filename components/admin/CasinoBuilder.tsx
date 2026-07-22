@@ -131,13 +131,14 @@ export function CasinoStatusBar({
   casino: CasinoBuilderCasino;
   busy: boolean;
   dirty: boolean;
-  onAction: (action: "request-review" | "request-changes" | "approve" | "publish" | "archive") => void;
+  onAction: (action: "request-review" | "request-changes" | "approve" | "publish" | "archive" | "restore") => void;
 }) {
   const canRequestReview = casino.status === "DRAFT";
   const canRequestChanges = ["IN_REVIEW", "APPROVED", "SCHEDULED", "PUBLISHED", "ARCHIVED"].includes(casino.status);
   const canApprove = casino.status === "IN_REVIEW";
   const canPublish = casino.status === "APPROVED" || casino.status === "SCHEDULED";
   const canArchive = casino.status !== "ARCHIVED";
+  const canRestore = casino.status === "ARCHIVED";
   const disabled = busy || dirty;
 
   return (
@@ -151,6 +152,7 @@ export function CasinoStatusBar({
         {canApprove && <button disabled={disabled} onClick={() => onAction("approve")} type="button">Approve</button>}
         {canPublish && <button disabled={disabled} onClick={() => onAction("publish")} type="button">Publish</button>}
         {canArchive && <button disabled={disabled} onClick={() => onAction("archive")} type="button">Archive</button>}
+        {canRestore && <button disabled={disabled} onClick={() => onAction("restore")} type="button">Restore to draft</button>}
       </div>
       {dirty && <small>Save the current draft before changing workflow.</small>}
     </div>
@@ -401,7 +403,7 @@ export function CasinoBuilderLayout({
     }
   }
 
-  async function workflow(action: "request-review" | "request-changes" | "approve" | "publish" | "archive") {
+  async function workflow(action: "request-review" | "request-changes" | "approve" | "publish" | "archive" | "restore") {
     setWorkflowBusy(true);
     setMessage(`Running workflow action: ${action}...`);
     try {

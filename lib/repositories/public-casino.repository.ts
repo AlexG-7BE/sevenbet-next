@@ -12,7 +12,7 @@ export interface PublicCasinoStore {
 export class PublicCasinoRepository implements PublicCasinoStore {
   async listPublished(): Promise<PublishedCasinoSnapshotRecord[]> {
     const versions = await prisma.casinoVersion.findMany({
-      where: { status: EditorialStatus.PUBLISHED, casino: { archivedAt: null, status: { not: EditorialStatus.ARCHIVED } } },
+      where: { status: EditorialStatus.PUBLISHED, casino: { archivedAt: null, status: EditorialStatus.PUBLISHED } },
       orderBy: [{ casinoId: "asc" }, { version: "desc" }],
       select: {
         casinoId: true,
@@ -44,7 +44,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
       where: {
         status: EditorialStatus.PUBLISHED,
         snapshot: { path: ["slug"], equals: slug },
-        casino: { archivedAt: null, status: { not: EditorialStatus.ARCHIVED } },
+        casino: { archivedAt: null, status: EditorialStatus.PUBLISHED },
       },
       orderBy: { version: "desc" },
       select: {

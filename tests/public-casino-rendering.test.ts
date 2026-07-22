@@ -93,6 +93,13 @@ test("draft and archived snapshots never become public", async () => {
   assert.equal(mapPublishedCasino(publishedRecord({ snapshot }), [], { redirectEnabled: true, now }), null);
 });
 
+test("the repository exposes a published version only while its current casino is published", () => {
+  const repository = readFileSync("lib/repositories/public-casino.repository.ts", "utf8");
+  const publicationGuard = /casino: \{ archivedAt: null, status: EditorialStatus\.PUBLISHED \}/g;
+  assert.equal(repository.match(publicationGuard)?.length, 2);
+  assert.doesNotMatch(repository, /status: \{ not: EditorialStatus\.ARCHIVED \}/);
+});
+
 test("public DTO removes storage, affiliate, notes, and draft metadata", () => {
   const dto = mapPublishedCasino(publishedRecord(), [
     { casinoId: "11111111-1111-4111-8111-111111111111", casinoBonusId: null, slug: "cms-10bet" },

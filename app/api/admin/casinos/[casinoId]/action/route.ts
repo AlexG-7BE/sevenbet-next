@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   try {
     const actor = await requireAdminPermission(request, "casino.edit");
     const body = (await request.json()) as {
-      action?: "request-review" | "request-changes" | "approve" | "schedule" | "publish" | "archive";
+      action?: "request-review" | "request-changes" | "approve" | "schedule" | "publish" | "archive" | "restore";
       publishAt?: string;
       expectedUpdatedAt?: string;
     };
@@ -61,6 +61,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     }
     if (body.action === "archive") {
       const casino = await casinoService.transitionWorkflow(casinoId, EditorialStatus.ARCHIVED, actor.id, expectedUpdatedAt);
+      revalidatePublicCasino(casino.slug);
+      return NextResponse.json({ ok: true, casino: casinoService.toBuilderCasino(casino), source: "postgresql" });
+    }
+    if (body.action === "restore") {
+      const casino = await casinoService.transitionWorkflow(casinoId, EditorialStatus.DRAFT, actor.id, expectedUpdatedAt);
       revalidatePublicCasino(casino.slug);
       return NextResponse.json({ ok: true, casino: casinoService.toBuilderCasino(casino), source: "postgresql" });
     }
