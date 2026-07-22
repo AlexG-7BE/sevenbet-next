@@ -7,6 +7,15 @@ export function isSafePublicSlug(value: string) {
   return slugPattern.test(value) && value.length <= 120;
 }
 
+export function parseRobotsMetadata(value: string) {
+  const directives = new Set(value.toLowerCase().split(",").map((entry) => entry.trim()).filter(Boolean));
+  const none = directives.has("none");
+  return {
+    index: !none && !directives.has("noindex"),
+    follow: !none && !directives.has("nofollow"),
+  };
+}
+
 export function safePublicUrl(value: unknown, options: { allowInternal?: boolean } = {}) {
   if (typeof value !== "string" || !value.trim()) return null;
   const candidate = value.trim();

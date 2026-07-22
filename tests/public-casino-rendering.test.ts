@@ -4,6 +4,7 @@ import test from "node:test";
 
 import { getCasinos } from "../lib/data";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
+import { parseRobotsMetadata } from "../lib/public-casino/public-casino-validation";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
@@ -123,6 +124,13 @@ test("missing or disabled redirect mapping produces a non-clickable affiliate st
   const disabled = mapPublishedCasino(publishedRecord(), [{ casinoId: "11111111-1111-4111-8111-111111111111", casinoBonusId: null, slug: "cms-10bet" }], { redirectEnabled: false, now });
   assert.deepEqual(missing?.affiliate, { href: null, available: false });
   assert.deepEqual(disabled?.affiliate, { href: null, available: false });
+});
+
+test("casino robots directives preserve noindex and treat none as noindex, nofollow", () => {
+  assert.deepEqual(parseRobotsMetadata("index, follow"), { index: true, follow: true });
+  assert.deepEqual(parseRobotsMetadata("noindex, follow"), { index: false, follow: true });
+  assert.deepEqual(parseRobotsMetadata("none"), { index: false, follow: false });
+  assert.deepEqual(parseRobotsMetadata("NOINDEX, NOFOLLOW"), { index: false, follow: false });
 });
 
 test("public routes use the service boundary and invalidate all publication surfaces", () => {

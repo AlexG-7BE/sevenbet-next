@@ -20,7 +20,7 @@ import {
 } from "@/components/CasinoReviewSections";
 import { Badge, Card, CTA, Section } from "@/components/ui";
 import { publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
-import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
+import { parseRobotsMetadata, safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { absoluteUrl } from "@/lib/site";
 
@@ -28,11 +28,6 @@ export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 const loadCasino = cache((slug: string) => publicCasinoService.getCasino(slug));
-
-function robots(value: string) {
-  const directives = value.toLowerCase().split(",").map((entry) => entry.trim());
-  return { index: !directives.includes("noindex"), follow: !directives.includes("nofollow") };
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const casino = await loadCasino((await params).slug);
@@ -42,7 +37,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     title: casino.seo.title,
     description: casino.seo.description,
     alternates: { canonical: casino.seo.canonical },
-    robots: robots(casino.seo.robots),
+    robots: parseRobotsMetadata(casino.seo.robots),
     openGraph: {
       type: "article",
       title: casino.seo.socialTitle,
