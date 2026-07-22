@@ -14,16 +14,22 @@ export const responsibleTools = [
   ["Reality checks", "Use reminders that show time spent and help interrupt automatic play."],
 ];
 
+function AffiliateOfferButton({ casino, label = "View Offer" }: { casino: Casino; label?: string }) {
+  if (!casino.affiliateUrl) return <span aria-disabled="true" className="button disabled">Offer unavailable</span>;
+  return <Button href={casino.affiliateUrl} external rel="nofollow sponsored noopener" variant="primary">{label}</Button>;
+}
+
 export function CasinoReviewHero({ casino }: { casino: Casino }) {
   const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
   const officialUrl = `https://${casino.domain}`;
+  const reviewDate = casino.publishedAt ? new Date(casino.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : REVIEW_DATE_LABEL;
 
   return (
     <section className="pageShell">
       <div className="container detailGrid">
         <div>
           <div className="casinoIdentity">
-            <div className="casinoLogo" aria-hidden="true">{casino.name.slice(0, 2).toUpperCase()}</div>
+            <div className="casinoLogo">{casino.logo ? <img alt={casino.logo.alt || `${casino.name} logo`} height={casino.logo.height || 96} src={casino.logo.url} width={casino.logo.width || 96} /> : <span aria-hidden="true">{casino.name.slice(0, 2).toUpperCase()}</span>}</div>
             <div className="badgeCluster">
               <Badge tone="dark">Editor&apos;s Score {casino.rating}/10</Badge>
               <VerificationBadge verified={casino.isVerified} />
@@ -33,13 +39,13 @@ export function CasinoReviewHero({ casino }: { casino: Casino }) {
           <h1>{casino.name} Review</h1>
           <p className="lead">{casino.tagline || casino.description}</p>
           <div className="heroActions">
-            <Button href={casino.affiliateUrl} external variant="primary">View Offer</Button>
+            <AffiliateOfferButton casino={casino} />
             <Button href={officialUrl} external rel="noopener" variant="ghost">Visit Official Website</Button>
           </div>
           <div className="trustStrip">
             <Badge tone="green">Licensed</Badge>
             <Badge tone="green">Reviewed</Badge>
-            <Badge tone="warning">Updated {REVIEW_DATE_LABEL}</Badge>
+            <Badge tone="warning">Updated {reviewDate}</Badge>
             <Badge>Responsible Gambling Tools Available</Badge>
           </div>
         </div>
@@ -51,7 +57,7 @@ export function CasinoReviewHero({ casino }: { casino: Casino }) {
           </div>
           <h2>{casino.license}</h2>
           <div className="resultRows">
-            <div><span>Last reviewed</span><strong>{REVIEW_DATE_LABEL}</strong></div>
+            <div><span>Last reviewed</span><strong>{reviewDate}</strong></div>
             <div><span>License status</span><strong>{casino.licenseStatus}</strong></div>
             <div><span>Minimum deposit</span><strong>{formatMoney(casino.minDeposit)}</strong></div>
             <div><span>Withdrawal speed</span><strong>~{casino.payoutHours}h</strong></div>
@@ -67,7 +73,7 @@ export function QuickOverview({ casino }: { casino: Casino }) {
   const items = [
     ["Editor's Score", `${casino.rating}/10`],
     ["License", casino.license],
-    ["Founded", "Not listed in current dataset"],
+    ["Founded", casino.foundedYear ? String(casino.foundedYear) : "Not listed in current dataset"],
     ["Accepted countries", casino.countries.slice(0, 6).join(", ") || casino.country],
     ["Restricted countries", "Check operator terms"],
     ["Game providers", casino.providers.slice(0, 5).join(", ")],
@@ -106,7 +112,9 @@ export function WelcomeBonusSection({ casino }: { casino: Casino }) {
             <div><span>Eligibility</span><strong>New players, subject to operator terms</strong></div>
             <div><span>Expiration</span><strong>Check operator terms</strong></div>
           </div>
-          <Button href={casino.affiliateUrl} external variant="primary">View Offer</Button>
+          {casino.importantConditions?.length ? <div className="miniTasks">{casino.importantConditions.map((condition) => <span key={condition}>{condition}</span>)}</div> : null}
+          {casino.termsUrl && <Button href={casino.termsUrl} external rel="nofollow noopener" variant="ghost">Read full bonus terms</Button>}
+          <AffiliateOfferButton casino={casino} />
         </Card>
         <Card className="guideCard" tone="warning">
           <h3>Before accepting</h3>
@@ -116,6 +124,17 @@ export function WelcomeBonusSection({ casino }: { casino: Casino }) {
           </p>
         </Card>
       </div>
+    </Section>
+  );
+}
+
+export function CasinoMediaSection({ casino }: { casino: Casino }) {
+  const gallery = casino.gallery ?? [];
+  if (!casino.hero && !gallery.length) return null;
+  return (
+    <Section eyebrow="Casino media" title={`${casino.name} published media.`}>
+      {casino.hero && <figure className="casinoPublicHero"><img alt={casino.hero.alt} fetchPriority="high" height={casino.hero.height || 720} src={casino.hero.url} width={casino.hero.width || 1280} /></figure>}
+      {gallery.length > 0 && <div className="casinoPublicGallery">{gallery.map((image) => <figure key={image.id}><img alt={image.alt} height={image.height || 360} loading="lazy" src={image.url} width={image.width || 640} />{image.caption && <figcaption>{image.caption}</figcaption>}</figure>)}</div>}
     </Section>
   );
 }

@@ -1,5 +1,4 @@
 import type { MetadataRoute } from "next";
-import { getCasinos } from "@/lib/data";
 import {
   getArticlePath,
   getCategoryPath,
@@ -8,12 +7,15 @@ import {
 } from "@/lib/learning-center";
 import { learningArticles } from "@/lib/responsible-gambling";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
+import { publicCasinoService } from "@/lib/services/public-casino.service";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
-  const casinoRoutes = getCasinos().slice(0, 80).map((casino) => ({
+  const casinoRoutes = (await publicCasinoService.listCasinos()).slice(0, 500).map((casino) => ({
     url: absoluteUrl(`/casino/${casino.slug}`),
-    lastModified: now,
+    lastModified: casino.lastReviewedAt ?? casino.publishedAt ?? now,
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));

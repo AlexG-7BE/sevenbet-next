@@ -12,6 +12,10 @@ const casinoAggregateInclude = {
   images: {
     orderBy: [{ kind: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }],
   },
+  mediaAssets: {
+    where: { status: "ACTIVE" },
+    orderBy: [{ type: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }, { createdAt: Prisma.SortOrder.asc }],
+  },
   countries: {
     orderBy: { countryCode: Prisma.SortOrder.asc },
   },
@@ -366,6 +370,20 @@ export class CasinoRepository implements CasinoStore {
           status: EditorialStatus.PUBLISHED,
           snapshot: snapshot({
             ...current,
+            mediaAssets: current.mediaAssets.map((asset) => ({
+              id: asset.id,
+              type: asset.type,
+              publicUrl: asset.publicUrl,
+              altText: asset.altText,
+              title: asset.title,
+              caption: asset.caption,
+              credit: asset.credit,
+              width: asset.width,
+              height: asset.height,
+              sortOrder: asset.sortOrder,
+              featured: asset.featured,
+              status: asset.status,
+            })),
             status: EditorialStatus.PUBLISHED,
             casinoBonuses: current.casinoBonuses.map((bonus) => ({
               ...bonus,

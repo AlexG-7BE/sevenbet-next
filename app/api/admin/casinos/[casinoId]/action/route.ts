@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 import { requireAdminPermission } from "@/lib/auth/admin";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { revalidatePublicCasino } from "@/lib/public-casino/cache";
 import { casinoService, ValidationError } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     }
     if (body.action === "publish") {
       const result = await casinoService.publishCasino(casinoId, actor.id, expectedUpdatedAt);
+      revalidatePublicCasino(result.casino.slug);
       return NextResponse.json({
         ok: true,
         casino: casinoService.toBuilderCasino(result.casino),
@@ -59,6 +61,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     }
     if (body.action === "archive") {
       const casino = await casinoService.transitionWorkflow(casinoId, EditorialStatus.ARCHIVED, actor.id, expectedUpdatedAt);
+      revalidatePublicCasino(casino.slug);
       return NextResponse.json({ ok: true, casino: casinoService.toBuilderCasino(casino), source: "postgresql" });
     }
 

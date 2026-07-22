@@ -180,9 +180,7 @@ export function OfferCard({ casino, rank }: { casino: Casino; rank?: number }) {
         </div>
       </div>
       <div className="cardActions">
-        <Button href={casino.affiliateUrl} external variant="primary">
-          View offer
-        </Button>
+        {casino.affiliateUrl ? <Button href={casino.affiliateUrl} external rel="nofollow sponsored noopener" variant="primary">View offer</Button> : <span aria-disabled="true" className="button disabled">Offer unavailable</span>}
         <Button href={`/casino/${casino.slug}`} variant="ghost">
           Read review
         </Button>

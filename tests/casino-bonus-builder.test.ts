@@ -223,11 +223,12 @@ test("versioned editor metadata preserves pre-existing review content", () => {
   assert.equal(readCasinoEditorMetadata(stored as never).bonuses[ids.first].featured, true);
 });
 
-test("legacy Bonus model and static public pages remain intact", () => {
+test("legacy Bonus model and public fallback data remain intact", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const bonusesPage = readFileSync("app/bonuses/page.tsx", "utf8");
   const casinoPage = readFileSync("app/casino/[slug]/page.tsx", "utf8");
   assert.match(schema, /model Bonus \{/);
   assert.match(bonusesPage, /from "@\/lib\/data"/);
-  assert.match(casinoPage, /from "@\/lib\/data"/);
+  assert.match(casinoPage, /publicCasinoService/);
+  assert.match(readFileSync("lib/services/public-casino.service.ts", "utf8"), /getCasinos\(\)/);
 });

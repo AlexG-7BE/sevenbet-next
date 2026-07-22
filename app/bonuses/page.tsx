@@ -12,7 +12,8 @@ import {
   Section,
   SectionHeader,
 } from "@/components/ui";
-import { formatMoney, getTopCasinos } from "@/lib/data";
+import { formatMoney } from "@/lib/data";
+import { publicCasinoService } from "@/lib/services/public-casino.service";
 
 const filters = [
   "Country",
@@ -28,8 +29,10 @@ const filters = [
 
 const sortOptions = ["Editor's Score", "Newest", "Highest Bonus", "Lowest Wagering", "Fastest Withdrawals"];
 
-export default function BonusesPage() {
-  const casinos = getTopCasinos(24);
+export const dynamic = "force-dynamic";
+
+export default async function BonusesPage() {
+  const casinos = (await publicCasinoService.listCasinoViews()).slice(0, 24);
   const featured = casinos.slice(0, 3);
   const comparison = casinos.slice(0, 12);
 
@@ -123,7 +126,7 @@ export default function BonusesPage() {
               <span>{casino.payments.slice(0, 3).join(", ")}</span>
               <span>Limits, cool-off, self-exclusion where available</span>
               <Button href={`/casino/${casino.slug}`} variant="ghost">Review</Button>
-              <Button href={casino.affiliateUrl} external variant="primary">View Offer</Button>
+              {casino.affiliateUrl ? <Button href={casino.affiliateUrl} external rel="nofollow sponsored noopener" variant="primary">View Offer</Button> : <span aria-disabled="true" className="button disabled">Offer unavailable</span>}
             </div>
           ))}
         </div>

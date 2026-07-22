@@ -25,6 +25,7 @@ export type Casino = {
   providers: string[];
   gameTypes: string[];
   countries: string[];
+  languages: string[];
   crypto: boolean;
   liveChat: boolean;
   mobileApp: boolean;
@@ -32,6 +33,15 @@ export type Casino = {
   reviewNeeded: boolean;
   pros: string[];
   cons: string[];
+  foundedYear?: number | null;
+  publishedAt?: string | null;
+  logo?: { url: string; alt: string; width: number | null; height: number | null } | null;
+  hero?: { url: string; alt: string; width: number | null; height: number | null } | null;
+  gallery?: Array<{ id: string; url: string; alt: string; width: number | null; height: number | null; caption?: string | null }>;
+  affiliateAvailable?: boolean;
+  termsUrl?: string | null;
+  importantConditions?: string[];
+  bonusExpiresAt?: string | null;
 };
 
 const casinos = (casinoData as { casinos: Casino[] }).casinos;

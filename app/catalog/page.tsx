@@ -1,10 +1,17 @@
 import { CasinoCard } from "@/components/ui";
 import { AffiliateDisclosure, Badge, Card, Container, MethodologyBlock } from "@/components/ui";
-import { getCasinos, getStats } from "@/lib/data";
+import { publicCasinoService } from "@/lib/services/public-casino.service";
 
-export default function CatalogPage() {
-  const casinos = getCasinos().slice(0, 80);
-  const stats = getStats();
+export const dynamic = "force-dynamic";
+
+export default async function CatalogPage() {
+  const casinos = (await publicCasinoService.listCasinoViews()).slice(0, 80);
+  const stats = {
+    total: casinos.length,
+    verified: casinos.filter((casino) => casino.isVerified).length,
+    payments: new Set(casinos.flatMap((casino) => casino.payments)).size,
+    licenses: new Set(casinos.map((casino) => casino.license)).size,
+  };
 
   return (
     <section className="pageShell">
