@@ -141,6 +141,37 @@ test("minimum and maximum dimension policies are type-aware", () => {
   expectValidationCode(() => validateMediaUpload({ data: png(2, 2), filename: "image.png", declaredMimeType: "image/png", type: "OTHER", maxDimension: 1 }), "INVALID_DIMENSIONS");
 });
 
+test("typed creative ownership cannot be removed through metadata updates", async () => {
+  const record = {
+    id: "11111111-1111-4111-8111-111111111111",
+    type: "BONUS_CREATIVE",
+    casinoId: "22222222-2222-4222-8222-222222222222",
+    casinoBonusId: "33333333-3333-4333-8333-333333333333",
+    affiliateOfferId: null,
+  };
+  let updateCalled = false;
+  const repository = {
+    findById: async () => record,
+    resolveOwnership: async () => ({
+      casino: { id: record.casinoId },
+      casinoBonus: null,
+      affiliateOffer: null,
+    }),
+    update: async () => { updateCalled = true; return record; },
+  } as unknown as MediaRepository;
+  const service = new MediaService(repository);
+
+  await assert.rejects(
+    () => service.update(record.id, {
+      casinoId: record.casinoId,
+      casinoBonusId: null,
+      actorId: "44444444-4444-4444-8444-444444444444",
+    }),
+    /BONUS_CREATIVE requires casinoBonusId/,
+  );
+  assert.equal(updateCalled, false);
+});
+
 test("local storage keeps generated keys inside its root and supports object lifecycle", async () => {
   const root = await mkdtemp(path.join(tmpdir(), "sevenbet-media-"));
   const previousRoot = process.env.MEDIA_LOCAL_STORAGE_ROOT;

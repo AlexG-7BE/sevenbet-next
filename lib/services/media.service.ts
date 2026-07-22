@@ -190,7 +190,10 @@ export class MediaService {
     if (current.casinoId !== input.casinoId) throw new ValidationError("Media asset does not belong to the requested casino");
     const bonusId = input.casinoBonusId !== undefined ? input.casinoBonusId : current.casinoBonusId;
     const offerId = input.affiliateOfferId !== undefined ? input.affiliateOfferId : current.affiliateOfferId;
-    await this.validateOwnership({ casinoId: current.casinoId, casinoBonusId: bonusId, affiliateOfferId: offerId, type: current.type });
+    await this.validateOwnership(
+      { casinoId: current.casinoId, casinoBonusId: bonusId, affiliateOfferId: offerId, type: current.type },
+      true,
+    );
     try {
       return await this.repository.update(id, {
         ...(input.altText !== undefined ? { altText: cleanText(input.altText, 300, current.type !== MediaAssetType.FAVICON) || "" } : {}),
