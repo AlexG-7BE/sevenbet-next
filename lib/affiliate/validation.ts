@@ -15,6 +15,8 @@ import type {
 import { ValidationError } from "@/lib/services/service-error";
 
 const secretPattern = /(?:api[_ -]?key|client[_ -]?secret|authorization\s*:\s*bearer|secret\s*=)/i;
+const unsafeUrlCharacters = /[\u0000-\u001f\u007f\\]/;
+const encodedLineBreak = /%0d|%0a/i;
 
 function required(value: unknown, field: string) {
   if (typeof value !== "string" || !value.trim()) {
@@ -72,13 +74,16 @@ export function normalizeSafeHttpsUrl(value: unknown, field: string, nullable: t
 export function normalizeSafeHttpsUrl(value: unknown, field: string, nullable = false): string | null {
   if ((value === undefined || value === null || value === "") && nullable) return null;
   const raw = required(value, field);
+  if (unsafeUrlCharacters.test(raw) || encodedLineBreak.test(raw)) {
+    throw new ValidationError(`${field} must be a safe HTTPS URL`, { field });
+  }
   let url: URL;
   try {
     url = new URL(raw);
   } catch {
     throw new ValidationError(`${field} must be a valid HTTPS URL`, { field });
   }
-  if (url.protocol !== "https:" || !url.hostname) {
+  if (url.protocol !== "https:" || !url.hostname || url.username || url.password) {
     throw new ValidationError(`${field} must use HTTPS`, { field });
   }
   return url.toString();

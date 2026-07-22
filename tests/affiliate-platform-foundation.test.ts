@@ -98,6 +98,9 @@ test("offer validation rejects GEO conflicts and invalid ISO country/currency", 
 test("unsafe URLs and duplicate active tracking specificity are rejected", () => {
   const link = validOffer().trackingLinks[0];
   assert.throws(() => normalizeAffiliateOffer(validOffer({ trackingLinks: [{ ...link, trackingUrl: "javascript:alert(1)" }] })), /valid HTTPS URL|use HTTPS/);
+  assert.throws(() => normalizeAffiliateOffer(validOffer({ trackingLinks: [{ ...link, trackingUrl: "https://user:password@tracking.example/click" }] })), /use HTTPS/);
+  assert.throws(() => normalizeAffiliateOffer(validOffer({ trackingLinks: [{ ...link, trackingUrl: "https://tracking.example/click%0d%0aSet-Cookie:test" }] })), /safe HTTPS URL/);
+  assert.throws(() => normalizeAffiliateOffer(validOffer({ trackingLinks: [{ ...link, trackingUrl: "https:\\tracking.example\\click" }] })), /safe HTTPS URL/);
   assert.throws(() => normalizeAffiliateOffer(validOffer({ trackingLinks: [link, { ...link, label: "Duplicate" }] })), /Duplicate active tracking specificity/);
 });
 
