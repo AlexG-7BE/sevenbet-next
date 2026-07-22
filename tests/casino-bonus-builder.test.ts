@@ -169,6 +169,13 @@ test("HTTP parser rejects unknown top-level fields and oversized payloads", asyn
     })),
     (error: unknown) => Boolean(error && typeof error === "object" && "statusCode" in error && error.statusCode === 413),
   );
+  await assert.rejects(
+    readCasinoSaveBody(new Request("http://localhost/api", {
+      method: "PATCH",
+      body: JSON.stringify({ draft: {} }),
+    })),
+    /expectedUpdatedAt must be an ISO date string/,
+  );
 });
 
 test("casino admin authorization resolves anonymous, forbidden, and editor access correctly", () => {
@@ -186,6 +193,7 @@ test("service enforces route ownership, revision, concurrency, and real audit ac
   assert.match(service, /A bonus cannot be moved between casinos/);
   assert.doesNotMatch(service, /casinoId:\s*record\.casinoId/);
   assert.match(repository, /CASINO_EDIT_CONFLICT/);
+  assert.match(repository, /current\.updatedAt\.getTime\(\) !== expectedUpdatedAt\.getTime\(\)/);
   assert.match(repository, /createRevision\(tx, current, actorId, summary\)/);
   assert.match(repository, /actorId,/);
   assert.match(route, /requireAdminPermission\(request, "casino\.edit"\)/);

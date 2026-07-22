@@ -79,7 +79,7 @@ export interface UpdateCasinoInput {
   reviewBlocks?: Prisma.InputJsonValue;
   lastReviewedAt?: Date | null;
   updatedBy: string;
-  expectedUpdatedAt?: Date;
+  expectedUpdatedAt: Date;
 }
 
 export interface CasinoValidationIssue {
@@ -513,7 +513,7 @@ export class CasinoService {
     id: string,
     input: CasinoCoreDraft,
     actorId: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ) {
     requireCoreDraftShape(input);
     const current = await this.getCasinoById(id);
@@ -790,7 +790,7 @@ export class CasinoService {
     id: string,
     target: EditorialStatus,
     actorId: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ) {
     const casino = await this.getCasinoById(id);
     if (target === EditorialStatus.PUBLISHED) {
@@ -830,7 +830,7 @@ export class CasinoService {
     id: string,
     publishAt: Date,
     actorId: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ) {
     const casino = await this.getCasinoById(id);
     if (casino.status !== EditorialStatus.APPROVED) {
@@ -866,7 +866,7 @@ export class CasinoService {
     }
   }
 
-  async publishCasino(id: string, actorId: string, expectedUpdatedAt?: Date) {
+  async publishCasino(id: string, actorId: string, expectedUpdatedAt: Date) {
     const casino = await this.getCasinoById(id);
     const validation = this.validateForPublication(casino);
     if (!validation.valid) {

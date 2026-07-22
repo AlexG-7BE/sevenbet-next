@@ -13,8 +13,7 @@ export const dynamic = "force-dynamic";
 
 type RouteContext = { params: Promise<{ casinoId: string }> };
 
-function optionalDate(value: string | undefined, field: string) {
-  if (value === undefined) return undefined;
+function requiredDate(value: string, field: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
     throw new ValidationError(`${field} must be a valid ISO date`);
@@ -45,7 +44,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       casinoId,
       body.draft,
       actor.id,
-      optionalDate(body.expectedUpdatedAt, "expectedUpdatedAt"),
+      requiredDate(body.expectedUpdatedAt, "expectedUpdatedAt"),
     );
 
     const data = await casinoService.getBuilderData(casinoId);

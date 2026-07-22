@@ -43,7 +43,7 @@ export async function readCasinoSaveBody(request: Request): Promise<SaveCasinoCo
   }
   rejectUnknown(value, bodyKeys, "request");
   rejectUnknown(value.draft, draftKeys, "draft");
-  if (value.expectedUpdatedAt !== undefined && typeof value.expectedUpdatedAt !== "string") {
+  if (typeof value.expectedUpdatedAt !== "string" || !value.expectedUpdatedAt.trim()) {
     throw new ValidationError("expectedUpdatedAt must be an ISO date string");
   }
   return value as unknown as SaveCasinoCoreDraftInput;

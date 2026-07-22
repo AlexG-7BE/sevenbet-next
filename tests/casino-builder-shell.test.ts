@@ -75,3 +75,13 @@ test("archived casinos can be restored to draft through the guarded workflow API
   assert.match(actionRoute, /revalidatePublicCasino\(casino\.slug\)/);
   assert.match(service, /ARCHIVED: \[EditorialStatus\.DRAFT\]/);
 });
+
+test("casino mutations require an optimistic concurrency timestamp", () => {
+  const saveParser = readFileSync("lib/casino-builder/http.ts", "utf8");
+  const actionRoute = readFileSync("app/api/admin/casinos/[casinoId]/action/route.ts", "utf8");
+  const repository = readFileSync("lib/repositories/casino.repository.ts", "utf8");
+
+  assert.match(saveParser, /typeof value\.expectedUpdatedAt !== "string"/);
+  assert.match(actionRoute, /expectedUpdatedAt is required/);
+  assert.doesNotMatch(repository, /expectedUpdatedAt && current\.updatedAt/);
+});

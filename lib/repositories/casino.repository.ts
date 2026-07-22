@@ -115,19 +115,19 @@ export interface CasinoStore {
     data: Prisma.CasinoUpdateInput,
     actorId: string,
     summary: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ): Promise<CasinoAggregate>;
   transitionWithRevision(
     id: string,
     status: EditorialStatus,
     actorId: string,
     summary: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ): Promise<CasinoAggregate>;
   publishWithVersion(
     id: string,
     actorId: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ): Promise<CasinoPublishResult>;
   listRevisions(id: string): Promise<CasinoRevision[]>;
   listRevisionsWithAuthors(id: string): Promise<CasinoRevisionWithAuthor[]>;
@@ -291,12 +291,12 @@ export class CasinoRepository implements CasinoStore {
     data: Prisma.CasinoUpdateInput,
     actorId: string,
     summary: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ) {
     return prisma.$transaction(async (tx) => {
       const current = await findAggregate(tx, id);
       if (!current) throw new Error("CASINO_NOT_FOUND");
-      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+      if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new Error("CASINO_EDIT_CONFLICT");
       }
 
@@ -327,7 +327,7 @@ export class CasinoRepository implements CasinoStore {
     status: EditorialStatus,
     actorId: string,
     summary: string,
-    expectedUpdatedAt?: Date,
+    expectedUpdatedAt: Date,
   ) {
     return this.updateWithRevision(
       id,
@@ -345,11 +345,11 @@ export class CasinoRepository implements CasinoStore {
     );
   }
 
-  async publishWithVersion(id: string, actorId: string, expectedUpdatedAt?: Date) {
+  async publishWithVersion(id: string, actorId: string, expectedUpdatedAt: Date) {
     return prisma.$transaction(async (tx) => {
       const current = await findAggregate(tx, id);
       if (!current) throw new Error("CASINO_NOT_FOUND");
-      if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+      if (current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
         throw new Error("CASINO_EDIT_CONFLICT");
       }
       if (

@@ -20,10 +20,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       publishAt?: string;
       expectedUpdatedAt?: string;
     };
-    const expectedUpdatedAt = body.expectedUpdatedAt
-      ? new Date(body.expectedUpdatedAt)
-      : undefined;
-    if (expectedUpdatedAt && Number.isNaN(expectedUpdatedAt.getTime())) {
+    if (typeof body.expectedUpdatedAt !== "string" || !body.expectedUpdatedAt.trim()) {
+      throw new ValidationError("expectedUpdatedAt is required");
+    }
+    const expectedUpdatedAt = new Date(body.expectedUpdatedAt);
+    if (Number.isNaN(expectedUpdatedAt.getTime())) {
       throw new ValidationError("expectedUpdatedAt must be a valid ISO date");
     }
 

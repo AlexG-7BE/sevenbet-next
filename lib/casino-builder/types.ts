@@ -280,7 +280,7 @@ export type CasinoCoreDraft = Pick<
 
 export interface SaveCasinoCoreDraftInput {
   draft: CasinoCoreDraft;
-  expectedUpdatedAt?: string;
+  expectedUpdatedAt: string;
 }
 
 export interface CasinoRevisionHistoryItem {
