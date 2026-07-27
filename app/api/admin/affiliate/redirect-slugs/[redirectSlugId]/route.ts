@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { readAffiliateMutation } from "@/lib/affiliate/http";
 import { requireAdminPermission } from "@/lib/auth/admin";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { revalidatePublicCasino } from "@/lib/public-casino/cache";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ redirectSlugId: string }> }) {
@@ -20,6 +21,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const actor = await requireAdminPermission(request, "affiliate.manage");
     const mutation = await readAffiliateMutation(request);
     const redirect = await affiliateRedirectService.update((await params).redirectSlugId, mutation.data, actor.id, mutation.expectedUpdatedAt);
+    revalidatePublicCasino();
     return NextResponse.json({ ok: true, redirect, source: "postgresql" });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to update affiliate redirect slug");

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { readAffiliateMutation } from "@/lib/affiliate/http";
 import { requireAdminPermission } from "@/lib/auth/admin";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { revalidatePublicCasino } from "@/lib/public-casino/cache";
 import { affiliateProgramService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,7 @@ export async function PATCH(request: NextRequest, { params }: Context) {
     const actor = await requireAdminPermission(request, "affiliate.manage");
     const body = await readAffiliateMutation(request);
     const program = await affiliateProgramService.update((await params).programId, body.data, actor.id, body.expectedUpdatedAt);
+    revalidatePublicCasino();
     return NextResponse.json({ ok: true, program, source: "postgresql" });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to update affiliate program");

@@ -27,6 +27,7 @@
     "affiliate-integration:test": "node --import tsx --test tests/affiliate-integration-framework.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
+    "discovery:test": "node --import tsx --test tests/public-casino-discovery.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

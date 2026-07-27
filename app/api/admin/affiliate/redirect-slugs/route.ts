@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { readAffiliateJson } from "@/lib/affiliate/http";
 import { requireAdminPermission } from "@/lib/auth/admin";
 import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { revalidatePublicCasino } from "@/lib/public-casino/cache";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
   try {
     const actor = await requireAdminPermission(request, "affiliate.manage");
     const redirect = await affiliateRedirectService.create(await readAffiliateJson(request), actor.id);
+    revalidatePublicCasino();
     return NextResponse.json({ ok: true, redirect, source: "postgresql" }, { status: 201 });
   } catch (error) {
     return adminServiceErrorResponse(error, "Unable to create affiliate redirect slug");
