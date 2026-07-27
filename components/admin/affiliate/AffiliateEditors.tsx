@@ -7,6 +7,7 @@ import { Badge, Card } from "@/components/ui";
 import { MediaSelector } from "@/components/admin/media/MediaSelector";
 import type {
   AffiliateGeoModeValue,
+  AffiliateIntegrationModeValue,
   AffiliateNetworkRecord,
   AffiliateNetworkTypeValue,
   AffiliateOfferRecord,
@@ -15,6 +16,7 @@ import type {
   AffiliateRedirectSlugRecord,
   AffiliateReferenceData,
   AffiliateStatusValue,
+  AffiliateSyncModeValue,
   AffiliateTrackingLinkRecord,
 } from "@/lib/affiliate/admin-types";
 
@@ -83,30 +85,200 @@ function NetworkEditor({ id }: { id?: string }) {
   </AffiliateAdminLayout>;
 }
 
+interface ProgramDraft {
+  networkId: string;
+  casinoId: string;
+  externalProgramId: string;
+  name: string;
+  operator: string;
+  status: AffiliateStatusValue;
+  workflowStatus: AffiliateProgramRecord["workflowStatus"];
+  providerType: string;
+  providerAccountId: string;
+  integrationMode: AffiliateIntegrationModeValue;
+  dashboardUrl: string;
+  accountReference: string;
+  accountManagerName: string;
+  accountManagerEmail: string;
+  defaultCurrency: string;
+  timezone: string;
+  supportedCountries: string;
+  supportedCurrencies: string;
+  metadata: Record<string, unknown>;
+  sourceOfTruth: Record<string, string>;
+  credentialReference: string;
+  syncEnabled: boolean;
+  syncMode: AffiliateSyncModeValue;
+  deactivateMissing: boolean;
+  trustedAutoActivation: boolean;
+  notes: string;
+  connectionStatus: AffiliateProgramRecord["connectionStatus"];
+  lastSyncAt: string;
+  updatedAt: string;
+}
+
+const emptyProgram: ProgramDraft = {
+  networkId: "",
+  casinoId: "",
+  externalProgramId: "",
+  name: "",
+  operator: "",
+  status: "DRAFT",
+  workflowStatus: "DRAFT",
+  providerType: "MANUAL",
+  providerAccountId: "",
+  integrationMode: "MANUAL",
+  dashboardUrl: "",
+  accountReference: "",
+  accountManagerName: "",
+  accountManagerEmail: "",
+  defaultCurrency: "",
+  timezone: "UTC",
+  supportedCountries: "",
+  supportedCurrencies: "",
+  metadata: {},
+  sourceOfTruth: {},
+  credentialReference: "",
+  syncEnabled: false,
+  syncMode: "FULL",
+  deactivateMissing: false,
+  trustedAutoActivation: false,
+  notes: "",
+  connectionStatus: "DISCONNECTED",
+  lastSyncAt: "",
+  updatedAt: "",
+};
+
+function programToDraft(item: AffiliateProgramRecord): ProgramDraft {
+  return {
+    networkId: item.networkId,
+    casinoId: item.casinoId || "",
+    externalProgramId: item.externalProgramId || "",
+    name: item.name,
+    operator: item.operator,
+    status: item.status,
+    workflowStatus: item.workflowStatus,
+    providerType: item.providerType,
+    providerAccountId: item.providerAccountId || "",
+    integrationMode: item.integrationMode,
+    dashboardUrl: item.dashboardUrl || "",
+    accountReference: item.accountReference || "",
+    accountManagerName: item.accountManagerName || "",
+    accountManagerEmail: item.accountManagerEmail || "",
+    defaultCurrency: item.defaultCurrency || "",
+    timezone: item.timezone || "",
+    supportedCountries: item.supportedCountries.join(", "),
+    supportedCurrencies: item.supportedCurrencies.join(", "),
+    metadata: item.metadata || {},
+    sourceOfTruth: item.sourceOfTruth || {},
+    credentialReference: item.credentialReference || "",
+    syncEnabled: item.syncEnabled,
+    syncMode: item.syncMode,
+    deactivateMissing: item.deactivateMissing,
+    trustedAutoActivation: item.trustedAutoActivation,
+    notes: item.notes || "",
+    connectionStatus: item.connectionStatus,
+    lastSyncAt: item.lastSyncAt || "",
+    updatedAt: item.updatedAt,
+  };
+}
+
 function ProgramEditor({ id }: { id?: string }) {
   const router = useRouter();
-  const empty = { networkId: "", externalProgramId: "", name: "", operator: "", status: "DRAFT" as AffiliateStatusValue, accountReference: "", supportedCountries: "", supportedCurrencies: "", notes: "", updatedAt: "" };
-  const [draft, setDraft] = useState(empty);
-  const [networks, setNetworks] = useState<AffiliateNetworkRecord[]>([]);
-  const [dirty, setDirty] = useState(false); const [saving, setSaving] = useState(false); const [error, setError] = useState("");
+  const [draft, setDraft] = useState<ProgramDraft>(emptyProgram);
+  const [references, setReferences] = useState<AffiliateReferenceData>({ networks: [], programs: [], casinos: [] });
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [connectionMessage, setConnectionMessage] = useState("");
   const load = useCallback(async () => {
-    const refs = await json<AffiliateReferenceData>("/api/admin/affiliate/reference-data"); setNetworks(refs.networks);
-    if (!id) { setDraft((value) => ({ ...value, networkId: value.networkId || refs.networks.find((item) => item.active)?.id || "" })); return; }
+    const refs = await json<AffiliateReferenceData>("/api/admin/affiliate/reference-data");
+    setReferences(refs);
+    if (!id) {
+      setDraft((value) => ({ ...value, networkId: value.networkId || refs.networks.find((item) => item.active)?.id || "" }));
+      return;
+    }
     const result = await json<{ program: AffiliateProgramRecord }>(`/api/admin/affiliate/programs/${id}`);
-    const item = result.program; setDraft({ networkId: item.networkId, externalProgramId: item.externalProgramId || "", name: item.name, operator: item.operator, status: item.status, accountReference: item.accountReference || "", supportedCountries: item.supportedCountries.join(", "), supportedCurrencies: item.supportedCurrencies.join(", "), notes: item.notes || "", updatedAt: item.updatedAt }); setDirty(false); setError("");
+    setDraft(programToDraft(result.program));
+    setDirty(false);
+    setError("");
   }, [id]);
   useEffect(() => { void load().catch((caught) => setError(caught instanceof Error ? caught.message : "Unable to load program")); }, [load]);
-  function change(patch: Partial<typeof draft>) { setDraft((value) => ({ ...value, ...patch })); setDirty(true); }
+  function change(patch: Partial<ProgramDraft>) { setDraft((value) => ({ ...value, ...patch })); setDirty(true); }
   async function save(next = draft) {
     setSaving(true); setError("");
     try {
-      const result = await json<{ program: AffiliateProgramRecord }>(id ? `/api/admin/affiliate/programs/${id}` : "/api/admin/affiliate/programs", { method: id ? "PATCH" : "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...next, supportedCountries: csv(next.supportedCountries), supportedCurrencies: csv(next.supportedCurrencies), expectedUpdatedAt: id ? draft.updatedAt : undefined }) });
+      const result = await json<{ program: AffiliateProgramRecord }>(id ? `/api/admin/affiliate/programs/${id}` : "/api/admin/affiliate/programs", {
+        method: id ? "PATCH" : "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          ...next,
+          casinoId: next.casinoId || null,
+          supportedCountries: csv(next.supportedCountries),
+          supportedCurrencies: csv(next.supportedCurrencies),
+          expectedUpdatedAt: id ? draft.updatedAt : undefined,
+        }),
+      });
       if (!id) { router.push(`/admin/affiliate/programs/${result.program.id}`); return; }
-      const item = result.program; setDraft({ networkId: item.networkId, externalProgramId: item.externalProgramId || "", name: item.name, operator: item.operator, status: item.status, accountReference: item.accountReference || "", supportedCountries: item.supportedCountries.join(", "), supportedCurrencies: item.supportedCurrencies.join(", "), notes: item.notes || "", updatedAt: item.updatedAt }); setDirty(false); router.refresh();
+      setDraft(programToDraft(result.program)); setDirty(false); router.refresh();
     } catch (caught) { setError(caught instanceof Error ? caught.message : "Unable to save program"); }
     finally { setSaving(false); }
   }
-  return <AffiliateAdminLayout active="programs" title={id ? draft.name || "Program" : "Create program"} description="Operator program identity, account reference, markets and lifecycle."><AffiliateStatusBar detail={networks.find((item) => item.id === draft.networkId)?.name} status={draft.status} updatedAt={draft.updatedAt} /><AffiliateSectionLayout title="Program details" description="External IDs are unique within the selected network."><div className="builderForm builderTwoCol"><Field label="Affiliate network"><select onChange={(event) => change({ networkId: event.target.value })} value={draft.networkId}><option value="">Select network</option>{networks.map((item) => <option disabled={!item.active} key={item.id} value={item.id}>{item.name}{!item.active ? " (archived)" : ""}</option>)}</select></Field><Field label="External program ID"><input onChange={(event) => change({ externalProgramId: event.target.value })} value={draft.externalProgramId} /></Field><Field label="Name"><input onChange={(event) => change({ name: event.target.value })} value={draft.name} /></Field><Field label="Operator"><input onChange={(event) => change({ operator: event.target.value })} value={draft.operator} /></Field><Field label="Status"><select onChange={(event) => change({ status: event.target.value as AffiliateStatusValue })} value={draft.status}>{statuses.map((value) => <option key={value}>{value}</option>)}</select></Field><Field label="Account reference"><input onChange={(event) => change({ accountReference: event.target.value })} value={draft.accountReference} /></Field><Field label="Supported countries"><input onChange={(event) => change({ supportedCountries: event.target.value })} placeholder="GB, IE, CA" value={draft.supportedCountries} /></Field><Field label="Supported currencies"><input onChange={(event) => change({ supportedCurrencies: event.target.value })} placeholder="GBP, EUR, CAD" value={draft.supportedCurrencies} /></Field><Field label="Internal notes"><textarea onChange={(event) => change({ notes: event.target.value })} rows={5} value={draft.notes} /></Field></div><div className="builderActions">{id && <button className="button ghost" onClick={() => void save({ ...draft, status: draft.status === "ARCHIVED" ? "DRAFT" : "ARCHIVED" })} type="button">{draft.status === "ARCHIVED" ? "Restore to draft" : "Archive"}</button>}</div></AffiliateSectionLayout><AffiliateSaveBar dirty={dirty || !id} error={error} onReload={() => void load()} onSave={() => void save()} saving={saving} /></AffiliateAdminLayout>;
+  async function testConnection() {
+    if (!id) return;
+    setSaving(true); setConnectionMessage(""); setError("");
+    try {
+      const response = await json<{ result: { message: string } }>(`/api/admin/affiliate/programs/${id}/connection-test`, { method: "POST" });
+      setConnectionMessage(response.result.message);
+      await load();
+    } catch (caught) { setError(caught instanceof Error ? caught.message : "Unable to test connection"); }
+    finally { setSaving(false); }
+  }
+  const network = references.networks.find((item) => item.id === draft.networkId);
+  return <AffiliateAdminLayout active="programs" title={id ? draft.name || "Program" : "Create program"} description="Commercial relationship, canonical casino ownership and external provider settings.">
+    <AffiliateStatusBar detail={`${network?.name || "No network"} · ${draft.providerType} · ${draft.connectionStatus}`} status={draft.status} updatedAt={draft.updatedAt} />
+    <AffiliateSectionLayout title="Program identity" description="One casino may have multiple direct or network programs. External IDs stay scoped to the network.">
+      <div className="builderForm builderTwoCol">
+        <Field label="Affiliate network"><select onChange={(event) => change({ networkId: event.target.value })} value={draft.networkId}><option value="">Select network</option>{references.networks.map((item) => <option disabled={!item.active} key={item.id} value={item.id}>{item.name}{!item.active ? " (archived)" : ""}</option>)}</select></Field>
+        <Field label="Canonical casino"><select onChange={(event) => change({ casinoId: event.target.value })} value={draft.casinoId}><option value="">Match during import</option>{references.casinos.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></Field>
+        <Field label="Name"><input onChange={(event) => change({ name: event.target.value })} value={draft.name} /></Field>
+        <Field label="Operator"><input onChange={(event) => change({ operator: event.target.value })} value={draft.operator} /></Field>
+        <Field label="Status"><select onChange={(event) => change({ status: event.target.value as AffiliateStatusValue })} value={draft.status}>{statuses.map((value) => <option key={value}>{value}</option>)}</select></Field>
+        <Field label="External program ID"><input onChange={(event) => change({ externalProgramId: event.target.value })} value={draft.externalProgramId} /></Field>
+        <Field label="Account reference"><input onChange={(event) => change({ accountReference: event.target.value })} value={draft.accountReference} /></Field>
+        <Field label="Supported countries"><input onChange={(event) => change({ supportedCountries: event.target.value })} placeholder="GB, IE, CA" value={draft.supportedCountries} /></Field>
+        <Field label="Supported currencies"><input onChange={(event) => change({ supportedCurrencies: event.target.value })} placeholder="GBP, EUR, CAD" value={draft.supportedCurrencies} /></Field>
+      </div>
+    </AffiliateSectionLayout>
+    <AffiliateSectionLayout title="Provider integration" description="Provider type is extensible. Credential references resolve only through the server-side environment allowlist.">
+      <div className="builderForm builderTwoCol">
+        <Field label="Provider type"><input list="affiliate-provider-types" onChange={(event) => change({ providerType: event.target.value.toUpperCase() })} value={draft.providerType} /><datalist id="affiliate-provider-types"><option value="MANUAL" /><option value="EVERFLOW" /><option value="INCOME_ACCESS" /><option value="AFFILKA" /><option value="CELLXPERT" /><option value="MYAFFILIATES" /><option value="NETREFER" /><option value="CUSTOM" /></datalist></Field>
+        <Field label="Integration mode"><select onChange={(event) => change({ integrationMode: event.target.value as AffiliateIntegrationModeValue })} value={draft.integrationMode}>{["MANUAL", "API", "CSV", "JSON", "XML", "SFTP", "WEBHOOK"].map((value) => <option key={value}>{value}</option>)}</select></Field>
+        <Field label="Provider account ID"><input onChange={(event) => change({ providerAccountId: event.target.value })} value={draft.providerAccountId} /></Field>
+        <Field label="Credential reference"><input autoComplete="off" onChange={(event) => change({ credentialReference: event.target.value })} placeholder="Managed secret reference" value={draft.credentialReference} /></Field>
+        <Field label="Dashboard URL"><input onChange={(event) => change({ dashboardUrl: event.target.value })} placeholder="https://" type="url" value={draft.dashboardUrl} /></Field>
+        <Field label="Sync mode"><select onChange={(event) => change({ syncMode: event.target.value as AffiliateSyncModeValue })} value={draft.syncMode}><option>FULL</option><option>INCREMENTAL</option></select></Field>
+        <label className="editorCheck"><input checked={draft.syncEnabled} onChange={(event) => change({ syncEnabled: event.target.checked })} type="checkbox" /> Scheduled sync enabled</label>
+        <label className="editorCheck"><input checked={draft.deactivateMissing} onChange={(event) => change({ deactivateMissing: event.target.checked })} type="checkbox" /> Archive provider records missing from explicit full sync</label>
+        <label className="editorCheck"><input checked={draft.trustedAutoActivation} onChange={(event) => change({ trustedAutoActivation: event.target.checked })} type="checkbox" /> Trusted automatic activation</label>
+      </div>
+      <div className="builderActions">{id && <button className="button ghost" disabled={saving || dirty} onClick={() => void testConnection()} type="button">Test connection</button>}</div>
+      {connectionMessage && <p className="muted" role="status">{connectionMessage}</p>}
+    </AffiliateSectionLayout>
+    <AffiliateSectionLayout title="Operations and source of truth" description="Editorial fields remain manual by default. Provider payout changes require review unless explicitly configured otherwise.">
+      <div className="builderForm builderTwoCol">
+        <Field label="Account manager"><input onChange={(event) => change({ accountManagerName: event.target.value })} value={draft.accountManagerName} /></Field>
+        <Field label="Account manager email"><input onChange={(event) => change({ accountManagerEmail: event.target.value })} type="email" value={draft.accountManagerEmail} /></Field>
+        <Field label="Default currency"><input maxLength={3} onChange={(event) => change({ defaultCurrency: event.target.value.toUpperCase() })} value={draft.defaultCurrency} /></Field>
+        <Field label="Timezone"><input onChange={(event) => change({ timezone: event.target.value })} placeholder="UTC" value={draft.timezone} /></Field>
+        <Field label="Payout fields"><select onChange={(event) => change({ sourceOfTruth: { ...draft.sourceOfTruth, payoutAmount: event.target.value, revenueSharePercentage: event.target.value } })} value={draft.sourceOfTruth.payoutAmount || "REVIEW_ON_CONFLICT"}>{["REVIEW_ON_CONFLICT", "PROVIDER_WINS", "MANUAL_WINS", "PROVIDER_IF_EMPTY"].map((value) => <option key={value}>{value}</option>)}</select></Field>
+        <Field label="Offer status"><select onChange={(event) => change({ sourceOfTruth: { ...draft.sourceOfTruth, status: event.target.value } })} value={draft.sourceOfTruth.status || "PROVIDER_WINS"}>{["PROVIDER_WINS", "REVIEW_ON_CONFLICT", "MANUAL_WINS"].map((value) => <option key={value}>{value}</option>)}</select></Field>
+        <Field label="Internal notes"><textarea onChange={(event) => change({ notes: event.target.value })} rows={5} value={draft.notes} /></Field>
+      </div>
+      <div className="builderActions">{id && <button className="button ghost" onClick={() => void save({ ...draft, status: draft.status === "ARCHIVED" ? "DRAFT" : "ARCHIVED" })} type="button">{draft.status === "ARCHIVED" ? "Restore to draft" : "Archive"}</button>}</div>
+    </AffiliateSectionLayout>
+    <AffiliateSaveBar dirty={dirty || !id} error={error} onReload={() => void load()} onSave={() => void save()} saving={saving} />
+  </AffiliateAdminLayout>;
 }
 
 interface OfferDraft {

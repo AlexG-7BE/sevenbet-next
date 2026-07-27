@@ -114,6 +114,91 @@ enum AffiliateGeoMode {
   BLOCK
 }
 
+enum AffiliateConnectionStatus {
+  DISCONNECTED
+  CONFIGURED
+  CONNECTED
+  ERROR
+}
+
+enum AffiliateIntegrationMode {
+  MANUAL
+  API
+  CSV
+  JSON
+  XML
+  SFTP
+  WEBHOOK
+}
+
+enum AffiliateSyncMode {
+  FULL
+  INCREMENTAL
+}
+
+enum AffiliateImportStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  COMPLETED_WITH_ERRORS
+  FAILED
+  CANCELLED
+}
+
+enum AffiliateImportAction {
+  CREATE
+  UPDATE
+  NO_CHANGE
+  ARCHIVE
+  SKIP
+  CONFLICT
+  ERROR
+}
+
+enum AffiliateImportItemStatus {
+  PENDING
+  APPLIED
+  SKIPPED
+  FAILED
+}
+
+enum AffiliateExternalEntityType {
+  PROGRAM
+  CASINO
+  OFFER
+  TRACKING_LINK
+  BONUS
+  CREATIVE
+}
+
+enum AffiliateMatchStatus {
+  MATCHED
+  UNMATCHED
+  REVIEW_REQUIRED
+  IGNORED
+  CONFLICT
+}
+
+enum AffiliateMatchMethod {
+  EXTERNAL_MAPPING
+  DOMAIN
+  BRAND
+  ALIAS
+  MANUAL
+}
+
+enum AffiliateSourcePolicy {
+  MANUAL_WINS
+  PROVIDER_WINS
+  PROVIDER_IF_EMPTY
+  REVIEW_ON_CONFLICT
+}
+
+enum CasinoAliasType {
+  BRAND
+  DOMAIN
+}
+
 enum AdminRole {
   SUPER_ADMIN
   ADMIN
@@ -536,22 +621,40 @@ model Casino {
   createdBy                String
   updatedBy                String
 
-  bonuses         Bonus[]
-  affiliateLinks  AffiliateLink[]
-  versions        CasinoVersion[]
-  revisions       CasinoRevision[]
-  images          CasinoImage[]
-  mediaAssets     MediaAsset[]
-  countries       CasinoCountry[]
-  licenses        CasinoLicense[]
-  paymentMethods  CasinoPaymentMethod[]
-  gameProviders   CasinoGameProvider[]
-  gameCategories  CasinoGameCategory[]
-  casinoBonuses   CasinoBonus[]
-  casinoLinks     CasinoAffiliateLink[]
-  affiliateOffers AffiliateOffer[]
-  redirectSlugs   AffiliateRedirectSlug[]
-  seo             CasinoSeo?
+  bonuses           Bonus[]
+  affiliateLinks    AffiliateLink[]
+  versions          CasinoVersion[]
+  revisions         CasinoRevision[]
+  images            CasinoImage[]
+  mediaAssets       MediaAsset[]
+  countries         CasinoCountry[]
+  licenses          CasinoLicense[]
+  paymentMethods    CasinoPaymentMethod[]
+  gameProviders     CasinoGameProvider[]
+  gameCategories    CasinoGameCategory[]
+  casinoBonuses     CasinoBonus[]
+  casinoLinks       CasinoAffiliateLink[]
+  affiliateOffers   AffiliateOffer[]
+  affiliatePrograms AffiliateProgram[]
+  redirectSlugs     AffiliateRedirectSlug[]
+  aliases           CasinoAlias[]
+  seo               CasinoSeo?
+}
+
+model CasinoAlias {
+  id              String          @id @default(uuid()) @db.Uuid
+  casinoId        String          @db.Uuid
+  type            CasinoAliasType
+  value           String
+  normalizedValue String
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  createdBy       String
+
+  casino Casino @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([type, normalizedValue])
+  @@index([casinoId, type])
 }
 
 model CasinoVersion {
@@ -790,27 +893,57 @@ model AffiliateNetwork {
 }
 
 model AffiliateProgram {
-  id                  String          @id @default(uuid()) @db.Uuid
-  networkId           String          @db.Uuid
-  externalProgramId   String?
-  name                String
-  operator            String
-  status              AffiliateStatus @default(DRAFT)
-  accountReference    String?
-  supportedCountries  String[]        @default([])
-  supportedCurrencies String[]        @default([])
-  notes               String?
-  archivedAt          DateTime?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-  createdBy           String
-  updatedBy           String
+  id                    String                    @id @default(uuid()) @db.Uuid
+  networkId             String                    @db.Uuid
+  casinoId              String?                   @db.Uuid
+  externalProgramId     String?
+  name                  String
+  operator              String
+  status                AffiliateStatus           @default(DRAFT)
+  workflowStatus        EditorialStatus           @default(DRAFT)
+  providerType          String                    @default("MANUAL")
+  providerAccountId     String?
+  connectionStatus      AffiliateConnectionStatus @default(DISCONNECTED)
+  integrationMode       AffiliateIntegrationMode  @default(MANUAL)
+  dashboardUrl          String?
+  accountReference      String?
+  accountManagerName    String?
+  accountManagerEmail   String?
+  defaultCurrency       String?
+  timezone              String?
+  supportedCountries    String[]                  @default([])
+  supportedCurrencies   String[]                  @default([])
+  metadata              Json                      @default("{}")
+  sourceOfTruth         Json                      @default("{}")
+  credentialReference   String?
+  syncEnabled           Boolean                   @default(false)
+  syncMode              AffiliateSyncMode         @default(FULL)
+  syncCursor            Json?
+  deactivateMissing     Boolean                   @default(false)
+  trustedAutoActivation Boolean                   @default(false)
+  lastConnectionTestAt  DateTime?
+  lastSyncAt            DateTime?
+  lastSuccessfulSyncAt  DateTime?
+  lastSyncStatus        AffiliateImportStatus?
+  lastSyncError         String?
+  notes                 String?
+  archivedAt            DateTime?
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  createdBy             String
+  updatedBy             String
 
-  network AffiliateNetwork @relation(fields: [networkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  offers  AffiliateOffer[]
+  network          AffiliateNetwork           @relation(fields: [networkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino           Casino?                    @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  offers           AffiliateOffer[]
+  externalMappings AffiliateExternalMapping[]
+  importJobs       AffiliateImportJob[]
 
   @@unique([networkId, externalProgramId])
   @@index([networkId, status])
+  @@index([casinoId, status])
+  @@index([providerType, connectionStatus])
+  @@index([syncEnabled, lastSyncAt])
   @@index([operator])
 }
 
@@ -820,6 +953,7 @@ model AffiliateOffer {
   casinoId               String               @db.Uuid
   casinoBonusId          String?              @db.Uuid
   externalOfferId        String?
+  externalName           String?
   internalName           String
   publicLabel            String
   offerType              String
@@ -831,6 +965,9 @@ model AffiliateOffer {
   hybridTerms            String?
   cookieDurationDays     Int?
   geoMode                AffiliateGeoMode     @default(GLOBAL)
+  languages              String[]             @default([])
+  devices                String[]             @default([])
+  landingPageUrl         String?
   startAt                DateTime?
   expiresAt              DateTime?
   evergreen              Boolean              @default(false)
@@ -838,6 +975,9 @@ model AffiliateOffer {
   priority               Int                  @default(0)
   terms                  String?
   notes                  String?
+  metadata               Json                 @default("{}")
+  sourceUpdatedAt        DateTime?
+  lastSyncedAt           DateTime?
   archivedAt             DateTime?
   createdAt              DateTime             @default(now())
   updatedAt              DateTime             @updatedAt
@@ -899,12 +1039,15 @@ model AffiliateTrackingLink {
   promoCode         String?
   campaign          String?
   creativeReference String?
+  subIdTemplate     String?
   verifiedAt        DateTime?
   lastCheckedAt     DateTime?
+  validFrom         DateTime?
   expiresAt         DateTime?
   active            Boolean          @default(false)
   priority          Int              @default(0)
   source            String           @default("MANUAL")
+  metadata          Json             @default("{}")
   archivedAt        DateTime?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
@@ -919,6 +1062,86 @@ model AffiliateTrackingLink {
   @@index([offerId, active, priority])
   @@index([currencyCode, active])
   @@index([expiresAt])
+}
+
+model AffiliateExternalMapping {
+  id                 String                      @id @default(uuid()) @db.Uuid
+  providerType       String
+  affiliateProgramId String                      @db.Uuid
+  entityType         AffiliateExternalEntityType
+  externalId         String
+  internalEntityId   String?
+  externalName       String?
+  externalDomain     String?
+  fingerprint        String?
+  sourcePayload      Json?
+  matchStatus        AffiliateMatchStatus        @default(UNMATCHED)
+  matchMethod        AffiliateMatchMethod?
+  matchConfidence    Float?
+  matchedBy          String?
+  firstSeenAt        DateTime                    @default(now())
+  lastSeenAt         DateTime                    @default(now())
+  lastSyncedAt       DateTime?
+  createdAt          DateTime                    @default(now())
+  updatedAt          DateTime                    @updatedAt
+
+  affiliateProgram AffiliateProgram @relation(fields: [affiliateProgramId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([providerType, affiliateProgramId, entityType, externalId])
+  @@index([affiliateProgramId, matchStatus, entityType])
+  @@index([externalDomain])
+  @@index([externalName])
+}
+
+model AffiliateImportJob {
+  id                 String                @id @default(uuid()) @db.Uuid
+  affiliateProgramId String                @db.Uuid
+  providerType       String
+  mode               AffiliateSyncMode
+  status             AffiliateImportStatus @default(PENDING)
+  dryRun             Boolean               @default(true)
+  cursor             Json?
+  summary            Json                  @default("{}")
+  errorSummary       Json?
+  startedAt          DateTime?
+  completedAt        DateTime?
+  initiatedBy        String
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  affiliateProgram AffiliateProgram      @relation(fields: [affiliateProgramId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  items            AffiliateImportItem[]
+
+  @@index([affiliateProgramId, createdAt])
+  @@index([status, createdAt])
+}
+
+model AffiliateImportItem {
+  id               String                      @id @default(uuid()) @db.Uuid
+  jobId            String                      @db.Uuid
+  entityType       AffiliateExternalEntityType
+  externalId       String
+  externalName     String?
+  externalDomain   String?
+  action           AffiliateImportAction
+  status           AffiliateImportItemStatus   @default(PENDING)
+  internalEntityId String?
+  matchStatus      AffiliateMatchStatus
+  matchMethod      AffiliateMatchMethod?
+  matchConfidence  Float?
+  before           Json?
+  after            Json?
+  sourcePayload    Json?
+  errors           Json?
+  conflictFields   String[]                    @default([])
+  createdAt        DateTime                    @default(now())
+  updatedAt        DateTime                    @updatedAt
+
+  job AffiliateImportJob @relation(fields: [jobId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([jobId, status, action])
+  @@index([matchStatus, entityType])
+  @@index([externalId])
 }
 
 model AffiliateTrackingLinkCountry {

@@ -3,8 +3,35 @@ import { AffiliateStatus, Prisma } from "@prisma/client";
 import type { AffiliateProgramInput } from "@/lib/affiliate/types";
 import { prisma } from "@/lib/db/prisma";
 
-const programInclude = { network: true, _count: { select: { offers: true } } } satisfies Prisma.AffiliateProgramInclude;
-export type AffiliateProgramAggregate = Prisma.AffiliateProgramGetPayload<{ include: typeof programInclude }>;
+const programInclude = {
+  network: true,
+  casino: { select: { id: true, title: true, slug: true, domain: true } },
+  externalMappings: {
+    where: { matchStatus: { in: ["UNMATCHED", "REVIEW_REQUIRED", "CONFLICT"] } },
+    select: { id: true, matchStatus: true },
+  },
+  _count: { select: { offers: true, externalMappings: true, importJobs: true } },
+} satisfies Prisma.AffiliateProgramInclude;
+type AffiliateProgramDatabaseAggregate = Prisma.AffiliateProgramGetPayload<{ include: typeof programInclude }>;
+export type AffiliateProgramAggregate = Pick<
+  AffiliateProgramDatabaseAggregate,
+  "id" | "networkId" | "externalProgramId" | "name" | "operator" | "status" | "accountReference"
+  | "supportedCountries" | "supportedCurrencies" | "notes" | "archivedAt" | "createdAt" | "updatedAt"
+  | "createdBy" | "updatedBy"
+> & Partial<Omit<AffiliateProgramDatabaseAggregate, "network" | "casino" | "externalMappings" | "_count">> & {
+  network: AffiliateProgramDatabaseAggregate["network"];
+  casino?: AffiliateProgramDatabaseAggregate["casino"];
+  externalMappings?: AffiliateProgramDatabaseAggregate["externalMappings"];
+  _count: { offers: number; externalMappings?: number; importJobs?: number };
+};
+
+function programData(input: AffiliateProgramInput) {
+  return {
+    ...input,
+    metadata: input.metadata as Prisma.InputJsonValue,
+    sourceOfTruth: input.sourceOfTruth as Prisma.InputJsonValue,
+  };
+}
 
 export interface AffiliateProgramStore {
   list(input?: { networkId?: string; status?: AffiliateStatus; search?: string; skip?: number; take?: number }): Promise<AffiliateProgramAggregate[]>;
@@ -41,7 +68,7 @@ export class AffiliateProgramRepository implements AffiliateProgramStore {
 
   async create(input: AffiliateProgramInput, actorId: string) {
     return prisma.$transaction(async (tx) => {
-      const program = await tx.affiliateProgram.create({ data: { ...input, createdBy: actorId, updatedBy: actorId }, include: programInclude });
+      const program = await tx.affiliateProgram.create({ data: { ...programData(input), createdBy: actorId, updatedBy: actorId }, include: programInclude });
       await tx.auditLog.create({ data: { actorId, action: "create", entityType: "affiliate-program", entityId: program.id, summary: `Created affiliate program: ${program.name}` } });
       return program;
     });
@@ -54,7 +81,7 @@ export class AffiliateProgramRepository implements AffiliateProgramStore {
       if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) throw new Error("AFFILIATE_EDIT_CONFLICT");
       const program = await tx.affiliateProgram.update({
         where: { id },
-        data: { ...input, archivedAt: input.status === AffiliateStatus.ARCHIVED ? new Date() : null, updatedBy: actorId },
+        data: { ...programData(input), archivedAt: input.status === AffiliateStatus.ARCHIVED ? new Date() : null, updatedBy: actorId },
         include: programInclude,
       });
       await tx.auditLog.create({ data: { actorId, action: input.status === AffiliateStatus.ARCHIVED ? "archive" : "update", entityType: "affiliate-program", entityId: id, summary: `Updated affiliate program: ${program.name}` } });

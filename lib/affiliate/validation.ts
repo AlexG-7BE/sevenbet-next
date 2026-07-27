@@ -1,8 +1,12 @@
 import {
   AffiliateGeoMode,
+  AffiliateIntegrationMode,
   AffiliateNetworkType,
   AffiliatePayoutModel,
+  AffiliateSourcePolicy,
   AffiliateStatus,
+  AffiliateSyncMode,
+  EditorialStatus,
 } from "@prisma/client";
 
 import type {
@@ -143,6 +147,28 @@ function assertNoSecrets(value: string | null, field: string) {
   }
 }
 
+function safeMetadata(value: unknown, field: string): Record<string, unknown> {
+  if (value === undefined || value === null) return {};
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new ValidationError(`${field} must be an object`, { field });
+  const serialized = JSON.stringify(value);
+  if (Buffer.byteLength(serialized, "utf8") > 64 * 1024) throw new ValidationError(`${field} is too large`, { field });
+  if (/(?:api[_-]?key|password|secret|authorization|credential|access[_-]?token)/i.test(serialized)) {
+    throw new ValidationError(`${field} must not contain credentials or secrets`, { field });
+  }
+  if (/__proto__|prototype|constructor/.test(serialized)) throw new ValidationError(`${field} contains unsafe keys`, { field });
+  return JSON.parse(serialized) as Record<string, unknown>;
+}
+
+function sourceOfTruth(value: unknown) {
+  const record = safeMetadata(value, "sourceOfTruth");
+  const output: Record<string, AffiliateSourcePolicy> = {};
+  for (const [field, policy] of Object.entries(record)) {
+    if (!/^[A-Za-z][A-Za-z0-9]{0,63}$/.test(field)) throw new ValidationError("sourceOfTruth contains an invalid field", { field });
+    output[field] = enumValue(policy, Object.values(AffiliateSourcePolicy), `sourceOfTruth.${field}`);
+  }
+  return output;
+}
+
 export function normalizeAffiliateNetwork(input: unknown): AffiliateNetworkInput {
   if (!input || typeof input !== "object") throw new ValidationError("Network payload is required");
   const value = input as Record<string, unknown>;
@@ -169,15 +195,52 @@ export function normalizeAffiliateProgram(input: unknown): AffiliateProgramInput
   const value = input as Record<string, unknown>;
   const notes = optional(value.notes);
   assertNoSecrets(notes, "notes");
+  const providerType = required(value.providerType ?? "MANUAL", "providerType").toUpperCase();
+  if (!/^[A-Z][A-Z0-9_]{1,63}$/.test(providerType)) throw new ValidationError("providerType is invalid", { field: "providerType" });
+  const accountManagerEmail = optional(value.accountManagerEmail)?.toLowerCase() ?? null;
+  if (accountManagerEmail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(accountManagerEmail)) {
+    throw new ValidationError("accountManagerEmail is invalid", { field: "accountManagerEmail" });
+  }
+  const defaultCurrency = optional(value.defaultCurrency)?.toUpperCase() ?? null;
+  if (defaultCurrency && !isIsoCurrency(defaultCurrency)) throw new ValidationError("defaultCurrency is invalid", { field: "defaultCurrency" });
+  const timezone = optional(value.timezone);
+  if (timezone) {
+    try {
+      new Intl.DateTimeFormat("en", { timeZone: timezone });
+    } catch {
+      throw new ValidationError("timezone must be a valid IANA timezone", { field: "timezone" });
+    }
+  }
+  const credentialReference = optional(value.credentialReference);
+  if (credentialReference && !/^[a-zA-Z0-9_-]{2,64}$/.test(credentialReference)) {
+    throw new ValidationError("credentialReference is invalid", { field: "credentialReference" });
+  }
   return {
     networkId: required(value.networkId, "networkId"),
+    casinoId: optional(value.casinoId),
     externalProgramId: optional(value.externalProgramId),
     name: required(value.name, "name"),
     operator: required(value.operator, "operator"),
     status: enumValue(value.status ?? AffiliateStatus.DRAFT, Object.values(AffiliateStatus), "status"),
+    workflowStatus: enumValue(value.workflowStatus ?? EditorialStatus.DRAFT, Object.values(EditorialStatus), "workflowStatus"),
+    providerType,
+    providerAccountId: optional(value.providerAccountId),
+    integrationMode: enumValue(value.integrationMode ?? AffiliateIntegrationMode.MANUAL, Object.values(AffiliateIntegrationMode), "integrationMode"),
+    dashboardUrl: normalizeSafeHttpsUrl(value.dashboardUrl, "dashboardUrl", true),
     accountReference: optional(value.accountReference),
+    accountManagerName: optional(value.accountManagerName),
+    accountManagerEmail,
+    defaultCurrency,
+    timezone,
     supportedCountries: normalizeCountries(value.supportedCountries ?? [], "supportedCountries"),
     supportedCurrencies: normalizeCurrencies(value.supportedCurrencies ?? [], "supportedCurrencies"),
+    metadata: safeMetadata(value.metadata, "metadata"),
+    sourceOfTruth: sourceOfTruth(value.sourceOfTruth),
+    credentialReference,
+    syncEnabled: Boolean(value.syncEnabled),
+    syncMode: enumValue(value.syncMode ?? AffiliateSyncMode.FULL, Object.values(AffiliateSyncMode), "syncMode"),
+    deactivateMissing: Boolean(value.deactivateMissing),
+    trustedAutoActivation: Boolean(value.trustedAutoActivation),
     notes,
   };
 }

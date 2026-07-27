@@ -1,8 +1,11 @@
 import type {
   AffiliateGeoMode,
+  AffiliateIntegrationMode,
   AffiliateNetworkType,
   AffiliatePayoutModel,
   AffiliateStatus,
+  AffiliateSyncMode,
+  EditorialStatus,
 } from "@prisma/client";
 
 export interface AffiliateCountryRuleInput {
@@ -47,13 +50,30 @@ export interface AffiliateNetworkInput {
 
 export interface AffiliateProgramInput {
   networkId: string;
+  casinoId?: string | null;
   externalProgramId?: string | null;
   name: string;
   operator: string;
   status: AffiliateStatus;
+  workflowStatus: EditorialStatus;
+  providerType: string;
+  providerAccountId?: string | null;
+  integrationMode: AffiliateIntegrationMode;
+  dashboardUrl?: string | null;
   accountReference?: string | null;
+  accountManagerName?: string | null;
+  accountManagerEmail?: string | null;
+  defaultCurrency?: string | null;
+  timezone?: string | null;
   supportedCountries: string[];
   supportedCurrencies: string[];
+  metadata: Record<string, unknown>;
+  sourceOfTruth: Record<string, string>;
+  credentialReference?: string | null;
+  syncEnabled: boolean;
+  syncMode: AffiliateSyncMode;
+  deactivateMissing: boolean;
+  trustedAutoActivation: boolean;
   notes?: string | null;
 }
 

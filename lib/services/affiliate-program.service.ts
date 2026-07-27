@@ -4,6 +4,7 @@ import type { AffiliateProgramInput } from "@/lib/affiliate/types";
 import { assertAffiliateStatusTransition, normalizeAffiliateProgram } from "@/lib/affiliate/validation";
 import { affiliateNetworkRepository, type AffiliateNetworkStore } from "@/lib/repositories/affiliate-network.repository";
 import { affiliateProgramRepository, type AffiliateProgramStore } from "@/lib/repositories/affiliate-program.repository";
+import { casinoRepository, type CasinoStore } from "@/lib/repositories/casino.repository";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
@@ -11,6 +12,7 @@ export class AffiliateProgramService {
   constructor(
     private readonly store: AffiliateProgramStore = affiliateProgramRepository,
     private readonly networkStore: AffiliateNetworkStore = affiliateNetworkRepository,
+    private readonly casinoStore: CasinoStore = casinoRepository,
   ) {}
 
   list(input?: Parameters<AffiliateProgramStore["list"]>[0]) {
@@ -26,7 +28,13 @@ export class AffiliateProgramService {
   private async validate(input: AffiliateProgramInput, excludeId?: string) {
     const network = await this.networkStore.findById(input.networkId);
     if (!network) throw new NotFoundError("Affiliate network", { id: input.networkId });
+    if (input.casinoId && !(await this.casinoStore.findById(input.casinoId))) {
+      throw new NotFoundError("Casino", { id: input.casinoId });
+    }
     if (input.status === "ACTIVE" && (!network.active || network.archivedAt)) throw new ValidationError("An archived or inactive network cannot have an active program");
+    if (input.providerType === "MANUAL" && input.integrationMode === "API") {
+      throw new ValidationError("Manual programs cannot use API integration mode");
+    }
     if (input.externalProgramId && await this.store.existsExternalProgramId(input.networkId, input.externalProgramId, excludeId)) {
       throw new ConflictError("External program ID already exists in this network", { externalProgramId: input.externalProgramId });
     }

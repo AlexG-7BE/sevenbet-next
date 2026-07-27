@@ -5,7 +5,14 @@ import { ValidationError } from "@/lib/services/service-error";
 export async function readAffiliateJson(request: Request) {
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > 512 * 1024) throw new ValidationError("Affiliate payload is too large");
-  const body = await request.json();
+  const raw = await request.text();
+  if (Buffer.byteLength(raw, "utf8") > 512 * 1024) throw new ValidationError("Affiliate payload is too large");
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    throw new ValidationError("Affiliate payload must be valid JSON");
+  }
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new ValidationError("JSON object payload is required");
   return body as Record<string, unknown>;
 }

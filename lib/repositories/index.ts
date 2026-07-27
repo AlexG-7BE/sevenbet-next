@@ -31,4 +31,5 @@ export * from "./affiliate-network.repository";
 export * from "./affiliate-program.repository";
 export * from "./affiliate-offer.repository";
 export * from "./affiliate-redirect.repository";
+export * from "./affiliate-integration.repository";
 export * from "./media.repository";

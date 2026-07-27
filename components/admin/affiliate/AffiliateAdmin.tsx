@@ -77,7 +77,12 @@ export function AffiliateListPage({ kind, initialFilters = {} }: { kind: ListKin
     <div className="affiliateRecordList" aria-busy={loading}>
       {records.map((item) => {
         if (kind === "networks") { const record = item as AffiliateNetworkRecord; return <Card key={record.id}><div><Badge tone={record.active ? "green" : "warning"}>{record.active ? "ACTIVE" : "ARCHIVED"}</Badge><h3>{record.name}</h3><p className="muted">{record.type.replaceAll("_", " ")} · {record.slug}</p></div><Link className="button ghost" href={`/admin/affiliate/networks/${record.id}`}>Edit</Link></Card>; }
-        if (kind === "programs") { const record = item as AffiliateProgramRecord; return <Card key={record.id}><div><Badge tone={statusTone(record.status)}>{record.status}</Badge><h3>{record.name}</h3><p className="muted">{record.network.name} · {record.operator} · {record._count.offers} offers</p></div><Link className="button ghost" href={`/admin/affiliate/programs/${record.id}`}>Edit</Link></Card>; }
+        if (kind === "programs") {
+          const record = item as AffiliateProgramRecord;
+          const unresolved = record.externalMappings?.filter((mapping) => mapping.matchStatus === "CONFLICT").length ?? 0;
+          const unmatched = record.externalMappings?.filter((mapping) => mapping.matchStatus === "UNMATCHED" || mapping.matchStatus === "REVIEW_REQUIRED").length ?? 0;
+          return <Card key={record.id}><div><div className="badgeCluster"><Badge tone={statusTone(record.status)}>{record.status}</Badge><Badge>{record.providerType}</Badge><Badge tone={record.connectionStatus === "CONNECTED" ? "green" : "warning"}>{record.connectionStatus}</Badge></div><h3>{record.name}</h3><p className="muted">{record.casino?.title || "Casino matched during import"} · {record.network.name} · {record._count.offers} offers · {unresolved} conflicts · {unmatched} unmatched · last sync {record.lastSyncAt ? new Date(record.lastSyncAt).toLocaleDateString("en-US") : "never"}</p></div><Link className="button ghost" href={`/admin/affiliate/programs/${record.id}`}>Edit</Link></Card>;
+        }
         const record = item as AffiliateOfferListRecord; return <Card key={record.id}><div><div className="badgeCluster"><Badge tone={statusTone(record.status)}>{record.status}</Badge><Badge>{record.program.network.name}</Badge><Badge>{record._count.trackingLinks} links</Badge></div><h3>{record.internalName}</h3><p className="muted">{record.casino.title} · {record.casinoBonus?.title || "Casino-level"} · priority {record.priority}</p></div><Link className="button ghost" href={`/admin/affiliate/offers/${record.id}`}>Edit</Link></Card>;
       })}
       {!loading && !records.length && <Card><p className="muted">No records match the current filters.</p></Card>}

@@ -24,6 +24,7 @@ interface CandidateTrackingLink {
   active: boolean;
   priority: number;
   verifiedAt: Date | string | null;
+  validFrom?: Date | string | null;
   expiresAt: Date | string | null;
   archivedAt: Date | string | null;
   updatedAt: Date | string;
@@ -118,8 +119,9 @@ export function resolveAffiliateCandidates(offers: CandidateOffer[], input: Cand
   const currency = input.currencyCode?.toUpperCase();
   const records = eligibleOffers.flatMap((offer) => offer.trackingLinks.flatMap((link) => {
     const expiry = asDate(link.expiresAt);
+    const validFrom = asDate(link.validFrom);
     const expired = Boolean(expiry && expiry <= now);
-    if (!link.active || link.archivedAt || expired || !languageAllows(link.language, input.language)) return [];
+    if (!link.active || link.archivedAt || (validFrom && validFrom > now) || expired || !languageAllows(link.language, input.language)) return [];
     if (currency && link.currencyCode && link.currencyCode !== currency) return [];
     if (!geoAllows(link.geoMode, link.countries, input.countryCode)) return [];
     const level = specificity(offer, link, input);
