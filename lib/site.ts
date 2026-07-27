@@ -10,7 +10,6 @@ export const coreRoutes = [
   "/responsible-gambling",
   "/bonuses",
   "/casinos",
-  "/catalog",
   "/methodology",
   "/affiliate-disclosure",
   "/about",

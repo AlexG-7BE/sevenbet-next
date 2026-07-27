@@ -1,77 +1,9 @@
-import { CasinoCard } from "@/components/ui";
-import { AffiliateDisclosure, Badge, Card, Container, MethodologyBlock } from "@/components/ui";
-import { publicCasinoService } from "@/lib/services/public-casino.service";
+import { permanentRedirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+import { parseCasinoDiscoveryQuery, serializeCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 
-export default async function CatalogPage() {
-  const casinos = (await publicCasinoService.listCasinoViews()).slice(0, 80);
-  const stats = {
-    total: casinos.length,
-    verified: casinos.filter((casino) => casino.isVerified).length,
-    payments: new Set(casinos.flatMap((casino) => casino.payments)).size,
-    licenses: new Set(casinos.map((casino) => casino.license)).size,
-  };
-
-  return (
-    <section className="pageShell">
-      <Container>
-        <div className="pageIntro">
-          <Badge tone="green">Casino comparison catalog</Badge>
-          <h1>Browse verified casino offers with ratings and bonus terms.</h1>
-          <p className="lead">
-            The first 80 profiles from the database. Each listing keeps rating, wagering, minimum deposit, payout speed
-            and license visible before any casino transition.
-          </p>
-        </div>
-
-        <div className="statsGrid pageGrid">
-          <Card>
-            <strong>{stats.total}</strong>
-            <span>casino profiles</span>
-          </Card>
-          <Card>
-            <strong>{stats.verified}</strong>
-            <span>licensed active</span>
-          </Card>
-          <Card>
-            <strong>{stats.payments}</strong>
-            <span>payment filters</span>
-          </Card>
-          <Card>
-            <strong>{stats.licenses}</strong>
-            <span>license sources</span>
-          </Card>
-        </div>
-
-        <AffiliateDisclosure />
-
-        <div className="catalogFilters" aria-label="Catalog filter preview">
-          {["Top rated", "Fast payout", "Low wagering", "Verified", "Crypto", "Live casino"].map((label) => (
-            <Badge tone={label === "Top rated" ? "warning" : "dark"} key={label}>
-              {label}
-            </Badge>
-          ))}
-        </div>
-
-        <div className="catalogToolbar">
-          <div>
-            <p className="eyebrow">Marketplace view</p>
-            <h2>Compare bonuses, ratings and risk labels in one scan.</h2>
-          </div>
-          <Badge tone="warning">Last updated today · {casinos.length} profiles</Badge>
-        </div>
-
-        <div className="catalogList">
-          {casinos.map((casino) => (
-            <CasinoCard casino={casino} key={casino.slug} />
-          ))}
-        </div>
-
-        <div className="catalogMethodology">
-          <MethodologyBlock />
-        </div>
-      </Container>
-    </section>
-  );
+export default async function CatalogRedirect({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const query = parseCasinoDiscoveryQuery(await searchParams);
+  const params = serializeCasinoDiscoveryQuery(query);
+  permanentRedirect(`/casinos${params.size ? `?${params}` : ""}`);
 }

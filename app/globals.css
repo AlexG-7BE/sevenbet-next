@@ -782,6 +782,85 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 .catalogList, .stepTimeline, .questionList { display: grid; gap: 12px; margin-top: 24px; }
 .catalogMethodology { margin-top: 64px; }
+.discoveryPage { overflow: clip; }
+.discoveryHero { max-width: 900px; margin-bottom: 28px; }
+.discoveryHero h1 { max-width: 850px; }
+.discoveryForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 18px;
+  margin-top: 28px;
+  align-items: end;
+}
+.discoverySearch { display: grid; gap: 8px; }
+.discoverySearch > label, .discoverySort > label { font-weight: 850; color: var(--text); }
+.discoverySearch > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.discoverySearch input, .discoverySort select {
+  min-height: 48px;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0 14px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--text);
+  font: inherit;
+}
+.discoverySearch input:focus-visible, .discoverySort select:focus-visible, .discoveryFilterGroup input:focus-visible, .activeFilterChip:focus-visible, .pagination a:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+.discoveryFilters { grid-column: 1 / 2; align-self: start; }
+.discoveryFilterToggle { position: absolute; opacity: 0; pointer-events: none; }
+.discoveryFilterSummary {
+  display: none;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 850;
+}
+.discoveryFilterSummary span:last-child { color: var(--muted); font-size: .86rem; font-weight: 650; }
+.discoveryFilterPanel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.discoveryFilterPanel > .button { align-self: start; justify-self: start; min-height: 48px; }
+.discoveryFilterGroup { min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: rgba(255,255,255,.035); }
+.discoveryFilterGroup legend { padding: 0 6px; font-weight: 900; }
+.discoveryFilterGroup label { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 9px; align-items: center; min-height: 40px; cursor: pointer; color: var(--muted); }
+.discoveryFilterGroup input { width: 18px; height: 18px; accent-color: var(--emerald); }
+.discoveryFilterGroup small { color: var(--subtle); }
+.discoverySort { grid-column: 2; grid-row: 1; display: grid; grid-template-columns: auto minmax(150px, auto) auto; align-items: center; gap: 10px; }
+.activeFilterChips { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin: 22px 0 0; }
+.activeFilterChip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid var(--border-emerald); border-radius: 999px; color: var(--text); background: rgba(0,226,138,.08); }
+.activeFilterChip span:first-of-type { color: var(--emerald); font-size: 1.15rem; }
+.clearFilters { margin-left: 4px; color: var(--gold); font-weight: 800; }
+.resultsAnnouncement { margin: 28px 0 14px; color: var(--muted); font-weight: 800; }
+.discoveryCards { display: grid; gap: 14px; }
+.discoveryCard { display: grid; grid-template-columns: 100px minmax(0, 1fr) minmax(280px, .48fr); gap: 22px; align-items: center; padding: 22px; }
+.discoveryLogo { width: 100px; min-height: 76px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--border); border-radius: 18px; background: rgba(255,255,255,.05); }
+.discoveryLogo img { display: block; max-width: 100%; max-height: 76px; width: auto; height: auto; object-fit: contain; }
+.discoveryLogo span { font-weight: 950; font-size: 1.45rem; color: var(--emerald); }
+.discoveryCardMain { display: grid; gap: 11px; }
+.discoveryCardMain h2 { margin: 0; font-size: 1.45rem; }
+.discoveryCardMain h2 a { color: inherit; }
+.discoveryHighlights { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 0; padding-left: 19px; color: var(--muted); font-size: .9rem; }
+.discoveryHighlights li::marker { color: var(--emerald); }
+.discoveryCommercial { display: grid; gap: 13px; align-self: stretch; align-content: center; padding-left: 20px; border-left: 1px solid var(--border); }
+.discoveryBonus { display: grid; gap: 4px; }
+.discoveryBonus span, .discoveryBonus em, .commercialNotice { color: var(--subtle); font-size: .76rem; font-style: normal; text-transform: uppercase; letter-spacing: .04em; }
+.discoveryBonus strong { color: var(--gold); }
+.discoveryBonus small { color: var(--muted); line-height: 1.45; }
+.discoveryCommercial .cardActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.commercialNotice { text-transform: none; letter-spacing: 0; line-height: 1.45; }
+.discoveryEmpty { display: grid; justify-items: start; gap: 12px; padding: 32px; }
+.discoveryEmpty h1, .discoveryEmpty h2, .discoveryEmpty p { margin: 0; }
+.pagination { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 28px; }
+.pagination a, .pagination span { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--border); border-radius: 12px; }
+.pagination a { color: var(--text); font-weight: 800; }
+.pagination a.disabled { pointer-events: none; opacity: .45; }
+.discoverySupport { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 64px; }
+.discoverySupport .card { padding: 24px; }
+.discoverySupport h2 { font-size: 1.35rem; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 .casinoCard, .casinoRow {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) minmax(250px, .48fr) auto;
@@ -1119,7 +1198,34 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .resultPanel { position: static; }
   .casinoRow .button, .casinoCard .button { justify-self: start; }
   .catalogToolbar { align-items: flex-start; flex-direction: column; }
+  .discoveryForm { grid-template-columns: 1fr; }
+  .discoveryFilters { grid-column: 1; }
+  .discoveryFilterSummary { display: flex; }
+  .discoveryFilterToggle:not(:checked) ~ .discoveryFilterPanel { display: none; }
+  .discoveryFilterPanel { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 12px; }
+  .discoveryFilterPanel > .button { width: 100%; }
+  .discoverySort { grid-column: 1; grid-row: auto; justify-content: start; }
+  .discoveryCard { grid-template-columns: 80px minmax(0, 1fr); align-items: start; }
+  .discoveryLogo { width: 80px; }
+  .discoveryCommercial { grid-column: 1 / -1; padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--border); }
+  .discoverySupport { grid-template-columns: 1fr; }
   .disclosureBlock { align-items: flex-start; flex-direction: column; }
+}
+
+@media (max-width: 620px) {
+  .discoverySearch > div, .discoveryFilterPanel, .discoveryCard { grid-template-columns: 1fr; }
+  .discoverySearch .button { width: 100%; }
+  .discoverySort { grid-template-columns: 1fr; }
+  .discoverySort .button { width: 100%; }
+  .discoveryLogo { width: 76px; min-height: 58px; }
+  .discoveryCommercial { grid-column: auto; }
+  .discoveryCommercial .button { width: 100%; }
+  .pagination { gap: 8px; }
+  .pagination a, .pagination span { padding: 7px 10px; font-size: .86rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .discoveryCard, .activeFilterChip, .pagination a { scroll-behavior: auto; transition: none !important; }
 }
 
 /* Phase 2 Program Builder */

@@ -62,7 +62,7 @@ export function Footer() {
           <Link href="/bonuses">Casino Bonuses</Link>
           <Link href="/casinos">Casino Reviews</Link>
           <Link href="/bonus-guide">Bonus guide</Link>
-          <Link href="/catalog">Legacy catalog</Link>
+          <Link href="/responsible-gambling">Player safety</Link>
         </div>
         <div>
           <h3>Company</h3>
