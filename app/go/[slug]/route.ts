@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { resolveAffiliateLink } from "@/lib/cms/repository";
 import type { CmsAffiliateLink } from "@/lib/cms/types";
+import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
 
 export const dynamic = "force-dynamic";
 
@@ -26,13 +27,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const link = resolveAffiliateLink(slug);
 
   if (!link || link.entity !== "affiliate-link" || !isAffiliateLinkActive(link)) {
+    await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", { now: new Date() }, { commercialAllowed: false, referralAllowed: false });
     return NextResponse.redirect(new URL("/casinos", request.url));
   }
 
   const destination = safeDestination(link.destinationUrl);
   if (!destination) {
+    await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", { now: new Date() }, { commercialAllowed: false, referralAllowed: false });
     return NextResponse.redirect(new URL("/casinos", request.url));
   }
+
+  await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", {
+    now: new Date(),
+  }, { commercialAllowed: true, referralAllowed: true });
 
   return NextResponse.redirect(destination);
 }

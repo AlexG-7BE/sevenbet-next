@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { safeAffiliateRedirectResponse, unavailableRedirectResponse } from "@/lib/affiliate-routing/redirect-response";
 import { countryFromRequest, isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/affiliate-routing/redirect-validation";
+import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +24,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const countryCode = countryFromRequest(request);
   try {
     const result = await affiliateRedirectService.resolve(slug, { countryCode, ...hints });
+    await evaluateJurisdictionShadow("AFFILIATE_REDIRECT", {
+      // Existing recognised headers are not yet proven to originate at a configured trusted boundary.
+      requestCountrySignal: countryCode ? { countryCode, trust: "UNTRUSTED", observedAt: new Date() } : null,
+      now: new Date(),
+    }, { commercialAllowed: result.ok, referralAllowed: result.ok });
     if (!result.ok) {
       safeDiagnostic(result.reason, { slugId: result.slugId, casinoId: result.casinoId, countryCode, ...hints });
       return unavailableRedirectResponse();

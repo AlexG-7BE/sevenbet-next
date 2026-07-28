@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import { AffiliateDisclosure, Card, Container } from "@/components/ui";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
+import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
@@ -28,6 +29,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function CasinosPage({ searchParams }: PageProps) {
   const query = parseCasinoDiscoveryQuery(await searchParams);
   const result = await publicCasinoDiscoveryService.discover(query);
+  const legacyCommercialAllowed = result.items.some((casino) => casino.visitAction.available);
+  await evaluateJurisdictionShadow("CASINO_DISCOVERY", {
+    // The query filter is a declared preference, never a trusted location signal.
+    userSelectedCountry: query.country?.[0] ?? null,
+    now: new Date(),
+  }, { commercialAllowed: legacyCommercialAllowed, referralAllowed: legacyCommercialAllowed });
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
