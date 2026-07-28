@@ -19,8 +19,11 @@ import {
   WelcomeBonusSection,
 } from "@/components/CasinoReviewSections";
 import { Badge, Card, CTA, Section } from "@/components/ui";
+import { EditorialReviewRenderer } from "@/components/editorial-review/EditorialReviewRenderer";
+import type { EditorialBlock } from "@/lib/editorial-review/types";
 import { publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata, safeJsonLd } from "@/lib/public-casino/public-casino-validation";
+import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { absoluteUrl } from "@/lib/site";
 
@@ -28,9 +31,16 @@ export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
 const loadCasino = cache((slug: string) => publicCasinoService.getCasino(slug));
+const loadEditorial = cache((slug: string) => editorialReviewService.getPublishedBySlug(slug));
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const casino = await loadCasino((await params).slug);
+  const slug = (await params).slug;
+  const editorial = await loadEditorial(slug);
+  if (editorial) {
+    const seo = editorial.review.revisions.find((revision) => revision.id === editorial.review.publishedRevisionId)?.content.seo;
+    if (seo) return { title: seo.title, description: seo.description, alternates: { canonical: seo.canonicalPath || `/casino/${slug}` }, robots: parseRobotsMetadata(seo.robots || "index,follow"), openGraph: { type: "article", title: seo.socialTitle || seo.title, description: seo.socialDescription || seo.description } };
+  }
+  const casino = await loadCasino(slug);
   if (!casino) return { title: "Casino review | SevenBet", robots: { index: false, follow: false } };
   const socialImages = casino.seo.socialImage ? [{ url: casino.seo.socialImage, alt: `${casino.name} review` }] : undefined;
   return {
@@ -65,7 +75,22 @@ function reviewSchema(casino: Awaited<ReturnType<typeof publicCasinoService.getC
 }
 
 export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
-  const casino = await loadCasino((await params).slug);
+  const slug = (await params).slug;
+  const editorial = await loadEditorial(slug);
+  if (editorial) {
+    const revision = editorial.review.revisions.find((item) => item.id === editorial.review.publishedRevisionId);
+    if (revision) {
+      const document = revision.content;
+      const faq = document.sections.flatMap((section) => section.blocks).filter((block): block is Extract<EditorialBlock, { type: "faq" }> => block.type === "faq");
+      const schemas = [
+        { "@context": "https://schema.org", "@type": "WebPage", name: document.title, description: document.summary, datePublished: editorial.review.publishedAt?.toISOString(), dateModified: revision.createdAt.toISOString() },
+        { "@context": "https://schema.org", "@type": "Review", itemReviewed: { "@type": "Organization", name: editorial.casino.title }, author: { "@type": "Person", name: document.author }, reviewRating: document.trustScore ? { "@type": "Rating", ratingValue: document.trustScore.overall, bestRating: 10, worstRating: 0 } : undefined },
+        faq.length ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) } : null,
+      ].filter(Boolean);
+      return <>{schemas.map((schema, index) => <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} />)}<section className="pageShell"><div className="container"><p className="eyebrow">Editorial casino review</p><h1>{document.title}</h1><p className="lead">{document.summary}</p></div></section><EditorialReviewRenderer document={document} /><MethodologyDisclosureSection /></>;
+    }
+  }
+  const casino = await loadCasino(slug);
   if (!casino) notFound();
   const view = publicCasinoToLegacy(casino);
   const similarCasinos = (await publicCasinoService.listCasinoViews()).filter((item) => item.slug !== casino.slug).slice(0, 3);
