@@ -16,6 +16,18 @@ enum EditorialStatus {
   ARCHIVED
 }
 
+// Editorial review state is intentionally separate from the legacy casino
+// workflow: a casino may remain operational while its public review is held.
+enum EditorialReviewStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+  SUSPENDED
+}
+
 enum OfferStatus {
   DRAFT
   ACTIVE
@@ -697,11 +709,68 @@ model Casino {
   redirectSlugs     AffiliateRedirectSlug[]
   aliases           CasinoAlias[]
   seo               CasinoSeo?
+  editorialReview   EditorialReview?
   operatorProfile   CasinoOperator?         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   brandProfile      CasinoBrand?            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
   @@index([operatorProfileId])
   @@index([brandProfileId])
+}
+
+model EditorialReview {
+  id                  String                @id @default(uuid()) @db.Uuid
+  casinoId            String                @unique @db.Uuid
+  status              EditorialReviewStatus @default(DRAFT)
+  draftRevisionNumber Int                   @default(1)
+  publishedRevisionId String?               @db.Uuid
+  scheduledPublishAt  DateTime?
+  publishedAt         DateTime?
+  archivedAt          DateTime?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  createdBy           String
+  updatedBy           String
+
+  casino        Casino                    @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revisions     EditorialReviewRevision[]
+  previewTokens EditorialPreviewToken[]
+
+  @@index([status, scheduledPublishAt])
+}
+
+model EditorialReviewRevision {
+  id             String                @id @default(uuid()) @db.Uuid
+  reviewId       String                @db.Uuid
+  revisionNumber Int
+  content        Json
+  validation     Json?
+  summary        String
+  createdBy      String
+  createdAt      DateTime              @default(now())
+  promotedAt     DateTime?
+
+  review        EditorialReview       @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  previewTokens EditorialPreviewToken[]
+
+  @@unique([reviewId, revisionNumber])
+  @@index([reviewId, createdAt])
+}
+
+model EditorialPreviewToken {
+  id         String                  @id @default(uuid()) @db.Uuid
+  reviewId   String                  @db.Uuid
+  revisionId String                  @db.Uuid
+  tokenHash  String                  @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdBy  String
+  createdAt  DateTime                @default(now())
+
+  review    EditorialReview         @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revision  EditorialReviewRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([tokenHash, expiresAt])
+  @@index([reviewId, expiresAt])
 }
 
 model CasinoOperator {

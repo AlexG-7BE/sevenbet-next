@@ -43,6 +43,7 @@ export * from "./affiliate-offer.service";
 export * from "./affiliate-redirect.service";
 export * from "./affiliate-sync.service";
 export * from "./media.service";
+export * from "./editorial-review.service";
 
 export {
   programSnapshotToPublicSteps,
