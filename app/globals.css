@@ -54,6 +54,8 @@ button, input, select { font: inherit; }
   outline-offset: 3px;
   border-radius: 12px;
 }
+.skipLink { position: fixed; left: 16px; top: -80px; z-index: 100; padding: 10px 14px; border-radius: 8px; background: var(--emerald); color: var(--dark-text); font-weight: 800; }
+.skipLink:focus { top: 16px; }
 
 .container { width: min(1200px, calc(100% - 64px)); margin: 0 auto; }
 .narrow { max-width: 880px; }

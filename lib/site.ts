@@ -18,7 +18,6 @@ export const coreRoutes = [
   "/terms",
   "/bonus-guide",
   "/tools/budget-calculator",
-  "/responsible-gaming",
 ];
 
 export function absoluteUrl(path: string) {

@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "SevenBet Help Center | Casino Bonuses, Reviews and Responsible Gambling FAQ",
   description:
     "Search SevenBet answers about the 10-Step Program, responsible gambling, casino bonuses, reviews, methodology, affiliate disclosure, payments, and licensing.",
+  alternates: { canonical: absoluteUrl("/faq") },
 };
 
 function breadcrumbSchema() {

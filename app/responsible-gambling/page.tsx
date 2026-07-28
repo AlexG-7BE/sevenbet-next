@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   title: "Responsible Gambling Learning Center | SevenBet",
   description:
     "Practical guides, educational articles and tools for budgeting, bonus terms, casino licensing and responsible gambling decisions.",
+  alternates: { canonical: absoluteUrl("/responsible-gambling") },
 };
 
 const featuredSlugs = [

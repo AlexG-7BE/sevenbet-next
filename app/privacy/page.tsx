@@ -1,5 +1,13 @@
 import { PageHero, ResourceCards } from "@/components/PageTemplates";
 import { Section } from "@/components/ui";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Privacy | SevenBet",
+  description: "SevenBet's intended privacy principles and data-minimization commitments.",
+  alternates: { canonical: absoluteUrl("/privacy") },
+  robots: { index: false, follow: true },
+};
 
 export default function PrivacyPage() {
   return (
@@ -21,3 +29,4 @@ export default function PrivacyPage() {
     </>
   );
 }
+import type { Metadata } from "next";

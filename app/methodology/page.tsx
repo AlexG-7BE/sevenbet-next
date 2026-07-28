@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "Methodology | How SevenBet Reviews Casinos and Bonuses",
   description:
     "SevenBet's editorial methodology for casino reviews, bonus comparisons, rating criteria, affiliate relationships, limitations, and corrections.",
+  alternates: { canonical: absoluteUrl("/methodology") },
 };
 
 function breadcrumbSchema() {

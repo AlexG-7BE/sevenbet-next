@@ -1,6 +1,13 @@
 import { PageHero, ResourceCards } from "@/components/PageTemplates";
 import { SelfAssessment } from "@/components/SelfAssessment";
 import { CTA, FAQ, Section } from "@/components/ui";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Educational Gambling Self-Check | SevenBet",
+  description: "A non-diagnostic self-check with educational resources for planning, budgeting, and safer gambling decisions.",
+  alternates: { canonical: absoluteUrl("/self-check") },
+};
 
 export default function SelfCheckPage() {
   return (
@@ -86,3 +93,4 @@ export default function SelfCheckPage() {
     </>
   );
 }
+import type { Metadata } from "next";

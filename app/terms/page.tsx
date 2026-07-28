@@ -1,5 +1,13 @@
 import { PageHero, ResourceCards } from "@/components/PageTemplates";
 import { Section } from "@/components/ui";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Terms of Use | SevenBet",
+  description: "SevenBet's intended terms-of-use structure and product boundaries.",
+  alternates: { canonical: absoluteUrl("/terms") },
+  robots: { index: false, follow: true },
+};
 
 export default function TermsPage() {
   return (
@@ -21,3 +29,4 @@ export default function TermsPage() {
     </>
   );
 }
+import type { Metadata } from "next";

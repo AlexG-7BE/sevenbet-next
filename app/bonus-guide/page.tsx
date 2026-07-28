@@ -1,4 +1,12 @@
+import type { Metadata } from "next";
 import { AffiliateDisclosure, Card, Container, CTA, MethodologyBlock, Section, SectionHeader } from "@/components/ui";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Casino Bonus Terms Guide | SevenBet",
+  description: "Learn how to read wagering, max-bet, expiry, deposit, and withdrawal terms before considering an offer.",
+  alternates: { canonical: absoluteUrl("/bonus-guide") },
+};
 
 const items = [
   ["Wagering", "x35 means the bonus amount must be wagered 35 times. Lower requirements are usually easier to control."],

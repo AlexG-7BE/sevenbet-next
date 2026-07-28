@@ -22,6 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: `${article.title} | SevenBet`,
     description: article.summary,
+    alternates: { canonical: absoluteUrl(`/responsible-gambling/${article.slug}`) },
   };
 }
 

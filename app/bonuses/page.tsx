@@ -14,6 +14,13 @@ import {
 } from "@/components/ui";
 import { formatMoney } from "@/lib/data";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "Casino Bonus Directory | SevenBet",
+  description: "Compare published casino bonus information, terms, licensing, payments, and responsible gambling context.",
+  alternates: { canonical: absoluteUrl("/bonuses") },
+};
 
 const filters = [
   "Country",
@@ -208,3 +215,4 @@ export default async function BonusesPage() {
     </>
   );
 }
+import type { Metadata } from "next";

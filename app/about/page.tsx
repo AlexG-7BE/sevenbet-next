@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "About SevenBet | Educational Casino Guides and Editorial Reviews",
   description:
     "Learn what SevenBet is, why it exists, what it does, what it does not do, and how its editorial casino comparison platform works.",
+  alternates: { canonical: absoluteUrl("/about") },
 };
 
 function breadcrumbSchema() {

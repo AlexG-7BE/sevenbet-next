@@ -13,6 +13,13 @@ import {
 } from "@/components/ui";
 import { getTopCasinos } from "@/lib/data";
 import { programSteps } from "@/lib/program";
+import { absoluteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  title: "SevenBet | 10-Step Control Program",
+  description: "Responsible gambling education, a 10-Step Control Program, and transparent casino comparison resources.",
+  alternates: { canonical: absoluteUrl("/") },
+};
 
 export default function HomePage() {
   const topCasinos = getTopCasinos(3);
@@ -214,3 +221,4 @@ export default function HomePage() {
     </>
   );
 }
+import type { Metadata } from "next";

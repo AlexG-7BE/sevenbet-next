@@ -1,1 +1,5 @@
-export { default } from "@/app/responsible-gambling/page";
+import { permanentRedirect } from "next/navigation";
+
+export default function ResponsibleGamingRedirect() {
+  permanentRedirect("/responsible-gambling");
+}

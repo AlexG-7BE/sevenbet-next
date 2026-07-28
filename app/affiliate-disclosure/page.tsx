@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: "Affiliate Disclosure | How SevenBet Is Funded",
   description:
     "A plain-English explanation of SevenBet affiliate relationships, commissions, editorial independence, and reader responsibility.",
+  alternates: { canonical: absoluteUrl("/affiliate-disclosure") },
 };
 
 function breadcrumbSchema() {
