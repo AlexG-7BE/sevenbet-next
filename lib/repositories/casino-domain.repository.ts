@@ -1,7 +1,7 @@
-import { casinoRepository, type CasinoStore } from "@/lib/repositories/casino.repository";
+import type { CasinoDomain } from "@/lib/casino-domain/types";
 
-import { mapCasinoAggregateToDomain } from "./mapper";
-import type { CasinoDomain } from "./types";
+import { mapCasinoAggregateToDomain } from "./casino-domain.mapper";
+import { casinoRepository, type CasinoStore } from "./casino.repository";
 
 export interface CasinoDomainStore { findById(id: string): Promise<CasinoDomain | null>; findBySlug(slug: string): Promise<CasinoDomain | null>; }
 

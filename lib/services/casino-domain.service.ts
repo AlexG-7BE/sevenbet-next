@@ -1,5 +1,5 @@
 import { evaluateCasinoEligibility } from "@/lib/casino-domain/eligibility";
-import { casinoDomainRepository, type CasinoDomainStore } from "@/lib/casino-domain/repository";
+import { casinoDomainRepository, type CasinoDomainStore } from "@/lib/repositories/casino-domain.repository";
 
 import { NotFoundError } from "./service-error";
 

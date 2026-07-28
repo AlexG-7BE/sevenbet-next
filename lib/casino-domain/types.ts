@@ -50,6 +50,7 @@ export interface CasinoBonus {
   id: string;
   slug: string;
   title: string;
+  lifecycleStatus: CasinoLifecycleStatus;
   publicationStatus: CasinoPublicationStatus;
   offerStatus: "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
   startsAt: Date | null;
@@ -63,13 +64,14 @@ export interface CasinoAffiliateProgram {
   operator: string;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
   publicationStatus: CasinoPublicationStatus;
-  suspended: boolean;
+  lifecycleStatus: CasinoLifecycleStatus;
 }
 
 export interface CasinoAffiliateOffer {
   id: string;
   programId: string;
   status: "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
+  lifecycleStatus: CasinoLifecycleStatus;
   countries: string[];
   currencies: string[];
   startsAt: Date | null;
@@ -84,8 +86,8 @@ export interface CasinoDomain {
   id: string;
   slug: string;
   name: string;
-  operator: { id: string | null; name: string | null };
-  brand: { id: string | null; name: string };
+  operator: { id: string | null; name: string | null; lifecycleStatus: CasinoLifecycleStatus };
+  brand: { id: string | null; name: string; lifecycleStatus: CasinoLifecycleStatus };
   lifecycleStatus: CasinoLifecycleStatus;
   publicationStatus: CasinoPublicationStatus;
   licences: CasinoLicence[];
