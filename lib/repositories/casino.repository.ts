@@ -21,6 +21,11 @@ const casinoAggregateInclude = {
   },
   licenses: {
     orderBy: { authority: Prisma.SortOrder.asc },
+    include: {
+      evidence: {
+        orderBy: { observedAt: Prisma.SortOrder.desc },
+      },
+    },
   },
   paymentMethods: {
     orderBy: { sortOrder: Prisma.SortOrder.asc },
@@ -44,6 +49,17 @@ const casinoAggregateInclude = {
     orderBy: { priority: Prisma.SortOrder.desc },
   },
   seo: true,
+  operatorProfile: true,
+  brandProfile: true,
+  affiliatePrograms: {
+    orderBy: { name: Prisma.SortOrder.asc },
+    include: {
+      offers: {
+        orderBy: { priority: Prisma.SortOrder.desc },
+        include: { countries: true, currencies: true },
+      },
+    },
+  },
 } satisfies Prisma.CasinoInclude;
 
 const casinoListSelect = {

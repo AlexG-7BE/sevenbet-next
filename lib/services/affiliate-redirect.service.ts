@@ -3,6 +3,7 @@ import { resolveAffiliateCandidates, type CandidateResolverInput } from "@/lib/a
 import { normalizeCurrencyHint, normalizeLanguageHint, normalizeRedirectSlug, validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
+import { casinoDomainService, type CasinoDomainService } from "@/lib/services/casino-domain.service";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
@@ -28,7 +29,19 @@ export class AffiliateRedirectService {
   constructor(
     private readonly store: AffiliateRedirectStore = affiliateRedirectRepository,
     private readonly offers: Pick<AffiliateOfferService, "activeCandidates"> = affiliateOfferService,
+    private readonly casinoDomain: Pick<CasinoDomainService, "eligibilityForCountry"> = casinoDomainService,
   ) {}
+
+  private async observeDomainEligibility(casinoId: string, countryCode?: string | null, now?: Date) {
+    if (process.env.JURISDICTION_RESOLVER_SHADOW_ENABLED !== "true") return;
+    try {
+      const eligibility = await this.casinoDomain.eligibilityForCountry(casinoId, countryCode ?? null, now);
+      console.warn("casino_domain_eligibility_shadow", { casinoId, countryCode: countryCode ?? null, eligible: eligibility.eligible, reason: eligibility.reason });
+    } catch {
+      // The canonical domain is observational during this exception; it must not broaden or interrupt legacy routing.
+      console.warn("casino_domain_eligibility_shadow_failed", { casinoId });
+    }
+  }
 
   list(input?: Parameters<AffiliateRedirectStore["list"]>[0]) {
     return this.store.list(input);
@@ -115,6 +128,7 @@ export class AffiliateRedirectService {
     const trackingUrl = validateRedirectTargetUrl(result.winner.trackingUrl);
     const destinationUrl = validateRedirectTargetUrl(result.winner.destinationUrl);
     if (!trackingUrl || !destinationUrl) return { ok: false, reason: "UNSAFE_REDIRECT_URL", slugId: mapping.id, casinoId: mapping.casinoId, candidates: result.candidates };
+    await this.observeDomainEligibility(mapping.casinoId, input.countryCode, input.now);
     return { ok: true, destination: trackingUrl, slugId: mapping.id, casinoId: mapping.casinoId, offerId: result.winner.offerId, trackingLinkId: result.winner.trackingLinkId, candidates: result.candidates };
   }
 }

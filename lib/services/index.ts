@@ -36,6 +36,7 @@ export {
 export * from "./xp.service";
 export * from "./achievement.service";
 export * from "./casino.service";
+export * from "./casino-domain.service";
 export * from "./affiliate-network.service";
 export * from "./affiliate-program.service";
 export * from "./affiliate-offer.service";

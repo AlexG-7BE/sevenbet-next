@@ -64,6 +64,40 @@ enum CasinoCountryAvailability {
   UNKNOWN
 }
 
+// Additive governed-domain states. Nullable fields using these enums preserve
+// the legacy CMS lifecycle until an explicit migration command assigns them.
+enum CasinoPublicationStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  PUBLISHED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum CasinoLifecycleStatus {
+  ACTIVE
+  SUSPENDED
+  ARCHIVED
+  UNKNOWN
+}
+
+enum CasinoLicenceStatus {
+  ACTIVE
+  EXPIRED
+  SUSPENDED
+  REVOKED
+  UNKNOWN
+}
+
+enum CasinoLicenceEvidenceStatus {
+  VERIFIED
+  UNVERIFIED
+  EXPIRED
+  REJECTED
+  UNKNOWN
+}
+
 enum CasinoBonusType {
   WELCOME
   NO_DEPOSIT
@@ -588,38 +622,44 @@ model Article {
 }
 
 model Casino {
-  id                       String          @id @default(uuid()) @db.Uuid
-  slug                     String          @unique
-  internalName             String?
-  title                    String
-  domain                   String          @unique
-  websiteUrl               String?
-  operator                 String?
-  tagline                  String?
-  summary                  String?
-  description              String?
-  foundedYear              Int?
-  language                 String          @default("en")
-  languages                String[]        @default([])
-  currencies               String[]        @default([])
-  editorScore              Float?
-  license                  String?
-  country                  String?
-  pros                     String[]        @default([])
-  cons                     String[]        @default([])
-  responsibleGamblingTools String[]        @default([])
-  reviewBlocks             Json?
-  status                   EditorialStatus @default(DRAFT)
-  publishedVersion         Int             @default(0)
-  draftVersion             Int             @default(1)
-  publishedAt              DateTime?
-  scheduledPublishAt       DateTime?
-  lastReviewedAt           DateTime?
-  archivedAt               DateTime?
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
-  createdBy                String
-  updatedBy                String
+  id                          String                   @id @default(uuid()) @db.Uuid
+  slug                        String                   @unique
+  internalName                String?
+  title                       String
+  domain                      String                   @unique
+  websiteUrl                  String?
+  operator                    String?
+  operatorProfileId           String?                  @db.Uuid
+  brandProfileId              String?                  @db.Uuid
+  domainLifecycleStatus       CasinoLifecycleStatus?
+  domainPublicationStatus     CasinoPublicationStatus?
+  responsibleGamblingMetadata Json?
+  trackingMetadata            Json?
+  tagline                     String?
+  summary                     String?
+  description                 String?
+  foundedYear                 Int?
+  language                    String                   @default("en")
+  languages                   String[]                 @default([])
+  currencies                  String[]                 @default([])
+  editorScore                 Float?
+  license                     String?
+  country                     String?
+  pros                        String[]                 @default([])
+  cons                        String[]                 @default([])
+  responsibleGamblingTools    String[]                 @default([])
+  reviewBlocks                Json?
+  status                      EditorialStatus          @default(DRAFT)
+  publishedVersion            Int                      @default(0)
+  draftVersion                Int                      @default(1)
+  publishedAt                 DateTime?
+  scheduledPublishAt          DateTime?
+  lastReviewedAt              DateTime?
+  archivedAt                  DateTime?
+  createdAt                   DateTime                 @default(now())
+  updatedAt                   DateTime                 @updatedAt
+  createdBy                   String
+  updatedBy                   String
 
   bonuses           Bonus[]
   affiliateLinks    AffiliateLink[]
@@ -639,6 +679,42 @@ model Casino {
   redirectSlugs     AffiliateRedirectSlug[]
   aliases           CasinoAlias[]
   seo               CasinoSeo?
+  operatorProfile   CasinoOperator?         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brandProfile      CasinoBrand?            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([operatorProfileId])
+  @@index([brandProfileId])
+}
+
+model CasinoOperator {
+  id         String                @id @default(uuid()) @db.Uuid
+  name       String
+  legalName  String?
+  websiteUrl String?
+  status     CasinoLifecycleStatus @default(ACTIVE)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  brands  CasinoBrand[]
+  casinos Casino[]
+
+  @@unique([name])
+}
+
+model CasinoBrand {
+  id         String                @id @default(uuid()) @db.Uuid
+  operatorId String?               @db.Uuid
+  name       String
+  domain     String?
+  status     CasinoLifecycleStatus @default(ACTIVE)
+  createdAt  DateTime              @default(now())
+  updatedAt  DateTime              @updatedAt
+
+  operator CasinoOperator? @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casinos  Casino[]
+
+  @@unique([operatorId, name])
+  @@index([operatorId])
 }
 
 model CasinoAlias {
@@ -724,24 +800,45 @@ model CasinoCountry {
 }
 
 model CasinoLicense {
-  id              String    @id @default(uuid()) @db.Uuid
-  casinoId        String    @db.Uuid
+  id              String               @id @default(uuid()) @db.Uuid
+  casinoId        String               @db.Uuid
   authority       String
   licenseNumber   String?
   jurisdiction    String?
-  status          String    @default("UNKNOWN")
+  status          String               @default("UNKNOWN")
+  canonicalStatus CasinoLicenceStatus?
   verificationUrl String?
   issuedAt        DateTime?
   expiresAt       DateTime?
   lastVerifiedAt  DateTime?
   notes           String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
 
-  casino Casino @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  casino   Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  evidence CasinoLicenseEvidence[]
 
   @@unique([casinoId, authority, licenseNumber])
   @@index([authority, status])
+}
+
+model CasinoLicenseEvidence {
+  id              String                      @id @default(uuid()) @db.Uuid
+  casinoLicenseId String                      @db.Uuid
+  sourceUrl       String?
+  sourceReference String?
+  status          CasinoLicenceEvidenceStatus @default(UNKNOWN)
+  observedAt      DateTime?
+  expiresAt       DateTime?
+  reviewedAt      DateTime?
+  notes           String?
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  license CasinoLicense @relation(fields: [casinoLicenseId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([casinoLicenseId, status])
+  @@index([expiresAt])
 }
 
 model CasinoPaymentMethod {

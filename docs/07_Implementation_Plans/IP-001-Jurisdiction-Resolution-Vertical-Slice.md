@@ -41,3 +41,11 @@ No canonical governed policy persistence, trusted-edge provenance, account count
 ## Definition of done
 
 The typed resolver is server-side, commercial/referral fail closed, instrumented in discovery and both redirects, tested, documented, and does not alter public or redirect outputs.
+
+## Casino Domain Foundation implementation exception (2026-07-28)
+
+**Authorised scope:** The Casino Domain Foundation may introduce canonical domain contracts, repositories, mappers, services, tests, and additive Prisma persistence for operator/brand references, licence evidence, and domain lifecycle metadata. This is an implementation exception to RFC-001's planning-only limitation.
+
+**Boundary:** The jurisdiction resolver remains shadow-only. This work does not activate jurisdiction filtering, commercial blocking, or a market. Existing public rendering and affiliate redirects preserve their current behaviour. Domain eligibility is fail-closed for missing, unverified, expired, revoked, or suspended licence evidence, but is not yet an authoritative runtime gate.
+
+**Database safety:** migrations must be additive and backward compatible; destructive migrations are prohibited. Commercial activation, authoritative enforcement, and any production market launch require separate approval and their applicable RFC phase gates.
