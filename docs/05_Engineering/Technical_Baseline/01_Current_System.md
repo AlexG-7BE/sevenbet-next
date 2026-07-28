@@ -1,0 +1,55 @@
+# Current System
+
+## Snapshot
+
+**Detected:** SevenBet is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, and program-progress APIs. This supersedes the previous documentation-only conclusion.
+
+## Frontend architecture
+
+**Detected:** `app/` uses the App Router and root layout (`app/layout.tsx`). Public routes include the home page, informational/legal pages, learning and responsible-gambling pages, program, catalogue/casino discovery, casino detail, and tools. Dynamic public routes include `/casino/[slug]`, `/learn/[category]`, `/learn/[category]/[slug]`, and `/responsible-gambling/[slug]`.
+
+**Detected:** Admin pages are grouped in `app/admin/(protected)/`; `app/admin/(protected)/layout.tsx` checks server-side staff access, while `app/admin/login/page.tsx` is public and marked non-indexable. The parent middleware provides a redirect convenience layer for `/admin/*` and `/api/admin/*`; authorization is re-checked by the protected layout and route handlers.
+
+**Detected:** Shared presentation components live in `components/`; reusable primitives are in `components/ui.tsx`. Builder, affiliate, casino-editor, and media components are under `components/admin/`. Styling is global CSS in `app/globals.css`, with class names in TSX; Tailwind and a separate CSS-in-JS library are **not detected**.
+
+**Detected:** Loading/error handling is specifically present for the casino builder and public casino list (`loading.tsx` / `error.tsx` where present). Global `not-found.tsx` is **not detected**. `app/robots.ts`, `app/sitemap.ts`, route metadata, and `app/llms.txt/route.ts` provide SEO/crawler surfaces. Client components are present where interactive state or browser APIs are used; other route pages are server components by default under App Router conventions.
+
+## Backend architecture
+
+| Mechanism | Status | Evidence |
+| --- | --- | --- |
+| Route handlers | Implemented | 50 handlers under `app/api/`, plus public redirect and crawler handlers. |
+| Service layer | Implemented | `lib/services/` contains program, casino, media, progress, XP, affiliate, and public discovery services. |
+| Repository layer | Implemented | `lib/repositories/` contains Prisma-backed repositories for the same principal domains. |
+| Input validation | Implemented | Domain validation modules in `lib/cms/`, `lib/casino-builder/`, `lib/affiliate/`, `lib/media/`, and `lib/progress/`. No external validation package is detected. |
+| Authorization policies | Implemented | `lib/auth/`, `lib/cms/permissions.ts`, protected layout, and admin handlers. |
+| Server actions | Not detected | No `"use server"` directive was found. |
+| Middleware | Implemented | `middleware.ts` scopes admin UX routing. |
+| Scheduled/background jobs | Not detected | Scripts and import/sync job records exist, but no scheduler/queue worker configuration was found. |
+| Webhooks | Not detected | An integration mode enum mentions `WEBHOOK`; no receiving webhook handler was detected. |
+| Caching | Partial | `lib/public-casino/cache.ts` exists; no external cache service was detected. |
+
+## Detected product modules
+
+| Module | Status | Main evidence | Persistence/admin availability | Limitation visible from evidence |
+| --- | --- | --- | --- | --- |
+| Public content, learning, responsible-gambling, self-check and budget tool | Implemented | Public `app/` routes and presentation components | Static/local data surfaces; no public editorial CMS route was confirmed | Jurisdiction/compliance enforcement is not established by these pages alone. |
+| Program, progress, XP and achievements | Implemented | `app/program`, `app/api/program/progress/*`, services/repositories | Prisma models; admin program, XP-rule, and achievement pages | No evidence of a user-facing account-management UI. |
+| Program Builder | Implemented | Admin program routes, `ProgramBuilder.tsx`, `program-builder.service.ts` | Version/snapshot/revision persistence and preview routes | Scope is program content, not a general CMS conclusion. |
+| Casino CMS and public casino rendering/discovery | Implemented | Casino admin routes, `CasinoBuilder.tsx`, public routes/services | Prisma-backed casinos, versions, revisions, SEO and related records | Public CMS path is environment-gated by `PUBLIC_CASINO_CMS_ENABLED`. |
+| Affiliate platform, routing and integrations | Implemented | Affiliate admin/API routes, `/r/[slug]`, `lib/affiliate*` | Prisma-backed networks, programs, offers, links, mapping/import records | Actual external provider connection is conditional/configuration-dependent. |
+| Media manager | Implemented | Admin media routes/components and `lib/media/` | Prisma media assets; LOCAL and S3 provider implementations | S3 activation depends on environment configuration. |
+| Authentication and staff administration | Implemented | Better Auth handler, staff/profile checks, bootstrap scripts | Prisma User/Session/Account/AdminUser | Legacy preview-token fallback remains available only when explicitly enabled. |
+| Analytics, reporting, notifications, payment processing | Not detected | No provider/client/route evidence found | — | Product planning references cannot establish implementation. |
+
+## Admin and CMS
+
+**Detected:** The admin shell, login, protected routes, permission checks, program/casino builders, affiliate management, media manager, lists, editor forms, revisions, previews, publication states, and role-based CMS permissions are present. The data model includes `EditorialStatus`, `AdminRole`, audit logs, program/casino versions and revisions.
+
+**Inferred:** This is a domain-specific CMS/admin implementation for program, casino, affiliate and media operations, rather than evidence of a generic all-content CMS. Article persistence is modeled, but an article admin/editor route was not detected.
+
+## Assessment
+
+- **Implementation completeness estimate: 55%** (engineering estimate, not a measurement). The application has substantial implemented public, admin, persistence, auth, affiliate, and test surfaces. Completeness is reduced by missing demonstrated CI, broad compliance/jurisdiction controls, production-operational evidence, and unconfirmed production integrations.
+- **Architecture readiness: 5/10.** A concrete codebase, domain persistence, layering patterns, migrations, auth boundaries, and tests are ready to inspect. Before Phase 2, the team must resolve/document the authoritative target architecture, jurisdiction/licensing enforcement, safety/compliance controls, deployment/CI/observability expectations, and whether existing implementation patterns are approved or transitional.
+- **May Phase 2 begin safely?** Yes, as an architecture-alignment phase, provided it treats the observed codebase as evidence to reconcile with Product Vision—not as an approved architecture.
