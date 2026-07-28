@@ -1861,6 +1861,45 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   margin: 0;
 }
 
+.editorialBuilderToolbar,
+.editorialSection > header,
+.editorialBlock > header,
+.editorialWorkflow,
+.editorialInsert,
+.editorialListFields > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.editorialBuilderToolbar { padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.editorialBuilderToolbar p { margin: 8px 0 0; }
+.editorialDocumentFields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.editorialDocumentFields .builderField:nth-child(3),
+.editorialDocumentFields .builderField:nth-child(5) { grid-column: 1 / -1; }
+.editorialSection, .editorialBlock { display: grid; gap: 14px; }
+.editorialSection > header > div, .editorialBlock > header > div { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.editorialSection > header input { min-width: 180px; border: 0; color: var(--text); background: transparent; font: inherit; font-size: 1.1rem; font-weight: 800; }
+.editorialBlocks { display: grid; gap: 12px; }
+.editorialBlockInvalid { border-color: #ffad72 !important; box-shadow: inset 3px 0 #ffad72; }
+.editorialBlock header small { display: block; max-width: 360px; }
+.editorialBlockFields { padding-top: 4px; }
+.editorialListFields { display: grid; gap: 8px; }
+.editorialListFields > div { justify-content: start; }
+.editorialListFields input { flex: 1; min-width: 160px; }
+.editorialInsert { justify-content: flex-start; padding-top: 4px; }
+.editorialInsert span { width: 100%; color: var(--muted); font-weight: 800; }
+.editorialWorkflow { justify-content: flex-start; padding: 14px; border: 1px solid var(--border); border-radius: 14px; background: rgba(255, 255, 255, .03); }
+.editorialWorkflow strong { margin-right: 6px; }
+.editorialWorkflow button { min-height: 38px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 10px; color: var(--text); background: rgba(255, 255, 255, .05); font: inherit; font-weight: 800; cursor: pointer; }
+
+@media (max-width: 760px) {
+  .editorialDocumentFields { grid-template-columns: 1fr; }
+  .editorialDocumentFields .builderField:nth-child(3), .editorialDocumentFields .builderField:nth-child(5) { grid-column: auto; }
+}
+
 .casinoSaveBar {
   position: sticky;
   bottom: 8px;

@@ -10,6 +10,7 @@ export type CasinoBuilderSection =
   | "game-categories"
   | "bonuses"
   | "affiliate-links"
+  | "editorial-review"
   | "media"
   | "publishing"
   | "history";

@@ -30,6 +30,7 @@ test("builder exposes the complete ordered section navigation", () => {
       "game-categories",
       "bonuses",
       "affiliate-links",
+      "editorial-review",
       "media",
       "publishing",
       "history",

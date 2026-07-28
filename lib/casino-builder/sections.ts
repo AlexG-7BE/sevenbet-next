@@ -14,6 +14,7 @@ export const casinoBuilderSections: Array<{
   { id: "game-categories", label: "Game Categories", description: "Game catalogue structure" },
   { id: "bonuses", label: "Bonuses", description: "Structured offer records" },
   { id: "affiliate-links", label: "Affiliate Links", description: "Managed destinations" },
+  { id: "editorial-review", label: "Editorial Review", description: "Structured review and workflow" },
   { id: "media", label: "Media", description: "Logo and review imagery" },
   { id: "publishing", label: "Publishing", description: "Validation and workflow" },
   { id: "history", label: "History", description: "Revisions and versions" },

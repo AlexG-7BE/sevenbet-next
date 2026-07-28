@@ -12,6 +12,7 @@ import { EditorField } from "@/components/admin/casino-editors/EditorFields";
 import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
 import { MediaManager } from "@/components/admin/media/MediaManager";
 import { CasinoAffiliatePanel } from "@/components/admin/affiliate/AffiliateAdmin";
+import { EditorialReviewBuilder } from "@/components/admin/EditorialReviewBuilder";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
 import { casinoBonusToDraft } from "@/lib/casino-builder/bonus-validation";
 import type {
@@ -47,6 +48,7 @@ function countForSection(section: CasinoBuilderSection, data: CasinoBuilderData)
     "affiliate-links":
       casino.casinoLinks.length +
       casino.casinoBonuses.reduce((total, bonus) => total + bonus.affiliateLinks.length, 0),
+    "editorial-review": undefined,
     publishing: data.validation.issues.length,
     history: data.revisionCount,
   };
@@ -447,6 +449,7 @@ export function CasinoBuilderLayout({
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
           {activeSection === "affiliate-links" && <CasinoSectionLayout title="Affiliate Offers" description="New-platform offers linked to this casino. Full editing stays in Affiliate Builder." badge="Integrated"><CasinoAffiliatePanel casinoId={data.casino.id} /></CasinoSectionLayout>}
+          {activeSection === "editorial-review" && <EditorialReviewBuilder casinoId={data.casino.id} casinoTitle={data.casino.title} />}
           {activeSection === "media" && <MediaSection casinoId={data.casino.id} />}
         </main>
       </div>
