@@ -496,6 +496,22 @@ test("direct actions reject invalid lesson and block IDs", async () => {
   );
 });
 
+test("exercise completion records a fact without retaining private reflection text", async () => {
+  const store = new FakeProgressStore();
+  const service = createService(store);
+  await service.startProgram("user-one", { programId: ids.program });
+  await service.saveExercise("user-one", {
+    programId: ids.program,
+    blockId: ids.exercise,
+    response: "A private reflection that must not enter the progress ledger.",
+  });
+  const event = store.enrollment?.progressEvents.find(
+    (candidate) => candidate.entityId === ids.exercise,
+  );
+  assert.deepEqual(event?.metadata, { completed: true });
+  assert.doesNotMatch(JSON.stringify(event?.metadata), /private reflection/i);
+});
+
 test("merge is explicit, ignores unknown IDs, and is idempotent", async () => {
   const store = new FakeProgressStore();
   const service = createService(store);

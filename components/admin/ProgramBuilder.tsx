@@ -200,6 +200,7 @@ function ScenarioBuilder({ block, onChange }: { block: CmsBlock; onChange: (bloc
               <button type="button" onClick={() => onChange(updateBlockData(block, "choices", choices.filter((_, choiceIndex) => choiceIndex !== index)))}>Remove</button>
             </div>
             <TextArea label="Feedback" rows={2} value={typeof choice.feedback === "string" ? choice.feedback : ""} onChange={(value) => updateChoice(index, "feedback", value)} />
+            <SelectField label="Safety response" value={typeof choice.safetySeverity === "string" ? choice.safetySeverity : "NONE"} options={["NONE", "SUPPORT", "URGENT", "EMERGENCY"]} onChange={(value) => updateChoice(index, "safetySeverity", value === "NONE" ? "" : value)} />
           </div>
         ))}
         <button className="builderSmallButton" type="button" onClick={() => onChange(updateBlockData(block, "choices", [...choices, { id: uid("choice"), label: "New choice", feedback: "", preferred: false, order: (choices.length + 1) * 1000 }]))}>Add choice</button>

@@ -15,7 +15,7 @@ export type ProgramStep = {
   exercisePrompt: string;
   scenario: {
     prompt: string;
-    options: Array<{ label: string; feedback: string; recommended?: boolean }>;
+    options: Array<{ label: string; feedback: string; recommended?: boolean; safetySeverity?: "SUPPORT" | "URGENT" | "EMERGENCY" }>;
   };
   quiz: {
     question: string;

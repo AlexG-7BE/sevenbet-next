@@ -495,9 +495,27 @@ model ProgramEnrollment {
   programVersion ProgramVersion         @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
   user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   progressEvents ProgramProgressEvent[]
+  reflections    ProgramReflection[]
 
   @@unique([userId, programId])
   @@index([programVersionId])
+}
+
+/// Private participant-authored text. This is deliberately separate from the
+/// event ledger so progress queries, rewards, and operational analytics never
+/// need to read reflection content.
+model ProgramReflection {
+  id           String   @id @default(uuid()) @db.Uuid
+  enrollmentId String   @db.Uuid
+  blockId      String   @db.Uuid
+  content      String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, blockId])
+  @@index([enrollmentId, updatedAt])
 }
 
 model ProgramProgressEvent {

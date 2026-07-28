@@ -126,6 +126,12 @@ export function programSnapshotToPublicSteps(
                 : "Review this choice against your plan.",
             recommended:
               choice.preferred === true,
+            safetySeverity:
+              choice.safetySeverity === "SUPPORT" ||
+              choice.safetySeverity === "URGENT" ||
+              choice.safetySeverity === "EMERGENCY"
+                ? choice.safetySeverity
+                : undefined,
           }),
         ),
       },

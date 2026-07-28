@@ -20,6 +20,7 @@ import type {
   UserProgressResponse,
 } from "@/lib/progress/types";
 import type { AchievementSummary } from "@/lib/rewards/types";
+import { genericSafetyResources, safetyResponseFor, type SafetyResponse } from "@/lib/responsible-gambling/safety";
 
 const STORAGE_KEY = "sevenbet-program-progress-v1";
 
@@ -296,10 +297,10 @@ export function CompletionScreen({
   return (
     <Section eyebrow="Program complete" title="You completed the 10-Step Control Program.">
       <CTA
-        title="Use your plan before comparing casino information."
-        intro="Completion is not a prompt to gamble. It is a checkpoint for calmer, better-informed decisions."
+        title="Keep your plan available when you need it."
+        intro="Completion is not a prompt to gamble. It is a checkpoint for calmer, better-informed decisions and continued access to support."
         primary={{ href: "/responsible-gambling", label: "Responsible Gambling Hub" }}
-        secondary={{ href: "/casinos", label: "Browse Casino Reviews" }}
+        secondary={{ href: "/program", label: "Review the program" }}
       />
       <div className="sectionButton">
         <button className="button ghost" onClick={onRestart} type="button">
@@ -373,6 +374,8 @@ export function ProgramExperience({
     "idle" | "saving" | "saved" | "error"
   >("idle");
   const [saveMessage, setSaveMessage] = useState("");
+  const [showSafetyHelp, setShowSafetyHelp] = useState(false);
+  const [safetyResponse, setSafetyResponse] = useState<SafetyResponse | null>(null);
   const localSnapshot = useRef<ProgramClientState>(initialProgramState);
   const userId = session?.user.id;
   const mergeMarkerKey =
@@ -697,6 +700,20 @@ export function ProgramExperience({
     }
   }
 
+  async function savePrivateReflection(content: string) {
+    if (!hasEnrollment || !programId || !activeStep.exerciseBlockId) return;
+    try {
+      await progressRequest("/api/program/reflections", {
+        programId,
+        blockId: activeStep.exerciseBlockId,
+        content,
+      });
+    } catch {
+      setSaveStatus("error");
+      setSaveMessage("Your private reflection could not be saved to your account. The device copy remains available.");
+    }
+  }
+
   function completeStep() {
     const alreadyCompleted = activeStep.stableId
       ? state.completedStepIds?.includes(activeStep.stableId)
@@ -803,6 +820,7 @@ export function ProgramExperience({
           <div className="heroActions">
             <Button href="#program-dashboard" variant="primary">Open Dashboard</Button>
             <Button href="#active-lesson" variant="ghost">Continue Lesson</Button>
+            <button className="button ghost" onClick={() => setShowSafetyHelp(true)} type="button">Need immediate help?</button>
           </div>
           <div className="trustStrip">
             <Badge tone="green">5-10 minutes per step</Badge>
@@ -848,6 +866,30 @@ export function ProgramExperience({
             {saveMessage}
           </p>
         </Container>
+      )}
+
+      {showSafetyHelp && (
+        <Section eyebrow="Support" title="You can pause here.">
+          <Card tone="soft">
+            <div role="status">
+              <p className="muted">This program is educational support, not medical care. You can leave at any time.</p>
+              <ul className="cleanList">{genericSafetyResources.map((resource) => <li key={resource}>{resource}</li>)}</ul>
+              <button className="button ghost" type="button" onClick={() => setShowSafetyHelp(false)}>Return to the program</button>
+            </div>
+          </Card>
+        </Section>
+      )}
+
+      {safetyResponse && (
+        <Section eyebrow="Safety support" title={safetyResponse.title}>
+          <Card tone="warning">
+            <div role="alert">
+              <p className="muted">{safetyResponse.message}</p>
+              <ul className="cleanList">{genericSafetyResources.map((resource) => <li key={resource}>{resource}</li>)}</ul>
+              <button className="button ghost" type="button" onClick={() => setSafetyResponse(null)}>Return when you are ready</button>
+            </div>
+          </Card>
+        </Section>
       )}
 
       {xpAwardNotice > 0 && rewardSource === "server" && (
@@ -909,6 +951,7 @@ export function ProgramExperience({
               onChange={(event) => updateState({
                 answers: { ...state.answers, [`exercise-${activeStep.day}`]: event.target.value },
               })}
+              onBlur={() => void savePrivateReflection(exerciseAnswer)}
               placeholder="Write a short reflection..."
               rows={5}
             />
@@ -930,6 +973,8 @@ export function ProgramExperience({
                   answerIndex: index,
                 });
               }
+              const configuredResponse = safetyResponseFor(activeStep.scenario.options[index]?.safetySeverity);
+              if (configuredResponse) setSafetyResponse(configuredResponse);
             }}
           />
           <QuizCard

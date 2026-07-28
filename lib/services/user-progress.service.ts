@@ -468,7 +468,9 @@ export class UserProgressService {
         entityType: block.type,
         eventType: "COMPLETED",
         eventKey: progressEventKey("exercise", block.id, "completed"),
-        metadata: { response },
+        // Free text belongs exclusively in ProgramReflection. The progress
+        // ledger only needs a completion fact and must remain safe to query.
+        metadata: { completed: true },
       });
       return recorded.created
         ? [this.rewardContext(userId, input.programId, block.id, "EXERCISE_COMPLETED")]

@@ -17,6 +17,7 @@
     "progress:test": "node --import tsx --test tests/user-progress.test.ts",
     "xp:test": "node --import tsx --test tests/xp-engine.test.ts",
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
+    "responsible-gambling:test": "node --import tsx --test tests/responsible-gambling-safety.test.ts",
     "casino:test": "node --import tsx --test tests/casino-foundation.test.ts",
     "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
     "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",
