@@ -80,6 +80,10 @@ It is an independent decision-support layer between gambling marketing and a use
 
 The product must remain useful when no referral is made. A user who leaves better informed, decides to pause, or finds a relevant support pathway is a successful user outcome.
 
+## 1.5 Program-led commercial growth
+
+SevenBet markets the 10-Step Control Program as its differentiated acquisition story while operating casino discovery, reviews, comparisons, bonuses and eligible affiliate referrals as persistent commercial product routes. The approved campaign, navigation, growth-loop and measurement model is defined by [RFC-003 — Program-Led Commercial Growth](../06_RFC/RFC-003-Program-Led-Commercial-Growth.md). Where this commercial model meets a protected Help or market-restricted context, the applicable safety and jurisdiction rules take precedence.
+
 ## 1.5 Relationship with Product Vision
 
 The Product Vision is the constitution. This plan operationalises it without altering it.
@@ -404,7 +408,7 @@ Provide a structured but optional path that helps an adult user pause, understan
 
 ### Responsibilities
 
-- Explain the purpose and optional nature of the programme.
+- Explain the purpose and optional nature of the programme; allow Mission 01 in a private ephemeral session, then require a SevenBet account to save its result and continue the personal, persistent programme while preserving public discovery and Help without registration.
 - Support reflection before a commercial decision.
 - Present decision-relevant knowledge and control actions.
 - Allow a user to complete, skip, revisit, or leave steps.
@@ -1544,8 +1548,8 @@ The MVP should be deliberately narrow: one primary market context, a limited app
 
 ### Registered-user scope
 
-- Registration remains optional.
-- Minimum useful account value: saved Control Program progress, saved research, and notification preferences.
+- Mission 01 may be completed in a private ephemeral session; registration is required to save that result and continue the personal Control Program. Public research, discovery and Help remain available without registration.
+- Minimum useful account value: a persistent personal Control Program, saved boundaries and actions, saved research, and notification preferences.
 - No loyalty, deposit, gambling frequency, or conversion mechanics.
 
 ## 12.3 MVP exclusions
@@ -1555,7 +1559,7 @@ The following are outside the first production version unless separately approve
 - multi-market expansion beyond the defined initial supported market;
 - other gambling verticals;
 - user-generated reviews, comments, or social/community functionality;
-- achievements or progress mechanics;
+- achievements or progress mechanics, except the private action-based Control Program progression and Personal Control Dashboard approved by RFC-002; all other achievement or progress mechanics remain excluded;
 - broad personalisation beyond user-selected market and preferences;
 - complex recommendation systems;
 - extensive automated notification programmes;
@@ -1569,7 +1573,7 @@ The following are outside the first production version unless separately approve
 
 The MVP is product-ready only when:
 
-- a user can complete a useful journey without referral or registration;
+- a user can complete a useful public research, education, Help or Mission 01 journey without referral or registration; persistent Control Program progress after Mission 01 requires the account and privacy controls defined by RFC-002;
 - every affiliate action is market-eligible, disclosed, and preceded by material information;
 - a user can reach the Responsible Gambling Hub from major commercial surfaces;
 - unsupported and restricted states are clear and non-commercial;
