@@ -1,13 +1,12 @@
 import Link from "next/link";
 
 const nav = [
-  ["Program", "/program"],
-  ["Self-check", "/self-check"],
-  ["Learn", "/learn"],
-  ["Responsible Gambling", "/responsible-gambling"],
+  ["10 Steps", "/10-steps"],
+  ["Casinos", "/casinos"],
   ["Bonuses", "/bonuses"],
-  ["Casino Reviews", "/casinos"],
-  ["Methodology", "/methodology"],
+  ["Best offers", "/best-offers"],
+  ["Learn", "/learn"],
+  ["Help", "/responsible-gambling"],
 ];
 
 export function Header() {
@@ -23,8 +22,8 @@ export function Header() {
             {label}
           </Link>
         ))}
-        <Link className="button gold navCta" href="/bonuses">
-          Compare offers
+        <Link className="button gold navCta" href="/10-steps">
+          Start 10 Steps
         </Link>
       </nav>
     </header>
@@ -59,6 +58,7 @@ export function Footer() {
         </div>
         <div>
           <h3>Casino comparison</h3>
+          <Link href="/best-offers">Best offers</Link>
           <Link href="/bonuses">Casino Bonuses</Link>
           <Link href="/casinos">Casino Reviews</Link>
           <Link href="/bonus-guide">Bonus guide</Link>

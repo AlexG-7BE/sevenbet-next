@@ -51,6 +51,8 @@ Brand and broad acquisition campaigns SHALL primarily lead to a dedicated Progra
 4. the Dashboard, XP, achievement and streak system;
 5. a clearly separated route to `Casinos`, `Bonuses`, and `Best offers`.
 
+For Home, the persistent global header and footer satisfy this separated commercial route. Under RFC-006, the Home body itself contains one repeated Program conversion action and no commercial bridge, offer preview or affiliate CTA. Dedicated discovery, review and comparison routes remain directly accessible and independently useful.
+
 ### 2.2 Commercial acquisition
 
 High-intent search, SEO, review and comparison routes may lead directly to a relevant commercial discovery page. Every such page must retain a visible route to the 10-Step Program and its relevant mission, for example a bonus explainer linking to the offer-check mission.

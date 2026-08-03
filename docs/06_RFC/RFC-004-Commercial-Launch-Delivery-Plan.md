@@ -1,10 +1,10 @@
 ---
-Title: RFC-004 — Commercial Launch Delivery Plan
+Title: RFC-004 — Flagship Product Delivery Plan
 Status: Approved
 Classification: Internal
 Owner: Founder / Product / Engineering
 Date: 2026-08-02
-Decision: The minimum launch scope and phased delivery plan for a working commercial SevenBet product with 10 Steps as its acquisition engine are approved.
+Decision: Build a complete, presentation-ready SevenBet flagship product before seeking operator partnerships; 10 Steps is its acquisition engine and commercial discovery is its primary business layer.
 Governing Documents:
   - ../Product-Vision-and-Principles.md
   - ../01_Product_Master_Plan/Product-Master-Plan.md
@@ -13,13 +13,13 @@ Governing Documents:
   - ./RFC-003-Program-Led-Commercial-Growth.md
 ---
 
-# RFC-004 — Commercial Launch Delivery Plan
+# RFC-004 — Flagship Product Delivery Plan
 
-## 1. Launch outcome
+## 1. Flagship outcome
 
-SevenBet launches as a working commercial casino-affiliate product in an explicitly approved initial market. Paid, social, SEO and direct traffic can enter through the 10-Step landing page or through commercial discovery; an adult user can create an account after Mission 01, build a saved plan, earn Program-only XP/achievements/streaks, explore market-eligible `Casinos`, `Bonuses` and `Best offers`, and activate an eligible, disclosed affiliate referral.
+Before seeking operator partnerships, SevenBet SHALL reach a complete, presentation-ready flagship standard in an explicitly approved initial market. **Great Britain (UK) is the approved first launch market.** The site must feel like a mature 2026 product: coherent public discovery, a visually distinctive 10-Step acquisition experience, a credible private Dashboard, rich editorial comparison surfaces, responsive behaviour, polished states and real product logic.
 
-This is a working vertical slice, not a design demo. Every live commercial CTA must be market-governed, attributable and auditable.
+The pre-partnership build is not a throwaway MVP or a static deck. It is a full product demonstration with non-live commercial preview states where live partner, offer and referral data is unavailable. Every later live commercial CTA must be market-governed, attributable and auditable.
 
 ## 2. Evidence baseline
 
@@ -31,11 +31,17 @@ This is a working vertical slice, not a design demo. Every live commercial CTA m
 
 **Planned:** the new Mission map, mandatory post-Mission-01 account claim, personal plan artefacts, server-side streak, `Best offers`, campaign attribution, private app shell and protected Help layout.
 
-## 3. Minimum launch scope
+## 2.1 Delivery rule: design the full experience before production implementation
+
+The team SHALL not optimise for the shortest code path. The Figma system is the visual and interaction source of truth for the flagship build. Before a major public or private product surface is implemented, it must have an approved desktop design, responsive/mobile behaviour, content hierarchy, interaction states and a reference-locked visual direction. Implementation then follows the approved system with reusable components and tokens.
+
+The first completed design package covers the entire presentation journey: Home, `/10-steps`, commercial discovery, casino/review/comparison, Mission 01, account claim, all ten mission families, Dashboard, My Plan, protected Help and essential empty/loading/error/legal states. The product is then implemented in coherent component batches, not as isolated placeholder pages.
+
+## 3. Full flagship scope before partner activation
 
 ### 3.1 Commercial and market foundation
 
-1. Approve one initial market, supported languages, currencies, age/disclosure copy and the first eligible operators/offers.
+1. Great Britain (UK) is the initial market. Define its supported languages, currencies, age/disclosure copy and first eligible operators/offers before enabling live referrals or paid acquisition. The product, demo content and non-live commercial surfaces may be built before an operator relationship exists.
 2. Deliver RFC-001's minimum market decision before any commercial page or redirect can show a market-specific offer or hand off a referral.
 3. Maintain one canonical eligible-offer projection used by `Casinos`, `Bonuses`, `Best offers`, Dashboard and every referral CTA.
 4. Provide visible affiliate/sponsorship disclosure and material offer terms before referral activation.
@@ -70,16 +76,16 @@ This is a working vertical slice, not a design demo. Every live commercial CTA m
 3. Add content/offer freshness, referral failure and market-policy monitoring.
 4. Test 18+, disclosure, consent, deletion/export, referral denial and Help routing before enabling paid traffic.
 
-## 4. Minimum implementation sequence
+## 4. Full-product implementation sequence
 
 | Milestone | Backend work | Frontend / Figma work | Done when |
 | --- | --- | --- | --- |
 | 0. Launch contract | Approve initial market and RFC-001 enforcement boundary; define event taxonomy. | Finalise commercial header, Program landing and protected Help specifications. | No ambiguous market, CTA or ownership decision remains. |
-| 1. Commercial core | Canonical eligible-offer projection; governed referral gateway; attribution store. | `Casinos`, `Bonuses`, `Best offers`, disclosure states and campaign landing. | An eligible visitor can view terms and activate one auditable referral. |
-| 2. Identity handoff | Guest Mission-01 session and signed claim; email/password account flow. | Mission 01 and registration/claim screens. | Guest completes M1; account saves the result and enters M2. |
-| 3. Active Program | New mission content; artifact persistence; server streak; reward catalogue/API. | Mission templates, map, XP/achievement states. | A user can finish all 10 missions with truthful saved results. |
-| 4. Return surface | Dashboard/My Plan read models; privacy/export/delete contracts. | Dashboard, My Plan, completed and paused states. | Returning user can edit their plan and voluntarily enter discovery. |
-| 5. Launch hardening | Analytics, monitoring, rate/error handling, tests and migration checks. | Responsive QA, accessibility, empty/error/legal states. | End-to-end launch checklist passes in the initial market. |
+| 1. Public flagship | Canonical non-live offer projection, UK content contract and attribution store. | Home, `/10-steps`, `Casinos`, `Bonuses`, `Best offers`, reviews, comparisons, editorial content and commercial disclosure states. | Public website is visually cohesive, responsive and credible enough for a partner demonstration. |
+| 2. Identity handoff | Guest Mission-01 session and signed claim; email/password account flow. | Mission 01, registration/claim, welcome and account states. | Guest completes M1; account saves the result and enters M2. |
+| 3. Active Program | New mission content; artifact persistence; server streak; reward catalogue/API. | All ten mission sequences, map, XP/achievement/streak states, motion and feedback. | A user can finish all ten missions with saved, useful results. |
+| 4. Return surface | Dashboard/My Plan read models; privacy/export/delete contracts. | Dashboard, My Plan, completed, paused and protected Help states. | Returning user can edit their plan and independently enter discovery. |
+| 5. Quality and activation readiness | Analytics, monitoring, rate/error handling, tests and migration checks. | Mobile product, loading/empty/error/legal states, visual QA and prototype walkthrough. | The complete product withstands a partner, investor and user walkthrough; live offers/referrals can be activated only after partner approval. |
 
 ## 5. Required code areas
 
@@ -92,13 +98,13 @@ This is a working vertical slice, not a design demo. Every live commercial CTA m
 | `components/SiteChrome.tsx`, `app/layout.tsx` | One global header/footer. | Introduce public, private and Protected Help route layouts. |
 | public discovery / affiliate routing | Casino/bonus and affiliate foundations exist. | Add canonical `Best offers` projection and enforce RFC-001 at every commercial handoff. |
 
-## 6. Explicitly out of scope for minimum launch
+## 6. Deferred until partner activation
 
-- Multiple markets before the initial-market flow is proven.
+- Live affiliate tracking links, partner-supplied offers and paid acquisition until agreements and UK compliance review are complete.
+- Multiple markets before the UK experience is approved.
 - Cash, bonus, operator or referral rewards for XP/achievements/streaks.
 - Personalised commercial targeting from Program, pause, Help or safety-sensitive data.
 - Native apps, social/community mechanics, leaderboards and complex notification automation.
-- A complete CMS redesign; the existing Program/admin foundations are extended only where the launch contract requires it.
 
 ## 7. Continuation after launch
 
@@ -123,9 +129,9 @@ This is a working vertical slice, not a design demo. Every live commercial CTA m
 - market-level commercial dashboards and controlled ranking experiments;
 - audited lifecycle messaging based on consented, non-sensitive product states.
 
-## 8. Launch acceptance criteria
+## 8. Flagship readiness criteria
 
-The product is launch-ready only when all statements are true:
+The product is ready for operator, investor and launch-partner presentation only when all statements are true:
 
 1. A paid/social/SEO visitor reaches `/10-steps` with attributable campaign context.
 2. The visitor can complete Mission 01 without an account and is required to create an account before Mission 02.

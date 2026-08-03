@@ -14,9 +14,9 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Technical Baseline verified against the actual implementation repository
 
-✅ Product & Design Phase 0 — discovery and creative direction completed
+✅ Product & Design trust-direction reset — RFC-006 approves “Human Guidance” and supersedes Prismatic Product Theatre
 
-✅ Product & Design Phase 1 — Figma foundations completed: 7 collections, 77 variables, semantic Light / Ink / Help collections, 10 Manrope text styles, and 3 elevation styles
+✅ Legacy Figma foundation baseline recorded: 7 collections, 77 variables, semantic Light / Ink / Help collections, 10 Manrope text styles, and 3 elevation styles
 
 ## In Progress
 
@@ -26,7 +26,9 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 🟨 RFC-004 — Commercial Launch Delivery Plan approved; Milestone 0 launch contract is the next implementation gate
 
-🟨 Product & Design Phase 3–5 — reusable core components and the first desktop screen are in progress in Figma
+🟨 RFC-006 — Human Guidance approved and amended to a single-action, evidence-informed Program Home; foundations and key journeys require validation
+
+🟨 Product & Design reset — legacy foundations and screens remain historical artefacts until the replacement system is validated
 
 ## Progress
 
@@ -34,9 +36,11 @@ Technical Baseline completed.
 
 Documentation structure normalized before Phase 2.
 
-Product & Design preparation is aligned with the approved Product Vision: the 10-Step Control Program is the central product layer; discovery remains accessible without programme completion; and Help / self-exclusion is a protected, non-commercial route. The approved creative direction is “Calm Editorial Intelligence”.
+Product & Design preparation is aligned with the approved Product Vision: the 10-Step Control Program is the central product layer; discovery remains accessible without programme completion; and Help / self-exclusion is a protected, non-commercial route. RFC-006 supersedes RFC-005 and approves “Human Guidance” as the active trust-led creative direction.
 
-Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. Phase 2 is complete: the eight planned pages are present and the Foundations page documents the palette, typography, spacing, radius and elevation tokens without duplicating foundations. Phase 3 now includes token-bound Button, Badge, Info Card and Program Step components. The first high-fidelity desktop Home direction, “Midnight Field”, is authored in Figma using the existing semantic tokens and Manrope styles: a product-visible Program Workspace is central, regulated discovery is an available but non-pressured route, and Help / self-exclusion is visually and commercially separated as a protected route. This record describes design artefacts, not shipped application behaviour.
+Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. Existing Calm Editorial, Midnight Field and Prismatic pages, foundations and components remain detected historical design artefacts, not shipped application behaviour. RFC-006 is now the future visual authority. Human Guidance must be built in a separate working area, validated with materially lower Home copy density, and reconciled with reusable foundations only after acceptance.
+
+The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation.
 
 Following approved RFC-002 and its 2026-08-02 Mission 01 session amendment, the Desktop screens page now contains a Personal Control Dashboard, an account entry screen after the first useful Programme action, and rebuilt active Programme steps. These are Figma design artefacts: public Discovery, education, Help and Mission 01 remain accessible without registration; persistent personal Control Program progress after Mission 01 requires an account and remains subject to the RFC's product, content, compliance, privacy, architecture, and Domain Model gates.
 
@@ -67,8 +71,8 @@ Architecture not started.
 
 ## Current Milestone
 
-Complete Product Master Plan while continuing the Product & Design track through components and validated screens
+Complete Product Master Plan while validating the Human Guidance Home and trust-led system in Figma
 
 ## Next Milestone
 
-Architecture Alignment; continue Figma reusable components, desktop screens and then mobile screens
+Architecture Alignment; validate Human Guidance desktop/mobile Home before broader component and journey migration
