@@ -11,7 +11,7 @@ import {
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { hashOpaqueToken } from "@/lib/programme/security";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
-import { programmeFlowService } from "@/lib/services/programme-flow.service";
+import { programmeClaimService } from "@/lib/programme/application/programme-claim.service";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     });
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone"]);
-    const dashboard = await programmeFlowService.redeemPendingClaim(
+    const dashboard = await programmeClaimService.redeemPendingClaim(
       user.id,
       claimToken,
       body.timeZone,

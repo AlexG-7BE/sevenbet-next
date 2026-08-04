@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import type { ProgrammeFlowRepository } from "../lib/repositories/programme-flow.repository";
+import type { ProgrammeUnitOfWork } from "../lib/programme/infrastructure/programme-unit-of-work";
 import {
   missionOneTaskStates,
   missionFourTaskStates,
@@ -17,6 +17,8 @@ import {
 import { activeDayStreak, localDateAt } from "../lib/programme/security";
 import { ValidationError } from "../lib/services/service-error";
 import { ProgrammeFlowService } from "../lib/services/programme-flow.service";
+
+type ProgrammeFlowRepository = ProgrammeUnitOfWork;
 import { parseActiveBoundary } from "../lib/programme/validation";
 
 const now = new Date("2026-08-04T10:00:00.000Z");
@@ -117,6 +119,11 @@ class MemoryProgrammeRepository {
   activeDays: any[] = [];
   unlocks: any[] = [];
   progressEvents: any[] = [];
+  readonly sessions = this;
+  readonly progress = this;
+  readonly artefacts = this;
+  readonly rewards = this;
+  readonly dashboard = this;
 
   private id() {
     this.sequence += 1;
@@ -171,6 +178,14 @@ class MemoryProgrammeRepository {
     });
     this.transactionQueue = run.then(() => undefined, () => undefined);
     return run;
+  }
+
+  serializable<T>(operation: (unitOfWork: ProgrammeUnitOfWork) => Promise<T>) {
+    return this.transaction(() => operation(this as unknown as ProgrammeUnitOfWork));
+  }
+
+  snapshot<T>(operation: (unitOfWork: ProgrammeUnitOfWork) => Promise<T>) {
+    return this.transaction(() => operation(this as unknown as ProgrammeUnitOfWork));
   }
 
   async createAnonymousSession(input: any) {
@@ -438,6 +453,12 @@ class MemoryProgrammeRepository {
 
   async findBoundaryBuiltAchievement() {
     return { id: "30000000-0000-4000-8000-000000000002", slug: "boundary-built" } as any;
+  }
+
+  async findAchievement(slug: string) {
+    return slug === "boundary-built"
+      ? this.findBoundaryBuiltAchievement()
+      : this.findFirstPlanAchievement();
   }
 
   async unlockAchievement(input: any) {

@@ -1,17 +1,17 @@
 import { requireCurrentUser } from "@/lib/auth/session";
+import { missionFourService } from "@/lib/programme/application/mission-04.service";
 import {
   programmeErrorResponse,
   programmeResponse,
   readProgrammeJson,
 } from "@/lib/programme/http";
-import { programmeFlowService } from "@/lib/services/programme-flow.service";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
-    const mission = await programmeFlowService.getMissionFourDraft(user.id);
+    const mission = await missionFourService.getDraft(user.id);
     return programmeResponse({ ok: true, mission });
   } catch (error) {
     return programmeErrorResponse(error);
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
-    const mission = await programmeFlowService.saveMissionFourDraft(
+    const mission = await missionFourService.saveDraft(
       user.id,
       await readProgrammeJson(request),
     );

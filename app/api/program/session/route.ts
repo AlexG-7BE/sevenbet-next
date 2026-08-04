@@ -7,7 +7,7 @@ import {
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { anonymousSessionLifetimeMs } from "@/lib/programme/security";
-import { programmeFlowService } from "@/lib/services/programme-flow.service";
+import { programmeSessionService } from "@/lib/programme/application/programme-session.service";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
       limit: 10,
       windowMs: 60_000,
     });
-    const result = await programmeFlowService.createAnonymousSession();
+    const result = await programmeSessionService.createAnonymousSession();
     const response = programmeResponse({ ok: true, session: result.session }, 201);
     response.cookies.set(anonymousProgrammeCookie, result.token, {
       ...privateCookieOptions,
