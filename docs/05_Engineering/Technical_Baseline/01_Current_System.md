@@ -18,7 +18,7 @@
 
 | Mechanism | Status | Evidence |
 | --- | --- | --- |
-| Route handlers | Implemented | 50 handlers under `app/api/`, plus public redirect and crawler handlers. |
+| Route handlers | Implemented | 54 handlers under `app/api/`, plus public redirect and crawler handlers. |
 | Service layer | Implemented | `lib/services/` contains program, casino, media, progress, XP, affiliate, and public discovery services. |
 | Repository layer | Implemented | `lib/repositories/` contains Prisma-backed repositories for the same principal domains. |
 | Input validation | Implemented | Domain validation modules in `lib/cms/`, `lib/casino-builder/`, `lib/affiliate/`, `lib/media/`, and `lib/progress/`. No external validation package is detected. |

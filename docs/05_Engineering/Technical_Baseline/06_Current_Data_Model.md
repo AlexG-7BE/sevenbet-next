@@ -2,16 +2,16 @@
 
 ## Persistence foundation
 
-**Detected:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 10 ordered SQL migrations (`0001_cms_foundation` through `0010_affiliate_integration_foundation`). The schema currently declares 50 Prisma models and 27 enums. Application repositories/services directly use this persistence layer.
+**Detected:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 14 ordered SQL migrations (`0001_cms_foundation` through `0014_casino_editorial_platform`). The schema currently declares 57 Prisma models and 32 enums. Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
 | Group | Detected models |
 | --- | --- |
 | Identity/admin | `User`, `Session`, `Account`, `Verification`, `AdminUser`, `AuditLog` |
-| Program/progress/rewards | `Program`, `ProgramStep`, `Lesson`, `LessonBlock`, `ProgramVersion`, `ProgramEnrollment`, `ProgramProgressEvent`, `XpRule`, `UserXpEvent`, `Achievement`, `UserAchievement` |
+| Program/progress/rewards | `Program`, `ProgramStep`, `Lesson`, `LessonBlock`, `ProgramVersion`, `ProgramEnrollment`, `ProgramReflection`, `ProgramProgressEvent`, `XpRule`, `UserXpEvent`, `Achievement`, `UserAchievement` |
 | Editorial/CMS | `Article`, `ContentRevision`, `SiteSetting` |
-| Casino | `Casino`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoLicense`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
+| Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
 | Affiliate | `AffiliateNetwork`, `AffiliateProgram`, `AffiliateOffer`, `AffiliateOfferCountry`, `AffiliateOfferCurrency`, `AffiliateTrackingLink`, `AffiliateTrackingLinkCountry`, `AffiliateOfferRevision`, `AffiliateTrackingLinkRevision`, `AffiliateRedirectSlug`, `AffiliateRedirectRevision`, `AffiliateExternalMapping`, `AffiliateImportJob`, `AffiliateImportItem` |
 | Media | `MediaAsset` |
 
@@ -33,5 +33,9 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 8. Affiliate redirect foundation
 9. Media manager
 10. Affiliate integration foundation
+11. Casino domain foundation
+12. Casino domain suspension states
+13. Responsible-gambling private reflections
+14. Casino editorial platform
 
 **Detected:** all migration directories contain `migration.sql`. Whether they have been applied to any particular deployed database is **not detected** from the repository. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.
