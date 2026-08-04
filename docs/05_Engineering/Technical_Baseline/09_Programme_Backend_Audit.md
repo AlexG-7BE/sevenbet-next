@@ -237,3 +237,38 @@ These boundaries correspond to existing routes, transactions and ownership rules
 - Reward rule changes: none.
 - Product behaviour changes: none.
 - Frontend impact: none.
+
+## Post-refactor result
+
+The result below is repository evidence on branch `refactor/programme-backend-boundaries-m01-m04` after the bounded extraction.
+
+- **Detected:** route handlers now invoke bounded session, claim, Mission 02, Mission 03, Mission 04, artefact, reward, active-day and Dashboard application services directly. No scoped Programme route imports Prisma or the compatibility facade.
+- **Detected:** the former 1,205-line service is now a 121-line compatibility facade. The former 559-line central repository is removed. Persistence is split into five scoped repositories composed by a concrete Programme unit of work.
+- **Detected:** ordering/prerequisite/next-Mission rules live in `mission-registry.ts`; implemented recognition remains exactly `60/80/90/100 XP`, `First Plan` for Mission 02 and `Boundary Built` for Mission 04 through `reward-policy.ts`.
+- **Detected:** claim and completion workflows use serializable transactions with bounded `P2034` retry. Standalone Dashboard/reward reads use repeatable-read snapshots; completion responses project the Dashboard from the active transaction.
+- **Detected:** Mission 01–04 validation is split by vertical slice. Typed internal Programme errors continue to map to the existing public status/code/envelope contract.
+- **Detected:** the in-memory limiter is behind a replaceable provider contract and is explicitly identified as a development/single-process implementation. No distributed limiter is implemented.
+- **Detected:** the regression suite contains 43 tests across Programme flow and pure domain policy. It covers two-user concurrent claim, concurrent/replayed Mission 02–04 completion, injected rollback, exact Dashboard totals/status, ownership denial for all private artefacts, active-day void and error/rate-limit mapping.
+- **Detected:** source-boundary tests reject direct Prisma or compatibility-facade imports in scoped Programme routes and lock the Mission 03 autosave method to the implemented `PUT` contract.
+- **Inferred:** keeping each mission completion coordinator over the 80-line review trigger makes the single atomic result visible; policy, presentation and persistence details are already extracted. Further splitting would obscure the transaction boundary without removing a separate responsibility.
+- **Not detected:** schema, migration, public request/response, reward, frontend, Figma or product-behaviour changes.
+- **Not detected:** a connected multi-process database contention/load test. Concurrent regression coverage uses a serialising, rollback-capable memory unit of work and is complemented by detected Prisma isolation and database uniqueness constraints.
+
+### Final impact declaration
+
+- API breaking changes: none.
+- Database migration impact: none; `prisma/schema.prisma` and `prisma/migrations/` are unchanged.
+- Reward rule changes: none.
+- Product behaviour changes: none.
+- Frontend impact: none.
+- Remaining release/operations risks: in-memory rate limiting, expiry purge automation, distributed-operation verification, account-wide export/erasure, telemetry/observability, autosave ordering and CI/CD.
+
+### Verification evidence
+
+- **Detected:** `npm ci` completed using an isolated temporary npm cache after the machine-level npm cache rejected writes; dependency installation reported three high-severity audit findings, and no unrelated automatic dependency fix was applied.
+- **Detected:** `npm run programme:test` passed `43/43` tests.
+- **Detected:** `node --import tsx --test tests/*.test.ts` passed the complete Node suite, `209/209` tests.
+- **Detected:** `npm run typecheck`, `npx prisma validate` and `npm run build` passed. The production build compiled all Programme routes under Next.js 15's Node-compatible server runtime.
+- **Detected:** a local import-graph check scanned 31 `lib/programme` files and found zero circular dependencies. Source checks found no Prisma or compatibility-facade imports in scoped Programme routes and no Edge runtime declaration.
+- **Detected limitation:** `npm run lint` does not provide a non-interactive lint gate. The existing `next lint` script exits at Next.js 15's configuration prompt; lint configuration migration is outside this bounded PR.
+- **Not applicable:** connected migration application/rollback. No schema or migration changed; Prisma schema validation and zero-diff checks against `main` passed.
