@@ -188,3 +188,20 @@ Motion should provide section transitions, card focus, subtle image crop movemen
 ## 10. Consequences
 
 This direction raises media, typography, motion and frontend implementation requirements. It also provides the emotional impact and consumer confidence missing from Human Guidance. SevenBet will need a stronger licensed or generated media library, custom display typography, real product renders and deliberate scroll choreography. The higher craft cost is accepted because the site must persuade operators and users that SevenBet is a serious consumer product before commercial partnerships begin.
+
+## 11. Figma implementation record — 2026-08-04
+
+The active Figma file retains only the accepted Tilt-Locked design system and current desktop acquisition surfaces. Superseded Prismatic, Human Guidance and earlier concept foundations, components, screens, variables, text styles and effect styles have been removed rather than retained as active canvas artefacts.
+
+Detected active artefacts:
+
+- Foundations: `285:55`;
+- Core components: `287:2`;
+- SevenBet product components: `289:20`;
+- Bonus components: `298:26`;
+- Best Offers components and three-state slider: `308:2` and `308:81`;
+- desktop Home: `289:946`;
+- desktop Bonuses: `299:786`;
+- desktop Best Offers: `310:224`.
+
+The Best Offers page adapts the full product-page rhythm defined by this RFC: strong promise, central product theatre, visible decision methodology, alternative comparison states, evidence building blocks, editorial reasoning, FAQ, related commercial discovery, protected Help and a dark disclosure footer. Operator names and offer values used before verified partner data exists are labelled as illustrative pre-launch content and must not ship without market, licence, terms and commercial review.
