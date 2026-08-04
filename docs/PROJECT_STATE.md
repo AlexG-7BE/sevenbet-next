@@ -22,7 +22,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 🟨 Product Master Plan
 
-🟨 RFC-002 — Active Control Program and Personal Control Dashboard approved; the first complete desktop design flow is validated, while product, compliance, domain-model, backend-alignment and content gates remain before implementation
+🟨 RFC-002 — Active Control Program and Personal Control Dashboard approved; Mission 01 → registration → Dashboard → Mission 02 → Mission 03 is implemented and runtime-verified, while Missions 04–10 and broader product/compliance gates remain
 
 🟨 RFC-004 — Commercial Launch Delivery Plan approved; Milestone 0 launch contract is the next implementation gate
 
@@ -34,7 +34,11 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Tilt-Locked active-control package — Mission 01, mandatory earned-result registration, the authenticated Dashboard, Mission 02, truthful XP/achievement/active-day states, and the post-Mission-02 Dashboard complete and visually validated in Figma
 
-✅ Active-control backend slice — RFC-008, additive Prisma migration 0015, private anonymous session/claim, atomic Mission 01 and Mission 02 persistence, Dashboard API, artefact controls, deterministic rewards, active-day correction and targeted tests implemented
+✅ Active-control backend slice — RFC-008, additive Prisma migrations through 0015, private anonymous session/claim, atomic Mission 01 and Mission 02 persistence, Dashboard API, artefact controls, deterministic rewards, active-day correction and targeted tests implemented and verified against the configured remote database
+
+✅ Active-control frontend slice — `/program` now implements the approved Mission 01 → earned-result registration → Dashboard → Mission 02 → updated Dashboard journey against the RFC-008 API, including responsive Tilt-Locked screens, evidence notes, private artefact editing and deterministic reward states
+
+✅ Mission 03 active-control slice — RFC-009 approved; the eight-screen evidence-led mission, private `UrgeLearningRecord`, resumable autosave, learning checks, `not now` branch, editable result, deterministic `+90 XP`, Dashboard `230 XP / 3 of 10` and Mission 04 current state are implemented and browser/runtime-verified
 
 ## Progress
 
@@ -48,7 +52,7 @@ Figma Plugin API access was revalidated after the file was upgraded to a Profess
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation. The 2026-08-04 RFC-007 article amendment applies the same separation to Learning Center content: neutral commercial education may link contextually to discovery after delivering value, while quit, control, self-exclusion and harm-related articles use a protected-control template with no casino, bonus, offer or affiliate actions in article content.
 
-RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file now contains the reusable Programme component board (`387:38`), the documented Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), and the desktop screen grid (`407:704`). RFC-008 now governs the implemented backend slice: Mission 01 awards `+60 XP` only after atomic claim redemption; Mission 02 awards `+80 XP` and `First Plan`; same-day completion remains `1 active day`. Public frontend and Figma were not changed by the backend task. Migration deployment, production database/content verification, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry and Missions 03–10 remain pending.
+RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file now contains the reusable Programme component board (`387:38`), the documented Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), the earlier desktop screen grid (`407:704`), and the approved Mission 03 desktop flow plus post-mission Dashboard (`449:1413`). RFC-008 governs the shared persistence/reward/privacy baseline; RFC-009 governs Mission 03. Mission 01 awards `+60 XP` only after atomic claim redemption; Mission 02 awards `+80 XP` and `First Plan`; Mission 03 awards `+90 XP` with no new achievement; same-day completion remains `1 active day`. The Next.js frontend at `/program` implements the three missions, mandatory account claim, returning-user sign-in and all approved Dashboard states. Migrations 0011–0016 are applied to the configured remote database, and the idempotent seed publishes `sevenbet-10-step-control-program` version 1 with ten active steps. A connected-database browser E2E completed Mission 03 with the evidence review, four-point urge-wave interaction, explained retry, private early signal and meaning check, then confirmed `230 XP`, `3 of 10`, `First Plan`, `1 active day`, the editable Mission 03 result and Mission 04 as current. Clinical-content/compliance release review, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry, broader device QA and Missions 04–10 remain pending.
 
 ## Technical Baseline Audit
 
@@ -81,4 +85,4 @@ Complete Product Master Plan while extending the validated Tilt-Locked consumer-
 
 ## Next Milestone
 
-Deploy and verify migration 0015 plus the published ten-step Program in a controlled environment; complete mobile/device QA before broader journey migration
+Complete clinical-content/compliance release review and mobile/device QA for Mission 03, then design and approve Mission 04 while continuing the remaining operational privacy controls

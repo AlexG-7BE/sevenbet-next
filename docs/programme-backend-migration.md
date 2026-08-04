@@ -1,17 +1,31 @@
-# Migration 0015 — Active Control Program Flow
+# Migrations 0015–0016 — Active Control Program Flow
 
 Migration: `prisma/migrations/0015_active_control_program_flow/migration.sql`.
 
-The migration is additive. It adds Programme mission/goal enums; anonymous session and claim tables; mission progress; Moment Map; Current Goal; active day/correction records; Programme reward provenance columns; constraints/indexes; and the deterministic `first-plan` achievement catalogue row. Existing users, enrollments, progress, XP and achievements are not deleted or rewritten.
+Mission 03 extension: `prisma/migrations/0016_mission_03_urge_learning/migration.sql`.
+
+Both migrations are additive. Migration 0015 adds Programme mission/goal enums; anonymous session and claim tables; mission progress; Moment Map; Current Goal; active day/correction records; Programme reward provenance columns; constraints/indexes; and the deterministic `first-plan` achievement catalogue row. Migration 0016 adds the private `UrgeLearningRecord`, its category enum, ownership constraint and personal-signal integrity checks. Existing users, enrollments, progress, XP and achievements are not deleted or rewritten.
 
 Before deployment:
 
 1. take and verify a target database backup;
 2. verify migrations 0001–0014 are applied in order;
 3. run `npx prisma validate` and `npm run programme:test` against the release source;
-4. confirm the published Program slug `sevenbet-10-step-control-program` has a published version and ten active steps;
-5. apply with the environment's reviewed `prisma migrate deploy` process;
-6. smoke-test anonymous session, claim redemption, same-day Mission 02 completion and owner-only artefact access;
-7. verify no Programme payloads appear in logs or commercial event streams.
+4. run the idempotent enum preflight before Prisma deploy because PostgreSQL requires the new `MISSION_COMPLETION` enum value to be committed before migration 0015 references it;
+5. apply with the environment's reviewed `npm run programme:migrate` process;
+6. publish or verify Program slug `sevenbet-10-step-control-program` with `npm run programme:seed`;
+7. smoke-test anonymous session, claim redemption, same-day Mission 02 and Mission 03 completion, returning-user sign-in and owner-only artefact access;
+8. verify no Programme payloads appear in logs or commercial event streams.
+
+## Deployment evidence — 2026-08-04
+
+- **Detected:** migrations 0011–0016 are applied and Prisma reports the configured remote database schema as up to date.
+- **Detected:** the first 0015 deploy attempt stopped safely with PostgreSQL `55P04`; the enum preflight was committed, the failed migration was marked rolled back, and the unchanged migration then applied successfully.
+- **Detected:** the idempotent seed published Program version 1 with ten active steps and left the existing published record unchanged on a second run.
+- **Detected:** a synthetic browser E2E verified Mission 01 claim (`60 XP`, `1 of 10`) and Mission 02 completion (`140 XP`, `First Plan`, `1 active day`, `2 of 10`).
+- **Detected:** a connected-database browser E2E verified returning-user sign-in and the complete Mission 03 sequence, including evidence review, urge-wave interaction, explained retry, private signal, meaning check, `+90 XP`, `230 XP` total, `3 of 10`, editable result and Mission 04 current.
+- **Detected:** server tests verify the `not now` path, idempotent reward, owner scope, edit/deletion scrub and incomplete-check rejection.
+- **Detected:** the two explicitly named synthetic E2E users and their cascade-owned Programme data were deleted after verification.
+- **Planned:** clinical-content/compliance release review, mobile/device QA, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry and Missions 04–10.
 
 Rollback is application-first: disable the new routes and deploy the previous application build. Do not drop the new tables or columns while any claim, artefact, reward or active-day row exists. A destructive database rollback requires a separate approved data migration.

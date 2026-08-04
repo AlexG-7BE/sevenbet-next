@@ -1,12 +1,22 @@
-import { Prisma, type GoalDirection, type GoalStatus } from "@prisma/client";
+import {
+  Prisma,
+  type EarlySignalCategory,
+  type GoalDirection,
+  type GoalStatus,
+} from "@prisma/client";
 
 import {
   CONTROL_PROGRAM_SLUG,
   EVIDENCE_CONTENT_VERSION,
   MISSION_ONE_VERSION,
+  MISSION_THREE_EVIDENCE_VERSION,
+  MISSION_THREE_LEARNING_ITEM_ID,
+  MISSION_THREE_VERSION,
   controlProgrammePath,
   missionOneTaskStates,
   missionStateFromTaskCount,
+  missionThreeStages,
+  missionThreeTaskStates,
   missionTwoStages,
   missionTwoTaskStates,
   programmeEvidence,
@@ -24,11 +34,14 @@ import {
 } from "@/lib/programme/security";
 import {
   assertCompleteTasks,
+  parseEarlySignalChoice,
   parseCurrentGoal,
   parseMissionOneDraft,
+  parseMissionThreeDraft,
   parseMissionTwoDraft,
   parseMomentMap,
   parseTimeZone,
+  parseUrgeLearningDraft,
 } from "@/lib/programme/validation";
 import {
   ProgrammeFlowRepository,
@@ -44,6 +57,7 @@ import {
 
 const missionOneAwardKey = "programme:mission:01:save:v1";
 const missionTwoAwardKey = "programme:mission:02:save:v1";
+const missionThreeAwardKey = "programme:mission:03:save:v1";
 
 function missionStatus(value: ReturnType<typeof missionStateFromTaskCount>) {
   return value.toUpperCase() as
@@ -58,6 +72,10 @@ function goalDirection(value: string) {
 
 function goalStatus(value: string) {
   return value.toUpperCase() as GoalStatus;
+}
+
+function earlySignalCategory(value: string) {
+  return value.toUpperCase() as EarlySignalCategory;
 }
 
 function jsonGoal(value: ReturnType<typeof parseCurrentGoal>) {
@@ -429,6 +447,159 @@ export class ProgrammeFlowService {
     );
   }
 
+  async getMissionThreeDraft(userId: string) {
+    const { source, enrollment } = await this.requireEnrollment(userId);
+    const progress = await this.repository.findMissionProgress(enrollment.id, 3);
+    if (!progress) throw new NotFoundError("Mission 03 progress");
+    return {
+      missionNumber: 3,
+      status: serialiseMissionState(progress.status),
+      taskStates: progress.taskStates,
+      stages: missionThreeStages,
+      draft: progress.draft ?? null,
+      evidence: programmeEvidence.mission03,
+      learningItemId: MISSION_THREE_LEARNING_ITEM_ID,
+      evidenceVersion: MISSION_THREE_EVIDENCE_VERSION,
+      programId: source.program.id,
+    };
+  }
+
+  async saveMissionThreeDraft(userId: string, value: unknown) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const missionTwo = await this.repository.findMissionProgress(enrollment.id, 2);
+    if (missionTwo?.status !== "COMPLETED") {
+      throw new ConflictError("Mission 02 must be completed before Mission 03");
+    }
+    const existing = await this.repository.findMissionProgress(enrollment.id, 3);
+    if (existing?.status === "COMPLETED") {
+      throw new ConflictError("Mission 03 is already completed");
+    }
+    if (!existing) throw new NotFoundError("Mission 03 progress");
+
+    const input = parseMissionThreeDraft(value);
+    const mergedTaskStates = missionThreeTaskStates.filter(
+      (task) => existing.taskStates.includes(task) || input.taskStates.includes(task),
+    );
+    const previousDraft =
+      existing.draft && typeof existing.draft === "object" && !Array.isArray(existing.draft)
+        ? existing.draft as { urgeLearning?: Record<string, unknown> }
+        : {};
+    const mergedLearning: Record<string, unknown> = {
+      ...(previousDraft.urgeLearning ?? {}),
+      ...input.urgeLearning,
+    };
+    if (input.urgeLearning.notNow === true) {
+      delete mergedLearning.earlySignalCategory;
+      delete mergedLearning.earlySignalText;
+    }
+    if (
+      input.urgeLearning.earlySignalCategory !== undefined ||
+      input.urgeLearning.earlySignalText !== undefined
+    ) {
+      mergedLearning.notNow = false;
+    }
+
+    const ready = mergedTaskStates.length === missionThreeTaskStates.length;
+    if (ready) parseUrgeLearningDraft(mergedLearning, { complete: true });
+    const saved = await this.repository.updateMissionDraftIfOpen({
+      enrollmentId: enrollment.id,
+      missionNumber: 3,
+      status: ready ? "READY_TO_SAVE" : "IN_PROGRESS",
+      taskStates: mergedTaskStates,
+      draft: { urgeLearning: mergedLearning as Prisma.InputJsonObject },
+    });
+    if (saved.count !== 1) {
+      throw new ConflictError("Mission 03 draft can no longer be changed");
+    }
+    const progress = await this.repository.findMissionProgress(enrollment.id, 3);
+    if (!progress) throw new NotFoundError("Mission 03 progress");
+    return {
+      missionNumber: 3,
+      status: serialiseMissionState(progress.status),
+      taskStates: progress.taskStates,
+      stages: missionThreeStages,
+      updatedAt: progress.updatedAt.toISOString(),
+    };
+  }
+
+  async completeMissionThree(userId: string, now = new Date()) {
+    return withSerializableRetry(() =>
+      this.repository.transaction(async (repository) => {
+        const source = await this.requireControlProgram(repository);
+        const enrollment = await repository.findEnrollment(userId, source.program.id);
+        if (!enrollment) throw new NotFoundError("Program enrollment");
+        const progress = await repository.findMissionProgress(enrollment.id, 3);
+        if (progress?.status === "COMPLETED") {
+          return this.dashboardFrom(repository, userId, source.program.id);
+        }
+        if (!progress) throw new NotFoundError("Mission 03 progress");
+        assertCompleteTasks(progress.taskStates, missionThreeTaskStates);
+        const stored = progress.draft as { urgeLearning?: unknown } | null;
+        const learning = parseUrgeLearningDraft(stored?.urgeLearning ?? {}, {
+          complete: true,
+        });
+        const missionTwo = await repository.findMissionProgress(enrollment.id, 2);
+        if (missionTwo?.status !== "COMPLETED") {
+          throw new ConflictError("Mission 02 must be completed before Mission 03");
+        }
+        const record = await repository.upsertUrgeLearningRecord({
+          enrollmentId: enrollment.id,
+          missionVersion: MISSION_THREE_VERSION,
+          learningItemId: MISSION_THREE_LEARNING_ITEM_ID,
+          evidenceVersion: MISSION_THREE_EVIDENCE_VERSION,
+          reviewedAt: now,
+          scenarioCheckCompletedAt: now,
+          meaningCheckCompletedAt: now,
+          earlySignalCategory: learning.notNow
+            ? null
+            : earlySignalCategory(learning.earlySignalCategory!),
+          earlySignalText: learning.notNow ? null : learning.earlySignalText ?? null,
+          notNow: Boolean(learning.notNow),
+        });
+        await repository.upsertMissionProgress({
+          enrollmentId: enrollment.id,
+          missionNumber: 3,
+          status: "COMPLETED",
+          taskStates: [...missionThreeTaskStates],
+          draft: Prisma.JsonNull,
+          completedAt: now,
+        });
+        await repository.upsertMissionProgress({
+          enrollmentId: enrollment.id,
+          missionNumber: 4,
+          status: "IN_PROGRESS",
+          taskStates: [],
+          draft: Prisma.JsonNull,
+          completedAt: null,
+        });
+        await repository.setEnrollmentCurrentStep(enrollment.id, source.program.steps[3].id);
+        await repository.recordProgressEvent({
+          enrollmentId: enrollment.id,
+          entityId: source.program.steps[2].id,
+          eventKey: `step:${source.program.steps[2].id}:completed`,
+        });
+        await repository.recordMissionXp({
+          userId,
+          programId: source.program.id,
+          missionNumber: 3,
+          xp: 90,
+          awardKey: missionThreeAwardKey,
+          sourceArtifactType: "URGE_LEARNING_RECORD",
+          sourceArtifactId: record.id,
+        });
+        await repository.recordActiveDay({
+          userId,
+          enrollmentId: enrollment.id,
+          localDate: dateOnlyUtc(localDateAt(now, enrollment.timezone)),
+          timezone: enrollment.timezone,
+          sourceEventKey: missionThreeAwardKey,
+          eligibleActivityAt: now,
+        });
+        return this.dashboardFrom(repository, userId, source.program.id);
+      }),
+    );
+  }
+
   async updateMomentMap(userId: string, value: unknown) {
     const { enrollment } = await this.requireEnrollment(userId);
     const momentMap = await this.repository.findMomentMap(enrollment.id);
@@ -475,6 +646,28 @@ export class ProgrammeFlowService {
     const currentGoal = await this.repository.findCurrentGoal(enrollment.id);
     if (!currentGoal || currentGoal.deletedAt) throw new NotFoundError("Current Goal");
     await this.repository.eraseCurrentGoal(currentGoal.id, now);
+  }
+
+  async updateUrgeLearningRecord(userId: string, value: unknown) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const record = await this.repository.findUrgeLearningRecord(enrollment.id);
+    if (!record || record.deletedAt) throw new NotFoundError("Urge Learning Record");
+    const input = parseEarlySignalChoice(value);
+    const updated = await this.repository.updateUrgeLearningRecord(record.id, {
+      earlySignalCategory: input.notNow
+        ? null
+        : earlySignalCategory(input.earlySignalCategory!),
+      earlySignalText: input.notNow ? null : input.earlySignalText ?? null,
+      notNow: input.notNow,
+    });
+    return this.urgeLearningRecordDto(updated);
+  }
+
+  async deleteUrgeLearningRecord(userId: string, now = new Date()) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const record = await this.repository.findUrgeLearningRecord(enrollment.id);
+    if (!record || record.deletedAt) throw new NotFoundError("Urge Learning Record");
+    await this.repository.eraseUrgeLearningRecord(record.id, now);
   }
 
   async getRewards(userId: string) {
@@ -600,9 +793,14 @@ export class ProgrammeFlowService {
         enrollment.currentGoal && !enrollment.currentGoal.deletedAt
           ? this.currentGoalDto(enrollment.currentGoal)
           : null,
+      urgeLearningRecord:
+        enrollment.urgeLearningRecord && !enrollment.urgeLearningRecord.deletedAt
+          ? this.urgeLearningRecordDto(enrollment.urgeLearningRecord)
+          : null,
       evidence: {
         mission01: programmeEvidence.mission01,
         mission02: programmeEvidence.mission02,
+        mission03: programmeEvidence.mission03,
       },
       rewardLedger: xpEvents.map((event) => ({
         eventType: event.eventType.toLowerCase(),
@@ -675,6 +873,36 @@ export class ProgrammeFlowService {
       confidence: value.confidence,
       confidenceAdjustment: value.confidenceAdjustment,
       status: value.status.toLowerCase(),
+      createdAt: value.createdAt.toISOString(),
+      updatedAt: value.updatedAt.toISOString(),
+    };
+  }
+
+  private urgeLearningRecordDto(value: {
+    id: string;
+    missionVersion: string;
+    learningItemId: string;
+    evidenceVersion: string;
+    reviewedAt: Date;
+    scenarioCheckCompletedAt: Date;
+    meaningCheckCompletedAt: Date;
+    earlySignalCategory: string | null;
+    earlySignalText: string | null;
+    notNow: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: value.id,
+      missionVersion: value.missionVersion,
+      learningItemId: value.learningItemId,
+      evidenceVersion: value.evidenceVersion,
+      reviewedAt: value.reviewedAt.toISOString(),
+      scenarioCheckCompletedAt: value.scenarioCheckCompletedAt.toISOString(),
+      meaningCheckCompletedAt: value.meaningCheckCompletedAt.toISOString(),
+      earlySignalCategory: value.earlySignalCategory?.toLowerCase() ?? null,
+      earlySignalText: value.earlySignalText,
+      notNow: value.notNow,
       createdAt: value.createdAt.toISOString(),
       updatedAt: value.updatedAt.toISOString(),
     };

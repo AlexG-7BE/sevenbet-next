@@ -1,19 +1,29 @@
 import type { Metadata } from "next";
+import { Archivo, Instrument_Serif } from "next/font/google";
 
-import { ProgramExperience } from "@/components/ProgramExperience";
-import {
-  programBuilderService,
-  programSnapshotToPublicSteps,
-} from "@/lib/services";
+import { ActiveControlProgramme } from "@/components/programme/ActiveControlProgramme";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-seven-sans",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: "400",
+  variable: "--font-seven-serif",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title:
-    "SevenBet 10-Step Control Program | Interactive Learning Experience",
+  title: "SevenBet 10-Step Control Program | Personal Control Plan",
   description:
-    "A guided educational program with saved progress, short lessons, scenario questions, quizzes, XP, achievements, and responsible gambling takeaways.",
+    "Build a private Moment Map, a practical seven-day goal and an editable early-signal card through SevenBet's evidence-informed Control Program.",
   alternates: {
     canonical: absoluteUrl("/program"),
   },
@@ -40,16 +50,9 @@ function breadcrumbSchema() {
   };
 }
 
-export default async function ProgramPage() {
-  const snapshot =
-    await programBuilderService.getPublishedSnapshot();
-
-  const steps = snapshot
-    ? programSnapshotToPublicSteps(snapshot)
-    : undefined;
-
+export default function ProgramPage() {
   return (
-    <>
+    <div className={`${archivo.variable} ${instrumentSerif.variable}`}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -58,11 +61,7 @@ export default async function ProgramPage() {
           ),
         }}
       />
-
-      <ProgramExperience
-        programId={snapshot?.program.id}
-        steps={steps}
-      />
-    </>
+      <ActiveControlProgramme />
+    </div>
   );
 }

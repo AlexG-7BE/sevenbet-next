@@ -19,6 +19,8 @@
     "achievement:test": "node --import tsx --test tests/achievement-engine.test.ts",
     "responsible-gambling:test": "node --import tsx --test tests/responsible-gambling-safety.test.ts",
     "programme:test": "node --import tsx --test tests/programme-flow.test.ts",
+    "programme:migrate": "prisma db execute --schema prisma/schema.prisma --file prisma/preflight/0015_active_control_program_flow.sql && prisma migrate deploy",
+    "programme:seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/seed-active-control-program.ts",
     "casino:test": "node --import tsx --test tests/casino-foundation.test.ts",
     "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
     "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",

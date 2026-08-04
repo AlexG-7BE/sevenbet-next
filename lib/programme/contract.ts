@@ -1,7 +1,10 @@
 export const CONTROL_PROGRAM_SLUG = "sevenbet-10-step-control-program";
 export const MISSION_ONE_VERSION = "mission-01-v1";
 export const MISSION_TWO_VERSION = "mission-02-v1";
+export const MISSION_THREE_VERSION = "mission-03-v1";
 export const EVIDENCE_CONTENT_VERSION = "rfc-002-2026-08-04";
+export const MISSION_THREE_EVIDENCE_VERSION = "rfc-009-2026-08-04";
+export const MISSION_THREE_LEARNING_ITEM_ID = "understand-the-urge-v1";
 
 export const missionOneTaskStates = [
   "brief",
@@ -35,6 +38,48 @@ export const missionTwoStages = {
   scenario_check: "Review",
   result_review: "Review",
 } as const;
+
+export const missionThreeTaskStates = [
+  "brief",
+  "cue_urge_action",
+  "urge_wave",
+  "scenario_check",
+  "signal_scan",
+  "signal_builder",
+  "meaning_check",
+  "result_review",
+] as const;
+
+export const missionThreeStages = {
+  brief: "Orient",
+  cue_urge_action: "Learn",
+  urge_wave: "Learn",
+  scenario_check: "Apply",
+  signal_scan: "Build",
+  signal_builder: "Build",
+  meaning_check: "Review",
+  result_review: "Review",
+} as const;
+
+export const urgeWaveMoments = [
+  "cue",
+  "early_signal",
+  "urge_builds",
+  "choice_point",
+] as const;
+
+export const earlySignalCategories = [
+  "body",
+  "thought",
+  "attention",
+  "action_tendency",
+  "not_sure",
+] as const;
+
+export const correctScenarioAnswer = "early_signal" as const;
+export const correctMeaningAnswer = "pause_information" as const;
+export const scenarioAnswers = ["cue", "early_signal", "action"] as const;
+export const meaningAnswers = ["proof_failure", "instruction_act", "pause_information"] as const;
 
 export const controlProgrammePath = [
   "Map the moment",
@@ -84,6 +129,48 @@ export const programmeEvidence = {
       limitation: "This self-directed goal is not motivational interviewing or treatment.",
     },
   ],
+  mission03: [
+    {
+      id: "NICE-NG248-2025",
+      source: "NICE",
+      title: "Gambling-related harms: identification, assessment and management",
+      url: "https://www.nice.org.uk/guidance/ng248/chapter/recommendations",
+      publishedAt: "2025-01-28",
+      contentVersion: MISSION_THREE_EVIDENCE_VERSION,
+      scope: "en-GB",
+      limitation: "SevenBet provides education, not clinician-led CBT, assessment, diagnosis or treatment.",
+    },
+    {
+      id: "NHS-GAMBLING-HELP",
+      source: "NHS",
+      title: "Help for problems with gambling",
+      url: "https://www.nhs.uk/live-well/addiction-support/gambling-addiction/",
+      publishedAt: "reviewed-current-source",
+      contentVersion: MISSION_THREE_EVIDENCE_VERSION,
+      scope: "en-GB",
+      limitation: "The NHS does not validate SevenBet or this mission.",
+    },
+    {
+      id: "CRAVING-SYSTEMATIC-REVIEW-2023",
+      source: "Systematic review",
+      title: "Craving in gambling disorder: a systematic review",
+      url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC10260221/",
+      publishedAt: "2023-06-07",
+      contentVersion: MISSION_THREE_EVIDENCE_VERSION,
+      scope: "educational-reference",
+      limitation: "Evidence is heterogeneous and does not establish a universal personal urge pattern.",
+    },
+    {
+      id: "CUE-REACTIVITY-2017",
+      source: "Research study",
+      title: "Neural substrates of cue reactivity and craving in gambling disorder",
+      url: "https://pmc.ncbi.nlm.nih.gov/articles/PMC5545724/",
+      publishedAt: "2017-08-01",
+      contentVersion: MISSION_THREE_EVIDENCE_VERSION,
+      scope: "educational-reference",
+      limitation: "A small laboratory study cannot predict an individual response or SevenBet outcome.",
+    },
+  ],
 } as const;
 
 export type MissionState =
@@ -126,6 +213,18 @@ export type CurrentGoalInput = {
   confidence: number;
   confidenceAdjustment: string;
   status: "active" | "completed" | "paused";
+};
+
+export type EarlySignalCategoryInput = (typeof earlySignalCategories)[number];
+
+export type UrgeLearningDraftInput = {
+  evidenceReviewed: boolean;
+  waveMomentsReviewed: (typeof urgeWaveMoments)[number][];
+  scenarioAnswer?: (typeof scenarioAnswers)[number];
+  earlySignalCategory?: EarlySignalCategoryInput;
+  earlySignalText?: string;
+  notNow: boolean;
+  meaningAnswer?: (typeof meaningAnswers)[number];
 };
 
 export function missionStateFromTaskCount(

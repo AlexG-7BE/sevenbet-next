@@ -311,6 +311,14 @@ enum GoalStatus {
   PAUSED
 }
 
+enum EarlySignalCategory {
+  BODY
+  THOUGHT
+  ATTENTION
+  ACTION_TENDENCY
+  NOT_SURE
+}
+
 model AdminUser {
   id        String    @id @default(uuid()) @db.Uuid
   userId    String?   @unique
@@ -540,6 +548,7 @@ model ProgramEnrollment {
   missionProgress ProgrammeMissionProgress[]
   momentMap       MomentMap?
   currentGoal     CurrentGoal?
+  urgeLearningRecord UrgeLearningRecord?
   activeDays      ProgrammeActiveDay[]
 
   @@unique([userId, programId])
@@ -724,6 +733,27 @@ model CurrentGoal {
   sourceMomentMap MomentMap         @relation(fields: [sourceMomentMapId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([sourceMomentMapId])
+}
+
+/// Private Mission 03 learning record. Personal signal text stays inside the
+/// Programme aggregate and is never copied to event or reward ledgers.
+model UrgeLearningRecord {
+  id                       String               @id @default(uuid()) @db.Uuid
+  enrollmentId             String               @unique @db.Uuid
+  missionVersion           String
+  learningItemId           String
+  evidenceVersion          String
+  reviewedAt               DateTime
+  scenarioCheckCompletedAt DateTime
+  meaningCheckCompletedAt  DateTime
+  earlySignalCategory      EarlySignalCategory?
+  earlySignalText          String?
+  notNow                   Boolean              @default(false)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  deletedAt                DateTime?
+
+  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 }
 
 /// One eligible programme day per user-local date. Voiding preserves the

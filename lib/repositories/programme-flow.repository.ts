@@ -1,4 +1,5 @@
 import {
+  type EarlySignalCategory,
   EditorialStatus,
   Prisma,
   type GoalDirection,
@@ -319,6 +320,50 @@ export class ProgrammeFlowRepository {
     });
   }
 
+  findUrgeLearningRecord(enrollmentId: string) {
+    return this.database.urgeLearningRecord.findUnique({ where: { enrollmentId } });
+  }
+
+  upsertUrgeLearningRecord(input: {
+    enrollmentId: string;
+    missionVersion: string;
+    learningItemId: string;
+    evidenceVersion: string;
+    reviewedAt: Date;
+    scenarioCheckCompletedAt: Date;
+    meaningCheckCompletedAt: Date;
+    earlySignalCategory: EarlySignalCategory | null;
+    earlySignalText: string | null;
+    notNow: boolean;
+  }) {
+    const { enrollmentId, ...data } = input;
+    return this.database.urgeLearningRecord.upsert({
+      where: { enrollmentId },
+      update: { ...data, deletedAt: null },
+      create: { enrollmentId, ...data },
+    });
+  }
+
+  updateUrgeLearningRecord(id: string, data: {
+    earlySignalCategory: EarlySignalCategory | null;
+    earlySignalText: string | null;
+    notNow: boolean;
+  }) {
+    return this.database.urgeLearningRecord.update({ where: { id }, data });
+  }
+
+  eraseUrgeLearningRecord(id: string, now: Date) {
+    return this.database.urgeLearningRecord.update({
+      where: { id },
+      data: {
+        earlySignalCategory: null,
+        earlySignalText: null,
+        notNow: true,
+        deletedAt: now,
+      },
+    });
+  }
+
   recordProgressEvent(input: {
     enrollmentId: string;
     entityId: string;
@@ -412,6 +457,7 @@ export class ProgrammeFlowRepository {
           missionProgress: { orderBy: { missionNumber: "asc" } },
           momentMap: true,
           currentGoal: true,
+          urgeLearningRecord: true,
           activeDays: {
             where: { voidedAt: null },
             orderBy: { localDate: "asc" },

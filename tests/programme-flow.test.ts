@@ -5,6 +5,7 @@ import test from "node:test";
 import type { ProgrammeFlowRepository } from "../lib/repositories/programme-flow.repository";
 import {
   missionOneTaskStates,
+  missionThreeTaskStates,
   missionTwoTaskStates,
 } from "../lib/programme/contract";
 import { activeDayStreak, localDateAt } from "../lib/programme/security";
@@ -43,6 +44,22 @@ function goal(sourceMomentMapId: string, base = now) {
   };
 }
 
+function urgeLearning(notNow = false) {
+  return {
+    evidenceReviewed: true,
+    waveMomentsReviewed: ["cue", "early_signal", "urge_builds", "choice_point"],
+    scenarioAnswer: "early_signal",
+    ...(notNow
+      ? { notNow: true }
+      : {
+          earlySignalCategory: "attention",
+          earlySignalText: "My attention narrows onto the next offer",
+          notNow: false,
+        }),
+    meaningAnswer: "pause_information",
+  };
+}
+
 class MemoryProgrammeRepository {
   private sequence = 10;
   anonymousSessions: any[] = [];
@@ -51,6 +68,7 @@ class MemoryProgrammeRepository {
   missions: any[] = [];
   momentMaps: any[] = [];
   goals: any[] = [];
+  urgeRecords: any[] = [];
   xpEvents: any[] = [];
   activeDays: any[] = [];
   unlocks: any[] = [];
@@ -232,6 +250,35 @@ class MemoryProgrammeRepository {
     });
   }
 
+  async findUrgeLearningRecord(enrollmentId: string) {
+    return this.urgeRecords.find((item) => item.enrollmentId === enrollmentId) ?? null;
+  }
+
+  async upsertUrgeLearningRecord(input: any) {
+    let row = await this.findUrgeLearningRecord(input.enrollmentId);
+    if (row) Object.assign(row, input, { updatedAt: now, deletedAt: null });
+    else {
+      row = { id: this.id(), createdAt: now, updatedAt: now, deletedAt: null, ...input };
+      this.urgeRecords.push(row);
+    }
+    return row;
+  }
+
+  async updateUrgeLearningRecord(id: string, data: any) {
+    const row = this.urgeRecords.find((item) => item.id === id)!;
+    Object.assign(row, data, { updatedAt: new Date(now.getTime() + 1_000) });
+    return row;
+  }
+
+  async eraseUrgeLearningRecord(id: string, at: Date) {
+    return this.updateUrgeLearningRecord(id, {
+      earlySignalCategory: null,
+      earlySignalText: null,
+      notNow: true,
+      deletedAt: at,
+    });
+  }
+
   async recordProgressEvent() { return { count: 1 }; }
 
   async recordMissionXp(input: any) {
@@ -276,6 +323,7 @@ class MemoryProgrammeRepository {
             .sort((a, b) => a.missionNumber - b.missionNumber),
           momentMap: await this.findMomentMap(enrollment.id),
           currentGoal: await this.findCurrentGoal(enrollment.id),
+          urgeLearningRecord: await this.findUrgeLearningRecord(enrollment.id),
           activeDays: this.activeDays.filter((item) => item.enrollmentId === enrollment.id && !item.voidedAt),
         }
       : null;
@@ -308,6 +356,16 @@ async function registeredFlow(completionDate = now) {
     currentGoal: goal(mapId, completionDate),
   });
   return { repository, service, started, dashboard, mapId };
+}
+
+async function missionThreeFlow(completionDate = now) {
+  const flow = await registeredFlow(completionDate);
+  await flow.service.completeMissionTwo("user-1", completionDate);
+  await flow.service.saveMissionThreeDraft("user-1", {
+    taskStates: [...missionThreeTaskStates],
+    urgeLearning: urgeLearning(),
+  });
+  return flow;
 }
 
 test("anonymous Mission 01 reaches registration_required without persistent XP", async () => {
@@ -404,6 +462,93 @@ test("Mission 02 completion awards 80 XP, First Plan and Mission 03 exactly once
   assert.equal(first.missions[2].status, "current");
 });
 
+test("Mission 03 is authenticated, resumable and rejects incomplete learning checks", async () => {
+  const { repository, service } = await registeredFlow();
+  await service.completeMissionTwo("user-1", now);
+  await service.saveMissionThreeDraft("user-1", {
+    taskStates: missionThreeTaskStates.slice(0, 7),
+    urgeLearning: { ...urgeLearning(), meaningAnswer: "proof_failure" },
+  });
+  await assert.rejects(
+    () => service.completeMissionThree("user-1", now),
+    /task states are incomplete/i,
+  );
+  const draft = await service.getMissionThreeDraft("user-1");
+  assert.equal(draft.taskStates.length, 7);
+  assert.equal(repository.xpEvents.length, 2);
+  await assert.rejects(() => service.getMissionThreeDraft("user-2"), /enrollment not found/i);
+  const route = readFileSync("app/api/program/missions/03/route.ts", "utf8");
+  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+});
+
+test("Mission 03 accepts empty unanswered checks during early autosave", async () => {
+  const { service } = await registeredFlow();
+  await service.completeMissionTwo("user-1", now);
+  const saved = await service.saveMissionThreeDraft("user-1", {
+    taskStates: ["brief"],
+    urgeLearning: {
+      evidenceReviewed: false,
+      waveMomentsReviewed: [],
+      scenarioAnswer: "",
+      meaningAnswer: "",
+      notNow: false,
+    },
+  });
+  assert.deepEqual(saved.taskStates, ["brief"]);
+  assert.equal(saved.status, "in_progress");
+});
+
+test("Mission 03 completion awards exactly 90 XP and makes Mission 04 current", async () => {
+  const { repository, service } = await missionThreeFlow();
+  const [first, retry] = await Promise.all([
+    service.completeMissionThree("user-1", now),
+    service.completeMissionThree("user-1", now),
+  ]);
+  assert.equal(first.totalXp, 230);
+  assert.equal(retry.totalXp, 230);
+  assert.equal(repository.xpEvents.length, 3);
+  assert.equal(repository.xpEvents.reduce((sum, item) => sum + item.xp, 0), 230);
+  assert.equal(first.currentMission, 4);
+  assert.equal(first.missions[2].status, "completed");
+  assert.equal(first.missions[3].status, "current");
+  assert.equal(first.achievements[0].state, "earned");
+  assert.equal(first.urgeLearningRecord?.earlySignalCategory, "attention");
+  assert.equal(first.urgeLearningRecord?.earlySignalText, "My attention narrows onto the next offer");
+  assert.ok(first.evidence.mission03.length >= 4);
+});
+
+test("Mission 03 not-now path completes without compulsory personal disclosure", async () => {
+  const flow = await registeredFlow();
+  await flow.service.completeMissionTwo("user-1", now);
+  await flow.service.saveMissionThreeDraft("user-1", {
+    taskStates: [...missionThreeTaskStates],
+    urgeLearning: urgeLearning(true),
+  });
+  const dashboard = await flow.service.completeMissionThree("user-1", now);
+  assert.equal(dashboard.totalXp, 230);
+  assert.equal(dashboard.urgeLearningRecord?.notNow, true);
+  assert.equal(dashboard.urgeLearningRecord?.earlySignalCategory, null);
+  assert.equal(dashboard.urgeLearningRecord?.earlySignalText, null);
+});
+
+test("Mission 03 private signal can be edited or deleted without rewriting completion", async () => {
+  const { repository, service } = await missionThreeFlow();
+  await service.completeMissionThree("user-1", now);
+  const updated = await service.updateUrgeLearningRecord("user-1", {
+    earlySignalCategory: "body",
+    earlySignalText: "My shoulders tense",
+    notNow: false,
+  });
+  assert.equal(updated.earlySignalCategory, "body");
+  await service.deleteUrgeLearningRecord("user-1", now);
+  assert.equal(repository.urgeRecords[0].earlySignalText, null);
+  assert.ok(repository.urgeRecords[0].deletedAt);
+  const dashboard = await service.getDashboard("user-1");
+  assert.equal(dashboard.urgeLearningRecord, null);
+  assert.equal(dashboard.currentMission, 4);
+  assert.equal(dashboard.totalXp, 230);
+});
+
 test("same local day is one active day; next local day advances the streak", async () => {
   const sameDay = await registeredFlow();
   const dashboard = await sameDay.service.completeMissionTwo("user-1", now);
@@ -468,12 +613,19 @@ test("schema and migration enforce idempotency, ownership, confidence and non-ne
     "prisma/migrations/0015_active_control_program_flow/migration.sql",
     "utf8",
   );
+  const missionThreeMigration = readFileSync(
+    "prisma/migrations/0016_mission_03_urge_learning/migration.sql",
+    "utf8",
+  );
   assert.match(schema, /@@unique\(\[userId, localDate\]\)/);
   assert.match(schema, /@@unique\(\[enrollmentId, missionNumber\]\)/);
   assert.match(migration, /UserXpEvent_non_negative_check/);
   assert.match(migration, /CurrentGoal_confidence_check/);
   assert.match(migration, /PendingProgrammeClaim_tokenHash_key/);
   assert.match(migration, /ON DELETE CASCADE ON UPDATE CASCADE/);
+  assert.match(schema, /model UrgeLearningRecord/);
+  assert.match(missionThreeMigration, /UrgeLearningRecord_signal_choice_check/);
+  assert.match(missionThreeMigration, /UrgeLearningRecord_enrollmentId_key/);
 });
 
 test("validation rejects invalid confidence and client-authored reward fields", async () => {
