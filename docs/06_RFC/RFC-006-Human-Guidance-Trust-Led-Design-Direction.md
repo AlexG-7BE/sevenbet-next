@@ -1,10 +1,11 @@
 ---
 Title: RFC-006 — Human Guidance Trust-Led Design Direction
-Status: Approved
+Status: Superseded
 Classification: Internal
 Owner: Founder / Product / Design
 Date: 2026-08-03
 Amended: 2026-08-03
+Superseded: 2026-08-04 by RFC-007
 Decision: Supersede Prismatic Product Theatre with a warmer, product-visible Human Guidance direction and make the Home body a single-action, evidence-informed acquisition narrative for the 10-Step Control Program.
 Supersedes:
   - ./RFC-005-Prismatic-Product-Theatre-Design-Direction.md
@@ -16,6 +17,8 @@ Governing Documents:
   - ./RFC-003-Program-Led-Commercial-Growth.md
   - ./RFC-004-Commercial-Launch-Delivery-Plan.md
 ---
+
+> Superseded on 2026-08-04 by [RFC-007 — Tilt-Locked Human Product Theatre](./RFC-007-Tilt-Locked-Human-Product-Theatre.md). This document remains the historical record of the Human Guidance decision and its compliance constraints.
 
 # RFC-006 — Human Guidance Trust-Led Design Direction
 

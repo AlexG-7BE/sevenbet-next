@@ -14,7 +14,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Technical Baseline verified against the actual implementation repository
 
-✅ Product & Design trust-direction reset — RFC-006 approves “Human Guidance” and supersedes Prismatic Product Theatre
+✅ Product & Design visual reset — RFC-007 approves “Tilt-Locked Human Product Theatre” and supersedes Human Guidance
 
 ✅ Legacy Figma foundation baseline recorded: 7 collections, 77 variables, semantic Light / Ink / Help collections, 10 Manrope text styles, and 3 elevation styles
 
@@ -26,7 +26,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 🟨 RFC-004 — Commercial Launch Delivery Plan approved; Milestone 0 launch contract is the next implementation gate
 
-🟨 RFC-006 — Human Guidance approved and amended to a single-action, evidence-informed Program Home; foundations and key journeys require validation
+✅ RFC-007 — Tilt-Locked Human Product Theatre approved; Figma foundations/components and interactive Next.js Home validated on desktop
 
 🟨 Product & Design reset — legacy foundations and screens remain historical artefacts until the replacement system is validated
 
@@ -36,9 +36,9 @@ Technical Baseline completed.
 
 Documentation structure normalized before Phase 2.
 
-Product & Design preparation is aligned with the approved Product Vision: the 10-Step Control Program is the central product layer; discovery remains accessible without programme completion; and Help / self-exclusion is a protected, non-commercial route. RFC-006 supersedes RFC-005 and approves “Human Guidance” as the active trust-led creative direction.
+Product & Design preparation is aligned with the approved Product Vision: the 10-Step Control Program is the central product layer; discovery remains accessible without programme completion; and Help / self-exclusion is a protected, non-commercial route. RFC-007 supersedes RFC-006 and approves “Tilt-Locked Human Product Theatre” as the active visual direction.
 
-Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. Existing Calm Editorial, Midnight Field and Prismatic pages, foundations and components remain detected historical design artefacts, not shipped application behaviour. RFC-006 is now the future visual authority. Human Guidance must be built in a separate working area, validated with materially lower Home copy density, and reconciled with reusable foundations only after acceptance.
+Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. Existing Calm Editorial, Midnight Field, Prismatic and Human Guidance pages, foundations and components remain detected historical design artefacts. RFC-007 is the active visual authority. The separate Tilt-Locked foundations, reusable Core/SevenBet components and desktop Home are now present in Figma. The same Home is implemented at `/` in Next.js with an interactive programme carousel, persistent navigation, responsive layout, motion/reduced-motion behaviour, programme-tool states and working Program/Help routes. Broader journey migration remains pending.
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation.
 
@@ -71,8 +71,8 @@ Architecture not started.
 
 ## Current Milestone
 
-Complete Product Master Plan while validating the Human Guidance Home and trust-led system in Figma
+Complete Product Master Plan while validating the Tilt-Locked Home and consumer-product system in Figma
 
 ## Next Milestone
 
-Architecture Alignment; validate Human Guidance desktop/mobile Home before broader component and journey migration
+Architecture Alignment; validate Tilt-Locked desktop/mobile Home before broader component and journey migration
