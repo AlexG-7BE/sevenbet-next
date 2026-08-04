@@ -9,9 +9,15 @@ import {
   missionThreeTaskStates,
   missionTwoTaskStates,
 } from "../lib/programme/contract";
+import { programmeErrorResponse } from "../lib/programme/http";
+import {
+  assertProgrammeRateLimit,
+  resetProgrammeRateLimitsForTests,
+} from "../lib/programme/rate-limit";
 import { activeDayStreak, localDateAt } from "../lib/programme/security";
 import { ValidationError } from "../lib/services/service-error";
 import { ProgrammeFlowService } from "../lib/services/programme-flow.service";
+import { parseActiveBoundary } from "../lib/programme/validation";
 
 const now = new Date("2026-08-04T10:00:00.000Z");
 const programmeId = "10000000-0000-4000-8000-000000000001";
@@ -83,8 +89,22 @@ function activeBoundary(base = now) {
   };
 }
 
+function cloneMemoryState<T>(value: T): T {
+  if (value instanceof Date) return new Date(value.getTime()) as T;
+  if (Array.isArray(value)) return value.map((item) => cloneMemoryState(item)) as T;
+  if (value && typeof value === "object") {
+    if (typeof (value as { toNumber?: unknown }).toNumber === "function") return value;
+    return Object.fromEntries(
+      Object.entries(value).map(([key, item]) => [key, cloneMemoryState(item)]),
+    ) as T;
+  }
+  return value;
+}
+
 class MemoryProgrammeRepository {
   private sequence = 10;
+  private transactionQueue: Promise<void> = Promise.resolve();
+  private failureStage: string | null = null;
   anonymousSessions: any[] = [];
   claims: any[] = [];
   enrollments: any[] = [];
@@ -96,14 +116,61 @@ class MemoryProgrammeRepository {
   xpEvents: any[] = [];
   activeDays: any[] = [];
   unlocks: any[] = [];
+  progressEvents: any[] = [];
 
   private id() {
     this.sequence += 1;
     return `10000000-0000-4000-8000-${String(this.sequence).padStart(12, "0")}`;
   }
 
+  failNext(stage: string) {
+    this.failureStage = stage;
+  }
+
+  private maybeFail(stage: string) {
+    if (this.failureStage !== stage) return;
+    this.failureStage = null;
+    throw new Error(`Injected failure at ${stage}`);
+  }
+
   transaction<T>(operation: (repository: any) => Promise<T>) {
-    return operation(this);
+    const run = this.transactionQueue.then(async () => {
+      const snapshot = cloneMemoryState({
+        sequence: this.sequence,
+        anonymousSessions: this.anonymousSessions,
+        claims: this.claims,
+        enrollments: this.enrollments,
+        missions: this.missions,
+        momentMaps: this.momentMaps,
+        goals: this.goals,
+        urgeRecords: this.urgeRecords,
+        boundaries: this.boundaries,
+        xpEvents: this.xpEvents,
+        activeDays: this.activeDays,
+        unlocks: this.unlocks,
+        progressEvents: this.progressEvents,
+      });
+      try {
+        return await operation(this);
+      } catch (error) {
+        this.sequence = snapshot.sequence;
+        this.anonymousSessions = snapshot.anonymousSessions;
+        this.claims = snapshot.claims;
+        this.enrollments = snapshot.enrollments;
+        this.missions = snapshot.missions;
+        this.momentMaps = snapshot.momentMaps;
+        this.goals = snapshot.goals;
+        this.urgeRecords = snapshot.urgeRecords;
+        this.boundaries = snapshot.boundaries;
+        this.xpEvents = snapshot.xpEvents;
+        this.activeDays = snapshot.activeDays;
+        this.unlocks = snapshot.unlocks;
+        this.progressEvents = snapshot.progressEvents;
+        throw error;
+      }
+    });
+    this.transactionQueue = run.then(() => undefined, () => undefined);
+    return run;
   }
 
   async createAnonymousSession(input: any) {
@@ -337,9 +404,17 @@ class MemoryProgrammeRepository {
     });
   }
 
-  async recordProgressEvent() { return { count: 1 }; }
+  async recordProgressEvent(input: any) {
+    const existing = this.progressEvents.find(
+      (item) => item.enrollmentId === input.enrollmentId && item.eventKey === input.eventKey,
+    );
+    if (existing) return { count: 0 };
+    this.progressEvents.push({ id: this.id(), createdAt: now, ...input });
+    return { count: 1 };
+  }
 
   async recordMissionXp(input: any) {
+    this.maybeFail("recordMissionXp");
     const existing = this.xpEvents.find((item) => item.userId === input.userId && item.awardKey === input.awardKey);
     if (existing) return { count: 0 };
     this.xpEvents.push({ id: this.id(), eventType: "MISSION_COMPLETION", createdAt: now, ...input });
@@ -347,6 +422,7 @@ class MemoryProgrammeRepository {
   }
 
   async recordActiveDay(input: any) {
+    this.maybeFail("recordActiveDay");
     const key = input.localDate.toISOString().slice(0, 10);
     const existing = this.activeDays.find(
       (item) => item.userId === input.userId && item.localDate.toISOString().slice(0, 10) === key,
@@ -365,6 +441,7 @@ class MemoryProgrammeRepository {
   }
 
   async unlockAchievement(input: any) {
+    this.maybeFail("unlockAchievement");
     if (this.unlocks.some((item) => item.userId === input.userId && item.awardKey === input.awardKey)) return { count: 0 };
     this.unlocks.push({
       id: this.id(),
@@ -373,6 +450,19 @@ class MemoryProgrammeRepository {
       achievement: input.achievementId.endsWith("2")
         ? { id: input.achievementId, slug: "boundary-built", title: "Boundary Built" }
         : { id: input.achievementId, slug: "first-plan", title: "First Plan" },
+    });
+    return { count: 1 };
+  }
+
+  async voidActiveDay(input: any) {
+    const row = this.activeDays.find(
+      (item) => item.id === input.activeDayId && !item.voidedAt,
+    );
+    if (!row) return { count: 0 };
+    Object.assign(row, {
+      voidedAt: input.voidedAt,
+      voidReason: input.reason,
+      voidedByAdminId: input.adminUserId,
     });
     return { count: 1 };
   }
@@ -495,6 +585,53 @@ test("claim redemption saves the Moment Map, gives exactly 60 XP and is one-use"
   assert.equal(repository.momentMaps.length, 1);
 });
 
+test("invalid claims fail closed without creating persistent Programme state", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", "unknown-claim", "UTC", now),
+    /claim not found/i,
+  );
+  assert.equal(repository.enrollments.length, 0);
+  assert.equal(repository.momentMaps.length, 0);
+  assert.equal(repository.xpEvents.length, 0);
+});
+
+test("one pending claim cannot be redeemed concurrently by two users", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  const attempts = await Promise.allSettled([
+    service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    service.redeemPendingClaim("user-2", started.claim.claimToken, "UTC", now),
+  ]);
+  assert.equal(attempts.filter((item) => item.status === "fulfilled").length, 1);
+  assert.equal(attempts.filter((item) => item.status === "rejected").length, 1);
+  assert.equal(repository.enrollments.length, 1);
+  assert.equal(repository.momentMaps.length, 1);
+  assert.equal(repository.xpEvents.length, 1);
+  assert.ok(["user-1", "user-2"].includes(repository.claims[0].consumedByUserId));
+});
+
+test("Mission 01 claim redemption rolls back claim, artefact and progress on failure", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  repository.failNext("recordActiveDay");
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    /Injected failure at recordActiveDay/,
+  );
+  assert.equal(repository.claims[0].consumedAt, null);
+  assert.equal(repository.enrollments.length, 0);
+  assert.equal(repository.momentMaps.length, 0);
+  assert.equal(repository.missions.length, 0);
+  assert.equal(repository.xpEvents.length, 0);
+  assert.equal(repository.activeDays.length, 0);
+  assert.equal(repository.anonymousSessions[0].missionState, "REGISTRATION_REQUIRED");
+  assert.ok(repository.anonymousSessions[0].draft);
+});
+
 test("Dashboard after Mission 01 has the approved state", async () => {
   const { dashboard } = await registeredFlow();
   assert.equal(dashboard.totalXp, 60);
@@ -521,6 +658,18 @@ test("Mission 02 draft is owner-scoped and incomplete tasks cannot complete", as
   assert.equal(repository.xpEvents.length, 1);
 });
 
+test("Mission 02 remains locked until Mission 01 is completed", async () => {
+  const { repository, service, mapId } = await registeredFlow();
+  repository.missions.find((item) => item.missionNumber === 1)!.status = "IN_PROGRESS";
+  await assert.rejects(
+    () => service.saveMissionTwoDraft("user-1", {
+      taskStates: [...missionTwoTaskStates],
+      currentGoal: goal(mapId),
+    }),
+    /Mission 01 must be completed/i,
+  );
+});
+
 test("Mission 02 completion awards 80 XP, First Plan and Mission 03 exactly once", async () => {
   const { repository, service } = await registeredFlow();
   const [first, retry] = await Promise.all([
@@ -535,6 +684,22 @@ test("Mission 02 completion awards 80 XP, First Plan and Mission 03 exactly once
   assert.equal(first.currentMission, 3);
   assert.equal(first.missions[1].status, "completed");
   assert.equal(first.missions[2].status, "current");
+});
+
+test("Mission 02 completion rolls back goal, progression, XP and achievement together", async () => {
+  const { repository, service } = await registeredFlow();
+  repository.failNext("unlockAchievement");
+  await assert.rejects(
+    () => service.completeMissionTwo("user-1", now),
+    /Injected failure at unlockAchievement/,
+  );
+  assert.equal(repository.goals.length, 0);
+  assert.equal(repository.missions.find((item) => item.missionNumber === 2)?.status, "READY_TO_SAVE");
+  assert.equal(repository.missions.some((item) => item.missionNumber === 3), false);
+  assert.equal(repository.xpEvents.length, 1);
+  assert.equal(repository.unlocks.length, 0);
+  const dashboard = await service.completeMissionTwo("user-1", now);
+  assert.equal(dashboard.totalXp, 140);
 });
 
 test("Mission 03 is authenticated, resumable and rejects incomplete learning checks", async () => {
@@ -554,6 +719,17 @@ test("Mission 03 is authenticated, resumable and rejects incomplete learning che
   await assert.rejects(() => service.getMissionThreeDraft("user-2"), /enrollment not found/i);
   const route = readFileSync("app/api/program/missions/03/route.ts", "utf8");
   assert.match(route, /requireCurrentUser\(request\.headers\)/);
+});
+
+test("Mission 03 remains locked until Mission 02 is completed", async () => {
+  const { service } = await registeredFlow();
+  await assert.rejects(
+    () => service.saveMissionThreeDraft("user-1", {
+      taskStates: [...missionThreeTaskStates],
+      urgeLearning: urgeLearning(),
+    }),
+    /Mission 02 must be completed/i,
+  );
 });
 
 test("Mission 03 accepts empty unanswered checks during early autosave", async () => {
@@ -590,6 +766,21 @@ test("Mission 03 completion awards exactly 90 XP and makes Mission 04 current", 
   assert.equal(first.urgeLearningRecord?.earlySignalCategory, "attention");
   assert.equal(first.urgeLearningRecord?.earlySignalText, "My attention narrows onto the next offer");
   assert.ok(first.evidence.mission03.length >= 4);
+});
+
+test("Mission 03 completion rolls back learning record, progression and XP on failure", async () => {
+  const { repository, service } = await missionThreeFlow();
+  repository.failNext("recordActiveDay");
+  await assert.rejects(
+    () => service.completeMissionThree("user-1", now),
+    /Injected failure at recordActiveDay/,
+  );
+  assert.equal(repository.urgeRecords.length, 0);
+  assert.equal(repository.missions.find((item) => item.missionNumber === 3)?.status, "READY_TO_SAVE");
+  assert.equal(repository.missions.some((item) => item.missionNumber === 4), false);
+  assert.equal(repository.xpEvents.length, 2);
+  const dashboard = await service.completeMissionThree("user-1", now);
+  assert.equal(dashboard.totalXp, 230);
 });
 
 test("Mission 03 not-now path completes without compulsory personal disclosure", async () => {
@@ -646,10 +837,42 @@ test("Mission 04 is authenticated, resumable and requires all structure checks",
   assert.match(route, /requireCurrentUser\(request\.headers\)/);
 });
 
+test("Mission 04 remains locked until Mission 03 is completed", async () => {
+  const { service } = await missionThreeFlow();
+  await assert.rejects(
+    () => service.saveMissionFourDraft("user-1", {
+      taskStates: [...missionFourTaskStates],
+      activeBoundary: activeBoundary(),
+    }),
+    /Mission 03 must be completed/i,
+  );
+});
+
+test("Mission 04 validation rejects unsupported or incomplete boundary structures", () => {
+  assert.throws(
+    () => parseActiveBoundary({ ...activeBoundary(), category: "unsupported" }, { complete: true, now }),
+    /category is not supported/i,
+  );
+  assert.throws(
+    () => parseActiveBoundary({ ...activeBoundary(), triggerType: "custom", triggerText: "" }, { complete: true, now }),
+    /decision point is required/i,
+  );
+  assert.throws(
+    () => parseActiveBoundary({ ...activeBoundary(), executionMethod: "custom", executionDetail: "" }, { complete: true, now }),
+    /execution method requires detail/i,
+  );
+  assert.throws(
+    () => parseActiveBoundary({ ...activeBoundary(), strengthChecks: ["specific"] }, { complete: true, now }),
+    /Every boundary strength check is required/i,
+  );
+});
+
 test("Mission 04 completion awards exactly 100 XP, Boundary Built and Mission 05", async () => {
   const { repository, service } = await missionFourFlow();
-  const first = await service.completeMissionFour("user-1", now);
-  const retry = await service.completeMissionFour("user-1", now);
+  const [first, retry] = await Promise.all([
+    service.completeMissionFour("user-1", now),
+    service.completeMissionFour("user-1", now),
+  ]);
   assert.equal(first.totalXp, 330);
   assert.equal(retry.totalXp, 330);
   assert.equal(repository.xpEvents.length, 4);
@@ -663,6 +886,33 @@ test("Mission 04 completion awards exactly 100 XP, Boundary Built and Mission 05
   assert.equal(first.activeBoundary?.triggerText, "My attention narrows onto the next offer");
   assert.ok(first.evidence.mission04.length >= 4);
   assert.equal(first.activeDays, 1);
+});
+
+test("Mission 04 completion rolls back artefact and progression when reward persistence fails", async () => {
+  const { repository, service } = await missionFourFlow();
+  repository.failNext("recordMissionXp");
+  await assert.rejects(
+    () => service.completeMissionFour("user-1", now),
+    /Injected failure at recordMissionXp/,
+  );
+  assert.equal(repository.boundaries.length, 0);
+  assert.equal(repository.missions.find((item) => item.missionNumber === 4)?.status, "READY_TO_SAVE");
+  assert.equal(repository.missions.some((item) => item.missionNumber === 5), false);
+  assert.equal(repository.xpEvents.length, 3);
+});
+
+test("Mission 04 completion rolls back artefact, progression and XP when achievement persistence fails", async () => {
+  const { repository, service } = await missionFourFlow();
+  repository.failNext("unlockAchievement");
+  await assert.rejects(
+    () => service.completeMissionFour("user-1", now),
+    /Injected failure at unlockAchievement/,
+  );
+  assert.equal(repository.boundaries.length, 0);
+  assert.equal(repository.missions.find((item) => item.missionNumber === 4)?.status, "READY_TO_SAVE");
+  assert.equal(repository.missions.some((item) => item.missionNumber === 5), false);
+  assert.equal(repository.xpEvents.length, 3);
+  assert.equal(repository.unlocks.length, 1);
 });
 
 test("Mission 04 boundary can be edited or erased without rewriting XP or completion", async () => {
@@ -708,10 +958,77 @@ test("commercial activity cannot enter the Programme reward or active-day ledger
 });
 
 test("foreign artefacts cannot be read, edited or deleted", async () => {
-  const { service } = await registeredFlow();
+  const { service } = await missionFourFlow();
+  await service.completeMissionFour("user-1", now);
+  await assert.rejects(() => service.getDashboard("user-2"), /enrollment not found/i);
   await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /enrollment not found/i);
   await assert.rejects(() => service.deleteMomentMap("user-2", now), /enrollment not found/i);
   await assert.rejects(() => service.updateCurrentGoal("user-2", { action: "foreign" }, now), /enrollment not found/i);
+  await assert.rejects(() => service.deleteCurrentGoal("user-2", now), /enrollment not found/i);
+  await assert.rejects(
+    () => service.updateUrgeLearningRecord("user-2", { notNow: true }),
+    /enrollment not found/i,
+  );
+  await assert.rejects(() => service.deleteUrgeLearningRecord("user-2", now), /enrollment not found/i);
+  await assert.rejects(
+    () => service.updateActiveBoundary("user-2", { ruleText: "foreign" }, now),
+    /enrollment not found/i,
+  );
+  await assert.rejects(() => service.deleteActiveBoundary("user-2", now), /enrollment not found/i);
+});
+
+test("repeated Dashboard reads are stable and do not mutate Programme state", async () => {
+  const { repository, service } = await missionFourFlow();
+  await service.completeMissionFour("user-1", now);
+  const counts = {
+    missions: repository.missions.length,
+    xp: repository.xpEvents.length,
+    achievements: repository.unlocks.length,
+    activeDays: repository.activeDays.length,
+  };
+  const first = await service.getDashboard("user-1");
+  const second = await service.getDashboard("user-1");
+  assert.deepEqual(second, first);
+  assert.deepEqual(
+    {
+      missions: repository.missions.length,
+      xp: repository.xpEvents.length,
+      achievements: repository.unlocks.length,
+      activeDays: repository.activeDays.length,
+    },
+    counts,
+  );
+});
+
+test("active-day correction requires SUPER_ADMIN and is idempotent", async () => {
+  const { repository, service } = await registeredFlow();
+  const activeDayId = repository.activeDays[0].id;
+  await assert.rejects(
+    () => service.voidActiveDay(
+      { id: "admin-1", role: "EDITOR" },
+      activeDayId,
+      "Correction requested by operations",
+      now,
+    ),
+    /SUPER_ADMIN access required/i,
+  );
+  await service.voidActiveDay(
+    { id: "admin-1", role: "SUPER_ADMIN" },
+    activeDayId,
+    "Correction requested by operations",
+    now,
+  );
+  assert.equal(repository.activeDays[0].voidReason, "Correction requested by operations");
+  assert.equal((await service.getDashboard("user-1")).activeDays, 0);
+  await assert.rejects(
+    () => service.voidActiveDay(
+      { id: "admin-1", role: "SUPER_ADMIN" },
+      activeDayId,
+      "Correction requested by operations",
+      now,
+    ),
+    /Active day not found/i,
+  );
 });
 
 test("expired claims are rejected without persistence", async () => {
@@ -786,4 +1103,23 @@ test("validation rejects invalid confidence and client-authored reward fields", 
     }),
     ValidationError,
   );
+});
+
+test("rate-limit errors keep the normalized public response contract", async () => {
+  resetProgrammeRateLimitsForTests();
+  assertProgrammeRateLimit("regression-rate-limit", { limit: 1, windowMs: 60_000 }, 1);
+  let captured: unknown;
+  try {
+    assertProgrammeRateLimit("regression-rate-limit", { limit: 1, windowMs: 60_000 }, 2);
+  } catch (error) {
+    captured = error;
+  }
+  const response = programmeErrorResponse(captured);
+  assert.equal(response.status, 429);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await response.json(), {
+    ok: false,
+    error: "Too many programme requests",
+    code: "RATE_LIMITED",
+  });
 });
