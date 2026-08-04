@@ -200,12 +200,54 @@ Detected active artefacts:
 - SevenBet product components: `289:20`;
 - Bonus components: `298:26`;
 - Best Offers components and three-state slider: `308:2` and `308:81`;
-- Casinos components: Review Signal `320:5`, Filter Chip `321:6`, Filter Option `332:548`, Review Card `322:2`, and Featured Review Theatre `324:8`;
+- Casinos components: Review Signal `320:5`, Filter Chip `321:6`, Filter Option `332:548`, Review Card `322:2`, Featured Review Theatre `324:8`, and Key Fact Row `342:38`;
 - desktop Home: `289:946`;
 - desktop Bonuses: `299:786`;
 - desktop Best Offers: `310:224`;
-- desktop Casinos: `325:323`.
+- desktop Casinos: `325:323`;
+- desktop illustrative casino profile / review: `343:601`.
 
 The Best Offers page adapts the full product-page rhythm defined by this RFC: strong promise, central product theatre, visible decision methodology, alternative comparison states, evidence building blocks, editorial reasoning, FAQ, related commercial discovery, protected Help and a dark disclosure footer. Operator names and offer values used before verified partner data exists are labelled as illustrative pre-launch content and must not ship without market, licence, terms and commercial review.
 
 The Casinos page applies the same visual authority to the public discovery contract: concise search, active-filter removal and a full-width filter command centre (`333:535`) covering the detected country, licence, payment, game-provider, category and bonus-type facets; bonus, visit-action, cryptocurrency and mobile availability filters; result counts; sort; page size; reset/apply actions; editorial review snapshots; and a gated commercial action state. The command-centre pattern deliberately preserves the full three-card comparison width instead of compressing the catalogue behind a permanent sidebar. The page also includes review-reading guidance, an Editor Score methodology, related Bonuses and Best Offers routes, protected Help and public disclosure. The screen preserves the detected production empty state while using clearly labelled illustrative operator data to validate populated layouts. Illustrative operators, scores, licence states, terms and availability must not ship without a published snapshot and market, editorial, compliance and commercial review.
+
+The casino profile pattern extends the catalogue into a short commercial decision profile rather than a long editorial dossier. Its first viewport combines operator identity, market and age context, Editor Score, a one-sentence verdict, the welcome offer, material restrictions and a dominant disclosed outbound action. The remainder is limited to a sticky decision bar, concise pros and constraints, reusable key facts, one tab-ready offer/payments/safety/games/control-tools panel, a short score rationale, four FAQ prompts, a repeated final offer action, protected Help and the public footer. The accepted desktop concept is 1,440 × 4,466 px and replaces the superseded 9,028 px long-form version at the same node `343:601`.
+
+The profile may repeat the same operator action in the decision bar, offer panel and final offer panel, but it must not introduce competing commercial actions or conceal wagering, eligibility, age, affiliate or risk disclosures. The commercial objective is an informed, eligible outbound transition; deposit completion, gambling frequency, losses and repeat deposits are not product optimisation targets. Editor Score remains a comparison aid rather than a safety or outcomes guarantee. Commercial actions remain subject to canonical market and redirect eligibility. Northstar is illustrative Figma content only and requires published backend data plus market, editorial, compliance and commercial approval before release.
+
+## 12. Article-detail system amendment — 2026-08-04
+
+SevenBet SHALL replace the current card-stacked Learning Center article presentation with a reusable Tilt-Locked editorial article template. The template preserves the detected backend content model — category, title, summary, reading time, author, editor, update date, takeaways, sections, examples, FAQ, related articles and next reading — while presenting it as continuous long-form reading rather than a sequence of generic cards.
+
+The reference lock for article detail pages is the human-scale editorial rhythm observed on Tilt's About page: one dominant thesis, rare but meaningful human media, numbered narrative chapters, strong typographic pauses and short proof blocks. Medium contributes reading-width discipline only. Health-information patterns contribute visible author/editor/update metadata, evidence sources and a protected support route. These secondary references must not dilute the active Tilt-Locked colour, typography, geometry or component roles.
+
+The article template has two content modes:
+
+1. **Educational-commercial** — neutral articles about bonus terms, casino evaluation, licensing, payments and comparison methodology may show contextual internal links to Casinos, Bonuses, Best Offers or reviews after the educational answer. Links must be relevant, disclosed and useful without an affiliate relationship.
+2. **Protected-control** — articles about stopping gambling, loss of control, self-exclusion, gambling-related harm or urgent support must not contain casino, bonus, offer or affiliate actions in the body, related-reading rail or final action. These articles may route only to the 10-Step Program, neutral educational resources and the protected Help experience.
+
+Commercial links are therefore conditional rather than universal. Vulnerability, self-check, Program, Help, pause or control-plan data must not select, rank or personalise commercial article links.
+
+The v1 protected-control article detail SHALL contain:
+
+- persistent public header, with commercial discovery remaining globally available but visually subordinate to reading;
+- article hero with category, plain-language title, one-sentence summary, reading time, reviewed date and editorial ownership;
+- one original or properly licensed human image illustrating agency and everyday life rather than distress or a promised outcome;
+- a short direct answer and three numbered action chapters;
+- a practical first-plan block that turns reading into an explicit next action;
+- visible evidence and source links, including applicable NHS, NICE and Gambling Commission material;
+- related educational reading, FAQ, one Program action and protected Help;
+- the existing public footer and disclosures.
+
+Medical, therapeutic or guaranteed-control claims are prohibited. Educational copy must distinguish SevenBet's editorial synthesis from clinical evaluation, keep source dates visible and undergo content and compliance review before production publication.
+
+Figma implementation record:
+
+- article component documentation: `368:38`;
+- reusable `SevenBet / Article / Related Reading Row`: `369:38`;
+- representative protected-control article detail: `372:648`;
+- screen size: 1,440 × 6,507 px;
+- representative article: `How to stop gambling — and make the next decision easier`;
+- reused system instances: Paper Header, Core Primary Button, Related Reading Row, FAQ Row, Protected Help and Public Footer.
+
+The representative article contains one Program action after the practical answer, no casino, bonus, best-offer or affiliate action in the article body, and commercial discovery only through the global header and footer. The displayed source names and update date are editorial design content and require link, date, medical-content and compliance verification before production publication.
