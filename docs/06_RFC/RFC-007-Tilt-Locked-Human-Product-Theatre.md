@@ -200,8 +200,12 @@ Detected active artefacts:
 - SevenBet product components: `289:20`;
 - Bonus components: `298:26`;
 - Best Offers components and three-state slider: `308:2` and `308:81`;
+- Casinos components: Review Signal `320:5`, Filter Chip `321:6`, Review Card `322:2`, and Featured Review Theatre `324:8`;
 - desktop Home: `289:946`;
 - desktop Bonuses: `299:786`;
-- desktop Best Offers: `310:224`.
+- desktop Best Offers: `310:224`;
+- desktop Casinos: `325:323`.
 
 The Best Offers page adapts the full product-page rhythm defined by this RFC: strong promise, central product theatre, visible decision methodology, alternative comparison states, evidence building blocks, editorial reasoning, FAQ, related commercial discovery, protected Help and a dark disclosure footer. Operator names and offer values used before verified partner data exists are labelled as illustrative pre-launch content and must not ship without market, licence, terms and commercial review.
+
+The Casinos page applies the same visual authority to the public discovery contract: concise search and backend-supported facets, editorial review snapshots, a gated commercial action state, review-reading guidance, an Editor Score methodology, related Bonuses and Best Offers routes, protected Help and public disclosure. The screen preserves the detected production empty state while using clearly labelled illustrative operator data to validate populated layouts. Illustrative operators, scores, licence states, terms and availability must not ship without a published snapshot and market, editorial, compliance and commercial review.

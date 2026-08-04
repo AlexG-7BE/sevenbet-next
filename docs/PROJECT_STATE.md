@@ -30,7 +30,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Product & Design reset — superseded Prismatic, Human Guidance and earlier concept foundations, components, screens, variables and styles removed from the active Figma file
 
-🟨 Tilt-Locked public acquisition surfaces — Home, Bonuses and Best Offers complete in Figma; Casinos is the next desktop surface
+✅ Tilt-Locked public acquisition surfaces — Home, Bonuses, Best Offers and Casinos complete in Figma; mobile/device QA and broader journey migration remain pending
 
 ## Progress
 
@@ -40,7 +40,7 @@ Documentation structure normalized before Phase 2.
 
 Product & Design preparation is aligned with the approved Product Vision: the 10-Step Control Program is the central product layer; discovery remains accessible without programme completion; and Help / self-exclusion is a protected, non-commercial route. RFC-007 supersedes RFC-006 and approves “Tilt-Locked Human Product Theatre” as the active visual direction.
 
-Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. RFC-007 is the active visual authority. Superseded Prismatic, Human Guidance and earlier concept artefacts have been removed from the active Figma file. The retained design system consists of the Tilt-Locked foundations, reusable Core components and SevenBet-specific product components. The desktop screen page now contains the accepted Home (`289:946`), Bonuses (`299:786`) and Best Offers (`310:224`) frames. Best Offers includes a three-state terms-first shortlist slider (`308:81`), ranking methodology, evidence fields, editorial reasoning, FAQ, related discovery paths, protected Help and affiliate/legal disclosure. Illustrative offer content is explicitly marked for verification before release. The same Home is implemented at `/` in Next.js with an interactive programme carousel, persistent navigation, responsive layout, motion/reduced-motion behaviour, programme-tool states and working Program/Help routes. Broader journey migration remains pending.
+Figma Plugin API access was revalidated after the file was upgraded to a Professional plan. RFC-007 is the active visual authority. Superseded Prismatic, Human Guidance and earlier concept artefacts have been removed from the active Figma file. The retained design system consists of the Tilt-Locked foundations, reusable Core components and SevenBet-specific product components. The desktop screen page now contains the accepted Home (`289:946`), Bonuses (`299:786`), Best Offers (`310:224`) and Casinos (`325:323`) frames. Casinos adds backend-compatible Filter Chip (`321:6`), Review Signal (`320:5`), Review Card (`322:2`) and Featured Review Theatre (`324:8`) components, plus licence/market, payments, controls, Editor Score and commercial-eligibility explanations. Because no casino snapshot is currently published, operator content is visibly labelled illustrative and the production empty state remains explicit. Best Offers includes a three-state terms-first shortlist slider (`308:81`), ranking methodology, evidence fields, editorial reasoning, FAQ, related discovery paths, protected Help and affiliate/legal disclosure. Illustrative commercial content is explicitly marked for verification before release. The same Home is implemented at `/` in Next.js with an interactive programme carousel, persistent navigation, responsive layout, motion/reduced-motion behaviour, programme-tool states and working Program/Help routes. Mobile/device QA and broader journey migration remain pending.
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation.
 
@@ -77,4 +77,4 @@ Complete Product Master Plan while extending the validated Tilt-Locked consumer-
 
 ## Next Milestone
 
-Architecture Alignment; design and validate the Tilt-Locked Casinos surface, then complete mobile/device QA before broader journey migration
+Architecture Alignment; translate the validated Tilt-Locked Casinos surface into implementation when scheduled, and complete mobile/device QA before broader journey migration
