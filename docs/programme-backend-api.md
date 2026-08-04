@@ -13,7 +13,7 @@ All responses are JSON and `Cache-Control: no-store`. Authenticated routes resol
 | `PUT /api/program/missions/02` | Better Auth | Saves strict `{taskStates, currentGoal}` draft. |
 | `POST /api/program/missions/02/complete` | Better Auth | Validates stored eight-task draft; atomically saves Current Goal, `+80 XP`, First Plan, active day and Mission 03 current state. |
 | `GET /api/program/missions/03` | Better Auth | Returns owner-scoped resumable Mission 03 task/draft state and evidence context. |
-| `PATCH /api/program/missions/03` | Better Auth | Saves the strict private urge-literacy draft. |
+| `PUT /api/program/missions/03` | Better Auth | Saves the strict private urge-literacy draft. |
 | `POST /api/program/missions/03/complete` | Better Auth | Validates the stored draft; atomically saves Urge Learning Record, `+90 XP`, active day and Mission 04 current state. |
 | `GET /api/program/missions/04` | Better Auth | Returns owner-scoped resumable Mission 04 task/draft state, source context and evidence register. |
 | `PATCH /api/program/missions/04` | Better Auth | Saves the strict nine-task Boundary Composer draft; no XP is awarded. |
@@ -32,3 +32,7 @@ All responses are JSON and `Cache-Control: no-store`. Authenticated routes resol
 Malformed JSON is `400`; missing authentication is `401`; forbidden staff action is `403`; missing/foreign resources are `404`; expired session/claim is `410`; conflicts are `409`; schema/state validation is `422`; rate limiting is `429`.
 
 Idempotency is server-authored: claim consumption is conditional; mission/progress, XP, achievement and active-day rows have database uniqueness constraints; Mission 02–04 completion retries return the existing Dashboard. Client idempotency keys are not trusted or required.
+
+Mission claim/completion writes are one serializable transaction, including artefact, progression, reward, achievement and active-day effects. The Dashboard returned by a successful completion is projected inside that transaction. Standalone Dashboard/reward reads use one repeatable-read snapshot and do not mutate state.
+
+The Mission 01–04 autosave contract has no revision/client sequence. Task-state completion merges monotonically, while draft fields are last-write-wins; optimistic concurrency is a documented future contract/UX decision rather than an implicit API change.

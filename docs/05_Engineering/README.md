@@ -24,6 +24,12 @@ Normative rules for how the system should be developed, tested, secured, deploye
 - Testing, security, and operational practices.
 - Technical conventions that apply across the project.
 
+Active Control Programme changes are additionally governed by:
+
+- [`Programme-Architecture-Standards.md`](Programme-Architecture-Standards.md)
+- [`Backend-Programme-Standards.md`](Backend-Programme-Standards.md)
+- [`Programme-Definition-of-Done.md`](Programme-Definition-of-Done.md)
+
 ## When this folder should be updated
 
 Update `Technical_Baseline/` when documenting a newly observed implementation state. Update standards and practices when an approved engineering standard, delivery practice, or shared technical convention changes.

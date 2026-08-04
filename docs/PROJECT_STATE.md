@@ -42,6 +42,8 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Mission 04 active-control slice — RFC-010 approved; the nine-stage build-and-rehearse mission, live Boundary Composer, private editable `ActiveBoundary`, deterministic `+100 XP`, `Boundary built`, Dashboard `330 XP / 4 of 10` and Mission 05 current state are implemented; targeted tests, type checking and the connected migration are verified, while authenticated browser completion and release review remain gates
 
+✅ Active-control backend architecture hardening — Missions 01–04 are split into bounded application/domain/infrastructure/validation slices with an explicit transaction-aware unit of work, server-owned repeatable Dashboard snapshots and permanent Programme engineering standards; public APIs, schema, rewards, product behaviour and frontend are unchanged
+
 ## Progress
 
 Technical Baseline completed.
@@ -54,7 +56,7 @@ Figma Plugin API access was revalidated after the file was upgraded to a Profess
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation. The 2026-08-04 RFC-007 article amendment applies the same separation to Learning Center content: neutral commercial education may link contextually to discovery after delivering value, while quit, control, self-exclusion and harm-related articles use a protected-control template with no casino, bonus, offer or affiliate actions in article content.
 
-RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file contains the reusable Programme component board (`387:38`), the Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), Mission 03 plus its post-mission Dashboard (`449:1413`), and the approved Mission 04 flow plus Dashboard (`468:1753`). RFC-008 governs shared persistence, rewards and privacy; RFC-009 governs Mission 03; RFC-010 governs Mission 04. Mission 01 awards `+60 XP`; Mission 02 awards `+80 XP` and `First Plan`; Mission 03 awards `+90 XP`; Mission 04 awards `+100 XP` and `Boundary built`; same-day completion remains one active day. **Detected:** `/program` implements Missions 01–04, mandatory account claim, returning-user sign-in and their approved Dashboard states. **Detected:** migrations 0011–0017 are applied to the configured remote database. **Detected:** targeted service tests verify Mission 04 resume, validation, idempotent completion, `330 XP`, Mission 05 unlock and boundary edit/deletion. **Planned release gates:** authenticated Mission 04 browser completion, clinical-content/compliance review, broader device QA, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry and Missions 05–10.
+RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file contains the reusable Programme component board (`387:38`), the Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), Mission 03 plus its post-mission Dashboard (`449:1413`), and the approved Mission 04 flow plus Dashboard (`468:1753`). RFC-008 governs shared persistence, rewards and privacy; RFC-009 governs Mission 03; RFC-010 governs Mission 04. Mission 01 awards `+60 XP`; Mission 02 awards `+80 XP` and `First Plan`; Mission 03 awards `+90 XP`; Mission 04 awards `+100 XP` and `Boundary built`; same-day completion remains one active day. **Detected:** `/program` implements Missions 01–04, mandatory account claim, returning-user sign-in and their approved Dashboard states. **Detected:** migrations 0011–0017 are applied to the configured remote database. **Detected:** the hardened Programme suite has 43 passing tests covering deterministic domain policy, concurrency/replay, rollback, ownership, Dashboard truthfulness, active-day correction and public error mapping; the full Node suite has 209 passing tests, and typecheck, Prisma schema validation and the production build pass. **Detected limitation:** repository lint remains unconfigured for Next 15 because `npm run lint` invokes interactive/deprecated `next lint`. **Planned release gates:** authenticated Mission 04 browser completion, clinical-content/compliance review, broader device QA, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry and Missions 05–10.
 
 ## Technical Baseline Audit
 
@@ -67,7 +69,7 @@ RFC-002 and its 2026-08-04 active-work amendment remain the approved product aut
 | Architecture readiness score | 5/10 |
 | Main blockers before Phase 2 | Authoritative architecture alignment; jurisdiction/licensing and safety-control design; CI/CD, deployment/migration, observability and operational controls; reconciliation of implementation with the approved Product Vision. |
 
-Architecture not started.
+The formal Phase 2 architecture milestone remains pending. A bounded, evidence-backed Programme backend hardening is implemented for Missions 01–04; it does not claim completion of the wider target architecture.
 
 ## Pending
 
@@ -77,7 +79,7 @@ Architecture not started.
 
 ⬜ Compliance
 
-⬜ Engineering Standards
+🟨 Engineering Standards — Programme-specific architecture, backend and Definition-of-Done standards are implemented; phase-wide standards remain pending
 
 ⬜ RFC
 

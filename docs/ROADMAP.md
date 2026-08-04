@@ -12,6 +12,7 @@
 | Product decision | RFC-010 — Mission 04 Build One Boundary | Approved and implemented; Figma flow, private ActiveBoundary, deterministic reward and migration 0017 verified, while authenticated browser completion and release review remain gates | 2026-08-04 |
 | Supporting track | Product & Design — Tilt-Locked system and key journeys | In progress; acquisition surfaces and the responsive `/program` journey through Mission 04 and Dashboard `4 of 10` are implemented. Mission 04 browser/mobile/release QA, Missions 05–10 and wider journey migration remain pending. | 2026-08-04 |
 | Backend decision | RFC-008 — Programme persistence, rewards and privacy | Implemented through migration 0017, including RFC-009 Mission 03 and RFC-010 Mission 04 persistence/rewards; expiry automation, distributed rate limiting, export/erasure and telemetry remain pending | 2026-08-04 |
+| Supporting track | Programme backend boundaries — Missions 01–04 | Architecture hardening complete: bounded vertical slices, explicit unit of work, repeatable Dashboard snapshots, permanent standards and 43/43 Programme regressions; no API, schema, reward, frontend or product change. Distributed operations, purge, export/erasure, telemetry, CI/CD and autosave ordering remain pending. | 2026-08-04 |
 | Phase 2 | Architecture | Pending | |
 | Phase 3 | Domain Model | Pending | |
 | Phase 4 | Compliance | Pending | |

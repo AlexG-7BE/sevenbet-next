@@ -24,6 +24,31 @@ All architecture decisions must be documented. All substantial product, architec
 
 When documentation and code conflict, follow the approved documentation and raise the inconsistency through the appropriate RFC or decision record.
 
+## Active Control Programme Changes
+
+Before changing the Active Control Programme, read:
+
+1. `docs/Product-Vision-and-Principles.md`
+2. the current approved Programme RFCs, including the RFC for the Mission being changed
+3. `docs/05_Engineering/Programme-Architecture-Standards.md`
+4. `docs/05_Engineering/Backend-Programme-Standards.md`
+5. `docs/05_Engineering/Programme-Definition-of-Done.md`
+6. `docs/PROJECT_STATE.md`
+
+Without a separate approved decision, do not:
+
+- change reward amounts, achievements, Mission ordering or prerequisites;
+- change commercial/safety data separation or protected Help behaviour;
+- add a Mission to a central service, repository, switch, generic engine or workflow DSL;
+- import Prisma in a route handler or React component;
+- calculate XP, progress, completion or next Mission on the client;
+- use Programme, pause or Help data for affiliate targeting or commercial personalisation;
+- perform a destructive migration or `prisma migrate reset`;
+- commit a material Programme feature directly to `main`;
+- declare Programme work complete without regression tests and documentation updates.
+
+For every new Mission, apply `docs/05_Engineering/Programme-Definition-of-Done.md` and record unmet release gates explicitly.
+
 ## Technical Documentation Evidence Rule
 
 The factual implementation baseline is maintained at `docs/05_Engineering/Technical_Baseline/`. It is distinct from target architecture in `docs/02_Product_Architecture/` and from engineering standards in `docs/05_Engineering/`.

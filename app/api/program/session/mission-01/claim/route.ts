@@ -8,7 +8,7 @@ import {
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { hashOpaqueToken, pendingClaimLifetimeMs } from "@/lib/programme/security";
-import { programmeFlowService } from "@/lib/services/programme-flow.service";
+import { programmeSessionService } from "@/lib/programme/application/programme-session.service";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       limit: 5,
       windowMs: 60_000,
     });
-    const claim = await programmeFlowService.createPendingClaim(token);
+    const claim = await programmeSessionService.createPendingClaim(token);
     const response = programmeResponse(
       { ok: true, state: "registration_required", expiresAt: claim.expiresAt },
       201,

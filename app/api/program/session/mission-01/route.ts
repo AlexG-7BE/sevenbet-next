@@ -7,7 +7,7 @@ import {
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { hashOpaqueToken } from "@/lib/programme/security";
-import { programmeFlowService } from "@/lib/services/programme-flow.service";
+import { programmeSessionService } from "@/lib/programme/application/programme-session.service";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export async function PATCH(request: Request) {
       limit: 60,
       windowMs: 60_000,
     });
-    const session = await programmeFlowService.saveMissionOneDraft(
+    const session = await programmeSessionService.saveMissionOneDraft(
       token,
       await readProgrammeJson(request),
     );
