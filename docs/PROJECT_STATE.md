@@ -34,6 +34,8 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Tilt-Locked active-control package — Mission 01, mandatory earned-result registration, the authenticated Dashboard, Mission 02, truthful XP/achievement/active-day states, and the post-Mission-02 Dashboard complete and visually validated in Figma
 
+✅ Active-control backend slice — RFC-008, additive Prisma migration 0015, private anonymous session/claim, atomic Mission 01 and Mission 02 persistence, Dashboard API, artefact controls, deterministic rewards, active-day correction and targeted tests implemented
+
 ## Progress
 
 Technical Baseline completed.
@@ -46,7 +48,7 @@ Figma Plugin API access was revalidated after the file was upgraded to a Profess
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation. The 2026-08-04 RFC-007 article amendment applies the same separation to Learning Center content: neutral commercial education may link contextually to discovery after delivering value, while quit, control, self-exclusion and harm-related articles use a protected-control template with no casino, bonus, offer or affiliate actions in article content.
 
-RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file now contains the reusable Programme component board (`387:38`), the documented Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), and the desktop screen grid (`407:704`). The grid contains eight Mission 01 screens, two mandatory registration screens, the first authenticated Dashboard, eight Mission 02 screens, and the updated post-Mission-02 Dashboard. Mission 01 awards `+60 XP` only after the Moment Map is saved during registration; Mission 02 awards `+80 XP` and `First plan`; same-day completion remains `1 active day`. Public Discovery, education, Help and Mission 01 remain accessible without registration; persistent personal Control Program progress after Mission 01 requires an account and remains subject to the RFC's product, content, compliance, privacy, architecture, backend-alignment, and Domain Model gates. Backend alignment is explicitly deferred to a separate implementation task.
+RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file now contains the reusable Programme component board (`387:38`), the documented Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), and the desktop screen grid (`407:704`). RFC-008 now governs the implemented backend slice: Mission 01 awards `+60 XP` only after atomic claim redemption; Mission 02 awards `+80 XP` and `First Plan`; same-day completion remains `1 active day`. Public frontend and Figma were not changed by the backend task. Migration deployment, production database/content verification, expiry purge automation, distributed rate limiting, account-wide export/erasure, telemetry and Missions 03–10 remain pending.
 
 ## Technical Baseline Audit
 
@@ -79,4 +81,4 @@ Complete Product Master Plan while extending the validated Tilt-Locked consumer-
 
 ## Next Milestone
 
-Architecture and backend-flow alignment for the approved Programme package in a separate implementation task; complete mobile/device QA before broader journey migration
+Deploy and verify migration 0015 plus the published ten-step Program in a controlled environment; complete mobile/device QA before broader journey migration

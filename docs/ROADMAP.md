@@ -9,6 +9,7 @@
 | Design decision | RFC-006 — Human Guidance Trust-Led Design Direction | Superseded by RFC-007 | 2026-08-04 |
 | Design decision | RFC-007 — Tilt-Locked Human Product Theatre | Approved; visual and composition authority | 2026-08-04 |
 | Supporting track | Product & Design — Tilt-Locked system and key journeys | In progress; desktop acquisition surfaces plus Mission 01 → mandatory registration → Dashboard → Mission 02 → updated Dashboard complete; mobile/device QA, Missions 03–10 and broader journey migration pending | 2026-08-04 |
+| Backend decision | RFC-008 — Programme persistence, rewards and privacy | Implemented locally; migration 0015 and production content/database verification pending deployment | 2026-08-04 |
 | Phase 2 | Architecture | Pending | |
 | Phase 3 | Domain Model | Pending | |
 | Phase 4 | Compliance | Pending | |

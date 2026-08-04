@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-**Detected:** SevenBet is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, and program-progress APIs. This supersedes the previous documentation-only conclusion.
+**Detected:** SevenBet is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, authenticated program-progress APIs, and the RFC-008 Mission 01/02 backend flow.
 
 ## Frontend architecture
 
@@ -18,7 +18,7 @@
 
 | Mechanism | Status | Evidence |
 | --- | --- | --- |
-| Route handlers | Implemented | 54 handlers under `app/api/`, plus public redirect and crawler handlers. |
+| Route handlers | Implemented | 65 handlers under `app/api/`, plus public redirect and crawler handlers. |
 | Service layer | Implemented | `lib/services/` contains program, casino, media, progress, XP, affiliate, and public discovery services. |
 | Repository layer | Implemented | `lib/repositories/` contains Prisma-backed repositories for the same principal domains. |
 | Input validation | Implemented | Domain validation modules in `lib/cms/`, `lib/casino-builder/`, `lib/affiliate/`, `lib/media/`, and `lib/progress/`. No external validation package is detected. |
@@ -35,6 +35,7 @@
 | --- | --- | --- | --- | --- |
 | Public content, learning, responsible-gambling, self-check and budget tool | Implemented | Public `app/` routes and presentation components | Static/local data surfaces; no public editorial CMS route was confirmed | Jurisdiction/compliance enforcement is not established by these pages alone. |
 | Program, progress, XP and achievements | Implemented | `app/program`, `app/api/program/progress/*`, services/repositories | Prisma models; admin program, XP-rule, and achievement pages | No evidence of a user-facing account-management UI. |
+| Active-control Mission 01/02 backend | Implemented | `app/api/program/session`, claims, Dashboard, Mission 02, artefact and reward routes | Prisma migration 0015; RFC-008 service/repository; Better Auth ownership | Deployment application and production Program content are not repository-confirmed. |
 | Program Builder | Implemented | Admin program routes, `ProgramBuilder.tsx`, `program-builder.service.ts` | Version/snapshot/revision persistence and preview routes | Scope is program content, not a general CMS conclusion. |
 | Casino CMS and public casino rendering/discovery | Implemented | Casino admin routes, `CasinoBuilder.tsx`, public routes/services | Prisma-backed casinos, versions, revisions, SEO and related records | Public CMS path is environment-gated by `PUBLIC_CASINO_CMS_ENABLED`. |
 | Affiliate platform, routing and integrations | Implemented | Affiliate admin/API routes, `/r/[slug]`, `lib/affiliate*` | Prisma-backed networks, programs, offers, links, mapping/import records | Actual external provider connection is conditional/configuration-dependent. |

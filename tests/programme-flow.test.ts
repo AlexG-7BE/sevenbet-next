@@ -1,0 +1,495 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+import type { ProgrammeFlowRepository } from "../lib/repositories/programme-flow.repository";
+import {
+  missionOneTaskStates,
+  missionTwoTaskStates,
+} from "../lib/programme/contract";
+import { activeDayStreak, localDateAt } from "../lib/programme/security";
+import { ValidationError } from "../lib/services/service-error";
+import { ProgrammeFlowService } from "../lib/services/programme-flow.service";
+
+const now = new Date("2026-08-04T10:00:00.000Z");
+const programmeId = "10000000-0000-4000-8000-000000000001";
+const versionId = "10000000-0000-4000-8000-000000000002";
+
+function momentMap() {
+  return {
+    situation: "After work while deciding what to do next",
+    cues: ["stress", "an offer notification"],
+    thoughtOrFeeling: "I should decide quickly",
+    response: "I opened several comparison pages",
+    immediateConsequence: "The decision felt more urgent",
+    noticeRule: "Next time I notice urgency, I will pause and name it before deciding.",
+    neutralFlags: [],
+    notSureFlags: ["thoughtOrFeeling"],
+  };
+}
+
+function goal(sourceMomentMapId: string, base = now) {
+  return {
+    sourceMomentMapId,
+    direction: "pause",
+    action: "Wait ten minutes before opening a comparison page",
+    triggerOrSituation: "When an offer notification creates urgency",
+    alternativeAction: "Close the notification and take a short walk",
+    successSignal: "I paused before deciding",
+    reviewAt: new Date(base.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    confidence: 7,
+    confidenceAdjustment: "Use a two-minute pause if ten minutes feels too large",
+    status: "active",
+  };
+}
+
+class MemoryProgrammeRepository {
+  private sequence = 10;
+  anonymousSessions: any[] = [];
+  claims: any[] = [];
+  enrollments: any[] = [];
+  missions: any[] = [];
+  momentMaps: any[] = [];
+  goals: any[] = [];
+  xpEvents: any[] = [];
+  activeDays: any[] = [];
+  unlocks: any[] = [];
+
+  private id() {
+    this.sequence += 1;
+    return `10000000-0000-4000-8000-${String(this.sequence).padStart(12, "0")}`;
+  }
+
+  transaction<T>(operation: (repository: any) => Promise<T>) {
+    return operation(this);
+  }
+
+  async createAnonymousSession(input: any) {
+    const row = {
+      id: this.id(),
+      ...input,
+      missionState: "NOT_STARTED",
+      taskStates: [],
+      draft: null,
+      lastActivityAt: now,
+      createdAt: now,
+      updatedAt: now,
+      deletedAt: null,
+    };
+    this.anonymousSessions.push(row);
+    return row;
+  }
+
+  async findAnonymousSession(tokenHash: string) {
+    const row = this.anonymousSessions.find((item) => item.tokenHash === tokenHash);
+    return row ? { ...row, pendingClaim: this.claims.find((item) => item.anonymousSessionId === row.id) ?? null } : null;
+  }
+
+  async updateAnonymousSession(id: string, input: any) {
+    const row = this.anonymousSessions.find((item) => item.id === id)!;
+    Object.assign(row, input, { updatedAt: input.lastActivityAt });
+    return row;
+  }
+
+  async transitionAnonymousSessionToRegistration(id: string, at: Date) {
+    const row = this.anonymousSessions.find(
+      (item) => item.id === id && item.missionState === "READY_TO_SAVE" && !item.deletedAt && item.expiresAt > at,
+    );
+    if (!row) return { count: 0 };
+    Object.assign(row, { missionState: "REGISTRATION_REQUIRED", lastActivityAt: at });
+    return { count: 1 };
+  }
+
+  async upsertPendingClaim(input: any) {
+    let row = this.claims.find((item) => item.anonymousSessionId === input.anonymousSessionId);
+    if (row) Object.assign(row, input, { consumedAt: null, consumedByUserId: null });
+    else {
+      row = { id: this.id(), ...input, consumedAt: null, consumedByUserId: null, createdAt: now };
+      this.claims.push(row);
+    }
+    return row;
+  }
+
+  async findClaim(tokenHash: string) {
+    const row = this.claims.find((item) => item.tokenHash === tokenHash);
+    const anonymousSession = row && this.anonymousSessions.find((item) => item.id === row.anonymousSessionId);
+    return row && anonymousSession ? { ...row, anonymousSession } : null;
+  }
+
+  async consumeClaim(id: string, userId: string, at: Date) {
+    const row = this.claims.find((item) => item.id === id && !item.consumedAt && item.expiresAt > at);
+    if (!row) return { count: 0 };
+    Object.assign(row, { consumedAt: at, consumedByUserId: userId });
+    return { count: 1 };
+  }
+
+  async completeAnonymousSession(id: string, at: Date) {
+    const row = this.anonymousSessions.find((item) => item.id === id)!;
+    Object.assign(row, { missionState: "COMPLETED", draft: null, deletedAt: at });
+    return row;
+  }
+
+  async findControlProgram() {
+    return {
+      program: {
+        id: programmeId,
+        slug: "sevenbet-10-step-control-program",
+        steps: Array.from({ length: 10 }, (_, index) => ({
+          id: `20000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
+          order: index + 1,
+        })),
+      },
+      version: { id: versionId, status: "PUBLISHED" },
+    } as any;
+  }
+
+  async findEnrollment(userId: string, targetProgramId: string) {
+    return this.enrollments.find((item) => item.userId === userId && item.programId === targetProgramId) ?? null;
+  }
+
+  async getOrCreateEnrollment(input: any) {
+    const existing = await this.findEnrollment(input.userId, input.programId);
+    if (existing) return existing;
+    const row = { id: this.id(), startedAt: now, completedAt: null, ...input };
+    this.enrollments.push(row);
+    return row;
+  }
+
+  async setEnrollmentCurrentStep(enrollmentId: string, currentStepId: string) {
+    const row = this.enrollments.find((item) => item.id === enrollmentId)!;
+    row.currentStepId = currentStepId;
+    return row;
+  }
+
+  async findMissionProgress(enrollmentId: string, missionNumber: number) {
+    return this.missions.find((item) => item.enrollmentId === enrollmentId && item.missionNumber === missionNumber) ?? null;
+  }
+
+  async upsertMissionProgress(input: any) {
+    let row = await this.findMissionProgress(input.enrollmentId, input.missionNumber);
+    if (row) Object.assign(row, input, { updatedAt: input.completedAt ?? now });
+    else {
+      row = { id: this.id(), createdAt: now, updatedAt: now, ...input };
+      this.missions.push(row);
+    }
+    return row;
+  }
+
+  async updateMissionDraftIfOpen(input: any) {
+    const row = await this.findMissionProgress(input.enrollmentId, input.missionNumber);
+    if (!row || row.status === "COMPLETED") return { count: 0 };
+    Object.assign(row, input, { updatedAt: now });
+    return { count: 1 };
+  }
+
+  async findMomentMap(enrollmentId: string) {
+    return this.momentMaps.find((item) => item.enrollmentId === enrollmentId) ?? null;
+  }
+
+  async createMomentMap(input: any) {
+    const row = { id: this.id(), createdAt: now, updatedAt: now, deletedAt: null, ...input };
+    this.momentMaps.push(row);
+    return row;
+  }
+
+  async updateMomentMap(id: string, data: any) {
+    const row = this.momentMaps.find((item) => item.id === id)!;
+    Object.assign(row, data, { updatedAt: new Date(now.getTime() + 1_000) });
+    return row;
+  }
+
+  async eraseMomentMap(id: string, at: Date) {
+    return this.updateMomentMap(id, {
+      situation: "", cues: [], thoughtOrFeeling: "", response: "",
+      immediateConsequence: "", noticeRule: "", neutralFlags: [], notSureFlags: [], deletedAt: at,
+    });
+  }
+
+  async findCurrentGoal(enrollmentId: string) {
+    return this.goals.find((item) => item.enrollmentId === enrollmentId) ?? null;
+  }
+
+  async upsertCurrentGoal(input: any) {
+    let row = await this.findCurrentGoal(input.enrollmentId);
+    if (row) Object.assign(row, input, { updatedAt: now, deletedAt: null });
+    else {
+      row = { id: this.id(), createdAt: now, updatedAt: now, deletedAt: null, ...input };
+      this.goals.push(row);
+    }
+    return row;
+  }
+
+  async updateCurrentGoal(id: string, data: any) {
+    const row = this.goals.find((item) => item.id === id)!;
+    Object.assign(row, data, { updatedAt: new Date(now.getTime() + 1_000) });
+    return row;
+  }
+
+  async eraseCurrentGoal(id: string, at: Date) {
+    return this.updateCurrentGoal(id, {
+      action: "", triggerOrSituation: "", alternativeAction: "",
+      successSignal: "", confidenceAdjustment: "", deletedAt: at,
+    });
+  }
+
+  async recordProgressEvent() { return { count: 1 }; }
+
+  async recordMissionXp(input: any) {
+    const existing = this.xpEvents.find((item) => item.userId === input.userId && item.awardKey === input.awardKey);
+    if (existing) return { count: 0 };
+    this.xpEvents.push({ id: this.id(), eventType: "MISSION_COMPLETION", createdAt: now, ...input });
+    return { count: 1 };
+  }
+
+  async recordActiveDay(input: any) {
+    const key = input.localDate.toISOString().slice(0, 10);
+    const existing = this.activeDays.find(
+      (item) => item.userId === input.userId && item.localDate.toISOString().slice(0, 10) === key,
+    );
+    if (existing) return { count: 0 };
+    this.activeDays.push({ id: this.id(), createdAt: now, voidedAt: null, voidReason: null, ...input });
+    return { count: 1 };
+  }
+
+  async findFirstPlanAchievement() {
+    return { id: "30000000-0000-4000-8000-000000000001", slug: "first-plan" } as any;
+  }
+
+  async unlockAchievement(input: any) {
+    if (this.unlocks.some((item) => item.userId === input.userId && item.awardKey === input.awardKey)) return { count: 0 };
+    this.unlocks.push({
+      id: this.id(),
+      awardedAt: now,
+      ...input,
+      achievement: { id: input.achievementId, slug: "first-plan", title: "First Plan" },
+    });
+    return { count: 1 };
+  }
+
+  async findDashboardData(userId: string, targetProgramId: string) {
+    const enrollment = await this.findEnrollment(userId, targetProgramId);
+    const aggregate = enrollment
+      ? {
+          ...enrollment,
+          missionProgress: this.missions
+            .filter((item) => item.enrollmentId === enrollment.id)
+            .sort((a, b) => a.missionNumber - b.missionNumber),
+          momentMap: await this.findMomentMap(enrollment.id),
+          currentGoal: await this.findCurrentGoal(enrollment.id),
+          activeDays: this.activeDays.filter((item) => item.enrollmentId === enrollment.id && !item.voidedAt),
+        }
+      : null;
+    return [
+      aggregate,
+      this.xpEvents.filter((item) => item.userId === userId && item.programId === targetProgramId),
+      this.unlocks.filter((item) => item.userId === userId),
+    ] as any;
+  }
+}
+
+async function startMissionOne(service: ProgrammeFlowService) {
+  const created = await service.createAnonymousSession(now);
+  await service.saveMissionOneDraft(created.token, {
+    taskStates: [...missionOneTaskStates],
+    momentMap: momentMap(),
+  }, now);
+  const claim = await service.createPendingClaim(created.token, now);
+  return { ...created, claim };
+}
+
+async function registeredFlow(completionDate = now) {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  const dashboard = await service.redeemPendingClaim("user-1", started.claim.claimToken, "Asia/Almaty", now);
+  const mapId = dashboard.momentMap!.id;
+  await service.saveMissionTwoDraft("user-1", {
+    taskStates: [...missionTwoTaskStates],
+    currentGoal: goal(mapId, completionDate),
+  });
+  return { repository, service, started, dashboard, mapId };
+}
+
+test("anonymous Mission 01 reaches registration_required without persistent XP", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  assert.equal(started.session.state, "not_started");
+  assert.equal(repository.anonymousSessions[0].missionState, "REGISTRATION_REQUIRED");
+  assert.equal(repository.xpEvents.length, 0);
+});
+
+test("anonymous autosave merges partial content and concurrent claim creation has one winner", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const created = await service.createAnonymousSession(now);
+  await service.saveMissionOneDraft(created.token, {
+    taskStates: ["brief"],
+    momentMap: { situation: momentMap().situation },
+  }, now);
+  await service.saveMissionOneDraft(created.token, {
+    taskStates: [...missionOneTaskStates],
+    momentMap: { ...momentMap(), situation: undefined },
+  }, now);
+  assert.equal(repository.anonymousSessions[0].draft.situation, momentMap().situation);
+  const attempts = await Promise.allSettled([
+    service.createPendingClaim(created.token, now),
+    service.createPendingClaim(created.token, now),
+  ]);
+  assert.equal(attempts.filter((item) => item.status === "fulfilled").length, 1);
+  assert.equal(attempts.filter((item) => item.status === "rejected").length, 1);
+  assert.equal(repository.claims.length, 1);
+});
+
+test("Mission 02 is unavailable without an authenticated enrollment", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  await assert.rejects(() => service.getMissionTwoDraft("anonymous"), /enrollment not found/i);
+  const route = readFileSync("app/api/program/missions/02/route.ts", "utf8");
+  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+});
+
+test("claim redemption saves the Moment Map, gives exactly 60 XP and is one-use", async () => {
+  const { repository, service, started, dashboard } = await registeredFlow();
+  assert.equal(dashboard.totalXp, 60);
+  assert.equal(dashboard.momentMap?.noticeRule, momentMap().noticeRule);
+  assert.equal(repository.xpEvents.length, 1);
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "Asia/Almaty", now),
+    /already been used/i,
+  );
+  assert.equal(repository.xpEvents.length, 1);
+  assert.equal(repository.momentMaps.length, 1);
+});
+
+test("Dashboard after Mission 01 has the approved state", async () => {
+  const { dashboard } = await registeredFlow();
+  assert.equal(dashboard.totalXp, 60);
+  assert.equal(dashboard.currentMission, 2);
+  assert.equal(dashboard.missions[0].status, "completed");
+  assert.equal(dashboard.missions[1].status, "current");
+  assert.equal(dashboard.activeDays, 1);
+  assert.equal(dashboard.achievements[0].state, "locked");
+  assert.equal(dashboard.missions.length, 10);
+  assert.ok(dashboard.evidence.mission01.length > 0);
+});
+
+test("Mission 02 draft is owner-scoped and incomplete tasks cannot complete", async () => {
+  const { repository, service, mapId } = await registeredFlow();
+  const missionTwo = repository.missions.find((item) => item.missionNumber === 2)!;
+  missionTwo.taskStates = [];
+  missionTwo.draft = null;
+  await service.saveMissionTwoDraft("user-1", {
+    taskStates: missionTwoTaskStates.slice(0, 7),
+    currentGoal: goal(mapId),
+  });
+  await assert.rejects(() => service.completeMissionTwo("user-1", now), /task states are incomplete/i);
+  await assert.rejects(() => service.getMissionTwoDraft("user-2"), /enrollment not found/i);
+  assert.equal(repository.xpEvents.length, 1);
+});
+
+test("Mission 02 completion awards 80 XP, First Plan and Mission 03 exactly once", async () => {
+  const { repository, service } = await registeredFlow();
+  const [first, retry] = await Promise.all([
+    service.completeMissionTwo("user-1", now),
+    service.completeMissionTwo("user-1", now),
+  ]);
+  assert.equal(first.totalXp, 140);
+  assert.equal(retry.totalXp, 140);
+  assert.equal(repository.xpEvents.length, 2);
+  assert.equal(repository.xpEvents.reduce((sum, item) => sum + item.xp, 0), 140);
+  assert.equal(first.achievements[0].state, "earned");
+  assert.equal(first.currentMission, 3);
+  assert.equal(first.missions[1].status, "completed");
+  assert.equal(first.missions[2].status, "current");
+});
+
+test("same local day is one active day; next local day advances the streak", async () => {
+  const sameDay = await registeredFlow();
+  const dashboard = await sameDay.service.completeMissionTwo("user-1", now);
+  assert.equal(dashboard.activeDays, 1);
+  assert.equal(dashboard.currentStreak, 1);
+
+  const nextDay = new Date("2026-08-05T10:00:00.000Z");
+  const later = await registeredFlow(nextDay);
+  const laterDashboard = await later.service.completeMissionTwo("user-1", nextDay);
+  assert.equal(laterDashboard.activeDays, 2);
+  assert.equal(laterDashboard.currentStreak, 2);
+  assert.equal(activeDayStreak(["2026-08-04", "2026-08-05"]), 2);
+  assert.equal(localDateAt(now, "Asia/Almaty"), "2026-08-04");
+});
+
+test("commercial activity cannot enter the Programme reward or active-day ledger", async () => {
+  const { repository, service } = await registeredFlow();
+  await service.completeMissionTwo("user-1", now);
+  assert.ok(repository.xpEvents.every((item) => item.eventType === "MISSION_COMPLETION"));
+  assert.ok(repository.activeDays.every((item) => item.sourceEventKey.startsWith("programme:mission:")));
+  const serviceSource = readFileSync("lib/services/programme-flow.service.ts", "utf8");
+  assert.doesNotMatch(serviceSource, /affiliate|casino|bonus|deposit/i);
+});
+
+test("foreign artefacts cannot be read, edited or deleted", async () => {
+  const { service } = await registeredFlow();
+  await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /enrollment not found/i);
+  await assert.rejects(() => service.deleteMomentMap("user-2", now), /enrollment not found/i);
+  await assert.rejects(() => service.updateCurrentGoal("user-2", { action: "foreign" }, now), /enrollment not found/i);
+});
+
+test("expired claims are rejected without persistence", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  const expiredAt = new Date(now.getTime() + 31 * 60 * 1000);
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", expiredAt),
+    /expired/i,
+  );
+  assert.equal(repository.enrollments.length, 0);
+  assert.equal(repository.xpEvents.length, 0);
+});
+
+test("artefact deletion scrubs personal content while retaining a tombstone", async () => {
+  const { repository, service } = await registeredFlow();
+  await service.completeMissionTwo("user-1", now);
+  await service.deleteCurrentGoal("user-1", now);
+  await service.deleteMomentMap("user-1", now);
+  assert.equal(repository.goals[0].action, "");
+  assert.equal(repository.momentMaps[0].situation, "");
+  assert.ok(repository.goals[0].deletedAt);
+  assert.ok(repository.momentMaps[0].deletedAt);
+  const dashboard = await service.getDashboard("user-1");
+  assert.equal(dashboard.currentGoal, null);
+  assert.equal(dashboard.momentMap, null);
+});
+
+test("schema and migration enforce idempotency, ownership, confidence and non-negative XP", () => {
+  const schema = readFileSync("prisma/schema.prisma", "utf8");
+  const migration = readFileSync(
+    "prisma/migrations/0015_active_control_program_flow/migration.sql",
+    "utf8",
+  );
+  assert.match(schema, /@@unique\(\[userId, localDate\]\)/);
+  assert.match(schema, /@@unique\(\[enrollmentId, missionNumber\]\)/);
+  assert.match(migration, /UserXpEvent_non_negative_check/);
+  assert.match(migration, /CurrentGoal_confidence_check/);
+  assert.match(migration, /PendingProgrammeClaim_tokenHash_key/);
+  assert.match(migration, /ON DELETE CASCADE ON UPDATE CASCADE/);
+});
+
+test("validation rejects invalid confidence and client-authored reward fields", async () => {
+  const { service, mapId } = await registeredFlow();
+  await assert.rejects(
+    () => service.saveMissionTwoDraft("user-1", {
+      taskStates: [...missionTwoTaskStates],
+      currentGoal: { ...goal(mapId), confidence: 11 },
+    }),
+    ValidationError,
+  );
+  await assert.rejects(
+    () => service.saveMissionTwoDraft("user-1", {
+      taskStates: [...missionTwoTaskStates],
+      currentGoal: { ...goal(mapId), xp: 999 },
+    }),
+    ValidationError,
+  );
+});

@@ -191,7 +191,7 @@ The Dashboard is the home for a returning Programme user. It combines personal p
 
 ## 6. Data, privacy, and backend contract
 
-This RFC is a **target product contract**, not a claim that the current implementation already exposes these capabilities. A technical audit and Domain Model decision must validate or design the persistence model before implementation.
+This RFC began as a target product contract. RFC-008 and migration 0015 now implement the Mission 01 → registration claim → Dashboard → Mission 02 backend slice. Production deployment, content/compliance release gates and Missions 03–10 remain separate from that implementation evidence.
 
 ### 6.1 Account creation after Mission 01
 
@@ -199,7 +199,7 @@ A visitor may use Discovery, public education and Help without an account. A vis
 
 **Detected baseline (2026-08-02):** `lib/auth/config.ts` enables Better Auth email-and-password authentication. The initial product UI SHALL use email and password; it must not imply magic-link, social, or identity-verification support unless a later technical decision adds it.
 
-On successful account creation, SevenBet persists the Mission 01 cue, creates a new personal Programme state, and enters Mission 02. A failed or abandoned registration discards the ephemeral cue at session end and cannot expose or create a partial commercial user state; it should return the visitor to Mission 01, the public Program explainer, Discovery or Help. Consent record, retention, deletion/export behaviour, and cross-device conflict semantics remain Domain Model and privacy delivery gates.
+On successful account creation, SevenBet persists the Mission 01 cue, creates a new personal Programme state, and enters Mission 02. A failed or abandoned registration discards the ephemeral cue at session end and cannot expose or create a partial commercial user state; it should return the visitor to Mission 01, the public Program explainer, Discovery or Help. The implemented retention, deletion, timezone, reward and claim semantics are governed by [RFC-008](./RFC-008-Programme-Persistence-Rewards-and-Privacy.md); account-wide export/erasure remains a broader privacy delivery gate.
 
 The minimum conceptual record is:
 

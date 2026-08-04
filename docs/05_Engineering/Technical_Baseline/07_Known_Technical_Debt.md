@@ -9,6 +9,8 @@
 | Compliance/jurisdiction gap | Casino country/license fields and public discovery exist, but no comprehensive jurisdiction-policy engine or compliance control system is evidenced. | Product Vision’s Regulated First rule is not technically demonstrated across all commercial routing/discovery. | Critical | Yes. |
 | Operational visibility gap | No analytics, monitoring, error-tracking, queue, scheduler, or webhook receiver evidence. | Production incidents, data freshness and integration reliability lack demonstrated controls. | High | Yes. |
 | Persistence/deployment state unknown | Migrations exist, but deployed database application state is not in repository evidence. | Cannot establish database readiness/consistency for an environment. | Medium | Yes for deployment architecture. |
+| Programme operational controls | RFC-008 uses an in-process limiter and defines 24-hour anonymous expiry, but no shared limiter or automated purge job is detected. | Multi-instance abuse protection and expired private-data cleanup require production operations work. | High | Yes for production scale-out. |
+| Programme privacy breadth | Artefact edit/content-erasure is implemented; account-wide export/erasure and verified retention automation are not detected. | The implemented slice is user-controllable, but full account privacy operations remain incomplete. | High | Yes for production account lifecycle. |
 | CMS coverage ambiguity | Article/legacy CMS models are schema-present but no article admin route was detected. | Scope boundaries and unused/transitioning entities require architecture decisions. | Medium | No. |
 
 This inventory records observed compromises and gaps; it does not prescribe fixes.

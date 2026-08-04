@@ -2,7 +2,7 @@
 
 ## Persistence foundation
 
-**Detected:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 14 ordered SQL migrations (`0001_cms_foundation` through `0014_casino_editorial_platform`). The schema currently declares 57 Prisma models and 32 enums. Application repositories/services directly use this persistence layer.
+**Detected:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 15 ordered SQL migrations (`0001_cms_foundation` through `0015_active_control_program_flow`). The schema currently declares 63 Prisma models and 35 enums. Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
@@ -10,6 +10,7 @@
 | --- | --- |
 | Identity/admin | `User`, `Session`, `Account`, `Verification`, `AdminUser`, `AuditLog` |
 | Program/progress/rewards | `Program`, `ProgramStep`, `Lesson`, `LessonBlock`, `ProgramVersion`, `ProgramEnrollment`, `ProgramReflection`, `ProgramProgressEvent`, `XpRule`, `UserXpEvent`, `Achievement`, `UserAchievement` |
+| Active-control private flow | `AnonymousProgrammeSession`, `PendingProgrammeClaim`, `ProgrammeMissionProgress`, `MomentMap`, `CurrentGoal`, `ProgrammeActiveDay` |
 | Editorial/CMS | `Article`, `ContentRevision`, `SiteSetting` |
 | Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
 | Affiliate | `AffiliateNetwork`, `AffiliateProgram`, `AffiliateOffer`, `AffiliateOfferCountry`, `AffiliateOfferCurrency`, `AffiliateTrackingLink`, `AffiliateTrackingLinkCountry`, `AffiliateOfferRevision`, `AffiliateTrackingLinkRevision`, `AffiliateRedirectSlug`, `AffiliateRedirectRevision`, `AffiliateExternalMapping`, `AffiliateImportJob`, `AffiliateImportItem` |
@@ -37,5 +38,6 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 12. Casino domain suspension states
 13. Responsible-gambling private reflections
 14. Casino editorial platform
+15. Active Control Program Mission 01/02 persistence, rewards, privacy and active days
 
 **Detected:** all migration directories contain `migration.sql`. Whether they have been applied to any particular deployed database is **not detected** from the repository. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.

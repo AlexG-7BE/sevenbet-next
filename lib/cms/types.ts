@@ -223,7 +223,8 @@ export type XpEventType =
   | "SCENARIO_COMPLETION"
   | "EXERCISE_COMPLETION"
   | "PROGRAM_COMPLETION"
-  | "GUIDE_COMPLETION";
+  | "GUIDE_COMPLETION"
+  | "MISSION_COMPLETION";
 
 export type CmsXpRule = CmsBaseRecord & {
   entity: "xp-rule";

@@ -9,7 +9,7 @@ sevenbet-next/
 ├── data/             Local JSON data
 ├── docs/             Product, implementation, and baseline documentation
 ├── lib/              Auth, CMS, services, repositories, media, affiliate and public-domain logic
-├── prisma/           Prisma schema and 10 SQL migrations
+├── prisma/           Prisma schema and 15 SQL migrations
 ├── scripts/          Admin bootstrap, integrity, smoke and visual-QA scripts
 ├── tests/            Node tests and Playwright browser test
 ├── .vercel/          Local Vercel-link metadata (not deployment configuration)
@@ -24,7 +24,7 @@ sevenbet-next/
 | --- | --- |
 | Public page routes | 21 non-admin `page.tsx` routes, including dynamic casino, learning and responsible-gambling routes. |
 | Admin page routes | 32 `page.tsx` routes under `app/admin/`; 31 are in `(protected)` and `/admin/login` is public. |
-| API route handlers | 50 under `app/api/`: auth, administrative CMS/affiliate/media, public resource, and program-progress handlers. |
+| API route handlers | 65 under `app/api/`: auth, administrative CMS/affiliate/media/programme, public resource, legacy progress, and active-control handlers. |
 | Non-API route handlers | `/go/[slug]`, `/r/[slug]`, and `/llms.txt`. |
 | Metadata routes | `robots.ts` and `sitemap.ts`. |
 
@@ -36,15 +36,15 @@ The counts exclude `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverag
 
 | Measure | Count / result |
 | --- | --- |
-| Relevant directories | 176 |
-| Relevant files | 351 |
-| Source files | 276 |
-| Test files | 16 |
-| Prisma migrations | 10 |
-| Application page routes | 53 |
+| Relevant directories | 221 |
+| Relevant files | 435 |
+| Source files | 354 |
+| Test files | 22 |
+| Prisma migrations | 15 |
+| Application page routes | 56 |
 | Admin page routes | 32 |
-| API route handlers | 50 |
-| Prisma models | 50 |
+| API route handlers | 65 |
+| Prisma models | 63 |
 | Detected product modules | 9 |
 | Languages | TypeScript/TSX, JavaScript (MJS), SQL, Prisma schema language, CSS, JSON, Markdown |
 | Frameworks | Next.js App Router, React |

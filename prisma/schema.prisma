@@ -285,6 +285,30 @@ enum XpEventType {
   EXERCISE_COMPLETION
   PROGRAM_COMPLETION
   GUIDE_COMPLETION
+  MISSION_COMPLETION
+}
+
+enum ProgrammeMissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  READY_TO_SAVE
+  REGISTRATION_REQUIRED
+  COMPLETED
+}
+
+enum GoalDirection {
+  UNDERSTAND
+  PAUSE
+  REDUCE_IMPULSE
+  SET_BOUNDARY
+  RESEARCH_LATER
+  SEEK_SUPPORT
+}
+
+enum GoalStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
 }
 
 model AdminUser {
@@ -296,8 +320,9 @@ model AdminUser {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user      User?      @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  auditLogs AuditLog[]
+  user                 User?                @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  auditLogs            AuditLog[]
+  activeDayCorrections ProgrammeActiveDay[]
 }
 
 model User {
@@ -309,12 +334,14 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions           Session[]
-  accounts           Account[]
-  adminUser          AdminUser?
-  programEnrollments ProgramEnrollment[]
-  xpEvents           UserXpEvent[]
-  achievements       UserAchievement[]
+  sessions                Session[]
+  accounts                Account[]
+  adminUser               AdminUser?
+  programEnrollments      ProgramEnrollment[]
+  xpEvents                UserXpEvent[]
+  achievements            UserAchievement[]
+  consumedProgrammeClaims PendingProgrammeClaim[]
+  programmeActiveDays     ProgrammeActiveDay[]
 }
 
 model Session {
@@ -397,6 +424,7 @@ model Program {
   steps       ProgramStep[]
   versions    ProgramVersion[]
   enrollments ProgramEnrollment[]
+  xpEvents    UserXpEvent[]
 }
 
 model ProgramStep {
@@ -502,12 +530,17 @@ model ProgramEnrollment {
   startedAt        DateTime  @default(now())
   completedAt      DateTime?
   currentStepId    String?   @db.Uuid
+  timezone         String    @default("UTC")
 
-  program        Program                @relation(fields: [programId], references: [id], onDelete: Restrict)
-  programVersion ProgramVersion         @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
-  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  progressEvents ProgramProgressEvent[]
-  reflections    ProgramReflection[]
+  program         Program                    @relation(fields: [programId], references: [id], onDelete: Restrict)
+  programVersion  ProgramVersion             @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  progressEvents  ProgramProgressEvent[]
+  reflections     ProgramReflection[]
+  missionProgress ProgrammeMissionProgress[]
+  momentMap       MomentMap?
+  currentGoal     CurrentGoal?
+  activeDays      ProgrammeActiveDay[]
 
   @@unique([userId, programId])
   @@index([programVersionId])
@@ -568,23 +601,154 @@ model XpRule {
 }
 
 model UserXpEvent {
-  id            String      @id @default(uuid()) @db.Uuid
-  userId        String
-  ruleId        String?     @db.Uuid
-  achievementId String?     @db.Uuid
-  awardKey      String
-  eventType     XpEventType
-  xp            Int
-  createdAt     DateTime    @default(now())
+  id                 String      @id @default(uuid()) @db.Uuid
+  userId             String
+  ruleId             String?     @db.Uuid
+  achievementId      String?     @db.Uuid
+  programId          String?     @db.Uuid
+  missionNumber      Int?
+  sourceArtifactType String?
+  sourceArtifactId   String?     @db.Uuid
+  awardKey           String
+  eventType          XpEventType
+  xp                 Int
+  createdAt          DateTime    @default(now())
 
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   rule        XpRule?      @relation(fields: [ruleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   achievement Achievement? @relation(fields: [achievementId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  program     Program?     @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@unique([userId, awardKey])
   @@index([userId, createdAt])
   @@index([ruleId])
   @@index([achievementId])
+  @@index([programId, missionNumber])
+}
+
+/// Short-lived private state for Mission 01. The opaque browser token is
+/// stored only as a hash; draft content is never copied to progress events.
+model AnonymousProgrammeSession {
+  id              String                 @id @default(uuid()) @db.Uuid
+  tokenHash       String                 @unique
+  missionState    ProgrammeMissionStatus @default(NOT_STARTED)
+  taskStates      String[]
+  draft           Json?
+  missionVersion  String
+  evidenceVersion String
+  expiresAt       DateTime
+  lastActivityAt  DateTime               @default(now())
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  deletedAt       DateTime?
+
+  pendingClaim PendingProgrammeClaim?
+
+  @@index([expiresAt])
+}
+
+/// One-time bridge between the anonymous Mission 01 result and the Better
+/// Auth account that elects to save it.
+model PendingProgrammeClaim {
+  id                 String    @id @default(uuid()) @db.Uuid
+  anonymousSessionId String    @unique @db.Uuid
+  tokenHash          String    @unique
+  expiresAt          DateTime
+  consumedAt         DateTime?
+  consumedByUserId   String?
+  createdAt          DateTime  @default(now())
+
+  anonymousSession AnonymousProgrammeSession @relation(fields: [anonymousSessionId], references: [id], onDelete: Cascade)
+  consumedByUser   User?                     @relation(fields: [consumedByUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([expiresAt, consumedAt])
+  @@index([consumedByUserId])
+}
+
+model ProgrammeMissionProgress {
+  id            String                 @id @default(uuid()) @db.Uuid
+  enrollmentId  String                 @db.Uuid
+  missionNumber Int
+  status        ProgrammeMissionStatus @default(NOT_STARTED)
+  taskStates    String[]
+  draft         Json?
+  completedAt   DateTime?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, missionNumber])
+  @@index([enrollmentId, updatedAt])
+}
+
+model MomentMap {
+  id                   String    @id @default(uuid()) @db.Uuid
+  enrollmentId         String    @unique @db.Uuid
+  situation            String
+  cues                 String[]
+  thoughtOrFeeling     String
+  response             String
+  immediateConsequence String
+  noticeRule           String
+  neutralFlags         String[]
+  notSureFlags         String[]
+  missionVersion       String
+  evidenceVersion      String
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  deletedAt            DateTime?
+
+  enrollment   ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourcedGoals CurrentGoal[]
+}
+
+model CurrentGoal {
+  id                   String        @id @default(uuid()) @db.Uuid
+  enrollmentId         String        @unique @db.Uuid
+  sourceMomentMapId    String        @db.Uuid
+  direction            GoalDirection
+  action               String
+  triggerOrSituation   String
+  alternativeAction    String
+  successSignal        String
+  reviewAt             DateTime
+  confidence           Int
+  confidenceAdjustment String
+  status               GoalStatus    @default(ACTIVE)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+  deletedAt            DateTime?
+
+  enrollment      ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourceMomentMap MomentMap         @relation(fields: [sourceMomentMapId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([sourceMomentMapId])
+}
+
+/// One eligible programme day per user-local date. Voiding preserves the
+/// correction trail without rewriting XP or sensitive artefacts.
+model ProgrammeActiveDay {
+  id                 String    @id @default(uuid()) @db.Uuid
+  userId             String
+  enrollmentId       String    @db.Uuid
+  localDate          DateTime  @db.Date
+  timezone           String
+  sourceEventKey     String
+  eligibleActivityAt DateTime
+  createdAt          DateTime  @default(now())
+  voidedAt           DateTime?
+  voidReason         String?
+  voidedByAdminId    String?   @db.Uuid
+
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  enrollment    ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  voidedByAdmin AdminUser?        @relation(fields: [voidedByAdminId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([userId, localDate])
+  @@unique([enrollmentId, sourceEventKey])
+  @@index([userId, localDate, voidedAt])
+  @@index([voidedByAdminId])
 }
 
 model Achievement {
@@ -739,17 +903,17 @@ model EditorialReview {
 }
 
 model EditorialReviewRevision {
-  id             String                @id @default(uuid()) @db.Uuid
-  reviewId       String                @db.Uuid
+  id             String    @id @default(uuid()) @db.Uuid
+  reviewId       String    @db.Uuid
   revisionNumber Int
   content        Json
   validation     Json?
   summary        String
   createdBy      String
-  createdAt      DateTime              @default(now())
+  createdAt      DateTime  @default(now())
   promotedAt     DateTime?
 
-  review        EditorialReview       @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  review        EditorialReview         @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   previewTokens EditorialPreviewToken[]
 
   @@unique([reviewId, revisionNumber])
@@ -757,17 +921,17 @@ model EditorialReviewRevision {
 }
 
 model EditorialPreviewToken {
-  id         String                  @id @default(uuid()) @db.Uuid
-  reviewId   String                  @db.Uuid
-  revisionId String                  @db.Uuid
-  tokenHash  String                  @unique
+  id         String    @id @default(uuid()) @db.Uuid
+  reviewId   String    @db.Uuid
+  revisionId String    @db.Uuid
+  tokenHash  String    @unique
   expiresAt  DateTime
   usedAt     DateTime?
   createdBy  String
-  createdAt  DateTime                @default(now())
+  createdAt  DateTime  @default(now())
 
-  review    EditorialReview         @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  revision  EditorialReviewRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  review   EditorialReview         @relation(fields: [reviewId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revision EditorialReviewRevision @relation(fields: [revisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@index([tokenHash, expiresAt])
   @@index([reviewId, expiresAt])
