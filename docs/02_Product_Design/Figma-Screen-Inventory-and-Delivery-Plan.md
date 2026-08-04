@@ -26,8 +26,8 @@ The audit identifies **73 unique user-facing screen families or representative s
 
 | Figma status | Count | Meaning in this audit |
 |---|---:|---|
-| `APPROVED` | 0 | No family meets the requested readiness definition because the mobile page is empty and Ready for Dev/prototype coverage is absent. This does not revoke prior product approval of desktop concepts. |
-| `DESIGNED_NEEDS_QA` | 18 | Current Tilt-Locked design exists and may include completed responsive/internal QA work, but user approval or wider journey handoff remains outstanding. |
+| `APPROVED` | 2 | Public Header and Public Footer are visually approved across their completed desktop, laptop and mobile states. |
+| `DESIGNED_NEEDS_QA` | 16 | Current Tilt-Locked design exists but user approval, responsive QA or wider journey handoff remains outstanding. |
 | `PARTIAL` | 11 | A component, fragment, or subset of the family exists, but the family is not complete. |
 | `LEGACY` | 0 | No active Figma screen is labelled or detected as a retained superseded direction. Legacy/stale frontend surfaces are tracked separately. |
 | `MISSING` | 32 | No adequate active Figma family was detected. |
@@ -43,14 +43,14 @@ The audit identifies **73 unique user-facing screen families or representative s
 
 | Area | Detected evidence | Audit conclusion |
 |---|---|---|
-| Pages | Strategy; Foundations; Core; SevenBet components; Patterns & Flows; Desktop; Mobile; Motion & Prototype; Ready for Dev | Organisation exists, but Strategy, Mobile, Motion and Ready for Dev are empty. |
+| Pages | Strategy; Foundations; Core; SevenBet components; Patterns & Flows; Desktop; Mobile; Motion & Prototype; Ready for Dev | Organisation exists; Mobile contains the approved Public Shell family, while Strategy, Motion and Ready for Dev are empty. |
 | Foundations | Node `285:55`; 4 collections / 41 variables; 10 text styles | Tilt-Locked foundation exists. Mode naming and handoff notes need QA. |
 | Core components | Node `287:2`; 4 sets / 28 components | Core primitives exist. |
-| SevenBet components | Page `6:4`; 19 sets / 92 components | Good domain base, but responsive shell, commercial availability states and protected-control shell are incomplete. |
+| SevenBet components | Page `6:4`; 19 sets / 92 components | Good domain base; the responsive Public Shell is approved, while live commercial availability authority and the protected-control shell remain incomplete. |
 | Desktop screens | Page `6:6`; Home, Bonuses, Best Offers, Casinos, Casino Profile, Protected article, Programme M01–M04 | Strong desktop concept coverage in selected modules. |
-| Mobile | Page `6:7`; Public Shell family `492:2268` with three 390×844 frames, one 375×667 frame and full mobile footer | Public Shell responsive coverage is complete and internally QA-validated; all other required families remain blockers. |
+| Mobile | Page `6:7`; Public Shell family `492:2268` with three 390×844 frames, one 375×667 frame and full mobile footer | Public Shell responsive coverage is complete, internally QA-validated and visually approved; all other required families remain blockers. |
 | Prototype | 7 interaction nodes in Header set `289:43`; page `6:8` remains empty | Public mobile Menu/Close uses 240ms Smart Animate and Escape recovery; other journeys still need interaction QA. |
-| Ready for Dev | Page `6:9`, empty | No family qualifies as implementation-ready under the requested definition. |
+| Ready for Dev | Page `6:9`, empty | Public Shell visual approval is recorded here in the inventory; a consolidated implementation-handoff page is still absent. |
 | Legacy | No Prismatic Product Theatre, Human Guidance, archived or superseded active frames detected | Do not restore removed directions. |
 
 ## Screen inventory
@@ -63,8 +63,8 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 | A02 | Public acquisition | 10-Steps campaign landing | `/10-steps` | Explain value and start Mission 01 | `MISSING` | — | Missing | Missing | **Detected — legacy/stale** | Programme contract | Reward/privacy wording; no commercial reward linkage | P0 | Design complete Tilt-Locked desktop/mobile family; correct stale `+20 XP` frontend copy to approved +60 only in later implementation. |
 | A03 | Public acquisition | General Programme explainer | `/program` or Home modules | Explain Programme without forcing a mission start | `PARTIAL` | `291:23`, `292:64`, `292:141` | Home fragments | Missing | **Detected — partial** | Programme mission summaries | Protected Programme-data separation | P0 | Define IA relationship between campaign landing and direct Programme entry; reuse existing theatre/tool components. |
 | A04 | Public acquisition | Age / market entry state | Global entry or contextual gate | Prevent false availability and explain 18+/market limits | `BLOCKED` | Generic notice set `489:70`; family `492:2268` | Generic unknown/unavailable designed | Generic 390/375 designed | **Not detected** | Trusted market/age signals not launch-complete | RFC-001 remains proposed; RFC-004 GB intent is not live eligibility authority | P0 | Generic non-live treatment is designed and marked illustrative; live detection/eligibility remains blocked. |
-| A05 | Public acquisition | Public header and responsive navigation | Global | Navigation, Programme, discovery, Help and account entry | `DESIGNED_NEEDS_QA` | Set `289:43`; family `492:2268` | 1440 and 1280 signed-out/in | 390 closed/open/signed-in; 375 contract | **Detected — legacy/partial** | Auth state; optional market state | Help must stay protected; account/commercial separation | P0 | Internal QA passed; obtain user approval, then preserve the contract for later frontend parity work. |
-| A06 | Public acquisition | Public footer | Global | Trust, disclosure, Help and legal escape routes | `DESIGNED_NEEDS_QA` | Set `488:100`; desktop `289:137`; mobile `488:69`; family `492:2268` | Designed and QA-checked | Full 390 footer; 375 contract | **Detected — legacy/partial** | Navigation/legal registry | 18+, affiliate disclosure, Help neutrality | P0 | Internal QA passed; obtain user approval; production legal wording remains a content dependency. |
+| A05 | Public acquisition | Public header and responsive navigation | Global | Navigation, Programme, discovery, Help and account entry | `APPROVED` | Set `289:43`; family `492:2268` | Approved: 1440 and 1280 signed-out/in | Approved: 390 closed/open/signed-in; 375 contract | **Detected — legacy/partial** | Auth state; optional market state | Help must stay protected; account/commercial separation | P0 | Preserve as the visual and navigation source of truth for subsequent public P0 families and later frontend parity work. |
+| A06 | Public acquisition | Public footer | Global | Trust, disclosure, Help and legal escape routes | `APPROVED` | Set `488:100`; desktop `289:137`; mobile `488:69`; family `492:2268` | Approved: desktop and 1280 contract | Approved: full 390 footer and 375 contract | **Detected — legacy/partial** | Navigation/legal registry | 18+, affiliate disclosure, Help neutrality | P0 | Preserve as part of the shared Public Shell; production legal wording remains a content dependency. |
 | A07 | Public acquisition | Global search entry | Planned | Cross-site discovery | `NOT_REQUIRED_FOR_INITIAL_LAUNCH` | — | Deferred | Deferred | **Not detected** | Search index | Result eligibility and protected-content separation | OUT OF SCOPE | Do not design until search is accepted into launch IA. |
 | B01 | Commercial discovery | Casinos catalogue and filter states | `/casinos` | Discover and shortlist eligible operators | `DESIGNED_NEEDS_QA` | `325:323` | Designed | Missing | **Detected — legacy/partial** | Casino discovery service, filters, freshness | Eligibility, affiliate disclosure, material facts, uncertainty | P0 | Preserve desktop; add mobile catalogue, filter open/closed/applied, loading and disclosure QA. |
 | B02 | Commercial discovery | Catalogue empty / no eligible offers | `/casinos` | Honest recovery when nothing can be shown | `MISSING` | — | Missing | Missing | **Detected — partial** | Empty discovery result and reason codes | No substitution with ineligible offers | P0 | Add representative desktop/mobile state using reusable availability surface. |
@@ -137,15 +137,15 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 
 ### Design gaps
 
-- The launch journey has strong desktop anchors but no complete public shell, `/10-steps` campaign family, comparison family, dedicated Protected Help shell, or legal-system template set.
+- The launch journey has an approved responsive Public Shell and strong desktop anchors, but no `/10-steps` campaign family, comparison family, dedicated Protected Help shell, or legal-system template set.
 - Commercial designs lack a unified availability/outbound state model covering restricted, unknown, expired, unavailable and no-eligible outcomes.
 - The Programme is the most mature product area, but its state coverage is incomplete around claim recovery, session expiry, pause, artefact deletion and explicit returning sign-in.
 - Active Figma has no legacy/superseded frames to rescue. Existing older frontend pages should be treated as implementation debt, not visual references.
 
 ### Mobile and responsive gaps
 
-- Figma page `06 — Screens / Mobile` now contains the internally QA-validated Public Shell family (`492:2268`); all other launch families still lack active mobile frames.
-- Header/footer, account states and generic availability now have 1440, 1280, 390×844 and 375×667 evidence; route-level Home and downstream families still need their own responsive QA.
+- Figma page `06 — Screens / Mobile` contains the internally QA-validated and visually approved Public Shell family (`492:2268`); all other launch families still lack active mobile frames.
+- Header/footer and account states have approved 1440, 1280, 390×844 and 375×667 evidence; the generic availability treatment is designed but remains blocked as live product authority. Route-level Home and downstream families still need their own responsive QA.
 - Full 390×844 mobile frames are required for Home, `/10-steps`, Casinos, Casino Profile, Bonuses, Best Offers, Comparison, Dashboard, Protected Help and registration/sign-in.
 - Each family also needs a documented 1280 laptop contract and 375×667 small-mobile behaviour, including safe areas, long terms, sticky actions, filters, comparison overflow and focus order.
 
@@ -202,7 +202,7 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 
 ## Recommended P0 creation order
 
-1. **Public shell completeness — designed, internally QA-passed, awaiting user approval** — header, footer, signed-out/signed-in account entry, mobile navigation, generic market/restricted message and 18+ treatment.
+1. **Public shell completeness — APPROVED** — header, footer, signed-out/signed-in account entry, mobile navigation, generic market/restricted message and 18+ treatment. This shell is the visual and navigation source of truth for every subsequent public P0 family.
 2. **`/10-steps` campaign landing** — desktop/mobile and clear entry to Mission 01.
 3. **Casinos catalogue family** — filters, loading, empty, restricted/unknown and mobile.
 4. **Casino Profile family** — available/unavailable, outbound disclosure and mobile.
@@ -217,7 +217,7 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 
 ## First completed action
 
-The first screen family is **Public shell completeness** because every public acquisition, commercial, learning and legal route depends on it. It is now designed in Figma as family `492:2268`, with the existing Header set extended at `289:43`, the Footer converted to responsive set `488:100`, and generic Availability Notice set `489:70`. Internal visual and structural QA passed; user approval remains outstanding, so the status is `DESIGNED_NEEDS_QA`, not `APPROVED`.
+The first screen family is **Public shell completeness** because every public acquisition, commercial, learning and legal route depends on it. It is designed in Figma as family `492:2268`, with the existing Header set extended at `289:43`, the Footer converted to responsive set `488:100`, and generic Availability Notice set `489:70`. Internal visual and structural QA passed, and the user visually approved the family on 2026-08-04. Public Header and Public Footer are therefore `APPROVED`; the generic Availability Notice remains a designed treatment without live jurisdiction authority.
 
 ### Family completion contract
 
@@ -238,6 +238,8 @@ The first screen family is **Public shell completeness** because every public ac
 - Accessibility QA: all audited interactive targets are at least 44px; focus-order contract is documented; no horizontal mobile navigation scroll.
 - Structural QA: approved fonts only (`Archivo Black`, `Archivo`, `Instrument Serif`); 11 linked instances, 0 detached; 0 placeholder texts; 0 remaining text-bound defects.
 - Data/compliance: generic states make no live location claim and carry the required illustrative approval marker. RFC-001/live market authority remains blocked.
+- Approval: desktop `492:2283`, laptop `494:116`, mobile `493:57`, `493:78`, `493:115`, small-mobile `493:131` and full mobile footer `494:151` are visually approved. These node IDs are unchanged.
+- Downstream rule: every subsequent public P0 screen family must reuse this Public Shell as its shared visual and navigation source of truth; it must not create a competing header, footer or public navigation model.
 
 ## Next screen family
 
