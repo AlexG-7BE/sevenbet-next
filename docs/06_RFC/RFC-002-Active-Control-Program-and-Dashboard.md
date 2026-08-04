@@ -4,6 +4,7 @@ Status: Approved
 Classification: Internal
 Owner: Founder / Product
 Date: 2026-08-02
+Last Updated: 2026-08-04
 Decision: Make the 10-Step Control Program an action-based progression system and make the Personal Control Dashboard its primary return surface.
 Governing Documents:
   - ../Product-Vision-and-Principles.md
@@ -31,7 +32,7 @@ The intended outcome is a practical personal control tool. A user completes smal
 
 ## 2. Product rules
 
-1. **One meaningful action per step.** A step is complete only after the user performs its stated learning, planning, or control action. Passive exposure to a screen alone is not completion.
+1. **One meaningful outcome per mission.** A mission is complete only after the user performs its required learning, planning, or control tasks and creates the stated user-owned result. Passive exposure to a screen, a single decorative choice, or elapsed time alone is not completion.
 2. **Progress means useful work, not compliance.** Progress represents completed decision-support actions and the assembled personal plan. It is never a measure of suitability to gamble, loyalty, or commercial value.
 3. **Account access and programme gating are bounded.** A visitor may complete Mission 01 in an ephemeral, private session. A SevenBet account is required immediately after that first useful action to save its result and to open Mission 02 or any persistent personal programme state. Completing a mission may open the next mission within that Program. Neither account creation nor mission completion may unlock casino discovery, operator referrals, bonus access, or better commercial treatment.
 4. **Agency remains intact.** Every mission has an obvious leave route. A user may pause the programme at any time; non-essential reflection inputs may be skipped; no sensitive disclosure is required to exit or use support.
@@ -46,8 +47,8 @@ The following is the approved product map. Exact wording, jurisdictional variant
 
 | Step | Mission | Required programme action | User-owned result |
 | --- | --- | --- | --- |
-| 01 | Name the moment | Select the current decision context; optionally add a short note. | A private check-in and stated intent. |
-| 02 | Set the goal | Choose the useful near-term goal: learn, pause, research, reduce impulse, or decide later. | A current goal that can steer the Dashboard. |
+| 01 | Map the moment | Reconstruct one recent or representative decision moment, distinguish context, cue, response and immediate consequence, then write one personal notice rule. | An editable private Moment Map and notice rule. |
+| 02 | Set a 7-day goal | Review the Moment Map, choose one useful near-term goal, make the next action specific, and calibrate it to the user's stated confidence. | An editable Current Goal with a concrete next action and review date. |
 | 03 | Understand the urge | Complete a short evidence-based learning interaction and identify one personal early signal or use a neutral "not now" path. | A reviewed learning item and optional reflection. |
 | 04 | Build one boundary | Create, select, or revise one concrete personal rule. | An editable active boundary. |
 | 05 | Check before deciding | Complete a fact-check exercise using material terms, source quality, and uncertainty. | A personal decision checklist. |
@@ -71,6 +72,20 @@ No mission may require an admission of harm, an account, payment data, a gamblin
 - A clear, deterministic acknowledgement of the XP or achievement earned for a completed Program action.
 - Optional reminders controlled by the user; a reminder may mention an active streak but must not use loss aversion, punishment language, or a false deadline.
 
+#### 4.1.1 Initial reward schedule for the first production flow
+
+The first designed flow uses a deterministic reward schedule tied to saved, useful Programme artefacts:
+
+| Event | Recognition | Product meaning |
+| --- | --- | --- |
+| Mission 01 Moment Map is valid and successfully saved to the new account | `+60 XP` and Mission 01 completion | The user created and preserved the first reusable Programme artefact. |
+| Mission 02 Current Goal is valid and saved | `+80 XP`, Mission 02 completion, and `First plan` achievement | The user converted the Moment Map into a specific seven-day action and review point. |
+| A useful Programme action is completed on another eligible local calendar day | learning streak advances according to the final streak policy | The user returned and performed useful work; account creation, opening a screen, or a commercial action is not eligible. |
+
+The Dashboard may display total XP, achievements, active-day history and the next available Programme recognition. It must always name the useful action behind a reward. It must not use mystery rewards, random reward values, streak-loss threats, purchasable recovery, leaderboards, or conversion-linked rewards.
+
+The initial Dashboard after registration therefore shows `60 XP`, Mission 01 completed, Mission 02 current, and `1 active day` rather than claiming a multi-day streak. The `First plan` achievement remains visibly attainable but unearned until Mission 02 is completed. Exact streak timezone, grace, reminder and correction semantics remain an implementation gate for the later backend-alignment task.
+
 ### 4.2 Prohibited mechanics
 
 - Coins, cash-equivalent rewards, operator bonuses, levels that signal gambling readiness, leaderboards, competitive scores, scarcity timers, loss aversion, or variable rewards.
@@ -88,6 +103,68 @@ The ten missions SHALL not be implemented as ten visually identical forms. A mis
 - **Build:** Missions 04, 06, 09 and 10 use a plan-composer interaction that creates, edits, rehearses or reviews a reusable personal rule.
 
 Every mission sequence must show: the task, why it matters, the action, an immediate plain-language result, the deterministic XP or achievement consequence where applicable, and the next safe choice. The existing Personal Control Dashboard visual shell is the standard for the authenticated Programme. Mission screens may vary in composition, density, surface and interaction, but must retain the same calm, private character.
+
+### 4.4 Active-work and duration standard
+
+Every mission SHALL be designed for **15–25 minutes of active participation at a normal reading and interaction pace**. A mission may take longer when a user chooses to add detail. The target is achieved through useful work, not artificial delay.
+
+Each mission therefore contains five functional stages:
+
+1. **Orient:** state the practical outcome, expected time, privacy boundary, and leave/help routes.
+2. **Learn:** present one short, reviewed evidence concept with its source and limitation.
+3. **Apply:** ask the user to use the concept on a concrete situation, scenario, or decision.
+4. **Build:** create or revise a reusable personal artefact.
+5. **Review:** explain the result, allow editing, and show exactly what will be saved and what follows.
+
+Elapsed time SHALL NOT be a completion gate. Completion depends on required task states and a valid user-owned result. Optional sensitive detail, free-text disclosure, or admission of harm must never be required. A neutral example, `not sure`, or `prefer not to add detail` route may satisfy a non-essential reflection without falsifying completion.
+
+The interface may display an honest estimate such as `15–20 min`. It must not use a countdown, false urgency, punishment, or a claim that spending longer produces a safer or clinically better outcome.
+
+### 4.5 Approved first-flow design contract
+
+The first production flow SHALL be designed and validated as one continuous package:
+
+```text
+Mission 01 → earned-result registration gate → Personal Control Dashboard → Mission 02 → updated Dashboard
+```
+
+**Mission 01 — Map the moment (target 17–22 minutes)**
+
+1. Mission brief: explain that the user will create one private Moment Map.
+2. Evidence note: explain that personal and environmental triggers, thoughts, feelings and immediate consequences can be examined to understand a behaviour sequence; state that SevenBet is adapting this as education and is not delivering CBT or treatment.
+3. Moment selection: choose one recent or representative situation and record when/where at a level the user is comfortable saving.
+4. Cue scan: identify at least one external or internal cue, with a neutral `not sure yet` option.
+5. Sequence builder: arrange or complete `situation → cue → thought/feeling → response → immediate consequence`.
+6. Learning check: distinguish a cue from a response in a short scenario and receive an explained answer.
+7. Notice rule: complete `Next time I notice …, I will pause and name it before deciding.`
+8. Result review: edit and confirm the Moment Map before registration is requested.
+
+The completed Moment Map remains ephemeral until registration succeeds. Mission 01 awards its deterministic Programme XP only when the result is saved to the new account; the pre-registration screen may preview the pending acknowledgement but must not imply that an account is optional for Mission 02.
+
+**Registration — save the earned result**
+
+The gate SHALL show the Moment Map preview, explain exactly what the account saves, and use the detected email-and-password capability. The primary action is `Create my private account`. Marketing consent, if offered at all, is separate, optional, and unchecked. There is no `continue without account` route into Mission 02; the person may still leave, return to public pages, restart Mission 01, or use protected Help.
+
+**Dashboard — first authenticated state**
+
+After registration the Dashboard SHALL show Mission 01 as completed, Mission 02 as current, the saved Moment Map, the next 15–25 minute task, deterministic XP acknowledgement, the ten-mission path, and private edit/delete controls. A streak begins only under the separately defined streak rule; account creation alone does not manufacture a streak. Commercial navigation remains available as separately labelled site navigation and is not placed in the Mission result or reward panel.
+
+**Mission 02 — Set a 7-day goal (target 18–24 minutes)**
+
+1. Mission brief: explain that the user will turn the Moment Map into one reviewable seven-day goal.
+2. Evidence note: explain that NICE recommends discussing and agreeing an aim and other personally important goals in treatment settings, and that motivational interviewing may strengthen confidence and commitment; state that SevenBet provides a self-directed educational adaptation, not motivational interviewing or treatment.
+3. Recall: review and, if needed, edit the relevant Moment Map.
+4. Goal choice: choose one primary direction — understand, pause, reduce impulse, set a boundary, research later, or seek support.
+5. Action builder: specify what the user will do, when or in what situation, and how they will know it happened.
+6. Confidence calibration: privately rate confidence from 0–10. A low rating offers a smaller action or support route; it is not a diagnosis or score of readiness to gamble.
+7. Scenario check: identify the more specific and controllable action, then show the explanation.
+8. Result review: save the Current Goal, its next action and review date to the Dashboard.
+
+Mission 02 completion may award deterministic Programme XP and the first-plan achievement. Neither acknowledgement may unlock, improve, or be visually coupled to a casino, bonus, offer, referral, deposit, or gambling action.
+
+**Dashboard — authenticated state after Mission 02**
+
+After Mission 02 is saved, the Dashboard SHALL show `140 XP` total, Mission 01 and Mission 02 as completed, the `First plan` achievement as earned, Mission 03 as current, the saved Current Goal, and its evidence note. When Mission 01 and Mission 02 are completed on the same local calendar day, the Dashboard continues to show `1 active day`; the streak does not advance until another eligible Programme action is completed on another eligible day.
 
 ## 5. Personal Control Dashboard
 
@@ -149,6 +226,19 @@ Required controls:
 Every evidence card used in a mission must have: a named source, source URL or controlled source reference, publication/review date, content owner, applicable market/language scope, and a next review date. Material that makes medical, psychological, or behavioural-health claims requires the defined clinical/content review route before publication.
 
 The product may explain concepts such as urges, decision friction, self-exclusion, or support pathways. It must clearly state its limits, avoid diagnosing an individual, and make professional or emergency support discoverable where appropriate. It must not present a quiz answer or programme completion as a clinical assessment.
+
+### 7.1 Initial evidence register for Mission 01 and Mission 02
+
+The following sources govern the first design package. They support the educational concepts and design constraints; they do not constitute clinical evaluation of SevenBet's complete Programme.
+
+| Evidence ID | Source | Approved design use | Required limitation |
+| --- | --- | --- | --- |
+| `NICE-NG248-2025` | NICE, *Gambling-related harms: identification, assessment and management*, published 28 January 2025: https://www.nice.org.uk/guidance/ng248/chapter/recommendations | Explain that assessment/treatment practice can examine triggers, cravings, thoughts and feelings; support agreed aims, personally important goals, relapse-prevention concepts, and confidence/commitment language. | CBT and motivational interviewing are practitioner-delivered treatment approaches. SevenBet must not claim to provide either, diagnose a condition, or reproduce clinical assessment. |
+| `NICE-EVIDENCE-F-2025` | NICE evidence review F, *Psychological and psychosocial treatment of harmful gambling*: https://www.nice.org.uk/guidance/ng248/evidence/f-psychological-and-psychosocial-treatment-of-harmful-gambling-pdf-15241031251 | Calibrate evidence wording and avoid overstating effectiveness. | Evidence quality and certainty vary; do not infer that the SevenBet Programme itself is effective. |
+| `LARIMER-RCT-2012` | Larimer et al., randomized trial of brief interventions for college student gambling, PMID 22188239: https://pubmed.ncbi.nlm.nih.gov/22188239/ | Support the educational sequence of functional analysis, identifying triggers, correcting a misconception, and considering alternative responses. | The population and intervention were specific; results are not general proof for all users or for SevenBet. |
+| `NHS-GAMBLING-HELP` | NHS, *Help for problems with gambling*: https://www.nhs.uk/live-well/addiction-support/gambling-addiction/ | Provide UK help language and a protected route when gambling is causing stress, guilt, financial or relationship problems. | A SevenBet mission or answer is not the NHS questionnaire and must not be presented as screening or diagnosis. |
+
+Before production release, each rendered evidence note must additionally carry content owner, clinical/content reviewer, market/language scope, last-reviewed date, and next-review date. Claims must be re-checked against the live source during review.
 
 ## 8. Measurement and safety stop signals
 

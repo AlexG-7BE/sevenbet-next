@@ -22,7 +22,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 🟨 Product Master Plan
 
-🟨 RFC-002 — Active Control Program and Personal Control Dashboard approved; product, compliance, domain-model and content gates remain before implementation
+🟨 RFC-002 — Active Control Program and Personal Control Dashboard approved; the first complete desktop design flow is validated, while product, compliance, domain-model, backend-alignment and content gates remain before implementation
 
 🟨 RFC-004 — Commercial Launch Delivery Plan approved; Milestone 0 launch contract is the next implementation gate
 
@@ -31,6 +31,8 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 ✅ Product & Design reset — superseded Prismatic, Human Guidance and earlier concept foundations, components, screens, variables and styles removed from the active Figma file
 
 ✅ Tilt-Locked public acquisition surfaces — Home, Bonuses, Best Offers, Casinos, the casino profile/review pattern and a representative protected-control article detail complete in Figma; the article-detail system is governed by the RFC-007 protected-control / educational-commercial amendment; mobile/device QA and broader journey migration remain pending
+
+✅ Tilt-Locked active-control package — Mission 01, mandatory earned-result registration, the authenticated Dashboard, Mission 02, truthful XP/achievement/active-day states, and the post-Mission-02 Dashboard complete and visually validated in Figma
 
 ## Progress
 
@@ -44,7 +46,7 @@ Figma Plugin API access was revalidated after the file was upgraded to a Profess
 
 The 2026-08-03 RFC-006 amendment makes `Start the 10-Step Program` the only conversion action inside Home content. Commercial discovery remains directly available through the global header and footer, while the Home body uses static self-recognition, evidence limitations, a visible Personal Control Plan result, non-testimonial plan-use scenarios, methodology and a protected Help route. Program, Help, pause, self-check and vulnerability data are prohibited from advertising targeting and individual commercial personalisation. The 2026-08-04 RFC-007 article amendment applies the same separation to Learning Center content: neutral commercial education may link contextually to discovery after delivering value, while quit, control, self-exclusion and harm-related articles use a protected-control template with no casino, bonus, offer or affiliate actions in article content.
 
-RFC-002 and its 2026-08-02 Mission 01 session amendment remain the approved product authority for a Personal Control Dashboard, account entry after the first useful Programme action, and active Programme missions. Earlier exploratory Dashboard, account-entry and mission frames were removed during the RFC-007 visual reset and are not present in the active Figma screen set. They must be redesigned in the Tilt-Locked system before implementation handoff. Public Discovery, education, Help and Mission 01 remain accessible without registration; persistent personal Control Program progress after Mission 01 requires an account and remains subject to the RFC's product, content, compliance, privacy, architecture, and Domain Model gates.
+RFC-002 and its 2026-08-04 active-work amendment remain the approved product authority for the Personal Control Dashboard, mandatory account entry after the first useful Programme mission, 15–25 minute active-work missions, and deterministic Programme rewards. The active Figma file now contains the reusable Programme component board (`387:38`), the documented Mission 01 → Registration → Dashboard → Mission 02 flow (`426:2`), and the desktop screen grid (`407:704`). The grid contains eight Mission 01 screens, two mandatory registration screens, the first authenticated Dashboard, eight Mission 02 screens, and the updated post-Mission-02 Dashboard. Mission 01 awards `+60 XP` only after the Moment Map is saved during registration; Mission 02 awards `+80 XP` and `First plan`; same-day completion remains `1 active day`. Public Discovery, education, Help and Mission 01 remain accessible without registration; persistent personal Control Program progress after Mission 01 requires an account and remains subject to the RFC's product, content, compliance, privacy, architecture, backend-alignment, and Domain Model gates. Backend alignment is explicitly deferred to a separate implementation task.
 
 ## Technical Baseline Audit
 
@@ -73,8 +75,8 @@ Architecture not started.
 
 ## Current Milestone
 
-Complete Product Master Plan while extending the validated Tilt-Locked consumer-product system across public acquisition surfaces
+Complete Product Master Plan while extending the validated Tilt-Locked consumer-product system across public acquisition and active-control surfaces
 
 ## Next Milestone
 
-Architecture Alignment; translate the validated Tilt-Locked Casinos catalogue and casino profile surfaces into implementation when scheduled, and complete mobile/device QA before broader journey migration
+Architecture and backend-flow alignment for the approved Programme package in a separate implementation task; complete mobile/device QA before broader journey migration
