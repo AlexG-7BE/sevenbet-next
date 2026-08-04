@@ -1,4 +1,6 @@
 import {
+  type BoundaryCategory,
+  type BoundaryStatus,
   Prisma,
   type EarlySignalCategory,
   type GoalDirection,
@@ -8,12 +10,16 @@ import {
 import {
   CONTROL_PROGRAM_SLUG,
   EVIDENCE_CONTENT_VERSION,
+  MISSION_FOUR_EVIDENCE_VERSION,
+  MISSION_FOUR_VERSION,
   MISSION_ONE_VERSION,
   MISSION_THREE_EVIDENCE_VERSION,
   MISSION_THREE_LEARNING_ITEM_ID,
   MISSION_THREE_VERSION,
   controlProgrammePath,
   missionOneTaskStates,
+  missionFourStages,
+  missionFourTaskStates,
   missionStateFromTaskCount,
   missionThreeStages,
   missionThreeTaskStates,
@@ -34,9 +40,11 @@ import {
 } from "@/lib/programme/security";
 import {
   assertCompleteTasks,
+  parseActiveBoundary,
   parseEarlySignalChoice,
   parseCurrentGoal,
   parseMissionOneDraft,
+  parseMissionFourDraft,
   parseMissionThreeDraft,
   parseMissionTwoDraft,
   parseMomentMap,
@@ -58,6 +66,7 @@ import {
 const missionOneAwardKey = "programme:mission:01:save:v1";
 const missionTwoAwardKey = "programme:mission:02:save:v1";
 const missionThreeAwardKey = "programme:mission:03:save:v1";
+const missionFourAwardKey = "programme:mission:04:save:v1";
 
 function missionStatus(value: ReturnType<typeof missionStateFromTaskCount>) {
   return value.toUpperCase() as
@@ -78,7 +87,22 @@ function earlySignalCategory(value: string) {
   return value.toUpperCase() as EarlySignalCategory;
 }
 
+function boundaryCategory(value: string) {
+  return value.toUpperCase() as BoundaryCategory;
+}
+
+function boundaryStatus(value: string) {
+  return value.toUpperCase() as BoundaryStatus;
+}
+
 function jsonGoal(value: ReturnType<typeof parseCurrentGoal>) {
+  return {
+    ...value,
+    ...(value.reviewAt ? { reviewAt: value.reviewAt.toISOString() } : {}),
+  } as Prisma.InputJsonObject;
+}
+
+function jsonBoundary(value: ReturnType<typeof parseActiveBoundary>) {
   return {
     ...value,
     ...(value.reviewAt ? { reviewAt: value.reviewAt.toISOString() } : {}),
@@ -600,6 +624,179 @@ export class ProgrammeFlowService {
     );
   }
 
+  async getMissionFourDraft(userId: string) {
+    const { source, enrollment } = await this.requireEnrollment(userId);
+    const progress = await this.repository.findMissionProgress(enrollment.id, 4);
+    if (!progress) throw new NotFoundError("Mission 04 progress");
+    return {
+      missionNumber: 4,
+      status: serialiseMissionState(progress.status),
+      taskStates: progress.taskStates,
+      stages: missionFourStages,
+      draft: progress.draft ?? null,
+      evidence: programmeEvidence.mission04,
+      evidenceVersion: MISSION_FOUR_EVIDENCE_VERSION,
+      currentGoal: enrollment.id
+        ? await this.repository.findCurrentGoal(enrollment.id)
+        : null,
+      urgeLearningRecord: enrollment.id
+        ? await this.repository.findUrgeLearningRecord(enrollment.id)
+        : null,
+      programId: source.program.id,
+    };
+  }
+
+  async saveMissionFourDraft(userId: string, value: unknown) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const missionThree = await this.repository.findMissionProgress(enrollment.id, 3);
+    if (missionThree?.status !== "COMPLETED") {
+      throw new ConflictError("Mission 03 must be completed before Mission 04");
+    }
+    const existing = await this.repository.findMissionProgress(enrollment.id, 4);
+    if (!existing) throw new NotFoundError("Mission 04 progress");
+    if (existing.status === "COMPLETED") {
+      throw new ConflictError("Mission 04 is already completed");
+    }
+    const input = parseMissionFourDraft(value);
+    const mergedTaskStates = missionFourTaskStates.filter(
+      (task) => existing.taskStates.includes(task) || input.taskStates.includes(task),
+    );
+    const previousDraft =
+      existing.draft && typeof existing.draft === "object" && !Array.isArray(existing.draft)
+        ? existing.draft as { activeBoundary?: Record<string, unknown> }
+        : {};
+    const mergedBoundary = {
+      ...(previousDraft.activeBoundary ?? {}),
+      ...jsonBoundary(input.activeBoundary),
+    } as Prisma.InputJsonObject;
+    const ready = mergedTaskStates.length === missionFourTaskStates.length;
+    if (ready) parseActiveBoundary(mergedBoundary, { complete: true });
+    const saved = await this.repository.updateMissionDraftIfOpen({
+      enrollmentId: enrollment.id,
+      missionNumber: 4,
+      status: ready ? "READY_TO_SAVE" : "IN_PROGRESS",
+      taskStates: mergedTaskStates,
+      draft: { activeBoundary: mergedBoundary },
+    });
+    if (saved.count !== 1) {
+      throw new ConflictError("Mission 04 draft can no longer be changed");
+    }
+    const progress = await this.repository.findMissionProgress(enrollment.id, 4);
+    if (!progress) throw new NotFoundError("Mission 04 progress");
+    return {
+      missionNumber: 4,
+      status: serialiseMissionState(progress.status),
+      taskStates: progress.taskStates,
+      stages: missionFourStages,
+      updatedAt: progress.updatedAt.toISOString(),
+    };
+  }
+
+  async completeMissionFour(userId: string, now = new Date()) {
+    return withSerializableRetry(() =>
+      this.repository.transaction(async (repository) => {
+        const source = await this.requireControlProgram(repository);
+        const enrollment = await repository.findEnrollment(userId, source.program.id);
+        if (!enrollment) throw new NotFoundError("Program enrollment");
+        const progress = await repository.findMissionProgress(enrollment.id, 4);
+        if (progress?.status === "COMPLETED") {
+          return this.dashboardFrom(repository, userId, source.program.id);
+        }
+        if (!progress) throw new NotFoundError("Mission 04 progress");
+        assertCompleteTasks(progress.taskStates, missionFourTaskStates);
+        const stored = progress.draft as { activeBoundary?: unknown } | null;
+        const boundary = parseActiveBoundary(stored?.activeBoundary ?? {}, {
+          complete: true,
+          now,
+        });
+        const missionThree = await repository.findMissionProgress(enrollment.id, 3);
+        if (missionThree?.status !== "COMPLETED") {
+          throw new ConflictError("Mission 03 must be completed before Mission 04");
+        }
+        const currentGoal = await repository.findCurrentGoal(enrollment.id);
+        const urgeRecord = await repository.findUrgeLearningRecord(enrollment.id);
+        if (
+          boundary.triggerType === "saved_early_signal" &&
+          (!urgeRecord || urgeRecord.deletedAt || urgeRecord.notNow)
+        ) {
+          throw new ConflictError("An active saved early signal is required for this decision point");
+        }
+        const triggerText = boundary.triggerType === "saved_early_signal"
+          ? urgeRecord!.earlySignalText ?? urgeRecord!.earlySignalCategory?.toLowerCase().replaceAll("_", " ") ?? null
+          : boundary.triggerText ?? null;
+        const activeBoundary = await repository.upsertActiveBoundary({
+          enrollmentId: enrollment.id,
+          sourceCurrentGoalId: currentGoal && !currentGoal.deletedAt ? currentGoal.id : null,
+          sourceUrgeLearningRecordId:
+            boundary.triggerType === "saved_early_signal" ? urgeRecord!.id : null,
+          missionVersion: MISSION_FOUR_VERSION,
+          evidenceVersion: MISSION_FOUR_EVIDENCE_VERSION,
+          category: boundaryCategory(boundary.category!),
+          triggerType: boundary.triggerType!,
+          triggerText,
+          ruleText: boundary.ruleText!,
+          limitValue: boundary.limitValue === undefined
+            ? null
+            : new Prisma.Decimal(boundary.limitValue),
+          limitUnit: boundary.limitUnit ?? null,
+          limitPeriod: boundary.limitPeriod ?? null,
+          executionMethod: boundary.executionMethod!,
+          executionDetail: boundary.executionDetail ?? null,
+          copingAction: boundary.copingAction!,
+          reviewAt: boundary.reviewAt!,
+          status: boundaryStatus(boundary.status!),
+        });
+        await repository.upsertMissionProgress({
+          enrollmentId: enrollment.id,
+          missionNumber: 4,
+          status: "COMPLETED",
+          taskStates: [...missionFourTaskStates],
+          draft: Prisma.JsonNull,
+          completedAt: now,
+        });
+        await repository.upsertMissionProgress({
+          enrollmentId: enrollment.id,
+          missionNumber: 5,
+          status: "IN_PROGRESS",
+          taskStates: [],
+          draft: Prisma.JsonNull,
+          completedAt: null,
+        });
+        await repository.setEnrollmentCurrentStep(enrollment.id, source.program.steps[4].id);
+        await repository.recordProgressEvent({
+          enrollmentId: enrollment.id,
+          entityId: source.program.steps[3].id,
+          eventKey: `step:${source.program.steps[3].id}:completed`,
+        });
+        await repository.recordMissionXp({
+          userId,
+          programId: source.program.id,
+          missionNumber: 4,
+          xp: 100,
+          awardKey: missionFourAwardKey,
+          sourceArtifactType: "ACTIVE_BOUNDARY",
+          sourceArtifactId: activeBoundary.id,
+        });
+        const achievement = await repository.findBoundaryBuiltAchievement();
+        if (!achievement) throw new ConflictError("Boundary Built achievement is unavailable");
+        await repository.unlockAchievement({
+          userId,
+          achievementId: achievement.id,
+          awardKey: "achievement:boundary-built:mission-04:v1",
+        });
+        await repository.recordActiveDay({
+          userId,
+          enrollmentId: enrollment.id,
+          localDate: dateOnlyUtc(localDateAt(now, enrollment.timezone)),
+          timezone: enrollment.timezone,
+          sourceEventKey: missionFourAwardKey,
+          eligibleActivityAt: now,
+        });
+        return this.dashboardFrom(repository, userId, source.program.id);
+      }),
+    );
+  }
+
   async updateMomentMap(userId: string, value: unknown) {
     const { enrollment } = await this.requireEnrollment(userId);
     const momentMap = await this.repository.findMomentMap(enrollment.id);
@@ -668,6 +865,43 @@ export class ProgrammeFlowService {
     const record = await this.repository.findUrgeLearningRecord(enrollment.id);
     if (!record || record.deletedAt) throw new NotFoundError("Urge Learning Record");
     await this.repository.eraseUrgeLearningRecord(record.id, now);
+  }
+
+  async updateActiveBoundary(userId: string, value: unknown, now = new Date()) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const current = await this.repository.findActiveBoundary(enrollment.id);
+    if (!current || current.deletedAt) throw new NotFoundError("Active Boundary");
+    const input = parseActiveBoundary(value, { now });
+    const data = {
+      ...(input.category ? { category: boundaryCategory(input.category) } : {}),
+      ...(input.triggerType ? { triggerType: input.triggerType } : {}),
+      ...(input.triggerText !== undefined ? { triggerText: input.triggerText ?? null } : {}),
+      ...(input.ruleText ? { ruleText: input.ruleText } : {}),
+      ...(input.limitValue !== undefined
+        ? { limitValue: new Prisma.Decimal(input.limitValue) }
+        : {}),
+      ...(input.limitUnit !== undefined ? { limitUnit: input.limitUnit ?? null } : {}),
+      ...(input.limitPeriod !== undefined ? { limitPeriod: input.limitPeriod ?? null } : {}),
+      ...(input.executionMethod ? { executionMethod: input.executionMethod } : {}),
+      ...(input.executionDetail !== undefined
+        ? { executionDetail: input.executionDetail ?? null }
+        : {}),
+      ...(input.copingAction ? { copingAction: input.copingAction } : {}),
+      ...(input.reviewAt ? { reviewAt: input.reviewAt } : {}),
+      ...(input.status ? { status: boundaryStatus(input.status) } : {}),
+    };
+    if (!Object.keys(data).length) {
+      throw new ValidationError("At least one Active Boundary field is required");
+    }
+    const updated = await this.repository.updateActiveBoundary(current.id, data);
+    return this.activeBoundaryDto(updated);
+  }
+
+  async deleteActiveBoundary(userId: string, now = new Date()) {
+    const { enrollment } = await this.requireEnrollment(userId);
+    const current = await this.repository.findActiveBoundary(enrollment.id);
+    if (!current || current.deletedAt) throw new NotFoundError("Active Boundary");
+    await this.repository.eraseActiveBoundary(current.id, now);
   }
 
   async getRewards(userId: string) {
@@ -756,7 +990,10 @@ export class ProgrammeFlowService {
     const activeDates = enrollment.activeDays.map((day) =>
       day.localDate.toISOString().slice(0, 10),
     );
-    const firstPlan = achievementRows[0];
+    const firstPlan = achievementRows.find((row) => row.achievement.slug === "first-plan");
+    const boundaryBuilt = achievementRows.find(
+      (row) => row.achievement.slug === "boundary-built",
+    );
     return {
       programId,
       totalXp: xpEvents.reduce((total, event) => total + event.xp, 0),
@@ -784,6 +1021,12 @@ export class ProgrammeFlowService {
           state: firstPlan ? "earned" : "locked",
           awardedAt: firstPlan?.awardedAt.toISOString() ?? null,
         },
+        {
+          slug: "boundary-built",
+          title: "Boundary Built",
+          state: boundaryBuilt ? "earned" : "locked",
+          awardedAt: boundaryBuilt?.awardedAt.toISOString() ?? null,
+        },
       ],
       momentMap:
         enrollment.momentMap && !enrollment.momentMap.deletedAt
@@ -797,10 +1040,15 @@ export class ProgrammeFlowService {
         enrollment.urgeLearningRecord && !enrollment.urgeLearningRecord.deletedAt
           ? this.urgeLearningRecordDto(enrollment.urgeLearningRecord)
           : null,
+      activeBoundary:
+        enrollment.activeBoundary && !enrollment.activeBoundary.deletedAt
+          ? this.activeBoundaryDto(enrollment.activeBoundary)
+          : null,
       evidence: {
         mission01: programmeEvidence.mission01,
         mission02: programmeEvidence.mission02,
         mission03: programmeEvidence.mission03,
+        mission04: programmeEvidence.mission04,
       },
       rewardLedger: xpEvents.map((event) => ({
         eventType: event.eventType.toLowerCase(),
@@ -903,6 +1151,51 @@ export class ProgrammeFlowService {
       earlySignalCategory: value.earlySignalCategory?.toLowerCase() ?? null,
       earlySignalText: value.earlySignalText,
       notNow: value.notNow,
+      createdAt: value.createdAt.toISOString(),
+      updatedAt: value.updatedAt.toISOString(),
+    };
+  }
+
+
+  private activeBoundaryDto(value: {
+    id: string;
+    sourceCurrentGoalId: string | null;
+    sourceUrgeLearningRecordId: string | null;
+    missionVersion: string;
+    evidenceVersion: string;
+    category: string;
+    triggerType: string;
+    triggerText: string | null;
+    ruleText: string;
+    limitValue: Prisma.Decimal | null;
+    limitUnit: string | null;
+    limitPeriod: string | null;
+    executionMethod: string;
+    executionDetail: string | null;
+    copingAction: string;
+    reviewAt: Date;
+    status: string;
+    createdAt: Date;
+    updatedAt: Date;
+  }) {
+    return {
+      id: value.id,
+      sourceCurrentGoalId: value.sourceCurrentGoalId,
+      sourceUrgeLearningRecordId: value.sourceUrgeLearningRecordId,
+      missionVersion: value.missionVersion,
+      evidenceVersion: value.evidenceVersion,
+      category: value.category.toLowerCase(),
+      triggerType: value.triggerType,
+      triggerText: value.triggerText,
+      ruleText: value.ruleText,
+      limitValue: value.limitValue?.toNumber() ?? null,
+      limitUnit: value.limitUnit,
+      limitPeriod: value.limitPeriod,
+      executionMethod: value.executionMethod,
+      executionDetail: value.executionDetail,
+      copingAction: value.copingAction,
+      reviewAt: value.reviewAt.toISOString(),
+      status: value.status.toLowerCase(),
       createdAt: value.createdAt.toISOString(),
       updatedAt: value.updatedAt.toISOString(),
     };

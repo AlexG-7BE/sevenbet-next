@@ -1,4 +1,6 @@
 import {
+  type BoundaryCategory,
+  type BoundaryStatus,
   type EarlySignalCategory,
   EditorialStatus,
   Prisma,
@@ -364,6 +366,71 @@ export class ProgrammeFlowRepository {
     });
   }
 
+  findActiveBoundary(enrollmentId: string) {
+    return this.database.activeBoundary.findUnique({ where: { enrollmentId } });
+  }
+
+  upsertActiveBoundary(input: {
+    enrollmentId: string;
+    sourceCurrentGoalId: string | null;
+    sourceUrgeLearningRecordId: string | null;
+    missionVersion: string;
+    evidenceVersion: string;
+    category: BoundaryCategory;
+    triggerType: string;
+    triggerText: string | null;
+    ruleText: string;
+    limitValue: Prisma.Decimal | null;
+    limitUnit: string | null;
+    limitPeriod: string | null;
+    executionMethod: string;
+    executionDetail: string | null;
+    copingAction: string;
+    reviewAt: Date;
+    status: BoundaryStatus;
+  }) {
+    const { enrollmentId, ...data } = input;
+    return this.database.activeBoundary.upsert({
+      where: { enrollmentId },
+      update: { ...data, deletedAt: null },
+      create: { enrollmentId, ...data },
+    });
+  }
+
+  updateActiveBoundary(id: string, data: Partial<{
+    category: BoundaryCategory;
+    triggerType: string;
+    triggerText: string | null;
+    ruleText: string;
+    limitValue: Prisma.Decimal | null;
+    limitUnit: string | null;
+    limitPeriod: string | null;
+    executionMethod: string;
+    executionDetail: string | null;
+    copingAction: string;
+    reviewAt: Date;
+    status: BoundaryStatus;
+  }>) {
+    return this.database.activeBoundary.update({ where: { id }, data });
+  }
+
+  eraseActiveBoundary(id: string, now: Date) {
+    return this.database.activeBoundary.update({
+      where: { id },
+      data: {
+        triggerText: null,
+        ruleText: "",
+        limitValue: null,
+        limitUnit: null,
+        limitPeriod: null,
+        executionDetail: null,
+        copingAction: "",
+        status: "RETIRED",
+        deletedAt: now,
+      },
+    });
+  }
+
   recordProgressEvent(input: {
     enrollmentId: string;
     entityId: string;
@@ -438,6 +505,17 @@ export class ProgrammeFlowRepository {
     });
   }
 
+  findBoundaryBuiltAchievement() {
+    return this.database.achievement.findFirst({
+      where: {
+        slug: "boundary-built",
+        status: EditorialStatus.PUBLISHED,
+        active: true,
+        archivedAt: null,
+      },
+    });
+  }
+
   unlockAchievement(input: {
     userId: string;
     achievementId: string;
@@ -458,6 +536,7 @@ export class ProgrammeFlowRepository {
           momentMap: true,
           currentGoal: true,
           urgeLearningRecord: true,
+          activeBoundary: true,
           activeDays: {
             where: { voidedAt: null },
             orderBy: { localDate: "asc" },
@@ -469,8 +548,9 @@ export class ProgrammeFlowRepository {
         orderBy: { createdAt: "asc" },
       }),
       this.database.userAchievement.findMany({
-        where: { userId, achievement: { slug: "first-plan" } },
+        where: { userId, achievement: { slug: { in: ["first-plan", "boundary-built"] } } },
         include: { achievement: true },
+        orderBy: { awardedAt: "asc" },
       }),
     ]);
   }

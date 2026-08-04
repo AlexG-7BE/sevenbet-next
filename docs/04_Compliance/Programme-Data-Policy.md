@@ -2,7 +2,7 @@
 
 Status: Approved implementation policy for RFC-008.
 
-Programme answers, Moment Maps, Current Goals, confidence, mission drafts, Help/pause context, XP, achievements and active-day state are sensitive personal-control data. Their permitted purposes are saving the user's requested plan, resuming the Programme, showing the private Dashboard, enforcing progress/reward integrity, honouring edit/deletion, and tightly scoped operations.
+Programme answers, Moment Maps, Current Goals, Urge Learning Records, Active Boundaries, confidence, mission drafts, Help/pause context, XP, achievements and active-day state are sensitive personal-control data. Their permitted purposes are saving the user's requested plan, resuming the Programme, showing the private Dashboard, enforcing progress/reward integrity, honouring edit/deletion, and tightly scoped operations.
 
 They are prohibited inputs to advertising audiences, operator or casino recommendations, bonuses, offer selection, affiliate optimisation, commercial eligibility, ranking and promotional pressure. No Programme route emits an affiliate/commercial event. No Help route is changed by this implementation.
 

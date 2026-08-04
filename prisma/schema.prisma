@@ -319,6 +319,19 @@ enum EarlySignalCategory {
   NOT_SURE
 }
 
+enum BoundaryCategory {
+  MONEY
+  TIME
+  ACCESS
+  PAUSE
+}
+
+enum BoundaryStatus {
+  ACTIVE
+  PAUSED
+  RETIRED
+}
+
 model AdminUser {
   id        String    @id @default(uuid()) @db.Uuid
   userId    String?   @unique
@@ -540,16 +553,17 @@ model ProgramEnrollment {
   currentStepId    String?   @db.Uuid
   timezone         String    @default("UTC")
 
-  program         Program                    @relation(fields: [programId], references: [id], onDelete: Restrict)
-  programVersion  ProgramVersion             @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
-  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  progressEvents  ProgramProgressEvent[]
-  reflections     ProgramReflection[]
-  missionProgress ProgrammeMissionProgress[]
-  momentMap       MomentMap?
-  currentGoal     CurrentGoal?
+  program            Program                    @relation(fields: [programId], references: [id], onDelete: Restrict)
+  programVersion     ProgramVersion             @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
+  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  progressEvents     ProgramProgressEvent[]
+  reflections        ProgramReflection[]
+  missionProgress    ProgrammeMissionProgress[]
+  momentMap          MomentMap?
+  currentGoal        CurrentGoal?
   urgeLearningRecord UrgeLearningRecord?
-  activeDays      ProgrammeActiveDay[]
+  activeBoundary     ActiveBoundary?
+  activeDays         ProgrammeActiveDay[]
 
   @@unique([userId, programId])
   @@index([programVersionId])
@@ -729,8 +743,9 @@ model CurrentGoal {
   updatedAt            DateTime      @updatedAt
   deletedAt            DateTime?
 
-  enrollment      ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  sourceMomentMap MomentMap         @relation(fields: [sourceMomentMapId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  enrollment        ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourceMomentMap   MomentMap         @relation(fields: [sourceMomentMapId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourcedBoundaries ActiveBoundary[]
 
   @@index([sourceMomentMapId])
 }
@@ -753,7 +768,41 @@ model UrgeLearningRecord {
   updatedAt                DateTime             @updatedAt
   deletedAt                DateTime?
 
-  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  enrollment        ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourcedBoundaries ActiveBoundary[]
+}
+
+/// Private Mission 04 rule. User-entered values and free text remain inside
+/// the Programme aggregate and never enter commercial ranking or targeting.
+model ActiveBoundary {
+  id                         String           @id @default(uuid()) @db.Uuid
+  enrollmentId               String           @unique @db.Uuid
+  sourceCurrentGoalId        String?          @db.Uuid
+  sourceUrgeLearningRecordId String?          @db.Uuid
+  missionVersion             String
+  evidenceVersion            String
+  category                   BoundaryCategory
+  triggerType                String
+  triggerText                String?
+  ruleText                   String
+  limitValue                 Decimal?         @db.Decimal(12, 2)
+  limitUnit                  String?
+  limitPeriod                String?
+  executionMethod            String
+  executionDetail            String?
+  copingAction               String
+  reviewAt                   DateTime
+  status                     BoundaryStatus   @default(ACTIVE)
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  deletedAt                  DateTime?
+
+  enrollment               ProgramEnrollment   @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  sourceCurrentGoal        CurrentGoal?        @relation(fields: [sourceCurrentGoalId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  sourceUrgeLearningRecord UrgeLearningRecord? @relation(fields: [sourceUrgeLearningRecordId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([sourceCurrentGoalId])
+  @@index([sourceUrgeLearningRecordId])
 }
 
 /// One eligible programme day per user-local date. Voiding preserves the

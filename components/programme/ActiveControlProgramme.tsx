@@ -39,6 +39,25 @@ const MISSION_THREE_TASKS = [
   "result_review",
 ] as const;
 
+const MISSION_FOUR_TASKS = [
+  "brief",
+  "boundary_anatomy",
+  "category_selection",
+  "decision_point",
+  "rule_builder",
+  "execution_method",
+  "coping_review",
+  "strength_check",
+  "result_review",
+] as const;
+
+const BOUNDARY_CHECKS = [
+  "placed_before_pressure",
+  "specific",
+  "executable",
+  "protected_from_in_moment_editing",
+] as const;
+
 const WAVE_MOMENTS = ["cue", "early_signal", "urge_builds", "choice_point"] as const;
 
 const STAGES = ["Orient", "Learn", "Apply", "Build", "Review"] as const;
@@ -104,6 +123,29 @@ type UrgeLearningDraft = {
   meaningAnswer: string;
 };
 
+type BoundaryCategory = "money" | "time" | "access" | "pause";
+type BoundaryTriggerType = "saved_early_signal" | "before_access" | "scheduled_time" | "custom";
+type BoundaryExecutionMethod = "operator_account_limit" | "bank_gambling_block" | "device_site_block" | "remove_payment_access" | "trusted_contact" | "leave_action" | "self_exclusion_help" | "custom";
+
+type ActiveBoundary = {
+  id?: string;
+  evidenceReviewed: boolean;
+  category: BoundaryCategory | "";
+  triggerType: BoundaryTriggerType | "";
+  triggerText: string;
+  ruleText: string;
+  limitValue: number | "";
+  limitUnit: string;
+  limitPeriod: string;
+  executionMethod: BoundaryExecutionMethod | "";
+  executionDetail: string;
+  copingAction: string;
+  reviewAt: string;
+  scenarioAnswer: string;
+  strengthChecks: string[];
+  status: "active" | "paused" | "retired";
+};
+
 type DashboardModel = {
   totalXp: number;
   currentMission: number;
@@ -114,10 +156,11 @@ type DashboardModel = {
   momentMap: MomentMap | null;
   currentGoal: CurrentGoal | null;
   urgeLearningRecord: UrgeLearningRecord | null;
+  activeBoundary: ActiveBoundary | null;
 };
 
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
-type View = "mission-01" | "registration-gate" | "registration" | "dashboard" | "mission-02" | "mission-03";
+type View = "mission-01" | "registration-gate" | "registration" | "dashboard" | "mission-02" | "mission-03" | "mission-04";
 
 const emptyMomentMap: MomentMap = {
   situation: "",
@@ -157,6 +200,31 @@ const emptyUrgeLearning: UrgeLearningDraft = {
   scenarioAnswer: "",
   notNow: false,
   meaningAnswer: "",
+};
+
+function tomorrowAtTen() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  date.setHours(10, 0, 0, 0);
+  return date.toISOString().slice(0, 16);
+}
+
+const emptyBoundary: ActiveBoundary = {
+  evidenceReviewed: false,
+  category: "",
+  triggerType: "",
+  triggerText: "",
+  ruleText: "",
+  limitValue: "",
+  limitUnit: "",
+  limitPeriod: "",
+  executionMethod: "",
+  executionDetail: "",
+  copingAction: "",
+  reviewAt: tomorrowAtTen(),
+  scenarioAnswer: "",
+  strengthChecks: [],
+  status: "active",
 };
 
 async function programmeRequest<T>(path: string, init?: RequestInit) {
@@ -208,8 +276,10 @@ function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean })
   );
 }
 
-function MissionProgress({ mission, step }: { mission: 1 | 2 | 3; step: number }) {
-  const stageIndex = mission === 3
+function MissionProgress({ mission, step }: { mission: 1 | 2 | 3 | 4; step: number }) {
+  const stageIndex = mission === 4
+    ? step <= 0 ? 0 : step === 1 ? 1 : step <= 3 ? 2 : step <= 6 ? 3 : 4
+    : mission === 3
     ? step <= 0 ? 0 : step <= 2 ? 1 : step === 3 ? 2 : step <= 5 ? 3 : 4
     : step <= 0 ? 0 : step <= 1 ? 1 : step <= 3 ? 2 : step <= 5 ? 3 : 4;
   return (
@@ -224,7 +294,7 @@ function MissionProgress({ mission, step }: { mission: 1 | 2 | 3; step: number }
         </div>
       </div>
       <div className={styles.metaPills}>
-        <span>{mission === 1 ? "17–22 MIN" : "18–24 MIN"}</span>
+        <span>{mission === 1 ? "17–22 MIN" : mission === 4 ? "20–25 MIN" : "18–24 MIN"}</span>
         <span>{mission === 1 ? "PRIVATE UNTIL SAVED" : "SAVED TO YOUR ACCOUNT"}</span>
       </div>
     </div>
@@ -260,24 +330,29 @@ function PhotoTheatre({ image, eyebrow, title, note, compact = false }: { image:
   );
 }
 
-function EvidenceCard({ mission }: { mission: 1 | 2 | 3 }) {
+function EvidenceCard({ mission }: { mission: 1 | 2 | 3 | 4 }) {
   const isFirst = mission === 1;
   const isThird = mission === 3;
+  const isFourth = mission === 4;
   return (
     <article className={styles.evidenceCard}>
-      <div><span>EVIDENCE NOTE</span><b>NICE NG248 · 2025</b></div>
-      <h3>{isFirst ? "Why map the moment?" : isThird ? "Why notice an early signal?" : "Why choose one goal?"}</h3>
+      <div><span>EVIDENCE NOTE</span><b>{isFourth ? "UKGC · RCT EVIDENCE" : "NICE NG248 · 2025"}</b></div>
+      <h3>{isFirst ? "Why map the moment?" : isThird ? "Why notice an early signal?" : isFourth ? "Why plan before pressure?" : "Why choose one goal?"}</h3>
       <p>{isFirst
         ? "Clinical guidance examines triggers, cravings, thoughts and feelings to understand what happens around gambling."
         : isThird
           ? "NICE includes triggers, cravings, thoughts and emotions among factors that can contribute to continued gambling."
+        : isFourth
+          ? "Concrete action and coping plans have been studied as ways to support an existing intention."
         : "NICE recommends agreeing an aim and other goals that matter to the person."}</p>
       <small>{isFirst
         ? "SevenBet adapts the idea as education. This mission is not CBT, assessment or treatment."
         : isThird
           ? "Research does not establish one universal urge pattern. This is education, not diagnosis, CBT or treatment."
+        : isFourth
+          ? "Evidence for voluntary limit tools is mixed. This SevenBet mission has not been clinically evaluated."
         : "SevenBet adapts goal clarification as self-directed education. It is not motivational interviewing or treatment."}</small>
-      <a href="https://www.nice.org.uk/guidance/ng248/chapter/recommendations" rel="noreferrer" target="_blank">Read the source ↗</a>
+      <a href={isFourth ? "https://www.gamblingcommission.gov.uk/blog/post/changes-to-customer-led-tools-financial-limits/" : "https://www.nice.org.uk/guidance/ng248/chapter/recommendations"} rel="noreferrer" target="_blank">Read the source ↗</a>
     </article>
   );
 }
@@ -304,7 +379,7 @@ function Field({ label, value, onChange, placeholder, multiline = false, hint, t
   );
 }
 
-function MissionShell({ mission, step, xp, children }: { mission: 1 | 2 | 3; step: number; xp: number; children: ReactNode }) {
+function MissionShell({ mission, step, xp, children }: { mission: 1 | 2 | 3 | 4; step: number; xp: number; children: ReactNode }) {
   return (
     <div className={styles.programmeShell}>
       <Header xp={xp} authenticated={mission !== 1} />
@@ -481,12 +556,13 @@ function Registration({
   );
 }
 
-function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: DashboardModel; onStartMission: () => void; onEdit: (type: "moment" | "goal" | "signal") => void }) {
+function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: DashboardModel; onStartMission: () => void; onEdit: (type: "moment" | "goal" | "signal" | "boundary") => void }) {
   const afterTwo = dashboard.currentMission >= 3;
   const afterThree = dashboard.currentMission >= 4;
-  const currentTitle = afterThree ? "04 · Build one boundary" : afterTwo ? "03 · Understand the urge" : "02 · Set a 7-day goal";
-  const currentCopy = afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and save one early signal." : "Turn the Moment Map into one specific action and a review date.";
-  const completedCount = afterThree ? 3 : afterTwo ? 2 : 1;
+  const afterFour = dashboard.currentMission >= 5;
+  const currentTitle = afterFour ? "05 · Check before deciding" : afterThree ? "04 · Build one boundary" : afterTwo ? "03 · Understand the urge" : "02 · Set a 7-day goal";
+  const currentCopy = afterFour ? "Run a short check before the next gambling decision." : afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and save one early signal." : "Turn the Moment Map into one specific action and a review date.";
+  const completedCount = afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1;
   const record = dashboard.urgeLearningRecord;
   const signalBody = record?.notNow
     ? "No personal signal saved yet. The evidence item and learning checks are complete."
@@ -495,16 +571,16 @@ function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: Dashboard
     <div className={styles.dashboardPage}>
       <Header authenticated xp={dashboard.totalXp} />
       <section className={styles.dashboardHeading}>
-        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{afterThree ? "Your early signal is saved." : afterTwo ? "Your 7-day goal is active." : "Your first map is saved."}</h1><p>{afterThree ? "Mission 04 turns that signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 turns it into one specific 7-day goal."}</p></div>
-        <div className={styles.recognitionGrid}><Recognition label={afterTwo ? "TOTAL EARNED" : "MOMENT MAP SAVED"} value={afterTwo ? `${dashboard.totalXp} XP` : "+60 XP"} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value="FIRST PLAN" note={afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
+        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{afterFour ? "Your boundary is active." : afterThree ? "Your early signal is saved." : afterTwo ? "Your 7-day goal is active." : "Your first map is saved."}</h1><p>{afterFour ? "Review or edit it any time. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns that signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 turns it into one specific 7-day goal."}</p></div>
+        <div className={styles.recognitionGrid}><Recognition label={afterTwo ? "TOTAL EARNED" : "MOMENT MAP SAVED"} value={afterTwo ? `${dashboard.totalXp} XP` : "+60 XP"} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
       </section>
       <section className={styles.currentMission}>
-        <div><span>CURRENT MISSION · 18–24 MIN</span><h2>{currentTitle}</h2><p>{currentCopy}</p></div>
-        <div className={styles.currentPhoto}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={afterThree ? PEOPLE.planning : afterTwo ? PEOPLE.outcome : PEOPLE.portrait} alt="Adult ready to continue a practical plan" /><span>{afterThree ? "UP NEXT · BUILD ONE BOUNDARY" : afterTwo ? "UP NEXT · UNDERSTAND THE URGE" : "NEXT · ONE USEFUL ACTION"}</span>{afterThree ? <button className={styles.primaryButton} disabled type="button">Mission 04 · next stage</button> : <PrimaryButton onClick={onStartMission}>Start Mission {String(dashboard.currentMission).padStart(2, "0")}</PrimaryButton>}</div>
+        <div><span>CURRENT MISSION · {afterThree && !afterFour ? "20–25" : "18–24"} MIN</span><h2>{currentTitle}</h2><p>{currentCopy}</p></div>
+        <div className={styles.currentPhoto}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={afterThree ? PEOPLE.planning : afterTwo ? PEOPLE.outcome : PEOPLE.portrait} alt="Adult ready to continue a practical plan" /><span>{afterFour ? "UP NEXT · CHECK BEFORE DECIDING" : afterThree ? "UP NEXT · BUILD ONE BOUNDARY" : afterTwo ? "UP NEXT · UNDERSTAND THE URGE" : "NEXT · ONE USEFUL ACTION"}</span>{afterFour ? <button className={styles.primaryButton} disabled type="button">Mission 05 · next package</button> : <PrimaryButton onClick={onStartMission}>Start Mission {String(dashboard.currentMission).padStart(2, "0")}</PrimaryButton>}</div>
       </section>
       <div className={styles.pathHeading}><span>MY 10-STEP PATH</span><b>{completedCount} OF 10 COMPLETE</b></div>
-      <ol className={styles.pathPreview}>{dashboard.missions.slice(0, 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : 90} XP` : mission.status === "current" ? "CURRENT · 18–24 MIN" : "UP NEXT"}</small></div></li>)}<li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li></ol>
-      <section className={styles.dashboardArtifacts}>{afterThree && record ? <ArtifactCard eyebrow="MISSION 03 RESULT" title={record.notNow ? "Not now" : "My early signal"} body={signalBody} footer="Private · Editable · Evidence item reviewed" onEdit={() => onEdit("signal")} /> : afterTwo && dashboard.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT" title="My 7-day goal" body={`When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.`} footer={`Review on ${reviewLabel(dashboard.currentGoal.reviewAt)} · Confidence ${dashboard.currentGoal.confidence}/10`} onEdit={() => onEdit("goal")} /> : dashboard.momentMap ? <ArtifactCard eyebrow="MISSION 01 RESULT" title="Your Moment Map" body={momentSummary(dashboard.momentMap)} footer="Saved to your private account · Edit or delete any time" dark onEdit={() => onEdit("moment")} /> : null}<EvidenceCard mission={afterThree ? 3 : afterTwo ? 2 : 1} /></section>
+      <ol className={styles.pathPreview}>{dashboard.missions.slice(0, afterFour ? 5 : 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : mission.missionNumber === 3 ? 90 : 100} XP` : mission.status === "current" ? `CURRENT · ${mission.missionNumber === 4 ? "20–25" : "18–24"} MIN` : "UP NEXT"}</small></div></li>)}{!afterFour ? <li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li> : null}</ol>
+      <section className={styles.dashboardArtifacts}>{afterFour && dashboard.activeBoundary ? <ArtifactCard eyebrow="MISSION 04 RESULT" title="My active boundary" body={boundarySentence(dashboard.activeBoundary, record)} footer={`Review ${reviewLabel(dashboard.activeBoundary.reviewAt)} · Private · Editable`} onEdit={() => onEdit("boundary")} /> : afterThree && record ? <ArtifactCard eyebrow="MISSION 03 RESULT" title={record.notNow ? "Not now" : "My early signal"} body={signalBody} footer="Private · Editable · Evidence item reviewed" onEdit={() => onEdit("signal")} /> : afterTwo && dashboard.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT" title="My 7-day goal" body={`When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.`} footer={`Review on ${reviewLabel(dashboard.currentGoal.reviewAt)} · Confidence ${dashboard.currentGoal.confidence}/10`} onEdit={() => onEdit("goal")} /> : dashboard.momentMap ? <ArtifactCard eyebrow="MISSION 01 RESULT" title="Your Moment Map" body={momentSummary(dashboard.momentMap)} footer="Saved to your private account · Edit or delete any time" dark onEdit={() => onEdit("moment")} /> : null}<EvidenceCard mission={afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1} /></section>
     </div>
   );
 }
@@ -704,23 +780,105 @@ function MissionThreeScreen({
   </MissionShell>;
 }
 
-function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "goal" | "signal"; dashboard: DashboardModel; onClose: () => void; onSaved: (dashboard: DashboardModel) => void }) {
+function boundarySentence(boundary: ActiveBoundary, signal?: UrgeLearningRecord | null) {
+  const when = boundary.triggerType === "saved_early_signal"
+    ? signal?.earlySignalText || signal?.earlySignalCategory?.replaceAll("_", " ") || "my saved early signal appears"
+    : boundary.triggerText || "the decision point appears";
+  return `When ${when}, ${boundary.ruleText || "my boundary action will go here"}`;
+}
+
+function BoundaryComposer({ boundary, signal, compact = false }: { boundary: ActiveBoundary; signal?: UrgeLearningRecord | null; compact?: boolean }) {
+  const parts = [
+    ["01", "WHEN", boundary.triggerType ? "Locked" : "Next"],
+    ["02", "RULE", boundary.ruleText ? "Locked" : "Next"],
+    ["03", "EXECUTION", boundary.executionMethod ? "Locked" : "Next"],
+    ["04", "COPING + REVIEW", boundary.copingAction ? "Locked" : "Next"],
+  ];
+  return <article className={`${styles.boundaryComposer} ${compact ? styles.boundaryComposerCompact : ""}`}><span>BOUNDARY COMPOSER</span><h3>{boundarySentence(boundary, signal)}</h3><ol>{parts.map(([number, label, state]) => <li key={number} data-state={state.toLowerCase()}><b>{number}</b><span>{label}</span><small>{state}</small></li>)}</ol></article>;
+}
+
+function MissionFourScreen({ step, boundary, setBoundary, onNext, busy, error, dashboard }: { step: number; boundary: ActiveBoundary; setBoundary: (value: ActiveBoundary) => void; onNext: () => void; busy: boolean; error: string; dashboard: DashboardModel | null }) {
+  const signal = dashboard?.urgeLearningRecord;
+  const needsValue = ["money", "time", "pause"].includes(boundary.category);
+  const canContinue = step <= 1
+    ? step === 0 || boundary.evidenceReviewed
+    : step === 2
+      ? Boolean(boundary.category)
+      : step === 3
+        ? Boolean(boundary.triggerType && (boundary.triggerType === "saved_early_signal" || boundary.triggerText))
+        : step === 4
+          ? Boolean(boundary.ruleText && (!needsValue || (boundary.limitValue && boundary.limitUnit)) && (boundary.category !== "money" || boundary.limitPeriod))
+          : step === 5
+            ? Boolean(boundary.executionMethod && (boundary.executionMethod !== "custom" || boundary.executionDetail))
+            : step === 6
+              ? Boolean(boundary.copingAction && boundary.reviewAt)
+              : step === 7
+                ? boundary.scenarioAnswer === "concrete" && BOUNDARY_CHECKS.every((item) => boundary.strengthChecks.includes(item))
+                : true;
+  const categories: Array<[BoundaryCategory, string, string]> = [
+    ["money", "Money", "A user-entered value and a clear reset period."],
+    ["time", "Time", "A no-start, stop or review point."],
+    ["access", "Access", "A block, removal or concrete restriction."],
+    ["pause", "Pause", "A signal-triggered wait before another decision."],
+  ];
+  const executions: Array<[BoundaryExecutionMethod, string, string]> = [
+    ["operator_account_limit", "Operator account limit", "Activate a user-chosen limit with the operator."],
+    ["bank_gambling_block", "Bank gambling block", "Ask your bank whether a gambling block is available."],
+    ["device_site_block", "Device or site block", "Use a blocking tool on the relevant device."],
+    ["remove_payment_access", "Remove payment or access", "Remove a saved payment method or app access."],
+    ["trusted_contact", "Trusted contact", "Tell one person what you plan to do."],
+    ["leave_action", "Leave action", "Close the app or leave the setting."],
+  ];
+
+  if (step === 0) return <MissionShell mission={4} step={step} xp={230}><section className={styles.splitHero}><div className={styles.boundaryHero}><div className={styles.titleBlock}><span>MISSION 04 OF 10 · BUILD</span><h1>One clear rule, built before pressure.</h1><p>Turn your goal and early signal into a boundary you can recognise, use and review.</p></div><div className={styles.boundaryMeta}><b>+100 XP</b><span>4 parts</span><span>Private</span></div><BoundaryComposer boundary={boundary} signal={signal} compact /></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="WHAT YOU’LL MAKE · ACTIVE BOUNDARY" title="Specific. Editable. Yours." note="SevenBet saves the plan. External tools do the blocking." /></section><ActionBar busy={busy}><PrimaryButton onClick={onNext}>Start building</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 1) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>LEARN · ABOUT 4 MIN</span><h1>A boundary is more than a limit.</h1><p>It needs a decision point, a concrete rule, an execution method and a plan for the difficult moment.</p></div><div className={styles.boundaryAnatomy}>{[["01", "Decision point", "When the rule starts"], ["02", "Concrete rule", "What you will or will not do"], ["03", "Execution", "What adds friction outside SevenBet"], ["04", "Coping + review", "What happens before any later change"]].map(([number, title, copy]) => <article key={number}><b>{number}</b><div><strong>{title}</strong><span>{copy}</span></div></article>)}</div></div><div className={styles.stack}><EvidenceCard mission={4} /><Choice active={boundary.evidenceReviewed} title="I reviewed the evidence and limitation" description="The complete SevenBet mission has not been clinically evaluated." onClick={() => setBoundary({ ...boundary, evidenceReviewed: true })} /></div></section><ActionBar busy={busy} note="A prompt can increase limit-setting without proving reduced gambling intensity."><PrimaryButton disabled={!canContinue} onClick={onNext}>Build the four parts</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 2) return <MissionShell mission={4} step={step} xp={230}><section className={styles.wideForm}><div className={styles.titleBlock}><span>APPLY · CHOOSE ONE</span><h1>What should the boundary control?</h1><p>Choose the kind of decision you want to make earlier. No amount or duration is suggested.</p></div><div className={styles.boundaryCategoryGrid}>{categories.map(([key, title, copy], index) => <button key={key} data-active={boundary.category === key} onClick={() => setBoundary({ ...boundary, category: key, limitValue: "", limitUnit: key === "money" ? "GBP" : key === "access" ? "" : "minutes", limitPeriod: "", ruleText: "" })} type="button"><span>0{index + 1}</span><b>{title}</b><small>{copy}</small></button>)}</div><div className={styles.disclosureStrip}>Material values stay blank until you enter them. SevenBet does not recommend a “safe” limit.</div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this category</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 3) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>APPLY · USE WHAT YOU KNOW</span><h1>When should your rule begin?</h1><p>Choose one point you can recognise before or at the earliest signal.</p></div><div className={styles.choiceList}><Choice active={boundary.triggerType === "saved_early_signal"} title="At my saved early signal" description={signal?.earlySignalText || signal?.earlySignalCategory?.replaceAll("_", " ") || "No personal signal is currently saved"} onClick={() => signal && !signal.notNow ? setBoundary({ ...boundary, triggerType: "saved_early_signal", triggerText: "" }) : undefined} /><Choice active={boundary.triggerType === "before_access"} title="Before opening an app or site" description="A neutral access point." onClick={() => setBoundary({ ...boundary, triggerType: "before_access", triggerText: "Before opening a gambling app or site" })} /><Choice active={boundary.triggerType === "scheduled_time"} title="At a scheduled day or time" description="A planned no-start or review point." onClick={() => setBoundary({ ...boundary, triggerType: "scheduled_time", triggerText: "At my scheduled review time" })} /><Choice active={boundary.triggerType === "custom"} title="Write another decision point" description="Keep it concrete and recognisable." onClick={() => setBoundary({ ...boundary, triggerType: "custom" })} /></div>{boundary.triggerType === "custom" ? <Field label="My decision point" value={boundary.triggerText} onChange={(triggerText) => setBoundary({ ...boundary, triggerText })} placeholder="When I notice…" /> : null}</div><div className={styles.stack}>{dashboard?.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT" title="My current goal" body={`When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.`} footer="Use it only if this is the point you want the boundary to start." dark /> : null}<BoundaryComposer boundary={boundary} signal={signal} compact /></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Connect this point</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 4) return <MissionShell mission={4} step={step} xp={230}><section className={styles.composerLayout}><div><div className={styles.titleBlock}><span>BUILD · DEFINE THE RULE</span><h1>Make the rule specific.</h1><p>The product checks structure, not whether a value is safe or suitable.</p></div><div className={styles.ruleFields}>{needsValue ? <><Field label={boundary.category === "money" ? "Amount · entered by you" : "Duration · entered by you"} type="number" min={0} value={boundary.limitValue} onChange={(value) => setBoundary({ ...boundary, limitValue: value ? Number(value) : "" })} placeholder="No suggested value" /><Field label="Unit" value={boundary.limitUnit} onChange={(limitUnit) => setBoundary({ ...boundary, limitUnit })} placeholder={boundary.category === "money" ? "GBP" : "minutes"} />{boundary.category === "money" ? <Field label="Reset period" value={boundary.limitPeriod} onChange={(limitPeriod) => setBoundary({ ...boundary, limitPeriod })} placeholder="per calendar day, per week…" /> : null}</> : null}<Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline placeholder={boundary.category === "access" ? "I remove the app and saved payment access before deciding again." : "I pause for the value entered above before another gambling decision."} hint="Describe an action and a clear completion condition." /></div></div><BoundaryComposer boundary={boundary} signal={signal} /></section><ActionBar busy={busy} note="No amount or duration is prefilled or recommended."><PrimaryButton disabled={!canContinue} onClick={onNext}>Save this rule</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 5) return <MissionShell mission={4} step={step} xp={230}><section className={styles.formGrid}><PhotoTheatre image={PEOPLE.planning} eyebrow="MAKE THE RULE EASIER TO FOLLOW" title="Add real friction." note="Choose one action you can activate outside SevenBet." /><div><div className={styles.titleBlock}><span>BUILD · EXECUTION</span><h1>What makes it easier to carry out?</h1><p>SevenBet saves your choice. The operator, bank, device or person must activate it.</p></div><div className={styles.choiceList}>{executions.map(([key, title, copy]) => <Choice key={key} active={boundary.executionMethod === key} title={title} description={copy} onClick={() => setBoundary({ ...boundary, executionMethod: key })} />)}<Choice active={boundary.executionMethod === "custom"} title="Another method" description="Describe one action you can activate." onClick={() => setBoundary({ ...boundary, executionMethod: "custom" })} /></div>{boundary.executionMethod === "custom" ? <Field label="Execution detail" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} /> : null}</div></section><ActionBar busy={busy} note="Provider-neutral · no operator recommendation."><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this method</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 6) return <MissionShell mission={4} step={step} xp={230}><section className={styles.copingLayout}><div><div className={styles.titleBlock}><span>BUILD · PROTECT THE RULE</span><h1>Plan for the urge to override it.</h1><p>Choose one action before any change, then choose a later review point.</p></div><div className={styles.choiceList}>{["Leave the app or site", "Message my trusted contact", "Move to another room", "Open protected Help"].map((item) => <Choice key={item} active={boundary.copingAction === item} title={item} onClick={() => setBoundary({ ...boundary, copingAction: item })} />)}</div></div><div className={styles.reviewPanel}><span>04 · REVIEW LATER</span><h2>Not in the pressure moment.</h2><Field label="Review point" type="datetime-local" value={boundary.reviewAt} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} /><blockquote>“If I want to override it, I {boundary.copingAction ? boundary.copingAction.toLowerCase() : "use my coping action"}, then review the boundary later.”</blockquote><small>This is a coping plan, not enforcement.</small></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Add coping and review</PrimaryButton></ActionBar></MissionShell>;
+
+  if (step === 7) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div className={styles.scenarioPanel}><span>NEUTRAL SCENARIO</span><h2>Sam wants to avoid chasing a loss.</h2><p>Which boundary is specific, executable and reviewed later?</p><Choice active={boundary.scenarioAnswer === "vague"} title="I’ll try to be more careful next time." onClick={() => setBoundary({ ...boundary, scenarioAnswer: "vague" })} /><Choice active={boundary.scenarioAnswer === "concrete"} title="After a loss, I leave the app for 30 minutes, message Alex and review tomorrow." onClick={() => setBoundary({ ...boundary, scenarioAnswer: "concrete" })} /></div><div><div className={styles.titleBlock}><span>REVIEW · UNLIMITED RETRY</span><h1>Run four structure checks.</h1><p>These checks do not label the boundary safe, healthy or sufficient.</p></div>{boundary.scenarioAnswer ? <div className={`${styles.feedback} ${boundary.scenarioAnswer === "concrete" ? styles.feedbackGood : ""}`}><b>{boundary.scenarioAnswer === "concrete" ? "That’s the stronger structure." : "Look for a concrete point and action."}</b><span>{boundary.scenarioAnswer === "concrete" ? "It names the point, action, friction and later review." : "The vague intention cannot be checked or carried out."}</span></div> : null}<div className={styles.strengthChecks}>{[["placed_before_pressure", "Placed before pressure"], ["specific", "Specific"], ["executable", "Executable"], ["protected_from_in_moment_editing", "Protected from instant editing"]].map(([key, label]) => <Choice key={key} active={boundary.strengthChecks.includes(key)} title={label} onClick={() => setBoundary({ ...boundary, strengthChecks: boundary.strengthChecks.includes(key) ? boundary.strengthChecks.filter((item) => item !== key) : [...boundary.strengthChecks, key] })} />)}</div></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Check my boundary</PrimaryButton></ActionBar></MissionShell>;
+
+  return <MissionShell mission={4} step={step} xp={230}><section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · READY TO SAVE</span><h1>Your boundary is ready.</h1><p>Review the complete rule, privacy controls and evidence limitation.</p></div><ArtifactCard eyebrow="MISSION 04 RESULT" title="My active boundary" body={boundarySentence(boundary, signal)} footer={`Review ${reviewLabel(boundary.reviewAt)} · Edit or delete any time`} /><article className={styles.boundaryDisclosure}><b>BEFORE YOU SAVE</b><p>This plan does not make gambling safe. SevenBet cannot enforce operator, bank or device controls, and the complete mission has not been clinically evaluated.</p></article></div><aside className={styles.rewardColumn}><Recognition label="BOUNDARY SAVED" value="+100 XP" note="Mission 04 complete." /><Recognition dark label="ACHIEVEMENT EARNED" value="BOUNDARY BUILT" note="Your first boundary becomes active." /><div className={styles.disclosureStrip}>330 XP total · 4 of 10 · Mission 05 current</div></aside><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="MISSION 04 · RESULT READY" title="Useful work, recognised." note="The reward recognises a plan, never a gambling action." /></section><ActionBar busy={busy} note="Private Programme data is not used for advertising targeting."><PrimaryButton onClick={onNext}>Save boundary · earn 100 XP</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</MissionShell>;
+}
+
+function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "goal" | "signal" | "boundary"; dashboard: DashboardModel; onClose: () => void; onSaved: (dashboard: DashboardModel) => void }) {
   const [moment, setMoment] = useState(dashboard.momentMap || emptyMomentMap);
   const [goal, setGoal] = useState(dashboard.currentGoal || emptyGoal(dashboard.momentMap?.id));
   const [signal, setSignal] = useState<UrgeLearningRecord>(dashboard.urgeLearningRecord || { earlySignalCategory: null, earlySignalText: null, notNow: true });
+  const [boundary, setBoundary] = useState<ActiveBoundary>(dashboard.activeBoundary || emptyBoundary);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function save(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const path = type === "moment" ? "/api/program/artefacts/moment-map" : type === "goal" ? "/api/program/artefacts/current-goal" : "/api/program/artefacts/urge-learning-record";
-      const body = type === "moment" ? { ...moment, id: undefined } : type === "goal" ? { ...goal, id: undefined, sourceMomentMapId: undefined, reviewAt: new Date(`${goal.reviewAt.slice(0, 10)}T12:00:00`).toISOString() } : { earlySignalCategory: signal.notNow ? undefined : signal.earlySignalCategory, earlySignalText: signal.notNow ? undefined : signal.earlySignalText || undefined, notNow: signal.notNow };
+      const path = type === "moment"
+        ? "/api/program/artefacts/moment-map"
+        : type === "goal"
+          ? "/api/program/artefacts/current-goal"
+          : type === "signal"
+            ? "/api/program/artefacts/urge-learning-record"
+            : "/api/program/artefacts/active-boundary";
+      const body = type === "moment"
+        ? { ...moment, id: undefined }
+        : type === "goal"
+          ? { ...goal, id: undefined, sourceMomentMapId: undefined, reviewAt: new Date(`${goal.reviewAt.slice(0, 10)}T12:00:00`).toISOString() }
+          : type === "signal"
+            ? { earlySignalCategory: signal.notNow ? undefined : signal.earlySignalCategory, earlySignalText: signal.notNow ? undefined : signal.earlySignalText || undefined, notNow: signal.notNow }
+            : { ruleText: boundary.ruleText, executionMethod: boundary.executionMethod, executionDetail: boundary.executionDetail || undefined, copingAction: boundary.copingAction, reviewAt: new Date(boundary.reviewAt).toISOString(), status: boundary.status };
       await programmeRequest(path, { method: "PATCH", body: JSON.stringify(body) });
       const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard");
       onSaved(payload.dashboard);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save the change"); } finally { setBusy(false); }
   }
-  return <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Edit ${type}`}><form className={styles.editPanel} onSubmit={save}><div><span>PRIVATE PROGRAMME ARTEFACT</span><button onClick={onClose} type="button">Close</button></div><h2>{type === "moment" ? "Edit your Moment Map" : type === "goal" ? "Edit your 7-day goal" : "Edit your early signal"}</h2>{type === "moment" ? <><Field label="Situation" value={moment.situation} onChange={(situation) => setMoment({ ...moment, situation })} /><Field label="Cues · comma separated" value={moment.cues.join(", ")} onChange={(value) => setMoment({ ...moment, cues: value.split(",").map((item) => item.trim()).filter(Boolean) })} /><Field label="Thought or feeling" value={moment.thoughtOrFeeling} onChange={(thoughtOrFeeling) => setMoment({ ...moment, thoughtOrFeeling })} multiline /><Field label="Response" value={moment.response} onChange={(response) => setMoment({ ...moment, response })} multiline /><Field label="Immediate consequence" value={moment.immediateConsequence} onChange={(immediateConsequence) => setMoment({ ...moment, immediateConsequence })} multiline /><Field label="Notice rule" value={moment.noticeRule} onChange={(noticeRule) => setMoment({ ...moment, noticeRule })} multiline /></> : type === "goal" ? <><Field label="Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} /><Field label="Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline /><Field label="Alternative action" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline /><Field label="Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline /><Field label="Review date" value={goal.reviewAt.slice(0, 10)} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} type="date" /></> : <><div className={styles.choiceGrid}>{(["body", "thought", "attention", "action_tendency", "not_sure"] as EarlySignalCategory[]).map((category) => <Choice key={category} active={!signal.notNow && signal.earlySignalCategory === category} title={category.replace("_", " ")} onClick={() => setSignal({ ...signal, earlySignalCategory: category, notNow: false })} />)}</div><Field label="My early signal · optional wording" value={signal.earlySignalText || ""} onChange={(earlySignalText) => setSignal({ ...signal, earlySignalText })} multiline /><button className={styles.notNowButton} data-active={signal.notNow} onClick={() => setSignal({ ...signal, earlySignalCategory: null, earlySignalText: null, notNow: true })} type="button">Not now — remove the personal signal</button></>}{error ? <p className={styles.error}>{error}</p> : null}<PrimaryButton disabled={busy || (type === "signal" && !signal.notNow && !signal.earlySignalCategory)} type="submit">{busy ? "Saving…" : "Save changes"}</PrimaryButton></form></div>;
+  return <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Edit ${type}`}><form className={styles.editPanel} onSubmit={save}><div><span>PRIVATE PROGRAMME ARTEFACT</span><button onClick={onClose} type="button">Close</button></div><h2>{type === "moment" ? "Edit your Moment Map" : type === "goal" ? "Edit your 7-day goal" : type === "signal" ? "Edit your early signal" : "Edit your active boundary"}</h2>{type === "moment" ? <><Field label="Situation" value={moment.situation} onChange={(situation) => setMoment({ ...moment, situation })} /><Field label="Cues · comma separated" value={moment.cues.join(", ")} onChange={(value) => setMoment({ ...moment, cues: value.split(",").map((item) => item.trim()).filter(Boolean) })} /><Field label="Thought or feeling" value={moment.thoughtOrFeeling} onChange={(thoughtOrFeeling) => setMoment({ ...moment, thoughtOrFeeling })} multiline /><Field label="Response" value={moment.response} onChange={(response) => setMoment({ ...moment, response })} multiline /><Field label="Immediate consequence" value={moment.immediateConsequence} onChange={(immediateConsequence) => setMoment({ ...moment, immediateConsequence })} multiline /><Field label="Notice rule" value={moment.noticeRule} onChange={(noticeRule) => setMoment({ ...moment, noticeRule })} multiline /></> : type === "goal" ? <><Field label="Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} /><Field label="Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline /><Field label="Alternative action" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline /><Field label="Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline /><Field label="Review date" value={goal.reviewAt.slice(0, 10)} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} type="date" /></> : type === "signal" ? <><div className={styles.choiceGrid}>{(["body", "thought", "attention", "action_tendency", "not_sure"] as EarlySignalCategory[]).map((category) => <Choice key={category} active={!signal.notNow && signal.earlySignalCategory === category} title={category.replace("_", " ")} onClick={() => setSignal({ ...signal, earlySignalCategory: category, notNow: false })} />)}</div><Field label="My early signal · optional wording" value={signal.earlySignalText || ""} onChange={(earlySignalText) => setSignal({ ...signal, earlySignalText })} multiline /><button className={styles.notNowButton} data-active={signal.notNow} onClick={() => setSignal({ ...signal, earlySignalCategory: null, earlySignalText: null, notNow: true })} type="button">Not now — remove the personal signal</button></> : <><Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline /><Field label="Execution detail · optional" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} multiline /><Field label="Coping action" value={boundary.copingAction} onChange={(copingAction) => setBoundary({ ...boundary, copingAction })} multiline /><Field label="Review point" value={boundary.reviewAt.slice(0, 16)} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} type="datetime-local" /></>}{error ? <p className={styles.error}>{error}</p> : null}<PrimaryButton disabled={busy || (type === "signal" && !signal.notNow && !signal.earlySignalCategory)} type="submit">{busy ? "Saving…" : "Save changes"}</PrimaryButton></form></div>;
 }
 
 export function ActiveControlProgramme() {
@@ -729,13 +887,15 @@ export function ActiveControlProgramme() {
   const [m1Step, setM1Step] = useState(0);
   const [m2Step, setM2Step] = useState(0);
   const [m3Step, setM3Step] = useState(0);
+  const [m4Step, setM4Step] = useState(0);
   const [momentMap, setMomentMap] = useState<MomentMap>(emptyMomentMap);
   const [goal, setGoal] = useState<CurrentGoal>(() => emptyGoal());
   const [urgeLearning, setUrgeLearning] = useState<UrgeLearningDraft>(emptyUrgeLearning);
+  const [activeBoundary, setActiveBoundary] = useState<ActiveBoundary>(emptyBoundary);
   const [dashboard, setDashboard] = useState<DashboardModel | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [editType, setEditType] = useState<"moment" | "goal" | "signal" | null>(null);
+  const [editType, setEditType] = useState<"moment" | "goal" | "signal" | "boundary" | null>(null);
   const [returningSignIn, setReturningSignIn] = useState(false);
   const authenticated = Boolean(session?.user);
 
@@ -748,7 +908,7 @@ export function ActiveControlProgramme() {
     if (sessionPending || !authenticated) return;
     let cancelled = false;
     programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard")
-      .then((payload) => { if (!cancelled) { setDashboard(payload.dashboard); setMomentMap(payload.dashboard.momentMap || emptyMomentMap); setView("dashboard"); } })
+      .then((payload) => { if (!cancelled) { setDashboard(payload.dashboard); setMomentMap(payload.dashboard.momentMap || emptyMomentMap); setActiveBoundary(payload.dashboard.activeBoundary || emptyBoundary); setView("dashboard"); } })
       .catch(() => undefined);
     return () => { cancelled = true; };
   }, [authenticated, sessionPending]);
@@ -840,9 +1000,26 @@ export function ActiveControlProgramme() {
     finally { setBusy(false); }
   }
 
+  async function startMissionFour() {
+    setBusy(true); setError("");
+    try {
+      const payload = await programmeRequest<{ mission: { taskStates: string[]; draft?: { activeBoundary?: Partial<ActiveBoundary> } } }>("/api/program/missions/04");
+      const draft = payload.mission.draft?.activeBoundary;
+      setActiveBoundary({
+        ...emptyBoundary,
+        ...draft,
+        reviewAt: typeof draft?.reviewAt === "string" ? draft.reviewAt.slice(0, 16) : tomorrowAtTen(),
+      });
+      setM4Step(Math.min(payload.mission.taskStates.length, 8));
+      setView("mission-04");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Mission 04 could not be opened"); }
+    finally { setBusy(false); }
+  }
+
   async function startCurrentMission() {
     if (dashboard?.currentMission === 2) await startMissionTwo();
     else if (dashboard?.currentMission === 3) await startMissionThree();
+    else if (dashboard?.currentMission === 4) await startMissionFour();
   }
 
   async function saveMissionThreeStep() {
@@ -864,6 +1041,39 @@ export function ActiveControlProgramme() {
     finally { setBusy(false); }
   }
 
+  async function saveMissionFourStep() {
+    setBusy(true); setError("");
+    try {
+      const completing = m4Step === 8;
+      const taskStates = completing ? [...MISSION_FOUR_TASKS] : MISSION_FOUR_TASKS.slice(0, m4Step + 1);
+      const reviewAt = new Date(activeBoundary.reviewAt).toISOString();
+      await programmeRequest("/api/program/missions/04", {
+        method: "PATCH",
+        body: JSON.stringify({
+          taskStates,
+          activeBoundary: {
+            ...activeBoundary,
+            id: undefined,
+            category: activeBoundary.category || undefined,
+            triggerType: activeBoundary.triggerType || undefined,
+            executionMethod: activeBoundary.executionMethod || undefined,
+            limitValue: activeBoundary.limitValue || undefined,
+            triggerText: activeBoundary.triggerText || undefined,
+            executionDetail: activeBoundary.executionDetail || undefined,
+            reviewAt,
+          },
+        }),
+      });
+      if (completing) {
+        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/04/complete", { method: "POST" });
+        setDashboard(payload.dashboard);
+        setActiveBoundary(payload.dashboard.activeBoundary || activeBoundary);
+        setView("dashboard");
+      } else setM4Step((value) => value + 1);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
@@ -871,6 +1081,7 @@ export function ActiveControlProgramme() {
       {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}
       {view === "mission-03" ? <MissionThreeScreen step={m3Step} learning={urgeLearning} setLearning={setUrgeLearning} onNext={saveMissionThreeStep} busy={busy} error={error} dashboard={dashboard} /> : null}
+      {view === "mission-04" ? <MissionFourScreen step={m4Step} boundary={activeBoundary} setBoundary={setActiveBoundary} onNext={saveMissionFourStep} busy={busy} error={error} dashboard={dashboard} /> : null}
       {editType && dashboard ? <EditOverlay type={editType} dashboard={dashboard} onClose={() => setEditType(null)} onSaved={(next) => { setDashboard(next); setEditType(null); }} /> : null}
     </div>
   );

@@ -5,6 +5,7 @@ import test from "node:test";
 import type { ProgrammeFlowRepository } from "../lib/repositories/programme-flow.repository";
 import {
   missionOneTaskStates,
+  missionFourTaskStates,
   missionThreeTaskStates,
   missionTwoTaskStates,
 } from "../lib/programme/contract";
@@ -60,6 +61,28 @@ function urgeLearning(notNow = false) {
   };
 }
 
+function activeBoundary(base = now) {
+  return {
+    evidenceReviewed: true,
+    category: "pause",
+    triggerType: "saved_early_signal",
+    ruleText: "I pause before making another gambling decision.",
+    limitValue: 30,
+    limitUnit: "minutes",
+    executionMethod: "leave_action",
+    copingAction: "Leave the app or site",
+    reviewAt: new Date(base.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    scenarioAnswer: "concrete",
+    strengthChecks: [
+      "placed_before_pressure",
+      "specific",
+      "executable",
+      "protected_from_in_moment_editing",
+    ],
+    status: "active",
+  };
+}
+
 class MemoryProgrammeRepository {
   private sequence = 10;
   anonymousSessions: any[] = [];
@@ -69,6 +92,7 @@ class MemoryProgrammeRepository {
   momentMaps: any[] = [];
   goals: any[] = [];
   urgeRecords: any[] = [];
+  boundaries: any[] = [];
   xpEvents: any[] = [];
   activeDays: any[] = [];
   unlocks: any[] = [];
@@ -279,6 +303,40 @@ class MemoryProgrammeRepository {
     });
   }
 
+  async findActiveBoundary(enrollmentId: string) {
+    return this.boundaries.find((item) => item.enrollmentId === enrollmentId) ?? null;
+  }
+
+  async upsertActiveBoundary(input: any) {
+    let row = await this.findActiveBoundary(input.enrollmentId);
+    if (row) Object.assign(row, input, { updatedAt: now, deletedAt: null });
+    else {
+      row = { id: this.id(), createdAt: now, updatedAt: now, deletedAt: null, ...input };
+      this.boundaries.push(row);
+    }
+    return row;
+  }
+
+  async updateActiveBoundary(id: string, data: any) {
+    const row = this.boundaries.find((item) => item.id === id)!;
+    Object.assign(row, data, { updatedAt: new Date(now.getTime() + 1_000) });
+    return row;
+  }
+
+  async eraseActiveBoundary(id: string, at: Date) {
+    return this.updateActiveBoundary(id, {
+      triggerText: null,
+      ruleText: "",
+      limitValue: null,
+      limitUnit: null,
+      limitPeriod: null,
+      executionDetail: null,
+      copingAction: "",
+      status: "RETIRED",
+      deletedAt: at,
+    });
+  }
+
   async recordProgressEvent() { return { count: 1 }; }
 
   async recordMissionXp(input: any) {
@@ -302,13 +360,19 @@ class MemoryProgrammeRepository {
     return { id: "30000000-0000-4000-8000-000000000001", slug: "first-plan" } as any;
   }
 
+  async findBoundaryBuiltAchievement() {
+    return { id: "30000000-0000-4000-8000-000000000002", slug: "boundary-built" } as any;
+  }
+
   async unlockAchievement(input: any) {
     if (this.unlocks.some((item) => item.userId === input.userId && item.awardKey === input.awardKey)) return { count: 0 };
     this.unlocks.push({
       id: this.id(),
       awardedAt: now,
       ...input,
-      achievement: { id: input.achievementId, slug: "first-plan", title: "First Plan" },
+      achievement: input.achievementId.endsWith("2")
+        ? { id: input.achievementId, slug: "boundary-built", title: "Boundary Built" }
+        : { id: input.achievementId, slug: "first-plan", title: "First Plan" },
     });
     return { count: 1 };
   }
@@ -324,6 +388,7 @@ class MemoryProgrammeRepository {
           momentMap: await this.findMomentMap(enrollment.id),
           currentGoal: await this.findCurrentGoal(enrollment.id),
           urgeLearningRecord: await this.findUrgeLearningRecord(enrollment.id),
+          activeBoundary: await this.findActiveBoundary(enrollment.id),
           activeDays: this.activeDays.filter((item) => item.enrollmentId === enrollment.id && !item.voidedAt),
         }
       : null;
@@ -364,6 +429,16 @@ async function missionThreeFlow(completionDate = now) {
   await flow.service.saveMissionThreeDraft("user-1", {
     taskStates: [...missionThreeTaskStates],
     urgeLearning: urgeLearning(),
+  });
+  return flow;
+}
+
+async function missionFourFlow(completionDate = now) {
+  const flow = await missionThreeFlow(completionDate);
+  await flow.service.completeMissionThree("user-1", completionDate);
+  await flow.service.saveMissionFourDraft("user-1", {
+    taskStates: [...missionFourTaskStates],
+    activeBoundary: activeBoundary(completionDate),
   });
   return flow;
 }
@@ -549,6 +624,65 @@ test("Mission 03 private signal can be edited or deleted without rewriting compl
   assert.equal(dashboard.totalXp, 230);
 });
 
+test("Mission 04 is authenticated, resumable and requires all structure checks", async () => {
+  const flow = await missionThreeFlow();
+  await flow.service.completeMissionThree("user-1", now);
+  await flow.service.saveMissionFourDraft("user-1", {
+    taskStates: missionFourTaskStates.slice(0, 8),
+    activeBoundary: {
+      ...activeBoundary(),
+      strengthChecks: ["placed_before_pressure", "specific"],
+    },
+  });
+  await assert.rejects(
+    () => flow.service.completeMissionFour("user-1", now),
+    /task states are incomplete/i,
+  );
+  const draft = await flow.service.getMissionFourDraft("user-1");
+  assert.equal(draft.taskStates.length, 8);
+  assert.equal(flow.repository.xpEvents.length, 3);
+  await assert.rejects(() => flow.service.getMissionFourDraft("user-2"), /enrollment not found/i);
+  const route = readFileSync("app/api/program/missions/04/route.ts", "utf8");
+  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+});
+
+test("Mission 04 completion awards exactly 100 XP, Boundary Built and Mission 05", async () => {
+  const { repository, service } = await missionFourFlow();
+  const first = await service.completeMissionFour("user-1", now);
+  const retry = await service.completeMissionFour("user-1", now);
+  assert.equal(first.totalXp, 330);
+  assert.equal(retry.totalXp, 330);
+  assert.equal(repository.xpEvents.length, 4);
+  assert.equal(repository.xpEvents.reduce((sum, item) => sum + item.xp, 0), 330);
+  assert.equal(first.currentMission, 5);
+  assert.equal(first.missions[3].status, "completed");
+  assert.equal(first.missions[4].status, "current");
+  assert.equal(first.achievements.find((item) => item.slug === "boundary-built")?.state, "earned");
+  assert.equal(first.activeBoundary?.category, "pause");
+  assert.equal(first.activeBoundary?.limitValue, 30);
+  assert.equal(first.activeBoundary?.triggerText, "My attention narrows onto the next offer");
+  assert.ok(first.evidence.mission04.length >= 4);
+  assert.equal(first.activeDays, 1);
+});
+
+test("Mission 04 boundary can be edited or erased without rewriting XP or completion", async () => {
+  const { repository, service } = await missionFourFlow();
+  await service.completeMissionFour("user-1", now);
+  const changed = await service.updateActiveBoundary("user-1", {
+    ruleText: "I leave the app and wait before another decision.",
+    copingAction: "Message my trusted contact",
+    reviewAt: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+  }, now);
+  assert.match(changed.ruleText, /leave the app/i);
+  await service.deleteActiveBoundary("user-1", now);
+  assert.equal(repository.boundaries[0].ruleText, "");
+  assert.ok(repository.boundaries[0].deletedAt);
+  const dashboard = await service.getDashboard("user-1");
+  assert.equal(dashboard.activeBoundary, null);
+  assert.equal(dashboard.currentMission, 5);
+  assert.equal(dashboard.totalXp, 330);
+});
+
 test("same local day is one active day; next local day advances the streak", async () => {
   const sameDay = await registeredFlow();
   const dashboard = await sameDay.service.completeMissionTwo("user-1", now);
@@ -617,6 +751,10 @@ test("schema and migration enforce idempotency, ownership, confidence and non-ne
     "prisma/migrations/0016_mission_03_urge_learning/migration.sql",
     "utf8",
   );
+  const missionFourMigration = readFileSync(
+    "prisma/migrations/0017_mission_04_active_boundary/migration.sql",
+    "utf8",
+  );
   assert.match(schema, /@@unique\(\[userId, localDate\]\)/);
   assert.match(schema, /@@unique\(\[enrollmentId, missionNumber\]\)/);
   assert.match(migration, /UserXpEvent_non_negative_check/);
@@ -626,6 +764,10 @@ test("schema and migration enforce idempotency, ownership, confidence and non-ne
   assert.match(schema, /model UrgeLearningRecord/);
   assert.match(missionThreeMigration, /UrgeLearningRecord_signal_choice_check/);
   assert.match(missionThreeMigration, /UrgeLearningRecord_enrollmentId_key/);
+  assert.match(schema, /model ActiveBoundary/);
+  assert.match(missionFourMigration, /ActiveBoundary_material_value_check/);
+  assert.match(missionFourMigration, /ActiveBoundary_enrollmentId_key/);
+  assert.match(missionFourMigration, /boundary-built/);
 });
 
 test("validation rejects invalid confidence and client-authored reward fields", async () => {

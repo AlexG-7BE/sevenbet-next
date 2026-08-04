@@ -330,7 +330,7 @@
 .currentPhoto .primaryButton { position: relative; z-index: 2; }
 .pathHeading { display: flex; justify-content: space-between; color: var(--muted); }
 .pathHeading b { color: var(--ink); }
-.pathPreview { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; list-style: none; }
+.pathPreview { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 20px; list-style: none; }
 .pathPreview li { min-height: 88px; padding: 16px; display: flex; align-items: center; gap: 16px; background: var(--white); border: 1px solid var(--muted); border-radius: 20px; }
 .pathPreview li > span { min-width: 40px; min-height: 40px; display: grid; place-items: center; border-radius: 50%; background: var(--white); font-size: 12px; font-weight: 650; }
 .pathPreview li[data-status="completed"] > span { color: var(--white); background: var(--teal); }
@@ -346,6 +346,91 @@
 .confidence > span { color: var(--teal); }
 .confidence > strong { font-size: 30px; line-height: 34px; }
 .confidence input { width: 100%; accent-color: var(--acid); }
+
+.boundaryHero {
+  min-height: 100%;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--white);
+  background: var(--deep);
+  border-radius: 24px;
+}
+.boundaryHero .titleBlock > span { color: var(--teal); }
+.boundaryHero .titleBlock > p { color: var(--night-muted); }
+.boundaryMeta { display: flex; flex-wrap: wrap; gap: 10px; }
+.boundaryMeta > * { padding: 9px 14px; color: var(--ink); background: var(--white); border-radius: 999px; font-size: 12px; line-height: 16px; text-transform: uppercase; }
+.boundaryMeta > b { background: var(--acid); }
+
+.boundaryComposer {
+  min-height: 420px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--ink);
+  background: var(--acid-soft);
+  border: 1px solid var(--ink);
+  border-radius: 24px;
+}
+.boundaryComposer > span,
+.reviewPanel > span,
+.scenarioPanel > span,
+.boundaryDisclosure > b {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.boundaryComposer h3 { margin: 0; font-size: 30px; line-height: 34px; letter-spacing: -.5px; }
+.boundaryComposer ol { margin: auto 0 0; padding: 0; display: grid; gap: 8px; list-style: none; }
+.boundaryComposer li { min-height: 48px; padding: 10px 12px; display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 12px; background: rgba(255,255,255,.55); border-radius: 12px; }
+.boundaryComposer li b { color: var(--teal); font-size: 12px; }
+.boundaryComposer li span, .boundaryComposer li small { font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase; }
+.boundaryComposer li small { color: var(--muted); }
+.boundaryComposer li[data-state="locked"] { color: var(--white); background: var(--deep); }
+.boundaryComposer li[data-state="locked"] small { color: var(--acid); }
+.boundaryComposerCompact { min-height: 260px; margin-top: auto; padding: 20px; color: var(--white); background: var(--night); border-color: #4b4945; }
+.boundaryComposerCompact h3 { display: none; }
+.boundaryComposerCompact li { min-height: 38px; padding: 7px 10px; background: var(--deep); }
+
+.boundaryAnatomy { margin-top: 28px; display: grid; gap: 10px; padding: 18px; color: var(--white); background: var(--deep); border-radius: 24px; }
+.boundaryAnatomy article { min-height: 76px; padding: 16px; display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 14px; background: var(--night); border-radius: 16px; }
+.boundaryAnatomy article:first-child { color: var(--ink); background: var(--acid-soft); }
+.boundaryAnatomy article > b { color: var(--acid); font-size: 24px; }
+.boundaryAnatomy article:first-child > b { color: var(--ink); }
+.boundaryAnatomy article div { display: grid; gap: 4px; }
+.boundaryAnatomy article strong { font-size: 13px; text-transform: uppercase; }
+.boundaryAnatomy article span { color: var(--night-muted); font-size: 13px; }
+.boundaryAnatomy article:first-child span { color: var(--muted); }
+
+.boundaryCategoryGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.boundaryCategoryGrid button { min-height: 180px; padding: 24px; display: grid; grid-template-columns: 1fr auto; align-content: start; gap: 18px 24px; text-align: left; color: var(--ink); background: var(--white); border: 1px solid #aaa89f; border-radius: 24px; cursor: pointer; }
+.boundaryCategoryGrid button > span { color: var(--teal); font-size: 12px; font-weight: 700; }
+.boundaryCategoryGrid button > b { grid-column: 1 / -1; font-size: 30px; line-height: 34px; text-transform: uppercase; }
+.boundaryCategoryGrid button > small { grid-column: 1 / -1; color: var(--muted); font-size: 14px; line-height: 20px; }
+.boundaryCategoryGrid button[data-active="true"] { background: var(--acid-soft); border: 2px solid var(--ink); }
+.boundaryCategoryGrid button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.disclosureStrip { padding: 14px 18px; color: var(--muted); background: var(--acid-soft); border-radius: 14px; font-size: 13px; line-height: 19px; }
+
+.composerLayout { display: grid; grid-template-columns: minmax(0, .95fr) minmax(440px, 1.05fr); gap: 32px; align-items: stretch; flex: 1; }
+.composerLayout > div:first-child { display: flex; flex-direction: column; gap: 24px; }
+.ruleFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.ruleFields > :last-child { grid-column: 1 / -1; }
+.copingLayout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(420px, .9fr); gap: 32px; flex: 1; }
+.reviewPanel, .scenarioPanel { padding: 32px; display: flex; flex-direction: column; gap: 18px; color: var(--white); background: var(--deep); border-radius: 24px; }
+.reviewPanel > span, .scenarioPanel > span { color: var(--teal); }
+.reviewPanel h2, .scenarioPanel h2 { margin: 0; font-size: 30px; line-height: 34px; }
+.reviewPanel .field > span { color: var(--night-muted); }
+.reviewPanel blockquote { margin: auto 0 0; padding: 24px; color: var(--ink); background: var(--acid-soft); border-radius: 18px; font-size: 22px; line-height: 28px; font-weight: 700; }
+.reviewPanel > small { color: var(--night-muted); }
+.scenarioPanel > p { margin: 0 0 10px; color: var(--night-muted); font-size: 16px; line-height: 24px; }
+.strengthChecks { margin-top: 18px; display: grid; gap: 10px; }
+.boundaryDisclosure { padding: 18px 20px; color: var(--white); background: var(--deep); border-radius: 18px; }
+.boundaryDisclosure > b { color: var(--teal); }
+.boundaryDisclosure p { margin: 8px 0 0; color: var(--night-muted); font-size: 13px; line-height: 19px; }
 
 .overlay { position: fixed; z-index: 100; inset: 0; padding: 32px; display: grid; place-items: center; background: rgba(16,15,15,.72); backdrop-filter: blur(8px); }
 .editPanel { width: min(760px, 100%); max-height: calc(100vh - 64px); overflow: auto; padding: 32px; display: grid; gap: 18px; background: var(--paper); border-radius: 24px; box-shadow: 0 24px 90px rgba(0,0,0,.35); }
@@ -363,6 +448,7 @@
   .dashboardHeading { grid-template-columns: 1fr; }
   .pathPreview { grid-template-columns: repeat(2, 1fr); }
   .modelStrip { grid-template-columns: 1fr; }
+  .composerLayout, .copingLayout { grid-template-columns: 1fr; }
   .modelStrip > i { transform: rotate(90deg); justify-self: center; }
 }
 
@@ -396,6 +482,8 @@
   .waveMoments { grid-template-columns: 1fr; }
   .signalScan { grid-template-columns: 1fr; }
   .signalScan > :last-child { grid-column: auto; }
+  .boundaryCategoryGrid, .ruleFields { grid-template-columns: 1fr; }
+  .ruleFields > :last-child { grid-column: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
