@@ -11,7 +11,15 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/program?auth=sign-in");
   await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
-  await expect(page.getByText(/Some outbound links may compensate SevenBet/i)).toBeVisible();
+  await expect(page.getByText(/SevenBet may receive compensation from some outbound links/i)).toBeVisible();
+  const undersizedTargets = await page.locator("[data-public-shell] a, [data-public-shell] button").evaluateAll((targets) => targets
+    .filter((target) => {
+      const rect = target.getBoundingClientRect();
+      const style = getComputedStyle(target);
+      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && (rect.width < 44 || rect.height < 44);
+    })
+    .map((target) => ({ text: target.textContent?.trim(), rect: target.getBoundingClientRect().toJSON() })));
+  expect(undersizedTargets).toEqual([]);
 });
 
 test("mobile menu is modal, Escape-closeable and restores focus", async ({ browser }) => {
@@ -55,10 +63,9 @@ for (const viewport of [
   });
 }
 
-test("public shell remains usable at 200% zoom", async ({ page }) => {
-  await page.setViewportSize({ width: 1280, height: 800 });
+test("public shell reflows at the effective layout width of 200% zoom", async ({ page }) => {
+  await page.setViewportSize({ width: 640, height: 800 });
   await page.goto(`${baseUrl}/casinos`, { waitUntil: "domcontentloaded" });
-  await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await expect(page.getByRole("button", { name: "Open navigation" })).toBeVisible();
 });

@@ -100,20 +100,9 @@ function ArrowIcon({ direction = "right" }: { direction?: "left" | "right" }) {
   );
 }
 
-function MenuIcon({ open }: { open: boolean }) {
-  return (
-    <span className={styles.menuIcon} aria-hidden="true">
-      <i className={open ? styles.menuLineOpenOne : undefined} />
-      <i className={open ? styles.menuLineOpenTwo : undefined} />
-    </span>
-  );
-}
-
 export function TiltHome() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [activeTool, setActiveTool] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [headerScrolled, setHeaderScrolled] = useState(false);
   const heroRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -128,13 +117,6 @@ export function TiltHome() {
     );
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    const updateHeader = () => setHeaderScrolled(window.scrollY > 24);
-    updateHeader();
-    window.addEventListener("scroll", updateHeader, { passive: true });
-    return () => window.removeEventListener("scroll", updateHeader);
   }, []);
 
   function moveCarousel(direction: number) {
@@ -163,31 +145,6 @@ export function TiltHome() {
 
   return (
     <div className={`tiltHomePage ${styles.home}`}>
-      <header className={`${styles.header} ${headerScrolled ? styles.headerScrolled : ""}`}>
-        <Link className={styles.wordmark} href="/" aria-label="SevenBet home">
-          SEVENBET
-        </Link>
-        <button
-          className={styles.menuButton}
-          type="button"
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((value) => !value)}
-        >
-          <MenuIcon open={menuOpen} />
-        </button>
-        <nav className={`${styles.navigation} ${menuOpen ? styles.navigationOpen : ""}`} aria-label="Primary navigation">
-          <Link href="/casinos" onClick={() => setMenuOpen(false)}>Casinos</Link>
-          <Link href="/bonuses" onClick={() => setMenuOpen(false)}>Bonuses</Link>
-          <Link href="/best-offers" onClick={() => setMenuOpen(false)}>Best offers</Link>
-          <Link href="/casinos" onClick={() => setMenuOpen(false)}>Reviews</Link>
-          <Link href="/catalog" onClick={() => setMenuOpen(false)}>Compare</Link>
-        </nav>
-        <Link className={`${styles.primaryButton} ${styles.headerCta}`} href="/program">
-          Start the 10-Step Program
-        </Link>
-      </header>
-
       <section
         className={styles.hero}
         ref={heroRef}
@@ -341,28 +298,6 @@ export function TiltHome() {
         <Link className={styles.primaryButton} href="/program">Start the 10-Step Program</Link>
       </section>
 
-      <section className={styles.helpPanel}>
-        <div>
-          <span>NEED SUPPORT NOW?</span>
-          <h2>Help without offers.</h2>
-          <p>Open a protected route with no casino, bonus or affiliate calls to action.</p>
-        </div>
-        <Link href="/responsible-gambling">Open Help <ArrowIcon /></Link>
-      </section>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerLead}>
-          <Link className={styles.wordmark} href="/">SEVENBET</Link>
-          <p>Choose better. Play with more control.</p>
-        </div>
-        <div className={styles.footerLinks}>
-          <div><strong>Explore</strong><Link href="/casinos">Casinos</Link><Link href="/bonuses">Bonuses</Link><Link href="/best-offers">Best offers</Link></div>
-          <div><strong>Understand</strong><Link href="/casinos">Reviews</Link><Link href="/catalog">Comparisons</Link><Link href="/learn">Learn</Link></div>
-          <div><strong>Control</strong><Link href="/10-steps">10-Step Program</Link><Link href="/self-check">Self-check</Link><Link href="/responsible-gambling">Help</Link></div>
-          <div><strong>SevenBet</strong><Link href="/about">About</Link><Link href="/privacy">Privacy</Link><Link href="/affiliate-disclosure">Affiliate disclosure</Link></div>
-        </div>
-        <p className={styles.legal}>18+ · GambleAware · Safer gambling · Terms apply · Some links may be affiliate links.</p>
-      </footer>
     </div>
   );
 }

@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
-import { Footer, Header } from "@/components/SiteChrome";
+import { Archivo } from "next/font/google";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 import "./globals.css";
+
+const archivo = Archivo({
+  subsets: ["latin"],
+  variable: "--font-seven-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -24,15 +30,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>
-        <a className="skipLink" href="#main-content">Skip to main content</a>
+      <body className={archivo.variable}>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") }) }}
         />
-        <Header />
-        <main id="main-content">{children}</main>
-        <Footer />
+        {children}
       </body>
     </html>
   );

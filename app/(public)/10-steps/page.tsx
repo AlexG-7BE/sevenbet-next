@@ -25,7 +25,7 @@ const missions = [
 
 export default function TenStepsPage() {
   return (
-    <main className="tenStepsPage">
+    <div className="tenStepsPage">
       <section className="tenStepsHero">
         <div className="tenStepsWrap tenStepsHeroGrid">
           <div>
@@ -96,6 +96,6 @@ export default function TenStepsPage() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
