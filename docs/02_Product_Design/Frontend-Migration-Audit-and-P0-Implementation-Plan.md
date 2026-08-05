@@ -293,16 +293,16 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-01 — Public Shell
 
-**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_15 — AWAITING REVIEW/MERGE`.
+**Implementation status, 2026-08-05:** `MERGED_IN_CEEE4E7`.
 
-- **Detected implementation:** [PR #15](https://github.com/AlexG-7BE/sevenbet-next/pull/15), contract test commit `617cb69` and implementation commit `9c12efa` introduce a server-owned `app/(public)/layout.tsx`, replace legacy `SiteChrome`, use the existing Better Auth server session for account presentation, and isolate mobile route/menu interaction in `PublicNavigation`.
+- **Detected implementation:** [PR #15](https://github.com/AlexG-7BE/sevenbet-next/pull/15), merged in `ceee4e7`, introduces a server-owned `app/(public)/layout.tsx`, replaces legacy `SiteChrome`, uses the existing Better Auth server session for account presentation, and isolates mobile route/menu interaction in `PublicNavigation`.
 - **Detected route ownership:** the Public Shell applies to `/`, `/10-steps`, commercial discovery/profile routes, `/bonus-guide`, `/learn/**`, public trust/legal routes, `/self-check` and `/tools/budget-calculator`, plus public error/404 presentation. `/program`, `/responsible-gambling/**`, `/responsible-gaming`, `/admin/**` and editorial/internal routes are intentionally excluded. URL paths are unchanged by the route group.
 - **Detected shell integration:** Home-owned Header/Footer and the obsolete standalone Help panel are removed; the page body remains unchanged. `/10-steps` and `/best-offers` no longer create a second `<main>`. Programme keeps its existing product shell. Protected Help receives no commercial shell; its approved dedicated shell remains FE-MIG-13.
 - **Detected account/availability boundary:** signed-out and signed-in account presentation derive from the server session. XP appears only when an authoritative value is supplied; no XP is invented in this package. Availability Notice `489:70` exists only as generic unknown/unavailable presentation and is not activated as GEO, market, age or eligibility authority.
 - **Detected QA:** typecheck, production build, `git diff --check`, 5/5 shell contract tests and 15/15 combined Public Shell/public-casino browser tests pass. Browser checks cover 1440, 1280, 1024, 768, 430, 390 × 844, 375 × 667, 360 and effective 200% reflow, with no shell horizontal overflow. Escape, native modal focus containment, focus return, scroll lock, safe areas, reduced motion, one-main ownership, excluded-shell regressions and 44 × 44 visible targets pass. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-01/`.
 - **Detected baseline gaps:** the full Node suite remains 207 passed / 7 failed, with the same date-dependent Mission 04 `reviewAt` fixtures recorded by the audit. `npm run lint` still invokes deprecated interactive `next lint`. No disposable authenticated browser fixture is detected; signed-in behavior is covered by the server-state contract test but still needs an authenticated browser snapshot.
 - **Release limitations:** 18+/affiliate/legal wording remains review-gated; public routes become dynamic because the shared layout reads the server session; live availability remains blocked; Protected Help still needs FE-MIG-13. `/self-check` and `/tools/budget-calculator` retain their P0 launch blocker under FE-SAFETY-01, including separate review of global navigation on result states.
-- **Next recommended package:** FE-MIG-02 — Home responsive parity. This does not reduce the independent priority of FE-SAFETY-01 or FE-MIG-13.
+- **Next package after merge:** FE-MIG-02 — Home responsive parity is implemented in [PR #16](https://github.com/AlexG-7BE/sevenbet-next/pull/16). This does not reduce the independent priority of FE-SAFETY-01 or FE-MIG-13.
 
 - **Figma source:** Public Shell `492:2268`; Header set `289:43`; Footer set `488:100`; Availability Notice `489:70` only as non-authoritative presentation.
 - **Routes/components:** `app/layout.tsx`, `components/SiteChrome.tsx`, shared shell styles; all public non-admin routes.
@@ -315,6 +315,15 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-02 — Home responsive parity
 
+**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_16 — AWAITING REVIEW/MERGE`.
+
+- **Detected implementation:** [PR #16](https://github.com/AlexG-7BE/sevenbet-next/pull/16) preserves the approved ten-section narrative, moves Home back to server rendering, and limits client JavaScript to `HomeProgrammeCarousel`. Critical SSR content no longer depends on `IntersectionObserver` or hydration for visibility.
+- **Detected responsive parity:** desktop and mobile compositions follow the unchanged approved Home nodes across 1,440, 1,280, 390 and 375 representatives, with bounded reflow tests down to 320 CSS pixels and no document-level horizontal overflow.
+- **Detected authority boundary:** the shared Public Layout remains the only source of anonymous/signed-in account presentation. Home fetches no Dashboard/Programme state, calculates no XP/progress/next Mission, and does not use Programme or safety data for commercial personalization.
+- **Detected QA:** 5/5 Home contract tests and 39/39 combined Home/Public Shell/public-casino browser tests pass against the production build. Coverage includes no-JS, delayed hydration, missing `IntersectionObserver`, reduced motion, navigation/history, keyboard and announcements, 44px targets, mobile menu, key-route/404 regressions and widths 1440–320. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-02/`.
+- **Detected baseline gaps:** the full Node suite remains 212 passed / 7 failed because fixed Mission 04 `reviewAt` fixtures are now outside the next-30-days validation window. `npm run lint` still invokes deprecated interactive `next lint`. An authenticated disposable browser fixture and per-asset archival provenance remain not detected.
+- **Next recommended package after review/merge:** FE-MIG-03 — 10 Steps campaign landing. It was not started in PR #16.
+
 - **Figma source:** desktop `661:7551`, mobile `657:2545`, preserved 1440 `289:946`.
 - **Routes/components:** `/`, `components/home/TiltHome.tsx`, module CSS.
 - **Reuse/refactor/create:** reuse approved Public Shell; refactor Home-owned header/footer and standalone Help block; preserve narrative sections and imagery pending asset/licence review.
@@ -322,7 +331,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Compliance:** no clinical claim; Help remains available through approved shell; commercial modules cannot use Programme data.
 - **Acceptance:** hero copy legible; 10-section contract and responsive first folds match; no competing shell; removed standalone Help panel; returning state uses server truth.
 - **QA:** visual comparison, image loading/alt, carousel keyboard/announcement, reduced motion, mobile menu regression.
-- **Branch/PR order:** `codex/fe-mig-02-home-parity`; PR 2 after FE-MIG-01.
+- **Branch/PR:** `codex/fe-mig-02-home-parity`; [PR #16](https://github.com/AlexG-7BE/sevenbet-next/pull/16).
 
 ### FE-MIG-03 — 10 Steps campaign landing
 

@@ -6,7 +6,9 @@ Branch: `codex/fe-mig-02-home-parity`
 
 Baseline: `ceee4e79644c52d824542c94475061e6966ccf23` (`main`, merged FE-MIG-01)
 
-Status: **IMPLEMENTED — REVIEW REQUIRED**
+Pull request: [#16](https://github.com/AlexG-7BE/sevenbet-next/pull/16)
+
+Status: **IMPLEMENTED — REVIEW/MERGE REQUIRED**
 
 ## Authority and scope
 
