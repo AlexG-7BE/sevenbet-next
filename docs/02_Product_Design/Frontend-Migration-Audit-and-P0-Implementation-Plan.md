@@ -1,9 +1,13 @@
 # Frontend Migration Audit and P0 Implementation Plan
 
-Status: **documentation-only audit complete; implementation not authorised by this document**  
-Date: 2026-08-05  
-Repository baseline: `ec3e5aa7223aaff2bb4ca0b117e25a37d821edef` on `main`  
-Figma: [SevenBet](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)  
+Status: **documentation-only audit complete; implementation not authorised by this document**
+
+Date: 2026-08-05
+
+Repository baseline: `ec3e5aa7223aaff2bb4ca0b117e25a37d821edef` on `main`
+
+Figma: [SevenBet](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
+
 Governing visual direction: RFC-007 Tilt-Locked Human Product Theatre
 
 ## 1. Decision summary
@@ -193,8 +197,10 @@ The IDs and product priority come from the approved Figma inventory. “WP” id
 
 ### 6.1 Status and launch rule
 
-**Work package:** FE-SAFETY-01 — Self-check and Budget Tool Regulatory Redesign  
-**Status:** `P0_REDESIGN_REQUIRED` / `BLOCKED_BY_PRODUCT_BEHAVIOUR — ROUTE RETAINED IN P0`  
+**Work package:** FE-SAFETY-01 — Self-check and Budget Tool Regulatory Redesign
+
+**Status:** `P0_REDESIGN_REQUIRED` / `BLOCKED_BY_PRODUCT_BEHAVIOUR — ROUTE RETAINED IN P0`
+
 **Launch rule:** both routes remain in P0, but neither may ship its current mechanic to production. The blocker remains until the redesigned UX, privacy/data flow and regulatory presentation receive separate product and compliance approval.
 
 This audit records the supplied product decision. Because it is material product/compliance work, implementation must also pass the repository’s RFC/decision process before code changes.
@@ -205,7 +211,7 @@ This audit records the supplied product decision. Because it is material product
 
 **Risk conclusion:** the current route combines vulnerability/harm-adjacent signals with commercial discovery. It conflicts with the Product Vision’s commercial/safety separation and must not be migrated unchanged.
 
-**Required redesign contract:** 
+**Required redesign contract:**
 
 - Preserve self-check as acquisition, education and responsible-gambling support.
 - Do not use stress, impulsivity, control, gambling harm or any other vulnerability signal to select, rank or personalise casinos, bonuses or affiliate offers.
@@ -589,9 +595,12 @@ Programme work additionally remains subject to `Programme-Definition-of-Done.md`
 
 ## 13. Recommended first implementation PR
 
-**Title:** `feat(frontend): migrate approved public shell`  
-**Branch:** `codex/fe-mig-01-public-shell`  
-**Scope:** Header, Footer, mobile menu, signed-out/in presentation, skip/main ownership and shared route-group integration only.  
+**Title:** `feat(frontend): migrate approved public shell`
+
+**Branch:** `codex/fe-mig-01-public-shell`
+
+**Scope:** Header, Footer, mobile menu, signed-out/in presentation, skip/main ownership and shared route-group integration only.
+
 **Explicit exclusions:** no Home body redesign, no Programme logic, no market detection, no commercial ranking/data work, no Help content redesign, no self-check/budget changes, no backend/API/Prisma change.
 
 Why first: every public acquisition, commercial, learning, trust and legal family depends on one stable responsive shell. It also removes the current competing-shell/duplicate-landmark problem and creates the layout boundary needed for the separate Protected Help shell. It should not activate the Availability Notice as live truth; only non-authoritative unknown/unavailable presentation may be included until FE-MIG-11 is approved.

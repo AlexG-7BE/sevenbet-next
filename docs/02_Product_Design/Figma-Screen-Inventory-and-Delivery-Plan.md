@@ -172,6 +172,15 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 - Privacy and Terms routes are placeholders and cannot be treated as approved production legal content.
 - Protected Help has an independent approved shell with no casino/bonus CTA, affiliate referral or commercial card inside protected content. Production still requires a governed resource catalogue, redirect status and approved regional urgent-support copy.
 
+### Frontend migration audit decision — retained P0 safety routes
+
+The documentation-only [Frontend Migration Audit and P0 Implementation Plan](Frontend-Migration-Audit-and-P0-Implementation-Plan.md) adds two routes to the P0 migration scope without changing the 73-family Figma count:
+
+- `/self-check` — `P0_REDESIGN_REQUIRED` / `BLOCKED_BY_PRODUCT_BEHAVIOUR — ROUTE RETAINED IN P0`.
+- `/tools/budget-calculator` — `P0_REDESIGN_REQUIRED` / `BLOCKED_BY_PRODUCT_BEHAVIOUR — ROUTE RETAINED IN P0`.
+
+Neither route is `NOT_REQUIRED_FOR_INITIAL_LAUNCH`. Their current product behaviour is not approved, no dedicated approved redesign family is detected, and application/Figma changes remain out of scope for this audit. **FE-SAFETY-01 — Self-check and Budget Tool Regulatory Redesign** is a mandatory P0 work package and launch blocker pending product, privacy, UKGC/CAP/ICO-informed compliance and new Figma approval. Self-check, Programme, pause, Help and budget-tool signals must not drive commercial selection, ranking, personalisation, affiliate tracking or retargeting.
+
 ## Initial-launch scope
 
 ### P0 — required for the first commercial vertical slice
@@ -187,6 +196,7 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 9. Protected Help family and protected article mobile completion.
 10. Launch identity/privacy entry points supported by the current Better Auth contract.
 11. Affiliate Disclosure, Methodology, Privacy, Terms, responsible-gambling policy treatment and representative system states.
+12. Retained safety tools: `/self-check` and `/tools/budget-calculator`, redesigned under FE-SAFETY-01 before production; current mechanics are not approved.
 
 ### P1 — soon after launch
 
