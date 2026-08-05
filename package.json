@@ -33,6 +33,7 @@
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
     "discovery:test": "node --import tsx --test tests/public-casino-discovery.test.ts",
+    "fe-mig-04:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

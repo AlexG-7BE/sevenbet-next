@@ -1,5 +1,7 @@
 "use client";
 
+import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
+
 export default function CasinoDiscoveryError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return <section className="pageShell"><div className="container"><div className="card discoveryEmpty"><p className="eyebrow">Casino discovery</p><h1>We could not load the catalog.</h1><p>Please try again. No database or technical details have been exposed.</p><button className="button gold" onClick={reset} type="button">Try again</button></div></div></section>;
+  return <div className={styles.page}><section className={styles.statePage}><div><span>Casino directory</span><h1>We could not load the published reviews.</h1><p>Try again in a moment. No database, provider or technical details have been exposed.</p><button onClick={reset} type="button">Try again</button></div></section></div>;
 }

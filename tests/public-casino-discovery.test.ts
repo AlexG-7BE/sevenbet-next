@@ -2,7 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { parseCasinoDiscoveryQuery, serializeCasinoDiscoveryQuery } from "../lib/public-casino-discovery/query";
+import { discoveryHref, parseCasinoDiscoveryQuery, serializeCasinoDiscoveryQuery } from "../lib/public-casino-discovery/query";
+import { visitActionUnavailableCopy } from "../lib/public-casino-discovery/visit-action-presentation";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
@@ -50,6 +51,19 @@ test("query parser normalizes, deduplicates, bounds, and serializes deterministi
   assert.equal(query.pageSize, 12);
   assert.equal(query.sort, "NAME_DESC");
   assert.equal(serializeCasinoDiscoveryQuery(query).toString(), "q=Crypto+Casino&country=GB&payment=bitcoin&sort=NAME_DESC");
+});
+
+test("directory links preserve every public control while pagination can reset", () => {
+  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24"));
+  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24");
+  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24");
+});
+
+test("unavailable visit actions have safe public explanations", () => {
+  const action = { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "NO_ACTIVE_TRACKING_LINK" };
+  assert.equal(visitActionUnavailableCopy(action), "A governed visit link is not currently available.");
+  assert.equal(visitActionUnavailableCopy({ ...action, reasonCode: "PRIVATE_PROVIDER_FAILURE" }), "A governed visit link is not currently available.");
+  assert.doesNotMatch(visitActionUnavailableCopy({ ...action, reasonCode: "PRIVATE_PROVIDER_FAILURE" }) ?? "", /provider|private|failure/i);
 });
 
 test("search ranking covers canonical name, alias, domain, punctuation, and structured relations", async () => {
