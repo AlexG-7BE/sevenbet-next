@@ -23,12 +23,18 @@ const returningImage = "https://images.pexels.com/photos/4450147/pexels-photo-44
 
 export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
   const returning = state.kind === "returning";
+  const availableProgrammeComplete = state.kind === "available-programme-complete";
+  const hasProgrammeRecord = returning || availableProgrammeComplete;
   const accountState = state.kind === "anonymous" ? "anonymous" : "signed-in";
 
   return (
     <div className={`tenStepsPage ${styles.page}`} data-account-state={accountState} data-figma-contract="502:2238 502:2412">
-      <section className={`${styles.hero} ${returning ? styles.heroReturning : ""}`} data-ten-steps-section="hero" aria-labelledby="ten-steps-title">
-        {returning ? <ReturningHero state={state} /> : <AnonymousHero signedIn={state.kind === "signed-in-fallback"} />}
+      <section className={`${styles.hero} ${hasProgrammeRecord ? styles.heroReturning : ""}`} data-ten-steps-section="hero" aria-labelledby="ten-steps-title">
+        {returning
+          ? <ReturningHero state={state} />
+          : availableProgrammeComplete
+            ? <AvailableProgrammeCompleteHero state={state} />
+            : <AnonymousHero signedIn={state.kind === "signed-in-fallback"} />}
       </section>
 
       <section className={styles.builds} data-ten-steps-section="programme-builds" aria-labelledby="programme-builds-title">
@@ -78,7 +84,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
           <h2 id="account-boundary-title"><strong>Begin privately.</strong><em>Save when you choose.</em></h2>
           <p>Mission 01 can begin before account creation. An account is required only when you choose to save the result and continue with your Programme record.</p>
           <div className={styles.pendingReward} aria-label="Pending Mission 01 reward preview">
-            <span>SAVE TO EARN</span><strong>+60 XP</strong><small>Awarded after account creation.</small>
+            <span>SAVE TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 is saved to your account.</small>
           </div>
         </div>
       </section>
@@ -98,11 +104,11 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       </section>
 
       <section className={styles.finalAction} data-ten-steps-section="final-action" aria-labelledby="final-action-title">
-        <span>{returning ? "YOUR PROGRAMME IS READY" : "READY WHEN YOU ARE"}</span>
-        <h2 id="final-action-title"><strong>{returning ? "RETURN TO YOUR PLAN." : "START WITH ONE"}</strong><em>{returning ? "Keep the next step clear." : "useful mission."}</em></h2>
-        <p>{returning ? "Your saved progress and next Mission come from your Programme record." : "No promise of a perfect outcome. Just a practical first step you can finish."}</p>
-        <Link className={styles.primaryButton} href="/program">{returning ? "Open My Programme" : "Start Mission 01"}</Link>
-        <small>{returning ? "Server-owned progress · account required" : "Private until you choose to save"}</small>
+        <span>{availableProgrammeComplete ? "CURRENT AVAILABLE PATH COMPLETE" : returning ? "YOUR PROGRAMME IS READY" : "READY WHEN YOU ARE"}</span>
+        <h2 id="final-action-title"><strong>{hasProgrammeRecord ? "RETURN TO YOUR PLAN." : "START WITH ONE"}</strong><em>{availableProgrammeComplete ? "Keep what you built." : returning ? "Keep the next step clear." : "useful mission."}</em></h2>
+        <p>{availableProgrammeComplete ? "Your saved Programme remains available while later Missions stay planned and unavailable." : returning ? "Your saved progress and next Mission come from your Programme record." : "No promise of a perfect outcome. Just a practical first step you can finish."}</p>
+        <Link className={styles.primaryButton} href="/program">{hasProgrammeRecord ? "Open My Programme" : "Start Mission 01"}</Link>
+        <small>{availableProgrammeComplete ? "Missions 05–10 · planned, not yet available" : returning ? "Server-owned progress · account required" : "Private until you choose to save"}</small>
       </section>
     </div>
   );
@@ -143,6 +149,28 @@ function ReturningHero({ state }: { state: Extract<TenStepsLandingState, { kind:
           <strong>Mission {String(state.currentMission).padStart(2, "0")}</strong>
           <p>{state.completedMissions} of 10 complete · {state.totalXp} XP</p>
           <small>Live values from your saved Programme record</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AvailableProgrammeCompleteHero({ state }: { state: Extract<TenStepsLandingState, { kind: "available-programme-complete" }> }) {
+  return (
+    <div className={styles.returningInner}>
+      <div className={styles.returningCopy}>
+        <span>CURRENT AVAILABLE PATH COMPLETE</span>
+        <h1 id="ten-steps-title"><strong>YOU COMPLETED</strong><em>what is available.</em></h1>
+        <p>Your saved Missions 01–04 remain in My Programme. Missions 05–10 are planned and are not yet available.</p>
+        <Link className={styles.secondaryButton} href="/program">Open My Programme</Link>
+      </div>
+      <div className={styles.returningPanel}>
+        <img alt="" height="1200" src={returningImage} width="1800" />
+        <div className={styles.returningCard}>
+          <span>MY PROGRAMME</span>
+          <strong>Available path complete</strong>
+          <p>{state.completedMissions} of 10 complete · {state.totalXp} XP</p>
+          <small>No later Mission is available yet</small>
         </div>
       </div>
     </div>

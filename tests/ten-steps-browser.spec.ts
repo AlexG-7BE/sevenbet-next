@@ -11,7 +11,8 @@ async function assertTenStepsContract(page: import("@playwright/test").Page) {
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("list").locator("li")).toHaveCount(10);
   await expect(page.getByText("SAVE TO EARN", { exact: true })).toBeVisible();
-  await expect(page.getByText("Awarded after account creation.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Awarded when Mission 01 is saved to your account.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Awarded after account creation.", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/UK PREVIEW|UK-ready discovery|\+\s*20\s*XP/i)).toHaveCount(0);
   await expect(page.locator("main a[href^='/casinos'], main a[href^='/bonuses'], main a[href^='/best-offers']")).toHaveCount(0);
   expect(await page.locator("[data-ten-steps-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-ten-steps-section")))).toEqual(approvedOrder);

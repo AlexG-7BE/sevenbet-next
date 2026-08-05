@@ -1,3 +1,8 @@
+import {
+  missionDefinition,
+  type ImplementedMissionNumber,
+} from "@/lib/programme/domain/mission-registry";
+
 export type TenStepsLandingState =
   | { kind: "anonymous" }
   | { kind: "signed-in-fallback" }
@@ -5,7 +10,12 @@ export type TenStepsLandingState =
       kind: "returning";
       totalXp: number;
       completedMissions: number;
-      currentMission: number;
+      currentMission: ImplementedMissionNumber;
+    }
+  | {
+      kind: "available-programme-complete";
+      totalXp: number;
+      completedMissions: number;
     };
 
 type LandingSession = { user: { id: string } } | null;
@@ -19,6 +29,12 @@ type LandingDashboard = {
   }>;
 };
 
+function hasImplementedCompletion(
+  missionNumber: number,
+): missionNumber is ImplementedMissionNumber {
+  return missionDefinition(missionNumber).completion !== null;
+}
+
 export async function resolveTenStepsLandingState({
   getSession,
   getDashboard,
@@ -31,10 +47,22 @@ export async function resolveTenStepsLandingState({
 
   try {
     const dashboard = await getDashboard(session.user.id);
+    const completedMissions = dashboard.missions.filter(
+      (mission) => mission.status === "completed",
+    ).length;
+
+    if (!hasImplementedCompletion(dashboard.currentMission)) {
+      return {
+        kind: "available-programme-complete",
+        totalXp: dashboard.totalXp,
+        completedMissions,
+      };
+    }
+
     return {
       kind: "returning",
       totalXp: dashboard.totalXp,
-      completedMissions: dashboard.missions.filter((mission) => mission.status === "completed").length,
+      completedMissions,
       currentMission: dashboard.currentMission,
     };
   } catch {

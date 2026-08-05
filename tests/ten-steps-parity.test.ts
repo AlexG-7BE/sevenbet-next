@@ -29,13 +29,13 @@ test("10 Steps keeps the approved section contract inside the Public Shell", () 
 
   assert.match(layout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.doesNotMatch(landing, /<header|<footer|Need support now|standalone help/iu);
-  assert.equal((landing.match(/<h1\b/g) ?? []).length, 2, "the mutually exclusive hero states each own one H1");
+  assert.equal((landing.match(/<h1\b/g) ?? []).length, 3, "the mutually exclusive hero states each own one H1");
   assert.match(landing, /aria-labelledby="ten-steps-title"/);
   assert.match(landing, /<ol className=\{styles\.missionList\}>/);
 });
 
 test("10 Steps uses the canonical Programme entry and no commercial body CTA", () => {
-  assert.equal((landing.match(/href="\/program"/g) ?? []).length, 3);
+  assert.equal((landing.match(/href="\/program"/g) ?? []).length, 4);
   assert.doesNotMatch(landing, /href="\/(?:casinos|bonuses|best-offers|r\/|go\/)/);
   assert.doesNotMatch(landing, /\?mission=|missionIndex|localStorage|sessionStorage/);
   assert.match(page, /alternates:\s*\{ canonical: absoluteUrl\("\/10-steps"\) \}/);
@@ -46,7 +46,8 @@ test("10 Steps removes legacy reward and unsupported market claims", () => {
   assert.doesNotMatch(combined, /\+\s*20\s*XP/i);
   assert.doesNotMatch(combined, /UK PREVIEW|UK-ready discovery/i);
   assert.match(landing, /SAVE TO EARN/);
-  assert.match(landing, /Awarded after account creation\./);
+  assert.doesNotMatch(landing, /Awarded after account creation\./);
+  assert.match(landing, /Awarded when Mission 01 is saved to your account\./);
   assert.match(landing, /Programme, pause and Help data are not used for affiliate targeting or commercial personalisation\./);
 });
 
@@ -71,7 +72,7 @@ test("anonymous, unclaimed and unavailable states never invent Programme truth",
   assert.deepEqual(signedInWithoutClaim, { kind: "signed-in-fallback" });
 });
 
-test("returning state exposes only server-owned XP, progress and next Mission", async () => {
+test("returning state exposes server-owned Mission 02 without client inference", async () => {
   const state = await resolveTenStepsLandingState({
     getSession: async () => ({ user: { id: "user-1" } }),
     getDashboard: async (userId) => {
@@ -82,7 +83,7 @@ test("returning state exposes only server-owned XP, progress and next Mission", 
         missions: [
           { missionNumber: 1, status: "completed" },
           { missionNumber: 2, status: "current" },
-          ...Array.from({ length: 8 }, (_, index) => ({ missionNumber: index + 3, status: "not_started" })),
+          ...Array.from({ length: 8 }, (_, index) => ({ missionNumber: index + 3, status: "locked" })),
         ],
       };
     },
@@ -98,6 +99,56 @@ test("returning state exposes only server-owned XP, progress and next Mission", 
   assert.match(landing, /state\.completedMissions/);
   assert.match(landing, /state\.currentMission/);
   assert.doesNotMatch(landing, /330 XP|3 rules active|1 of 10 complete/);
+});
+
+test("Mission 04 remains an available server-owned current Mission", async () => {
+  const state = await resolveTenStepsLandingState({
+    getSession: async () => ({ user: { id: "user-1" } }),
+    getDashboard: async () => ({
+      totalXp: 230,
+      currentMission: 4,
+      missions: [
+        { missionNumber: 1, status: "completed" },
+        { missionNumber: 2, status: "completed" },
+        { missionNumber: 3, status: "completed" },
+        { missionNumber: 4, status: "current" },
+        ...Array.from({ length: 6 }, (_, index) => ({ missionNumber: index + 5, status: "locked" })),
+      ],
+    }),
+  });
+
+  assert.deepEqual(state, {
+    kind: "returning",
+    totalXp: 230,
+    completedMissions: 3,
+    currentMission: 4,
+  });
+});
+
+test("post-Mission-04 state never presents planned Mission 05 as available", async () => {
+  const state = await resolveTenStepsLandingState({
+    getSession: async () => ({ user: { id: "user-1" } }),
+    getDashboard: async () => ({
+      totalXp: 330,
+      currentMission: 5,
+      missions: [
+        ...Array.from({ length: 4 }, (_, index) => ({ missionNumber: index + 1, status: "completed" })),
+        { missionNumber: 5, status: "current" },
+        ...Array.from({ length: 5 }, (_, index) => ({ missionNumber: index + 6, status: "locked" })),
+      ],
+    }),
+  });
+
+  assert.deepEqual(state, {
+    kind: "available-programme-complete",
+    totalXp: 330,
+    completedMissions: 4,
+  });
+  assert.ok(!("currentMission" in state));
+  assert.match(landing, /CURRENT AVAILABLE PATH COMPLETE/);
+  assert.match(landing, /Available path complete/);
+  assert.match(landing, /Missions 05–10 are planned and are not yet available\./);
+  assert.doesNotMatch(landing, /Continue Mission 05|>Mission 05<|currentMission\s*\+\s*1/);
 });
 
 test("10 Steps remains server rendered with visible-by-default responsive content", () => {
