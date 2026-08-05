@@ -34,7 +34,7 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Tilt-Locked responsive public shell — Figma family `492:2268` completes the approved responsive Header (`289:43`) and revised Footer (`488:100`) across 1,440 desktop, 1,280 laptop, 390 × 844 mobile and 375 × 667 small-mobile representatives. The Footer revision adds a compact `Open Help` link. The approved shell is the shared visual/navigation source of truth; generic Availability Notice (`489:70`) live market authority and frontend parity remain pending
 
-🟨 Tilt-Locked Comparison family — desktop family `567:3592` and mobile family `569:1589` are review ready across full 1,440/390 layouts, 1,280/375 first folds and ten desktop/mobile selection, compatibility, eligibility, recovery and outbound states. The family reuses the approved Public Shell and awaits visual approval; no `/compare` frontend route or comparison engine is detected
+✅ Tilt-Locked Comparison family — desktop family `567:3592` and mobile family `569:1589` are visually approved across full 1,440/390 layouts, 1,280/375 first folds and ten desktop/mobile selection, compatibility, eligibility, recovery and outbound states. Labels `567:3593` and `569:1590` record `APPROVED`; all family/frame node IDs are unchanged. The family reuses the approved Public Shell; no `/compare` frontend route or comparison engine is detected
 
 ✅ Tilt-Locked `/10-steps` screen family — desktop family `502:2238` and mobile family `502:2412` cover approved full signed-out 1,440, 1,280 and 390 layouts plus approved 390×844 returning signed-in and 375×667 signed-out first folds. The family reuses the approved Public Shell, removes the standalone Help panel, and passes revised visual/structural QA; frontend parity is not implemented
 
