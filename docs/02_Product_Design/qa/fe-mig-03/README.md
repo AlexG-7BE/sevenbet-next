@@ -10,6 +10,13 @@ Pull request: [#17](https://github.com/AlexG-7BE/sevenbet-next/pull/17)
 
 Status: **IMPLEMENTED — REVIEW/MERGE REQUIRED**
 
+Implementation history:
+
+- `2a4fef2` — `test(frontend): lock 10 Steps responsive contract`
+- `3bc4204` — `feat(frontend): migrate approved 10 Steps campaign landing`
+- `172b97b` — `docs(frontend): record 10 Steps migration`
+- `5908494` — `fix(frontend): bind approved 10 Steps serif`
+
 ## Authority and scope
 
 **Detected:** implementation follows the unchanged approved live Figma contract: desktop family `502:2238`, full 1,440 `502:2240`, full 1,280 `502:2241`, mobile family `502:2412`, full signed-out 390 `502:2414`, returning 390 first fold `502:2415`, signed-out 375 first fold `502:2416` and evidence-card set `506:640`. Desktop contract `505:2520`, state contract `505:2521` and mobile state contract `506:312` were also inspected live before implementation.
