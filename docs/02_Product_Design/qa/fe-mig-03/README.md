@@ -16,6 +16,8 @@ Implementation history:
 - `3bc4204` — `feat(frontend): migrate approved 10 Steps campaign landing`
 - `172b97b` — `docs(frontend): record 10 Steps migration`
 - `5908494` — `fix(frontend): bind approved 10 Steps serif`
+- `84bb4f6` — `docs(frontend): finalize 10 Steps handoff evidence`
+- `12b5610` — `fix(frontend): guard 10 Steps returning truth`
 
 ## Authority and scope
 
@@ -34,8 +36,9 @@ Implementation history:
 - **Detected before:** the legacy body carried stale `+20 XP`, `UK PREVIEW` and `UK-ready discovery` claims, a local commercial-discovery section and a composition that did not match the approved desktop/mobile family.
 - **Detected before:** the page had no returning-state projection and represented all ten Missions as if they were equally available.
 - **Detected now:** `+20 XP`, unsupported market copy and body links to casinos/bonuses/best offers are removed. The only body destination is the canonical `/program` entry.
-- **Detected now:** signed-out Mission 01 shows `+60 XP` only as a pending preview with `SAVE TO EARN` and `Awarded after account creation.` Awarded XP is rendered only when the server Dashboard projection confirms a returning Programme record.
+- **Detected now:** signed-out Mission 01 shows `+60 XP` only as a pending preview with `SAVE TO EARN` and `Awarded when Mission 01 is saved to your account.` Awarded XP is rendered only when the server Dashboard projection confirms a returning Programme record.
 - **Detected now:** Missions 01–04 are identified as the current path. Missions 05–10 are explicitly `PLANNED · NOT YET AVAILABLE`; the campaign does not convert the roadmap into live capability.
+- **Detected now:** the returning-state resolver uses the existing Mission registry completion contract (`completion !== null`) as its availability authority. Current Missions 01–04 remain resumable; a Dashboard projection whose `currentMission` is 5 resolves to the separate `available-programme-complete` state, preserves server XP/completed count, offers only `Open My Programme`, and never presents Mission 05 as available or next.
 - **Detected now:** Programme, pause and Help data separation is stated directly. The route contains no commercial body action and makes no market/jurisdiction claim.
 - **Detected now:** critical content is server-rendered and visible by default. There is no page-level Client Component, client Dashboard fetch, client XP/progress calculation, `IntersectionObserver` reveal or browser storage.
 
@@ -45,7 +48,8 @@ Implementation history:
 | --- | --- | --- |
 | Anonymous | Better Auth server session is absent | Signed-out hero; Mission 01 canonical entry; `+60 XP` is pending only |
 | Signed in, no readable Programme record | Server session exists; Dashboard projection is unavailable/not enrolled | Honest signed-in fallback; no XP, completion count or next-Mission claim |
-| Returning Programme user | Server session plus `programmeDashboardService.getDashboard(userId)` | Dashboard-owned `totalXp`, completed Mission count and current Mission only |
+| Returning Programme user, current Mission 01–04 | Server session plus `programmeDashboardService.getDashboard(userId)` and registry completion capability | Dashboard-owned `totalXp`, completed Mission count and available current Mission only |
+| Available Programme path complete | Dashboard current Mission has no registry completion capability, currently Mission 05 | Dashboard-owned `totalXp` and completed count; current available path complete; `Open My Programme`; no Mission 05 link or next-step claim |
 
 The resolver is dependency-injected for contract testing. Anonymous requests do not read the Dashboard. Projection failures fail closed to the signed-in fallback rather than inventing progress.
 
@@ -91,12 +95,12 @@ After implementation:
 
 ## Verification
 
-- `node --test --import tsx tests/ten-steps-parity.test.ts` — 6/6 passed.
+- `node --test --import tsx tests/ten-steps-parity.test.ts` — 8/8 passed, including current Mission 04 and post-Mission-04 current Mission 05 truth.
 - `npx playwright test tests/ten-steps-browser.spec.ts` — 13/13 passed.
 - Combined Home, Public Shell, public-casino and 10 Steps browser regressions — 52/52 passed against `next start`.
 - `npm run typecheck` — passed.
 - `npm run build` — passed; `/10-steps` is dynamic/server-rendered, route size is 810 B and First Load JS is 107 kB. No route Client Component was added.
-- Full Node suite — 218/225 passed; the same seven date-dependent Mission 04 `reviewAt` fixtures fail because their fixed date is no longer within the validator's next-30-days window. This baseline debt predates and is outside FE-MIG-03.
+- Full Node suite — 220/227 passed; the same seven date-dependent Mission 04 `reviewAt` fixtures fail because their fixed date is no longer within the validator's next-30-days window. This baseline debt predates and is outside FE-MIG-03.
 - `npm run lint` — not a usable non-interactive gate: the repository still invokes deprecated `next lint` and prompts for initial ESLint configuration.
 - `git diff --check` — passed.
 
@@ -106,4 +110,4 @@ After implementation:
 - **Not detected:** an approved disposable authenticated browser fixture. Returning state is covered by server-state contract tests, but an authenticated route screenshot remains an explicit release gap; no auth bypass or invented cookie was added.
 - Per-image source/author/release archival evidence remains a release-process gap despite the reviewed general Pexels licence.
 - Missions 05–10 remain planned, not released by this campaign migration.
-- Merge is not performed by this package. FE-MIG-04 must start separately after FE-MIG-03 review/merge direction.
+- PR #17 is approved subject to the recorded bounded correctness fix and awaits squash merge. FE-MIG-04 must start separately after FE-MIG-03 merge.
