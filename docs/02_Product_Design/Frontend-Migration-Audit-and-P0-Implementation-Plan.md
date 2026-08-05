@@ -337,7 +337,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-03 — 10 Steps campaign landing
 
-**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_17 — REVIEW/MERGE REQUIRED`.
+**Implementation status, 2026-08-05:** `MERGED_IN_D85146E`.
 
 - **Detected implementation:** [PR #17](https://github.com/AlexG-7BE/sevenbet-next/pull/17) replaces the stale route with the approved seven-section campaign body while retaining FE-MIG-01 Public Shell ownership. `+20 XP`, `UK PREVIEW`, `UK-ready discovery` and local commercial-discovery links are removed; canonical Programme entry remains `/program`.
 - **Detected authority boundary:** anonymous visitors do not trigger a Dashboard read. Signed-in returning XP, completed count and current Mission are rendered only from `programmeDashboardService.getDashboard(userId)`. Missing/unavailable Programme projection fails closed to a signed-in fallback without invented values. The resolver uses the existing Mission registry completion contract (`completion !== null`) rather than duplicating availability policy.
@@ -345,8 +345,8 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Detected separation:** the page contains no casino, bonus, best-offer, affiliate, market or eligibility body action. Programme, pause and Help data are explicitly excluded from affiliate targeting and commercial personalisation. Help remains in the shared Header/Footer only.
 - **Detected QA:** 8/8 route contract tests and 13/13 route browser tests pass. Combined Home/Public Shell/public-casino/10 Steps browser regressions pass 52/52 against `next start`, including no-JS, reduced motion, 44px targets, menu focus/Escape and widths 1,440 through 320 with no horizontal overflow. Typecheck and production build pass. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-03/`.
 - **Detected baseline gaps:** the full Node suite is 220 passed / 7 failed with the unchanged stale Mission 04 `reviewAt` fixtures. `npm run lint` remains blocked by deprecated interactive `next lint`. No approved disposable authenticated browser fixture is detected, so returning server state is contract-tested but its authenticated route screenshot remains a review gate.
-- **Scope confirmation:** no backend/API/Prisma/schema/migration, Programme reward/order/prerequisite, protected Help, commercial eligibility, other route body or Figma change is included. FE-MIG-04 was not started.
-- **Next package after review/merge:** FE-MIG-04 — Casinos catalogue and filters.
+- **Scope confirmation:** no backend/API/Prisma/schema/migration, Programme reward/order/prerequisite, protected Help, commercial eligibility, other route body or Figma change is included.
+- **Next package after merge:** FE-MIG-04 — Casinos catalogue and filters, implemented on its separate branch.
 
 - **Figma source:** desktop family `502:2238` with full 1,440 `502:2240` and 1,280 `502:2241`; mobile family `502:2412` with full signed-out 390 `502:2414`, returning 390 first fold `502:2415` and signed-out 375 first fold `502:2416`; evidence card set `506:640`.
 - **Routes/components:** `/10-steps`, shared page-template components.
@@ -355,9 +355,19 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Compliance:** signed-out `+60 XP` may appear only as a clearly pending post-account-creation preview; awarded XP requires the completed Mission 01 claim in server Dashboard truth. No commercial reward linkage; no standalone Help block.
 - **Acceptance:** approved signed-out/returning/small-mobile states; no `+20 XP`; one main; CTA enters Mission 01 without rewriting Programme state.
 - **QA:** copy assertions, authenticated/anonymous browser states, responsive and accessibility checks.
-- **Branch/PR order:** `codex/fe-mig-03-ten-steps`; review/merge required before FE-MIG-04.
+- **Branch/PR:** `codex/fe-mig-03-ten-steps`; [PR #17](https://github.com/AlexG-7BE/sevenbet-next/pull/17), merged in `d85146e` before FE-MIG-04 began.
 
 ### FE-MIG-04 — Casinos catalogue and filters
+
+**Implementation status, 2026-08-05:** `IMPLEMENTED_ON_CODEX_FE_MIG_04_CASINOS — REVIEW/MERGE REQUIRED`.
+
+- **Detected implementation:** the legacy catalogue body is replaced by the approved night/paper/acid hierarchy while FE-MIG-01 remains the only Header/Footer and `<main>` owner. Dynamic SSR, `PublicCasinoDiscoveryService`, current published snapshots, deterministic query parsing and governed `/r/[slug]` remain unchanged authorities.
+- **Detected URL and client boundary:** search, six facets, four availability switches, sort and page size are canonical GET controls. Each form preserves the other normalized controls and drops stale `page`; active chips use public labels and accessible remove names. Only the mobile modal lifecycle is client-side. Results, cards, eligibility and reason mapping remain server-owned; a `noscript` GET-form fallback is present.
+- **Detected commercial/safety boundary:** country is labelled as a market preference, not location or legal eligibility. A visit action renders only when `available`, a safe `redirectSlug` and the local redirect route are present. Otherwise the review remains accessible and the mapped explanation exposes no provider or private failure detail. Affiliate disclosure precedes cards; no fake rating, review count, freshness, bonus or illustrative Figma operator is synthesized.
+- **Detected QA:** 12/12 FE-MIG-04 contract/service tests and 5/5 Playwright tests pass with TypeScript and the production build. Browser coverage includes desktop SSR, complete URL-state preservation, modal semantics, Escape/focus return/scroll lock, no-JS fallback, horizontal overflow and `/catalog` redirect. Before/after evidence is in `docs/02_Product_Design/qa/fe-mig-04/`.
+- **Detected fixture gap:** the connected local data set contains no published Casino, so populated/provider-backed and no-eligible-action visual captures cannot be produced without changing canonical data. Loading/error source contracts pass, but deterministic boundary screenshots remain a release-environment gate.
+- **Scope confirmation:** no backend/API/Prisma/schema/migration, redirect-engine, jurisdiction authority, Figma node, other route body or FE-MIG-05 change is included.
+- **Next package after review/merge:** FE-MIG-05 — Casino Profile.
 
 - **Figma source:** desktop `520:2496`, mobile `521:312`.
 - **Routes/components:** `/casinos`, `components/casino-discovery/CasinoDiscovery.tsx`, public discovery service/types.

@@ -34,7 +34,7 @@ Supported URL parameters are `q`, `country`, `license`, `payment`, `gameProvider
 - Facet arrays are trimmed, deduplicated, syntax-checked, limited to 12 values, and intersected with values that exist in the public result set.
 - Multiple values inside one facet are OR; different facets are AND.
 - Page sizes are allowlisted to 12, 24, or 48 by the URL parser, with a hard service maximum of 48.
-- Changing a search/filter through the server form omits `page`, resetting it to 1. Pagination links preserve the normalized query.
+- Changing search, filters, sort, or page size through the server forms omits `page`, resetting it to 1. Every form preserves the other normalized controls, including `pageSize`; pagination links preserve the complete normalized query.
 - Serializer ordering is deterministic so URLs are copyable and browser back/forward is native.
 
 Search ranking is exact canonical name, exact published name, exact alias, canonical/name/alias prefix, name contains, canonical domain, structured relation, then description. Every strategy has name and ID tie-breakers.
@@ -67,13 +67,13 @@ Only published, active, in-date bonuses from the immutable Casino snapshot are c
 
 ## DTO and server/client boundary
 
-`PublicCasinoCardDto` is plain serializable data: IDs/slugs, labels, safe media, summary, editorial rating, highlights, optional bonus summary, safe visit action, and publication dates. Prisma models, Decimal, Date objects, provider fields, notes, drafts, mappings, payloads, and commercial destinations do not cross the boundary. The page and data service are Server Components/server-only modules; catalog controls use native GET forms and links, so no client fetch waterfall or Prisma client bundle exists.
+`PublicCasinoCardDto` is plain serializable data: IDs/slugs, labels, safe media, summary, editorial rating, highlights, optional bonus summary, safe visit action, and publication dates. Prisma models, Decimal, Date objects, provider fields, notes, drafts, mappings, payloads, and commercial destinations do not cross the boundary. The page, cards and data service are Server Components/server-only modules; catalog controls use native GET forms and links, so no client fetch waterfall or Prisma client bundle exists. The only Client Component owns the mobile modal lifecycle and receives rendered form children rather than result data or eligibility authority.
 
 ## SEO, accessibility, and safeguards
 
 The unfiltered catalog and clean pagination have their own canonical URLs. Arbitrary search/filter combinations are `noindex,follow` and canonicalize to `/casinos`; they are never emitted by the sitemap. ItemList JSON-LD contains only review URLs, not redirect URLs. Breadcrumb JSON-LD, unique metadata, Open Graph metadata, and production-safe error/empty states are included.
 
-Search, sorting, filter groups, checkboxes, result announcements, active-filter removal, and pagination have accessible labels and focus styles. The mobile filters use a keyboard-native disclosure. Touch targets are at least 44–48px, content is not color-only, and reduced-motion preferences are respected.
+Search, sorting, filter groups, checkboxes, result announcements, active-filter removal, and pagination have accessible labels and focus styles. Mobile filters use a native modal dialog with Escape dismissal, trigger focus return and body scroll lock; a native GET-form fallback is present in `noscript`. Touch targets are at least 44–48px, content is not color-only, and reduced-motion preferences are respected.
 
 Commercial areas disclose commission, 18+, terms, and gambling risk and link to the Responsible Gambling Hub. There are no countdowns, scarcity claims, guaranteed outcomes, fake activity, preselected filters, or automatic redirects.
 
