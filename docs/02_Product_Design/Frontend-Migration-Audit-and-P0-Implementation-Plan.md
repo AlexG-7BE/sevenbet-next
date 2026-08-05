@@ -359,7 +359,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-04 — Casinos catalogue and filters
 
-**Implementation status, 2026-08-05:** `IMPLEMENTED_ON_CODEX_FE_MIG_04_CASINOS — REVIEW/MERGE REQUIRED`.
+**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_18 — REVIEW/MERGE REQUIRED`.
 
 - **Detected implementation:** the legacy catalogue body is replaced by the approved night/paper/acid hierarchy while FE-MIG-01 remains the only Header/Footer and `<main>` owner. Dynamic SSR, `PublicCasinoDiscoveryService`, current published snapshots, deterministic query parsing and governed `/r/[slug]` remain unchanged authorities.
 - **Detected URL and client boundary:** search, six facets, four availability switches, sort and page size are canonical GET controls. Each form preserves the other normalized controls and drops stale `page`; active chips use public labels and accessible remove names. Only the mobile modal lifecycle is client-side. Results, cards, eligibility and reason mapping remain server-owned; a `noscript` GET-form fallback is present.
@@ -368,6 +368,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Detected fixture gap:** the connected local data set contains no published Casino, so populated/provider-backed and no-eligible-action visual captures cannot be produced without changing canonical data. Loading/error source contracts pass, but deterministic boundary screenshots remain a release-environment gate.
 - **Scope confirmation:** no backend/API/Prisma/schema/migration, redirect-engine, jurisdiction authority, Figma node, other route body or FE-MIG-05 change is included.
 - **Next package after review/merge:** FE-MIG-05 — Casino Profile.
+- **Branch/PR:** `codex/fe-mig-04-casinos`; [PR #18](https://github.com/AlexG-7BE/sevenbet-next/pull/18).
 
 - **Figma source:** desktop `520:2496`, mobile `521:312`.
 - **Routes/components:** `/casinos`, `components/casino-discovery/CasinoDiscovery.tsx`, public discovery service/types.
