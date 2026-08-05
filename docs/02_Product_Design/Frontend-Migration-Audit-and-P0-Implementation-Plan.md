@@ -293,6 +293,17 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-01 — Public Shell
 
+**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_15 — AWAITING REVIEW/MERGE`.
+
+- **Detected implementation:** [PR #15](https://github.com/AlexG-7BE/sevenbet-next/pull/15), contract test commit `617cb69` and implementation commit `9c12efa` introduce a server-owned `app/(public)/layout.tsx`, replace legacy `SiteChrome`, use the existing Better Auth server session for account presentation, and isolate mobile route/menu interaction in `PublicNavigation`.
+- **Detected route ownership:** the Public Shell applies to `/`, `/10-steps`, commercial discovery/profile routes, `/bonus-guide`, `/learn/**`, public trust/legal routes, `/self-check` and `/tools/budget-calculator`, plus public error/404 presentation. `/program`, `/responsible-gambling/**`, `/responsible-gaming`, `/admin/**` and editorial/internal routes are intentionally excluded. URL paths are unchanged by the route group.
+- **Detected shell integration:** Home-owned Header/Footer and the obsolete standalone Help panel are removed; the page body remains unchanged. `/10-steps` and `/best-offers` no longer create a second `<main>`. Programme keeps its existing product shell. Protected Help receives no commercial shell; its approved dedicated shell remains FE-MIG-13.
+- **Detected account/availability boundary:** signed-out and signed-in account presentation derive from the server session. XP appears only when an authoritative value is supplied; no XP is invented in this package. Availability Notice `489:70` exists only as generic unknown/unavailable presentation and is not activated as GEO, market, age or eligibility authority.
+- **Detected QA:** typecheck, production build, `git diff --check`, 5/5 shell contract tests and 15/15 combined Public Shell/public-casino browser tests pass. Browser checks cover 1440, 1280, 1024, 768, 430, 390 × 844, 375 × 667, 360 and effective 200% reflow, with no shell horizontal overflow. Escape, native modal focus containment, focus return, scroll lock, safe areas, reduced motion, one-main ownership, excluded-shell regressions and 44 × 44 visible targets pass. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-01/`.
+- **Detected baseline gaps:** the full Node suite remains 207 passed / 7 failed, with the same date-dependent Mission 04 `reviewAt` fixtures recorded by the audit. `npm run lint` still invokes deprecated interactive `next lint`. No disposable authenticated browser fixture is detected; signed-in behavior is covered by the server-state contract test but still needs an authenticated browser snapshot.
+- **Release limitations:** 18+/affiliate/legal wording remains review-gated; public routes become dynamic because the shared layout reads the server session; live availability remains blocked; Protected Help still needs FE-MIG-13. `/self-check` and `/tools/budget-calculator` retain their P0 launch blocker under FE-SAFETY-01, including separate review of global navigation on result states.
+- **Next recommended package:** FE-MIG-02 — Home responsive parity. This does not reduce the independent priority of FE-SAFETY-01 or FE-MIG-13.
+
 - **Figma source:** Public Shell `492:2268`; Header set `289:43`; Footer set `488:100`; Availability Notice `489:70` only as non-authoritative presentation.
 - **Routes/components:** `app/layout.tsx`, `components/SiteChrome.tsx`, shared shell styles; all public non-admin routes.
 - **Reuse/refactor/create:** reuse Next layouts and auth session boundary; refactor `SiteChrome`; create route-group ownership if needed. Do not change public route data.
@@ -300,7 +311,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Compliance:** protected Help link must remain neutral; 18+/affiliate/legal wording review-gated; do not claim market availability.
 - **Acceptance:** one public shell per route; approved desktop/mobile/menu/account states; one main landmark; skip link/focus order correct; no standalone copied shell in Home/Programme public contexts.
 - **QA:** 1440/1280/390/375, menu keyboard/Escape/focus return, signed-out/in snapshots, Help separation regression.
-- **Branch/PR order:** `codex/fe-mig-01-public-shell`; PR 1.
+- **Branch/PR:** `feat/frontend-public-shell-migration`; [PR #15](https://github.com/AlexG-7BE/sevenbet-next/pull/15).
 
 ### FE-MIG-02 — Home responsive parity
 

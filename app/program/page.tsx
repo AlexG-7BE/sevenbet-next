@@ -52,16 +52,18 @@ function breadcrumbSchema() {
 
 export default function ProgramPage() {
   return (
-    <div className={`${archivo.variable} ${instrumentSerif.variable}`}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
-            breadcrumbSchema(),
-          ),
-        }}
-      />
-      <ActiveControlProgramme />
-    </div>
+    <main id="main-content">
+      <div className={`${archivo.variable} ${instrumentSerif.variable}`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(
+              breadcrumbSchema(),
+            ),
+          }}
+        />
+        <ActiveControlProgramme />
+      </div>
+    </main>
   );
 }

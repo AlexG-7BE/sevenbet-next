@@ -107,6 +107,6 @@ test("discovery architecture is provider-independent and catalog is canonical", 
     assert.doesNotMatch(service, new RegExp(forbidden, "i"));
   }
   assert.doesNotMatch(repository, /externalMapping|providerType|trackingUrl|destinationUrl/);
-  assert.match(readFileSync("app/catalog/page.tsx", "utf8"), /permanentRedirect/);
+  assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   assert.doesNotMatch(readFileSync("lib/site.ts", "utf8"), /"\/catalog"/);
 });

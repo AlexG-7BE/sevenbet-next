@@ -145,12 +145,12 @@ test("casino robots directives preserve noindex and treat none as noindex, nofol
 });
 
 test("public routes use the service boundary and invalidate all publication surfaces", () => {
-  for (const file of ["app/casino/[slug]/page.tsx", "app/bonuses/page.tsx", "app/sitemap.ts"]) {
+  for (const file of ["app/(public)/casino/[slug]/page.tsx", "app/(public)/bonuses/page.tsx", "app/sitemap.ts"]) {
     assert.match(readFileSync(file, "utf8"), /publicCasinoService/);
   }
-  assert.match(readFileSync("app/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
-  assert.match(readFileSync("app/catalog/page.tsx", "utf8"), /permanentRedirect/);
-  const page = readFileSync("app/casino/[slug]/page.tsx", "utf8");
+  assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
+  assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
+  const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
   assert.doesNotMatch(page, /generateStaticParams/);
   assert.match(page, /BreadcrumbList/);

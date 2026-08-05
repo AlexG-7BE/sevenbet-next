@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function BestOffersPage() {
   return (
-    <main className="offerPreviewPage">
+    <div className="offerPreviewPage">
       <section className="offerPreviewHero">
         <div className="tenStepsWrap">
           <p className="tenStepsKicker">UK MARKET PREVIEW · 18+</p>
@@ -36,6 +36,6 @@ export default function BestOffersPage() {
           ))}
         </div>
       </section>
-    </main>
+    </div>
   );
 }

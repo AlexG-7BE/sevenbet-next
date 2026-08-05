@@ -233,8 +233,8 @@ test("versioned editor metadata preserves pre-existing review content", () => {
 
 test("legacy Bonus model and public fallback data remain intact", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
-  const bonusesPage = readFileSync("app/bonuses/page.tsx", "utf8");
-  const casinoPage = readFileSync("app/casino/[slug]/page.tsx", "utf8");
+  const bonusesPage = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+  const casinoPage = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   assert.match(schema, /model Bonus \{/);
   assert.match(bonusesPage, /from "@\/lib\/data"/);
   assert.match(casinoPage, /publicCasinoService/);
