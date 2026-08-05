@@ -1,0 +1,134 @@
+import { expect, test } from "@playwright/test";
+
+const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+
+async function assertHomeStructure(page: import("@playwright/test").Page) {
+  await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
+  await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
+  await expect(page.locator("main")).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("CONTROL");
+  await expect(page.locator("[data-home-section]")).toHaveCount(9);
+  await expect(page.getByText("Need support now?", { exact: true })).toHaveCount(0);
+}
+
+test("Home critical content is visible before hydration and without IntersectionObserver", async ({ browser }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  const response = await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(200);
+  await assertHomeStructure(page);
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByText("Built from evidence.", { exact: true })).toBeVisible();
+  const opacity = await page.getByRole("heading", { level: 1 }).evaluate((element) => getComputedStyle(element).opacity);
+  expect(opacity).toBe("1");
+  await context.close();
+});
+
+test("Home remains visible with reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByText("START WITH ONE", { exact: true })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+});
+
+test("Home hero survives delayed hydration, missing IntersectionObserver and immediate capture", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await context.addInitScript(() => {
+    Object.defineProperty(window, "IntersectionObserver", { configurable: true, value: undefined });
+  });
+  const page = await context.newPage();
+  await page.route("**/_next/static/chunks/**", (route) => route.abort());
+  await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+  const heading = page.getByRole("heading", { level: 1 });
+  await expect(heading).toBeVisible();
+  expect(await heading.evaluate((element) => getComputedStyle(element).opacity)).toBe("1");
+  await page.screenshot({ animations: "disabled" });
+  await context.close();
+});
+
+test("Home hero remains visible through client navigation and browser history", async ({ page }) => {
+  await page.goto(`${baseUrl}/casinos`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("link", { name: "SevenBet home" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await page.goBack({ waitUntil: "domcontentloaded" });
+  await page.goForward({ waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+});
+
+test("Home carousel is keyboard operable with an announced active state", async ({ page }) => {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  const region = page.getByRole("region", { name: "Programme preview" });
+  const counter = region.locator("[aria-live='polite']");
+  await expect(counter).toHaveText("01 / 03");
+  await region.getByRole("button", { name: "Next programme preview" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(counter).toHaveText("02 / 03");
+  await page.keyboard.press("ArrowLeft");
+  await expect(counter).toHaveText("01 / 03");
+});
+
+test("Home hydrates without browser errors and keeps accessible action targets", async ({ page }) => {
+  const browserErrors: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") browserErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => browserErrors.push(error.message));
+
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+
+  const undersizedTargets = await page.locator("main a, main button").evaluateAll((targets) => targets
+    .filter((target) => {
+      const rect = target.getBoundingClientRect();
+      const style = getComputedStyle(target);
+      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && (rect.width < 44 || rect.height < 44);
+    })
+    .map((target) => ({ text: target.textContent?.trim(), rect: target.getBoundingClientRect().toJSON() })));
+
+  expect(undersizedTargets).toEqual([]);
+  expect(browserErrors).toEqual([]);
+});
+
+for (const route of ["/10-steps", "/program", "/casinos", "/responsible-gambling"]) {
+  test(`${route} remains reachable after the Home migration`, async ({ page }) => {
+    const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    await expect(page.locator("main")).toHaveCount(1);
+  });
+}
+
+for (const viewport of [
+  { width: 1440, height: 900 },
+  { width: 1280, height: 800 },
+  { width: 1024, height: 768 },
+  { width: 768, height: 1024 },
+  { width: 640, height: 800 },
+  { width: 430, height: 932 },
+  { width: 390, height: 844 },
+  { width: 375, height: 667 },
+  { width: 360, height: 800 },
+  { width: 320, height: 720 },
+]) {
+  test(`Home follows the approved order and reflows at ${viewport.width}px`, async ({ browser }) => {
+    const page = await browser.newPage({ viewport });
+    await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+    await assertHomeStructure(page);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+    const order = await page.locator("[data-home-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-home-section")));
+    expect(order).toEqual(["hero", "programme-theatre", "self-recognition", "recognise", "build", "apply", "programme-tools", "evidence", "final-programme-cta"]);
+    await page.close();
+  });
+}
+
+test("Home uses the Public Shell mobile menu without duplicating navigation", async ({ browser }) => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+  await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
+  const menu = page.getByRole("button", { name: "Open navigation" });
+  await menu.click();
+  await expect(page.getByRole("dialog", { name: "Site navigation" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog", { name: "Site navigation" })).not.toBeVisible();
+  await expect(menu).toBeFocused();
+  await page.close();
+});
