@@ -121,7 +121,7 @@ The production Home SHALL use the following Tilt-derived sequence:
 6. **Human Chapter: Apply** — full-bleed positive photo, one short explanation of using and reviewing the plan.
 7. **Tools Working for You** — three object-led cards for Trigger Map, Pause Rule and Review Routine.
 8. **Evidence and Momentum** — source evidence, clinical limitation, programme facts and only approved testimonial evidence. Before an evidence pack exists, use factual programme metrics and neutral illustrative plan-use examples rather than fabricated reviews.
-9. **Final Program Action** — repeat `Start the 10-Step Program`, followed by the protected Help route.
+9. **Final Program Action** — repeat `Start the 10-Step Program`, followed directly by the shared Footer whose `CONTROL & SUPPORT` block links to the protected Help route.
 10. **Footer** — commercial discovery, product, methodology, legal, privacy, Help and affiliate disclosure.
 
 ## 5. Copy and action contract
@@ -156,7 +156,7 @@ Required reusable components:
 - full-bleed human chapter;
 - object-led tool card;
 - evidence/metric card;
-- protected Help panel;
+- protected Help access in the Public Header and Footer, with a prominent panel reserved for approved urgent/protected contexts;
 - dark legal footer.
 
 Motion should provide section transitions, card focus, subtle image crop movement, progress and saved-state confirmation. Reduced-motion equivalents are required. Motion must not create gambling-like anticipation or rewards.
@@ -180,7 +180,7 @@ Motion should provide section transitions, card focus, subtle image crop movemen
 - the Program is visible as an active product inside a high-impact product theatre;
 - the page contains materially less explanatory copy than RFC-006 explorations;
 - lime is limited to interactive emphasis and never becomes a large aggressive surface;
-- self-recognition, evidence limitations and protected Help remain clear;
+- self-recognition, evidence limitations and protected Help access remain clear;
 - commercial discovery stays accessible in header and footer without entering the harm-recognition narrative;
 - desktop and mobile preserve the same narrative order;
 - no Tilt logo, copy, photo, testimonial or proprietary product render is reused.
@@ -207,11 +207,11 @@ Detected active artefacts:
 - desktop Casinos: `325:323`;
 - desktop illustrative casino profile / review: `343:601`.
 
-The Best Offers page adapts the full product-page rhythm defined by this RFC: strong promise, central product theatre, visible decision methodology, alternative comparison states, evidence building blocks, editorial reasoning, FAQ, related commercial discovery, protected Help and a dark disclosure footer. Operator names and offer values used before verified partner data exists are labelled as illustrative pre-launch content and must not ship without market, licence, terms and commercial review.
+The Best Offers page adapts the full product-page rhythm defined by this RFC: strong promise, central product theatre, visible decision methodology, alternative comparison states, evidence building blocks, editorial reasoning, FAQ, related commercial discovery and a dark disclosure footer with protected Help access. Operator names and offer values used before verified partner data exists are labelled as illustrative pre-launch content and must not ship without market, licence, terms and commercial review.
 
-The Casinos page applies the same visual authority to the public discovery contract: concise search, active-filter removal and a full-width filter command centre (`333:535`) covering the detected country, licence, payment, game-provider, category and bonus-type facets; bonus, visit-action, cryptocurrency and mobile availability filters; result counts; sort; page size; reset/apply actions; editorial review snapshots; and a gated commercial action state. The command-centre pattern deliberately preserves the full three-card comparison width instead of compressing the catalogue behind a permanent sidebar. The page also includes review-reading guidance, an Editor Score methodology, related Bonuses and Best Offers routes, protected Help and public disclosure. The screen preserves the detected production empty state while using clearly labelled illustrative operator data to validate populated layouts. Illustrative operators, scores, licence states, terms and availability must not ship without a published snapshot and market, editorial, compliance and commercial review.
+The Casinos page applies the same visual authority to the public discovery contract: concise search, active-filter removal and a full-width filter command centre (`333:535`) covering the detected country, licence, payment, game-provider, category and bonus-type facets; bonus, visit-action, cryptocurrency and mobile availability filters; result counts; sort; page size; reset/apply actions; editorial review snapshots; and a gated commercial action state. The command-centre pattern deliberately preserves the full three-card comparison width instead of compressing the catalogue behind a permanent sidebar. The page also includes review-reading guidance, an Editor Score methodology, related Bonuses and Best Offers routes, public disclosure and protected Help access in the Footer. The screen preserves the detected production empty state while using clearly labelled illustrative operator data to validate populated layouts. Illustrative operators, scores, licence states, terms and availability must not ship without a published snapshot and market, editorial, compliance and commercial review.
 
-The casino profile pattern extends the catalogue into a short commercial decision profile rather than a long editorial dossier. Its first viewport combines operator identity, market and age context, Editor Score, a one-sentence verdict, the welcome offer, material restrictions and a dominant disclosed outbound action. The remainder is limited to a sticky decision bar, concise pros and constraints, reusable key facts, one tab-ready offer/payments/safety/games/control-tools panel, a short score rationale, four FAQ prompts, a repeated final offer action, protected Help and the public footer. The accepted desktop concept is 1,440 × 4,466 px and replaces the superseded 9,028 px long-form version at the same node `343:601`.
+The casino profile pattern extends the catalogue into a short commercial decision profile rather than a long editorial dossier. Its first viewport combines operator identity, market and age context, Editor Score, a one-sentence verdict, the welcome offer, material restrictions and a dominant disclosed outbound action. The remainder is limited to a sticky decision bar, concise pros and constraints, reusable key facts, one tab-ready offer/payments/safety/games/control-tools panel, a short score rationale, four FAQ prompts, a repeated final offer action and the public Footer with protected Help access. After the 2026-08-05 Help-hierarchy revision, the accepted desktop concept is 1,440 × 4,262 px at node `343:601`.
 
 The profile may repeat the same operator action in the decision bar, offer panel and final offer panel, but it must not introduce competing commercial actions or conceal wagering, eligibility, age, affiliate or risk disclosures. The commercial objective is an informed, eligible outbound transition; deposit completion, gambling frequency, losses and repeat deposits are not product optimisation targets. Editor Score remains a comparison aid rather than a safety or outcomes guarantee. Commercial actions remain subject to canonical market and redirect eligibility. Northstar is illustrative Figma content only and requires published backend data plus market, editorial, compliance and commercial approval before release.
 
@@ -236,8 +236,8 @@ The v1 protected-control article detail SHALL contain:
 - a short direct answer and three numbered action chapters;
 - a practical first-plan block that turns reading into an explicit next action;
 - visible evidence and source links, including applicable NHS, NICE and Gambling Commission material;
-- related educational reading, FAQ, one Program action and protected Help;
-- the existing public footer and disclosures.
+- related educational reading, FAQ and one Program action;
+- the existing public Footer and disclosures, including the `CONTROL & SUPPORT` protected-Help link.
 
 Medical, therapeutic or guaranteed-control claims are prohibited. Educational copy must distinguish SevenBet's editorial synthesis from clinical evaluation, keep source dates visible and undergo content and compliance review before production publication.
 
@@ -246,8 +246,21 @@ Figma implementation record:
 - article component documentation: `368:38`;
 - reusable `SevenBet / Article / Related Reading Row`: `369:38`;
 - representative protected-control article detail: `372:648`;
-- screen size: 1,440 × 6,507 px;
+- screen size after the Help-hierarchy revision: 1,440 × 6,255 px;
 - representative article: `How to stop gambling — and make the next decision easier`;
-- reused system instances: Paper Header, Core Primary Button, Related Reading Row, FAQ Row, Protected Help and Public Footer.
+- reused system instances: Paper Header, Core Primary Button, Related Reading Row, FAQ Row and the revised Public Footer.
 
-The representative article contains one Program action after the practical answer, no casino, bonus, best-offer or affiliate action in the article body, and commercial discovery only through the global header and footer. The displayed source names and update date are editorial design content and require link, date, medical-content and compliance verification before production publication.
+The representative article contains one Program action after the practical answer, no casino, bonus, best-offer or affiliate action in the article body, protected Help access through the Header/Footer, and commercial discovery only through the global shell. The displayed source names and update date are editorial design content and require link, date, medical-content and compliance verification before production publication.
+
+## 13. Public Help access hierarchy amendment — 2026-08-05
+
+The approved public-screen composition SHALL keep protected Help continuously available without placing a separate high-emphasis `Need support now?` panel after the final Programme or commercial action. On standard public acquisition, commercial-discovery and educational screens, the large standalone Protected Help panel is removed from the page sequence. This amendment overrides the standalone-panel requirement in sections 4, 7, 9 and 12 where those sections conflict with this access hierarchy.
+
+Protected Help access remains mandatory through both parts of the approved Public Shell:
+
+- the persistent Public Header keeps its `Help` route;
+- the Public Footer `CONTROL & SUPPORT` block keeps the neutral support explanation and adds an explicit `Open Help` link to `/responsible-gambling`.
+
+The footer link is a compact tertiary utility action, not a second primary CTA. The final `Start the 10-Step Program` or `Start Mission 01` action remains the dominant end-of-content action. `safety/teal` remains reserved for the compact support surface and verified safety states; it must not become a large public-page attention surface.
+
+This amendment changes public composition only. It does not change the protected route, Help eligibility, the prohibition on casino, bonus or affiliate calls to action inside protected Help, or the separation of Program, pause, Help and vulnerability data from commercial targeting and personalisation. A prominent standalone safety treatment remains permissible only in an approved urgent-support or protected-Help context whose content contract requires it; it is not the default ending for public screens.
