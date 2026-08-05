@@ -45,6 +45,36 @@ test("Programme and protected Help never receive the commercial public shell", a
   }
 });
 
+for (const boundary of [
+  { route: "/definitely-missing", publicShell: true },
+  { route: "/program/definitely-missing", publicShell: false },
+  { route: "/responsible-gambling/definitely-missing", publicShell: false },
+]) {
+  test(`${boundary.route} keeps its 404 shell boundary`, async ({ page }) => {
+    const browserErrors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") browserErrors.push(message.text());
+    });
+    page.on("pageerror", (error) => browserErrors.push(error.message));
+
+    const response = await page.goto(`${baseUrl}${boundary.route}`, { waitUntil: "networkidle" });
+
+    expect(response?.status()).toBe(404);
+    await expect(page.locator("main")).toHaveCount(1);
+    await expect(page.locator("body > header[data-public-shell]")).toHaveCount(boundary.publicShell ? 1 : 0);
+    await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(boundary.publicShell ? 1 : 0);
+
+    if (!boundary.publicShell) {
+      await expect(page.getByRole("link", { name: /casinos|bonuses|best offers|affiliate/iu })).toHaveCount(0);
+    }
+
+    const unexpectedBrowserErrors = browserErrors.filter(
+      (message) => message !== "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    );
+    expect(unexpectedBrowserErrors).toEqual([]);
+  });
+}
+
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 1280, height: 800 },

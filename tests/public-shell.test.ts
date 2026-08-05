@@ -38,8 +38,10 @@ test("ordinary public, Programme, protected Help and internal routes stay separa
   }
 
   assert.equal(classifyShellRoute("/program"), "programme");
+  assert.equal(classifyShellRoute("/program/definitely-missing"), "programme");
   assert.equal(classifyShellRoute("/responsible-gambling"), "protected-help");
   assert.equal(classifyShellRoute("/responsible-gambling/cooling-off"), "protected-help");
+  assert.equal(classifyShellRoute("/responsible-gambling/definitely-missing"), "protected-help");
   assert.equal(classifyShellRoute("/responsible-gaming"), "protected-help");
   assert.equal(classifyShellRoute("/admin"), "internal");
   assert.equal(classifyShellRoute("/editorial-preview/token"), "internal");
