@@ -225,6 +225,18 @@
 :global(body:has(.tiltHomePage)) .primaryNavigation .helpLink { color: #67c8bd; }
 :global(body:has(.tiltHomePage)) .menuButton { border-color: rgba(255, 255, 255, .72); }
 
+:global(body:has(.tenStepsPage[data-account-state="anonymous"])) .header {
+  border-bottom-color: rgba(255, 255, 255, .16);
+  background: var(--shell-night);
+  color: var(--shell-white);
+}
+:global(body:has(.tenStepsPage[data-account-state="anonymous"])) .primaryNavigation .helpLink { color: #67c8bd; }
+:global(body:has(.tenStepsPage[data-account-state="anonymous"])) .menuButton {
+  border-color: var(--shell-acid);
+  background: var(--shell-acid);
+  color: var(--shell-ink);
+}
+
 .footer {
   min-height: 500px;
   padding: 64px 0 32px;
