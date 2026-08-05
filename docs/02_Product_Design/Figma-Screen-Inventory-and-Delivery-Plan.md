@@ -26,8 +26,8 @@ The audit identifies **73 unique user-facing screen families or representative s
 
 | Figma status | Count | Meaning in this audit |
 |---|---:|---|
-| `APPROVED` | 3 | Public Header, revised Public Footer and `/10-steps` are visually approved across their completed responsive states. |
-| `DESIGNED_NEEDS_QA` | 17 | Current Tilt-Locked design exists but user approval, responsive QA or wider journey handoff remains outstanding. |
+| `APPROVED` | 5 | Public Header, revised Public Footer, `/10-steps`, Casinos catalogue and its empty/no-eligible state family are visually approved across their completed responsive states. |
+| `DESIGNED_NEEDS_QA` | 15 | Current Tilt-Locked design exists but user approval, responsive QA or wider journey handoff remains outstanding. |
 | `PARTIAL` | 12 | A component, fragment, or subset of the family exists, but the family is not complete. |
 | `LEGACY` | 0 | No active Figma screen is labelled or detected as a retained superseded direction. Legacy/stale frontend surfaces are tracked separately. |
 | `MISSING` | 29 | No adequate active Figma family was detected. |
@@ -66,8 +66,8 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 | A05 | Public acquisition | Public header and responsive navigation | Global | Navigation, Programme, discovery, Help and account entry | `APPROVED` | Set `289:43`; family `492:2268` | Approved: 1440 and 1280 signed-out/in | Approved: 390 closed/open/signed-in; 375 contract | **Detected — legacy/partial** | Auth state; optional market state | Help must stay protected; account/commercial separation | P0 | Preserve as the visual and navigation source of truth for subsequent public P0 families and later frontend parity work. |
 | A06 | Public acquisition | Public footer | Global | Trust, disclosure, Help and legal escape routes | `APPROVED` | Set `488:100`; desktop `289:137`; mobile `488:69`; `Open Help` rows `514:38`, `514:41`; family `492:2268` | Approved: desktop and 1280 contract | Approved: full 390 footer and 375 contract | **Detected — legacy/partial** | Navigation/legal registry | 18+, affiliate disclosure, Help neutrality | P0 | Preserve the compact `Open Help` link as part of the approved shared shell; production legal wording remains a content dependency. |
 | A07 | Public acquisition | Global search entry | Planned | Cross-site discovery | `NOT_REQUIRED_FOR_INITIAL_LAUNCH` | — | Deferred | Deferred | **Not detected** | Search index | Result eligibility and protected-content separation | OUT OF SCOPE | Do not design until search is accepted into launch IA. |
-| B01 | Commercial discovery | Casinos catalogue and filter states | `/casinos` | Discover and shortlist eligible operators | `DESIGNED_NEEDS_QA` | Original anchor `325:323`; desktop family `520:2496`; canonical 1440 `520:2498`; 1280 first fold `520:2741`; desktop states `520:2742`; mobile family `521:312`; full 390 `521:314`; filters `521:315`; applied `521:316`; loading `521:317`; no matches `521:318`; state matrix `521:319`; 375 first fold `521:320` | Review ready: 1440 full, 1280 first fold and state contract | Review ready: full 390, filter open/applied, loading, empty, availability/error matrix and 375 first fold | **Detected — legacy/partial** | Casino discovery service, filters, freshness | Eligibility, affiliate disclosure, material facts, uncertainty | P0 | Await visual approval; preserve the original anchor and approved Public Shell. Frontend parity remains separate. |
-| B02 | Commercial discovery | Catalogue empty / no eligible offers | `/casinos` | Honest recovery when nothing can be shown | `DESIGNED_NEEDS_QA` | Desktop `520:2742`; no matches `521:318`; mobile state matrix `521:319` | Review-ready no-matches/no-eligible states | Review-ready no-matches/no-eligible states | **Detected — partial** | Empty discovery result and reason codes | No substitution with ineligible offers | P0 | Await visual approval; production reason mapping remains a backend/compliance dependency. |
+| B01 | Commercial discovery | Casinos catalogue and filter states | `/casinos` | Discover and shortlist eligible operators | `APPROVED` | Original anchor `325:323`; desktop family `520:2496`; canonical 1440 `520:2498`; 1280 first fold `520:2741`; desktop states `520:2742`; mobile family `521:312`; full 390 `521:314`; filters `521:315`; applied `521:316`; loading `521:317`; no matches `521:318`; state matrix `521:319`; 375 first fold `521:320` | Approved: 1440 full, 1280 first fold and state contract | Approved: full 390, filter open/applied, loading, empty, availability/error matrix and 375 first fold | **Detected — legacy/partial** | Casino discovery service, filters, freshness | Eligibility, affiliate disclosure, material facts, uncertainty | P0 | Preserve as the approved responsive/state contract with the original anchor and approved Public Shell. Frontend parity remains separate. |
+| B02 | Commercial discovery | Catalogue empty / no eligible offers | `/casinos` | Honest recovery when nothing can be shown | `APPROVED` | Desktop `520:2742`; no matches `521:318`; mobile state matrix `521:319` | Approved no-matches/no-eligible states | Approved no-matches/no-eligible states | **Detected — partial** | Empty discovery result and reason codes | No substitution with ineligible offers | P0 | Preserve the approved visual treatment; production reason mapping remains a backend/compliance dependency. |
 | B03 | Commercial discovery | Restricted / unknown market catalogue | `/casinos` | Block commercial action while retaining neutral routes | `BLOCKED` | Desktop `520:2742`; mobile state matrix `521:319` | Generic illustrative treatment designed | Generic illustrative treatment designed | **Not detected** (shadow evaluation only) | Trusted jurisdiction resolution | RFC-001 enforcement not approved; no live market claim | P0 | Visual treatment is review ready; live authority remains blocked and must not be inferred from the mock states. |
 | B04 | Commercial discovery | Casino profile / review, available | `/casino/[slug]` | Evidence-led operator evaluation | `DESIGNED_NEEDS_QA` | `343:601` | Designed | Missing | **Detected — legacy/partial** | Published review, key facts, terms, freshness | Licensing uncertainty, affiliate disclosure, 18+, methodology | P0 | Add mobile, long-content, sticky outbound, evidence and accessibility QA. |
 | B05 | Commercial discovery | Casino profile unavailable / restricted | `/casino/[slug]` | Explain unavailable, unpublished or ineligible content | `MISSING` | — | Missing | Missing | **Detected — partial** (`notFound`) | Publication/eligibility reason | Must not leak or redirect to an ineligible operator | P0 | Add reusable unavailable screen and neutral alternatives. |
@@ -204,7 +204,7 @@ Desktop and mobile statuses describe Figma, not frontend CSS. `—` means no nod
 
 1. **Public shell completeness — APPROVED** — Header and revised Footer are approved across desktop, laptop and mobile states. The shell is the visual and navigation source of truth for every subsequent public P0 family.
 2. **`/10-steps` campaign landing — APPROVED** — complete approved desktop/mobile family and clear entry to Mission 01, revised so the final CTA flows directly into the shared Footer.
-3. **Casinos catalogue family — REVIEW READY** — filters, loading, empty, restricted/unknown and mobile are complete in Figma and await visual approval.
+3. **Casinos catalogue family — APPROVED** — filters, loading, empty, restricted/unknown and mobile are visually approved; live market authority remains blocked separately.
 4. **Casino Profile family** — available/unavailable, outbound disclosure and mobile.
 5. **Bonuses family** — catalogue, material terms, expired/unavailable and mobile.
 6. **Best Offers family** — shortlist, methodology/eligibility, no eligible offers and mobile.
@@ -264,9 +264,9 @@ The **`/10-steps` acquisition landing** is designed as desktop family `502:2238`
 - Approval: `APPROVED`. The family was revised after user feedback and visually re-approved on 2026-08-05; family labels `502:2239` and `502:2413` now read `APPROVED`. Family/frame node IDs are unchanged.
 - Frontend gap: the current route still uses the legacy shell, standalone Help block and in-body commercial bridge, has different mission copy, and displays stale `+20 XP`; no frontend code was changed in this design/documentation action.
 
-## Third completed design action — CASINOS FAMILY REVIEW READY
+## Third completed design action — CASINOS FAMILY APPROVED
 
-The **`/casinos` discovery family** is complete in Figma for visual review as desktop family `520:2496` and mobile family `521:312`. The original 1,440 Tilt-Locked anchor `325:323` remains untouched and is retained as the visual source; the new family composes responsive and state representatives around it while reusing the approved Public Shell. Status remains `DESIGNED_NEEDS_QA` until user approval.
+The **`/casinos` discovery family** is approved in Figma as desktop family `520:2496` and mobile family `521:312`. The original 1,440 Tilt-Locked anchor `325:323` remains untouched and is retained as the visual source; the family composes responsive and state representatives around it while reusing the approved Public Shell. The user visually approved the family on 2026-08-05.
 
 ### Responsive and state contract
 
@@ -282,11 +282,12 @@ The **`/casinos` discovery family** is complete in Figma for visual review as de
 - New screen-specific composition only: mobile catalogue sections, filter sheet, skeletons, empty/error cards and mobile FAQ rows. No new reusable component set or frontend component was created.
 - Visual QA: canonical desktop, desktop state board, full 390, filter-open/applied, loading, no-matches, state matrix and 375 first fold were inspected. Approved Tilt-Locked fonts remain Archivo, Archivo Black and Instrument Serif; no placeholder nodes were detected.
 - Structural QA: canonical 1,440, desktop states and full 390 have no direct-child overflow. Cropping is deliberate only for 1,280 and 375 first-fold representatives and the 390 applied-state viewport. All interactive mobile filter controls and active-filter hit areas are at least 44px. Shell instances remain linked to the approved Header/Footer components.
+- Approval: `APPROVED`. Family labels `520:2497` and `521:313` now read `APPROVED`; all family/frame node IDs are unchanged.
 - Frontend gap: the current route provides search, six facets, eligibility flags, five sort modes, 12/24/48 page sizes, empty and error handling, but retains legacy Inter styling and does not implement this responsive Tilt-Locked composition. Country remains a user preference rather than trusted GEO; no application code changed.
 
 ## Next screen family
 
-After visual approval of Casinos, the next P0 candidate is the **Casino Profile family**: available/unavailable, long evidence, outbound disclosure and mobile states.
+The next P0 candidate is the **Casino Profile family**: available/unavailable, long evidence, outbound disclosure and mobile states.
 
 ## Blockers and decisions not to infer
 
