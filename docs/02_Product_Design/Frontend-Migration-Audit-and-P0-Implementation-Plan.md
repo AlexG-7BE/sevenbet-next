@@ -102,6 +102,8 @@ Production build output was exercised locally at desktop `1280×900` and mobile 
 
 ## 4. Status model and parity totals
 
+The totals and matrix below preserve the repository baseline captured when this audit was approved. They are not silently recomputed after each delivery PR; the dated implementation-status blocks in section 8 are the current evidence for FE-MIG-01 through FE-MIG-03.
+
 Each approved Figma inventory row receives exactly one primary migration status:
 
 - `PARITY` — approved contract is implemented with no material detected gap.
@@ -315,14 +317,14 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-02 — Home responsive parity
 
-**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_16 — AWAITING REVIEW/MERGE`.
+**Implementation status, 2026-08-05:** `MERGED_IN_BEF86BD`.
 
-- **Detected implementation:** [PR #16](https://github.com/AlexG-7BE/sevenbet-next/pull/16) preserves the approved ten-section narrative, moves Home back to server rendering, and limits client JavaScript to `HomeProgrammeCarousel`. Critical SSR content no longer depends on `IntersectionObserver` or hydration for visibility.
+- **Detected implementation:** [PR #16](https://github.com/AlexG-7BE/sevenbet-next/pull/16), merged in `bef86bd`, preserves the approved ten-section narrative, moves Home back to server rendering, and limits client JavaScript to `HomeProgrammeCarousel`. Critical SSR content no longer depends on `IntersectionObserver` or hydration for visibility.
 - **Detected responsive parity:** desktop and mobile compositions follow the unchanged approved Home nodes across 1,440, 1,280, 390 and 375 representatives, with bounded reflow tests down to 320 CSS pixels and no document-level horizontal overflow.
 - **Detected authority boundary:** the shared Public Layout remains the only source of anonymous/signed-in account presentation. Home fetches no Dashboard/Programme state, calculates no XP/progress/next Mission, and does not use Programme or safety data for commercial personalization.
 - **Detected QA:** 5/5 Home contract tests and 39/39 combined Home/Public Shell/public-casino browser tests pass against the production build. Coverage includes no-JS, delayed hydration, missing `IntersectionObserver`, reduced motion, navigation/history, keyboard and announcements, 44px targets, mobile menu, key-route/404 regressions and widths 1440–320. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-02/`.
 - **Detected baseline gaps:** the full Node suite remains 212 passed / 7 failed because fixed Mission 04 `reviewAt` fixtures are now outside the next-30-days validation window. `npm run lint` still invokes deprecated interactive `next lint`. An authenticated disposable browser fixture and per-asset archival provenance remain not detected.
-- **Next recommended package after review/merge:** FE-MIG-03 — 10 Steps campaign landing. It was not started in PR #16.
+- **Next package after merge:** FE-MIG-03 — 10 Steps campaign landing is implemented on `codex/fe-mig-03-ten-steps` and awaits review/merge.
 
 - **Figma source:** desktop `661:7551`, mobile `657:2545`, preserved 1440 `289:946`.
 - **Routes/components:** `/`, `components/home/TiltHome.tsx`, module CSS.
@@ -335,14 +337,25 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 ### FE-MIG-03 — 10 Steps campaign landing
 
-- **Figma source:** desktop `502:2238`, mobile `502:2412`.
+**Implementation status, 2026-08-05:** `IMPLEMENTED_IN_PR_17 — REVIEW/MERGE REQUIRED`.
+
+- **Detected implementation:** [PR #17](https://github.com/AlexG-7BE/sevenbet-next/pull/17) replaces the stale route with the approved seven-section campaign body while retaining FE-MIG-01 Public Shell ownership. `+20 XP`, `UK PREVIEW`, `UK-ready discovery` and local commercial-discovery links are removed; canonical Programme entry remains `/program`.
+- **Detected authority boundary:** anonymous visitors do not trigger a Dashboard read. Signed-in returning XP, completed count and current Mission are rendered only from `programmeDashboardService.getDashboard(userId)`. Missing/unavailable Programme projection fails closed to a signed-in fallback without invented values.
+- **Detected reward/capability truth:** signed-out `+60 XP` is labelled `SAVE TO EARN` and `Awarded after account creation.` Awarded XP appears only from the returning Dashboard projection. Missions 01–04 are the current path; Missions 05–10 are explicitly planned/not yet available.
+- **Detected separation:** the page contains no casino, bonus, best-offer, affiliate, market or eligibility body action. Programme, pause and Help data are explicitly excluded from affiliate targeting and commercial personalisation. Help remains in the shared Header/Footer only.
+- **Detected QA:** 6/6 route contract tests and 13/13 route browser tests pass. Combined Home/Public Shell/public-casino/10 Steps browser regressions pass 52/52 against `next start`, including no-JS, reduced motion, 44px targets, menu focus/Escape and widths 1,440 through 320 with no horizontal overflow. Typecheck and production build pass. Evidence is stored in `docs/02_Product_Design/qa/fe-mig-03/`.
+- **Detected baseline gaps:** the full Node suite is 218 passed / 7 failed with the unchanged stale Mission 04 `reviewAt` fixtures. `npm run lint` remains blocked by deprecated interactive `next lint`. No approved disposable authenticated browser fixture is detected, so returning server state is contract-tested but its authenticated route screenshot remains a review gate.
+- **Scope confirmation:** no backend/API/Prisma/schema/migration, Programme reward/order/prerequisite, protected Help, commercial eligibility, other route body or Figma change is included. FE-MIG-04 was not started.
+- **Next package after review/merge:** FE-MIG-04 — Casinos catalogue and filters.
+
+- **Figma source:** desktop family `502:2238` with full 1,440 `502:2240` and 1,280 `502:2241`; mobile family `502:2412` with full signed-out 390 `502:2414`, returning 390 first fold `502:2415` and signed-out 375 first fold `502:2416`; evidence card set `506:640`.
 - **Routes/components:** `/10-steps`, shared page-template components.
 - **Reuse/refactor/create:** reuse Public Shell and Programme entry URL; replace stale body rather than carrying legacy layout.
 - **Data readiness:** Programme contract ready; returning state uses server/session truth.
-- **Compliance:** show `+60 XP` only after completed Mission 01 claim; no commercial reward linkage; remove standalone Help block.
+- **Compliance:** signed-out `+60 XP` may appear only as a clearly pending post-account-creation preview; awarded XP requires the completed Mission 01 claim in server Dashboard truth. No commercial reward linkage; no standalone Help block.
 - **Acceptance:** approved signed-out/returning/small-mobile states; no `+20 XP`; one main; CTA enters Mission 01 without rewriting Programme state.
 - **QA:** copy assertions, authenticated/anonymous browser states, responsive and accessibility checks.
-- **Branch/PR order:** `codex/fe-mig-03-ten-steps`; PR 3.
+- **Branch/PR order:** `codex/fe-mig-03-ten-steps`; review/merge required before FE-MIG-04.
 
 ### FE-MIG-04 — Casinos catalogue and filters
 
