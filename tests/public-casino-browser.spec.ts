@@ -9,12 +9,36 @@ test("desktop discovery renders the approved SSR directory without browser error
   const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /Casino reviews/ })).toBeVisible();
+  await expect(page.getByText(/Search published editorial profiles/)).toBeVisible();
+  await expect(page.getByText(/Search verified published profiles/)).toHaveCount(0);
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
   await expect(page.getByText("Market preference, not location.").first()).toBeVisible();
   await expect(page.getByRole("status")).toContainText(/Page 1 of/);
   await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
   expect(errors).toEqual([]);
   await page.screenshot({ path: "/tmp/sevenbet-casinos-desktop.png", fullPage: true });
+});
+
+test("directory URLs remain stable without overflow or runtime errors across approved widths", async ({ browser }) => {
+  for (const width of [1440, 1280, 390, 375, 320]) {
+    const errors: string[] = [];
+    const page = await browser.newPage({ viewport: { width, height: width <= 390 ? 844 : 900 }, isMobile: width <= 390 });
+    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+    page.on("pageerror", (error) => errors.push(error.message));
+    const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+    expect(errors, `runtime errors at ${width}px`).toEqual([]);
+    await page.close();
+  }
+
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  for (const path of ["/casinos?q=test", "/casinos?sort=NAME_ASC", "/casinos?page=2"]) {
+    const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
+    expect(response?.status(), path).toBe(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), path).toBe(false);
+  }
+  await page.close();
 });
 
 test("sort, page size and search remain URL-authoritative", async ({ page }) => {

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults, FeaturedCasinoReview } from "@/components/casino-discovery/CasinoDiscovery";
+import { ActiveDiscoveryFilters, DirectoryReviewPreview, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
@@ -38,8 +38,8 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <section className={styles.hero}>
       <div className={styles.shell}>
         <div className={styles.heroGrid}>
-          <header><p>Independent casino discovery · Published reviews · 18+</p><h1>Casino reviews,<br /><em>without the noise.</em></h1><span>Search verified published profiles, compare the facts that matter and keep review access separate from commercial availability.</span><a href="#casino-directory">Explore the directory <b aria-hidden="true">↓</b></a></header>
-          <FeaturedCasinoReview casino={result.items[0]} />
+          <header><p>Independent casino discovery · Published reviews · 18+</p><h1>Casino reviews,<br /><em>without the noise.</em></h1><span>Search published editorial profiles, compare the facts that matter and keep review access separate from commercial availability.</span><a href="#casino-directory">Explore the directory <b aria-hidden="true">↓</b></a></header>
+          <DirectoryReviewPreview casino={result.items[0]} />
         </div>
       </div>
     </section>
@@ -57,7 +57,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <section className={styles.readingGuide}><div className={styles.shell}><div className={styles.sectionIntro}><p>How to read the directory</p><h2>Separate evidence from availability.</h2></div><div className={styles.guideGrid}>{[
       ["01", "Published evidence", "Names, licences, markets, payments and bonus terms come from the current published editorial snapshot."],
       ["02", "Editorial score", "A score is an editorial assessment, not a promise of safety, winnings, access or product performance."],
-      ["03", "Visit availability", "A visit action appears only when an eligible local offer, tracking link and governed redirect are all available."],
+      ["03", "Visit availability", "A visit action appears only when a governed offer, an active tracking link and an internal redirect are available."],
       ["04", "Your responsibility", "Confirm local law, operator terms and account eligibility yourself. A market preference is not proof of location."],
     ].map(([number, title, copy]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{copy}</p></article>)}</div></div></section>
 

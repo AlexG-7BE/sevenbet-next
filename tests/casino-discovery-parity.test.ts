@@ -4,15 +4,27 @@ import test from "node:test";
 
 const page = readFileSync("app/(public)/casinos/page.tsx", "utf8");
 const components = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
+const card = readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8");
 const mobile = readFileSync("components/casino-discovery/MobileCasinoFilters.tsx", "utf8");
 
 test("FE-MIG-04 keeps SSR discovery and published DTO boundaries", () => {
   assert.match(page, /publicCasinoDiscoveryService\.discover/);
   assert.match(page, /dynamic = "force-dynamic"/);
-  assert.doesNotMatch(page + components + mobile, /@prisma\/client|prisma\./);
-  assert.doesNotMatch(page + components, /trackingUrl|destinationUrl|providerType|externalId/);
-  assert.match(components, /\/r\/\$\{casino\.visitAction\.redirectSlug\}/);
-  assert.match(components, /casino\.visitAction\.available/);
+  assert.doesNotMatch(page + components + card + mobile, /@prisma\/client|prisma\./);
+  assert.doesNotMatch(page + components + card, /trackingUrl|destinationUrl|providerType|externalId/);
+  assert.match(card, /\/r\/\$\{casino\.visitAction\.redirectSlug\}/);
+  assert.match(card, /casino\.visitAction\.available/);
+});
+
+test("public copy has no unsupported verification, featured, ranking-independence, or local-offer claims", () => {
+  assert.doesNotMatch(page, /Search verified published profiles/i);
+  assert.match(page, /Search published editorial profiles/);
+  assert.doesNotMatch(page + components + card, /Featured published review|FeaturedCasinoReview/);
+  assert.match(card, /Published review preview/);
+  assert.doesNotMatch(card, /Rankings and editorial reviews remain independently governed/);
+  assert.match(card, /The editorial score is displayed separately from visit availability/);
+  assert.doesNotMatch(page, /eligible local offer/);
+  assert.match(card, /Directory result position/);
 });
 
 test("FE-MIG-04 exposes the approved responsive and state contract", () => {
