@@ -88,7 +88,7 @@ After implementation:
 - `npx playwright test tests/ten-steps-browser.spec.ts` — 13/13 passed.
 - Combined Home, Public Shell, public-casino and 10 Steps browser regressions — 52/52 passed against `next start`.
 - `npm run typecheck` — passed.
-- `npm run build` — passed.
+- `npm run build` — passed; `/10-steps` is dynamic/server-rendered, route size is 810 B and First Load JS is 107 kB. No route Client Component was added.
 - Full Node suite — 218/225 passed; the same seven date-dependent Mission 04 `reviewAt` fixtures fail because their fixed date is no longer within the validator's next-30-days window. This baseline debt predates and is outside FE-MIG-03.
 - `npm run lint` — not a usable non-interactive gate: the repository still invokes deprecated `next lint` and prompts for initial ESLint configuration.
 - `git diff --check` — passed.

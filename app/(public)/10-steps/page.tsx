@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Instrument_Serif } from "next/font/google";
 
 import { TenStepsLanding } from "./TenStepsLanding";
 import { getServerSession } from "@/lib/auth/session";
@@ -7,6 +8,14 @@ import { absoluteUrl } from "@/lib/site";
 import { resolveTenStepsLandingState } from "@/lib/ten-steps-landing";
 
 export const dynamic = "force-dynamic";
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: "400",
+  variable: "--font-seven-serif",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "10 Steps Before You Choose | SevenBet",
@@ -21,5 +30,9 @@ export default async function TenStepsPage() {
     getDashboard: (userId) => programmeDashboardService.getDashboard(userId),
   });
 
-  return <TenStepsLanding state={state} />;
+  return (
+    <div className={instrumentSerif.variable}>
+      <TenStepsLanding state={state} />
+    </div>
+  );
 }

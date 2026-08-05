@@ -21,7 +21,7 @@
 .page *, .page *::before, .page *::after { box-sizing: border-box; }
 .page :focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
 .page h1, .page h2, .page p, .page figure { margin: 0; }
-.page em { font-family: Georgia, "Times New Roman", serif; font-weight: 400; }
+.page em { font-family: var(--font-seven-serif), Georgia, "Times New Roman", serif; font-weight: 400; }
 
 .primaryButton,
 .secondaryButton {
