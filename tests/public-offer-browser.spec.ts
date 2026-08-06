@@ -6,36 +6,25 @@ test("best offers is server rendered with material terms before governed actions
   const response = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /The shortlist/ })).toBeVisible();
-  await expect(page.getByText("Minimum deposit").first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "Read full review" }).first()).toBeVisible();
+  await expect(page.getByText("Min deposit").first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "View full terms" }).first()).toBeVisible();
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
-  const activeCard = page.getByRole("region", { name: "Top three eligible offers" }).getByRole("article");
+  const activeCard = page.getByRole("region", { name: "Best offer selectors" }).locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]');
   const cardText = await activeCard.innerText();
-  expect(cardText.indexOf("Minimum deposit")).toBeLessThan(cardText.indexOf("Review demo handoff"));
+  expect(cardText.indexOf("Wagering")).toBeLessThan(cardText.indexOf("View full terms"));
 });
 
-test("Best Offers carousel, tabs and outbound confirmation are keyboard accessible", async ({ page }) => {
+test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
-  const carousel = page.getByRole("region", { name: "Top three eligible offers" });
+  const carousel = page.getByRole("region", { name: "Best offer selectors" });
   await carousel.focus();
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByText("02 / 03")).toBeVisible();
-  await page.getByRole("tab", { name: "Lower wagering" }).click();
-  await expect(page.getByRole("tabpanel").getByText("Lowest published non-null wagering requirement in the current eligible shortlist.", { exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "Faster payout signal" }).click();
-  await expect(page.getByRole("tabpanel").getByText("Fastest published withdrawal-time signal in the current eligible shortlist; this is not a payout guarantee.", { exact: true })).toBeVisible();
-
-  const action = page.getByRole("button", { name: /Review demo handoff/ }).first();
-  if (await action.count()) {
-    await action.click();
-    const dialog = page.getByRole("dialog", { name: "Before you continue." });
-    await expect(dialog).toBeVisible();
-    await expect(dialog.getByRole("button", { name: "Keep comparing" })).toBeFocused();
-    expect(await dialog.locator('a[href^="http"]').count()).toBe(0);
-    await page.keyboard.press("Escape");
-    await expect(dialog).toBeHidden();
-    await expect(action).toBeFocused();
-  }
+  await expect(carousel.locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]')).toContainText("Lower wagering");
+  await page.getByRole("tab", { name: "2 Lower wagering" }).click();
+  await expect(page.getByRole("tabpanel").getByText("A smaller headline with a lighter play-through requirement.", { exact: true })).toBeVisible();
+  await page.getByRole("tab", { name: "3 Faster payout signal" }).click();
+  await expect(page.getByRole("tabpanel").getByText("A clearer, faster published withdrawal signal beside the bonus terms.", { exact: true })).toBeVisible();
+  expect(await page.locator('a[href^="http"]').count()).toBe(0);
 });
 
 test("bonus filters remain URL-authoritative and server rendered", async ({ page }) => {
