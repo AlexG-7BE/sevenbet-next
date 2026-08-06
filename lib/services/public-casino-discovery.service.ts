@@ -64,6 +64,7 @@ interface WorkingCard {
   recommended: boolean;
   supportsCrypto: boolean;
   supportsMobile: boolean;
+  hasResponsibleGambling: boolean;
   bonusTypes: string[];
   relevance: number;
 }
@@ -141,6 +142,7 @@ export class PublicCasinoDiscoveryService {
       const card: PublicCasinoCardDto = {
         id: casino.id, slug: casino.slug, name: casino.name,
         logo: casino.media.logo ? { url: casino.media.logo.url, alt: casino.media.logo.alt || `${casino.name} logo`, width: casino.media.logo.width, height: casino.media.logo.height } : null,
+        hero: casino.media.hero ? { url: casino.media.hero.url, alt: casino.media.hero.alt || `${casino.name} editorial image`, width: casino.media.hero.width, height: casino.media.hero.height } : null,
         shortDescription: casino.summary || null, rating: casino.editorScore || null, reviewCount: null,
         licenses: casino.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
         countries: availableCountries,
@@ -149,11 +151,12 @@ export class PublicCasinoDiscoveryService {
         categories: casino.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
         highlights: casino.pros.slice(0, 3),
         featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
-        visitAction: visit, responsibleGamblingLabel: casino.responsibleGamblingTools.length ? "Responsible gambling tools available" : "Gambling involves risk",
+        visitAction: visit, responsibleGamblingLabel: casino.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
         publishedAt: casino.publishedAt, editorialUpdatedAt: casino.lastReviewedAt ?? casino.publishedAt,
       };
       return [{ card, aliases: aliasesByCasino.get(casino.id) ?? [], canonicalName: text(snapshot.internalName) || casino.name, domain: casino.domain, featured: casino.featured, recommended: casino.recommended,
         supportsCrypto: casino.payments.some((payment) => payment.crypto), supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
+        hasResponsibleGambling: casino.responsibleGamblingTools.length > 0,
         bonusTypes: casino.bonuses.map((entry) => entry.type), relevance: 0 }];
     });
 
@@ -182,6 +185,7 @@ export class PublicCasinoDiscoveryService {
       && matchesAny(query.bonusType, item.bonusTypes)
       && (!query.hasBonus || Boolean(item.card.featuredBonus))
       && (!query.hasAvailableVisitAction || item.card.visitAction.available)
+      && (!query.hasResponsibleGambling || item.hasResponsibleGambling)
       && (!query.supportsCrypto || item.supportsCrypto)
       && (!query.supportsMobile || item.supportsMobile));
     const sort = query.sort ?? (normalizedSearch ? "RELEVANCE" : "FEATURED");

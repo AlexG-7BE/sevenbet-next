@@ -55,6 +55,7 @@ export function parseCasinoDiscoveryQuery(input: DiscoverySearchParams): CasinoD
     bonusType: tokens(input, "bonusType", true),
     hasBonus: bool(input, "hasBonus"),
     hasAvailableVisitAction: bool(input, "hasAvailableVisitAction"),
+    hasResponsibleGambling: bool(input, "hasResponsibleGambling"),
     supportsCrypto: bool(input, "supportsCrypto"),
     supportsMobile: bool(input, "supportsMobile"),
     sort: DISCOVERY_SORTS.includes(sortValue!) ? sortValue : search ? "RELEVANCE" : "FEATURED",
@@ -71,7 +72,7 @@ export function serializeCasinoDiscoveryQuery(query: CasinoDiscoveryQuery, optio
     ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"],
   ];
   for (const [field, key] of arrays) for (const value of [...((query[field] as string[] | undefined) ?? [])].sort()) params.append(key, value);
-  for (const key of ["hasBonus", "hasAvailableVisitAction", "supportsCrypto", "supportsMobile"] as const) if (query[key]) params.set(key, "true");
+  for (const key of ["hasBonus", "hasAvailableVisitAction", "hasResponsibleGambling", "supportsCrypto", "supportsMobile"] as const) if (query[key]) params.set(key, "true");
   if (query.sort && query.sort !== (query.search ? "RELEVANCE" : "FEATURED")) params.set("sort", query.sort);
   if (!options.omitPage && (query.page ?? 1) > 1) params.set("page", String(query.page));
   if ((query.pageSize ?? DEFAULT_DISCOVERY_PAGE_SIZE) !== DEFAULT_DISCOVERY_PAGE_SIZE) params.set("pageSize", String(query.pageSize));
@@ -85,5 +86,5 @@ export function discoveryHref(query: CasinoDiscoveryQuery, patch: Partial<Casino
 }
 
 export function hasDiscoveryFilters(query: CasinoDiscoveryQuery) {
-  return Boolean(query.search || query.country?.length || query.license?.length || query.payment?.length || query.gameProvider?.length || query.category?.length || query.bonusType?.length || query.hasBonus || query.hasAvailableVisitAction || query.supportsCrypto || query.supportsMobile);
+  return Boolean(query.search || query.country?.length || query.license?.length || query.payment?.length || query.gameProvider?.length || query.category?.length || query.bonusType?.length || query.hasBonus || query.hasAvailableVisitAction || query.hasResponsibleGambling || query.supportsCrypto || query.supportsMobile);
 }
