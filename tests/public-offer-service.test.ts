@@ -71,6 +71,38 @@ test("search filters eligible public offers and returns deterministic pagination
   assert.equal(all.records[0].casino.slug, "beta");
 });
 
+test("default page contains 24 records and page two preserves the twenty-fifth", async () => {
+  const records = Array.from({ length: 25 }, (_, index) => offer(`offer-${String(index + 1).padStart(2, "0")}`, { score: 9 - index / 100 }));
+  const service = new PublicOfferService(store(records), { cmsEnabled: true });
+  const first = await service.searchOffers(parsePublicOfferQuery({}));
+  const second = await service.searchOffers(parsePublicOfferQuery({ page: "2" }));
+  assert.equal(first.records.length, 24);
+  assert.equal(first.total, 25);
+  assert.equal(first.pageCount, 2);
+  assert.equal(second.records.length, 1);
+  assert.equal(second.page, 2);
+});
+
+test("every supported public bonus filter is real and combined filters can return empty", async () => {
+  const alpha = offer("alpha", { country: "GB", type: "WELCOME", payment: "Visa", crypto: true, deposit: 10, wagering: 25, available: true });
+  const beta = offer("beta", { country: "IE", type: "CASHBACK", payment: "Apple Pay", crypto: false, deposit: 30, wagering: 45, available: false });
+  const service = new PublicOfferService(store([alpha, beta]), { cmsEnabled: true });
+  const cases: Array<[Record<string, string>, string]> = [
+    [{ country: "GB" }, "alpha"], [{ type: "CASHBACK" }, "beta"], [{ payment: "Visa" }, "alpha"],
+    [{ crypto: "false" }, "beta"], [{ maxDeposit: "15" }, "alpha"], [{ maxWagering: "30" }, "alpha"],
+    [{ availability: "AVAILABLE" }, "alpha"],
+  ];
+  for (const [params, slug] of cases) {
+    const result = await service.searchOffers(parsePublicOfferQuery(params));
+    assert.deepEqual(result.records.map((item) => item.casino.slug), [slug]);
+  }
+  const combined = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "WELCOME", payment: "Visa", crypto: "true", maxDeposit: "10", maxWagering: "25", availability: "AVAILABLE", sort: "lowest-wagering" }));
+  assert.deepEqual(combined.records.map((item) => item.casino.slug), ["alpha"]);
+  const empty = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "CASHBACK" }));
+  assert.equal(empty.total, 0);
+  assert.deepEqual(empty.records, []);
+});
+
 test("sorting uses stable editorial tie breakers and keeps missing values last", async () => {
   const service = new PublicOfferService(store([
     offer("zulu", { score: 8, deposit: null, wagering: null }),
