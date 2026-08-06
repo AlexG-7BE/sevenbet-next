@@ -13,11 +13,11 @@ function recordScope(position: number) {
   return position < 9 ? position : 100 + position;
 }
 
-function payment(scope: number, slot: number, methodKey: string, name: string, type: string, currencies: string[], minimumDeposit: number, crypto = false) {
+function payment(scope: number, slot: number, methodKey: string, name: string, type: string, currencies: string[], minimumDeposit: number, crypto = false, withdrawalTime = "Illustrative 1–3 days") {
   return {
     id: id(scope, slot), methodKey, name, supportsDeposits: true, supportsWithdrawals: true,
     currencies, minimumDeposit: minimumDeposit.toFixed(2), minimumWithdrawal: "20.00", maximumWithdrawal: "2500.00",
-    maximumDeposit: "5000.00", depositProcessingTime: "Illustrative instant state", withdrawalTime: "Illustrative 1–3 days",
+    maximumDeposit: "5000.00", depositProcessingTime: "Illustrative instant state", withdrawalTime,
     fees: "Synthetic display data — not operator terms", depositFee: null, withdrawalFee: null, type,
     countries: [], verified: false, notes: "Synthetic payment presentation only", archived: false, crypto, sortOrder: slot,
   };
@@ -47,7 +47,7 @@ type Scenario = {
   n: number; slug: string; label: string; accent: string; dark: string; score: number; trust: number;
   country: string; currency: string; bonusType: string; percentage: number | null; freeSpins: number | null;
   maximumBonus: number; minimumDeposit: number; wagering: number; featured: boolean; recommended: boolean;
-  crypto?: boolean; paymentVariant?: "CARD" | "WALLET" | "BANK"; publicExperience?: "FULL_PROFILE" | "STRUCTURED_EDITORIAL";
+  crypto?: boolean; paymentVariant?: "CARD" | "WALLET" | "BANK"; withdrawalTime?: string; revision?: string; publicExperience?: "FULL_PROFILE" | "STRUCTURED_EDITORIAL";
 };
 
 export interface TemporaryDemoCasino {
@@ -73,15 +73,15 @@ const scenario = (n: number, slug: string, label: string, patch: Partial<Omit<Sc
 });
 
 const scenarios: Scenario[] = [
-  scenario(1, "northstar", "Northstar", { accent: "#d8ff3e", dark: "#17211b", score: 9.3, trust: 8.9, maximumBonus: 500, wagering: 24, featured: true, recommended: true }),
-  scenario(2, "harbour", "Harbour", { accent: "#78d7ff", dark: "#102332", score: 9.0, trust: 8.6, bonusType: "FREE_SPINS", percentage: null, freeSpins: 100, maximumBonus: 250, minimumDeposit: 5, wagering: 28, paymentVariant: "BANK" }),
-  scenario(3, "atlas", "Atlas", { accent: "#ffb15a", dark: "#2c1c15", score: 8.8, trust: 8.4, bonusType: "CASHBACK", percentage: 15, freeSpins: null, maximumBonus: 300, wagering: 20, recommended: true }),
+  scenario(1, "northstar", "Northstar", { accent: "#d8ff3e", dark: "#17211b", score: 9.5, trust: 9.0, maximumBonus: 500, wagering: 24, featured: true, recommended: true, withdrawalTime: "Typically within one day", revision: "best-offers-r1" }),
+  scenario(2, "harbour", "Harbour", { accent: "#78d7ff", dark: "#102332", score: 9.0, trust: 8.6, bonusType: "FREE_SPINS", percentage: null, freeSpins: 100, maximumBonus: 250, minimumDeposit: 5, wagering: 20, paymentVariant: "BANK", withdrawalTime: "Typically within one to two days", revision: "best-offers-r1" }),
+  scenario(3, "atlas", "Atlas", { accent: "#ffb15a", dark: "#2c1c15", score: 8.8, trust: 8.4, bonusType: "CASHBACK", percentage: 15, freeSpins: null, maximumBonus: 300, wagering: 26, recommended: true, withdrawalTime: "Typically within 2 hours", revision: "best-offers-r1" }),
   scenario(4, "meadow", "Meadow", { accent: "#a9e5b2", dark: "#183022", score: 8.5, trust: 8.1, bonusType: "RELOAD", percentage: 50, maximumBonus: 350, minimumDeposit: 15, wagering: 32 }),
   scenario(5, "lantern", "Lantern", { accent: "#ff8e9d", dark: "#311a22", score: 9.1, trust: 8.7, bonusType: "NO_DEPOSIT", percentage: null, freeSpins: 40, maximumBonus: 80, minimumDeposit: 0, wagering: 35, crypto: true, publicExperience: "STRUCTURED_EDITORIAL" }),
   scenario(6, "summit", "Summit", { accent: "#ffd45c", dark: "#302812", score: 8.9, trust: 8.5, bonusType: "VIP", percentage: 75, freeSpins: 50, maximumBonus: 750, minimumDeposit: 20, wagering: 30, recommended: true }),
   scenario(7, "ember", "Ember", { accent: "#ff775c", dark: "#321713", score: 8.7, trust: 8.2, bonusType: "WELCOME", percentage: 125, maximumBonus: 600, wagering: 34, paymentVariant: "WALLET" }),
   scenario(8, "tide", "Tide", { accent: "#60e4d1", dark: "#12312e", score: 8.6, trust: 8.0, bonusType: "FREE_SPINS", percentage: 50, freeSpins: 150, maximumBonus: 450, minimumDeposit: 10, wagering: 29, crypto: true }),
-  scenario(9, "juniper", "Juniper", { accent: "#b8ef7f", dark: "#20301a", score: 8.4, trust: 8.0, bonusType: "CASHBACK", percentage: 12, freeSpins: null, maximumBonus: 220, minimumDeposit: 5, wagering: 18, recommended: true }),
+  scenario(9, "juniper", "Juniper", { accent: "#b8ef7f", dark: "#20301a", score: 8.4, trust: 8.0, bonusType: "CASHBACK", percentage: 12, freeSpins: null, maximumBonus: 220, minimumDeposit: 5, wagering: 22, recommended: true, revision: "best-offers-r1" }),
   scenario(10, "orbit", "Orbit", { accent: "#a9a3ff", dark: "#211f3a", score: 8.3, trust: 7.9, bonusType: "RELOAD", percentage: 60, freeSpins: 30, maximumBonus: 500, minimumDeposit: 20, wagering: 36, publicExperience: "STRUCTURED_EDITORIAL" }),
   scenario(11, "quartz", "Quartz", { accent: "#f0bfff", dark: "#2f1d34", score: 8.2, trust: 7.8, bonusType: "OTHER", percentage: 80, freeSpins: 20, maximumBonus: 420, minimumDeposit: 10, wagering: 27, crypto: true }),
   scenario(12, "willow", "Willow", { accent: "#9ed0a8", dark: "#1b2b20", score: 8.0, trust: 7.7, bonusType: "WELCOME", percentage: 100, freeSpins: 75, maximumBonus: 550, minimumDeposit: 15, wagering: 31, recommended: true }),
@@ -107,8 +107,8 @@ function paymentSet(item: Scenario, scope: number) {
     BANK: [["visa", "Visa", "CARD"], ["bank-transfer", "Bank transfer", "BANK_TRANSFER"]],
   } as const;
   const selected = variants[item.paymentVariant ?? (item.n % 2 ? "CARD" : "WALLET")];
-  const records = selected.map(([key, name, type], index) => payment(scope, 20 + index, key, name, type, [item.currency], item.minimumDeposit));
-  if (item.crypto) records.push(payment(scope, 29, "demo-coin", "Demo Coin", "CRYPTO", [item.currency], item.minimumDeposit, true));
+  const records = selected.map(([key, name, type], index) => payment(scope, 20 + index, key, name, type, [item.currency], item.minimumDeposit, false, item.withdrawalTime));
+  if (item.crypto) records.push(payment(scope, 29, "demo-coin", "Demo Coin", "CRYPTO", [item.currency], item.minimumDeposit, true, item.withdrawalTime));
   return records;
 }
 
@@ -120,7 +120,7 @@ export const temporaryDemoCasinos: TemporaryDemoCasino[] = scenarios.map((item) 
   const pros = ["Clear fictional demo disclosure", "Complete responsive profile presentation", "Illustrative payment and game information"];
   const cons = ["Not a real casino operator", "No live registration, deposit or bonus", "Licence and availability blocks are synthetic UI examples"];
   const draft: CasinoCoreDraft = {
-    slug: item.slug, internalName: `${title} — ${TEMPORARY_DEMO_DATASET_ID}`, title, domain: `${item.slug}.example`, websiteUrl: null,
+    slug: item.slug, internalName: `${title} — ${TEMPORARY_DEMO_DATASET_ID}${item.revision ? ` — ${item.revision}` : ""}`, title, domain: `${item.slug}.example`, websiteUrl: null,
     operator: "Fictional SevenBet Demo Studio", tagline: "Fictional profile for product demonstration only", summary,
     description: `${summary} The review, score, countries, payments, games, licence block and bonus presentation exist only to demonstrate SevenBet's product experience to potential partners. No statement describes an existing gambling business.`,
     foundedYear: 2026, language: "en", languages: ["en"], currencies: [item.currency], editorScore: item.score,

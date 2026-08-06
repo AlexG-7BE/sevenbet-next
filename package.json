@@ -44,6 +44,8 @@
     "fe-mig-06:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
     "fe-mig-07:test": "node --import tsx --test tests/public-offer-service.test.ts tests/bonus-directory.test.tsx",
     "fe-mig-07:browser": "playwright test tests/bonus-directory-browser.spec.ts tests/public-offer-browser.spec.ts",
+    "fe-mig-08:test": "node --import tsx --test tests/public-offer-service.test.ts tests/temporary-production-demo-casinos.test.ts",
+    "fe-mig-08:browser": "playwright test tests/public-offer-browser.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

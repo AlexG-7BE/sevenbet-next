@@ -149,7 +149,7 @@ The IDs and product priority come from the approved Figma inventory. “WP” id
 | B06 | Profile trust/evidence | `/casino/[slug]` | Legacy review sections; incomplete lifecycle presentation | `STALE` | Editorial evidence readiness varies | FE-MIG-05 |
 | B07 | Bonuses catalogue | `/bonuses` | Legacy casino-view directory, static-looking filters and table | `STALE` | Dedicated offer projection absent | FE-MIG-06 |
 | B08 | Bonus lifecycle states | `/bonuses`, cards | No complete governed current/changed/expired/unavailable projection | `BLOCKED_BY_DATA` | Canonical offer/evidence lifecycle required | FE-MIG-06 |
-| B09 | Best Offers | `/best-offers` | Honest static future preview only | `PLACEHOLDER` | Live shortlist/market authority absent | FE-MIG-08 |
+| B09 | Best Offers | `/best-offers` | Canonical server-rendered database shortlist implemented on FE-MIG-08 branch | `PARTIAL` | PR, protected Preview and Founder review remain gates | FE-MIG-08 |
 | B10 | Comparison desktop | `/compare` | Route not detected | `FRONTEND_MISSING` | Comparable projection also required | FE-MIG-09 |
 | B11 | Comparison mobile | `/compare` | Route not detected | `FRONTEND_MISSING` | Comparable projection also required | FE-MIG-09 |
 | B13 | Commercial handoff | Cross-cutting; `/r/[slug]` | Safe redirect foundation, no confirmation/unavailable/recovery UI | `BLOCKED_BY_DATA` | Eligibility/reason projection required | FE-MIG-10 |
@@ -417,10 +417,10 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 
 - **Figma source:** desktop `556:3336`, mobile `557:1470`.
 - **Routes/components:** `/best-offers`.
-- **Reuse/refactor/create:** preserve honest placeholder until canonical eligible shortlist exists; then implement approved ranked editorial surface.
-- **Data readiness:** **blocked by data**—live eligible offers, methodology and market authority not detected.
+- **Reuse/refactor/create:** approved ranked editorial surface implemented from the existing Public Offer repository/service boundary; route-specific client behavior is limited to carousel, fit tabs and governed confirmation dialog.
+- **Data readiness:** **detected on implementation branch**—latest published snapshots provide live eligible synthetic offers, explicit GB authority, complete terms and published ranking inputs; PR/Preview/Founder review remain release gates.
 - **Compliance:** ranking rationale and affiliate disclosure; no “best” claim without published method/current evidence.
-- **Acceptance:** no illustrative operator/offer published as live; complete loading/empty/unavailable; governed handoff only.
+- **Acceptance:** explicitly synthetic operators remain disclosed; complete loading/empty/unavailable; governed internal handoff only; no raw destination.
 - **QA:** ranking fixtures, unavailable/unknown, mobile/a11y, evidence freshness.
 - **Branch/PR order:** `codex/fe-mig-08-best-offers`; after FE-MIG-06/data authority.
 

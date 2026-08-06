@@ -3,16 +3,23 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { parsePublicOfferQuery } from "../lib/public-offer/query";
+import {
+  bestFitWinners,
+  normalizeWithdrawalTime,
+  selectFasterPayout,
+  selectLowerWagering,
+  selectOverallShortlist,
+} from "../lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import type { PublicOfferStore } from "../lib/repositories/public-offer.repository";
 import { PublicOfferRepository } from "../lib/repositories/public-offer.repository";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
-import { buildOfferFacets, PublicOfferService, rankBestOffers } from "../lib/services/public-offer.service";
+import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
 
 function offer(slug: string, patch: {
   score?: number; featured?: boolean; recommended?: boolean; country?: string; type?: string; payment?: string;
   crypto?: boolean; deposit?: number | null; wagering?: number | null; maximumBonus?: number | null;
-  available?: boolean; publishedAt?: string;
+  available?: boolean; publishedAt?: string; withdrawalTime?: string | null; supportsWithdrawals?: boolean;
 } = {}): PublicOfferDTO {
   const available = patch.available ?? false;
   return {
@@ -22,7 +29,11 @@ function offer(slug: string, patch: {
       publishedAt: patch.publishedAt ?? "2030-01-01T00:00:00.000Z", lastReviewedAt: "2030-01-01T00:00:00.000Z",
       countries: [{ countryCode: patch.country ?? "GB", availability: "AVAILABLE" }],
       licenses: [{ authority: "Demo authority — not real", jurisdiction: "Synthetic", status: "ACTIVE" }],
-      payments: [{ key: (patch.payment ?? "visa").toLowerCase(), name: patch.payment ?? "Visa", minimumDeposit: patch.deposit ?? 10, crypto: patch.crypto ?? false }],
+      payments: [{
+        key: (patch.payment ?? "visa").toLowerCase(), name: patch.payment ?? "Visa", minimumDeposit: patch.deposit ?? 10,
+        supportsWithdrawals: patch.supportsWithdrawals ?? true, withdrawalTime: patch.withdrawalTime === undefined ? "Typically within one day" : patch.withdrawalTime,
+        minimumWithdrawal: 20, maximumWithdrawal: 2500, fees: "Synthetic display data", crypto: patch.crypto ?? false,
+      }],
       responsibleGamblingTools: ["Synthetic deposit-limit presentation"],
     },
     bonus: {
@@ -125,11 +136,58 @@ test("facets count eligible offer values only and de-duplicate payments within a
   assert.equal(facets.availability.find((item) => item.value === "AVAILABLE")?.count, 1);
 });
 
-test("best-offer ranking applies market, completeness, flags, score and term order", () => {
+test("best-offer shortlist applies market, completeness, score, flags and term order", () => {
   const nonGb = offer("non-gb", { country: "IE", score: 10, featured: true });
   const featured = offer("featured", { score: 8, featured: true, wagering: 35 });
   const lowerWagering = offer("lower", { score: 8, featured: true, wagering: 20 });
-  assert.deepEqual(rankBestOffers([nonGb, featured, lowerWagering]).map((item) => item.casino.slug), ["lower", "featured", "non-gb"]);
+  assert.deepEqual(selectOverallShortlist([nonGb, featured, lowerWagering]).map((item) => item.casino.slug), ["lower", "featured"]);
+});
+
+test("Best Offers selectors produce generic deterministic winners without slug rules", () => {
+  const overall = offer("north", { score: 9.5, featured: true, recommended: true, wagering: 24, withdrawalTime: "within one day" });
+  const wagering = offer("harbour", { score: 9, featured: true, wagering: 20, withdrawalTime: "one to two days" });
+  const payout = offer("atlas", { score: 8.8, featured: true, wagering: 26, withdrawalTime: "Typically within 2 hours" });
+  const unknown = offer("unknown", { score: 9.2, featured: true, wagering: 18, withdrawalTime: null });
+  const incomplete = offer("incomplete", { score: 10, featured: true });
+  incomplete.bonus.eligibility = null;
+  const shortlist = selectOverallShortlist([unknown, payout, incomplete, wagering, overall]);
+  assert.deepEqual(shortlist.map((item) => item.casino.slug), ["north", "unknown", "harbour", "atlas"]);
+  const winners = bestFitWinners(shortlist);
+  assert.equal(winners.overall?.casino.slug, "north");
+  assert.equal(winners.wagering?.casino.slug, "unknown");
+  assert.equal(winners.payout?.casino.slug, "atlas");
+
+  unknown.bonus.wageringMultiplier = null;
+  assert.equal(selectLowerWagering(shortlist)?.casino.slug, "harbour");
+  unknown.casino.payments[0].withdrawalTime = "instant";
+  assert.equal(selectFasterPayout(shortlist)?.casino.slug, "unknown", "changing published input changes the winner");
+});
+
+test("withdrawal normalization is deterministic and missing signals never outrank evidence", () => {
+  assert.deepEqual([
+    normalizeWithdrawalTime("Instant"),
+    normalizeWithdrawalTime("Typically within 2 hours"),
+    normalizeWithdrawalTime("Same day"),
+    normalizeWithdrawalTime("Within one day"),
+    normalizeWithdrawalTime("one to two days"),
+    normalizeWithdrawalTime("3 or more days"),
+    normalizeWithdrawalTime(null),
+  ], ["instant", "under-2-hours", "same-day", "one-day", "one-to-two-days", "three-or-more-days", "unknown"]);
+  const signalled = offer("zulu", { score: 8, withdrawalTime: "three or more days" });
+  const missing = offer("alpha", { score: 10, withdrawalTime: null });
+  assert.equal(selectFasterPayout([missing, signalled])?.casino.slug, "zulu");
+});
+
+test("overall shortlist is GB-only, complete and capped at twelve with stable ties", () => {
+  const records = Array.from({ length: 14 }, (_, index) => offer(`offer-${String(index).padStart(2, "0")}`, { score: 8, featured: true }));
+  records.push(offer("non-gb", { country: "IE", score: 10, featured: true }));
+  records.push(offer("missing", { score: 10, featured: true }));
+  records.at(-1)!.bonus.wageringMultiplier = null;
+  const shortlist = selectOverallShortlist(records);
+  assert.equal(shortlist.length, 12);
+  assert.deepEqual(shortlist.slice(0, 2).map((item) => item.casino.slug), ["offer-00", "offer-01"]);
+  assert.ok(shortlist.every((item) => item.casino.countries.some((country) => country.countryCode === "GB" && country.availability === "AVAILABLE")));
+  assert.ok(shortlist.every((item) => item.bonus.wageringMultiplier !== null));
 });
 
 test("CMS retrieval failures fail closed and never fall back to legacy offers", async () => {
@@ -172,6 +230,16 @@ test("public offer pages use the service boundary and expose no raw destination 
   }
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);
+  for (const file of ["app/(public)/best-offers/page.tsx", "components/best-offers/BestOffersExperience.tsx", "lib/public-offer/best-offer-ranking.ts"]) {
+    assert.doesNotMatch(readFileSync(file, "utf8"), /demo-(?:northstar|harbour|atlas)/, `${file} must not contain winner-specific slugs`);
+  }
+});
+
+test("public offer mapper projects only the required existing payout fields", () => {
+  const source = readFileSync("lib/public-offer/public-offer.mapper.ts", "utf8");
+  for (const field of ["supportsWithdrawals", "withdrawalTime", "minimumWithdrawal", "maximumWithdrawal", "fees"]) assert.match(source, new RegExp(field));
+  const types = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
+  assert.doesNotMatch(types, /depositFee|withdrawalFee|destinationUrl|trackingUrl/);
 });
 
 test("offer components encode server form and material-term output without raw destinations", () => {

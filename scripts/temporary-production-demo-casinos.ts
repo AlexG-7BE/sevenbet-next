@@ -5,7 +5,7 @@ import { publicCasinoRepository } from "@/lib/repositories/public-casino.reposit
 import { PublicOfferRepository } from "@/lib/repositories/public-offer.repository";
 import { casinoService } from "@/lib/services/casino.service";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
-import { rankBestOffers } from "@/lib/services/public-offer.service";
+import { selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
 import {
   PRODUCTION_SITE_ORIGIN,
   TEMPORARY_DEMO_ACTOR_LABEL,
@@ -191,7 +191,7 @@ async function verify() {
   }
   const offers = (await new PublicOfferRepository(publicCasinoRepository, { redirectEnabled: true }).listOffers()).filter((offer) => temporaryDemoCasinoIds.includes(offer.casino.id));
   const gbEligible = offers.filter((offer) => offer.casino.countries.some((country) => country.countryCode === "GB" && country.availability === "AVAILABLE"));
-  const defaultShortlist = rankBestOffers(offers, "GB").slice(0, 12);
+  const defaultShortlist = selectOverallShortlist(offers, { country: "GB" });
   if (offers.length < 25) issues.push(`Expected at least 25 eligible public offers, found ${offers.length}`);
   if (gbEligible.length < 18) issues.push(`Expected at least 18 GB-eligible offers, found ${gbEligible.length}`);
   if (defaultShortlist.length < 12 || defaultShortlist.slice(0, 3).some((offer) => !offer.casino.featured)) issues.push("Default Best Offers shortlist does not contain the required featured leading set");

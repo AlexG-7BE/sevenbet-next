@@ -11,6 +11,9 @@ import {
   temporaryDemoCasinos,
   temporaryDemoOwnedIds,
 } from "../scripts/temporary-production-demo-casino.manifest";
+import { bestFitWinners, selectOverallShortlist } from "../lib/public-offer/best-offer-ranking";
+import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
+import { publicCasinoToOffers } from "../lib/public-offer/public-offer.mapper";
 
 test("temporary production manifest contains exactly 25 explicitly fictional published scenarios", () => {
   assert.equal(TEMPORARY_DEMO_DATASET_ID, "temporary-production-demo-casinos-v2");
@@ -89,6 +92,37 @@ test("five available demo actions stay on their own SevenBet production profiles
     assert.equal(destination.origin, PRODUCTION_SITE_ORIGIN);
     assert.equal(destination.pathname, `/casino/${casino.slug}`);
   }
+});
+
+test("manifest publication data naturally selects the Founder Office Best Offers winners", () => {
+  const offers = temporaryDemoCasinos.flatMap((definition) => {
+    const mapped = mapPublishedCasino({
+      casinoId: definition.id,
+      version: 1,
+      status: "PUBLISHED",
+      archivedAt: null,
+      publishedAt: new Date("2026-08-06T00:00:00.000Z"),
+      snapshot: {
+        ...definition.draft,
+        id: definition.id,
+        status: "PUBLISHED",
+        publishedAt: "2026-08-06T00:00:00.000Z",
+        casinoBonuses: definition.draft.casinoBonuses.map((item) => ({ ...item, status: "PUBLISHED" })),
+      },
+    }, [], { now: new Date("2026-08-06T12:00:00.000Z"), redirectEnabled: false });
+    return mapped ? publicCasinoToOffers(mapped) : [];
+  });
+  const shortlist = selectOverallShortlist(offers);
+  const winners = bestFitWinners(shortlist);
+  assert.equal(shortlist.length, 12);
+  assert.equal(winners.overall?.casino.slug, "demo-northstar");
+  assert.equal(winners.wagering?.casino.slug, "demo-harbour");
+  assert.equal(winners.payout?.casino.slug, "demo-atlas");
+});
+
+test("only intended Best Offers demo records carry a publication revision marker", () => {
+  const revised = temporaryDemoCasinos.filter((item) => item.draft.internalName?.includes("best-offers-r1"));
+  assert.deepEqual(revised.map((item) => item.slug), ["demo-northstar", "demo-harbour", "demo-atlas", "demo-juniper"]);
 });
 
 test("seed converges unchanged records and cleanup is exact-ID only", () => {

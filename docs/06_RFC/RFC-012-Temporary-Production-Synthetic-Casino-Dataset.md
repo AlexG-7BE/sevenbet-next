@@ -48,7 +48,7 @@ Facet counts are computed from eligible public offers only. In CMS mode `/best-o
 
 ### `/best-offers`
 
-The page is server rendered from the public offer service. Its default shortlist prefers `GB`-available offers, complete material terms, featured then recommended records, higher editorial score, lower wagering, lower minimum deposit and deterministic slug tie-breakers. It displays up to 12 offers, with at least three featured cards followed by a comparison list when sufficient eligible data exists.
+The page is server rendered from the public offer service. Its default shortlist requires `GB` availability and complete material terms, then orders by higher editorial score, featured and recommended flags, lower wagering, lower minimum deposit, published payout evidence and deterministic casino/bonus slug tie-breakers. It displays up to 12 offers, with the leading three cards followed by the complete ranked ledger when sufficient eligible data exists.
 
 Material terms, licence, payment and responsible-gambling context appear before action. The editorial review remains visible when an action is unavailable. The page includes a truthful empty state, metadata and `ItemList` structured data.
 
@@ -86,3 +86,5 @@ Run the dedicated exact-ID cleanup command, confirm every manifest casino and af
 ## Implementation evidence
 
 Implemented and production-deployed on 2026-08-06 in PR #20 at application commit `5c05b54`. Production verification detects exactly 25 published manifest casinos, 25 eligible offers, 18 GB-eligible offers, 12 default shortlist records, 75 media assets, five controlled internal routes and no issues. A repeated seed leaves all 25 publication versions unchanged. Production desktop/mobile, URL-filter, no-JavaScript and overflow smoke passes 10/10. No schema change, migration, separate Demo infrastructure or external gambling destination was introduced.
+
+FE-MIG-08 implementation evidence, 2026-08-06: Founder-approved demo tuning republished only Northstar (editor score 9.5, trust score 9.0, one-day withdrawal signal), Harbour (20× wagering and one-to-two-day signal), Atlas (26× wagering and under-two-hour signal) and Juniper (22× wagering). Production versions became 5, 5, 5 and 2 respectively. The first post-change seed verified 25 eligible offers, 18 GB-eligible offers, a 12-record strict shortlist, five controlled internal routes and `issues: []`; the second identical seed classified all 25 records as `Unchanged`. Generic selectors choose Northstar overall, Harbour for lower wagering and Atlas for faster published payout signal without slug-specific rules. This evidence changes no schema, migration, API, CMS workflow, cleanup boundary or external destination.
