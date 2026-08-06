@@ -13,10 +13,11 @@ test("best offers is server rendered with material terms before governed actions
 
 test("bonus filters remain URL-authoritative and server rendered", async ({ page }) => {
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  await page.getByLabel("Country").selectOption("GB");
-  await page.getByLabel("Bonus type").selectOption("WELCOME");
-  await page.getByLabel("Sort").selectOption("lowest-wagering");
-  await page.getByRole("button", { name: "Apply filters" }).click();
+  const form = page.locator('form[action="/bonuses"]').first();
+  await form.getByLabel("Country preference").selectOption("GB");
+  await form.getByLabel("Bonus type").selectOption("WELCOME");
+  await form.getByLabel("Sort results").selectOption("lowest-wagering");
+  await form.getByRole("button", { name: "Show Results" }).click();
   await expect(page).toHaveURL(/country=GB/);
   await expect(page).toHaveURL(/type=WELCOME/);
   await expect(page).toHaveURL(/sort=lowest-wagering/);
@@ -41,5 +42,5 @@ test("bonus HTML remains useful without JavaScript", async ({ request }) => {
   const html = await response.text();
   expect(html).toContain('method="get"');
   expect(html).toContain("Active filters");
-  expect(html).toContain("Full filtered results");
+  expect(html).toContain("Full comparison results");
 });
