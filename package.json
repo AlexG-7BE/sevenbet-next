@@ -40,6 +40,7 @@
     "prod:demo-casinos:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts verify",
     "prod:demo-casinos:cleanup": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts cleanup",
     "fe-mig-04:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
+    "fe-mig-05:test": "node --import tsx --test tests/casino-profile.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -24,6 +24,7 @@ export interface PublicCasinoBonus {
   percentage: number | null;
   minimumDeposit: number | null;
   maximumBonus: number | null;
+  maximumBet: number | null;
   currency: string | null;
   freeSpins: number | null;
   wageringMultiplier: number | null;
