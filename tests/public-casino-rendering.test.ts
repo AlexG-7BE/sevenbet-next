@@ -155,6 +155,8 @@ test("public routes use the service boundary and invalidate all publication surf
   assert.match(page, /dynamic = "force-dynamic"/);
   assert.doesNotMatch(page, /generateStaticParams/);
   assert.match(page, /BreadcrumbList/);
+  assert.match(page, /if \(publishedCasino\)/);
+  for (const section of ["CasinoReviewHero", "CasinoMediaSection", "QuickOverview", "WelcomeBonusSection", "PaymentsSection"]) assert.match(page, new RegExp(`<${section}`));
   assert.doesNotMatch(page, /AggregateRating|reviewCount|ratingCount/);
   const cache = readFileSync("lib/public-casino/cache.ts", "utf8");
   for (const path of ["/casinos", "/best-offers", "/bonuses", "/sitemap.xml"]) assert.match(cache, new RegExp(path.replace("/", "\\/")));
