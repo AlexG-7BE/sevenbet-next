@@ -1,5 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 
+import { warnForUnsafePrismaRuntimeConnection } from "@/lib/db/prisma-runtime-config";
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
@@ -12,6 +14,8 @@ const transactionOptions =
   Number.isSafeInteger(configuredTransactionTimeout) && configuredTransactionTimeout > 0
     ? { timeout: configuredTransactionTimeout }
     : undefined;
+
+warnForUnsafePrismaRuntimeConnection();
 
 export const prisma =
   globalForPrisma.prisma ??
