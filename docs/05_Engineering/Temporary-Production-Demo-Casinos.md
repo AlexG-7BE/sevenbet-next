@@ -42,3 +42,12 @@ Synthetic licence records use the workflow-required `ACTIVE` state but remain ex
 Before production seed: unit tests, typecheck, production build, read-only dataset audit and a successful production deployment containing the static assets.
 
 After production seed: database verification and desktop/mobile smoke checks for `/casinos`, each `/casino/demo-*` profile, unavailable actions and the controlled internal redirect.
+
+## Release evidence — 2026-08-06
+
+- **Detected:** the production database contains the five exact manifest UUIDs at `PUBLISHED`, each with `publishedVersion: 3`; `prod:demo-casinos:verify` reports `issues: []`.
+- **Detected:** `https://sevenbet-next.vercel.app/casinos` and all five `/casino/demo-*` profiles return HTTP 200 after the production deployment.
+- **Detected:** Northstar redirects with HTTP 302 only to `https://sevenbet-next.vercel.app/casino/demo-northstar`, with `no-store` and `noindex`; the four other Demo redirect slugs return HTTP 404.
+- **Detected:** desktop and mobile browser checks show no horizontal overflow or external links. Northstar renders rating, three media assets, payment, explicitly fictional licence and non-live bonus presentation with `Needs review`, `Licence not verified` and `Official site unavailable`; Lantern renders the structured editorial-review contract.
+- **Detected:** country, payment, published-bonus, available-visit and crypto filters select the expected manifest subsets.
+- **Detected:** targeted public/manifest regressions, typecheck, Prisma validation and production build pass. No Prisma schema or migration file changed.

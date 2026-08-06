@@ -18,11 +18,11 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Legacy Figma foundation baseline recorded: 7 collections, 77 variables, semantic Light / Ink / Help collections, 10 Manrope text styles, and 3 elevation styles
 
+✅ RFC-012 temporary production synthetic casino dataset — [PR #20](https://github.com/AlexG-7BE/sevenbet-next/pull/20) provides five deterministic, clearly fictional `demo-*` profiles and exact-ID cleanup on the current schema. The records are published on the production URL through the existing Casino Builder/publication contracts; Northstar is the sole internal-only controlled redirect, the other four commercial actions are unavailable, and production database plus responsive browser smoke checks pass. No schema change, migration, separate Demo environment or RFC-011 fixture adapter is included.
+
 ## In Progress
 
 🟨 Product Master Plan
-
-🟨 RFC-012 temporary production synthetic casino dataset — Founder Office approved five deterministic, clearly fictional `demo-*` profiles in the current production database for product validation and partner presentations. The existing Casino Builder/publication path is authoritative; no schema change, migration, separate Demo environment or RFC-011 fixture adapter is included. Exact-ID cleanup and internal-only controlled redirect behaviour are required before release completion.
 
 ✅ Documentation-only Frontend Migration Audit — all 59 approved Figma screen families are mapped to current Next.js evidence and P0 work packages in `docs/02_Product_Design/Frontend-Migration-Audit-and-P0-Implementation-Plan.md`. The audit records 0 `PARITY`, 11 `CLOSE_PARITY`, 14 `PARTIAL`, 21 `STALE`, 3 `PLACEHOLDER`, 3 `FRONTEND_MISSING`, 3 `BLOCKED_BY_DATA` and 4 `BLOCKED_BY_PRODUCT`. `/self-check` and `/tools/budget-calculator` remain P0 as `P0_REDESIGN_REQUIRED`; their current mechanics are not approved, and production release is blocked by FE-SAFETY-01 plus separate product/privacy/compliance/Figma approval. No application, backend, API, Prisma or Figma change was made.
 
