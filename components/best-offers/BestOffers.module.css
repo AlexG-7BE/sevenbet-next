@@ -26,6 +26,7 @@
 .hero h1 span, .hero h1 em { display: block; }
 .hero h1 em { font-family: var(--font-seven-serif), Georgia, serif; font-weight: 400; line-height: 1.02; }
 .heroCopy { max-width: 650px; margin: 0; color: var(--on-night-muted); font-size: 18px; line-height: 27px; letter-spacing: -.15px; }
+.mobileHeroSignals { display: none; }
 .heroActions { margin-top: 48px; display: flex; align-items: center; gap: 68px; }
 .heroActions a, .lightCta { min-height: 50px; padding: 17px 26px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--acid); color: var(--ink); font-size: 12px; line-height: 16px; font-weight: 700; }
 .heroActions span { color: var(--on-night-muted); font-size: 13px; line-height: 19px; }
@@ -236,56 +237,146 @@
 
 @media (max-width: 700px) {
   .shell { width: calc(100% - 32px); }
-  .hero h1 { font-size: clamp(50px, 15vw, 74px); }
-  .heroActions { align-items: flex-start; flex-direction: column; gap: 18px; }
-  .shortlistSection { height: auto; min-height: 0; padding: 64px 0; }
-  .shortlistIntro h2, .methodSection h2, .fitSection h2, .fullRankIntro h2, .evidenceSection h2, .related h2 { font-size: 46px; line-height: 48px; }
-  .productStage { height: 720px; margin-top: 36px; border-radius: 22px; }
-  .productViewport { top: 28px; width: min(420px, calc(100% - 40px)); height: 620px; }
-  .productCard { width: 100%; height: 620px; padding: 20px; gap: 14px; border-radius: 30px; }
-  .productCard h3 { height: 92px; font-size: 46px; line-height: 47px; }
-  .productTop > span { max-width: calc(100% - 64px); }
-  .whyCard { height: 98px; flex-basis: 98px; }
-  .stageArrow { top: auto; bottom: 24px; }
-  .stageArrowPrevious { left: 22px; }
-  .stageArrowNext { right: 22px; }
-  .stageDots { bottom: 38px; }
-  .metrics { margin-top: 48px; grid-template-columns: 1fr; gap: 26px; }
-  .metrics > div, .metrics > div + div { padding: 0 0 26px; border-bottom: 1px solid var(--line); }
+  .kicker { font-size: 11px; line-height: 14px; }
+
+  .hero { height: auto; min-height: 0; }
+  .heroInner { padding-block: 44px 48px; }
+  .hero h1 { margin: 18px 0 20px; font-size: clamp(42px, 11.5vw, 48px); line-height: .96; letter-spacing: -.045em; text-wrap: balance; }
+  .hero h1 em { margin-top: 4px; font-size: .9em; line-height: .98; }
+  .heroCopy { color: var(--white); font-size: 17px; line-height: 25px; text-wrap: pretty; }
+  .mobileHeroSignals { margin-top: 22px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .mobileHeroSignals::-webkit-scrollbar { display: none; }
+  .mobileHeroSignals span { min-height: 32px; padding: 9px 12px; display: inline-flex; align-items: center; flex: 0 0 auto; border-radius: 999px; background: var(--deep); color: var(--white); font-size: 10px; line-height: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .mobileHeroSignals span:first-child { background: var(--acid); color: var(--ink); }
+  .heroActions { margin-top: 28px; align-items: flex-start; flex-direction: column; gap: 14px; }
+  .heroActions a { min-height: 48px; width: 100%; }
+  .heroActions span { font-size: 12px; line-height: 17px; }
+
+  .shortlistSection { height: auto; min-height: 0; padding: 52px 0 56px; }
+  .shortlistIntro h2, .methodSection h2, .fitSection h2, .fullRankIntro h2, .evidenceSection h2, .related h2 { font-size: 42px; line-height: 43px; letter-spacing: -.9px; text-wrap: balance; }
+  .shortlistIntro p { margin-top: 20px; font-size: 16px; line-height: 24px; text-wrap: pretty; }
+  .productStage { height: 646px; margin-top: 32px; border-radius: 24px; }
+  .productViewport { top: 20px; width: calc(100% - 24px); height: 548px; border-radius: 28px; }
+  .productCard { width: 100%; height: 548px; padding: 18px; gap: 11px; border-radius: 28px; }
+  .productTop { height: 44px; }
+  .productTop > span { max-width: calc(100% - 60px); padding: 8px 10px; font-size: 10px; line-height: 14px; }
+  .productTop > strong { min-width: 48px; height: 48px; padding: 8px; font-size: 25px; line-height: 28px; }
+  .operatorName { height: 14px; font-size: 10px; line-height: 14px; }
+  .productCard h3 { height: 78px; font-size: 39px; line-height: 40px; letter-spacing: -1px; }
+  .productTerms { height: 120px; flex-basis: 120px; }
+  .productTerms > div { height: 40px; padding-inline: 10px; grid-template-columns: minmax(0, .85fr) minmax(0, 1.15fr); font-size: 12px; line-height: 16px; }
+  .whyCard { height: 82px; padding: 13px; flex-basis: 82px; border-radius: 14px; }
+  .whyCard span { margin-bottom: 5px; font-size: 10px; line-height: 13px; }
+  .whyCard p { font-size: 12px; line-height: 16px; -webkit-line-clamp: 2; }
+  .cardCta { min-height: 48px; padding: 14px 20px; }
+  .cardDisclosure { margin-top: 0; font-size: 10px; line-height: 14px; white-space: normal; }
+  .stageArrow { top: auto; bottom: 16px; width: 48px; height: 48px; padding-bottom: 3px; font-size: 24px; line-height: 28px; }
+  .stageArrowPrevious { left: 16px; }
+  .stageArrowNext { right: 16px; }
+  .stageDots { bottom: 26px; min-width: 68px; height: 28px; gap: 8px; }
+  .stageDots button { width: 7px; height: 7px; }
+  .stageDots button[aria-current="true"] { width: 20px; }
+  .metrics { margin-top: 30px; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .metrics > div, .metrics > div + div { min-height: 126px; padding: 18px; border: 1px solid #d8d7d0; border-radius: 18px; background: var(--white); }
+  .metrics > div:last-child { grid-column: 1 / -1; }
   .metrics > div:not(:last-child)::after { display: none; }
-  .metrics strong { font-size: 44px; line-height: 46px; }
-  .methodSection, .fitSection, .evidenceSection, .faq, .related { padding-block: 72px; }
-  .methodCards { gap: 16px; }
-  .fitTabs { grid-template-columns: 1fr; }
-  .fitTabs button { min-height: 64px; }
-  .fitStage { height: 920px; }
-  .stageDisc { top: 80px; width: 380px; height: 380px; }
-  .fitStage > .productCard { top: 42px; width: min(420px, calc(100% - 32px)); }
-  .fitNoteLeft { top: 690px; left: 24px; width: calc(50% - 34px); }
-  .fitNoteRight { right: 24px; bottom: 24px; width: calc(50% - 34px); }
-  .fitNoteLeft p, .fitNoteRight p { margin-top: 12px; font-size: 17px; line-height: 21px; }
-  .decisionStrip { grid-template-columns: 1fr; gap: 32px; }
-  .fullRankSection { padding-block: 72px; }
-  .fullShortlist { margin-top: 44px; }
-  .fullShortlist > summary { min-height: 84px; padding: 15px 15px 15px 22px; border-radius: 26px; }
+  .metrics strong { height: auto; font-size: 28px; line-height: 31px; letter-spacing: -.6px; overflow-wrap: anywhere; }
+  .metrics span { margin-top: 12px; font-size: 12px; line-height: 17px; }
+  .dataNote { margin-top: 20px; font-size: 11px; line-height: 17px; text-align: left; }
+
+  .methodSection, .fitSection, .evidenceSection, .faq, .related { padding-block: 64px; }
+  .methodSupport, .fitSupport, .evidenceSupport { margin-top: 24px; font-size: 16px; line-height: 24px; text-wrap: pretty; }
+  .methodSupport, .fitSupport { color: var(--white); }
+  .lightCta { width: 100%; min-height: 48px; margin-top: 30px; }
+  .methodCards { margin-top: 52px; gap: 12px; }
+  .methodCards li { height: auto; min-height: 188px; padding: 20px; border-radius: 20px; }
+  .methodCards h3 { margin: 28px 0 12px; font-size: 26px; line-height: 29px; }
+  .methodCards p { font-size: 13px; line-height: 19px; }
+  .editorialBoundary { min-height: 0; margin-top: 48px; padding: 22px; grid-template-columns: 1fr; gap: 20px; border-radius: 20px; }
+  .editorialBoundary strong { font-size: 28px; line-height: 30px; letter-spacing: -.5px; }
+
+  .fitTabs { margin: 36px -16px 0; padding: 0 16px 8px; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(214px, 78vw); grid-template-columns: none; gap: 10px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .fitTabs::-webkit-scrollbar { display: none; }
+  .fitTabs button { min-height: 66px; padding: 16px 18px; gap: 18px; scroll-snap-align: start; font-size: 14px; line-height: 20px; }
+  .fitStage { height: auto; margin-top: 24px; padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; border-radius: 24px; isolation: isolate; }
+  .stageDisc { top: 46px; width: 320px; height: 320px; z-index: 0; }
+  .fitStage > .productCard { position: relative; top: auto; left: auto; width: 100%; transform: none; z-index: 1; grid-row: 1; }
+  .fitNoteLeft, .fitNoteRight { position: relative; inset: auto; width: 100%; padding: 17px; border: 1px solid rgba(16, 15, 15, .2); border-radius: 16px; background: rgba(255, 255, 255, .62); z-index: 1; }
+  .fitNoteLeft { grid-row: 2; }
+  .fitNoteRight { grid-row: 3; }
+  .fitNoteLeft p, .fitNoteRight p { margin-top: 9px; font-size: 17px; line-height: 21px; }
+  .fitBucket { position: relative; inset: auto; padding: 4px 2px 0; transform: none; font-size: 10px; line-height: 14px; grid-row: 4; }
+  .decisionStrip { min-height: 0; margin: 24px -16px 0; padding: 0 16px 8px; display: flex; gap: 10px; overflow-x: auto; border-radius: 0; background: transparent; scroll-snap-type: x mandatory; scrollbar-width: none; }
+  .decisionStrip::-webkit-scrollbar { display: none; }
+  .decisionStrip div { min-width: 236px; min-height: 166px; padding: 20px; flex: 0 0 72vw; border-radius: 20px; background: var(--deep); scroll-snap-align: start; }
+  .decisionStrip strong { margin-top: 16px; font-size: 25px; line-height: 28px; }
+
+  .fullRankSection { padding-block: 64px; }
+  .fullRankIntro { gap: 22px; }
+  .fullRankIntro > p { font-size: 15px; line-height: 23px; }
+  .fullShortlist { margin-top: 36px; }
+  .fullShortlist > summary { min-height: 84px; padding: 14px 14px 14px 20px; border-radius: 24px; }
   .fullShortlist > summary span { align-items: flex-start; flex-direction: column; gap: 2px; }
   .fullShortlist > summary strong { font-size: 20px; line-height: 25px; }
+  .fullShortlist > summary small { font-size: 11px; line-height: 16px; }
   .fullShortlist > summary b { width: 52px; height: 52px; flex-basis: 52px; }
-  .rankedGrid { grid-template-columns: 1fr; gap: 16px; }
-  .rankedCard { min-height: 630px; }
-  .editorialDesk { margin-top: 72px; padding: 28px; }
-  .editorialDesk blockquote { font-size: 46px; }
-  .relatedCards { grid-template-columns: 1fr; }
-  .relatedCards a { min-height: 340px; }
-  .relatedCards strong { font-size: 36px; line-height: 39px; }
+  .rankedGrid { margin-top: 18px; grid-template-columns: 1fr; gap: 14px; }
+  .rankedCard { min-height: 0; padding: 20px; border-radius: 22px; }
+  .rankedCard h3 { min-height: 0; margin-bottom: 18px; font-size: 29px; line-height: 32px; }
+  .rankedTerms > div { min-height: 44px; padding-inline: 10px; }
+  .rankedReason { min-height: 0; }
+  .rankedReason p { -webkit-line-clamp: unset; }
+  .rankedConditions { min-height: 0; }
+  .rankedConditions p { white-space: normal; text-overflow: clip; }
+  .rankedCta { min-height: 48px; }
+  .fullRankFootnote { margin-top: 20px; }
+
+  .evidenceCards { margin-top: 40px; gap: 12px; }
+  .evidenceCards article { min-height: 232px; padding: 22px; border-radius: 20px; }
+  .evidenceCards h3 { margin: 38px 0 14px; font-size: 27px; line-height: 30px; }
+  .editorialDesk { height: auto; margin-top: 52px; padding: 22px; grid-template-columns: 1fr; gap: 28px; border-radius: 22px; }
+  .editorialDesk blockquote { margin: 30px 0 22px; font-size: 42px; line-height: .98; }
+  .editorialDesk > div > p:last-child { font-size: 14px; line-height: 22px; }
+  .rankSnapshot { min-height: 0; padding: 22px; border-radius: 20px; }
+  .rankSnapshot h3 { margin: 22px 0 16px; font-size: 36px; line-height: 38px; }
+
+  .faqGrid { gap: 42px; }
+  .faqIntro h2 { font-size: 48px; line-height: .96; }
+  .faqIntro aside { margin-top: 32px; padding: 20px; border-radius: 18px; }
+  .faqIntro aside strong { font-size: 20px; line-height: 24px; }
+  .faqList summary { min-height: 78px; font-size: 16px; line-height: 22px; }
+  .faqList p { font-size: 14px; line-height: 22px; }
+
+  .relatedCards { margin-top: 40px; grid-template-columns: 1fr; gap: 12px; }
+  .relatedCards a { min-height: 300px; padding: 24px; border-radius: 22px; }
+  .relatedCards strong { margin-top: 28px; font-size: 32px; line-height: 35px; }
+  .relatedCards p { font-size: 14px; line-height: 22px; }
+  .demoDisclosure { padding: 22px 0 calc(22px + env(safe-area-inset-bottom)); }
+  .demoDisclosure p { font-size: 11px; line-height: 17px; }
+
+  .statePage { min-height: 0; padding: 48px 0; }
+  .statePanel { padding: 24px; border-radius: 20px; }
+  .statePanel h1, .statePanel h3 { font-size: 40px; line-height: 41px; }
+  .statePanel a, .statePanel button { width: 100%; margin-right: 0; justify-content: center; }
+  .loadingCard { height: 560px; margin-top: 32px; border-radius: 22px; }
 }
 
 @media (max-width: 420px) {
-  .productTop > span { padding-inline: 10px; font-size: 10px; }
-  .productCard h3 { font-size: 40px; line-height: 42px; }
-  .productTerms > div { padding-inline: 8px; }
-  .cardDisclosure { font-size: 11px; }
-  .fitNoteLeft p, .fitNoteRight p { font-size: 15px; line-height: 19px; }
+  .hero h1 { font-size: 40px; line-height: 40px; }
+  .shortlistIntro h2, .methodSection h2, .fitSection h2, .fullRankIntro h2, .evidenceSection h2, .related h2 { font-size: 38px; line-height: 40px; }
+  .productStage { height: 632px; }
+  .productViewport { width: calc(100% - 20px); }
+  .productCard { padding-inline: 16px; }
+  .productCard h3 { font-size: 35px; line-height: 37px; }
+  .productTerms > div { padding-inline: 8px; font-size: 11px; }
+  .metrics strong { font-size: 25px; line-height: 28px; }
+  .fitTabs { grid-auto-columns: 82vw; }
+  .fitStage { padding: 10px; }
+  .fitNoteLeft p, .fitNoteRight p { font-size: 16px; line-height: 20px; }
+  .decisionStrip div { flex-basis: 78vw; }
+  .fullShortlist > summary { padding-left: 17px; }
+  .fullShortlist > summary b { width: 48px; height: 48px; flex-basis: 48px; }
+  .rankedCard { padding: 18px; }
 }
 
 @media (prefers-reduced-motion: reduce) { .productTrack { transition: none; } .loadingCard { animation: none; } }
