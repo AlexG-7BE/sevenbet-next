@@ -6,6 +6,10 @@ Base: `12c2d278d7291a7253be42f75fe84ef3fcab37ef`
 
 Branch: `codex/fe-mig-07-bonuses`
 
+PR: [#25](https://github.com/AlexG-7BE/sevenbet-next/pull/25)
+
+Preview: [Vercel deployment](https://sevenbet-next-git-codex-fe-mig-07-bonuses-alexg-7bes-projects.vercel.app/bonuses)
+
 ## Evidence boundary
 
 **Detected:** the repository root is `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`. The 657 tracked files were inventoried before this handoff; dependencies, `.next`, caches, generated test output and `tsconfig.tsbuildinfo` are excluded from implementation claims.
@@ -78,6 +82,6 @@ The browser suite covers default 24 offers, page 2, each supported filter, all s
 
 ## Remaining delivery gates
 
-**Planned:** push the branch, open a separate PR against `main`, wait for Vercel Preview, run Preview desktop/mobile/no-JavaScript smoke and leave merge to Founder Office review.
+**Detected:** the branch is pushed and separate PR #25 targets `main`. Vercel Preview smoke and Founder Office review remain delivery gates; automatic merge is prohibited.
 
 **Inferred:** the local production build warning about a direct Prisma endpoint reflects local environment configuration, not this frontend change; Prisma validation and database-backed runtime tests pass, and no connection configuration changed.
