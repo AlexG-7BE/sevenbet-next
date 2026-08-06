@@ -71,6 +71,7 @@ The approved Figma family is the visual source of truth. Refero research was use
 - `npx prisma validate` — passed.
 - `npm run build` — passed; `/bonuses` remains dynamic SSR.
 - `git diff --check` — passed before delivery.
+- Protected Vercel Preview smoke — 24 default records, page-2 ItemList position 25, every URL control, combined/empty states, available/unavailable actions, canonical/noindex, SSR GET forms, 1,440/320 overflow, `/best-offers` regression and zero `/bonuses` console or hydration errors passed.
 
 The browser suite covers default 24 offers, page 2, each supported filter, all sorts, combined filters, empty results, available/unavailable presentation, material terms, canonical/noindex, ItemList positions, raw SSR HTML, no-JavaScript controls and pagination, mobile dialog focus behavior, keyboard focus and the full width matrix.
 
@@ -82,6 +83,6 @@ The browser suite covers default 24 offers, page 2, each supported filter, all s
 
 ## Remaining delivery gates
 
-**Detected:** the branch is pushed and separate PR #25 targets `main`. Vercel Preview smoke and Founder Office review remain delivery gates; automatic merge is prohibited.
+**Detected:** the branch is pushed and separate PR #25 targets `main`. The protected Vercel Preview is Ready and desktop/mobile/no-JavaScript smoke passes. Preview smoke identified and closed framework prefetch of governed `/r/` actions; those links now request only after explicit user action. Founder Office review remains the delivery gate; automatic merge is prohibited.
 
 **Inferred:** the local production build warning about a direct Prisma endpoint reflects local environment configuration, not this frontend change; Prisma validation and database-backed runtime tests pass, and no connection configuration changed.
