@@ -10,7 +10,9 @@
 - **Detected in PR #20:** a dedicated public-offer DTO/query/result contract, repository, query parser and service built on the existing public casino snapshot store.
 - **Detected in PR #20:** SSR `/best-offers` and `/bonuses` consumers plus deterministic filters, sorts, facets, pagination, metadata and no-JavaScript output.
 - **Detected in PR #20:** a factory-driven exact-25 manifest, 75 media assets, five internal-only routes, exact-ID cleanup and bounded production verification.
-- **Planned:** deployment, v2 production seed and final production smoke evidence.
+- **Detected in production:** application commit `5c05b54` is deployed; the projection returns 25 eligible offers, 18 for the GB filter and 12 in the default shortlist. Page two of the 24-record directory contains the remaining record.
+- **Detected in production:** deterministic country/type/payment/crypto/deposit/wagering/availability filters return server-rendered results, five internal-only actions resolve to the owning SevenBet profiles, and public HTML contains no external action href.
+- **Detected in production:** a repeated seed leaves all 25 published snapshots unchanged; standalone verification reports `issues: []`; responsive/no-JavaScript Playwright smoke passes 10/10.
 
 ## Authority chain
 

@@ -82,3 +82,7 @@ The implementation must not add a search engine, cache service, materialized vie
 ## Rollback
 
 Run the dedicated exact-ID cleanup command, confirm every manifest casino and affiliate ID is absent, then verify that the four public routes no longer return manifest records. Cleanup is intentionally incapable of deleting records outside the manifest.
+
+## Implementation evidence
+
+Implemented and production-deployed on 2026-08-06 in PR #20 at application commit `5c05b54`. Production verification detects exactly 25 published manifest casinos, 25 eligible offers, 18 GB-eligible offers, 12 default shortlist records, 75 media assets, five controlled internal routes and no issues. A repeated seed leaves all 25 publication versions unchanged. Production desktop/mobile, URL-filter, no-JavaScript and overflow smoke passes 10/10. No schema change, migration, separate Demo infrastructure or external gambling destination was introduced.

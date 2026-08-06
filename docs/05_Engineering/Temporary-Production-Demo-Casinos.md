@@ -68,7 +68,10 @@ After production seed:
 
 ## Evidence
 
-- **Detected:** the v1 production dataset currently contains the original five published records and Northstar internal route.
-- **Detected:** the v2 read-only production audit finds those five expected identities, an eligible governed actor and no collisions after preserving Northstar's existing casino-level route contract.
-- **Detected:** local manifest/public-offer tests, typecheck, Prisma validation, production build and responsive/no-JavaScript offer-page smoke pass.
-- **Planned:** production deployment, v2 seed, repeated convergence check and final production browser evidence.
+- **Detected:** application commit `5c05b54` is deployed at `https://sevenbet-next.vercel.app`; the production build completed successfully.
+- **Detected:** the v2 production seed published exactly 25 manifest casinos through the existing CMS workflow. Verification reports 25 eligible offers, 18 GB-eligible offers, the required 12-record default shortlist, five controlled routes and `issues: []`.
+- **Detected:** a second production seed classified all 25 records as `Unchanged`; no casino publication version increased and the same five routes were upserted.
+- **Detected:** each representative production profile renders logo, hero, screenshot, score, bonus, country/payment/licence context and pros/cons. Across the manifest, 75 deterministic SVG assets are present.
+- **Detected:** production `/best-offers` returns 12 records. Unfiltered `/bonuses` returns 25 with 24 on page one and one on page two; observed filter totals are GB 18, free spins 4, Visa 25, crypto 6, maximum deposit 10 = 16, maximum wagering 30 = 13 and available action = 5.
+- **Detected:** `/r/demo-northstar`, `/r/demo-harbour`, `/r/demo-atlas`, `/r/demo-lantern` and `/r/demo-summit` return `302` only to their own SevenBet profiles; `/r/demo-meadow` returns `404`. Public offer/profile HTML contains no external action href.
+- **Detected:** focused public-offer and public-casino tests, typecheck, Prisma validation, local and Vercel production builds pass. Production Playwright discovery/offer desktop, mobile, URL-authority, no-JavaScript and overflow smoke passes 10/10.
