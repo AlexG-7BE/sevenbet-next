@@ -58,6 +58,11 @@ test("offer pages have no horizontal overflow at desktop and mobile widths", asy
     for (const path of ["/best-offers", "/bonuses?country=GB&sort=lowest-deposit"]) {
       const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
       expect(response?.status(), `${path} at ${width}px`).toBe(200);
+      if (path === "/best-offers" && width <= 390) {
+        const comparison = page.getByText("Compare all 12", { exact: true });
+        await comparison.click();
+        await expect(page.getByTestId("ranked-offer-card")).toHaveCount(12);
+      }
       expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${path} at ${width}px`).toBe(false);
     }
     await page.close();
