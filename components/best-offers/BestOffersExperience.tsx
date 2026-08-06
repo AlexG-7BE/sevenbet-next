@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
-import { offerWithdrawalBucket, type BestFitCriterion } from "@/lib/public-offer/best-offer-ranking";
+import { offerWithdrawalBucket, shortlistReason, type BestFitCriterion } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 
 import styles from "./BestOffers.module.css";
@@ -64,6 +64,42 @@ function ProductCard({ criterion, offer }: { criterion: BestFitCriterion; offer:
     </div>
     <Link className={styles.cardCta} href={`/casino/${offer.casino.slug}`}>View full terms</Link>
     <p className={styles.cardDisclosure}>18+ · Illustrative operator · Affiliate disclosure</p>
+  </article>;
+}
+
+function RankedOfferCard({ index, offer, winners }: {
+  index: number;
+  offer: PublicOfferDTO;
+  winners: Record<BestFitCriterion, PublicOfferDTO | null>;
+}) {
+  const badges = criteria.filter((key) => winners[key]?.casino.id === offer.casino.id && winners[key]?.bonus.id === offer.bonus.id);
+  const licence = offer.casino.licenses.find((item) => item.status === "ACTIVE") ?? offer.casino.licenses[0];
+
+  return <article className={styles.rankedCard} data-testid="ranked-offer-card">
+    <div className={styles.rankedCardTop}>
+      <span className={styles.rankNumber}>{String(index + 1).padStart(2, "0")}</span>
+      <strong aria-label={`Editorial score ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}<small>/10</small></strong>
+    </div>
+    <div className={styles.rankedBadges}>{badges.map((key) => <span key={key}>{criterionLabels[key]}</span>)}</div>
+    <p className={styles.rankedOperator}>{offer.casino.name}</p>
+    <h3>{offer.bonus.title}</h3>
+    <dl className={styles.rankedTerms}>
+      <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}× bonus`}</dd></div>
+      <div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div>
+      <div><dt>Max bonus</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency)}</dd></div>
+      <div><dt>Payout signal</dt><dd>{payoutSignal(offer)}</dd></div>
+      <div><dt>Licence context</dt><dd>{licence?.authority ?? "Not published"}</dd></div>
+    </dl>
+    <div className={styles.rankedReason}>
+      <span>Why it ranks</span>
+      <p>{shortlistReason(offer)}</p>
+    </div>
+    <div className={styles.rankedConditions}>
+      <p><strong>Eligibility:</strong> {offer.bonus.eligibility || "Check full terms"}</p>
+      <p><strong>Material condition:</strong> {offer.bonus.importantConditions[0] || "Check full terms"}</p>
+    </div>
+    <Link className={styles.rankedCta} href={`/casino/${offer.casino.slug}`}>View full terms <span aria-hidden="true">→</span></Link>
+    <p className={styles.rankedDisclosure}>Editorial rank · Commission is not a ranking input</p>
   </article>;
 }
 
@@ -169,6 +205,28 @@ export function BestOffersExperience({ shortlist, winners }: {
           <div><span>02</span><strong>Wagering</strong><p>Prioritises a lower play-through requirement.</p></div>
           <div><span>03</span><strong>Payout</strong><p>Prioritises a clearer, faster withdrawal signal.</p></div>
         </div>
+      </div>
+    </section>
+
+    <section className={styles.fullRankSection} aria-labelledby="full-rank-title">
+      <div className={styles.shell}>
+        <div className={styles.fullRankIntro}>
+          <div>
+            <p className={styles.kicker}>All eligible records · one published order</p>
+            <h2 id="full-rank-title">The full ranked field.</h2>
+          </div>
+          <p>The three selectors above answer the quickest questions. Open the full field when you want to compare every eligible record, material term and editorial signal.</p>
+        </div>
+        <details className={styles.fullShortlist}>
+          <summary>
+            <span><strong>Compare all {shortlist.length}</strong><small>Every eligible offer, ranked and explained</small></span>
+            <b aria-hidden="true">+</b>
+          </summary>
+          <div className={styles.rankedGrid}>
+            {shortlist.map((offer, index) => <RankedOfferCard index={index} key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} winners={winners} />)}
+          </div>
+        </details>
+        <p className={styles.fullRankFootnote}>Ranking uses market eligibility, material-term completeness and editorial evidence. Withdrawal timing is a published signal, not a guarantee.</p>
       </div>
     </section>
 

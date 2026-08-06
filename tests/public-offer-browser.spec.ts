@@ -12,6 +12,18 @@ test("best offers is server rendered with material terms before governed actions
   const activeCard = page.getByRole("region", { name: "Best offer selectors" }).locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]');
   const cardText = await activeCard.innerText();
   expect(cardText.indexOf("Wagering")).toBeLessThan(cardText.indexOf("View full terms"));
+  await expect(page.getByText("Compare all 12", { exact: true })).toBeVisible();
+  expect(await page.getByTestId("ranked-offer-card").count()).toBe(12);
+});
+
+test("Best Offers exposes all ranked records as an accessible comparison", async ({ page }) => {
+  await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
+  await page.getByText("Compare all 12", { exact: true }).click();
+  const cards = page.getByTestId("ranked-offer-card");
+  await expect(cards.first()).toBeVisible();
+  await expect(cards.first()).toContainText("Why it ranks");
+  await expect(cards.first()).toContainText("Commission is not a ranking input");
+  expect(await cards.count()).toBe(12);
 });
 
 test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page }) => {
@@ -67,6 +79,8 @@ test("Best Offers HTML remains useful without JavaScript and has truthful ItemLi
   const html = await response.text();
   expect(html).toContain("One headline. The full decision.");
   expect(html).toContain("Find your best fit.");
+  expect(html).toContain("The full ranked field.");
+  expect((html.match(/data-testid="ranked-offer-card"/g) ?? []).length).toBe(12);
   expect(html).toContain("Illustrative pre-launch offer data.");
   expect(html).toContain('"@type":"ItemList"');
   expect(html).not.toContain('"@type":"Offer"');

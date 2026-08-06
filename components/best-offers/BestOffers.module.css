@@ -106,6 +106,45 @@
 .decisionStrip strong { display: block; margin-top: 18px; font-size: 30px; line-height: 34px; letter-spacing: -.5px; text-transform: uppercase; }
 .decisionStrip p { margin: 10px 0 0; color: var(--on-night-muted); font-size: 13px; line-height: 19px; }
 
+.fullRankSection { padding: 92px 0 116px; background: var(--night); color: var(--white); }
+.fullRankIntro { display: grid; grid-template-columns: 1.4fr .7fr; align-items: end; gap: 70px; }
+.fullRankIntro h2 { max-width: 820px; margin: 28px 0 0; font-size: 72px; line-height: 74px; letter-spacing: -1.7px; }
+.fullRankIntro > p { max-width: 470px; margin: 0 0 6px; color: var(--on-night-muted); font-size: 16px; line-height: 24px; }
+.fullShortlist { margin-top: 66px; }
+.fullShortlist > summary { min-height: 96px; padding: 18px 22px 18px 30px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-radius: 999px; background: var(--acid); color: var(--ink); cursor: pointer; list-style: none; }
+.fullShortlist > summary::-webkit-details-marker { display: none; }
+.fullShortlist > summary span { display: flex; align-items: baseline; gap: 22px; }
+.fullShortlist > summary strong { font-size: 24px; line-height: 30px; letter-spacing: -.3px; }
+.fullShortlist > summary small { font-size: 13px; line-height: 19px; }
+.fullShortlist > summary b { width: 58px; height: 58px; display: grid; place-items: center; flex: 0 0 58px; border-radius: 50%; background: var(--night); color: var(--white); font-size: 34px; line-height: 1; font-weight: 400; transition: transform .2s ease; }
+.fullShortlist[open] > summary b { transform: rotate(45deg); }
+.fullShortlist > summary:focus-visible { outline: 3px solid var(--white); outline-offset: 4px; }
+.rankedGrid { margin-top: 34px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.rankedCard { min-width: 0; min-height: 662px; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 24px; background: var(--white); color: var(--ink); }
+.rankedCardTop { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.rankNumber { font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .05em; }
+.rankedCardTop > strong { min-width: 74px; padding: 9px 12px; border-radius: 999px; background: var(--night); color: var(--white); font-size: 22px; line-height: 26px; text-align: center; }
+.rankedCardTop small { margin-left: 2px; color: var(--on-night-muted); font-size: 10px; font-weight: 400; }
+.rankedBadges { min-height: 30px; margin-top: 9px; display: flex; flex-wrap: wrap; gap: 6px; }
+.rankedBadges span { padding: 7px 10px; border-radius: 999px; background: var(--soft); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.rankedOperator { margin: 24px 0 0; overflow: hidden; color: var(--muted); font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; white-space: nowrap; text-overflow: ellipsis; }
+.rankedCard h3 { min-height: 68px; margin: 10px 0 20px; display: -webkit-box; overflow: hidden; font-size: 30px; line-height: 34px; letter-spacing: -.5px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.rankedTerms { margin: 0; }
+.rankedTerms > div { min-height: 42px; padding: 10px 12px; display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: center; gap: 12px; background: var(--paper); font-size: 12px; line-height: 16px; }
+.rankedTerms > div + div { border-top: 1px solid #e8e7e0; }
+.rankedTerms dt { color: var(--muted); }
+.rankedTerms dd { margin: 0; overflow: hidden; font-weight: 600; text-align: right; white-space: nowrap; text-overflow: ellipsis; }
+.rankedReason { min-height: 112px; margin-top: 16px; padding: 15px; border-radius: 16px; background: var(--soft); }
+.rankedReason span { color: var(--muted); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
+.rankedReason p { margin: 7px 0 0; display: -webkit-box; overflow: hidden; font-size: 12px; line-height: 17px; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.rankedConditions { min-height: 58px; margin: 12px 0 14px; overflow: hidden; color: var(--muted); font-size: 11px; line-height: 15px; }
+.rankedConditions p { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rankedConditions p + p { margin-top: 5px; }
+.rankedConditions strong { color: var(--ink); }
+.rankedCta { min-height: 48px; margin-top: auto; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-radius: 999px; background: var(--acid); color: var(--ink); font-size: 12px; line-height: 16px; font-weight: 700; }
+.rankedDisclosure { margin: 12px 0 0; color: var(--muted); font-size: 10px; line-height: 14px; text-align: center; }
+.fullRankFootnote { max-width: 760px; margin: 26px 0 0; color: var(--on-night-muted); font-size: 12px; line-height: 18px; }
+
 .evidenceSection { min-height: 1550px; padding: 84px 0 150px; background: var(--white); }
 .evidenceSection .kicker { color: #7a7900; }
 .evidenceSection h2 { font-size: 56px; line-height: 58px; letter-spacing: -1px; }
@@ -180,6 +219,8 @@
   .metrics strong { height: auto; font-size: 38px; line-height: 42px; }
   .methodCards { margin-top: 80px; grid-template-columns: 1fr; }
   .methodSection, .fitSection, .evidenceSection, .faq, .related { min-height: 0; }
+  .fullRankIntro { grid-template-columns: 1fr; align-items: start; gap: 28px; }
+  .rankedGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .editorialBoundary { margin-top: 70px; grid-template-columns: 1fr; }
   .fitTabs { gap: 12px; }
   .fitStage { height: 980px; }
@@ -198,7 +239,7 @@
   .hero h1 { font-size: clamp(50px, 15vw, 74px); }
   .heroActions { align-items: flex-start; flex-direction: column; gap: 18px; }
   .shortlistSection { height: auto; min-height: 0; padding: 64px 0; }
-  .shortlistIntro h2, .methodSection h2, .fitSection h2, .evidenceSection h2, .related h2 { font-size: 46px; line-height: 48px; }
+  .shortlistIntro h2, .methodSection h2, .fitSection h2, .fullRankIntro h2, .evidenceSection h2, .related h2 { font-size: 46px; line-height: 48px; }
   .productStage { height: 720px; margin-top: 36px; border-radius: 22px; }
   .productViewport { top: 28px; width: min(420px, calc(100% - 40px)); height: 620px; }
   .productCard { width: 100%; height: 620px; padding: 20px; gap: 14px; border-radius: 30px; }
@@ -224,6 +265,14 @@
   .fitNoteRight { right: 24px; bottom: 24px; width: calc(50% - 34px); }
   .fitNoteLeft p, .fitNoteRight p { margin-top: 12px; font-size: 17px; line-height: 21px; }
   .decisionStrip { grid-template-columns: 1fr; gap: 32px; }
+  .fullRankSection { padding-block: 72px; }
+  .fullShortlist { margin-top: 44px; }
+  .fullShortlist > summary { min-height: 84px; padding: 15px 15px 15px 22px; border-radius: 26px; }
+  .fullShortlist > summary span { align-items: flex-start; flex-direction: column; gap: 2px; }
+  .fullShortlist > summary strong { font-size: 20px; line-height: 25px; }
+  .fullShortlist > summary b { width: 52px; height: 52px; flex-basis: 52px; }
+  .rankedGrid { grid-template-columns: 1fr; gap: 16px; }
+  .rankedCard { min-height: 630px; }
   .editorialDesk { margin-top: 72px; padding: 28px; }
   .editorialDesk blockquote { font-size: 46px; }
   .relatedCards { grid-template-columns: 1fr; }
