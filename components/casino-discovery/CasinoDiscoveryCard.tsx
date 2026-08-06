@@ -6,6 +6,8 @@ import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
 
+const DIRECTORY_EDITORIAL_MEDIA = "/casino-directory/editorial-media.jpg";
+
 export type CasinoCardClassNames = Record<
   | "casinoCard" | "cardHeader" | "position" | "logo" | "identity" | "score"
   | "description" | "signals" | "signal" | "offerBlock" | "commission"
@@ -60,7 +62,7 @@ export function CasinoDiscoveryCardMarkup({ casino, position, classNames }: { ca
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames }) {
   if (!casino) return <div className={classNames.featurePlaceholder}><span>Published directory</span><strong>Reviews appear only after editorial publication.</strong><p>No placeholder casino or promotional claim is substituted.</p></div>;
   return <section aria-label="Published review preview" className={classNames.featureTheatre}>
-    {casino.hero && <img alt={casino.hero.alt} className={classNames.featureMedia} height={casino.hero.height ?? 720} src={casino.hero.url} width={casino.hero.width ?? 1280} />}
+    <img alt="" aria-hidden="true" className={classNames.featureMedia} height={720} src={DIRECTORY_EDITORIAL_MEDIA} width={1280} />
     <div aria-hidden="true" className={classNames.featureOverlay} />
     <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>Published casino review · 18+</span><h2>Know the operator<br /><em>before the offer.</em></h2><p>Licence, payments, controls and material bonus terms—read in one calm snapshot.</p><div className={classNames.featureMetrics}><span><b>10-point</b> Editor Score</span><span><b>Published</b> evidence</span><span><b>Review</b> before visit</span></div></div>
     <article className={classNames.featureCard}><ReviewCardContents casino={casino} classNames={classNames} /></article>

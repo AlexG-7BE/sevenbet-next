@@ -38,7 +38,7 @@ The approved Figma family is the sole visual source of truth. Refero research wa
 | UI field | Existing server projection |
 | --- | --- |
 | Identity and review links | `id`, `slug`, `name` |
-| Brand and theatre media | published `logo`, published `media.hero` |
+| Brand and theatre media | published `logo`; fixed approved Figma `editorial-media` asset for the decorative theatre background |
 | Editorial evidence | `shortDescription`, `rating`, `publishedAt`, `editorialUpdatedAt` |
 | Comparison signals | published licences, payment methods, providers and categories |
 | Responsible-gambling state | non-empty published `responsibleGamblingTools`; missing data is hidden |
@@ -75,6 +75,12 @@ The approved Figma family is the sole visual source of truth. Refero research wa
 - Protected Vercel Preview smoke — desktop, mobile, JavaScript-disabled mobile GET-filter and metadata checks passed; zero console errors and no horizontal overflow.
 
 The browser suite covers default directory, page 2, country/licence/payment filters, bonus and responsible-gambling booleans, combined filters, empty results, available and unavailable actions, invalid parameters, SSR, a real JavaScript-disabled mobile GET-filter flow, canonical/noindex, ItemList, sorting, page size, keyboard/focus behavior and the full width matrix.
+
+## Post-merge theatre-media correction
+
+**Detected, 2026-08-06:** Figma node `520:2498` maps the Featured Review Theatre `324:8` background to fixed decorative image node `324:9` (`editorial-media`). The initial FE-MIG-06 implementation incorrectly projected and rendered the first result's published `media.hero` in that slot.
+
+**Detected:** the hotfix stores the exact Figma source image at `public/casino-directory/editorial-media.jpg`, renders it with the existing 1,280 × 720 `object-cover` theatre treatment, and removes the unused directory `hero` DTO projection. The first-result review card remains database-driven. Playwright verifies that the approved 2,400 × 3,600 source asset loads, and desktop screenshot QA confirms the intended crop and contrast veil.
 
 ## Guardrail audit
 

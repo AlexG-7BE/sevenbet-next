@@ -41,7 +41,6 @@ export interface PublicCasinoCardDto {
   slug: string;
   name: string;
   logo: PublicMediaDto | null;
-  hero: PublicMediaDto | null;
   shortDescription: string | null;
   rating: number | null;
   reviewCount: number | null;

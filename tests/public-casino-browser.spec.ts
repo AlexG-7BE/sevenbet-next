@@ -12,6 +12,9 @@ test("desktop discovery renders the approved SSR directory without browser error
   await expect(page.getByText(/Search published review snapshots/)).toBeVisible();
   await expect(page.getByText(/Search verified published profiles/)).toHaveCount(0);
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
+  const editorialMedia = page.locator('img[src="/casino-directory/editorial-media.jpg"]');
+  await expect(editorialMedia).toBeVisible();
+  expect(await editorialMedia.evaluate((image: HTMLImageElement) => ({ complete: image.complete, width: image.naturalWidth, height: image.naturalHeight }))).toEqual({ complete: true, width: 2400, height: 3600 });
   await expect(page.getByText("Market preference, not location.").first()).toBeVisible();
   await expect(page.getByRole("status")).toContainText(/Page 1 of/);
   await page.getByLabel("Search published reviews").focus();

@@ -16,7 +16,6 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
     slug: "full-casino",
     name: "Full Casino",
     logo: { url: "https://media.example/full.png", alt: "Full Casino logo", width: 320, height: 160 },
-    hero: null,
     shortDescription: "A published editorial summary.",
     rating: 8.4,
     reviewCount: null,
@@ -68,6 +67,8 @@ test("first-result theatre stays neutral for default, search, sort and later-pag
   for (const context of ["default", "search", "NAME_ASC", "page-2"]) {
     const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
     assert.match(html, /Published casino review/);
+    assert.match(html, /src="\/casino-directory\/editorial-media\.jpg"/);
+    assert.match(html, /alt="" aria-hidden="true"/);
     assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
   }
   const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
