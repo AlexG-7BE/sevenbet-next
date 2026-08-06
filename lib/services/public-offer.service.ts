@@ -1,6 +1,7 @@
 import { getCasinos, type Casino } from "@/lib/data";
 import { mapLegacyCasino } from "@/lib/public-casino/public-casino.mapper";
 import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
+import { selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
 import type {
   PublicOfferDTO,
   PublicOfferFacetValue,
@@ -24,28 +25,6 @@ function stableTieBreak(a: PublicOfferDTO, b: PublicOfferDTO) {
     || textCompare(a.casino.name, b.casino.name)
     || textCompare(a.casino.slug, b.casino.slug)
     || textCompare(a.bonus.slug, b.bonus.slug);
-}
-
-function completeTerms(offer: PublicOfferDTO) {
-  return Number(offer.bonus.minimumDeposit !== null)
-    + Number(offer.bonus.wageringMultiplier !== null || Boolean(offer.bonus.wageringText))
-    + Number(Boolean(offer.bonus.eligibility))
-    + Number(offer.bonus.importantConditions.length > 0);
-}
-
-export function rankBestOffers(offers: PublicOfferDTO[], country = "GB") {
-  return [...offers].sort((a, b) => {
-    const market = (offer: PublicOfferDTO) => Number(offer.casino.countries.some((item) => item.countryCode === country && item.availability === "AVAILABLE"));
-    return market(b) - market(a)
-      || completeTerms(b) - completeTerms(a)
-      || Number(b.casino.featured) - Number(a.casino.featured)
-      || Number(b.casino.recommended) - Number(a.casino.recommended)
-      || b.casino.editorScore - a.casino.editorScore
-      || (a.bonus.wageringMultiplier ?? missingHigh) - (b.bonus.wageringMultiplier ?? missingHigh)
-      || (a.bonus.minimumDeposit ?? missingHigh) - (b.bonus.minimumDeposit ?? missingHigh)
-      || textCompare(a.casino.slug, b.casino.slug)
-      || textCompare(a.bonus.slug, b.bonus.slug);
-  });
 }
 
 function sortOffers(offers: PublicOfferDTO[], sort: PublicOfferQuery["sort"]) {
@@ -158,7 +137,22 @@ export class PublicOfferService {
 
   async getFeaturedOffers(options: { country?: string; limit?: number } = {}) {
     const offers = await this.listEligibleOffers();
-    return rankBestOffers(offers, options.country ?? "GB").slice(0, Math.min(Math.max(options.limit ?? 12, 1), 100));
+    return selectOverallShortlist(offers, { country: options.country ?? "GB", limit: options.limit ?? 12 });
+  }
+
+  async getBestOffersPageData(options: { country?: string; limit?: number } = {}) {
+    const country = options.country ?? "GB";
+    const limit = options.limit ?? 12;
+    if (!this.cmsEnabled()) {
+      const records = await this.getFeaturedOffers({ country, limit });
+      return { status: records.length ? "available" : "no-eligible", records } as const;
+    }
+    try {
+      const records = selectOverallShortlist(await this.repository.listOffers(), { country, limit });
+      return { status: records.length ? "available" : "no-eligible", records } as const;
+    } catch {
+      return { status: "unavailable", records: [] } as const;
+    }
   }
 
   async getOfferFacets() {

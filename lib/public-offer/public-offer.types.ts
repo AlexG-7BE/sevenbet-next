@@ -17,7 +17,17 @@ export interface PublicOfferDTO {
     lastReviewedAt: string | null;
     countries: Array<{ countryCode: string; availability: string }>;
     licenses: Array<{ authority: string; jurisdiction: string | null; status: string }>;
-    payments: Array<{ key: string; name: string; minimumDeposit: number | null; crypto: boolean }>;
+    payments: Array<{
+      key: string;
+      name: string;
+      minimumDeposit: number | null;
+      supportsWithdrawals: boolean;
+      withdrawalTime: string | null;
+      minimumWithdrawal: number | null;
+      maximumWithdrawal: number | null;
+      fees: string | null;
+      crypto: boolean;
+    }>;
     responsibleGamblingTools: string[];
   };
   bonus: {
