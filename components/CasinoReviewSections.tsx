@@ -1,5 +1,6 @@
 import type { Casino } from "@/lib/data";
 import { formatMoney } from "@/lib/data";
+import { casinoOfficialUrl } from "@/lib/site";
 import { AffiliateDisclosure, Badge, Button, Card, FAQ, OfferCard, RiskBadge, Section, VerificationBadge } from "@/components/ui";
 
 export const REVIEW_DATE = "2026-07-10";
@@ -21,7 +22,7 @@ function AffiliateOfferButton({ casino, label = "View Offer" }: { casino: Casino
 
 export function CasinoReviewHero({ casino }: { casino: Casino }) {
   const riskLevel = casino.wagering > 45 || casino.reviewNeeded ? "medium" : "low";
-  const officialUrl = `https://${casino.domain}`;
+  const officialUrl = casinoOfficialUrl(casino.domain);
   const reviewDate = casino.publishedAt ? new Date(casino.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : REVIEW_DATE_LABEL;
 
   return (
@@ -40,10 +41,12 @@ export function CasinoReviewHero({ casino }: { casino: Casino }) {
           <p className="lead">{casino.tagline || casino.description}</p>
           <div className="heroActions">
             <AffiliateOfferButton casino={casino} />
-            <Button href={officialUrl} external rel="noopener" variant="ghost">Visit Official Website</Button>
+            {officialUrl
+              ? <Button href={officialUrl} external rel="noopener" variant="ghost">Visit Official Website</Button>
+              : <span aria-disabled="true" className="button disabled">Official site unavailable</span>}
           </div>
           <div className="trustStrip">
-            <Badge tone="green">Licensed</Badge>
+            <Badge tone={casino.isVerified ? "green" : "warning"}>{casino.isVerified ? "Licensed" : "Licence not verified"}</Badge>
             <Badge tone="green">Reviewed</Badge>
             <Badge tone="warning">Updated {reviewDate}</Badge>
             <Badge>Responsible Gambling Tools Available</Badge>

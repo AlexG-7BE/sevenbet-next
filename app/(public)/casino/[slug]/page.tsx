@@ -25,7 +25,7 @@ import { publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata, safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, casinoOfficialUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -61,10 +61,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 function reviewSchema(casino: Awaited<ReturnType<typeof publicCasinoService.getCasino>>) {
   if (!casino) return null;
+  const officialUrl = casinoOfficialUrl(casino.domain);
   return {
     "@context": "https://schema.org",
     "@type": "Review",
-    itemReviewed: { "@type": "Organization", name: casino.name, url: `https://${casino.domain}` },
+    itemReviewed: { "@type": "Organization", name: casino.name, ...(officialUrl ? { url: officialUrl } : {}) },
     author: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
     publisher: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
     reviewRating: { "@type": "Rating", ratingValue: casino.editorScore, bestRating: 10, worstRating: 0 },
@@ -81,12 +82,31 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
     const revision = editorial.review.revisions.find((item) => item.id === editorial.review.publishedRevisionId);
     if (revision) {
       const document = revision.content;
+      const publishedCasino = await loadCasino(slug);
       const faq = document.sections.flatMap((section) => section.blocks).filter((block): block is Extract<EditorialBlock, { type: "faq" }> => block.type === "faq");
       const schemas = [
         { "@context": "https://schema.org", "@type": "WebPage", name: document.title, description: document.summary, datePublished: editorial.review.publishedAt?.toISOString(), dateModified: revision.createdAt.toISOString() },
         { "@context": "https://schema.org", "@type": "Review", itemReviewed: { "@type": "Organization", name: editorial.casino.title }, author: { "@type": "Person", name: document.author }, reviewRating: document.trustScore ? { "@type": "Rating", ratingValue: document.trustScore.overall, bestRating: 10, worstRating: 0 } : undefined },
         faq.length ? { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) } : null,
       ].filter(Boolean);
+      if (publishedCasino) {
+        const view = publicCasinoToLegacy(publishedCasino);
+        return <>
+          {schemas.map((schema, index) => <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} />)}
+          <CasinoReviewHero casino={view} />
+          <CasinoMediaSection casino={view} />
+          <QuickOverview casino={view} />
+          <WelcomeBonusSection casino={view} />
+          <WageringSection casino={view} />
+          <ProsConsSection casino={view} />
+          <LicensingSafetySection casino={view} />
+          <PaymentsSection casino={view} />
+          <ResponsibleToolsSection />
+          <Section eyebrow="Published editorial review" title={document.title}><p className="lead">{document.summary}</p><p className="muted">Reviewed by {document.author}.</p></Section>
+          <EditorialReviewRenderer document={document} />
+          <MethodologyDisclosureSection />
+        </>;
+      }
       return <>{schemas.map((schema, index) => <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} />)}<section className="pageShell"><div className="container"><p className="eyebrow">Editorial casino review</p><h1>{document.title}</h1><p className="lead">{document.summary}</p></div></section><EditorialReviewRenderer document={document} /><MethodologyDisclosureSection /></>;
     }
   }

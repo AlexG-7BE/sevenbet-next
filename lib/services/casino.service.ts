@@ -47,6 +47,8 @@ import {
 } from "./service-error";
 
 export interface CreateCasinoInput {
+  /** Reserved for deterministic, governed operational seeds. Admin HTTP payloads do not supply it. */
+  id?: string;
   slug: string;
   title: string;
   domain: string;
@@ -102,6 +104,7 @@ const allowedTransitions: Record<EditorialStatus, EditorialStatus[]> = {
   PUBLISHED: [EditorialStatus.DRAFT, EditorialStatus.ARCHIVED],
   ARCHIVED: [EditorialStatus.DRAFT],
 };
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function normalizeUrl(value: string | undefined, domain: string) {
   return normalizeHttpUrl(value, `https://${domain}`);
@@ -386,6 +389,7 @@ export class CasinoService {
     const title = input.title.trim();
     const websiteUrl = normalizeUrl(input.websiteUrl, domain);
 
+    if (input.id && !uuidPattern.test(input.id)) throw new ValidationError("Casino ID must be a UUID");
     if (!slug) throw new ValidationError("Casino slug cannot be empty");
     if (!title) throw new ValidationError("Casino title cannot be empty");
     if (!isValidDomain(domain)) throw new ValidationError("Casino domain is invalid");
@@ -399,6 +403,7 @@ export class CasinoService {
 
     return casinoRepository.create(
       {
+        ...(input.id ? { id: input.id } : {}),
         slug,
         internalName: input.internalName?.trim() || title,
         title,

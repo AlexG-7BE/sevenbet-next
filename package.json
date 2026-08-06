@@ -32,7 +32,13 @@
     "affiliate-integration:test": "node --import tsx --test tests/affiliate-integration-framework.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
+    "public-offer:test": "node --import tsx --test tests/public-offer-service.test.ts",
     "discovery:test": "node --import tsx --test tests/public-casino-discovery.test.ts",
+    "prod:demo-casinos:assets": "tsx scripts/generate-temporary-demo-assets.mjs",
+    "prod:demo-casinos:audit": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts audit",
+    "prod:demo-casinos:seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts seed",
+    "prod:demo-casinos:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts verify",
+    "prod:demo-casinos:cleanup": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/temporary-production-demo-casinos.ts cleanup",
     "fe-mig-04:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
     "typecheck": "tsc --noEmit"
   },
