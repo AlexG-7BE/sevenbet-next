@@ -12,7 +12,7 @@ test("default directory exposes 24 database offers and page two continues at pos
   expect(pageTwo?.status()).toBe(200);
   await expect(page.locator('[role="list"] > article[role="listitem"]')).toHaveCount(24);
   await expect(page.getByText(/Page 2 \/ \d+/)).toBeVisible();
-  await expect(page.getByRole("list").getByText("25", { exact: true })).toBeVisible();
+  await expect(page.getByRole("list").getByText("25", { exact: true }).filter({ visible: true })).toBeVisible();
 });
 
 test("every supported URL filter and sort is server owned", async ({ page }) => {
@@ -48,7 +48,7 @@ test("empty results, material terms and commercial states remain truthful", asyn
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  for (const label of ["Minimum deposit", "Wagering", "Maximum bonus", "Expiry", "Licence", "Payments"]) await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+  for (const label of ["Minimum deposit", "Wagering", "Maximum bonus", "Expiry", "Licence", "Payments"]) await expect(page.getByText(label, { exact: true }).filter({ visible: true }).first()).toBeVisible();
   const governedActions = await page.locator('a[href^="/r/"]').count();
   const unavailableActions = await page.getByText("No governed visit", { exact: true }).count();
   expect(governedActions + unavailableActions).toBeGreaterThan(0);
@@ -104,4 +104,18 @@ test("mobile filter dialog is keyboard dismissible and restores focus", async ({
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
   await expect(trigger).toBeFocused();
+});
+
+test("mobile presentation follows the approved 390px material-object composition", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
+  await expect(page.getByText("Bonus Terms", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Read the contract before the headline." })).toBeVisible();
+  await expect(page.getByText("Full material ledger", { exact: true })).toBeVisible();
+  const hero = page.locator("main > section").first();
+  const feature = page.locator('article[class*="featureCard"]').first();
+  const result = page.locator('[role="list"] > article[role="listitem"]').first();
+  expect(Math.round((await hero.boundingBox())!.height)).toBe(800);
+  expect(Math.round((await feature.boundingBox())!.width)).toBe(342);
+  expect(Math.round((await result.boundingBox())!.height)).toBe(124);
 });

@@ -60,25 +60,28 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   return <main className={`${styles.page} ${instrumentSerif.variable}`}>
     <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" />
     <section className={styles.hero}>
-      <Image alt="" aria-hidden="true" className={styles.heroMedia} fill priority sizes="(max-width: 760px) 100vw, 53vw" src="/bonus-directory/material-field.png" />
+      <Image alt="" aria-hidden="true" className={styles.heroMedia} height={980} priority sizes="(max-width: 760px) 39vw, 53vw" src="/bonus-directory/material-field.png" width={1600} />
       <div className={styles.heroCopy}>
-        <p className={styles.eyebrow}>Bonuses · Material Editorial Theatre · 18+</p>
+        <p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Bonuses · Material Editorial Theatre · 18+</p>
+        <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Bonus Terms</p>
         <h1>Terms<br />Before<br />The Number.</h1>
-        <em>A bonus is a contract-shaped object.</em>
-        <p>Compare current published records without hiding wagering, deposit, eligibility, expiry, licence context or commercial availability behind the headline.</p>
+        <em className={styles.desktopOnly}>A bonus is a contract-shaped object.</em>
+        <p className={styles.desktopOnly}>Compare current published records without hiding wagering, deposit, eligibility, expiry, licence context or commercial availability behind the headline.</p>
+        <p className={`${styles.mobileHeroMicrocopy} ${styles.mobileOnly}`}>Read the conditions before you compare.</p>
       </div>
       <div aria-hidden="true" className={styles.termsScene}>
         <div className={styles.termSheet}><span>SevenBet / Terms Sheet</span><strong>Welcome Terms</strong><ul><li>Wagering / must be legible</li><li>Deposit / cash cost first</li><li>Expiry / time is material</li><li>Withdrawal / restrictions visible</li></ul></div>
         <div className={`${styles.termSheet} ${styles.termSheetSmall}`}><span>SevenBet / Terms Sheet</span><strong>Limits</strong><ul><li>Eligibility</li><li>Market</li><li>Availability</li></ul></div>
       </div>
+      <div aria-hidden="true" className={styles.mobileTermSheet}><span>SevenBet / Terms Sheet</span><strong>Terms</strong><ul><li>Wagering</li><li>Min deposit</li><li>Expiry</li></ul></div>
     </section>
 
     <section className={styles.directorySection}>
       <div className={styles.shell}>
-        <header className={styles.sectionHeading}><div><p className={styles.eyebrow}>Current published offer objects</p><h2 className={styles.display}>Featured Bonuses<br />As Product Objects.</h2></div><p>The first 3 results use the same server-owned order as the full directory. No sponsored override or static fixture determines their position.</p></header>
+        <header className={styles.sectionHeading}><div><p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Current published offer objects</p><h2 className={`${styles.display} ${styles.desktopOnly}`}>Featured Bonuses<br />As Product Objects.</h2><p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Featured bonuses as product objects</p><h2 className={`${styles.mobileSectionTitle} ${styles.mobileOnly}`}>Read the contract before the headline.</h2></div><p><span className={styles.desktopOnly}>The first 3 results use the same server-owned order as the full directory. No sponsored override or static fixture determines their position.</span><span className={styles.mobileOnly}>Three published snapshots. The same material fields remain visible on every object.</span></p></header>
         {featured.length > 0 && <div className={styles.featuredGrid}>{featured.map((offer, index) => <FeaturedBonusCard key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} position={startPosition + index} primary={index === 0} />)}</div>}
 
-        <div className={styles.controlsIntro}><div><p className={styles.eyebrow}>Published filters · URL owned</p><h2>Compare Every Material Term.</h2></div><p>{result.total} real matching offer{result.total === 1 ? "" : "s"}. Every filter, sort and result count is resolved on the server from the latest current published database snapshots.</p></div>
+        <div className={styles.controlsIntro}><div><p className={styles.eyebrow}><span className={styles.desktopOnly}>Published filters · URL owned</span><span className={styles.mobileOnly}>Full material ledger</span></p><h2>Compare Every Material Term.</h2></div><p><span className={styles.desktopOnly}>{result.total} real matching offer{result.total === 1 ? "" : "s"}. Every filter, sort and result count is resolved on the server from the latest current published database snapshots.</span><span className={styles.mobileOnly}>{result.records.length} results stay scannable on this page. Open a review only when you need the full evidence.</span></p></div>
         <BonusFilters activeCount={activeCount} facets={result.facets} query={result.query} total={result.total} />
         <ActiveBonusFilters query={result.query} raw={raw} />
 
