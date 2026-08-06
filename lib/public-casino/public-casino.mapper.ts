@@ -203,6 +203,7 @@ export function mapPublishedCasino(
       percentage: number(record.percentage),
       minimumDeposit: number(record.minimumDeposit),
       maximumBonus: number(record.maximumBonus),
+      maximumBet: number(record.maximumBet),
       currency: nullableText(record.currency),
       freeSpins: integer(record.freeSpins),
       wageringMultiplier: number(record.wageringMultiplier),
@@ -310,7 +311,7 @@ export function mapLegacyCasino(casino: Casino): PublicCasinoDTO {
     payments: casino.payments.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, supportsDeposits: true, supportsWithdrawals: true, currencies: [], minimumDeposit: casino.minDeposit, minimumWithdrawal: null, maximumWithdrawal: null, depositProcessingTime: null, withdrawalTime: casino.payoutHours ? `${casino.payoutHours} hours` : null, fees: null, crypto: /bitcoin|ethereum|crypto|usdt/i.test(name) })),
     providers: casino.providers.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, liveCasino: false })),
     categories: casino.gameTypes.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, featured: false })),
-    bonuses: [{ id: `legacy-${casino.id}`, slug: `${casino.slug}-welcome`, title: casino.bonusHeadline, summary: casino.bonusHeadline, type: "WELCOME", percentage: null, minimumDeposit: casino.minDeposit, maximumBonus: casino.bonusAmountUsd, currency: "USD", freeSpins: casino.freeSpins, wageringMultiplier: casino.wagering, wageringText: null, eligibility: null, importantConditions: [], termsUrl: null, startsAt: null, expiresAt: null, affiliate: { href: affiliateHref, available: Boolean(affiliateHref) } }],
+    bonuses: [{ id: `legacy-${casino.id}`, slug: `${casino.slug}-welcome`, title: casino.bonusHeadline, summary: casino.bonusHeadline, type: "WELCOME", percentage: null, minimumDeposit: casino.minDeposit, maximumBonus: casino.bonusAmountUsd, maximumBet: null, currency: "USD", freeSpins: casino.freeSpins, wageringMultiplier: casino.wagering, wageringText: null, eligibility: null, importantConditions: [], termsUrl: null, startsAt: null, expiresAt: null, affiliate: { href: affiliateHref, available: Boolean(affiliateHref) } }],
     media: { logo: null, hero: null, screenshots: [], gallery: [], socialImage: null },
     affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
   };

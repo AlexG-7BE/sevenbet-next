@@ -152,12 +152,15 @@ test("public routes use the service boundary and invalidate all publication surf
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
+  const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
+  const seo = readFileSync("lib/casino-profile/seo.ts", "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
   assert.doesNotMatch(page, /generateStaticParams/);
-  assert.match(page, /BreadcrumbList/);
-  assert.match(page, /if \(publishedCasino\)/);
-  for (const section of ["CasinoReviewHero", "CasinoMediaSection", "QuickOverview", "WelcomeBonusSection", "PaymentsSection"]) assert.match(page, new RegExp(`<${section}`));
-  assert.doesNotMatch(page, /AggregateRating|reviewCount|ratingCount/);
+  assert.match(page, /if \(!casino\) notFound\(\)/);
+  assert.match(page, /casinoProfileSchemas/);
+  assert.match(seo, /BreadcrumbList/);
+  for (const section of ["casino-profile-title", "overview-heading", "offer-heading", "verdict-heading", "faq-heading"]) assert.match(profile, new RegExp(section));
+  assert.doesNotMatch(`${page}\n${seo}`, /AggregateRating|reviewCount|ratingCount|casinoOfficialUrl/);
   const cache = readFileSync("lib/public-casino/cache.ts", "utf8");
   for (const path of ["/casinos", "/best-offers", "/bonuses", "/sitemap.xml"]) assert.match(cache, new RegExp(path.replace("/", "\\/")));
   assert.doesNotMatch(cache, /"\/catalog"/);
@@ -168,7 +171,8 @@ test("public routes use the service boundary and invalidate all publication surf
 });
 
 test("client components do not import Prisma and public HTML uses internal redirect paths for CMS offers", () => {
-  for (const file of ["components/CasinoReviewSections.tsx", "components/ui.tsx"]) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|prisma\./);
+  for (const file of ["components/CasinoReviewSections.tsx", "components/ui.tsx", "components/casino-profile/CasinoProfile.tsx", "components/casino-profile/CasinoOutboundAction.tsx"]) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|prisma\./);
   assert.doesNotMatch(readFileSync("lib/public-casino/public-casino.types.ts", "utf8"), /trackingUrl|destinationUrl|storageKey|checksum|internalNotes/);
   assert.match(readFileSync("components/CasinoReviewSections.tsx", "utf8"), /nofollow sponsored noopener/);
+  assert.match(readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8"), /href=\{action\.href\}/);
 });
