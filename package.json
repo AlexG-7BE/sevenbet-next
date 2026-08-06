@@ -34,6 +34,7 @@
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
     "discovery:test": "node --import tsx --test tests/public-casino-discovery.test.ts",
     "fe-mig-04:test": "node --import tsx --test tests/public-casino-discovery.test.ts tests/casino-discovery-parity.test.ts tests/casino-discovery-render.test.tsx",
+    "fe-mig-05:test": "node --import tsx --test tests/casino-profile.test.ts tests/public-casino-rendering.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

@@ -2,26 +2,11 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 
-import {
-  CasinoFaqSection,
-  CasinoMediaSection,
-  CasinoReviewHero,
-  EditorialReviewSection,
-  getCasinoFaqItems,
-  LicensingSafetySection,
-  MethodologyDisclosureSection,
-  PaymentsSection,
-  ProsConsSection,
-  QuickOverview,
-  ResponsibleToolsSection,
-  SimilarCasinosSection,
-  WageringSection,
-  WelcomeBonusSection,
-} from "@/components/CasinoReviewSections";
-import { Badge, Card, CTA, Section } from "@/components/ui";
+import { MethodologyDisclosureSection } from "@/components/CasinoReviewSections";
+import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
 import { EditorialReviewRenderer } from "@/components/editorial-review/EditorialReviewRenderer";
+import { casinoProfileFaq, publishedScore } from "@/lib/casino-profile/presentation";
 import type { EditorialBlock } from "@/lib/editorial-review/types";
-import { publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata, safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
@@ -37,11 +22,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const slug = (await params).slug;
   const editorial = await loadEditorial(slug);
   if (editorial) {
-    const seo = editorial.review.revisions.find((revision) => revision.id === editorial.review.publishedRevisionId)?.content.seo;
+    const document = editorial.review.revisions.find((revision) => revision.id === editorial.review.publishedRevisionId)?.content;
+    const seo = document?.seo;
     if (seo) return { title: seo.title, description: seo.description, alternates: { canonical: seo.canonicalPath || `/casino/${slug}` }, robots: parseRobotsMetadata(seo.robots || "index,follow"), openGraph: { type: "article", title: seo.socialTitle || seo.title, description: seo.socialDescription || seo.description } };
+    return { title: document?.title ?? `${editorial.casino.title} Review | SevenBet`, description: document?.summary, alternates: { canonical: `/casino/${slug}` }, robots: { index: true, follow: true } };
   }
   const casino = await loadCasino(slug);
-  if (!casino) return { title: "Casino review | SevenBet", robots: { index: false, follow: false } };
+  if (!casino) notFound();
   const socialImages = casino.seo.socialImage ? [{ url: casino.seo.socialImage, alt: `${casino.name} review` }] : undefined;
   return {
     title: casino.seo.title,
@@ -61,13 +48,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 function reviewSchema(casino: Awaited<ReturnType<typeof publicCasinoService.getCasino>>) {
   if (!casino) return null;
+  const score = publishedScore(casino);
   return {
     "@context": "https://schema.org",
     "@type": "Review",
-    itemReviewed: { "@type": "Organization", name: casino.name, url: `https://${casino.domain}` },
+    itemReviewed: { "@type": "Organization", name: casino.name },
     author: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
     publisher: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
-    reviewRating: { "@type": "Rating", ratingValue: casino.editorScore, bestRating: 10, worstRating: 0 },
+    reviewRating: score === null ? undefined : { "@type": "Rating", ratingValue: score, bestRating: 10, worstRating: 0 },
     reviewBody: casino.reviewContent,
     datePublished: casino.publishedAt ?? undefined,
     dateModified: casino.lastReviewedAt ?? casino.publishedAt ?? undefined,
@@ -92,44 +80,21 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
   }
   const casino = await loadCasino(slug);
   if (!casino) notFound();
-  const view = publicCasinoToLegacy(casino);
-  const similarCasinos = (await publicCasinoService.listCasinoViews()).filter((item) => item.slug !== casino.slug).slice(0, 3);
-  const faq = getCasinoFaqItems(view);
+  const faq = casinoProfileFaq(casino);
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [
       { "@type": "ListItem", position: 1, name: "Casino Reviews", item: absoluteUrl("/casinos") },
       { "@type": "ListItem", position: 2, name: casino.name, item: casino.seo.canonical },
     ] },
     reviewSchema(casino),
-    { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } })) },
+    { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: faq.map((item) => ({ "@type": "Question", name: item.question, acceptedAnswer: { "@type": "Answer", text: item.answer } })) },
     casino.seo.structuredData,
   ].filter(Boolean);
 
   return (
     <>
       {schemas.map((schema, index) => <script key={index} type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} />)}
-      <CasinoReviewHero casino={view} />
-      <CasinoMediaSection casino={view} />
-      <QuickOverview casino={view} />
-      <WelcomeBonusSection casino={view} />
-      <WageringSection casino={view} />
-      <ProsConsSection casino={view} />
-      <LicensingSafetySection casino={view} />
-      <PaymentsSection casino={view} />
-      <ResponsibleToolsSection />
-      <EditorialReviewSection casino={view} />
-      <SimilarCasinosSection casinos={similarCasinos} />
-      <CasinoFaqSection casino={view} />
-      <MethodologyDisclosureSection />
-
-      <Section eyebrow="Player protection" title="Review your limits before any casino decision.">
-        <Card className="ctaBlock" tone="warning">
-          <div><div className="badgeCluster"><Badge tone="warning">18+ only</Badge><Badge>Affiliate links may be present</Badge></div><p className="muted">Gambling involves financial risk. Review bonus terms, local availability and responsible gambling tools before registering. SevenBet does not guarantee outcomes.</p></div>
-        </Card>
-      </Section>
-      <Section eyebrow="Next step" title="Compare More Casinos">
-        <CTA title="Review more casino profiles or read the methodology behind SevenBet reviews." primary={{ href: "/casinos", label: "Browse Casino Comparisons" }} secondary={{ href: "/methodology", label: "Read Review Methodology" }} />
-      </Section>
+      <CasinoProfile casino={casino} />
     </>
   );
 }
