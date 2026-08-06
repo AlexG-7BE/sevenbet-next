@@ -5,7 +5,7 @@
   --paper: #fafaf7;
   --field: #f4f1eb;
   --white: #fff;
-  --acid: #f0e814;
+  --acid: #e4e24e;
   --teal: #176c65;
   --metal: #64635c;
   --line: #bfbdb2;
@@ -20,6 +20,7 @@
 .shell { width: min(1296px, calc(100% - 96px)); margin-inline: auto; }
 .eyebrow { margin: 0; color: var(--teal); font-size: 14px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .display { margin: 0; font-size: clamp(46px, 5vw, 72px); font-weight: 900; line-height: .9; letter-spacing: -.055em; text-transform: uppercase; text-wrap: balance; }
+.mobileOnly, .mobileTermSheet, .featureMobileTerms, .mobileMaterialResult, .reviewSeparationNote { display: none; }
 
 .hero { min-height: 980px; position: relative; display: grid; grid-template-columns: minmax(0, 47.2%) 1fr; overflow: hidden; background: var(--ink); color: var(--white); }
 .heroMedia { position: absolute; inset: 0 0 0 47.2%; width: 52.8%; height: 100%; object-fit: cover; }
@@ -146,7 +147,7 @@
 .evidenceTable { border: 1px solid var(--ink); }
 .evidenceTable div { display: grid; grid-template-columns: 160px 1fr 100px; gap: 12px; padding: 16px; border-top: 1px solid var(--ink); }
 .evidenceTable div:first-child { border-top: 0; }
-.evidenceTable div:nth-child(3), .evidenceTable div:nth-child(4) { background: var(--acid); }
+.evidenceTable div:nth-child(n+4) { background: var(--acid); }
 .evidenceTable b, .evidenceTable em { font-size: 11px; text-transform: uppercase; }
 .evidenceTable span { font-size: 12px; }
 .evidenceTable em { color: var(--teal); font-style: normal; font-weight: 800; text-align: right; }
@@ -195,27 +196,57 @@
 }
 
 @media (max-width: 760px) {
-  .shell, .contractHeading { width: min(100% - 28px, 1296px); }
-  .hero { min-height: 1000px; display: block; }
-  .heroMedia { inset: 0; width: 100%; height: 430px; top: 570px; }
-  .heroCopy { min-height: 570px; padding: 50px 20px 42px; }
-  .heroCopy h1 { margin-top: 26px; font-size: clamp(52px, 16vw, 72px); }
-  .heroCopy em { margin-top: 28px; font-size: 30px; }
-  .heroCopy p:last-child { font-size: 13px; }
-  .termsScene { min-height: 430px; margin-top: -430px; pointer-events: none; }
-  .termSheet { width: 62%; min-height: 320px; top: 48px; left: 19%; padding: 18px; }
-  .termSheetSmall { width: 46%; min-height: 220px; top: 180px; left: 42%; }
-  .termSheet span { font-size: 8px; }
-  .termSheet strong { margin: 18px 0 26px; font-size: 24px; }
-  .termSheet li { padding: 12px 0 18px; font-size: 10px; }
-  .directorySection { padding: 54px 0 66px; }
-  .sectionHeading { margin-bottom: 28px; }
+  .desktopOnly { display: none !important; }
+  .mobileOnly { display: revert; }
+  .shell, .contractHeading { width: calc(100% - 48px); }
+
+  .hero { height: 800px; min-height: 800px; display: block; }
+  .hero::after { content: ""; position: absolute; z-index: 1; inset: 0 auto 0 calc(61% - 4px); width: 4px; background: var(--acid); opacity: .9; }
+  .heroMedia { position: absolute; inset: 0 0 0 61%; width: 39%; max-width: none; height: 800px; object-fit: cover; object-position: 54% center; }
+  .heroCopy { position: absolute; inset: 0; min-height: 0; padding: 0; background: transparent; }
+  .heroCopy .eyebrow { position: absolute; top: 42px; left: 24px; width: 210px; color: var(--acid); font-size: 11px; line-height: 14px; letter-spacing: .05em; }
+  .heroCopy h1 { position: absolute; z-index: 2; top: 82px; left: 24px; width: calc(100% - 48px); margin: 0; font-size: clamp(42px, 12.31vw, 48px); line-height: .917; letter-spacing: -.02em; text-wrap: initial; }
+  .heroCopy .mobileHeroMicrocopy { position: absolute; z-index: 2; top: 750px; left: 24px; width: calc(100% - 32px); margin: 0; color: rgba(255,255,255,.76); font-size: 8px; font-weight: 800; line-height: 12px; letter-spacing: .02em; text-transform: uppercase; }
+  .termsScene { display: none; }
+  .mobileTermSheet { position: absolute; z-index: 3; top: 438px; left: calc(100% - 268px); width: 240px; height: 294px; display: block; padding: 21px; overflow: hidden; transform: rotate(-4deg); border: 1px solid var(--teal); background: #f6f4e8; color: var(--ink); box-shadow: 0 12px 24px rgba(0,0,0,.24); }
+  .mobileTermSheet span { color: #056e63; font-size: 12px; font-weight: 800; line-height: 15px; text-transform: uppercase; }
+  .mobileTermSheet strong { display: block; margin: 26px 0 16px; font-size: 38px; font-weight: 900; line-height: 42px; letter-spacing: -.02em; text-transform: uppercase; }
+  .mobileTermSheet ul { margin: 0; padding: 0; list-style: none; }
+  .mobileTermSheet li { height: 51px; padding-top: 14px; border-top: 1px solid #ada894; font-size: 15px; font-weight: 650; line-height: 20px; text-transform: uppercase; }
+
+  .directorySection { padding: 0 0 66px; }
+  .sectionHeading { display: block; margin: 0 0 36px; padding-top: 42px; }
+  .sectionHeading .eyebrow { font-size: 10px; line-height: 12px; }
+  .mobileSectionTitle { max-width: 330px; margin: 22px 0 0; font-size: 32px; font-weight: 900; line-height: 33px; letter-spacing: -.02em; }
+  .sectionHeading > p { margin-top: 24px; font-size: 13px; line-height: 19px; }
   .display { font-size: 42px; }
-  .featuredGrid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 58px; }
-  .featureCard, .featureCardPrimary { min-height: 0; grid-column: auto; }
+  .featuredGrid { grid-template-columns: 1fr; gap: 22px; margin-bottom: 78px; }
+  .featureCard, .featureCardPrimary { height: 535px; min-height: 535px; grid-column: auto; padding: 20px; border-width: 2px; }
+  .featureCardPrimary { height: 556px; min-height: 556px; }
+  .featureMeta { display: block; color: var(--teal); font-size: 12px; line-height: 16px; }
+  .featureMeta > span:last-child { display: none; }
+  .offerType { display: none; }
+  .featureCard h3 { margin-top: 18px; overflow: hidden; font-size: 29px; line-height: 31px; text-overflow: ellipsis; white-space: nowrap; }
+  .offerHeadline { min-height: 46px; max-height: 46px; margin: 11px 0 16px; overflow: hidden; font-size: 17px; line-height: 22px; }
+  .featureTerms { display: none; }
+  .featureMobileTerms { display: grid; margin: 0; border-top: 2px solid currentColor; }
+  .featureMobileTerms div { min-width: 0; min-height: 61px; display: grid; grid-template-columns: 96px 1fr; gap: 16px; align-items: center; }
+  .featureMobileTerms dt { color: var(--metal); font-size: 12px; font-weight: 800; line-height: 15px; text-transform: uppercase; }
+  .featureMobileTerms dd { min-width: 0; margin: 0; overflow: hidden; font-size: 14px; font-weight: 750; line-height: 19px; overflow-wrap: anywhere; }
+  .featureCardPrimary .featureMobileTerms dt { color: var(--acid); }
+  .conditions { display: none; }
+  .featureActions { grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 0; }
+  .featureActions a, .featureActions .offerAction, .featureActions .actionUnavailable { min-height: 44px; justify-content: flex-start; padding: 0; border: 0; background: transparent; color: var(--teal); font-size: 14px; line-height: 19px; }
+  .featureCardPrimary .featureActions a { color: var(--acid); }
+  .featureCardPrimary .featureActions .offerAction, .featureCardPrimary .featureActions .actionUnavailable { color: var(--paper); font-size: 12px; }
+
+  .controlsIntro { display: block; margin: 0 0 18px; }
+  .controlsIntro .eyebrow { font-size: 10px; line-height: 12px; }
+  .controlsIntro h2 { max-width: 330px; margin: 10px 0 0; font-size: 28px; line-height: 30px; letter-spacing: -.02em; text-transform: none; }
+  .controlsIntro > p { margin-top: 10px; font-size: 11px; line-height: 15px; }
   .desktopFilters { display: none; }
   .mobileFilterRoot { display: block; }
-  .mobileFilterTrigger { width: 100%; min-height: 64px; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px; border: 1px solid var(--ink); border-top: 6px solid var(--acid); background: var(--night); color: var(--white); font: inherit; font-size: 12px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
+  .mobileFilterTrigger { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 14px 0 0; padding: 0 14px; border: 1px solid var(--ink); border-radius: 24px; background: var(--paper); color: var(--ink); font: inherit; font-size: 10px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
   .filterDialog { width: min(100%, 520px); max-width: none; height: min(100dvh, 900px); max-height: none; margin: auto 0 0 auto; padding: 0; overflow: auto; overscroll-behavior: contain; border: 0; background: var(--paper); color: var(--ink); }
   .filterDialog::backdrop { background: rgba(6,7,8,.72); }
   .dialogHeader { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 20px; padding: 18px; background: var(--night); color: var(--white); }
@@ -229,36 +260,73 @@
   .filterActions { align-items: stretch; flex-direction: column; }
   .filterActions > div { margin: 0 0 8px; }
   .filterActions > a, .filterActions > button { width: 100%; }
-  .activeFilters { margin-bottom: 22px; }
+  .activeFilters { margin: 12px 0 18px; }
   .clearFilters { width: 100%; margin-left: 0; }
-  .resultsHeader { align-items: start; flex-direction: column; margin-top: 40px; }
-  .resultsHeader > p { text-align: left; }
-  .comparison { grid-template-columns: 1fr; }
-  .comparisonRow { padding: 16px; }
+  .filterSummary { margin: 12px 0 18px; font-size: 10px; }
+  .resultsHeader { display: none; }
+  .comparison { display: grid; grid-template-columns: 1fr; gap: 8px; border: 0; }
+  .comparisonRow { min-height: 124px; display: block; padding: 0; overflow: hidden; border: 0 !important; border-radius: 10px; }
+  .desktopComparisonCell { display: none; }
+  .mobileMaterialResult { position: relative; width: 100%; height: 124px; display: block; overflow: hidden; border: 1px solid var(--metal); border-radius: 10px; background: var(--white); color: var(--ink); }
+  .mobileMaterialResultFeatured { border-color: var(--teal); background: var(--night); color: var(--white); }
+  .mobileResultRank { position: absolute; top: 13px; left: 13px; width: 28px; color: var(--teal); font-size: 16px; font-weight: 900; line-height: 18px; }
+  .mobileMaterialResultFeatured .mobileResultRank { color: var(--acid); }
+  .mobileMaterialResult h3 { position: absolute; top: 13px; left: 47px; width: calc(100% - 178px); margin: 0; overflow: hidden; font-size: 15px; font-weight: 900; line-height: 18px; letter-spacing: -.01em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
+  .mobileResultStatus { position: absolute; top: 9px; right: 13px; width: 76px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--metal); border-radius: 12px; font-size: 8px; font-weight: 800; line-height: 9px; text-transform: uppercase; }
+  .mobileMaterialResultFeatured .mobileResultStatus { border-color: var(--acid); background: var(--acid); color: var(--ink); }
+  .mobileResultHeadline { position: absolute; top: 39px; left: 13px; width: calc(100% - 26px); height: 16px; margin: 0; overflow: hidden; font-size: 11px; font-weight: 650; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileResultTerms { position: absolute; top: 63px; left: 13px; width: calc(100% - 26px); height: 51px; display: grid; grid-template-columns: 23% 28% 25%; gap: 2%; padding-top: 10px; border-top: 1px solid var(--metal); }
+  .mobileMaterialResultFeatured .mobileResultTerms { border-color: var(--acid); }
+  .mobileResultTerms span { overflow: hidden; font-size: 9px; font-weight: 800; line-height: 11px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileResultEvidence { position: absolute; bottom: 9px; left: 13px; width: calc(100% - 118px); height: 12px; margin: 0; overflow: hidden; color: var(--metal); font-size: 8px; line-height: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileMaterialResultFeatured .mobileResultEvidence { color: var(--white); }
+  .mobileReviewAction { position: absolute; right: 13px; bottom: 10px; width: 80px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 8px; font-weight: 800; line-height: 9px; text-transform: uppercase; }
+  .mobileMaterialResultFeatured .mobileReviewAction { background: var(--acid); color: var(--ink) !important; }
+  .reviewSeparationNote { min-height: 96px; display: block; margin-top: 10px; padding: 16px; border-radius: 10px; background: var(--night); color: var(--white); }
+  .reviewSeparationNote strong { color: var(--teal); font-size: 9px; line-height: 11px; text-transform: uppercase; }
+  .reviewSeparationNote p { margin: 10px 0 0; font-size: 10px; line-height: 14px; }
   .pagination { grid-template-columns: 1fr 1fr; }
   .pagination div { grid-column: 1 / -1; grid-row: 1; }
   .empty { padding: 34px 22px; }
-  .contractSection { padding: 38px 0; }
-  .contractHeading p { font-size: 42px; }
-  .ledgerSection { padding: 60px 0; }
-  .ledgerIntro h2 { font-size: 46px; }
-  .ledgerList li { grid-template-columns: 70px 1fr; }
-  .ledgerList b { font-size: 38px; }
-  .noTerm { background: linear-gradient(90deg, var(--ink) 0 calc(100% - 36px), var(--acid) calc(100% - 36px)); }
-  .noTerm h2 { font-size: 42px; }
-  .evidenceSection, .faqSection, .relatedSection { padding: 64px 0; }
-  .evidenceTable div { grid-template-columns: 100px 1fr; }
-  .evidenceTable em { grid-column: 2; text-align: left; }
+  .contractSection { height: 200px; padding: 48px 0 0; }
+  .contractHeading p { font-size: 34px; line-height: 32px; letter-spacing: -.02em; }
+  .ledgerSection { padding: 38px 0 53px; }
+  .ledgerSection .shell { gap: 28px; }
+  .ledgerIntro span { font-size: 10px; line-height: 13px; }
+  .ledgerIntro h2 { margin-top: 16px; font-size: 31px; line-height: 29px; letter-spacing: -.02em; }
+  .ledgerList li { grid-template-columns: 54px 1fr; gap: 18px; min-height: 116px; padding: 20px 0 24px; }
+  .ledgerList b { font-size: 28px; line-height: 28px; }
+  .ledgerList div { gap: 8px; }
+  .ledgerList strong { font-size: 12px; line-height: 13px; }
+  .ledgerList span { font-size: 12px; line-height: 16px; }
+  .noTerm { height: 136px; padding: 48px 0 0; background: linear-gradient(90deg, var(--ink) 0 calc(100% - 34px), var(--acid) calc(100% - 34px)); }
+  .noTerm h2 { font-size: 28px; line-height: 28px; letter-spacing: -.02em; }
+  .evidenceSection { padding: 38px 0 48px; }
+  .evidenceGrid { gap: 28px; }
+  .evidenceGrid article > span { font-size: 9px; line-height: 11px; }
+  .evidenceGrid h2 { margin: 14px 0 22px; font-size: 27px; line-height: 27px; letter-spacing: -.02em; }
+  .evidenceTable div { min-height: 58px; grid-template-columns: 68px 1fr 54px; align-items: start; gap: 10px; padding: 10px; }
+  .evidenceTable b, .evidenceTable em { font-size: 8px; line-height: 9px; }
+  .evidenceTable span { font-size: 9px; line-height: 11px; }
+  .evidenceTable em { grid-column: auto; text-align: right; }
+  .stateCard { min-height: 260px; padding: 18px; border-radius: 14px; }
+  .stateCard > span { font-size: 9px !important; }
+  .stateCard h2 { margin: 12px 0 24px; font-size: 24px; line-height: 24px; }
+  .stateCard > div { min-height: 28px; align-items: center; padding: 8px 10px; border-top: 4px solid var(--night); }
+  .stateCard > div b, .stateCard > div span { font-size: 8px; }
+  .faqSection, .relatedSection { padding: 64px 0; }
   .faqHeading h2, .relatedSection h2 { font-size: 46px; }
   .relatedSection nav a { grid-template-columns: 100px 1fr; }
   .disclosure .shell { grid-template-columns: 1fr; gap: 10px; }
 }
 
 @media (max-width: 360px) {
-  .heroCopy h1 { font-size: 48px; }
-  .featureTerms div { grid-template-columns: 96px 1fr; }
-  .featureActions { grid-template-columns: 1fr; }
-  .rowIdentity { grid-template-columns: 42px 1fr; }
+  .heroCopy h1 { font-size: 40px; line-height: 39px; }
+  .mobileTermSheet { left: calc(100% - 248px); width: 220px; }
+  .featureMobileTerms div { grid-template-columns: 84px 1fr; gap: 10px; }
+  .featureActions { grid-template-columns: 1fr 1fr; }
+  .mobileResultTerms { grid-template-columns: 26% 34% 28%; gap: 1%; }
+  .mobileResultTerms span { font-size: 8px; }
   .relatedSection nav a { grid-template-columns: 1fr; gap: 6px; padding: 18px 0; }
 }
 
