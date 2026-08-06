@@ -12,6 +12,7 @@ export interface CasinoDiscoveryQuery {
   bonusType?: string[];
   hasBonus?: boolean;
   hasAvailableVisitAction?: boolean;
+  hasResponsibleGambling?: boolean;
   supportsCrypto?: boolean;
   supportsMobile?: boolean;
   sort?: CasinoDiscoverySort;
@@ -40,6 +41,7 @@ export interface PublicCasinoCardDto {
   slug: string;
   name: string;
   logo: PublicMediaDto | null;
+  hero: PublicMediaDto | null;
   shortDescription: string | null;
   rating: number | null;
   reviewCount: number | null;

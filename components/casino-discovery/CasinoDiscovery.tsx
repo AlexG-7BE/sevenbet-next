@@ -3,14 +3,14 @@ import Link from "next/link";
 import { discoveryHref } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryFacetValue, CasinoDiscoveryQuery, CasinoDiscoveryResult, PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
-import { CasinoDiscoveryCardMarkup, DirectoryReviewPreviewMarkup, type CasinoCardClassNames } from "./CasinoDiscoveryCard";
+import { CasinoDiscoveryCardMarkup, DirectoryFeaturedTheatreMarkup, type CasinoCardClassNames } from "./CasinoDiscoveryCard";
 import { MobileCasinoFilters } from "./MobileCasinoFilters";
 import styles from "./CasinoDiscovery.module.css";
 
 const sortLabels = { FEATURED: "Featured", RELEVANCE: "Relevance", NEWEST: "Newest", NAME_ASC: "Name A–Z", NAME_DESC: "Name Z–A" } as const;
 const pageSizes = [12, 24, 48] as const;
 const arrayFields = [["country", "country"], ["license", "license"], ["payment", "payment"], ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"]] as const;
-const booleanFields = [["hasBonus", "Published bonus"], ["hasAvailableVisitAction", "Visit action available"], ["supportsCrypto", "Cryptocurrency support"], ["supportsMobile", "Mobile support"]] as const;
+const booleanFields = [["hasBonus", "Published bonus"], ["hasAvailableVisitAction", "Visit action available"], ["hasResponsibleGambling", "Responsible gambling information"], ["supportsCrypto", "Cryptocurrency support"], ["supportsMobile", "Mobile support"]] as const;
 const cardClassNames = styles as unknown as CasinoCardClassNames;
 
 function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; except?: string[] }) {
@@ -23,28 +23,29 @@ function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; exce
   </>;
 }
 
-function FilterGroup({ legend, name, values, selected }: { legend: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
+function FilterSelect({ label, name, values, selected }: { label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
   if (!values.length) return null;
-  return <fieldset className={styles.filterGroup}><legend>{legend}</legend><div>
-    {values.slice(0, 12).map((value) => <label key={value.key}>
-      <input defaultChecked={selected.includes(value.key)} name={name} type="checkbox" value={value.key} />
-      <span>{value.label}</span><small>{value.count}</small>
-    </label>)}
-  </div></fieldset>;
+  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">Any</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
+}
+
+function BooleanSelect({ active, label, name }: { active: boolean; label: string; name: string }) {
+  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">Any</option><option value="true">Required</option></select></label>;
 }
 
 function FilterFields({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
   return <div className={styles.filterGrid}>
-    <FilterGroup legend="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
-    <FilterGroup legend="Licence" name="license" selected={query.license ?? []} values={result.facets.licenses} />
-    <FilterGroup legend="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
-    <FilterGroup legend="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
-    <FilterGroup legend="Category" name="category" selected={query.category ?? []} values={result.facets.categories} />
-    <FilterGroup legend="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
-    <fieldset className={styles.filterGroup}><legend>Availability</legend><div>
-      {booleanFields.map(([name, label]) => <label key={name}><input defaultChecked={Boolean(query[name])} name={name} type="checkbox" value="true" /><span>{label}</span></label>)}
-    </div></fieldset>
+    <FilterSelect label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
+    <FilterSelect label="Licence" name="license" selected={query.license ?? []} values={result.facets.licenses} />
+    <FilterSelect label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
+    <FilterSelect label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
+    <FilterSelect label="Category" name="category" selected={query.category ?? []} values={result.facets.categories} />
+    <FilterSelect label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
+    <BooleanSelect active={Boolean(query.hasBonus)} label="Published bonus" name="hasBonus" />
+    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} label="Visit availability" name="hasAvailableVisitAction" />
+    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} label="Responsible gambling" name="hasResponsibleGambling" />
+    <BooleanSelect active={Boolean(query.supportsCrypto)} label="Cryptocurrency" name="supportsCrypto" />
+    <BooleanSelect active={Boolean(query.supportsMobile)} label="Mobile support" name="supportsMobile" />
   </div>;
 }
 
@@ -56,30 +57,29 @@ function FilterForm({ result, mobile = false }: { result: CasinoDiscoveryResult;
   const query = result.appliedFilters;
   return <form action="/casinos" className={mobile ? styles.mobileFilterForm : styles.filterForm} method="get">
     <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
+    <div className={styles.filterPrompt}><span>Filters and sort</span><strong>Select the facts you want to compare.</strong></div>
     <FilterFields result={result} />
-    <p className={styles.preferenceNote}><strong>Market preference, not location.</strong> This filters published market information. It does not confirm legal eligibility or where you are.</p>
-    <div className={styles.filterActions}><Link href="/casinos">Reset all</Link><button type="submit">{mobile ? `Show ${result.total} results` : "Apply filters"}</button></div>
+    <p className={styles.preferenceNote}><strong>Market preference, not location.</strong> Filters published market information; it does not confirm eligibility.</p>
+    <div className={styles.filterActions}><div><strong>{result.total} {result.total === 1 ? "published match" : "published matches"}</strong><span>Only current published review snapshots</span></div><Link href="/casinos">Reset all</Link><button type="submit">{mobile ? `Show ${result.total} results` : "Apply filters →"}</button></div>
   </form>;
 }
 
-export function DiscoveryControls({ result }: { result: CasinoDiscoveryResult }) {
+function SearchForm({ result }: { result: CasinoDiscoveryResult }) {
+  return <form action="/casinos" className={styles.searchForm} method="get"><HiddenQuery except={["q"]} query={result.appliedFilters} /><label className={styles.srOnly} htmlFor="casino-search">Search published reviews</label><input defaultValue={result.appliedFilters.search ?? ""} id="casino-search" maxLength={100} name="q" placeholder="Search casino, licence, payment…" type="search" /><button aria-label="Search" type="submit">→</button></form>;
+}
+
+function SortForm({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
-  const count = activeFilterCount(query);
+  return <form action="/casinos" className={styles.sortForm} method="get"><HiddenQuery except={["sort", "pageSize"]} query={query} /><label><span>Sort</span><select aria-label="Sort by" defaultValue={query.sort} name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span>Show</span><select aria-label="Show" defaultValue={query.pageSize} name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></label><button type="submit">Update</button></form>;
+}
+
+export function DiscoveryControls({ result }: { result: CasinoDiscoveryResult }) {
+  const count = activeFilterCount(result.appliedFilters);
   return <div className={styles.controls}>
-    <form action="/casinos" className={styles.searchForm} method="get">
-      <HiddenQuery except={["q"]} query={query} />
-      <label htmlFor="casino-search">Search published reviews</label>
-      <div><input defaultValue={query.search ?? ""} id="casino-search" maxLength={100} name="q" placeholder="Casino, licence, payment…" type="search" /><button type="submit">Search</button></div>
-    </form>
+    <div className={styles.commandHeader}><SearchForm result={result} /><SortForm result={result} /><div className={styles.activeCount}><strong>{count} active</strong><span>{count ? "Filters applied" : "All published reviews"}</span></div></div>
     <div className={styles.desktopFilters}><FilterForm result={result} /></div>
-    <MobileCasinoFilters activeCount={count}><FilterForm mobile result={result} /></MobileCasinoFilters>
+    <div className={styles.mobileControls}><MobileCasinoFilters activeCount={count}><FilterForm mobile result={result} /></MobileCasinoFilters></div>
     <noscript><details className={styles.noScriptFilters}><summary>Filters{count ? ` (${count})` : ""}</summary><FilterForm mobile result={result} /></details></noscript>
-    <form action="/casinos" className={styles.sortForm} method="get">
-      <HiddenQuery except={["sort", "pageSize"]} query={query} />
-      <label htmlFor="casino-sort">Sort by<select defaultValue={query.sort} id="casino-sort" name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-      <label htmlFor="casino-page-size">Show<select defaultValue={query.pageSize} id="casino-page-size" name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
-      <button type="submit">Update</button>
-    </form>
   </div>;
 }
 
@@ -109,17 +109,17 @@ export function CasinoDiscoveryCard({ casino, position }: { casino: PublicCasino
   return <CasinoDiscoveryCardMarkup casino={casino} classNames={cardClassNames} position={position} />;
 }
 
-export function DirectoryReviewPreview({ casino }: { casino: PublicCasinoCardDto | undefined }) {
-  return <DirectoryReviewPreviewMarkup casino={casino} classNames={cardClassNames} />;
+export function DirectoryFeaturedTheatre({ casino }: { casino: PublicCasinoCardDto | undefined }) {
+  return <DirectoryFeaturedTheatreMarkup casino={casino} classNames={cardClassNames} />;
 }
 
 export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) {
   const firstPosition = (result.page - 1) * result.pageSize + 1;
   const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
   return <div className={styles.results} id="casino-results">
-    <div className={styles.resultsHeader}><div><span>Published directory</span><h2>{result.total} {result.total === 1 ? "casino review" : "casino reviews"}</h2></div><p aria-live="polite" role="status">Page {result.page} of {result.pageCount}</p></div>
-    {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Review-only results</strong><span>No governed visit action is available for this result set. Reviews and public evidence remain accessible.</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove a filter or try a broader search. Nothing has been substituted from draft or private data.</p><Link href="/casinos">Reset the directory</Link></div>}
+    <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "published review" : "published reviews"}</h2></div><p aria-live="polite" role="status">Page {result.page} of {result.pageCount}</p></div>
+    {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. SevenBet will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div>}
     {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
   </div>;
 }

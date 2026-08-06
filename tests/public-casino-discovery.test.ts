@@ -54,9 +54,9 @@ test("query parser normalizes, deduplicates, bounds, and serializes deterministi
 });
 
 test("directory links preserve every public control while pagination can reset", () => {
-  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24"));
-  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24");
-  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24");
+  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24"));
+  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24");
+  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24");
 });
 
 test("unavailable visit actions have safe public explanations", () => {
@@ -76,11 +76,17 @@ test("search ranking covers canonical name, alias, domain, punctuation, and stru
 });
 
 test("filters use OR within a facet and AND between facets", async () => {
-  const service = new PublicCasinoDiscoveryService(store([record("alpha-id", "alpha", "Alpha"), record("beta-id", "beta", "Beta")]), () => now);
+  const service = new PublicCasinoDiscoveryService(store([
+    record("alpha-id", "alpha", "Alpha"),
+    record("beta-id", "beta", "Beta", { responsibleGamblingTools: [] }),
+  ]), () => now);
   assert.equal((await service.discover({ country: ["GB", "CA"] })).total, 2);
   const result = await service.discover({ country: ["GB", "CA"], payment: ["bitcoin"] });
   assert.deepEqual(result.items.map((item) => item.slug), ["beta"]);
   assert.equal(result.facets.payments.find((item) => item.key === "bitcoin")?.count, 1);
+  const responsible = await service.discover({ hasResponsibleGambling: true });
+  assert.deepEqual(responsible.items.map((item) => item.slug), ["alpha"]);
+  assert.equal(responsible.items[0]?.responsibleGamblingLabel, "Responsible gambling tools available");
 });
 
 test("visit action requires active local program, offer, link, and safe redirect slug", async () => {

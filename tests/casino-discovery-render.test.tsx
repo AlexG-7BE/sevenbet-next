@@ -3,11 +3,11 @@ import test from "node:test";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { CasinoDiscoveryCardMarkup, DirectoryReviewPreviewMarkup, type CasinoCardClassNames } from "../components/casino-discovery/CasinoDiscoveryCard";
+import { CasinoDiscoveryCardMarkup, DirectoryFeaturedTheatreMarkup, type CasinoCardClassNames } from "../components/casino-discovery/CasinoDiscoveryCard";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 
 const classNames = Object.fromEntries([
-  "casinoCard", "cardHeader", "position", "logo", "score", "description", "cardFacts", "tags", "highlights", "offerBlock", "commission", "unavailable", "cardActions", "featurePlaceholder", "featureCard", "featureTop",
+  "casinoCard", "cardHeader", "position", "logo", "identity", "score", "description", "signals", "signal", "offerBlock", "commission", "unavailable", "cardActions", "featurePlaceholder", "featureTheatre", "featureMedia", "featureOverlay", "featureCopy", "featureMetrics", "featureCard", "featureEyebrow",
 ].map((name) => [name, name])) as CasinoCardClassNames;
 
 function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
@@ -16,6 +16,7 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
     slug: "full-casino",
     name: "Full Casino",
     logo: { url: "https://media.example/full.png", alt: "Full Casino logo", width: 320, height: 160 },
+    hero: null,
     shortDescription: "A published editorial summary.",
     rating: 8.4,
     reviewCount: null,
@@ -41,7 +42,7 @@ test("full canonical card renders published evidence and only the governed inter
   assert.match(html, /aria-label="Directory result position 7"/);
   assert.match(html, /href="\/r\/full-casino-visit"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
-  assert.match(html, /The editorial score is displayed separately from visit availability\./);
+  assert.match(html, /Review access is editorial\. A visit action is conditional and may compensate SevenBet\./);
   assert.doesNotMatch(html, /destinationUrl|trackingUrl|operator\.example/);
   assert.doesNotMatch(html, /featured published review|recommended|best placement|available where you are|eligible in your location/i);
 });
@@ -56,19 +57,20 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={sparse} classNames={classNames} position={2} />);
   assert.match(html, /href="\/casino\/sparse-casino"/);
   assert.match(html, /A governed visit link is not currently available\. The published review remains available\./);
-  assert.match(html, /No active public bonus is attached to this review\./);
+  assert.match(html, /No active public bonus/);
+  assert.match(html, /The review remains available without a commercial bonus\./);
   assert.doesNotMatch(html, /href="\/r\//);
-  assert.doesNotMatch(html, /<img|Editorial score|Editorial check|<span>Licence<\/span>|Published markets|<span>Payments<\/span>/);
+  assert.doesNotMatch(html, /<img|Editorial score|Reviewed/);
   assert.doesNotMatch(html, /No licence|Unlicensed|Unsupported|destinationUrl|trackingUrl/i);
 });
 
-test("first-result preview stays neutral for default, search, sort and later-page contexts", () => {
+test("first-result theatre stays neutral for default, search, sort and later-page contexts", () => {
   for (const context of ["default", "search", "NAME_ASC", "page-2"]) {
-    const html = renderToStaticMarkup(<DirectoryReviewPreviewMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
-    assert.match(html, /Published review preview/);
+    const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
+    assert.match(html, /Published casino review/);
     assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
   }
-  const empty = renderToStaticMarkup(<DirectoryReviewPreviewMarkup casino={undefined} classNames={classNames} />);
+  const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
   assert.match(empty, /Reviews appear only after editorial publication/);
   assert.doesNotMatch(empty, /Featured published review|recommended review|best review|top review/i);
 });
