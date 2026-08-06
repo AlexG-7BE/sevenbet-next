@@ -6,6 +6,12 @@ Base: `2b358222e77f9ed56b1ff5f3ab8333da3863326d`
 
 Branch: `codex/fe-mig-06-casino-directory`
 
+Application commit: `97eae8f42d8758a81b0d9cc4ff3343c46ccea147`
+
+PR: [#23](https://github.com/AlexG-7BE/sevenbet-next/pull/23)
+
+Preview: [protected Vercel deployment](https://sevenbet-next-git-codex-fe-mig-06-ca-1bc9ea-alexg-7bes-projects.vercel.app/casinos)
+
 ## Evidence boundary
 
 **Detected:** the repository root is `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`. All 655 tracked files were scanned before this technical handoff; dependencies, `.next`, caches, generated build output and `tsconfig.tsbuildinfo` were excluded from implementation claims.
@@ -66,6 +72,7 @@ The approved Figma family is the sole visual source of truth. Refero research wa
 - `npx prisma validate` — passed.
 - `npm run build` — passed; `/casinos` remains dynamic SSR.
 - `git diff --check` — passed before delivery.
+- Protected Vercel Preview smoke — desktop, mobile, JavaScript-disabled mobile GET-filter and metadata checks passed; zero console errors and no horizontal overflow.
 
 The browser suite covers default directory, page 2, country/licence/payment filters, bonus and responsible-gambling booleans, combined filters, empty results, available and unavailable actions, invalid parameters, SSR, a real JavaScript-disabled mobile GET-filter flow, canonical/noindex, ItemList, sorting, page size, keyboard/focus behavior and the full width matrix.
 
@@ -83,6 +90,6 @@ The five protected documentation stashes were not applied, removed, renamed or i
 
 ## Known limitations and remaining delivery gates
 
-**Planned:** push the branch, open a separate PR into `main`, obtain the Vercel Preview URL, and repeat desktop/mobile/no-JavaScript smoke on Preview. Automatic merge is prohibited.
+**Detected:** the branch is pushed, separate PR #23 targets `main`, the protected Vercel Preview is Ready, and project-scoped bypass smoke passes on desktop, mobile and JavaScript-disabled mobile. Automatic merge remains prohibited; Founder Office review is the remaining delivery gate.
 
 **Inferred:** the local production build warning about a direct Prisma endpoint reflects the local environment configuration, not this frontend package; Prisma validation and runtime discovery tests pass, and no connection configuration changed.
