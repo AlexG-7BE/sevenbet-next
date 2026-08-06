@@ -23,3 +23,9 @@ export const coreRoutes = [
 export function absoluteUrl(path: string) {
   return `${siteUrl}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+export function casinoOfficialUrl(domain: string) {
+  const hostname = domain.trim().toLowerCase().replace(/\.$/, "");
+  if (!hostname || /(?:^|\.)(?:example|invalid|localhost|test)$/.test(hostname)) return null;
+  return `https://${hostname}`;
+}

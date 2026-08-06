@@ -25,7 +25,7 @@ import { publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata, safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
-import { absoluteUrl } from "@/lib/site";
+import { absoluteUrl, casinoOfficialUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -61,10 +61,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 function reviewSchema(casino: Awaited<ReturnType<typeof publicCasinoService.getCasino>>) {
   if (!casino) return null;
+  const officialUrl = casinoOfficialUrl(casino.domain);
   return {
     "@context": "https://schema.org",
     "@type": "Review",
-    itemReviewed: { "@type": "Organization", name: casino.name, url: `https://${casino.domain}` },
+    itemReviewed: { "@type": "Organization", name: casino.name, ...(officialUrl ? { url: officialUrl } : {}) },
     author: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
     publisher: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
     reviewRating: { "@type": "Rating", ratingValue: casino.editorScore, bestRating: 10, worstRating: 0 },

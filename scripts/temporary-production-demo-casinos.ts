@@ -97,12 +97,21 @@ async function returnCasinoToDraft(casinoId: string, actorId: string) {
   return current;
 }
 
-async function publishEditorial(casinoId: string, content: (typeof temporaryDemoCasinos)[number]["editorial"], actorId: string) {
+async function syncEditorial(
+  casinoId: string,
+  content: (typeof temporaryDemoCasinos)[number]["editorial"],
+  publicExperience: (typeof temporaryDemoCasinos)[number]["publicExperience"],
+  actorId: string,
+) {
   const existing = await editorialReviewService.getByCasinoId(casinoId);
   if (existing && existing.status !== "DRAFT" && existing.status !== "ARCHIVED") {
     await editorialReviewService.transition(existing.id, "DRAFT", actorId);
   }
   let review = await editorialReviewService.saveDraft(casinoId, content, `Refresh ${TEMPORARY_DEMO_DATASET_ID}`, actorId);
+  if (publicExperience === "FULL_PROFILE") {
+    await editorialReviewService.transition(review.id, "ARCHIVED", actorId);
+    return;
+  }
   review = await editorialReviewService.transition(review.id, "IN_REVIEW", actorId);
   review = await editorialReviewService.transition(review.id, "APPROVED", actorId);
   const candidate = review.revisions.find((item) => item.revisionNumber === review.draftRevisionNumber);
@@ -133,7 +142,7 @@ async function seedCasino(definition: (typeof temporaryDemoCasinos)[number], act
       update: { kind: image.kind, url: image.url, alt: image.alt, width: image.width, height: image.height, sortOrder: image.sortOrder, isPrimary: image.isPrimary },
     });
   }
-  await publishEditorial(definition.id, definition.editorial, actorId);
+  await syncEditorial(definition.id, definition.editorial, definition.publicExperience, actorId);
   aggregate = await casinoService.getCasinoById(definition.id);
   aggregate = await casinoService.transitionWorkflow(definition.id, EditorialStatus.IN_REVIEW, actorId, aggregate.updatedAt);
   aggregate = await casinoService.transitionWorkflow(definition.id, EditorialStatus.APPROVED, actorId, aggregate.updatedAt);
@@ -197,7 +206,11 @@ async function verify() {
   for (const expected of temporaryDemoCasinos) {
     const record = records.find((item) => item.id === expected.id);
     if (!record || record.slug !== expected.slug || record.status !== "PUBLISHED" || !record.versions.length) issues.push(`${expected.slug} is not published from a version snapshot`);
-    if (!record?.editorialReview?.publishedRevisionId || record.editorialReview.status !== "PUBLISHED") issues.push(`${expected.slug} editorial review is not published`);
+    if (expected.publicExperience === "STRUCTURED_EDITORIAL") {
+      if (!record?.editorialReview?.publishedRevisionId || record.editorialReview.status !== "PUBLISHED") issues.push(`${expected.slug} structured editorial review is not published`);
+    } else if (record?.editorialReview?.status !== "ARCHIVED") {
+      issues.push(`${expected.slug} does not expose the complete canonical casino profile`);
+    }
     if (record && expected.images.some((image) => !record.images.some((actual) => actual.id === image.id && actual.kind === image.kind))) issues.push(`${expected.slug} media set is incomplete`);
     if (record && record.casinoBonuses.some((item) => item.status !== "PUBLISHED" || item.offerStatus !== "ACTIVE")) issues.push(`${expected.slug} demo bonus is not publicly presentable`);
   }

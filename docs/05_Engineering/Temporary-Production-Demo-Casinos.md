@@ -31,7 +31,11 @@ All database identities owned directly by the seed are deterministic UUIDs. Stat
 - `npm run prod:demo-casinos:verify` performs read-only database verification.
 - `npm run prod:demo-casinos:cleanup` deletes only the exact manifest affiliate and casino IDs after identity checks.
 
-Mutating commands require `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS=true`. They never print connection strings or credentials.
+Mutating commands require `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS=true`. For a remote production database, set `PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS=30000` on the seed or cleanup command so the existing audited repository transactions can tolerate network latency. The override is process-local and does not alter the deployed application's default transaction timeout. These commands never print connection strings or credentials.
+
+The manifest intentionally exercises both existing public contracts: Northstar, Harbour, Atlas and Meadow expose the complete canonical Casino Profile, while Lantern exposes the separately published structured editorial-review presentation. This keeps rating, media, payment, licence and bonus sections demonstrable without changing the public renderer.
+
+Synthetic licence records use the workflow-required `ACTIVE` state but remain explicitly fictional and unverified: there is no licence number, verification URL or `lastVerifiedAt`. Public verification requires both active status and actual verification evidence, so Demo profiles render `Needs review` / `Licence not verified`. Reserved documentation domains (`.example`, `.test`, `.invalid` and localhost) cannot become official-site links or structured-data operator URLs; the only available Demo action is the governed internal redirect for Northstar.
 
 ## Release checks
 

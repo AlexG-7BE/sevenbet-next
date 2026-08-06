@@ -51,14 +51,15 @@ export interface TemporaryDemoCasino {
   responsibleGamblingTools: string[];
   images: Array<{ id: string; kind: "LOGO" | "HERO" | "SCREENSHOT"; url: string; alt: string; width: number; height: number; sortOrder: number; isPrimary: boolean }>;
   editorial: CasinoEditorialDocument;
+  publicExperience: "FULL_PROFILE" | "STRUCTURED_EDITORIAL";
 }
 
 const definitions = [
-  { n: 1, slug: "demo-northstar", title: "Demo Northstar Casino", accent: "#d8ff3e", dark: "#17211b", score: 9.1, trust: 8.8, country: "GB", currency: "GBP", payments: [["visa", "Visa", "CARD"], ["mastercard", "Mastercard", "CARD"], ["paypal", "PayPal", "E_WALLET"]], bonus: ["WELCOME", "100.00", 50, "500.00"], featured: true },
-  { n: 2, slug: "demo-harbour", title: "Demo Harbour Casino", accent: "#78d7ff", dark: "#102332", score: 8.6, trust: 8.3, country: "IE", currency: "EUR", payments: [["visa", "Visa", "CARD"], ["bank-transfer", "Bank transfer", "BANK_TRANSFER"]], bonus: ["FREE_SPINS", null, 80, "250.00"], featured: true },
-  { n: 3, slug: "demo-atlas", title: "Demo Atlas Casino", accent: "#ffb15a", dark: "#2c1c15", score: 8.2, trust: 7.9, country: "CA", currency: "CAD", payments: [["mastercard", "Mastercard", "CARD"], ["interac", "Interac", "BANK_TRANSFER"]], bonus: ["CASHBACK", "10.00", null, "300.00"], featured: false },
-  { n: 4, slug: "demo-meadow", title: "Demo Meadow Casino", accent: "#a9e5b2", dark: "#183022", score: 7.6, trust: 7.2, country: "NZ", currency: "NZD", payments: [["visa", "Visa", "CARD"]], bonus: null, featured: false },
-  { n: 5, slug: "demo-lantern", title: "Demo Lantern Casino", accent: "#ff8e9d", dark: "#311a22", score: 8.8, trust: 8.5, country: "AU", currency: "AUD", payments: [["visa", "Visa", "CARD"], ["apple-pay", "Apple Pay", "E_WALLET"], ["demo-coin", "Demo Coin", "CRYPTO"]], bonus: ["RELOAD", "50.00", 25, "400.00"], featured: true },
+  { n: 1, slug: "demo-northstar", title: "Demo Northstar Casino", accent: "#d8ff3e", dark: "#17211b", score: 9.1, trust: 8.8, country: "GB", currency: "GBP", payments: [["visa", "Visa", "CARD"], ["mastercard", "Mastercard", "CARD"], ["paypal", "PayPal", "E_WALLET"]], bonus: ["WELCOME", "100.00", 50, "500.00"], featured: true, publicExperience: "FULL_PROFILE" },
+  { n: 2, slug: "demo-harbour", title: "Demo Harbour Casino", accent: "#78d7ff", dark: "#102332", score: 8.6, trust: 8.3, country: "IE", currency: "EUR", payments: [["visa", "Visa", "CARD"], ["bank-transfer", "Bank transfer", "BANK_TRANSFER"]], bonus: ["FREE_SPINS", null, 80, "250.00"], featured: true, publicExperience: "FULL_PROFILE" },
+  { n: 3, slug: "demo-atlas", title: "Demo Atlas Casino", accent: "#ffb15a", dark: "#2c1c15", score: 8.2, trust: 7.9, country: "CA", currency: "CAD", payments: [["mastercard", "Mastercard", "CARD"], ["interac", "Interac", "BANK_TRANSFER"]], bonus: ["CASHBACK", "10.00", null, "300.00"], featured: false, publicExperience: "FULL_PROFILE" },
+  { n: 4, slug: "demo-meadow", title: "Demo Meadow Casino", accent: "#a9e5b2", dark: "#183022", score: 7.6, trust: 7.2, country: "NZ", currency: "NZD", payments: [["visa", "Visa", "CARD"]], bonus: null, featured: false, publicExperience: "FULL_PROFILE" },
+  { n: 5, slug: "demo-lantern", title: "Demo Lantern Casino", accent: "#ff8e9d", dark: "#311a22", score: 8.8, trust: 8.5, country: "AU", currency: "AUD", payments: [["visa", "Visa", "CARD"], ["apple-pay", "Apple Pay", "E_WALLET"], ["demo-coin", "Demo Coin", "CRYPTO"]], bonus: ["RELOAD", "50.00", 25, "400.00"], featured: true, publicExperience: "STRUCTURED_EDITORIAL" },
 ] as const;
 
 export const temporaryDemoCasinos: TemporaryDemoCasino[] = definitions.map((definition) => {
@@ -76,7 +77,7 @@ export const temporaryDemoCasinos: TemporaryDemoCasino[] = definitions.map((defi
     internalName: `${definition.title} — synthetic production demo`,
     title: definition.title,
     domain: `${definition.slug}.example`,
-    websiteUrl,
+    websiteUrl: null,
     operator: "Fictional SevenBet Demo Studio",
     tagline: "Fictional profile for product demonstration only",
     summary,
@@ -155,6 +156,7 @@ export const temporaryDemoCasinos: TemporaryDemoCasino[] = definitions.map((defi
       { id: id(definition.n, 82), kind: "SCREENSHOT", url: asset("screen"), alt: `${definition.title} fictional mobile product presentation`, width: 900, height: 1200, sortOrder: 100, isPrimary: false },
     ],
     editorial,
+    publicExperience: definition.publicExperience,
   };
 });
 
