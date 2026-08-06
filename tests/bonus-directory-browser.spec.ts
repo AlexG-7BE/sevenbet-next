@@ -53,6 +53,14 @@ test("empty results, material terms and commercial states remain truthful", asyn
   const unavailableActions = await page.getByText("No governed visit", { exact: true }).count();
   expect(governedActions + unavailableActions).toBeGreaterThan(0);
   expect(unavailableActions).toBeGreaterThan(0);
+  if (governedActions > 0) {
+    const action = page.locator('a[href^="/r/"]').first();
+    const colours = await action.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, foreground: style.color };
+    });
+    expect(colours).toEqual({ background: "rgb(16, 15, 15)", foreground: "rgb(255, 255, 255)" });
+  }
   for (const link of await page.locator('a[href^="/r/"]').all()) await expect(link).toHaveAttribute("href", /^\/r\/demo-/);
 });
 

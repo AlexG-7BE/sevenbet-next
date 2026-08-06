@@ -17,6 +17,8 @@ test("available actions remain governed internal redirects after material terms"
   assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
   assert.match(component, /href=\{href\} prefetch=\{false\}/);
   assert.match(component, /rel="nofollow sponsored"/);
+  const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
+  assert.match(styles, /\.page \.offerActionCompact \{ color: var\(--white\); \}/);
   assert.match(component, /String\(startPosition \+ index\)\.padStart/);
   assert.ok(component.indexOf("function materialTerms") < component.indexOf("function OfferAction"));
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
@@ -26,8 +28,8 @@ test("FE-MIG-07 isolates Bonuses from the shared Best Offers presentation", () =
   const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   const bestOffers = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   assert.match(bonuses, /components\/bonus-directory\/BonusDirectory/);
-  assert.doesNotMatch(bonuses, /components\/public-offers\/PublicOffers/);
-  assert.match(bestOffers, /components\/public-offers\/PublicOffers/);
+  assert.doesNotMatch(bonuses, /components\/best-offers\/BestOffersExperience/);
+  assert.match(bestOffers, /components\/best-offers\/BestOffersExperience/);
   assert.doesNotMatch(bestOffers, /components\/bonus-directory/);
 });
 
