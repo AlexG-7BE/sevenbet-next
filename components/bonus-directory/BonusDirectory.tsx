@@ -51,7 +51,7 @@ function evidenceRows(offer: PublicOfferDTO) {
 function OfferAction({ offer, compact = false }: { offer: PublicOfferDTO; compact?: boolean }) {
   const href = safeActionHref(offer);
   if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>No governed visit</span>;
-  return <Link className={compact ? styles.offerActionCompact : styles.offerAction} href={href} rel="nofollow sponsored">View Offer <span aria-hidden="true">↗</span></Link>;
+  return <Link className={compact ? styles.offerActionCompact : styles.offerAction} href={href} prefetch={false} rel="nofollow sponsored">View Offer <span aria-hidden="true">↗</span></Link>;
 }
 
 export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {

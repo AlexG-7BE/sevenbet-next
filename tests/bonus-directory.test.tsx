@@ -15,6 +15,7 @@ test("bonus presentation renders neutral absence and never links an unavailable 
 test("available actions remain governed internal redirects after material terms", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
+  assert.match(component, /href=\{href\} prefetch=\{false\}/);
   assert.match(component, /rel="nofollow sponsored"/);
   assert.match(component, /String\(startPosition \+ index\)\.padStart/);
   assert.ok(component.indexOf("function materialTerms") < component.indexOf("function OfferAction"));
