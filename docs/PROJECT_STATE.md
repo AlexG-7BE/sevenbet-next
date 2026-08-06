@@ -18,11 +18,11 @@ Phase 1 — Product Master Plan, supported by Product & Design preparation
 
 ✅ Legacy Figma foundation baseline recorded: 7 collections, 77 variables, semantic Light / Ink / Help collections, 10 Manrope text styles, and 3 elevation styles
 
-✅ RFC-012 temporary production synthetic casino dataset — [PR #20](https://github.com/AlexG-7BE/sevenbet-next/pull/20) provides five deterministic, clearly fictional `demo-*` profiles and exact-ID cleanup on the current schema. The records are published on the production URL through the existing Casino Builder/publication contracts; Northstar is the sole internal-only controlled redirect, the other four commercial actions are unavailable, and production database plus responsive browser smoke checks pass. No schema change, migration, separate Demo environment or RFC-011 fixture adapter is included.
-
 ## In Progress
 
 🟨 Product Master Plan
+
+🟨 RFC-012 temporary production synthetic casino dataset and public offer projection — Founder Office expanded [PR #20](https://github.com/AlexG-7BE/sevenbet-next/pull/20) from five profiles to exactly 25 published `demo-*` casino aggregates and approved database-driven `/best-offers` plus `/bonuses`. The implementation must use latest published `CasinoVersion` snapshots, repository/service boundaries, URL-authoritative SSR filters and exact-ID lifecycle controls. Schema audit confirms no Prisma change or migration is required. Production reseed and verification are pending; separate Demo infrastructure and RFC-011 remain out of scope.
 
 ✅ Documentation-only Frontend Migration Audit — all 59 approved Figma screen families are mapped to current Next.js evidence and P0 work packages in `docs/02_Product_Design/Frontend-Migration-Audit-and-P0-Implementation-Plan.md`. The audit records 0 `PARITY`, 11 `CLOSE_PARITY`, 14 `PARTIAL`, 21 `STALE`, 3 `PLACEHOLDER`, 3 `FRONTEND_MISSING`, 3 `BLOCKED_BY_DATA` and 4 `BLOCKED_BY_PRODUCT`. `/self-check` and `/tools/budget-calculator` remain P0 as `P0_REDESIGN_REQUIRED`; their current mechanics are not approved, and production release is blocked by FE-SAFETY-01 plus separate product/privacy/compliance/Figma approval. No application, backend, API, Prisma or Figma change was made.
 

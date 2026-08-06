@@ -2,52 +2,73 @@
 
 ## Governing decision
 
-RFC-012 authorises a temporary, synthetic dataset in the current production database. Separate Demo infrastructure and the future RFC-011 fixture-adapter proposal are out of scope.
+RFC-012 authorises exactly 25 temporary synthetic casino aggregates in the current production database and a public-offer projection for `/best-offers` and `/bonuses`. Separate Demo infrastructure and the future RFC-011 fixture adapter remain out of scope.
 
 ## Detected implementation path
 
-The current Prisma schema already represents casino profiles, countries, licences, payments, game providers, categories, bonuses, SEO, images, structured editorial reviews and governed affiliate redirects. `CasinoService` validates the draft, moves it through `DRAFT → IN_REVIEW → APPROVED`, and publishes an immutable `CasinoVersion` snapshot used by the public repository.
+The existing schema represents casino profiles, countries, licences, payments, game providers, categories, bonuses, SEO, images, structured editorial reviews and governed redirects. `CasinoService` validates a draft, moves it through `DRAFT → IN_REVIEW → APPROVED` and publishes an immutable `CasinoVersion` snapshot.
+
+`PublicCasinoRepository` selects only the latest published snapshot for a currently published, non-archived casino. `PublicOfferRepository` maps those public-safe snapshots to `PublicOfferDTO`; `PublicOfferService` owns filtering, sorting, facets and pagination. Pages do not import Prisma. Missing redirect authority preserves editorial offers with unavailable actions.
 
 No schema change or migration is required.
 
 ## Dataset contract
 
-The source-controlled manifest contains exactly these casino slugs:
+The factory-driven manifest contains exactly:
 
-- `demo-northstar`
-- `demo-harbour`
-- `demo-atlas`
-- `demo-meadow`
-- `demo-lantern`
+- `demo-northstar`, `demo-harbour`, `demo-atlas`, `demo-meadow`, `demo-lantern`
+- `demo-summit`, `demo-ember`, `demo-tide`, `demo-juniper`, `demo-orbit`
+- `demo-quartz`, `demo-willow`, `demo-beacon`, `demo-forge`, `demo-aurora`
+- `demo-cedar`, `demo-vale`, `demo-cobalt`, `demo-drift`, `demo-solstice`
+- `demo-meridian`, `demo-mosaic`, `demo-plume`, `demo-prism`, `demo-canopy`
 
-All database identities owned directly by the seed are deterministic UUIDs. Static presentation assets live under `public/demo-casinos/` and are referenced by deterministic `CasinoImage` records included in the normal published snapshot.
+Every aggregate has one active published synthetic bonus, three deterministic media assets and explicit fictional disclosures. Eighteen scenarios are `GB`-available; twelve are featured for the default shortlist. Types, terms, currencies, payments, crypto states, scores and presentation modes vary through scenario overrides.
 
-`demo-northstar` is the only available visit-action example. Its governed tracking destination is the internal production profile `/casino/demo-northstar`. The other records deliberately have no active redirect mapping.
+Five casino-level internal routes are allowed: Northstar, Harbour, Atlas, Lantern and Summit. Each resolves only to its own `https://sevenbet-next.vercel.app/casino/demo-*` profile. The other 20 offer actions are unavailable.
+
+All seed-owned database identities are deterministic UUIDs. Re-running the v2 seed skips unchanged published snapshots and upserts the same five affiliate graphs, producing no duplicate casino, bonus, media, affiliate or redirect records.
+
+## Public offer behavior
+
+`/best-offers` uses the GB shortlist, returns up to 12 records and shows three featured cards before the remaining comparison list. `/bonuses` uses the same service with page size 24 and URL filters for country, type, payment, crypto, deposit, wagering, availability, sort and page.
+
+Draft, unpublished, archived, future and expired bonuses are ineligible. Material terms and review access render before action. The public contract contains no tracking or destination URL, partner identifier, credential or internal note. CMS retrieval failures fail closed; legacy data is available only when CMS mode is explicitly disabled and its actions are scrubbed to unavailable.
 
 ## Commands
 
-- `npm run prod:demo-casinos:audit` performs read-only collision and environment checks.
-- `npm run prod:demo-casinos:seed` creates or refreshes only the manifest records and publishes them through the existing workflow.
-- `npm run prod:demo-casinos:verify` performs read-only database verification.
-- `npm run prod:demo-casinos:cleanup` deletes only the exact manifest affiliate and casino IDs after identity checks.
+- `npm run prod:demo-casinos:assets` deterministically generates the 75 SVG assets.
+- `npm run prod:demo-casinos:audit` performs read-only identity, collision, actor and schema checks.
+- `npm run prod:demo-casinos:seed` creates or refreshes exact manifest records through the existing publication workflow.
+- `npm run prod:demo-casinos:verify` checks the production database, public-offer counts, GB coverage, shortlist and redirect safety.
+- `npm run prod:demo-casinos:cleanup` deletes only exact manifest affiliate and casino IDs after identity checks.
 
-Mutating commands require `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS=true`. For a remote production database, set `PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS=30000` on the seed or cleanup command so the existing audited repository transactions can tolerate network latency. The override is process-local and does not alter the deployed application's default transaction timeout. These commands never print connection strings or credentials.
+Mutating commands require `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS=true`. Remote mutations should set `PRISMA_INTERACTIVE_TRANSACTION_TIMEOUT_MS=30000` for the existing audited interactive transactions. Commands do not print connection strings or credentials.
 
-The manifest intentionally exercises both existing public contracts: Northstar, Harbour, Atlas and Meadow expose the complete canonical Casino Profile, while Lantern exposes the separately published structured editorial-review presentation. This keeps rating, media, payment, licence and bonus sections demonstrable without changing the public renderer.
+## Cleanup contract
 
-Synthetic licence records use the workflow-required `ACTIVE` state but remain explicitly fictional and unverified: there is no licence number, verification URL or `lastVerifiedAt`. Public verification requires both active status and actual verification evidence, so Demo profiles render `Needs review` / `Licence not verified`. Reserved documentation domains (`.example`, `.test`, `.invalid` and localhost) cannot become official-site links or structured-data operator URLs; the only available Demo action is the governed internal redirect for Northstar.
+Cleanup validates fixed casino ID, slug and domain triplets plus affiliate ownership, then deletes exact redirect, offer, program, network and casino IDs. Casino-owned snapshots, revisions, editorial records and relations are removed only through existing foreign-key cascades. Prefix deletion, unknown-record deletion and `startsWith("demo-")` deletion are absent and prohibited.
 
-## Release checks
+## Release gates
 
-Before production seed: unit tests, typecheck, production build, read-only dataset audit and a successful production deployment containing the static assets.
+Before production seed:
 
-After production seed: database verification and desktop/mobile smoke checks for `/casinos`, each `/casino/demo-*` profile, unavailable actions and the controlled internal redirect.
+- targeted public-offer, public-casino, discovery, redirect and manifest regressions;
+- typecheck, Prisma validation, production build and `git diff --check`;
+- read-only production audit with no collisions;
+- deployed code and all 75 assets;
+- green PR #20 checks.
 
-## Release evidence — 2026-08-06
+After production seed:
 
-- **Detected:** the production database contains the five exact manifest UUIDs at `PUBLISHED`, each with `publishedVersion: 3`; `prod:demo-casinos:verify` reports `issues: []`.
-- **Detected:** `https://sevenbet-next.vercel.app/casinos` and all five `/casino/demo-*` profiles return HTTP 200 after the production deployment.
-- **Detected:** Northstar redirects with HTTP 302 only to `https://sevenbet-next.vercel.app/casino/demo-northstar`, with `no-store` and `noindex`; the four other Demo redirect slugs return HTTP 404.
-- **Detected:** desktop and mobile browser checks show no horizontal overflow or external links. Northstar renders rating, three media assets, payment, explicitly fictional licence and non-live bonus presentation with `Needs review`, `Licence not verified` and `Official site unavailable`; Lantern renders the structured editorial-review contract.
-- **Detected:** country, payment, published-bonus, available-visit and crypto filters select the expected manifest subsets.
-- **Detected:** targeted public/manifest regressions, typecheck, Prisma validation and production build pass. No Prisma schema or migration file changed.
+- exact 25 casino records and at least 25 eligible public offers;
+- at least 18 GB-eligible offers and 12 default Best Offers records;
+- five and only five safe internal redirects;
+- desktop/mobile and no-JavaScript smoke for `/casinos`, `/best-offers`, `/bonuses` and representative profiles;
+- URL filter, facet, pagination, empty-state, metadata and action verification.
+
+## Evidence
+
+- **Detected:** the v1 production dataset currently contains the original five published records and Northstar internal route.
+- **Detected:** the v2 read-only production audit finds those five expected identities, an eligible governed actor and no collisions after preserving Northstar's existing casino-level route contract.
+- **Detected:** local manifest/public-offer tests, typecheck, Prisma validation, production build and responsive/no-JavaScript offer-page smoke pass.
+- **Planned:** production deployment, v2 seed, repeated convergence check and final production browser evidence.

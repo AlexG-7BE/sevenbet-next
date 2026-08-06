@@ -145,9 +145,10 @@ test("casino robots directives preserve noindex and treat none as noindex, nofol
 });
 
 test("public routes use the service boundary and invalidate all publication surfaces", () => {
-  for (const file of ["app/(public)/casino/[slug]/page.tsx", "app/(public)/bonuses/page.tsx", "app/sitemap.ts"]) {
+  for (const file of ["app/(public)/casino/[slug]/page.tsx", "app/sitemap.ts"]) {
     assert.match(readFileSync(file, "utf8"), /publicCasinoService/);
   }
+  for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
@@ -156,7 +157,7 @@ test("public routes use the service boundary and invalidate all publication surf
   assert.match(page, /BreadcrumbList/);
   assert.doesNotMatch(page, /AggregateRating|reviewCount|ratingCount/);
   const cache = readFileSync("lib/public-casino/cache.ts", "utf8");
-  for (const path of ["/casinos", "/bonuses", "/sitemap.xml"]) assert.match(cache, new RegExp(path.replace("/", "\\/")));
+  for (const path of ["/casinos", "/best-offers", "/bonuses", "/sitemap.xml"]) assert.match(cache, new RegExp(path.replace("/", "\\/")));
   assert.doesNotMatch(cache, /"\/catalog"/);
   const action = readFileSync("app/api/admin/casinos/[casinoId]/action/route.ts", "utf8");
   assert.match(action, /revalidatePublicCasino\(result\.casino\.slug\)/);

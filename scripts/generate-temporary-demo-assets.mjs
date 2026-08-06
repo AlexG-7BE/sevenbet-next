@@ -1,13 +1,15 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const definitions = [
-  ["demo-northstar", "NORTHSTAR", "#d8ff3e", "#17211b", "N"],
-  ["demo-harbour", "HARBOUR", "#78d7ff", "#102332", "H"],
-  ["demo-atlas", "ATLAS", "#ffb15a", "#2c1c15", "A"],
-  ["demo-meadow", "MEADOW", "#a9e5b2", "#183022", "M"],
-  ["demo-lantern", "LANTERN", "#ff8e9d", "#311a22", "L"],
-];
+import { temporaryDemoCasinos } from "./temporary-production-demo-casino.manifest.ts";
+
+const definitions = temporaryDemoCasinos.map((casino) => [
+  casino.slug,
+  casino.title.replace(/^Demo /, "").replace(/ Casino$/, "").toUpperCase(),
+  casino.style.accent,
+  casino.style.dark,
+  casino.title.replace(/^Demo /, "").slice(0, 1).toUpperCase(),
+]);
 const root = path.join(process.cwd(), "public", "demo-casinos");
 await mkdir(root, { recursive: true });
 
