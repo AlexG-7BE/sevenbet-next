@@ -32,7 +32,7 @@ test("10 Steps keeps the approved Figma hierarchy inside the Public Shell", () =
   assert.match(landing, /502:2240[\s\S]*502:2416/);
   assert.match(layout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.doesNotMatch(landing, /<header|<footer|Need support now|standalone help/iu);
-  assert.equal((landing.match(/<h1\b/g) ?? []).length, 2, "the mutually exclusive anonymous and signed-in heroes each own one H1");
+  assert.equal((landing.match(/<h1\b/g) ?? []).length, 3, "the mutually exclusive anonymous, confirmed and fallback heroes each own one H1");
   assert.match(landing, /aria-labelledby="ten-steps-title"/);
   assert.match(landing, /<ol className=\{styles\.missionList\}>/);
 });
@@ -107,7 +107,9 @@ test("anonymous and unavailable session states never invent Programme truth", as
     getDashboard: async () => { throw new Error("Programme unavailable"); },
   });
   assert.deepEqual(signedInWithoutDashboard, { kind: "signed-in-fallback" });
-  assert.match(landing, /Programme state is unavailable here\. Open My Programme to retry\./);
+  assert.match(landing, /function SignedInFallbackHero/);
+  assert.match(landing, /Programme status is unavailable here\./);
+  assert.doesNotMatch(landing, /Programme state is unavailable here\. Open My Programme to retry\./);
 });
 
 test("returning state exposes server-owned current Mission, completion and XP", async () => {

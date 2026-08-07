@@ -22,9 +22,26 @@ const programmeMissions = missionRegistry.map((mission) => ({
 }));
 
 export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
-  const returning = state.kind === "returning" || state.kind === "available-programme-complete";
+  const confirmedProgramme = state.kind === "returning" || state.kind === "available-programme-complete";
   const signedIn = state.kind !== "anonymous";
-  const actionLabel = returning ? "Open My Programme" : state.kind === "signed-in-fallback" ? "Open the Programme" : "Start Mission 01";
+  const actionLabel = confirmedProgramme ? "Open My Programme" : state.kind === "signed-in-fallback" ? "Open the Programme" : "Start Mission 01";
+  const finalAction = confirmedProgramme
+    ? {
+        eyebrow: "YOUR PROGRAMME",
+        title: "Return to the plan you already started.",
+        copy: "Your saved progress stays inside My Programme.",
+      }
+    : state.kind === "signed-in-fallback"
+      ? {
+          eyebrow: "YOUR ACCOUNT",
+          title: "Programme status is unavailable here.",
+          copy: "Open the Programme to start or retry.",
+        }
+      : {
+          eyebrow: "ONE USEFUL MISSION",
+          title: "Start with the moment in front of you.",
+          copy: "No account until Mission 01 is complete.",
+        };
 
   return (
     <div
@@ -33,7 +50,13 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       data-figma-contract="502:2238 502:2240 502:2241 502:2412 502:2414 502:2415 502:2416"
     >
       <section className={styles.hero} data-ten-steps-section="hero" aria-labelledby="ten-steps-title">
-        {signedIn ? <ReturningHero state={state} actionLabel={actionLabel} /> : <AnonymousHero />}
+        {state.kind === "anonymous" ? (
+          <AnonymousHero />
+        ) : state.kind === "signed-in-fallback" ? (
+          <SignedInFallbackHero />
+        ) : (
+          <ReturningHero state={state} />
+        )}
       </section>
 
       <section className={styles.builds} data-ten-steps-section="programme-builds" aria-labelledby="programme-builds-title">
@@ -124,9 +147,9 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       </section>
 
       <section className={styles.finalAction} data-ten-steps-section="final-action" aria-labelledby="final-action-title">
-        <span>{returning ? "YOUR PROGRAMME" : "ONE USEFUL MISSION"}</span>
-        <h2 id="final-action-title">{returning ? "Return to the plan you already started." : "Start with the moment in front of you."}</h2>
-        <p>{returning ? "Your saved progress stays inside My Programme." : "No account until Mission 01 is complete."}</p>
+        <span>{finalAction.eyebrow}</span>
+        <h2 id="final-action-title">{finalAction.title}</h2>
+        <p>{finalAction.copy}</p>
         <Link className={styles.primaryButton} href="/program">{actionLabel}</Link>
       </section>
     </div>
@@ -153,13 +176,12 @@ function AnonymousHero() {
   );
 }
 
-function ReturningHero({ state, actionLabel }: { state: Exclude<TenStepsLandingState, { kind: "anonymous" }>; actionLabel: string }) {
-  const hasDashboard = state.kind === "returning" || state.kind === "available-programme-complete";
+type ConfirmedProgrammeState = Extract<TenStepsLandingState, { kind: "returning" | "available-programme-complete" }>;
+
+function ReturningHero({ state }: { state: ConfirmedProgrammeState }) {
   const progress = state.kind === "returning"
     ? `Mission ${String(state.currentMission).padStart(2, "0")} · ${state.completedMissions} of 10 complete · ${state.totalXp} XP`
-    : state.kind === "available-programme-complete"
-      ? `${state.completedMissions} of 10 complete · ${state.totalXp} XP · later Missions unavailable`
-      : "Programme state is unavailable here. Open My Programme to retry.";
+    : `${state.completedMissions} of 10 complete · ${state.totalXp} XP · later Missions unavailable`;
 
   return (
     <div className={styles.returningInner}>
@@ -167,12 +189,26 @@ function ReturningHero({ state, actionLabel }: { state: Exclude<TenStepsLandingS
         <span>WELCOME BACK</span>
         <h1 id="ten-steps-title">Continue the plan you already started.</h1>
         <p>Your saved progress, XP and next Mission stay inside My Programme.</p>
-        <Link className={styles.primaryButton} href="/program">{actionLabel}</Link>
+        <Link className={styles.primaryButton} href="/program">Open My Programme</Link>
         <div className={styles.serverState}>
           <strong>MY PROGRAMME</strong>
           <p>{progress}</p>
-          {hasDashboard && <small>Live values from your server-owned Programme record.</small>}
+          <small>Live values from your server-owned Programme record.</small>
         </div>
+      </div>
+      <div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src={returningImage} width="1800" /></div>
+    </div>
+  );
+}
+
+function SignedInFallbackHero() {
+  return (
+    <div className={styles.returningInner}>
+      <div className={styles.returningCopy}>
+        <span>YOUR ACCOUNT</span>
+        <h1 id="ten-steps-title">Programme status is unavailable here.</h1>
+        <p>Open the Programme to start or retry.</p>
+        <Link className={styles.primaryButton} href="/program">Open the Programme</Link>
       </div>
       <div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src={returningImage} width="1800" /></div>
     </div>
