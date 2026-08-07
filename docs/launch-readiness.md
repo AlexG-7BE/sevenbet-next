@@ -18,7 +18,7 @@
 - **Blocking — RFC-001:** `docs/06_RFC/RFC-001-Jurisdiction-and-Market-Resolution.md` remains Proposed. It does not authorise market launch, commercial activation, or referral launch.
 - **Blocking:** market-specific legal, licence, age, disclosure, support, and ownership evidence must be approved before any market is exposed commercially.
 - **Blocking:** production deployment, secret-management, backup/restore, incident, telemetry, and on-call decisions require their applicable RFC/operational approvals.
-- **Blocking:** Privacy and Terms pages are explicitly placeholders and require reviewed legal copy before public launch.
+- **Blocking:** Privacy and Terms are substantive launch-candidate pages, but final external counsel review, processor/subprocessor verification and retention/transfer confirmation remain required before launch approval.
 
 ## Known limitations
 
@@ -34,7 +34,7 @@
 - [ ] Confirm Better Auth secrets, admin bootstrap, and preview-token settings are production-safe.
 - [ ] Confirm every published casino has current licence evidence, owner, review date, and jurisdiction approval.
 - [ ] Confirm `/r/[slug]` stays disabled unless the relevant governance gates are approved; verify unavailable routing fails safely.
-- [ ] Replace and legally approve Privacy and Terms content.
+- [ ] Obtain final external counsel approval for Privacy and Terms and verify processor/subprocessor, retention and transfer statements.
 - [ ] Verify external media delivery, alt text, social images, and image cache headers on the deployment.
 - [ ] Verify redirects, `/robots.txt`, `/sitemap.xml`, canonical links, structured data, and 404/error pages on the deployed origin.
 

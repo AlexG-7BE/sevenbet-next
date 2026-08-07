@@ -1,13 +1,16 @@
 # Persisted User Progress Foundation
 
-## Current progress storage
+## Status
 
-The public `ProgramExperience` remains anonymous-first. Anonymous progress and
-offline fallback state use `sevenbet-program-progress-v1` in `localStorage`.
-Authenticated completion, XP, and achievements hydrate from PostgreSQL. No
-`sessionStorage` progress state exists.
+**Historical compatibility foundation — not the current `/program` authority.**
 
-| State | Current source | PostgreSQL readiness |
+The active `/program` route now renders `ActiveControlProgramme` and uses the bounded Mission 01–04 Programme services, private artefacts and server-owned Dashboard/reward contracts. Missions 05–10 remain unimplemented. The legacy `ProgramExperience` component and `/api/program/progress/**` compatibility surface remain in the repository, but their localStorage flow must not be described as the current Active Control Programme architecture.
+
+## Historical compatibility progress storage
+
+The legacy `ProgramExperience` was anonymous-first. Its anonymous progress and offline fallback state use `sevenbet-program-progress-v1` in `localStorage`; authenticated completion, XP and achievements hydrate from PostgreSQL. No `sessionStorage` progress state exists in that compatibility subsystem.
+
+| State | Historical compatibility source | PostgreSQL readiness |
 | --- | --- | --- |
 | Current step | `activeStep` and stable `activeStepId` in localStorage | `ProgramEnrollment.currentStepId` exists |
 | Completed lessons | Not tracked separately by the current UI | `lesson:<lessonId>:completed` events are supported by the new service |
@@ -119,13 +122,13 @@ All three use `ON DELETE CASCADE ON UPDATE CASCADE`. Existing composite unique
 constraints already index these user IDs, so no duplicate indexes are added.
 The migration must be reviewed and applied manually only after a clean preflight.
 
-## Next UI phase
+## Historical UI phase record
 
-`ProgramExperience` now waits for Better Auth session resolution, hydrates an
-existing enrollment, and offers a deliberate merge only when the device copy is
-stronger. No enrollment or merge is created silently. A local decision marker
+At the time of this foundation, `ProgramExperience` waited for Better Auth session resolution, hydrated an
+existing enrollment, and offered a deliberate merge only when the device copy was
+stronger. No enrollment or merge was created silently. A local decision marker
 prevents repeated prompts, while the original localStorage payload remains the
-anonymous/offline fallback. API failures leave client progress untouched.
+anonymous/offline fallback. API failures leave client progress untouched. This paragraph records the compatibility flow; it is not a roadmap for the active Mission 01–04 Programme.
 
 The authenticated XP and achievement engines are documented in
 `docs/server-reward-engines.md`. Anonymous XP and achievements remain local;

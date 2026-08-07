@@ -1,22 +1,21 @@
 # Roadmap
 
-| Phase | Focus | Status | Completion Date |
+| Sequence | Workstream | Status | Evidence / boundary |
 | --- | --- | --- | --- |
-| Phase 0 | Product Vision | Completed | — |
-| Phase 1 | Product Master Plan | In progress | |
-| Product decision | RFC-002 — Active Control Program and Personal Control Dashboard | Approved; delivery gates pending | 2026-08-02 |
-| Design decision | RFC-005 — Prismatic Product Theatre | Superseded by RFC-006 | 2026-08-03 |
-| Design decision | RFC-006 — Human Guidance Trust-Led Design Direction | Superseded by RFC-007 | 2026-08-04 |
-| Design decision | RFC-007 — Tilt-Locked Human Product Theatre | Approved; visual and composition authority | 2026-08-04 |
-| Product decision | RFC-009 — Mission 03 Urge Literacy and Early Signal | Approved and implemented; connected-database browser flow verified, while clinical-content/compliance release review and mobile QA remain gates | 2026-08-04 |
-| Product decision | RFC-010 — Mission 04 Build One Boundary | Approved and implemented; Figma flow, private ActiveBoundary, deterministic reward and migration 0017 verified, while authenticated browser completion and release review remain gates | 2026-08-04 |
-| Product decision | RFC-012 — Temporary Production Synthetic Casino Dataset and Public Offer Projection | Implemented and production-deployed in [PR #20](https://github.com/AlexG-7BE/sevenbet-next/pull/20): exactly 25 published `demo-*` aggregates, 25 eligible offers, 18 GB scenarios, 75 media assets and five internal-only redirects through latest published snapshots and repository/service contracts. Repeat seed converges without new versions; production verification and responsive/no-JavaScript smoke pass. No schema migration, separate Demo infrastructure or external gambling destination | 2026-08-06 |
-| Supporting track | Product & Design — Tilt-Locked system and key journeys | In progress; acquisition surfaces and the responsive `/program` journey through Mission 04 and Dashboard `4 of 10` are implemented. Mission 04 browser/mobile/release QA, Missions 05–10 and wider journey migration remain pending. | 2026-08-04 |
-| Supporting track | Frontend Migration Audit and P0 Plan | Audit complete; FE-MIG-01 through FE-MIG-07 are merged. FE-MIG-09 is implemented on `codex/fe-mig-09-comparison` from `main` base `731227c`: approved Figma families `567:3592` / `569:1589` map to dynamic SSR `/compare`, a latest-published database projection, repeated URL selection, generic default selection, explicit missing-evidence states, a server-owned differences view and governed internal-only actions. Separate PR, protected Preview and Founder review remain gates; schema, migrations, APIs, CMS workflow and production data are unchanged. `/self-check` and `/tools/budget-calculator` remain launch-blocked as `P0_REDESIGN_REQUIRED` under FE-SAFETY-01. | 2026-08-07 |
-| Backend decision | RFC-008 — Programme persistence, rewards and privacy | Implemented through migration 0017, including RFC-009 Mission 03 and RFC-010 Mission 04 persistence/rewards; expiry automation, distributed rate limiting, export/erasure and telemetry remain pending | 2026-08-04 |
-| Supporting track | Programme backend boundaries — Missions 01–04 | Architecture hardening complete: bounded vertical slices, explicit unit of work, repeatable Dashboard snapshots, permanent standards and 43/43 Programme regressions; no API, schema, reward, frontend or product change. Distributed operations, purge, export/erasure, telemetry, CI/CD and autosave ordering remain pending. | 2026-08-04 |
-| Phase 2 | Architecture | Pending | |
-| Phase 3 | Domain Model | Pending | |
-| Phase 4 | Compliance | Pending | |
-| Phase 5 | Engineering Standards | Pending | |
-| Phase 6 | Implementation | Pending | |
+| 1 | Product Vision & Principles | **Completed** | Approved constitutional authority. |
+| 2 | RFC-002 / RFC-008 Programme foundation | **Implemented through Mission 04; release gates remain** | Missions 01–04 are server-owned; expiry, distributed limiting, export/erasure and telemetry remain. |
+| 3 | RFC-007 Tilt-Locked visual direction | **Approved** | Visual and composition authority. |
+| 4 | FE-MIG-01 through FE-MIG-16 | **Completed and merged** | Public Shell, acquisition, discovery, trust, learning and legal content families. |
+| 5 | FE-GAP-01 | **Completed and merged** | Privacy, Terms, safe Self-Check, Personal Gambling Limit Tracker and compact About amendment. |
+| 6 | FE-GAP-02 | **Completed and merged** | Protected Help article closure, FAQ, semantic fixes and FE-HANDOFF-01 closure. |
+| 7 | Final page-level P0/P1 audit | **Closed** | Known public-surface P0: 0; P1: 0 at baseline `30fc96e`. |
+| 8 | DOC-REC-01 | **In progress on this branch** | Final post-migration documentation reconciliation; docs only. |
+| 9 | FE-DS-01 — Frontend & Design System Consolidation | **Next** | Consolidate real production patterns; do not reopen approved page redesign. |
+| 10 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
+| 11 | Regulated commercial release | **Blocked by separate gates** | Live jurisdiction/age authority, legal/compliance approval, real operator/partner data and production operations are not supplied by FE-DS-01. |
+
+## FE-DS-01 outcome
+
+FE-DS-01 should produce a governed Design System v1: production UI inventory, Figma/code parity normalization, tokens, component variants, responsive contracts, accessibility normalization, visual regression, Storybook decision, Figma back-sync and legacy deprecation.
+
+It may correct consolidation-level P2/P3 inconsistencies. It must not claim commercial launch readiness or replace product, compliance, backend/operations or partner-data approvals.
