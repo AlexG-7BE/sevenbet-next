@@ -42,7 +42,7 @@ function eligibleOffers(context: DiscoveryContext, casinoId: string, casinoBonus
   }).sort((a, b) => Number(b.featured) - Number(a.featured) || b.priority - a.priority || a.id.localeCompare(b.id));
 }
 
-function visitAction(context: DiscoveryContext, casinoId: string, casinoBonusId: string | null, countryCode: string | undefined, now: Date): PublicVisitAction {
+export function resolvePublicVisitAction(context: DiscoveryContext, casinoId: string, casinoBonusId: string | null, countryCode: string | undefined, now: Date): PublicVisitAction {
   const offers = eligibleOffers(context, casinoId, casinoBonusId, countryCode, now);
   if (!offers.length) return { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "NO_ACTIVE_OFFER" };
   const offerIds = new Set(offers.map((offer) => offer.id));
@@ -125,7 +125,7 @@ export class PublicCasinoDiscoveryService {
       const general = object(editor.general);
       const bonusMetadata = object(editor.bonuses);
       const visit = casinoAllowsCountry(casino.countries.filter((country) => country.availability === "AVAILABLE").map((country) => ({ key: country.countryCode, label: country.countryCode })), countryContext)
-        ? visitAction(context, casino.id, null, countryContext, now)
+        ? resolvePublicVisitAction(context, casino.id, null, countryContext, now)
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
       const bonusCandidates = casino.bonuses.filter((bonus) => {
         const metadata = object(bonusMetadata[bonus.id]);
@@ -135,7 +135,7 @@ export class PublicCasinoDiscoveryService {
         if (countryContext && geoMode === "ALLOW" && !allowedCountries.includes(countryContext)) return false;
         if (countryContext && geoMode === "BLOCK" && blockedCountries.includes(countryContext)) return false;
         const hasCommercialOffer = context.offers.some((offer) => offer.casinoId === casino.id && offer.casinoBonusId === bonus.id);
-        return !hasCommercialOffer || visitAction(context, casino.id, bonus.id, countryContext, now).available;
+        return !hasCommercialOffer || resolvePublicVisitAction(context, casino.id, bonus.id, countryContext, now).available;
       }).sort((a, b) => Number(bool(object(bonusMetadata[b.id]).featured)) - Number(bool(object(bonusMetadata[a.id]).featured)) || a.slug.localeCompare(b.slug));
       const bonus = bonusCandidates[0] ?? null;
       const availableCountries = casino.countries.filter((country) => country.availability === "AVAILABLE").map((country) => ({ key: country.countryCode, label: country.countryCode }));
