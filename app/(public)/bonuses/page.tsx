@@ -57,7 +57,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
     })),
   };
 
-  return <main className={`${styles.page} ${instrumentSerif.variable}`}>
+  return <div className={`${styles.page} ${instrumentSerif.variable}`}>
     <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" />
     <section className={styles.hero}>
       <Image alt="" aria-hidden="true" className={styles.heroMedia} height={980} priority sizes="(max-width: 760px) 39vw, 53vw" src="/bonus-directory/material-field.png" width={1600} />
@@ -96,5 +96,5 @@ export default async function BonusesPage({ searchParams }: PageProps) {
     <BonusEducation />
     <BonusRelatedNavigation />
     <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>SevenBet may receive compensation from some governed outbound links. Publication and server-owned sorting do not depend on affiliate availability. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
-  </main>;
+  </div>;
 }

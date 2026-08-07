@@ -203,7 +203,7 @@
 .demoDisclosure strong { color: var(--white); }
 .statePage { min-height: 60vh; padding: 100px 0; background: var(--paper); }
 .statePanel { padding: 40px; border: 2px solid var(--acid); background: var(--night); color: var(--white); }
-.statePanel h1, .statePanel h3 { margin: 18px 0; font-size: clamp(38px, 5vw, 70px); line-height: .95; }
+.statePanel h1, .statePanel h2, .statePanel h3 { margin: 18px 0; font-size: clamp(38px, 5vw, 70px); line-height: .95; }
 .statePanel p { max-width: 720px; color: var(--on-night-muted); line-height: 24px; }
 .statePanel a, .statePanel button { min-height: 48px; margin: 10px 10px 0 0; padding: 12px 20px; display: inline-flex; align-items: center; border: 1px solid var(--acid); border-radius: 999px; background: var(--acid); color: var(--ink); cursor: pointer; font-weight: 800; }
 .loadingCard { height: 900px; margin-top: 50px; border-radius: 28px; background: linear-gradient(100deg, #e5e3da 20%, #f8f7f1 40%, #e5e3da 60%); background-size: 200% 100%; animation: pulse 1.6s infinite linear; }
@@ -356,7 +356,7 @@
 
   .statePage { min-height: 0; padding: 48px 0; }
   .statePanel { padding: 24px; border-radius: 20px; }
-  .statePanel h1, .statePanel h3 { font-size: 40px; line-height: 41px; }
+  .statePanel h1, .statePanel h2, .statePanel h3 { font-size: 40px; line-height: 41px; }
   .statePanel a, .statePanel button { width: 100%; margin-right: 0; justify-content: center; }
   .loadingCard { height: 560px; margin-top: 32px; border-radius: 22px; }
 }

@@ -14,8 +14,6 @@ export const coreRoutes = [
   "/affiliate-disclosure",
   "/about",
   "/faq",
-  "/privacy",
-  "/terms",
   "/bonus-guide",
   "/tools/budget-calculator",
 ];
