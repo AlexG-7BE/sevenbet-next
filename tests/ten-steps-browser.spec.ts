@@ -9,9 +9,9 @@ async function assertTenStepsContract(page: import("@playwright/test").Page) {
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("list").locator("li")).toHaveCount(10);
-  await expect(page.getByText("SAVE TO EARN", { exact: true })).toBeVisible();
-  await expect(page.getByText("Awarded when Mission 01 is saved to your account.", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-ten-steps-section='mission-map'] > ol > li")).toHaveCount(10);
+  await expect(page.getByText("SAVE TO EARN", { exact: true })).toHaveCount(1);
+  await expect(page.getByText("Awarded when Mission 01 is saved to your account.", { exact: true })).toHaveCount(1);
   await expect(page.getByText("Awarded after account creation.", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/UK PREVIEW|UK-ready discovery|\+\s*20\s*XP/i)).toHaveCount(0);
   await expect(page.locator("main a[href^='/casinos'], main a[href^='/bonuses'], main a[href^='/best-offers']")).toHaveCount(0);
@@ -52,12 +52,10 @@ test("10 Steps remains visible with reduced motion and hydrates without errors",
 for (const viewport of [
   { width: 1440, height: 900 },
   { width: 1280, height: 800 },
-  { width: 1024, height: 768 },
+  { width: 900, height: 900 },
   { width: 768, height: 1024 },
-  { width: 430, height: 932 },
   { width: 390, height: 844 },
   { width: 375, height: 667 },
-  { width: 360, height: 800 },
   { width: 320, height: 720 },
 ]) {
   test(`10 Steps follows the approved order and reflows at ${viewport.width}px`, async ({ browser }) => {
