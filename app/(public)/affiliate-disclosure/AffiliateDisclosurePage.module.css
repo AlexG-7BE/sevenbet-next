@@ -1,11 +1,11 @@
 .page {
-  --paper: #fafaf7;
-  --ink: #100f0f;
-  --muted: #64635c;
+  --paper: var(--sb-paper);
+  --ink: var(--sb-night);
+  --muted: var(--sb-metal);
   --border: rgba(16, 15, 15, .44);
-  --acid: #e4e24e;
-  --acid-hover: #efed58;
-  --teal: #176c65;
+  --acid: var(--sb-acid);
+  --acid-hover: var(--sb-acid-hover);
+  --teal: var(--sb-teal);
   min-height: 100vh;
   overflow: clip;
   background: var(--paper);
@@ -60,7 +60,7 @@
   width: min(500px, 42vw);
   height: 16px;
   margin-top: 26px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--acid);
 }
 
@@ -81,13 +81,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--acid);
   color: var(--ink);
   font-size: 15px;
   line-height: 20px;
   font-weight: 750;
-  transition: background-color 160ms ease, transform 160ms ease;
+  transition: background-color var(--sb-motion-fast) var(--sb-ease-standard), transform var(--sb-motion-fast) var(--sb-ease-standard);
 }
 
 .primaryAction:hover { background: var(--acid-hover); transform: translateY(-1px); }
@@ -160,7 +160,7 @@
   padding: 34px 32px;
   border-radius: 28px;
   background: var(--teal);
-  color: #fff;
+  color: var(--sb-white);
 }
 .principlePanel h2 { margin-top: 24px; font-size: 34px; line-height: 40px; }
 .principlePanel > p:last-child { max-width: 740px; margin: 18px 0 0; font-size: 16px; line-height: 24px; text-wrap: pretty; }

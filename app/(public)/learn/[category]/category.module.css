@@ -1,5 +1,5 @@
-.page { --paper: #f4f1eb; --ink: #100f0f; --acid: #e4e24e; background: var(--paper); color: var(--ink); color-scheme: light; overflow: clip; }
-.page :focus-visible { outline-color: #176c65; border-radius: 0; }
+.page { --paper: var(--sb-field); --ink: var(--sb-night); --acid: var(--sb-acid); background: var(--paper); color: var(--ink); color-scheme: light; overflow: clip; }
+.page :focus-visible { outline-color: var(--sb-teal); border-radius: 0; }
 .kicker { margin: 0 0 18px; font-size: .7rem; line-height: 1; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
 .hero { padding: 38px max(32px, calc((100vw - 1240px) / 2)) clamp(88px, 13vw, 190px); background: var(--acid); }
 .breadcrumbs { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: clamp(80px, 11vw, 150px); font-size: .78rem; font-weight: 800; }
@@ -26,7 +26,7 @@
 .empty > p:not(.kicker) { max-width: 52ch; line-height: 1.6; }
 .empty a { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; padding: 10px 16px; background: var(--ink); color: white; font-weight: 850; }
 
-.faq { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr); gap: clamp(42px, 8vw, 126px); background: #060708; color: white; }
+.faq { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr); gap: clamp(42px, 8vw, 126px); background: var(--sb-black); color: white; }
 .faqList { border-top: 1px solid rgba(255,255,255,.55); }
 .faq details { border-bottom: 1px solid rgba(255,255,255,.55); }
 .faq summary { min-height: 70px; display: flex; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; font-size: clamp(1.05rem, 2vw, 1.45rem); font-weight: 800; list-style: none; }

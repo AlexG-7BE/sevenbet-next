@@ -1,12 +1,12 @@
 .page {
-  --guide-ink: #100f0f;
-  --guide-paper: #fafaf7;
-  --guide-white: #ffffff;
-  --guide-muted: #64635c;
+  --guide-ink: var(--sb-night);
+  --guide-paper: var(--sb-paper);
+  --guide-white: var(--sb-white);
+  --guide-muted: var(--sb-metal);
   --guide-border: rgba(16, 15, 15, .52);
-  --guide-acid: #e4e24e;
-  --guide-acid-hover: #efed58;
-  --guide-verified: #176c65;
+  --guide-acid: var(--sb-acid);
+  --guide-acid-hover: var(--sb-acid-hover);
+  --guide-verified: var(--sb-teal);
   background: var(--guide-paper);
   color: var(--guide-ink);
   font-family: var(--font-seven-sans), Arial, sans-serif;
@@ -507,7 +507,7 @@
   padding: 12px 18px;
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--guide-acid);
   color: var(--guide-ink);
   font-size: 13px;

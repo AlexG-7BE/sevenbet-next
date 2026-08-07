@@ -1,11 +1,11 @@
 .page {
-  --faq-paper: #f4f1eb;
-  --faq-white: #fafaf7;
-  --faq-night: #060708;
-  --faq-ink: #100f0f;
-  --faq-muted: #64635c;
-  --faq-acid: #f0e814;
-  --faq-teal: #176c65;
+  --faq-paper: var(--sb-field);
+  --faq-white: var(--sb-paper);
+  --faq-night: var(--sb-black);
+  --faq-ink: var(--sb-night);
+  --faq-muted: var(--sb-metal);
+  --faq-acid: var(--sb-acid-bright);
+  --faq-teal: var(--sb-teal);
   overflow-x: clip;
   background: var(--faq-paper);
   color: var(--faq-ink);
@@ -14,7 +14,7 @@
 
 .page *, .page *::before, .page *::after { box-sizing: border-box; }
 .page a, .page summary { -webkit-tap-highlight-color: rgba(240, 232, 20, .25); }
-.page :focus-visible { outline: 3px solid #777500; outline-offset: 3px; }
+.page :focus-visible { outline: 3px solid var(--sb-acid-contrast); outline-offset: 3px; }
 
 .hero {
   min-height: 620px;
@@ -153,7 +153,7 @@
   min-width: 300px;
   min-height: 64px;
   padding: 16px 28px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;

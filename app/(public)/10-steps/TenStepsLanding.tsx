@@ -1,5 +1,4 @@
-import Link from "next/link";
-
+import { ActionLink } from "@/components/design-system/Action";
 import { missionRegistry } from "@/lib/programme/domain/mission-registry";
 import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
 import styles from "./TenStepsLanding.module.css";
@@ -150,7 +149,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <span>{finalAction.eyebrow}</span>
         <h2 id="final-action-title">{finalAction.title}</h2>
         <p>{finalAction.copy}</p>
-        <Link className={styles.primaryButton} href="/program">{actionLabel}</Link>
+        <ActionLink className={styles.primaryButton} href="/program" size="large">{actionLabel}</ActionLink>
       </section>
     </div>
   );
@@ -163,7 +162,7 @@ function AnonymousHero() {
         <span>PUBLIC PROGRAMME · START WITHOUT AN ACCOUNT</span>
         <h1 id="ten-steps-title"><strong>10 STEPS</strong><em>before you choose.</em></h1>
         <p>Compare casinos, understand offers, build your own rules.</p>
-        <Link className={styles.primaryButton} href="/program">Start Mission 01</Link>
+        <ActionLink className={styles.primaryButton} href="/program" size="large">Start Mission 01</ActionLink>
         <small>MISSION 01 IS PRIVATE. CREATE AN ACCOUNT ONLY AFTER COMPLETION TO SAVE +60 XP.</small>
       </div>
       <div className={styles.heroVisual}>
@@ -189,7 +188,7 @@ function ReturningHero({ state }: { state: ConfirmedProgrammeState }) {
         <span>WELCOME BACK</span>
         <h1 id="ten-steps-title">Continue the plan you already started.</h1>
         <p>Your saved progress, XP and next Mission stay inside My Programme.</p>
-        <Link className={styles.primaryButton} href="/program">Open My Programme</Link>
+        <ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink>
         <div className={styles.serverState}>
           <strong>MY PROGRAMME</strong>
           <p>{progress}</p>
@@ -208,7 +207,7 @@ function SignedInFallbackHero() {
         <span>YOUR ACCOUNT</span>
         <h1 id="ten-steps-title">Programme status is unavailable here.</h1>
         <p>Open the Programme to start or retry.</p>
-        <Link className={styles.primaryButton} href="/program">Open the Programme</Link>
+        <ActionLink className={styles.primaryButton} href="/program" size="large">Open the Programme</ActionLink>
       </div>
       <div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src={returningImage} width="1800" /></div>
     </div>

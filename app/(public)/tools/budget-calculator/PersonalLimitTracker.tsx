@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 
+import { ActionButton, ActionLink } from "@/components/design-system/Action";
 import styles from "./PersonalLimitTracker.module.css";
 
 type AmountField = "cap" | "used" | "planned";
@@ -90,7 +91,7 @@ export function PersonalLimitTracker() {
           {atOrOver ? <><p className={styles.resultLabel}>At / over your limit</p><h2>You have reached or exceeded the limit you set.</h2><p>SevenBet does not recommend increasing it in response to losses or continued play.</p></> : plannedOver ? <><p className={styles.resultLabel}>Planned amount exceeds your limit</p><h2>Your entries are {money.format(calculation.overBy)} above the limit you set.</h2><p>Consider not adding further gambling spend during this period.</p><p>SevenBet does not recommend increasing your limit to make the planned amount fit.</p></> : <><p className={styles.resultLabel}>Your own limit</p><h2>Remaining under the limit you entered: {money.format(calculation.remaining)}.</h2><p>You have used {Math.round(calculation.usedPercentage)}% of your own limit.</p><p>This is your limit, not a SevenBet recommendation about what is safe to gamble.</p></>}
         </div>
         <div className={styles.resultActions}>
-          {atOrOver ? <Link className={styles.primaryAction} href="/responsible-gambling">Protected Help / Pause options</Link> : <button className={styles.primaryAction} type="button" onClick={plannedOver ? editPlanned : () => setCalculation(null)}>{plannedOver ? "Reduce planned amount" : "Adjust entries"}</button>}
+          {atOrOver ? <ActionLink className={styles.primaryAction} href="/responsible-gambling">Protected Help / Pause options</ActionLink> : <ActionButton className={styles.primaryAction} type="button" onClick={plannedOver ? editPlanned : () => setCalculation(null)}>{plannedOver ? "Reduce planned amount" : "Adjust entries"}</ActionButton>}
           <button className={styles.secondaryAction} type="button" onClick={reset}>Reset</button>
           {!atOrOver ? <Link className={styles.helpLink} href="/responsible-gambling">Protected Help</Link> : <button className={styles.helpLink} type="button" onClick={() => setCalculation(null)}>Adjust entries</button>}
         </div>
@@ -107,7 +108,7 @@ export function PersonalLimitTracker() {
         <legend>Period</legend>
         {([{ value: "today", label: "Today" }, { value: "7-days", label: "7 days" }, { value: "30-days", label: "30 days" }] as const).map((option) => <label key={option.value}><input type="radio" name="period" value={option.value} checked={period === option.value} onChange={() => setPeriod(option.value)} /><span>{option.label}</span></label>)}
       </fieldset>
-      <button className={styles.primaryAction} type="submit">Check my limit</button>
+      <ActionButton className={styles.primaryAction} type="submit">Check my limit</ActionButton>
     </form>
   );
 }
