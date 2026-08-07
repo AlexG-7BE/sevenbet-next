@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { CategoryHero, CategoryPageContent } from "@/components/LearningCenterSections";
-import { getLearningCategory, learningCategories } from "@/lib/learning-center";
+import { LearningCategoryView } from "./LearningCategoryView";
+import { getArticlesByCategory, getLearningCategory, getRelatedCategories, learningCategories } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
 
 export function generateStaticParams() {
@@ -91,8 +91,11 @@ export default async function LearningCategoryPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(category)) }}
       />
-      <CategoryHero category={category} />
-      <CategoryPageContent category={category} />
+      <LearningCategoryView
+        category={category}
+        articles={getArticlesByCategory(category.slug)}
+        relatedCategories={getRelatedCategories(category)}
+      />
     </>
   );
 }

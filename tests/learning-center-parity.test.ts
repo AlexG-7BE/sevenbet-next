@@ -1,0 +1,96 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import test from "node:test";
+
+import {
+  getArticlePath,
+  getArticlesByCategory,
+  learningArticles,
+  learningCategories,
+  learningPaths,
+  learningTags,
+} from "../lib/learning-center";
+
+const hubRoute = readFileSync("app/(public)/learn/page.tsx", "utf8");
+const hubView = readFileSync("app/(public)/learn/LearningCenterPage.tsx", "utf8");
+const searchView = readFileSync("components/learning/LearningSearchAndFilter.tsx", "utf8");
+const categoryRoute = readFileSync("app/(public)/learn/[category]/page.tsx", "utf8");
+const categoryView = readFileSync("app/(public)/learn/[category]/LearningCategoryView.tsx", "utf8");
+const articleRoute = readFileSync("app/(public)/learn/[category]/[slug]/page.tsx", "utf8");
+const articleView = readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8");
+const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
+
+test("the Learning route family is server owned and uses the unchanged Public Shell", () => {
+  for (const source of [hubRoute, hubView, categoryRoute, categoryView, articleRoute, articleView]) {
+    assert.doesNotMatch(source, /["']use client["']|useEffect|useState|localStorage|sessionStorage/);
+  }
+  assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
+  assert.doesNotMatch(`${hubView}${categoryView}${articleView}`, /<footer|PublicHeader|PublicFooter/);
+  assert.equal((hubView.match(/<h1\b/g) ?? []).length, 1);
+  assert.equal((categoryView.match(/<h1\b/g) ?? []).length, 1);
+  assert.equal((articleView.match(/<h1\b/g) ?? []).length, 1);
+  assert.match(hubView, /data-figma-authority="835:6356"/);
+  assert.match(categoryView, /data-figma-authority="632:4360"/);
+  assert.match(articleView, /data-figma-authority="633:4341"/);
+});
+
+test("hub renders the complete current catalogue and only current taxonomy values", () => {
+  assert.equal(learningCategories.length, 13);
+  assert.equal(learningArticles.length, 13);
+  assert.equal(learningPaths.length, 6);
+  assert.match(hubRoute, /articles=\{learningArticles\}/);
+  assert.match(hubRoute, /categories=\{learningCategories\}/);
+  assert.match(hubRoute, /tags=\{learningTags\}/);
+  assert.match(hubRoute, /paths=\{learningPaths\}/);
+  assert.match(searchView, /article\.title, article\.summary, categoryTitle, \.\.\.article\.tags/);
+  assert.doesNotMatch(searchView, /plannedTopics|500\+|future article/);
+
+  const currentTags = new Set(learningArticles.flatMap((article) => article.tags));
+  for (const tag of currentTags) assert.ok(learningTags.includes(tag));
+  for (const article of learningArticles) assert.equal(getArticlePath(article), `/learn/${article.categorySlug}/${article.slug}`);
+});
+
+test("category pages publish current article records and fail closed when empty", () => {
+  for (const category of learningCategories) {
+    const articles = getArticlesByCategory(category.slug);
+    assert.ok(articles.length > 0, `${category.slug} should currently resolve a published article`);
+    assert.ok(articles.every((article) => article.categorySlug === category.slug));
+  }
+  assert.match(categoryView, /articles\.length > 0/);
+  assert.match(categoryView, /NO PUBLISHED GUIDES YET/);
+  assert.doesNotMatch(categoryView, /plannedTopics|Browse Casinos|Browse Bonuses|Claim|Play now/iu);
+  assert.match(categoryRoute, /if \(!category\) notFound\(\)/);
+});
+
+test("article template is truthful about missing evidence and preserves the protected boundary", () => {
+  assert.match(articleView, /SOURCE STATUS: UNAVAILABLE/);
+  assert.match(articleView, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
+  assert.doesNotMatch(articleView, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
+  assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
+  assert.match(articleView, /href="\/compare"/);
+  assert.match(articleView, /href="\/responsible-gambling"/);
+  assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);
+  assert.match(articleRoute, /if \(!article\) notFound\(\)/);
+});
+
+test("metadata and structured data remain aligned with visible content", () => {
+  assert.match(hubRoute, /canonical: absoluteUrl\("\/learn"\)/);
+  assert.match(categoryRoute, /BreadcrumbList/);
+  assert.match(categoryRoute, /FAQPage/);
+  assert.match(articleRoute, /BreadcrumbList/);
+  assert.match(articleRoute, /"@type": "Article"/);
+  assert.match(articleRoute, /FAQPage/);
+  assert.match(articleView, /article\.faq\.map/);
+  assert.match(articleView, /author\.name/);
+  assert.match(articleView, /editor\.name/);
+});
+
+test("search is the only client island and supports accessible recovery", () => {
+  assert.match(searchView, /^"use client";/);
+  assert.match(searchView, /aria-live="polite"/);
+  assert.match(searchView, /type="search"/);
+  assert.match(searchView, /<select/);
+  assert.match(searchView, /Clear filters/);
+  assert.match(searchView, /Browse categories/);
+  assert.match(searchView, /filteredArticles\.length > 0/);
+});

@@ -52,6 +52,8 @@
     "fe-mig-12:browser": "playwright test tests/methodology-browser.spec.ts tests/public-shell-browser.spec.ts tests/home-browser.spec.ts",
     "fe-mig-13:test": "node --import tsx --test tests/fe-mig-13-trust-pages.test.ts",
     "fe-mig-13:browser": "playwright test tests/fe-mig-13-browser.spec.ts",
+    "fe-mig-14:test": "node --import tsx --test tests/learning-center-parity.test.ts",
+    "fe-mig-14:browser": "playwright test tests/learning-center-browser.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
