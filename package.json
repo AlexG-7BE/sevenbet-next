@@ -56,6 +56,8 @@
     "fe-mig-14:browser": "playwright test tests/learning-center-browser.spec.ts",
     "fe-mig-15:test": "node --import tsx --test tests/bonus-guide-parity.test.ts",
     "fe-mig-15:browser": "playwright test tests/bonus-guide-browser.spec.ts",
+    "fe-mig-16:test": "node --import tsx --test tests/home-parity.test.ts",
+    "fe-mig-16:browser": "playwright test tests/home-browser.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

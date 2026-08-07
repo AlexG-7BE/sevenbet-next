@@ -45,7 +45,7 @@
 
 .hero {
   position: relative;
-  height: 920px;
+  height: min(920px, 63.8889vw);
   overflow: hidden;
   isolation: isolate;
   background: var(--night);
@@ -53,7 +53,7 @@
 
 .heroCopy {
   position: absolute;
-  inset: 220px 0 auto;
+  inset: min(220px, 15.2778vw) 0 auto;
   z-index: 5;
   display: grid;
   justify-items: center;
@@ -61,25 +61,32 @@
 }
 .heroCopy h1 { width: 100%; margin: 0; display: grid; justify-items: center; }
 .heroCopy h1 strong {
-  font-size: clamp(112px, 11vw, 158px);
+  font-size: min(158px, 10.9722vw);
   line-height: .96;
   letter-spacing: -.075em;
   font-weight: 900;
 }
 .heroCopy h1 em {
   font-family: var(--font-seven-serif), Georgia, serif;
-  font-size: clamp(104px, 9.9vw, 142px);
+  font-size: min(142px, 9.8611vw);
   font-weight: 400;
   line-height: .88;
 }
 .heroCopy > p {
-  width: 536px;
-  margin: 64px 0 58px;
-  font-size: 18px;
+  width: min(536px, 37.2222vw);
+  margin: min(77px, 5.3472vw) 0 min(61px, 4.2361vw);
+  font-size: min(18px, 1.25vw);
   line-height: 1.1;
   text-wrap: balance;
 }
-.heroProof { margin-top: 54px; color: var(--night-muted); font-size: 12px; line-height: 14px; font-weight: 650; }
+.heroProof { margin-top: min(56px, 3.8889vw); color: var(--night-muted); font-size: min(12px, .8333vw); line-height: 1.08; font-weight: 650; }
+
+.hero .primaryButton {
+  min-width: min(320px, 22.2222vw);
+  min-height: min(64px, 4.4444vw);
+  padding-inline: min(32px, 2.2222vw);
+  font-size: min(14px, .9722vw);
+}
 
 .heroPhoto {
   position: absolute;
@@ -88,20 +95,19 @@
   overflow: hidden;
   border-radius: 24px;
   background: var(--card);
-  transform: rotate(var(--photo-rotation));
-  transition: transform 220ms ease, filter 220ms ease;
 }
-.heroPhoto:hover { z-index: 6; transform: translateY(-6px) rotate(0); filter: saturate(1.06); }
 .heroPhoto img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.heroPhotoOne { width: 234px; height: 330px; left: max(64px, calc((100vw - 1312px) / 2)); top: 150px; }
-.heroPhotoTwo { width: 254px; height: 320px; right: max(42px, calc((100vw - 1368px) / 2)); top: 154px; }
-.heroPhotoThree { width: 222px; height: 254px; left: max(100px, calc((100vw - 1180px) / 2)); top: 646px; }
-.heroPhotoFour { width: 241px; height: 267px; right: max(80px, calc((100vw - 1220px) / 2)); top: 636px; }
-.heroPhotoTwo img { object-position: 52% 25%; }
-.heroPhotoThree img { object-position: 52% 50%; }
+.heroPhotoOne { width: min(228px, 15.8333vw); height: min(304px, 21.1111vw); left: min(50.625px, 3.5156vw); top: min(162.76px, 11.3028vw); transform: rotate(7deg); }
+.heroPhotoTwo { width: min(224px, 15.5556vw); height: min(298px, 20.6944vw); right: min(57.039px, 3.961vw); top: min(141.481px, 9.8251vw); transform: rotate(-6deg); }
+.heroPhotoThree { width: min(192px, 13.3333vw); height: min(230px, 15.9722vw); left: min(145.071px, 10.0744vw); top: min(631.521px, 43.8556vw); transform: rotate(-8deg); }
+.heroPhotoFour { width: min(216px, 15vw); height: min(246px, 17.0833vw); right: min(127.445px, 8.8503vw); top: min(646.615px, 44.9038vw); transform: rotate(6deg); }
+.heroPhotoOne img { object-position: 50% 50%; }
+.heroPhotoTwo img { object-position: 50% 38%; }
+.heroPhotoThree img { object-position: 50% 50%; }
+.heroPhotoFour img { object-position: 50% 50%; }
 
-.scrollCue { position: absolute; left: 50%; bottom: 29px; z-index: 6; width: 72px; height: 44px; transform: translateX(-50%); display: grid; place-items: center; }
-.scrollCue span { width: 72px; height: 5px; border-radius: 999px; background: var(--acid); animation: cue 1.8s ease-in-out infinite; }
+.scrollCue { position: absolute; left: 50%; bottom: min(39px, 2.7083vw); z-index: 6; width: min(72px, 5vw); height: 44px; transform: translateX(-50%); display: grid; place-items: center; }
+.scrollCue span { width: min(72px, 5vw); height: min(5px, .3472vw); border-radius: 999px; background: var(--acid); animation: cue 1.8s ease-in-out infinite; }
 
 .theatre { position: relative; height: 860px; overflow: hidden; background: var(--deep); }
 .sectionIntro { position: absolute; z-index: 5; left: max(64px, calc((100vw - 1312px) / 2)); top: 72px; width: 760px; }
@@ -171,6 +177,7 @@
 
 .humanChapter { position: relative; height: 820px; overflow: hidden; isolation: isolate; }
 .humanChapter > img { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -3; object-fit: cover; }
+.humanChapter[data-home-section="recognise"] > img { object-position: 50% 38%; }
 .chapterShade { position: absolute; inset: 0; z-index: -2; background: rgba(16, 15, 15, .44); }
 .chapterCopy { width: 650px; height: 100%; padding: 104px 0 81px; margin-left: max(64px, calc((100vw - 1312px) / 2)); display: flex; flex-direction: column; align-items: flex-start; }
 .humanChapterRight .chapterCopy { margin-left: auto; margin-right: max(64px, calc((100vw - 1312px) / 2)); }
@@ -193,16 +200,7 @@
 .toolCard > strong { font-size: 28px; line-height: 1.12; letter-spacing: -.03em; }
 .toolCard > p { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.12; }
 .toolVisual { position: relative; overflow: hidden; border-radius: 24px; display: block; background: var(--acid-soft); }
-.mapVisual i { position: absolute; width: 42px; height: 42px; border-radius: 50%; background: var(--night); }
-.mapVisual i:nth-child(1) { left: 13%; top: 27%; }
-.mapVisual i:nth-child(2) { left: 44%; top: 48%; background: var(--acid); border: 3px solid var(--night); }
-.mapVisual i:nth-child(3) { right: 13%; top: 31%; }
-.mapVisual b { position: absolute; left: 17%; top: 49%; width: 65%; height: 3px; transform: rotate(6deg); background: var(--night); }
-.pauseVisual { display: grid; place-items: center; }
-.pauseVisual::before { content: ""; width: 136px; height: 136px; border: 16px solid var(--night); border-radius: 50%; }
-.pauseVisual i { position: absolute; width: 18px; height: 58px; top: calc(50% - 29px); border-radius: 9px; background: var(--acid); }
-.pauseVisual i:first-child { left: calc(50% - 28px); }
-.pauseVisual i:last-child { right: calc(50% - 28px); }
+.toolVisual > img { object-fit: fill; }
 .reviewVisual { padding: 48px 52px; display: grid; align-content: center; gap: 18px; }
 .reviewVisual i { display: block; height: 18px; border-radius: 99px; background: var(--night); }
 .reviewVisual i:nth-child(2) { width: 92%; opacity: .82; }
@@ -250,19 +248,20 @@
 @media (max-width: 760px) {
   .primaryButton { min-width: min(270px, calc(100vw - 48px)); min-height: 64px; padding-inline: 16px; font-size: 13px; }
 
-  .hero { height: 920px; }
-  .heroCopy { inset: 276px 16px auto; }
-  .heroCopy h1 strong { font-size: 54px; line-height: 50px; letter-spacing: -.06em; }
-  .heroCopy h1 em { font-size: 56px; line-height: 52px; }
-  .heroCopy > p { width: min(318px, calc(100vw - 56px)); margin: 36px 0 54px; font-size: 16px; line-height: 24px; }
-  .heroProof { width: calc(100vw - 48px); margin-top: 26px; font-size: 12px; line-height: 14px; }
-  .heroPhoto { border-radius: 14px; }
-  .heroPhotoOne { width: 104px; height: 138px; left: 16px; top: 112px; }
-  .heroPhotoTwo { width: 104px; height: 138px; right: 16px; top: 122px; }
-  .heroPhotoThree { width: 104px; height: 126px; left: 20px; top: 664px; }
-  .heroPhotoFour { width: 108px; height: 132px; right: 16px; top: 650px; }
-  .scrollCue { bottom: 48px; width: 64px; }
-  .scrollCue span { width: 64px; height: 4px; }
+  .hero { height: min(920px, 235.8974vw); }
+  .heroCopy { inset: min(276px, 70.7692vw) 16px auto; }
+  .heroCopy h1 strong { font-size: min(54px, 13.8462vw); line-height: min(50px, 12.8205vw); letter-spacing: -.06em; }
+  .heroCopy h1 em { font-size: min(56px, 14.359vw); line-height: min(52px, 13.3333vw); }
+  .heroCopy > p { width: min(318px, calc(100vw - 56px)); margin: min(36px, 9.2308vw) 0 min(58px, 14.8718vw); font-size: min(16px, 4.1026vw); line-height: min(24px, 6.1538vw); }
+  .hero .primaryButton { min-width: min(270px, 69.2308vw); min-height: min(64px, 16.4103vw); padding-inline: 16px; font-size: min(13px, 3.3333vw); }
+  .heroProof { width: calc(100vw - 48px); margin-top: min(26px, 6.6667vw); font-size: min(10px, 2.5641vw); line-height: min(14px, 3.5897vw); }
+  .heroPhoto { border-radius: min(14px, 3.5897vw); }
+  .heroPhotoOne { width: min(104px, 26.6667vw); height: min(138px, 35.3846vw); left: min(8.507px, 2.1813vw); top: min(117.057px, 30.0146vw); transform: rotate(6deg); }
+  .heroPhotoTwo { width: min(104px, 26.6667vw); height: min(138px, 35.3846vw); right: min(9.073px, 2.3264vw); top: min(116.188px, 29.7918vw); transform: rotate(-6deg); }
+  .heroPhotoThree { width: min(104px, 26.6667vw); height: min(126px, 32.3077vw); left: min(14.313px, 3.67vw); top: min(668.292px, 171.3569vw); transform: rotate(5deg); }
+  .heroPhotoFour { width: min(108px, 27.6923vw); height: min(132px, 33.8462vw); right: min(10.453px, 2.6803vw); top: min(645.045px, 165.3962vw); transform: rotate(-5deg); }
+  .scrollCue { bottom: min(50px, 12.8205vw); width: min(64px, 16.4103vw); height: 44px; }
+  .scrollCue span { width: min(64px, 16.4103vw); height: min(4px, 1.0256vw); }
 
   .theatre { height: 840px; }
   .sectionIntro { left: 24px; right: 24px; top: 56px; width: auto; }
@@ -285,7 +284,8 @@
   .recognitionFoot { margin-top: 38px; font-size: 15px; line-height: 22px; }
 
   .humanChapter { height: 640px; }
-  .humanChapter > img { object-position: center; }
+  .humanChapter > img,
+  .humanChapter[data-home-section="recognise"] > img { object-position: center; }
   .chapterCopy, .humanChapterRight .chapterCopy { width: auto; height: 640px; margin: 0; padding: 54px 24px 34px; align-items: flex-start; text-align: left; }
   .chapterCopy h2 { margin-top: 24px; }
   .chapterCopy h2 strong { font-size: 52px; line-height: 50px; }
@@ -303,7 +303,6 @@
   .toolCard { width: 100%; height: 436px; padding: 20px; grid-template-rows: auto 192px auto 1fr; gap: 20px; }
   .toolCard > strong { font-size: 24px; }
   .toolCard > p { font-size: 14px; line-height: 21px; }
-  .pauseVisual::before { width: 118px; height: 118px; border-width: 14px; }
   .reviewVisual { padding: 42px 45px; gap: 16px; }
 
   .evidenceSection { height: 1320px; padding: 56px 24px 0; }
@@ -336,5 +335,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .home *, .home *::before, .home *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-  .primaryButton:hover, .heroPhoto:hover { transform: rotate(var(--photo-rotation, 0deg)); }
+  .primaryButton:hover { transform: none; }
 }
