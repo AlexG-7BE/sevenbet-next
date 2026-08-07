@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArticleLayout } from "@/components/LearningCenterSections";
+import { LearningArticleView } from "./LearningArticleView";
 import {
   getArticlePath,
   getAuthor,
   getLearningArticle,
   getLearningCategory,
+  getRelatedArticles,
   learningArticles,
 } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
@@ -143,7 +144,13 @@ export default async function LearningArticlePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(article)) }}
       />
-      <ArticleLayout article={article} />
+      <LearningArticleView
+        article={article}
+        category={getLearningCategory(article.categorySlug)!}
+        author={getAuthor(article.authorId)}
+        editor={getAuthor(article.editorId)}
+        relatedArticles={getRelatedArticles(article)}
+      />
     </>
   );
 }

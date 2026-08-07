@@ -172,12 +172,12 @@ The IDs and product priority come from the approved Figma inventory. “WP” id
 | D01 | Protected Help shell | Protected route group | Content exists under commercial shell | `PARTIAL` | Route-group/layout work required | FE-MIG-13 |
 | D02 | Help Hub | `/responsible-gambling` | Legacy content and navigation | `STALE` | Governed resource catalogue required | FE-MIG-13 |
 | D03 | Protected Help article | `/responsible-gambling/[slug]` | Legacy dynamic article | `STALE` | Content verification required | FE-MIG-13 |
-| D04 | Pause / cooling-off | `/responsible-gambling/cooling-off` | Legacy article content | `STALE` | UK content/compliance review | FE-MIG-14 |
-| D05 | Limits / self-exclusion | Protected Help routes | Static local content, incomplete governed state handling | `STALE` | Resource verification/availability | FE-MIG-14 |
-| D07 | External support handoff | Protected Help | No approved confirmation/unavailable resource flow | `BLOCKED_BY_DATA` | Governed resource registry required | FE-MIG-14 |
-| E01 | Learning Hub | `/learn` | Legacy learning centre | `STALE` | Content source exists | FE-MIG-16 |
-| E02 | Learning category | `/learn/[category]` | Legacy generated category route | `STALE` | Content source exists | FE-MIG-16 |
-| E03 | Learning article | `/learn/[category]/[slug]` | Legacy article route | `STALE` | Evidence lifecycle missing | FE-MIG-16 |
+| D04 | Pause / cooling-off | `/responsible-gambling/cooling-off` | Legacy article content | `STALE` | UK content/compliance review | Reallocation required |
+| D05 | Limits / self-exclusion | Protected Help routes | Static local content, incomplete governed state handling | `STALE` | Resource verification/availability | Reallocation required |
+| D07 | External support handoff | Protected Help | No approved confirmation/unavailable resource flow | `BLOCKED_BY_DATA` | Governed resource registry required | Reallocation required |
+| E01 | Learning Hub | `/learn` | Legacy learning centre | `STALE` | Content source exists | FE-MIG-14 |
+| E02 | Learning category | `/learn/[category]` | Legacy generated category route | `STALE` | Content source exists | FE-MIG-14 |
+| E03 | Learning article | `/learn/[category]/[slug]` | Legacy article route | `STALE` | Evidence lifecycle missing | FE-MIG-14 |
 | E04 | Bonus Guide | `/bonus-guide` | Legacy card grid and hard-coded `x35` example | `STALE` | Governed evidence/source states required | FE-MIG-07 |
 | E06 | About | `/about` | Content exists in legacy layout | `PARTIAL` | Content/legal review | FE-MIG-17 |
 | E07 | Methodology | `/methodology` | Content exists in legacy layout | `PARTIAL` | Published methodology approval | FE-MIG-17 |
@@ -479,7 +479,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **QA:** route-group regression, commercial-link/tracker absence assertions, keyboard/mobile/a11y, unavailable resource states.
 - **Branch/PR order:** `codex/fe-mig-13-protected-help`; high-priority PR after Public Shell.
 
-### FE-MIG-14 — Pause, limits, self-exclusion and support handoff
+### Historical FE-MIG-14 allocation — superseded 2026-08-07
 
 - **Figma source:** Pause desktop `674:5143`, mobile `674:8171`; Protected Help external-handoff states.
 - **Routes/components:** `/responsible-gambling/cooling-off` and governed support-resource detail/actions.
@@ -488,7 +488,7 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **Compliance:** current UKGC/operator/Gamstop/GamCare wording, no invented local number, no commercial bridge.
 - **Acceptance:** reviewed pause/limit/self-exclusion routes; source owner/date; safe fallback when resource is unavailable; one neutral primary action.
 - **QA:** link verification in CI/release checklist, offline/unavailable fixtures, keyboard/mobile/a11y, no commercial calls.
-- **Branch/PR order:** `codex/fe-mig-14-pause-support`; after FE-MIG-13 and content approval.
+- **Branch/PR order:** no longer assigned. Founder Office reassigned FE-MIG-14 to Learning Center; this protected work requires a new approved workstream identifier and remains out of scope.
 
 ### FE-MIG-15 — Identity and Privacy
 
@@ -501,16 +501,16 @@ Common QA for every package: typecheck, production build, affected unit/integrat
 - **QA:** auth error/recovery enumeration, keyboard/forms/autocomplete, session states, legal-copy sign-off.
 - **Branch/PR order:** `codex/fe-mig-15-identity-privacy`; sign-in visual slice may precede capability work; policy/settings wait.
 
-### FE-MIG-16 — Learning and Articles
+### FE-MIG-14 — Learning and Articles
 
-- **Figma source:** desktop `632:4237`, mobile `634:2074`.
+- **Figma source:** active `/learn` root `835:6356`, desktop `835:6359`, mobile `835:6473`; category desktop `632:4360`, mobile `634:2177`; article desktop `633:4341`, mobile `635:2148`.
 - **Routes/components:** `/learn`, category and article routes; learning data/components.
 - **Reuse/refactor/create:** reuse content model/search and Public Shell; refactor hub/category/article primitives; create source/unavailable states.
 - **Data readiness:** static content available; evidence lifecycle/governance incomplete.
 - **Compliance:** separate protected Help articles from neutral/commercial learning; source/freshness labels; no disguised promotion.
 - **Acceptance:** approved responsive hub/category/article; accessible search; protected content routes to protected shell; content evidence visible.
 - **QA:** generated paths, search keyboard/empty state, heading hierarchy, long copy/mobile, metadata/links.
-- **Branch/PR order:** `codex/fe-mig-16-learning`; after shell; before Bonus Guide if sharing primitives.
+- **Branch/PR order:** `codex/fe-mig-14-learning-center`; after FE-MIG-13, without changing Protected Help.
 
 ### FE-MIG-17 — Legal, Trust and System States
 
@@ -544,7 +544,7 @@ flowchart TD
   HOME["FE-MIG-02 Home"]
   TEN["FE-MIG-03 10 Steps"]
   PROG["FE-MIG-12 Programme"]
-  LEARN["FE-MIG-16 Learning"]
+  LEARN["FE-MIG-14 Learning"]
   CAS["FE-MIG-04 Casinos"]
   PROFILE["FE-MIG-05 Casino Profile"]
   HANDOFF["FE-MIG-10 Commercial Handoff"]
@@ -552,7 +552,7 @@ flowchart TD
   BEST["FE-MIG-08 Best Offers"]
   COMPARE["FE-MIG-09 Comparison"]
   MARKET["FE-MIG-11 Age / Market"]
-  SUPPORT["FE-MIG-14 Pause / Support"]
+  SUPPORT["Protected Pause / Support — reallocation required"]
   SAFETY["FE-SAFETY-01 approved application redesign"]
 
   D0 --> SHELL
