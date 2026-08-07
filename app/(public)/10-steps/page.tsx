@@ -18,11 +18,43 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "10 Steps Before You Choose | SevenBet",
+  title: "10-Step Programme | Start Mission 01 | SevenBet",
   description:
-    "Build a clearer way to compare casino options, understand offers and set your own rules before you choose.",
+    "Start Mission 01 privately, build a personal Moment Map and choose whether to save your result in SevenBet's 10-Step Programme.",
   alternates: { canonical: absoluteUrl("/10-steps") },
+  robots: { index: true, follow: true },
+  openGraph: {
+    type: "website",
+    title: "10-Step Programme | Start Mission 01 | SevenBet",
+    description: "Start Mission 01 privately and build a personal result before choosing whether to create an account.",
+    url: absoluteUrl("/10-steps"),
+  },
+  twitter: {
+    card: "summary",
+    title: "10-Step Programme | Start Mission 01 | SevenBet",
+    description: "Start Mission 01 privately and choose whether to save the result after completion.",
+  },
 };
+
+function structuredData() {
+  return [
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+        { "@type": "ListItem", position: 2, name: "10-Step Programme", item: absoluteUrl("/10-steps") },
+      ],
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      name: "SevenBet 10-Step Programme",
+      description: metadata.description,
+      url: absoluteUrl("/10-steps"),
+    },
+  ];
+}
 
 export default async function TenStepsPage() {
   const state = await resolveTenStepsLandingState({
@@ -32,6 +64,10 @@ export default async function TenStepsPage() {
 
   return (
     <div className={instrumentSerif.variable}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
+      />
       <TenStepsLanding state={state} />
     </div>
   );
