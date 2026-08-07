@@ -110,4 +110,4 @@ After implementation:
 - **Not detected:** an approved disposable authenticated browser fixture. Returning state is covered by server-state contract tests, but an authenticated route screenshot remains an explicit release gap; no auth bypass or invented cookie was added.
 - Per-image source/author/release archival evidence remains a release-process gap despite the reviewed general Pexels licence.
 - Missions 05–10 remain planned, not released by this campaign migration.
-- PR #17 is approved subject to the recorded bounded correctness fix and awaits squash merge. FE-MIG-04 must start separately after FE-MIG-03 merge.
+- **Historical handoff at package close:** PR #17 awaited squash merge and FE-MIG-04 was to start afterward. Both migrations subsequently merged; this is evidence history, not a current instruction.

@@ -1,105 +1,66 @@
 # SevenBet Next
 
-Production-oriented React/Next rebuild of the SevenBet mindful gambling + casino affiliate site.
+SevenBet is an online-casino-first, regulated-first decision-support product for adults. It combines public discovery and education with a private 10-Step Programme and a separate, non-commercial Protected Help area.
 
-## Run
+The approved product authority is [Product Vision & Principles](docs/Product-Vision-and-Principles.md). Read [Project State](docs/PROJECT_STATE.md) and the [Roadmap](docs/ROADMAP.md) before planning work.
+
+## Current implementation
+
+- Next.js App Router public and admin application
+- server-owned Public Shell with responsive navigation and account presentation
+- Home and `/10-steps` acquisition journeys
+- database-backed Casino Directory, Casino Profile, Bonuses, Best Offers and Comparison
+- Learning Center with category/article routes and E05 client-side search/filter over an SSR catalogue
+- Affiliate Disclosure, Ranking Methodology, About and Bonus Guide
+- dedicated Protected Help routes under `/responsible-gambling/**`
+- private Programme flow through Missions 01–04 with server-owned progress and deterministic rewards
+- Prisma/PostgreSQL, Better Auth, CMS/editorial, media and affiliate-routing foundations
+
+The page-level frontend migration programme is complete. Frontend/design-system consolidation is not: **FE-DS-01 — Frontend & Design System Consolidation** is the next authorized frontend workstream.
+
+## Documentation map
+
+- [Project State](docs/PROJECT_STATE.md) — current operational truth
+- [Roadmap](docs/ROADMAP.md) — forward execution sequence
+- [Figma Screen Inventory](docs/02_Product_Design/Figma-Screen-Inventory-and-Delivery-Plan.md) — current route/family/status authority
+- [Frontend Migration Record](docs/02_Product_Design/Frontend-Migration-Audit-and-P0-Implementation-Plan.md) — completed historical migration record
+- [Technical Baseline](docs/05_Engineering/Technical_Baseline/README.md) — evidence-based implementation baseline
+
+## Run locally
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open:
+Open `http://localhost:4173`.
 
-```text
-http://localhost:4173
+## Validation commands
+
+```bash
+npm run typecheck
+npm run build
+npm run cms:test
 ```
 
-## What Is Included
-
-- Next App Router structure
-- Component-based design system
-- Typed casino data layer
-- Control-first homepage funnel
-- Self-check client page
-- Budget calculator client page
-- 10-step program page
-- Bonus guide
-- Best bonuses page
-- Catalog and casino detail pages
-- Playwright visual QA script
+Focused route and domain tests are listed in `package.json`. The repository's `npm run lint` command still invokes the deprecated interactive `next lint` path and is not a configured non-interactive lint gate.
 
 ## Visual QA
 
-Start the site first:
-
-```bash
-npm run dev
-```
-
-Then:
+With the application running:
 
 ```bash
 npm run visual:qa
 ```
 
-The script checks important routes for one `h1`, horizontal overflow and saves screenshots.
+The script checks selected routes for one `h1`, horizontal overflow and screenshot output. It is not a maintained visual-regression system; that decision belongs to FE-DS-01.
 
-## AI and crawler access
+## Public origin
 
-The site exposes:
-
-- `/robots.txt`
-- `/sitemap.xml`
-- `/llms.txt`
-
-Set the public production URL in Vercel:
+Set the production origin in the deployment environment:
 
 ```text
 NEXT_PUBLIC_SITE_URL=https://your-domain.com
 ```
 
-This keeps sitemap and AI-readable links canonical after deployment.
-
-## CMS Phase 1
-
-The project includes a Phase 1 headless CMS foundation:
-
-- admin preview shell at `/admin`;
-- temporary token gate through `SEVENBET_ADMIN_PREVIEW_TOKEN`;
-- admin CRUD API at `/api/admin/:entity`;
-- public read API at `/api/public/:resource`;
-- safe affiliate redirect route at `/go/:slug`;
-- Prisma schema and SQL migration under `prisma/`;
-- CMS architecture notes in `docs/cms-phase-1.md`.
-
-Run the lightweight CMS checks:
-
-```bash
-npm run cms:test
-```
-
-Open admin locally with:
-
-```text
-http://localhost:4173/admin?token=phase-1-local-admin
-```
-
-For production, set a long random `SEVENBET_ADMIN_PREVIEW_TOKEN` in the hosting environment before opening `/admin`.
-
-## Next Build Steps
-
-- Replace the in-memory CMS repository with Prisma and PostgreSQL.
-- Add production admin authentication and invitations.
-- Add persistent program progress with localStorage or user accounts.
-- Add real filter/search state to `/catalog`.
-- Split casino data enrichment into CMS-ready fields.
-- Add country, payment and provider SEO pages.
-- Add editorial methodology and affiliate disclosure pages.
-# sevenbet-next
-
-## CMS Phase 2: Program Builder
-
-The admin area now includes a visual Program Builder at `/admin/programs`. It supports structured steps, lessons and blocks, quiz/scenario/exercise editing, validation, workflow, draft preview, revisions, XP rules, achievements and progress-safe publication snapshots.
-
-Architecture and rollout details are documented in `docs/cms-phase-2-program-builder.md` and `docs/program-migration-report.md`.
+This keeps canonical URLs, sitemap, robots and structured data aligned with the deployed host.

@@ -92,4 +92,4 @@ After implementation:
 - Product/design review should compare the four approved Figma representatives with the stored after screenshots.
 - Authenticated returning-user browser evidence remains a known gap until a disposable fixture exists.
 - Per-image source/author/release archival evidence remains a release-process gap even though the existing assets are covered by the reviewed general Pexels licence.
-- Merge is not performed by this package. The next migration package remains FE-MIG-03 and must start separately after review/merge direction.
+- **Historical handoff at package close:** merge was outside this package and FE-MIG-03 was to start only after review/merge direction. Both migrations subsequently merged; this is evidence history, not a current instruction.
