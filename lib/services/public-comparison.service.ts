@@ -1,0 +1,283 @@
+import { mapPublishedCasino } from "@/lib/public-casino/public-casino.mapper";
+import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import type {
+  PublicComparisonAction,
+  PublicComparisonCandidate,
+  PublicComparisonCasino,
+  PublicComparisonEvidenceStatus,
+  PublicComparisonGroup,
+  PublicComparisonMarketState,
+  PublicComparisonQuery,
+  PublicComparisonReason,
+  PublicComparisonResult,
+  PublicComparisonValue,
+} from "@/lib/public-comparison/public-comparison.types";
+import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casino-discovery.repository";
+import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
+import { resolvePublicVisitAction } from "@/lib/services/public-casino-discovery.service";
+
+const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+function marketState(casino: PublicCasinoDTO, country: string): PublicComparisonMarketState {
+  const market = casino.countries.find((entry) => entry.countryCode === country);
+  if (!market || market.availability === "UNKNOWN") return "UNKNOWN";
+  return market.availability === "AVAILABLE" ? "AVAILABLE" : "UNAVAILABLE";
+}
+
+function marketLabel(state: PublicComparisonMarketState, country: string) {
+  if (state === "AVAILABLE") return `Published available for ${country}`;
+  if (state === "UNAVAILABLE") return `Published unavailable for ${country}`;
+  return `${country} availability not published`;
+}
+
+function comparisonCompleteness(casino: PublicCasinoDTO) {
+  const bonus = selectComparisonBonus(casino);
+  return Number(Boolean(casino.summary))
+    + Number(casino.editorScore > 0)
+    + Number(Boolean(casino.publishedAt || casino.lastReviewedAt))
+    + Number(casino.licenses.length > 0)
+    + Number(casino.payments.length > 0)
+    + Number(Boolean(bonus))
+    + Number(Boolean(bonus?.eligibility))
+    + Number(Boolean(bonus?.importantConditions.length))
+    + Number(casino.responsibleGamblingTools.length > 0);
+}
+
+function defaultCandidates(casinos: PublicCasinoDTO[], country: string) {
+  return casinos
+    .filter((casino) => marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
+    .sort((a, b) => Number(b.featured) - Number(a.featured)
+      || Number(b.recommended) - Number(a.recommended)
+      || b.editorScore - a.editorScore
+      || comparisonCompleteness(b) - comparisonCompleteness(a)
+      || a.name.localeCompare(b.name, "en", { sensitivity: "base" })
+      || a.slug.localeCompare(b.slug))
+    .slice(0, 3);
+}
+
+function offerCompleteness(bonus: PublicCasinoBonus) {
+  const hasText = (value: string | null) => Boolean(value?.trim());
+  return Number(hasText(bonus.title))
+    + Number(hasText(bonus.type))
+    + Number(bonus.minimumDeposit !== null)
+    + Number(bonus.wageringMultiplier !== null || hasText(bonus.wageringText))
+    + Number(hasText(bonus.eligibility))
+    + Number(bonus.importantConditions.length > 0);
+}
+
+function selectComparisonBonus(casino: PublicCasinoDTO) {
+  return [...casino.bonuses].sort((a, b) => offerCompleteness(b) - offerCompleteness(a) || a.slug.localeCompare(b.slug))[0] ?? null;
+}
+
+function safeAction(casino: PublicCasinoDTO, country: string, state: PublicComparisonMarketState, context: DiscoveryContext, now: Date): PublicComparisonAction {
+  if (state !== "AVAILABLE") return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Declared market availability does not permit a commercial action." };
+  const visit = resolvePublicVisitAction(context, casino.id, null, country, now);
+  const href = visit.available && visit.redirectSlug ? `/r/${visit.redirectSlug}` : null;
+  if (!href || !internalRedirect.test(href)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed internal action is currently available." };
+  return { available: true, href, label: `Visit ${casino.name}`, reason: "Rechecked by the governed internal redirect route." };
+}
+
+function money(value: number | null, currency: string | null) {
+  if (value === null) return null;
+  if (!currency || !/^[A-Z]{3}$/.test(currency)) return `${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(value)}${currency ? ` ${currency}` : ""}`;
+  try {
+    return new Intl.NumberFormat("en-GB", { style: "currency", currency, maximumFractionDigits: Number.isInteger(value) ? 0 : 2 }).format(value);
+  } catch {
+    return `${value} ${currency}`;
+  }
+}
+
+function date(value: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(parsed);
+}
+
+function value(text: string | null | undefined, status: PublicComparisonEvidenceStatus, missing: PublicComparisonEvidenceStatus = "Unknown"): PublicComparisonValue {
+  return text ? { text, status } : { text: missing === "Unavailable" ? "Not published" : missing, status: missing };
+}
+
+function listValue(items: string[], status: PublicComparisonEvidenceStatus, missing: PublicComparisonEvidenceStatus = "Unknown") {
+  return value(items.length ? items.join(" · ") : null, status, missing);
+}
+
+function buildGroups(casinos: PublicCasinoDTO[], projected: PublicComparisonCasino[], country: string): PublicComparisonGroup[] {
+  const bySlug = new Map(projected.map((casino) => [casino.slug, casino]));
+  const rows = (definitions: Array<{ id: string; label: string; description: string; get: (casino: PublicCasinoDTO) => PublicComparisonValue }>) => definitions.map((definition) => ({
+    id: definition.id,
+    label: definition.label,
+    description: definition.description,
+    values: Object.fromEntries(casinos.map((casino) => [casino.slug, definition.get(casino)])),
+  }));
+
+  return [
+    {
+      id: "identity",
+      label: "Identity and editorial context",
+      rows: rows([
+        { id: "editor-score", label: "Editorial score", description: "SevenBet editorial assessment, not an operator rating.", get: (casino) => value(`${casino.editorScore.toFixed(1)}/10`, "Editorial") },
+        { id: "summary", label: "Review summary", description: "Summary from the latest published profile.", get: (casino) => value(casino.summary, "Editorial") },
+        { id: "freshness", label: "Review freshness", description: "Latest published review or snapshot date.", get: (casino) => value(date(casino.lastReviewedAt) ?? date(casino.publishedAt), "Published") },
+      ]),
+    },
+    {
+      id: "licensing-market",
+      label: "Licensing and declared market context",
+      rows: rows([
+        { id: "licences", label: "Published licence context", description: "Authority, jurisdiction and published verification state.", get: (casino) => listValue(casino.licenses.map((licence) => [licence.authority, licence.jurisdiction, licence.status, licence.lastVerifiedAt ? `checked ${date(licence.lastVerifiedAt)}` : null].filter(Boolean).join(" · ")), casino.licenses.some((licence) => licence.lastVerifiedAt) ? "Published" : "Operator-published") },
+        { id: "market", label: `${country} availability`, description: "Declared comparison preference, not detected location or legal eligibility.", get: (casino) => value(marketLabel(marketState(casino, country), country), "Operator-published") },
+        { id: "minimum-age", label: "Published minimum age", description: "Shown only when the profile publishes a market-specific value.", get: (casino) => { const age = casino.countries.find((entry) => entry.countryCode === country)?.minimumAge; return value(age === null || age === undefined ? null : `${age}+`, "Operator-published"); } },
+        { id: "languages", label: "Languages", description: "Published profile languages.", get: (casino) => listValue(casino.languages, "Operator-published") },
+        { id: "currencies", label: "Currencies", description: "Published profile and payment currencies.", get: (casino) => listValue([...new Set([...casino.currencies, ...casino.payments.flatMap((payment) => payment.currencies)])], "Operator-published") },
+      ]),
+    },
+    {
+      id: "offer",
+      label: "Current published offer terms",
+      rows: rows([
+        { id: "offer-title", label: "Offer", description: "Current published offer selected by generic completeness and stable ordering.", get: (casino) => value(selectComparisonBonus(casino)?.title, "Operator-published", "Unavailable") },
+        { id: "offer-type", label: "Bonus type", description: "Published offer classification.", get: (casino) => value(selectComparisonBonus(casino)?.type.replaceAll("_", " "), "Operator-published", "Unavailable") },
+        { id: "percentage", label: "Percentage", description: "Published headline percentage where supplied.", get: (casino) => { const amount = selectComparisonBonus(casino)?.percentage; return value(amount === null || amount === undefined ? null : `${amount}%`, "Operator-published"); } },
+        { id: "maximum-bonus", label: "Maximum bonus", description: "Currencies can differ; compare the published basis before drawing a conclusion.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? money(bonus.maximumBonus, bonus.currency) : null, bonus?.currency ? "Operator-published" : "Not comparable", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "free-spins", label: "Free spins", description: "Published quantity, not an assumed benefit.", get: (casino) => { const spins = selectComparisonBonus(casino)?.freeSpins; return value(spins === null || spins === undefined ? null : String(spins), "Operator-published"); } },
+        { id: "minimum-deposit", label: "Minimum deposit", description: "Current published cash requirement.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? money(bonus.minimumDeposit, bonus.currency) : null, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "wagering", label: "Wagering", description: "Missing wagering remains unknown and never becomes an advantage.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus?.wageringText ?? (bonus?.wageringMultiplier === null || bonus?.wageringMultiplier === undefined ? null : `${bonus.wageringMultiplier}×`), "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "maximum-bet", label: "Maximum bet", description: "Published maximum stake during wagering, where supplied.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? money(bonus.maximumBet, bonus.currency) : null, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "eligibility", label: "Eligibility", description: "Operator-published offer eligibility; not a SevenBet eligibility decision.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus?.eligibility, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "conditions", label: "Important conditions", description: "Material published restrictions shown before commercial action.", get: (casino) => { const bonus = selectComparisonBonus(casino); return listValue(bonus?.importantConditions ?? [], "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "expiry", label: "Expiry / current status", description: "Only current published offers enter the projection.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? date(bonus.expiresAt) ?? "Current · no fixed expiry published" : null, "Published", "Unavailable"); } },
+      ]),
+    },
+    {
+      id: "payments",
+      label: "Payments and withdrawal evidence",
+      rows: rows([
+        { id: "methods", label: "Payment methods", description: "Methods listed in the published profile.", get: (casino) => listValue(casino.payments.map((payment) => payment.name), "Operator-published") },
+        { id: "deposit-support", label: "Deposit support", description: "Published method capability, not a payment recommendation.", get: (casino) => listValue(casino.payments.filter((payment) => payment.supportsDeposits).map((payment) => payment.name), "Operator-published") },
+        { id: "withdrawal-support", label: "Withdrawal support", description: "Published method capability.", get: (casino) => listValue(casino.payments.filter((payment) => payment.supportsWithdrawals).map((payment) => payment.name), "Operator-published") },
+        { id: "minimum-withdrawal", label: "Minimum withdrawal", description: "Values may differ by method and currency.", get: (casino) => listValue(casino.payments.filter((payment) => payment.minimumWithdrawal !== null).map((payment) => `${payment.name}: ${money(payment.minimumWithdrawal, payment.currencies[0] ?? null)}`), "Operator-published") },
+        { id: "maximum-withdrawal", label: "Maximum withdrawal", description: "Values may differ by method and period.", get: (casino) => listValue(casino.payments.filter((payment) => payment.maximumWithdrawal !== null).map((payment) => `${payment.name}: ${money(payment.maximumWithdrawal, payment.currencies[0] ?? null)}`), "Operator-published") },
+        { id: "withdrawal-time", label: "Withdrawal-time signal", description: "Published timing is a signal, never a guarantee.", get: (casino) => listValue(casino.payments.filter((payment) => payment.withdrawalTime).map((payment) => `${payment.name}: ${payment.withdrawalTime}`), "Operator-published") },
+        { id: "fees", label: "Fees", description: "Only published fee wording is shown.", get: (casino) => listValue(casino.payments.filter((payment) => payment.fees).map((payment) => `${payment.name}: ${payment.fees}`), "Operator-published") },
+        { id: "crypto", label: "Crypto indication", description: "Whether any published payment method is marked as crypto.", get: (casino) => value(casino.payments.length ? (casino.payments.some((payment) => payment.crypto) ? "Published crypto method" : "No published crypto method") : null, "Operator-published") },
+      ]),
+    },
+    {
+      id: "safety-commercial",
+      label: "Safety, review and commercial boundary",
+      rows: rows([
+        { id: "control-tools", label: "Responsible-gambling tools", description: "Check current operator availability before relying on a tool.", get: (casino) => listValue(casino.responsibleGamblingTools, "Operator-published") },
+        { id: "review", label: "Full review", description: "Editorial review remains available independently of referral status.", get: (casino) => value(bySlug.get(casino.slug)?.reviewHref ? "Published review available" : null, "Published", "Unavailable") },
+        { id: "commercial", label: "Commercial action", description: "Available only through the governed internal redirect contract.", get: (casino) => { const action = bySlug.get(casino.slug)?.action; return value(action?.available ? "Governed action available" : action?.reason, action?.available ? "Policy-gated" : "Unavailable", "Unavailable"); } },
+      ]),
+    },
+  ];
+}
+
+function filterDifferences(groups: PublicComparisonGroup[], slugs: string[]) {
+  let hidden = 0;
+  const filtered = groups.map((group) => ({
+    ...group,
+    rows: group.rows.filter((row) => {
+      const cells = slugs.map((slug) => row.values[slug]);
+      const same = cells.length > 1 && cells.every((cell) => cell?.text === cells[0]?.text && cell?.status === cells[0]?.status);
+      if (same) hidden += 1;
+      return !same;
+    }),
+  })).filter((group) => group.rows.length);
+  return { groups: filtered, hidden };
+}
+
+function reasonForMarket(casino: PublicCasinoDTO, country: string): PublicComparisonReason | null {
+  const state = marketState(casino, country);
+  if (state === "AVAILABLE") return null;
+  return {
+    slug: casino.slug,
+    code: state === "UNAVAILABLE" ? "DECLARED_MARKET_UNAVAILABLE" : "DECLARED_MARKET_UNKNOWN",
+    message: state === "UNAVAILABLE"
+      ? `${casino.name} is published as unavailable for the declared ${country} context.`
+      : `${casino.name} has no published ${country} availability decision.`,
+  };
+}
+
+export class PublicComparisonService {
+  constructor(private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository, private readonly now = () => new Date()) {}
+
+  async compare(query: PublicComparisonQuery): Promise<PublicComparisonResult> {
+    let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
+    let context: DiscoveryContext;
+    try {
+      published = await this.store.listPublished();
+      context = await this.store.loadContext(published.map((record) => record.casinoId));
+    } catch {
+      return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The published comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false };
+    }
+
+    const now = this.now();
+    const all = published.flatMap((record) => {
+      const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      return casino?.source === "cms" ? [casino] : [];
+    });
+    const candidates: PublicComparisonCandidate[] = all.map((casino) => {
+      const state = marketState(casino, query.country);
+      return { slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
+    }).sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
+
+    const selected = query.selectionMode === "default" ? defaultCandidates(all, query.country) : query.casinos.flatMap((slug) => {
+      const casino = all.find((entry) => entry.slug === slug);
+      return casino ? [casino] : [];
+    });
+    const selectedSlugs = query.selectionMode === "default" ? selected.map((casino) => casino.slug) : query.casinos;
+    const reasons: PublicComparisonReason[] = [];
+    if (query.selectionMode === "explicit") for (const slug of query.casinos) {
+      const casino = all.find((entry) => entry.slug === slug);
+      if (!casino) reasons.push({ slug, code: "UNKNOWN_OR_UNPUBLISHED", message: `${slug} is unknown, unpublished, archived or unavailable in the public projection.` });
+      else {
+        const marketReason = reasonForMarket(casino, query.country);
+        if (marketReason) reasons.push(marketReason);
+      }
+    }
+
+    const comparable = selected.filter((casino) => marketState(casino, query.country) === "AVAILABLE");
+    const projected = selected.map((casino): PublicComparisonCasino => {
+      const state = marketState(casino, query.country);
+      return {
+        id: casino.id,
+        slug: casino.slug,
+        name: casino.name,
+        summary: casino.summary,
+        logo: casino.media.logo,
+        editorScore: casino.editorScore,
+        publishedAt: casino.publishedAt,
+        lastReviewedAt: casino.lastReviewedAt,
+        reviewHref: `/casino/${casino.slug}`,
+        marketState: state,
+        action: safeAction(casino, query.country, state, context, now),
+      };
+    });
+    const comparableProjected = projected.filter((casino) => casino.marketState === "AVAILABLE");
+    const rawGroups = comparable.length >= 2 ? buildGroups(comparable, comparableProjected, query.country) : [];
+    const differenceResult = query.differences ? filterDifferences(rawGroups, comparable.map((casino) => casino.slug)) : { groups: rawGroups, hidden: 0 };
+    const status = query.selectionMode === "empty" || (query.selectionMode === "explicit" && !selectedSlugs.length)
+      ? "empty"
+      : comparable.length === 1 && reasons.length === 0
+        ? "one-selected"
+        : comparable.length >= 2
+          ? "available"
+          : "no-comparable";
+
+    return {
+      status,
+      query,
+      selectedSlugs,
+      candidates,
+      casinos: projected,
+      reasons,
+      groups: differenceResult.groups,
+      hiddenEqualRows: differenceResult.hidden,
+      defaulted: query.selectionMode === "default",
+    };
+  }
+}
+
+export const publicComparisonService = new PublicComparisonService();

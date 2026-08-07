@@ -1,0 +1,92 @@
+import type { PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
+
+export type PublicComparisonEvidenceStatus =
+  | "Published"
+  | "Editorial"
+  | "Operator-published"
+  | "Unknown"
+  | "Unavailable"
+  | "Not comparable"
+  | "Policy-gated";
+
+export type PublicComparisonMarketState = "AVAILABLE" | "UNAVAILABLE" | "UNKNOWN";
+export type PublicComparisonSelectionMode = "default" | "explicit" | "empty";
+export type PublicComparisonReasonCode =
+  | "UNKNOWN_OR_UNPUBLISHED"
+  | "DECLARED_MARKET_UNAVAILABLE"
+  | "DECLARED_MARKET_UNKNOWN"
+  | "PROJECTION_UNAVAILABLE";
+
+export interface PublicComparisonQuery {
+  casinos: string[];
+  country: string;
+  differences: boolean;
+  selectionMode: PublicComparisonSelectionMode;
+  issues: Array<"INVALID_CASINO" | "TOO_MANY_CASINOS" | "INVALID_COUNTRY" | "INVALID_DIFFERENCES">;
+}
+
+export interface PublicComparisonCandidate {
+  slug: string;
+  name: string;
+  logo: PublicCasinoMedia | null;
+  editorScore: number;
+  marketState: PublicComparisonMarketState;
+  marketLabel: string;
+}
+
+export interface PublicComparisonReason {
+  slug: string;
+  code: PublicComparisonReasonCode;
+  message: string;
+}
+
+export interface PublicComparisonAction {
+  available: boolean;
+  href: string | null;
+  label: string;
+  reason: string;
+}
+
+export interface PublicComparisonCasino {
+  id: string;
+  slug: string;
+  name: string;
+  summary: string;
+  logo: PublicCasinoMedia | null;
+  editorScore: number;
+  publishedAt: string | null;
+  lastReviewedAt: string | null;
+  reviewHref: string;
+  marketState: PublicComparisonMarketState;
+  action: PublicComparisonAction;
+}
+
+export interface PublicComparisonValue {
+  text: string;
+  status: PublicComparisonEvidenceStatus;
+}
+
+export interface PublicComparisonRow {
+  id: string;
+  label: string;
+  description: string;
+  values: Record<string, PublicComparisonValue>;
+}
+
+export interface PublicComparisonGroup {
+  id: string;
+  label: string;
+  rows: PublicComparisonRow[];
+}
+
+export interface PublicComparisonResult {
+  status: "available" | "empty" | "one-selected" | "no-comparable" | "projection-unavailable";
+  query: PublicComparisonQuery;
+  selectedSlugs: string[];
+  candidates: PublicComparisonCandidate[];
+  casinos: PublicComparisonCasino[];
+  reasons: PublicComparisonReason[];
+  groups: PublicComparisonGroup[];
+  hiddenEqualRows: number;
+  defaulted: boolean;
+}
