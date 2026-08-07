@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
 import {
-  MethodologyContent,
-  MethodologyHero,
+  MethodologyDocument,
   methodologyFaqItems,
-} from "@/components/MethodologySections";
+} from "./MethodologyDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -60,8 +59,7 @@ export default function MethodologyPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
       />
-      <MethodologyHero />
-      <MethodologyContent />
+      <MethodologyDocument />
     </>
   );
 }
