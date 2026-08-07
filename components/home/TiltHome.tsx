@@ -1,5 +1,5 @@
+import Image from "next/image";
 import Link from "next/link";
-import type { CSSProperties } from "react";
 
 import { HomeProgrammeCarousel } from "./HomeProgrammeCarousel";
 import styles from "./TiltHome.module.css";
@@ -34,43 +34,46 @@ const tools = [
 const heroPhotos = [
   {
     className: styles.heroPhotoOne,
-    src: "https://images.pexels.com/photos/4450147/pexels-photo-4450147.jpeg?auto=compress&cs=tinysrgb&w=900",
-    rotation: "-7deg",
+    src: "/home/hero-creator.jpg",
+    priority: true,
   },
   {
     className: styles.heroPhotoTwo,
-    src: "https://images.pexels.com/photos/34947154/pexels-photo-34947154.jpeg?auto=compress&cs=tinysrgb&w=900",
-    rotation: "6deg",
+    src: "/home/hero-confidence.jpg",
+    priority: true,
   },
   {
     className: styles.heroPhotoThree,
-    src: "https://images.pexels.com/photos/5710657/pexels-photo-5710657.jpeg?auto=compress&cs=tinysrgb&w=900",
-    rotation: "8deg",
+    src: "/home/hero-plan.jpg",
+    priority: false,
   },
   {
     className: styles.heroPhotoFour,
-    src: "https://images.pexels.com/photos/37057075/pexels-photo-37057075.jpeg?auto=compress&cs=tinysrgb&w=900",
-    rotation: "-6deg",
+    src: "/home/hero-outcome.jpg",
+    priority: false,
   },
 ] as const;
 
 export function TiltHome() {
   return (
-    <div className={`tiltHomePage ${styles.home}`} data-home-contract="figma-289-946">
+    <div
+      className={`tiltHomePage ${styles.home}`}
+      data-home-contract="figma-289-946"
+      data-home-canonical-node="289:946"
+      data-home-responsive-authority="661:7551 661:7554 661:7607 657:2545 657:2548 661:2635 661:2686 661:2711"
+    >
       <section className={styles.hero} data-home-section="hero" aria-labelledby="home-title">
-        {heroPhotos.map((photo, index) => (
+        {heroPhotos.map((photo) => (
           <figure
             className={`${styles.heroPhoto} ${photo.className}`}
             key={photo.src}
-            style={{ "--photo-rotation": photo.rotation } as CSSProperties}
           >
-            <img
+            <Image
               alt=""
-              fetchPriority={index === 0 ? "high" : undefined}
-              height="1200"
-              loading={index === 0 ? "eager" : "lazy"}
+              fill
+              priority={photo.priority}
+              sizes="(max-width: 760px) 108px, (max-width: 1280px) 18vw, 228px"
               src={photo.src}
-              width="900"
             />
           </figure>
         ))}
@@ -114,7 +117,7 @@ export function TiltHome() {
         heavy="SEE"
         serif="the pattern."
         body="Notice the trigger, the moment and the cost before the next decision."
-        image="https://images.pexels.com/photos/34947154/pexels-photo-34947154.jpeg?auto=compress&cs=tinysrgb&w=2000"
+        image="/home/hero-confidence.jpg"
       />
       <HumanChapter
         section="build"
@@ -123,7 +126,7 @@ export function TiltHome() {
         heavy="WRITE"
         serif="the rule."
         body="Choose a pause, an alternative action and a limit while the moment is calm."
-        image="https://images.pexels.com/photos/5710657/pexels-photo-5710657.jpeg?auto=compress&cs=tinysrgb&w=2000"
+        image="/home/hero-plan.jpg"
       />
       <HumanChapter
         section="apply"
@@ -131,14 +134,14 @@ export function TiltHome() {
         heavy="USE IT."
         serif="Make it yours."
         body="Try the plan in real life, review what happened and strengthen the next action."
-        image="https://images.pexels.com/photos/7870310/pexels-photo-7870310.jpeg?auto=compress&cs=tinysrgb&w=2000"
+        image="/home/chapter-apply.jpg"
       />
 
       <section className={styles.toolsSection} data-home-section="programme-tools" aria-labelledby="tools-title">
         <div className={styles.toolsHeading}>
           <span>WHAT YOU KEEP</span>
           <h2 id="tools-title"><strong>Not advice to remember.</strong><em>Tools you can use.</em></h2>
-          <p>Every mission saves a concrete rule, map or review to your dashboard.</p>
+          <p>Available missions save a concrete map, rule or review to your private Programme.</p>
         </div>
         <div className={styles.toolGrid}>
           {tools.map((tool) => (
@@ -156,13 +159,13 @@ export function TiltHome() {
         <div className={styles.evidenceHeading}>
           <span>WHY THIS EXISTS</span>
           <h2 id="evidence-title"><strong>Built from evidence.</strong><em>Honest about its limits.</em></h2>
-          <p>SevenBet draws on methods studied in gambling-harm treatment and behaviour-change research. The complete programme has not yet been clinically evaluated.</p>
+          <p>SevenBet uses public NHS and NICE guidance to shape recognition language and Programme safety boundaries. The complete Programme has not yet been clinically evaluated.</p>
         </div>
         <div className={styles.evidenceGrid}>
           <article><span>NHS</span><strong>Recognition and support guidance</strong><p>Used to shape the self-recognition language.</p></article>
           <article><span>NICE NG248</span><strong>Assessment and treatment guidance</strong><p>A source for safe programme boundaries.</p></article>
-          <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>Each mission produces a saved tool or rule.</p></article>
-          <article className={styles.limitCard}><span>CLEAR LIMIT</span><strong>No clinical claim</strong><p>The complete programme has not yet been clinically evaluated.</p></article>
+          <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>Missions 01–04 are implemented; later missions remain planned.</p></article>
+          <article className={styles.limitCard}><span>CLEAR LIMIT</span><strong>No clinical claim</strong><p>The complete Programme has not yet been clinically evaluated.</p></article>
         </div>
       </section>
 
@@ -188,13 +191,12 @@ function HumanChapter({ align = "left", section, chapter, heavy, serif, body, im
 }) {
   return (
     <section className={`${styles.humanChapter} ${align === "right" ? styles.humanChapterRight : ""}`} data-home-section={section} aria-label={`${heavy} ${serif}`}>
-      <img
+      <Image
         alt=""
-        fetchPriority={section === "apply" ? "low" : undefined}
-        height="1200"
-        loading={section === "apply" ? "eager" : "lazy"}
+        fill
+        loading="lazy"
+        sizes="100vw"
         src={image}
-        width="2000"
       />
       <div className={styles.chapterShade} />
       <div className={styles.chapterCopy}>
@@ -208,7 +210,19 @@ function HumanChapter({ align = "left", section, chapter, heavy, serif, body, im
 }
 
 function ToolVisual({ type }: { type: "map" | "pause" | "review" }) {
-  if (type === "pause") return <span aria-hidden="true" className={`${styles.toolVisual} ${styles.pauseVisual}`}><i /><i /></span>;
+  if (type === "map" || type === "pause") {
+    return (
+      <span aria-hidden="true" className={styles.toolVisual}>
+        <Image
+          alt=""
+          fill
+          loading="lazy"
+          sizes="(max-width: 760px) calc(100vw - 88px), 344px"
+          src={type === "map" ? "/home/tool-trigger-map.svg" : "/home/tool-pause-rule.svg"}
+        />
+      </span>
+    );
+  }
   if (type === "review") return <span aria-hidden="true" className={`${styles.toolVisual} ${styles.reviewVisual}`}><i /><i /><i /><i /></span>;
-  return <span aria-hidden="true" className={`${styles.toolVisual} ${styles.mapVisual}`}><i /><i /><i /><b /></span>;
+  return null;
 }

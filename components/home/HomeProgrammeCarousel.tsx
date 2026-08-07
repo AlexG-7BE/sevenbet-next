@@ -7,29 +7,29 @@ import styles from "./TiltHome.module.css";
 const slides = [
   {
     key: "mission",
-    eyebrow: "START HERE",
+    eyebrow: "MISSION PREVIEW",
     title: "Make the urge wait.",
-    body: "Choose a pause you can use before the next bet.",
-    metric: "4 min · one saved rule",
-    status: "Saved to your plan",
+    body: "Preview a practical pause before the next decision.",
+    metric: "Mission 01 · available now",
+    status: "Illustrative layout · not your progress",
     progress: 34,
   },
   {
     key: "path",
-    eyebrow: "10 MISSIONS",
-    title: "A path you can finish.",
-    body: "Each mission creates something you can reuse in a difficult moment.",
-    metric: "1 of 10 complete",
-    status: "Mission 02 unlocks next",
+    eyebrow: "10-MISSION PATH",
+    title: "A path you can review.",
+    body: "Missions 01–04 are implemented. Later missions remain planned.",
+    metric: "Mission 01 available",
+    status: "Missions 05–10 · not yet available",
     progress: 18,
   },
   {
     key: "dashboard",
-    eyebrow: "YOUR PLAN",
+    eyebrow: "DASHBOARD PREVIEW",
     title: "See what works.",
-    body: "Track completed missions, saved rules and the next useful action.",
-    metric: "3 rules active",
-    status: "Next: build a pause rule",
+    body: "Saved rules and tools appear here as the available Programme progresses.",
+    metric: "Saved work appears here",
+    status: "Preview only · no visitor data",
     progress: 64,
   },
 ] as const;
@@ -77,7 +77,7 @@ export function HomeProgrammeCarousel() {
             <p>{slide.body}</p>
             <span className={styles.miniScreen}>
               <b>{slide.metric}</b>
-              <i><span style={{ width: `${slide.progress}%` }} /></i>
+              <i aria-hidden="true" data-presentational-progress="true"><span style={{ width: `${slide.progress}%` }} /></i>
               <small>{slide.status}</small>
             </span>
           </article>

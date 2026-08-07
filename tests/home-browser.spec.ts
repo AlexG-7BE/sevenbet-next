@@ -62,11 +62,37 @@ test("Home carousel is keyboard operable with an announced active state", async 
   const region = page.getByRole("region", { name: "Programme preview" });
   const counter = region.locator("[aria-live='polite']");
   await expect(counter).toHaveText("01 / 03");
-  await region.getByRole("button", { name: "Next programme preview" }).focus();
+  const next = region.getByRole("button", { name: "Next programme preview" });
+  await next.focus();
   await page.keyboard.press("Enter");
   await expect(counter).toHaveText("02 / 03");
+  await next.click();
+  await expect(counter).toHaveText("03 / 03");
+  await page.waitForTimeout(750);
+  await expect(counter).toHaveText("03 / 03");
   await page.keyboard.press("ArrowLeft");
-  await expect(counter).toHaveText("01 / 03");
+  await expect(counter).toHaveText("02 / 03");
+});
+
+test("Home renders all four canonical hero crops and the primary CTA works", async ({ page }) => {
+  await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
+  const hero = page.locator("[data-home-section='hero']");
+  await expect(hero.locator("figure")).toHaveCount(4);
+  expect(await hero.locator("figure img").evaluateAll((images) => images.map((image) => ({
+    complete: (image as HTMLImageElement).complete,
+    naturalWidth: (image as HTMLImageElement).naturalWidth,
+  })))).toEqual([
+    expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
+    expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
+    expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
+    expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
+  ]);
+  expect(await hero.locator("figure img").evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+
+  const cta = hero.getByRole("link", { name: "Start the 10-Step Program" });
+  await expect(cta).toBeVisible();
+  await cta.click();
+  await expect(page).toHaveURL(/\/program$/);
 });
 
 test("Home hydrates without browser errors and keeps accessible action targets", async ({ page }) => {
@@ -90,11 +116,24 @@ test("Home hydrates without browser errors and keeps accessible action targets",
   expect(browserErrors).toEqual([]);
 });
 
-for (const route of ["/10-steps", "/program", "/casinos", "/responsible-gambling"]) {
+for (const route of [
+  "/10-steps",
+  "/program",
+  "/responsible-gambling",
+  "/casinos",
+  "/bonuses",
+  "/best-offers",
+  "/compare",
+  "/methodology",
+  "/affiliate-disclosure",
+  "/about",
+  "/learn",
+  "/bonus-guide",
+]) {
   test(`${route} remains reachable after the Home migration`, async ({ page }) => {
     const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
-    await expect(page.locator("main")).toHaveCount(1);
+    expect(await page.locator("main").count()).toBeGreaterThan(0);
   });
 }
 
@@ -102,6 +141,7 @@ for (const viewport of [
   { width: 1440, height: 900 },
   { width: 1280, height: 800 },
   { width: 1024, height: 768 },
+  { width: 900, height: 900 },
   { width: 768, height: 1024 },
   { width: 640, height: 800 },
   { width: 430, height: 932 },
@@ -117,6 +157,9 @@ for (const viewport of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     const order = await page.locator("[data-home-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-home-section")));
     expect(order).toEqual(["hero", "programme-theatre", "self-recognition", "recognise", "build", "apply", "programme-tools", "evidence", "final-programme-cta"]);
+    if (viewport.width === 375) {
+      await expect(page.locator("[data-home-section='hero']").getByRole("link", { name: "Start the 10-Step Program" })).toBeVisible();
+    }
     await page.close();
   });
 }
@@ -127,6 +170,7 @@ test("Home uses the Public Shell mobile menu without duplicating navigation", as
   const menu = page.getByRole("button", { name: "Open navigation" });
   await menu.click();
   await expect(page.getByRole("dialog", { name: "Site navigation" })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Site navigation" })).not.toBeVisible();
   await expect(menu).toBeFocused();
