@@ -1,5 +1,9 @@
 # 10-Step Program Migration Report
 
+## Status
+
+**Historical Phase 2 migration report.** The active `/program` route now renders `ActiveControlProgramme` and uses the approved Mission 01–04 Programme contracts. The `lib/program.ts`, Program Builder and legacy progress routes described below remain repository history/compatibility evidence, not current authority for Mission completion, XP or next-Mission state.
+
 ## Source
 
 The original program remains in `lib/program.ts`. Phase 2 seed generation maps it into CMS records at startup.
@@ -12,7 +16,7 @@ The original program remains in `lib/program.ts`. Phase 2 seed generation maps i
 - lesson text, exercises, scenarios, quizzes, explanations, takeaways and recap content;
 - XP values and educational achievements;
 - original order;
-- public `/program` route and current interactive UX;
+- the then-current public `/program` route and interactive UX;
 - browser progress key `sevenbet-program-progress-v1`.
 
 ## Structured Conversion
@@ -23,10 +27,10 @@ Each original step becomes one `ProgramStep` and one required `Lesson`. Lesson c
 
 Existing day-number completion state is retained. On first Phase 2 load, completed day numbers are also mapped to stable CMS step IDs. Future reordering and renaming use those stable IDs. No automatic progress reset is performed.
 
-## Current Source of Truth
+## Historical Source of Truth at the Time
 
-Until PostgreSQL is connected, the published in-memory CMS snapshot is the runtime source for `/program`, with `lib/program.ts` as both seed input and safe fallback. Do not remove the old source yet.
+At the time of this migration, the published in-memory CMS snapshot was the runtime source for `/program`, with `lib/program.ts` as seed input and fallback. That statement is superseded for the active route by the Mission 01–04 Programme services and server-owned Dashboard/reward contracts.
 
-## Production Cutover Gate
+## Historical Production Cutover Gate
 
 The old source may be retired only after the Prisma repository is connected, migrations and seed run successfully, published snapshot rendering is verified, enrollment version pinning is active, and a rollback rehearsal succeeds.

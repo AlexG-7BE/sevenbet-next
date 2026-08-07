@@ -12,7 +12,7 @@
 
 **Detected:** Shared presentation components live in `components/`; reusable primitives are in `components/ui.tsx`. Builder, affiliate, casino-editor, and media components are under `components/admin/`. Styling is global CSS in `app/globals.css`, with class names in TSX; Tailwind and a separate CSS-in-JS library are **not detected**.
 
-**Detected:** Loading/error handling is specifically present for the casino builder and public casino list (`loading.tsx` / `error.tsx` where present). Global `not-found.tsx` is **not detected**. `app/robots.ts`, `app/sitemap.ts`, route metadata, and `app/llms.txt/route.ts` provide SEO/crawler surfaces. Client components are present where interactive state or browser APIs are used; other route pages are server components by default under App Router conventions.
+**Detected, reconciled 2026-08-07:** Loading/error handling is present for bounded public/admin surfaces, and global `app/not-found.tsx` plus `app/global-error.tsx` provide safe recovery. `app/robots.ts`, `app/sitemap.ts`, route metadata, and `app/llms.txt/route.ts` provide SEO/crawler surfaces. Client components are present where interactive state or browser APIs are used; other route pages are server components by default under App Router conventions.
 
 ## Backend architecture
 
