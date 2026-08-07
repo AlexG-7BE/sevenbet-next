@@ -2,6 +2,7 @@ import Link from "next/link";
 import React from "react";
 import type { ReactNode } from "react";
 
+import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
@@ -51,7 +52,7 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     </div>
     <p className={classNames.commission}>Review access is editorial. A visit action is conditional and may compensate SevenBet.</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
-    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>Read review</Link>{canVisit && <a href={`/r/${casino.visitAction.redirectSlug}`} rel="nofollow sponsored noopener" target="_blank">{casino.visitAction.label} ↗</a>}</div>
+    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>Read review</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
   </>;
 }
 

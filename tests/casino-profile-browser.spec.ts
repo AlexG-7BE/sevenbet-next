@@ -52,9 +52,9 @@ test("outbound confirmation is keyboard dismissible and returns focus", async ({
   const hero = page.getByRole("complementary", { name: "Published bonus and visit action" });
   const trigger = hero.getByRole("link", { name: "Visit Demo Northstar Casino" });
   await trigger.click();
-  const dialog = hero.getByRole("dialog", { name: "Review the handoff." });
+  const dialog = hero.getByRole("dialog", { name: "You are leaving SevenBet." });
   await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("button", { name: "Stay on review" })).toBeFocused();
+  await expect(dialog.getByRole("button", { name: "Cancel and stay on SevenBet" })).toBeFocused();
   expect(await dialog.locator('a[href^="http"]').count()).toBe(0);
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
@@ -68,7 +68,7 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino review" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" }).first()).toHaveAttribute("href", "/r/demo-northstar");
+  await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" }).first()).toHaveAttribute("href", "/outbound/demo-northstar");
   await context.close();
 });
 

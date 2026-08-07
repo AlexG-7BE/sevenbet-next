@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
@@ -65,7 +66,7 @@ function mobileFeaturedTerms(offer: PublicOfferDTO) {
 function OfferAction({ offer, compact = false }: { offer: PublicOfferDTO; compact?: boolean }) {
   const href = safeActionHref(offer);
   if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>No governed visit</span>;
-  return <Link className={compact ? styles.offerActionCompact : styles.offerAction} href={href} prefetch={false} rel="nofollow sponsored">View Offer <span aria-hidden="true">↗</span></Link>;
+  return <CasinoOutboundAction action={{ href, label: "View Offer" }} className={compact ? styles.offerActionCompact : styles.offerAction} />;
 }
 
 export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {
