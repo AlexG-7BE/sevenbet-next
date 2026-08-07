@@ -35,7 +35,8 @@ export function AboutDocument() {
       className={styles.page}
       data-about-document
       data-figma-family="835:5298"
-      data-figma-desktop="835:5301"
+      data-figma-desktop="923:2694"
+      data-figma-compact-hero="923:2694"
       data-figma-mobile="835:5436"
     >
       <header className={styles.hero} data-about-section="hero">

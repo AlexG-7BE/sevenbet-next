@@ -51,7 +51,8 @@ test("About implements the corrected approved visual family, not the retired fou
   assert.equal((aboutDocument.match(/<h1\b/g) ?? []).length, 1);
   assert.match(aboutDocument, /data-about-document/);
   assert.match(aboutDocument, /data-figma-family="835:5298"/);
-  assert.match(aboutDocument, /data-figma-desktop="835:5301"/);
+  assert.match(aboutDocument, /data-figma-desktop="923:2694"/);
+  assert.match(aboutDocument, /data-figma-compact-hero="923:2694"/);
   assert.match(aboutDocument, /data-figma-mobile="835:5436"/);
   assert.doesNotMatch(aboutDocument, /CLARITY BEFORE|MAKE COMPLEX TERMS LEGIBLE|NO WINNING PROMISES|18\+ · ADULTS ONLY/);
 

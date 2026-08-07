@@ -1,50 +1,52 @@
-"use client";
-
+import type { Metadata } from "next";
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { formatMoney } from "@/lib/data";
 
-export default function BudgetCalculatorPage() {
-  const [budget, setBudget] = useState(300);
-  const [sessions, setSessions] = useState(4);
-  const [ratio, setRatio] = useState(0.2);
-  const result = useMemo(() => {
-    const monthlyCap = Math.floor(Math.max(0, budget) * ratio);
-    const stopLoss = Math.floor(monthlyCap / Math.max(1, sessions));
-    return { monthlyCap, stopLoss };
-  }, [budget, sessions, ratio]);
+import { absoluteUrl } from "@/lib/site";
+import { PersonalLimitTracker } from "./PersonalLimitTracker";
+import styles from "./PersonalLimitTracker.module.css";
 
+export const metadata: Metadata = {
+  title: "Personal Gambling Limit Tracker | SevenBet",
+  description: "Track a gambling limit you choose yourself without SevenBet calculating a safe or affordable gambling amount.",
+  alternates: { canonical: absoluteUrl("/tools/budget-calculator") },
+};
+
+export default function PersonalLimitTrackerPage() {
   return (
-    <section className="pageShell">
-      <div className="container twoCol">
-        <div>
-          <p className="eyebrow">Budget calculator</p>
-          <h1>Set the limit before depositing, not after losing.</h1>
-          <p className="lead">If there is debt, borrowed money or loss of control, the safer gambling limit for today is zero.</p>
-          <div className="formPanel">
-            <label>Monthly entertainment budget</label>
-            <input value={budget} min={0} onChange={(event) => setBudget(Number(event.target.value))} type="number" />
-            <label>Maximum gambling sessions per month</label>
-            <input value={sessions} min={1} onChange={(event) => setSessions(Number(event.target.value))} type="number" />
-            <label>Conservativeness</label>
-            <select value={ratio} onChange={(event) => setRatio(Number(event.target.value))}>
-              <option value={0.1}>Very cautious: 10%</option>
-              <option value={0.2}>Cautious: 20%</option>
-              <option value={0.3}>Maximum: 30%</option>
-            </select>
-          </div>
+    <article
+      className={styles.page}
+      data-limit-tracker-page
+      data-figma-family="924:3422"
+      data-figma-desktop="924:3424"
+      data-figma-mobile="924:3555"
+    >
+      <div className={styles.shell}>
+        <div className={styles.layout}>
+          <header className={styles.intro}>
+            <p className={styles.eyebrow}>Personal Gambling Limit Tracker · Local only</p>
+            <h1>Check your<br />own limit.</h1>
+            <p>Start with a limit that you choose. SevenBet does not calculate how much gambling is safe or affordable for you.</p>
+          </header>
+          <PersonalLimitTracker />
         </div>
-        <aside className="resultPanel">
-          <span className="safeBadge">Recommended</span>
-          <h2>{formatMoney(result.stopLoss)} per session</h2>
-          <div className="resultRows">
-            <div><span>Monthly cap</span><strong>{formatMoney(result.monthlyCap)}</strong></div>
-            <div><span>Stop-loss</span><strong>{formatMoney(result.stopLoss)}</strong></div>
-            <div><span>Time cap</span><strong>45 min</strong></div>
-          </div>
-          <Link className="button gold" href="/bonuses">Review offers</Link>
+
+        <noscript>
+          <section className={styles.noJs} data-limit-tracker-nojs aria-labelledby="limit-tracker-nojs-title">
+            <p className={styles.eyebrow}>Private by default</p>
+            <h2 id="limit-tracker-nojs-title">Interactive tracker needs JavaScript.</h2>
+            <p>Manual fallback: your chosen limit minus the amount already used equals the amount remaining under your own limit.</p>
+            <p>SevenBet does not calculate a safe gambling amount.</p>
+            <Link href="/responsible-gambling">Open Protected Help</Link>
+          </section>
+        </noscript>
+
+        <aside className={styles.privacyNote}>
+          <strong>Private by default.</strong>
+          <span>Values stay in this browser session and clear when you refresh.</span>
+          <span>They are not stored in SevenBet&apos;s application database and are not used to recommend casinos or bonuses.</span>
+          <Link href="/responsible-gambling">Open Protected Help</Link>
         </aside>
       </div>
-    </section>
+    </article>
   );
 }
