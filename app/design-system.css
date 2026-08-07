@@ -30,8 +30,10 @@
 
   /* Semantic colour roles */
   --sb-surface-night: var(--sb-night);
+  --sb-surface-night-strong: var(--sb-night-strong);
   --sb-surface-deep: var(--sb-deep);
   --sb-surface-card-dark: var(--sb-charcoal);
+  --sb-surface-black: var(--sb-black);
   --sb-surface-paper: var(--sb-paper);
   --sb-surface-field: var(--sb-field);
   --sb-surface-white: var(--sb-white);
@@ -41,12 +43,15 @@
   --sb-text-muted: var(--sb-metal);
   --sb-action-primary: var(--sb-acid);
   --sb-action-primary-hover: var(--sb-acid-hover);
+  --sb-action-primary-bright: var(--sb-acid-bright);
   --sb-action-on-primary: var(--sb-night);
   --sb-action-soft: var(--sb-acid-soft);
   --sb-border-subtle: rgba(16, 15, 15, .34);
   --sb-border-on-night: rgba(255, 255, 255, .34);
   --sb-safety-verified: var(--sb-teal);
   --sb-status-danger: var(--sb-danger);
+  --sb-status-danger-text: var(--sb-danger-text);
+  --sb-focus-acid-contrast: var(--sb-acid-contrast);
 
   /* Typography */
   --sb-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;

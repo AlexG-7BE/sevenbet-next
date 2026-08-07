@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 
 const read = (path: string) => readFileSync(path, "utf8");
@@ -64,4 +64,39 @@ test("public and protected shells retain separate landmark ownership", () => {
   assert.doesNotMatch(publicLayout, /ProtectedHelpHeader|ProtectedHelpFooter/);
   assert.match(protectedLayout, /<ProtectedHelpHeader[\s\S]*<main id="main-content">[\s\S]*<ProtectedHelpFooter/);
   assert.doesNotMatch(protectedLayout, /PublicHeader|PublicFooter/);
+});
+
+test("commercial actions remain confirmation-first and managed outside shared Action", () => {
+  const outbound = read("components/casino-profile/CasinoOutboundAction.tsx");
+  const confirmation = read("components/commercial-handoff/CommercialHandoffPage.tsx");
+  assert.match(outbound, /confirmationHref = slug \? `\/outbound\/\$\{slug\}` : "\/outbound\/unavailable"/);
+  assert.match(outbound, /href=\{confirmationHref\}/);
+  assert.match(confirmation, /href=\{`\/r\/\$\{slug\}`\}/);
+  assert.doesNotMatch(read("components/design-system/Action.tsx"), /\/outbound\/|\/r\/|target=|sponsored/);
+});
+
+test("protected Help and private control-tool results cannot import commercial action paths", () => {
+  const protectedHelp = [
+    "components/protected-help/ProtectedHelpArticle.tsx",
+    "components/protected-help/ProtectedHelpHub.tsx",
+    "components/protected-help/ProtectedHelpShell.tsx",
+  ].map(read).join("\n");
+  const controlTools = [
+    "app/(public)/self-check/SelfCheckFlow.tsx",
+    "app/(public)/tools/budget-calculator/PersonalLimitTracker.tsx",
+  ].map(read).join("\n");
+  for (const source of [protectedHelp, controlTools]) {
+    assert.doesNotMatch(source, /CasinoOutboundAction|CommercialHandoff|href=[{]?['"`]\/r\//);
+  }
+});
+
+test("the visual snapshot manifest is present, bounded and cross-domain", () => {
+  const manifest = read("tests/design-system-visual.spec.ts");
+  const snapshots = readdirSync("tests/design-system-visual.spec.ts-snapshots").filter((name) => name.endsWith(".png"));
+  assert.equal(snapshots.length, 10);
+  assert.match(manifest, /\/responsible-gambling/);
+  assert.match(manifest, /\/privacy/);
+  assert.match(manifest, /\/self-check/);
+  assert.match(manifest, /\/tools\/budget-calculator/);
+  assert.match(manifest, /toHaveScreenshot/);
 });
