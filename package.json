@@ -48,6 +48,8 @@
     "fe-mig-08:browser": "playwright test tests/public-offer-browser.spec.ts",
     "fe-mig-09:test": "node --import tsx --test tests/public-comparison.test.ts tests/public-casino-discovery.test.ts tests/public-offer-service.test.ts tests/affiliate-redirect-engine.test.ts",
     "fe-mig-09:browser": "playwright test tests/public-comparison-browser.spec.ts",
+    "fe-mig-12:test": "node --import tsx --test tests/methodology-parity.test.ts",
+    "fe-mig-12:browser": "playwright test tests/methodology-browser.spec.ts tests/public-shell-browser.spec.ts tests/home-browser.spec.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
