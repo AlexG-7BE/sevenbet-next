@@ -9,6 +9,37 @@ import { PublicComparisonService } from "../lib/services/public-comparison.servi
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
+function snapshotBonus(casinoSlug: string, bonusSlug: string, patch: {
+  title?: string;
+  type?: string;
+  minimumDeposit?: number | null;
+  wageringMultiplier?: number | null;
+  wageringText?: string | null;
+  eligibility?: string | null;
+  importantConditions?: string[];
+} = {}) {
+  const casinoId = `${casinoSlug}-id`;
+  return {
+    id: `${casinoId}-${bonusSlug}`,
+    slug: bonusSlug,
+    title: patch.title ?? `${bonusSlug} title`,
+    summary: "Fictional offer",
+    type: patch.type ?? "WELCOME",
+    percentage: 100,
+    maximumBonus: 500,
+    maximumBet: 5,
+    currency: "GBP",
+    freeSpins: 20,
+    minimumDeposit: patch.minimumDeposit === undefined ? 10 : patch.minimumDeposit,
+    wageringMultiplier: patch.wageringMultiplier === undefined ? 30 : patch.wageringMultiplier,
+    wageringText: patch.wageringText ?? null,
+    eligibility: patch.eligibility === undefined ? "New fictional customers" : patch.eligibility,
+    importantConditions: patch.importantConditions ?? ["Synthetic demonstration only"],
+    status: "PUBLISHED",
+    offerStatus: "ACTIVE",
+  };
+}
+
 function record(slug: string, patch: {
   score?: number;
   country?: string;
@@ -20,6 +51,7 @@ function record(slug: string, patch: {
   wagering?: number | null;
   withdrawal?: string | null;
   responsibleTools?: string[];
+  bonuses?: ReturnType<typeof snapshotBonus>[];
 } = {}): PublishedCasinoSnapshotRecord {
   const id = `${slug}-id`;
   return {
@@ -45,9 +77,15 @@ function record(slug: string, patch: {
       licenses: [{ id: `${id}-licence`, authority: "Fictional authority", jurisdiction: "Synthetic", status: "ACTIVE", lastVerifiedAt: "2030-04-01T00:00:00.000Z" }],
       countries: [{ id: `${id}-country`, countryCode: patch.country ?? "GB", availability: patch.availability ?? "AVAILABLE", minimumAge: 18 }],
       paymentMethods: [{ id: `${id}-payment`, methodKey: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: 10, minimumWithdrawal: 20, maximumWithdrawal: 2000, withdrawalTime: patch.withdrawal === undefined ? "Within one day" : patch.withdrawal, fees: "Check published terms", crypto: false }],
-      casinoBonuses: [{ id: `${id}-bonus`, slug: `${slug}-welcome`, title: `${slug} published offer`, summary: "Fictional offer", type: "WELCOME", percentage: 100, maximumBonus: 500, maximumBet: 5, currency: "GBP", freeSpins: 20, minimumDeposit: 10, wageringMultiplier: patch.wagering === undefined ? 30 : patch.wagering, eligibility: "New fictional customers", importantConditions: ["Synthetic demonstration only"], status: "PUBLISHED", offerStatus: "ACTIVE" }],
+      casinoBonuses: patch.bonuses ?? [snapshotBonus(slug, `${slug}-welcome`, { title: `${slug} published offer`, wageringMultiplier: patch.wagering })],
     },
   };
+}
+
+async function selectedOfferTitle(bonuses: ReturnType<typeof snapshotBonus>[]) {
+  const result = await new PublicComparisonService(store([record("alpha", { bonuses }), record("beta")]), () => now)
+    .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  return result.groups.flatMap((group) => group.rows).find((row) => row.id === "offer-title")?.values.alpha.text;
 }
 
 function activeOffer(casinoId: string): DiscoveryContext["offers"][number] {
@@ -99,6 +137,64 @@ test("clean comparison uses a generic deterministic GB default without slug rule
   assert.equal(result.status, "available");
   assert.deepEqual(result.selectedSlugs, ["alpha", "zulu", "bravo"]);
   assert.ok(result.casinos.every((casino) => casino.marketState === "AVAILABLE"));
+});
+
+test("offer completeness treats zero minimum deposit as present and null as missing", async () => {
+  const title = await selectedOfferTitle([
+    snapshotBonus("alpha", "a-null-deposit", { title: "Null deposit", minimumDeposit: null }),
+    snapshotBonus("alpha", "z-zero-deposit", { title: "Zero deposit", minimumDeposit: 0 }),
+  ]);
+  assert.equal(title, "Zero deposit");
+});
+
+test("offer completeness treats zero wagering and supported wagering text as present", async () => {
+  const zeroTitle = await selectedOfferTitle([
+    snapshotBonus("alpha", "a-null-wagering", { title: "Null wagering", wageringMultiplier: null }),
+    snapshotBonus("alpha", "z-zero-wagering", { title: "Zero wagering", wageringMultiplier: 0 }),
+  ]);
+  assert.equal(zeroTitle, "Zero wagering");
+
+  const textTitle = await selectedOfferTitle([
+    snapshotBonus("alpha", "a-missing-wagering", { title: "Missing wagering", wageringMultiplier: null }),
+    snapshotBonus("alpha", "z-text-wagering", { title: "Text wagering", wageringMultiplier: null, wageringText: "No wagering" }),
+  ]);
+  assert.equal(textTitle, "Text wagering");
+});
+
+test("offer completeness treats empty eligibility and empty conditions as missing", async () => {
+  const eligibilityTitle = await selectedOfferTitle([
+    snapshotBonus("alpha", "a-empty-eligibility", { title: "Empty eligibility", eligibility: "" }),
+    snapshotBonus("alpha", "z-published-eligibility", { title: "Published eligibility" }),
+  ]);
+  assert.equal(eligibilityTitle, "Published eligibility");
+
+  const conditionsTitle = await selectedOfferTitle([
+    snapshotBonus("alpha", "a-empty-conditions", { title: "Empty conditions", importantConditions: [] }),
+    snapshotBonus("alpha", "z-published-conditions", { title: "Published conditions" }),
+  ]);
+  assert.equal(conditionsTitle, "Published conditions");
+});
+
+test("comparison offer selection is deterministic at equal completeness", async () => {
+  const title = await selectedOfferTitle([
+    snapshotBonus("alpha", "z-second", { title: "Second by slug" }),
+    snapshotBonus("alpha", "a-first", { title: "First by slug" }),
+  ]);
+  assert.equal(title, "First by slug");
+});
+
+test("changing zero to null can change the selected offer without slug rules", async () => {
+  const fallback = snapshotBonus("alpha", "a-fallback", { title: "Stable fallback", minimumDeposit: null });
+  const withZero = await selectedOfferTitle([
+    fallback,
+    snapshotBonus("alpha", "z-variable", { title: "Variable offer", minimumDeposit: 0 }),
+  ]);
+  const withNull = await selectedOfferTitle([
+    fallback,
+    snapshotBonus("alpha", "z-variable", { title: "Variable offer", minimumDeposit: null }),
+  ]);
+  assert.equal(withZero, "Variable offer");
+  assert.equal(withNull, "Stable fallback");
 });
 
 test("explicit empty, one, two and three selections are represented without auto-fill", async () => {
@@ -191,4 +287,13 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|destinationUrl|trackingUrl|localStorage/);
     assert.doesNotMatch(source, /demo-(?:northstar|harbour|atlas)/);
   }
+});
+
+test("comparison loading boundary is truthful, accessible and value-free", () => {
+  const loading = readFileSync("app/(public)/compare/loading.tsx", "utf8");
+  assert.match(loading, /aria-busy="true"/);
+  assert.match(loading, /aria-label="Casino comparison is loading"/);
+  assert.equal(loading.match(/<h1/g)?.length, 1);
+  assert.doesNotMatch(loading, /Demo\s+\w+\s+Casino|demo-(?:northstar|harbour|atlas)|\/r\//i);
+  assert.doesNotMatch(loading, /\d+(?:\.\d+)?\/10|[£$€]|\d+×|\d+%/);
 });

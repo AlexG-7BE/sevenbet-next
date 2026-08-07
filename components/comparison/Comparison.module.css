@@ -161,12 +161,47 @@
 .stateSection li strong { color: var(--danger); }
 .stateSection a, .stateSection button { width: fit-content; min-height: 48px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; background: var(--night); color: var(--white); font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
 
+.loadingHero { padding: 48px 0 64px; background: var(--night); color: var(--white); }
+.loadingStateLabel { display: flex; align-items: center; gap: 12px; }
+.loadingStateLabel span { padding: 6px 9px; border-radius: 999px; background: var(--acid); color: var(--ink); font-size: 10px; line-height: 12px; font-weight: 800; letter-spacing: .08em; }
+.loadingStateLabel small { color: var(--night-muted); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .08em; }
+.loadingHero h1 { max-width: 980px; margin: 22px 0 16px; font-size: clamp(52px, 6vw, 76px); line-height: .94; letter-spacing: -.055em; text-wrap: balance; }
+.loadingCopy { max-width: 720px; margin: 0; color: var(--night-muted); font-size: 17px; line-height: 26px; }
+.loadingSlots { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.loadingSlot { min-width: 0; min-height: 180px; padding: 22px; display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 15px; align-content: center; border: 1px solid #64635c; border-radius: 20px; background: var(--card); }
+.loadingSlot > i { width: 58px; height: 58px; border-radius: 14px; background: #45433f; }
+.loadingSlot > div { min-width: 0; display: grid; align-content: center; gap: 11px; }
+.loadingSlot span, .loadingControls span, .loadingControls i, .loadingControls b, .loadingMatrixHeading span, .loadingMatrix i, .loadingMatrixRow > span { display: block; border-radius: 999px; background: #45433f; }
+.loadingSlot span:nth-child(1) { width: 32%; height: 8px; background: #747169; }
+.loadingSlot span:nth-child(2) { width: 72%; height: 20px; }
+.loadingSlot span:nth-child(3) { width: 54%; height: 9px; }
+.loadingControls { margin-top: 18px; padding: 20px; border: 1px solid #4f4d47; border-radius: 18px; background: var(--deep); }
+.loadingControls > span { width: 260px; max-width: 70%; height: 12px; }
+.loadingControls > div { margin-top: 20px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.loadingControls i { height: 48px; border: 1px solid #5c5a54; border-radius: 10px; background: var(--card); }
+.loadingControls b { width: 150px; height: 48px; margin-top: 16px; background: #d8d7cf; opacity: .45; }
+.loadingMatrixSection { padding: 82px 0 88px; background: var(--deep); }
+.loadingMatrixHeading { margin-bottom: 28px; display: grid; gap: 14px; }
+.loadingMatrixHeading span:first-child { width: min(620px, 70%); height: 52px; background: #34322f; }
+.loadingMatrixHeading span:last-child { width: min(470px, 56%); height: 12px; background: #4b4944; }
+.loadingMatrix { overflow: hidden; border-radius: 18px; background: var(--paper); }
+.loadingMatrixHeader { min-height: 92px; padding: 18px; display: grid; grid-template-columns: minmax(220px, .76fr) repeat(3, minmax(0, 1fr)); gap: 18px; align-items: center; background: var(--night); }
+.loadingMatrixHeader::before { content: ""; width: 72px; height: 9px; border-radius: 999px; background: #5f5c55; }
+.loadingMatrixHeader i { width: 64%; height: 14px; background: #45433f; }
+.loadingMatrixRow { min-height: 112px; display: grid; grid-template-columns: minmax(220px, .76fr) minmax(0, 3fr); border-bottom: 1px solid var(--line); }
+.loadingMatrixRow > span { width: 44%; height: 12px; margin: 22px 18px; background: #c8c7c0; }
+.loadingMatrixRow > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.loadingMatrixRow i { width: 62%; height: 12px; margin: 22px 18px; background: #deddd6; }
+
 @media (max-width: 1050px) {
   .shell { width: calc(100% - 48px); }
   .legendGrid { grid-template-columns: repeat(3, 1fr); }
   .selectedGrid, .slotGrid, .decisionCards, .commercialCards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .methodSection ol { grid-template-columns: repeat(2, 1fr); }
   .desktopMatrix[data-columns="3"] .operatorHeader, .desktopMatrix[data-columns="3"] .matrixRow { grid-template-columns: minmax(190px, .7fr) repeat(3, minmax(0, 1fr)); }
+  .loadingSlots { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .loadingSlot { padding: 18px; grid-template-columns: 48px minmax(0, 1fr); }
+  .loadingSlot > i { width: 48px; height: 48px; }
 }
 
 @media (max-width: 760px) {
@@ -217,6 +252,29 @@
   .methodSection aside a { min-height: 54px; }
   .relatedSection nav { grid-template-columns: 1fr; }
   .demoDisclosure .shell { grid-template-columns: 1fr; gap: 8px; }
+  .loadingHero { padding: 30px 0 34px; }
+  .loadingHero h1 { margin-top: 18px; font-size: clamp(40px, 11.5vw, 48px); line-height: .98; }
+  .loadingCopy { font-size: 15px; line-height: 23px; }
+  .loadingSlots { gap: 10px; }
+  .loadingSlot { min-height: 124px; padding: 13px; display: grid; grid-template-columns: 1fr; gap: 10px; border-radius: 14px; }
+  .loadingSlot > i { width: 38px; height: 38px; border-radius: 10px; }
+  .loadingSlot span:nth-child(1) { width: 48%; }
+  .loadingSlot span:nth-child(2) { width: 88%; height: 14px; }
+  .loadingSlot span:nth-child(3) { width: 68%; }
+  .loadingControls { padding: 16px; }
+  .loadingControls > div { grid-template-columns: 1fr; }
+  .loadingControls b { width: 100%; height: 54px; }
+  .loadingMatrixSection { padding: 34px 0 38px; }
+  .loadingMatrixHeading span:first-child { width: 84%; height: 36px; }
+  .loadingMatrixHeading span:last-child { width: 68%; }
+  .loadingMatrix { display: grid; gap: 12px; overflow: visible; background: transparent; }
+  .loadingMatrixHeader { min-height: 48px; padding: 14px; display: block; border-radius: 10px; background: var(--acid); }
+  .loadingMatrixHeader::before { display: block; width: 42%; background: rgba(16,15,15,.32); }
+  .loadingMatrixHeader i { display: none; }
+  .loadingMatrixRow { min-height: 0; padding: 14px; display: grid; grid-template-columns: 1fr; gap: 16px; border: 0; border-radius: 14px; background: var(--paper); }
+  .loadingMatrixRow > span { width: 48%; margin: 0; background: #c8c7c0; }
+  .loadingMatrixRow > div { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .loadingMatrixRow i { width: 100%; height: 54px; margin: 0; border-radius: 10px; background: var(--white); border: 1px solid var(--line); }
 }
 
 @media (max-width: 390px) {
@@ -226,4 +284,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+}
+
+@media (scripting: none) {
+  :global(html):has(.page), :global(body):has(.page) { overflow-x: clip; }
+  .page[data-comparison-loading] { display: none; }
+  :global(body):has(.page) :global(div[hidden][id^="S:"]) { display: contents !important; }
 }

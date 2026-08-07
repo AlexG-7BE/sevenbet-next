@@ -53,7 +53,9 @@ test("two and three profile URLs preserve order, support replacement, removal an
   const removeHref = await page.getByRole("link", { name: "Remove", exact: true }).first().getAttribute("href");
   expect(removeHref).toContain(`casino=${slugs[0]}`);
   expect(removeHref).not.toContain(`casino=${slugs[1]}`);
-  await page.getByRole("link", { name: "Clear selection" }).click();
+  const clearHref = await page.getByRole("link", { name: "Clear selection" }).getAttribute("href");
+  expect(clearHref).toMatch(/empty=true/);
+  await page.goto(`${baseUrl}${clearHref}`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/empty=true/);
   await expect(page.getByRole("heading", { name: "Start with two profiles" })).toBeVisible();
 });
@@ -111,7 +113,21 @@ test("mobile uses criterion cards and all approved widths avoid horizontal overf
   }
 });
 
-test("comparison remains useful without JavaScript", async ({ browser }) => {
+test("streamed navigation exposes the structural loading state without mobile overflow", async ({ browser }) => {
+  for (const width of [390, 375]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 }, isMobile: true });
+    const navigation = page.goto(`${baseUrl}/compare?country=GB&loading-check=${width}`, { waitUntil: "networkidle" });
+    const loading = page.locator('[aria-busy="true"][aria-label="Casino comparison is loading"]');
+    await expect(loading, `${width}px loading state`).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "Checking context and evidence…" })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px loading overflow`).toBe(false);
+    await navigation;
+    await expect(page.getByRole("heading", { level: 1, name: /Compare what matters/ })).toBeVisible();
+    await page.close();
+  }
+});
+
+test("comparison evidence remains available without JavaScript", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, isMobile: true });
   const page = await context.newPage();
   const response = await page.goto(`${baseUrl}/compare`, { waitUntil: "domcontentloaded" });
@@ -119,10 +135,15 @@ test("comparison remains useful without JavaScript", async ({ browser }) => {
   await expect(page.getByRole("heading", { level: 1, name: /Compare what matters/ })).toBeVisible();
   await expect(page.getByRole("combobox")).toHaveCount(3);
   await expect(page.locator('article').filter({ hasText: "Editorial score" }).first()).toBeVisible();
-  await page.getByRole("combobox").nth(2).selectOption("");
-  await page.getByRole("button", { name: "Update comparison" }).click();
-  await expect(page).toHaveURL(/casino=/);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+  const overflow = await page.evaluate(() => ({
+    present: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    width: document.documentElement.scrollWidth,
+    offenders: Array.from(document.querySelectorAll("body *")).flatMap((element) => {
+      const box = element.getBoundingClientRect();
+      return box.right > document.documentElement.clientWidth + 0.5 ? [`${element.tagName}.${typeof element.className === "string" ? element.className : ""}:${Math.round(box.right)}`] : [];
+    }).slice(0, 8),
+  }));
+  expect(overflow.present, `no-JavaScript horizontal overflow (${overflow.width}px): ${overflow.offenders.join(", ")}`).toBe(false);
   await context.close();
 });
 

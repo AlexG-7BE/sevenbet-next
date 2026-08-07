@@ -56,8 +56,13 @@ function defaultCandidates(casinos: PublicCasinoDTO[], country: string) {
 }
 
 function offerCompleteness(bonus: PublicCasinoBonus) {
-  return [bonus.title, bonus.type, bonus.minimumDeposit, bonus.wageringMultiplier, bonus.eligibility, bonus.importantConditions.length]
-    .filter((value) => value !== null && value !== "" && value !== 0).length;
+  const hasText = (value: string | null) => Boolean(value?.trim());
+  return Number(hasText(bonus.title))
+    + Number(hasText(bonus.type))
+    + Number(bonus.minimumDeposit !== null)
+    + Number(bonus.wageringMultiplier !== null || hasText(bonus.wageringText))
+    + Number(hasText(bonus.eligibility))
+    + Number(bonus.importantConditions.length > 0);
 }
 
 function selectComparisonBonus(casino: PublicCasinoDTO) {
