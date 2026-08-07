@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import styles from "@/components/public-offers/PublicOffers.module.css";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 
@@ -23,7 +24,7 @@ function terms(offer: PublicOfferDTO) {
 
 function OfferAction({ offer }: { offer: PublicOfferDTO }) {
   if (!offer.action.available || !offer.action.href) return <span aria-disabled="true" className={styles.unavailable}>Offer unavailable</span>;
-  return <Link className={styles.primaryAction} href={offer.action.href} rel="nofollow sponsored">View demo action</Link>;
+  return <CasinoOutboundAction action={{ href: offer.action.href, label: "View demo action" }} className={styles.primaryAction} />;
 }
 
 export function FeaturedOfferCard({ offer, rank }: { offer: PublicOfferDTO; rank: number }) {

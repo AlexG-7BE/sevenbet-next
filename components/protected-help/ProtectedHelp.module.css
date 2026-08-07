@@ -508,13 +508,268 @@
   outline-color: var(--help-soft);
 }
 
+.article {
+  width: 100%;
+  background: var(--help-paper);
+}
+
+.articleHero,
+.articleBody,
+.articleUnavailable {
+  padding-inline: max(64px, calc((100vw - 1440px) / 2 + 64px));
+}
+
+.articleHero {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+.articleBreadcrumb {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--help-muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.articleBreadcrumb a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--help-ink);
+}
+
+.articleBadge,
+.articleStatus {
+  width: fit-content;
+  margin: 16px 0 0;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: var(--help-teal);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.articleHero h1,
+.articleUnavailable h1 {
+  max-width: 1120px;
+  margin: 24px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--help-ink);
+  font-size: clamp(48px, 5vw, 64px);
+  font-weight: 900;
+  letter-spacing: -.045em;
+  line-height: 1.03;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.articleIntro {
+  max-width: 820px;
+  margin: 24px 0 0;
+  color: #4f4e49;
+  font-size: 20px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.directAnswer {
+  padding: 64px max(64px, calc((100vw - 1440px) / 2 + 64px));
+  background: var(--help-ink);
+  color: white;
+}
+
+.articleEyebrow {
+  margin: 0;
+  color: #4fb4aa;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.directAnswer h2 {
+  max-width: 1050px;
+  margin: 24px 0 0;
+  color: white;
+  font-size: clamp(30px, 3vw, 36px);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.directAnswer > p:last-child {
+  max-width: 900px;
+  margin: 24px 0 0;
+  color: var(--help-night-muted);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.articleBody {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+
+.articleSections {
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  list-style: none;
+}
+
+.articleSections li {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--help-muted);
+  background: var(--help-white);
+}
+
+.articleSections li > span {
+  color: var(--help-teal);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.articleSections h2 {
+  margin: 16px 0 0;
+  color: var(--help-ink);
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.22;
+}
+
+.articleSections p,
+.articleSource p,
+.articleUnavailable > p:not(.articleBadge) {
+  max-width: 1000px;
+  margin: 12px 0 0;
+  color: #4f4e49;
+  font-size: 16px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.articleSource {
+  width: min(100%, 624px);
+  min-height: 184px;
+  margin-top: 32px;
+  padding: 24px;
+  border: 1px solid var(--help-muted);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--help-paper);
+}
+
+.articleSource > div {
+  min-width: 0;
+}
+
+.articleSource .articleStatus {
+  margin: 0;
+  font-size: 9px;
+}
+
+.articleSource h2 {
+  margin: 12px 0 0;
+  color: var(--help-ink);
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.articleSource p:not(.articleStatus) {
+  font-size: 13px;
+}
+
+.articleStateMatrix {
+  margin: 18px 0 0;
+  display: grid;
+  gap: 10px;
+}
+
+.articleStateMatrix div {
+  padding-top: 10px;
+  border-top: 1px solid var(--help-muted);
+}
+
+.articleStateMatrix dt {
+  color: var(--help-ink);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.articleStateMatrix dd {
+  margin: 5px 0 0;
+  color: #4f4e49;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.articleSource > a {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--help-teal);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.articleUnavailable {
+  min-height: 620px;
+  padding-top: 96px;
+  padding-bottom: 96px;
+}
+
+.articleUnavailable > p:not(.articleBadge) {
+  max-width: 720px;
+  margin-top: 24px;
+  font-size: 18px;
+}
+
+.articleUnavailable > div {
+  margin-top: 32px;
+}
+
 @media (max-width: 1024px) {
   .headerWrap,
   .footerWrap,
   .hero,
   .nextSteps,
   .support,
-  .programme {
+  .programme,
+  .articleHero,
+  .articleBody,
+  .articleUnavailable {
+    padding-inline: 32px;
+  }
+
+  .directAnswer {
     padding-inline: 32px;
   }
 
@@ -538,8 +793,102 @@
   .hero,
   .nextSteps,
   .support,
-  .programme {
+  .programme,
+  .articleHero,
+  .articleBody,
+  .articleUnavailable {
     padding-inline: 20px;
+  }
+
+  .directAnswer {
+    padding: 24px 20px;
+  }
+
+  .articleHero {
+    padding-top: 40px;
+    padding-bottom: 40px;
+  }
+
+  .articleBreadcrumb {
+    font-size: 10px;
+  }
+
+  .articleBadge {
+    margin-top: 12px;
+    padding: 6px 10px;
+    font-size: 9px;
+  }
+
+  .articleHero h1,
+  .articleUnavailable h1 {
+    margin-top: 16px;
+    font-size: clamp(34px, 10.2vw, 40px);
+    line-height: 1.05;
+  }
+
+  .articleIntro {
+    margin-top: 16px;
+    font-size: 15px;
+    line-height: 23px;
+  }
+
+  .directAnswer h2 {
+    margin-top: 16px;
+    font-size: 26px;
+    line-height: 31px;
+  }
+
+  .directAnswer > p:last-child {
+    margin-top: 16px;
+    font-size: 14px;
+    line-height: 21px;
+  }
+
+  .articleBody {
+    padding-top: 24px;
+    padding-bottom: 24px;
+  }
+
+  .articleSections {
+    gap: 8px;
+  }
+
+  .articleSections li {
+    padding: 24px;
+    border-radius: 12px;
+  }
+
+  .articleSections li > span {
+    font-size: 16px;
+  }
+
+  .articleSections h2 {
+    margin-top: 12px;
+    font-size: 20px;
+    line-height: 25px;
+  }
+
+  .articleSections p {
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .articleSource {
+    width: calc(100% - 32px);
+    min-height: 0;
+    margin: 8px 16px 0;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .articleSource > a {
+    flex: 0 0 auto;
+  }
+
+  .articleUnavailable {
+    min-height: 520px;
+    padding-top: 64px;
+    padding-bottom: 64px;
   }
 
   .headerWrap {

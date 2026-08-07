@@ -112,7 +112,7 @@ test("mobile presentation follows the approved 390px material-object composition
   await expect(page.getByText("Bonus Terms", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Read the contract before the headline." })).toBeVisible();
   await expect(page.getByText("Full material ledger", { exact: true })).toBeVisible();
-  const hero = page.locator("main > section").first();
+  const hero = page.locator('main section[class*="hero"]').first();
   const feature = page.locator('article[class*="featureCard"]').first();
   const result = page.locator('[role="list"] > article[role="listitem"]').first();
   expect(Math.round((await hero.boundingBox())!.height)).toBe(800);

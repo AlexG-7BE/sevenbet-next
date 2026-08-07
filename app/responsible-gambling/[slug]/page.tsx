@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ArticleLayout } from "@/components/ResponsibleGamblingHub";
+import { ProtectedHelpArticle } from "@/components/protected-help/ProtectedHelpArticle";
 import {
   getLearningArticle,
   learningArticles,
@@ -74,21 +74,6 @@ function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle
   };
 }
 
-function faqSchema(article: NonNullable<ReturnType<typeof getLearningArticle>>) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: article.faq.map(([question, answer]) => ({
-      "@type": "Question",
-      name: question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: answer,
-      },
-    })),
-  };
-}
-
 export default async function ResponsibleGamblingArticlePage({
   params,
 }: {
@@ -109,11 +94,7 @@ export default async function ResponsibleGamblingArticlePage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema(article)) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(article)) }}
-      />
-      <ArticleLayout article={article} />
+      <ProtectedHelpArticle article={article} />
     </>
   );
 }

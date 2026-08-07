@@ -39,6 +39,8 @@ test("full canonical card renders published evidence and only the governed inter
   assert.match(html, /href="\/casino\/full-casino"/);
   assert.match(html, /aria-label="Editorial score 8\.4 out of 10"/);
   assert.match(html, /aria-label="Directory result position 7"/);
+  assert.match(html, /aria-haspopup="dialog"/);
+  assert.match(html, /href="\/outbound\/full-casino-visit"/);
   assert.match(html, /href="\/r\/full-casino-visit"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
   assert.match(html, /Review access is editorial\. A visit action is conditional and may compensate SevenBet\./);

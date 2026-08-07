@@ -112,7 +112,9 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
   assert.match(component, /Offer unavailable/);
-  assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 2);
+  assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
+  assert.match(action, /href=\{confirmationHref\}/);
+  assert.match(action, /aria-haspopup="dialog"/);
   assert.doesNotMatch(source, /@prisma\/client|\bprisma\.|fetch\(|axios|startsWith\(["']demo-|destinationUrl|trackingUrl|casinoOfficialUrl/);
   assert.equal((component.match(/<h1/g) ?? []).length, 1);
 });

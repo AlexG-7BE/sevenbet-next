@@ -169,11 +169,11 @@ test("metadata and structured data use a clean canonical without commercial sche
 
 test("governed outbound confirmation is keyboard dismissible and unavailable actions stay inert", async ({ page, request }) => {
   const slugs = await defaultSlugs(page);
-  const trigger = page.locator('a[href^="/r/"]').first();
+  const trigger = page.locator('a[aria-haspopup="dialog"]').first();
   await expect(trigger).toBeVisible();
   await trigger.focus();
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "Review the handoff." });
+  const dialog = page.getByRole("dialog", { name: "You are leaving SevenBet." });
   await expect(dialog).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
@@ -191,6 +191,6 @@ test("governed outbound confirmation is keyboard dismissible and unavailable act
   expect(unavailableHtml).not.toMatch(/<a[^>]+href="https?:\/\//);
 
   const missingRedirect = await request.get(`${baseUrl}/r/definitely-missing-comparison-route`, { maxRedirects: 0 });
-  expect([404, 410]).toContain(missingRedirect.status());
-  expect(missingRedirect.headers().location ?? "").not.toMatch(/^https?:\/\//);
+  expect(missingRedirect.status()).toBe(303);
+  expect(missingRedirect.headers().location ?? "").toMatch(/\/outbound\/unavailable$/);
 });

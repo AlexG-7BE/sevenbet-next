@@ -32,16 +32,18 @@ SevenBet is a responsible gambling platform centered on the SevenBet 10-Step Con
 
 - [Home](${absoluteUrl("/")}) - program-first responsible gambling entry point.
 - [10-step program](${absoluteUrl("/program")}) - the primary SevenBet control program.
-- [Self-check](${absoluteUrl("/self-check")}) - structured self-assessment before casino comparison.
+- [Self-Check](${absoluteUrl("/self-check")}) - private, non-clinical reflection whose answers remain local to the browser and do not personalise commercial recommendations.
 - [Learning Center](${absoluteUrl("/learn")}) - scalable educational hub for casino basics, bonuses, safety, payments, licensing, games, glossary and country guides.
-- [Responsible gambling learning center](${absoluteUrl("/responsible-gambling")}) - educational hub for budgeting, time management, bonus terms, licenses and responsible gambling tools.
-- [Budget calculator](${absoluteUrl("/tools/budget-calculator")}) - session limit and stop-loss calculator.
+- [Protected Help](${absoluteUrl("/responsible-gambling")}) - non-commercial control and support information with no casino, bonus or affiliate actions.
+- [Personal Gambling Limit Tracker](${absoluteUrl("/tools/budget-calculator")}) - works from a gambling limit chosen by the user. SevenBet does not calculate a safe or affordable amount and does not generate a stop-loss recommendation.
 - [Casino bonuses](${absoluteUrl("/bonuses")}) - secondary bonus comparison directory.
 - [Casino reviews](${absoluteUrl("/casinos")}) - reviewed casino profiles.
 - [Methodology](${absoluteUrl("/methodology")}) - review criteria and editorial process.
 - [Affiliate disclosure](${absoluteUrl("/affiliate-disclosure")}) - commercial relationship explanation.
 - [Bonus guide](${absoluteUrl("/bonus-guide")}) - wagering, max bet, expiry and withdrawal rules.
-- [Help Center](${absoluteUrl("/faq")}) - searchable knowledge base for program, bonuses, reviews, methodology and affiliate questions.
+- [SevenBet FAQ](${absoluteUrl("/faq")}) - product and trust answers covering SevenBet, the Programme, private tools, editorial and affiliate boundaries, privacy and Protected Help separation.
+- [Privacy](${absoluteUrl("/privacy")}) - current handling boundaries for account, Programme, Self-Check, Personal Limit Tracker, Protected Help and affiliate-related data.
+- [Terms](${absoluteUrl("/terms")}) - current service, commercial, operator and user boundaries for SevenBet.
 
 ## Learning Center Categories
 

@@ -28,13 +28,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   if (!link || link.entity !== "affiliate-link" || !isAffiliateLinkActive(link)) {
     await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", { now: new Date() }, { commercialAllowed: false, referralAllowed: false });
-    return NextResponse.redirect(new URL("/casinos", request.url));
+    return NextResponse.redirect(new URL("/outbound/unavailable", request.url));
   }
 
   const destination = safeDestination(link.destinationUrl);
   if (!destination) {
     await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", { now: new Date() }, { commercialAllowed: false, referralAllowed: false });
-    return NextResponse.redirect(new URL("/casinos", request.url));
+    return NextResponse.redirect(new URL("/outbound/unavailable", request.url));
   }
 
   await evaluateJurisdictionShadow("LEGACY_AFFILIATE_REDIRECT", {

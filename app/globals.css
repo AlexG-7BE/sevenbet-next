@@ -1451,6 +1451,172 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .footer { padding: 36px 0; }
 }
 
+.commercialOutboundPrimary,
+.commercialOutboundSecondary {
+  min-height: 48px;
+  padding: 11px 18px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--acid, #e4e24e);
+  color: var(--ink, #100f0f);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 16px;
+  text-align: center;
+  text-decoration: none;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.commercialOutboundPrimary {
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.commercialOutboundPrimary:hover {
+  transform: translateY(-1px);
+  background: #efed58;
+}
+
+.commercialOutboundSecondary {
+  width: 100%;
+  border-color: var(--ink, #100f0f);
+  background: transparent;
+}
+
+.commercialOutboundSecondary:hover {
+  background: var(--ink, #100f0f);
+  color: #fff;
+}
+
+.commercialOutboundDialog {
+  width: min(630px, calc(100% - 32px));
+  max-width: none;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-radius: 28px;
+  background: #fafaf7;
+  color: #100f0f;
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+
+.commercialOutboundDialog::backdrop {
+  background: rgba(16, 15, 15, .68);
+}
+
+.commercialOutboundDialog :focus-visible {
+  outline: 3px solid #777500;
+  outline-offset: 3px;
+}
+
+.commercialOutboundSheet {
+  padding: 36px;
+  display: grid;
+  gap: 16px;
+}
+
+.commercialOutboundLabel {
+  margin: 0;
+  color: #176c65;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  line-height: 16px;
+  text-transform: uppercase;
+}
+
+.commercialOutboundSheet > p:not(.commercialOutboundLabel) {
+  margin: 0;
+  color: #3f3e3a;
+  font-size: 15px;
+  line-height: 23px;
+}
+
+.commercialOutboundSheet h2 {
+  margin: 18px 0 4px;
+  font-size: 48px;
+  letter-spacing: -.05em;
+  line-height: .94;
+}
+
+.commercialOutboundContract {
+  margin-top: 10px;
+  padding: 20px;
+  border: 1px solid rgba(16, 15, 15, .28);
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+  background: #fff;
+}
+
+.commercialOutboundContract span {
+  color: #64635c;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .06em;
+}
+
+.commercialOutboundContract strong {
+  overflow-wrap: anywhere;
+  font-size: 20px;
+}
+
+.commercialOutboundContract small {
+  color: #64635c;
+  font-size: 11px;
+  line-height: 16px;
+}
+
+.commercialOutboundSheet > .commercialOutboundPrimary {
+  margin-top: 10px;
+}
+
+.commercialOutboundHelp {
+  width: fit-content;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: #176c65;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 760px) {
+  .commercialOutboundDialog {
+    width: 100%;
+    max-height: calc(100dvh - 72px);
+    margin: auto 0 0;
+    border-radius: 28px 28px 0 0;
+  }
+
+  .commercialOutboundSheet {
+    padding: 30px 24px calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .commercialOutboundSheet h2 {
+    font-size: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .commercialOutboundPrimary {
+    transition: none;
+  }
+
+  .commercialOutboundPrimary:hover {
+    transform: none;
+  }
+}
+
 .adminPage {
   padding: 48px 0 96px;
 }
