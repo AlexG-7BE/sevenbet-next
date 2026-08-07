@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { AffiliateContent, AffiliateHero, affiliateFaqItems } from "@/components/AffiliateSections";
+import { AffiliateDisclosureDocument } from "./AffiliateDisclosureDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Affiliate Disclosure | How SevenBet Is Funded",
   description:
-    "A plain-English explanation of SevenBet affiliate relationships, commissions, editorial independence, and reader responsibility.",
+    "How affiliate links may fund SevenBet, how commercial relationships relate to editorial work, and what readers should verify.",
   alternates: { canonical: absoluteUrl("/affiliate-disclosure") },
 };
 
@@ -30,21 +30,6 @@ function breadcrumbSchema() {
   };
 }
 
-function faqSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: affiliateFaqItems.map(([question, answer]) => ({
-      "@type": "Question",
-      name: question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: answer,
-      },
-    })),
-  };
-}
-
 export default function AffiliateDisclosurePage() {
   return (
     <>
@@ -52,12 +37,7 @@ export default function AffiliateDisclosurePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
-      />
-      <AffiliateHero />
-      <AffiliateContent />
+      <AffiliateDisclosureDocument />
     </>
   );
 }

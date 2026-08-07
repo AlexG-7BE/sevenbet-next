@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { AboutContent, AboutHero, aboutFaqItems } from "@/components/AboutSections";
+import { AboutDocument } from "./AboutDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About SevenBet | Educational Casino Guides and Editorial Reviews",
+  title: "About SevenBet | Learn, Reflect, Compare",
   description:
-    "Learn what SevenBet is, why it exists, what it does, what it does not do, and how its editorial casino comparison platform works.",
+    "How SevenBet puts education before comparison, keeps Programme reflection separate from commercial information, and defines its product boundaries.",
   alternates: { canonical: absoluteUrl("/about") },
 };
 
@@ -30,21 +30,6 @@ function breadcrumbSchema() {
   };
 }
 
-function faqSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: aboutFaqItems.map(([question, answer]) => ({
-      "@type": "Question",
-      name: question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: answer,
-      },
-    })),
-  };
-}
-
 export default function AboutPage() {
   return (
     <>
@@ -52,12 +37,7 @@ export default function AboutPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
-      />
-      <AboutHero />
-      <AboutContent />
+      <AboutDocument />
     </>
   );
 }
