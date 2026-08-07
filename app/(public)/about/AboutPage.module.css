@@ -22,23 +22,23 @@
 .page h1, .page h2, .page h3, .page p { text-wrap: pretty; }
 .page h1, .page h2, .page h3 { text-transform: uppercase; }
 
-.hero { min-height: 1530px; background: var(--black); color: #fff; }
-.heroInner { position: relative; width: min(1296px, calc(100% - 144px)); min-height: 1530px; margin-inline: auto; padding-top: 72px; }
+.hero { min-height: 1180px; background: var(--black); color: #fff; }
+.heroInner { position: relative; width: min(1296px, calc(100% - 144px)); min-height: 1180px; margin-inline: auto; padding-top: 55px; }
 .heroEyebrow { color: var(--acid); font-size: 18px; line-height: 20px; }
-.heroTitle { position: absolute; top: 120px; left: 0; width: 690px; margin: 0; font-size: clamp(64px, 5.77vw, 83px); font-weight: 900; letter-spacing: -.045em; line-height: .88; }
+.heroTitle { position: absolute; top: 92px; left: 0; width: 690px; margin: 0; font-size: 68px; font-weight: 900; letter-spacing: -.045em; line-height: 1.073; }
 .heroWord { display: block; }
-.heroStairs { position: absolute; inset: 142px 0 auto auto; width: 578px; margin: 0; padding: 0; list-style: none; }
-.heroStairs li { width: 420px; min-height: 92px; margin-bottom: 98px; padding: 0 20px; display: flex; align-items: center; gap: 48px; background: var(--field); color: var(--night); font-size: 20px; text-transform: uppercase; }
+.heroStairs { position: absolute; inset: 110px 0 auto auto; width: 578px; margin: 0; padding: 0; list-style: none; }
+.heroStairs li { width: 344px; min-height: 74px; margin-bottom: 73px; padding: 0 20px; display: flex; align-items: center; gap: 54px; background: var(--field); color: var(--night); font-size: 16.4px; text-transform: uppercase; }
 .heroStairs li:nth-child(even) { margin-left: 250px; }
-.heroStairs li:nth-child(2) { width: 386px; }
-.heroStairs li:nth-child(3) { width: 352px; }
-.heroStairs li:nth-child(4) { width: 318px; }
-.heroStairs li:nth-child(5) { width: 284px; }
-.heroStairs li:nth-child(6) { width: 250px; }
+.heroStairs li:nth-child(2) { width: 317px; }
+.heroStairs li:nth-child(3) { width: 289px; }
+.heroStairs li:nth-child(4) { width: 261px; }
+.heroStairs li:nth-child(5) { width: 233px; }
+.heroStairs li:nth-child(6) { width: 205px; }
 .heroStairs li span { font-weight: 900; }
 .heroStairs li strong { font-weight: 800; }
 .heroStairs .activeStep, .flowSteps .activeStep { background: var(--acid); }
-.heroNote { position: absolute; left: 0; bottom: 286px; margin: 0; color: var(--teal); font-size: 35px; font-weight: 900; letter-spacing: .025em; line-height: 1.02; text-transform: uppercase; }
+.heroNote { position: absolute; top: 873px; left: 0; margin: 0; color: var(--teal); font-size: 36px; font-weight: 900; letter-spacing: .025em; line-height: 1; text-transform: uppercase; }
 
 .sequenceOverview { min-height: 800px; padding-top: 80px; background: var(--field); }
 .sequenceOverview h2 { max-width: 1050px; margin: 30px 0 0; font-size: clamp(48px, 4.05vw, 58px); font-weight: 900; letter-spacing: -.035em; line-height: 1; }
@@ -112,7 +112,7 @@
 
 @media (max-width: 1279px) and (min-width: 901px) {
   .contentShell, .heroInner, .flowInner, .outputsInner { width: calc(100% - 112px); }
-  .heroTitle { width: 54%; font-size: clamp(58px, 6vw, 76px); }
+  .heroTitle { width: 54%; font-size: clamp(50px, 5.3vw, 68px); }
   .heroStairs { width: 49%; }
   .heroStairs li:nth-child(even) { margin-left: 28%; }
   .boundariesInner, .principlesInner { width: calc(100% - 108px); }

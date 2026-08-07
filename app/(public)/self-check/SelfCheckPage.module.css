@@ -1,0 +1,78 @@
+.page { --paper:#fafaf7; --field:#f4f1eb; --ink:#100f0f; --night:#0d0d0d; --teal:#176c65; --acid:#f0e814; min-height:100vh; overflow:clip; background:var(--paper); color:var(--ink); font-family:var(--font-seven-sans),Arial,sans-serif; color-scheme:light; }
+:global(body):has(.page) { background:var(--paper); color:var(--ink); color-scheme:light; }
+.shell { width:min(1248px,calc(100% - 192px)); margin-inline:auto; }
+.intro { min-height:720px; padding:52px 0 72px; }
+.eyebrow,.progress { margin:0; color:var(--teal); font-size:13px; line-height:18px; font-weight:750; text-transform:uppercase; }
+.intro h1 { max-width:760px; margin:34px 0 0; font-size:58px; line-height:.98; letter-spacing:-.045em; text-transform:uppercase; }
+.lead { max-width:720px; margin:0; font-size:20px; line-height:1.45; }
+.privacyPanel { width:700px; min-height:170px; margin-top:74px; padding:32px 20px; display:grid; align-content:start; gap:4px; border-radius:20px; background:var(--night); color:#fff; font-size:15px; line-height:21px; }
+.privacyPanel strong { text-transform:uppercase; }
+.flow { margin-top:28px; }
+.page:has([data-self-check-state="question"]) .intro,.page:has([data-self-check-state^="result-"]) .intro { padding-top:0; }
+.page:has([data-self-check-state="question"]) [data-self-check-intro] > .shell > :not([data-self-check-flow]),.page:has([data-self-check-state^="result-"]) [data-self-check-intro] > .shell > :not([data-self-check-flow]) { display:none; }
+.flow:has(.questionForm),.flow:has(.result) { margin-top:0; }
+.primaryAction,.secondaryAction,.navigation button,.restart { min-height:52px; padding:0 24px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--ink); border-radius:999px; font-weight:750; cursor:pointer; }
+.primaryAction,.navigation button:last-child { min-width:254px; border-color:var(--acid); background:var(--acid); color:var(--ink); }
+.secondaryAction,.navigation button:first-child,.restart { background:var(--paper); color:var(--ink); }
+.restart { border:0; text-decoration:underline; text-underline-offset:4px; }
+
+.questionForm { min-height:630px; padding-top:10px; }
+.progress { display:grid; }
+.questionForm fieldset { max-width:720px; margin:42px 0 0; padding:0; border:0; }
+.questionForm legend { margin:0 0 54px; font-size:44px; line-height:1.02; font-weight:900; letter-spacing:-.035em; text-transform:uppercase; }
+.answers { display:grid; gap:14px; }
+.answers label { position:relative; min-height:56px; padding:0 18px; display:flex; align-items:center; border:1px solid var(--ink); border-radius:16px; cursor:pointer; font-weight:650; }
+.answers label.selected { background:var(--acid); }
+.answers input { position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
+.answers label:has(input:focus-visible) { outline:3px solid var(--teal); outline-offset:3px; }
+.answers label.selected::after { content:"Selected"; margin-left:auto; font-size:11px; text-transform:uppercase; }
+.navigation { max-width:720px; margin-top:30px; display:flex; justify-content:space-between; gap:12px; }
+.navigation button { min-width:120px; }
+.navigation button:disabled { cursor:not-allowed; opacity:.42; }
+
+.result { min-height:640px; padding-top:12px; outline:none; }
+.result h2 { max-width:760px; margin:46px 0 0; font-size:56px; line-height:.98; letter-spacing:-.04em; text-transform:uppercase; }
+.result > p:not(.eyebrow) { max-width:720px; margin:22px 0 0; font-size:19px; line-height:1.45; }
+.resultActions { margin-top:96px; display:grid; justify-items:start; gap:12px; }
+.helpResult { margin:0 calc((100vw - min(1248px,calc(100% - 192px)))/-2) -72px; padding:78px max(96px,calc((100vw - 1248px)/2)); background:var(--night); color:#fff; }
+.helpResult .result { min-height:560px; }
+.helpResult .secondaryAction,.helpResult .restart { background:#fff; color:var(--ink); }
+
+.ageBoundary { padding:34px 0; border-top:1px solid rgba(16,15,15,.28); background:var(--field); }
+.ageBoundary p { max-width:820px; margin:0 0 8px; font-size:14px; line-height:21px; }
+.ageBoundary a,.noJs a { color:var(--teal); font-weight:750; text-decoration:underline; }
+.noJs { min-height:620px; padding:54px 0 80px; }
+.noJs h2 { max-width:760px; margin:28px 0 0; font-size:56px; line-height:1; text-transform:uppercase; }
+.noJs p { max-width:760px; font-size:18px; line-height:1.5; }
+.noJsLinks { display:flex; flex-wrap:wrap; gap:20px; margin:32px 0; }
+.page:has([data-self-check-nojs]) [data-self-check-intro],.page:has([data-self-check-nojs]) .ageBoundary { display:none; }
+.page :focus-visible { outline:3px solid var(--teal); outline-offset:4px; }
+
+@media (max-width:900px) {
+  .shell { width:calc(100% - 48px); }
+  .intro { min-height:770px; padding:42px 0 64px; }
+  .intro h1 { margin-top:52px; font-size:42px; }
+  .lead { margin-top:22px; font-size:17px; }
+  .privacyPanel { width:100%; min-height:160px; margin-top:68px; padding:24px 18px; }
+  .primaryAction { width:100%; }
+  .questionForm { min-height:772px; padding-top:42px; }
+  .questionForm fieldset { margin-top:48px; }
+  .questionForm legend { margin-bottom:44px; font-size:31px; line-height:.97; }
+  .answers { gap:16px; }
+  .answers label { min-height:56px; padding:0 18px; border-radius:16px; }
+  .answers label.selected::after { display:none; }
+  .navigation { margin-top:28px; }
+  .navigation button { min-width:0; flex:1; }
+  .result { min-height:772px; padding-top:80px; }
+  .result h2 { margin-top:44px; font-size:42px; }
+  .result > p:not(.eyebrow) { margin-top:46px; font-size:17px; }
+  .resultActions { margin-top:88px; }
+  .resultActions a { width:100%; }
+  .helpResult { margin:0 calc((100vw - (100% - 48px))/-2) -64px; padding:74px 24px; }
+  .helpResult .result { min-height:720px; }
+  .ageBoundary { padding:30px 0; }
+  .noJs h2 { font-size:42px; }
+}
+@media (max-width:375px) { .shell{width:calc(100% - 40px)} .intro h1,.result h2,.noJs h2{font-size:38px} .questionForm legend{font-size:29px} }
+@media (max-width:330px) { .shell{width:calc(100% - 32px)} .intro h1,.result h2,.noJs h2{font-size:34px} .questionForm legend{font-size:27px} }
+@media (prefers-reduced-motion:reduce){.page{scroll-behavior:auto}}

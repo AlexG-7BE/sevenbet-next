@@ -33,6 +33,7 @@ test("About renders the corrected 835:5298 visual family and content order", asy
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("[data-about-document]")).toHaveAttribute("data-figma-family", "835:5298");
+  await expect(page.locator("[data-about-document]")).toHaveAttribute("data-figma-compact-hero", "923:2694");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Learn\.↓?Reflect\.↓?Understand\.↓?Compare\.↓?Decide\.↓?Review again\./i);
 
   const expectedSections = [
@@ -101,7 +102,7 @@ const affiliateViewports = [
 ] as const;
 
 const aboutViewports = [
-  { width: 1440, height: 900, authority: "835:5301" },
+  { width: 1440, height: 900, authority: "923:2694" },
   { width: 1280, height: 800, authority: "835:5651" },
   { width: 1024, height: 768, authority: "835:5787" },
   { width: 900, height: 900 },
