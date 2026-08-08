@@ -5,6 +5,9 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # Routine version updates are paused during launch-critical delivery.
+    # Dependabot security updates remain enabled through repository settings.
+    # Re-enable routine maintenance after closed beta or by Founder Office decision.
     # Routine automation is intentionally bounded to non-major version updates.
     # Major dependency upgrades require a dedicated reviewed workstream.
     # Dependabot security updates are not restricted by allow.update-types.
@@ -13,13 +16,16 @@ updates:
         update-types:
           - version-update:semver-patch
           - version-update:semver-minor
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     labels: [dependencies]
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
       day: monday
+    # Routine version updates are paused during launch-critical delivery.
+    # Dependabot security updates remain enabled through repository settings.
+    # Re-enable routine maintenance after closed beta or by Founder Office decision.
     # Routine automation is intentionally bounded to non-major version updates.
     # Major action upgrades require a dedicated reviewed workstream.
     # Dependabot security updates are not restricted by allow.update-types.
@@ -28,5 +34,5 @@ updates:
         update-types:
           - version-update:semver-patch
           - version-update:semver-minor
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 0
     labels: [dependencies]

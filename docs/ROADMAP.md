@@ -12,7 +12,7 @@
 | 8 | DOC-REC-01 | **Completed and merged** | Post-migration documentation reconciliation at PR #43. |
 | 9 | FE-DS-01 — Frontend & Design System Consolidation | **Completed and merged** | Design System v1 merged through PR #44 at main baseline `8f7ab7e`. |
 | 10 | OPS-01 — Production Engineering & Release Governance | **Completed and merged** | [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) merged as `e140f4d`; three-job CI, branch protection, scheduled smoke and operations runbooks are active. |
-| 11 | ENV-ISO-01 — Preview / Production Environment Isolation | **IMPLEMENTATION COMPLETE — DELIVERY PR #52** | [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) proves distinct Preview database/auth/admin authority, exact-host Preview auth and no Production-data copy. It is not merged; real Production auth E2E remains a pre-merge gate because auth runtime/origin code changed. Recovery remains a separate PARTIAL pre-launch gate. |
+| 11 | ENV-ISO-01 — Preview / Production Environment Isolation | **Completed and merged** | [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged as `a954243`; distinct Preview database/auth/admin authority, exact-host Preview auth and no Production-data copy are proven. Exact-merge Production deployment, smoke and real staff auth E2E passed. Recovery remains a separate PARTIAL pre-closed-beta gate. |
 | 12 | GB-MARKET-01 — GB Market Authority | **Next business/release authority, subject to Founder sequencing** | Approve live jurisdiction, age, licensing, support-resource and commercial-eligibility policy; this remains separate from OPS-01 and ENV-ISO-01. |
 | 13 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
 | 14 | Regulated commercial release | **Blocked by separate gates** | Live jurisdiction/age authority, legal/compliance approval, real operator/partner data and verified recovery remain outstanding. |
@@ -29,4 +29,15 @@ OPS-01 implements [RFC-013](06_RFC/RFC-013-Production-Engineering-and-Release-Go
 
 ## ENV-ISO-01 outcome
 
-ENV-ISO-01 delivery [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) establishes a dedicated shared Preview Prisma Postgres resource, independent auth/admin secrets, exact Vercel branch-host trust, Production-only and Preview-only provider connections, fail-closed Preview integrations and a disposable auth/mutation proof. No Production data was copied. The PR is not merged and must not receive merge approval until the required real Production auth E2E passes. Prisma Free backup/PITR limitations remain a separate recovery gate.
+ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) is merged and closed. It establishes a dedicated shared Preview Prisma Postgres resource, independent auth/admin secrets, exact Vercel branch-host trust, Production-only and Preview-only provider connections, fail-closed Preview integrations and a disposable auth/mutation proof. No Production data was copied. The exact-merge Production deployment is healthy, Production Smoke passed and real Production staff authentication passed login, protected admin, refresh/session persistence and logout. Prisma Free backup/PITR limitations remain a separate recovery gate and do not reopen ENV-ISO-01.
+
+## Next sequencing
+
+With ENV-ISO-01 and the Production configuration incident closed, the following may proceed in parallel subject to their own governing approvals and release gates:
+
+- GB-MARKET-01 market authority work;
+- RECOVERY-01 as the separate stateful pre-closed-beta recovery gate;
+- PROGRAM-AI-01 product/architecture planning only;
+- COMM-01 / LEGAL-02 preparation as Founder Office sequences it.
+
+No follow-up ENV-ISO or generic OPS cleanup workstream is open.
