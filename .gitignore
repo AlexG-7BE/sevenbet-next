@@ -6,6 +6,7 @@ test-results
 *.log
 .vercel
 .env*
+!.env.example
 
 .env
 .env.local
