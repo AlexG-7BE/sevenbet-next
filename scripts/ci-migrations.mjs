@@ -1,5 +1,7 @@
 import { spawnSync } from "node:child_process";
-import { readdir } from "node:fs/promises";
+import { copyFile, cp, mkdir, mkdtemp, readdir, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 
 const allowedHosts = new Set(["127.0.0.1", "localhost"]);
 
@@ -45,26 +47,70 @@ async function main() {
 
   run("npx", ["prisma", "validate"]);
   run("npx", ["prisma", "generate"]);
-  // Migration 0015 adds and then uses a PostgreSQL enum value. PostgreSQL
-  // requires that value to be committed first, so the approved idempotent
-  // Programme preflight must be a separate transaction before deploy.
-  run("npx", [
-    "prisma",
-    "db",
-    "execute",
-    "--schema",
-    "prisma/schema.prisma",
-    "--file",
-    "prisma/preflight/0015_active_control_program_flow.sql",
-  ]);
-  run("npx", ["prisma", "migrate", "deploy"]);
+
+  const migrationEntries = (await readdir("prisma/migrations", {
+    withFileTypes: true,
+  }))
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort();
+  const programmeMigration = "0015_active_control_program_flow";
+  const programmeMigrationIndex = migrationEntries.indexOf(programmeMigration);
+  if (programmeMigrationIndex < 1) {
+    throw new Error(`Expected historical migration ${programmeMigration}`);
+  }
+
+  // Migration 0015 adds and then uses a PostgreSQL enum value. On a clean
+  // database PostgreSQL requires a commit between those operations. Replay
+  // the unchanged prior Prisma history first, commit the approved idempotent
+  // preflight, then let normal migrate deploy apply 0015 and everything later.
+  const stagedSchemaDirectory = await mkdtemp(
+    path.join(tmpdir(), "sevenbet-ci-migrations-"),
+  );
+  try {
+    const stagedMigrations = path.join(stagedSchemaDirectory, "migrations");
+    await mkdir(stagedMigrations);
+    await copyFile(
+      "prisma/schema.prisma",
+      path.join(stagedSchemaDirectory, "schema.prisma"),
+    );
+    await copyFile(
+      "prisma/migrations/migration_lock.toml",
+      path.join(stagedMigrations, "migration_lock.toml"),
+    );
+    for (const migration of migrationEntries.slice(0, programmeMigrationIndex)) {
+      await cp(
+        path.join("prisma/migrations", migration),
+        path.join(stagedMigrations, migration),
+        { recursive: true },
+      );
+    }
+
+    run("npx", [
+      "prisma",
+      "migrate",
+      "deploy",
+      "--schema",
+      path.join(stagedSchemaDirectory, "schema.prisma"),
+    ]);
+    run("npx", [
+      "prisma",
+      "db",
+      "execute",
+      "--schema",
+      "prisma/schema.prisma",
+      "--file",
+      "prisma/preflight/0015_active_control_program_flow.sql",
+    ]);
+    run("npx", ["prisma", "migrate", "deploy"]);
+  } finally {
+    await rm(stagedSchemaDirectory, { recursive: true, force: true });
+  }
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
   try {
-    const migrationDirectories = (await readdir("prisma/migrations", {
-      withFileTypes: true,
-    })).filter((entry) => entry.isDirectory()).length;
+    const migrationDirectories = migrationEntries.length;
     const appliedRows = await prisma.$queryRawUnsafe(
       'SELECT COUNT(*)::int AS "count" FROM "_prisma_migrations" WHERE "finished_at" IS NOT NULL',
     );

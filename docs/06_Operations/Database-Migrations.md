@@ -8,7 +8,7 @@
 - **Detected:** the CI guard refuses non-loopback hosts, ports other than 5432, database names without the `_ci` suffix, and execution without `CI=true`.
 - **Not detected:** an approved short-lived Production migration credential or provider-native Production migration hook. Production automation remains provider/secret-architecture gated.
 
-Migration 0015 adds `MISSION_COMPLETION` to a PostgreSQL enum and later uses it. PostgreSQL requires the new enum value to be committed first. Therefore the committed `prisma/preflight/0015_active_control_program_flow.sql` must run in its own transaction immediately before `prisma migrate deploy` on a database where that enum value is absent. The preflight is idempotent; this is a historical replay requirement, not permission to edit migration history.
+Migration 0015 adds `MISSION_COMPLETION` to a PostgreSQL enum and later uses it. PostgreSQL requires the new enum value to be committed first. On a fresh database, apply unchanged migrations 0001–0014 with Prisma, run the committed `prisma/preflight/0015_active_control_program_flow.sql` in its own transaction, then run normal `prisma migrate deploy` for unchanged migration 0015 onward. The preflight is idempotent; this is a historical replay requirement, not permission to edit migration history.
 
 ## Expand/contract rule
 

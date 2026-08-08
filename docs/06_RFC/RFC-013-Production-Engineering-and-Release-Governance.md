@@ -45,7 +45,7 @@ The existing pixel snapshots remain valuable local Design System evidence but ar
 
 - Required PR verification uses only a disposable PostgreSQL 16 service on localhost.
 - CI must fail before any migration command unless both Prisma URLs use the expected local host, expected port and a database name ending in `_ci`.
-- Historical migration 0015 adds and uses a PostgreSQL enum value. The committed idempotent preflight runs as a separate transaction before `migrate deploy`; migration history itself is not rewritten.
+- Historical migration 0015 adds and uses a PostgreSQL enum value. Fresh replay applies unchanged migrations 0001–0014 with Prisma, commits the existing idempotent preflight, then applies unchanged migrations 0015 onward with Prisma. Migration history itself is not rewritten.
 - Existing migration history is immutable in OPS-01. No migration or schema change is approved.
 - Future production schema changes use expand/contract compatibility across deployment boundaries.
 - Application rollback uses a known-good Vercel deployment. Database recovery defaults to forward-fix; reverse SQL is never improvised.
