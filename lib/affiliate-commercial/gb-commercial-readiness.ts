@@ -33,6 +33,7 @@ export type GbCommercialReadinessReasonCode =
   | "GB_PARTNER_AGREEMENT_EXPIRED"
   | "GB_PARTNER_AGREEMENT_STALE"
   | "GB_PARTNER_MARKET_MISSING"
+  | "GB_PARTNER_CHANNEL_NOT_APPROVED"
   | "GB_PARTNER_IDENTITY_MISMATCH"
   | "GB_OPERATOR_PROFILE_MISSING"
   | "GB_OPERATOR_IDENTITY_MISMATCH"
@@ -202,7 +203,12 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
   if (!program.operator || normalizeLabel(program.operator) !== normalizeLabel(structuredOperatorIdentity)) reasons.push("GB_OPERATOR_IDENTITY_MISMATCH");
   if (casino.brand.id && casino.brand.operatorId !== casino.operator.id) reasons.push("GB_BRAND_OPERATOR_MISMATCH");
 
-  const agreementAssessment = assessGbPartnerAgreement({ metadata: program.metadata, expectedIdentity: program.operator, now });
+  const agreementAssessment = assessGbPartnerAgreement({
+    metadata: program.metadata,
+    expectedIdentity: program.operator,
+    now,
+    requiredChannels: ["DIRECT_LINK"],
+  });
   const agreementReasonMap = {
     MISSING: "GB_PARTNER_AGREEMENT_MISSING",
     INVALID: "GB_PARTNER_AGREEMENT_INVALID",
@@ -210,6 +216,7 @@ export function evaluateGbCommercialReadiness(input: GbCommercialReadinessInput)
     EXPIRED: "GB_PARTNER_AGREEMENT_EXPIRED",
     STALE: "GB_PARTNER_AGREEMENT_STALE",
     MARKET_MISSING: "GB_PARTNER_MARKET_MISSING",
+    CHANNEL_NOT_APPROVED: "GB_PARTNER_CHANNEL_NOT_APPROVED",
     IDENTITY_MISMATCH: "GB_PARTNER_IDENTITY_MISMATCH",
   } as const;
   reasons.push(...agreementAssessment.reasons.map((reason) => agreementReasonMap[reason]));

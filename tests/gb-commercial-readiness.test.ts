@@ -6,6 +6,7 @@ import type { CandidateOffer } from "../lib/affiliate-routing/candidate-resolver
 import { evaluateGbCommercialReadiness } from "../lib/affiliate-commercial/gb-commercial-readiness";
 import { gbCommercialDomainEvidenceRecords, type GbCommercialDomainEvidenceRecord } from "../lib/affiliate-commercial/gb-domain-evidence";
 import type { CasinoBonus, CasinoDomain } from "../lib/casino-domain/types";
+import { gbJurisdictionPolicy } from "../lib/jurisdiction/policies/gb";
 import type { JurisdictionDecision } from "../lib/jurisdiction/types";
 
 const now = new Date("2026-08-08T12:00:00.000Z");
@@ -194,6 +195,46 @@ test("agreement authority fails closed for missing, malformed, stale, expired, w
   }
 });
 
+test("outbound readiness requires DIRECT_LINK agreement authority independently of content channels", () => {
+  for (const approvedChannels of [["EDITORIAL_CONTENT"], ["CASINO_REVIEW"], ["BONUS_PAGE"]]) {
+    const candidate = offer({
+      program: {
+        ...offer().program,
+        metadata: { gbCommercialAuthority: agreement({ approvedChannels }) },
+      },
+    });
+    const result = evaluate({ offer: candidate });
+    assert.equal(result.partnerAuthority, false, approvedChannels[0]);
+    assert.equal(result.referralReady, false, approvedChannels[0]);
+    assert.ok(result.reasonCodes.includes("GB_PARTNER_CHANNEL_NOT_APPROVED"), approvedChannels[0]);
+  }
+
+  const explicitlyApproved = evaluate({
+    offer: offer({
+      program: {
+        ...offer().program,
+        metadata: { gbCommercialAuthority: agreement({ approvedChannels: ["CASINO_REVIEW", "DIRECT_LINK"] }) },
+      },
+    }),
+  });
+  assert.equal(explicitlyApproved.partnerAuthority, true);
+  assert.equal(explicitlyApproved.referralReady, true);
+  assert.deepEqual(explicitlyApproved.reasonCodes, ["GB_COMMERCIAL_READY"]);
+
+  const currentRepositoryPolicy = evaluate({
+    jurisdiction: {
+      ...jurisdiction,
+      commercialAllowed: gbJurisdictionPolicy.commercialAllowed,
+      referralAllowed: gbJurisdictionPolicy.referralAllowed,
+      policyVersion: gbJurisdictionPolicy.policyVersion,
+    },
+  });
+  assert.equal(gbJurisdictionPolicy.commercialAllowed, false);
+  assert.equal(gbJurisdictionPolicy.referralAllowed, false);
+  assert.equal(currentRepositoryPolicy.commercialReady, false);
+  assert.equal(currentRepositoryPolicy.referralReady, false);
+});
+
 test("program, offer and relationship states are necessary but never sufficient", () => {
   const cases: Array<[CandidateOffer | CasinoDomain, string, "offer" | "casino"]> = [
     [offer({ program: { ...offer().program, casinoId: null } }), "GB_PROGRAM_CASINO_MISSING", "offer"],
@@ -319,6 +360,7 @@ test("program and offer state transitions enforce the GB activation contract", (
   assert.match(programService, /structured operator before activation/);
   assert.match(offerService, /explicit GB allow-list/);
   assert.match(offerService, /recently verified tracking link/);
+  assert.match(offerService, /requiredChannels: \["DIRECT_LINK"\]/);
   assert.match(offerService, /program\.casinoId !== input\.casinoId/);
 });
 

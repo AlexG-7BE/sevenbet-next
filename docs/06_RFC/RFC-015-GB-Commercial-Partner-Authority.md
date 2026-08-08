@@ -71,7 +71,7 @@ The version 1 contract requires:
 - reviewer identity/reference and review timestamp; and
 - an optional compliance contact reference.
 
-The agreement is denied when it is not yet effective, expired, reviewed more than 90 days ago, missing a required fact, contains an unknown enum value, or fails exact normalized identity matching. A network relationship proves only the contractual network relationship; it does not prove an operator, brand, licence, offer or domain relationship.
+The agreement is denied when it is not yet effective, expired, reviewed more than 90 days ago, missing a required fact, contains an unknown enum value, fails exact normalized identity matching, or does not include every channel required by the consuming action. `EDITORIAL_CONTENT`, `CASINO_REVIEW` and `BONUS_PAGE` do not imply outbound-link authority. Runtime referral readiness requires `DIRECT_LINK`. A network relationship proves only the contractual network relationship; it does not prove an operator, brand, licence, offer or domain relationship.
 
 The 90-day review window is an internal operational control, not a regulatory claim. Reviews must also occur on material partner, programme, licence, domain, tracking, bonus, contract or policy change and before agreement expiry.
 
@@ -111,7 +111,7 @@ The existing lifecycle states remain canonical; COMM-01 does not add parallel en
 
 A programme must be `ACTIVE`, workflow `PUBLISHED`, provider-connected where applicable, explicitly support `GB`, have a matching casino, have a valid agreement, and have no unresolved identity conflict.
 
-An offer must be `ACTIVE`, within its effective dates, belong to the exact programme and casino, and use an explicit GB allow-list. `GLOBAL`, a missing list, or a GB block-list does not grant GB authority.
+An offer must be `ACTIVE`, within its effective dates, belong to the exact programme and casino, use an explicit GB allow-list, and be backed by agreement approval for `DIRECT_LINK`. `GLOBAL`, a missing list, a GB block-list or content-channel approval alone does not grant GB outbound authority. Draft programme and evidence preparation remains available without `DIRECT_LINK`; the channel gate applies at active GB offer validation and again at request-time readiness.
 
 Payout model and payout value remain internal commercial fields. They can support reporting and reconciliation but cannot alter jurisdiction, compliance, eligibility, ranking or destination selection.
 

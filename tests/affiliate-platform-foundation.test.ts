@@ -8,6 +8,7 @@ import {
   AffiliateNetworkType,
   AffiliatePayoutModel,
   AffiliateStatus,
+  EditorialStatus,
 } from "@prisma/client";
 
 import {
@@ -148,6 +149,55 @@ test("bonus ownership and archived ancestor checks are enforced by offer service
   offerStore.findCasinoBonus = async () => ({ casinoExists: true, bonusCasinoId: null });
   activeProgram.network.active = false;
   await assert.rejects(() => service.create(validOffer({ status: AffiliateStatus.ACTIVE }), actorId), /inactive network\/program/);
+});
+
+test("active GB offers require direct-link agreement authority while draft preparation does not", async () => {
+  let created = false;
+  const offerStore = {
+    list: async () => [], findById: async () => null, existsExternalOfferId: async () => false,
+    findDuplicateExternalLinkId: async () => null,
+    findCasinoBonus: async (): Promise<{ casinoExists: boolean; bonusCasinoId: string | null }> => ({ casinoExists: true, bonusCasinoId: null }),
+    create: async () => { created = true; return null as never; }, update: async () => { throw new Error("unused"); }, findActiveCandidates: async () => [],
+    archive: async () => { throw new Error("unused"); }, listRevisions: async () => [], listTrackingHistory: async () => [],
+  };
+  const reviewedAt = new Date();
+  const activeProgram = {
+    id: ids.program, networkId: ids.network, casinoId: ids.casino, externalProgramId: null, name: "Program", operator: "Operator Limited",
+    status: AffiliateStatus.ACTIVE, workflowStatus: EditorialStatus.PUBLISHED, accountReference: null, supportedCountries: ["GB"], supportedCurrencies: ["GBP"],
+    metadata: { gbCommercialAuthority: {
+      authorityVersion: "gb-partner-authority.v1", relationshipType: "DIRECT_OPERATOR", partnerLegalName: "Operator Limited",
+      operatorOrProgrammeIdentity: "Operator Limited", agreementReference: "agreement-ref", agreementStatus: "ACTIVE",
+      effectiveAt: new Date(reviewedAt.getTime() - 60_000).toISOString(), expiresAt: new Date(reviewedAt.getTime() + 86_400_000).toISOString(),
+      approvedMarkets: ["GB"], approvedChannels: ["EDITORIAL_CONTENT"], commercialModel: "CPA",
+      sourceType: "EXTERNAL_DOCUMENT_REFERENCE", sourceReference: "document-ref", reviewedAt: reviewedAt.toISOString(), reviewedBy: "reviewer",
+    } },
+    trustedAutoActivation: false, notes: null, archivedAt: null, createdAt: reviewedAt, updatedAt: reviewedAt, createdBy: actorId, updatedBy: actorId,
+    network: { id: ids.network, name: "Network", slug: "network", type: AffiliateNetworkType.DIRECT, websiteUrl: null, apiCapable: false, exportCapable: false, active: true, notes: null, archivedAt: null, createdAt: reviewedAt, updatedAt: reviewedAt, createdBy: actorId, updatedBy: actorId },
+    _count: { offers: 0 },
+  };
+  const programStore = {
+    list: async () => [], findById: async () => activeProgram, existsExternalProgramId: async () => false,
+    create: async () => activeProgram, update: async () => activeProgram, archive: async () => activeProgram,
+  };
+  const service = new AffiliateOfferService(offerStore, programStore);
+  const activeGbOffer = validOffer({
+    status: AffiliateStatus.ACTIVE,
+    geoMode: AffiliateGeoMode.ALLOW,
+    countries: [{ countryCode: "GB", mode: AffiliateGeoMode.ALLOW }],
+    trackingLinks: [{
+      ...validOffer().trackingLinks[0],
+      geoMode: AffiliateGeoMode.ALLOW,
+      countries: [{ countryCode: "GB", mode: AffiliateGeoMode.ALLOW }],
+      verifiedAt: reviewedAt,
+      lastCheckedAt: reviewedAt,
+    }],
+  });
+
+  await assert.rejects(() => service.create(activeGbOffer, actorId), /CHANNEL_NOT_APPROVED/);
+  assert.equal(created, false);
+
+  await service.create(validOffer(), actorId);
+  assert.equal(created, true, "draft evidence preparation remains available without DIRECT_LINK authority");
 });
 
 test("affiliate permission resolves anonymous and unauthorized staff correctly", () => {

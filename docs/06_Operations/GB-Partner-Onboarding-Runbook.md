@@ -83,7 +83,7 @@ White-label status requires a separate Legal review and explicit licensed-operat
 
 ### Partner agreement
 
-Enter only the typed `metadata.gbCommercialAuthority` facts described in the technical contract. Store external document/source/contact references, not documents or personal/secret contents.
+Enter only the typed `metadata.gbCommercialAuthority` facts described in the technical contract. Record channels exactly as approved; do not infer `DIRECT_LINK` from editorial, review or bonus-page permission. Store external document/source/contact references, not documents or personal/secret contents.
 
 ### Domain evidence
 
@@ -106,7 +106,7 @@ Credentials belong in the approved encrypted secret system. They never belong in
 
 ### Offer and link
 
-Use an explicit GB allow-list. Do not use `GLOBAL` as GB authority. Keep imported offers draft and links inactive until reviewed. Record `verifiedAt`, `lastCheckedAt`, effective dates and current terms. A linked bonus must meet the technical/significant-condition gate.
+Use an explicit GB allow-list. Do not use `GLOBAL` as GB authority. Keep imported offers draft and links inactive until reviewed. An active GB offer requires the agreement to approve `DIRECT_LINK`; content-only channel approval is insufficient. Record `verifiedAt`, `lastCheckedAt`, effective dates and current terms. A linked bonus must meet the technical/significant-condition gate.
 
 ## Phase 5 — Preview proof
 
@@ -116,6 +116,7 @@ Prove all of the following on the exact candidate commit:
 
 - current jurisdiction deny still overrides every lower gate;
 - missing/invalid/stale agreement denies;
+- editorial-only, casino-review-only and bonus-page-only agreements deny outbound readiness with `GB_PARTNER_CHANNEL_NOT_APPROVED`;
 - operator/brand/casino/licence/domain exact chain passes only when complete;
 - inactive, white-label or stale domain evidence denies;
 - programme/offer/link pause and expiry deny without changing editorial publication;
@@ -134,18 +135,19 @@ Required local and CI checks are maintained in RFC-015. Preview must be `READY`,
 Activation needs every item below and an explicit Founder `GO`:
 
 1. real agreement active and current;
-2. Legal / Compliance approval recorded externally;
-3. exact structured operator/brand/casino relation;
-4. current remote casino licence and official evidence;
-5. exact active domain evidence;
-6. approved programme, offer, link and optional bonus terms;
-7. approved public disclosure/significant-condition surfaces;
-8. current Production smoke and healthy logs;
-9. Preview validation at the exact release head;
-10. recovery/closed-beta gates where stateful scope requires them;
-11. a separately approved permissive GB policy change;
-12. explicit authorization to enable the redirect engine; and
-13. Founder explicit `GO` after reviewing the final real destination.
+2. agreement explicitly approves `DIRECT_LINK` for the intended outbound action;
+3. Legal / Compliance approval recorded externally;
+4. exact structured operator/brand/casino relation;
+5. current remote casino licence and official evidence;
+6. exact active domain evidence;
+7. approved programme, offer, link and optional bonus terms;
+8. approved public disclosure/significant-condition surfaces;
+9. current Production smoke and healthy logs;
+10. Preview validation at the exact release head;
+11. recovery/closed-beta gates where stateful scope requires them;
+12. a separately approved permissive GB policy change;
+13. explicit authorization to enable the redirect engine; and
+14. Founder explicit `GO` after reviewing the final real destination.
 
 There is no hidden or single activation toggle. The policy, evidence and global kill switch are independent controls.
 

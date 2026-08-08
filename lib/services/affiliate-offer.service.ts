@@ -49,7 +49,12 @@ export class AffiliateOfferService {
       if (program.workflowStatus !== "PUBLISHED") throw new ValidationError("A GB offer requires a published program", { field: "programId" });
       if (!program.casinoId || program.casinoId !== input.casinoId) throw new ValidationError("A GB offer must match the program casino", { field: "casinoId" });
       if (program.trustedAutoActivation) throw new ValidationError("Trusted automatic activation is forbidden for GB offers", { field: "programId" });
-      const agreement = assessGbPartnerAgreement({ metadata: program.metadata, expectedIdentity: program.operator, now: new Date() });
+      const agreement = assessGbPartnerAgreement({
+        metadata: program.metadata,
+        expectedIdentity: program.operator,
+        now: new Date(),
+        requiredChannels: ["DIRECT_LINK"],
+      });
       if (agreement.reasons.length) throw new ValidationError(`GB partner agreement is not activation-ready: ${agreement.reasons.join(", ")}`, { field: "programId", reasons: agreement.reasons });
       if (input.geoMode !== "ALLOW" || !input.countries.some((rule) => rule.mode === "ALLOW" && rule.countryCode === "GB")) {
         throw new ValidationError("A GB offer requires an explicit GB allow-list", { field: "countries" });

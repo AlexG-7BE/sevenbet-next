@@ -7,7 +7,7 @@
 
 ## Research method and limits
 
-Candidates were bounded to five and evaluated from official operator/programme pages plus the UK Gambling Commission's official downloadable business-licence data. The downloaded register snapshot was timestamped 2026-08-08 04:30 and exposed licence/account, remote activity and domain records. No affiliate blog, payout aggregator or scraped third-party rate was used.
+Candidates were bounded to five and evaluated from official operator/programme pages plus the UK Gambling Commission's official downloadable business-licence data. The downloaded register snapshot was timestamped 2026-08-08 04:30 and exposed licence/account, remote activity and domain records. Current licence, domain and regulatory-action pages in the live Public Register were also rechecked on 2026-08-08. No affiliate blog, payout aggregator or scraped third-party rate was used.
 
 Licence/domain facts below are **Detected** in that dated official dataset. Affiliate-programme facts are **Detected** from official pages linked below. An item marked **Unknown** was not established from the available primary source and must be resolved during application/due diligence.
 
@@ -17,15 +17,15 @@ No candidate is approved, contracted or represented in SevenBet runtime data. A 
 
 Scores are an internal research aid, not a public casino ranking. Each dimension is 0–5; operational complexity is inverse, so a higher number is easier. Unknown evidence lowers the score. Commission size is not a scoring dimension.
 
-| Priority | Candidate class | Regulatory confidence | Accessibility | Commercial potential | Technical fit | Brand/conversion potential | Operational simplicity | Evidence completeness | Total / 35 | Confidence |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| 1 | LeoVegas Affiliates — multi-brand group | 5 | 5 | 4 | 3 | 4 | 3 | 4 | 28 | High for discovery; no agreement |
-| 2 | 888Affiliates — direct licensed operator opportunity | 5 | 5 | 4 | 3 | 5 | 3 | 4 | 29 | High for discovery; contract entity/rate unknown |
-| 3 | William Hill Affiliates — direct programme | 5 | 5 | 4 | 3 | 5 | 4 | 5 | 31 | High for discovery; no SevenBet terms |
-| 4 | Betfair Affiliates — direct group programme | 4 | 5 | 4 | 4 | 5 | 2 | 3 | 27 | Medium; contract/licence chain is complex |
-| 5 | Income Access — network/platform discovery | 2 | 4 | 3 | 4 | 2 | 2 | 2 | 19 | Low for activation; current exact GB inventory unknown |
+| Priority | Candidate class | Regulatory evidence confidence | Regulatory/compliance history risk (not scored) | Accessibility | Commercial potential | Technical fit | Brand/conversion potential | Operational simplicity | Evidence completeness | Total / 35 | Confidence |
+| --- | --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| 1 | LeoVegas Affiliates — multi-brand group | 5 | Lower in current register | 5 | 4 | 3 | 4 | 3 | 4 | 28 | High for discovery; no agreement |
+| 2 | 888Affiliates — licensed-operator programme opportunity; counterparty unknown | 5 | Elevated — three current actions | 5 | 4 | 3 | 5 | 3 | 4 | 29 | High for discovery; contract entity/rate unknown |
+| 3 | William Hill Affiliates — direct programme | 5 | Elevated — one current action | 5 | 4 | 3 | 5 | 4 | 5 | 31 | High for discovery; no SevenBet terms |
+| 4 | Betfair Affiliates — group programme; casino counterparty chain requires proof | 4 | Elevated — one current settlement | 5 | 4 | 4 | 5 | 2 | 3 | 27 | Medium; contract/licence chain is complex |
+| 5 | Income Access — network/platform discovery | 2 | Programme-specific / unknown | 4 | 3 | 4 | 2 | 2 | 2 | 19 | Low for activation; current exact GB inventory unknown |
 
-The recommended outreach sequence is 1–3 in parallel only after Founder applicant inputs are complete. Priority 4 needs pre-application entity/domain clarification. Priority 5 is a network-discovery conversation, not operator authority.
+`Regulatory evidence confidence` measures how completely current licence/domain facts can be evidenced; it is not a judgment that an operator is compliant. `Regulatory/compliance history risk` reports current Public Register actions separately and does not alter the 35-point arithmetic. Priorities are unchanged: they reflect the overall application route, entity clarity and operating fit, while the recorded actions now create explicit Legal/Compliance diligence questions rather than arbitrary score changes. The recommended outreach sequence remains 1–3 in parallel only after Founder applicant inputs are complete. Priority 4 needs pre-application entity/domain clarification. Priority 5 is a network-discovery conversation, not operator authority.
 
 ## Partner evidence register
 
@@ -39,6 +39,18 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 | Betfair Affiliates | Betfair Casino Limited; affiliate counterparty differs | Betfair / `www.betfair.com` | `39435` / `039435-R-319329-008` | UKGC download | Active; multi-entity complexity | Official Betfair terms | NOT PRESENT | NO | UNKNOWN | 2026-08-08 | 2026-08-15 | Founder Office / evidence reviewer | RESEARCH — ENTITY REVIEW |
 | Income Access | UNKNOWN exact operator | UNKNOWN | UNKNOWN | Official network page only | UNKNOWN | Official Income Access network page | NOT PRESENT | NO | UNKNOWN | 2026-08-08 | On exact programme proposal | Founder Office / evidence reviewer | DISCOVERY ONLY |
 
+## Recent UKGC regulatory actions / compliance history
+
+This is a current due-diligence input, not a licence-status substitute or a public casino rating. The UKGC states that sanctions and settlements remain on the Public Register for three years; “no recorded actions” therefore describes the current register window and is not proof of a spotless lifetime history.
+
+| Candidate | Current licence/domain evidence | Current action state | Diligence relevance |
+| --- | --- | --- | --- |
+| LeoVegas Gaming PLC, account `39198` | [Remote casino licence `039198-R-319450-028` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/39198); [`leovegas.co.uk` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39198). | [No regulatory actions recorded](https://www.gamblingcommission.gov.uk/public-register/business/detail/settlements/39198). | Lower current-register history risk, but agreement, counterparty, channel and ongoing licence/domain checks remain mandatory. |
+| 888 UK Limited, account `39028` | [Remote casino licence `039028-R-319297-013` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/39028); [`888casino.com` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39028). | [Current action record](https://www.gamblingcommission.gov.uk/public-register/business/detail/actions/39028): 19 Aug 2024 financial penalty concerning credit-card controls; 7 Aug 2025 financial penalty concerning remote customer identification across group companies; 18 Nov 2025 financial penalty concerning remote self-exclusion. | Elevated compliance-history diligence. Ask how remedial controls, affiliate monitoring and incident/change notification apply to the exact SevenBet counterparty and product. |
+| WHG (International) Limited, account `39225` | [Remote casino licence `039225-R-319373-014` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/39225); [`www.williamhill.com` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39225). | [7 Aug 2025 financial penalty](https://www.gamblingcommission.gov.uk/public-register/business/detail/actions/39225) concerning remote customer identification across group companies. | Elevated but bounded current history. Confirm remediation, group-account identity controls and partner notification obligations. |
+| Betfair Casino Limited, account `39435` | [Current remote casino licence `039435-R-319329-008` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/39435); [`www.betfair.com` is Active](https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/39435). | [17 Dec 2025 regulatory settlement](https://www.gamblingcommission.gov.uk/public-register/business/detail/actions/39435): public statement, costs and a group payment in lieu of a financial penalty concerning remote customer-interaction/social-responsibility controls. The reviewed action cites prior licence version `039435-R-319329-007`. | Elevated history plus entity/version complexity. Reconcile the current licence version, affiliate counterparty and four-licensee group chain before application or activation. |
+| Income Access | No single operator, licence or domain: this is a network/platform candidate. | Not applicable at platform level; regulatory history is operator/programme-specific. | Require an exact current programme proposal, then repeat licence, domain and action-history diligence for its operator. |
+
 ## Candidate 1 — LeoVegas Affiliates
 
 - **Class:** strong multi-brand operator/group opportunity.
@@ -51,12 +63,13 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 - **Commercial model:** **Unknown for SevenBet.** No negotiated rate, cookie, minimum payout, negative carryover or payment term exists.
 - **Technical capability:** official terms establish an affiliate account/link framework; API/export availability for SevenBet is **Unknown**.
 - **Confidence:** high that the programme and active licensed domain exist; no confidence in SevenBet acceptance or commercial terms.
+- **Regulatory/compliance history:** the current UKGC account page records no regulatory actions; this lowers current-register history risk but does not replace diligence or continuing monitoring.
 - **Primary risk:** affiliate contracting entity and licensed operator are different group entities; due diligence must prove programme → operator → exact domain authority and approved GB channels.
 - **Founder action:** request direct confirmation that SevenBet's owned editorial/comparison channel may promote `leovegas.co.uk`, identify all approved GB group brands, and request exact entity, model, terms, tracking/reporting and compliance pack.
 
 ## Candidate 2 — 888Affiliates
 
-- **Class:** strong direct casino/operator programme opportunity.
+- **Class:** strong licensed-operator programme opportunity; the affiliate contracting entity remains unknown, so this is not classified as a proven direct-operator counterparty.
 - **Licensed operator detected:** 888 UK Limited, Gambling Commission account `39028`.
 - **Remote casino licence detected:** `039028-R-319297-013`, active in the 2026-08-08 official dataset.
 - **Candidate domain:** `888casino.com`, status `Active` in the official dataset.
@@ -67,6 +80,7 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 - **Compliance signal:** official terms explicitly bind GB-facing affiliate activity relating to 888 UK Limited to applicable LCCP and advertising requirements.
 - **Affiliate contracting entity:** **Unknown from the captured primary evidence** and must be confirmed; do not assume it is identical to 888 UK Limited.
 - **Confidence:** high for licensed domain/programme; medium for exact contract chain.
+- **Regulatory/compliance history:** the current register records a 2024 financial penalty and two 2025 financial penalties, covering credit-card, group customer-identification and self-exclusion controls. This is elevated diligence risk despite the active licence/domain evidence.
 - **Primary risk:** detailed approval, marketing-consent and creative controls may require operational review before each placement; contract entity must be reconciled.
 - **Founder action:** apply only after legal identity/traffic inputs are complete and ask for exact GB casino scope, contracting entity, approved SevenBet pages/channels, model, tracking/reporting and significant-condition workflow.
 
@@ -82,6 +96,7 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 - **Commercial models detected:** Revenue Share, CPA and custom arrangements are described by the official FAQ. Exact SevenBet model/rate is **Unknown**.
 - **Technical capability:** affiliate account, links/creatives and programme support are detected; API/export capability is **Unknown**.
 - **Confidence:** high for public entity, licence, domain and programme chain.
+- **Regulatory/compliance history:** the current register records a 7 August 2025 financial penalty concerning remote customer identification across group companies; remediation and notification controls require review.
 - **Primary risk:** public programme terms are dated 2023 and must be reconfirmed at application; channel/creative/significant-condition approvals may be operationally intensive.
 - **Founder action:** treat as a leading direct application and request current terms, exact GB casino products/domains, approved editorial/comparison placements, change notifications and data/reporting options.
 
@@ -97,6 +112,7 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 - **Commercial models detected:** Revenue Share, Bounty and Hybrid are described in official terms. Exact current SevenBet option/rate is **Unknown**.
 - **Technical capability:** unique affiliate ID, programme links/creatives and reporting support are detected. An odds API is referenced, but that is not evidence of an affiliate-offer API.
 - **Confidence:** medium.
+- **Regulatory/compliance history:** the current register records a 17 December 2025 group settlement concerning remote customer-interaction/social-responsibility controls. The action identifies an earlier licence version, increasing the need to reconcile the present licence and entity chain.
 - **Primary risk:** multiple PPB/Betfair entities and licence activities are associated with the shared domain; the affiliate counterparty does not by itself prove the exact casino operator/domain relationship.
 - **Founder action:** do not apply until the programme confirms in writing the exact GB casino operator, licensed activity, `betfair.com` scope and agreement-to-operator chain for SevenBet.
 
@@ -111,6 +127,7 @@ This is research status, not runtime evidence. `NOT PRESENT` is deliberate: no a
 - **Commercial model:** network-level capabilities are described, but every candidate programme's rate, cookie, terms and eligibility are **Unknown**.
 - **Technical capability:** network/reporting/payment capability is detected at platform level; SevenBet API/export availability is **Unknown**.
 - **Confidence:** low for activation, medium for discovery.
+- **Regulatory/compliance history:** not meaningful at Income Access platform level; it must be assessed for each exact operator/programme proposed by the network.
 - **Primary risk:** treating network membership as approval for an unknown operator or outdated programme.
 - **Founder action:** ask for a current written inventory of GB remote-casino programmes open to a new publisher, then rerun the full operator/licence/domain/programme diligence for each proposed brand.
 

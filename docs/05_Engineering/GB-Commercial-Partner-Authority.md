@@ -37,7 +37,7 @@ The following classifications apply throughout this document:
 | Operator and brand | Legal/brand relationship | Prisma `CasinoOperator`, `CasinoBrand` | Structured IDs, lifecycle and brand-to-operator equality | GB readiness evaluator | Published operator context only | Name inference or relationship conflict | Real first-partner mapping absent |
 | Licence/evidence | GB remote-casino authority | `CasinoLicense`, `CasinoLicenseEvidence` | Exact accepted authority, GB scope, active state, official source, seven-day freshness | Existing GB operator evaluator | Published licence context only | Stale or unofficial evidence | Real Production inventory not verified |
 | Exact domain evidence | Proves destination domain relationship | `gbCommercialDomainEvidenceRecords` | Exact normalized domain, exact IDs, official source, active state, seven-day freshness | GB readiness service | Never exposed | Incorrect or stale record could grant authority | Store intentionally empty |
-| Partner agreement | Proves real contractual permission | `AffiliateProgram.metadata.gbCommercialAuthority` | Versioned parser, active/effective state, 90-day review, market and identity | Programme/offer services and readiness evaluator | Never exposed | Generic metadata or network listing mistaken for authority | No real agreement record |
+| Partner agreement | Proves real contractual permission | `AffiliateProgram.metadata.gbCommercialAuthority` | Versioned parser, active/effective state, 90-day review, market, required channel and identity | Programme/offer services and readiness evaluator | Never exposed | Content approval mistaken for outbound authority | No real agreement record |
 | Affiliate programme | Commercial owner and provider state | `AffiliateProgram` | Active, published, exact casino/operator, explicit GB, agreement, no GB auto-activation | Offer save/import and readiness evaluator | Availability only | Active database state mistaken for contract | Real programme absent |
 | Affiliate offer | Commercial terms and targeting | `AffiliateOffer` | Active/effective, exact programme/casino, explicit GB allow-list | Candidate resolver and readiness evaluator | Governed internal route only | Global targeting or stale terms | Real offer absent |
 | Tracking link | Server-owned destination | `AffiliateTrackingLink` | Active, HTTPS, explicit GB, `verifiedAt` and `lastCheckedAt` under seven days, effective dates | Candidate resolver and readiness evaluator | Raw URL never projected | Unsafe/stale destination | Real link absent |
@@ -57,7 +57,7 @@ The central evaluator returns one `GbCommercialReadinessDecision` with independe
 
 - jurisdiction commercial/referral deny;
 - programme state, market, casino and unsafe automatic activation;
-- agreement missing, invalid, not effective, expired, stale, wrong market or identity mismatch;
+- agreement missing, invalid, not effective, expired, stale, wrong market, required channel absent or identity mismatch;
 - structured operator/brand mismatch;
 - offer state, date, casino or GB targeting failure;
 - domain evidence missing, invalid, inactive, stale, white-label review or relationship mismatch;
@@ -95,7 +95,7 @@ The only recognized metadata namespace is `gbCommercialAuthority`. Version 1 req
 
 Allowed relationship types are `DIRECT_OPERATOR` and `AFFILIATE_NETWORK`. A network contract proves only the network relationship; the exact operator, casino, licence, domain, programme, offer and link remain independently required.
 
-Allowed agreement status is `ACTIVE`; inactive or unknown values fail parsing. Effective time, optional expiry, explicit `GB`, known acquisition channels, model, source and reviewer are required. Review older than 90 days denies. Material contract/operator/programme/domain/offer/link changes require event-driven review before that interval.
+Allowed agreement status is `ACTIVE`; inactive or unknown values fail parsing. Effective time, optional expiry, explicit `GB`, known acquisition channels, model, source and reviewer are required. The parser recognizes `EDITORIAL_CONTENT`, `CASINO_REVIEW`, `BONUS_PAGE` and `DIRECT_LINK`, but it does not infer one from another. Each consumer supplies its required channels and every required channel must be present. Request-time outbound readiness and active GB offer validation require `DIRECT_LINK`; failure maps to `GB_PARTNER_CHANNEL_NOT_APPROVED` and makes partner/referral authority false. Programme/draft evidence preparation does not require outbound authority. Review older than 90 days denies. Material contract/operator/programme/domain/offer/link changes require event-driven review before that interval.
 
 The JSON stores references and control metadata only. Signed agreements, contract text, banking/tax records, personal identification, personal phone numbers, passwords, credentials, secret URLs and API tokens are prohibited.
 
@@ -133,7 +133,7 @@ A GB-supporting programme cannot be saved into `ACTIVE` or `PUBLISHED` activatio
 
 ### Offer
 
-An active offer under a GB-supporting programme requires the programme to be active/published, exact casino ownership, current agreement evidence, explicit `ALLOW` targeting containing `GB`, and at least one active explicitly GB-scoped link with current verification and health evidence.
+An active offer under a GB-supporting programme requires the programme to be active/published, exact casino ownership, current agreement evidence explicitly containing `DIRECT_LINK`, explicit `ALLOW` targeting containing `GB`, and at least one active explicitly GB-scoped link with current verification and health evidence. Content-only agreement channels cannot authorize an active outbound offer. Draft offer/evidence preparation remains available before that channel is approved.
 
 ### Provider import
 

@@ -28,7 +28,7 @@ export type GbPartnerAgreementReadResult =
   | { ok: true; agreement: GbPartnerAgreement }
   | { ok: false; reason: "MISSING" | "INVALID" };
 
-export type GbPartnerAgreementAssessmentReason = "MISSING" | "INVALID" | "NOT_EFFECTIVE" | "EXPIRED" | "STALE" | "MARKET_MISSING" | "IDENTITY_MISMATCH";
+export type GbPartnerAgreementAssessmentReason = "MISSING" | "INVALID" | "NOT_EFFECTIVE" | "EXPIRED" | "STALE" | "MARKET_MISSING" | "CHANNEL_NOT_APPROVED" | "IDENTITY_MISMATCH";
 
 function record(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -118,7 +118,12 @@ function normalizeLabel(value: string | null | undefined) {
   return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() ?? "";
 }
 
-export function assessGbPartnerAgreement(input: { metadata: unknown; expectedIdentity: string | null | undefined; now: Date }) {
+export function assessGbPartnerAgreement(input: {
+  metadata: unknown;
+  expectedIdentity: string | null | undefined;
+  now: Date;
+  requiredChannels?: readonly GbPartnerApprovedChannel[];
+}) {
   const result = readGbPartnerAgreement(input.metadata);
   if (!result.ok) return { agreement: null, reasons: [result.reason] as GbPartnerAgreementAssessmentReason[] };
   const { agreement } = result;
@@ -127,6 +132,7 @@ export function assessGbPartnerAgreement(input: { metadata: unknown; expectedIde
   if (agreement.expiresAt && agreement.expiresAt <= input.now) reasons.push("EXPIRED");
   if (agreement.reviewedAt > input.now || input.now.getTime() - agreement.reviewedAt.getTime() >= GB_PARTNER_AGREEMENT_REVIEW_MAX_AGE_MS) reasons.push("STALE");
   if (!agreement.approvedMarkets.includes("GB")) reasons.push("MARKET_MISSING");
+  if (input.requiredChannels?.some((channel) => !agreement.approvedChannels.includes(channel))) reasons.push("CHANNEL_NOT_APPROVED");
   if (!input.expectedIdentity || normalizeLabel(agreement.operatorOrProgrammeIdentity) !== normalizeLabel(input.expectedIdentity)) reasons.push("IDENTITY_MISMATCH");
   return { agreement, reasons };
 }
