@@ -74,10 +74,6 @@ async function main() {
       "prisma/schema.prisma",
       path.join(stagedSchemaDirectory, "schema.prisma"),
     );
-    await copyFile(
-      "prisma/migrations/migration_lock.toml",
-      path.join(stagedMigrations, "migration_lock.toml"),
-    );
     for (const migration of migrationEntries.slice(0, programmeMigrationIndex)) {
       await cp(
         path.join("prisma/migrations", migration),
