@@ -4,7 +4,7 @@
 
 Approved by Founder Office on 2026-08-08 through GB-MARKET-01 and governed by [RFC-014](../06_RFC/RFC-014-Great-Britain-Market-Eligibility-and-Evidence-Authority.md).
 
-**Detected:** the repository contains one server-authoritative, repository-controlled policy for the Great Britain online-casino market. It governs commercial and referral projection at public casino, bonus, comparison, confirmation and redirect boundaries. It adds no Prisma model, migration, seed, dependency, operator, partner or destination.
+**Detected:** the repository contains one server-authoritative, repository-controlled policy for the Great Britain online-casino market. It governs commercial and referral projection at public casino, bonus, comparison, confirmation and redirect boundaries. COMM-01 extends its lower commercial evidence chain without changing this policy and adds no Prisma model, migration, seed, dependency, operator, partner or destination.
 
 **Detected:** the initial policy supports editorial content but does not activate commercial or referral capability. **Not detected:** final Legal approval, a real GB partner authority, or machine-readable official evidence that a casino domain is covered by a licence. SevenBet is not GB launch-ready on the strength of this implementation.
 
@@ -64,7 +64,7 @@ Future GB commercial eligibility requires all of the following distinct layers:
 7. The affiliate program is active, published, connected, not suspended and supports `GB`; the offer and selected tracking link are active and current.
 8. An active internal redirect slug selects a server-owned, revalidated safe destination.
 
-**Detected gap:** existing licence evidence is associated with a licence but has no machine-readable licensed-domain relationship. Runtime does not interpret free text or an admin-set verification status as domain proof. The default operator authority therefore supplies no domain evidence and denies every commercial/referral action. COMM-01 must propose the real evidence representation through a separately approved decision.
+**Detected after COMM-01:** existing licence evidence remains associated with a licence, while [RFC-015](../06_RFC/RFC-015-GB-Commercial-Partner-Authority.md) adds a separate typed repository-controlled exact-domain relationship. Runtime does not interpret free text or an admin-set verification status as domain proof. The real evidence store is empty, so the default authority still denies every commercial/referral action.
 
 ## Enforcement matrix
 
@@ -122,9 +122,9 @@ The following facts were checked from primary sources on 2026-08-08. Recheck is 
 
 **Not verified:** no secure read-only Production database audit was performed by GB-MARKET-01, so underlying published-casino, country, licence, evidence and partner counts must not be guessed.
 
-**Detected:** commercially eligible GB operators are exactly zero under policy version `gb-2026-08-08.1`, irrespective of underlying inventory, because jurisdiction commercial and referral capabilities are false and licensed-domain evidence is unavailable to the evaluator.
+**Detected:** commercially eligible GB operators are exactly zero under policy version `gb-2026-08-08.1`, irrespective of underlying inventory, because jurisdiction commercial and referral capabilities are false and the real exact-domain evidence store is empty.
 
-- COMM-01 must supply real operator/partner authority, current licence/domain evidence, GB-supported program state, approved destinations and commercial terms.
+- [COMM-01](GB-Commercial-Partner-Authority.md) supplies the fail-closed authority contracts and state gates. A real operator/partner, current licence/domain record, approved destination and commercial terms remain absent.
 - LEGAL-02 must supply final external GB legal/compliance sign-off, including age/account and significant-condition decisions where applicable.
 - RECOVERY-01 remains a stateful-beta gate.
 - The RFC-012 temporary fictional Production exception is unchanged and must not be expanded.

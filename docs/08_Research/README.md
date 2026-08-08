@@ -10,6 +10,7 @@ Stores evidence that informs product, market, user, regulatory, and technical de
 - Market and competitor research.
 - Regulatory research.
 - Experiment findings and evidence summaries.
+- [GB commercial partner shortlist, application and economics evidence](GB-Partner-Readiness-Package.md).
 
 ## When this folder should be updated
 

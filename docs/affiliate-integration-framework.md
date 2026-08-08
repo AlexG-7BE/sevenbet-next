@@ -72,7 +72,7 @@ Only allowlisted references resolve. The admin UI shows connection/configuration
 9. Mapping upsert makes retries idempotent.
 10. Item failures are recorded without rolling back successful independent items.
 
-New imported offers are draft and links inactive unless `trustedAutoActivation` is explicitly enabled. Provider-missing records are archived only during an explicit full sync when `deactivateMissing` is enabled.
+New imported offers are draft and links inactive unless `trustedAutoActivation` is explicitly enabled for a non-GB programme. For every programme that supports `GB`, trusted automatic activation is forbidden and both preview and apply force provider-created/updated offers to draft and links inactive. Provider-missing records are archived only during an explicit full sync when `deactivateMissing` is enabled. See [GB Commercial Partner Authority](05_Engineering/GB-Commercial-Partner-Authority.md).
 
 ## Matching rules
 
