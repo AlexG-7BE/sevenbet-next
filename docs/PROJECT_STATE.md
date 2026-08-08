@@ -12,7 +12,7 @@
 
 **Detected:** the public page-level frontend migration is complete through FE-GAP-02. The final audit has no known page-level P0 or P1 public-surface defect.
 
-**Current operations delivery:** **OPS-01 — Production Engineering & Release Governance** is implemented on `codex/ops-01-production-governance` for Founder review. It does not authorise merge or declare regulated launch readiness.
+**Current operations delivery:** **OPS-01 — Production Engineering & Release Governance** is represented by [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) on `codex/ops-01-production-governance` for Founder review. It does not authorise merge or declare regulated launch readiness.
 
 **Detected on main:** Design System v1 consolidates the production UI inventory, semantic tokens, internal Action component, states, responsive evidence, accessibility, bounded visual regression, Figma production back-sync and governance. OPS-01 adds ESLint, deterministic PR CI, isolated fresh-database verification, browser and build-secret gates, scheduled read-only Production smoke and operations runbooks without changing product behaviour or Production data.
 

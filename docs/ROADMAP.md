@@ -11,7 +11,7 @@
 | 7 | Final page-level P0/P1 audit | **Closed** | Known public-surface P0: 0; P1: 0 at baseline `30fc96e`. |
 | 8 | DOC-REC-01 | **Completed and merged** | Post-migration documentation reconciliation at PR #43. |
 | 9 | FE-DS-01 — Frontend & Design System Consolidation | **Completed and merged** | Design System v1 merged through PR #44 at main baseline `8f7ab7e`. |
-| 10 | OPS-01 — Production Engineering & Release Governance | **Ready for Founder review** | RFC-013, three-job CI, repository governance, isolated browser/migration proof, scheduled smoke and runbooks are implemented on the OPS branch. |
+| 10 | OPS-01 — Production Engineering & Release Governance | **Ready for Founder review** | [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) implements RFC-013, three-job CI, repository governance, isolated browser/migration proof, scheduled smoke and runbooks. |
 | 11 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
 | 12 | Regulated commercial release | **Blocked by separate gates** | Live jurisdiction/age authority, legal/compliance approval, real operator/partner data, Preview isolation and verified recovery remain outstanding. |
 
