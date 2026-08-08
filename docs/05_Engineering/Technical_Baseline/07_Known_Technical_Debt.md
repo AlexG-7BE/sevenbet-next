@@ -9,7 +9,6 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 | Preview/Production isolation | Redacted Vercel evidence shows Preview and Production share database/auth/admin values. | Mutation-capable Preview could affect Production. Preview writes are blocked pending isolation. | Critical |
 | Provider recovery evidence | Prisma Postgres is detected, but backup frequency, retention, PITR, restore permission and a completed drill are not verified. | Recovery objectives are targets rather than guarantees; stateful Production changes remain gated. | High |
 | Production migration architecture | Fresh-database PR proof exists, but no approved short-lived Production credential/provider-native hook is detected. | Production migration automation cannot be safely enabled yet. | High |
-| Dependency advisories | The safe Next.js patch is applied; the current npm advisory report still includes high transitive advisories without a verified non-breaking resolution. | Requires bounded dependency follow-up and regression evidence; no critical advisory is detected. | High |
 | Legacy admin-preview path | `middleware.ts` and `lib/auth/admin.ts` retain the token path when `CMS_PHASE1_ALLOW_DEV_ADMIN=true`. | Dual access paths increase policy/configuration complexity. | Medium |
 | Jurisdiction/compliance authority | The resolver is shadow/deny-safe; `unavailableJurisdictionPolicyStore` has no approved live policy dataset and public enforcement is not detected. | Regulated-first commercial eligibility is not demonstrated end-to-end. | Critical |
 | Operational visibility | Vercel logs and hourly smoke are detected, but paging, central retention and a named legal/compliance responder are not. | Incidents outside active observation may be delayed; notification ownership needs post-merge proof. | High |
@@ -38,5 +37,6 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 - FE-DS-01 frontend consolidation: recurring production colour roles, focus/motion roles and eligible internal actions are governed by Design System v1; five unreachable presentation wrappers were removed.
 - Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
 - OPS-01 linting/governance foundation: ESLint, deterministic three-job CI, fresh-database proof, build-secret scan, scheduled smoke and operational runbooks are detected on the OPS branch.
+- OPS-01 dependency baseline: Next.js is patched to 15.5.21 and bounded PostCSS 8.5.23/Sharp 0.35.0 overrides remove the detected transitive advisories; `npm audit` reports zero known vulnerabilities after build/browser regression proof.
 
 Resolved Design System debt does not imply product, legal/compliance, data-partner, backend/operations or launch readiness. Remaining route-local extraction is P2/P3 and requires new production evidence.

@@ -72,7 +72,7 @@ The exact merged work-package history is recorded in the [final migration audit]
 
 ## Known non-blocking debt
 
-- The safe Next.js 15.5.21 patch is applied; remaining high transitive npm advisories require a bounded dependency follow-up.
+- The safe Next.js 15.5.21 patch plus bounded PostCSS/Sharp overrides pass build/browser regression; `npm audit` reports zero known vulnerabilities.
 - The Programme suite currently passes 36/43 tests; seven Mission 04 fixtures use fixed review dates outside the rolling 30-day validator window.
 - Local/demo casino availability can drift from production data; locally linked demo profiles may return 404 even when production profiles resolve. This is classified as environment/data drift, not a demonstrated source-code failure.
 - Route-local CSS remains broad by design. The recurring production palette, shared internal Action, cross-route visual baseline and code/Figma governance are consolidated in Design System v1.

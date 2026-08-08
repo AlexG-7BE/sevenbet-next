@@ -42,7 +42,7 @@ test("Privacy is substantive and remains noindex, follow", async ({ page }) => {
   );
 });
 
-test("Self-Check stays local and exposes a Help-first result", async ({ page }) => {
+test("Self-Check stays local and exposes a protected result path", async ({ page }) => {
   await open(page, "/self-check");
   await page.getByRole("button", { name: "Start private reflection" }).click();
   for (let index = 0; index < 8; index += 1) {
@@ -51,7 +51,8 @@ test("Self-Check stays local and exposes a Help-first result", async ({ page }) 
       .getByRole("button", { name: index === 7 ? "View reflection" : "Next", exact: true })
       .click();
   }
-  await expect(page.locator("[data-self-check-state='result']")).toBeVisible();
+  await expect(page.locator("[data-self-check-state^='result-']")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Open Protected Help" })).toBeVisible();
   await expect(page.locator('main a[href^="/r/"], main a[href^="/go/"]')).toHaveCount(0);
 });
 
@@ -132,5 +133,7 @@ test("10 Steps renders representative signed-out content without invented progre
   await open(page, "/10-steps");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.locator("[data-ten-steps-section='mission-map']")).toBeVisible();
-  await expect(page.getByText(/\d+ of 10 complete|\d+ XP/)).toHaveCount(0);
+  await expect(page.locator("[data-account-state='anonymous']")).toHaveCount(1);
+  await expect(page.getByText("Live values from your server-owned Programme record.")).toHaveCount(0);
+  await expect(page.getByText("WELCOME BACK")).toHaveCount(0);
 });

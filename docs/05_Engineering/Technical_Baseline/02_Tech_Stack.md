@@ -14,6 +14,7 @@
 | Better Auth 1.6.23 | Detected imports/configuration and `/api/auth/[...all]`. | Email/password session authentication and admin staff resolution. |
 | Playwright 1.61.1 resolved | Detected dev dependency, lockfile and browser suites. | Chromium browser testing; required OPS manifest uses an isolated local production build. |
 | ESLint 9.39.5 + eslint-config-next 15.5.21 | Detected exact dev dependencies and flat config. | Required static analysis with zero warnings. |
+| PostCSS 8.5.23 + Sharp 0.35.0 | Detected bounded npm overrides beneath Next.js 15.5.21. | Patched transitive build/image dependencies; retained only after quality, build and browser regression. |
 | Node test runner + tsx | Detected test scripts and `.test.ts` files. | Unit/integration-style repository tests and TypeScript scripts. |
 
 ## Tooling and configuration
