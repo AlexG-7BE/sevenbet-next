@@ -6,7 +6,7 @@ Phase 3.7 introduces a production-safe redirect foundation for the PostgreSQL af
 
 ## Architecture
 
-`GET /r/[slug]` → trusted Vercel request-country adapter → `JurisdictionResolver` → `AffiliateRedirectService` → GB operator evidence authority → `AffiliateRedirectRepository` and `AffiliateOfferService` → candidate resolver → final URL validation → controlled HTTP response.
+`GET /r/[slug]` → global kill switch → trusted Vercel request-country adapter → `JurisdictionResolver` → `AffiliateRedirectService` → current candidate → GB commercial readiness authority → final URL validation → controlled HTTP response.
 
 The public route never accepts a destination URL. A stored `AffiliateRedirectSlug` identifies one casino, an optional casino bonus, and an optional affiliate offer. The slug is lowercase, human-readable, unique, immutable after creation, and cannot contain reserved security terms or the mapped offer/program external IDs.
 
@@ -53,7 +53,7 @@ Public-route failures issue a `303` to `/outbound/unavailable` without internal 
 
 Public execution requires `AFFILIATE_REDIRECT_ENGINE_ENABLED=true`. The default is disabled, and the current GB policy independently denies commercial/referral capability. `/go/[slug]` no longer reads legacy affiliate records and always returns the neutral unavailable flow; it can never act as fallback or rollback authority. Existing `AffiliateLink` and `CasinoAffiliateLink` data may remain for compatibility, but cannot produce an external `/go` response.
 
-The final referral decision is a strict AND of current jurisdiction policy, operator/licence/domain evidence, partner/offer/link eligibility, active slug and safe server-owned destination. The current schema cannot prove licensed-domain coverage, so the default operator authority fails closed. See [Great Britain Market Authority](05_Engineering/Great-Britain-Market-Authority.md).
+The final referral decision is a strict AND of current jurisdiction policy, agreement, operator/licence/exact-domain evidence, programme/offer/link/optional-bonus eligibility, active slug and safe server-owned destination. COMM-01 adds a repository-controlled exact-domain authority and typed agreement evidence without a schema change; its real evidence store remains empty, so default authority still fails closed. See [Great Britain Market Authority](05_Engineering/Great-Britain-Market-Authority.md) and [GB Commercial Partner Authority](05_Engineering/GB-Commercial-Partner-Authority.md).
 
 ## Event logging decision
 

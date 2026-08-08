@@ -60,6 +60,7 @@ export interface PreparedAffiliateOfferApply {
   offer: NormalizedAffiliateOffer;
   actorId: string;
   trustedAutoActivation: boolean;
+  supportsGb: boolean;
   deactivateMissing: boolean;
 }
 
@@ -67,10 +68,7 @@ function json(value: unknown): Prisma.InputJsonValue {
   return value as Prisma.InputJsonValue;
 }
 
-function offerMetadata(providerType: string, offer: NormalizedAffiliateOffer, trustedAutoActivation: boolean) {
-  const canonicalStatus = trustedAutoActivation && offer.providerStatus === "ACTIVE"
-    ? AffiliateStatus.ACTIVE
-    : offer.status;
+function offerMetadata(providerType: string, offer: NormalizedAffiliateOffer, canonicalStatus: AffiliateStatus) {
   return json({
     ...offer.metadata,
     _integration: {
@@ -425,6 +423,7 @@ export class AffiliateIntegrationRepository {
 
   async applyOfferItem(input: PreparedAffiliateOfferApply) {
     return prisma.$transaction(async (tx) => {
+      const allowAutoActivation = input.trustedAutoActivation && !input.supportsGb;
       const item = await tx.affiliateImportItem.findUnique({ where: { id: input.itemId } });
       if (!item || item.status === AffiliateImportItemStatus.APPLIED) return item;
       if (!applicableImportActions.has(item.action)) {
@@ -445,7 +444,9 @@ export class AffiliateIntegrationRepository {
         include: { trackingLinks: true },
       });
 
-      const status = input.offer.status;
+      const status = input.supportsGb && input.offer.status !== AffiliateStatus.ARCHIVED
+        ? AffiliateStatus.DRAFT
+        : input.offer.status;
       const geoMode = input.offer.countries.length
         ? AffiliateGeoMode.ALLOW
         : input.offer.excludedCountries.length
@@ -470,7 +471,7 @@ export class AffiliateIntegrationRepository {
         expiresAt: input.offer.validUntil,
         evergreen: !input.offer.validUntil,
         priority: input.offer.priority,
-        metadata: offerMetadata(input.providerType, input.offer, input.trustedAutoActivation),
+        metadata: offerMetadata(input.providerType, input.offer, status),
         sourceUpdatedAt: input.offer.sourceUpdatedAt,
         lastSyncedAt: new Date(),
         archivedAt: status === AffiliateStatus.ARCHIVED ? new Date() : null,
@@ -536,7 +537,7 @@ export class AffiliateIntegrationRepository {
           subIdTemplate: link.subIdTemplate,
           validFrom: link.validFrom,
           expiresAt: link.validUntil,
-          active: input.trustedAutoActivation && link.active,
+          active: allowAutoActivation && link.active,
           priority: link.priority,
           source: input.providerType,
           metadata: json(link.metadata),

@@ -30,6 +30,11 @@ Active Control Programme changes are additionally governed by:
 - [`Backend-Programme-Standards.md`](Backend-Programme-Standards.md)
 - [`Programme-Definition-of-Done.md`](Programme-Definition-of-Done.md)
 
+GB market and commercial authority are governed by:
+
+- [`Great-Britain-Market-Authority.md`](Great-Britain-Market-Authority.md)
+- [`GB-Commercial-Partner-Authority.md`](GB-Commercial-Partner-Authority.md)
+
 ## When this folder should be updated
 
 Update `Technical_Baseline/` when documenting a newly observed implementation state. Update standards and practices when an approved engineering standard, delivery practice, or shared technical convention changes.

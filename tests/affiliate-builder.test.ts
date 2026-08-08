@@ -137,6 +137,8 @@ function filesBelow(directory: string): string[] {
 
 test("client components never import Prisma and legacy redirect remains unchanged", () => {
   for (const file of filesBelow("components/admin/affiliate")) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|\bprisma\./, file);
-  assert.match(readFileSync("app/go/[slug]/route.ts", "utf8"), /resolveAffiliateLink/);
+  const legacyRoute = readFileSync("app/go/[slug]/route.ts", "utf8");
+  assert.doesNotMatch(legacyRoute, /resolveAffiliateLink|destinationUrl/);
+  assert.match(legacyRoute, /\/outbound\/unavailable/);
   assert.equal(existsSync("prisma/migrations/0008_affiliate_builder"), false);
 });

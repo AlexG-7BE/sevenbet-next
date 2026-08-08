@@ -3,10 +3,10 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-08
-- **Main entering ENV-ISO-01:** `2aefc05dab2332deeb7dbe6f26d3a08d7b849028`
-- **ENV-ISO-01 merge:** [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`
-- **GB-MARKET-01 delivery:** implementation complete in [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54), based on `9620a9c89afda57ea168f3edbf398ba0c4e450d4`; not merged
-- **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` Ready; Production Smoke run `31254902719` passed 2026-08-08)
+- **Main entering COMM-01:** `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
+- **GB-MARKET-01 merge:** [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) merged as `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
+- **COMM-01 delivery:** implementation complete on `codex/comm-01-gb-commercial-authority`; [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) is open for Founder review and is not merged
+- **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_ARwGCNGaYUtkGqRiw9LVrxMSiv4c` Ready at the COMM-01 baseline; Production Smoke run `31264010347` passed 2026-08-08)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
 
@@ -22,7 +22,9 @@
 
 **Detected in merged ENV-ISO-01 / PR #52:** Production and Preview use distinct Prisma Postgres resources and credentials, distinct Better Auth/admin secrets and separate provider environment scopes. Preview accepts only its exact Vercel branch host, all 17 migrations are applied, representative Preview data counts are zero, and a disposable Preview auth/session canary was absent from Production and deleted after proof. No Production data was copied. Post-merge Production authentication passed without broadening Production origin trust. Recovery capability remains **PARTIAL** because Prisma Free supplies no usable provider snapshot/PITR recovery point.
 
-**GB-MARKET-01: IMPLEMENTATION COMPLETE — DELIVERY PR #54.** The GB technical market authority is **READY FOR FOUNDER REVIEW**. GB commercial activation is **NOT ACTIVE** and GB referral is **NOT ACTIVE**. COMM-01 and LEGAL-02 remain open; this status is not GB launch approval.
+**GB-MARKET-01: MERGED — PR #54.** The GB technical market authority is implemented on main. GB commercial activation is **NOT ACTIVE** and GB referral is **NOT ACTIVE**.
+
+**COMM-01: IMPLEMENTATION COMPLETE — PR #55 OPEN FOR FOUNDER REVIEW.** Commercial partner authority machinery is **READY FOR FOUNDER REVIEW**. Real signed GB partner: **NO**. Real partner activation: **OFF**. LEGAL-02: **OPEN**. Commercial launch: **NOT READY**.
 
 ## Completed frontend
 
@@ -41,11 +43,12 @@ The exact merged work-package history is recorded in the [final migration audit]
 - **Detected — Programme:** Missions 01–04 have server-owned validation, progress, deterministic rewards and Dashboard state. Mission 01 awards 60 XP; Mission 02 awards 80 XP and `First Plan`; Mission 03 awards 90 XP; Mission 04 awards 100 XP and `Boundary built`.
 - **Planned — Programme:** Missions 05–10 have titles/navigation state only; no completion policy or task content is implemented.
 - **Detected — casino data:** RFC-012 authorises exactly 25 deterministic fictional `demo-*` aggregates as a bounded temporary pre-launch exception. Normal regulated production policy does not permit synthetic operator data; cleanup/replacement is required before genuine regulated commercial operation.
-- **Detected in GB-MARKET-01 delivery — commercial routing:** public commercial projection requires current jurisdiction, operator/evidence and redirect authority. `/r/[slug]` rechecks the full authority and fails to `/outbound/unavailable` without a substitute. `/go/[slug]` has no external authority and always uses the neutral unavailable flow. The affiliate engine remains off.
+- **Detected in merged GB-MARKET-01 and COMM-01 delivery — commercial routing:** public commercial projection requires current jurisdiction, typed agreement with explicit `DIRECT_LINK` approval, structured operator/licence/exact-domain evidence, programme, offer, tracking-link, optional bonus and redirect authority. Content-only channels cannot authorize referral. `/r/[slug]` rechecks the full authority and fails to `/outbound/unavailable` without a substitute. `/go/[slug]` has no external authority and always uses the neutral unavailable flow. The affiliate engine remains off.
 - **Detected — legal/tools:** Privacy and Terms are substantive launch-candidate pages, `noindex, follow`, and absent from the sitemap. Self-Check and the Limit Tracker are local React-memory tools with mandatory commercial isolation.
 - **Not detected — account lifecycle:** account-wide export, account-wide erasure automation and complete password recovery.
-- **Detected in GB-MARKET-01 delivery — market authority:** one versioned repository policy supports GB online-casino editorial visibility while commercial and referral capabilities remain false. Trusted request location is Vercel Preview/Production country metadata only; user filters and routes cannot grant permission. Operator eligibility requires existing canonical country/licence/evidence/partner contracts and machine-provable domain evidence. The latter is not currently available to runtime, so actions remain denied.
-- **Not verified — Production market data inventory:** no secure read-only Production database audit was performed. Published-casino, GB availability, canonical licence, verified/fresh evidence and GB partner counts are not guessed. Effective commercially eligible GB operators are `0` under policy `gb-2026-08-08.1` because the jurisdiction commercial/referral ceiling is false.
+- **Detected in merged GB-MARKET-01 — market authority:** one versioned repository policy supports GB online-casino editorial visibility while commercial and referral capabilities remain false. Trusted request location is Vercel Preview/Production country metadata only; user filters and routes cannot grant permission.
+- **Detected in COMM-01 delivery — partner authority:** a typed agreement contract, explicit `DIRECT_LINK` gate at active-offer save and request-time readiness, empty repository-controlled exact-domain evidence store, state-transition validation, current tracking/bonus gates and central evaluator extend the existing affiliate stack. GB provider import cannot auto-activate an offer or link. No schema, migration, real partner, agreement, destination or Production commercial mutation was added.
+- **Not verified — Production market/commercial data inventory:** no secure read-only Production database audit was performed. Network, programme, offer, link, redirect, casino, licence and agreement counts are not guessed. Effective commercially eligible GB operators are `0` under policy `gb-2026-08-08.1` because the jurisdiction commercial/referral ceiling is false and the real domain-evidence store is empty.
 
 ## Remaining release gates
 
@@ -71,7 +74,8 @@ The exact merged work-package history is recorded in the [final migration audit]
 ### Data / partners
 
 - Replace or remove the RFC-012 temporary fictional dataset before regulated commercial operation.
-- **COMM-01 OPEN:** approve real operator/domain evidence, partner destinations, ownership, freshness, terms and commercial activation. No real partner is active through GB-MARKET-01.
+- COMM-01 authority machinery is implementation-complete. Founder Office must apply/contract with a real partner, then supply approved operator/domain/programme/offer/link evidence through the [onboarding runbook](06_Operations/GB-Partner-Onboarding-Runbook.md).
+- No real signed partner, agreement, domain evidence, offer terms or destination is detected; no real partner is active.
 
 ### Design system
 

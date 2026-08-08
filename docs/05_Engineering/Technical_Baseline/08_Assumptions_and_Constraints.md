@@ -15,7 +15,7 @@
 - Production database backup/restore capability, Production migration automation, Preview isolation completion, or a successful provider restore drill.
 - Active Everflow or S3 credentials/connections, even though adapters/providers exist.
 - Automated analytics/APM/paging, central log retention, backups, data-retention automation, account lifecycle, performance budgets, or service-level objectives. Vercel logs, incident runbooks and an hourly read-only smoke are detected but do not establish those broader capabilities.
-- A generic multi-market/multi-jurisdiction persistence model, durable licensed-domain evidence representation, final GB legal approval, verified age/account authority or a real commercially eligible GB partner.
+- A generic multi-market/multi-jurisdiction persistence model, final GB legal approval, verified age/account authority or a real commercially eligible GB partner. COMM-01 adds a bounded repository-controlled GB licensed-domain evidence representation; its real record set is empty.
 - Generic article CMS/editor functionality, user self-service account UI, payments, notifications, or reporting.
 
 ## Audit boundary

@@ -1,5 +1,6 @@
 import { AffiliateStatus } from "@prisma/client";
 
+import { assessGbPartnerAgreement } from "@/lib/affiliate-commercial/gb-partner-agreement";
 import type { AffiliateProgramInput } from "@/lib/affiliate/types";
 import { assertAffiliateStatusTransition, normalizeAffiliateProgram } from "@/lib/affiliate/validation";
 import { affiliateNetworkRepository, type AffiliateNetworkStore } from "@/lib/repositories/affiliate-network.repository";
@@ -7,6 +8,10 @@ import { affiliateProgramRepository, type AffiliateProgramStore } from "@/lib/re
 import { casinoRepository, type CasinoStore } from "@/lib/repositories/casino.repository";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
+
+function normalizeIdentity(value: string | null | undefined) {
+  return value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, " ").trim() ?? "";
+}
 
 export class AffiliateProgramService {
   constructor(
@@ -28,12 +33,27 @@ export class AffiliateProgramService {
   private async validate(input: AffiliateProgramInput, excludeId?: string) {
     const network = await this.networkStore.findById(input.networkId);
     if (!network) throw new NotFoundError("Affiliate network", { id: input.networkId });
-    if (input.casinoId && !(await this.casinoStore.findById(input.casinoId))) {
+    const casino = input.casinoId ? await this.casinoStore.findById(input.casinoId) : null;
+    if (input.casinoId && !casino) {
       throw new NotFoundError("Casino", { id: input.casinoId });
     }
     if (input.status === "ACTIVE" && (!network.active || network.archivedAt)) throw new ValidationError("An archived or inactive network cannot have an active program");
     if (input.providerType === "MANUAL" && input.integrationMode === "API") {
       throw new ValidationError("Manual programs cannot use API integration mode");
+    }
+    if (input.supportedCountries.includes("GB") && input.trustedAutoActivation) {
+      throw new ValidationError("Trusted automatic activation is forbidden for GB-supporting programs", { field: "trustedAutoActivation" });
+    }
+    const gbActivationState = input.supportedCountries.includes("GB") && (input.status === "ACTIVE" || input.workflowStatus === "PUBLISHED");
+    if (gbActivationState) {
+      if (!casino || !input.casinoId) throw new ValidationError("A GB program must be linked to an exact casino before activation", { field: "casinoId" });
+      const operatorIdentity = casino.operatorProfile?.legalName || casino.operatorProfile?.name;
+      if (!casino.operatorProfileId || !operatorIdentity) throw new ValidationError("A GB program requires a structured operator before activation", { field: "casinoId" });
+      if (normalizeIdentity(input.operator) !== normalizeIdentity(operatorIdentity)) throw new ValidationError("GB program operator must match the structured casino operator", { field: "operator" });
+      if (casino.brandProfileId && casino.brandProfile?.operatorId !== casino.operatorProfileId) throw new ValidationError("GB casino brand and operator relationships are inconsistent", { field: "casinoId" });
+      if (input.integrationMode !== "MANUAL" && (!input.providerAccountId || !input.credentialReference)) throw new ValidationError("A connected GB integration requires provider account and credential references before activation", { field: "credentialReference" });
+      const agreement = assessGbPartnerAgreement({ metadata: input.metadata, expectedIdentity: input.operator, now: new Date() });
+      if (agreement.reasons.length) throw new ValidationError(`GB partner agreement is not activation-ready: ${agreement.reasons.join(", ")}`, { field: "metadata.gbCommercialAuthority", reasons: agreement.reasons });
     }
     if (input.externalProgramId && await this.store.existsExternalProgramId(input.networkId, input.externalProgramId, excludeId)) {
       throw new ConflictError("External program ID already exists in this network", { externalProgramId: input.externalProgramId });

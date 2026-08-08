@@ -8,7 +8,7 @@ import type { CasinoDomain } from "@/lib/casino-domain/types";
 import type { CasinoAggregate } from "@/lib/repositories/casino.repository";
 
 function casino(overrides: Partial<CasinoDomain> = {}): CasinoDomain {
-  return { id: "casino", slug: "casino", name: "Casino", domain: "casino.example", operator: { id: null, name: "Operator", lifecycleStatus: "ACTIVE" }, brand: { id: null, name: "Casino", lifecycleStatus: "ACTIVE" }, lifecycleStatus: "ACTIVE", publicationStatus: "PUBLISHED", licences: [{ id: "licence", authority: "Authority", number: null, jurisdiction: "GB", status: "ACTIVE", expiresAt: null, verifiedAt: new Date("2026-01-01"), evidence: [{ id: "evidence", sourceUrl: null, sourceReference: null, status: "VERIFIED", observedAt: null, expiresAt: null, reviewedAt: null }] }], availability: [{ countryCode: "GB", state: "AVAILABLE", minimumAge: null }], languages: [], currencies: [], bonuses: [], affiliatePrograms: [], affiliateOffers: [], seo: { title: null, description: null, canonicalUrl: null, robots: null }, responsibleGambling: { tools: [] }, tracking: { affiliateProgramIds: [] }, ...overrides };
+  return { id: "casino", slug: "casino", name: "Casino", domain: "casino.example", operator: { id: null, name: "Operator", legalName: null, lifecycleStatus: "ACTIVE" }, brand: { id: null, operatorId: null, name: "Casino", lifecycleStatus: "ACTIVE" }, lifecycleStatus: "ACTIVE", publicationStatus: "PUBLISHED", licences: [{ id: "licence", authority: "Authority", number: null, jurisdiction: "GB", status: "ACTIVE", expiresAt: null, verifiedAt: new Date("2026-01-01"), evidence: [{ id: "evidence", sourceUrl: null, sourceReference: null, status: "VERIFIED", observedAt: null, expiresAt: null, reviewedAt: null }] }], availability: [{ countryCode: "GB", state: "AVAILABLE", minimumAge: null }], languages: [], currencies: [], bonuses: [], affiliatePrograms: [], affiliateOffers: [], seo: { title: null, description: null, canonicalUrl: null, robots: null }, responsibleGambling: { tools: [] }, tracking: { affiliateProgramIds: [] }, ...overrides };
 }
 
 test("canonical eligibility accepts only published available casinos with verified current evidence", () => {
@@ -23,8 +23,8 @@ test("canonical eligibility fails closed for missing, expired, and suspended rec
   assert.deepEqual(evaluateCasinoEligibility(casino({ licences: [{ ...casino().licences[0], evidence: [] }] }), "GB"), { eligible: false, reason: "LICENCE_EVIDENCE_INVALID" });
   assert.deepEqual(evaluateCasinoEligibility(casino({ lifecycleStatus: "SUSPENDED" }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
   assert.deepEqual(evaluateCasinoEligibility(casino({ licences: [{ ...casino().licences[0], evidence: [{ ...casino().licences[0].evidence[0], status: "EXPIRED" }] }] }), "GB"), { eligible: false, reason: "LICENCE_EVIDENCE_INVALID" });
-  assert.deepEqual(evaluateCasinoEligibility(casino({ operator: { id: "operator", name: "Operator", lifecycleStatus: "SUSPENDED" } }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
-  assert.deepEqual(evaluateCasinoEligibility(casino({ brand: { id: "brand", name: "Brand", lifecycleStatus: "SUSPENDED" } }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
+  assert.deepEqual(evaluateCasinoEligibility(casino({ operator: { id: "operator", name: "Operator", legalName: null, lifecycleStatus: "SUSPENDED" } }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
+  assert.deepEqual(evaluateCasinoEligibility(casino({ brand: { id: "brand", operatorId: "operator", name: "Brand", lifecycleStatus: "SUSPENDED" } }), "GB"), { eligible: false, reason: "ENTITY_SUSPENDED" });
 });
 
 test("suspended affiliate programs and offers are ineligible without suppressing the editorial casino", () => {

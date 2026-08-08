@@ -8,7 +8,7 @@
 4. Verify detail metadata, canonical, JSON-LD, media, bonuses, responsible gambling notices and review-only commercial state.
 5. Verify `/casinos`, `/catalog`, `/bonuses`, `/sitemap.xml` and `/api/public/casinos` contain no draft or private fields.
 6. Test an absent redirect mapping and confirm the offer CTA is disabled.
-7. Do not enable Production referral from this cutover plan. COMM-01, LEGAL-02 and current market/operator evidence must separately approve it.
+7. Do not enable Production referral from this cutover plan. RFC-015 authority machinery exists, but a real partner/evidence package, LEGAL-02 and a separate policy/redirect decision must approve activation.
 
 ## Rollback
 

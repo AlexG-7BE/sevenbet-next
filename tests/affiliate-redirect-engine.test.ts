@@ -9,7 +9,7 @@ import { requestCountrySignalFromHeaders } from "../lib/jurisdiction/request-cou
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import { getAdminAccessStatus } from "../lib/auth/policy";
-import { allowJurisdictionResolver, allowOperatorAuthority } from "./market-authority.fixtures";
+import { allowGbCommercialReadinessAuthority, allowJurisdictionResolver } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -157,7 +157,7 @@ function redirectStore(record: Awaited<ReturnType<AffiliateRedirectStore["findBy
 }
 
 test("redirect service returns 404 semantics for unknown slug and never uses query destinations", async () => {
-  const service = new AffiliateRedirectService(redirectStore(null), { activeCandidates: async () => [] }, allowJurisdictionResolver, allowOperatorAuthority);
+  const service = new AffiliateRedirectService(redirectStore(null), { activeCandidates: async () => [] }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority);
   const result = await service.resolve("unknown-slug");
   assert.equal(result.ok, false);
   if (!result.ok) assert.equal(result.reason, "SLUG_NOT_FOUND");
@@ -188,12 +188,12 @@ test("redirect service selects only stored safe tracking URLs", async () => {
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
     createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
-  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowOperatorAuthority);
+  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority);
   const safe = await safeService.resolve("casino-offer", { now });
   assert.equal(safe.ok, true);
   if (safe.ok) assert.equal(safe.destination.toString(), "https://tracking.example/link-safe");
   const unsafeOffer = offer("unsafe", { trackingLinks: [link("unsafe", { trackingUrl: "javascript:alert(1)" })] });
-  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowOperatorAuthority);
+  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority);
   const unsafe = await unsafeService.resolve("casino-offer", { now });
   assert.equal(unsafe.ok, false);
   if (!unsafe.ok) assert.equal(unsafe.reason, "UNSAFE_REDIRECT_URL");

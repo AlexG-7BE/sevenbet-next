@@ -15,7 +15,7 @@
 
 ## Remaining governance gates
 
-- **Blocking:** RFC-014 approves the bounded technical GB market authority but explicitly does not authorise market launch, commercial activation or referral launch. COMM-01 and LEGAL-02 remain open.
+- **Blocking:** RFC-014 and RFC-015 approve bounded GB market and commercial-partner authorities but do not authorise launch. COMM-01 machinery is implementation-complete; a real partner/agreement/domain/offer, LEGAL-02, recovery and separate policy/redirect activation remain open.
 - **Blocking:** market-specific legal, licence, age, disclosure, support, and ownership evidence must be approved before any market is exposed commercially.
 - **Blocking:** production deployment, secret-management, backup/restore, incident, telemetry, and on-call decisions require their applicable RFC/operational approvals.
 - **Blocking:** Privacy and Terms are substantive launch-candidate pages, but final external counsel review, processor/subprocessor verification and retention/transfer confirmation remain required before launch approval.

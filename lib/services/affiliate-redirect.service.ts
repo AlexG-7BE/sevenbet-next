@@ -1,20 +1,21 @@
 import type { AffiliateRedirectSlugInput } from "@/lib/affiliate/types";
 import { resolveAffiliateCandidates, type CandidateOffer, type CandidateResolverInput } from "@/lib/affiliate-routing/candidate-resolver";
 import { normalizeCurrencyHint, normalizeLanguageHint, normalizeRedirectSlug, validateRedirectTargetUrl } from "@/lib/affiliate-routing/redirect-validation";
+import type { GbCommercialReadinessDecision } from "@/lib/affiliate-commercial/gb-commercial-readiness";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { jurisdictionResolver, type JurisdictionResolver } from "@/lib/jurisdiction/resolver";
 import type { CountrySignal, JurisdictionDecision } from "@/lib/jurisdiction/types";
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
-import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } from "@/lib/services/gb-commercial-readiness.service";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
 export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
-  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility: GbOperatorEligibilityDecision }
-  | { ok: false; reason: RedirectFailureReason; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision?: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision };
+  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility: GbOperatorEligibilityDecision; commercialReadiness: GbCommercialReadinessDecision }
+  | { ok: false; reason: RedirectFailureReason; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision?: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision };
 
 export type AffiliateRedirectPreviewResolution =
   | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"] }
@@ -29,18 +30,6 @@ export interface AffiliateRedirectRequestInput {
   currencyCode?: string | null;
   language?: string | null;
   now?: Date;
-}
-
-export function gbCommercialContractFromCandidate(offer: CandidateOffer, trackingLinkId: string) {
-  const link = offer.trackingLinks.find((candidate) => candidate.id === trackingLinkId);
-  return {
-    programActive: offer.program.status === "ACTIVE" && !offer.program.archivedAt && offer.program.domainLifecycleStatus !== "SUSPENDED",
-    programPublished: offer.program.workflowStatus === "PUBLISHED",
-    programConnected: offer.program.connectionStatus === "CONNECTED",
-    programSupportsGb: offer.program.supportedCountries?.includes("GB") === true,
-    offerActive: offer.status === "ACTIVE" && !offer.archivedAt && offer.domainLifecycleStatus !== "SUSPENDED",
-    trackingLinkActive: link?.active === true && !link.archivedAt,
-  };
 }
 
 function optionalId(value: unknown, field: string) {
@@ -60,7 +49,7 @@ export class AffiliateRedirectService {
     private readonly store: AffiliateRedirectStore = affiliateRedirectRepository,
     private readonly offers: Pick<AffiliateOfferService, "activeCandidates"> = affiliateOfferService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
-    private readonly operatorEligibility: GbOperatorEligibilityAuthority = gbOperatorEligibilityService,
+    private readonly commercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
   ) {}
 
   list(input?: Parameters<AffiliateRedirectStore["list"]>[0]) {
@@ -179,19 +168,23 @@ export class AffiliateRedirectService {
     });
     if (!routing.ok) return { ...routing, jurisdictionDecision };
 
-    const operatorEligibility = await this.operatorEligibility.evaluate(routing.casinoId, now, {
-      domainEvidence: null,
-      commercialContract: gbCommercialContractFromCandidate(routing.selectedOffer, routing.trackingLinkId),
+    const commercialReadiness = await this.commercialReadiness.evaluate({
+      casinoId: routing.casinoId,
+      offer: routing.selectedOffer,
+      trackingLinkId: routing.trackingLinkId,
+      jurisdictionDecision,
       redirectContract: { slugActive: true, destinationServerOwned: true, destinationSafe: true },
+      now,
     });
+    const operatorEligibility = commercialReadiness.operatorEligibility;
     if (!operatorEligibility.operatorEvidenceEligible) {
-      return { ok: false, reason: "OPERATOR_EVIDENCE_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision, operatorEligibility };
+      return { ok: false, reason: "OPERATOR_EVIDENCE_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision, operatorEligibility, commercialReadiness };
     }
-    if (!operatorEligibility.referralEligible) {
-      return { ok: false, reason: "COMMERCIAL_CONTRACT_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision, operatorEligibility };
+    if (!commercialReadiness.referralReady) {
+      return { ok: false, reason: "COMMERCIAL_CONTRACT_DENIED", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision, operatorEligibility, commercialReadiness };
     }
     const { selectedOffer: _selectedOffer, ...resolution } = routing;
-    return { ...resolution, jurisdictionDecision, operatorEligibility };
+    return { ...resolution, jurisdictionDecision, operatorEligibility, commercialReadiness };
   }
 }
 
