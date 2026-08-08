@@ -185,6 +185,7 @@ The small client-island cost is deliberate and bounded. No dependency was added 
 ## Exact-head Preview release evidence
 
 - **Detected:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) was opened against `main` from `codex/ux-perf-01-performance-instant-discovery` and was not merged by the implementing agent.
+- **Detected release-record boundary:** the final self-referential commit SHA and its check/deployment identifiers are reported in the Founder handoff; embedding them inside that same commit would change the SHA being documented.
 - **Detected:** exact source `bf75b4d0bc58b937c7e9867147d98fd92ddc4b11` produced Vercel Preview deployment `dpl_EMCGsPFjW6FtdFNFyH8dUrB55SMD`; status is Ready on `sevenbet-next-git-codex-ux-perf-01-p-52e7a9-alexg-7bes-projects.vercel.app`.
 - **Detected:** GitHub CI run `31270035322` passed Quality (`93134312286`), Database / Migration Verification (`93134312251`) and Build / Browser (`93134312278`). Vercel and Vercel Preview Comments passed for the same SHA.
 - **Detected:** signed-in Preview QA returned complete titled pages, expected H1 content and no Next error overlay for `/`, `/casinos`, `/bonuses`, `/best-offers`, `/compare`, `/10-steps`, `/responsible-gambling`, `/self-check`, `/tools/budget-calculator`, `/privacy` and `/terms`.
