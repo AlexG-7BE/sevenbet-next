@@ -2,12 +2,21 @@
   "name": "sevenbet-next",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev -p 4173",
     "build": "next build",
     "start": "next start -p 4173",
     "postinstall": "prisma generate",
-    "lint": "next lint",
+    "lint": "eslint app components lib scripts tests middleware.ts next.config.mjs playwright.config.ts playwright.ci.config.ts --max-warnings=0",
+    "ci:quality": "npm run lint && npm run typecheck && npx prisma validate && npm run ci:structural",
+    "ci:structural": "node scripts/ci-structural-tests.mjs",
+    "ci:browser": "playwright test --config=playwright.ci.config.ts tests/ops-browser.spec.ts",
+    "ci:migrations": "node scripts/ci-migrations.mjs",
+    "ci:build-secrets": "node scripts/check-build-secrets.mjs",
+    "ops:smoke": "node scripts/production-smoke.mjs",
     "visual:qa": "node scripts/visual-qa.mjs",
     "cms:test": "node scripts/cms-smoke-tests.mjs && node scripts/program-builder-smoke-tests.mjs",
     "auth:bootstrap-admin": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/bootstrap-first-admin.ts",
@@ -63,16 +72,24 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "better-auth": "1.6.23",
-    "next": "^15.3.0",
+    "next": "15.5.21",
     "prisma": "^6.19.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.23",
+      "sharp": "0.35.0"
+    }
   },
   "devDependencies": {
     "@playwright/test": "^1.54.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.21",
     "tsx": "4.23.1",
     "typescript": "^5.8.0"
   }

@@ -1,16 +1,18 @@
 # Known Technical Debt
 
-Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `2d151218b3e4f85f40fc3473b4b5c63dfaba57e3` on 2026-08-08. Dependencies, generated output, build artefacts and caches were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
+Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `8f7ab7e9d61a57d91c6d683f33641b9816ecad9c` on 2026-08-08. Dependencies, generated output, build artefacts and caches were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
 
 ## Remaining
 
 | Category | Evidence | Impact | Severity |
 | --- | --- | --- | --- |
-| Linting/tooling | `package.json` invokes `next lint`; no ESLint configuration/dependency is detected and Next 15 does not provide the legacy command. | Lint is not a usable automated gate. | Medium |
-| CI/CD and deployment governance | No repository CI workflow, production migration workflow, backup/restore runbook or rollback evidence is detected. | Pre-release enforcement and recovery are unproven. | High |
+| Preview/Production isolation | Redacted Vercel evidence shows Preview and Production share database/auth/admin values. | Mutation-capable Preview could affect Production. Preview writes are blocked pending isolation. | Critical |
+| Provider recovery evidence | Prisma Postgres is detected, but backup frequency, retention, PITR, restore permission and a completed drill are not verified. | Recovery objectives are targets rather than guarantees; stateful Production changes remain gated. | High |
+| Production migration architecture | Fresh-database PR proof exists, but no approved short-lived Production credential/provider-native hook is detected. | Production migration automation cannot be safely enabled yet. | High |
+| Historical migration preflight | Migration 0015 adds and uses a PostgreSQL enum value that must be committed between operations. The existing idempotent preflight is required before fresh replay. | Restore/bootstrap tooling must preserve this explicit step; migration history cannot safely be treated as standalone. | High |
 | Legacy admin-preview path | `middleware.ts` and `lib/auth/admin.ts` retain the token path when `CMS_PHASE1_ALLOW_DEV_ADMIN=true`. | Dual access paths increase policy/configuration complexity. | Medium |
 | Jurisdiction/compliance authority | The resolver is shadow/deny-safe; `unavailableJurisdictionPolicyStore` has no approved live policy dataset and public enforcement is not detected. | Regulated-first commercial eligibility is not demonstrated end-to-end. | Critical |
-| Operational visibility | Hosting diagnostics use `console.warn`; managed monitoring, alert ownership, scheduler/queue and incident/on-call controls are not detected. | Data freshness and production failures may not be acted on reliably. | High |
+| Operational visibility | Vercel logs and hourly smoke are detected, but paging, central retention and a named legal/compliance responder are not. | Incidents outside active observation may be delayed; notification ownership needs post-merge proof. | High |
 | Programme expiry and rate limiting | Anonymous expiry is defined and limiting is in-process; no automated purge or shared/distributed limiter is detected. | Multi-instance abuse control and expired-data cleanup remain incomplete. | High |
 | Account privacy/recovery lifecycle | Artefact-level edit/content erasure exists; account-wide export, account-wide erasure automation and complete password recovery are not detected. | Full user account lifecycle is incomplete. | High |
 | Programme autosave ordering | Draft APIs have no revision/client sequence; scalar/private fields remain last-write-wins. | A delayed request can overwrite a newer draft field. | Medium |
@@ -35,5 +37,7 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 - FE-HANDOFF-01: confirmation-first managed handoff and neutral fail-closed recovery are implemented.
 - FE-DS-01 frontend consolidation: recurring production colour roles, focus/motion roles and eligible internal actions are governed by Design System v1; five unreachable presentation wrappers were removed.
 - Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
+- OPS-01 linting/governance foundation: ESLint, deterministic three-job CI, fresh-database proof, build-secret scan, scheduled smoke and operational runbooks are delivered by OPS-01 / PR #45.
+- OPS-01 dependency baseline: Next.js is patched to 15.5.21 and bounded PostCSS 8.5.23/Sharp 0.35.0 overrides remove the detected transitive advisories; `npm audit` reports zero known vulnerabilities after build/browser regression proof.
 
 Resolved Design System debt does not imply product, legal/compliance, data-partner, backend/operations or launch readiness. Remaining route-local extraction is P2/P3 and requires new production evidence.

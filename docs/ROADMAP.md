@@ -10,12 +10,19 @@
 | 6 | FE-GAP-02 | **Completed and merged** | Protected Help article closure, FAQ, semantic fixes and FE-HANDOFF-01 closure. |
 | 7 | Final page-level P0/P1 audit | **Closed** | Known public-surface P0: 0; P1: 0 at baseline `30fc96e`. |
 | 8 | DOC-REC-01 | **Completed and merged** | Post-migration documentation reconciliation at PR #43. |
-| 9 | FE-DS-01 — Frontend & Design System Consolidation | **Ready for Founder review** | Design System v1 delivery is represented by the FE-DS-01 implementation PR and its merge commit in Git history. |
-| 10 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
-| 11 | Regulated commercial release | **Blocked by separate gates** | Live jurisdiction/age authority, legal/compliance approval, real operator/partner data and production operations are not supplied by FE-DS-01. |
+| 9 | FE-DS-01 — Frontend & Design System Consolidation | **Completed and merged** | Design System v1 merged through PR #44 at main baseline `8f7ab7e`. |
+| 10 | OPS-01 — Production Engineering & Release Governance | **IMPLEMENTATION COMPLETE — DELIVERY PR #45** | [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is the unmerged delivery record for RFC-013, three-job CI, active repository governance, isolated browser/migration proof, scheduled smoke and runbooks. Post-merge activation evidence remains the first scheduled Production Smoke result and confirmation that its notification reaches the accountable owner. |
+| 11 | ENV-ISO-01 — Preview / Production Environment Isolation | **Next operations gate** | Isolate Preview database, authentication and administration configuration from Production before mutation-capable Preview use. |
+| 12 | GB-MARKET-01 — GB Market Authority | **Next business/release authority, subject to Founder sequencing** | Approve live jurisdiction, age, licensing, support-resource and commercial-eligibility policy; this remains separate from OPS-01 and ENV-ISO-01. |
+| 13 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
+| 14 | Regulated commercial release | **Blocked by separate gates** | Live jurisdiction/age authority, legal/compliance approval, real operator/partner data, Preview isolation and verified recovery remain outstanding. |
 
 ## FE-DS-01 outcome
 
 FE-DS-01 produces a governed [Design System v1](02_Product_Design/Design-System-v1.md): production UI inventory, Figma/code token parity, a bounded internal Action family, responsive and accessibility contracts, visual regression, an explicit Storybook decision, Figma back-sync and legacy deprecation.
 
 It may correct consolidation-level P2/P3 inconsistencies. It must not claim commercial launch readiness or replace product, compliance, backend/operations or partner-data approvals.
+
+## OPS-01 outcome
+
+OPS-01 implements [RFC-013](06_RFC/RFC-013-Production-Engineering-and-Release-Governance.md) and the [operations runbooks](06_Operations/README.md). [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is its delivery record; `main` branch protection is currently enabled, while the PR remains unmerged. Post-merge activation evidence is the first scheduled Production Smoke result and confirmation that its notification reaches the accountable owner. OPS-01 does not rotate unknown hosted credentials, automate Production migrations without an approved secret architecture, merge itself, or close Preview isolation, provider recovery, jurisdiction, legal/compliance, Programme or partner-data gates.

@@ -21,7 +21,7 @@ import {
   writeCasinoEditorMetadata,
 } from "../lib/casino-builder/editor-metadata";
 import { readCasinoSaveBody } from "../lib/casino-builder/http";
-import type { CasinoBuilderBonus, CasinoBuilderCountry, CasinoCoreDraft } from "../lib/casino-builder/types";
+import type { CasinoBuilderBonus, CasinoBuilderCountry } from "../lib/casino-builder/types";
 
 const ids = {
   first: "11111111-1111-4111-8111-111111111111",
@@ -231,12 +231,12 @@ test("versioned editor metadata preserves pre-existing review content", () => {
   assert.equal(readCasinoEditorMetadata(stored as never).bonuses[ids.first].featured, true);
 });
 
-test("legacy Bonus model and public fallback data remain intact", () => {
+test("legacy Bonus model and public server projections remain intact", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const bonusesPage = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   const casinoPage = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   assert.match(schema, /model Bonus \{/);
-  assert.match(bonusesPage, /from "@\/lib\/data"/);
+  assert.match(bonusesPage, /publicOfferService\.searchOffers/);
   assert.match(casinoPage, /publicCasinoService/);
   assert.match(readFileSync("lib/services/public-casino.service.ts", "utf8"), /getCasinos\(\)/);
 });

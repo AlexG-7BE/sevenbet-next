@@ -54,7 +54,10 @@ export function AffiliateListPage({ kind, initialFilters = {} }: { kind: ListKin
     setLoading(true); setError("");
     const params = new URLSearchParams();
     if (filters.search) params.set("search", filters.search);
-    if (filters.status) kind === "networks" ? params.set("active", filters.status) : params.set("status", filters.status);
+    if (filters.status) {
+      if (kind === "networks") params.set("active", filters.status);
+      else params.set("status", filters.status);
+    }
     for (const key of ["networkId", "programId", "casinoId", "country", "currency"] as const) if (filters[key]) params.set(key, filters[key]);
     try {
       const result = await json<{ records: typeof records }>(`/api/admin/affiliate/${kind}?${params}`);

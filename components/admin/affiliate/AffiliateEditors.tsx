@@ -50,6 +50,7 @@ const statuses: AffiliateStatusValue[] = ["DRAFT", "ACTIVE", "PAUSED", "EXPIRED"
 const networkTypes: AffiliateNetworkTypeValue[] = ["EVERFLOW", "INCOME_ACCESS", "MYAFFILIATES", "NETREFER", "DIRECT", "OTHER"];
 const payoutModels: AffiliatePayoutModelValue[] = ["CPA", "CPL", "REV_SHARE", "HYBRID", "FLAT", "UNKNOWN"];
 const geoModes: AffiliateGeoModeValue[] = ["GLOBAL", "ALLOW", "BLOCK"];
+const emptyNetworkDraft = { name: "", slug: "", type: "OTHER" as AffiliateNetworkTypeValue, websiteUrl: "", apiCapable: false, exportCapable: false, active: true, notes: "", updatedAt: "" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="affiliateField"><span>{label}</span>{children}</label>;
@@ -57,13 +58,12 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function NetworkEditor({ id }: { id?: string }) {
   const router = useRouter();
-  const empty = { name: "", slug: "", type: "OTHER" as AffiliateNetworkTypeValue, websiteUrl: "", apiCapable: false, exportCapable: false, active: true, notes: "", updatedAt: "" };
-  const [draft, setDraft] = useState(empty);
+  const [draft, setDraft] = useState({ ...emptyNetworkDraft });
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const load = useCallback(async () => {
-    if (!id) { setDraft(empty); return; }
+    if (!id) { setDraft({ ...emptyNetworkDraft }); return; }
     const result = await json<{ network: AffiliateNetworkRecord }>(`/api/admin/affiliate/networks/${id}`);
     setDraft({ ...result.network, websiteUrl: result.network.websiteUrl || "", notes: result.network.notes || "" }); setDirty(false); setError("");
   }, [id]);

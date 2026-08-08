@@ -14,11 +14,11 @@ SevenBet is a decision-support platform for adults considering regulated gamblin
 - **Legal surfaces:** substantive `/privacy` and `/terms` pages are server-rendered, `noindex, follow`, and intentionally excluded from the XML sitemap pending release governance.
 - **Admin/CMS:** Prisma/PostgreSQL repositories, Better Auth staff access, and domain-specific programme, casino, editorial, media and affiliate builders.
 
-The current public page-level frontend migration is complete through FE-GAP-02. FE-DS-01 is the next frontend phase and consolidates the production patterns; separate product, legal/compliance, data-partner and operational gates remain.
+The public page-level frontend migration and FE-DS-01 Design System v1 consolidation are merged. OPS-01 establishes deterministic CI, release governance and operational runbooks; separate product, legal/compliance, data-partner, environment-isolation and recovery gates remain.
 
 ## Local development
 
-Prerequisites: a supported Node.js runtime and the environment values described in `.env.example`.
+Prerequisites: Node.js 24.x and the environment values described in `.env.example`.
 
 ```bash
 npm install
@@ -31,12 +31,15 @@ Open <http://localhost:4173>.
 
 ```bash
 npm run typecheck
+npm run lint
 npm run build
+npm run ci:structural
+npm run ci:browser
 npm run cms:test
 npm run programme:test
 ```
 
-Focused frontend packages expose `fe-mig-*` test scripts in `package.json`. `npm run visual:qa` checks selected routes when a local server is already running. The current lint script is not a usable gate under Next 15 and remains documented technical debt.
+`npm run ci:migrations` is intentionally CI-only and refuses any database except loopback port 5432 with a name ending in `_ci`. `npm run ops:smoke` performs read-only checks against the production origin. The Programme suite currently includes seven known rolling-date fixture failures and remains visible but non-required in CI.
 
 ## Documentation
 
@@ -45,3 +48,4 @@ Focused frontend packages expose `fe-mig-*` test scripts in `package.json`. `npm
 - [Roadmap](docs/ROADMAP.md) — delivery sequence and remaining gates.
 - [Figma inventory](docs/02_Product_Design/Figma-Screen-Inventory-and-Delivery-Plan.md) — current visual authorities and implementation classification.
 - [Technical baseline](docs/05_Engineering/Technical_Baseline/README.md) — evidence-backed implementation baseline.
+- [Operations](docs/06_Operations/README.md) — release, environment, migration, recovery and incident runbooks.
