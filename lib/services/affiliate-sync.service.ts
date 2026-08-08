@@ -5,7 +5,6 @@ import {
   AffiliateMatchMethod,
   AffiliateMatchStatus,
   AffiliateSourcePolicy,
-  AffiliateStatus,
   AffiliateSyncMode,
   Prisma,
 } from "@prisma/client";
@@ -18,6 +17,7 @@ import { findDuplicateExternalIds, summarizeAffiliateImportItems } from "@/lib/a
 import { assertAffiliateOperationRateLimit } from "@/lib/affiliate-integrations/rate-limit";
 import { affiliateAdapterRegistry, type AffiliateAdapterRegistry } from "@/lib/affiliate-integrations/registry";
 import { payloadFingerprint, redactAffiliateError, sanitizeAffiliatePayload } from "@/lib/affiliate-integrations/sanitize";
+import { providerOfferProjection } from "@/lib/affiliate-integrations/provider-projection";
 import type {
   AffiliateImportSummary,
   AffiliatePlannedItem,
@@ -62,45 +62,7 @@ function dateString(value: Date | null) {
   return value?.toISOString() ?? null;
 }
 
-export function providerOfferProjection(offer: NormalizedAffiliateOffer, trustedAutoActivation = false) {
-  return {
-    externalName: offer.externalName,
-    status: trustedAutoActivation && offer.providerStatus === "ACTIVE"
-      ? AffiliateStatus.ACTIVE
-      : offer.status,
-    payoutModel: offer.payoutModel,
-    payoutAmount: offer.payoutAmount,
-    payoutCurrency: offer.payoutCurrency,
-    revenueSharePercentage: offer.revenueSharePercentage,
-    hybridTerms: offer.hybridTerms,
-    countries: [...offer.countries].sort(),
-    excludedCountries: [...offer.excludedCountries].sort(),
-    currencies: [...offer.currencies].sort(),
-    languages: [...offer.languages].sort(),
-    devices: [...offer.devices].sort(),
-    landingPageUrl: offer.landingPageUrl,
-    validFrom: dateString(offer.validFrom),
-    validUntil: dateString(offer.validUntil),
-    priority: offer.priority,
-    trackingLinks: offer.trackingLinks.map((link) => ({
-      externalId: link.externalId,
-      label: link.label,
-      destinationUrl: link.destinationUrl,
-      trackingUrl: link.trackingUrl,
-      countries: [...link.countries].sort(),
-      languages: [...link.languages].sort(),
-      devices: [...link.devices].sort(),
-      currencyCode: link.currencyCode,
-      campaign: link.campaign,
-      subIdTemplate: link.subIdTemplate,
-      priority: link.priority,
-      active: link.active,
-      validFrom: dateString(link.validFrom),
-      validUntil: dateString(link.validUntil),
-      metadata: link.metadata,
-    })),
-  };
-}
+export { providerOfferProjection } from "@/lib/affiliate-integrations/provider-projection";
 
 function currentOfferProjection(offer: Awaited<ReturnType<AffiliateIntegrationRepository["findOfferByExternalId"]>>) {
   if (!offer) return null;
@@ -378,14 +340,14 @@ export class AffiliateSyncService {
             matchStatus: match.status,
             matchMethod: match.method,
             matchConfidence: match.confidence,
-            after: { casinoId: null, provider: providerOfferProjection(offer, program.trustedAutoActivation) },
+            after: { casinoId: null, provider: providerOfferProjection(offer, program.trustedAutoActivation, program.supportedCountries.includes("GB")) },
             errors: ["Casino match requires review"],
           });
           continue;
         }
 
         const existing = await this.repository.findOfferByExternalId(program.id, offer.externalId);
-        const projection = providerOfferProjection(offer, program.trustedAutoActivation);
+        const projection = providerOfferProjection(offer, program.trustedAutoActivation, program.supportedCountries.includes("GB"));
         const current = currentOfferProjection(existing);
         const merged = current
           ? mergeProviderFields({
@@ -510,6 +472,7 @@ export class AffiliateSyncService {
           offer: applyResolvedProjection(normalized, resolved),
           actorId,
           trustedAutoActivation: program.trustedAutoActivation,
+          supportsGb: program.supportedCountries.includes("GB"),
           deactivateMissing: program.deactivateMissing,
         });
       } catch (error) {

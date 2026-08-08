@@ -21,6 +21,7 @@ import { AffiliateAdapterRegistry } from "../lib/affiliate-integrations/registry
 import { redactAffiliateError, sanitizeAffiliatePayload } from "../lib/affiliate-integrations/sanitize";
 import type { AffiliatePlannedItem, ExternalAffiliateOffer } from "../lib/affiliate-integrations/types";
 import { resolveAffiliateCandidates, type CandidateOffer } from "../lib/affiliate-routing/candidate-resolver";
+import { providerOfferProjection } from "../lib/affiliate-integrations/provider-projection";
 
 function externalOffer(id: string, patch: Partial<ExternalAffiliateOffer> = {}): ExternalAffiliateOffer {
   return {
@@ -135,6 +136,19 @@ test("normalization rejects malformed tracking and landing URLs", () => {
   assert.throws(() => normalizeExternalOffer(externalOffer("bad-link", {
     trackingLinks: [{ externalId: "bad", destinationUrl: "https://example.com", trackingUrl: "javascript:alert(1)" }],
   })), /HTTPS/);
+});
+
+test("provider projection cannot auto-activate GB offers or tracking links", () => {
+  const normalized = normalizeExternalOffer(externalOffer("gb-safe"));
+  const gbProjection = providerOfferProjection(normalized, true, true);
+  assert.equal(gbProjection.status, "DRAFT");
+  assert.equal(gbProjection.trackingLinks[0].active, false);
+  const nonGbProjection = providerOfferProjection(normalized, true, false);
+  assert.equal(nonGbProjection.status, "ACTIVE");
+  assert.equal(nonGbProjection.trackingLinks[0].active, true);
+  const repository = readFileSync("lib/repositories/affiliate-integration.repository.ts", "utf8");
+  assert.match(repository, /allowAutoActivation = input\.trustedAutoActivation && !input\.supportsGb/);
+  assert.match(repository, /input\.supportsGb && input\.offer\.status !== AffiliateStatus\.ARCHIVED/);
 });
 
 test("CSV and JSON parser rejects malformed and oversized input", () => {
