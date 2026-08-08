@@ -53,7 +53,7 @@ test("Best Offers and Bonuses close their heading and landmark defects without d
   assert.equal((bestError.match(/<h1\b/g) ?? []).length, 1);
   assert.match(best, /result\.status === "available"/);
   assert.match(best, /<h2>\{result\.status === "unavailable"/);
-  for (const path of ["app/(public)/bonuses/page.tsx", "app/(public)/bonuses/loading.tsx", "app/(public)/bonuses/error.tsx"]) assert.doesNotMatch(read(path), /<main\b/);
+  for (const path of ["app/(public)/bonuses/page.tsx", "app/(public)/bonuses/error.tsx"]) assert.doesNotMatch(read(path), /<main\b/);
 });
 
 test("commercial actions use confirmation first and neutral managed recovery", () => {

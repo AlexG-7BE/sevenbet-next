@@ -39,7 +39,7 @@ test("FE-MIG-07 isolates Bonuses from the shared Best Offers presentation", () =
 test("page source preserves SSR, metadata, canonical, noindex and ItemList positions", () => {
   const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
-  assert.match(page, /publicOfferService\.searchOffers\(query\)/);
+  assert.match(page, /publicOfferService\.searchOffers\(query, authority\)/);
   assert.match(page, /parsePublicOfferQuery\(raw, 24\)/);
   assert.match(page, /canonical: absoluteUrl\("\/bonuses"\)/);
   assert.match(page, /index: false, follow: true/);
@@ -51,19 +51,19 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
 test("all supported controls are GET parameters and no-JS filters and pagination remain links", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
-  assert.match(component, /method="get"/);
+  assert.match(component, /InstantDiscoveryForm/);
   assert.match(component, /<noscript>/);
   assert.match(component, /Bonus result pages/);
   assert.match(component, /\/bonuses\$\{params\.size/);
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
 });
 
-test("loading and error states fail without invented offer truth", () => {
-  const loading = readFileSync("app/(public)/bonuses/loading.tsx", "utf8");
+test("pending and error states fail without invented offer truth", () => {
+  const pending = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
   const error = readFileSync("app/(public)/bonuses/error.tsx", "utf8");
-  assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /Loading current published offers/);
-  assert.doesNotMatch(loading, /£|\$|wagering.*\d/i);
+  assert.match(pending, /aria-busy=\{pending\}/);
+  assert.match(pending, /pendingLabel/);
+  assert.doesNotMatch(pending, /maximum bonus|minimum deposit|wagering multiplier/i);
   assert.match(error, /fail closed/i);
   assert.match(error, /No cached or invented commercial record/);
   assert.match(error, /reset/);

@@ -106,5 +106,5 @@ export interface DiscoveryContext {
 
 export interface PublicCasinoDiscoveryStore {
   listPublished(): Promise<PublishedCasinoSnapshotRecord[]>;
-  loadContext(casinoIds: string[]): Promise<DiscoveryContext>;
+  loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean }): Promise<DiscoveryContext>;
 }

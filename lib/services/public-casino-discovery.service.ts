@@ -139,15 +139,17 @@ export class PublicCasinoDiscoveryService {
   async discover(input: CasinoDiscoveryQuery = {}, authority?: CommercialJurisdictionAuthority | null): Promise<CasinoDiscoveryResult> {
     const now = this.now();
     const published = await this.store.listPublished();
-    const context = await this.store.loadContext(published.map((record) => record.casinoId));
-    const operatorDecisions = jurisdictionAllowsReferral(authority)
+    const redirectEnabled = this.redirectEnabled();
+    const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
+    const context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: true, includeCommercial: commercialProjection });
+    const operatorDecisions = commercialProjection
       ? await this.operatorEligibility.evaluateMany(published.map((record) => record.casinoId), now)
       : new Map<string, GbOperatorEligibilityDecision>();
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);
     const requestedCountry = input.country?.[0];
     const countryContext = requestedCountry && published.some((record) => list(object(record.snapshot).countries).some((entry) => text(object(entry).countryCode).toUpperCase() === requestedCountry)) ? requestedCountry : undefined;
-    const commercialCountryContext = jurisdictionAllowsReferral(authority) ? authority?.countryCode ?? undefined : undefined;
+    const commercialCountryContext = commercialProjection ? authority?.countryCode ?? undefined : undefined;
     const working = published.flatMap((record): WorkingCard[] => {
       const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
       if (!casino) return [];
@@ -156,7 +158,7 @@ export class PublicCasinoDiscoveryService {
       const general = object(editor.general);
       const bonusMetadata = object(editor.bonuses);
       const visit = casinoAllowsCountry(casino.countries.filter((country) => country.availability === "AVAILABLE").map((country) => ({ key: country.countryCode, label: country.countryCode })), countryContext)
-        ? resolvePublicVisitAction(context, casino.id, null, commercialCountryContext, now, authority, operatorDecisions.get(casino.id), this.redirectEnabled())
+        ? resolvePublicVisitAction(context, casino.id, null, commercialCountryContext, now, authority, operatorDecisions.get(casino.id), redirectEnabled)
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
       const bonusCandidates = casino.bonuses.filter((bonus) => {
         const metadata = object(bonusMetadata[bonus.id]);

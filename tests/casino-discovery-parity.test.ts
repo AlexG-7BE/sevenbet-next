@@ -6,6 +6,7 @@ const page = readFileSync("app/(public)/casinos/page.tsx", "utf8");
 const components = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
 const card = readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8");
 const mobile = readFileSync("components/casino-discovery/MobileCasinoFilters.tsx", "utf8");
+const instantForm = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
 
 test("FE-MIG-06 keeps SSR discovery and published DTO boundaries", () => {
   assert.match(page, /publicCasinoDiscoveryService\.discover/);
@@ -37,7 +38,9 @@ test("FE-MIG-06 exposes the approved responsive and state contract", () => {
   assert.match(components, /Market preference, not location/);
   assert.match(components, /Reviews remain available/);
   assert.match(components, /No published reviews match these controls/);
-  assert.match(readFileSync("components/casino-discovery/CasinoDiscoveryPending.tsx", "utf8"), /aria-busy="true"/);
+  assert.match(instantForm, /aria-busy=\{pending\}/);
+  assert.match(instantForm, /aria-live="polite"/);
+  assert.match(instantForm, /method="get"/);
   assert.match(readFileSync("app/(public)/casinos/error.tsx", "utf8"), /could not load the catalogue/);
 });
 

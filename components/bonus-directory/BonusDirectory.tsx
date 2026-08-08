@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
@@ -96,11 +97,11 @@ function FilterFields({ facets, query }: { facets: PublicOfferFacets; query: Pub
 }
 
 function BonusFilterForm({ facets, query, total, compact = false }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; compact?: boolean }) {
-  return <form action="/bonuses" className={compact ? styles.filterFormCompact : styles.filterForm} method="get">
+  return <InstantDiscoveryForm action="/bonuses" className={compact ? styles.filterFormCompact : styles.filterForm} debouncedFields={["maxDeposit", "maxWagering"]} key={`bonus-filters:${compact}:${JSON.stringify(query)}`} pendingLabel="Updating bonus results…">
     <FilterFields facets={facets} query={query} />
     <p className={styles.marketNote}>Country is a comparison preference, not detected location, legal advice or proof that an offer is available to you.</p>
     <div className={styles.filterActions}><div><strong>{total} matching offer{total === 1 ? "" : "s"}</strong><span>Latest current published snapshots only</span></div><Link href="/bonuses">Reset</Link><button type="submit">Show Results</button></div>
-  </form>;
+  </InstantDiscoveryForm>;
 }
 
 export function BonusFilters({ facets, query, total, activeCount }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; activeCount: number }) {

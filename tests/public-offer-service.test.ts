@@ -223,6 +223,26 @@ test("redirect authority failure preserves published editorial offers without ac
   assert.equal(records[0].action.href, null);
 });
 
+test("commercial denial prevents affiliate route projection and operator evaluation", async () => {
+  let includeCommercial: boolean | undefined;
+  let operatorCalls = 0;
+  const repository: PublicOfferStore = {
+    listOffers: async (options) => {
+      includeCommercial = options?.includeCommercial;
+      return [offer("alpha", { available: true })];
+    },
+  };
+  const service = new PublicOfferService(repository, { cmsEnabled: true, redirectEnabled: true }, {
+    async evaluate() { operatorCalls += 1; throw new Error("must not evaluate"); },
+    async evaluateMany() { operatorCalls += 1; return new Map(); },
+  });
+  const result = await service.searchOffers(parsePublicOfferQuery({}));
+  assert.equal(includeCommercial, false);
+  assert.equal(operatorCalls, 0);
+  assert.equal(result.records[0].commercialAvailability, "UNAVAILABLE");
+  assert.equal(result.records[0].action.href, null);
+});
+
 test("public offer pages use the service boundary and expose no raw destination contract", () => {
   for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) {
     const source = readFileSync(file, "utf8");

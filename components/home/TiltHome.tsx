@@ -40,7 +40,7 @@ const heroPhotos = [
   {
     className: styles.heroPhotoTwo,
     src: "/home/hero-confidence.jpg",
-    priority: true,
+    priority: false,
   },
   {
     className: styles.heroPhotoThree,

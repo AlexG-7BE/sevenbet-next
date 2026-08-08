@@ -122,6 +122,26 @@ test("commercial denial preserves published bonus editorial content", async () =
   assert.equal(result.items[0].featuredBonus?.title, "Alpha welcome");
 });
 
+test("commercial denial omits affiliate context and operator evaluation while retaining aliases", async () => {
+  let contextOptions: { includeAliases?: boolean; includeCommercial?: boolean } | undefined;
+  let operatorCalls = 0;
+  const service = new PublicCasinoDiscoveryService({
+    listPublished: async () => [record("alpha-id", "alpha", "Alpha")],
+    loadContext: async (_ids, options) => {
+      contextOptions = options;
+      return { aliases: [{ casinoId: "alpha-id", value: "Alpha alias" }], offers: [], redirects: [] };
+    },
+  }, () => now, {
+    async evaluate() { operatorCalls += 1; throw new Error("must not evaluate"); },
+    async evaluateMany() { operatorCalls += 1; return new Map(); },
+  }, () => true);
+  const result = await service.discover({ search: "Alpha alias" });
+  assert.deepEqual(contextOptions, { includeAliases: true, includeCommercial: false });
+  assert.equal(operatorCalls, 0);
+  assert.equal(result.total, 1);
+  assert.equal(result.items[0].visitAction.available, false);
+});
+
 test("sorting and pagination are stable and bounded", async () => {
   const records = Array.from({ length: 30 }, (_, index) => record(`id-${index.toString().padStart(2, "0")}`, `casino-${index.toString().padStart(2, "0")}`, `Casino ${index.toString().padStart(2, "0")}`));
   const service = new PublicCasinoDiscoveryService(store(records), () => now);

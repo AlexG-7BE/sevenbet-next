@@ -119,8 +119,10 @@ export class PublicOfferService {
       });
     }
     try {
-      const records = await this.repository.listOffers();
-      if (!(this.options.redirectEnabled ?? isAffiliateRedirectEnabled()) || !jurisdictionAllowsReferral(authority)) return records.map(withoutAction);
+      const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
+      const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
+      const records = await this.repository.listOffers({ includeCommercial: commercialProjection });
+      if (!commercialProjection) return records.map(withoutAction);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
       return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record));
     } catch {

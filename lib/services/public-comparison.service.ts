@@ -226,9 +226,11 @@ export class PublicComparisonService {
   async compare(query: PublicComparisonQuery, authority?: CommercialJurisdictionAuthority | null): Promise<PublicComparisonResult> {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     let context: DiscoveryContext;
+    const redirectEnabled = this.redirectEnabled();
+    const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
     try {
       published = await this.store.listPublished();
-      context = await this.store.loadContext(published.map((record) => record.casinoId));
+      context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: false, includeCommercial: commercialProjection });
     } catch {
       return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The published comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false };
     }
@@ -238,7 +240,7 @@ export class PublicComparisonService {
       const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
       return casino?.source === "cms" ? [casino] : [];
     });
-    const operatorDecisions = jurisdictionAllowsReferral(authority)
+    const operatorDecisions = commercialProjection
       ? await this.operatorEligibility.evaluateMany(all.map((casino) => casino.id), now)
       : new Map<string, GbOperatorEligibilityDecision>();
     const candidates: PublicComparisonCandidate[] = all.map((casino) => {
@@ -275,7 +277,7 @@ export class PublicComparisonService {
         lastReviewedAt: casino.lastReviewedAt,
         reviewHref: `/casino/${casino.slug}`,
         marketState: state,
-        action: safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), this.redirectEnabled()),
+        action: safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), redirectEnabled),
       };
     });
     const comparableProjected = projected.filter((casino) => casino.marketState === "AVAILABLE");

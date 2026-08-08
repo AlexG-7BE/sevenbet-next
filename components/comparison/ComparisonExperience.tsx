@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { comparisonHref } from "@/lib/public-comparison/query";
 import type {
   PublicComparisonCandidate,
@@ -27,7 +28,7 @@ function candidateLabel(candidate: PublicComparisonCandidate) {
 }
 
 function SelectionForm({ result }: { result: PublicComparisonResult }) {
-  return <form action="/compare" className={styles.selectionForm} method="get">
+  return <InstantDiscoveryForm action="/compare" className={styles.selectionForm} key={`comparison:${result.query.country}:${result.query.differences}:${result.selectedSlugs.join(",")}`} pendingLabel="Updating comparison…">
     <input name="country" type="hidden" value={result.query.country} />
     {result.query.differences ? <input name="differences" type="hidden" value="true" /> : null}
     <fieldset>
@@ -55,7 +56,7 @@ function SelectionForm({ result }: { result: PublicComparisonResult }) {
       <span role="status">{result.selectedSlugs.length} of 3 selected{result.selectedSlugs.length === 3 ? " · maximum" : ""}</span>
     </div>
     {result.query.issues.length ? <p className={styles.queryNotice} role="status">Some URL values were safely ignored: {result.query.issues.map((issue) => issue.replaceAll("_", " ").toLowerCase()).join(" · ")}.</p> : null}
-  </form>;
+  </InstantDiscoveryForm>;
 }
 
 function SelectedCard({ casino, index, result }: { casino: PublicComparisonCasino; index: number; result: PublicComparisonResult }) {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { discoveryHref } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryFacetValue, CasinoDiscoveryQuery, CasinoDiscoveryResult, PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
@@ -55,22 +56,22 @@ function activeFilterCount(query: CasinoDiscoveryQuery) {
 
 function FilterForm({ result, mobile = false }: { result: CasinoDiscoveryResult; mobile?: boolean }) {
   const query = result.appliedFilters;
-  return <form action="/casinos" className={mobile ? styles.mobileFilterForm : styles.filterForm} method="get">
+  return <InstantDiscoveryForm action="/casinos" className={mobile ? styles.mobileFilterForm : styles.filterForm} key={`filters:${mobile}:${JSON.stringify(query)}`} pendingLabel="Updating casino results…">
     <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
     <div className={styles.filterPrompt}><span>Filters and sort</span><strong>Select the facts you want to compare.</strong></div>
     <FilterFields result={result} />
     <p className={styles.preferenceNote}><strong>Market preference, not location.</strong> Filters published market information; it does not confirm eligibility.</p>
     <div className={styles.filterActions}><div><strong>{result.total} {result.total === 1 ? "published match" : "published matches"}</strong><span>Only current published review snapshots</span></div><Link href="/casinos">Reset all</Link><button type="submit">{mobile ? `Show ${result.total} results` : "Apply filters →"}</button></div>
-  </form>;
+  </InstantDiscoveryForm>;
 }
 
 function SearchForm({ result }: { result: CasinoDiscoveryResult }) {
-  return <form action="/casinos" className={styles.searchForm} method="get"><HiddenQuery except={["q"]} query={result.appliedFilters} /><label className={styles.srOnly} htmlFor="casino-search">Search published reviews</label><input defaultValue={result.appliedFilters.search ?? ""} id="casino-search" maxLength={100} name="q" placeholder="Search casino, licence, payment…" type="search" /><button aria-label="Search" type="submit">→</button></form>;
+  return <InstantDiscoveryForm action="/casinos" className={styles.searchForm} debouncedFields={["q"]} key={`search:${JSON.stringify(result.appliedFilters)}`} pendingLabel="Updating casino results…"><HiddenQuery except={["q"]} query={result.appliedFilters} /><label className={styles.srOnly} htmlFor="casino-search">Search published reviews</label><input defaultValue={result.appliedFilters.search ?? ""} id="casino-search" maxLength={100} name="q" placeholder="Search casino, licence, payment…" type="search" /><button aria-label="Search" type="submit">→</button></InstantDiscoveryForm>;
 }
 
 function SortForm({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
-  return <form action="/casinos" className={styles.sortForm} method="get"><HiddenQuery except={["sort", "pageSize"]} query={query} /><label><span>Sort</span><select aria-label="Sort by" defaultValue={query.sort} name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span>Show</span><select aria-label="Show" defaultValue={query.pageSize} name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></label><button type="submit">Update</button></form>;
+  return <InstantDiscoveryForm action="/casinos" className={styles.sortForm} key={`sort:${JSON.stringify(query)}`} pendingLabel="Updating casino results…"><HiddenQuery except={["sort", "pageSize"]} query={query} /><label><span>Sort</span><select aria-label="Sort by" defaultValue={query.sort} name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span>Show</span><select aria-label="Show" defaultValue={query.pageSize} name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></label><button type="submit">Update</button></InstantDiscoveryForm>;
 }
 
 export function DiscoveryControls({ result }: { result: CasinoDiscoveryResult }) {
@@ -117,7 +118,7 @@ export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) 
   const firstPosition = (result.page - 1) * result.pageSize + 1;
   const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
   return <div className={styles.results} id="casino-results">
-    <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "published review" : "published reviews"}</h2></div><p aria-live="polite" role="status">Page {result.page} of {result.pageCount}</p></div>
+    <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "published review" : "published reviews"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
     {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. SevenBet will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div>}
     {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
