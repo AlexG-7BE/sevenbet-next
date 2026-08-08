@@ -4,6 +4,8 @@
 
 Reconciled on 2026-08-08 during ENV-ISO-01. Production and Preview are distinct Prisma Postgres resources, and Vercel account metadata reports both on the **Free** plan.
 
+ENV-ISO-01 is merged and closed with Production healthy and auth verified. Its closure proves environment isolation; it does not change the separate recovery classification or authorise paid infrastructure.
+
 | Capability | Classification | Evidence |
 | --- | --- | --- |
 | Automated snapshots | **Not available on the current plan** | Prisma's detailed [backup documentation](https://www.prisma.io/docs/postgres/database/backups) lists automatic snapshots for Starter, Pro and Business; account metadata reports Free. |
@@ -37,7 +39,7 @@ Before stateful closed-beta or regulated release, Founder Office must authorise 
 1. upgrade to a plan with provider snapshots, verify the actual schedule/retention and complete a Preview-sourced restore into a new isolated resource; or
 2. approve a separately governed encrypted backup architecture, retention authority and restore drill.
 
-ENV-ISO-01 did not authorise either spend or architecture choice.
+ENV-ISO-01 and REPO-FINALIZE-01 did not authorise either spend or architecture choice. The stateful Closed Commercial Beta recovery gate remains open.
 
 ## Future non-production restore drill
 

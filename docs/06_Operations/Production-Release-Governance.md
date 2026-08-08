@@ -8,6 +8,7 @@
 - **Detected:** the repository supplies three deterministic CI contexts: `Quality`, `Build / Browser`, and `Database / Migration Verification`.
 - **Detected during OPS-01:** `main` branch protection is enabled and currently requires pull-request delivery; strict, up-to-date `Quality`, `Build / Browser`, `Database / Migration Verification`, and `Vercel` contexts; resolved review conversations; administrator enforcement; zero required approvals for the current single-maintainer model; and no force push or branch deletion.
 - **Detected:** [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is merged at `e140f4d`; required branch protection and successful Production Smoke evidence are active.
+- **Detected:** ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged under explicit Founder Office authority as `a954243`; exact-merge main CI, Production deployment, Production Smoke and real staff auth E2E passed. The environment-isolation/configuration incident is closed.
 - **Not authorised:** direct Production mutation, automatic PR merge, force push, branch deletion, production credentials in PR CI, or deployment from an arbitrary local branch.
 
 The Git commit SHA is the release identifier. Record the pull request and Vercel deployment URL in the release/incident record; do not create a parallel ID.

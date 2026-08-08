@@ -1,6 +1,6 @@
 # Known Technical Debt
 
-Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `2aefc05dab2332deeb7dbe6f26d3a08d7b849028` plus ENV-ISO-01 delivery [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) on 2026-08-08. Dependencies, generated output, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
+Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at merged ENV-ISO-01 baseline `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b` on 2026-08-08. Dependencies, generated output, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
 
 ## Remaining
 
@@ -11,7 +11,7 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 | Historical migration preflight | Migration 0015 adds and uses a PostgreSQL enum value that must be committed between operations. The existing idempotent preflight is required before fresh replay. | Restore/bootstrap tooling must preserve this explicit step; migration history cannot safely be treated as standalone. | High |
 | Legacy admin-preview path | `middleware.ts` and `lib/auth/admin.ts` retain the token path when `CMS_PHASE1_ALLOW_DEV_ADMIN=true`. | Dual access paths increase policy/configuration complexity. | Medium |
 | Jurisdiction/compliance authority | The resolver is shadow/deny-safe; `unavailableJurisdictionPolicyStore` has no approved live policy dataset and public enforcement is not detected. | Regulated-first commercial eligibility is not demonstrated end-to-end. | Critical |
-| Operational visibility | Vercel logs and hourly smoke are detected, but paging, central retention and a named legal/compliance responder are not. | Incidents outside active observation may be delayed; notification ownership needs post-merge proof. | High |
+| Operational visibility | Vercel logs and hourly smoke are detected, and the manual ENV-ISO post-merge smoke passed; paging, central retention, independently observed scheduled-notification delivery and a named legal/compliance responder are not detected. | Incidents outside active observation may be delayed; broader monitoring remains less robust than a mature Production operations model. | High |
 | Programme expiry and rate limiting | Anonymous expiry is defined and limiting is in-process; no automated purge or shared/distributed limiter is detected. | Multi-instance abuse control and expired-data cleanup remain incomplete. | High |
 | Account privacy/recovery lifecycle | Artefact-level edit/content erasure exists; account-wide export, account-wide erasure automation and complete password recovery are not detected. | Full user account lifecycle is incomplete. | High |
 | Programme autosave ordering | Draft APIs have no revision/client sequence; scalar/private fields remain last-write-wins. | A delayed request can overwrite a newer draft field. | Medium |
@@ -38,6 +38,6 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 - Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
 - OPS-01 linting/governance foundation: ESLint, deterministic three-job CI, fresh-database proof, build-secret scan, scheduled smoke and operational runbooks are delivered by OPS-01 / PR #45.
 - OPS-01 dependency baseline: Next.js is patched to 15.5.21 and bounded PostCSS 8.5.23/Sharp 0.35.0 overrides remove the detected transitive advisories; `npm audit` reports zero known vulnerabilities after build/browser regression proof.
-- ENV-ISO-01 Preview/Production isolation: distinct provider resources, database credentials, Better Auth secrets and admin credentials are detected; Production and Preview provider connections are environment-scoped, exact-host Preview auth passes, no Production data was copied and the disposable auth canary was removed. Delivery remains unmerged in PR #52.
+- ENV-ISO-01 Preview/Production isolation: [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) is merged; distinct provider resources, database credentials, Better Auth secrets and admin credentials are detected; Production and Preview provider connections are environment-scoped, exact-host Preview auth passes, no Production data was copied and the disposable auth canary was removed. Exact-merge Production deployment, smoke and real staff auth E2E passed; the ENV-ISO workstream is closed.
 
 Resolved Design System debt does not imply product, legal/compliance, data-partner, backend/operations or launch readiness. Remaining route-local extraction is P2/P3 and requires new production evidence.

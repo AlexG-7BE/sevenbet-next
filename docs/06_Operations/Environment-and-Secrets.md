@@ -2,7 +2,7 @@
 
 ## Trust zones and active evidence
 
-Reconciled on 2026-08-08 for ENV-ISO-01 delivery [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52). Secret values are intentionally omitted.
+Reconciled on 2026-08-08 after ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged and passed post-merge Production verification. Secret values are intentionally omitted.
 
 | Zone | Database authority | Auth/admin authority | External integrations | Allowed data and mutation | Deployment source |
 | --- | --- | --- | --- | --- | --- |
@@ -22,7 +22,10 @@ Preview is an engineering/review environment, not Demo/Staging. It must never be
 - **Detected:** Preview Better Auth uses `VERCEL_BRANCH_URL` only when `VERCEL_ENV=preview`. The host must be an exact generated `*-git-*.vercel.app` branch host; wildcard, Production fallback and contradictory static origins fail closed.
 - **Detected:** an `example.invalid` Preview account and session succeeded, the exact account was absent from Production, Production rejected the Preview session, and the Preview account was deleted. No canary remains.
 - **Detected:** the Production marketplace connection is Production-only under `PRODDB_*`; the Preview connection is Preview-only under `ENVISO_*`. The application continues to consume separately scoped `DATABASE_URL`/`DIRECT_URL` values.
+- **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; exact-merge main CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected admin, refresh/session persistence and logout.
 - **Not detected:** any Production database, user, Programme, protected-support or CMS record copied to Preview.
+
+ENV-ISO-01 and the associated Production configuration incident are closed. Recovery remains PARTIAL and is governed separately before stateful closed beta.
 
 The provider connection prefixes are control-plane aliases. No repository runtime consumer uses `PRODDB_*` or `ENVISO_*`; the separately scoped runtime/direct variables remain authoritative.
 
