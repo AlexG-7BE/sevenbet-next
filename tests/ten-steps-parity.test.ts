@@ -9,6 +9,7 @@ const page = readFileSync("app/(public)/10-steps/page.tsx", "utf8");
 const landing = readFileSync("app/(public)/10-steps/TenStepsLanding.tsx", "utf8");
 const layout = readFileSync("app/(public)/layout.tsx", "utf8");
 const styles = readFileSync("app/(public)/10-steps/TenStepsLanding.module.css", "utf8");
+const actionStyles = readFileSync("components/design-system/Action.module.css", "utf8");
 const combined = `${page}\n${landing}\n${styles}`;
 
 test("10 Steps keeps the approved Figma hierarchy inside the Public Shell", () => {
@@ -174,6 +175,7 @@ test("core content remains SSR-first, visible by default and responsive", () => 
   assert.match(styles, /@media \(max-width: 900px\)/);
   assert.match(styles, /@media \(max-width: 380px\)/);
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
-  assert.match(styles, /:focus-visible/);
-  assert.match(styles, /min-height: 64px/);
+  assert.match(landing, /<ActionLink/);
+  assert.match(actionStyles, /\.action:focus-visible/);
+  assert.match(actionStyles, /min-height: var\(--sb-action-height, 64px\)/);
 });

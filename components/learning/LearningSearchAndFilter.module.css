@@ -3,8 +3,8 @@
   grid-template-columns: minmax(250px, .72fr) minmax(0, 1.28fr);
   column-gap: clamp(40px, 8vw, 128px);
   padding: clamp(72px, 10vw, 144px) max(32px, calc((100vw - 1240px) / 2));
-  background: #f4f1eb;
-  color: #100f0f;
+  background: var(--sb-field);
+  color: var(--sb-night);
 }
 
 .headingBlock { grid-row: span 2; }
@@ -12,22 +12,22 @@
 .headingBlock h2 { max-width: 8ch; margin: 0 0 28px; font-size: clamp(3rem, 6.2vw, 6.3rem); line-height: .84; letter-spacing: -.075em; }
 .headingBlock > p:last-child { max-width: 40ch; margin: 0; color: #55514b; font-size: 1rem; line-height: 1.6; }
 
-.controls { border-top: 5px solid #100f0f; }
+.controls { border-top: 5px solid var(--sb-night); }
 .controls label { display: grid; gap: 10px; }
 .controls label > span { font-size: .72rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .controls input, .controls select {
-  width: 100%; min-height: 52px; border: 0; border-bottom: 2px solid #100f0f; border-radius: 0;
-  background: transparent; color: #100f0f; padding: 10px 40px 10px 0; font-size: 1rem;
+  width: 100%; min-height: 52px; border: 0; border-bottom: 2px solid var(--sb-night); border-radius: 0;
+  background: transparent; color: var(--sb-night); padding: 10px 40px 10px 0; font-size: 1rem;
 }
-.controls input:focus-visible, .controls select:focus-visible { outline-color: #176c65; outline-offset: 4px; border-radius: 0; }
+.controls input:focus-visible, .controls select:focus-visible { outline-color: var(--sb-teal); outline-offset: 4px; border-radius: 0; }
 .searchField { padding: 28px 0 32px; }
 .searchField input { font-size: clamp(1.15rem, 2vw, 1.55rem); }
 .selectGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
 
 .resultBar { grid-column: 2; display: flex; justify-content: space-between; align-items: center; gap: 24px; margin-top: 44px; border-bottom: 1px solid rgba(16,15,15,.35); padding-bottom: 14px; }
 .resultBar p { margin: 0; font-size: .9rem; letter-spacing: .03em; }
-.resultBar button, .emptyActions button, .emptyActions a { min-height: 44px; border: 0; border-radius: 0; padding: 10px 16px; background: #100f0f; color: #fff; font-weight: 850; cursor: pointer; }
-.resultBar button { background: transparent; color: #100f0f; text-decoration: underline; text-underline-offset: 4px; }
+.resultBar button, .emptyActions button, .emptyActions a { min-height: 44px; border: 0; border-radius: 0; padding: 10px 16px; background: var(--sb-night); color: var(--sb-white); font-weight: 850; cursor: pointer; }
+.resultBar button { background: transparent; color: var(--sb-night); text-decoration: underline; text-underline-offset: 4px; }
 
 .results { grid-column: 2; margin: 0; padding: 0; list-style: none; }
 .results li { border-bottom: 1px solid rgba(16,15,15,.35); }
@@ -39,11 +39,11 @@
 .arrow { font-size: 1.3rem; transition: transform .18s ease; }
 .resultLink:hover .arrow { transform: translate(3px, -3px); }
 
-.empty { grid-column: 2; margin-top: 28px; padding: clamp(38px, 7vw, 80px); background: #e4e24e; }
+.empty { grid-column: 2; margin-top: 28px; padding: clamp(38px, 7vw, 80px); background: var(--sb-acid); }
 .empty h3 { max-width: 9ch; margin: 0 0 18px; font-size: clamp(2.8rem, 6vw, 5.8rem); line-height: .86; letter-spacing: -.07em; }
 .empty > p:not(.kicker) { max-width: 50ch; line-height: 1.6; }
 .emptyActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
-.emptyActions a { background: transparent; color: #100f0f; border: 2px solid #100f0f; }
+.emptyActions a { background: transparent; color: var(--sb-night); border: 2px solid var(--sb-night); }
 
 @media (max-width: 800px) {
   .section { grid-template-columns: 1fr; padding: 72px 20px; }

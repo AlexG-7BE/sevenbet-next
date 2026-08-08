@@ -1,11 +1,11 @@
 .shell {
-  --help-paper: #fafaf7;
-  --help-white: #ffffff;
-  --help-ink: #100f0f;
-  --help-muted: #64635c;
-  --help-teal: #176c65;
-  --help-soft: #faf9b6;
-  --help-night-muted: #b7b5ad;
+  --help-paper: var(--sb-paper);
+  --help-white: var(--sb-white);
+  --help-ink: var(--sb-night);
+  --help-muted: var(--sb-metal);
+  --help-teal: var(--sb-teal);
+  --help-soft: var(--sb-acid-soft);
+  --help-night-muted: var(--sb-grey-300);
   min-width: 0;
   overflow-x: clip;
   background: var(--help-paper);
@@ -71,7 +71,7 @@
 .heroBadge,
 .resourceStatus,
 .separationBadge {
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--help-teal);
   color: white;
   font-weight: 800;
@@ -110,7 +110,7 @@
 .resourceAction,
 .programmeAction {
   min-height: 44px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -549,7 +549,7 @@
   width: fit-content;
   margin: 16px 0 0;
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--help-teal);
   color: white;
   font-size: 10px;
@@ -727,7 +727,7 @@
   flex: 0 0 auto;
   min-height: 44px;
   padding: 10px 14px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   display: inline-flex;
   align-items: center;
   justify-content: center;

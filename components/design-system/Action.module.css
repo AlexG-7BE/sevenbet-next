@@ -1,0 +1,83 @@
+.action {
+  width: fit-content;
+  min-width: var(--sb-action-min-width, 0);
+  border: 1px solid transparent;
+  border-radius: var(--sb-action-radius, var(--sb-radius-full));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+  font-variation-settings: "wdth" 100;
+  font-weight: var(--sb-action-font-weight, 650);
+  text-align: center;
+  text-decoration: none;
+  touch-action: manipulation;
+  transition:
+    background-color var(--sb-motion-fast) var(--sb-ease-standard),
+    border-color var(--sb-motion-fast) var(--sb-ease-standard),
+    color var(--sb-motion-fast) var(--sb-ease-standard),
+    transform var(--sb-motion-fast) var(--sb-ease-standard);
+}
+
+.medium {
+  min-height: var(--sb-action-height, 52px);
+  padding: 0 var(--sb-action-padding-inline, var(--sb-space-6));
+  font-size: var(--sb-action-font-size, 13px);
+  line-height: 1.1;
+}
+
+.large {
+  min-height: var(--sb-action-height, 64px);
+  padding: 0 var(--sb-action-padding-inline, 28px);
+  font-size: var(--sb-action-font-size, 15px);
+  line-height: 1.1;
+}
+
+.primary {
+  background: var(--sb-action-background, var(--sb-action-primary));
+  color: var(--sb-action-color, var(--sb-action-on-primary));
+}
+
+.primary:hover {
+  background: var(--sb-action-background-hover, var(--sb-action-primary-hover));
+  transform: translateY(-1px);
+}
+
+.ghostNight {
+  border-color: var(--sb-text-on-night);
+  background: transparent;
+  color: var(--sb-text-on-night);
+}
+
+.ghostNight:hover {
+  background: var(--sb-text-on-night);
+  color: var(--sb-text-ink);
+}
+
+.ghostPaper {
+  border-color: var(--sb-text-ink);
+  background: transparent;
+  color: var(--sb-text-ink);
+}
+
+.ghostPaper:hover {
+  background: var(--sb-text-ink);
+  color: var(--sb-text-on-night);
+}
+
+.action:active {
+  transform: translateY(0);
+}
+
+.action:focus-visible {
+  outline: var(--sb-focus-width) solid var(--sb-focus-color);
+  outline-offset: var(--sb-focus-offset);
+}
+
+.action:disabled {
+  cursor: not-allowed;
+  opacity: .32;
+  pointer-events: none;
+  transform: none;
+}

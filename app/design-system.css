@@ -1,0 +1,104 @@
+/*
+ * SevenBet Design System v1
+ *
+ * Governing visual direction: RFC-007, Tilt-Locked — Human Product Theatre.
+ * Keep primitives private to this file; consumers should prefer semantic roles.
+ */
+:root {
+  /* Primitive colour palette */
+  --sb-night: #100f0f;
+  --sb-deep: #171616;
+  --sb-charcoal: #262525;
+  --sb-black: #060708;
+  --sb-night-strong: #0d0d0d;
+  --sb-paper: #fafaf7;
+  --sb-field: #f4f1eb;
+  --sb-white: #ffffff;
+  --sb-metal: #64635c;
+  --sb-grey-300: #b7b5ad;
+  --sb-grey-200: #d8d7cf;
+  --sb-acid: #e4e24e;
+  --sb-acid-hover: #efed58;
+  --sb-acid-soft: #faf9b6;
+  --sb-acid-bright: #f0e814;
+  --sb-teal: #176c65;
+  --sb-teal-rich: #19766f;
+  --sb-danger: #b94b47;
+  --sb-danger-strong: #b73a34;
+  --sb-danger-text: #a72e2a;
+  --sb-acid-contrast: #777500;
+
+  /* Semantic colour roles */
+  --sb-surface-night: var(--sb-night);
+  --sb-surface-night-strong: var(--sb-night-strong);
+  --sb-surface-deep: var(--sb-deep);
+  --sb-surface-card-dark: var(--sb-charcoal);
+  --sb-surface-black: var(--sb-black);
+  --sb-surface-paper: var(--sb-paper);
+  --sb-surface-field: var(--sb-field);
+  --sb-surface-white: var(--sb-white);
+  --sb-text-on-night: var(--sb-white);
+  --sb-text-on-night-muted: var(--sb-grey-300);
+  --sb-text-ink: var(--sb-night);
+  --sb-text-muted: var(--sb-metal);
+  --sb-action-primary: var(--sb-acid);
+  --sb-action-primary-hover: var(--sb-acid-hover);
+  --sb-action-primary-bright: var(--sb-acid-bright);
+  --sb-action-on-primary: var(--sb-night);
+  --sb-action-soft: var(--sb-acid-soft);
+  --sb-border-subtle: rgba(16, 15, 15, .34);
+  --sb-border-on-night: rgba(255, 255, 255, .34);
+  --sb-safety-verified: var(--sb-teal);
+  --sb-status-danger: var(--sb-danger);
+  --sb-status-danger-text: var(--sb-danger-text);
+  --sb-focus-acid-contrast: var(--sb-acid-contrast);
+
+  /* Typography */
+  --sb-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sb-type-label-size: 12px;
+  --sb-type-label-line: 16px;
+  --sb-type-body-small-size: 13px;
+  --sb-type-body-small-line: 19px;
+  --sb-type-body-size: 16px;
+  --sb-type-body-line: 24px;
+  --sb-type-body-large-size: 18px;
+  --sb-type-body-large-line: 27px;
+
+  /* Spacing */
+  --sb-space-1: 4px;
+  --sb-space-2: 8px;
+  --sb-space-3: 12px;
+  --sb-space-4: 16px;
+  --sb-space-6: 24px;
+  --sb-space-8: 32px;
+  --sb-space-12: 48px;
+  --sb-space-16: 64px;
+  --sb-space-24: 96px;
+  --sb-space-32: 128px;
+
+  /* Geometry */
+  --sb-radius-none: 0;
+  --sb-radius-s: 12px;
+  --sb-radius-m: 20px;
+  --sb-radius-l: 24px;
+  --sb-radius-full: 999px;
+  --sb-content-compact: 1050px;
+  --sb-content-default: 1248px;
+  --sb-content-wide: 1280px;
+  --sb-content-shell: 1312px;
+
+  /* Interaction */
+  --sb-focus-color: var(--sb-safety-verified);
+  --sb-focus-width: 3px;
+  --sb-focus-offset: 3px;
+  --sb-motion-fast: 160ms;
+  --sb-motion-standard: 240ms;
+  --sb-ease-standard: ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sb-motion-fast: 0ms;
+    --sb-motion-standard: 0ms;
+  }
+}

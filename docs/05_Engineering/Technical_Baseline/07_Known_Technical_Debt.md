@@ -1,6 +1,6 @@
 # Known Technical Debt
 
-Repository evidence was rescanned at main baseline `30fc96e198f2a509ac3cae707f66bf9b6b9a5201` on 2026-08-07. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
+Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `2d151218b3e4f85f40fc3473b4b5c63dfaba57e3` on 2026-08-08. Dependencies, generated output, build artefacts and caches were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
 
 ## Remaining
 
@@ -16,8 +16,7 @@ Repository evidence was rescanned at main baseline `30fc96e198f2a509ac3cae707f66
 | Programme autosave ordering | Draft APIs have no revision/client sequence; scalar/private fields remain last-write-wins. | A delayed request can overwrite a newer draft field. | Medium |
 | Connected concurrency evidence | Memory-unit tests cover replay/rollback and schema uniqueness is detected; no multi-process connected-database contention test is detected. | Cross-process production guarantees are not load-tested. | Medium |
 | CMS coverage ambiguity | Article/legacy CMS models exist, but no article admin/editor route is detected. | Ownership of legacy/unused content entities remains unclear. | Medium |
-| Frontend consolidation | Page migration is complete, but token/component duplication, CSS ownership, state variants, cross-route accessibility and visual baseline governance remain unnormalized. | Drift can recur without FE-DS-01 consolidation. | Medium |
-| Visual regression tooling | Focused Playwright and `visual:qa` checks exist; no maintained cross-route approved screenshot baseline is detected. | Figma/code drift can escape package-level checks. | Medium |
+| Route-local CSS breadth | Design System v1 centralizes the recurring production palette and one proven Action family, but 25 route/domain CSS Modules remain by design and the breakpoint spread is unchanged. | Additional extraction without production evidence could erase approved page and domain differences. | Low |
 | Local casino environment/data drift | FE-GAP-02 evidence observed locally linked demo profiles returning 404 while corresponding production profiles resolved; source failure was not demonstrated. | Local validation can disagree with production data state. | Low |
 
 ## Newly confirmed
@@ -34,5 +33,7 @@ Repository evidence was rescanned at main baseline `30fc96e198f2a509ac3cae707f66
 - Legal placeholders: Privacy and Terms are substantive launch-candidate pages; external approval remains a release gate, not a page placeholder defect.
 - Known page-level missing-H1/nested-main defects addressed by FE-GAP-02.
 - FE-HANDOFF-01: confirmation-first managed handoff and neutral fail-closed recovery are implemented.
+- FE-DS-01 frontend consolidation: recurring production colour roles, focus/motion roles and eligible internal actions are governed by Design System v1; five unreachable presentation wrappers were removed.
+- Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
 
-Resolved page migration does not mean FE-DS-01 is complete; consolidation debt remains until that work is delivered.
+Resolved Design System debt does not imply product, legal/compliance, data-partner, backend/operations or launch readiness. Remaining route-local extraction is P2/P3 and requires new production evidence.

@@ -2,8 +2,8 @@
 
 ## Snapshot
 
-- **Reconciled:** 2026-08-07
-- **Main baseline:** `30fc96e198f2a509ac3cae707f66bf9b6b9a5201` (PR [#42](https://github.com/AlexG-7BE/sevenbet-next/pull/42))
+- **Reconciled:** 2026-08-08
+- **Main baseline:** `2d151218b3e4f85f40fc3473b4b5c63dfaba57e3` (PR [#43](https://github.com/AlexG-7BE/sevenbet-next/pull/43))
 - **Production URL:** <https://sevenbet-next.vercel.app> (HTTP 200 verified 2026-08-07)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
@@ -12,9 +12,9 @@
 
 **Detected:** the public page-level frontend migration is complete through FE-GAP-02. The final audit has no known page-level P0 or P1 public-surface defect.
 
-**Next frontend phase:** **FE-DS-01 — Frontend & Design System Consolidation**.
+**Current frontend delivery:** **FE-DS-01 — Frontend & Design System Consolidation** is represented by the FE-DS-01 implementation pull request and its merge commit in Git history.
 
-FE-DS-01 consolidates the production UI inventory, tokens, components, states, responsive contracts, accessibility, visual regression and governance. It is not authority to reopen approved page-level redesign. SevenBet as a whole is not declared launch-ready or compliance-complete.
+**Detected in the delivery:** Design System v1 consolidates the production UI inventory, semantic tokens, internal Action component, states, responsive evidence, accessibility, bounded visual regression, Figma production back-sync and governance. It does not reopen approved page-level design. SevenBet as a whole is not declared launch-ready or compliance-complete.
 
 ## Completed frontend
 
@@ -65,11 +65,11 @@ The exact merged work-package history is recorded in the [final migration audit]
 
 ### Design system
 
-- FE-DS-01 production inventory, token and component normalization, accessibility/state consolidation, visual regression, Storybook decision, Figma production back-sync and legacy deprecation.
+- No P0/P1 Design System release gate is detected in FE-DS-01. Remaining route-local extraction is P2/P3 and requires production evidence; Storybook and Code Connect are explicitly deferred in the [Design System v1 contract](02_Product_Design/Design-System-v1.md).
 
-## Known non-blocking pre-DS debt
+## Known non-blocking debt
 
 - `npm run lint` still invokes unsupported `next lint` under Next 15.
 - The Programme suite currently passes 36/43 tests; seven Mission 04 fixtures use fixed review dates outside the rolling 30-day validator window.
 - Local/demo casino availability can drift from production data; locally linked demo profiles may return 404 even when production profiles resolve. This is classified as environment/data drift, not a demonstrated source-code failure.
-- Cross-route visual regression and duplicate CSS/component governance remain FE-DS-01 work.
+- Route-local CSS remains broad by design. The recurring production palette, shared internal Action, cross-route visual baseline and code/Figma governance are consolidated in Design System v1.

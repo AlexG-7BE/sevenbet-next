@@ -28,7 +28,7 @@
 html { scroll-behavior: smooth; }
 
 body:has(.tiltHomePage) {
-  background: #100f0f;
+  background: var(--sb-surface-night);
 }
 
 body:has(.tiltHomePage) > .topbar,
@@ -37,7 +37,7 @@ body:has(.tiltHomePage) > .footer {
 }
 
 body:has(.activeProgrammePage) {
-  background: #fafaf7;
+  background: var(--sb-surface-paper);
   color-scheme: light;
 }
 
@@ -77,7 +77,7 @@ button, input, select { font: inherit; }
 }
 .skipLink { position: fixed; left: 16px; top: -80px; z-index: 100; padding: 10px 14px; border-radius: 8px; background: var(--emerald); color: var(--dark-text); font-weight: 800; }
 .skipLink:focus { top: 16px; }
-body:has([data-public-shell]) .skipLink { background: #e4e24e; color: #100f0f; }
+body:has([data-public-shell]) .skipLink { background: var(--sb-action-primary); color: var(--sb-action-on-primary); }
 
 .container { width: min(1200px, calc(100% - 64px)); margin: 0 auto; }
 .narrow { max-width: 880px; }
@@ -229,7 +229,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .tenStepsMetric { display: flex; align-items: baseline; gap: 12px; padding: 30px 0 22px; border-bottom: 1px solid rgba(247, 251, 239, .2); }
 .tenStepsMetric strong { font-size: 5.6rem; line-height: .8; letter-spacing: -.07em; color: #baf266; }.tenStepsMetric span { color: #c6d8c7; }
 .tenStepsMissionPreview { margin-top: 20px; padding: 28px; border-radius: 18px; background: #f7fbef; color: #111611; }.tenStepsSignal { color: #286448; font-size: .7rem; font-weight: 900; letter-spacing: .12em; }.tenStepsMissionPreview h2 { margin: 14px 0 10px; font-size: 2.1rem; letter-spacing: -.05em; }.tenStepsMissionPreview p { color: #4c584d; line-height: 1.5; }.tenStepsReward { margin-top: 25px; color: #245e42; letter-spacing: .04em; }.tenStepsConsoleFoot { padding: 18px 2px 3px; color: #c6d8c7; font-size: .84rem; }
-.tenStepsProof { border-top: 1px solid #d8ddd3; border-bottom: 1px solid #d8ddd3; background: #ffffff; }.tenStepsProofGrid { display: grid; grid-template-columns: repeat(3, 1fr); }.tenStepsProof p { display: grid; gap: 6px; margin: 0; padding: 24px 28px; border-left: 1px solid #d8ddd3; }.tenStepsProof p:last-child { border-right: 1px solid #d8ddd3; }.tenStepsProof strong { font-size: 1rem; }.tenStepsProof span { color: #667067; font-size: .86rem; }
+.tenStepsProof { border-top: 1px solid #d8ddd3; border-bottom: 1px solid #d8ddd3; background: var(--sb-surface-white); }.tenStepsProofGrid { display: grid; grid-template-columns: repeat(3, 1fr); }.tenStepsProof p { display: grid; gap: 6px; margin: 0; padding: 24px 28px; border-left: 1px solid #d8ddd3; }.tenStepsProof p:last-child { border-right: 1px solid #d8ddd3; }.tenStepsProof strong { font-size: 1rem; }.tenStepsProof span { color: #667067; font-size: .86rem; }
 .tenStepsPath { padding: 108px 0; }.tenStepsSectionHead { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: end; margin-bottom: 44px; }.tenStepsSectionHead h2 { margin: 0; font-size: clamp(2.7rem, 5vw, 4.4rem); line-height: .98; letter-spacing: -.06em; }.tenStepsSectionHead > p:last-child { max-width: 400px; margin: 0 0 4px; color: #566156; line-height: 1.55; }
 .tenStepsMissionGrid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; margin: 0; padding: 1px; list-style: none; background: #cfd5ca; }.tenStepsMissionGrid li { min-height: 205px; padding: 26px; background: #f9faf6; }.tenStepsMissionGrid li span { color: #2e6446; font-weight: 900; letter-spacing: .08em; }.tenStepsMissionGrid h3 { margin: 42px 0 10px; font-size: 1.45rem; letter-spacing: -.035em; }.tenStepsMissionGrid p { max-width: 430px; margin: 0; color: #626d63; line-height: 1.5; }
 .tenStepsCommerce { padding: 84px 0; background: #073c2d; color: #f7fbef; }.tenStepsCommerceGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }.tenStepsCommerce .tenStepsKicker { color: #baf266; }.tenStepsCommerce h2 { max-width: 520px; font-size: clamp(2.7rem, 5vw, 4rem); line-height: .98; letter-spacing: -.06em; }.tenStepsCommerce p { max-width: 520px; color: #c6d8c7; line-height: 1.6; }.tenStepsCommerceLinks { border-top: 1px solid rgba(247,251,239,.25); }.tenStepsCommerceLinks a { display: grid; grid-template-columns: 44px 1fr 20px; gap: 12px; align-items: center; padding: 20px 0; border-bottom: 1px solid rgba(247,251,239,.25); font-size: 1.2rem; font-weight: 800; }.tenStepsCommerceLinks span { color: #baf266; font-size: .78rem; letter-spacing: .08em; }.tenStepsCommerceLinks b { color: #baf266; }
@@ -1461,8 +1461,8 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  background: var(--acid, #e4e24e);
-  color: var(--ink, #100f0f);
+  background: var(--acid, var(--sb-action-primary));
+  color: var(--ink, var(--sb-action-on-primary));
   font: inherit;
   font-size: 12px;
   font-weight: 750;
@@ -1479,18 +1479,18 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
 .commercialOutboundPrimary:hover {
   transform: translateY(-1px);
-  background: #efed58;
+  background: var(--sb-action-primary-hover);
 }
 
 .commercialOutboundSecondary {
   width: 100%;
-  border-color: var(--ink, #100f0f);
+  border-color: var(--ink, var(--sb-text-ink));
   background: transparent;
 }
 
 .commercialOutboundSecondary:hover {
-  background: var(--ink, #100f0f);
-  color: #fff;
+  background: var(--ink, var(--sb-text-ink));
+  color: var(--sb-text-on-night);
 }
 
 .commercialOutboundDialog {
@@ -1502,8 +1502,8 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   overscroll-behavior: contain;
   border: 0;
   border-radius: 28px;
-  background: #fafaf7;
-  color: #100f0f;
+  background: var(--sb-surface-paper);
+  color: var(--sb-text-ink);
   font-family: var(--font-seven-sans), Arial, sans-serif;
 }
 
@@ -1512,7 +1512,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 
 .commercialOutboundDialog :focus-visible {
-  outline: 3px solid #777500;
+  outline: var(--sb-focus-width) solid var(--sb-focus-acid-contrast);
   outline-offset: 3px;
 }
 
@@ -1524,7 +1524,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
 .commercialOutboundLabel {
   margin: 0;
-  color: #176c65;
+  color: var(--sb-safety-verified);
   font-size: 11px;
   font-weight: 750;
   letter-spacing: .06em;
@@ -1553,11 +1553,11 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   border-radius: 18px;
   display: grid;
   gap: 8px;
-  background: #fff;
+  background: var(--sb-surface-white);
 }
 
 .commercialOutboundContract span {
-  color: #64635c;
+  color: var(--sb-text-muted);
   font-size: 10px;
   font-weight: 750;
   letter-spacing: .06em;
@@ -1569,7 +1569,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 
 .commercialOutboundContract small {
-  color: #64635c;
+  color: var(--sb-text-muted);
   font-size: 11px;
   line-height: 16px;
 }
@@ -1583,7 +1583,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   min-height: 44px;
   display: inline-flex;
   align-items: center;
-  color: #176c65;
+  color: var(--sb-safety-verified);
   font-size: 12px;
   font-weight: 750;
   text-decoration: underline;

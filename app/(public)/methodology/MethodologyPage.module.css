@@ -1,12 +1,12 @@
 .page {
-  --paper: #fafaf7;
-  --white: #ffffff;
-  --ink: #100f0f;
-  --muted: #64635c;
+  --paper: var(--sb-paper);
+  --white: var(--sb-white);
+  --ink: var(--sb-night);
+  --muted: var(--sb-metal);
   --border: rgba(16, 15, 15, .44);
   --border-soft: rgba(16, 15, 15, .24);
-  --acid: #e4e24e;
-  --teal: #176c65;
+  --acid: var(--sb-acid);
+  --teal: var(--sb-teal);
   min-height: 100vh;
   overflow: clip;
   background: var(--paper);
@@ -17,8 +17,8 @@
 }
 
 :global(body):has(.page) {
-  background: #fafaf7;
-  color: #100f0f;
+  background: var(--sb-paper);
+  color: var(--sb-night);
   color-scheme: light;
 }
 
@@ -62,7 +62,7 @@
   width: min(560px, 48vw);
   height: 16px;
   margin-top: 26px;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--acid);
 }
 

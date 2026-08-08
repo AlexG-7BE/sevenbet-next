@@ -1,11 +1,11 @@
 .page {
-  --field: #f4f1eb;
-  --paper: #fafaf7;
-  --night: #100f0f;
-  --black: #060708;
-  --metal: #64635c;
-  --teal: #176c65;
-  --acid: #f0e814;
+  --field: var(--sb-field);
+  --paper: var(--sb-paper);
+  --night: var(--sb-night);
+  --black: var(--sb-black);
+  --metal: var(--sb-metal);
+  --teal: var(--sb-teal);
+  --acid: var(--sb-acid-bright);
   min-height: 100vh;
   overflow: clip;
   background: var(--field);
@@ -22,7 +22,7 @@
 .page h1, .page h2, .page h3, .page p { text-wrap: pretty; }
 .page h1, .page h2, .page h3 { text-transform: uppercase; }
 
-.hero { min-height: 1180px; background: var(--black); color: #fff; }
+.hero { min-height: 1180px; background: var(--black); color: var(--sb-white); }
 .heroInner { position: relative; width: min(1296px, calc(100% - 144px)); min-height: 1180px; margin-inline: auto; padding-top: 55px; }
 .heroEyebrow { color: var(--acid); font-size: 18px; line-height: 20px; }
 .heroTitle { position: absolute; top: 92px; left: 0; width: 690px; margin: 0; font-size: 68px; font-weight: 900; letter-spacing: -.045em; line-height: 1.073; }
@@ -78,7 +78,7 @@
 .principleList li:nth-child(6) { top: 340px; right: -30px; color: var(--teal); border-color: var(--teal); }
 .principleList li:nth-child(7) { top: 418px; left: 0; font-size: 24px; }
 
-.flow { min-height: 760px; padding: 54px 0 60px; background: var(--night); color: #fff; }
+.flow { min-height: 760px; padding: 54px 0 60px; background: var(--night); color: var(--sb-white); }
 .flowInner { width: min(1296px, calc(100% - 144px)); margin-inline: auto; }
 .flowEyebrow { color: var(--acid); }
 .flow h2 { margin: 30px 0 0; font-size: 30px; font-weight: 900; letter-spacing: -.025em; line-height: 1.05; }
@@ -105,7 +105,7 @@
 .outputList h3 { margin: 0; color: var(--teal); font-size: 14px; font-weight: 750; line-height: 18px; }
 .outputList p { margin: 28px 0 0; font-size: 14px; font-weight: 700; line-height: 18px; }
 .outputList .activeOutput { background: #e9e63e; }
-.outputList .protectedOutput { border-color: var(--night); background: var(--night); color: #fff; }
+.outputList .protectedOutput { border-color: var(--night); background: var(--night); color: var(--sb-white); }
 .outputList .protectedOutput h3 { color: var(--acid); }
 
 .page :focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }

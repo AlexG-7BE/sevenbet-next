@@ -1,14 +1,14 @@
 .page {
-  --night: #100f0f;
-  --deep: #171616;
-  --paper: #fafaf7;
-  --white: #ffffff;
-  --ink: #100f0f;
-  --muted: #64635c;
+  --night: var(--sb-night);
+  --deep: var(--sb-deep);
+  --paper: var(--sb-paper);
+  --white: var(--sb-white);
+  --ink: var(--sb-night);
+  --muted: var(--sb-metal);
   --line: rgba(16, 15, 15, .28);
-  --acid: #e4e24e;
-  --acid-soft: #faf9b6;
-  --teal: #176c65;
+  --acid: var(--sb-acid);
+  --acid-soft: var(--sb-acid-soft);
+  --teal: var(--sb-teal);
   min-height: 100vh;
   overflow: clip;
   background: var(--paper);
@@ -21,7 +21,7 @@
 .page a { color: inherit; }
 .page img { display: block; max-width: 100%; }
 .page a, .page button, .page summary { -webkit-tap-highlight-color: rgba(228, 226, 78, .28); }
-.page :focus-visible { outline: 3px solid #777500; outline-offset: 3px; }
+.page :focus-visible { outline: 3px solid var(--sb-acid-contrast); outline-offset: 3px; }
 .shell { width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
 .breadcrumb { min-height: 64px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; }
 .breadcrumb a { min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
@@ -34,7 +34,7 @@
 .identityRow > div:nth-child(2) { min-width: 0; display: grid; gap: 5px; }
 .identityRow strong { overflow-wrap: anywhere; font-size: 13px; line-height: 18px; text-transform: uppercase; }
 .identityRow div > span { color: var(--muted); font-size: 13px; line-height: 18px; }
-.signal, .verifiedSignal { width: fit-content; min-height: 34px; display: inline-flex; align-items: center; padding: 8px 13px; border-radius: 999px; background: var(--acid-soft); color: var(--ink); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .03em; }
+.signal, .verifiedSignal { width: fit-content; min-height: 34px; display: inline-flex; align-items: center; padding: 8px 13px; border-radius: var(--sb-radius-full); background: var(--acid-soft); color: var(--ink); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .03em; }
 .verifiedSignal { background: var(--teal); color: var(--white); }
 .hero h1 { max-width: 860px; margin: 28px 0 20px; overflow-wrap: anywhere; font-size: clamp(42px, 5vw, 72px); line-height: .94; letter-spacing: -.055em; text-wrap: balance; }
 .scoreVerdict { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 28px; }
@@ -53,16 +53,16 @@
 .heroOffer .primaryAction, .heroOffer .unavailableAction { margin-top: auto; }
 .heroOffer small { margin-top: 13px; color: #8d8b84; font-size: 10px; line-height: 15px; }
 
-.primaryAction, .secondaryAction, .unavailableAction { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 11px 18px; border: 1px solid transparent; border-radius: 999px; background: var(--acid); color: var(--ink); font: inherit; font-size: 12px; line-height: 16px; font-weight: 750; text-align: center; touch-action: manipulation; }
-.primaryAction { cursor: pointer; transition: transform 160ms ease, background-color 160ms ease; }
-.primaryAction:hover { transform: translateY(-1px); background: #efed58; }
+.primaryAction, .secondaryAction, .unavailableAction { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; gap: 12px; padding: 11px 18px; border: 1px solid transparent; border-radius: var(--sb-radius-full); background: var(--acid); color: var(--ink); font: inherit; font-size: 12px; line-height: 16px; font-weight: 750; text-align: center; touch-action: manipulation; }
+.primaryAction { cursor: pointer; transition: transform var(--sb-motion-fast) var(--sb-ease-standard), background-color var(--sb-motion-fast) var(--sb-ease-standard); }
+.primaryAction:hover { transform: translateY(-1px); background: var(--sb-acid-hover); }
 .secondaryAction { border-color: var(--ink); background: transparent; color: var(--ink); cursor: pointer; }
 .secondaryAction:hover { background: var(--ink); color: var(--white); }
 .unavailableAction { border-color: rgba(16, 15, 15, .25); background: #e8e7e0; color: #55544f; cursor: not-allowed; }
 .heroOffer .unavailableAction, .finalOffer .unavailableAction { border-color: #56544f; background: #242323; color: #d4d2ca; }
 .compactAction { min-width: 180px; min-height: 40px; padding-block: 7px; }
 
-.decisionBar { position: sticky; top: 88px; z-index: 20; min-height: 64px; margin: 22px 0 0; padding: 7px 8px 7px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: 999px; background: rgba(250, 250, 247, .96); backdrop-filter: blur(12px); }
+.decisionBar { position: sticky; top: 88px; z-index: 20; min-height: 64px; margin: 22px 0 0; padding: 7px 8px 7px 18px; display: flex; align-items: center; justify-content: space-between; gap: 20px; border: 1px solid var(--line); border-radius: var(--sb-radius-full); background: rgba(250, 250, 247, .96); backdrop-filter: blur(12px); }
 .decisionBar > div { min-width: 0; display: flex; align-items: center; gap: clamp(12px, 2.8vw, 34px); }
 .decisionBar > div a { min-height: 44px; display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 .decisionBar > .unavailableAction { min-height: 40px; }
@@ -94,7 +94,7 @@
 
 .detailPanel { overflow: hidden; border: 1px solid var(--line); border-radius: 24px; background: var(--white); }
 .detailTabs { min-height: 62px; padding: 0 18px; display: flex; align-items: center; gap: 8px; overflow-x: auto; border-bottom: 1px solid var(--line); scrollbar-width: thin; }
-.detailTabs span { flex: 0 0 auto; min-height: 38px; display: inline-flex; align-items: center; padding: 0 13px; border-radius: 999px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.detailTabs span { flex: 0 0 auto; min-height: 38px; display: inline-flex; align-items: center; padding: 0 13px; border-radius: var(--sb-radius-full); color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
 .detailTabs span[aria-current="true"] { background: var(--acid); color: var(--ink); }
 .detailColumns { display: grid; grid-template-columns: 1fr 1fr; }
 .detailColumns > div { min-width: 0; padding: 32px; }

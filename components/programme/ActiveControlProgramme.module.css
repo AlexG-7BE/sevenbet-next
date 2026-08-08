@@ -1,14 +1,14 @@
 .page {
-  --paper: #fafaf7;
-  --white: #fff;
-  --ink: #100f0f;
-  --deep: #171616;
-  --card-dark: #262525;
-  --muted: #64635c;
-  --night-muted: #b7b5ad;
-  --acid: #e4e24e;
-  --acid-soft: #faf9b6;
-  --teal: #176c65;
+  --paper: var(--sb-paper);
+  --white: var(--sb-white);
+  --ink: var(--sb-night);
+  --deep: var(--sb-deep);
+  --card-dark: var(--sb-charcoal);
+  --muted: var(--sb-metal);
+  --night-muted: var(--sb-grey-300);
+  --acid: var(--sb-acid);
+  --acid-soft: var(--sb-acid-soft);
+  --teal: var(--sb-teal);
   min-height: 100vh;
   background: var(--paper);
   color: var(--ink);
@@ -63,8 +63,8 @@
 .nav a, .accountNav a { transition: opacity .2s ease; }
 .nav a:hover, .accountNav a:hover { opacity: .55; }
 .accountNav { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
-.xpPill { padding: 8px 16px; background: var(--acid-soft); border-radius: 999px; }
-.accountPill { padding: 8px 16px; border: 1px solid var(--muted); border-radius: 999px; }
+.xpPill { padding: 8px 16px; background: var(--acid-soft); border-radius: var(--sb-radius-full); }
+.accountPill { padding: 8px 16px; border: 1px solid var(--muted); border-radius: var(--sb-radius-full); }
 
 .missionMeta { display: flex; align-items: flex-start; justify-content: space-between; }
 .progressPanel { width: 640px; padding: 16px; background: var(--white); display: grid; gap: 12px; }
@@ -72,11 +72,11 @@
 .progressCopy span { color: var(--muted); font-weight: 650; }
 .progressCopy strong { color: var(--ink); font-weight: 650; }
 .progressBars { display: flex; gap: 8px; }
-.progressBars i { height: 6px; flex: 1; border-radius: 999px; background: var(--muted); }
+.progressBars i { height: 6px; flex: 1; border-radius: var(--sb-radius-full); background: var(--muted); }
 .progressBars i[data-state="done"] { background: var(--teal); }
 .progressBars i[data-state="current"] { background: var(--ink); }
 .metaPills { display: flex; gap: 8px; }
-.metaPills span { padding: 8px 12px; background: var(--white); border: 1px solid var(--muted); border-radius: 999px; font-size: 12px; line-height: 16px; font-weight: 650; }
+.metaPills span { padding: 8px 12px; background: var(--white); border: 1px solid var(--muted); border-radius: var(--sb-radius-full); font-size: 12px; line-height: 16px; font-weight: 650; }
 
 .splitHero,
 .formGrid,
@@ -152,7 +152,7 @@
   min-height: 64px;
   padding: 0 28px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--sb-radius-full);
   background: var(--acid);
   color: var(--ink);
   font-size: 15px;
@@ -278,7 +278,7 @@
 .notNowButton { width: 100%; margin-top: 12px; padding: 14px 18px; text-align: left; color: var(--muted); background: transparent; border: 1px dashed var(--muted); border-radius: 14px; cursor: pointer; }
 .notNowButton[data-active="true"] { color: var(--ink); background: var(--acid-soft); border-style: solid; border-color: var(--ink); }
 .exampleChips { margin-top: 20px; display: flex; flex-wrap: wrap; gap: 10px; }
-.exampleChips button { padding: 12px 16px; color: var(--ink); background: var(--white); border: 1px solid var(--muted); border-radius: 999px; cursor: pointer; }
+.exampleChips button { padding: 12px 16px; color: var(--ink); background: var(--white); border: 1px solid var(--muted); border-radius: var(--sb-radius-full); cursor: pointer; }
 .exampleChips button:hover { background: var(--acid-soft); border-color: var(--ink); }
 
 .resultLayout { position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) 300px; gap: 64px; flex: 1; min-height: 0; padding-bottom: 232px; }
@@ -360,7 +360,7 @@
 .boundaryHero .titleBlock > span { color: var(--teal); }
 .boundaryHero .titleBlock > p { color: var(--night-muted); }
 .boundaryMeta { display: flex; flex-wrap: wrap; gap: 10px; }
-.boundaryMeta > * { padding: 9px 14px; color: var(--ink); background: var(--white); border-radius: 999px; font-size: 12px; line-height: 16px; text-transform: uppercase; }
+.boundaryMeta > * { padding: 9px 14px; color: var(--ink); background: var(--white); border-radius: var(--sb-radius-full); font-size: 12px; line-height: 16px; text-transform: uppercase; }
 .boundaryMeta > b { background: var(--acid); }
 
 .boundaryComposer {
@@ -436,7 +436,7 @@
 .editPanel { width: min(760px, 100%); max-height: calc(100vh - 64px); overflow: auto; padding: 32px; display: grid; gap: 18px; background: var(--paper); border-radius: 24px; box-shadow: 0 24px 90px rgba(0,0,0,.35); }
 .editPanel > div:first-child { display: flex; align-items: center; justify-content: space-between; }
 .editPanel > div:first-child span { color: var(--muted); font-size: 12px; font-weight: 650; }
-.editPanel > div:first-child button { padding: 8px 14px; background: var(--white); border: 1px solid var(--muted); border-radius: 999px; cursor: pointer; }
+.editPanel > div:first-child button { padding: 8px 14px; background: var(--white); border: 1px solid var(--muted); border-radius: var(--sb-radius-full); cursor: pointer; }
 .editPanel h2 { margin: 0; font-size: 36px; line-height: 40px; }
 
 @media (max-width: 1100px) {

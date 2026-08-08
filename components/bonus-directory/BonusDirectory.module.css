@@ -1,15 +1,15 @@
 .page {
-  --ink: #060708;
-  --night: #100f0f;
-  --deep: #171616;
-  --paper: #fafaf7;
-  --field: #f4f1eb;
-  --white: #fff;
-  --acid: #e4e24e;
-  --teal: #176c65;
-  --metal: #64635c;
+  --ink: var(--sb-black);
+  --night: var(--sb-night);
+  --deep: var(--sb-deep);
+  --paper: var(--sb-paper);
+  --field: var(--sb-field);
+  --white: var(--sb-white);
+  --acid: var(--sb-acid);
+  --teal: var(--sb-teal);
+  --metal: var(--sb-metal);
   --line: #bfbdb2;
-  --danger: #b94b47;
+  --danger: var(--sb-danger);
   overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
@@ -74,7 +74,7 @@
 .filterActions { min-height: 112px; display: flex; align-items: center; gap: 12px; padding: 22px; background: var(--night); color: var(--white); }
 .filterActions > div { display: grid; gap: 4px; margin-right: auto; }
 .filterActions strong { font-size: 20px; }
-.filterActions span { color: #b7b5ad; font-size: 11px; }
+.filterActions span { color: var(--sb-grey-300); font-size: 11px; }
 .filterActions > a, .filterActions > button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 24px; border: 1px solid var(--white); border-radius: 0; background: transparent; color: var(--white); font: inherit; font-size: 11px; font-weight: 800; text-transform: uppercase; cursor: pointer; }
 .filterActions > button { min-width: 190px; border-color: var(--acid); background: var(--acid); color: var(--ink); }
 .mobileFilterRoot, .noScriptFilters { display: none; }
@@ -334,6 +334,6 @@
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; }
 }
 
-.loadingPulse { min-height: 84px; background: linear-gradient(90deg, #e5e2d9 25%, #f4f1eb 50%, #e5e2d9 75%); background-size: 200% 100%; animation: bonus-loading 1.4s linear infinite; }
+.loadingPulse { min-height: 84px; background: linear-gradient(90deg, #e5e2d9 25%, var(--sb-field) 50%, #e5e2d9 75%); background-size: 200% 100%; animation: bonus-loading 1.4s linear infinite; }
 @keyframes bonus-loading { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .loadingPulse { animation: none; } }

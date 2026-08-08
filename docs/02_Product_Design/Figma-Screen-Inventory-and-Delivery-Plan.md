@@ -2,15 +2,15 @@
 
 ## Document control
 
-- **Reconciled:** 2026-08-07
-- **Repository baseline:** `30fc96e198f2a509ac3cae707f66bf9b6b9a5201`
+- **Reconciled:** 2026-08-08
+- **Repository baseline:** `2d151218b3e4f85f40fc3473b4b5c63dfaba57e3`
 - **Figma file:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Visual direction:** RFC-007 Tilt-Locked Human Product Theatre
 - **Status:** current visual-authority inventory after FE-GAP-02; design approval is not product, data, legal or market approval
 
 ## Evidence and classification
 
-The repository root was confirmed as `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`. Source analysis excluded dependencies, build output, caches and generated artefacts. Live Figma was inspected read-only through the Plugin API; existing documentation and old handoffs were not treated as proof.
+The repository root was confirmed as `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`. Source analysis excluded dependencies, build output, caches and generated artefacts. Live Figma and current repository evidence were inspected; existing documentation and old handoffs were not treated as proof.
 
 - **Detected:** directly present in current source or the live Figma file.
 - **Inferred:** a bounded conclusion from detected evidence.
@@ -73,11 +73,20 @@ The final closure families resolve live with the IDs shown above. In particular,
 
 - **Implemented:** the 27 current frontend authority groups above. Known page-level P0 and P1 migration gaps are closed through FE-GAP-02.
 - **Deferred product:** Missions 05–10; account export/erasure/recovery; trusted age/market capability; unapproved Learning search/filter extensions.
-- **FE-DS debt:** token/component normalization, duplicate CSS/component detection, responsive/state normalization, accessibility consolidation, visual regression, Storybook decision, production Figma back-sync and legacy deprecation.
+- **FE-DS-01 delivered for review:** production token/component normalization, duplicate/dead-code audit, responsive/accessibility contracts, bounded visual regression, Storybook decision, production Figma back-sync and governance are recorded in [Design System v1](Design-System-v1.md).
 - **Not implied:** launch readiness, GB compliance approval, real-partner readiness or production operational completeness.
 
-## Next phase
+## Design System v1 back-sync
 
-**PAGE-LEVEL FRONTEND: READY FOR FE-DS-01.**
+**Detected:** the existing file still has 10 pages; no parallel file or page family was created. FE-DS-01 changed only reusable-system documentation and the existing Core Button:
 
-FE-DS-01 consolidates the approved, implemented patterns. It may resolve P2/P3 consistency issues but must not reopen approved page-level redesign or implement product-gated capabilities without their own decisions.
+- `Foundations`: production token contract board `934:2`.
+- Collections evolved in place: Primitives `VariableCollectionId:285:2`, Color `VariableCollectionId:285:3`, Spacing `VariableCollectionId:285:4`, Radius `VariableCollectionId:285:5`.
+- 58 production variables; all 22 semantic colours alias primitives; exact CSS WEB syntax; zero broken aliases.
+- `Components/Core`: `Core / Button` `287:43`, 24 variants across three styles, two sizes and Default/Hover/Focus/Disabled states. Hover fills match production tokens; Focus preserves 52px/64px base geometry and demonstrates the 3px `safety/verified` ring with a 3px visual gap.
+- Disabled is an `ActionButton` state. `ActionLink` has no disabled navigation API; unavailable navigation must not render an actionable shared link.
+- `Ready for Dev`: FE-DS-01 handoff board `937:2` with code paths, exact Action interaction-state parity, responsive widths, accessibility, safety boundaries, deferrals and deprecation guidance.
+
+**Detected:** no approved page family was deleted, moved or renamed. Core/Button was evolved in place, so no reusable Figma pattern was superseded. Historical artefacts remain intact.
+
+**DESIGN SYSTEM V1: READY FOR FOUNDER REVIEW.**

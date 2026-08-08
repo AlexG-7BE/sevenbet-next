@@ -1,14 +1,14 @@
 .home {
-  --night: #100f0f;
-  --deep: #171616;
-  --card: #262525;
-  --paper: #fafaf7;
-  --white: #fff;
-  --ink: #100f0f;
-  --muted: #64635c;
-  --night-muted: #b7b5ad;
-  --acid: #e4e24e;
-  --acid-soft: #faf9b6;
+  --night: var(--sb-night);
+  --deep: var(--sb-deep);
+  --card: var(--sb-charcoal);
+  --paper: var(--sb-paper);
+  --white: var(--sb-white);
+  --ink: var(--sb-night);
+  --muted: var(--sb-metal);
+  --night-muted: var(--sb-grey-300);
+  --acid: var(--sb-acid);
+  --acid-soft: var(--sb-acid-soft);
   --border: rgba(16, 15, 15, .34);
   position: relative;
   overflow: clip;
@@ -21,27 +21,14 @@
 .home *, .home *::before, .home *::after { box-sizing: border-box; }
 .home a { color: inherit; text-decoration: none; }
 .home button { font: inherit; }
-.home :focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
+.home :focus-visible:not(.primaryButton) { outline: 3px solid var(--acid); outline-offset: 4px; }
 
 .primaryButton {
-  min-width: 320px;
-  min-height: 64px;
-  padding: 0 32px;
-  border: 0;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--acid);
-  color: var(--ink) !important;
-  font-size: 14px;
-  line-height: 16px;
-  font-weight: 650;
-  text-align: center;
-  transition: background-color 160ms ease, transform 160ms ease;
+  --sb-action-min-width: 320px;
+  --sb-action-padding-inline: 32px;
+  --sb-action-font-size: 14px;
+  --sb-action-color: var(--ink);
 }
-.primaryButton:hover { background: #efed58; transform: translateY(-1px); }
-.primaryButton:active { transform: translateY(0); }
 
 .hero {
   position: relative;
@@ -107,7 +94,7 @@
 .heroPhotoFour img { object-position: 50% 50%; }
 
 .scrollCue { position: absolute; left: 50%; bottom: min(39px, 2.7083vw); z-index: 6; width: min(72px, 5vw); height: 44px; transform: translateX(-50%); display: grid; place-items: center; }
-.scrollCue span { width: min(72px, 5vw); height: min(5px, .3472vw); border-radius: 999px; background: var(--acid); animation: cue 1.8s ease-in-out infinite; }
+.scrollCue span { width: min(72px, 5vw); height: min(5px, .3472vw); border-radius: var(--sb-radius-full); background: var(--acid); animation: cue 1.8s ease-in-out infinite; }
 
 .theatre { position: relative; height: 860px; overflow: hidden; background: var(--deep); }
 .sectionIntro { position: absolute; z-index: 5; left: max(64px, calc((100vw - 1312px) / 2)); top: 72px; width: 760px; }
@@ -154,7 +141,7 @@
 .miniScreen small { color: var(--muted); }
 .miniScreen i { height: 8px; overflow: hidden; border-radius: 99px; background: #66645f; }
 .miniScreen i span { display: block; height: 100%; border-radius: inherit; background: var(--acid); transition: width 300ms ease; }
-.carouselControls { position: absolute; left: 50%; top: 468px; z-index: 8; width: 312px; height: 52px; padding: 0 18px; border-radius: 999px; transform: translateX(-50%); display: flex; align-items: center; justify-content: space-between; background: var(--card); }
+.carouselControls { position: absolute; left: 50%; top: 468px; z-index: 8; width: 312px; height: 52px; padding: 0 18px; border-radius: var(--sb-radius-full); transform: translateX(-50%); display: flex; align-items: center; justify-content: space-between; background: var(--card); }
 .carouselControls button { width: 44px; height: 44px; padding: 0; border: 0; display: grid; place-items: center; background: transparent; color: var(--white); cursor: pointer; }
 .carouselControls svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .carouselControls span { font-size: 12px; line-height: 14px; font-weight: 650; font-variant-numeric: tabular-nums; }
