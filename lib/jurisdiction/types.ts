@@ -8,6 +8,7 @@ export type JurisdictionReasonCode =
   | "MARKET_SUSPENDED"
   | "POLICY_STALE"
   | "POLICY_UNAVAILABLE"
+  | "COMMERCIAL_NOT_ACTIVE"
   | "EVIDENCE_MISSING";
 
 export type CountrySignal = {
@@ -32,7 +33,9 @@ export type JurisdictionPolicy = {
   jurisdictionId: string | null;
   state: "SUPPORTED" | "RESTRICTED" | "UNSUPPORTED" | "SUSPENDED";
   policyVersion: string;
+  checkedAt: Date;
   validUntil: Date | null;
+  evidenceIds: string[];
   editorialAllowed: boolean;
   commercialAllowed: boolean;
   referralAllowed: boolean;

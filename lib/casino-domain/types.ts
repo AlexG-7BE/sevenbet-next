@@ -86,6 +86,7 @@ export interface CasinoDomain {
   id: string;
   slug: string;
   name: string;
+  domain: string;
   operator: { id: string | null; name: string | null; lifecycleStatus: CasinoLifecycleStatus };
   brand: { id: string | null; name: string; lifecycleStatus: CasinoLifecycleStatus };
   lifecycleStatus: CasinoLifecycleStatus;

@@ -15,7 +15,7 @@ function lifecycle(value: CasinoLifecycleStatus | null | undefined, fallback: Ca
 export function mapCasinoAggregateToDomain(casino: CasinoAggregate): CasinoDomain {
   const lifecycleStatus = lifecycle(casino.domainLifecycleStatus, casino.archivedAt ? "ARCHIVED" : "ACTIVE");
   return {
-    id: casino.id, slug: casino.slug, name: casino.title,
+    id: casino.id, slug: casino.slug, name: casino.title, domain: casino.domain,
     operator: { id: casino.operatorProfile?.id ?? null, name: casino.operatorProfile?.name ?? casino.operator, lifecycleStatus: lifecycle(casino.operatorProfile?.status) },
     brand: { id: casino.brandProfile?.id ?? null, name: casino.brandProfile?.name ?? casino.title, lifecycleStatus: lifecycle(casino.brandProfile?.status) },
     lifecycleStatus, publicationStatus: casino.domainPublicationStatus ?? publicationStatus[casino.status],

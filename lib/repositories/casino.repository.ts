@@ -120,6 +120,7 @@ export interface CasinoBonusIdentity {
 export interface CasinoStore {
   findAll(filters?: CasinoListFilters): Promise<CasinoListResult>;
   findById(id: string): Promise<CasinoAggregate | null>;
+  findManyByIds(ids: string[]): Promise<CasinoAggregate[]>;
   findBySlug(slug: string): Promise<CasinoAggregate | null>;
   findPublishedVersionBySlug(slug: string): Promise<CasinoVersion | null>;
   create(data: Prisma.CasinoCreateInput, actorId: string): Promise<CasinoAggregate>;
@@ -226,6 +227,14 @@ export class CasinoRepository implements CasinoStore {
   async findById(id: string) {
     return prisma.casino.findUnique({
       where: { id },
+      include: casinoAggregateInclude,
+    });
+  }
+
+  async findManyByIds(ids: string[]) {
+    if (!ids.length) return [];
+    return prisma.casino.findMany({
+      where: { id: { in: [...new Set(ids)] } },
       include: casinoAggregateInclude,
     });
   }
