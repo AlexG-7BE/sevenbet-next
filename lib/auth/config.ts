@@ -2,23 +2,20 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import prisma from "@/lib/db/prisma";
+import { resolveBetterAuthRuntimeConfig } from "@/lib/auth/runtime-config";
 
 type SevenBetAuthOptions = {
   autoSignIn?: boolean;
 };
 
-function getTrustedOrigins() {
-  return (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "")
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-}
-
 export function createSevenBetAuth({
   autoSignIn = true,
 }: SevenBetAuthOptions = {}) {
+  const runtimeConfig = resolveBetterAuthRuntimeConfig();
+
   return betterAuth({
     appName: "SevenBet",
+    ...(runtimeConfig.baseURL ? { baseURL: runtimeConfig.baseURL } : {}),
     database: prismaAdapter(prisma, {
       provider: "postgresql",
     }),
@@ -26,6 +23,6 @@ export function createSevenBetAuth({
       enabled: true,
       autoSignIn,
     },
-    trustedOrigins: getTrustedOrigins(),
+    trustedOrigins: runtimeConfig.trustedOrigins,
   });
 }

@@ -7,7 +7,7 @@
 - **Detected:** Vercel is linked to this Git repository and Production uses Node.js 24.x.
 - **Detected:** the repository supplies three deterministic CI contexts: `Quality`, `Build / Browser`, and `Database / Migration Verification`.
 - **Detected during OPS-01:** `main` branch protection is enabled and currently requires pull-request delivery; strict, up-to-date `Quality`, `Build / Browser`, `Database / Migration Verification`, and `Vercel` contexts; resolved review conversations; administrator enforcement; zero required approvals for the current single-maintainer model; and no force push or branch deletion.
-- **Detected:** [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is the unmerged OPS-01 delivery record. Active branch protection and pull-request merge state are separate facts.
+- **Detected:** [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is merged at `e140f4d`; required branch protection and successful Production Smoke evidence are active.
 - **Not authorised:** direct Production mutation, automatic PR merge, force push, branch deletion, production credentials in PR CI, or deployment from an arbitrary local branch.
 
 The Git commit SHA is the release identifier. Record the pull request and Vercel deployment URL in the release/incident record; do not create a parallel ID.
@@ -29,7 +29,7 @@ The Git commit SHA is the release identifier. Record the pull request and Vercel
 5. Confirm no CI job received a hosted Production or Preview secret.
 6. For schema work, complete [Database Migrations](Database-Migrations.md) and [Backup and Restore](Backup-and-Restore.md) gates.
 7. Record risk, rollback trigger and post-release owner in the PR.
-8. Founder Office makes the merge decision. The implementing agent does not merge OPS-01.
+8. Founder Office makes the merge decision. The implementing agent does not merge its delivery PR.
 
 ## Post-merge verification
 

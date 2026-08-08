@@ -1,13 +1,12 @@
 # Known Technical Debt
 
-Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `8f7ab7e9d61a57d91c6d683f33641b9816ecad9c` on 2026-08-08. Dependencies, generated output, build artefacts and caches were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
+Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` at main baseline `2aefc05dab2332deeb7dbe6f26d3a08d7b849028` plus ENV-ISO-01 delivery [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) on 2026-08-08. Dependencies, generated output, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. This inventory records remaining engineering debt; product roadmap and release approvals are tracked separately.
 
 ## Remaining
 
 | Category | Evidence | Impact | Severity |
 | --- | --- | --- | --- |
-| Preview/Production isolation | Redacted Vercel evidence shows Preview and Production share database/auth/admin values. | Mutation-capable Preview could affect Production. Preview writes are blocked pending isolation. | Critical |
-| Provider recovery evidence | Prisma Postgres is detected, but backup frequency, retention, PITR, restore permission and a completed drill are not verified. | Recovery objectives are targets rather than guarantees; stateful Production changes remain gated. | High |
+| Provider recovery capability | **Detected:** both Prisma Postgres resources are Free; the detailed provider documentation limits automatic snapshots to paid plans and describes PITR as future functionality. No provider recovery point or restore drill is available. | Recovery objectives remain targets; stateful closed-beta/release work needs an approved backup path and isolated restore drill. | High |
 | Production migration architecture | Fresh-database PR proof exists, but no approved short-lived Production credential/provider-native hook is detected. | Production migration automation cannot be safely enabled yet. | High |
 | Historical migration preflight | Migration 0015 adds and uses a PostgreSQL enum value that must be committed between operations. The existing idempotent preflight is required before fresh replay. | Restore/bootstrap tooling must preserve this explicit step; migration history cannot safely be treated as standalone. | High |
 | Legacy admin-preview path | `middleware.ts` and `lib/auth/admin.ts` retain the token path when `CMS_PHASE1_ALLOW_DEV_ADMIN=true`. | Dual access paths increase policy/configuration complexity. | Medium |
@@ -39,5 +38,6 @@ Repository evidence was rescanned from root `/Users/alex/Documents/Codex/2026-07
 - Cross-route visual baseline: ten bounded Playwright snapshots now cover public/protected shells, navigation, legal, forms/control outcomes and editorial surfaces.
 - OPS-01 linting/governance foundation: ESLint, deterministic three-job CI, fresh-database proof, build-secret scan, scheduled smoke and operational runbooks are delivered by OPS-01 / PR #45.
 - OPS-01 dependency baseline: Next.js is patched to 15.5.21 and bounded PostCSS 8.5.23/Sharp 0.35.0 overrides remove the detected transitive advisories; `npm audit` reports zero known vulnerabilities after build/browser regression proof.
+- ENV-ISO-01 Preview/Production isolation: distinct provider resources, database credentials, Better Auth secrets and admin credentials are detected; Production and Preview provider connections are environment-scoped, exact-host Preview auth passes, no Production data was copied and the disposable auth canary was removed. Delivery remains unmerged in PR #52.
 
 Resolved Design System debt does not imply product, legal/compliance, data-partner, backend/operations or launch readiness. Remaining route-local extraction is P2/P3 and requires new production evidence.
