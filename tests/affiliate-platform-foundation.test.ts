@@ -66,7 +66,7 @@ function validOffer(overrides: Record<string, unknown> = {}) {
   };
 }
 
-test("migration 0007 is additive, UUID-compatible, and preserves legacy affiliate paths", () => {
+test("migration 0007 is additive, UUID-compatible, and preserves legacy affiliate data without redirect authority", () => {
   const schema = readFileSync("prisma/schema.prisma", "utf8");
   const migration = readFileSync("prisma/migrations/0007_affiliate_platform_foundation/migration.sql", "utf8");
   for (const model of ["AffiliateNetwork", "AffiliateProgram", "AffiliateOffer", "AffiliateOfferCountry", "AffiliateOfferCurrency", "AffiliateTrackingLink", "AffiliateTrackingLinkCountry", "AffiliateOfferRevision", "AffiliateTrackingLinkRevision"]) {
@@ -76,7 +76,9 @@ test("migration 0007 is additive, UUID-compatible, and preserves legacy affiliat
   assert.doesNotMatch(migration, /DROP|TRUNCATE|DELETE FROM|UPDATE "(?:AffiliateLink|CasinoAffiliateLink)"/);
   assert.match(schema, /model AffiliateLink \{/);
   assert.match(schema, /model CasinoAffiliateLink \{/);
-  assert.match(readFileSync("app/go/[slug]/route.ts", "utf8"), /resolveAffiliateLink/);
+  const legacyRoute = readFileSync("app/go/[slug]/route.ts", "utf8");
+  assert.doesNotMatch(legacyRoute, /resolveAffiliateLink|destinationUrl/);
+  assert.match(legacyRoute, /\/outbound\/unavailable/);
   assert.match(migration, /"AffiliateOffer_casinoId_fkey"[\s\S]*REFERENCES "Casino"\("id"\) ON DELETE RESTRICT ON UPDATE CASCADE/);
   assert.match(migration, /"AffiliateOffer_casinoBonusId_fkey"[\s\S]*REFERENCES "CasinoBonus"\("id"\) ON DELETE SET NULL ON UPDATE CASCADE/);
   assert.match(migration, /"programId" UUID NOT NULL/);

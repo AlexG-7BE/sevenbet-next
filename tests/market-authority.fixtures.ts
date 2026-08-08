@@ -2,6 +2,7 @@ import type { CommercialJurisdictionAuthority } from "../lib/jurisdiction/commer
 import type { GbOperatorEligibilityDecision } from "../lib/jurisdiction/gb-operator-eligibility";
 import type { JurisdictionDecision } from "../lib/jurisdiction/types";
 import type { GbOperatorEligibilityAuthority } from "../lib/services/gb-operator-eligibility.service";
+import type { GbCommercialReadinessAuthority } from "../lib/services/gb-commercial-readiness.service";
 
 export const allowJurisdictionAuthority: CommercialJurisdictionAuthority = {
   commercialAllowed: true,
@@ -36,6 +37,29 @@ export const allowOperatorAuthority: GbOperatorEligibilityAuthority = {
   async evaluate() { return allowOperatorDecision; },
   async evaluateMany(casinoIds) {
     return new Map(casinoIds.map((casinoId) => [casinoId, allowOperatorDecision]));
+  },
+};
+
+export const allowGbCommercialReadinessAuthority: GbCommercialReadinessAuthority = {
+  async evaluate() {
+    return {
+      jurisdictionAuthority: true,
+      partnerAuthority: true,
+      operatorAuthority: true,
+      domainAuthority: true,
+      programAuthority: true,
+      offerAuthority: true,
+      trackingAuthority: true,
+      bonusAuthority: true,
+      redirectAuthority: true,
+      commercialReady: true,
+      referralReady: true,
+      reasonCodes: ["GB_COMMERCIAL_READY"],
+      operatorEligibility: allowOperatorDecision,
+      checkedAt: "2030-06-01T00:00:00.000Z",
+      evidenceCheckedAt: allowOperatorDecision.evidenceCheckedAt,
+      revalidateAt: allowOperatorDecision.revalidateAt,
+    };
   },
 };
 

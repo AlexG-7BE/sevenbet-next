@@ -50,6 +50,13 @@ export interface CasinoBonus {
   id: string;
   slug: string;
   title: string;
+  summary: string;
+  type: string;
+  percentage: number | null;
+  currency: string | null;
+  freeSpins: number | null;
+  eligibility: string | null;
+  lastVerifiedAt: Date | null;
   lifecycleStatus: CasinoLifecycleStatus;
   publicationStatus: CasinoPublicationStatus;
   offerStatus: "DRAFT" | "ACTIVE" | "PAUSED" | "EXPIRED" | "ARCHIVED";
@@ -87,8 +94,8 @@ export interface CasinoDomain {
   slug: string;
   name: string;
   domain: string;
-  operator: { id: string | null; name: string | null; lifecycleStatus: CasinoLifecycleStatus };
-  brand: { id: string | null; name: string; lifecycleStatus: CasinoLifecycleStatus };
+  operator: { id: string | null; name: string | null; legalName: string | null; lifecycleStatus: CasinoLifecycleStatus };
+  brand: { id: string | null; operatorId: string | null; name: string; lifecycleStatus: CasinoLifecycleStatus };
   lifecycleStatus: CasinoLifecycleStatus;
   publicationStatus: CasinoPublicationStatus;
   licences: CasinoLicence[];

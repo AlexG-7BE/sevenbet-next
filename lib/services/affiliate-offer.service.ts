@@ -1,7 +1,9 @@
 import { AffiliateStatus } from "@prisma/client";
 
+import { assessGbPartnerAgreement } from "@/lib/affiliate-commercial/gb-partner-agreement";
 import type { AffiliateOfferInput } from "@/lib/affiliate/types";
 import { assertAffiliateStatusTransition, normalizeAffiliateOffer } from "@/lib/affiliate/validation";
+import { GB_LICENCE_EVIDENCE_MAX_AGE_MS } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { affiliateOfferRepository, type AffiliateOfferAggregate, type AffiliateOfferStore } from "@/lib/repositories/affiliate-offer.repository";
 import { affiliateProgramRepository, type AffiliateProgramStore } from "@/lib/repositories/affiliate-program.repository";
 
@@ -42,6 +44,28 @@ export class AffiliateOfferService {
     if (!program) throw new NotFoundError("Affiliate program", { id: input.programId });
     if (input.status === "ACTIVE" && (program.status !== "ACTIVE" || !program.network.active || program.network.archivedAt)) {
       throw new ValidationError("An archived or inactive network/program cannot have an active offer");
+    }
+    if (input.status === "ACTIVE" && program.supportedCountries.includes("GB")) {
+      if (program.workflowStatus !== "PUBLISHED") throw new ValidationError("A GB offer requires a published program", { field: "programId" });
+      if (!program.casinoId || program.casinoId !== input.casinoId) throw new ValidationError("A GB offer must match the program casino", { field: "casinoId" });
+      if (program.trustedAutoActivation) throw new ValidationError("Trusted automatic activation is forbidden for GB offers", { field: "programId" });
+      const agreement = assessGbPartnerAgreement({ metadata: program.metadata, expectedIdentity: program.operator, now: new Date() });
+      if (agreement.reasons.length) throw new ValidationError(`GB partner agreement is not activation-ready: ${agreement.reasons.join(", ")}`, { field: "programId", reasons: agreement.reasons });
+      if (input.geoMode !== "ALLOW" || !input.countries.some((rule) => rule.mode === "ALLOW" && rule.countryCode === "GB")) {
+        throw new ValidationError("A GB offer requires an explicit GB allow-list", { field: "countries" });
+      }
+      const now = new Date();
+      const currentGbLink = input.trackingLinks.some((link) => link.active
+        && !link.archived
+        && link.geoMode === "ALLOW"
+        && link.countries.some((rule) => rule.mode === "ALLOW" && rule.countryCode === "GB")
+        && Boolean(link.verifiedAt && link.lastCheckedAt)
+        && link.verifiedAt! <= now
+        && link.lastCheckedAt! <= now
+        && now.getTime() - link.verifiedAt!.getTime() < GB_LICENCE_EVIDENCE_MAX_AGE_MS
+        && now.getTime() - link.lastCheckedAt!.getTime() < GB_LICENCE_EVIDENCE_MAX_AGE_MS
+        && (!link.expiresAt || link.expiresAt > now));
+      if (!currentGbLink) throw new ValidationError("A GB offer requires an active, explicitly scoped, recently verified tracking link", { field: "trackingLinks" });
     }
     const identity = await this.store.findCasinoBonus(input.casinoId, input.casinoBonusId);
     if (!identity.casinoExists) throw new NotFoundError("Casino", { id: input.casinoId });

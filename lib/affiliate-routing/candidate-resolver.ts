@@ -24,6 +24,7 @@ interface CandidateTrackingLink {
   active: boolean;
   priority: number;
   verifiedAt: Date | string | null;
+  lastCheckedAt?: Date | string | null;
   validFrom?: Date | string | null;
   expiresAt: Date | string | null;
   archivedAt: Date | string | null;
@@ -45,11 +46,19 @@ export interface CandidateOffer {
   countries: CountryRule[];
   currencies: Array<{ currencyCode: string }>;
   program: {
+    id?: string;
+    casinoId?: string | null;
     name: string;
+    operator?: string;
     status?: string;
     workflowStatus?: string;
     connectionStatus?: string;
+    integrationMode?: string;
+    providerAccountId?: string | null;
+    credentialReference?: string | null;
     supportedCountries?: string[];
+    metadata?: unknown;
+    trustedAutoActivation?: boolean;
     domainLifecycleStatus?: string | null;
     archivedAt?: Date | string | null;
     network: { name: string; active?: boolean; archivedAt?: Date | string | null };
