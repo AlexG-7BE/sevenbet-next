@@ -17,7 +17,7 @@
 }
 
 .page *, .page *::before, .page *::after { box-sizing: border-box; }
-.page :focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
+.page :focus-visible:not(.primaryButton) { outline: 3px solid var(--acid); outline-offset: 4px; }
 .page h1, .page h2, .page h3, .page p, .page figure { margin: 0; }
 .page em { font-family: var(--font-seven-serif), Georgia, serif; font-weight: 400; }
 

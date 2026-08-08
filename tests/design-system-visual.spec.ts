@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -90,7 +90,7 @@ test("About mobile reference", async ({ page }) => {
   await matchViewport(page, "about-mobile.png");
 });
 
-test("shared Action exposes production hover and keyboard-focus states", async ({ page }) => {
+test("shared Action exposes the production primary hover state", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openStable(page, "/");
 
@@ -107,19 +107,65 @@ test("shared Action exposes production hover and keyboard-focus states", async (
   await action.hover();
   await expect.poll(() => action.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(expectedHover);
   await expect.poll(() => action.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
-
-  await action.focus();
-  await page.keyboard.press("Shift+Tab");
-  await page.keyboard.press("Tab");
-  await expect(action).toBeFocused();
-  const focus = await action.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      offset: style.outlineOffset,
-      style: style.outlineStyle,
-      visible: element.matches(":focus-visible"),
-      width: style.outlineWidth,
-    };
-  });
-  expect(focus).toEqual({ offset: "4px", style: "solid", visible: true, width: "3px" });
 });
+
+const sharedActionFocusCases: Array<{
+  name: string;
+  route: string;
+  action: (page: Page) => Locator;
+}> = [
+  {
+    name: "Home",
+    route: "/",
+    action: (page) => page.getByRole("link", { name: "Start the 10-Step Program" }).first(),
+  },
+  {
+    name: "10 Steps",
+    route: "/10-steps",
+    action: (page) => page.getByRole("main").locator('a[href="/program"]').first(),
+  },
+  {
+    name: "Personal Limit Tracker",
+    route: "/tools/budget-calculator",
+    action: (page) => page.getByRole("button", { name: "Check my limit" }),
+  },
+];
+
+for (const focusCase of sharedActionFocusCases) {
+  test(`${focusCase.name} Shared Action keeps the production focus contract`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await openStable(page, focusCase.route);
+
+    const action = focusCase.action(page);
+    const expectedFocusColor = await page.evaluate(() => {
+      const probe = document.createElement("div");
+      probe.style.outline = "var(--sb-focus-width) solid var(--sb-focus-color)";
+      document.body.append(probe);
+      const color = getComputedStyle(probe).outlineColor;
+      probe.remove();
+      return color;
+    });
+
+    await action.focus();
+    await page.keyboard.press("Shift+Tab");
+    await page.keyboard.press("Tab");
+    await expect(action).toBeFocused();
+    const focus = await action.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        boxShadow: style.boxShadow,
+        focusVisible: element.matches(":focus-visible"),
+        outlineColor: style.outlineColor,
+        outlineOffset: style.outlineOffset,
+        outlineWidth: style.outlineWidth,
+      };
+    });
+    expect(focus).toEqual({
+      boxShadow: "none",
+      focusVisible: true,
+      outlineColor: expectedFocusColor,
+      outlineOffset: "3px",
+      outlineWidth: "3px",
+    });
+  });
+}

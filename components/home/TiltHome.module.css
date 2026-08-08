@@ -21,7 +21,7 @@
 .home *, .home *::before, .home *::after { box-sizing: border-box; }
 .home a { color: inherit; text-decoration: none; }
 .home button { font: inherit; }
-.home :focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
+.home :focus-visible:not(.primaryButton) { outline: 3px solid var(--acid); outline-offset: 4px; }
 
 .primaryButton {
   --sb-action-min-width: 320px;

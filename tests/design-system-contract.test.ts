@@ -44,6 +44,18 @@ test("the shared Action primitive is server-safe, internal-only and exposes the 
   assert.doesNotMatch(action, /aria-disabled/);
 });
 
+test("route focus scopes preserve shared Action ownership", () => {
+  const homeCss = read("components/home/TiltHome.module.css");
+  const tenStepsCss = read("app/(public)/10-steps/TenStepsLanding.module.css");
+  const limitTrackerCss = read("app/(public)/tools/budget-calculator/PersonalLimitTracker.module.css");
+  assert.match(homeCss, /\.home :focus-visible:not\(\.primaryButton\)/);
+  assert.match(tenStepsCss, /\.page :focus-visible:not\(\.primaryButton\)/);
+  assert.match(limitTrackerCss, /\.page :focus-visible:not\(\.primaryAction\)/);
+  for (const routeCss of [homeCss, tenStepsCss, limitTrackerCss]) {
+    assert.doesNotMatch(routeCss, /\.(?:home|page) :focus-visible\s*\{/);
+  }
+});
+
 test("production consumers reuse Action without moving protected or commercial decisions into it", () => {
   for (const path of [
     "components/home/TiltHome.tsx",
