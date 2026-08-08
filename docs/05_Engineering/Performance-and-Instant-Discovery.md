@@ -37,7 +37,7 @@ The client serializes controls and provides navigation feedback only. It does no
 
 **Detected:** the same three-run browser harness was used against the local optimized production build. Local timing is not directly comparable to Vercel edge timing because the application and database path differ. It is retained as diagnostic evidence; emitted bundle size and transferred asset-shape changes are comparable.
 
-**Planned release evidence:** repeat the route inventory on the exact-head Vercel Preview and record it below before Founder handoff.
+**Detected release constraint:** Vercel Deployment Protection requires an authenticated team session. The signed-in Preview browser interface supports route/DOM/runtime verification but does not expose Navigation Timing, resource timing or LCP instrumentation. Therefore no false Preview paint or transfer numbers are reported. The controlled optimized-build data is the post-change performance evidence; Preview is used for deployment, functional and runtime-health evidence.
 
 ## Production baseline — mobile median
 
@@ -182,6 +182,15 @@ The small client-island cost is deliberate and bounded. No dependency was added 
 
 **Detected local environment warning:** the local production build uses a direct Prisma endpoint and emits the existing pooled-runtime recommendation. This is not evidence about the deployed Vercel Production value.
 
+## Exact-head Preview release evidence
+
+- **Detected:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) was opened against `main` from `codex/ux-perf-01-performance-instant-discovery` and was not merged by the implementing agent.
+- **Detected:** exact source `bf75b4d0bc58b937c7e9867147d98fd92ddc4b11` produced Vercel Preview deployment `dpl_EMCGsPFjW6FtdFNFyH8dUrB55SMD`; status is Ready on `sevenbet-next-git-codex-ux-perf-01-p-52e7a9-alexg-7bes-projects.vercel.app`.
+- **Detected:** GitHub CI run `31270035322` passed Quality (`93134312286`), Database / Migration Verification (`93134312251`) and Build / Browser (`93134312278`). Vercel and Vercel Preview Comments passed for the same SHA.
+- **Detected:** signed-in Preview QA returned complete titled pages, expected H1 content and no Next error overlay for `/`, `/casinos`, `/bonuses`, `/best-offers`, `/compare`, `/10-steps`, `/responsible-gambling`, `/self-check`, `/tools/budget-calculator`, `/privacy` and `/terms`.
+- **Detected:** an actual `/casinos` search exposed the accessible retained-results pending state, completed at the canonical `?sort=FEATURED&pageSize=12&q=demo` URL, returned to idle and showed the server-owned result status. Preview has an isolated empty dataset, so no real casino profile was asserted.
+- **Detected:** Preview logs showed every audited branch-host GET as 200, with zero warnings and zero fatals. Two error-level 500 entries were Vercel probes against the immutable deployment hostname; Preview authentication rejected that unapproved hostname because the exact configured branch hostname is the sole allowed host. This is the ENV-ISO-01 fail-closed contract working as designed, not a branch-host application failure. Synthetic browser OPTIONS probes returned 400 and are not application GET failures.
+
 ## Data, dependency and rollback record
 
 - **Detected:** no Prisma schema, migration, seed, Production data or synthetic-data change.
@@ -192,7 +201,5 @@ The small client-island cost is deliberate and bounded. No dependency was added 
 
 ## Remaining release evidence
 
-- **Planned:** exact-head Preview measurements and all-route QA.
-- **Planned:** exact-head required CI and Vercel checks.
-- **Planned:** Preview runtime-log review and unchanged Production smoke/log review.
+- **Planned:** unchanged Production smoke/log review after the final documentation-only head is green.
 - **Planned:** Founder review and merge decision. The implementing agent must not merge the pull request.

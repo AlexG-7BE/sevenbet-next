@@ -6,7 +6,8 @@
 - **Current main / COMM-01 merge:** `82e3985765285ae63e4d2620b843bc6086fb4185`
 - **GB-MARKET-01 merge:** [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) merged as `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
 - **COMM-01 merge:** [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) merged as `82e3985765285ae63e4d2620b843bc6086fb4185`
-- **UX-PERF-01 delivery:** implementation and local verification complete on `codex/ux-perf-01-performance-instant-discovery`; Founder-review pull request and Preview evidence are pending
+- **UX-PERF-01 delivery:** implementation and Preview verification complete on `codex/ux-perf-01-performance-instant-discovery`; [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) is open for Founder review and is not merged
+- **UX-PERF-01 verified Preview:** deployment `dpl_EMCGsPFjW6FtdFNFyH8dUrB55SMD`, source `bf75b4d0bc58b937c7e9867147d98fd92ddc4b11`, Ready on the isolated branch domain; CI run `31270035322` passed all three jobs
 - **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_CoVwh2Z9KsQsNBMWW3tobeqty2WW`, source `82e3985765285ae63e4d2620b843bc6086fb4185`, Ready; Production Smoke run `31268425111`, job `93130210903`, passed 2026-08-08)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
@@ -27,7 +28,7 @@
 
 **COMM-01: MERGED — PR #55.** Commercial partner authority machinery is on main. Real signed GB partner: **NO**. Real partner activation: **OFF**. LEGAL-02: **OPEN**. Commercial launch: **NOT READY**.
 
-**Detected on the UX-PERF-01 branch:** [RFC-016](06_RFC/RFC-016-Production-Performance-and-Instant-Discovery.md) is approved and implemented. Casinos, Bonuses and Compare retain canonical server GET/query authority while a narrow progressive enhancer supplies 300 ms search/numeric debounce, immediate discrete changes, soft RSC navigation, URL/history truth, no-JavaScript fallback and accessible pending feedback. The measured casino theatre image uses responsive Next Image delivery; denied commercial contexts omit commercial relation reads and operator evaluation. No schema, migration, dependency, Production data, commercial-authority or cache-policy change was made. This is **READY FOR PREVIEW/FOUNDER REVIEW**, not merged or deployed to Production.
+**Detected on the UX-PERF-01 branch:** [RFC-016](06_RFC/RFC-016-Production-Performance-and-Instant-Discovery.md) is approved and implemented. Casinos, Bonuses and Compare retain canonical server GET/query authority while a narrow progressive enhancer supplies 300 ms search/numeric debounce, immediate discrete changes, soft RSC navigation, URL/history truth, no-JavaScript fallback and accessible pending feedback. The measured casino theatre image uses responsive Next Image delivery; denied commercial contexts omit commercial relation reads and operator evaluation. No schema, migration, dependency, Production data, commercial-authority or cache-policy change was made. Exact-head CI, all-route Preview QA and branch-host runtime review passed. This is **READY FOR FOUNDER REVIEW**, not merged or deployed to Production.
 
 ## Completed frontend
 

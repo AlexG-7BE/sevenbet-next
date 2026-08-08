@@ -100,4 +100,3 @@ Release evidence must cover:
 Delivery follows RFC-013: one feature branch, one pull request, required exact-head checks, configured Preview alias, Founder review and no implementing-agent merge.
 
 Rollback is a reviewed application revert. The native GET forms remain the semantic fallback, so disabling or reverting the client enhancer restores document navigation without changing server filtering or authority. No database rollback is involved.
-
