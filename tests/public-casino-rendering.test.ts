@@ -167,7 +167,9 @@ test("public routes use the service boundary and invalidate all publication surf
   const action = readFileSync("app/api/admin/casinos/[casinoId]/action/route.ts", "utf8");
   assert.match(action, /revalidatePublicCasino\(result\.casino\.slug\)/);
   assert.match(action, /revalidatePublicCasino\(casino\.slug\)/);
-  assert.match(readFileSync("app/go/[slug]/route.ts", "utf8"), /resolveAffiliateLink/);
+  const legacyRedirect = readFileSync("app/go/[slug]/route.ts", "utf8");
+  assert.doesNotMatch(legacyRedirect, /resolveAffiliateLink|destinationUrl/);
+  assert.match(legacyRedirect, /outbound\/unavailable/);
 });
 
 test("client components do not import Prisma and public HTML uses internal redirect paths for CMS offers", () => {

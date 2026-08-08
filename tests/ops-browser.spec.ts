@@ -74,11 +74,18 @@ test("FAQ disclosures remain native and keyboard operable", async ({ page }) => 
   await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();
 });
 
-test("commercial confirmation and invalid managed routes fail closed", async ({ page }) => {
+test("commercial confirmation, no-JS, and invalid managed routes fail closed", async ({ browser, page }) => {
   await open(page, "/outbound/example-managed-action");
-  const managed = page.getByRole("link", { name: "Continue to eligible partner" });
-  await expect(managed).toHaveAttribute("href", "/r/example-managed-action");
-  expect(await managed.getAttribute("href")).not.toMatch(/^https?:/);
+  await expect(page).toHaveURL(/\/outbound\/unavailable$/);
+  await expect(page.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Continue to eligible partner" })).toHaveCount(0);
+
+  const noJsContext = await browser.newContext({ javaScriptEnabled: false });
+  const noJsPage = await noJsContext.newPage();
+  await noJsPage.goto(`${baseUrl}/outbound/example-managed-action`, { waitUntil: "domcontentloaded" });
+  await expect(noJsPage).toHaveURL(/\/outbound\/unavailable$/);
+  await expect(noJsPage.getByText("No destination · No redirect · No substitute offer")).toBeVisible();
+  await noJsContext.close();
 
   const response = await page.goto(`${baseUrl}/r/not-a-real-managed-destination`, {
     waitUntil: "domcontentloaded",

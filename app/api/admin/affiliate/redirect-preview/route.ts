@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     await requireAdminPermission(request, "affiliate.manage");
     const slug = request.nextUrl.searchParams.get("slug");
     if (!slug) throw new ValidationError("slug is required");
-    const result = await affiliateRedirectService.resolve(slug, {
+    const result = await affiliateRedirectService.preview(slug, {
       countryCode: normalizeCountryHint(request.nextUrl.searchParams.get("country")),
       currencyCode: normalizeCurrencyHint(request.nextUrl.searchParams.get("currency")),
       language: normalizeLanguageHint(request.nextUrl.searchParams.get("language")),

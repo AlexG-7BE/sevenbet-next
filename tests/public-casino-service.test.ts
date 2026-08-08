@@ -5,6 +5,7 @@ import { getCasinos } from "../lib/data";
 import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const legacy = getCasinos().slice(0, 3);
@@ -62,6 +63,10 @@ function service(repository: PublicCasinoStore, cmsEnabled = true) {
   return new PublicCasinoService(repository, legacy, { cmsEnabled, redirectEnabled: true, now });
 }
 
+function authorizedService(repository: PublicCasinoStore) {
+  return new PublicCasinoService(repository, legacy, { cmsEnabled: true, redirectEnabled: true, now }, allowOperatorAuthority);
+}
+
 function assertReviewOnly(casino: Awaited<ReturnType<PublicCasinoService["getCasino"]>>) {
   assert.ok(casino);
   assert.equal(casino.source, "legacy");
@@ -82,7 +87,7 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
       { casinoId: record.casinoId, casinoBonusId: null, slug: "cms-route" },
       { casinoId: record.casinoId, casinoBonusId: `bonus-${managedSlug}`, slug: "cms-bonus-route" },
     ];
-    const casino = await service(store([record], [managedSlug], routes)).getCasino(managedSlug);
+    const casino = await authorizedService(store([record], [managedSlug], routes)).getCasino(managedSlug, allowJurisdictionAuthority);
     assert.equal(casino?.source, "cms");
     assert.equal(casino?.affiliate.href, "/r/cms-route");
     assert.equal(casino?.bonuses[0]?.affiliate.href, "/r/cms-bonus-route");
@@ -146,7 +151,7 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
     const repository = store([record], [managedSlug], [], {
       listActiveAffiliateRoutes: async () => { throw new Error("route lookup unavailable"); },
     });
-    const casino = await service(repository).getCasino(managedSlug);
+    const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority);
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
     assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
@@ -183,7 +188,7 @@ test("listCasinos never expands visibility when a CMS authority is unavailable",
     const repository = store([record], [managedSlug], [], {
       listActiveAffiliateRoutes: async () => { throw new Error("route list unavailable"); },
     });
-    const casino = (await service(repository).listCasinos()).find((entry) => entry.slug === managedSlug);
+    const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority)).find((entry) => entry.slug === managedSlug);
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
     assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });

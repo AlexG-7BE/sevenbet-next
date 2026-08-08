@@ -1,5 +1,7 @@
 # SevenBet Headless CMS Phase 1
 
+> Historical implementation note: RFC-014 / GB-MARKET-01 supersedes this phase's `/go/:slug` behaviour. `/go/[slug]` is now permanently non-commercial and returns the neutral unavailable flow; only `/r/[slug]` can perform a governed external handoff.
+
 This phase introduces the CMS foundation without changing the public SevenBet product architecture.
 
 ## What Exists Now

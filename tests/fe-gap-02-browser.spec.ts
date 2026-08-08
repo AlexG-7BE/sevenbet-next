@@ -106,23 +106,10 @@ test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ brows
   await context.close();
 });
 
-test("commercial handoff confirms, cancels and invokes only the managed redirect", async ({ page }) => {
+test("commercial handoff remains absent while market authority denies referral", async ({ page }) => {
   await page.goto(`${baseUrl}/casinos`, { waitUntil: "domcontentloaded" });
-  const action = page.locator('a[aria-haspopup="dialog"]').first();
-  await expect(action).toBeVisible();
-  await expect(action).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
-  await action.focus();
-  await page.keyboard.press("Enter");
-  const dialog = page.getByRole("dialog");
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("heading", { name: "You are leaving SevenBet." })).toBeVisible();
-  const managed = dialog.getByRole("link", { name: /Continue to eligible partner/ });
-  await expect(managed).toHaveAttribute("href", /^\/r\/[a-z0-9-]+$/);
-  expect(await managed.getAttribute("href")).not.toMatch(/^https?:/);
-  await expect(dialog.getByRole("button", { name: "Cancel and stay on SevenBet" })).toBeFocused();
-  await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
-  await expect(action).toBeFocused();
+  await expect(page.locator('a[aria-haspopup="dialog"]')).toHaveCount(0);
+  await expect(page.locator('a[href^="/r/"], a[href^="/outbound/"]:not([href="/outbound/unavailable"])')).toHaveCount(0);
 });
 
 test("invalid managed redirects and no-JS outbound flows use governed same-origin recovery", async ({ browser, page }) => {
@@ -135,8 +122,9 @@ test("invalid managed redirects and no-JS outbound flows use governed same-origi
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/outbound/example-managed-action`, { waitUntil: "domcontentloaded" });
-  await expect(noJsPage.getByRole("heading", { name: "You are leaving SevenBet." })).toBeVisible();
-  await expect(noJsPage.getByRole("link", { name: "Continue to eligible partner" })).toHaveAttribute("href", "/r/example-managed-action");
+  await expect(noJsPage).toHaveURL(/\/outbound\/unavailable$/);
+  await expect(noJsPage.getByRole("heading", { name: "Destination unavailable." })).toBeVisible();
+  await expect(noJsPage.getByRole("link", { name: "Continue to eligible partner" })).toHaveCount(0);
   expect(await noOverflow(noJsPage)).toBe(true);
   await context.close();
 });

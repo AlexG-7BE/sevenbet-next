@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ActiveDiscoveryFilters, DirectoryFeaturedTheatre, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { CasinoDiscoveryPending } from "@/components/casino-discovery/CasinoDiscoveryPending";
-import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
@@ -26,9 +26,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function CasinosPage({ searchParams }: PageProps) {
   const query = parseCasinoDiscoveryQuery(await searchParams);
-  const result = await publicCasinoDiscoveryService.discover(query);
-  const legacyCommercialAllowed = result.items.some((casino) => casino.visitAction.available);
-  await evaluateJurisdictionShadow("CASINO_DISCOVERY", { userSelectedCountry: query.country?.[0] ?? null, now: new Date() }, { commercialAllowed: legacyCommercialAllowed, referralAllowed: legacyCommercialAllowed });
+  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
+  const result = await publicCasinoDiscoveryService.discover(query, authority);
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Casino Reviews", item: absoluteUrl("/casinos") }] },
     { "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) },

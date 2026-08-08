@@ -7,6 +7,7 @@ import { bestFitWinners } from "@/lib/public-offer/best-offer-ranking";
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -17,7 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function BestOffersPage() {
-  const result = await publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 });
+  const authority = await resolveServerJurisdiction({ routeCountryOrMarketSlug: "GB" });
+  const result = await publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, authority);
   const schema = {
     "@context": "https://schema.org",
     "@type": "ItemList",

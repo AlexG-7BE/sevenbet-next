@@ -6,7 +6,7 @@ import { evaluateJurisdictionShadow, isJurisdictionResolverShadowEnabled } from 
 import type { JurisdictionPolicy, JurisdictionPolicyStore, ResolutionInput } from "../lib/jurisdiction/types";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
-const policy: JurisdictionPolicy = { countryCode: "GB", marketId: "market-gb", jurisdictionId: "jurisdiction-gb", state: "SUPPORTED", policyVersion: "policy-v1", validUntil: new Date("2030-07-01T00:00:00.000Z"), editorialAllowed: true, commercialAllowed: true, referralAllowed: true };
+const policy: JurisdictionPolicy = { countryCode: "GB", marketId: "market-gb", jurisdictionId: "jurisdiction-gb", state: "SUPPORTED", policyVersion: "policy-v1", checkedAt: new Date("2030-05-15T00:00:00.000Z"), validUntil: new Date("2030-07-01T00:00:00.000Z"), evidenceIds: ["test-policy"], editorialAllowed: true, commercialAllowed: true, referralAllowed: true };
 const store = (value: JurisdictionPolicy | null): JurisdictionPolicyStore => ({ findByCountry: async () => value });
 const input = (patch: Partial<ResolutionInput> = {}): ResolutionInput => ({ requestCountrySignal: { countryCode: "GB", trust: "TRUSTED", observedAt: now }, now, ...patch });
 

@@ -11,9 +11,16 @@ import type {
 } from "@/lib/public-offer/public-offer.types";
 import { publicOfferRepository, type PublicOfferStore } from "@/lib/repositories/public-offer.repository";
 import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
+import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
+
+function withoutAction(offer: PublicOfferDTO): PublicOfferDTO {
+  return { ...offer, action: { href: null, available: false }, commercialAvailability: "UNAVAILABLE" };
+}
 
 function textCompare(a: string, b: string) {
   return a.localeCompare(b, "en", { sensitivity: "base" });
@@ -92,14 +99,15 @@ export function buildOfferFacets(offers: PublicOfferDTO[]): PublicOfferFacets {
 export class PublicOfferService {
   constructor(
     private readonly repository: PublicOfferStore = publicOfferRepository,
-    private readonly options: { cmsEnabled?: boolean; legacyCasinos?: Casino[] } = {},
+    private readonly options: { cmsEnabled?: boolean; legacyCasinos?: Casino[]; redirectEnabled?: boolean } = {},
+    private readonly operatorEligibility: GbOperatorEligibilityAuthority = gbOperatorEligibilityService,
   ) {}
 
   private cmsEnabled() {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
   }
 
-  private async listEligibleOffers() {
+  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null) {
     if (!this.cmsEnabled()) {
       return (this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
         const legacy = mapLegacyCasino(casino);
@@ -111,14 +119,17 @@ export class PublicOfferService {
       });
     }
     try {
-      return await this.repository.listOffers();
+      const records = await this.repository.listOffers();
+      if (!(this.options.redirectEnabled ?? isAffiliateRedirectEnabled()) || !jurisdictionAllowsReferral(authority)) return records.map(withoutAction);
+      const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
+      return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record));
     } catch {
       return [];
     }
   }
 
-  async searchOffers(query: PublicOfferQuery): Promise<PublicOfferSearchResult> {
-    const all = await this.listEligibleOffers();
+  async searchOffers(query: PublicOfferQuery, authority?: CommercialJurisdictionAuthority | null): Promise<PublicOfferSearchResult> {
+    const all = await this.listEligibleOffers(authority);
     const filtered = all.filter((offer) => matches(offer, query));
     const sorted = sortOffers(filtered, query.sort);
     const pageCount = Math.max(1, Math.ceil(sorted.length / query.pageSize));
@@ -135,28 +146,28 @@ export class PublicOfferService {
     };
   }
 
-  async getFeaturedOffers(options: { country?: string; limit?: number } = {}) {
-    const offers = await this.listEligibleOffers();
+  async getFeaturedOffers(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
+    const offers = await this.listEligibleOffers(authority);
     return selectOverallShortlist(offers, { country: options.country ?? "GB", limit: options.limit ?? 12 });
   }
 
-  async getBestOffersPageData(options: { country?: string; limit?: number } = {}) {
+  async getBestOffersPageData(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country ?? "GB";
     const limit = options.limit ?? 12;
     if (!this.cmsEnabled()) {
-      const records = await this.getFeaturedOffers({ country, limit });
+      const records = await this.getFeaturedOffers({ country, limit }, authority);
       return { status: records.length ? "available" : "no-eligible", records } as const;
     }
     try {
-      const records = selectOverallShortlist(await this.repository.listOffers(), { country, limit });
+      const records = selectOverallShortlist((await this.listEligibleOffers(authority)), { country, limit });
       return { status: records.length ? "available" : "no-eligible", records } as const;
     } catch {
       return { status: "unavailable", records: [] } as const;
     }
   }
 
-  async getOfferFacets() {
-    return buildOfferFacets(await this.listEligibleOffers());
+  async getOfferFacets(authority?: CommercialJurisdictionAuthority | null) {
+    return buildOfferFacets(await this.listEligibleOffers(authority));
   }
 }
 

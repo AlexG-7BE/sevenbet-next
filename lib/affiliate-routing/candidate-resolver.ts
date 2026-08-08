@@ -36,6 +36,7 @@ export interface CandidateOffer {
   casinoBonusId: string | null;
   casinoBonus?: { casinoId: string } | null;
   status?: string;
+  domainLifecycleStatus?: string | null;
   archivedAt?: Date | string | null;
   startAt?: Date | string | null;
   expiresAt?: Date | string | null;
@@ -46,6 +47,10 @@ export interface CandidateOffer {
   program: {
     name: string;
     status?: string;
+    workflowStatus?: string;
+    connectionStatus?: string;
+    supportedCountries?: string[];
+    domainLifecycleStatus?: string | null;
     archivedAt?: Date | string | null;
     network: { name: string; active?: boolean; archivedAt?: Date | string | null };
   };

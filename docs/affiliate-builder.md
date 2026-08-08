@@ -39,4 +39,4 @@ The preview calls a protected read-only endpoint. It filters inactive, archived,
 
 ## Legacy coexistence
 
-`AffiliateLink`, `CasinoAffiliateLink`, and `/go/[slug]` are unchanged. The new `/r/[slug]` route is independent and opt-in. Public casino/bonus links are not switched automatically, and no implicit fallback to legacy destinations is allowed.
+`AffiliateLink` and `CasinoAffiliateLink` remain legacy data contracts. RFC-014 / GB-MARKET-01 makes `/go/[slug]` permanently non-commercial and makes `/r/[slug]` the only possible governed external route. Public casino/bonus links are not switched automatically, and no implicit fallback to legacy destinations is allowed.

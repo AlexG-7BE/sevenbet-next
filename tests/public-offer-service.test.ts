@@ -15,6 +15,7 @@ import type { PublicOfferStore } from "../lib/repositories/public-offer.reposito
 import { PublicOfferRepository } from "../lib/repositories/public-offer.repository";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
+import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 
 function offer(slug: string, patch: {
   score?: number; featured?: boolean; recommended?: boolean; country?: string; type?: string; payment?: string;
@@ -97,19 +98,19 @@ test("default page contains 24 records and page two preserves the twenty-fifth",
 test("every supported public bonus filter is real and combined filters can return empty", async () => {
   const alpha = offer("alpha", { country: "GB", type: "WELCOME", payment: "Visa", crypto: true, deposit: 10, wagering: 25, available: true });
   const beta = offer("beta", { country: "IE", type: "CASHBACK", payment: "Apple Pay", crypto: false, deposit: 30, wagering: 45, available: false });
-  const service = new PublicOfferService(store([alpha, beta]), { cmsEnabled: true });
+  const service = new PublicOfferService(store([alpha, beta]), { cmsEnabled: true, redirectEnabled: true }, allowOperatorAuthority);
   const cases: Array<[Record<string, string>, string]> = [
     [{ country: "GB" }, "alpha"], [{ type: "CASHBACK" }, "beta"], [{ payment: "Visa" }, "alpha"],
     [{ crypto: "false" }, "beta"], [{ maxDeposit: "15" }, "alpha"], [{ maxWagering: "30" }, "alpha"],
     [{ availability: "AVAILABLE" }, "alpha"],
   ];
   for (const [params, slug] of cases) {
-    const result = await service.searchOffers(parsePublicOfferQuery(params));
+    const result = await service.searchOffers(parsePublicOfferQuery(params), allowJurisdictionAuthority);
     assert.deepEqual(result.records.map((item) => item.casino.slug), [slug]);
   }
-  const combined = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "WELCOME", payment: "Visa", crypto: "true", maxDeposit: "10", maxWagering: "25", availability: "AVAILABLE", sort: "lowest-wagering" }));
+  const combined = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "WELCOME", payment: "Visa", crypto: "true", maxDeposit: "10", maxWagering: "25", availability: "AVAILABLE", sort: "lowest-wagering" }), allowJurisdictionAuthority);
   assert.deepEqual(combined.records.map((item) => item.casino.slug), ["alpha"]);
-  const empty = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "CASHBACK" }));
+  const empty = await service.searchOffers(parsePublicOfferQuery({ country: "GB", type: "CASHBACK" }), allowJurisdictionAuthority);
   assert.equal(empty.total, 0);
   assert.deepEqual(empty.records, []);
 });

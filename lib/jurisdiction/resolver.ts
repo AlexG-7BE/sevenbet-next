@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { unavailableJurisdictionPolicyStore } from "./policy-store";
+import { repositoryJurisdictionPolicyStore } from "./policy-store";
 import type { CountrySignal, JurisdictionDecision, JurisdictionPolicy, JurisdictionPolicyStore, ResolutionInput } from "./types";
 
 const maxSignalAgeMs = 24 * 60 * 60 * 1000;
@@ -18,7 +18,8 @@ function stableDecisionId(value: unknown) {
 
 function signalState(signal: CountrySignal | null | undefined, now: Date) {
   if (!signal?.countryCode || !signal.observedAt) return "ABSENT" as const;
-  return now.getTime() - signal.observedAt.getTime() > maxSignalAgeMs ? "STALE" as const : "CURRENT" as const;
+  const age = now.getTime() - signal.observedAt.getTime();
+  return !Number.isFinite(age) || age < 0 || age > maxSignalAgeMs ? "STALE" as const : "CURRENT" as const;
 }
 
 function decision(input: ResolutionInput, value: Omit<JurisdictionDecision, "decisionId" | "evaluatedAt" | "inputSummary">): JurisdictionDecision {
@@ -30,7 +31,17 @@ function decision(input: ResolutionInput, value: Omit<JurisdictionDecision, "dec
     { source: "ROUTE", trust: "UNTRUSTED", state: input.routeCountryOrMarketSlug ? "CURRENT" : "ABSENT" },
     { source: "OVERRIDE", trust: "SERVER", state: input.administrativeOverride ? "CURRENT" : "ABSENT" },
   ];
-  const identity = { countryCode: value.countryCode, marketId: value.marketId, jurisdictionId: value.jurisdictionId, reasonCode: value.reasonCode, policyVersion: value.policyVersion, inputSummary };
+  const identity = {
+    countryCode: value.countryCode,
+    marketId: value.marketId,
+    jurisdictionId: value.jurisdictionId,
+    reasonCode: value.reasonCode,
+    policyVersion: value.policyVersion,
+    editorialAllowed: value.editorialAllowed,
+    commercialAllowed: value.commercialAllowed,
+    referralAllowed: value.referralAllowed,
+    inputSummary,
+  };
   return { ...value, decisionId: stableDecisionId(identity), evaluatedAt: input.now.toISOString(), inputSummary };
 }
 
@@ -39,7 +50,7 @@ function deny(input: ResolutionInput, reasonCode: JurisdictionDecision["reasonCo
 }
 
 export class JurisdictionResolver {
-  constructor(private readonly store: JurisdictionPolicyStore = unavailableJurisdictionPolicyStore) {}
+  constructor(private readonly store: JurisdictionPolicyStore = repositoryJurisdictionPolicyStore) {}
 
   async resolve(input: ResolutionInput): Promise<JurisdictionDecision> {
     const request = input.requestCountrySignal;
@@ -58,14 +69,23 @@ export class JurisdictionResolver {
     let policy: JurisdictionPolicy | null;
     try { policy = await this.store.findByCountry(countryCode); } catch { return deny(input, "POLICY_UNAVAILABLE", countryCode); }
     if (!policy) return deny(input, "UNSUPPORTED_MARKET", countryCode);
+    if (normalizeCountry(policy.countryCode) !== countryCode) return deny(input, "POLICY_UNAVAILABLE", countryCode, policy);
     if (input.policyVersion && input.policyVersion !== policy.policyVersion) return deny(input, "POLICY_STALE", countryCode, policy);
-    if (!policy.validUntil || policy.validUntil.getTime() <= input.now.getTime()) return deny(input, "POLICY_STALE", countryCode, policy);
-    if (!policy.marketId || !policy.jurisdictionId) return deny(input, "POLICY_UNAVAILABLE", countryCode, policy);
+    if (
+      Number.isNaN(policy.checkedAt.getTime())
+      || policy.checkedAt.getTime() > input.now.getTime()
+      || !policy.validUntil
+      || policy.validUntil.getTime() <= policy.checkedAt.getTime()
+      || policy.validUntil.getTime() <= input.now.getTime()
+    ) return deny(input, "POLICY_STALE", countryCode, policy, policy.editorialAllowed);
+    if (!policy.marketId || !policy.jurisdictionId || !policy.evidenceIds.length || policy.evidenceIds.some((id) => !id.trim())) {
+      return deny(input, "POLICY_UNAVAILABLE", countryCode, policy);
+    }
     if (policy.state === "SUSPENDED") return deny(input, "MARKET_SUSPENDED", countryCode, policy, policy.editorialAllowed);
     if (policy.state === "RESTRICTED") return deny(input, "MARKET_RESTRICTED", countryCode, policy, policy.editorialAllowed);
     if (policy.state !== "SUPPORTED") return deny(input, "UNSUPPORTED_MARKET", countryCode, policy, policy.editorialAllowed);
     if (input.administrativeOverride?.forceCommercialDeny) return deny(input, input.administrativeOverride.reasonCode, countryCode, policy, policy.editorialAllowed);
-    if (!policy.commercialAllowed) return deny(input, "EVIDENCE_MISSING", countryCode, policy, policy.editorialAllowed);
+    if (!policy.commercialAllowed) return deny(input, "COMMERCIAL_NOT_ACTIVE", countryCode, policy, policy.editorialAllowed);
     if (!policy.referralAllowed) {
       return decision(input, {
         countryCode, marketId: policy.marketId, jurisdictionId: policy.jurisdictionId,

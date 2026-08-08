@@ -5,6 +5,7 @@
 - **Reconciled:** 2026-08-08
 - **Main entering ENV-ISO-01:** `2aefc05dab2332deeb7dbe6f26d3a08d7b849028`
 - **ENV-ISO-01 merge:** [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`
+- **GB-MARKET-01 delivery:** implementation complete in [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54), based on `9620a9c89afda57ea168f3edbf398ba0c4e450d4`; not merged
 - **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` Ready; Production Smoke run `31254902719` passed 2026-08-08)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
@@ -20,6 +21,8 @@
 **Detected from merged OPS-01 / PR #45:** ESLint, deterministic PR CI, isolated fresh-database verification, browser and build-secret gates, scheduled read-only Production smoke and operations runbooks are implemented without changing product behaviour or Production data.
 
 **Detected in merged ENV-ISO-01 / PR #52:** Production and Preview use distinct Prisma Postgres resources and credentials, distinct Better Auth/admin secrets and separate provider environment scopes. Preview accepts only its exact Vercel branch host, all 17 migrations are applied, representative Preview data counts are zero, and a disposable Preview auth/session canary was absent from Production and deleted after proof. No Production data was copied. Post-merge Production authentication passed without broadening Production origin trust. Recovery capability remains **PARTIAL** because Prisma Free supplies no usable provider snapshot/PITR recovery point.
+
+**GB-MARKET-01: IMPLEMENTATION COMPLETE — DELIVERY PR #54.** The GB technical market authority is **READY FOR FOUNDER REVIEW**. GB commercial activation is **NOT ACTIVE** and GB referral is **NOT ACTIVE**. COMM-01 and LEGAL-02 remain open; this status is not GB launch approval.
 
 ## Completed frontend
 
@@ -38,10 +41,11 @@ The exact merged work-package history is recorded in the [final migration audit]
 - **Detected — Programme:** Missions 01–04 have server-owned validation, progress, deterministic rewards and Dashboard state. Mission 01 awards 60 XP; Mission 02 awards 80 XP and `First Plan`; Mission 03 awards 90 XP; Mission 04 awards 100 XP and `Boundary built`.
 - **Planned — Programme:** Missions 05–10 have titles/navigation state only; no completion policy or task content is implemented.
 - **Detected — casino data:** RFC-012 authorises exactly 25 deterministic fictional `demo-*` aggregates as a bounded temporary pre-launch exception. Normal regulated production policy does not permit synthetic operator data; cleanup/replacement is required before genuine regulated commercial operation.
-- **Detected — commercial routing:** confirmation UI hands off to managed `/r/[slug]`; resolution is server-authoritative and fails to `/outbound/unavailable` without substitute offers. `/go/[slug]` is legacy compatibility only. FE-HANDOFF-01 is closed.
+- **Detected in GB-MARKET-01 delivery — commercial routing:** public commercial projection requires current jurisdiction, operator/evidence and redirect authority. `/r/[slug]` rechecks the full authority and fails to `/outbound/unavailable` without a substitute. `/go/[slug]` has no external authority and always uses the neutral unavailable flow. The affiliate engine remains off.
 - **Detected — legal/tools:** Privacy and Terms are substantive launch-candidate pages, `noindex, follow`, and absent from the sitemap. Self-Check and the Limit Tracker are local React-memory tools with mandatory commercial isolation.
 - **Not detected — account lifecycle:** account-wide export, account-wide erasure automation and complete password recovery.
-- **Not detected — market authority:** the jurisdiction resolver is shadow/deny-safe and its default policy store has no approved live dataset. GB launch intent is not live age or eligibility authority.
+- **Detected in GB-MARKET-01 delivery — market authority:** one versioned repository policy supports GB online-casino editorial visibility while commercial and referral capabilities remain false. Trusted request location is Vercel Preview/Production country metadata only; user filters and routes cannot grant permission. Operator eligibility requires existing canonical country/licence/evidence/partner contracts and machine-provable domain evidence. The latter is not currently available to runtime, so actions remain denied.
+- **Not verified — Production market data inventory:** no secure read-only Production database audit was performed. Published-casino, GB availability, canonical licence, verified/fresh evidence and GB partner counts are not guessed. Effective commercially eligible GB operators are `0` under policy `gb-2026-08-08.1` because the jurisdiction commercial/referral ceiling is false.
 
 ## Remaining release gates
 
@@ -53,9 +57,9 @@ The exact merged work-package history is recorded in the [final migration audit]
 
 ### Compliance / legal
 
-- External counsel review of Privacy, Terms, disclosures and market-specific copy.
+- **LEGAL-02 OPEN:** external counsel review of Privacy, Terms, disclosures, market-specific copy, age/account launch decisions and significant-condition evidence.
 - Processor/subprocessor verification and retention/transfer confirmation.
-- Approve live age, jurisdiction, licensing, support-resource and commercial-eligibility policy.
+- Approve any later permissive GB policy change only after Legal and commercial evidence gates close.
 
 ### Backend / operations
 
@@ -67,7 +71,7 @@ The exact merged work-package history is recorded in the [final migration audit]
 ### Data / partners
 
 - Replace or remove the RFC-012 temporary fictional dataset before regulated commercial operation.
-- Approve real operator evidence, partner destinations, ownership, freshness and commercial activation.
+- **COMM-01 OPEN:** approve real operator/domain evidence, partner destinations, ownership, freshness, terms and commercial activation. No real partner is active through GB-MARKET-01.
 
 ### Design system
 

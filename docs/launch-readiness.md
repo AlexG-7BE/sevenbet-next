@@ -11,11 +11,11 @@
 - **Implemented:** public error, global-error, and not-found boundaries avoid white screens and avoid revealing technical details.
 - **Implemented:** `/responsible-gaming` permanently redirects to the canonical `/responsible-gambling`; the alias is no longer in the sitemap source.
 - **Implemented:** standard response headers now prevent MIME sniffing and framing, restrict referrer forwarding, and disable unused browser capabilities.
-- **Detected:** affiliate redirect availability is environment-gated; this work did not change that gate.
+- **Detected:** affiliate redirect availability is the strict AND of current market policy, operator evidence, partner/link/slug state and the environment kill switch. The current GB policy denies commercial/referral capability.
 
 ## Remaining governance gates
 
-- **Blocking — RFC-001:** `docs/06_RFC/RFC-001-Jurisdiction-and-Market-Resolution.md` remains Proposed. It does not authorise market launch, commercial activation, or referral launch.
+- **Blocking:** RFC-014 approves the bounded technical GB market authority but explicitly does not authorise market launch, commercial activation or referral launch. COMM-01 and LEGAL-02 remain open.
 - **Blocking:** market-specific legal, licence, age, disclosure, support, and ownership evidence must be approved before any market is exposed commercially.
 - **Blocking:** production deployment, secret-management, backup/restore, incident, telemetry, and on-call decisions require their applicable RFC/operational approvals.
 - **Blocking:** Privacy and Terms are substantive launch-candidate pages, but final external counsel review, processor/subprocessor verification and retention/transfer confirmation remain required before launch approval.
@@ -25,7 +25,7 @@
 - **Detected:** `NEXT_PUBLIC_SITE_URL` defaults to localhost when unset. Production must provide the final HTTPS origin before sitemap, canonical, robots host, and JSON-LD are verified.
 - **Detected:** public casino runtime can fall back to legacy data after a CMS repository failure. This preserves public availability but must be assessed against the approved market-publication policy before launch.
 - **Detected:** current server diagnostics use `console.warn`; no external monitoring provider was added, in line with the Epic.
-- **Not detected:** CI/CD configuration, managed production monitoring, backup/restore evidence, deployment runbook, and a production incident/on-call process.
+- **Not detected:** provider backup/restore proof, broader managed paging/retention, or final legal/partner market approval. CI/CD, deployment/smoke and incident runbooks are detected.
 
 ## Manual launch checklist
 

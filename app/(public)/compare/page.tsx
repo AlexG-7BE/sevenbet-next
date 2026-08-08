@@ -6,6 +6,7 @@ import { parsePublicComparisonQuery, type ComparisonSearchParams } from "@/lib/p
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { publicComparisonService } from "@/lib/services/public-comparison.service";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 export const dynamic = "force-dynamic";
 
@@ -39,7 +40,9 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 
 export default async function ComparePage({ searchParams }: { searchParams: Promise<PageSearchParams> }) {
   const raw = toSearchParams(await searchParams);
-  const result = await loadComparison(raw.toString());
+  const query = parsePublicComparisonQuery(new URLSearchParams(raw) as ComparisonSearchParams);
+  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country });
+  const result = await publicComparisonService.compare(query, authority);
   const schemas = result.status === "projection-unavailable" ? [] : [
     {
       "@context": "https://schema.org",

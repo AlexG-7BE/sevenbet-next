@@ -4,7 +4,7 @@
 
 The canonical public catalog is `/casinos`. `/catalog` permanently redirects to it and preserves only parameters accepted by the shared query parser. `/casino/[slug]` remains the detail route, `/bonuses` remains the bonus directory, and `/r/[slug]` remains the only commercial redirect route. `/catalog` was removed from the sitemap route list so there is only one indexable catalog.
 
-Public content comes from the latest immutable `CasinoVersion` whose version and current `Casino` are both `PUBLISHED` and whose current Casino is not archived. Draft rows, archived Casinos, unmatched import records, and legacy fixtures never enter Discovery. `PublicCasinoService` still owns projection of one detail page; `PublicCasinoDiscoveryService` owns catalog search, filters, sorting, facets, pagination, GEO preview, bonus summary, and card DTOs.
+Public content comes from the latest immutable `CasinoVersion` whose version and current `Casino` are both `PUBLISHED` and whose current Casino is not archived. Draft rows, archived Casinos, unmatched import records, and legacy fixtures never enter Discovery. `PublicCasinoService` still owns projection of one detail page; `PublicCasinoDiscoveryService` owns catalog search, filters, sorting, facets, pagination, declared-market preview, bonus summary, and card DTOs.
 
 The audit found structured published snapshot data for countries, licenses, payment methods, game providers, categories, bonuses, languages, and currencies. Editorial featured/recommended flags and extended bonus GEO fields are stored in the versioned editor metadata JSON. Mobile support has no dedicated relation; the filter is conservative and matches only an explicit published `mobileApp` or `supportsMobile` signal. Casino aliases are canonical local relations and are used only for search. Bonus GEO has no dedicated table, so the published bonus editor metadata is authoritative until a normalized bonus-country relation is introduced.
 
@@ -47,12 +47,15 @@ Facets are server-generated from published local records matching the current se
 
 The catalog country parameter is a filter and availability preview, not proof of physical location. An unknown or invalid country is ignored. No automatic redirect occurs. Casino availability, Offer GEO, Tracking Link GEO, and bonus GEO are evaluated separately.
 
-With no trusted/selected country, only global Offer and Tracking Link rules create a visible action. A selected valid country may enable ALLOW rules or disable BLOCK rules. The redirect engine independently derives trusted request country and remains the final authority.
+Country selection can filter editorial records and published bonus metadata, but it cannot create an action. Offer and Tracking Link GEO rules are evaluated only with the current trusted jurisdiction country after the server resolver permits referral. Unknown trusted location, policy deny, conflict or operator-evidence failure leaves the review and published bonus editorial visible while removing the action.
 
 A public visit action requires:
 
 ```text
-published Casino
+current jurisdiction referral permission
+  → published, non-suspended Casino/operator/brand
+  → current official GB licence and exact-domain evidence
+  → published Casino
   → active, unarchived Program and Network
   → active, in-date Offer allowed for the GEO
   → active, in-date Tracking Link allowed for the GEO
@@ -63,7 +66,7 @@ Cards expose only `{ available, redirectSlug, label, reasonCode }`; rendered CTA
 
 ## Bonus projection
 
-Only published, active, in-date bonuses from the immutable Casino snapshot are considered. Bonus GEO metadata is applied independently. When a bonus has local commercial Offers, an eligible bonus redirect is required; editorial bonuses without a commercial Offer may remain informational. Selection is deterministic: published featured metadata first, then stable slug order. Cards show terms notices and never label an offer “best.”
+Only published, active, in-date bonuses from the immutable Casino snapshot are considered. Bonus GEO metadata is applied independently as declared editorial context. Commercial denial never removes an otherwise eligible published bonus summary. Selection is deterministic: published featured metadata first, then stable slug order. Cards show terms notices and never label an offer “best.”
 
 ## DTO and server/client boundary
 

@@ -1,9 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import { safeAffiliateRedirectResponse } from "@/lib/affiliate-routing/redirect-response";
-import { countryFromRequest, isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/affiliate-routing/redirect-validation";
-import { evaluateJurisdictionShadow } from "@/lib/jurisdiction/shadow";
+import { affiliateRedirectHeaders, safeAffiliateRedirectResponse } from "@/lib/affiliate-routing/redirect-response";
+import { isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/affiliate-routing/redirect-validation";
+import { logJurisdictionDecision } from "@/lib/jurisdiction/decision-log";
+import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,9 @@ function recoveryResponse(request: NextRequest) {
   recoveryUrl.pathname = "/outbound/unavailable";
   recoveryUrl.search = "";
   recoveryUrl.hash = "";
-  return NextResponse.redirect(recoveryUrl, 303);
+  const response = NextResponse.redirect(recoveryUrl, 303);
+  for (const [name, value] of Object.entries(affiliateRedirectHeaders)) response.headers.set(name, value);
+  return response;
 }
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -30,22 +33,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     safeDiagnostic("INVALID_PREFERENCE_HINT");
     return recoveryResponse(request);
   }
-  const countryCode = countryFromRequest(request);
+  const now = new Date();
+  const requestCountrySignal = requestCountrySignalFromHeaders(request.headers, now);
   try {
-    const result = await affiliateRedirectService.resolve(slug, { countryCode, ...hints });
-    await evaluateJurisdictionShadow("AFFILIATE_REDIRECT", {
-      // Existing recognised headers are not yet proven to originate at a configured trusted boundary.
-      requestCountrySignal: countryCode ? { countryCode, trust: "UNTRUSTED", observedAt: new Date() } : null,
-      now: new Date(),
-    }, { commercialAllowed: result.ok, referralAllowed: result.ok });
+    const result = await affiliateRedirectService.resolve(slug, { requestCountrySignal, ...hints, now });
+    if (result.jurisdictionDecision) logJurisdictionDecision("AFFILIATE_REDIRECT", result.jurisdictionDecision);
     if (!result.ok) {
-      safeDiagnostic(result.reason, { slugId: result.slugId, casinoId: result.casinoId, countryCode, ...hints });
+      safeDiagnostic(result.reason, { slugId: result.slugId, casinoId: result.casinoId, countryCode: result.jurisdictionDecision?.countryCode, ...hints });
       return recoveryResponse(request);
     }
     const response = safeAffiliateRedirectResponse(result.destination);
     return response.status === 302 ? response : recoveryResponse(request);
   } catch {
-    safeDiagnostic("RESOLUTION_ERROR", { countryCode, ...hints });
+    safeDiagnostic("RESOLUTION_ERROR", { countryCode: requestCountrySignal?.countryCode, ...hints });
     return recoveryResponse(request);
   }
 }
