@@ -4,22 +4,23 @@
 
 | Technology | Status and evidence | Active use |
 | --- | --- | --- |
-| Node.js | Detected runtime; scripts use `node` and package scripts. No repository-level Node version constraint (`engines`, `.nvmrc`, `.node-version`) detected. | Development, build, scripts and tests. |
+| Node.js 24.x | Detected `package.json` engine; verified Vercel Production major and CI setup match it. | Development target, build, scripts and tests. |
 | npm | Detected from `package-lock.json` and `package.json`. | Package management. |
-| Next.js 15 | Detected dependency and imports; App Router under `app/`; `next.config.mjs`. | Web framework, route handlers, metadata, middleware. |
+| Next.js 15.5.21 | Detected exact dependency and imports; App Router under `app/`; `next.config.mjs`. | Web framework, route handlers, metadata, middleware. |
 | React 19 | Detected dependency and TSX components. | UI. |
 | TypeScript | Detected `tsconfig.json`, `.ts/.tsx` source, `tsc --noEmit`. | Application, services and tests. |
 | CSS | Detected `app/globals.css` and component class names. | Global/class-based styling and responsive rules where authored. |
 | Prisma 6 + PostgreSQL | Detected package imports, `prisma/schema.prisma`, migrations and `lib/db/prisma.ts`. | ORM/client and persistence. |
 | Better Auth 1.6.23 | Detected imports/configuration and `/api/auth/[...all]`. | Email/password session authentication and admin staff resolution. |
-| Playwright | Detected dev dependency and `tests/public-casino-browser.spec.ts`. | Browser testing. |
+| Playwright 1.61.1 resolved | Detected dev dependency, lockfile and browser suites. | Chromium browser testing; required OPS manifest uses an isolated local production build. |
+| ESLint 9.39.5 + eslint-config-next 15.5.21 | Detected exact dev dependencies and flat config. | Required static analysis with zero warnings. |
 | Node test runner + tsx | Detected test scripts and `.test.ts` files. | Unit/integration-style repository tests and TypeScript scripts. |
 
 ## Tooling and configuration
 
-**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, and multiple focused test scripts.
+**Detected:** `next build`, `next dev -p 4173`, `next start -p 4173`, Prisma generation via `postinstall`, TypeScript strict/no-emit checking, ESLint, explicit deterministic Node-test manifests, isolated browser CI, build-secret scanning and guarded fresh-PostgreSQL migration verification.
 
-**Not detected:** ESLint configuration or a working lint dependency. `package.json` declares `next lint`, but no ESLint configuration/package is present and Next.js 15 no longer provides the prior `next lint` command. Tailwind, PostCSS, Docker, a separate UI-component library, Zod/Yup, and a test-coverage configuration are also not detected.
+**Not detected:** Tailwind, a separate UI-component library, Zod/Yup, a test-coverage threshold, repository Docker image or infrastructure-as-code. PostgreSQL runs as a GitHub Actions service only; it is not an application container architecture.
 
 ## Dependency caution
 

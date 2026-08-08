@@ -1,26 +1,24 @@
 # Environments
 
-## Detected local workflow
+## Detected workflow
 
-`npm run dev` starts Next.js on port 4173; `npm run build` builds, and `npm run start` starts on the same port. `.env`, `.env.local`, and `.env.example` are present. Only `.env.example` names are documented here; values are intentionally omitted.
-
-| Environment | Evidence | URL/status |
+| Environment | Evidence | Approval boundary |
 | --- | --- | --- |
-| Development | Detected npm scripts and example values | `http://localhost:4173` is the documented local default. |
-| Preview | Partially detected | Vercel link metadata is present, but no preview URL/process is documented. |
-| Production | Partially detected | `NEXT_PUBLIC_SITE_URL` supports canonical URLs; no production URL, deploy command, or release process is repository-confirmed. |
+| Local | Port 4173 scripts and committed `.env.example`; local value files ignored | Synthetic/developer-owned resources only |
+| CI | GitHub Actions Node.js 24, fake auth sentinels and disposable PostgreSQL 16 | No hosted Preview/Production secrets or data |
+| Preview | Vercel environment and Git Preview deployment | Read-only inspection only until isolated non-production database/auth/admin values exist |
+| Production | Vercel project/deployment, fixed production smoke origin and Node.js 24.x metadata | Protected PR/merge path; smoke after deployment |
 
-## Configuration surface
+## Isolation finding
 
-| Area | Variable names (values omitted) |
-| --- | --- |
-| Database/site/auth | `DATABASE_URL`, `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` |
-| Admin bootstrap/legacy gate | `SEVENBET_ADMIN_PREVIEW_TOKEN`, `CMS_PHASE1_ALLOW_DEV_ADMIN`, `CMS_AUTH_PROVIDER`, `CMS_WEBHOOK_SECRET`, `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_PASSWORD`, `BOOTSTRAP_ADMIN_PROFILE_ID`, `ADMIN_PROFILE_EMAIL`, `ADMIN_PROFILE_NAME` |
-| Public casino/affiliate | `PUBLIC_CASINO_CMS_ENABLED`, `AFFILIATE_REDIRECT_ENGINE_ENABLED`, `AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE`, `JURISDICTION_RESOLVER_SHADOW_ENABLED`, `AFFILIATE_CREDENTIAL_REFERENCES`, `AFFILIATE_CREDENTIALS_<NORMALIZED_REFERENCE>` |
-| Media | `MEDIA_STORAGE_PROVIDER`, `MEDIA_LOCAL_STORAGE_ROOT`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_MAX_FILE_SIZE_BYTES`, `MEDIA_MAX_DIMENSION`, and the `MEDIA_S3_*` variables listed in [04_External_Services.md](04_External_Services.md). |
+**Detected, high severity:** redacted equality checks showed Preview and Production currently share the same database, Better Auth and admin-preview values. No value was printed or recorded. Mutation-capable Preview use is blocked until separate services/credentials are provisioned and verified.
+
+**Detected inconsistency:** Vercel metadata lists encrypted `DATABASE_URL` and `DIRECT_URL`, but an isolated environment-run check did not surface them while provider database aliases were present. No hosted setting was changed. Runtime database configuration must be reconciled before a migration-capable Production release.
+
+The complete configuration-name inventory, classifications, consumers and handling rules are maintained in [Environment and Secrets](../../06_Operations/Environment-and-Secrets.md).
 
 ## CI/CD and secrets
 
-**Not detected:** GitHub Actions or another CI workflow, coverage publishing, a production migration command, IaC, container deployment, or explicit secret-manager integration. `.env*` files are ignored by `.gitignore`; this is a local repository convention, not proof of production secret management.
+**Detected:** required PR CI, fresh-database migration verification, isolated browser tests, build-deliverable secret scanning, scheduled Production smoke, immutable GitHub Action pins and read-only default workflow permissions.
 
-**Detected:** Prisma client generation runs at `postinstall`; focused smoke/test scripts are available. Test results are treated as generated/local analysis output and excluded from this audit.
+**Not detected:** a short-lived Production migration credential, provider-native migration hook, verified secret rotation record or proven backup/restore configuration. Production migration automation remains provider/secret-architecture gated.

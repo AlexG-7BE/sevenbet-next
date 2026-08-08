@@ -25,7 +25,7 @@
 | Authorization policies | Implemented | `lib/auth/`, `lib/cms/permissions.ts`, protected layout, and admin handlers. |
 | Server actions | Not detected | No `"use server"` directive was found. |
 | Middleware | Implemented | `middleware.ts` scopes admin UX routing. |
-| Scheduled/background jobs | Not detected | Scripts and import/sync job records exist, but no scheduler/queue worker configuration was found. |
+| Scheduled/background jobs | Partial | No application scheduler/queue worker is detected. A repository-owned hourly GitHub Actions Production smoke is implemented by OPS-01. |
 | Webhooks | Not detected | An integration mode enum mentions `WEBHOOK`; no receiving webhook handler was detected. |
 | Caching | Partial | `lib/public-casino/cache.ts` exists; no external cache service was detected. |
 
@@ -51,6 +51,6 @@
 
 ## Assessment
 
-- **Implementation completeness estimate: 55%** (engineering estimate, not a measurement). The application has substantial implemented public, admin, persistence, auth, affiliate, and test surfaces. Completeness is reduced by missing demonstrated CI, broad compliance/jurisdiction controls, production-operational evidence, and unconfirmed production integrations.
-- **Architecture readiness: 5/10.** A concrete codebase, domain persistence, layering patterns, migrations, auth boundaries, and tests are ready to inspect. Before Phase 2, the team must resolve/document the authoritative target architecture, jurisdiction/licensing enforcement, safety/compliance controls, deployment/CI/observability expectations, and whether existing implementation patterns are approved or transitional.
+- **Implementation completeness estimate: 58%** (engineering estimate, not a measurement). The application has substantial implemented public, admin, persistence, auth, affiliate and test surfaces plus deterministic PR CI and operating runbooks. Completeness remains reduced by jurisdiction/compliance authority, Preview/Production isolation, provider recovery evidence, Programme operational gaps and unconfirmed Production integrations.
+- **Architecture readiness: 6/10.** A concrete codebase, domain persistence, layering patterns, migrations, auth boundaries, deterministic CI and a low-complexity release model are ready to inspect. Before regulated launch, the team must still resolve jurisdiction/licensing authority, legal/compliance ownership, Preview isolation, backup/restore proof and the remaining Programme/privacy lifecycle gates.
 - **May Phase 2 begin safely?** Yes, as an architecture-alignment phase, provided it treats the observed codebase as evidence to reconcile with Product Vision—not as an approved architecture.

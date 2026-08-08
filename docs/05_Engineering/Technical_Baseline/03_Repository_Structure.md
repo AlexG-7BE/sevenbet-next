@@ -12,6 +12,7 @@ sevenbet-next/
 ├── prisma/           Prisma schema and 17 SQL migrations
 ├── scripts/          Admin bootstrap, integrity, smoke and visual-QA scripts
 ├── tests/            Node tests and Playwright browser test
+├── .github/          Required CI, scheduled smoke, CODEOWNERS, PR template and Dependabot
 ├── .vercel/          Local Vercel-link metadata (not deployment configuration)
 ├── middleware.ts     Admin-route middleware
 ├── next.config.mjs   Next configuration
@@ -49,7 +50,7 @@ The counts exclude `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverag
 | Languages | TypeScript/TSX, JavaScript (MJS), SQL, Prisma schema language, CSS, JSON, Markdown |
 | Frameworks | Next.js App Router, React |
 
-**Detected:** no `public/` directory, GitHub Actions workflow, Tailwind/PostCSS configuration, or separate API/server directory. Git metadata has a configured GitHub `origin`; this confirms source hosting only, not a GitHub service integration in the running application.
+**Detected:** no `public/` directory, Tailwind configuration or separate API/server directory. GitHub Actions provides three deterministic PR jobs and a scheduled Production smoke. Git metadata has a configured GitHub `origin`; there is no GitHub service integration in the running application.
 
 ## Active Control Programme structure
 

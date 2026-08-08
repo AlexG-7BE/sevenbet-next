@@ -4,10 +4,10 @@
 
 | Field | Value |
 | --- | --- |
-| Audit date | 2026-07-28 |
+| Audit date | 2026-08-08 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | Documentation only; no application code, Prisma schema/migrations, environment values, or deployment configuration changed. |
+| Change scope | OPS-01 production-engineering audit and governance implementation. CI, test/lint tooling, runbooks and repository policy files changed; Prisma schema/migrations, hosted values, Production data and product behaviour did not change. |
 
 ## Evidence vocabulary
 
