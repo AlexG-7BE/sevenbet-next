@@ -158,7 +158,7 @@ test("metadata and structured data use a clean canonical without commercial sche
   expect(defaultHtml).not.toContain('"@type":"Offer"');
   expect(defaultHtml).not.toContain('"@type":"AggregateRating"');
   expect(defaultHtml).not.toMatch(/destinationUrl|trackingUrl/);
-  expect(defaultHtml).toMatch(/href="\/r\/[a-z0-9-]+"/);
+  expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
 
   const queryResponse = await request.get(`${baseUrl}/compare?empty=true&country=GB`);
   const queryHtml = await queryResponse.text();
@@ -167,17 +167,10 @@ test("metadata and structured data use a clean canonical without commercial sche
   expect(queryHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/compare"');
 });
 
-test("governed outbound confirmation is keyboard dismissible and unavailable actions stay inert", async ({ page, request }) => {
+test("commercial actions stay inert while market authority denies referral", async ({ page, request }) => {
   const slugs = await defaultSlugs(page);
-  const trigger = page.locator('a[aria-haspopup="dialog"]').first();
-  await expect(trigger).toBeVisible();
-  await trigger.focus();
-  await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "You are leaving SevenBet." });
-  await expect(dialog).toBeVisible();
-  await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
-  await expect(trigger).toBeFocused();
+  await expect(page.locator('a[aria-haspopup="dialog"]')).toHaveCount(0);
+  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 
   const candidateSlugs = await page.locator('select[name="casino"]').first().locator('option[value]:not([value=""])').evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
   let unavailableHtml = "";

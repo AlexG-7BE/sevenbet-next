@@ -17,6 +17,7 @@ import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -40,7 +41,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 export default async function BonusesPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   const query = parsePublicOfferQuery(raw, 24);
-  const result = await publicOfferService.searchOffers(query);
+  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country ?? null });
+  const result = await publicOfferService.searchOffers(query, authority);
   const featured = result.records.slice(0, 3);
   const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability].filter((value) => value !== undefined).length;
   const startPosition = (result.page - 1) * result.pageSize + 1;

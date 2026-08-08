@@ -4,10 +4,12 @@ import test from "node:test";
 
 import { resolveAffiliateCandidates, type CandidateOffer } from "../lib/affiliate-routing/candidate-resolver";
 import { safeAffiliateRedirectResponse, unavailableRedirectResponse } from "../lib/affiliate-routing/redirect-response";
-import { countryFromRequest, normalizeRedirectSlug, validateRedirectTargetUrl } from "../lib/affiliate-routing/redirect-validation";
+import { normalizeRedirectSlug, validateRedirectTargetUrl } from "../lib/affiliate-routing/redirect-validation";
+import { requestCountrySignalFromHeaders } from "../lib/jurisdiction/request-country";
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import { getAdminAccessStatus } from "../lib/auth/policy";
+import { allowJurisdictionResolver, allowOperatorAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -121,13 +123,14 @@ test("URL validation blocks unsafe protocols, credentials, CRLF, and production 
 });
 
 test("public country uses platform headers and ignores ordinary query override", () => {
-  assert.equal(countryFromRequest(new Request("https://sevenbet.example/r/test?country=GB")), null);
-  assert.equal(countryFromRequest(new Request("https://sevenbet.example/r/test", { headers: { "x-vercel-ip-country": "XX" } })), null);
-  assert.equal(countryFromRequest(new Request("https://sevenbet.example/r/test?country=US", { headers: { "x-vercel-ip-country": "GB" } })), "GB");
-  const previous = process.env.AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE;
-  process.env.AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE = "true";
-  assert.equal(countryFromRequest(new Request("http://localhost/r/test?testCountry=IE")), "IE");
-  if (previous === undefined) delete process.env.AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE; else process.env.AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE = previous;
+  const observedAt = new Date("2026-08-08T00:00:00.000Z");
+  assert.equal(requestCountrySignalFromHeaders(new Headers({ "x-vercel-ip-country": "GB" }), observedAt, {}), null);
+  assert.equal(requestCountrySignalFromHeaders(new Headers({ "x-vercel-ip-country": "XX" }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), null);
+  assert.deepEqual(requestCountrySignalFromHeaders(new Headers({ "x-vercel-ip-country": "GB" }), observedAt, { VERCEL: "1", VERCEL_ENV: "production" }), {
+    countryCode: "GB",
+    trust: "TRUSTED",
+    observedAt,
+  });
 });
 
 test("HTTP helpers produce controlled 302 and safe no-store 404 responses", () => {
@@ -154,8 +157,10 @@ function redirectStore(record: Awaited<ReturnType<AffiliateRedirectStore["findBy
 }
 
 test("redirect service returns 404 semantics for unknown slug and never uses query destinations", async () => {
-  const service = new AffiliateRedirectService(redirectStore(null), { activeCandidates: async () => [] });
-  assert.deepEqual(await service.resolve("unknown-slug"), { ok: false, reason: "SLUG_NOT_FOUND", candidates: [] });
+  const service = new AffiliateRedirectService(redirectStore(null), { activeCandidates: async () => [] }, allowJurisdictionResolver, allowOperatorAuthority);
+  const result = await service.resolve("unknown-slug");
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.reason, "SLUG_NOT_FOUND");
   assert.throws(() => normalizeRedirectSlug("token-secret"), /reserved security term/);
 });
 
@@ -183,12 +188,12 @@ test("redirect service selects only stored safe tracking URLs", async () => {
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
     createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
-  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never });
+  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowOperatorAuthority);
   const safe = await safeService.resolve("casino-offer", { now });
   assert.equal(safe.ok, true);
   if (safe.ok) assert.equal(safe.destination.toString(), "https://tracking.example/link-safe");
   const unsafeOffer = offer("unsafe", { trackingLinks: [link("unsafe", { trackingUrl: "javascript:alert(1)" })] });
-  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never });
+  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowOperatorAuthority);
   const unsafe = await unsafeService.resolve("casino-offer", { now });
   assert.equal(unsafe.ok, false);
   if (!unsafe.ok) assert.equal(unsafe.reason, "UNSAFE_REDIRECT_URL");
@@ -216,13 +221,14 @@ test("active redirect candidates require a published casino and active published
   );
 });
 
-test("migration 0008 is additive, event-free, and legacy route remains independent", () => {
+test("migration 0008 is additive and the legacy route is permanently fail closed", () => {
   const migration = readFileSync("prisma/migrations/0008_affiliate_redirect_foundation/migration.sql", "utf8");
   assert.match(migration, /CREATE TABLE "AffiliateRedirectSlug"/);
   assert.match(migration, /CREATE TABLE "AffiliateRedirectRevision"/);
   assert.doesNotMatch(migration, /AffiliateRedirectEvent|DROP|TRUNCATE|DELETE FROM|rawIp|userAgent/);
   const legacy = readFileSync("app/go/[slug]/route.ts", "utf8");
-  assert.match(legacy, /resolveAffiliateLink/);
+  assert.doesNotMatch(legacy, /resolveAffiliateLink|destinationUrl|safeDestination/);
   assert.doesNotMatch(legacy, /affiliateRedirectService|AffiliateRedirectSlug/);
+  assert.match(legacy, /outbound\/unavailable/);
   assert.match(readFileSync("app/r/[slug]/route.ts", "utf8"), /affiliateRedirectService/);
 });

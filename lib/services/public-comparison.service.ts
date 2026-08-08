@@ -15,6 +15,10 @@ import type {
 import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casino-discovery.repository";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { resolvePublicVisitAction } from "@/lib/services/public-casino-discovery.service";
+import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
+import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -69,9 +73,20 @@ function selectComparisonBonus(casino: PublicCasinoDTO) {
   return [...casino.bonuses].sort((a, b) => offerCompleteness(b) - offerCompleteness(a) || a.slug.localeCompare(b.slug))[0] ?? null;
 }
 
-function safeAction(casino: PublicCasinoDTO, country: string, state: PublicComparisonMarketState, context: DiscoveryContext, now: Date): PublicComparisonAction {
+function safeAction(
+  casino: PublicCasinoDTO,
+  country: string,
+  state: PublicComparisonMarketState,
+  context: DiscoveryContext,
+  now: Date,
+  authority?: CommercialJurisdictionAuthority | null,
+  operatorEligibility?: GbOperatorEligibilityDecision | null,
+  redirectEnabled = isAffiliateRedirectEnabled(),
+): PublicComparisonAction {
   if (state !== "AVAILABLE") return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Declared market availability does not permit a commercial action." };
-  const visit = resolvePublicVisitAction(context, casino.id, null, country, now);
+  if (!jurisdictionAllowsReferral(authority)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Current market authority does not permit a commercial action." };
+  if (!operatorEligibility?.referralEligible) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Required operator and commercial evidence is not currently complete." };
+  const visit = resolvePublicVisitAction(context, casino.id, null, country, now, authority, operatorEligibility, redirectEnabled);
   const href = visit.available && visit.redirectSlug ? `/r/${visit.redirectSlug}` : null;
   if (!href || !internalRedirect.test(href)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed internal action is currently available." };
   return { available: true, href, label: `Visit ${casino.name}`, reason: "Rechecked by the governed internal redirect route." };
@@ -201,9 +216,14 @@ function reasonForMarket(casino: PublicCasinoDTO, country: string): PublicCompar
 }
 
 export class PublicComparisonService {
-  constructor(private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository, private readonly now = () => new Date()) {}
+  constructor(
+    private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository,
+    private readonly now = () => new Date(),
+    private readonly operatorEligibility: GbOperatorEligibilityAuthority = gbOperatorEligibilityService,
+    private readonly redirectEnabled = isAffiliateRedirectEnabled,
+  ) {}
 
-  async compare(query: PublicComparisonQuery): Promise<PublicComparisonResult> {
+  async compare(query: PublicComparisonQuery, authority?: CommercialJurisdictionAuthority | null): Promise<PublicComparisonResult> {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     let context: DiscoveryContext;
     try {
@@ -218,6 +238,9 @@ export class PublicComparisonService {
       const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
       return casino?.source === "cms" ? [casino] : [];
     });
+    const operatorDecisions = jurisdictionAllowsReferral(authority)
+      ? await this.operatorEligibility.evaluateMany(all.map((casino) => casino.id), now)
+      : new Map<string, GbOperatorEligibilityDecision>();
     const candidates: PublicComparisonCandidate[] = all.map((casino) => {
       const state = marketState(casino, query.country);
       return { slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
@@ -252,7 +275,7 @@ export class PublicComparisonService {
         lastReviewedAt: casino.lastReviewedAt,
         reviewHref: `/casino/${casino.slug}`,
         marketState: state,
-        action: safeAction(casino, query.country, state, context, now),
+        action: safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), this.redirectEnabled()),
       };
     });
     const comparableProjected = projected.filter((casino) => casino.marketState === "AVAILABLE");

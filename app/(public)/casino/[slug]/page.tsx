@@ -8,6 +8,7 @@ import { casinoProfileMetadata, casinoProfileSchemas } from "@/lib/casino-profil
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -29,7 +30,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [casino, editorialResult] = await Promise.all([loadCasino(slug), loadEditorial(slug)]);
+  const [authority, editorialResult] = await Promise.all([resolveServerJurisdiction(), loadEditorial(slug)]);
+  const casino = await publicCasinoService.getCasino(slug, authority);
   if (!casino) notFound();
   const editorial = profileEditorialDocument(editorialResult);
   const schemas = casinoProfileSchemas(casino, editorial);

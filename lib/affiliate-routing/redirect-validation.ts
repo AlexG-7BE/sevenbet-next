@@ -1,16 +1,12 @@
 import { ValidationError } from "@/lib/services/service-error";
+import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
+
+export { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
 
 const controlCharacters = /[\u0000-\u001f\u007f]/;
 const encodedLineBreak = /%0d|%0a/i;
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const reservedSlugPart = /(?:^|-)(?:api-?key|auth|bearer|password|secret|session|token)(?:-|$)/i;
-
-export function isIsoCountryCode(value: string) {
-  const code = value.toUpperCase();
-  if (!/^[A-Z]{2}$/.test(code) || ["EU", "UN", "XA", "XB", "XK", "XX"].includes(code)) return false;
-  const name = new Intl.DisplayNames(["en"], { type: "region" }).of(code);
-  return Boolean(name && name !== code && name !== "Unknown Region");
-}
 
 export function isIsoCurrencyCode(value: string) {
   const code = value.toUpperCase();
@@ -64,18 +60,6 @@ export function validateRedirectTargetUrl(value: unknown, { production = process
 
 export function isAffiliateRedirectEnabled() {
   return process.env.AFFILIATE_REDIRECT_ENGINE_ENABLED === "true";
-}
-
-export function countryFromRequest(request: Request) {
-  for (const header of ["x-vercel-ip-country", "cf-ipcountry", "cloudfront-viewer-country"]) {
-    const value = request.headers.get(header);
-    if (value && isIsoCountryCode(value)) return value.toUpperCase();
-  }
-  if (process.env.NODE_ENV !== "production" && process.env.AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE === "true") {
-    const testCountry = new URL(request.url).searchParams.get("testCountry");
-    if (testCountry && isIsoCountryCode(testCountry)) return testCountry.toUpperCase();
-  }
-  return null;
 }
 
 export function preferenceHintsFromRequest(request: Request) {

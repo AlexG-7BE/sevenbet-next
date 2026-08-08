@@ -6,6 +6,7 @@ import { comparisonHref, parsePublicComparisonQuery, serializePublicComparisonQu
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicComparisonService } from "../lib/services/public-comparison.service";
+import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -259,7 +260,7 @@ test("commercial action requires an active governed offer and safe internal redi
   const beta = record("beta");
   const offer = activeOffer("alpha-id");
   const context = { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-governed" }] };
-  const result = await new PublicComparisonService(store([alpha, beta], context), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  const result = await new PublicComparisonService(store([alpha, beta], context), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }), allowJurisdictionAuthority);
   assert.deepEqual(result.casinos[0].action, { available: true, href: "/r/alpha-governed", label: "Visit Casino alpha", reason: "Rechecked by the governed internal redirect route." });
   assert.equal(result.casinos[1].action.available, false);
   assert.equal(result.casinos[1].action.href, null);

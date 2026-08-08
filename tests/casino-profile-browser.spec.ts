@@ -46,19 +46,12 @@ test("structured editorial evidence renders only for a published profile", async
   await expect(page.getByRole("heading", { level: 2, name: "Demo Lantern Casino: synthetic editorial demonstration" })).toBeVisible();
 });
 
-test("outbound confirmation is keyboard dismissible and returns focus", async ({ browser }) => {
+test("outbound confirmation is absent while market authority denies referral", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
   await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
   const hero = page.getByRole("complementary", { name: "Published bonus and visit action" });
-  const trigger = hero.getByRole("link", { name: "Visit Demo Northstar Casino" });
-  await trigger.click();
-  const dialog = hero.getByRole("dialog", { name: "You are leaving SevenBet." });
-  await expect(dialog).toBeVisible();
-  await expect(dialog.getByRole("button", { name: "Cancel and stay on SevenBet" })).toBeFocused();
-  expect(await dialog.locator('a[href^="http"]').count()).toBe(0);
-  await page.keyboard.press("Escape");
-  await expect(dialog).not.toBeVisible();
-  await expect(trigger).toBeFocused();
+  await expect(hero.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
+  await expect(hero.getByText("Offer unavailable")).toBeVisible();
   await page.close();
 });
 
@@ -68,7 +61,8 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino review" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" }).first()).toHaveAttribute("href", "/outbound/demo-northstar");
+  await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
+  await expect(page.getByText("Offer unavailable").first()).toBeVisible();
   await context.close();
 });
 

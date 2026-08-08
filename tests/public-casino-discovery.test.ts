@@ -7,6 +7,7 @@ import { visitActionUnavailableCopy } from "../lib/public-casino-discovery/visit
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
+import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -92,21 +93,33 @@ test("filters use OR within a facet and AND between facets", async () => {
 test("visit action requires active local program, offer, link, and safe redirect slug", async () => {
   const casino = record("alpha-id", "alpha", "Alpha");
   const offer = activeOffer("alpha-id");
-  const active = new PublicCasinoDiscoveryService(store([casino], { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }] }), () => now);
-  const card = (await active.discover()).items[0];
+  const active = new PublicCasinoDiscoveryService(store([casino], { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
+  const card = (await active.discover({}, allowJurisdictionAuthority)).items[0];
   assert.deepEqual(card.visitAction, { available: true, redirectSlug: "alpha-visit", label: "Visit casino", reasonCode: null });
   assert.doesNotMatch(JSON.stringify(card), /trackingUrl|destinationUrl|providerType|externalId/);
-  const inactive = new PublicCasinoDiscoveryService(store([casino], { offers: [activeOffer("alpha-id", { status: "PAUSED" })], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: null, slug: "alpha-visit" }] }), () => now);
-  assert.equal((await inactive.discover()).items[0].visitAction.available, false);
+  const inactive = new PublicCasinoDiscoveryService(store([casino], { offers: [activeOffer("alpha-id", { status: "PAUSED" })], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: null, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
+  assert.equal((await inactive.discover({}, allowJurisdictionAuthority)).items[0].visitAction.available, false);
 });
 
 test("GEO rules remove the action without removing the published review", async () => {
   const casino = record("alpha-id", "alpha", "Alpha");
   const offer = activeOffer("alpha-id", { geoMode: "ALLOW", countries: [{ countryCode: "GB", mode: "ALLOW" }] });
-  const service = new PublicCasinoDiscoveryService(store([casino], { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }] }), () => now);
-  assert.equal((await service.discover({ country: ["GB"] })).items[0].visitAction.available, true);
-  assert.equal((await service.discover()).items[0].visitAction.available, false);
+  const service = new PublicCasinoDiscoveryService(store([casino], { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
+  assert.equal((await service.discover({ country: ["GB"] }, allowJurisdictionAuthority)).items[0].visitAction.available, true);
+  assert.equal((await service.discover({}, { ...allowJurisdictionAuthority, countryCode: "IE" })).items[0].visitAction.available, false);
   assert.equal((await service.discover()).total, 1);
+});
+
+test("commercial denial preserves published bonus editorial content", async () => {
+  const casino = record("alpha-id", "alpha", "Alpha");
+  const bonusId = "alpha-id-bonus";
+  const context = {
+    offers: [activeOffer("alpha-id", { casinoBonusId: bonusId })],
+    redirects: [{ casinoId: "alpha-id", casinoBonusId: bonusId, affiliateOfferId: null, slug: "alpha-bonus" }],
+  };
+  const result = await new PublicCasinoDiscoveryService(store([casino], context), () => now).discover();
+  assert.equal(result.items[0].visitAction.available, false);
+  assert.equal(result.items[0].featuredBonus?.title, "Alpha welcome");
 });
 
 test("sorting and pagination are stable and bounded", async () => {
