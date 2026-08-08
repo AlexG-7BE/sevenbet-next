@@ -3,8 +3,8 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-08
-- **Main entering OPS-01:** `8f7ab7e9d61a57d91c6d683f33641b9816ecad9c` (PR [#44](https://github.com/AlexG-7BE/sevenbet-next/pull/44))
-- **Production URL:** <https://sevenbet-next.vercel.app> (HTTP 200 verified 2026-08-07)
+- **Main entering ENV-ISO-01:** `2aefc05dab2332deeb7dbe6f26d3a08d7b849028`
+- **Production URL:** <https://sevenbet-next.vercel.app> (HTTP 200 and Production Smoke verified 2026-08-08)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
 
@@ -12,13 +12,13 @@
 
 **Detected:** the public page-level frontend migration is complete through FE-GAP-02. The final audit has no known page-level P0 or P1 public-surface defect.
 
-**Current operations delivery:** **OPS-01 — Production Engineering & Release Governance** delivery record is [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45). The workstream establishes the repository CI and release-governance foundation; Git history is authoritative for its eventual merge commit. This record does not authorise merge or declare regulated launch readiness.
-
-**Next operations gate:** **ENV-ISO-01 — Preview / Production Environment Isolation**. Preview database, authentication and administration configuration must be isolated from Production before mutation-capable Preview use.
+**Current operations delivery:** **ENV-ISO-01 — Preview / Production Environment Isolation** is implementation-complete in delivery [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52), not merged. Distinct Preview database, authentication, administration and external-integration controls are live and proven. Because Better Auth runtime/origin code changed, a real Production auth E2E remains a pre-merge gate and is blocked pending a Founder-supplied secure test identity.
 
 **Detected on main:** Design System v1 consolidates the production UI inventory, semantic tokens, internal Action component, states, responsive evidence, accessibility, bounded visual regression, Figma production back-sync and governance.
 
-**Detected in OPS-01 / PR #45:** ESLint, deterministic PR CI, isolated fresh-database verification, browser and build-secret gates, scheduled read-only Production smoke and operations runbooks are implemented without changing product behaviour or Production data. This delivery state does not claim that PR #45 is merged.
+**Detected from merged OPS-01 / PR #45:** ESLint, deterministic PR CI, isolated fresh-database verification, browser and build-secret gates, scheduled read-only Production smoke and operations runbooks are implemented without changing product behaviour or Production data.
+
+**Detected in ENV-ISO-01 / PR #52:** Production and Preview use distinct Prisma Postgres resources and credentials, distinct Better Auth/admin secrets and separate provider environment scopes. Preview accepts only its exact Vercel branch host, all 17 migrations are applied, representative Preview data counts are zero, and a disposable Preview auth/session canary was absent from Production and deleted after proof. No Production data was copied. Recovery capability remains **PARTIAL** because Prisma Free supplies no usable provider snapshot/PITR recovery point.
 
 ## Completed frontend
 
@@ -58,8 +58,8 @@ The exact merged work-package history is recorded in the [final migration audit]
 
 ### Backend / operations
 
-- Isolate Preview database/auth/admin configuration from Production before mutation-capable Preview use.
-- Verify Prisma Postgres backup/retention/PITR/restore capabilities and complete a non-production restore drill; recovery objectives are not yet guarantees.
+- Complete the required real Production auth E2E for ENV-ISO-01 after Founder Office supplies a secure test identity; do not create a Production account for this gate.
+- Approve a paid provider snapshot path or separately governed backup architecture, then complete a Preview-sourced isolated restore drill; recovery objectives are not yet guarantees.
 - Approve a short-lived or provider-native Production migration mechanism. PR CI intentionally has no hosted credential.
 - Confirm the first post-merge scheduled Production smoke and its failure notification reaches the owner; broader APM/paging remains unimplemented.
 - Distributed Programme rate limiting, anonymous-data expiry purge, telemetry and account-wide export/erasure.

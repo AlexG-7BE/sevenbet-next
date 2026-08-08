@@ -1,35 +1,53 @@
 # Backup and Restore
 
-## Evidence and objectives
+## Current evidence
 
-- **Detected:** the hosted database endpoint class is Prisma Postgres.
-- **Not detected:** repository or provider evidence proving backup schedule, retention, point-in-time recovery, regional redundancy, restore permissions, encryption controls, or a completed restore drill.
-- **Planned target:** RPO no greater than 24 hours and RTO no greater than 4 hours for closed beta. These are objectives, not current guarantees.
+Reconciled on 2026-08-08 during ENV-ISO-01. Production and Preview are distinct Prisma Postgres resources, and Vercel account metadata reports both on the **Free** plan.
 
-Database-changing Production work is blocked until the provider console/contract confirms the required capabilities and a non-production restore drill succeeds.
+| Capability | Classification | Evidence |
+| --- | --- | --- |
+| Automated snapshots | **Not available on the current plan** | Prisma's detailed [backup documentation](https://www.prisma.io/docs/postgres/database/backups) lists automatic snapshots for Starter, Pro and Business; account metadata reports Free. |
+| Backup schedule | **Not applicable / unverified for Free** | Paid snapshots are described as daily on active days; no Free snapshot is available to inspect. |
+| Retention | **Not applicable / unverified for Free** | Paid retention is documented as 7 days for Starter/Pro and 30 days for Business. |
+| Point-in-time recovery | **Not available** | The detailed backup documentation describes point-in-time restore as future functionality. |
+| Restore from provider snapshot | **Not available on the current plan** | Neither Free resource exposes a provider snapshot recovery point. |
+| Restore permissions | **Unverified** | No restore authority was exercised; Production restore was prohibited. |
+| Manual `pg_dump` / `pg_restore` | **Documented provider mechanism, not an active managed backup** | Prisma documents direct connections for manual backup tooling. No Production dump or unmanaged copy was created. |
 
-## Verification checklist
+The broader provider overview currently uses less-specific backup/PITR language; this runbook follows the detailed backup feature page plus the account's verified Free plan. Conclusions are therefore plan-specific and deliberately conservative.
 
-The Founder/configuration owner and technical responder must record, outside this public repository where sensitive account detail is involved:
+## ENV-ISO-01 restore-drill outcome
 
-- provider project/database identity and accountable owner;
-- automated backup frequency, retention and encryption;
-- point-in-time recovery window, if available;
-- restore target options and whether restore can avoid overwriting Production;
-- roles permitted to initiate and approve restore;
-- estimated restore duration and cost;
-- provider support/escalation path;
-- last successful isolated restore drill date, source recovery point and verified application invariants.
+- Source environment: Preview only was required.
+- Production data used: **No**.
+- Recovery point available: **No**.
+- Temporary recovery resource created: **No**.
+- Paid plan enabled: **No**.
+- Manual Production export created: **No**.
+- Result: **NOT AVAILABLE — blocked by current provider plan capability**.
 
-## Non-production restore drill
+No restore was attempted because the Free Preview resource has no provider snapshot/PITR recovery point. Creating an unmanaged dump solely to satisfy the checklist would not verify the managed Production recovery path and would introduce another sensitive copy. No recovery clone is retained.
 
-1. Select a recovery point that contains no unapproved Production export. Use provider-native isolated restore/clone capability; do not overwrite Production.
-2. Restrict access and record start time, recovery point and operator.
-3. Restore to a new non-production target with separate credentials.
-4. Apply no ad-hoc schema edits. Verify migration history, representative table accessibility, authentication isolation and application read paths.
-5. Do not copy personal data into issue/CI logs. Destroy or retain the restored target according to an approved data-retention decision.
-6. Record measured RPO/RTO and discrepancies; update this runbook only with non-secret evidence.
+## Recovery status and gate
+
+**RECOVERY CAPABILITY PARTIAL.** Provider, plan and limitation are verified; automated backup, retention, restore permission and an isolated restore drill are not operationally proven. The existing internal targets remain RPO no greater than 24 hours and RTO no greater than 4 hours for closed beta; they are objectives, not guarantees.
+
+Before stateful closed-beta or regulated release, Founder Office must authorise exactly one bounded recovery path:
+
+1. upgrade to a plan with provider snapshots, verify the actual schedule/retention and complete a Preview-sourced restore into a new isolated resource; or
+2. approve a separately governed encrypted backup architecture, retention authority and restore drill.
+
+ENV-ISO-01 did not authorise either spend or architecture choice.
+
+## Future non-production restore drill
+
+1. Select a Preview recovery point containing only disposable non-production data. Never use a Production export to satisfy the drill.
+2. Record operator, source resource, recovery point and start time outside public logs.
+3. Restore into a new isolated recovery resource. Never overwrite Production or Preview.
+4. Verify the 17 repository migrations, representative harmless counts, authentication isolation and read paths. Do not inspect protected/private content.
+5. Record measured duration as drill evidence, not a guaranteed Production RTO.
+6. Delete the temporary recovery resource and verify deletion. Do not retain a clone or recurring cost.
 
 ## Incident restore
 
-The incident commander freezes writes when continued mutation increases harm. The technical responder confirms the failure mode, recovery point and expected loss window. Founder Office authorises a Production restore. Restore through the verified provider procedure, rotate credentials if compromise is possible, verify schema/migration invariants, deploy a compatible known-good application, run Production smoke and monitor. Preserve an audit record of actors, timestamps, SHAs and provider operation IDs—never credential values or protected user answers.
+The incident commander freezes writes when continued mutation increases harm. The technical responder confirms the failure mode, recovery point and expected loss window. Founder Office authorises any Production restore. Restore through the verified provider procedure, rotate credentials if compromise is possible, verify schema/migration invariants, deploy a compatible known-good application, run Production Smoke and monitor. Preserve an audit record of actors, timestamps, SHAs and provider operation IDs—never credential values or protected user answers.
