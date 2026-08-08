@@ -75,7 +75,6 @@
   outline-offset: var(--sb-focus-offset);
 }
 
-.action[aria-disabled="true"],
 .action:disabled {
   cursor: not-allowed;
   opacity: .32;

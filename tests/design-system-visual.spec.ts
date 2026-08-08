@@ -89,3 +89,37 @@ test("About mobile reference", async ({ page }) => {
   await openStable(page, "/about");
   await matchViewport(page, "about-mobile.png");
 });
+
+test("shared Action exposes production hover and keyboard-focus states", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openStable(page, "/");
+
+  const action = page.getByRole("link", { name: "Start the 10-Step Program" }).first();
+  const expectedHover = await page.evaluate(() => {
+    const probe = document.createElement("div");
+    probe.style.background = "var(--sb-action-primary-hover)";
+    document.body.append(probe);
+    const background = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return background;
+  });
+
+  await action.hover();
+  await expect.poll(() => action.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe(expectedHover);
+  await expect.poll(() => action.evaluate((element) => getComputedStyle(element).transform)).not.toBe("none");
+
+  await action.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(action).toBeFocused();
+  const focus = await action.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      offset: style.outlineOffset,
+      style: style.outlineStyle,
+      visible: element.matches(":focus-visible"),
+      width: style.outlineWidth,
+    };
+  });
+  expect(focus).toEqual({ offset: "4px", style: "solid", visible: true, width: "3px" });
+});

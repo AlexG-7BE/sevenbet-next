@@ -100,8 +100,9 @@ Selector counts are audit heuristics, not claims that every matching selector is
 - **Styles:** Primary, Ghost / Night, Ghost / Paper.
 - **Sizes:** Medium (52px minimum height), Large (64px minimum height).
 - **States:** Default, Hover, Focus, Disabled.
-- **Semantics:** `ActionLink` renders navigation; `ActionButton` renders application action. External/commercial resolution is prohibited.
-- **Accessibility:** native disabled behavior; `aria-disabled` presentation support; 3px focus-visible indicator; no glow; minimum target height at least 52px.
+- **Hover:** Primary uses `action/primary-hover` and a 1px interaction lift; Ghost / Night fills `text/on-night` with `text/ink`; Ghost / Paper fills `text/ink` with `text/on-night`.
+- **Semantics:** `ActionLink` renders available navigation and has no disabled API. `ActionButton` renders application action and owns the native Disabled state. Unavailable navigation must not render an actionable `ActionLink`. External/commercial resolution is prohibited.
+- **Accessibility:** native button-disabled behavior; 3px `safety/verified` focus-visible indicator with a 3px visual offset and no glow; minimum target height at least 52px.
 - **Responsive:** content-sized by default with bounded local CSS variable overrides; mobile full-width behavior stays with the consuming layout.
 - **Runtime:** server-compatible; no `use client`, browser global or Prisma import.
 
@@ -144,13 +145,13 @@ New shared components must prove their intrinsic sizing at 320px and at the cons
 
 | Figma area | Node / collection | Production relationship |
 | --- | --- | --- |
-| Foundations production token board | `934:2` | Documents semantic colour, spacing, radius and code-only focus/motion contracts. |
+| Foundations production token board | `934:2` | Documents semantic colour, spacing, radius and code-only focus/motion contracts, including the 3px focus width and 3px offset. |
 | Primitives | `VariableCollectionId:285:2` | 21 primitive variables; mode renamed `Value`; hidden from normal component consumption. |
 | Color | `VariableCollectionId:285:3` | 22 semantic variables; mode renamed `Default`; all values alias primitives. |
 | Spacing | `VariableCollectionId:285:4` | 10 variables; mode `Value`. |
 | Radius | `VariableCollectionId:285:5` | 5 variables; mode `Value`. |
-| Core / Button | `287:43` | 24 variants across style, size and state; full radius and Focus strokes are variable-bound. |
-| Ready for Dev | `937:2` | Production handoff, responsive contract, accessibility, domain boundaries, deprecation and traceability. |
+| Core / Button | `287:43` | 24 variants across style, size and state; Hover fills match production tokens and Focus uses an external variable-bound 3px ring with a 3px gap while retaining 52px/64px base geometry. |
+| Ready for Dev | `937:2` | Production handoff, responsive contract, truthful button-only Disabled semantics, accessibility, domain boundaries, deprecation and traceability. |
 
 All 58 local production variables have exact WEB syntax; semantic aliases with CSS equivalents use `var(--sb-*)`. Validation found 22 aliases, zero broken aliases, zero missing/malformed WEB syntax and zero semantic colour values bypassing primitives.
 

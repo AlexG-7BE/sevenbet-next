@@ -83,8 +83,9 @@ The final closure families resolve live with the IDs shown above. In particular,
 - `Foundations`: production token contract board `934:2`.
 - Collections evolved in place: Primitives `VariableCollectionId:285:2`, Color `VariableCollectionId:285:3`, Spacing `VariableCollectionId:285:4`, Radius `VariableCollectionId:285:5`.
 - 58 production variables; all 22 semantic colours alias primitives; exact CSS WEB syntax; zero broken aliases.
-- `Components/Core`: `Core / Button` `287:43`, now 24 variants across three styles, two sizes and Default/Hover/Focus/Disabled states.
-- `Ready for Dev`: FE-DS-01 handoff board `937:2` with code paths, responsive widths, accessibility, safety boundaries, deferrals and deprecation guidance.
+- `Components/Core`: `Core / Button` `287:43`, 24 variants across three styles, two sizes and Default/Hover/Focus/Disabled states. Hover fills match production tokens; Focus preserves 52px/64px base geometry and demonstrates the 3px `safety/verified` ring with a 3px visual gap.
+- Disabled is an `ActionButton` state. `ActionLink` has no disabled navigation API; unavailable navigation must not render an actionable shared link.
+- `Ready for Dev`: FE-DS-01 handoff board `937:2` with code paths, exact Action interaction-state parity, responsive widths, accessibility, safety boundaries, deferrals and deprecation guidance.
 
 **Detected:** no approved page family was deleted, moved or renamed. Core/Button was evolved in place, so no reusable Figma pattern was superseded. Historical artefacts remain intact.
 

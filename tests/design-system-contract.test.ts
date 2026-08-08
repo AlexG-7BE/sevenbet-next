@@ -25,14 +25,23 @@ test("the Tilt-Locked semantic token contract is global and loaded before legacy
 test("the shared Action primitive is server-safe, internal-only and exposes the approved variants", () => {
   const action = read("components/design-system/Action.tsx");
   const css = read("components/design-system/Action.module.css");
+  const tokens = read("app/design-system.css");
   assert.doesNotMatch(action, /["']use client["']/);
   assert.doesNotMatch(action, /target=|rel=|window\.|location\.|@prisma\/client/);
   for (const variant of ["primary", "ghost-night", "ghost-paper"]) assert.match(action, new RegExp(`"${variant}"`));
   for (const size of ["medium", "large"]) assert.match(action, new RegExp(`"${size}"`));
   assert.match(css, /min-height: var\(--sb-action-height, 52px\)/);
   assert.match(css, /min-height: var\(--sb-action-height, 64px\)/);
-  assert.match(css, /\.action:focus-visible/);
-  assert.match(css, /\.action\[aria-disabled="true"\]/);
+  assert.match(css, /\.primary:hover\s*\{[^}]*background: var\(--sb-action-background-hover, var\(--sb-action-primary-hover\)\);[^}]*transform: translateY\(-1px\);/s);
+  assert.match(css, /\.ghostNight:hover\s*\{[^}]*background: var\(--sb-text-on-night\);[^}]*color: var\(--sb-text-ink\);/s);
+  assert.match(css, /\.ghostPaper:hover\s*\{[^}]*background: var\(--sb-text-ink\);[^}]*color: var\(--sb-text-on-night\);/s);
+  assert.match(css, /\.action:focus-visible\s*\{[^}]*outline: var\(--sb-focus-width\) solid var\(--sb-focus-color\);[^}]*outline-offset: var\(--sb-focus-offset\);/s);
+  assert.match(tokens, /--sb-focus-color: var\(--sb-safety-verified\);/);
+  assert.match(tokens, /--sb-focus-width: 3px;/);
+  assert.match(tokens, /--sb-focus-offset: 3px;/);
+  assert.match(css, /\.action:disabled/);
+  assert.doesNotMatch(css, /\.action\[aria-disabled="true"\]/);
+  assert.doesNotMatch(action, /aria-disabled/);
 });
 
 test("production consumers reuse Action without moving protected or commercial decisions into it", () => {
