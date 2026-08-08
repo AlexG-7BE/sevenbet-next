@@ -5,6 +5,14 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # Routine automation is intentionally bounded to non-major version updates.
+    # Major dependency upgrades require a dedicated reviewed workstream.
+    # Dependabot security updates are not restricted by allow.update-types.
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-patch
+          - version-update:semver-minor
     open-pull-requests-limit: 3
     labels: [dependencies]
   - package-ecosystem: github-actions
@@ -12,5 +20,13 @@ updates:
     schedule:
       interval: weekly
       day: monday
+    # Routine automation is intentionally bounded to non-major version updates.
+    # Major action upgrades require a dedicated reviewed workstream.
+    # Dependabot security updates are not restricted by allow.update-types.
+    allow:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-patch
+          - version-update:semver-minor
     open-pull-requests-limit: 3
     labels: [dependencies]
