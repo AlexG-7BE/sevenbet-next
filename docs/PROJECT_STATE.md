@@ -5,7 +5,7 @@
 - **Reconciled:** 2026-08-08
 - **Main entering COMM-01:** `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
 - **GB-MARKET-01 merge:** [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) merged as `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
-- **COMM-01 delivery:** implementation complete on `codex/comm-01-gb-commercial-authority`; delivery PR pending creation
+- **COMM-01 delivery:** implementation complete on `codex/comm-01-gb-commercial-authority`; [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) is open for Founder review and is not merged
 - **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_ARwGCNGaYUtkGqRiw9LVrxMSiv4c` Ready at the COMM-01 baseline; Production Smoke run `31264010347` passed 2026-08-08)
 - **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
 - **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
@@ -24,7 +24,7 @@
 
 **GB-MARKET-01: MERGED — PR #54.** The GB technical market authority is implemented on main. GB commercial activation is **NOT ACTIVE** and GB referral is **NOT ACTIVE**.
 
-**COMM-01: IMPLEMENTATION COMPLETE — DELIVERY PR PENDING.** Commercial partner authority machinery is **READY FOR FOUNDER REVIEW**. Real signed GB partner: **NO**. Real partner activation: **OFF**. LEGAL-02: **OPEN**. Commercial launch: **NOT READY**.
+**COMM-01: IMPLEMENTATION COMPLETE — PR #55 OPEN FOR FOUNDER REVIEW.** Commercial partner authority machinery is **READY FOR FOUNDER REVIEW**. Real signed GB partner: **NO**. Real partner activation: **OFF**. LEGAL-02: **OPEN**. Commercial launch: **NOT READY**.
 
 ## Completed frontend
 
