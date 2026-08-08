@@ -11,7 +11,6 @@ import type {
   CmsLesson,
   CmsProgram,
   CmsProgramStep,
-  EditorialStatus,
   ProgramBuilderSnapshot,
   ProgramValidationReport,
 } from "@/lib/cms/types";
@@ -254,21 +253,21 @@ export function ProgramStructureTree({ snapshot, selection, issuesById, onSelect
 }) {
   return (
     <div className="structureTree" role="tree" aria-label="Program structure">
-      <button className={selection.id === snapshot.program.id ? "selected" : ""} role="treeitem" type="button" onClick={() => onSelect({ type: "program", id: snapshot.program.id })}>
+      <button className={selection.id === snapshot.program.id ? "selected" : ""} role="treeitem" aria-selected={selection.id === snapshot.program.id} type="button" onClick={() => onSelect({ type: "program", id: snapshot.program.id })}>
         <span>Program</span><strong>{snapshot.program.title}</strong>{issuesById.has(snapshot.program.id) && <em>{issuesById.get(snapshot.program.id)}</em>}
       </button>
       {snapshot.steps.map((step, stepIndex) => (
         <div className="treeBranch" key={step.id} role="group">
-          <button className={selection.id === step.id ? "selected" : ""} role="treeitem" aria-level={2} type="button" onClick={() => onSelect({ type: "step", id: step.id })}>
+          <button className={selection.id === step.id ? "selected" : ""} role="treeitem" aria-level={2} aria-selected={selection.id === step.id} type="button" onClick={() => onSelect({ type: "step", id: step.id })}>
             <span>Step {stepIndex + 1}</span><strong>{step.title}</strong>{issuesById.has(step.id) && <em>{issuesById.get(step.id)}</em>}
           </button>
           {step.lessons.map((lesson) => (
             <div className="treeBranch lessonBranch" key={lesson.id} role="group">
-              <button className={selection.id === lesson.id ? "selected" : ""} role="treeitem" aria-level={3} type="button" onClick={() => onSelect({ type: "lesson", id: lesson.id })}>
+              <button className={selection.id === lesson.id ? "selected" : ""} role="treeitem" aria-level={3} aria-selected={selection.id === lesson.id} type="button" onClick={() => onSelect({ type: "lesson", id: lesson.id })}>
                 <span>Lesson</span><strong>{lesson.title}</strong>{issuesById.has(lesson.id) && <em>{issuesById.get(lesson.id)}</em>}
               </button>
               {lesson.blocks.filter((block) => !block.archived).map((block) => (
-                <button className={`treeBlock ${selection.id === block.id ? "selected" : ""}`} key={block.id} role="treeitem" aria-level={4} type="button" onClick={() => onSelect({ type: "block", id: block.id })}>
+                <button className={`treeBlock ${selection.id === block.id ? "selected" : ""}`} key={block.id} role="treeitem" aria-level={4} aria-selected={selection.id === block.id} type="button" onClick={() => onSelect({ type: "block", id: block.id })}>
                   <span>{block.type.replaceAll("_", " ")}</span><strong>{block.internalLabel}</strong>{issuesById.has(block.id) && <em>{issuesById.get(block.id)}</em>}
                 </button>
               ))}

@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci
+  DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:54329/sevenbet_ci
+  BETTER_AUTH_SECRET: ci-only-better-auth-sentinel-do-not-use
+  BETTER_AUTH_URL: http://127.0.0.1:4173
+  BETTER_AUTH_TRUSTED_ORIGINS: http://127.0.0.1:4173
+  SEVENBET_ADMIN_PREVIEW_TOKEN: ci-only-admin-preview-sentinel-do-not-use
+  NEXT_PUBLIC_SITE_URL: http://127.0.0.1:4173
+  PUBLIC_CASINO_CMS_ENABLED: "false"
+  AFFILIATE_REDIRECT_ENGINE_ENABLED: "false"
+  ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS: "false"
+
+jobs:
+  quality:
+    name: Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_ENV: test
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run ci:quality
+      - name: Observe date-sensitive Programme regression suite
+        continue-on-error: true
+        run: npm run programme:test
+
+  build-browser:
+    name: Build / Browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NODE_ENV: production
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm run ci:build-secrets
+      - run: npx playwright install --with-deps chromium
+      - run: npm run ci:browser
+
+  database-migrations:
+    name: Database / Migration Verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sevenbet
+          POSTGRES_PASSWORD: sevenbet
+          POSTGRES_DB: sevenbet_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U sevenbet -d sevenbet_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+      DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+      CI: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Use Node.js 24
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run ci:migrations

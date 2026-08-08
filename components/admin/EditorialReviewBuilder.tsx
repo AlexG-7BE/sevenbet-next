@@ -19,7 +19,6 @@ const blockTypes: Array<{ type: BlockType; label: string }> = [
 ];
 
 function id(prefix: string) { return `${prefix}-${crypto.randomUUID()}`; }
-function clone<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 function draftKey(casinoId: string) { return `sevenbet:editorial-review:${casinoId}`; }
 
 function newBlock(type: BlockType): EditorialBlock {

@@ -21,7 +21,7 @@ import {
   writeCasinoEditorMetadata,
 } from "../lib/casino-builder/editor-metadata";
 import { readCasinoSaveBody } from "../lib/casino-builder/http";
-import type { CasinoBuilderBonus, CasinoBuilderCountry, CasinoCoreDraft } from "../lib/casino-builder/types";
+import type { CasinoBuilderBonus, CasinoBuilderCountry } from "../lib/casino-builder/types";
 
 const ids = {
   first: "11111111-1111-4111-8111-111111111111",

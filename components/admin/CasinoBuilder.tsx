@@ -213,30 +213,6 @@ export function CasinoSaveBar({
   );
 }
 
-function PlaceholderNotice({ children }: { children: ReactNode }) {
-  return (
-    <Card className="casinoPlaceholder" tone="soft">
-      <Badge tone="warning">Read-only foundation</Badge>
-      {children}
-      <p className="muted">Mutation controls for this section are intentionally deferred to a dedicated editor phase.</p>
-    </Card>
-  );
-}
-
-function RecordList({ records, empty }: { records: Array<{ id: string; title: string; detail: string }>; empty: string }) {
-  if (!records.length) return <p className="muted">{empty}</p>;
-  return (
-    <div className="casinoBuilderRecords">
-      {records.map((record) => (
-        <article key={record.id}>
-          <strong>{record.title}</strong>
-          <span>{record.detail}</span>
-        </article>
-      ))}
-    </div>
-  );
-}
-
 function MediaSection({ casinoId }: { casinoId: string }) {
   return (
     <CasinoSectionLayout title="Media" description="Logo, hero and screenshot assets.">

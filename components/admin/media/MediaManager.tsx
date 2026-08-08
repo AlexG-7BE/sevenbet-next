@@ -47,7 +47,7 @@ function MediaMetadataEditor({
 
   useEffect(() => {
     setDraft(mediaMetadataDraft(record));
-  }, [record.altText, record.caption, record.id, record.updatedAt]);
+  }, [record]);
 
   async function saveMetadata(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
