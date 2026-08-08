@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Phase 3.5 introduces an additive PostgreSQL model for multi-network, multi-GEO affiliate offers. It does not replace `AffiliateLink`, `CasinoAffiliateLink`, or the current `/go/[slug]` route.
+Phase 3.5 introduced an additive PostgreSQL model for multi-network, multi-GEO affiliate offers. Its original legacy-coexistence plan is historical: RFC-014 / GB-MARKET-01 now makes `/r/[slug]` the only possible governed external route and makes `/go/[slug]` permanently non-commercial.
 
 ## ER diagram
 
@@ -81,8 +81,8 @@ Only HTTPS website, destination, and tracking URLs are accepted. `javascript:`, 
 2. Build the Phase 3.6 admin UI against the new services.
 3. Import/create new records and shadow-test candidate selection.
 4. Run a separate, reversible data migration from legacy records.
-5. Switch `/go/[slug]` only after parity and production verification.
-6. Remove old models in a later migration after an observation period.
+5. Superseded by RFC-014: never switch `/go/[slug]` to the new engine; it returns unavailable.
+6. Remove old models only in a later approved migration after dependency and traffic evidence.
 
 Migration 0007 creates only new enums, tables, indexes, and foreign keys. It does not alter migrations 0001–0006 or existing public data.
 

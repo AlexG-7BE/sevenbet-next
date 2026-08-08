@@ -39,7 +39,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `PRISMA_DATABASE_URL`, `POSTGRES_URL` | Sensitive provider aliases | Production-only preserved aliases; no repository consumer detected | Founder Office/config owner |
 | `BETTER_AUTH_SECRET` | Secret | Better Auth runtime convention; independent per environment | Founder Office/config owner; repository maintainer technical owner |
 | `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` | Sensitive configuration | Exact Production origin and Local/CI origins; intentionally absent in Preview | Same as authentication configuration |
-| `VERCEL_ENV`, `VERCEL_BRANCH_URL` | Vercel system configuration | Bounded Preview Better Auth origin derivation | Vercel control plane |
+| `VERCEL`, `VERCEL_ENV`, `VERCEL_BRANCH_URL` | Vercel system configuration | Trusted request-country runtime boundary and bounded Preview Better Auth origin derivation | Vercel control plane |
 | `NEXT_PUBLIC_SITE_URL` | Public configuration | Canonical links, redirects, media fallback | Repository maintainer |
 | `SEVENBET_ADMIN_PREVIEW_TOKEN` | Secret, legacy/admin gate | Independent Preview and Production values | Founder Office/config owner |
 | `CMS_PHASE1_ALLOW_DEV_ADMIN`, `CMS_AUTH_PROVIDER` | Sensitive feature/auth configuration | Admin auth compatibility | Repository maintainer; remove only through governed auth work |
@@ -48,7 +48,8 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `ADMIN_PROFILE_EMAIL`, `ADMIN_PROFILE_NAME` | Personal/sensitive operator input | Manual profile script only | Founder Office decision owner |
 | `PUBLIC_CASINO_CMS_ENABLED` | Sensitive feature flag | Public CMS-backed casino discovery; disabled in Preview | Repository maintainer |
 | `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | High-risk exceptional flag | RFC-012 scripts/public guard | Founder Office under RFC-012 only |
-| `AFFILIATE_REDIRECT_ENGINE_ENABLED`, `AFFILIATE_REDIRECT_DEV_GEO_OVERRIDE`, `JURISDICTION_RESOLVER_SHADOW_ENABLED` | High-risk commercial/jurisdiction flags | Server redirect/resolution paths; public affiliate redirects disabled in Preview | Founder Office plus compliance review where applicable |
+| `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server redirect and confirmation paths; public affiliate redirects disabled in Preview | Founder Office plus compliance review |
+| `JURISDICTION_RESOLVER_SHADOW_ENABLED` | Diagnostic configuration | Obsolete bounded shadow-comparison helper only; no active public authority consumer | Repository maintainer |
 | `AFFILIATE_CREDENTIAL_REFERENCES`, `AFFILIATE_CREDENTIALS_<NORMALIZED_REFERENCE>` | Secret indirection/credentials | Server-only affiliate adapters; absent from Preview | Founder Office/partner operations; never client or logs |
 | `MEDIA_STORAGE_PROVIDER`, `MEDIA_LOCAL_STORAGE_ROOT`, `MEDIA_PUBLIC_BASE_URL`, `MEDIA_MAX_FILE_SIZE_BYTES`, `MEDIA_MAX_DIMENSION` | Configuration | Media storage/runtime limits; Preview is `LOCAL` | Repository maintainer |
 | `MEDIA_S3_ENDPOINT`, `MEDIA_S3_REGION`, `MEDIA_S3_BUCKET`, `MEDIA_S3_PUBLIC_BASE_URL` | Sensitive configuration | Optional S3-compatible provider; absent from Preview | Storage owner not documented |

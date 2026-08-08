@@ -7,7 +7,7 @@
 | Audit date | 2026-08-08 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | OPS-01 production-engineering audit and governance implementation. CI, test/lint tooling, runbooks and repository policy files changed; Prisma schema/migrations, hosted values, Production data and product behaviour did not change. |
+| Change scope | Rescanned for GB-MARKET-01 at base `9620a9c89afda57ea168f3edbf398ba0c4e450d4`. The delivery adds repository policy/evidence authority and public commercial enforcement; Prisma schema/migrations, dependencies, hosted values and Production data do not change. |
 
 ## Evidence vocabulary
 

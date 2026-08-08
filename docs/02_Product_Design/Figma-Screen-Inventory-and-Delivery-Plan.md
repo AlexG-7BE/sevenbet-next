@@ -63,7 +63,7 @@ Historical explorations and the `ROUND 2B — FUNCTIONAL CONTENT EXTENSIONS — 
 | 26 | Commercial Handoff | Desktop family `679:5238`; confirmation `679:5319`; mobile family `679:8391`; confirmation `679:8489` | **Detected — implemented.** Confirmation precedes managed server resolution. |
 | 27 | Commercial Handoff neutral recovery | Amendment `930:3109`; desktop `930:3111`; mobile `930:3123`; contract `930:3133` | **Detected — implemented.** No redirect or substitute offer on failure. |
 | 28 | Identity / privacy account capabilities | Desktop `613:4023`; mobile `624:1930` | **Product/capability-gated.** Sign-in exists; account-wide export, erasure lifecycle and complete password recovery are **not detected**. |
-| 29 | Age / Market Boundary | Desktop `686:5333`; mobile `686:8301` | **Product/capability-gated.** Generic fail-closed visuals exist; a trusted live age/jurisdiction policy dataset and public enforcement are **not detected**. |
+| 29 | Age / Market Boundary | Desktop `686:5333`; mobile `686:8301` | **Product/capability-gated.** Generic fail-closed visuals and a bounded non-commercial GB technical authority are detected; verified age/account authority, real partner activation and final Legal approval are not detected. |
 
 ## Renumbered/current nodes
 
