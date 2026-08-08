@@ -29,7 +29,7 @@ The primary CI workflow has three stable required contexts:
 
 1. **Quality** — ESLint, TypeScript, Prisma schema validation and an explicit deterministic structural/unit manifest.
 2. **Build / Browser** — production build, browser-deliverable secret scan and a Chromium-only OPS browser manifest that does not depend on shared or production data.
-3. **Database / Migration Verification** — fresh PostgreSQL 16 service container, strict localhost/database-name guard, Prisma validation and generation, `prisma migrate deploy`, then connected representative reads.
+3. **Database / Migration Verification** — fresh PostgreSQL 16 service container, strict localhost/database-name guard, Prisma validation and generation, the existing idempotent migration-0015 enum preflight, `prisma migrate deploy`, then connected representative reads.
 
 CI uses Vercel's verified Node.js 24 major, `npm ci`, read-only repository permissions and immutable SHAs for GitHub-owned actions. Pull-request code is never run through `pull_request_target`. No required PR job receives a production secret or production database URL.
 
@@ -45,6 +45,7 @@ The existing pixel snapshots remain valuable local Design System evidence but ar
 
 - Required PR verification uses only a disposable PostgreSQL 16 service on localhost.
 - CI must fail before any migration command unless both Prisma URLs use the expected local host, expected port and a database name ending in `_ci`.
+- Historical migration 0015 adds and uses a PostgreSQL enum value. The committed idempotent preflight runs as a separate transaction before `migrate deploy`; migration history itself is not rewritten.
 - Existing migration history is immutable in OPS-01. No migration or schema change is approved.
 - Future production schema changes use expand/contract compatibility across deployment boundaries.
 - Application rollback uses a known-good Vercel deployment. Database recovery defaults to forward-fix; reverse SQL is never improvised.

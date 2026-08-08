@@ -45,6 +45,18 @@ async function main() {
 
   run("npx", ["prisma", "validate"]);
   run("npx", ["prisma", "generate"]);
+  // Migration 0015 adds and then uses a PostgreSQL enum value. PostgreSQL
+  // requires that value to be committed first, so the approved idempotent
+  // Programme preflight must be a separate transaction before deploy.
+  run("npx", [
+    "prisma",
+    "db",
+    "execute",
+    "--schema",
+    "prisma/schema.prisma",
+    "--file",
+    "prisma/preflight/0015_active_control_program_flow.sql",
+  ]);
   run("npx", ["prisma", "migrate", "deploy"]);
 
   const { PrismaClient } = await import("@prisma/client");
