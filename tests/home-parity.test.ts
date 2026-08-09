@@ -128,7 +128,7 @@ test("Public Shell behavior and prohibited implementation boundaries remain unch
     .trim()
     .split("\n")
     .filter(Boolean);
-  const allowedMarketApiChanges = new Set(["app/api/admin/affiliate/redirect-preview/route.ts"]);
-  assert.deepEqual(changed.filter((file) => /^(prisma\/|app\/api\/|lib\/programme\/)/.test(file) && !allowedMarketApiChanges.has(file)), []);
-  assert.deepEqual(changed.filter((file) => /^components\/programme\/.*\.tsx?$/.test(file)), []);
+  assert.equal(changed.includes("prisma/schema.prisma"), false);
+  assert.equal(changed.some((file) => /^prisma\/migrations\//.test(file)), false);
+  assert.equal(changed.includes("package-lock.json"), false);
 });

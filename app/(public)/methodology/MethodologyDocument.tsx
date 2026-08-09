@@ -13,7 +13,7 @@ export const methodologyFaqItems: Array<[string, string]> = [
   ],
   [
     "Do affiliate commissions affect rankings?",
-    "Affiliate relationships do not automatically produce a higher score. Commercial relationships should not remove limitations, risk notes, or negative findings.",
+    "Affiliate compensation does not determine SevenBet's Editor Score or natural editorial ranking. Commercial relationships do not remove limitations, risk notes, or negative findings.",
   ],
   [
     "How often are reviews updated?",
@@ -149,7 +149,7 @@ export function MethodologyDocument() {
           <dl className={styles.metadata} aria-label="Document metadata">
             <div><dt>Document</dt><dd>Editorial methodology</dd></div>
             <div><dt>Framework</dt><dd>10-point Editor&apos;s Score</dd></div>
-            <div><dt>Last updated</dt><dd>July 12, 2026</dd></div>
+            <div><dt>Last updated</dt><dd>August 9, 2026</dd></div>
           </dl>
         </div>
       </header>
@@ -275,11 +275,11 @@ export function MethodologyDocument() {
             <div className={styles.boundaryLedger}>
               <div>
                 <h3>Editorial independence</h3>
-                <p>Affiliate status does not automatically produce a higher score. Paid placement should be identified where applicable, comparison criteria should be applied consistently, and material limitations should remain visible. Commercial partners may be excluded if information is insufficient or concerns are significant.</p>
+                <p>Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial ranking. Any future sponsored or paid placement must be identified separately. Comparison criteria are applied consistently, material limitations remain visible, and a commercial partner may be excluded when information is insufficient or concerns are significant.</p>
               </div>
               <div>
                 <h3>Affiliate relationships</h3>
-                <p>SevenBet may receive a commission when a user follows certain links and completes a qualifying action. Users do not usually pay SevenBet directly for comparison content. Not every reviewed casino must be an affiliate partner, and affiliate relationships should not remove negative findings.</p>
+                <p>SevenBet may receive a commission when a user follows a future eligible governed link and completes a qualifying action. Users do not usually pay SevenBet directly for comparison content. Not every reviewed casino must be an affiliate partner, and affiliate relationships do not remove negative findings.</p>
                 <Link href="/affiliate-disclosure">Read the full affiliate disclosure <span aria-hidden="true">→</span></Link>
               </div>
             </div>

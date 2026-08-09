@@ -23,6 +23,8 @@ export interface CasinoDiscoveryQuery {
 export interface PublicLabelDto { key: string; label: string }
 export interface PublicMediaDto { url: string; alt: string; width: number | null; height: number | null }
 export interface PublicVisitAction { available: boolean; redirectSlug: string | null; label: string; reasonCode: string | null }
+export type PublicCasinoDataClassification = "DEMO_FIXTURE" | "PUBLISHED_RECORD";
+export type PublicCasinoInventoryMode = "DEMO_ONLY" | "MIXED" | "PUBLISHED_ONLY";
 
 export interface PublicBonusSummaryDto {
   title: string;
@@ -38,6 +40,7 @@ export interface PublicBonusSummaryDto {
 
 export interface PublicCasinoCardDto {
   id: string;
+  dataClassification: PublicCasinoDataClassification;
   slug: string;
   name: string;
   logo: PublicMediaDto | null;
@@ -69,6 +72,7 @@ export interface CasinoDiscoveryFacets {
 
 export interface CasinoDiscoveryResult {
   items: PublicCasinoCardDto[];
+  inventoryMode: PublicCasinoInventoryMode;
   total: number;
   page: number;
   pageSize: number;

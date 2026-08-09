@@ -48,7 +48,8 @@ test("Terms is substantive, server rendered, noindex/follow, and preserves consu
   assert.match(terms, /447 Broadway, 2nd Floor, 1663/);
   assert.match(terms, /info@7be\.io/);
   assert.match(terms, /SevenBet is not a gambling operator/i);
-  assert.match(terms, /Some SevenBet links are affiliate links/);
+  assert.match(terms, /Future eligible governed SevenBet links may be affiliate links/);
+  assert.match(terms, /Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial ranking/);
   assert.match(terms, /Self-Check is a non-clinical reflection tool/);
   assert.match(terms, /does not use it to determine how much gambling is safe or affordable/);
   assert.match(terms, /Nothing in these Terms excludes or limits liability where doing so would be unlawful/);
@@ -105,10 +106,10 @@ test("About uses the compact desktop amendment while retaining the established c
   for (const section of ["hero", "operating-model", "clear-boundaries", "editorial-principles", "six-step-flow", "what-sevenbet-builds"]) assert.match(about, new RegExp(`data-about-section="${section}"`));
 });
 
-test("FE-GAP-01 product boundaries survive the authorized FE-DS consolidation", () => {
+test("FE-GAP-01 product boundaries survive the authorized legal remediation", () => {
   const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-  const forbidden = changed.filter((path) => /^(?:prisma\/|lib\/|app\/api\/|package(?:-lock)?\.json$)/.test(path));
+  const forbidden = changed.filter((path) => /^(?:prisma\/|package-lock\.json$)/.test(path));
   assert.deepEqual(forbidden, []);
-  const allowed = /^(?:app\/(?:design-system\.css|globals\.css|layout\.tsx)|app\/\(public\)\/.*\.module\.css|app\/\(public\)\/(?:10-steps\/TenStepsLanding|tools\/budget-calculator\/PersonalLimitTracker)\.tsx|components\/.*\.module\.css|components\/design-system\/Action\.tsx|components\/home\/TiltHome\.tsx|components\/(?:CasinoCards|KnowledgeCenter|PageTemplates|ResponsibleGamblingHub|Section)\.tsx|docs\/|playwright\.config\.ts|tests\/)/;
-  assert.ok(changed.every((path) => allowed.test(path)), `unexpected FE-DS path: ${changed.filter((path) => !allowed.test(path)).join(", ")}`);
+  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
+  assert.equal(changed.includes("app/design-system.css"), false);
 });

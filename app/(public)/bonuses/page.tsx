@@ -103,6 +103,6 @@ export default async function BonusesPage({ searchParams }: PageProps) {
 
     <BonusEducation />
     <BonusRelatedNavigation />
-    <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>SevenBet may receive compensation from some governed outbound links. Publication and server-owned sorting do not depend on affiliate availability. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
+    <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>SevenBet may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
   </div>;
 }

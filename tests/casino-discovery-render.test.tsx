@@ -13,6 +13,7 @@ const classNames = Object.fromEntries([
 function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
     id: "casino-full",
+    dataClassification: "PUBLISHED_RECORD",
     slug: "full-casino",
     name: "Full Casino",
     logo: { url: "https://media.example/full.png", alt: "Full Casino logo", width: 320, height: 160 },
@@ -69,11 +70,22 @@ test("first-result theatre stays neutral for default, search, sort and later-pag
   for (const context of ["default", "search", "NAME_ASC", "page-2"]) {
     const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
     assert.match(html, /Published casino review/);
-    assert.match(html, /src="\/casino-directory\/editorial-media\.jpg"/);
+    assert.match(html, /casino-directory(?:%2F|\/)editorial-media\.jpg/);
     assert.match(html, /alt="" aria-hidden="true"/);
     assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
   }
   const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
   assert.match(empty, /Reviews appear only after editorial publication/);
   assert.doesNotMatch(empty, /Featured published review|recommended review|best review|top review/i);
+});
+
+test("demo cards disclose fictional status and never render a commercial action", () => {
+  const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card({
+    dataClassification: "DEMO_FIXTURE",
+    visitAction: { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" },
+  })} classNames={classNames} position={1} />);
+  assert.match(html, /DEMONSTRATION DATA · FICTIONAL OPERATOR/);
+  assert.match(html, /not a current operator, licence claim, partner offer or live promotion/i);
+  assert.match(html, /Not claimable/);
+  assert.doesNotMatch(html, /href="\/r\//);
 });

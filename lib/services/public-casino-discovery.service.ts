@@ -10,6 +10,13 @@ import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+
+export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
+  const demoCount = casinos.filter((casino) => casino.dataClassification === "DEMO_FIXTURE").length;
+  if (demoCount === 0) return "PUBLISHED_ONLY" as const;
+  return demoCount === casinos.length ? "DEMO_ONLY" as const : "MIXED" as const;
+}
 
 function object(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
@@ -171,8 +178,9 @@ export class PublicCasinoDiscoveryService {
       }).sort((a, b) => Number(bool(object(bonusMetadata[b.id]).featured)) - Number(bool(object(bonusMetadata[a.id]).featured)) || a.slug.localeCompare(b.slug));
       const bonus = bonusCandidates[0] ?? null;
       const availableCountries = casino.countries.filter((country) => country.availability === "AVAILABLE").map((country) => ({ key: country.countryCode, label: country.countryCode }));
+      const demo = isTemporaryDemoCasinoId(casino.id);
       const card: PublicCasinoCardDto = {
-        id: casino.id, slug: casino.slug, name: casino.name,
+        id: casino.id, dataClassification: demo ? "DEMO_FIXTURE" : "PUBLISHED_RECORD", slug: casino.slug, name: casino.name,
         logo: casino.media.logo ? { url: casino.media.logo.url, alt: casino.media.logo.alt || `${casino.name} logo`, width: casino.media.logo.width, height: casino.media.logo.height } : null,
         shortDescription: casino.summary || null, rating: casino.editorScore || null, reviewCount: null,
         licenses: casino.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
@@ -182,7 +190,8 @@ export class PublicCasinoDiscoveryService {
         categories: casino.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
         highlights: casino.pros.slice(0, 3),
         featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
-        visitAction: visit, responsibleGamblingLabel: casino.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
+        visitAction: demo ? { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" } : visit,
+        responsibleGamblingLabel: casino.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
         publishedAt: casino.publishedAt, editorialUpdatedAt: casino.lastReviewedAt ?? casino.publishedAt,
       };
       return [{ card, aliases: aliasesByCasino.get(casino.id) ?? [], canonicalName: text(snapshot.internalName) || casino.name, domain: casino.domain, featured: casino.featured, recommended: casino.recommended,
@@ -231,7 +240,16 @@ export class PublicCasinoDiscoveryService {
     const pageCount = Math.max(1, Math.ceil(total / query.pageSize!));
     const page = Math.min(query.page!, pageCount);
     const start = (page - 1) * query.pageSize!;
-    return { items: filtered.slice(start, start + query.pageSize!).map((item) => item.card), total, page, pageSize: query.pageSize!, pageCount, facets, appliedFilters: { ...query, page, sort } };
+    return {
+      items: filtered.slice(start, start + query.pageSize!).map((item) => item.card),
+      inventoryMode: publicCasinoInventoryMode(filtered.map((item) => item.card)),
+      total,
+      page,
+      pageSize: query.pageSize!,
+      pageCount,
+      facets,
+      appliedFilters: { ...query, page, sort },
+    };
   }
 }
 

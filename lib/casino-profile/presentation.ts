@@ -1,5 +1,6 @@
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 export interface CasinoProfileAction {
   href: string;
@@ -56,6 +57,7 @@ export function selectProfileBonus(casino: PublicCasinoDTO) {
 }
 
 export function profileAction(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null): CasinoProfileAction | null {
+  if (isTemporaryDemoCasinoId(casino.id)) return null;
   const href = bonus?.affiliate.available ? bonus.affiliate.href : casino.affiliate.available ? casino.affiliate.href : null;
   if (!href || !internalRedirect.test(href)) return null;
   return { href, label: `Visit ${casino.name}` };
@@ -134,6 +136,18 @@ function editorialFaq(document: CasinoEditorialDocument | null) {
 }
 
 export function profileFaqItems(casino: PublicCasinoDTO, bonus: PublicCasinoBonus | null, editorial: CasinoEditorialDocument | null): CasinoProfileFaqItem[] {
+  if (isTemporaryDemoCasinoId(casino.id)) {
+    return [
+      {
+        question: `Is ${casino.name} a real current operator or partner?`,
+        answer: "No. This is a fictional product demonstration, not a current GB operator, promotion, partner offer or claimable bonus.",
+      },
+      {
+        question: "Can I use a commercial visit action from this profile?",
+        answer: "No. Demonstration records never provide an outbound affiliate or commercial visit action.",
+      },
+    ];
+  }
   const items = editorialFaq(editorial);
   const licence = casino.licenses[0];
   if (licence) {

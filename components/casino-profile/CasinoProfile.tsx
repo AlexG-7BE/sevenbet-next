@@ -13,6 +13,7 @@ import {
   selectProfileBonus,
 } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -56,6 +57,7 @@ function EditorialEvidence({ document }: { document: CasinoEditorialDocument }) 
 }
 
 export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; editorial: CasinoEditorialDocument | null }) {
+  const demo = isTemporaryDemoCasinoId(casino.id);
   const bonus = selectProfileBonus(casino);
   const action = profileAction(casino, bonus);
   const facts = profileFacts(casino);
@@ -72,6 +74,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
   return <article className={styles.page}>
     <div className={styles.shell}>
       <nav aria-label="Breadcrumb" className={styles.breadcrumb}><Link href="/casinos">Casinos</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} review</span></nav>
+      {demo ? <p className={styles.profileDisclosure} role="note"><strong>DEMONSTRATION DATA.</strong> This fictional operator profile shows the review experience. It is not a current GB operator, licence claim, partner offer or live promotion. No commercial visit is available.</p> : null}
 
       <section aria-labelledby="casino-profile-title" className={styles.hero}>
         <div className={styles.heroReview}>
@@ -88,16 +91,16 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             <p>{editorial?.summary || casino.summary}</p>
           </div>
           <div aria-label="Published review signals" className={styles.signals}>
-            {licence ? <Signal verified={licenceChecked}>{licenceChecked ? "LICENCE EVIDENCE CHECKED" : "LICENCE NOT VERIFIED"}</Signal> : null}
+            {licence ? <Signal verified={!demo && licenceChecked}>{demo ? "FICTIONAL LICENCE FIELD" : licenceChecked ? "LICENCE EVIDENCE CHECKED" : "LICENCE NOT VERIFIED"}</Signal> : null}
             {payments.length ? <Signal>{payments.join(" + ").toUpperCase()}</Signal> : null}
             {withdrawal ? <Signal>{withdrawal.toUpperCase()} WITHDRAWALS</Signal> : null}
           </div>
-          <p className={styles.profileDisclosure}>{casino.summary}</p>
+          <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : casino.summary}</p>
         </div>
 
         <aside aria-label="Published bonus and visit action" className={styles.heroOffer}>
           {bonus ? <>
-            <span>PUBLISHED OFFER INFORMATION</span>
+            <span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span>
             <h2>{profileOfferHeadline(bonus)}</h2>
             <p>{bonus.title}</p>
             <ul>
@@ -106,7 +109,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
               {bonus.eligibility ? <li>{bonus.eligibility}</li> : null}
             </ul>
             {action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}
-            <small>18+ · Terms apply · Gambling involves financial risk</small>
+            <small>18+ · {demo ? "Not claimable · Demonstration only" : "Terms apply"} · Gambling involves financial risk</small>
           </> : <>
             <span>OFFER INFORMATION</span>
             <h2>No published offer.</h2>
@@ -149,7 +152,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
           <div className={styles.detailTabs} aria-label="Published detail groups"><span aria-current="true">Offer</span><span>Payments</span><span>Safety</span><span>Games</span><span>Control tools</span></div>
           <div className={styles.detailColumns}>
             <div>
-              <span className={styles.detailLabel}>PUBLISHED OFFER TERMS</span>
+              <span className={styles.detailLabel}>{demo ? "FICTIONAL DEMONSTRATION TERMS" : "PUBLISHED OFFER TERMS"}</span>
               {bonus ? <>
                 <h3>{profileOfferHeadline(bonus)}</h3>
                 <p>{bonus.summary}</p>
@@ -174,8 +177,8 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
                 <div><dt>Published source</dt><dd>Casino profile version {casino.version}</dd></div>
               </dl>
               <div className={styles.evidenceNote}>
-                <strong>{licenceChecked ? "Evidence date is published" : "Verification date unavailable"}</strong>
-                <p>Availability, licence status and offer terms can change. Review the current terms before acting.</p>
+                <strong>{demo ? "Demonstration fields only" : licenceChecked ? "Evidence date is published" : "Verification date unavailable"}</strong>
+                <p>{demo ? "No operator, licence, offer or availability field on this fictional profile is current commercial evidence." : "Availability, licence status and offer terms can change. Review the current terms before acting."}</p>
               </div>
               {casino.responsibleGamblingTools.length ? <div className={styles.controlTools}><strong>Published control tools</strong><ul>{casino.responsibleGamblingTools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div> : null}
               <p className={styles.affiliateCopy}>SevenBet may receive compensation from some eligible outbound links. Editorial review access does not depend on a commercial route.</p>
@@ -209,7 +212,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         <div className={styles.faqGrid}>
           <div>{faq.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
           <aside className={styles.finalOffer}>
-            {bonus ? <><span>PUBLISHED OFFER INFORMATION</span><h3>{profileOfferHeadline(bonus)}</h3><p>{bonus.title}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>No published offer.</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
+            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span><h3>{profileOfferHeadline(bonus)}</h3><p>{bonus.title}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>No published offer.</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
           </aside>
         </div>
       </section>

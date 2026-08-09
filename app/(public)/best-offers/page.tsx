@@ -45,7 +45,7 @@ export default async function BestOffersPage() {
       <h1><span>The shortlist</span><em>that survives the small print.</em></h1>
       <p className={styles.heroCopy}>A terms-first comparison. See the recorded cost, ranking reason, data status and commercial boundary before any action.</p>
       <div aria-label="Ranking dimensions" className={styles.mobileHeroSignals}><span>Overall</span><span>Wagering</span><span>Payout</span></div>
-      <div className={styles.heroActions}><Link href="#shortlist">See the shortlist</Link><span>Natural editorial ranking · Affiliate compensation is not a ranking input</span></div>
+      <div className={styles.heroActions}><Link href="#shortlist">See the shortlist</Link><span>Affiliate compensation does not determine Editor Score or natural editorial ranking</span></div>
     </div></section>
     {result.inventoryMode !== "PUBLISHED_ONLY" ? <section className={styles.demoDisclosure} role="note"><div className={styles.shell}><p><strong>DEMONSTRATION DATA.</strong> Every fictional record is a product demonstration, not a current GB promotion, partner offer or claimable bonus. No commercial visit is available.</p></div></section> : null}
     {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} shortlist={result.records} winners={bestFitWinners(result.records)} /> : <section className={styles.statePage}><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible records"}</p><h2>{result.status === "unavailable" ? "The comparison could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current record has both GB availability and every required material term. SevenBet does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}
@@ -55,7 +55,7 @@ export default async function BestOffersPage() {
         <details><summary>What does “Best Offer” mean?</summary><p>The strongest balance under the published method: completeness first, then editor score, wagering, deposit and payout visibility.</p></details>
         <details><summary>Are the biggest bonuses ranked first?</summary><p>No. A headline amount never overrides material terms, eligibility or editorial evidence.</p></details>
         <details><summary>Can offer terms change?</summary><p>Yes. Published terms are a comparison snapshot; verify the operator’s current terms before acting.</p></details>
-        <details><summary>Does SevenBet earn a commission?</summary><p>SevenBet may receive compensation from eligible governed links. Commission does not affect ranking.</p></details>
+        <details><summary>Does SevenBet earn a commission?</summary><p>SevenBet may receive compensation from future eligible governed links. Affiliate compensation does not determine Editor Score or natural editorial ranking.</p></details>
         <details><summary>How often is the shortlist checked?</summary><p>The page uses the latest published, non-archived snapshots available to the public service.</p></details>
       </div>
     </div></section>

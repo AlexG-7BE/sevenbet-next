@@ -7,6 +7,16 @@ import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositori
 import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+
+function enforceTemporaryDemoReviewOnly(casino: PublicCasinoDTO) {
+  if (!isTemporaryDemoCasinoId(casino.id)) return casino;
+  return {
+    ...casino,
+    affiliate: { href: null, available: false },
+    bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
+  };
+}
 
 export function isPublicCasinoCmsEnabled() {
   return process.env.PUBLIC_CASINO_CMS_ENABLED === "true";
@@ -68,7 +78,7 @@ export class PublicCasinoService {
       }
 
       const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
-      if (casino) return casino;
+      if (casino) return enforceTemporaryDemoReviewOnly(casino);
     }
 
     try {
@@ -114,7 +124,7 @@ export class PublicCasinoService {
 
     const cms = published.flatMap((entry) => {
       const casino = mapPublishedCasino(entry, routes, { redirectEnabled: referralAllowed(entry.casinoId), now: this.options.now });
-      return casino ? [casino] : [];
+      return casino ? [enforceTemporaryDemoReviewOnly(casino)] : [];
     });
     const bySlug = new Map<string, PublicCasinoDTO>();
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {

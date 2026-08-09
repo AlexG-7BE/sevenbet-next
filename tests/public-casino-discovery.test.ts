@@ -8,6 +8,7 @@ import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
+import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -99,6 +100,24 @@ test("visit action requires active local program, offer, link, and safe redirect
   assert.doesNotMatch(JSON.stringify(card), /trackingUrl|destinationUrl|providerType|externalId/);
   const inactive = new PublicCasinoDiscoveryService(store([casino], { offers: [activeOffer("alpha-id", { status: "PAUSED" })], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: null, slug: "alpha-visit" }] }), () => now, allowOperatorAuthority, () => true);
   assert.equal((await inactive.discover({}, allowJurisdictionAuthority)).items[0].visitAction.available, false);
+});
+
+test("exact-ID demo authority overrides otherwise permissive visit eligibility", async () => {
+  const casinoId = temporaryDemoCasinoIds[0];
+  const casino = record(casinoId, "fictional-demo", "Fictional Demo");
+  const offer = activeOffer(casinoId);
+  const service = new PublicCasinoDiscoveryService(store([casino], {
+    offers: [offer],
+    redirects: [{ casinoId, casinoBonusId: null, affiliateOfferId: offer.id, slug: "fictional-demo-visit" }],
+  }), () => now, allowOperatorAuthority, () => true);
+  const result = await service.discover({}, allowJurisdictionAuthority);
+  assert.equal(result.inventoryMode, "DEMO_ONLY");
+  assert.equal(result.items[0].dataClassification, "DEMO_FIXTURE");
+  assert.deepEqual(result.items[0].visitAction, { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" });
+
+  const mixed = await new PublicCasinoDiscoveryService(store([casino, record("real-id", "real-record", "Real Record")]), () => now).discover();
+  assert.equal(mixed.inventoryMode, "MIXED");
+  assert.deepEqual(mixed.items.map((item) => item.dataClassification).sort(), ["DEMO_FIXTURE", "PUBLISHED_RECORD"]);
 });
 
 test("GEO rules remove the action without removing the published review", async () => {
