@@ -7,6 +7,7 @@ import {
   executeDataSubjectDeletion,
   findDataSubjectUser,
 } from "../lib/privacy/data-subject";
+import { assertPrivacyDeletionAuthority, parsePrivacyTargetEnvironment } from "../lib/privacy/deletion-confirmation";
 
 function option(name: string) {
   const index = process.argv.indexOf(name);
@@ -28,9 +29,10 @@ async function main() {
   const operation = process.argv[2];
   const identifier = option("--identifier");
   const output = option("--output");
+  const environment = parsePrivacyTargetEnvironment(option("--environment"));
   const execute = process.argv.includes("--execute");
   if (!identifier || !output || !["export", "delete"].includes(operation)) {
-    throw new Error("Usage: privacy-data-subject <export|delete> --identifier <email-or-id> --output <new-json-path> [--execute]");
+    throw new Error("Usage: privacy-data-subject <export|delete> --environment <local|preview|production> --identifier <email-or-id> --output <new-json-path> [--execute]");
   }
   const { default: database } = await import("../lib/db/prisma");
   const user = await findDataSubjectUser(database, identifier);
@@ -45,15 +47,18 @@ async function main() {
     result = await buildDataSubjectDeletionPlan(database, user.id);
     status = "dry-run";
   } else {
-    const production = process.env.VERCEL_ENV === "production";
-    if (production && process.env.SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM !== `DELETE:${user.id}`) {
-      throw new Error("Production deletion requires SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM=DELETE:<exact-user-id>");
-    }
+    assertPrivacyDeletionAuthority({
+      execute,
+      environment,
+      userId: user.id,
+      generalConfirmation: process.env.SEVENBET_PRIVACY_DELETE_CONFIRM,
+      productionConfirmation: process.env.SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM,
+    });
     result = await executeDataSubjectDeletion(database, user.id);
     status = "deleted";
   }
   const target = writeRestrictedJson(output, result);
-  process.stdout.write(`${JSON.stringify({ operation, status, output: target })}\n`);
+  process.stdout.write(`${JSON.stringify({ operation, environment, status, output: target })}\n`);
   await database.$disconnect();
 }
 

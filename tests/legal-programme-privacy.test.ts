@@ -32,9 +32,16 @@ test("Programme validators reject raw narrative fields at every active Mission b
 
 test("Programme client uses tab-scoped storage and sends bounded server payloads", () => {
   const active = source("components/programme/ActiveControlProgramme.tsx");
+  const subjectStorage = source("lib/programme/local-subject-storage.ts");
   const legacy = source("components/ProgramExperience.tsx");
   assert.match(active, /window\.sessionStorage/);
-  assert.match(active, /PROGRAMME_LOCAL_CONTENT_KEY/);
+  assert.match(active, /userProgrammeSubject\(sessionUserId\)/);
+  assert.match(active, /migrateClaimedJourneyToUser/);
+  assert.match(active, /subjectMatchesSession/);
+  assert.match(active, /claimTransitionPending/);
+  assert.match(subjectStorage, /sevenbet\.programme\.local-content\.v2/);
+  assert.match(subjectStorage, /sevenbet\.age-attestation\.v2/);
+  assert.doesNotMatch(subjectStorage, /email/i);
   assert.doesNotMatch(active, /window\.localStorage/);
   assert.doesNotMatch(legacy, /window\.localStorage/);
   assert.match(active, /signalChoice: urgeLearning\.notNow \? "not_now" : "local"/);

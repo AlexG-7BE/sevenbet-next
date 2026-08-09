@@ -82,10 +82,16 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
   if (!user) return null;
   const enrollmentIds = (await database.programEnrollment.findMany({ where: { userId }, select: { id: true } })).map((item) => item.id);
   const enrollmentWhere = { enrollmentId: { in: enrollmentIds } };
+  const consumedClaimRows = await database.pendingProgrammeClaim.findMany({
+    where: { consumedByUserId: userId },
+    select: { id: true, anonymousSessionId: true, anonymousSession: { select: { id: true, draft: true } } },
+  });
+  const linkedAnonymousSessionIds = new Set(consumedClaimRows.map((claim) => claim.anonymousSessionId));
+  const legacyDraftBearingAnonymousSessions = consumedClaimRows.filter((claim) => claim.anonymousSession.draft !== null).length;
   const [
     sessions, accounts, enrollments, progressEvents, reflections, missionProgress,
     momentMaps, currentGoals, urgeRecords, boundaries, xpEvents, achievements,
-    activeDays, consumedClaims, verifications,
+    activeDays, verifications,
   ] = await Promise.all([
     database.session.count({ where: { userId } }),
     database.account.count({ where: { userId } }),
@@ -100,7 +106,6 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
     database.userXpEvent.count({ where: { userId } }),
     database.userAchievement.count({ where: { userId } }),
     database.programmeActiveDay.count({ where: { userId } }),
-    database.pendingProgrammeClaim.count({ where: { consumedByUserId: userId } }),
     database.verification.count({ where: { identifier: { equals: user.email, mode: "insensitive" } } }),
   ]);
   return {
@@ -109,7 +114,26 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
     userId,
     email: user.email,
     blockedByAdminProfile: Boolean(user.adminUser),
-    counts: { users: 1, sessions, accounts, enrollments, progressEvents, reflections, missionProgress, momentMaps, currentGoals, urgeRecords, boundaries, xpEvents, achievements, activeDays, consumedClaims, verifications },
+    counts: {
+      users: 1,
+      sessions,
+      accounts,
+      enrollments,
+      progressEvents,
+      reflections,
+      missionProgress,
+      momentMaps,
+      currentGoals,
+      urgeRecords,
+      boundaries,
+      xpEvents,
+      achievements,
+      activeDays,
+      consumedClaims: consumedClaimRows.length,
+      linkedAnonymousSessions: linkedAnonymousSessionIds.size,
+      legacyDraftBearingAnonymousSessions,
+      verifications,
+    },
     backupCaveat: "Deletion applies to the active application database. Provider backups may retain encrypted copies until their independently verified expiry and must not be selectively restored without reapplying the erasure.",
   };
 }
@@ -119,6 +143,14 @@ export async function executeDataSubjectDeletion(database: PrismaClient, userId:
   if (!plan) return null;
   if (plan.blockedByAdminProfile) throw new Error("Data subject has a staff profile; manual legal and audit-record review is required");
   await database.$transaction(async (transaction) => {
+    // Capture the exact consumed claim/session ownership set before deleting the
+    // account. The User relation otherwise becomes null and loses erasure scope.
+    const consumedClaims = await transaction.pendingProgrammeClaim.findMany({
+      where: { consumedByUserId: userId },
+      select: { id: true, anonymousSessionId: true },
+    });
+    const consumedClaimIds = consumedClaims.map((claim) => claim.id);
+    const linkedAnonymousSessionIds = [...new Set(consumedClaims.map((claim) => claim.anonymousSessionId))];
     const enrollmentIds = (await transaction.programEnrollment.findMany({ where: { userId }, select: { id: true } })).map((item) => item.id);
     const enrollmentWhere = { enrollmentId: { in: enrollmentIds } };
     await transaction.activeBoundary.deleteMany({ where: enrollmentWhere });
@@ -134,7 +166,8 @@ export async function executeDataSubjectDeletion(database: PrismaClient, userId:
     await transaction.userAchievement.deleteMany({ where: { userId } });
     await transaction.session.deleteMany({ where: { userId } });
     await transaction.account.deleteMany({ where: { userId } });
-    await transaction.pendingProgrammeClaim.updateMany({ where: { consumedByUserId: userId }, data: { consumedByUserId: null } });
+    if (consumedClaimIds.length > 0) await transaction.pendingProgrammeClaim.deleteMany({ where: { id: { in: consumedClaimIds } } });
+    if (linkedAnonymousSessionIds.length > 0) await transaction.anonymousProgrammeSession.deleteMany({ where: { id: { in: linkedAnonymousSessionIds } } });
     await transaction.verification.deleteMany({ where: { identifier: { equals: plan.email, mode: "insensitive" } } });
     await transaction.user.delete({ where: { id: userId } });
   });

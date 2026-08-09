@@ -6,7 +6,7 @@
 
 ## Processing summary
 
-The Programme provides adult users with education, private reflection, decision support and boundary planning. The account stores identity/authentication, enrolment, task and mission completion, XP, streak, achievements and minimum structured continuity. Raw personal narrative is processed in browser memory or tab-scoped `sessionStorage` and is rejected from new server write paths.
+The Programme provides adult users with education, private reflection, decision support and boundary planning. The account stores identity/authentication, enrolment, task and mission completion, XP, streak, achievements and minimum structured continuity. Raw personal narrative is processed in browser memory or subject-isolated, tab-scoped `sessionStorage` and is rejected from new server write paths.
 
 Self-Check and Personal Limit Tracker values remain local. Help remains open and separated from commercial eligibility. Programme, Help, pause and vulnerability data are prohibited from casino/bonus ranking, affiliate routing and commercial personalisation.
 
@@ -28,7 +28,8 @@ Self-Check and Personal Limit Tracker values remain local. Help remains open and
 | Cross-account disclosure | Server session ownership and enrollment scoping; authenticated export | Complete authenticated browser penetration/regression exercise |
 | Historic server narrative remains | Hidden from active dashboard; export/erasure available; no new writes | Quantify Production population and approve legacy cleanup/notice plan |
 | Under-18 persistent access | Unchecked self-attestation plus server mutation/signup enforcement | **AGE ATTESTATION PERSISTENCE — P1 OPEN**; legal review of proportionality/evidence |
-| DSAR export or deletion error | Exact lookup, dry-run plan, mode-0600 exclusive output, User A/B isolation test, Production double confirmation | Approve secure delivery and case-management system |
+| Cross-user local narrative or age inheritance | Random journey and exact user-ID namespaces; fail-closed subject transition; exact claim-only migration; source removal; User A/B regression | Reassess if authentication/session architecture changes |
+| DSAR export or deletion error | Exact lookup; claim/session capture; dry-run relation counts; mode-0600 exclusive output; isolated User A/B erasure test; exact confirmation in every environment and a second Production confirmation | Approve secure delivery and case-management system |
 | Provider/log/backup exposure | Data minimisation and bounded error responses | Verify provider retention, regions, subprocessors, transfers, backup expiry and log controls |
 | Re-identification or sensitive inferences from structured boundary values | No commercial use; minimum fields; access scoped to account service | Review whether numeric boundary retention remains necessary after product validation |
 

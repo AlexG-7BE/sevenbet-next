@@ -1,9 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
+import {
+  anonymousProgrammeSubject,
+  clearProgrammeSubjectContent,
+  hasProgrammeAgeAttestation,
+  loadProgrammeSubjectContent,
+  migrateClaimedJourneyToUser,
+  programmeSubjectsEqual,
+  rotateAnonymousProgrammeSubject,
+  saveProgrammeSubjectContent,
+  setProgrammeAgeAttestation,
+  userProgrammeSubject,
+  type ProgrammeLocalSubject,
+} from "@/lib/programme/local-subject-storage";
 import styles from "./ActiveControlProgramme.module.css";
 
 const MISSION_ONE_TASKS = [
@@ -234,24 +247,7 @@ const emptyBoundary: ActiveBoundary = {
   status: "active",
 };
 
-const AGE_ATTESTATION_KEY = "sevenbet.age-attestation.v1";
-const PROGRAMME_LOCAL_CONTENT_KEY = "sevenbet.programme.local-content.v1";
-
-function loadProgrammeLocalContent(): Partial<ProgrammeLocalContent> {
-  if (typeof window === "undefined") return {};
-  try {
-    const value = JSON.parse(window.sessionStorage.getItem(PROGRAMME_LOCAL_CONTENT_KEY) || "{}");
-    return value && typeof value === "object" && !Array.isArray(value) ? value as Partial<ProgrammeLocalContent> : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveProgrammeLocalContent(value: ProgrammeLocalContent) {
-  window.sessionStorage.setItem(PROGRAMME_LOCAL_CONTENT_KEY, JSON.stringify(value));
-}
-
-function mergeDashboardLocal(dashboard: DashboardModel, local = loadProgrammeLocalContent()): DashboardModel {
+function mergeDashboardLocal(dashboard: DashboardModel, local: Partial<ProgrammeLocalContent>): DashboardModel {
   return {
     ...dashboard,
     momentMap: dashboard.momentMap ? { ...dashboard.momentMap, ...(local.momentMap || {}), id: dashboard.momentMap.id } : null,
@@ -266,8 +262,8 @@ function mergeDashboardLocal(dashboard: DashboardModel, local = loadProgrammeLoc
   };
 }
 
-async function programmeRequest<T>(path: string, init?: RequestInit) {
-  const ageAttested = window.sessionStorage.getItem(AGE_ATTESTATION_KEY) === "18-or-over";
+async function programmeRequest<T>(path: string, subject: ProgrammeLocalSubject, init?: RequestInit) {
+  const ageAttested = hasProgrammeAgeAttestation(window.sessionStorage, subject);
   const response = await fetch(path, {
     credentials: "same-origin",
     cache: "no-store",
@@ -923,6 +919,7 @@ function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "
 
 export function ActiveControlProgramme() {
   const { data: session, isPending: sessionPending } = useSession();
+  const sessionUserId = session?.user?.id || null;
   const [view, setView] = useState<View>("mission-01");
   const [m1Step, setM1Step] = useState(0);
   const [m2Step, setM2Step] = useState(0);
@@ -939,92 +936,161 @@ export function ActiveControlProgramme() {
   const [returningSignIn, setReturningSignIn] = useState(false);
   const [ageAttested, setAgeAttested] = useState(false);
   const [localHydrated, setLocalHydrated] = useState(false);
-  const authenticated = Boolean(session?.user);
+  const [activeSubject, setActiveSubject] = useState<ProgrammeLocalSubject | null>(null);
+  const [claimTransitionPending, setClaimTransitionPending] = useState(false);
+  const previousSessionUserId = useRef<string | null | undefined>(undefined);
+  const claimedJourneySubject = useRef<ProgrammeLocalSubject | null>(null);
+  const authenticated = Boolean(sessionUserId);
+  const subjectMatchesSession = Boolean(
+    activeSubject
+    && (sessionUserId
+      ? activeSubject.kind === "user" && activeSubject.id === sessionUserId
+      : activeSubject.kind === "journey"),
+  );
 
   useEffect(() => {
-    setAgeAttested(window.sessionStorage.getItem(AGE_ATTESTATION_KEY) === "18-or-over");
-    const local = loadProgrammeLocalContent();
+    if (sessionPending) return;
+    if (claimTransitionPending && sessionUserId && activeSubject?.kind === "journey") return;
+    const priorUserId = previousSessionUserId.current;
+    const nextSubject = sessionUserId
+      ? userProgrammeSubject(sessionUserId)
+      : priorUserId
+        ? rotateAnonymousProgrammeSubject(window.sessionStorage)
+        : anonymousProgrammeSubject(window.sessionStorage);
+    previousSessionUserId.current = sessionUserId;
+    if (programmeSubjectsEqual(activeSubject, nextSubject)) return;
+
+    // Fail closed on every subject transition: remove the prior subject from memory
+    // before hydrating only the exact next subject namespace.
+    setLocalHydrated(false);
+    setDashboard(null);
+    setEditType(null);
+    setError("");
+    setMomentMap(emptyMomentMap);
+    setGoal(emptyGoal());
+    setUrgeLearning(emptyUrgeLearning);
+    setActiveBoundary(emptyBoundary);
+    setAgeAttested(false);
+    setActiveSubject(nextSubject);
+
+    const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, nextSubject);
     if (local.momentMap) setMomentMap({ ...emptyMomentMap, ...local.momentMap });
     if (local.goal) setGoal({ ...emptyGoal(), ...local.goal });
     if (local.urgeLearning) setUrgeLearning({ ...emptyUrgeLearning, ...local.urgeLearning });
     if (local.activeBoundary) setActiveBoundary({ ...emptyBoundary, ...local.activeBoundary });
+    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, nextSubject));
     setLocalHydrated(true);
     const returning = new URLSearchParams(window.location.search).get("auth") === "sign-in";
-    if (returning) { setReturningSignIn(true); setView("registration"); }
-  }, []);
+    if (returning && nextSubject.kind === "journey") {
+      setReturningSignIn(true);
+      setView("registration");
+    } else if (nextSubject.kind === "journey") {
+      setReturningSignIn(false);
+      setView("mission-01");
+    }
+  }, [activeSubject, claimTransitionPending, sessionPending, sessionUserId]);
 
   useEffect(() => {
-    if (!localHydrated) return;
-    saveProgrammeLocalContent({ momentMap, goal, urgeLearning, activeBoundary });
-  }, [activeBoundary, goal, localHydrated, momentMap, urgeLearning]);
+    if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
+    saveProgrammeSubjectContent(window.sessionStorage, activeSubject, { momentMap, goal, urgeLearning, activeBoundary });
+  }, [activeBoundary, activeSubject, goal, localHydrated, momentMap, subjectMatchesSession, urgeLearning]);
+
+  const request = useCallback(<T,>(path: string, init?: RequestInit) => {
+    if (!activeSubject || !subjectMatchesSession) {
+      return Promise.reject(new Error("Programme subject changed; reload the exact session before continuing"));
+    }
+    return programmeRequest<T>(path, activeSubject, init);
+  }, [activeSubject, subjectMatchesSession]);
 
   useEffect(() => {
-    if (sessionPending || !authenticated) return;
+    if (sessionPending || !authenticated || !activeSubject || activeSubject.kind !== "user" || !subjectMatchesSession) return;
     let cancelled = false;
-    programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard")
-      .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setActiveBoundary(next.activeBoundary || emptyBoundary); setView("dashboard"); } })
+    const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, activeSubject);
+    request<{ dashboard: DashboardModel }>("/api/program/dashboard")
+      .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard, local); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setUrgeLearning({ ...emptyUrgeLearning, ...(local.urgeLearning || {}) }); setActiveBoundary(next.activeBoundary || emptyBoundary); setView("dashboard"); } })
       .catch(() => undefined);
     return () => { cancelled = true; };
-  }, [authenticated, sessionPending]);
+  }, [activeSubject, authenticated, request, sessionPending, subjectMatchesSession]);
 
   const m1Complete = useMemo(() => Boolean(momentMap.situation && momentMap.cues.length && momentMap.thoughtOrFeeling && momentMap.response && momentMap.immediateConsequence && momentMap.noticeRule), [momentMap]);
 
   async function saveMissionOneStep() {
     setBusy(true); setError("");
     const nextStates = MISSION_ONE_TASKS.slice(0, m1Step + 1);
-    const save = () => programmeRequest("/api/program/session/mission-01", { method: "PATCH", body: JSON.stringify({ taskStates: nextStates }) });
+    const save = () => request("/api/program/session/mission-01", { method: "PATCH", body: JSON.stringify({ taskStates: nextStates }) });
     try {
       try { await save(); }
       catch (cause) {
         if ((cause as Error & { status?: number }).status !== 404) throw cause;
-        await programmeRequest("/api/program/session", { method: "POST" });
+        await request("/api/program/session", { method: "POST" });
         await save();
       }
       if (m1Step === 7) {
         if (!m1Complete) throw new Error("Complete the Moment Map before saving it");
-        await programmeRequest("/api/program/session/mission-01/claim", { method: "POST" });
+        await request("/api/program/session/mission-01/claim", { method: "POST" });
+        claimedJourneySubject.current = activeSubject?.kind === "journey" ? activeSubject : null;
         setView("registration-gate");
       } else setM1Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
     finally { setBusy(false); }
   }
 
-  async function redeemClaim() {
-    const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
-    const next = mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary });
+  async function redeemClaim(targetUserId: string) {
+    const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
+    const targetSubject = userProgrammeSubject(targetUserId);
+    let local: Partial<ProgrammeLocalContent>;
+    if (activeSubject?.kind === "journey") {
+      if (!programmeSubjectsEqual(activeSubject, claimedJourneySubject.current)) {
+        throw new Error("The anonymous Programme journey cannot be matched to this claim");
+      }
+      local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, activeSubject, targetSubject);
+    } else if (programmeSubjectsEqual(activeSubject, targetSubject)) {
+      local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, targetSubject);
+    } else {
+      throw new Error("The Programme claim does not match the active account subject");
+    }
+    claimedJourneySubject.current = null;
+    setActiveSubject(targetSubject);
+    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, targetSubject));
+    const next = mergeDashboardLocal(payload.dashboard, local);
     setDashboard(next); setMomentMap(next.momentMap || momentMap); setView("dashboard");
   }
 
   async function handleRegistrationContinue() {
     if (!authenticated) { setView("registration"); return; }
     setBusy(true); setError("");
-    try { await redeemClaim(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
+    try {
+      if (!sessionUserId) throw new Error("The authenticated account could not be resolved");
+      await redeemClaim(sessionUserId);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
   }
 
   async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) {
     setBusy(true); setError("");
+    const continuingCurrentClaim = !(returningSignIn && input.mode === "sign-in")
+      && activeSubject?.kind === "journey"
+      && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current);
+    setClaimTransitionPending(continuingCurrentClaim);
     try {
       const result = input.mode === "sign-up"
         ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "SevenBet member", fetchOptions: { headers: { "x-sevenbet-age-attestation": input.adultConfirmed ? "18-or-over" : "" } } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
+      const targetUserId = result.data?.user.id;
+      if (!targetUserId) throw new Error("The authenticated account could not be resolved");
       if (returningSignIn && input.mode === "sign-in") {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard");
-        const next = mergeDashboardLocal(payload.dashboard);
-        setDashboard(next);
-        setMomentMap(next.momentMap || emptyMomentMap);
         window.history.replaceState({}, "", "/program");
-        setView("dashboard");
-      } else await redeemClaim();
+        setReturningSignIn(false);
+      } else await redeemClaim(targetUserId);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
-    finally { setBusy(false); }
+    finally { setClaimTransitionPending(false); setBusy(false); }
   }
 
   async function startMissionTwo() {
     if (!dashboard?.momentMap) return;
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { draft?: { currentGoal?: Partial<CurrentGoal> } } }>("/api/program/missions/02");
+      const payload = await request<{ mission: { draft?: { currentGoal?: Partial<CurrentGoal> } } }>("/api/program/missions/02");
       const draft = payload.mission.draft?.currentGoal;
       setGoal({ ...emptyGoal(dashboard.momentMap.id), ...draft, sourceMomentMapId: dashboard.momentMap.id || "", reviewAt: typeof draft?.reviewAt === "string" ? draft.reviewAt.slice(0, 10) : sevenDaysFromNow(), direction: (draft?.direction || "pause") as GoalDirection });
       setM2Step(0); setView("mission-02");
@@ -1036,9 +1102,9 @@ export function ActiveControlProgramme() {
     setBusy(true); setError("");
     try {
       const reviewAt = new Date(`${goal.reviewAt.slice(0, 10)}T12:00:00`).toISOString();
-      await programmeRequest("/api/program/missions/02", { method: "PUT", body: JSON.stringify({ taskStates: MISSION_TWO_TASKS.slice(0, m2Step + 1), currentGoal: { sourceMomentMapId: goal.sourceMomentMapId, direction: goal.direction, reviewAt, confidence: goal.confidence, status: goal.status } }) });
+      await request("/api/program/missions/02", { method: "PUT", body: JSON.stringify({ taskStates: MISSION_TWO_TASKS.slice(0, m2Step + 1), currentGoal: { sourceMomentMapId: goal.sourceMomentMapId, direction: goal.direction, reviewAt, confidence: goal.confidence, status: goal.status } }) });
       if (m2Step === 7) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/02/complete", { method: "POST" });
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/02/complete", { method: "POST" });
         setDashboard(mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary })); setView("dashboard");
       } else setM2Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
@@ -1048,7 +1114,7 @@ export function ActiveControlProgramme() {
   async function startMissionThree() {
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { taskStates: string[]; draft?: { urgeLearning?: { evidenceReviewed?: boolean; waveMomentsReviewed?: string[]; scenarioAnswer?: string; signalChoice?: "local" | "not_now"; meaningAnswer?: string } } } }>("/api/program/missions/03");
+      const payload = await request<{ mission: { taskStates: string[]; draft?: { urgeLearning?: { evidenceReviewed?: boolean; waveMomentsReviewed?: string[]; scenarioAnswer?: string; signalChoice?: "local" | "not_now"; meaningAnswer?: string } } } }>("/api/program/missions/03");
       const saved = payload.mission.draft?.urgeLearning;
       setUrgeLearning({ ...emptyUrgeLearning, ...urgeLearning, ...saved, notNow: saved?.signalChoice === "not_now" ? true : urgeLearning.notNow });
       setM3Step(Math.min(payload.mission.taskStates.length, 6));
@@ -1060,7 +1126,7 @@ export function ActiveControlProgramme() {
   async function startMissionFour() {
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { taskStates: string[]; draft?: { activeBoundary?: Partial<ActiveBoundary> } } }>("/api/program/missions/04");
+      const payload = await request<{ mission: { taskStates: string[]; draft?: { activeBoundary?: Partial<ActiveBoundary> } } }>("/api/program/missions/04");
       const draft = payload.mission.draft?.activeBoundary;
       setActiveBoundary({
         ...emptyBoundary,
@@ -1086,12 +1152,12 @@ export function ActiveControlProgramme() {
     try {
       const completing = m3Step === 6;
       const taskStates = completing ? [...MISSION_THREE_TASKS] : MISSION_THREE_TASKS.slice(0, m3Step + 1);
-      await programmeRequest("/api/program/missions/03", {
+      await request("/api/program/missions/03", {
         method: "PUT",
         body: JSON.stringify({ taskStates, urgeLearning: { evidenceReviewed: urgeLearning.evidenceReviewed, waveMomentsReviewed: urgeLearning.waveMomentsReviewed, scenarioAnswer: urgeLearning.scenarioAnswer || undefined, signalChoice: urgeLearning.notNow ? "not_now" : "local", meaningAnswer: urgeLearning.meaningAnswer || undefined } }),
       });
       if (completing) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/03/complete", { method: "POST" });
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/03/complete", { method: "POST" });
         setDashboard(mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary }));
         setM3Step(7);
       } else setM3Step((value) => value + 1);
@@ -1105,7 +1171,7 @@ export function ActiveControlProgramme() {
       const completing = m4Step === 8;
       const taskStates = completing ? [...MISSION_FOUR_TASKS] : MISSION_FOUR_TASKS.slice(0, m4Step + 1);
       const reviewAt = new Date(activeBoundary.reviewAt).toISOString();
-      await programmeRequest("/api/program/missions/04", {
+      await request("/api/program/missions/04", {
         method: "PATCH",
         body: JSON.stringify({
           taskStates,
@@ -1123,7 +1189,7 @@ export function ActiveControlProgramme() {
         }),
       });
       if (completing) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/04/complete", { method: "POST" });
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/04/complete", { method: "POST" });
         const next = mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary });
         setDashboard(next);
         setActiveBoundary(next.activeBoundary || activeBoundary);
@@ -1134,20 +1200,25 @@ export function ActiveControlProgramme() {
   }
 
   async function clearLocalContent() {
-    window.sessionStorage.removeItem(PROGRAMME_LOCAL_CONTENT_KEY);
+    if (!activeSubject || !subjectMatchesSession) return;
+    clearProgrammeSubjectContent(window.sessionStorage, activeSubject);
     setMomentMap(emptyMomentMap);
     setGoal(emptyGoal(dashboard?.momentMap?.id));
     setUrgeLearning(emptyUrgeLearning);
     setActiveBoundary(emptyBoundary);
     try {
-      const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard");
+      const payload = await request<{ dashboard: DashboardModel }>("/api/program/dashboard");
       setDashboard(payload.dashboard);
     } catch {
       setDashboard(null);
     }
   }
 
-  if (!ageAttested) return <AgeGate onConfirm={() => { window.sessionStorage.setItem(AGE_ATTESTATION_KEY, "18-or-over"); setAgeAttested(true); }} />;
+  if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession) {
+    return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/responsible-gambling">Protected Help remains available.</Link></p></section></div>;
+  }
+
+  if (!ageAttested) return <AgeGate onConfirm={() => { setProgrammeAgeAttestation(window.sessionStorage, activeSubject); setAgeAttested(true); }} />;
 
   return (
     <div className={`activeProgrammePage ${styles.page}`}>

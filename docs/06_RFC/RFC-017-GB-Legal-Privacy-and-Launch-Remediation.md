@@ -84,7 +84,7 @@ The legacy reflection create operation is retired and must fail before parsing a
 
 ### 3.3 Local lifecycle
 
-Raw Programme content lives in React state and may be mirrored to versioned, namespaced `sessionStorage` solely for same-tab continuity. It must never use `localStorage`. It is cleared when the user explicitly clears the local Programme, completes the relevant local lifecycle where the interface promises clearance, signs out in that tab, or the tab session ends. The interface states plainly which facts are saved to the account and which remain only in the browser session.
+Raw Programme content lives in React state and may be mirrored to versioned, subject-isolated `sessionStorage` solely for same-tab continuity. Anonymous work uses a random opaque journey namespace; authenticated work uses the actual Better Auth user ID, never email or a health/vulnerability value. Only the exact current Mission 01 journey may migrate after successful claim redemption, after which its source is removed. Ordinary sign-in does not migrate anonymous content. On subject change, prior narrative is hidden and cleared from memory before only the exact next namespace or an empty record is loaded. It must never use `localStorage`. It is cleared when the user explicitly clears the active local Programme, completes the relevant local lifecycle where the interface promises clearance, signs out/session-expires into a fresh anonymous journey, or the tab session ends. The interface states plainly which facts are saved to the account and which remain only in the browser session.
 
 Existing required database strings use implementation-owned sentinel values which unambiguously mean that the narrative is local. These values are never presented as user-authored content, never exposed to commercial consumers and never interpreted as evidence of vulnerability. Existing historic raw rows are not returned as active browser narrative by default.
 
@@ -116,7 +116,7 @@ Casino, bonus, About, methodology, Programme and control-tool copy must remain f
 
 ## 7. Age control
 
-The normal account-creation path requires an unchecked “I confirm I am 18 or over” control. The server independently requires the corresponding bounded confirmation on signup and on authenticated Programme mutation routes where appropriate; client state alone cannot grant access. No marketing checkbox is bundled into Programme registration.
+The normal account-creation path requires an unchecked “I confirm I am 18 or over” control. The server independently requires the corresponding bounded confirmation on signup and on authenticated Programme mutation routes where appropriate; client state alone cannot grant access. The local confirmation is scoped to the current journey or exact authenticated user, and an authenticated-user switch does not inherit the former user's confirmation. No marketing checkbox is bundled into Programme registration.
 
 Commercial casino and bonus surfaces display the existing adult-use boundary. Protected Help remains open. The release documentation must state: `AGE ATTESTATION PERSISTENCE — P1 OPEN`.
 
@@ -128,14 +128,14 @@ Internal data-subject tools must provide:
 
 - deterministic account lookup;
 - a structured JSON export of actual related records;
-- an explicit deletion plan with relation counts;
+- an explicit deletion plan with relation counts, including consumed claims, linked anonymous sessions and determinable legacy draft-bearing sessions;
 - dry-run as the default;
 - output files created with mode `0600`;
 - no user content in console or application logs;
-- refusal to operate against Production by default; and
-- Production deletion only when both an explicit Production confirmation environment value and an explicit execute flag are present.
+- exact user-specific execution confirmation in every environment in addition to the execute flag; and
+- an explicit environment target, with a second exact user-specific confirmation for Production.
 
-Deletion removes active application rows in a documented order and reports completion without printing their contents. Backup expiry and restore caveats are communicated rather than overstated.
+Deletion captures consumed claim IDs and linked anonymous-session IDs before deleting the User, removes those exact claims/sessions and any legacy draft they contain, and leaves unconsumed journeys, other users and global Programme definitions untouched. It removes other active application rows in a documented order and reports completion without printing their contents. Operators verify the intended database out of band; neither `VERCEL_ENV` nor database-URL parsing is treated as database identity authority. Backup expiry and restore caveats are communicated rather than overstated.
 
 ## 9. Retention, processors and incident readiness
 
@@ -161,7 +161,8 @@ Completion requires automated coverage for:
 - commercial import and DTO firewall invariants;
 - age gate default, client flow and server enforcement;
 - privacy complaint and UK-representative disclosure;
-- export and deletion dry-run and execute behaviour for isolated test users;
+- export and deletion dry-run and exact-confirmation execute eligibility for isolated test users, including consumed anonymous-session erasure;
+- same-tab User A/User B local-content and age-attestation isolation, plus exact current-claim migration and source removal;
 - absence of tracking and behavioural analytics SDKs; and
 - GB market, affiliate, Programme, build, no-JavaScript, accessibility and responsive regressions.
 

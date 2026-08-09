@@ -4,6 +4,7 @@ import test from "node:test";
 import type { PrismaClient } from "@prisma/client";
 
 import { buildDataSubjectDeletionPlan, collectDataSubjectExport, executeDataSubjectDeletion } from "../lib/privacy/data-subject";
+import { assertPrivacyDeletionAuthority, parsePrivacyTargetEnvironment } from "../lib/privacy/deletion-confirmation";
 
 type Row = Record<string, unknown>;
 
@@ -47,7 +48,16 @@ function fakeDatabase() {
     xp: [{ id: "xp-a", userId: "user-a" }, { id: "xp-b", userId: "user-b" }] as Row[],
     achievements: [{ id: "achievement-a", userId: "user-a" }, { id: "achievement-b", userId: "user-b" }] as Row[],
     activeDays: [{ id: "day-a", userId: "user-a", enrollmentId: "enrollment-a" }, { id: "day-b", userId: "user-b", enrollmentId: "enrollment-b" }] as Row[],
-    claims: [{ id: "claim-a", consumedByUserId: "user-a" }, { id: "claim-b", consumedByUserId: "user-b" }] as Row[],
+    anonymousSessions: [
+      { id: "anonymous-a", draft: { momentMap: "A-LEGACY-DRAFT-SENTINEL" } },
+      { id: "anonymous-b", draft: { momentMap: "B-DRAFT-SENTINEL" } },
+      { id: "anonymous-unconsumed", draft: { momentMap: "UNCONSUMED-DRAFT-SENTINEL" } },
+    ] as Row[],
+    claims: [
+      { id: "claim-a", anonymousSessionId: "anonymous-a", consumedByUserId: "user-a", anonymousSession: { id: "anonymous-a", draft: { momentMap: "A-LEGACY-DRAFT-SENTINEL" } } },
+      { id: "claim-b", anonymousSessionId: "anonymous-b", consumedByUserId: "user-b", anonymousSession: { id: "anonymous-b", draft: { momentMap: "B-DRAFT-SENTINEL" } } },
+      { id: "claim-unconsumed", anonymousSessionId: "anonymous-unconsumed", consumedByUserId: null, anonymousSession: { id: "anonymous-unconsumed", draft: { momentMap: "UNCONSUMED-DRAFT-SENTINEL" } } },
+    ] as Row[],
     verifications: [{ id: "verification-a", identifier: "a@example.test" }, { id: "verification-b", identifier: "b@example.test" }] as Row[],
     globalCasinos: [{ id: "editorial-casino", status: "PUBLISHED" }] as Row[],
   };
@@ -103,6 +113,7 @@ function fakeDatabase() {
     userAchievement: model(rows.achievements),
     programmeActiveDay: model(rows.activeDays),
     pendingProgrammeClaim: model(rows.claims),
+    anonymousProgrammeSession: model(rows.anonymousSessions),
     verification: model(rows.verifications),
     $transaction: async (operation: (transaction: unknown) => Promise<unknown>) => operation(database),
   };
@@ -114,11 +125,15 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   const exported = await collectDataSubjectExport(database, "user-a");
   const serializedExport = JSON.stringify(exported);
   assert.match(serializedExport, /user-a/);
-  assert.doesNotMatch(serializedExport, /user-b|b@example\.test/);
+  assert.match(serializedExport, /A-LEGACY-DRAFT-SENTINEL/);
+  assert.doesNotMatch(serializedExport, /user-b|b@example\.test|B-DRAFT-SENTINEL/);
 
   const plan = await buildDataSubjectDeletionPlan(database, "user-a");
   assert.equal(plan?.counts.users, 1);
   assert.equal(plan?.counts.sessions, 1);
+  assert.equal(plan?.counts.consumedClaims, 1);
+  assert.equal(plan?.counts.linkedAnonymousSessions, 1);
+  assert.equal(plan?.counts.legacyDraftBearingAnonymousSessions, 1);
   assert.equal(rows.users.length, 2, "planning must not mutate either user");
 
   await executeDataSubjectDeletion(database, "user-a");
@@ -130,18 +145,36 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.deepEqual(rows.achievements.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.activeDays.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.verifications.map((row) => row.identifier), ["b@example.test"]);
-  assert.equal(rows.claims.find((row) => row.id === "claim-a")?.consumedByUserId, null);
+  assert.equal(rows.claims.find((row) => row.id === "claim-a"), undefined);
   assert.equal(rows.claims.find((row) => row.id === "claim-b")?.consumedByUserId, "user-b");
+  assert.equal(rows.claims.find((row) => row.id === "claim-unconsumed")?.consumedByUserId, null);
+  assert.deepEqual(rows.anonymousSessions.map((row) => row.id), ["anonymous-b", "anonymous-unconsumed"]);
+  assert.match(JSON.stringify(rows.anonymousSessions), /B-DRAFT-SENTINEL|UNCONSUMED-DRAFT-SENTINEL/);
+  assert.doesNotMatch(JSON.stringify(rows.anonymousSessions), /A-LEGACY-DRAFT-SENTINEL/);
   assert.deepEqual(rows.globalCasinos, [{ id: "editorial-casino", status: "PUBLISHED" }]);
 });
 
-test("CLI requires explicit output, exclusive mode-0600 files and two-part Production deletion confirmation", () => {
+test("destructive CLI confirmation is exact in every environment and doubled for Production", () => {
+  const local = parsePrivacyTargetEnvironment("local");
+  const preview = parsePrivacyTargetEnvironment("preview");
+  const production = parsePrivacyTargetEnvironment("production");
+  assert.doesNotThrow(() => assertPrivacyDeletionAuthority({ execute: false, environment: local, userId: "user-a" }));
+  assert.throws(() => assertPrivacyDeletionAuthority({ execute: true, environment: local, userId: "user-a" }), /SEVENBET_PRIVACY_DELETE_CONFIRM/);
+  assert.throws(() => assertPrivacyDeletionAuthority({ execute: true, environment: preview, userId: "user-a", generalConfirmation: "DELETE:user-b" }), /SEVENBET_PRIVACY_DELETE_CONFIRM/);
+  assert.doesNotThrow(() => assertPrivacyDeletionAuthority({ execute: true, environment: preview, userId: "user-a", generalConfirmation: "DELETE:user-a" }));
+  assert.throws(() => assertPrivacyDeletionAuthority({ execute: true, environment: production, userId: "user-a", generalConfirmation: "DELETE:user-a" }), /SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM/);
+  assert.throws(() => assertPrivacyDeletionAuthority({ execute: true, environment: production, userId: "user-a", productionConfirmation: "DELETE:user-a" }), /SEVENBET_PRIVACY_DELETE_CONFIRM/);
+  assert.doesNotThrow(() => assertPrivacyDeletionAuthority({ execute: true, environment: production, userId: "user-a", generalConfirmation: "DELETE:user-a", productionConfirmation: "DELETE:user-a" }));
+  assert.throws(() => parsePrivacyTargetEnvironment(undefined), /--environment/);
+
   const cli = readFileSync("scripts/privacy-data-subject.ts", "utf8");
   assert.match(cli, /--output/);
+  assert.match(cli, /--environment/);
   assert.match(cli, /O_EXCL/);
   assert.match(cli, /0o600/);
   assert.match(cli, /process\.argv\.includes\("--execute"\)/);
-  assert.match(cli, /VERCEL_ENV === "production"/);
+  assert.match(cli, /SEVENBET_PRIVACY_DELETE_CONFIRM/);
   assert.match(cli, /SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM/);
+  assert.doesNotMatch(cli, /VERCEL_ENV|DATABASE_URL/);
   assert.doesNotMatch(cli, /console\.log|JSON\.stringify\(result\).*stdout/s);
 });

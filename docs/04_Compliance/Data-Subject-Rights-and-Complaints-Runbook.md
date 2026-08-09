@@ -12,7 +12,7 @@
 - The public Privacy Policy directs requests and complaints to `privacy@7be.io` and identifies 7BE Inc. as controller.
 - `scripts/privacy-data-subject.ts` supports exact account lookup, restricted JSON export and dry-run-first deletion over the active Prisma relations.
 - The export excludes credentials, session tokens, provider tokens and verification secrets.
-- Account deletion cascades or explicitly removes active authentication, Programme, XP and achievement data. Consumed-claim attribution is detached.
+- Account deletion cascades or explicitly removes active authentication, Programme, XP and achievement data. Exact consumed Programme claims and their linked anonymous sessions are captured and deleted before the user row, including any legacy draft they contain.
 
 ### Inferred
 
@@ -49,16 +49,16 @@
 Export:
 
 ```text
-npm run privacy:data-subject -- export --identifier <exact-email-or-user-id> --output <new-path.json>
+npm run privacy:data-subject -- export --environment <local|preview|production> --identifier <exact-email-or-user-id> --output <new-path.json>
 ```
 
 Deletion plan (default; no mutation):
 
 ```text
-npm run privacy:data-subject -- delete --identifier <exact-email-or-user-id> --output <new-plan-path.json>
+npm run privacy:data-subject -- delete --environment <local|preview|production> --identifier <exact-email-or-user-id> --output <new-plan-path.json>
 ```
 
-Non-Production execution requires the explicit `--execute` flag. Production execution additionally requires `SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM=DELETE:<exact-user-id>`. Production erasure must not be exercised as a routine smoke test.
+The deletion plan reports consumed claims, linked anonymous sessions and determinable legacy draft-bearing sessions. Before any execution, verify the intended database and declared environment out of band; `VERCEL_ENV` and database-URL parsing are not environment authority. Every environment requires `--execute` and `SEVENBET_PRIVACY_DELETE_CONFIRM=DELETE:<exact-user-id>`. A declared Production target additionally requires `SEVENBET_PRIVACY_PRODUCTION_DELETE_CONFIRM=DELETE:<exact-user-id>`. Production erasure must not be exercised as a routine smoke test.
 
 Every output path must be new. The CLI uses exclusive creation and mode `0600`. Console output contains only operation status and output path, never exported content.
 

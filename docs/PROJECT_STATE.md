@@ -6,7 +6,7 @@
 - **Current main:** `b5c5c0317befc1f2a85b6625d6e5d918cf3b7a37`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
-- **LEGAL-IMPL-01:** implementation complete on `codex/legal-impl-01-gb-launch-remediation`; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) and exact-head Preview/CI verification pending.
+- **LEGAL-IMPL-01:** implementation complete with bounded Founder Office privacy corrections on `codex/legal-impl-01-gb-launch-remediation`; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) and exact-head Preview/CI verification pending.
 - **Production:** <https://sevenbet-next.vercel.app>; read-only baseline and smoke healthy before LEGAL-IMPL-01. Production deployment remains unchanged by this branch.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
@@ -46,18 +46,18 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 ### Active Control Programme
 
 - Missions 01–04 retain server-owned progression, deterministic XP, achievements, active days, streak inputs and next-Mission state.
-- Raw M1–M4 narrative is local-first in React state and tab-scoped `sessionStorage`; active server DTOs use exact allow-lists and reject unexpected sensitive fields.
+- Raw M1–M4 narrative is local-first in React state and subject-isolated, tab-scoped `sessionStorage`: random anonymous journey before authentication and actual Better Auth user ID after authentication. Exact current-claim migration removes its anonymous source; subject changes fail closed before rendering. Active server DTOs use exact allow-lists and reject unexpected sensitive fields.
 - Required legacy text columns receive neutral implementation markers. Active presenters redact historic raw narrative.
 - Legacy reflection creation is retired with `410 LOCAL_ONLY_CONTENT` before request-body parsing; authenticated access/export/deletion remains.
-- The normal Programme UI uses an unchecked 18-or-over confirmation, and non-GET Programme API requests require the bounded age-attestation header.
+- The normal Programme UI uses an unchecked, journey/user-scoped 18-or-over confirmation, and non-GET Programme API requests require the bounded age-attestation header. Authenticated users do not inherit another user's local confirmation.
 - Protected Help remains accessible without age or Programme completion gating and remains commercially isolated.
 - Structural tests prevent Programme, Self-Check, personal-limit, Help, vulnerability and local-session state from entering commercial modules or DTOs.
 
 ### Privacy operations
 
 - Privacy copy describes the local-first Programme boundary, one-month rights workflow, complaint escalation and the unappointed UK-representative gap.
-- The internal data-subject CLI performs deterministic account lookup, structured JSON export and ordered relation-count deletion planning.
-- Deletion is dry-run by default. Output files are exclusive mode `0600`. Production execution is refused unless both explicit Production confirmation and execute controls are present.
+- The internal data-subject CLI performs deterministic account lookup, structured JSON export and ordered relation-count deletion planning, including consumed claims and linked/draft-bearing anonymous sessions.
+- Exact claimant-owned consumed claims and anonymous sessions are deleted before the User; other users, unconsumed journeys and global content remain outside scope. Deletion is dry-run by default. Output files are exclusive mode `0600`. Every execution requires an exact general user confirmation; Production requires a second exact confirmation and explicit target declaration.
 - Retention, processor/international-transfer, breach and DPIA draft documents distinguish detected, target and unknown facts without inventing contracts or appointments.
 
 ### Platform and delivery baseline
@@ -69,7 +69,7 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ## Evidence classification
 
-- **Detected:** local-first active Programme narrative; server allow-lists; redacted presenters; age request gate; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations; substantive compliance runbooks.
+- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; subject-scoped age request gate; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
 - **Planned:** durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
 - **Not detected:** DOB/KYC, durable age-attestation evidence, a completed UK representative appointment, a confirmed ICO registration/fee outcome, outside-counsel sign-off, verified complete processor/transfer evidence, a real signed GB partner, real eligible offer/link authority, Production affiliate activation, or a successful restore drill.

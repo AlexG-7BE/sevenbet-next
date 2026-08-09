@@ -6,7 +6,7 @@ Status: **Approved implementation policy** under RFC-017. Last reconciled: 2026-
 
 The Active Control Programme is an adult educational reflection, decision-support and personal-boundary product. It is not diagnosis, treatment, therapy, rehabilitation or evidence that gambling is safe or suitable.
 
-Raw participant narrative is local-first for GB v1. It may exist in React state and in the versioned, tab-scoped `sessionStorage` key `sevenbet.programme.local-content.v1`. It must not be sent to the application server, stored in cookies, URLs, `localStorage`, logs, analytics or generic event metadata. Account, enrolment, bounded task state, completion, rewards and the minimum neutral structured continuity facts remain server-persisted.
+Raw participant narrative is local-first for GB v1. It may exist in React state and in versioned, subject-isolated, tab-scoped `sessionStorage`: a random opaque journey namespace before authentication and `sevenbet.programme.local-content.v2:user:<user-id>` after authentication. It must not be sent to the application server, stored in cookies, URLs, `localStorage`, logs, analytics or generic event metadata. Account, enrolment, bounded task state, completion, rewards and the minimum neutral structured continuity facts remain server-persisted.
 
 Programme data, pause state and protected Help activity are prohibited inputs to advertising, operator/casino recommendation, offer selection, affiliate optimisation, commercial eligibility, natural editorial ranking or promotional pressure.
 
@@ -40,15 +40,15 @@ API errors may name invalid fields or invalid states but must not include submit
 
 ## Local lifecycle and user communication
 
-Local narrative is namespaced by Mission inside the single versioned session key. The interface distinguishes “saved to your account” progress from words kept in the current browser tab. The local record is removed on explicit local clear and sign-out in that tab; the browser tab lifecycle supplies natural expiry. It is not a durable hidden vault.
+Local narrative is namespaced by the exact anonymous journey or authenticated Better Auth user ID. A current anonymous Mission 01 namespace moves to the exact claimant only after successful claim redemption, then the anonymous source is removed. Ordinary sign-in never imports an arbitrary anonymous namespace. An authenticated subject change hides and clears the former subject from memory before loading only the next subject's namespace or an empty record. The interface distinguishes “saved to your account” progress from words kept in the current browser tab. Explicit local clear removes the active namespace; sign-out/session expiry rotates to a fresh anonymous journey; the browser tab lifecycle supplies natural expiry. It is not a durable hidden vault.
 
-An unchecked 18-or-over confirmation gates the Programme. Mutating Programme requests require the bounded `x-sevenbet-age-attestation: 18-or-over` header at middleware, and signup independently requires the confirmation. Help remains open. **AGE ATTESTATION PERSISTENCE — P1 OPEN:** no DOB, KYC or durable attestation evidence is stored by this release.
+An unchecked 18-or-over confirmation gates the Programme. Its tab record is subject-isolated by anonymous journey or authenticated user, so one authenticated user's confirmation cannot authorize another. A legitimately claimed current journey may carry its current-session confirmation to the exact claimant; ordinary sign-in does not. Mutating Programme requests require the bounded `x-sevenbet-age-attestation: 18-or-over` header at middleware, and signup independently requires its own unchecked confirmation. Help remains open. **AGE ATTESTATION PERSISTENCE — P1 OPEN:** no DOB, KYC or durable attestation evidence is stored by this release.
 
 ## Retention, access and erasure
 
 - **Detected:** anonymous Mission 1 sessions expire after 24 hours of accepted activity; pending claims expire after 30 minutes.
 - **Detected:** authenticated users can access active Programme projections; current projections redact legacy narrative.
-- **Detected:** the internal data-subject tool exports actual related records and produces an ordered, dry-run-by-default deletion plan. Production execution requires both explicit environment confirmation and an execute flag.
+- **Detected:** the internal data-subject tool exports actual related records and produces an ordered, dry-run-by-default deletion plan. Erasure deletes exact consumed claims and their linked anonymous sessions. Every execution requires an exact general user confirmation; an explicit Production target requires a second exact Production confirmation.
 - **Detected:** artefact-level deletion scrubs or deletes the applicable content while preserving truthful reward/completion integrity where the route contract requires it.
 - **Planned:** automated expiry purge and a separately approved legacy-content cleanup/retention decision.
 - **Not detected:** a lawful basis or approved purpose for new server persistence of raw vulnerability/health narrative.
@@ -61,7 +61,7 @@ Commercial ranking, public casino/offer projection, affiliate candidate selectio
 
 ## Evidence status
 
-- **Detected:** local-first M1–M4 client storage; exact request allow-lists; redacted presenters; neutral legacy-column markers; retired legacy reflection creation; age mutation gate; deterministic rewards; commercial import firewall.
+- **Detected:** local-first, subject-isolated M1–M4 client storage; exact request allow-lists; redacted presenters; neutral legacy-column markers; retired legacy reflection creation; subject-isolated age mutation gate; deterministic rewards; commercial import firewall.
 - **Inferred:** neutral legacy markers preserve existing relational and reward integrity without a schema change while avoiding new raw-content persistence.
 - **Planned:** durable age evidence, distributed rate limiting, automated anonymous expiry purge and approved legacy cleanup.
 - **Not detected:** Programme analytics, commercial analytics based on Programme state, behavioural advertising SDKs, or any authorised commercial use of Programme data.
