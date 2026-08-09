@@ -30,10 +30,10 @@ test("Affiliate Disclosure is a server-rendered four-section document inside the
 
 test("Affiliate Disclosure keeps commercial claims qualified and exposes only Methodology", () => {
   for (const content of [
-    "Future eligible governed links on SevenBet may be affiliate links",
-    "SevenBet may receive a commission",
+    "Future eligible governed links on B4GAMBLE may be affiliate links",
+    "B4GAMBLE may receive a commission",
     "Not every operator",
-    "Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial",
+    "Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial",
     "Commercial relationships do not remove negative findings",
     "A paid link is not proof",
   ]) assert.ok(affiliateDocument.includes(content), `missing Affiliate content: ${content}`);

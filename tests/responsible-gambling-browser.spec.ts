@@ -29,7 +29,7 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
 
 test("keyboard focus is visible and external-resource meaning is explicit", async ({ page }) => {
   await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "domcontentloaded" });
-  const firstLink = page.getByRole("link", { name: "SevenBet Help home" });
+  const firstLink = page.getByRole("link", { name: "B4GAMBLE Help home" });
   await firstLink.focus();
   const focusStyle = await firstLink.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(focusStyle).not.toBe("none");
@@ -79,7 +79,7 @@ test("reduced motion and no-JS preserve the full Help route", async ({ browser }
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
-  await expect(page.getByText(/SevenBet does not save your choices here/i)).toBeVisible();
+  await expect(page.getByText(/B4GAMBLE does not save your choices here/i)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await context.close();
 });

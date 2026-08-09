@@ -27,7 +27,7 @@ test("public copy excludes bounded high-risk positive claims while preserving di
     /\b(?:a|the|this) safe casino\b/i,
     /\bready to gamble\b/i,
     /\bcontrol (?:is )?verified\b/i,
-    /\b(?:sevenbet|the programme|the program) (?:can |will )?treats? gambling addiction\b/i,
+    /\b(?:b4gamble|sevenbet|the programme|the program) (?:can |will )?treats? gambling addiction\b/i,
     /\brecover from gambling addiction (?:so you can|and) (?:gamble|play)\b/i,
     /\brisk-free gambling (?:experience|product|offer)\b/i,
   ];
@@ -46,7 +46,7 @@ test("commercial surfaces state the enforced compensation boundary without aspir
   ];
   for (const file of files) {
     const text = source(file);
-    assert.match(text, /Affiliate compensation does not determine (?:SevenBet(?:&apos;|')s )?Editor Score or natural editorial\s+ranking/);
+    assert.match(text, /Affiliate compensation does not determine (?:B4GAMBLE(?:&apos;|')s )?Editor Score or natural editorial\s+ranking/);
     assert.doesNotMatch(text, /should not automatically determine|independent casino discovery/i);
   }
 });

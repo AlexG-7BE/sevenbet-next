@@ -44,7 +44,7 @@ test("full canonical card renders published evidence and only the governed inter
   assert.match(html, /href="\/outbound\/full-casino-visit"/);
   assert.match(html, /href="\/r\/full-casino-visit"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
-  assert.match(html, /Review access is editorial\. A visit action is conditional and may compensate SevenBet\./);
+  assert.match(html, /Review access is editorial\. A visit action is conditional and may compensate B4GAMBLE\./);
   assert.doesNotMatch(html, /destinationUrl|trackingUrl|operator\.example/);
   assert.doesNotMatch(html, /featured published review|recommended|best placement|available where you are|eligible in your location/i);
 });

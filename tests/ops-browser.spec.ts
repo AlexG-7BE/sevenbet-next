@@ -68,7 +68,7 @@ test("Personal Limit Tracker calculates only from user-entered values", async ({
 
 test("FAQ disclosures remain native and keyboard operable", async ({ page }) => {
   await open(page, "/faq");
-  const summary = page.locator("summary").filter({ hasText: "Is SevenBet an online casino?" });
+  const summary = page.locator("summary").filter({ hasText: "Is B4GAMBLE an online casino?" });
   await summary.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();

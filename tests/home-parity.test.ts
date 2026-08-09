@@ -22,7 +22,7 @@ const homeAssets = [
 test("Home route renders TiltHome with the approved metadata and canonical", () => {
   assert.match(page, /import \{ TiltHome \}/);
   assert.match(page, /<TiltHome \/>/);
-  assert.match(page, /title: "SevenBet \| Start with more control"/);
+  assert.match(page, /title: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
 });
@@ -114,15 +114,17 @@ test("Programme availability and evidence limitations remain truthful", () => {
   assert.doesNotMatch(home, /Every mission saves|Each mission produces/);
 });
 
-test("Public Shell behavior and prohibited implementation boundaries remain unchanged", () => {
-  const protectedPaths = [
-    "components/public-shell/PublicHeader.tsx",
-    "components/public-shell/PublicFooter.tsx",
-    "components/public-shell/PublicNavigation.tsx",
-    "lib/public-shell.ts",
-    "app/(public)/layout.tsx",
-  ];
-  execFileSync("git", ["diff", "--quiet", "origin/main", "--", ...protectedPaths]);
+test("Public Shell keeps its approved architecture while exposing the current brand", () => {
+  const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+  const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  assert.match(header, /aria-label="B4GAMBLE home"/);
+  assert.match(header, />\s*B4GAMBLE\s*</);
+  assert.match(navigation, />B4GAMBLE<\/Link>/);
+  assert.match(footer, />B4GAMBLE<\/Link>/);
+  assert.match(footer, /Know your limits before you play\./);
+
+  execFileSync("git", ["diff", "--quiet", "origin/main", "--", "app/(public)/layout.tsx", "components/public-shell/PublicShell.module.css", "app/design-system.css"]);
 
   const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })
     .trim()

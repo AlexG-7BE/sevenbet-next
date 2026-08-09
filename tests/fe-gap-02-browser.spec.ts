@@ -94,7 +94,7 @@ test("FAQ uses five semantic disclosure groups and remains usable at every viewp
 
 test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ browser, page }) => {
   await page.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  const summary = page.locator("summary").filter({ hasText: "Is SevenBet an online casino?" });
+  const summary = page.locator("summary").filter({ hasText: "Is B4GAMBLE an online casino?" });
   await summary.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();

@@ -50,7 +50,7 @@ test("Home hero survives delayed hydration, missing IntersectionObserver and imm
 
 test("Home hero remains visible through client navigation and browser history", async ({ page }) => {
   await page.goto(`${baseUrl}/casinos`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("link", { name: "SevenBet home" }).click();
+  await page.getByRole("link", { name: "B4GAMBLE home" }).click();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.goBack({ waitUntil: "domcontentloaded" });
   await page.goForward({ waitUntil: "domcontentloaded" });

@@ -10,7 +10,7 @@ import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } fro
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
 
-function enforceTemporaryDemoReviewOnly(casino: PublicCasinoDTO) {
+export function enforceTemporaryDemoReviewOnly(casino: PublicCasinoDTO) {
   if (!isTemporaryDemoCasinoId(casino.id)) return casino;
   const brand = (value: string) => currentPublicBrandText(value);
   return {

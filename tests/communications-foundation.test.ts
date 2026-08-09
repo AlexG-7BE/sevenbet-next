@@ -98,6 +98,9 @@ test("fixed templates are purpose-compatible, privacy-safe and tracking-free", (
   assert.equal(renderCommunicationTemplate("PROGRAMME_ENGAGEMENT_REMINDER", "ACCOUNT_SECURITY", config.siteUrl), null);
   assert.equal(renderCommunicationTemplate("COMMERCIAL_MARKETING", "PROGRAMME_ENGAGEMENT", config.siteUrl), null);
   const content = [account, requested, engagement].map((message) => `${message.html}\n${message.text}`).join("\n");
+  const subjects = [account, requested, engagement].map((message) => message.subject).join("\n");
+  assert.match(`${subjects}\n${content}`, /B4GAMBLE/);
+  assert.doesNotMatch(`${subjects}\n${content}`, /SevenBet|SEVENBET/);
   assert.doesNotMatch(content, /<img|pixel|utm_|click.?track|open.?track|affiliate|casino|bonus/i);
   assert.doesNotMatch(content, /moment map|cue|urge|boundary|reflection|self-check|help activity/i);
 });

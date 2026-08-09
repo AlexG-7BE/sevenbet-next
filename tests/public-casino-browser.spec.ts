@@ -124,7 +124,7 @@ test("demo directory metadata, canonical rules, schema suppression and action de
   const defaultHtml = await defaultResponse.text();
   expect(defaultResponse.status()).toBe(200);
   expect(defaultHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(defaultHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/casinos"');
+  expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/casinos"');
   expect(defaultHtml).not.toContain('"@type":"ItemList"');
   expect(defaultHtml).toContain("DEMONSTRATION DATA");
   expect(defaultHtml).toContain("Fictional operators and offer fields show the product experience");
@@ -134,14 +134,14 @@ test("demo directory metadata, canonical rules, schema suppression and action de
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();
   expect(pageTwoResponse.status()).toBe(200);
-  expect(pageTwoHtml).toContain('rel="canonical" href="https://sevenbet-next.vercel.app/casinos?page=2"');
+  expect(pageTwoHtml).toContain('rel="canonical" href="https://b4gamble.com/casinos?page=2"');
   expect(pageTwoHtml).toContain("Demonstration records never provide a commercial visit action.");
 
   const filteredResponse = await request.get(`${baseUrl}/casinos?hasResponsibleGambling=true`);
   const filteredHtml = await filteredResponse.text();
   expect(filteredResponse.status()).toBe(200);
   expect(filteredHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(filteredHtml).toContain('rel="canonical" href="https://sevenbet-next.vercel.app/casinos"');
+  expect(filteredHtml).toContain('rel="canonical" href="https://b4gamble.com/casinos"');
 });
 
 test("published facet, boolean, combined and invalid URL states stay server-authoritative", async ({ page, request }) => {

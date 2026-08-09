@@ -32,8 +32,8 @@ test("current Editor's Score weights, criteria, limitations and commercial separ
     "Promotional terms availability",
     "Bonus-related withdrawal conditions",
     "External support links",
-    "SevenBet does not guarantee winnings, withdrawals, operator conduct, or dispute outcomes",
-    "Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial ranking",
+    "B4GAMBLE does not guarantee winnings, withdrawals, operator conduct, or dispute outcomes",
+    "Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial ranking",
   ]) assert.ok(document.includes(content), `missing current methodology content: ${content}`);
 
   assert.match(document, /href="\/affiliate-disclosure"/);
