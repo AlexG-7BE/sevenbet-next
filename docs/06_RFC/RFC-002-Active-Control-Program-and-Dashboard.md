@@ -14,6 +14,8 @@ Governing Documents:
 
 # RFC-002 — Active Control Program and Personal Control Dashboard
 
+> **Persistence supersession — 2026-08-09:** [RFC-017](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) supersedes this RFC only where it describes persistence of participant-authored narrative. Raw M1–M4 narrative is now browser-session local; the server retains only RFC-017's bounded allow-list and neutral legacy-column markers. Mission order, content intent, completion rules and rewards remain approved and unchanged.
+
 ## Decision summary
 
 SevenBet SHALL evolve the 10-Step Control Program from a primarily informational sequence into an **action-based decision-support programme**. Each step will ask the user to perform one bounded, useful action: learn a relevant concept, make a decision, create or revise a personal boundary, or choose a safety-oriented next action.

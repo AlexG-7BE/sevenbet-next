@@ -2,96 +2,104 @@
 
 ## Snapshot
 
-- **Reconciled:** 2026-08-08
-- **Current main / COMM-01 merge:** `82e3985765285ae63e4d2620b843bc6086fb4185`
-- **GB-MARKET-01 merge:** [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) merged as `5fbb73b674a52327a01c31f59c3474a3b8a6b3fb`
-- **COMM-01 merge:** [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) merged as `82e3985765285ae63e4d2620b843bc6086fb4185`
-- **UX-PERF-01 delivery:** implementation and Preview verification complete on `codex/ux-perf-01-performance-instant-discovery`; [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) is open for Founder review and is not merged
-- **UX-PERF-01 verified Preview:** deployment `dpl_EMCGsPFjW6FtdFNFyH8dUrB55SMD`, source `bf75b4d0bc58b937c7e9867147d98fd92ddc4b11`, Ready on the isolated branch domain; CI run `31270035322` passed all three jobs
-- **Production URL:** <https://sevenbet-next.vercel.app> (deployment `dpl_CoVwh2Z9KsQsNBMWW3tobeqty2WW`, source `82e3985765285ae63e4d2620b843bc6086fb4185`, Ready; Production Smoke run `31268425111`, job `93130210903`, passed 2026-08-08)
-- **Figma:** [SevenBet — `UvuJZEzeMAd8cK9TNAueb8`](https://www.figma.com/design/UvuJZEzeMAd8cK9TNAueb8)
-- **Strategy:** Product Vision & Principles v2.0 and RFC-007 Tilt-Locked Human Product Theatre
+- **Reconciled:** 2026-08-09
+- **Current main:** `b5c5c0317befc1f2a85b6625d6e5d918cf3b7a37`
+- **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
+- **LEGAL-02:** analysis complete; Founder Office decisions accepted.
+- **LEGAL-IMPL-01:** implementation complete on `codex/legal-impl-01-gb-launch-remediation`; delivery PR and exact-head Preview/CI verification pending.
+- **Production:** <https://sevenbet-next.vercel.app>; read-only baseline and smoke healthy before LEGAL-IMPL-01. Production deployment remains unchanged by this branch.
+- **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
+- **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
-## Current phase
+| Gate | Current state |
+| --- | --- |
+| LEGAL-02 | **ANALYSIS COMPLETE** |
+| LEGAL-IMPL-01 | **IMPLEMENTATION COMPLETE — DELIVERY PR PENDING** |
+| Fixture truthfulness | **CLOSED — exact-ID demo disclosure/action/SEO/schema controls tested** |
+| Privacy complaints | **CLOSED — public policy and operating runbook implemented** |
+| Protected data firewall | **CLOSED / STRENGTHENED** |
+| Local-first Programme | **IMPLEMENTED — historic raw rows remain under export/erasure; cleanup open** |
+| Age | **PARTIAL — UI/request enforcement implemented; durable evidence P1 open** |
+| UK representative | **OPEN EXTERNAL** |
+| ICO fee | **OPEN EXTERNAL** |
+| Real partner | **OPEN** |
+| Commercial/referral | **OFF** |
+| Recovery | **OPEN / PARTIAL** |
 
-**Detected:** the public page-level frontend migration is complete through FE-GAP-02. The final audit has no known page-level P0 or P1 public-surface defect.
+## Governing product boundary
 
-**Closed operations delivery:** **ENV-ISO-01 — Preview / Production Environment Isolation** merged through [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52). Exact-merge main CI passed, the ENV-ISO Production deployment is Ready, Production Smoke passed, and a real Production staff authentication E2E passed login, protected `/admin`, refresh/session persistence and normal logout. Production is healthy and the ENV-ISO configuration incident/workstream is closed.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 is the approved LEGAL-IMPL-01 decision record and supersedes only the narrative-persistence clauses in RFC-002, RFC-008, RFC-009 and RFC-010. Mission order, prerequisites, content intent and reward amounts are unchanged.
 
-**Detected on main:** Design System v1 consolidates the production UI inventory, semantic tokens, internal Action component, states, responsive evidence, accessibility, bounded visual regression, Figma production back-sync and governance.
+SevenBet is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
 
-**Detected from merged OPS-01 / PR #45:** ESLint, deterministic PR CI, isolated fresh-database verification, browser and build-secret gates, scheduled read-only Production smoke and operations runbooks are implemented without changing product behaviour or Production data.
+## Detected implementation
 
-**Detected in merged ENV-ISO-01 / PR #52:** Production and Preview use distinct Prisma Postgres resources and credentials, distinct Better Auth/admin secrets and separate provider environment scopes. Preview accepts only its exact Vercel branch host, all 17 migrations are applied, representative Preview data counts are zero, and a disposable Preview auth/session canary was absent from Production and deleted after proof. No Production data was copied. Post-merge Production authentication passed without broadening Production origin trust. Recovery capability remains **PARTIAL** because Prisma Free supplies no usable provider snapshot/PITR recovery point.
+### Public truthfulness and commercial containment
 
-**GB-MARKET-01: MERGED — PR #54.** The GB technical market authority is implemented on main. GB commercial activation is **NOT ACTIVE** and GB referral is **NOT ACTIVE**.
+- Exact RFC-012 IDs classify temporary fictional casinos and related offer inventory through a server-owned authority.
+- Demo casino, profile, bonus and best-offer surfaces disclose fictional demonstration state and expose no commercial action.
+- Demo-only and mixed public inventory is `noindex, follow`; commercial item/list/review/offer schema is suppressed where it could present demo records as real.
+- Future non-demo inventory must still pass GB jurisdiction, partner, offer, link, bonus and redirect authority before any commercial action appears.
+- Affiliate compensation does not determine Editor Score or natural editorial ranking. Any future paid placement must be separately identified.
+- Bounded public-claims tests cover high-risk safety, treatment, recovery, verification and independence language.
 
-**COMM-01: MERGED — PR #55.** Commercial partner authority machinery is on main. Real signed GB partner: **NO**. Real partner activation: **OFF**. LEGAL-02: **OPEN**. Commercial launch: **NOT READY**.
+### Active Control Programme
 
-**Detected on the UX-PERF-01 branch:** [RFC-016](06_RFC/RFC-016-Production-Performance-and-Instant-Discovery.md) is approved and implemented. Casinos, Bonuses and Compare retain canonical server GET/query authority while a narrow progressive enhancer supplies 300 ms search/numeric debounce, immediate discrete changes, soft RSC navigation, URL/history truth, no-JavaScript fallback and accessible pending feedback. The measured casino theatre image uses responsive Next Image delivery; denied commercial contexts omit commercial relation reads and operator evaluation. No schema, migration, dependency, Production data, commercial-authority or cache-policy change was made. Exact-head CI, all-route Preview QA and branch-host runtime review passed. This is **READY FOR FOUNDER REVIEW**, not merged or deployed to Production.
+- Missions 01–04 retain server-owned progression, deterministic XP, achievements, active days, streak inputs and next-Mission state.
+- Raw M1–M4 narrative is local-first in React state and tab-scoped `sessionStorage`; active server DTOs use exact allow-lists and reject unexpected sensitive fields.
+- Required legacy text columns receive neutral implementation markers. Active presenters redact historic raw narrative.
+- Legacy reflection creation is retired with `410 LOCAL_ONLY_CONTENT` before request-body parsing; authenticated access/export/deletion remains.
+- The normal Programme UI uses an unchecked 18-or-over confirmation, and non-GET Programme API requests require the bounded age-attestation header.
+- Protected Help remains accessible without age or Programme completion gating and remains commercially isolated.
+- Structural tests prevent Programme, Self-Check, personal-limit, Help, vulnerability and local-session state from entering commercial modules or DTOs.
 
-## Completed frontend
+### Privacy operations
 
-- Public Shell, Home and 10 Steps.
-- Casino Directory, Casino Profile, Bonuses, Best Offers and Comparison.
-- Protected Help shell, Hub, all ten governed articles, Cooling-off/Pause states and protected unknown-article recovery.
-- Methodology, Affiliate Disclosure, About, Learning hub/category/article and Bonus Guide.
-- Privacy, Terms, Self-Check, Personal Gambling Limit Tracker and Product/Trust FAQ.
-- Confirmation-first commercial handoff with neutral managed recovery.
-- Final FE-GAP-02 semantic fixes for Help, Best Offers, Bonuses, crawler copy and sitemap consistency.
-- UX-PERF-01 progressive discovery and measured asset/query-path optimization are complete on the review branch; merge remains pending.
+- Privacy copy describes the local-first Programme boundary, one-month rights workflow, complaint escalation and the unappointed UK-representative gap.
+- The internal data-subject CLI performs deterministic account lookup, structured JSON export and ordered relation-count deletion planning.
+- Deletion is dry-run by default. Output files are exclusive mode `0600`. Production execution is refused unless both explicit Production confirmation and execute controls are present.
+- Retention, processor/international-transfer, breach and DPIA draft documents distinguish detected, target and unknown facts without inventing contracts or appointments.
 
-The exact merged work-package history is recorded in the [final migration audit](02_Product_Design/Frontend-Migration-Audit-and-P0-Implementation-Plan.md).
+### Platform and delivery baseline
 
-## Current product and backend state
+- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01 and UX-PERF-01 are merged on main.
+- Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
+- CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
+- Recovery is **PARTIAL** because no verified provider snapshot/PITR restore point is available under the current provider plan.
 
-- **Detected — Programme:** Missions 01–04 have server-owned validation, progress, deterministic rewards and Dashboard state. Mission 01 awards 60 XP; Mission 02 awards 80 XP and `First Plan`; Mission 03 awards 90 XP; Mission 04 awards 100 XP and `Boundary built`.
-- **Planned — Programme:** Missions 05–10 have titles/navigation state only; no completion policy or task content is implemented.
-- **Detected — casino data:** RFC-012 authorises exactly 25 deterministic fictional `demo-*` aggregates as a bounded temporary pre-launch exception. Normal regulated production policy does not permit synthetic operator data; cleanup/replacement is required before genuine regulated commercial operation.
-- **Detected in merged GB-MARKET-01 and COMM-01 — commercial routing:** public commercial projection requires current jurisdiction, typed agreement with explicit `DIRECT_LINK` approval, structured operator/licence/exact-domain evidence, programme, offer, tracking-link, optional bonus and redirect authority. Content-only channels cannot authorize referral. `/r/[slug]` rechecks the full authority and fails to `/outbound/unavailable` without a substitute. `/go/[slug]` has no external authority and always uses the neutral unavailable flow. The affiliate engine remains off.
-- **Detected — legal/tools:** Privacy and Terms are substantive launch-candidate pages, `noindex, follow`, and absent from the sitemap. Self-Check and the Limit Tracker are local React-memory tools with mandatory commercial isolation.
-- **Not detected — account lifecycle:** account-wide export, account-wide erasure automation and complete password recovery.
-- **Detected in merged GB-MARKET-01 — market authority:** one versioned repository policy supports GB online-casino editorial visibility while commercial and referral capabilities remain false. Trusted request location is Vercel Preview/Production country metadata only; user filters and routes cannot grant permission.
-- **Detected in merged COMM-01 — partner authority:** a typed agreement contract, explicit `DIRECT_LINK` gate at active-offer save and request-time readiness, empty repository-controlled exact-domain evidence store, state-transition validation, current tracking/bonus gates and central evaluator extend the existing affiliate stack. GB provider import cannot auto-activate an offer or link. No schema, migration, real partner, agreement, destination or Production commercial mutation was added.
-- **Detected on the UX-PERF-01 branch — discovery/query projection:** URL search parameters, server query parsers and Server Components remain authoritative. The client enhancer serializes form values only. After the server jurisdiction ceiling denies commercial capability, casino, offer and comparison repository projections omit affiliate relations and operator evaluation while preserving permitted editorial data.
-- **Not verified — Production market/commercial data inventory:** no secure read-only Production database audit was performed. Network, programme, offer, link, redirect, casino, licence and agreement counts are not guessed. Effective commercially eligible GB operators are `0` under policy `gb-2026-08-08.1` because the jurisdiction commercial/referral ceiling is false and the real domain-evidence store is empty.
+## Evidence classification
+
+- **Detected:** local-first active Programme narrative; server allow-lists; redacted presenters; age request gate; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations; substantive compliance runbooks.
+- **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
+- **Planned:** durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
+- **Not detected:** DOB/KYC, durable age-attestation evidence, a completed UK representative appointment, a confirmed ICO registration/fee outcome, outside-counsel sign-off, verified complete processor/transfer evidence, a real signed GB partner, real eligible offer/link authority, Production affiliate activation, or a successful restore drill.
 
 ## Remaining release gates
 
-### Product
+### External legal and regulatory
 
-- Approve and implement Missions 05–10 under separate Mission RFCs and the Programme Definition of Done.
-- Complete authenticated Mission 04 browser/device and clinical-content review.
-- Decide remaining account lifecycle and recovery experiences.
+- Appoint a qualifying UK representative or record the legally approved alternative; none is currently appointed.
+- Complete ICO registration/fee assessment and payment where required; outcome remains open.
+- Obtain outside-counsel review of the launch package, privacy/legal copy, age approach and closed-beta constraints.
+- Verify processor/subprocessor contracts, locations, retention, international transfers and the applicable transfer mechanism.
+- Complete and approve the DPIA; the repository document is a working draft, not sign-off.
 
-### Compliance / legal
+### Product, data and partners
 
-- **LEGAL-02 OPEN:** external counsel review of Privacy, Terms, disclosures, market-specific copy, age/account launch decisions and significant-condition evidence.
-- Processor/subprocessor verification and retention/transfer confirmation.
-- Approve any later permissive GB policy change only after Legal and commercial evidence gates close.
+- Replace or remove RFC-012 fictional data before genuine regulated commercial operation.
+- Contract and manually approve 1–3 eligible GB operators only under a separately authorised closed beta.
+- Supply and verify current licence, exact-domain, agreement, offer, material-condition, tracking-link and redirect evidence.
+- Keep commercial/referral policy and the affiliate engine off until those gates are separately approved.
+- Approve and implement Missions 05–10 through Mission-specific RFCs and the Programme Definition of Done.
 
-### Backend / operations
+### Engineering and operations
 
-- Approve a paid provider snapshot path or separately governed backup architecture, then complete a Preview-sourced isolated restore drill; recovery objectives are not yet guarantees.
-- Approve a short-lived or provider-native Production migration mechanism. PR CI intentionally has no hosted credential.
-- Distributed Programme rate limiting, anonymous-data expiry purge, telemetry and account-wide export/erasure.
-- Connected multi-process concurrency evidence and autosave ordering decision.
+- Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
+- Select a distributed Programme limiter and automated expired-session/claim purge.
+- Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
+- Complete RECOVERY-01 with a governed backup architecture and isolated restore drill.
+- Close remaining multi-process concurrency, autosave ordering, APM/paging and operational evidence gaps.
 
-### Data / partners
+## Release conclusion
 
-- Replace or remove the RFC-012 temporary fictional dataset before regulated commercial operation.
-- COMM-01 authority machinery is merged. Founder Office must apply/contract with a real partner, then supply approved operator/domain/programme/offer/link evidence through the [onboarding runbook](06_Operations/GB-Partner-Onboarding-Runbook.md).
-- No real signed partner, agreement, domain evidence, offer terms or destination is detected; no real partner is active.
-
-### Design system
-
-- No P0/P1 Design System release gate is detected in FE-DS-01. Remaining route-local extraction is P2/P3 and requires production evidence; Storybook and Code Connect are explicitly deferred in the [Design System v1 contract](02_Product_Design/Design-System-v1.md).
-
-## Known non-blocking debt
-
-- The safe Next.js 15.5.21 patch plus bounded PostCSS/Sharp overrides pass build/browser regression; `npm audit` reports zero known vulnerabilities.
-- Hourly Production Smoke remains active; the manual post-COMM merge smoke passed. Broader APM/paging and authoritative Production RUM are not implemented.
-- The Programme suite currently passes 36/43 tests; seven Mission 04 fixtures use fixed review dates outside the rolling 30-day validator window.
-- Local/demo casino availability can drift from production data; locally linked demo profiles may return 404 even when production profiles resolve. This is classified as environment/data drift, not a demonstrated source-code failure.
-- Route-local CSS remains broad by design. The recurring production palette, shared internal Action, cross-route visual baseline and code/Figma governance are consolidated in Design System v1.
-- Five existing Best Offers browser fixtures expect a populated 12-card shortlist while the current fail-closed Production/local runtime truth is “no eligible offers.” UX-PERF-01 does not fabricate offers or alter commercial data to satisfy those fixtures.
+LEGAL-IMPL-01 moves the repository to **INTERNAL LEGAL/PRIVACY REMEDIATION IMPLEMENTED** after its PR gates pass. It does not authorise commercial beta, Production data mutation, partner traffic or GB launch.

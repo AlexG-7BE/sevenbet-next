@@ -13,6 +13,8 @@ Governing Documents:
 
 # RFC-008 — Programme Persistence, Rewards and Privacy
 
+> **Persistence supersession — 2026-08-09:** [RFC-017](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) supersedes this RFC's PostgreSQL/raw-artefact persistence clauses. Raw M1–M4 narrative is now browser-session local; server persistence is limited to RFC-017's bounded continuity allow-list and neutral legacy-column markers. Identity, transaction, progress, reward, active-day, mission-order and idempotency decisions remain approved and unchanged.
+
 ## Decision
 
 SevenBet SHALL extend the detected `ProgramEnrollment`, `ProgramProgressEvent`, `UserXpEvent`, `Achievement`, `UserAchievement` and Better Auth boundaries. It SHALL NOT introduce a second programme, identity or reward framework.
