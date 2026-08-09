@@ -88,6 +88,8 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   const terms = source("app/(public)/terms/page.tsx");
   assert.match(terms, /info@7be\.io/);
   assert.match(terms, /effective="7 August 2026" updated="9 August 2026"/);
+  assert.match(terms, /id: "about-b4gamble"/);
+  assert.doesNotMatch(terms, /id: "about-sevenbet"/);
 });
 
 test("Production-style canonical, robots and sitemap output use b4gamble.com", async () => {

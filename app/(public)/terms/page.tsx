@@ -21,7 +21,7 @@ const operator = (
 
 const sections: readonly LegalSection[] = [
   {
-    id: "about-sevenbet",
+    id: "about-b4gamble",
     label: "About B4GAMBLE",
     title: "About B4GAMBLE",
     content: <><p>B4GAMBLE is a decision-support, editorial, educational, comparison and affiliate information service operated by:</p>{operator}<p>Contact: <a href="mailto:info@7be.io">info@7be.io</a></p><p>These Terms govern your use of B4GAMBLE.</p></>,

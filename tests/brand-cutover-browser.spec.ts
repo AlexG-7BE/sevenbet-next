@@ -47,6 +47,27 @@ test("Programme, protected Help, legal and unavailable states expose the current
   await expect(page.getByRole("link", { name: "Return to B4GAMBLE" })).toBeVisible();
 });
 
+test("Terms exposes only the B4GAMBLE section anchor in desktop and mobile navigation", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`${baseUrl}/terms`, { waitUntil: "networkidle" });
+
+  await expect(page.locator('a[href="#about-b4gamble"]')).toHaveCount(2);
+  await expect(page.locator('section[id="about-b4gamble"]')).toHaveCount(1);
+  await expect(page.locator('a[href="#about-sevenbet"]')).toHaveCount(0);
+  await expect(page.locator('section[id="about-sevenbet"]')).toHaveCount(0);
+
+  await page.locator('nav[aria-label="On this page"]:visible').getByRole("link", { name: "About B4GAMBLE" }).click();
+  await expect(page).toHaveURL(/\/terms#about-b4gamble$/);
+  await expect(page.locator('section[id="about-b4gamble"]')).toBeInViewport();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseUrl}/terms`, { waitUntil: "networkidle" });
+  await page.getByText("Jump to a section ↓").click();
+  await page.locator('nav[aria-label="On this page"]:visible').getByRole("link", { name: "About B4GAMBLE" }).click();
+  await expect(page).toHaveURL(/\/terms#about-b4gamble$/);
+  await expect(page.locator('section[id="about-b4gamble"]')).toBeInViewport();
+});
+
 test("representative current public HTML contains no legacy active consumer brand", async ({ request }) => {
   for (const route of [
     "/",
