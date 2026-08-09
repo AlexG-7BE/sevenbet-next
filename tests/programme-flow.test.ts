@@ -42,13 +42,8 @@ function goal(sourceMomentMapId: string, base = now) {
   return {
     sourceMomentMapId,
     direction: "pause",
-    action: "Wait ten minutes before opening a comparison page",
-    triggerOrSituation: "When an offer notification creates urgency",
-    alternativeAction: "Close the notification and take a short walk",
-    successSignal: "I paused before deciding",
     reviewAt: new Date(base.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     confidence: 7,
-    confidenceAdjustment: "Use a two-minute pause if ten minutes feels too large",
     status: "active",
   };
 }
@@ -58,13 +53,7 @@ function urgeLearning(notNow = false) {
     evidenceReviewed: true,
     waveMomentsReviewed: ["cue", "early_signal", "urge_builds", "choice_point"],
     scenarioAnswer: "early_signal",
-    ...(notNow
-      ? { notNow: true }
-      : {
-          earlySignalCategory: "attention",
-          earlySignalText: "My attention narrows onto the next offer",
-          notNow: false,
-        }),
+    signalChoice: notNow ? "not_now" : "local",
     meaningAnswer: "pause_information",
   };
 }
@@ -74,12 +63,9 @@ function activeBoundary(base = now) {
     evidenceReviewed: true,
     category: "pause",
     triggerType: "saved_early_signal",
-    ruleText: "I pause before making another gambling decision.",
     limitValue: 30,
-    limitUnit: "minutes",
     executionMethod: "leave_action",
-    copingAction: "Leave the app or site",
-    reviewAt: new Date(base.getTime() + 24 * 60 * 60 * 1000).toISOString(),
+    reviewAt: new Date(base.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     scenarioAnswer: "concrete",
     strengthChecks: [
       "placed_before_pressure",
@@ -515,7 +501,6 @@ async function startMissionOne(service: ProgrammeFlowService) {
   const created = await service.createAnonymousSession(now);
   await service.saveMissionOneDraft(created.token, {
     taskStates: [...missionOneTaskStates],
-    momentMap: momentMap(),
   }, now);
   const claim = await service.createPendingClaim(created.token, now);
   return { ...created, claim };
@@ -563,19 +548,18 @@ test("anonymous Mission 01 reaches registration_required without persistent XP",
   assert.equal(repository.xpEvents.length, 0);
 });
 
-test("anonymous autosave merges partial content and concurrent claim creation has one winner", async () => {
+test("anonymous autosave stores neutral continuity and concurrent claim creation has one winner", async () => {
   const repository = new MemoryProgrammeRepository();
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
   const created = await service.createAnonymousSession(now);
   await service.saveMissionOneDraft(created.token, {
     taskStates: ["brief"],
-    momentMap: { situation: momentMap().situation },
   }, now);
   await service.saveMissionOneDraft(created.token, {
     taskStates: [...missionOneTaskStates],
-    momentMap: { ...momentMap(), situation: undefined },
   }, now);
-  assert.equal(repository.anonymousSessions[0].draft.situation, momentMap().situation);
+  assert.deepEqual(repository.anonymousSessions[0].draft, { contentStorage: "browser_session" });
+  assert.doesNotMatch(JSON.stringify(repository.anonymousSessions[0]), /After work|offer notification|felt more urgent/);
   const attempts = await Promise.allSettled([
     service.createPendingClaim(created.token, now),
     service.createPendingClaim(created.token, now),
@@ -593,10 +577,11 @@ test("Mission 02 is unavailable without an authenticated enrollment", async () =
   assert.match(route, /requireCurrentUser\(request\.headers\)/);
 });
 
-test("claim redemption saves the Moment Map, gives exactly 60 XP and is one-use", async () => {
+test("claim redemption saves a neutral continuity marker, gives exactly 60 XP and is one-use", async () => {
   const { repository, service, started, dashboard } = await registeredFlow();
   assert.equal(dashboard.totalXp, 60);
-  assert.equal(dashboard.momentMap?.noticeRule, momentMap().noticeRule);
+  assert.equal(dashboard.momentMap?.noticeRule, "");
+  assert.equal(repository.momentMaps[0].noticeRule, "[stored only in this browser session]");
   assert.equal(repository.xpEvents.length, 1);
   await assert.rejects(
     () => service.redeemPendingClaim("user-1", started.claim.claimToken, "Asia/Almaty", now),
@@ -763,7 +748,6 @@ test("Mission 03 accepts empty unanswered checks during early autosave", async (
       waveMomentsReviewed: [],
       scenarioAnswer: "",
       meaningAnswer: "",
-      notNow: false,
     },
   });
   assert.deepEqual(saved.taskStates, ["brief"]);
@@ -784,8 +768,8 @@ test("Mission 03 completion awards exactly 90 XP and makes Mission 04 current", 
   assert.equal(first.missions[2].status, "completed");
   assert.equal(first.missions[3].status, "current");
   assert.equal(first.achievements[0].state, "earned");
-  assert.equal(first.urgeLearningRecord?.earlySignalCategory, "attention");
-  assert.equal(first.urgeLearningRecord?.earlySignalText, "My attention narrows onto the next offer");
+  assert.equal(first.urgeLearningRecord?.earlySignalCategory, null);
+  assert.equal(first.urgeLearningRecord?.earlySignalText, null);
   assert.ok(first.evidence.mission03.length >= 4);
 });
 
@@ -818,15 +802,17 @@ test("Mission 03 not-now path completes without compulsory personal disclosure",
   assert.equal(dashboard.urgeLearningRecord?.earlySignalText, null);
 });
 
-test("Mission 03 private signal can be edited or deleted without rewriting completion", async () => {
+test("Mission 03 signal continuity can be changed without accepting narrative", async () => {
   const { repository, service } = await missionThreeFlow();
   await service.completeMissionThree("user-1", now);
   const updated = await service.updateUrgeLearningRecord("user-1", {
-    earlySignalCategory: "body",
-    earlySignalText: "My shoulders tense",
-    notNow: false,
+    signalChoice: "local",
   });
-  assert.equal(updated.earlySignalCategory, "body");
+  assert.equal(updated.earlySignalCategory, null);
+  await assert.rejects(
+    () => service.updateUrgeLearningRecord("user-1", { earlySignalText: "My shoulders tense", signalChoice: "local" }),
+    /unsupported fields/i,
+  );
   await service.deleteUrgeLearningRecord("user-1", now);
   assert.equal(repository.urgeRecords[0].earlySignalText, null);
   assert.ok(repository.urgeRecords[0].deletedAt);
@@ -874,14 +860,8 @@ test("Mission 04 validation rejects unsupported or incomplete boundary structure
     () => parseActiveBoundary({ ...activeBoundary(), category: "unsupported" }, { complete: true, now }),
     /category is not supported/i,
   );
-  assert.throws(
-    () => parseActiveBoundary({ ...activeBoundary(), triggerType: "custom", triggerText: "" }, { complete: true, now }),
-    /decision point is required/i,
-  );
-  assert.throws(
-    () => parseActiveBoundary({ ...activeBoundary(), executionMethod: "custom", executionDetail: "" }, { complete: true, now }),
-    /execution method requires detail/i,
-  );
+  assert.throws(() => parseActiveBoundary({ ...activeBoundary(), ruleText: "sensitive narrative" }, { complete: true, now }), /unsupported fields/i);
+  assert.throws(() => parseActiveBoundary({ ...activeBoundary(), copingAction: "sensitive narrative" }, { complete: true, now }), /unsupported fields/i);
   assert.throws(
     () => parseActiveBoundary({ ...activeBoundary(), strengthChecks: ["specific"] }, { complete: true, now }),
     /Every boundary strength check is required/i,
@@ -904,7 +884,8 @@ test("Mission 04 completion awards exactly 100 XP, Boundary Built and Mission 05
   assert.equal(first.achievements.find((item) => item.slug === "boundary-built")?.state, "earned");
   assert.equal(first.activeBoundary?.category, "pause");
   assert.equal(first.activeBoundary?.limitValue, 30);
-  assert.equal(first.activeBoundary?.triggerText, "My attention narrows onto the next offer");
+  assert.equal(first.activeBoundary?.triggerText, "");
+  assert.equal(repository.boundaries[0].triggerText, "[stored only in this browser session]");
   assert.ok(first.evidence.mission04.length >= 4);
   assert.equal(first.activeDays, 1);
 });
@@ -936,15 +917,15 @@ test("Mission 04 completion rolls back artefact, progression and XP when achieve
   assert.equal(repository.unlocks.length, 1);
 });
 
-test("Mission 04 boundary can be edited or erased without rewriting XP or completion", async () => {
+test("Mission 04 structured continuity can be edited or erased without rewriting XP or completion", async () => {
   const { repository, service } = await missionFourFlow();
   await service.completeMissionFour("user-1", now);
   const changed = await service.updateActiveBoundary("user-1", {
-    ruleText: "I leave the app and wait before another decision.",
-    copingAction: "Message my trusted contact",
     reviewAt: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    status: "paused",
   }, now);
-  assert.match(changed.ruleText, /leave the app/i);
+  assert.equal(changed.status, "paused");
+  await assert.rejects(() => service.updateActiveBoundary("user-1", { ruleText: "raw content" }, now), /unsupported fields/i);
   await service.deleteActiveBoundary("user-1", now);
   assert.equal(repository.boundaries[0].ruleText, "");
   assert.ok(repository.boundaries[0].deletedAt);
@@ -982,7 +963,7 @@ test("foreign artefacts cannot be read, edited or deleted", async () => {
   const { service } = await missionFourFlow();
   await service.completeMissionFour("user-1", now);
   await assert.rejects(() => service.getDashboard("user-2"), /enrollment not found/i);
-  await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /enrollment not found/i);
+  await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /stored only in this browser session/i);
   await assert.rejects(() => service.deleteMomentMap("user-2", now), /enrollment not found/i);
   await assert.rejects(() => service.updateCurrentGoal("user-2", { action: "foreign" }, now), /enrollment not found/i);
   await assert.rejects(() => service.deleteCurrentGoal("user-2", now), /enrollment not found/i);

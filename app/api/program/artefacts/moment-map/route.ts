@@ -3,19 +3,14 @@ import { programmeArtefactService } from "@/lib/programme/application/programme-
 import {
   programmeErrorResponse,
   programmeResponse,
-  readProgrammeJson,
 } from "@/lib/programme/http";
 
 export const dynamic = "force-dynamic";
 
 export async function PATCH(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
-    const momentMap = await programmeArtefactService.updateMomentMap(
-      user.id,
-      await readProgrammeJson(request),
-    );
-    return programmeResponse({ ok: true, momentMap });
+    await requireCurrentUser(request.headers);
+    return programmeResponse({ ok: false, error: "Moment Map narrative is stored only in this browser session", code: "LOCAL_ONLY_CONTENT" }, 410);
   } catch (error) {
     return programmeErrorResponse(error);
   }

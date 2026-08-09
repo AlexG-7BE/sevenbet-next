@@ -15,13 +15,8 @@ import { ValidationError } from "@/lib/services/service-error";
 const goalFields = [
   "sourceMomentMapId",
   "direction",
-  "action",
-  "triggerOrSituation",
-  "alternativeAction",
-  "successSignal",
   "reviewAt",
   "confidence",
-  "confidenceAdjustment",
   "status",
 ] as const;
 
@@ -87,21 +82,8 @@ export function parseCurrentGoal(
   return {
     sourceMomentMapId,
     direction,
-    action: text(body.action, "action", complete),
-    triggerOrSituation: text(
-      body.triggerOrSituation,
-      "triggerOrSituation",
-      complete,
-    ),
-    alternativeAction: text(body.alternativeAction, "alternativeAction", complete),
-    successSignal: text(body.successSignal, "successSignal", complete),
     reviewAt,
     confidence,
-    confidenceAdjustment: text(
-      body.confidenceAdjustment,
-      "confidenceAdjustment",
-      complete,
-    ),
     status,
   };
 }

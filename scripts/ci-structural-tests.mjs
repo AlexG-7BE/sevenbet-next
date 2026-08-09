@@ -8,6 +8,7 @@ const requiredTests = [
   "tests/fe-gap-02-structural.test.ts",
   "tests/home-parity.test.ts",
   "tests/jurisdiction-resolver.test.ts",
+  "tests/legal-programme-privacy.test.ts",
   "tests/prisma-runtime-pooling.test.ts",
   "tests/public-casino-discovery.test.ts",
   "tests/public-casino-rendering.test.ts",

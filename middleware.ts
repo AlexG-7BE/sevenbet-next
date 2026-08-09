@@ -26,6 +26,13 @@ function hasPossibleBetterAuthSession(request: NextRequest) {
 
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
+  const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";
+  if (programmeMutation && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over") {
+    return NextResponse.json(
+      { ok: false, error: "Confirm that you are 18 or over before saving Programme progress", code: "AGE_ATTESTATION_REQUIRED" },
+      { status: 403, headers: { "Cache-Control": "no-store" } },
+    );
+  }
   const isAdminPath = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
@@ -85,5 +92,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/api/program/:path*"],
 };

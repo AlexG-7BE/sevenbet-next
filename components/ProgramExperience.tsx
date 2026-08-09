@@ -330,7 +330,10 @@ async function progressRequest(path: string, body?: object) {
   const response = await fetch(path, {
     method: body ? "POST" : "GET",
     credentials: "same-origin",
-    headers: body ? { "content-type": "application/json" } : undefined,
+    headers: body ? {
+      "content-type": "application/json",
+      ...(window.sessionStorage.getItem("sevenbet.age-attestation.v1") === "18-or-over" ? { "x-sevenbet-age-attestation": "18-or-over" } : {}),
+    } : undefined,
     body: body ? JSON.stringify(body) : undefined,
   });
   const payload = (await response.json()) as ServerProgramState & {
@@ -409,7 +412,7 @@ export function ProgramExperience({
   useEffect(() => {
     let parsed: unknown = null;
     try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
+      const saved = window.sessionStorage.getItem(STORAGE_KEY);
       parsed = saved ? JSON.parse(saved) : null;
     } catch {
       parsed = null;
@@ -441,7 +444,7 @@ export function ProgramExperience({
     const deviceState = serverProgress
       ? preserveDeviceProgress(localSnapshot.current, state, steps)
       : state;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(deviceState));
+    window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(deviceState));
     localSnapshot.current = deviceState;
   }, [localReady, mergeDecision, mergeOffer, serverProgress, state, steps]);
 
@@ -475,7 +478,7 @@ export function ProgramExperience({
         if (cancelled) return;
         const progress = consumeServerState(result, false);
         const decision = mergeMarkerKey
-          ? (window.localStorage.getItem(mergeMarkerKey) as
+          ? (window.sessionStorage.getItem(mergeMarkerKey) as
               | "saved"
               | "device"
               | null)
@@ -581,7 +584,7 @@ export function ProgramExperience({
       if (progress) {
         setHasEnrollment(true);
       }
-      window.localStorage.setItem(mergeMarkerKey, "saved");
+      window.sessionStorage.setItem(mergeMarkerKey, "saved");
       setMergeDecision("saved");
       setMergeOffer(false);
       setSaveStatus("saved");
@@ -597,7 +600,7 @@ export function ProgramExperience({
   }
 
   function keepProgressOnDevice() {
-    if (mergeMarkerKey) window.localStorage.setItem(mergeMarkerKey, "device");
+    if (mergeMarkerKey) window.sessionStorage.setItem(mergeMarkerKey, "device");
     setMergeDecision("device");
     setMergeOffer(false);
     setSaveStatus("idle");
@@ -700,18 +703,9 @@ export function ProgramExperience({
     }
   }
 
-  async function savePrivateReflection(content: string) {
-    if (!hasEnrollment || !programId || !activeStep.exerciseBlockId) return;
-    try {
-      await progressRequest("/api/program/reflections", {
-        programId,
-        blockId: activeStep.exerciseBlockId,
-        content,
-      });
-    } catch {
-      setSaveStatus("error");
-      setSaveMessage("Your private reflection could not be saved to your account. The device copy remains available.");
-    }
+  async function savePrivateReflection(_content: string) {
+    setSaveStatus("saved");
+    setSaveMessage("Private reflection kept only in this browser session.");
   }
 
   function completeStep() {
@@ -769,7 +763,7 @@ export function ProgramExperience({
   }
 
   function resetProgress() {
-    window.localStorage.removeItem(STORAGE_KEY);
+    window.sessionStorage.removeItem(STORAGE_KEY);
     const reset = { ...initialProgramState, lastVisitDate: todayKey() };
     localSnapshot.current = reset;
     setState(

@@ -168,7 +168,7 @@ function AnonymousHero() {
       <div className={styles.heroVisual}>
         <img alt="" fetchPriority="high" height="1200" src={heroImage} width="1800" />
         <div className={styles.rewardCard} aria-label="Mission 01 pending recognition">
-          <span>SAVE TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 is saved to your account.</small>
+          <span>SAVE PROGRESS TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 completion is saved to your account. Personal wording stays in your browser session.</small>
         </div>
       </div>
     </div>

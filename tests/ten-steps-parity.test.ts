@@ -67,7 +67,7 @@ test("10 Steps uses only the canonical Programme body destination", () => {
 test("Mission 01 reward and post-mission account boundary are exact", () => {
   assert.doesNotMatch(combined, /\+\s*20\s*XP/i);
   assert.match(landing, /\+60 XP/);
-  assert.match(landing, /Awarded when Mission 01 is saved to your account\./);
+  assert.match(landing, /Awarded when Mission 01 completion is saved to your account\./);
   assert.doesNotMatch(landing, /Awarded after account creation\./);
   assert.match(landing, /Mission 01 does not require an account/);
   assert.match(landing, /Create an account to save \+60 XP/);
