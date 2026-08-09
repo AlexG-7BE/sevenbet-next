@@ -148,7 +148,7 @@ export function OfferCard({ casino, rank }: { casino: Casino; rank?: number }) {
       <div className="ratingBlock">
         <div>
           <strong>{casino.rating}/10</strong>
-          <span>SevenBet rating</span>
+          <span>B4GAMBLE rating</span>
         </div>
         <div className="ratingBar" aria-hidden="true">
           <span style={{ width: `${ratingPercent}%` }} />
@@ -208,7 +208,7 @@ export function CasinoCard({ casino }: { casino: Casino }) {
         </div>
         <h3>{casino.name}</h3>
         <p className="muted">{casino.tagline}</p>
-        <div className="ratingBar" aria-label={`SevenBet rating ${casino.rating} out of 10`}>
+        <div className="ratingBar" aria-label={`B4GAMBLE rating ${casino.rating} out of 10`}>
           <span style={{ width: `${ratingPercent}%` }} />
         </div>
         <div className="chips">
@@ -281,7 +281,7 @@ export function AffiliateDisclosure() {
     <Card className="disclosureBlock" tone="soft">
       <VerificationBadge verified label="Affiliate disclosure" />
       <p>
-        SevenBet may earn commission from sponsored links. 18+ only. We keep license, wagering, deposit and responsible
+        B4GAMBLE may earn commission from sponsored links. 18+ only. We keep license, wagering, deposit and responsible
         gambling signals visible before any casino transition.
       </p>
     </Card>

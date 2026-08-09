@@ -26,7 +26,7 @@
 
 - Create and verify the external Google Cloud clients and exact authorised redirects.
 - Select and legally/operationally review an email delivery provider only under a separate activation decision.
-- Verify a SevenBet-controlled sending domain and monitored mailboxes.
+- Verify a B4GAMBLE-controlled sending domain and monitored mailboxes.
 
 ### Not detected
 
@@ -37,20 +37,20 @@
 
 Better Auth's provider callback path is exactly `/api/auth/callback/google`.
 
-| Environment | SevenBet origin | Exact callback to register | Credential boundary |
+| Environment | B4GAMBLE origin | Exact callback to register | Credential boundary |
 | --- | --- | --- | --- |
 | Local | `http://localhost:4173` | `http://localhost:4173/api/auth/callback/google` | Developer-owned client only; synthetic accounts |
 | Preview | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app` | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app/api/auth/callback/google` | Separate Preview client and Preview database/session secret |
-| Production | `https://sevenbet-next.vercel.app` | `https://sevenbet-next.vercel.app/api/auth/callback/google` | Separate Production client and Production database/session secret |
+| Production | `https://b4gamble.com` | `https://b4gamble.com/api/auth/callback/google` | Separate Production client and Production database/session secret |
 
 The Preview host above is the stable branch alias exposed by PR #58; the first generated deployment hostname was deliberately not used. Register only this exact callback before Google Preview activation. Do not register a random generated deployment hostname, a wildcard `*.vercel.app` redirect, the Production host for Preview, or a substring/pattern. The application deliberately rejects a Preview base URL that does not equal the exact `VERCEL_BRANCH_URL` origin.
 
-If the canonical Production domain changes, update `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`, Google authorised JavaScript origin and Google callback together through release governance. Do not leave the Vercel hostname and custom domain mixed across state/cookie boundaries.
+The approved canonical Production origin is `https://b4gamble.com`. Set `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` to that exact origin together through release governance. When Google Production activation is separately authorised, register that exact JavaScript origin and callback. Do not leave the Vercel hostname and custom domain mixed across state/cookie boundaries.
 
 ## Google Cloud setup
 
-1. Confirm the Google Cloud organisation/project owner and the 7BE Inc./SevenBet controller identity to display.
-2. Configure the OAuth consent screen with accurate application name, verified SevenBet-controlled homepage/privacy/terms domains, support contact and incident contact. Do not claim Google verifies age or gambling eligibility.
+1. Confirm the Google Cloud organisation/project owner and the 7BE Inc./B4GAMBLE controller identity to display.
+2. Configure the OAuth consent screen with accurate application name, verified B4GAMBLE-controlled homepage/privacy/terms domains, support contact and incident contact. Do not claim Google verifies age or gambling eligibility.
 3. Request only the normal OpenID identity permissions. Do not add mailbox, contacts, Drive, Calendar, advertising or offline mail access.
 4. Create one **Web application** OAuth client for Production and a separate Web application client for Preview/development where operationally practical.
 5. Add only the exact environment origin under authorised JavaScript origins and the exact matrix callback under authorised redirect URIs.
@@ -102,19 +102,19 @@ The service accepts no caller-provided recipient, sender, subject, text, HTML or
 
 The future visible sender is independent of the transport provider. Runtime configuration is reserved for:
 
-- `SEVENBET_ACCOUNT_EMAIL_FROM` — SevenBet-controlled account/security sender;
-- `SEVENBET_PROGRAMME_EMAIL_FROM` — SevenBet-controlled Programme sender; and
+- `SEVENBET_ACCOUNT_EMAIL_FROM` — B4GAMBLE-controlled account/security sender;
+- `SEVENBET_PROGRAMME_EMAIL_FROM` — B4GAMBLE-controlled Programme sender; and
 - `SEVENBET_EMAIL_REPLY_TO` — monitored reply mailbox.
 
 All three must be valid and configured before message creation, but they do not activate delivery. `createDisabledCommunicationService()` always uses the disabled transport and returns `EMAIL DELIVERY NOT CONFIGURED` semantics (`TRANSPORT_NOT_CONFIGURED`) without logging a body or claiming success.
 
-A future provider decision must compare security, reliability, regional processing, data-processing terms, subprocessors, transfer mechanism, retention, deletion, support access, API/SMTP credentials, idempotency, rate controls, bounce/complaint/suppression support and operational ownership. Do not default to a personal mailbox, use a user's Google token, or assume that a Google-authenticated recipient will whitelist SevenBet messages.
+A future provider decision must compare security, reliability, regional processing, data-processing terms, subprocessors, transfer mechanism, retention, deletion, support access, API/SMTP credentials, idempotency, rate controls, bounce/complaint/suppression support and operational ownership. Do not default to a personal mailbox, use a user's Google token, or assume that a Google-authenticated recipient will whitelist B4GAMBLE messages.
 
 ## Deliverability activation checklist
 
 Every item is **OPEN** until owner evidence is attached. There is no inbox-placement guarantee.
 
-- [ ] SevenBet-controlled sending domain ownership verified.
+- [ ] B4GAMBLE-controlled sending domain ownership verified.
 - [ ] Account, Programme and reply mailboxes approved, monitored and tested.
 - [ ] SPF record configured for the selected transport and verified.
 - [ ] DKIM selector/key configured and verified.
@@ -141,11 +141,11 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 
 ## Founder/Operations inputs still required
 
-- Confirm the canonical Production SevenBet domain and whether the current Vercel domain remains authoritative.
+- Before PR #59 is merged, apply and verify the approved Production authority `https://b4gamble.com` in the three documented Production-only environment values without triggering a deployment. The automatic exact-main deployment after Founder merge must use that contract, and its B4GAMBLE Production verification must pass before any later Google Production activation.
 - Register the documented stable Preview origin and callback in the separate Preview Google client.
 - Create and place separate Production and Preview Google client IDs/secrets.
 - Verify the consent screen, authorised origins and exact callbacks.
-- Select the future SevenBet-controlled sending domain.
+- Select the future B4GAMBLE-controlled sending domain.
 - Select account/security From, Programme From and monitored Reply-To mailboxes.
 - Decide whether/when to select an email transport provider under a separate activation decision.
 - Assign Privacy, Security, deliverability and bounce/complaint owners.

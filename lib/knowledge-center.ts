@@ -15,7 +15,7 @@ export type KnowledgeCategory = {
 export const knowledgeCategories: KnowledgeCategory[] = [
   {
     title: "10-Step Program",
-    description: "Questions about the SevenBet educational program, timing, progress, and repeat use.",
+    description: "Questions about the B4GAMBLE educational program, timing, progress, and repeat use.",
     href: "#program-questions",
   },
   {
@@ -30,7 +30,7 @@ export const knowledgeCategories: KnowledgeCategory[] = [
   },
   {
     title: "Casino Reviews",
-    description: "How SevenBet compares casinos, scores reviews, and presents operator information.",
+    description: "How B4GAMBLE compares casinos, scores reviews, and presents operator information.",
     href: "#casino-review-questions",
   },
   {
@@ -40,7 +40,7 @@ export const knowledgeCategories: KnowledgeCategory[] = [
   },
   {
     title: "Affiliate Disclosure",
-    description: "How SevenBet may earn commission and how affiliate relationships are disclosed.",
+    description: "How B4GAMBLE may earn commission and how affiliate relationships are disclosed.",
     href: "#affiliate-questions",
   },
   {
@@ -60,7 +60,7 @@ export const knowledgeCategories: KnowledgeCategory[] = [
   },
   {
     title: "General Questions",
-    description: "Basic questions about SevenBet, how the site works, and where to go next.",
+    description: "Basic questions about B4GAMBLE, how the site works, and where to go next.",
     href: "#general-questions",
   },
 ];
@@ -69,15 +69,15 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
   {
     question: "What is the 10-Step Program?",
     answer:
-      "The SevenBet 10-Step Program is a free educational framework that encourages users to slow down, reflect on gambling decisions, understand key terms, and create personal rules before comparing casinos.",
+      "The B4GAMBLE 10-Step Program is a free educational framework that encourages users to slow down, reflect on gambling decisions, understand key terms, and create personal rules before comparing casinos.",
     category: "10-Step Program",
     href: "/program",
     popular: true,
   },
   {
-    question: "How does SevenBet review casinos?",
+    question: "How does B4GAMBLE review casinos?",
     answer:
-      "SevenBet reviews casinos using an editorial framework that considers licensing, bonus terms, wagering, payments, withdrawal conditions, responsible gambling tools, usability, support information, and account rules.",
+      "B4GAMBLE reviews casinos using an editorial framework that considers licensing, bonus terms, wagering, payments, withdrawal conditions, responsible gambling tools, usability, support information, and account rules.",
     category: "Methodology",
     href: "/methodology",
     popular: true,
@@ -99,9 +99,9 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     popular: true,
   },
   {
-    question: "How does SevenBet make money?",
+    question: "How does B4GAMBLE make money?",
     answer:
-      "SevenBet may receive commissions from some affiliate links when a reader visits an operator and completes a qualifying action. The Affiliate Disclosure explains this relationship.",
+      "B4GAMBLE may receive commissions from some affiliate links when a reader visits an operator and completes a qualifying action. The Affiliate Disclosure explains this relationship.",
     category: "Affiliate Disclosure",
     href: "/affiliate-disclosure",
     popular: true,
@@ -139,13 +139,13 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
   {
     question: "Do I need an account?",
     answer:
-      "The current SevenBet educational pages do not require an account to read the program, guides, reviews, or comparison pages.",
+      "The current B4GAMBLE educational pages do not require an account to read the program, guides, reviews, or comparison pages.",
     category: "10-Step Program",
     href: "/program",
   },
   {
     question: "Is it free?",
-    answer: "The current SevenBet 10-Step Program is presented as a free educational resource on the website.",
+    answer: "The current B4GAMBLE 10-Step Program is presented as a free educational resource on the website.",
     category: "10-Step Program",
     href: "/program",
   },
@@ -194,7 +194,7 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
   {
     question: "How are casinos scored?",
     answer:
-      "SevenBet uses a 10-point Editor's Score based on transparent criteria including licensing, bonus clarity, payments, responsible gambling tools, usability, support, and account rules.",
+      "B4GAMBLE uses a 10-point Editor's Score based on transparent criteria including licensing, bonus clarity, payments, responsible gambling tools, usability, support, and account rules.",
     category: "Casino Reviews",
     href: "/methodology",
   },
@@ -243,28 +243,28 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
   {
     question: "What is an affiliate link?",
     answer:
-      "An affiliate link is a tracked link that may allow SevenBet to receive a commission if a user visits an operator and completes a qualifying action.",
+      "An affiliate link is a tracked link that may allow B4GAMBLE to receive a commission if a user visits an operator and completes a qualifying action.",
     category: "Affiliate Disclosure",
     href: "/affiliate-disclosure",
   },
   {
     question: "Do affiliate links affect rankings?",
     answer:
-      "Affiliate relationships should not automatically determine rankings or review scores. Review methodology and disclosure pages explain how SevenBet handles this.",
+      "Affiliate relationships should not automatically determine rankings or review scores. Review methodology and disclosure pages explain how B4GAMBLE handles this.",
     category: "Affiliate Disclosure",
     href: "/affiliate-disclosure",
   },
   {
-    question: "Who pays SevenBet?",
+    question: "Who pays B4GAMBLE?",
     answer:
       "When an affiliate action qualifies, commissions generally come from the operator, not directly from the reader.",
     category: "Affiliate Disclosure",
     href: "/affiliate-disclosure",
   },
   {
-    question: "Is SevenBet a casino?",
+    question: "Is B4GAMBLE a casino?",
     answer:
-      "No. SevenBet does not operate casinos, accept deposits, process withdrawals, or provide gambling services.",
+      "No. B4GAMBLE does not operate casinos, accept deposits, process withdrawals, or provide gambling services.",
     category: "General Questions",
     href: "/about",
   },
@@ -312,7 +312,7 @@ export const knowledgeSections = [
 
 export const contactOptions = [
   {
-    title: "Contact SevenBet",
+    title: "Contact B4GAMBLE",
     text: "Use the About and disclosure pages to understand the project and available contact routes.",
     href: "/about",
   },

@@ -25,7 +25,7 @@ test("public copy has no unsupported verification, featured, ranking-independenc
   assert.doesNotMatch(page + components + card, /Featured published review|FeaturedCasinoReview/);
   assert.match(card, /Published casino review/);
   assert.doesNotMatch(card, /Rankings and editorial reviews remain independently governed/);
-  assert.match(card, /Review access is editorial\. A visit action is conditional and may compensate SevenBet/);
+  assert.match(card, /Review access is editorial\. A visit action is conditional and may compensate B4GAMBLE/);
   assert.doesNotMatch(page, /eligible local offer/);
   assert.match(card, /Directory result position/);
 });

@@ -19,9 +19,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "SevenBet | Start with more control",
+  title: "B4GAMBLE | Know your limits before you play",
   description:
-    "Ten practical missions for recognising patterns, building personal rules and making gambling decisions with more control.",
+    "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
   alternates: { canonical: absoluteUrl("/") },
 };
 

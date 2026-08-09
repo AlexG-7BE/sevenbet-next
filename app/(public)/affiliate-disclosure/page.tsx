@@ -3,9 +3,9 @@ import { AffiliateDisclosureDocument } from "./AffiliateDisclosureDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Affiliate Disclosure | How SevenBet Is Funded",
+  title: "Affiliate Disclosure | How B4GAMBLE Is Funded",
   description:
-    "How affiliate links may fund SevenBet, how commercial relationships relate to editorial work, and what readers should verify.",
+    "How affiliate links may fund B4GAMBLE, how commercial relationships relate to editorial work, and what readers should verify.",
   alternates: { canonical: absoluteUrl("/affiliate-disclosure") },
 };
 

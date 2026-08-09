@@ -68,13 +68,13 @@ export const learningTags = [
 export const learningAuthors: LearningAuthor[] = [
   {
     id: "sevenbet-editorial",
-    name: "SevenBet Editorial Team",
+    name: "B4GAMBLE Editorial Team",
     role: "Author",
-    bio: "Creates educational guides and casino comparison resources using the SevenBet editorial methodology.",
+    bio: "Creates educational guides and casino comparison resources using the B4GAMBLE editorial methodology.",
   },
   {
     id: "sevenbet-review-desk",
-    name: "SevenBet Review Desk",
+    name: "B4GAMBLE Review Desk",
     role: "Editor",
     bio: "Reviews learning content for clarity, internal linking, responsible gambling context, and editorial consistency.",
   },
@@ -112,18 +112,18 @@ export const learningCategories: LearningCategory[] = [
     title: "Responsible Gambling",
     description: "Educational guides about limits, time management, cooling-off, and self-exclusion.",
     longDescription:
-      "Responsible Gambling collects practical education about planning, limits, and tools without presenting SevenBet as a healthcare provider.",
+      "Responsible Gambling collects practical education about planning, limits, and tools without presenting B4GAMBLE as a healthcare provider.",
     relatedCategories: ["casino-bonuses", "casino-safety", "casino-basics"],
     plannedTopics: ["Deposit limits", "Reality checks", "Cooling-off periods", "Self-exclusion"],
     faq: [
-      ["Is this medical advice?", "No. SevenBet provides educational information, not diagnosis or treatment."],
+      ["Is this medical advice?", "No. B4GAMBLE provides educational information, not diagnosis or treatment."],
       ["Where should I start?", "Start with the 10-Step Program or the Responsible Gambling Hub."],
     ],
   },
   {
     slug: "casino-reviews",
     title: "Casino Reviews",
-    description: "Understand how SevenBet reviews casinos, scores profiles, and compares operator information.",
+    description: "Understand how B4GAMBLE reviews casinos, scores profiles, and compares operator information.",
     longDescription:
       "Casino Reviews explains editorial scoring, review limitations, and how review pages should be read alongside methodology and disclosure.",
     relatedCategories: ["casino-safety", "licensing", "casino-basics"],
@@ -181,7 +181,7 @@ export const learningCategories: LearningCategory[] = [
     relatedCategories: ["casino-glossary", "casino-bonuses", "casino-basics"],
     plannedTopics: ["Slots basics", "Blackjack basics", "Poker basics", "RTP and volatility"],
     faq: [
-      ["Does SevenBet teach winning systems?", "No. Game guides explain terminology and mechanics, not promised results."],
+      ["Does B4GAMBLE teach winning systems?", "No. Game guides explain terminology and mechanics, not promised results."],
       ["Why do game types matter?", "Games may contribute differently to wagering requirements."],
     ],
   },
@@ -220,7 +220,7 @@ export const learningCategories: LearningCategory[] = [
     relatedCategories: ["licensing", "payments", "casino-safety"],
     plannedTopics: ["UK casino guide", "Canada casino guide", "Ireland casino guide", "Payment availability by country"],
     faq: [
-      ["Does SevenBet provide legal advice?", "No. Country guides are educational and should not replace local legal review."],
+      ["Does B4GAMBLE provide legal advice?", "No. Country guides are educational and should not replace local legal review."],
       ["Can availability change?", "Yes. Operator availability can change by country and license."],
     ],
   },
@@ -233,7 +233,7 @@ export const learningCategories: LearningCategory[] = [
     relatedCategories: ["casino-basics", "game-guides", "casino-bonuses"],
     plannedTopics: ["Wagering", "RTP", "Volatility", "KYC", "Self-exclusion"],
     faq: [
-      ["What is this category for?", "It defines common terms used across SevenBet guides and reviews."],
+      ["What is this category for?", "It defines common terms used across B4GAMBLE guides and reviews."],
       ["Will glossary terms link to guides?", "Yes. The architecture supports internal linking from terms to full guides."],
     ],
   },
@@ -286,7 +286,7 @@ function articleTemplate({
     popular,
     takeaways: [
       "Start with the concept before comparing casino offers.",
-      "Use SevenBet methodology and responsible gambling context together.",
+      "Use B4GAMBLE methodology and responsible gambling context together.",
       "Review current operator terms before registering or depositing.",
     ],
     sections: [
@@ -299,7 +299,7 @@ function articleTemplate({
         body: "Casino information can be fragmented or promotional. A structured guide helps readers compare terms, risks, and practical details in a calmer way.",
       },
       {
-        title: "How to use it on SevenBet",
+        title: "How to use it on B4GAMBLE",
         body: "Read the guide, follow related category links, review the methodology, and use the 10-Step Program or self-check when decisions feel unclear.",
       },
     ],

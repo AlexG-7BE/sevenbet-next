@@ -15,6 +15,7 @@ import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { currentPublicBrandText } from "@/lib/public-brand";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
@@ -25,8 +26,24 @@ function withoutAction(offer: PublicOfferDTO): PublicOfferDTO {
 
 function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
   if (!isTemporaryDemoCasinoId(offer.casino.id)) return { ...offer, dataClassification: "PUBLISHED_RECORD" };
+  const brand = (value: string) => currentPublicBrandText(value);
   return {
     ...offer,
+    casino: {
+      ...offer.casino,
+      name: brand(offer.casino.name),
+      summary: brand(offer.casino.summary),
+      logo: offer.casino.logo ? { ...offer.casino.logo, alt: brand(offer.casino.logo.alt), caption: offer.casino.logo.caption ? brand(offer.casino.logo.caption) : null } : null,
+      responsibleGamblingTools: offer.casino.responsibleGamblingTools.map(brand),
+    },
+    bonus: {
+      ...offer.bonus,
+      title: brand(offer.bonus.title),
+      summary: brand(offer.bonus.summary),
+      wageringText: offer.bonus.wageringText ? brand(offer.bonus.wageringText) : null,
+      eligibility: offer.bonus.eligibility ? brand(offer.bonus.eligibility) : null,
+      importantConditions: offer.bonus.importantConditions.map(brand),
+    },
     action: { href: null, available: false },
     commercialAvailability: "UNAVAILABLE",
     dataClassification: "DEMO_FIXTURE",

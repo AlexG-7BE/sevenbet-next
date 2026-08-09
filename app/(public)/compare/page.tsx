@@ -30,14 +30,14 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const result = await resolveComparison(raw);
   const cleanDefault = result.query.selectionMode === "default" && result.query.country === "GB" && !result.query.differences && !result.query.issues.length;
   const index = cleanDefault && result.status === "available";
-  const title = result.status === "available" ? "Compare Published Casino Profiles | SevenBet" : "Casino Comparison | SevenBet";
+  const title = result.status === "available" ? "Compare Published Casino Profiles | B4GAMBLE" : "Casino Comparison | B4GAMBLE";
   const description = "Compare up to three latest published casino profiles by licensing context, offer terms, payments, withdrawals and responsible-gambling evidence without a fabricated winner.";
   return {
     title,
     description,
     alternates: { canonical: absoluteUrl("/compare") },
     robots: { index, follow: true },
-    openGraph: { title, description, url: absoluteUrl("/compare"), siteName: "SevenBet", type: "website" },
+    openGraph: { title, description, url: absoluteUrl("/compare"), siteName: "B4GAMBLE", type: "website" },
   };
 }
 
@@ -56,7 +56,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
     ...(result.casinos.length ? [{
       "@context": "https://schema.org",
       "@type": "ItemList",
-      name: `SevenBet ${result.query.country} declared-context casino comparison`,
+      name: `B4GAMBLE ${result.query.country} declared-context casino comparison`,
       numberOfItems: result.casinos.length,
       itemListElement: result.casinos.map((casino, index) => ({ "@type": "ListItem", position: index + 1, name: casino.name, url: absoluteUrl(casino.reviewHref) })),
     }] : []),

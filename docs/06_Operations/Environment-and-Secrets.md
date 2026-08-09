@@ -2,7 +2,7 @@
 
 ## Trust zones and active evidence
 
-Reconciled on 2026-08-08 after ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged and passed post-merge Production verification. Secret values are intentionally omitted.
+Reconciled on 2026-08-09 for the approved B4GAMBLE canonical-domain release contract after ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged and passed post-merge Production verification. Secret values are intentionally omitted.
 
 | Zone | Database authority | Auth/admin authority | External integrations | Allowed data and mutation | Deployment source |
 | --- | --- | --- | --- | --- | --- |
@@ -38,11 +38,11 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `PRODDB_DATABASE_URL`, `PRODDB_POSTGRES_URL`, `PRODDB_PRISMA_DATABASE_URL` | Provider-injected sensitive aliases | Production-only control-plane connection; no repository consumer detected | Founder Office/config owner |
 | `PRISMA_DATABASE_URL`, `POSTGRES_URL` | Sensitive provider aliases | Production-only preserved aliases; no repository consumer detected | Founder Office/config owner |
 | `BETTER_AUTH_SECRET` | Secret | Better Auth runtime convention; independent per environment | Founder Office/config owner; repository maintainer technical owner |
-| `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` | Sensitive configuration | Exact Production origin and Local/CI origins; intentionally absent in Preview | Same as authentication configuration |
+| `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` | Sensitive configuration | Production target is exact `https://b4gamble.com`; Local/CI use explicit loopback origins; intentionally absent in Preview | Same as authentication configuration |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sensitive OAuth client configuration / secret | Optional Better Auth Google identity provider; both required; independent Production and Preview clients | Founder Office/Google Cloud owner; repository maintainer technical consumer |
 | `SEVENBET_ACCOUNT_EMAIL_FROM`, `SEVENBET_PROGRAMME_EMAIL_FROM`, `SEVENBET_EMAIL_REPLY_TO` | Sender configuration, not delivery credentials | Future server-only communications sender categories; currently no selected provider or Production send path | Founder Office/communications owner; values require verified domain/mailbox authority before activation |
 | `VERCEL`, `VERCEL_ENV`, `VERCEL_BRANCH_URL` | Vercel system configuration | Trusted request-country runtime boundary and bounded Preview Better Auth origin derivation | Vercel control plane |
-| `NEXT_PUBLIC_SITE_URL` | Public configuration | Canonical links, redirects, media fallback | Repository maintainer |
+| `NEXT_PUBLIC_SITE_URL` | Public configuration | Production target is exact `https://b4gamble.com`; canonical links, metadata, structured data, sitemap, robots and media fallback derive from it | Repository maintainer |
 | `SEVENBET_ADMIN_PREVIEW_TOKEN` | Secret, legacy/admin gate | Independent Preview and Production values | Founder Office/config owner |
 | `CMS_PHASE1_ALLOW_DEV_ADMIN`, `CMS_AUTH_PROVIDER` | Sensitive feature/auth configuration | Admin auth compatibility | Repository maintainer; remove only through governed auth work |
 | `CMS_WEBHOOK_SECRET` | Secret | Listed legacy/webhook surface; active consumer **not detected** | Owner not documented |
@@ -72,6 +72,18 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 8. Compare credentials using cryptographic fingerprints or immutable provider timestamps only. Record `MATCH`, `DIFFERENT`, `ABSENT` or `UNKNOWN`; never values.
 
 To rotate Preview, generate a new Preview-only value, update only Preview, redeploy, rerun the isolation proof, and confirm the Production configuration metadata did not change. To recreate Preview, delete only the dedicated Preview resource after explicit approval, create a replacement, apply the existing migrations, reinstall Preview-only secrets and repeat every proof. Production data or backups must never be the source.
+
+## B4GAMBLE Production authority cutover
+
+The target Production-only values are:
+
+```text
+NEXT_PUBLIC_SITE_URL=https://b4gamble.com
+BETTER_AUTH_URL=https://b4gamble.com
+BETTER_AUTH_TRUSTED_ORIGINS=https://b4gamble.com
+```
+
+Before PR #59 is merged, Founder/Operations must apply and verify the three values together in Production only. Changing the values must not deploy or otherwise mutate the current Production application. After Founder merges PR #59 by merge commit, the automatic exact-main Vercel Production deployment must build with this environment contract. Wait for the exact merged SHA to be Ready, then verify metadata, canonical links, structured data, robots, sitemap, Better Auth session behaviour, safe account access, legacy-host canonical behaviour and runtime errors. Preview values and its dynamic exact-host contract do not change. The legacy `sevenbet-next.vercel.app` project alias is an internal compatibility hostname, not the target public authority.
 
 ## Handling rules
 

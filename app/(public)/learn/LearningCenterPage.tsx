@@ -43,7 +43,7 @@ export function LearningCenterPage({
         />
         <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
-          <p>SevenBet Learning Center · Current editorial library</p>
+          <p>B4GAMBLE Learning Center · Current editorial library</p>
           <h1 id="learn-title">THE MAGAZINE SHELF.</h1>
           <span>Clear guides for reading casino terms, reviews and risks before comparing.</span>
         </div>

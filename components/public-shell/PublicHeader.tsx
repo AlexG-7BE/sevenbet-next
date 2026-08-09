@@ -14,8 +14,8 @@ export function PublicHeader({
   return (
     <header className={styles.header} data-public-shell="header">
       <div className={styles.headerInner}>
-        <Link className={styles.brand} href="/" aria-label="SevenBet home" translate="no">
-          SEVENBET
+        <Link className={styles.brand} href="/" aria-label="B4GAMBLE home" translate="no">
+          B4GAMBLE
         </Link>
         <PublicNavigation account={account} authenticated={authenticated} />
       </div>

@@ -25,7 +25,7 @@ function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
     languages: ["en"], currencies: ["GBP"], pros: ["Published strength"], cons: ["Published limitation"],
     responsibleGamblingTools: ["Deposit limits"],
     seo: {
-      title: "Published Casino review | SevenBet", description: "Published metadata description.", canonical: "https://sevenbet-next.vercel.app/casino/published-casino",
+      title: "Published Casino review | B4GAMBLE", description: "Published metadata description.", canonical: "https://b4gamble.com/casino/published-casino",
       robots: "index,follow", socialTitle: "Published social title", socialDescription: "Published social description", socialImage: "https://media.example/social.png", structuredData: null,
     },
     licenses: [{ authority: "Published Authority", licenseNumber: null, jurisdiction: "GB", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2030-01-15T00:00:00.000Z" }],

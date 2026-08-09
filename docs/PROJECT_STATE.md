@@ -3,12 +3,13 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-09
-- **Current main:** `a2ba5552479a2876dc3b6c153e06e6c0cdf8a35f`
+- **Current main:** `314639df94082eba6d8499f2ce26dee68ccc5fbe`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
-- **AUTH-COMMS-01:** repository delivery ready on `codex/auth-comms-01-google-email-foundation`; [DELIVERY PR #58](https://github.com/AlexG-7BE/sevenbet-next/pull/58) is open for review and unmerged.
-- **Production:** <https://sevenbet-next.vercel.app>; deployment `dpl_6aE2jthovESkm3dKojZxxberCEft` at current main passed the read-only baseline and smoke checks. Production remains unchanged by PR #58.
+- **AUTH-COMMS-01:** **CLOSED**; [PR #58](https://github.com/AlexG-7BE/sevenbet-next/pull/58) is merged in current main.
+- **BRAND-CUTOVER-01:** approved under RFC-019; the B4GAMBLE consumer-brand and canonical-domain delivery candidate is on `codex/brand-cutover-01-b4gamble` and remains unmerged.
+- **Production:** <https://b4gamble.com> routes to the current Vercel Production application, but current main still emits pre-cutover SevenBet identity and `sevenbet-next.vercel.app` canonical/schema/sitemap/robots authority. Production environment values and deployment remain unchanged by the unmerged delivery branch.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -16,7 +17,8 @@
 | --- | --- |
 | LEGAL-02 | **ANALYSIS COMPLETE** |
 | LEGAL-IMPL-01 | **CLOSED — PR #57 MERGED** |
-| AUTH-COMMS-01 | **DELIVERY PR #58 — REVIEW OPEN** |
+| AUTH-COMMS-01 | **CLOSED — PR #58 MERGED** |
+| BRAND-CUTOVER-01 | **DELIVERY CANDIDATE — UNMERGED** |
 | Google login code | **READY — existing Better Auth, fail-closed configuration** |
 | Google Production credentials | **OPEN EXTERNAL** |
 | Email communication architecture | **READY — provider-independent, disabled transport** |
@@ -38,9 +40,9 @@
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation; it does not authorise reminders, marketing or provider activation. Mission order, prerequisites, content intent and reward amounts are unchanged.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation; it does not authorise reminders, marketing or provider activation. RFC-019 supersedes earlier current-state references only for the consumer brand and target Production canonical authority. Mission order, prerequisites, content intent and reward amounts are unchanged.
 
-SevenBet is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
+B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
 
 ## Detected implementation
 
@@ -79,7 +81,8 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ### Platform and delivery baseline
 
-- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01 and UX-PERF-01 are merged on main.
+- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01 and AUTH-COMMS-01 are merged on main.
+- RFC-019 governs the unmerged B4GAMBLE consumer-brand and Production canonical-domain candidate. Repository, Vercel project, schema, migrations, routes, protocols and compatibility identifiers remain unchanged.
 - Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
 - CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
 - Recovery is **PARTIAL** because no verified provider snapshot/PITR restore point is available under the current provider plan.
@@ -112,7 +115,7 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 ### Engineering and operations
 
 - Configure separate Google Preview and Production Web clients, exact origins/callbacks and consent-screen evidence; keep the provider absent until each environment has a complete credential pair.
-- Select and approve a SevenBet-controlled sending domain, sender mailboxes and email transport before any delivery work. SPF, DKIM, DMARC, TLS, bounce/complaint handling and monitoring remain open. Actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
+- Select and approve a B4GAMBLE-controlled sending domain, sender mailboxes and email transport before any delivery work. SPF, DKIM, DMARC, TLS, bounce/complaint handling and monitoring remain open. Actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
 - Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
@@ -121,4 +124,4 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ## Release conclusion
 
-LEGAL-IMPL-01 is closed on current main. AUTH-COMMS-01 PR #58 makes the Google-auth code and disabled email architecture ready for Founder review, but it does not activate external Google credentials, email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.
+LEGAL-IMPL-01 and AUTH-COMMS-01 are closed on current main. BRAND-CUTOVER-01 is an unmerged delivery candidate. Before merge, Founder/Operations must set and verify the exact Production-only URL/auth environment values without deploying or mutating the current Production application. Founder merge then triggers the automatic exact-main deployment, which must reach Ready and pass the ordered B4GAMBLE canonical/auth/runtime verification before the workstream can close. It does not activate external Google credentials, email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.

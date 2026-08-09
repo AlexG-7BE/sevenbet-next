@@ -4,9 +4,9 @@ import { learningArticles, learningCategories, learningPaths, learningTags } fro
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "SevenBet Learning Center | Casino Education, Bonuses and Risk Guides",
+  title: "B4GAMBLE Learning Center | Casino Education, Bonuses and Risk Guides",
   description:
-    "Explore SevenBet's scalable Learning Center for casino basics, bonuses, responsible gambling, reviews, payments, licensing, crypto casinos, game guides and glossary terms.",
+    "Explore B4GAMBLE's scalable Learning Center for casino basics, bonuses, responsible gambling, reviews, payments, licensing, crypto casinos, game guides and glossary terms.",
   alternates: {
     canonical: absoluteUrl("/learn"),
   },
@@ -16,7 +16,7 @@ function organizationSchema() {
   return {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "SevenBet",
+    name: "B4GAMBLE",
     url: absoluteUrl("/"),
     sameAs: [],
   };

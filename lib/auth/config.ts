@@ -16,7 +16,7 @@ export function createSevenBetAuth({
   const googleConfig = resolveGoogleAuthConfig();
 
   return betterAuth({
-    appName: "SevenBet",
+    appName: "B4GAMBLE",
     ...(runtimeConfig.baseURL ? { baseURL: runtimeConfig.baseURL } : {}),
     database: prismaAdapter(prisma, {
       provider: "postgresql",

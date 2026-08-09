@@ -13,8 +13,8 @@ export function PublicFooter() {
     <footer className={styles.footer} data-public-shell="footer">
       <div className={styles.footerInner}>
         <div className={styles.footerLead}>
-          <Link className={styles.footerBrand} href="/" translate="no">SEVENBET</Link>
-          <p>Choose better. Keep control in view.</p>
+          <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
+          <p>Know your limits before you play.</p>
         </div>
         <div className={styles.footerGroups}>
           {groups.map((group) => (
@@ -31,10 +31,10 @@ export function PublicFooter() {
         </aside>
         <div className={styles.footerDisclosure}>
           <strong>18+ · COMMERCIAL DISCLOSURE</strong>
-          <p><span className={styles.desktopDisclosure}>SevenBet may receive compensation from some outbound links. Rankings remain editorial and availability is never assumed.</span><span className={styles.mobileDisclosure}>Some outbound links may compensate SevenBet. Availability is never assumed.</span></p>
+          <p><span className={styles.desktopDisclosure}>B4GAMBLE may receive compensation from some outbound links. Rankings remain editorial and availability is never assumed.</span><span className={styles.mobileDisclosure}>Some outbound links may compensate B4GAMBLE. Availability is never assumed.</span></p>
         </div>
         <div className={styles.footerBaseline}>
-          <span>© SevenBet · Information and comparison service</span>
+          <span>© B4GAMBLE · Information and comparison service</span>
           <div><Link href="/responsible-gambling">Responsible gambling</Link><Link href="/about">About</Link><span>Contact</span></div>
         </div>
       </div>

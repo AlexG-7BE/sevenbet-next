@@ -10,16 +10,16 @@ const previewOrigin = `https://${previewHost}`;
 test("Production retains its exact configured Better Auth URL and origins", () => {
   assert.deepEqual(
     resolveBetterAuthRuntimeConfig({
-      BETTER_AUTH_URL: "https://sevenbet-next.vercel.app",
+      BETTER_AUTH_URL: "https://b4gamble.com",
       BETTER_AUTH_TRUSTED_ORIGINS:
-        "https://sevenbet-next.vercel.app, https://www.example.com",
+        "https://b4gamble.com, https://www.example.com",
       VERCEL_BRANCH_URL: "sevenbet-next-git-main.vercel.app",
       VERCEL_ENV: "production",
     }),
     {
-      baseURL: "https://sevenbet-next.vercel.app",
+      baseURL: "https://b4gamble.com",
       trustedOrigins: [
-        "https://sevenbet-next.vercel.app",
+        "https://b4gamble.com",
         "https://www.example.com",
       ],
     },
@@ -77,7 +77,7 @@ test("Preview rejects a conflicting static base URL", () => {
   assert.throws(
     () =>
       resolveBetterAuthRuntimeConfig({
-        BETTER_AUTH_URL: "https://sevenbet-next.vercel.app",
+        BETTER_AUTH_URL: "https://b4gamble.com",
         VERCEL_BRANCH_URL: previewHost,
         VERCEL_ENV: "preview",
       }),
@@ -89,7 +89,7 @@ test("Preview rejects any additional trusted origin", () => {
   assert.throws(
     () =>
       resolveBetterAuthRuntimeConfig({
-        BETTER_AUTH_TRUSTED_ORIGINS: `${previewOrigin},https://sevenbet-next.vercel.app`,
+        BETTER_AUTH_TRUSTED_ORIGINS: `${previewOrigin},https://b4gamble.com`,
         VERCEL_BRANCH_URL: previewHost,
         VERCEL_ENV: "preview",
       }),

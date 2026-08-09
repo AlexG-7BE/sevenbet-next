@@ -27,7 +27,7 @@ Use role names until an authoritative individual assignment exists.
 ## Phase 0 — Founder decision before outreach
 
 1. Select a candidate from the readiness package based on evidence, accessibility, fit and operating burden, not payout alone.
-2. Confirm the legal SevenBet applicant entity, registration, business address, tax status, beneficial-owner information and authorized signatory outside Git.
+2. Confirm the legal B4GAMBLE applicant entity, registration, business address, tax status, beneficial-owner information and authorized signatory outside Git.
 3. Confirm the authoritative website/domain, business and compliance contacts, current audience evidence and proposed traffic channels.
 4. Choose the proposed commercial model and negotiation limits. Do not store banking, tax or identity documents in Git or general metadata.
 5. Obtain Founder authorization to submit. COMM-01 itself does not grant it.
@@ -38,7 +38,7 @@ Stop if applicant identity, website ownership, intended channels or the candidat
 
 1. Use only the candidate's official programme page or an independently verified official contact.
 2. Use the truthful application pack; replace every `FOUNDER INPUT REQUIRED` before submission.
-3. State that SevenBet is an information, education and comparison publisher, not a gambling operator, clinical service or recovery provider.
+3. State that B4GAMBLE is an information, education and comparison publisher, not a gambling operator, clinical service or recovery provider.
 4. State only current channels. Do not claim paid ads, email, SMS, push, retargeting, traffic volume, conversions or markets without evidence and approval.
 5. Do not accept unpublished side terms or insert API credentials into notes, email drafts, screenshots, repository files or programme metadata.
 6. Retain the submitted application and response in the approved external document system; record only opaque references later.
@@ -57,9 +57,9 @@ Legal / Compliance must resolve and record:
 - payment model, definitions, deductions, negative carryover, chargebacks, term and termination;
 - creative and link change-control obligations;
 - audit/monitoring access and incident-notification obligations; and
-- the exact evidence that permits SevenBet to promote each casino/domain.
+- the exact evidence that permits B4GAMBLE to promote each casino/domain.
 
-An application acceptance or dashboard login is not enough. The agreement must be executed/active according to the actual contract and represented as `ACTIVE` in the SevenBet evidence contract only after approval.
+An application acceptance or dashboard login is not enough. The agreement must be executed/active according to the actual contract and represented as `ACTIVE` in the B4GAMBLE evidence contract only after approval.
 
 ## Phase 3 — Due diligence and primary evidence
 
@@ -163,7 +163,7 @@ There is no hidden or single activation toggle. The policy, evidence and global 
 | Partner agreement | 90 days and before expiry | Contract/entity/market/channel/model/termination change |
 | Jurisdiction policy | Existing policy validity window | Regulatory/legal/operational change |
 
-Intervals are SevenBet internal fail-closed controls, not claims that regulators mandate those exact periods.
+Intervals are B4GAMBLE internal fail-closed controls, not claims that regulators mandate those exact periods.
 
 ## Routine pause and rollback
 

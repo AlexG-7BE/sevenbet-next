@@ -30,15 +30,15 @@ export function CasinoOutboundAction({ action, className = "" }: { action: Casin
       <dialog aria-describedby={descriptionId} aria-labelledby={titleId} className="commercialOutboundDialog" ref={dialogRef}>
         <div className="commercialOutboundSheet">
           <p className="commercialOutboundLabel">02 / Outbound confirmation</p>
-          <h2 id={titleId}>You are leaving SevenBet.</h2>
-          <p id={descriptionId}>SevenBet may receive a commission. Eligibility and destination are checked again before the internal redirect continues.</p>
+          <h2 id={titleId}>You are leaving B4GAMBLE.</h2>
+          <p id={descriptionId}>B4GAMBLE may receive a commission. Eligibility and destination are checked again before the internal redirect continues.</p>
           <div className="commercialOutboundContract">
             <span>Handoff contract</span>
             <strong>No raw destination URL · no browser-supplied authority.</strong>
             <small>A neutral cancel path remains available · 18+ · Terms apply</small>
           </div>
           <a className="commercialOutboundPrimary" href={action.href} onClick={() => dialogRef.current?.close()} rel="nofollow sponsored noopener" target="_blank">Continue to eligible partner <span aria-hidden="true">→</span></a>
-          <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">Cancel and stay on SevenBet</button>
+          <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">Cancel and stay on B4GAMBLE</button>
           <Link className="commercialOutboundHelp" href="/affiliate-disclosure">Review affiliate disclosure</Link>
         </div>
       </dialog>

@@ -13,19 +13,23 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "SevenBet | 10-Step Control Program",
+    default: "B4GAMBLE | Know your limits before you play",
     template: "%s",
   },
-  description: "Responsible gambling program with self-assessment, educational resources and transparent casino comparison.",
+  description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
   alternates: { canonical: absoluteUrl("/") },
   openGraph: {
     type: "website",
-    siteName: "SevenBet",
-    title: "SevenBet | 10-Step Control Program",
-    description: "Responsible gambling program with self-assessment, educational resources and transparent casino comparison.",
+    siteName: "B4GAMBLE",
+    title: "B4GAMBLE | Know your limits before you play",
+    description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
     url: absoluteUrl("/"),
   },
-  twitter: { card: "summary", title: "SevenBet | 10-Step Control Program" },
+  twitter: {
+    card: "summary",
+    title: "B4GAMBLE | Know your limits before you play",
+    description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -34,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={archivo.variable}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") }) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }) }}
         />
         {children}
       </body>

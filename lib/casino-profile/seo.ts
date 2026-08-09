@@ -15,7 +15,7 @@ function editorialCanonical(document: CasinoEditorialDocument | null, fallback: 
 export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial: CasinoEditorialDocument | null): Metadata {
   if (!casino) {
     return {
-      title: "Casino profile unavailable | SevenBet",
+      title: "Casino profile unavailable | B4GAMBLE",
       description: "This casino profile is not published or is unavailable.",
       robots: { index: false, follow: false },
     };
@@ -23,7 +23,7 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
 
   const demo = isTemporaryDemoCasinoId(casino.id);
   const seo = editorial?.seo;
-  const title = demo ? `${casino.name} Fictional Review Demonstration | SevenBet` : seo?.title || casino.seo.title;
+  const title = demo ? `${casino.name} Fictional Review Demonstration | B4GAMBLE` : seo?.title || casino.seo.title;
   const description = demo ? "A fictional casino review demonstration, not a current GB operator, licence claim, partner offer or live promotion. No commercial visit is available." : seo?.description || casino.seo.description;
   const canonical = editorialCanonical(editorial, casino.seo.canonical);
   const robots = demo ? { index: false, follow: true } : parseRobotsMetadata(seo?.robots || casino.seo.robots);
@@ -72,8 +72,8 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
       "@context": "https://schema.org",
       "@type": "Review",
       itemReviewed: { "@type": "Organization", name: casino.name },
-      author: { "@type": editorial?.author ? "Person" : "Organization", name: editorial?.author || "SevenBet" },
-      publisher: { "@type": "Organization", name: "SevenBet", url: absoluteUrl("/") },
+      author: { "@type": editorial?.author ? "Person" : "Organization", name: editorial?.author || "B4GAMBLE" },
+      publisher: { "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") },
       reviewRating: { "@type": "Rating", ratingValue: casino.editorScore, bestRating: 10, worstRating: 0 },
       reviewBody: casino.reviewContent,
       ...(casino.publishedAt ? { datePublished: casino.publishedAt } : {}),

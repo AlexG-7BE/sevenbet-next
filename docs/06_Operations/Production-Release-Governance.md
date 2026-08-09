@@ -31,14 +31,16 @@ The Git commit SHA is the release identifier. Record the pull request and Vercel
 6. For schema work, complete [Database Migrations](Database-Migrations.md) and [Backup and Restore](Backup-and-Restore.md) gates.
 7. Record risk, rollback trigger and post-release owner in the PR.
 8. Founder Office makes the merge decision. The implementing agent does not merge its delivery PR.
+9. For BRAND-CUTOVER-01, Founder/Operations sets and verifies `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` as `https://b4gamble.com` in Production only before merge, without triggering a deployment or mutating the current Production application.
 
 ## Post-merge verification
 
-1. In Vercel, confirm the Production deployment source commit equals the merged `main` SHA and status is Ready.
-2. Run `npm run ops:smoke` against the fixed production origin. The script performs read-only GET requests only.
-3. Confirm `/`, `/responsible-gambling`, `/privacy`, `/terms`, `/self-check`, `/tools/budget-calculator`, `/faq`, `/casinos`, and `/bonuses` return HTTP 200; root must return HTML.
-4. Review Vercel deployment/runtime logs for new errors without copying personal data, protected Self-Check answers, limit values, Programme data, raw affiliate URLs or secrets into the incident record.
-5. Observe the next scheduled `Production Smoke` result and confirm its GitHub notification reaches the accountable owner.
+1. For BRAND-CUTOVER-01, confirm the automatic Production deployment built with the pre-verified B4GAMBLE Production environment contract; do not perform a separate environment-change redeploy after merge.
+2. In Vercel, confirm the Production deployment source commit equals the merged `main` SHA and status is Ready.
+3. Run `npm run ops:smoke` against the fixed canonical Production origin `https://b4gamble.com`. The script performs read-only GET requests only.
+4. Confirm `/`, `/responsible-gambling`, `/privacy`, `/terms`, `/self-check`, `/tools/budget-calculator`, `/faq`, `/casinos`, and `/bonuses` return HTTP 200; root must return HTML.
+5. Review Vercel deployment/runtime logs for new errors without copying personal data, protected Self-Check answers, limit values, Programme data, raw affiliate URLs or secrets into the incident record.
+6. Observe the next scheduled `Production Smoke` result and confirm its GitHub notification reaches the accountable owner.
 
 ## Rollback decision
 

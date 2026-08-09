@@ -104,7 +104,7 @@ export function PublicNavigation({
           ref={dialogRef}
         >
           <div className={styles.dialogTopbar}>
-            <Link className={styles.dialogBrand} href="/" onClick={() => closeMenu({ restoreFocus: false })} translate="no">SEVENBET</Link>
+            <Link className={styles.dialogBrand} href="/" onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
             <button aria-label="Close navigation" className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button">Close</button>
           </div>
           <nav className={styles.mobileRouteList} aria-label="Mobile primary navigation">

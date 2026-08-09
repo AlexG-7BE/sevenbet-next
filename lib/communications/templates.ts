@@ -30,9 +30,9 @@ export function renderCommunicationTemplate(
     return {
       purpose,
       senderCategory: "ACCOUNT",
-      subject: "SevenBet account security notice",
-      text: `A security action was requested for your SevenBet account. Open SevenBet directly to review account access: ${actionUrl}\n\nSevenBet will never ask for your password by email.`,
-      html: `<p>A security action was requested for your SevenBet account.</p><p><a href="${actionUrl}">Review account access on SevenBet</a></p><p>SevenBet will never ask for your password by email.</p>`,
+      subject: "B4GAMBLE account security notice",
+      text: `A security action was requested for your B4GAMBLE account. Open B4GAMBLE directly to review account access: ${actionUrl}\n\nB4GAMBLE will never ask for your password by email.`,
+      html: `<p>A security action was requested for your B4GAMBLE account.</p><p><a href="${actionUrl}">Review account access on B4GAMBLE</a></p><p>B4GAMBLE will never ask for your password by email.</p>`,
     };
   }
 
@@ -41,16 +41,16 @@ export function renderCommunicationTemplate(
     return {
       purpose,
       senderCategory: "PROGRAMME",
-      subject: "Your requested SevenBet Programme reminder",
-      text: `You asked SevenBet to remind you to return to your private Programme. Continue when it suits you: ${actionUrl}\n\nThis message contains no private Programme narrative.`,
-      html: `<p>You asked SevenBet to remind you to return to your private Programme.</p><p><a href="${actionUrl}">Continue when it suits you</a></p><p>This message contains no private Programme narrative.</p>`,
+      subject: "Your requested B4GAMBLE Programme reminder",
+      text: `You asked B4GAMBLE to remind you to return to your private Programme. Continue when it suits you: ${actionUrl}\n\nThis message contains no private Programme narrative.`,
+      html: `<p>You asked B4GAMBLE to remind you to return to your private Programme.</p><p><a href="${actionUrl}">Continue when it suits you</a></p><p>This message contains no private Programme narrative.</p>`,
     };
   }
 
   return {
     purpose,
     senderCategory: "PROGRAMME",
-    subject: "A quiet reminder from your SevenBet Programme",
+    subject: "A quiet reminder from your B4GAMBLE Programme",
     text: `You opted in to occasional Programme reminders. Your private Programme is available when you choose to return: ${actionUrl}\n\nReply with “stop” to stop Programme engagement messages.`,
     html: `<p>You opted in to occasional Programme reminders.</p><p><a href="${actionUrl}">Return to your private Programme</a></p><p>Reply with “stop” to stop Programme engagement messages.</p>`,
   };

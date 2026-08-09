@@ -11,8 +11,8 @@ import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.serv
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Confirm External Commercial Action | SevenBet",
-  description: "Review SevenBet's commercial handoff before a managed external action.",
+  title: "Confirm External Commercial Action | B4GAMBLE",
+  description: "Review B4GAMBLE's commercial handoff before a managed external action.",
   robots: { index: false, follow: false },
 };
 

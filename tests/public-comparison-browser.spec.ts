@@ -155,7 +155,7 @@ test("metadata and structured data use a clean canonical without commercial sche
   const defaultHtml = await defaultResponse.text();
   expect(defaultResponse.status()).toBe(200);
   expect(defaultHtml).toContain('<meta name="robots" content="index, follow"');
-  expect(defaultHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/compare"');
+  expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/compare"');
   expect(defaultHtml).toContain('"@type":"BreadcrumbList"');
   expect(defaultHtml).toContain('"@type":"ItemList"');
   expect(defaultHtml).not.toContain('"@type":"Offer"');
@@ -167,7 +167,7 @@ test("metadata and structured data use a clean canonical without commercial sche
   const queryHtml = await queryResponse.text();
   expect(queryResponse.status()).toBe(200);
   expect(queryHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(queryHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/compare"');
+  expect(queryHtml).toContain('<link rel="canonical" href="https://b4gamble.com/compare"');
 });
 
 test("commercial actions stay inert while market authority denies referral", async ({ page, request }) => {

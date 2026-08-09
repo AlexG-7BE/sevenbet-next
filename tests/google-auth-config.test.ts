@@ -30,6 +30,7 @@ test("Google uses Better Auth's bounded identity provider and safe linking optio
   const route = readFileSync("app/api/auth/[...all]/route.ts", "utf8");
 
   assert.match(config, /encryptOAuthTokens: true/);
+  assert.match(config, /appName: "B4GAMBLE"/);
   assert.match(config, /requireLocalEmailVerified: true/);
   assert.match(config, /allowDifferentEmails: false/);
   assert.match(config, /allowUnlinkingAll: false/);
@@ -85,14 +86,14 @@ test("privacy and operations evidence describe only the implemented Google bound
   const exampleEnvironment = readFileSync(".env.example", "utf8");
 
   assert.match(privacy, /If you choose Google sign-in/);
-  assert.match(privacy, /does not provide SevenBet with your date of birth, contacts, mailbox contents or a gambling profile/);
+  assert.match(privacy, /does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile/);
   assert.match(privacy, /Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission/);
   assert.match(processors, /Google Identity \/ OAuth/);
   assert.match(processors, /external activation not verified/);
   assert.match(retention, /Google claim-continuation marker/);
   assert.match(retention, /Authentication sessions\/accounts and OAuth tokens/);
   assert.match(runbook, /http:\/\/localhost:4173\/api\/auth\/callback\/google/);
-  assert.match(runbook, /https:\/\/sevenbet-next\.vercel\.app\/api\/auth\/callback\/google/);
+  assert.match(runbook, /https:\/\/b4gamble\.com\/api\/auth\/callback\/google/);
   assert.match(runbook, /EMAIL DELIVERY NOT CONFIGURED/);
   assert.match(exampleEnvironment, /GOOGLE_CLIENT_ID=""/);
   assert.match(exampleEnvironment, /GOOGLE_CLIENT_SECRET=""/);

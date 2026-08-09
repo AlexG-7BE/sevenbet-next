@@ -11,7 +11,7 @@ test("Affiliate Disclosure renders the approved four-section trust document", as
   expect(response?.status()).toBe(200);
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/HOW SEVENBET\s*IS FUNDED\./);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/HOW B4GAMBLE\s*IS FUNDED\./);
   await expect(page.getByRole("navigation", { name: "On this page" }).getByRole("link")).toHaveCount(4);
   await expect(page.getByRole("link", { name: "Read methodology", exact: true })).toHaveAttribute("href", "/methodology");
   for (const heading of [

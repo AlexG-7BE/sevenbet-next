@@ -104,7 +104,11 @@ test("visit action requires active local program, offer, link, and safe redirect
 
 test("exact-ID demo authority overrides otherwise permissive visit eligibility", async () => {
   const casinoId = temporaryDemoCasinoIds[0];
-  const casino = record(casinoId, "fictional-demo", "Fictional Demo");
+  const casino = record(casinoId, "fictional-demo", "Fictional Demo", {
+    summary: "A fictional SevenBet product demonstration.",
+    pros: ["SevenBet presentation strength"],
+    casinoBonuses: [{ id: `${casinoId}-bonus`, slug: "fictional-demo-welcome", title: "SevenBet demo terms", summary: "SevenBet demonstration only", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
+  });
   const offer = activeOffer(casinoId);
   const service = new PublicCasinoDiscoveryService(store([casino], {
     offers: [offer],
@@ -114,6 +118,8 @@ test("exact-ID demo authority overrides otherwise permissive visit eligibility",
   assert.equal(result.inventoryMode, "DEMO_ONLY");
   assert.equal(result.items[0].dataClassification, "DEMO_FIXTURE");
   assert.deepEqual(result.items[0].visitAction, { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" });
+  assert.doesNotMatch(JSON.stringify(result.items[0]), /SevenBet|SEVENBET/);
+  assert.match(JSON.stringify(result.items[0]), /B4GAMBLE/);
 
   const mixed = await new PublicCasinoDiscoveryService(store([casino, record("real-id", "real-record", "Real Record")]), () => now).discover();
   assert.equal(mixed.inventoryMode, "MIXED");

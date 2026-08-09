@@ -7,16 +7,9 @@ import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositori
 import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
-import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { currentPublicCasinoBrand } from "@/lib/public-brand";
 
-function enforceTemporaryDemoReviewOnly(casino: PublicCasinoDTO) {
-  if (!isTemporaryDemoCasinoId(casino.id)) return casino;
-  return {
-    ...casino,
-    affiliate: { href: null, available: false },
-    bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
-  };
-}
+export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
 
 export function isPublicCasinoCmsEnabled() {
   return process.env.PUBLIC_CASINO_CMS_ENABLED === "true";
@@ -45,11 +38,11 @@ export class PublicCasinoService {
 
   private legacyForMode(casino: Casino) {
     const mapped = mapLegacyCasino(casino);
-    return {
+    return enforceTemporaryDemoReviewOnly({
       ...mapped,
       affiliate: { href: null, available: false },
       bonuses: mapped.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
-    };
+    });
   }
 
   async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO | null> {

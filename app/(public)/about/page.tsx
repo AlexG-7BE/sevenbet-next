@@ -3,9 +3,9 @@ import { AboutDocument } from "./AboutDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "About SevenBet | Learn, Reflect, Compare",
+  title: "About B4GAMBLE | Learn, Reflect, Compare",
   description:
-    "How SevenBet puts education before comparison, keeps Programme reflection separate from commercial information, and defines its product boundaries.",
+    "How B4GAMBLE puts education before comparison, keeps Programme reflection separate from commercial information, and defines its product boundaries.",
   alternates: { canonical: absoluteUrl("/about") },
 };
 
@@ -23,7 +23,7 @@ function breadcrumbSchema() {
       {
         "@type": "ListItem",
         position: 2,
-        name: "About SevenBet",
+        name: "About B4GAMBLE",
         item: absoluteUrl("/about"),
       },
     ],

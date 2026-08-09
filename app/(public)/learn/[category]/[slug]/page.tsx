@@ -27,11 +27,11 @@ export async function generateMetadata({
   const article = getLearningArticle(category, slug);
 
   if (!article) {
-    return { title: "Learning Guide | SevenBet" };
+    return { title: "Learning Guide | B4GAMBLE" };
   }
 
   return {
-    title: `${article.title} | SevenBet Learning Center`,
+    title: `${article.title} | B4GAMBLE Learning Center`,
     description: article.summary,
     alternates: {
       canonical: absoluteUrl(getArticlePath(article)),
@@ -98,7 +98,7 @@ function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle
     },
     publisher: {
       "@type": "Organization",
-      name: "SevenBet",
+      name: "B4GAMBLE",
       url: absoluteUrl("/"),
     },
     mainEntityOfPage: absoluteUrl(getArticlePath(article)),

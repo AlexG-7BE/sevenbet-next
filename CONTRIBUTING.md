@@ -1,4 +1,4 @@
-# Contributing to SevenBet
+# Contributing to B4GAMBLE (`sevenbet-next`)
 
 ## Documentation First
 

@@ -91,8 +91,8 @@ export function ProtectedHelpHub() {
         <aside className={styles.urgentBoundary} aria-labelledby="urgent-boundary-title">
           <div>
             <p className={styles.eyebrow}>Urgent help</p>
-            <h3 id="urgent-boundary-title">SevenBet is not an emergency service.</h3>
-            <p>If you or someone else is in immediate danger, contact local emergency services. No regional number is shown because SevenBet has not verified your location.</p>
+            <h3 id="urgent-boundary-title">B4GAMBLE is not an emergency service.</h3>
+            <p>If you or someone else is in immediate danger, contact local emergency services. No regional number is shown because B4GAMBLE has not verified your location.</p>
           </div>
           <a
             className={styles.secondaryAction}
@@ -112,7 +112,7 @@ export function ProtectedHelpHub() {
           <h2 id="programme-title">Prefer a structured ten-step plan?</h2>
           <p>Open the Programme without casino, bonus or affiliate prompts.</p>
           <p className={styles.privacyCopy}>
-            No account is needed for this Help page. SevenBet does not save your choices here or use Help activity for affiliate targeting, offer ranking or commercial personalisation.
+            No account is needed for this Help page. B4GAMBLE does not save your choices here or use Help activity for affiliate targeting, offer ranking or commercial personalisation.
           </p>
         </div>
         <Link className={styles.programmeAction} href="/program">Open 10-Step Programme</Link>

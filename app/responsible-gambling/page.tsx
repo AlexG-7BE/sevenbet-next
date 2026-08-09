@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { ProtectedHelpHub } from "@/components/protected-help/ProtectedHelpHub";
 import { absoluteUrl } from "@/lib/site";
 
-const title = "Responsible Gambling Help & Support | SevenBet";
+const title = "Responsible Gambling Help & Support | B4GAMBLE";
 const description =
   "Find practical gambling-control options and independently provided UK support without casino, bonus or affiliate prompts.";
 
@@ -52,7 +52,7 @@ const webPageSchema = {
   url: absoluteUrl("/responsible-gambling"),
   isPartOf: {
     "@type": "WebSite",
-    name: "SevenBet",
+    name: "B4GAMBLE",
     url: absoluteUrl("/"),
   },
 };

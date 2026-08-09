@@ -159,7 +159,7 @@ export function TiltHome() {
         <div className={styles.evidenceHeading}>
           <span>WHY THIS EXISTS</span>
           <h2 id="evidence-title"><strong>Built from evidence.</strong><em>Honest about its limits.</em></h2>
-          <p>SevenBet uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.</p>
+          <p>B4GAMBLE uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.</p>
         </div>
         <div className={styles.evidenceGrid}>
           <article><span>NHS</span><strong>Recognition and support guidance</strong><p>Used to shape the self-recognition language.</p></article>

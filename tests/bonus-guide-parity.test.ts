@@ -49,7 +49,7 @@ test("evidence records contain only the checked UKGC and ASA primary sources", (
 test("FAQ schema, visible FAQ and metadata share production sources", () => {
   assert.match(route, /mainEntity: bonusGuideFaq\.map/);
   assert.match(document, /bonusGuideFaq\.map/);
-  assert.match(route, /title: "Casino Bonus Terms Guide \| SevenBet"/);
+  assert.match(route, /title: "Casino Bonus Terms Guide \| B4GAMBLE"/);
   assert.match(route, /Learn how to read wagering, max-bet, expiry, deposit, and withdrawal terms before considering an offer\./);
   assert.match(route, /canonical: absoluteUrl\("\/bonus-guide"\)/);
   assert.match(route, /BreadcrumbList/);

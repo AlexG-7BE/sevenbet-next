@@ -1,6 +1,6 @@
-# SevenBet Next
+# B4GAMBLE (`sevenbet-next`)
 
-SevenBet is a decision-support platform for adults considering regulated gambling. It combines neutral discovery with a private, control-first 10-Step Programme. It is not a gambling operator and this repository is not evidence of market or launch approval.
+B4GAMBLE is a decision-support platform for adults considering regulated gambling. It combines neutral discovery with a private, control-first 10-Step Programme. It is not a gambling operator and this repository is not evidence of market or launch approval. The consumer brand changed from SevenBet to B4GAMBLE under RFC-019; the repository and compatibility identifiers remain `sevenbet-next`.
 
 ## Architecture
 

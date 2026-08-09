@@ -11,7 +11,7 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/program?auth=sign-in");
   await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
-  await expect(page.getByText(/SevenBet may receive compensation from some outbound links/i)).toBeVisible();
+  await expect(page.getByText(/B4GAMBLE may receive compensation from some outbound links/i)).toBeVisible();
   const undersizedTargets = await page.locator("[data-public-shell] a, [data-public-shell] button").evaluateAll((targets) => targets
     .filter((target) => {
       const rect = target.getBoundingClientRect();

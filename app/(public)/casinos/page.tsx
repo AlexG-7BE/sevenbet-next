@@ -22,8 +22,8 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const canonicalParams = new URLSearchParams();
   if (!filtered && (query.page ?? 1) > 1) canonicalParams.set("page", String(query.page));
   const canonical = absoluteUrl(`/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`);
-  const title = query.page && query.page > 1 ? `Casino Reviews — Page ${query.page} | SevenBet` : containsDemo ? "Casino Review Demonstration | SevenBet" : "Casino Reviews and Comparisons | SevenBet";
-  const description = containsDemo ? "Fictional demonstration casino records showing SevenBet's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by market preference, licence, payments, games, bonus availability and responsible gambling information.";
+  const title = query.page && query.page > 1 ? `Casino Reviews — Page ${query.page} | B4GAMBLE` : containsDemo ? "Casino Review Demonstration | B4GAMBLE" : "Casino Reviews and Comparisons | B4GAMBLE";
+  const description = containsDemo ? "Fictional demonstration casino records showing B4GAMBLE's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by market preference, licence, payments, games, bonus availability and responsible gambling information.";
   return { title, description, alternates: { canonical }, robots: filtered || containsDemo ? { index: false, follow: true } : { index: true, follow: true }, openGraph: { type: "website", title, description, url: canonical } };
 }
 
@@ -42,7 +42,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
           <header><p>Editorial casino discovery · Server-classified reviews · 18+</p><h1>A clearer casino<br /><em>choice.</em></h1><span>Search review snapshots before you compare a bonus or consider a governed visit action.</span></header>
-          <div className={styles.heroSearch}><InstantDiscoveryForm action="/casinos" debouncedFields={["q"]} key={`hero:${result.appliedFilters.search ?? ""}`} pendingLabel="Updating casino results…"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input defaultValue={result.appliedFilters.search ?? ""} id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></InstantDiscoveryForm><p>SevenBet may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
+          <div className={styles.heroSearch}><InstantDiscoveryForm action="/casinos" debouncedFields={["q"]} key={`hero:${result.appliedFilters.search ?? ""}`} pendingLabel="Updating casino results…"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input defaultValue={result.appliedFilters.search ?? ""} id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></InstantDiscoveryForm><p>B4GAMBLE may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
         </div>
         <DirectoryFeaturedTheatre casino={result.items[0]} />
       </div>
@@ -52,7 +52,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       <div className={styles.shell}>
         <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Find the facts that fit<br /><em>your priorities.</em></h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
         {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
-        <div className={styles.disclosure}><strong>Affiliate disclosure</strong><p>SevenBet may receive commission from future eligible governed visit links. Affiliate compensation does not determine Editor Score or natural editorial ranking, and no listing guarantees winnings or income.</p><Link href="/methodology">Read our review method →</Link></div>
+        <div className={styles.disclosure}><strong>Affiliate disclosure</strong><p>B4GAMBLE may receive commission from future eligible governed visit links. Affiliate compensation does not determine Editor Score or natural editorial ranking, and no listing guarantees winnings or income.</p><Link href="/methodology">Read our review method →</Link></div>
         <DiscoveryControls result={result} />
         <ActiveDiscoveryFilters result={result} />
         <DiscoveryResults result={result} />

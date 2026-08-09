@@ -123,7 +123,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
       <div className={styles.shell}>
         <div className={styles.shortlistIntro}>
           <h2 id="shortlist-title">One headline. The full decision.</h2>
-          <p>Swipe the shortlist by what matters to you — then see the material terms before you leave SevenBet.</p>
+          <p>Swipe the shortlist by what matters to you — then see the material terms before you leave B4GAMBLE.</p>
         </div>
         {slides.length ? <div
           aria-label="Best offer selectors"
@@ -245,7 +245,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
         </div>
         {featured ? <div className={styles.editorialDesk}>
           <div>
-            <p className={styles.kicker}>SevenBet editorial desk</p>
+            <p className={styles.kicker}>B4GAMBLE editorial desk</p>
             <blockquote>“A worthwhile offer makes the real cost easy to see.”</blockquote>
             <p>We compare the terms that affect the decision, explain the ranking, and keep commercial disclosure visible before any handoff.</p>
           </div>

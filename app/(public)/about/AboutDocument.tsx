@@ -55,7 +55,7 @@ export function AboutDocument() {
             ))}
           </h1>
 
-          <ol className={styles.heroStairs} aria-label="SevenBet operating sequence">
+          <ol className={styles.heroStairs} aria-label="B4GAMBLE operating sequence">
             {operatingSteps.map((step, index) => (
               <li key={step} className={index === 3 ? styles.activeStep : undefined}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
@@ -95,7 +95,7 @@ export function AboutDocument() {
               <span className={styles.mobileOnly}>The product</span><br />ends here.
             </h2>
             <p className={styles.boundariesLead}>
-              SevenBet explains and organizes information. It does not become the authority, operator,
+              B4GAMBLE explains and organizes information. It does not become the authority, operator,
               adviser or treatment provider.
             </p>
           </div>
@@ -131,7 +131,7 @@ export function AboutDocument() {
       <section className={styles.flow} data-about-section="six-step-flow" aria-labelledby="flow-title">
         <div className={styles.flowInner}>
           <p className={styles.flowEyebrow}>
-            <span className={styles.desktopOnly}>How SevenBet works / Non-manipulative path</span>
+            <span className={styles.desktopOnly}>How B4GAMBLE works / Non-manipulative path</span>
             <span className={styles.mobileOnly}>Six step flow</span>
           </p>
           <h2 id="flow-title">
@@ -167,7 +167,7 @@ export function AboutDocument() {
       <section className={styles.outputs} data-about-section="what-sevenbet-builds" aria-labelledby="outputs-title">
         <div className={styles.outputsInner}>
           <div className={styles.outputsIntro}>
-            <p className={styles.eyebrow}>What SevenBet builds</p>
+            <p className={styles.eyebrow}>What B4GAMBLE builds</p>
             <h2 id="outputs-title" className={styles.desktopOnly}>Five outputs.<br />One boundary<br />system.</h2>
           </div>
           <ul className={styles.outputList}>

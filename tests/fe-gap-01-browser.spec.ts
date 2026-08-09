@@ -30,7 +30,7 @@ for (const legal of [
     await expect(page.getByRole("heading", { level: 1 })).toContainText(legal.title);
     await expect(page.getByRole("navigation", { name: "On this page" }).getByRole("link")).toHaveCount(legal.sections);
     await expect(page.getByRole("link", { name: legal.contact, exact: true }).first()).toHaveAttribute("href", `mailto:${legal.contact}`);
-    await expect(page.getByText(/7BE Inc\., trading as SevenBet/).first()).toBeVisible();
+    await expect(page.getByText(/7BE Inc\., trading as B4GAMBLE/).first()).toBeVisible();
     await expect(page.getByText(/447 Broadway, 2nd Floor, 1663/).first()).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", new RegExp(`${legal.path}$`));
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex.*follow/i);

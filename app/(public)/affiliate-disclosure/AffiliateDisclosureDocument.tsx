@@ -10,8 +10,8 @@ const sections = [
     title: "THE COMMERCIAL RELATIONSHIP",
     body: (
       <>
-        Future eligible governed links on SevenBet may be affiliate links. If a reader follows one and
-        completes a qualifying action, SevenBet may receive a commission from the operator. Not every operator
+        Future eligible governed links on B4GAMBLE may be affiliate links. If a reader follows one and
+        completes a qualifying action, B4GAMBLE may receive a commission from the operator. Not every operator
         listed or reviewed has to be an affiliate partner, and readers should still review the
         operator&apos;s current terms, fees, and conditions.
       </>
@@ -24,7 +24,7 @@ const sections = [
     title: "COMPENSATION DOES NOT SET THE SCORE.",
     body: (
       <>
-        Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial
+        Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial
         ranking. Commercial relationships do not remove negative findings, hide material
         limitations, or replace the criteria described in the published methodology. Any future
         sponsored or paid placement must be identified separately.
@@ -51,7 +51,7 @@ const sections = [
     title: "CORRECTIONS",
     body: (
       <>
-        SevenBet reviews material errors against relevant sources and corrects them when appropriate.
+        B4GAMBLE reviews material errors against relevant sources and corrects them when appropriate.
         A commercial relationship does not suppress a correction, warning, or material limitation.
       </>
     ),
@@ -74,11 +74,11 @@ export function AffiliateDisclosureDocument() {
       <header className={styles.hero}>
         <div className={styles.shell}>
           <p className={styles.eyebrow}>Affiliate disclosure</p>
-          <h1>HOW SEVENBET<br />IS FUNDED.</h1>
+          <h1>HOW B4GAMBLE<br />IS FUNDED.</h1>
           <div className={styles.highlight} aria-hidden="true" />
           <p className={styles.heroLead}>
             Some future governed links may generate affiliate commissions. Affiliate compensation
-            does not determine SevenBet&apos;s Editor Score or natural editorial ranking.
+            does not determine B4GAMBLE&apos;s Editor Score or natural editorial ranking.
           </p>
           <Link className={styles.primaryAction} href="/methodology">Read methodology</Link>
         </div>

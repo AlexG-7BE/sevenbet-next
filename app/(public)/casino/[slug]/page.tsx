@@ -25,7 +25,7 @@ const loadEditorial = cache(async (slug: string) => {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const [casino, editorialResult] = await Promise.all([loadCasino(slug), loadEditorial(slug)]);
-  return casinoProfileMetadata(casino, casino ? profileEditorialDocument(editorialResult) : null);
+  return casinoProfileMetadata(casino, casino ? profileEditorialDocument(editorialResult, casino.id) : null);
 }
 
 export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -33,7 +33,7 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
   const [authority, editorialResult] = await Promise.all([resolveServerJurisdiction(), loadEditorial(slug)]);
   const casino = await publicCasinoService.getCasino(slug, authority);
   if (!casino) notFound();
-  const editorial = profileEditorialDocument(editorialResult);
+  const editorial = profileEditorialDocument(editorialResult, casino.id);
   const schemas = casinoProfileSchemas(casino, editorial);
 
   return <>

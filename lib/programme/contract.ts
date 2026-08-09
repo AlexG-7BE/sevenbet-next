@@ -157,7 +157,7 @@ export const programmeEvidence = {
       publishedAt: "2025-01-28",
       contentVersion: EVIDENCE_CONTENT_VERSION,
       scope: "en-GB",
-      limitation: "SevenBet provides education, not CBT, assessment, diagnosis or treatment.",
+      limitation: "B4GAMBLE provides education, not CBT, assessment, diagnosis or treatment.",
     },
     {
       id: "LARIMER-RCT-2012",
@@ -167,7 +167,7 @@ export const programmeEvidence = {
       publishedAt: "2012-01-01",
       contentVersion: EVIDENCE_CONTENT_VERSION,
       scope: "educational-reference",
-      limitation: "A specific study population and intervention do not prove SevenBet outcomes.",
+      limitation: "A specific study population and intervention do not prove B4GAMBLE outcomes.",
     },
   ],
   mission02: [
@@ -191,7 +191,7 @@ export const programmeEvidence = {
       publishedAt: "2025-01-28",
       contentVersion: MISSION_THREE_EVIDENCE_VERSION,
       scope: "en-GB",
-      limitation: "SevenBet provides education, not clinician-led CBT, assessment, diagnosis or treatment.",
+      limitation: "B4GAMBLE provides education, not clinician-led CBT, assessment, diagnosis or treatment.",
     },
     {
       id: "NHS-GAMBLING-HELP",
@@ -201,7 +201,7 @@ export const programmeEvidence = {
       publishedAt: "reviewed-current-source",
       contentVersion: MISSION_THREE_EVIDENCE_VERSION,
       scope: "en-GB",
-      limitation: "The NHS does not validate SevenBet or this mission.",
+      limitation: "The NHS does not validate B4GAMBLE or this mission.",
     },
     {
       id: "CRAVING-SYSTEMATIC-REVIEW-2023",
@@ -221,7 +221,7 @@ export const programmeEvidence = {
       publishedAt: "2017-08-01",
       contentVersion: MISSION_THREE_EVIDENCE_VERSION,
       scope: "educational-reference",
-      limitation: "A small laboratory study cannot predict an individual response or SevenBet outcome.",
+      limitation: "A small laboratory study cannot predict an individual response or B4GAMBLE outcome.",
     },
   ],
   mission04: [
@@ -233,7 +233,7 @@ export const programmeEvidence = {
       publishedAt: "2026-05-26",
       contentVersion: MISSION_FOUR_EVIDENCE_VERSION,
       scope: "en-GB",
-      limitation: "The rules apply to licensed operators. SevenBet cannot set or enforce an operator-account limit.",
+      limitation: "The rules apply to licensed operators. B4GAMBLE cannot set or enforce an operator-account limit.",
     },
     {
       id: "IVANOVA-DEPOSIT-LIMIT-RCT-2019",
@@ -253,7 +253,7 @@ export const programmeEvidence = {
       publishedAt: "2020-08-01",
       contentVersion: MISSION_FOUR_EVIDENCE_VERSION,
       scope: "educational-reference",
-      limitation: "The intervention did not improve adherence for the full sample and does not validate SevenBet.",
+      limitation: "The intervention did not improve adherence for the full sample and does not validate B4GAMBLE.",
     },
     {
       id: "NICE-NG248-2025",
@@ -263,7 +263,7 @@ export const programmeEvidence = {
       publishedAt: "2025-01-28",
       contentVersion: MISSION_FOUR_EVIDENCE_VERSION,
       scope: "en-GB",
-      limitation: "SevenBet adapts planning concepts as education, not clinician-led treatment or assessment.",
+      limitation: "B4GAMBLE adapts planning concepts as education, not clinician-led treatment or assessment.",
     },
   ],
 } as const;

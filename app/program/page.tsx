@@ -22,9 +22,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "SevenBet 10-Step Control Program | Personal Control Plan",
+  title: "B4GAMBLE 10-Step Control Program | Personal Control Plan",
   description:
-    "Build a private Moment Map, a practical seven-day goal and an editable early-signal card through SevenBet's evidence-informed Control Program.",
+    "Build a private Moment Map, a practical seven-day goal and an editable early-signal card through B4GAMBLE's evidence-informed Control Program.",
   alternates: {
     canonical: absoluteUrl("/program"),
   },

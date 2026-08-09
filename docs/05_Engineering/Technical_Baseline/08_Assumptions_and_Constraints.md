@@ -8,7 +8,7 @@
 - Admin access uses authenticated staff profiles and permission checks; a legacy preview-token path only operates when explicitly enabled by environment configuration.
 - Public casino CMS usage and affiliate redirects are environment-gated (`PUBLIC_CASINO_CMS_ENABLED`, `AFFILIATE_REDIRECT_ENGINE_ENABLED`).
 - The bounded GB market policy is repository-controlled, evidence-linked, expires after 30 days and currently permits editorial content while denying commercial/referral capability. Request country is trusted only from Vercel's country header in a positively identified Preview/Production runtime.
-- Product Vision constrains commercial behavior: SevenBet is not an operator, must not take funds, must disclose affiliate status, and requires locally applicable regulation before operator direction. GB-MARKET-01 technically enforces the market/operator/referral gates it defines; external legal approval, age/account decisions and real partner authority remain separate.
+- Product Vision constrains commercial behavior: B4GAMBLE is not an operator, must not take funds, must disclose affiliate status, and requires locally applicable regulation before operator direction. RFC-019 changes only the consumer brand from SevenBet; GB-MARKET-01 continues to enforce the market/operator/referral gates it defines, while external legal approval, age/account decisions and real partner authority remain separate.
 
 ## Explicitly unconfirmed assumptions
 
