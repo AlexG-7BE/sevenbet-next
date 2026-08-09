@@ -11,6 +11,7 @@ import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operat
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { currentPublicCasinoBrand } from "@/lib/public-brand";
 
 export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
   const demoCount = casinos.filter((casino) => casino.dataClassification === "DEMO_FIXTURE").length;
@@ -158,7 +159,8 @@ export class PublicCasinoDiscoveryService {
     const countryContext = requestedCountry && published.some((record) => list(object(record.snapshot).countries).some((entry) => text(object(entry).countryCode).toUpperCase() === requestedCountry)) ? requestedCountry : undefined;
     const commercialCountryContext = commercialProjection ? authority?.countryCode ?? undefined : undefined;
     const working = published.flatMap((record): WorkingCard[] => {
-      const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
       if (!casino) return [];
       const snapshot = object(record.snapshot);
       const editor = object(object(snapshot.reviewBlocks).__sevenbetCasinoEditor);

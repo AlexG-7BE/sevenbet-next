@@ -19,6 +19,7 @@ import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import { currentPublicCasinoBrand } from "@/lib/public-brand";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -237,7 +238,8 @@ export class PublicComparisonService {
 
     const now = this.now();
     const all = published.flatMap((record) => {
-      const casino = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
       return casino?.source === "cms" ? [casino] : [];
     });
     const operatorDecisions = commercialProjection
