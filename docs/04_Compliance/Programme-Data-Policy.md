@@ -8,7 +8,7 @@ The Active Control Programme is an adult educational reflection, decision-suppor
 
 Raw participant narrative is local-first for GB v1. It may exist in React state and in versioned, subject-isolated, tab-scoped `sessionStorage`: a random opaque journey namespace before authentication and `sevenbet.programme.local-content.v2:user:<user-id>` after authentication. It must not be sent to the application server, stored in cookies, URLs, `localStorage`, logs, analytics or generic event metadata. Account, enrolment, bounded task state, completion, rewards and the minimum neutral structured continuity facts remain server-persisted.
 
-Programme data, pause state and protected Help activity are prohibited inputs to advertising, operator/casino recommendation, offer selection, affiliate optimisation, commercial eligibility, natural editorial ranking or promotional pressure.
+Programme data, pause state and protected Help activity are prohibited inputs to advertising, operator/casino recommendation, offer selection, affiliate optimisation, commercial eligibility, natural editorial ranking, commercial email or promotional pressure. Programme email templates may use only a generic approved purpose, the server-resolved account email and the normal Programme URL; they must not import or receive protected content.
 
 ## Programme data persistence map
 
@@ -40,7 +40,7 @@ API errors may name invalid fields or invalid states but must not include submit
 
 ## Local lifecycle and user communication
 
-Local narrative is namespaced by the exact anonymous journey or authenticated Better Auth user ID. A current anonymous Mission 01 namespace moves to the exact claimant only after successful claim redemption, then the anonymous source is removed. Ordinary sign-in never imports an arbitrary anonymous namespace. An authenticated subject change hides and clears the former subject from memory before loading only the next subject's namespace or an empty record. The interface distinguishes “saved to your account” progress from words kept in the current browser tab. Explicit local clear removes the active namespace; sign-out/session expiry rotates to a fresh anonymous journey; the browser tab lifecycle supplies natural expiry. It is not a durable hidden vault.
+Local narrative is namespaced by the exact anonymous journey or authenticated Better Auth user ID. A current anonymous Mission 01 namespace moves to the exact claimant only after successful claim redemption, then the anonymous source is removed. Ordinary sign-in never imports an arbitrary anonymous namespace. For Google claim continuation, a separate marker contains only fixed intent, exact journey ID, version and timestamps, expires after about 10 minutes and must equal the current journey pointer. It contains no narrative, identity, token or consent state. An authenticated subject change hides and clears the former subject from memory before loading only the next subject's namespace or an empty record. The interface distinguishes “saved to your account” progress from words kept in the current browser tab. Explicit local clear removes the active namespace; sign-out/session expiry rotates to a fresh anonymous journey; the browser tab lifecycle supplies natural expiry. It is not a durable hidden vault.
 
 An unchecked 18-or-over confirmation gates the Programme. Its tab record is subject-isolated by anonymous journey or authenticated user, so one authenticated user's confirmation cannot authorize another. A legitimately claimed current journey may carry its current-session confirmation to the exact claimant; ordinary sign-in does not. Mutating Programme requests require the bounded `x-sevenbet-age-attestation: 18-or-over` header at middleware, and signup independently requires its own unchecked confirmation. Help remains open. **AGE ATTESTATION PERSISTENCE — P1 OPEN:** no DOB, KYC or durable attestation evidence is stored by this release.
 
@@ -57,7 +57,7 @@ Data-subject rights, complaints, backup caveats and operational ownership are de
 
 ## Commercial firewall
 
-Commercial ranking, public casino/offer projection, affiliate candidate selection, redirects and commercial-readiness modules must not import Programme, Self-Check, personal-limit, protected-Help, vulnerability or local-session state. Commercial DTOs contain none of those fields. Structural regression tests enforce this boundary. No protected activity changes eligibility, rank, presentation, sponsored placement or destination.
+Commercial ranking, public casino/offer projection, affiliate candidate selection, redirects, commercial-readiness and communications modules must not import Programme, Self-Check, personal-limit, protected-Help, vulnerability or local-session state. Commercial and communication DTOs contain none of those fields. Structural regression tests enforce this boundary. No protected activity changes eligibility, rank, presentation, sponsored placement, destination or email content.
 
 ## Evidence status
 

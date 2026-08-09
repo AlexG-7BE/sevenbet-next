@@ -76,3 +76,25 @@ test("the Google initiation boundary allows only fixed internal callbacks and no
     assert.equal(isAllowedGoogleSignInRequest(attempt), false);
   }
 });
+
+test("privacy and operations evidence describe only the implemented Google boundary", () => {
+  const privacy = readFileSync("app/(public)/privacy/page.tsx", "utf8");
+  const processors = readFileSync("docs/04_Compliance/Processor-and-International-Transfer-Register.md", "utf8");
+  const retention = readFileSync("docs/04_Compliance/Personal-Data-Retention-Schedule.md", "utf8");
+  const runbook = readFileSync("docs/06_Operations/Google-Authentication-and-Email-Readiness.md", "utf8");
+  const exampleEnvironment = readFileSync(".env.example", "utf8");
+
+  assert.match(privacy, /If you choose Google sign-in/);
+  assert.match(privacy, /does not provide SevenBet with your date of birth, contacts, mailbox contents or a gambling profile/);
+  assert.match(privacy, /Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission/);
+  assert.match(processors, /Google Identity \/ OAuth/);
+  assert.match(processors, /external activation not verified/);
+  assert.match(retention, /Google claim-continuation marker/);
+  assert.match(retention, /Authentication sessions\/accounts and OAuth tokens/);
+  assert.match(runbook, /http:\/\/localhost:4173\/api\/auth\/callback\/google/);
+  assert.match(runbook, /https:\/\/sevenbet-next\.vercel\.app\/api\/auth\/callback\/google/);
+  assert.match(runbook, /EMAIL DELIVERY NOT CONFIGURED/);
+  assert.match(exampleEnvironment, /GOOGLE_CLIENT_ID=""/);
+  assert.match(exampleEnvironment, /GOOGLE_CLIENT_SECRET=""/);
+  assert.doesNotMatch(exampleEnvironment, /GOOGLE_CLIENT_(ID|SECRET)="[^\"]+"/);
+});
