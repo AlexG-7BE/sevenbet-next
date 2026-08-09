@@ -11,7 +11,8 @@
 
 The current consumer brand is **B4GAMBLE**. The approved bounded positioning is:
 
-> B4GAMBLE  
+> B4GAMBLE
+>
 > Know your limits before you play.
 
 The canonical Production domain is `https://b4gamble.com`. Application output continues to derive absolute public URLs from the existing centralized `NEXT_PUBLIC_SITE_URL` contract. Production release therefore requires `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` to use the canonical origin before an exact-main redeploy.
