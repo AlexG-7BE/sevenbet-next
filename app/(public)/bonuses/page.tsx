@@ -27,13 +27,18 @@ type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const query = parsePublicOfferQuery(await searchParams, 24);
   const filtered = hasPublicOfferFilters(query);
-  const title = query.page > 1 ? `Casino Bonuses — Page ${query.page} | SevenBet` : "Published Casino Bonus Directory | SevenBet";
-  const description = "Compare current published casino bonus terms by country preference, type, payment, deposit, wagering and governed action availability.";
+  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country ?? null });
+  const result = await publicOfferService.searchOffers(query, authority);
+  const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
+  const title = query.page > 1 ? `Casino Bonus Comparison — Page ${query.page} | SevenBet` : containsDemo ? "Casino Bonus Demonstration | SevenBet" : "Casino Bonus Comparison | SevenBet";
+  const description = containsDemo
+    ? "Fictional demonstration records showing how SevenBet compares casino bonus terms. Not current GB promotions or partner offers."
+    : "Compare casino bonus terms by country preference, type, payment, deposit, wagering and governed action availability.";
   return {
     title,
     description,
     alternates: { canonical: absoluteUrl("/bonuses") },
-    robots: filtered ? { index: false, follow: true } : { index: true, follow: true },
+    robots: filtered || containsDemo ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: { type: "website", title, description, url: absoluteUrl("/bonuses") },
   };
 }
@@ -46,7 +51,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const featured = result.records.slice(0, 3);
   const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability].filter((value) => value !== undefined).length;
   const startPosition = (result.page - 1) * result.pageSize + 1;
-  const schema = {
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Published casino bonus directory",
@@ -57,10 +62,10 @@ export default async function BonusesPage({ searchParams }: PageProps) {
       name: `${offer.casino.name}: ${offer.bonus.title}`,
       url: absoluteUrl(`/casino/${offer.casino.slug}`),
     })),
-  };
+  } : null;
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`}>
-    <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" />
+    {schema ? <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" /> : null}
     <section className={styles.hero}>
       <Image alt="" aria-hidden="true" className={styles.heroMedia} height={980} priority sizes="(max-width: 760px) 39vw, 53vw" src="/bonus-directory/material-field.png" width={1600} />
       <div className={styles.heroCopy}>
@@ -68,7 +73,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Bonus Terms</p>
         <h1>Terms<br />Before<br />The Number.</h1>
         <em className={styles.desktopOnly}>A bonus is a contract-shaped object.</em>
-        <p className={styles.desktopOnly}>Compare current published records without hiding wagering, deposit, eligibility, expiry, licence context or commercial availability behind the headline.</p>
+        <p className={styles.desktopOnly}>Compare each record without hiding wagering, deposit, eligibility, expiry, licence context or commercial availability behind the headline.</p>
         <p className={`${styles.mobileHeroMicrocopy} ${styles.mobileOnly}`}>Read the conditions before you compare.</p>
       </div>
       <div aria-hidden="true" className={styles.termsScene}>
@@ -80,18 +85,19 @@ export default async function BonusesPage({ searchParams }: PageProps) {
 
     <section className={styles.directorySection}>
       <div className={styles.shell}>
-        <header className={styles.sectionHeading}><div><p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Current published offer objects</p><h2 className={`${styles.display} ${styles.desktopOnly}`}>Featured Bonuses<br />As Product Objects.</h2><p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Featured bonuses as product objects</p><h2 className={`${styles.mobileSectionTitle} ${styles.mobileOnly}`}>Read the contract before the headline.</h2></div><p><span className={styles.desktopOnly}>The first 3 results use the same server-owned order as the full directory. No sponsored override or static fixture determines their position.</span><span className={styles.mobileOnly}>Three published snapshots. The same material fields remain visible on every object.</span></p></header>
+        <header className={styles.sectionHeading}><div><p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Server-classified comparison records</p><h2 className={`${styles.display} ${styles.desktopOnly}`}>Bonus Terms<br />As Product Objects.</h2><p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Bonus terms as product objects</p><h2 className={`${styles.mobileSectionTitle} ${styles.mobileOnly}`}>Read the contract before the headline.</h2></div><p><span className={styles.desktopOnly}>The first 3 results use the same server-owned order as the full directory. No sponsored override changes their natural editorial position.</span><span className={styles.mobileOnly}>The same material fields remain visible on every record.</span></p></header>
+        {result.inventoryMode !== "PUBLISHED_ONLY" ? <aside className={styles.reviewSeparationNote} role="note"><strong>DEMONSTRATION DATA</strong><p>These fictional records show the comparison experience. They are not current GB promotions, partner offers or claimable bonuses. No commercial visit is available.</p></aside> : null}
         {featured.length > 0 && <div className={styles.featuredGrid}>{featured.map((offer, index) => <FeaturedBonusCard key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} position={startPosition + index} primary={index === 0} />)}</div>}
 
-        <div className={styles.controlsIntro}><div><p className={styles.eyebrow}><span className={styles.desktopOnly}>Published filters · URL owned</span><span className={styles.mobileOnly}>Full material ledger</span></p><h2>Compare Every Material Term.</h2></div><p><span className={styles.desktopOnly}>{result.total} real matching offer{result.total === 1 ? "" : "s"}. Every filter, sort and result count is resolved on the server from the latest current published database snapshots.</span><span className={styles.mobileOnly}>{result.records.length} results stay scannable on this page. Open a review only when you need the full evidence.</span></p></div>
+        <div className={styles.controlsIntro}><div><p className={styles.eyebrow}><span className={styles.desktopOnly}>Server-owned filters · URL owned</span><span className={styles.mobileOnly}>Full material ledger</span></p><h2>Compare Every Material Term.</h2></div><p><span className={styles.desktopOnly}>{result.total} matching comparison record{result.total === 1 ? "" : "s"}. Every filter, sort, classification and result count is resolved on the server.</span><span className={styles.mobileOnly}>{result.records.length} results stay scannable on this page. Open a review only when you need the full evidence.</span></p></div>
         <BonusFilters activeCount={activeCount} facets={result.facets} query={result.query} total={result.total} />
         <ActiveBonusFilters query={result.query} raw={raw} />
 
         {result.records.length > 0 ? <>
-          <header className={styles.resultsHeader}><div><p className={styles.eyebrow}>Full comparison results</p><h2>{result.total} Matching Offer{result.total === 1 ? "" : "s"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount} · {result.pageSize} per page. Missing values stay neutral and sort after known values where applicable.</p></header>
+          <header className={styles.resultsHeader}><div><p className={styles.eyebrow}>Full comparison results</p><h2>{result.total} Matching Record{result.total === 1 ? "" : "s"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount} · {result.pageSize} per page. Missing values stay neutral and sort after known values where applicable.</p></header>
           <BonusComparisonList offers={result.records} startPosition={startPosition} />
           <BonusPagination page={result.page} pageCount={result.pageCount} raw={raw} />
-        </> : <section className={styles.empty}><p className={styles.eyebrow}>No matches / no substitute</p><h2>No Published Offers Match These Filters.</h2><p>Reset the comparison instead of substituting an ineligible or commercially available offer. Published casino reviews, methodology, education and protected Help remain available.</p><Link href="/bonuses">Reset Filters</Link></section>}
+        </> : <section className={styles.empty}><p className={styles.eyebrow}>No matches / no substitute</p><h2>No Comparison Records Match These Filters.</h2><p>Reset the comparison instead of substituting an ineligible or commercial record. Casino reviews, methodology, education and protected Help remain available.</p><Link href="/bonuses">Reset Filters</Link></section>}
       </div>
     </section>
 

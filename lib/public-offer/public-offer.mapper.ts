@@ -64,6 +64,7 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] 
       },
       action,
       commercialAvailability: action.available && action.href ? "AVAILABLE" : "UNAVAILABLE",
+      dataClassification: "PUBLISHED_RECORD",
     };
   });
 }

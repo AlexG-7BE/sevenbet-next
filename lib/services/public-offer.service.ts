@@ -14,12 +14,29 @@ import { isPublicCasinoCmsEnabled } from "@/lib/services/public-casino.service";
 import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
 
 function withoutAction(offer: PublicOfferDTO): PublicOfferDTO {
   return { ...offer, action: { href: null, available: false }, commercialAvailability: "UNAVAILABLE" };
+}
+
+function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
+  if (!isTemporaryDemoCasinoId(offer.casino.id)) return { ...offer, dataClassification: "PUBLISHED_RECORD" };
+  return {
+    ...offer,
+    action: { href: null, available: false },
+    commercialAvailability: "UNAVAILABLE",
+    dataClassification: "DEMO_FIXTURE",
+  };
+}
+
+export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
+  const fixtures = offers.filter((offer) => offer.dataClassification === "DEMO_FIXTURE").length;
+  if (!fixtures) return "PUBLISHED_ONLY" as const;
+  return fixtures === offers.length ? "DEMO_ONLY" as const : "MIXED" as const;
 }
 
 function textCompare(a: string, b: string) {
@@ -116,15 +133,15 @@ export class PublicOfferService {
           affiliate: { href: null, available: false },
           bonuses: legacy.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
         });
-      });
+      }).map(classifyOffer);
     }
     try {
       const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
       const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
       const records = await this.repository.listOffers({ includeCommercial: commercialProjection });
-      if (!commercialProjection) return records.map(withoutAction);
+      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
-      return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record));
+      return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record)).map(classifyOffer);
     } catch {
       return [];
     }
@@ -145,6 +162,7 @@ export class PublicOfferService {
       pageCount,
       query: { ...query, page },
       facets: buildOfferFacets(all),
+      inventoryMode: publicOfferInventoryMode(all),
     };
   }
 
@@ -158,13 +176,13 @@ export class PublicOfferService {
     const limit = options.limit ?? 12;
     if (!this.cmsEnabled()) {
       const records = await this.getFeaturedOffers({ country, limit }, authority);
-      return { status: records.length ? "available" : "no-eligible", records } as const;
+      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
     }
     try {
       const records = selectOverallShortlist((await this.listEligibleOffers(authority)), { country, limit });
-      return { status: records.length ? "available" : "no-eligible", records } as const;
+      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
     } catch {
-      return { status: "unavailable", records: [] } as const;
+      return { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     }
   }
 
