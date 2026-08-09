@@ -74,4 +74,3 @@ test("commercial runtime modules do not import protected Programme or control da
     assert.doesNotMatch(text, /from ["'][^"']*(programme|responsible-gambling|self-check|limit-tracker|progress)[^"']*["']/i, path);
   }
 });
-

@@ -70,13 +70,15 @@ test("Mission 01 reward and post-mission account boundary are exact", () => {
   assert.match(landing, /Awarded when Mission 01 completion is saved to your account\./);
   assert.doesNotMatch(landing, /Awarded after account creation\./);
   assert.match(landing, /Mission 01 does not require an account/);
-  assert.match(landing, /Create an account to save \+60 XP/);
+  assert.match(landing, /Create an account to save completion and \+60 XP/);
   assert.doesNotMatch(combined, /cash value|money value|bonus eligibility|winnings|deposit reward/i);
 });
 
 test("commercial, clinical and outcome claims remain absent from the body", () => {
   assert.doesNotMatch(landing, /href="\/r\/|https?:\/\/(?!images\.pexels\.com)/i);
-  assert.doesNotMatch(landing, /guaranteed control|safe to gamble|improve your odds|diagnos(?:e|is)|treatment programme/i);
+  assert.doesNotMatch(landing, /guaranteed control|improve your odds|(?:diagnoses|treats) gambling addiction|clinical(?:ly)? effective|treatment programme/i);
+  assert.match(landing, /The Programme does not diagnose or treat gambling addiction or another medical condition\./);
+  assert.match(landing, /Completion does not mean gambling is safe or suitable\./);
   assert.match(landing, /The complete Programme has not yet been clinically evaluated\./);
   assert.match(landing, /Programme, pause and Help data are not used for affiliate targeting or commercial personalisation\./);
 });

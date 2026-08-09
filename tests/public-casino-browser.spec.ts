@@ -9,7 +9,7 @@ test("desktop discovery renders the approved SSR directory without browser error
   const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /A clearer casino choice/ })).toBeVisible();
-  await expect(page.getByText(/Search published review snapshots/)).toBeVisible();
+  await expect(page.getByText(/Search review snapshots before you compare/)).toBeVisible();
   await expect(page.getByText(/Search verified published profiles/)).toHaveCount(0);
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
   const editorialMedia = page.locator('section[aria-label="Published review preview"] img[aria-hidden="true"]').first();
@@ -119,22 +119,23 @@ test("mobile directory filters remain usable when JavaScript is disabled", async
   await context.close();
 });
 
-test("SSR metadata, canonical rules, ItemList and fail-closed action states remain intact", async ({ request }) => {
+test("demo directory metadata, canonical rules, schema suppression and action denial remain intact", async ({ request }) => {
   const defaultResponse = await request.get(`${baseUrl}/casinos`);
   const defaultHtml = await defaultResponse.text();
   expect(defaultResponse.status()).toBe(200);
-  expect(defaultHtml).toContain('<meta name="robots" content="index, follow"');
+  expect(defaultHtml).toContain('<meta name="robots" content="noindex, follow"');
   expect(defaultHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/casinos"');
-  expect(defaultHtml).toContain('"@type":"ItemList"');
-  expect(defaultHtml).toContain('"numberOfItems":25');
+  expect(defaultHtml).not.toContain('"@type":"ItemList"');
+  expect(defaultHtml).toContain("DEMONSTRATION DATA");
+  expect(defaultHtml).toContain("Fictional operators and offer fields show the product experience");
   expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
-  expect(defaultHtml).toContain("A governed visit link is not currently available.");
+  expect(defaultHtml).toContain("Demonstration records never provide a commercial visit action.");
 
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();
   expect(pageTwoResponse.status()).toBe(200);
   expect(pageTwoHtml).toContain('rel="canonical" href="https://sevenbet-next.vercel.app/casinos?page=2"');
-  expect(pageTwoHtml).toContain("The published review remains available.");
+  expect(pageTwoHtml).toContain("Demonstration records never provide a commercial visit action.");
 
   const filteredResponse = await request.get(`${baseUrl}/casinos?hasResponsibleGambling=true`);
   const filteredHtml = await filteredResponse.text();

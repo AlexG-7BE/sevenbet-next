@@ -42,4 +42,3 @@ Processor notices, regulator messages and user drafts stay in the restricted inc
 ## Minimum incident-register fields
 
 Reference; discovery and awareness timestamps; reporter; owners; systems/SHA; data classes; affected data subjects and jurisdictions; approximate records; recipients; containment; risk assessment; ICO decision/deadline/reference; user-communication decision/time; processor notices; evidence locations; remediation; closure approval; follow-up review.
-

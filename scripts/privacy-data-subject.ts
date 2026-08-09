@@ -61,4 +61,3 @@ main().catch((error) => {
   process.stderr.write(`${error instanceof Error ? error.message : "Privacy operation failed"}\n`);
   process.exitCode = 1;
 });
-

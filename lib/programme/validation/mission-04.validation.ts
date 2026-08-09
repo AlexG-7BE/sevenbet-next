@@ -16,7 +16,6 @@ import {
   objectInput,
   parseTaskStates,
   stringList,
-  text,
 } from "@/lib/programme/validation/common";
 import { ValidationError } from "@/lib/services/service-error";
 

@@ -25,19 +25,6 @@ const now = new Date("2026-08-04T10:00:00.000Z");
 const programmeId = "10000000-0000-4000-8000-000000000001";
 const versionId = "10000000-0000-4000-8000-000000000002";
 
-function momentMap() {
-  return {
-    situation: "After work while deciding what to do next",
-    cues: ["stress", "an offer notification"],
-    thoughtOrFeeling: "I should decide quickly",
-    response: "I opened several comparison pages",
-    immediateConsequence: "The decision felt more urgent",
-    noticeRule: "Next time I notice urgency, I will pause and name it before deciding.",
-    neutralFlags: [],
-    notSureFlags: ["thoughtOrFeeling"],
-  };
-}
-
 function goal(sourceMomentMapId: string, base = now) {
   return {
     sourceMomentMapId,

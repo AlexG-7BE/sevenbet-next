@@ -6,7 +6,7 @@
 - **Current main:** `b5c5c0317befc1f2a85b6625d6e5d918cf3b7a37`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
-- **LEGAL-IMPL-01:** implementation complete on `codex/legal-impl-01-gb-launch-remediation`; delivery PR and exact-head Preview/CI verification pending.
+- **LEGAL-IMPL-01:** implementation complete on `codex/legal-impl-01-gb-launch-remediation`; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) and exact-head Preview/CI verification pending.
 - **Production:** <https://sevenbet-next.vercel.app>; read-only baseline and smoke healthy before LEGAL-IMPL-01. Production deployment remains unchanged by this branch.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
@@ -14,7 +14,7 @@
 | Gate | Current state |
 | --- | --- |
 | LEGAL-02 | **ANALYSIS COMPLETE** |
-| LEGAL-IMPL-01 | **IMPLEMENTATION COMPLETE — DELIVERY PR PENDING** |
+| LEGAL-IMPL-01 | **IMPLEMENTATION COMPLETE — DELIVERY PR #57** |
 | Fixture truthfulness | **CLOSED — exact-ID demo disclosure/action/SEO/schema controls tested** |
 | Privacy complaints | **CLOSED — public policy and operating runbook implemented** |
 | Protected data firewall | **CLOSED / STRENGTHENED** |

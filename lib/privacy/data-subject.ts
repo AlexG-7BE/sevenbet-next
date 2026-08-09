@@ -140,4 +140,3 @@ export async function executeDataSubjectDeletion(database: PrismaClient, userId:
   });
   return { ...plan, executedAt: new Date().toISOString(), status: "deleted" as const };
 }
-

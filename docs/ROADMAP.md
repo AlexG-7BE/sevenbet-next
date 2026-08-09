@@ -13,7 +13,7 @@
 | 9 | COMM-01 | **Completed and merged** | PR #55; fail-closed partner authority machinery, no real partner or destination. |
 | 10 | UX-PERF-01 | **Completed and merged** | [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56); server-authoritative progressive discovery and measured performance work. |
 | 11 | LEGAL-02 | **Analysis complete** | Founder Office accepted the product, privacy, age and closed-beta policy decisions. |
-| 12 | LEGAL-IMPL-01 | **Implementation complete; delivery PR pending** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
+| 12 | LEGAL-IMPL-01 | **Implementation complete; PR #57 pending review** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
 | 13 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
 | 14 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
 | 15 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |

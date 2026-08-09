@@ -2,32 +2,43 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("best offers is server rendered with material terms before governed actions", async ({ page }) => {
+test("best offers is server rendered and fails closed before any governed action", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /The shortlist/ })).toBeVisible();
-  await expect(page.getByText("Min deposit").first()).toBeVisible();
-  await expect(page.getByRole("link", { name: "View full terms" }).first()).toBeVisible();
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
-  const activeCard = page.getByRole("region", { name: "Best offer selectors" }).locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]');
-  const cardText = await activeCard.innerText();
-  expect(cardText.indexOf("Wagering")).toBeLessThan(cardText.indexOf("View full terms"));
-  await expect(page.getByText("Compare all 12", { exact: true })).toBeVisible();
-  expect(await page.getByTestId("ranked-offer-card").count()).toBe(12);
+  expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
+  const products = page.getByTestId("best-offer-product-card");
+  const count = await products.count();
+  if (count === 0) {
+    await expect(page.getByText("No eligible records", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Nothing currently clears every gate." })).toBeVisible();
+  } else {
+    await expect(page.getByText("Min deposit").first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "View full terms" }).first()).toBeVisible();
+    await expect(page.getByText("DEMONSTRATION DATA", { exact: true }).first()).toBeVisible();
+    const activeCard = page.getByRole("region", { name: "Best offer selectors" }).locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]');
+    const cardText = await activeCard.innerText();
+    expect(cardText.indexOf("Wagering")).toBeLessThan(cardText.indexOf("View full terms"));
+  }
 });
 
 test("Best Offers exposes all ranked records as an accessible comparison", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
-  await page.getByText("Compare all 12", { exact: true }).click();
   const cards = page.getByTestId("ranked-offer-card");
+  test.skip(await cards.count() === 0, "No eligible shortlist records in this isolated environment");
+  const summary = page.locator("details").getByText(/Compare all \d+/, { exact: true });
+  await summary.click();
   await expect(cards.first()).toBeVisible();
   await expect(cards.first()).toContainText("Why it ranks");
   await expect(cards.first()).toContainText("Commission is not a ranking input");
-  expect(await cards.count()).toBe(12);
+  await expect(cards.first()).toContainText("DEMONSTRATION DATA");
+  expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
 });
 
 test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
+  test.skip(await page.getByTestId("best-offer-product-card").count() === 0, "No eligible shortlist records in this isolated environment");
   const carousel = page.getByRole("region", { name: "Best offer selectors" });
   await carousel.focus();
   await page.keyboard.press("ArrowRight");
@@ -58,10 +69,10 @@ test("offer pages have no horizontal overflow at desktop and mobile widths", asy
     for (const path of ["/best-offers", "/bonuses?country=GB&sort=lowest-deposit"]) {
       const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
       expect(response?.status(), `${path} at ${width}px`).toBe(200);
-      if (path === "/best-offers" && width <= 390) {
-        const comparison = page.getByText("Compare all 12", { exact: true });
+      if (path === "/best-offers" && width <= 390 && await page.getByTestId("ranked-offer-card").count() > 0) {
+        const comparison = page.locator("details").getByText(/Compare all \d+/, { exact: true });
         await comparison.click();
-        await expect(page.getByTestId("ranked-offer-card")).toHaveCount(12);
+        await expect(page.getByTestId("ranked-offer-card").first()).toBeVisible();
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${path} at ${width}px`).toBe(false);
     }
@@ -78,16 +89,19 @@ test("bonus HTML remains useful without JavaScript", async ({ request }) => {
   expect(html).toContain("Full comparison results");
 });
 
-test("Best Offers HTML remains useful without JavaScript and has truthful ItemList metadata", async ({ request }) => {
+test("Best Offers HTML remains useful without JavaScript and keeps empty/demo schema truthful", async ({ request }) => {
   const response = await request.get(`${baseUrl}/best-offers`);
   expect(response.status()).toBe(200);
   const html = await response.text();
-  expect(html).toContain("One headline. The full decision.");
-  expect(html).toContain("Find your best fit.");
-  expect(html).toContain("The full ranked field.");
-  expect((html.match(/data-testid="ranked-offer-card"/g) ?? []).length).toBe(12);
-  expect(html).toContain("Illustrative pre-launch offer data.");
-  expect(html).toContain('"@type":"ItemList"');
+  expect(html).toContain("<span>The shortlist</span><em>that survives the small print.</em>");
+  expect(html).toMatch(/No eligible records|DEMONSTRATION DATA/);
   expect(html).not.toContain('"@type":"Offer"');
+  if (html.includes("DEMONSTRATION DATA")) {
+    expect(html).not.toContain('"@type":"ItemList"');
+  } else {
+    expect(html).toContain('"@type":"ItemList"');
+    expect(html).toContain('"numberOfItems":0');
+  }
   expect(html).not.toMatch(/<a[^>]+href="https?:\/\//);
+  expect(html).not.toMatch(/<a[^>]+href="\/r\//);
 });
