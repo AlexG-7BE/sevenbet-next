@@ -9,7 +9,6 @@ export {
 } from "@/lib/programme/validation/common";
 export {
   parseMissionOneDraft,
-  parseMomentMap,
 } from "@/lib/programme/validation/mission-01.validation";
 export {
   parseCurrentGoal,

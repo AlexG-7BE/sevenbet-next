@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 
 import { offerWithdrawalBucket, shortlistReason, type BestFitCriterion } from "@/lib/public-offer/best-offer-ranking";
-import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
+import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
 
 import styles from "./BestOffers.module.css";
 
@@ -52,6 +52,7 @@ function ProductCard({ criterion, offer }: { criterion: BestFitCriterion; offer:
       <strong aria-label={`Editorial score ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}</strong>
     </div>
     <p className={styles.operatorName}>{offer.casino.name}</p>
+    {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.cardDisclosure}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current GB promotion or partner offer.</p> : null}
     <h3>{offer.bonus.title}</h3>
     <dl className={styles.productTerms}>
       <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}× bonus`}</dd></div>
@@ -63,7 +64,7 @@ function ProductCard({ criterion, offer }: { criterion: BestFitCriterion; offer:
       <p>{cardReasons[criterion]}</p>
     </div>
     <Link className={styles.cardCta} href={`/casino/${offer.casino.slug}`}>View full terms</Link>
-    <p className={styles.cardDisclosure}>18+ · Illustrative operator · Affiliate disclosure</p>
+    <p className={styles.cardDisclosure}>18+ · {offer.dataClassification === "DEMO_FIXTURE" ? "No commercial action" : "Affiliate disclosure"}</p>
   </article>;
 }
 
@@ -82,6 +83,7 @@ function RankedOfferCard({ index, offer, winners }: {
     </div>
     <div className={styles.rankedBadges}>{badges.map((key) => <span key={key}>{criterionLabels[key]}</span>)}</div>
     <p className={styles.rankedOperator}>{offer.casino.name}</p>
+    {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.rankedDisclosure}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current GB promotion or partner offer.</p> : null}
     <h3>{offer.bonus.title}</h3>
     <dl className={styles.rankedTerms}>
       <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}× bonus`}</dd></div>
@@ -103,9 +105,10 @@ function RankedOfferCard({ index, offer, winners }: {
   </article>;
 }
 
-export function BestOffersExperience({ shortlist, winners }: {
+export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
   shortlist: PublicOfferDTO[];
   winners: Record<BestFitCriterion, PublicOfferDTO | null>;
+  inventoryMode: PublicOfferInventoryMode;
 }) {
   const slides = criteria.flatMap((criterion) => winners[criterion] ? [{ criterion, offer: winners[criterion] as PublicOfferDTO }] : []);
   const [activeSlide, setActiveSlide] = useState(0);
@@ -162,14 +165,14 @@ export function BestOffersExperience({ shortlist, winners }: {
           <div><strong>9</strong><span>Material fields</span></div>
           <div><strong>TERMS FIRST</strong><span>Before the outbound click</span></div>
         </div>
-        <p className={styles.dataNote}>{shortlist.length} complete records checked · Illustrative pre-launch offer data · Verify operator, terms and market eligibility before release.</p>
+        <p className={styles.dataNote}>{shortlist.length} complete records checked · {inventoryMode === "PUBLISHED_ONLY" ? "Published inventory" : "DEMONSTRATION DATA · Fictional records"} · Verify operator, terms and market eligibility before acting.</p>
       </div>
     </section>
 
     <section className={styles.methodSection} aria-labelledby="method-title">
       <div className={styles.shell}>
         <p className={styles.kicker}>Published ranking method</p>
-        <h2 id="method-title">Every offer earns its place.</h2>
+        <h2 id="method-title">Every record follows the same method.</h2>
         <p className={styles.methodSupport}>Eligibility and complete terms are the gate. Editorial evidence decides the order. Commercial value never buys a position.</p>
         <Link className={styles.lightCta} href="#shortlist">View best offers</Link>
         <ol className={styles.methodCards}>
@@ -212,7 +215,7 @@ export function BestOffersExperience({ shortlist, winners }: {
       <div className={styles.shell}>
         <div className={styles.fullRankIntro}>
           <div>
-            <p className={styles.kicker}>All eligible records · one published order</p>
+            <p className={styles.kicker}>All comparison records · one natural editorial order</p>
             <h2 id="full-rank-title">The full ranked field.</h2>
           </div>
           <p>The three selectors above answer the quickest questions. Open the full field when you want to compare every eligible record, material term and editorial signal.</p>

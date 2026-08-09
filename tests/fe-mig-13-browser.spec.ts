@@ -16,7 +16,7 @@ test("Affiliate Disclosure renders the approved four-section trust document", as
   await expect(page.getByRole("link", { name: "Read methodology", exact: true })).toHaveAttribute("href", "/methodology");
   for (const heading of [
     "THE COMMERCIAL RELATIONSHIP",
-    "EDITORIAL JUDGEMENT IS NOT FOR SALE.",
+    "COMPENSATION DOES NOT SET THE SCORE.",
     "WHAT READERS CAN VERIFY",
     "CORRECTIONS",
   ]) await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();

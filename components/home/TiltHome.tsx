@@ -141,7 +141,7 @@ export function TiltHome() {
         <div className={styles.toolsHeading}>
           <span>WHAT YOU KEEP</span>
           <h2 id="tools-title"><strong>Not advice to remember.</strong><em>Tools you can use.</em></h2>
-          <p>Available missions save a concrete map, rule or review to your private Programme.</p>
+          <p>Available missions create a concrete map, rule or review. Private narrative stays in this browser session; neutral progress can save to your Programme.</p>
         </div>
         <div className={styles.toolGrid}>
           {tools.map((tool) => (
@@ -159,11 +159,11 @@ export function TiltHome() {
         <div className={styles.evidenceHeading}>
           <span>WHY THIS EXISTS</span>
           <h2 id="evidence-title"><strong>Built from evidence.</strong><em>Honest about its limits.</em></h2>
-          <p>SevenBet uses public NHS and NICE guidance to shape recognition language and Programme safety boundaries. The complete Programme has not yet been clinically evaluated.</p>
+          <p>SevenBet uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.</p>
         </div>
         <div className={styles.evidenceGrid}>
           <article><span>NHS</span><strong>Recognition and support guidance</strong><p>Used to shape the self-recognition language.</p></article>
-          <article><span>NICE NG248</span><strong>Assessment and treatment guidance</strong><p>A source for safe programme boundaries.</p></article>
+          <article><span>NICE NG248</span><strong>Assessment and treatment guidance</strong><p>A source for bounded Programme language and risk controls.</p></article>
           <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>Missions 01–04 are implemented; later missions remain planned.</p></article>
           <article className={styles.limitCard}><span>CLEAR LIMIT</span><strong>No clinical claim</strong><p>The complete Programme has not yet been clinically evaluated.</p></article>
         </div>
@@ -174,7 +174,7 @@ export function TiltHome() {
         <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>useful mission.</em></h2>
         <p>No promise of a perfect outcome. Just a practical first step you can finish.</p>
         <ActionLink className={styles.primaryButton} href="/program" size="large">Start the 10-Step Program</ActionLink>
-        <small>Next: Mission 01 · private until you choose to save</small>
+        <small>Next: Mission 01 · private narrative stays in this browser session</small>
       </section>
     </div>
   );

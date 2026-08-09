@@ -45,6 +45,7 @@ function offer(slug: string, patch: {
     },
     action: { href: available ? `/r/${slug}` : null, available },
     commercialAvailability: available ? "AVAILABLE" : "UNAVAILABLE",
+    dataClassification: "PUBLISHED_RECORD",
   };
 }
 

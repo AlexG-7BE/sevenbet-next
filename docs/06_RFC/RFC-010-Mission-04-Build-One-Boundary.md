@@ -15,6 +15,8 @@ Governing Documents:
 
 # RFC-010 — Mission 04 Build One Boundary
 
+> **Persistence supersession — 2026-08-09:** [RFC-017](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) supersedes this RFC only for user-authored boundary narrative. Trigger, rule, unit/period wording, execution detail and coping text are browser-session local; the server retains only RFC-017's bounded structured fields and neutral legacy-column markers. Mission content, order, prerequisites, `+100 XP` and `Boundary built` remain unchanged.
+
 ## Status and decision boundary
 
 This RFC was approved by the founder/product owner on 2026-08-04. It defines the product,

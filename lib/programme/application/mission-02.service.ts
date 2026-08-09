@@ -28,6 +28,7 @@ import {
   parseMissionTwoDraft,
 } from "@/lib/programme/validation";
 import { ValidationError } from "@/lib/services/service-error";
+import { localOnlyGoalNarrative } from "@/lib/programme/privacy";
 
 function jsonGoal(value: ReturnType<typeof parseCurrentGoal>) {
   return {
@@ -139,13 +140,9 @@ export class MissionTwoService {
         enrollmentId: enrollment.id,
         sourceMomentMapId: momentMap.id,
         direction: currentGoalInput.direction!,
-        action: currentGoalInput.action!,
-        triggerOrSituation: currentGoalInput.triggerOrSituation!,
-        alternativeAction: currentGoalInput.alternativeAction!,
-        successSignal: currentGoalInput.successSignal!,
+        ...localOnlyGoalNarrative,
         reviewAt: currentGoalInput.reviewAt!,
         confidence: currentGoalInput.confidence!,
-        confidenceAdjustment: currentGoalInput.confidenceAdjustment!,
         status: currentGoalInput.status!,
       });
       await unitOfWork.progress.upsertMissionProgress({

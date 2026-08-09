@@ -300,13 +300,8 @@ export type GoalDirectionInput = (typeof goalDirections)[number];
 export type CurrentGoalInput = {
   sourceMomentMapId: string;
   direction: GoalDirectionInput;
-  action: string;
-  triggerOrSituation: string;
-  alternativeAction: string;
-  successSignal: string;
   reviewAt: Date;
   confidence: number;
-  confidenceAdjustment: string;
   status: "active" | "completed" | "paused";
 };
 
@@ -316,9 +311,7 @@ export type UrgeLearningDraftInput = {
   evidenceReviewed: boolean;
   waveMomentsReviewed: (typeof urgeWaveMoments)[number][];
   scenarioAnswer?: (typeof scenarioAnswers)[number];
-  earlySignalCategory?: EarlySignalCategoryInput;
-  earlySignalText?: string;
-  notNow: boolean;
+  signalChoice?: "local" | "not_now";
   meaningAnswer?: (typeof meaningAnswers)[number];
 };
 
@@ -326,14 +319,8 @@ export type ActiveBoundaryDraftInput = {
   evidenceReviewed: boolean;
   category: (typeof boundaryCategories)[number];
   triggerType: (typeof boundaryTriggerTypes)[number];
-  triggerText?: string;
-  ruleText: string;
   limitValue?: number;
-  limitUnit?: string;
-  limitPeriod?: string;
   executionMethod: (typeof boundaryExecutionMethods)[number];
-  executionDetail?: string;
-  copingAction: string;
   reviewAt: Date;
   scenarioAnswer: (typeof boundaryScenarioAnswers)[number];
   strengthChecks: (typeof boundaryStrengthChecks)[number][];

@@ -30,18 +30,18 @@ test("Affiliate Disclosure is a server-rendered four-section document inside the
 
 test("Affiliate Disclosure keeps commercial claims qualified and exposes only Methodology", () => {
   for (const content of [
-    "Some links on SevenBet may be affiliate links",
+    "Future eligible governed links on SevenBet may be affiliate links",
     "SevenBet may receive a commission",
     "Not every operator",
-    "should not automatically determine review scores or rankings",
-    "should not remove negative findings",
+    "Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial",
+    "Commercial relationships do not remove negative findings",
     "A paid link is not proof",
   ]) assert.ok(affiliateDocument.includes(content), `missing Affiliate content: ${content}`);
 
   assert.match(affiliateDocument, /href="\/methodology"/);
   assert.doesNotMatch(affiliateDocument, /href="\/(?:r|go|casinos|bonuses|best-offers|compare)(?:\/|"|\?)/);
   assert.doesNotMatch(affiliateDocument, /Play now|Claim bonus|Browse Casino|casino recommendations/iu);
-  assert.doesNotMatch(affiliateDocument, /affiliate revenue can never affect ranking/iu);
+  assert.doesNotMatch(affiliateDocument, /should not automatically determine|affiliate revenue can never affect ranking/iu);
 });
 
 test("About implements the corrected approved visual family, not the retired four-section document", () => {

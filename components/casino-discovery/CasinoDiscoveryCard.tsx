@@ -30,6 +30,7 @@ function Signal({ children, classNames }: { children: ReactNode; classNames: Cas
 }
 
 function ReviewCardContents({ casino, position, classNames }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames }) {
+  const demo = casino.dataClassification === "DEMO_FIXTURE";
   const canVisit = casino.visitAction.available && casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug);
   const unavailable = visitActionUnavailableCopy(casino.visitAction);
   const freshness = formatDate(casino.editorialUpdatedAt ?? casino.publishedAt);
@@ -43,17 +44,17 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     {position !== undefined && <span aria-label={`Directory result position ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
     <div className={classNames.cardHeader}>
       <div className={classNames.logo}>{casino.logo ? <img alt={casino.logo.alt} height={casino.logo.height ?? 72} loading="lazy" src={casino.logo.url} width={casino.logo.width ?? 144} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}</div>
-      <div className={classNames.identity}><h2><Link href={`/casino/${casino.slug}`}>{casino.name}</Link></h2>{freshness && <small>Reviewed {freshness}</small>}</div>
+      <div className={classNames.identity}><h2><Link href={`/casino/${casino.slug}`}>{casino.name}</Link></h2>{demo ? <small>DEMONSTRATION DATA · FICTIONAL OPERATOR</small> : freshness && <small>Reviewed {freshness}</small>}</div>
       {casino.rating !== null && <div aria-label={`Editorial score ${casino.rating.toFixed(1)} out of 10`} className={classNames.score}><strong>{casino.rating.toFixed(1)}</strong><span>/10</span></div>}
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}
     {signals.length > 0 && <div className={classNames.signals}>{signals.map((signal) => <Signal classNames={classNames} key={signal}>{signal}</Signal>)}</div>}
     <div className={classNames.offerBlock}>
-      {casino.featuredBonus ? <><span>Published bonus terms · 18+</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 && <small>{casino.featuredBonus.keyTerms.slice(0, 3).join(" · ")} · Terms apply</small>}</> : <><span>Bonus unavailable</span><strong>No active public bonus</strong><p>The review remains available without a commercial bonus.</p></>}
+      {casino.featuredBonus ? <><span>{demo ? "Fictional demonstration fields · 18+" : "Published bonus terms · 18+"}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 && <small>{casino.featuredBonus.keyTerms.slice(0, 3).join(" · ")} · {demo ? "Not claimable" : "Terms apply"}</small>}</> : <><span>Bonus unavailable</span><strong>No active public bonus</strong><p>The review remains available without a commercial bonus.</p></>}
     </div>
-    <p className={classNames.commission}>Review access is editorial. A visit action is conditional and may compensate SevenBet.</p>
+    <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate SevenBet."}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
-    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>Read review</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
+    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>{demo ? "View demonstration" : "Read review"}</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
   </>;
 }
 
@@ -66,7 +67,7 @@ export function DirectoryFeaturedTheatreMarkup({ casino, classNames }: { casino:
   return <section aria-label="Published review preview" className={classNames.featureTheatre}>
     <Image alt="" aria-hidden="true" className={classNames.featureMedia} fill priority sizes="(max-width: 760px) 1px, (max-width: 1280px) 100vw, 1280px" src={DIRECTORY_EDITORIAL_MEDIA} />
     <div aria-hidden="true" className={classNames.featureOverlay} />
-    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>Published casino review · 18+</span><h2>Know the operator<br /><em>before the offer.</em></h2><p>Licence, payments, controls and material bonus terms—read in one calm snapshot.</p><div className={classNames.featureMetrics}><span><b>10-point</b> Editor Score</span><span><b>Published</b> evidence</span><span><b>Review</b> before visit</span></div></div>
+    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>{casino.dataClassification === "DEMO_FIXTURE" ? "Fictional review demonstration · 18+" : "Published casino review · 18+"}</span><h2>Know the operator<br /><em>before the offer.</em></h2><p>Licence, payments, controls and material bonus terms—read in one calm snapshot.</p><div className={classNames.featureMetrics}><span><b>10-point</b> Editor Score</span><span><b>{casino.dataClassification === "DEMO_FIXTURE" ? "Demo" : "Published"}</b> evidence</span><span><b>Review</b> before visit</span></div></div>
     <article className={classNames.featureCard}><ReviewCardContents casino={casino} classNames={classNames} /></article>
   </section>;
 }

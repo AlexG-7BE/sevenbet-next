@@ -14,6 +14,8 @@ Governing Documents:
 
 # RFC-009 — Mission 03 Urge Literacy and Early Signal
 
+> **Persistence supersession — 2026-08-09:** [RFC-017](RFC-017-GB-Legal-Privacy-and-Launch-Remediation.md) supersedes this RFC only for early-signal narrative/category persistence. Personal signal content is browser-session local; the server records the bounded `local`/`not_now` choice and approved learning/completion facts. Mission content, order and `+90 XP` remain unchanged.
+
 ## Status and decision boundary
 
 Founder/product approval was recorded on 2026-08-04. This RFC authorises backend and frontend implementation of the defined Mission 03 flow, the deterministic `+90 XP` reward, the private `UrgeLearningRecord` aggregate and the post-mission Dashboard state.

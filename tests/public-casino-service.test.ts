@@ -6,6 +6,7 @@ import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "../lib
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { PublicCasinoService } from "../lib/services/public-casino.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
+import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const legacy = getCasinos().slice(0, 3);
@@ -155,6 +156,20 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
     assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
+  });
+
+  await t.test("exact-ID demo profiles remain review-only under otherwise permissive authority", async () => {
+    const record = publishedRecord("fictional-demo");
+    record.casinoId = temporaryDemoCasinoIds[0];
+    (record.snapshot as Record<string, unknown>).id = temporaryDemoCasinoIds[0];
+    const routes = [
+      { casinoId: record.casinoId, casinoBonusId: null, slug: "fictional-demo-route" },
+      { casinoId: record.casinoId, casinoBonusId: "bonus-fictional-demo", slug: "fictional-demo-bonus-route" },
+    ];
+    const result = await authorizedService(store([record], ["fictional-demo"], routes)).getCasino("fictional-demo", allowJurisdictionAuthority);
+    assert.ok(result);
+    assert.deepEqual(result.affiliate, { href: null, available: false });
+    assert.deepEqual(result.bonuses[0]?.affiliate, { href: null, available: false });
   });
 });
 

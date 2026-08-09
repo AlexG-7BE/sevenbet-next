@@ -20,7 +20,8 @@ import {
   hashOpaqueToken,
   localDateAt,
 } from "@/lib/programme/security";
-import { parseMomentMap, parseTimeZone } from "@/lib/programme/validation";
+import { parseTimeZone } from "@/lib/programme/validation";
+import { localOnlyMomentMap } from "@/lib/programme/privacy";
 
 export class ProgrammeClaimService {
   private readonly dashboardService: ProgrammeDashboardService;
@@ -61,7 +62,6 @@ export class ProgrammeClaimService {
         anonymousSession.taskStates,
         definition.completion.taskStates,
       );
-      const momentMapInput = parseMomentMap(anonymousSession.draft ?? {}, true);
       const source = await requireControlProgram(unitOfWork);
       let enrollment = await unitOfWork.progress.findEnrollment(userId, source.program.id);
       if (enrollment) {
@@ -91,7 +91,7 @@ export class ProgrammeClaimService {
       }
       const momentMap = await unitOfWork.artefacts.createMomentMap({
         enrollmentId: enrollment.id,
-        ...momentMapInput,
+        ...localOnlyMomentMap,
         missionVersion: anonymousSession.missionVersion,
         evidenceVersion: anonymousSession.evidenceVersion,
       });

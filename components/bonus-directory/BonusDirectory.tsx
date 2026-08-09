@@ -24,7 +24,12 @@ function date(value: string | null) {
 }
 
 function safeActionHref(offer: PublicOfferDTO) {
-  return offer.action.available && offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href) ? offer.action.href : null;
+  return offer.dataClassification !== "DEMO_FIXTURE" && offer.action.available && offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href) ? offer.action.href : null;
+}
+
+function DemoFixtureNotice({ offer }: { offer: PublicOfferDTO }) {
+  if (offer.dataClassification !== "DEMO_FIXTURE") return null;
+  return <p className={styles.conditions}><strong>DEMONSTRATION DATA</strong> · Fictional record. Not a current GB promotion, partner offer or claimable bonus.</p>;
 }
 
 function bonusType(value: string) {
@@ -72,13 +77,14 @@ function OfferAction({ offer, compact = false }: { offer: PublicOfferDTO; compac
 
 export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {
   return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`}>
-    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / <span className={styles.desktopOnly}>Published</span><span className={styles.mobileOnly}>Fixture</span></span><span>{offer.commercialAvailability === "AVAILABLE" ? "Action available" : "Review only"}</span></div>
+    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? "Demo fixture" : "Published"}</span><span>{offer.commercialAvailability === "AVAILABLE" ? "Action available" : "Review only"}</span></div>
     <p className={styles.offerType}>{bonusType(offer.bonus.type)}</p>
     <h3>{offer.casino.name}</h3>
     <p className={styles.offerHeadline}>{offer.bonus.title}</p>
     <dl className={styles.featureTerms}>{evidenceRows(offer).slice(0, 7).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>
     <dl className={styles.featureMobileTerms}>{mobileFeaturedTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>
     {offer.bonus.importantConditions.length > 0 && <p className={styles.conditions}>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</p>}
+    <DemoFixtureNotice offer={offer} />
     <div className={styles.featureActions}><Link href={`/casino/${offer.casino.slug}`}>Read Review <span aria-hidden="true">→</span></Link><OfferAction offer={offer} /></div>
   </article>;
 }
@@ -100,7 +106,7 @@ function BonusFilterForm({ facets, query, total, compact = false }: { facets: Pu
   return <InstantDiscoveryForm action="/bonuses" className={compact ? styles.filterFormCompact : styles.filterForm} debouncedFields={["maxDeposit", "maxWagering"]} key={`bonus-filters:${compact}:${JSON.stringify(query)}`} pendingLabel="Updating bonus results…">
     <FilterFields facets={facets} query={query} />
     <p className={styles.marketNote}>Country is a comparison preference, not detected location, legal advice or proof that an offer is available to you.</p>
-    <div className={styles.filterActions}><div><strong>{total} matching offer{total === 1 ? "" : "s"}</strong><span>Latest current published snapshots only</span></div><Link href="/bonuses">Reset</Link><button type="submit">Show Results</button></div>
+    <div className={styles.filterActions}><div><strong>{total} matching record{total === 1 ? "" : "s"}</strong><span>Server-classified comparison records</span></div><Link href="/bonuses">Reset</Link><button type="submit">Show Results</button></div>
   </InstantDiscoveryForm>;
 }
 
@@ -129,7 +135,7 @@ export function ActiveBonusFilters({ query, raw }: { query: PublicOfferQuery; ra
     ["maxWagering", query.maxWagering === undefined ? null : `Wagering ≤ ${query.maxWagering}`],
     ["availability", query.availability === "AVAILABLE" ? "Action available" : query.availability === "UNAVAILABLE" ? "Review only" : null],
   ].filter((item): item is [string, string] => Boolean(item[1]));
-  if (!values.length) return <p className={styles.filterSummary}>All eligible current published offers are shown.</p>;
+  if (!values.length) return <p className={styles.filterSummary}>All current comparison records are shown.</p>;
   return <div className={styles.activeFilters} aria-label="Active filters"><strong>Active Filters</strong>{values.map(([key, label]) => <Link aria-label={`Remove ${label} filter`} href={filterHref(raw, key)} key={key}>{label}<span aria-hidden="true">×</span></Link>)}<Link className={styles.clearFilters} href="/bonuses">Clear All</Link></div>;
 }
 
@@ -138,7 +144,7 @@ export function BonusComparisonList({ offers, startPosition }: { offers: PublicO
     <div aria-hidden="true" className={styles.comparisonHeader}><span>Position / offer</span><span>Headline / material terms</span><span>Licence / payments</span><span>Commercial state</span></div>
     {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`} role="listitem">
       <div className={`${styles.rowIdentity} ${styles.desktopComparisonCell}`}><span>{String(startPosition + index).padStart(2, "0")}</span><div><p>{bonusType(offer.bonus.type)}</p><h3>{offer.casino.name}</h3><Link href={`/casino/${offer.casino.slug}`}>Read Review →</Link></div></div>
-      <div className={`${styles.rowTerms} ${styles.desktopComparisonCell}`}><strong>{offer.bonus.title}</strong><dl>{materialTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>{offer.bonus.importantConditions.length > 0 && <small>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</small>}</div>
+      <div className={`${styles.rowTerms} ${styles.desktopComparisonCell}`}><strong>{offer.bonus.title}</strong><DemoFixtureNotice offer={offer} /><dl>{materialTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>{offer.bonus.importantConditions.length > 0 && <small>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</small>}</div>
       <div className={`${styles.rowContext} ${styles.desktopComparisonCell}`}><span>Licence</span><strong>{offer.casino.licenses[0]?.authority || "Not listed"}</strong><span>Payments</span><p>{offer.casino.payments.slice(0, 3).map((item) => item.name).join(" · ") || "Not listed"}</p><small>Reviewed {date(offer.casino.lastReviewedAt)}</small></div>
       <div className={`${styles.rowCommercial} ${styles.desktopComparisonCell}`}><span className={offer.commercialAvailability === "AVAILABLE" ? styles.availableBadge : styles.unavailableBadge}>{offer.commercialAvailability === "AVAILABLE" ? "Available" : "Review only"}</span><p>Publication and position do not depend on affiliate availability.</p><OfferAction compact offer={offer} /></div>
       <div className={`${styles.mobileMaterialResult} ${index === 0 ? styles.mobileMaterialResultFeatured : ""}`}>
@@ -146,6 +152,7 @@ export function BonusComparisonList({ offers, startPosition }: { offers: PublicO
         <h3>{offer.casino.name}</h3>
         <span className={styles.mobileResultStatus}>{index === 0 ? "Featured" : "Result"}</span>
         <p className={styles.mobileResultHeadline}>{offer.bonus.title}</p>
+        <DemoFixtureNotice offer={offer} />
         <div className={styles.mobileResultTerms}><span>DEP&nbsp; {money(offer.bonus.minimumDeposit, offer.bonus.currency)}</span><span>WAGER&nbsp; {offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}×`}</span><span>PAYOUT&nbsp; {payoutEvidence(offer)}</span></div>
         <p className={styles.mobileResultEvidence}>{offer.casino.licenses[0]?.authority || "Not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Not listed"}</p>
         <Link className={styles.mobileReviewAction} href={`/casino/${offer.casino.slug}`}>Review →</Link>
@@ -165,7 +172,7 @@ export function BonusPagination({ page, pageCount, raw }: { page: number; pageCo
   };
   return <nav aria-label="Bonus result pages" className={styles.pagination}>
     {page > 1 ? <Link href={href(page - 1)}>← Previous</Link> : <span aria-disabled="true">← Previous</span>}
-    <div><span>Published directory</span><strong>Page {page} / {pageCount}</strong></div>
+    <div><span>Comparison directory</span><strong>Page {page} / {pageCount}</strong></div>
     {page < pageCount ? <Link href={href(page + 1)}>Next →</Link> : <span aria-disabled="true">Next →</span>}
   </nav>;
 }
@@ -175,7 +182,7 @@ export function BonusEducation() {
     <section className={styles.contractSection}><div className={styles.contractHeading}><p>Compare the contract,<br />not the headline.</p></div></section>
     <section className={styles.ledgerSection}><div className={styles.shell}><div className={styles.ledgerIntro}><span>Expressive method · terms ledger</span><h2>One offer.<br />Four decision fields.</h2></div><ol className={styles.ledgerList}><li><b>01</b><div><strong>Wagering</strong><span>How much turnover?</span></div></li><li><b>02</b><div><strong>Deposit</strong><span>What cash is required?</span></div></li><li><b>03</b><div><strong>Expiry</strong><span>When do rights end?</span></div></li><li><b>04</b><div><strong>Limits</strong><span>What blocks withdrawal?</span></div></li></ol></div></section>
     <section className={styles.noTerm}><div className={styles.shell}><h2>No term, no promise.</h2></div></section>
-    <section className={styles.evidenceSection}><div className={styles.shell}><div className={styles.evidenceGrid}><article><span><span className={styles.desktopOnly}>Decision method · compare in this order</span><span className={styles.mobileOnly}>Terms anatomy / missing data stays visible</span></span><h2>Headline ≠ Terms.</h2><div className={styles.evidenceTable}><div><b>Headline</b><span>Published offer description</span><em>Source field</em></div><div><b>Wagering</b><span>Published multiplier or wording</span><em>Source field</em></div><div><b>Min deposit</b><span>Published cash requirement</span><em>Source field</em></div><div><b>Max bet</b><span>Not listed remains not listed</span><em>Missing</em></div><div><b>Game contribution</b><span>Not listed remains not listed</span><em>Missing</em></div><div><b>Expiry / withdrawal</b><span>Not listed remains not listed</span><em>Missing</em></div></div></article><article className={styles.stateCard}><span>State contract</span><h2>When evidence breaks, action stops.</h2><div><b>Unavailable</b><span>Review remains</span></div><div><b>Expired</b><span>Terms remain</span></div><div className={styles.dangerRow}><b>Terms under review</b><span>Action removed</span></div><div><b>No governed visit</b><span>Internal review only</span></div></article></div></div></section>
+    <section className={styles.evidenceSection}><div className={styles.shell}><div className={styles.evidenceGrid}><article><span><span className={styles.desktopOnly}>Decision method · compare in this order</span><span className={styles.mobileOnly}>Terms anatomy / missing data stays visible</span></span><h2>Headline ≠ Terms.</h2><div className={styles.evidenceTable}><div><b>Headline</b><span>Recorded offer description</span><em>Source field</em></div><div><b>Wagering</b><span>Recorded multiplier or wording</span><em>Source field</em></div><div><b>Min deposit</b><span>Recorded cash requirement</span><em>Source field</em></div><div><b>Max bet</b><span>Not listed remains not listed</span><em>Missing</em></div><div><b>Game contribution</b><span>Not listed remains not listed</span><em>Missing</em></div><div><b>Expiry / withdrawal</b><span>Not listed remains not listed</span><em>Missing</em></div></div></article><article className={styles.stateCard}><span>State contract</span><h2>When evidence breaks, action stops.</h2><div><b>Unavailable</b><span>Review remains</span></div><div><b>Expired</b><span>Terms remain</span></div><div className={styles.dangerRow}><b>Terms under review</b><span>Action removed</span></div><div><b>No governed visit</b><span>Internal review only</span></div></article></div></div></section>
     <section className={styles.faqSection}><div className={styles.shell}><div className={styles.faqHeading}><span>Bonus education · neutral answers</span><h2>Questions before action.</h2><p>A published bonus is not a recommendation to play. Compare the cost, restrictions and local context first.</p></div><div className={styles.faqList}><details><summary>What does wagering mean?</summary><p>It describes the turnover required under the published terms. If the value is missing, SevenBet shows it as not listed instead of estimating it.</p></details><details><summary>Does a larger maximum bonus make an offer better?</summary><p>No. Deposit requirements, wagering, eligibility, expiry and withdrawal restrictions may matter more than the headline amount.</p></details><details><summary>Does an available action prove I am eligible?</summary><p>No. Country is only a comparison preference. Confirm local law, operator eligibility and the current operator terms yourself.</p></details><details><summary>How does SevenBet earn money?</summary><p>Some governed outbound links may compensate SevenBet. Publication and server-owned sorting do not depend on commercial availability.</p></details></div></div></section>
   </>;
 }

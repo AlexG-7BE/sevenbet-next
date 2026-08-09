@@ -26,6 +26,7 @@ import {
   parseActiveBoundary,
   parseMissionFourDraft,
 } from "@/lib/programme/validation";
+import { localOnlyBoundaryNarrative } from "@/lib/programme/privacy";
 
 function jsonBoundary(value: ReturnType<typeof parseActiveBoundary>) {
   return {
@@ -137,11 +138,6 @@ export class MissionFourService {
           "An active saved early signal is required for this decision point",
         );
       }
-      const triggerText = boundary.triggerType === "saved_early_signal"
-        ? urgeRecord!.earlySignalText
-          ?? urgeRecord!.earlySignalCategory?.toLowerCase().replaceAll("_", " ")
-          ?? null
-        : boundary.triggerText ?? null;
       const activeBoundary = await unitOfWork.artefacts.upsertActiveBoundary({
         enrollmentId: enrollment.id,
         sourceCurrentGoalId: currentGoal && !currentGoal.deletedAt ? currentGoal.id : null,
@@ -151,14 +147,11 @@ export class MissionFourService {
         evidenceVersion: definition.completion.evidenceVersion,
         category: boundary.category!,
         triggerType: boundary.triggerType!,
-        triggerText,
-        ruleText: boundary.ruleText!,
+        ...localOnlyBoundaryNarrative,
         limitValue: boundary.limitValue ?? null,
-        limitUnit: boundary.limitUnit ?? null,
-        limitPeriod: boundary.limitPeriod ?? null,
+        limitUnit: null,
+        limitPeriod: null,
         executionMethod: boundary.executionMethod!,
-        executionDetail: boundary.executionDetail ?? null,
-        copingAction: boundary.copingAction!,
         reviewAt: boundary.reviewAt!,
         status: boundary.status!,
       });

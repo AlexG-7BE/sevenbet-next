@@ -2,6 +2,8 @@ import type { PublicCasinoAffiliate, PublicCasinoMedia } from "@/lib/public-casi
 
 export type PublicOfferAvailability = "AVAILABLE" | "UNAVAILABLE";
 export type PublicOfferSort = "editorial" | "newest" | "highest-bonus" | "lowest-wagering" | "lowest-deposit";
+export type PublicOfferDataClassification = "DEMO_FIXTURE" | "PUBLISHED_RECORD";
+export type PublicOfferInventoryMode = "DEMO_ONLY" | "MIXED" | "PUBLISHED_ONLY";
 
 export interface PublicOfferDTO {
   casino: {
@@ -50,6 +52,7 @@ export interface PublicOfferDTO {
   };
   action: PublicCasinoAffiliate;
   commercialAvailability: PublicOfferAvailability;
+  dataClassification: PublicOfferDataClassification;
 }
 export interface PublicOfferQuery {
   country?: string;
@@ -88,4 +91,5 @@ export interface PublicOfferSearchResult {
   pageCount: number;
   query: PublicOfferQuery;
   facets: PublicOfferFacets;
+  inventoryMode: PublicOfferInventoryMode;
 }

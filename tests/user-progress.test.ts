@@ -675,11 +675,12 @@ test("server hydration does not erase a stronger device fallback", () => {
   assert.equal(preserved.xp, 40);
 });
 
-test("anonymous localStorage fallback remains in ProgramExperience", () => {
+test("anonymous Programme fallback is tab-scoped in ProgramExperience", () => {
   const source = readFileSync("components/ProgramExperience.tsx", "utf8");
   assert.match(source, /sevenbet-program-progress-v1/);
-  assert.match(source, /window\.localStorage\.getItem/);
-  assert.match(source, /window\.localStorage\.setItem/);
+  assert.doesNotMatch(source, /window\.localStorage/);
+  assert.match(source, /window\.sessionStorage\.getItem/);
+  assert.match(source, /window\.sessionStorage\.setItem/);
 });
 
 test("orphan preflight fails when a referenced user does not exist", () => {

@@ -1,9 +1,13 @@
 import type { CasinoCoreDraft } from "@/lib/casino-builder/types";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
+import {
+  PRODUCTION_SITE_ORIGIN,
+  TEMPORARY_DEMO_ACTOR_LABEL,
+  TEMPORARY_DEMO_DATASET_ID,
+  temporaryDemoCasinoIds as authoritativeTemporaryDemoCasinoIds,
+} from "../lib/demo-data/temporary-demo-authority";
 
-export const TEMPORARY_DEMO_DATASET_ID = "temporary-production-demo-casinos-v2";
-export const TEMPORARY_DEMO_ACTOR_LABEL = "Founder Office approved synthetic dataset";
-export const PRODUCTION_SITE_ORIGIN = "https://sevenbet-next.vercel.app";
+export { PRODUCTION_SITE_ORIGIN, TEMPORARY_DEMO_ACTOR_LABEL, TEMPORARY_DEMO_DATASET_ID };
 
 function id(scope: number, slot: number) {
   return `${String(scope).padStart(8, "0")}-0000-4000-8000-${String(slot).padStart(12, "0")}`;
@@ -182,7 +186,7 @@ export const temporaryDemoAffiliates = [
   affiliate(temporaryDemoCasinos[5], 205),
 ] as const;
 
-export const temporaryDemoCasinoIds = temporaryDemoCasinos.map((casino) => casino.id);
+export const temporaryDemoCasinoIds = [...authoritativeTemporaryDemoCasinoIds];
 export const temporaryDemoCasinoSlugs = temporaryDemoCasinos.map((casino) => casino.slug);
 export const temporaryDemoOwnedIds = new Set([
   ...temporaryDemoCasinos.flatMap((casino) => [casino.id, ...casino.draft.licenses.map((item) => item.id), ...casino.draft.countries.map((item) => item.id), ...casino.draft.paymentMethods.map((item) => item.id), ...casino.draft.gameProviders.map((item) => item.id), ...casino.draft.gameCategories.map((item) => item.id), ...casino.draft.casinoBonuses.map((item) => item.id), ...casino.images.map((item) => item.id)]),

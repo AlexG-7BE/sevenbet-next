@@ -42,9 +42,9 @@ test("every supported URL filter and sort is server owned", async ({ page }) => 
   }
 });
 
-test("empty results, material terms and commercial states remain truthful", async ({ page }) => {
+test("invalid filters fail safely while material terms and commercial states remain truthful", async ({ page }) => {
   await page.goto(`${baseUrl}/bonuses?country=ZZ`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: /No Published Offers Match/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Terms Before The Number/i })).toBeVisible();
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });

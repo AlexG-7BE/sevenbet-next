@@ -23,10 +23,7 @@ import {
   hashOpaqueToken,
   pendingClaimLifetimeMs,
 } from "@/lib/programme/security";
-import {
-  parseMissionOneDraft,
-  parseMomentMap,
-} from "@/lib/programme/validation";
+import { parseMissionOneDraft } from "@/lib/programme/validation";
 
 function persistenceMissionStatus(value: ReturnType<typeof missionStateFromTaskCount>) {
   return value.toUpperCase() as "NOT_STARTED" | "IN_PROGRESS" | "READY_TO_SAVE";
@@ -62,20 +59,11 @@ export class ProgrammeSessionService {
       throw new ProgrammeStateConflictError("Mission 01 draft can no longer be changed");
     }
     const input = parseMissionOneDraft(value);
-    const previousDraft = session.draft
-      && typeof session.draft === "object"
-      && !Array.isArray(session.draft)
-      ? session.draft as Record<string, unknown>
-      : {};
-    const mergedDraft = { ...previousDraft, ...input.momentMap };
     const mergedTaskStates = mergedMissionTasks(
       session.taskStates,
       input.taskStates,
       policy.taskStates,
     );
-    if (mergedTaskStates.length === policy.taskStates.length) {
-      parseMomentMap(mergedDraft, true);
-    }
     const state = missionStateFromTaskCount(
       mergedTaskStates.length,
       policy.taskStates.length,
@@ -83,7 +71,7 @@ export class ProgrammeSessionService {
     const updated = await this.unitOfWork.sessions.updateAnonymousSession(session.id, {
       missionState: persistenceMissionStatus(state),
       taskStates: mergedTaskStates,
-      draft: mergedDraft,
+      draft: { contentStorage: "browser_session" },
       expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
       lastActivityAt: now,
     });
@@ -100,7 +88,6 @@ export class ProgrammeSessionService {
     return this.unitOfWork.serializable(async (unitOfWork) => {
       const session = await this.requireAnonymousSession(unitOfWork, token, now);
       assertMissionTasksComplete(session.taskStates, policy.taskStates);
-      parseMomentMap(session.draft ?? {}, true);
       if (session.missionState !== "READY_TO_SAVE") {
         throw new ProgrammeStateConflictError("Mission 01 is not ready to save");
       }

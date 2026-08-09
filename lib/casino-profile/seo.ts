@@ -5,6 +5,7 @@ import { profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presen
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
 import { absoluteUrl } from "@/lib/site";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 
 function editorialCanonical(document: CasinoEditorialDocument | null, fallback: string) {
   const path = document?.seo.canonicalPath;
@@ -20,13 +21,14 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
     };
   }
 
+  const demo = isTemporaryDemoCasinoId(casino.id);
   const seo = editorial?.seo;
-  const title = seo?.title || casino.seo.title;
-  const description = seo?.description || casino.seo.description;
+  const title = demo ? `${casino.name} Fictional Review Demonstration | SevenBet` : seo?.title || casino.seo.title;
+  const description = demo ? "A fictional casino review demonstration, not a current GB operator, licence claim, partner offer or live promotion. No commercial visit is available." : seo?.description || casino.seo.description;
   const canonical = editorialCanonical(editorial, casino.seo.canonical);
-  const robots = parseRobotsMetadata(seo?.robots || casino.seo.robots);
-  const socialTitle = seo?.socialTitle || casino.seo.socialTitle || title;
-  const socialDescription = seo?.socialDescription || casino.seo.socialDescription || description;
+  const robots = demo ? { index: false, follow: true } : parseRobotsMetadata(seo?.robots || casino.seo.robots);
+  const socialTitle = demo ? title : seo?.socialTitle || casino.seo.socialTitle || title;
+  const socialDescription = demo ? description : seo?.socialDescription || casino.seo.socialDescription || description;
   const images = casino.seo.socialImage ? [{ url: casino.seo.socialImage, alt: `${casino.name} published review` }] : undefined;
 
   return {
@@ -41,6 +43,7 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
 
 export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
   const canonical = editorialCanonical(editorial, casino.seo.canonical);
+  const demo = isTemporaryDemoCasinoId(casino.id);
   const faq = profileFaqItems(casino, selectProfileBonus(casino), editorial);
   const schemas: Array<Record<string, unknown>> = [
     {
@@ -54,13 +57,15 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
     {
       "@context": "https://schema.org",
       "@type": "WebPage",
-      name: editorial?.title || casino.title,
-      description: editorial?.summary || casino.summary,
+      name: demo ? `${casino.name} fictional review demonstration` : editorial?.title || casino.title,
+      description: demo ? "Fictional product demonstration; not a current operator, licence claim, partner offer or live promotion." : editorial?.summary || casino.summary,
       url: canonical,
       ...(casino.publishedAt ? { datePublished: casino.publishedAt } : {}),
       ...(casino.lastReviewedAt ? { dateModified: casino.lastReviewedAt } : {}),
     },
   ];
+
+  if (demo) return schemas;
 
   if (Number.isFinite(casino.editorScore) && casino.editorScore >= 0 && casino.editorScore <= 10 && casino.reviewContent.trim()) {
     schemas.push({

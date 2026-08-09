@@ -62,7 +62,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <div className={styles.sectionIntro}>
           <span>WHAT YOU BUILD</span>
           <h2 id="programme-builds-title">A programme that leaves you with something useful.</h2>
-          <p>Start privately. Save your work after Mission 01. Return through My Programme when you are ready.</p>
+          <p>Start privately. Save completion and rewards after Mission 01 while personal wording stays in this browser session.</p>
         </div>
         <div className={styles.buildGrid}>
           <article>
@@ -74,8 +74,8 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
           <article>
             <span>YOUR WORK</span>
             <h3>See what works.</h3>
-            <p>Turn reflection into a practical plan you can edit and revisit.</p>
-            <div className={styles.miniResult}><small>SAVED AFTER ACCOUNT</small><b>My Programme</b><i /></div>
+            <p>Turn reflection into a local plan you can edit in this tab while your account keeps neutral progress.</p>
+            <div className={styles.miniResult}><small>LOCAL WORDING · SAVED PROGRESS</small><b>My Programme</b><i /></div>
           </article>
           <article>
             <span>10 MISSIONS</span>
@@ -119,12 +119,12 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       <section className={styles.accountBoundary} data-ten-steps-section="account-boundary" aria-labelledby="account-boundary-title">
         <div className={styles.accountCopy}>
           <span>ACCOUNT BOUNDARY</span>
-          <h2 id="account-boundary-title"><strong>Start private.</strong><em>Save only when you choose.</em></h2>
-          <p>Mission 01 does not require an account. After completion, create one only if you want to save the result and claim +60 XP.</p>
+          <h2 id="account-boundary-title"><strong>Start private.</strong><em>Save progress if you choose.</em></h2>
+          <p>Mission 01 does not require an account. After completion, create one only if you want to save completion and claim +60 XP. Your Moment Map wording stays in this browser session.</p>
           <ol>
             <li>Open Mission 01</li>
             <li>Complete it privately</li>
-            <li>Create an account to save +60 XP</li>
+            <li>Create an account to save completion and +60 XP</li>
           </ol>
         </div>
         <div className={styles.accountImage}><img alt="" height="1200" loading="eager" src={accountImage} width="1800" /></div>
@@ -137,7 +137,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         </div>
         <div className={styles.evidenceGrid}>
           <article><span>APPROVED PATH</span><strong>10</strong><h3>Mission titles</h3><p>Mission availability comes from the current Programme contract, not this landing page.</p></article>
-          <article className={styles.limitCard}><span>IMPORTANT LIMIT</span><h3>No clinical claim</h3><p>The complete Programme has not yet been clinically evaluated.</p></article>
+          <article className={styles.limitCard}><span>IMPORTANT LIMIT</span><h3>No clinical claim</h3><p>The Programme does not diagnose or treat gambling addiction or another medical condition. Completion does not mean gambling is safe or suitable. The complete Programme has not yet been clinically evaluated.</p></article>
         </div>
         <aside className={styles.dataBoundary} aria-label="Programme data boundary">
           <strong>PROTECTED</strong>
@@ -168,7 +168,7 @@ function AnonymousHero() {
       <div className={styles.heroVisual}>
         <img alt="" fetchPriority="high" height="1200" src={heroImage} width="1800" />
         <div className={styles.rewardCard} aria-label="Mission 01 pending recognition">
-          <span>SAVE TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 is saved to your account.</small>
+          <span>SAVE PROGRESS TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 completion is saved to your account. Personal wording stays in your browser session.</small>
         </div>
       </div>
     </div>

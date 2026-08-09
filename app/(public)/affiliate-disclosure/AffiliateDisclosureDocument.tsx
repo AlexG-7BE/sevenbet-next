@@ -10,8 +10,8 @@ const sections = [
     title: "THE COMMERCIAL RELATIONSHIP",
     body: (
       <>
-        Some links on SevenBet may be affiliate links. If a reader follows one and completes a
-        qualifying action, SevenBet may receive a commission from the operator. Not every operator
+        Future eligible governed links on SevenBet may be affiliate links. If a reader follows one and
+        completes a qualifying action, SevenBet may receive a commission from the operator. Not every operator
         listed or reviewed has to be an affiliate partner, and readers should still review the
         operator&apos;s current terms, fees, and conditions.
       </>
@@ -21,12 +21,13 @@ const sections = [
     number: "02",
     id: "editorial-boundary",
     indexLabel: "Editorial boundary",
-    title: "EDITORIAL JUDGEMENT IS NOT FOR SALE.",
+    title: "COMPENSATION DOES NOT SET THE SCORE.",
     body: (
       <>
-        Affiliate relationships should not automatically determine review scores or rankings.
-        Commercial relationships should not remove negative findings, hide material limitations,
-        or replace the criteria described in the published methodology.
+        Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial
+        ranking. Commercial relationships do not remove negative findings, hide material
+        limitations, or replace the criteria described in the published methodology. Any future
+        sponsored or paid placement must be identified separately.
       </>
     ),
   },
@@ -50,8 +51,8 @@ const sections = [
     title: "CORRECTIONS",
     body: (
       <>
-        Material errors should be reviewed against relevant sources and corrected when appropriate.
-        A commercial relationship should not suppress a correction, warning, or material limitation.
+        SevenBet reviews material errors against relevant sources and corrects them when appropriate.
+        A commercial relationship does not suppress a correction, warning, or material limitation.
       </>
     ),
   },
@@ -76,8 +77,8 @@ export function AffiliateDisclosureDocument() {
           <h1>HOW SEVENBET<br />IS FUNDED.</h1>
           <div className={styles.highlight} aria-hidden="true" />
           <p className={styles.heroLead}>
-            Some links may generate affiliate commissions. Those relationships should not
-            automatically determine editorial scores or hide material limitations.
+            Some future governed links may generate affiliate commissions. Affiliate compensation
+            does not determine SevenBet&apos;s Editor Score or natural editorial ranking.
           </p>
           <Link className={styles.primaryAction} href="/methodology">Read methodology</Link>
         </div>

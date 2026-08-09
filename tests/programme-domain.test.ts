@@ -81,13 +81,8 @@ test("boundary completion rule validates structure without judging the chosen am
     evidenceReviewed: true,
     category: "money",
     triggerType: "custom",
-    triggerText: "Before opening an operator account",
-    ruleText: "I will use only the amount I chose before this decision.",
     limitValue: 25,
-    limitUnit: "GBP",
-    limitPeriod: "seven days",
     executionMethod: "bank_gambling_block",
-    copingAction: "Leave the page and review this tomorrow",
     reviewAt: "2026-08-05T10:00:00.000Z",
     scenarioAnswer: "concrete",
     strengthChecks: [
@@ -103,9 +98,9 @@ test("boundary completion rule validates structure without judging the chosen am
     () => parseActiveBoundary({
       ...valid,
       reviewAt: valid.reviewAt?.toISOString(),
-      limitPeriod: undefined,
+      ruleText: "Raw narrative must remain local",
     }, { complete: true, now }),
-    /financial boundary requires a clear period/i,
+    /unsupported fields/i,
   );
 });
 

@@ -1,9 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
+import {
+  anonymousProgrammeSubject,
+  clearProgrammeSubjectContent,
+  hasProgrammeAgeAttestation,
+  loadProgrammeSubjectContent,
+  migrateClaimedJourneyToUser,
+  programmeSubjectsEqual,
+  rotateAnonymousProgrammeSubject,
+  saveProgrammeSubjectContent,
+  setProgrammeAgeAttestation,
+  userProgrammeSubject,
+  type ProgrammeLocalSubject,
+} from "@/lib/programme/local-subject-storage";
 import styles from "./ActiveControlProgramme.module.css";
 
 const MISSION_ONE_TASKS = [
@@ -159,6 +172,13 @@ type DashboardModel = {
   activeBoundary: ActiveBoundary | null;
 };
 
+type ProgrammeLocalContent = {
+  momentMap: MomentMap;
+  goal: CurrentGoal;
+  urgeLearning: UrgeLearningDraft;
+  activeBoundary: ActiveBoundary;
+};
+
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
 type View = "mission-01" | "registration-gate" | "registration" | "dashboard" | "mission-02" | "mission-03" | "mission-04";
 
@@ -227,12 +247,32 @@ const emptyBoundary: ActiveBoundary = {
   status: "active",
 };
 
-async function programmeRequest<T>(path: string, init?: RequestInit) {
+function mergeDashboardLocal(dashboard: DashboardModel, local: Partial<ProgrammeLocalContent>): DashboardModel {
+  return {
+    ...dashboard,
+    momentMap: dashboard.momentMap ? { ...dashboard.momentMap, ...(local.momentMap || {}), id: dashboard.momentMap.id } : null,
+    currentGoal: dashboard.currentGoal ? { ...dashboard.currentGoal, ...(local.goal || {}), id: dashboard.currentGoal.id, sourceMomentMapId: dashboard.currentGoal.sourceMomentMapId } : null,
+    urgeLearningRecord: dashboard.urgeLearningRecord ? {
+      ...dashboard.urgeLearningRecord,
+      earlySignalCategory: local.urgeLearning?.notNow ? null : local.urgeLearning?.earlySignalCategory ?? null,
+      earlySignalText: local.urgeLearning?.notNow ? null : local.urgeLearning?.earlySignalText ?? null,
+      notNow: local.urgeLearning?.notNow ?? dashboard.urgeLearningRecord.notNow,
+    } : null,
+    activeBoundary: dashboard.activeBoundary ? { ...dashboard.activeBoundary, ...(local.activeBoundary || {}), id: dashboard.activeBoundary.id } : null,
+  };
+}
+
+async function programmeRequest<T>(path: string, subject: ProgrammeLocalSubject, init?: RequestInit) {
+  const ageAttested = hasProgrammeAgeAttestation(window.sessionStorage, subject);
   const response = await fetch(path, {
     credentials: "same-origin",
     cache: "no-store",
     ...init,
-    headers: init?.body ? { "content-type": "application/json", ...init.headers } : init?.headers,
+    headers: {
+      ...(init?.body ? { "content-type": "application/json" } : {}),
+      ...(ageAttested ? { "x-sevenbet-age-attestation": "18-or-over" } : {}),
+      ...init?.headers,
+    },
   });
   const payload = (await response.json()) as ApiPayload<T>;
   if (!response.ok || payload.ok === false) {
@@ -274,6 +314,11 @@ function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean })
       </div>
     </header>
   );
+}
+
+function AgeGate({ onConfirm }: { onConfirm: () => void }) {
+  const [confirmed, setConfirmed] = useState(false);
+  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · 18+</span><h1>Confirm before you continue.</h1><p>Persistent SevenBet accounts and Programme saving are for adults aged 18 or over. We do not ask for your date of birth or perform identity checks here.</p></div><label className={styles.check}><input checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><PrimaryButton disabled={!confirmed} onClick={onConfirm}>Continue to the Programme</PrimaryButton><p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth or KYC is collected by this step." /></section></div>;
 }
 
 function MissionProgress({ mission, step }: { mission: 1 | 2 | 3 | 4; step: number }) {
@@ -495,7 +540,7 @@ function MissionOneScreen({
 
   return (
     <MissionShell mission={1} step={step} xp={0}>
-      <section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · ABOUT 2 MIN</span><h1>Your Moment Map is ready.</h1><p>Check the result before deciding whether to save it to a SevenBet account.</p></div><ArtifactCard eyebrow="MISSION 01 RESULT" title="Your Moment Map" body={momentSummary(map)} footer={`Notice rule: ${map.noticeRule}`} dark /></div><aside className={styles.rewardColumn}><Recognition label="SAVE AFTER ACCOUNT" value="+60 XP" note="Awarded after account creation." /><ul><li>Your five-part Moment Map</li><li>Your personal notice rule</li><li>Mission 01 completion and 60 XP</li></ul></aside><PhotoTheatre compact image={PEOPLE.planning} eyebrow="MISSION 01 · RESULT READY" title="Useful work, ready to keep." note="Your private result becomes persistent only after account creation." /></section>
+      <section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · ABOUT 2 MIN</span><h1>Your Moment Map is ready.</h1><p>Check the local result before deciding whether to save completion and XP to a SevenBet account.</p></div><ArtifactCard eyebrow="MISSION 01 RESULT · LOCAL" title="Your Moment Map" body={momentSummary(map)} footer={`Notice rule: ${map.noticeRule}`} dark /></div><aside className={styles.rewardColumn}><Recognition label="PROGRESS AFTER ACCOUNT" value="+60 XP" note="Awarded after account creation." /><ul><li>Your five-part Moment Map stays in this tab</li><li>Your personal notice rule stays in this tab</li><li>Mission 01 completion and 60 XP save to the account</li></ul></aside><PhotoTheatre compact image={PEOPLE.planning} eyebrow="MISSION 01 · RESULT READY" title="Useful work, locally held." note="Only completion, reward and neutral continuity become persistent." /></section>
       <ActionBar busy={busy} note="No casino or bonus action is connected to this reward."><PrimaryButton onClick={onNext}>Save and create my account</PrimaryButton></ActionBar>
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
     </MissionShell>
@@ -528,7 +573,7 @@ function Registration({
   map: MomentMap;
   authenticated: boolean;
   onContinue: () => void;
-  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => Promise<void>;
+  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) => Promise<void>;
   busy: boolean;
   error: string;
   returning?: boolean;
@@ -536,32 +581,33 @@ function Registration({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [terms, setTerms] = useState(false);
-  const [marketing, setMarketing] = useState(false);
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [mode, setMode] = useState<"sign-up" | "sign-in">(returning ? "sign-in" : "sign-up");
 
   if (gate) {
     return (
-      <div className={styles.programmeShell}><Header authenticated={authenticated} xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · SAVE REQUIRED</span><h1>Keep the work you just did.</h1><p>Create a private SevenBet account so your Moment Map and +60 XP remain available.</p><ul><li>Save the Moment Map and notice rule</li><li>Receive 60 XP for the completed mission</li><li>Return to Mission 02 and your private plan</li></ul><Recognition label="SAVE AFTER ACCOUNT" value="+60 XP" note="Awarded after successful claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="PRIVATE RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Private until account creation" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the work. Continue the path." note="The account stores your Programme work, not a gambling profile." /></div></section><ActionBar busy={busy} note="No marketing consent is required."><PrimaryButton onClick={onContinue}>{authenticated ? "Save to my private account" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
+      <div className={styles.programmeShell}><Header authenticated={authenticated} xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · ACCOUNT FOR PROGRESS</span><h1>Keep your progress. Keep the words local.</h1><p>Create a private SevenBet account so mission completion and +60 XP remain available. Your Moment Map narrative stays in this browser session.</p><ul><li>Keep the Moment Map locally in this tab</li><li>Save mission completion and receive 60 XP</li><li>Return to Mission 02 with neutral continuity</li></ul><Recognition label="ACCOUNT REWARD" value="+60 XP" note="Awarded after successful progress claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="LOCAL RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Stored only in this browser session" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the progress. Continue the path." note="The account stores completion and rewards, not this personal narrative." /></div></section><ActionBar busy={busy} note="No marketing consent is requested."><PrimaryButton onClick={onContinue}>{authenticated ? "Save my progress" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
     );
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (mode === "sign-up" && !terms) return;
-    await onSubmit({ email, password, mode });
+    if (mode === "sign-up" && !adultConfirmed) return;
+    await onSubmit({ email, password, mode, adultConfirmed });
   }
 
   return (
-    <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><form onSubmit={submit}><div className={styles.titleBlock}><span>PRIVATE SEVENBET ACCOUNT</span><h1>{mode === "sign-up" ? "Create your account." : returning ? "Return to your programme." : "Sign in to save your work."}</h1><p>Your programme data stays separate from affiliate ranking and advertising targeting.</p></div><Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." /><Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />{mode === "sign-up" ? <><label className={styles.check}><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /><span>I agree to the Terms and Privacy Notice · required</span></label><label className={styles.check}><input checked={marketing} onChange={(event) => setMarketing(event.target.checked)} type="checkbox" /><span>Send me product updates by email · optional</span></label></> : null}{error ? <p className={styles.error} role="alert">{error}</p> : null}<PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 || !terms : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save"}</PrimaryButton>{!returning ? <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}</form><div className={styles.stack}>{returning ? <ArtifactCard eyebrow="PRIVATE PROGRAMME" title="Your work stays yours" body="Sign in to continue from the latest completed mission." footer="Programme data is not used for advertising targeting" dark /> : <ArtifactCard eyebrow="SAVE PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="+60 XP after successful account creation" dark />}<PhotoTheatre image={PEOPLE.outcome} eyebrow="PRIVATE ACCOUNT · YOUR PLAN" title="Come back to what you made." note="No marketing consent is bundled with account creation." /></div></section></div>
+    <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><form onSubmit={submit}><div className={styles.titleBlock}><span>PRIVATE SEVENBET ACCOUNT · 18+</span><h1>{mode === "sign-up" ? "Create your account." : returning ? "Return to your programme." : "Sign in to save progress."}</h1><p>Progress and rewards save to your account. Personal narrative stays only in this browser session and is not used for affiliate ranking or advertising targeting.</p></div><Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." /><Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />{mode === "sign-up" ? <><label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /><span>I agree to the Terms and Privacy Notice · required</span></label></> : null}{error ? <p className={styles.error} role="alert">{error}</p> : null}<PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 || !terms || !adultConfirmed : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>{!returning ? <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}</form><div className={styles.stack}>{returning ? <ArtifactCard eyebrow="PRIVATE PROGRAMME" title="Your work stays yours" body="Sign in to continue from the latest completed mission." footer="Personal narrative is not restored from the account" dark /> : <ArtifactCard eyebrow="LOCAL PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="This narrative stays in this browser session · +60 XP saves to the account" dark />}<PhotoTheatre image={PEOPLE.outcome} eyebrow="PRIVATE ACCOUNT · YOUR PLAN" title="Come back to your progress." note="No marketing consent is bundled with account creation." /></div></section></div>
   );
 }
 
-function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: DashboardModel; onStartMission: () => void; onEdit: (type: "moment" | "goal" | "signal" | "boundary") => void }) {
+function Dashboard({ dashboard, onStartMission, onEdit, onClearLocal }: { dashboard: DashboardModel; onStartMission: () => void; onEdit: (type: "moment" | "goal" | "signal" | "boundary") => void; onClearLocal: () => void }) {
   const afterTwo = dashboard.currentMission >= 3;
   const afterThree = dashboard.currentMission >= 4;
   const afterFour = dashboard.currentMission >= 5;
   const currentTitle = afterFour ? "05 · Check before deciding" : afterThree ? "04 · Build one boundary" : afterTwo ? "03 · Understand the urge" : "02 · Set a 7-day goal";
-  const currentCopy = afterFour ? "Run a short check before the next gambling decision." : afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and save one early signal." : "Turn the Moment Map into one specific action and a review date.";
+  const currentCopy = afterFour ? "Run a short check before the next gambling decision." : afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and keep one local early signal." : "Turn the Moment Map into one specific action and a review date.";
   const completedCount = afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1;
   const record = dashboard.urgeLearningRecord;
   const signalBody = record?.notNow
@@ -571,7 +617,7 @@ function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: Dashboard
     <div className={styles.dashboardPage}>
       <Header authenticated xp={dashboard.totalXp} />
       <section className={styles.dashboardHeading}>
-        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{afterFour ? "Your boundary is active." : afterThree ? "Your early signal is saved." : afterTwo ? "Your 7-day goal is active." : "Your first map is saved."}</h1><p>{afterFour ? "Review or edit it any time. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns that signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 turns it into one specific 7-day goal."}</p></div>
+        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{afterFour ? "Your boundary progress is active." : afterThree ? "Your signal step is complete." : afterTwo ? "Your 7-day goal progress is active." : "Your first map is complete."}</h1><p>{afterFour ? "Personal wording remains in this browser session. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns the local signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 uses your local map to build one specific 7-day goal."}</p><button className={styles.textButton} onClick={onClearLocal} type="button">Clear local Programme content</button></div>
         <div className={styles.recognitionGrid}><Recognition label={afterTwo ? "TOTAL EARNED" : "MOMENT MAP SAVED"} value={afterTwo ? `${dashboard.totalXp} XP` : "+60 XP"} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
       </section>
       <section className={styles.currentMission}>
@@ -580,7 +626,7 @@ function Dashboard({ dashboard, onStartMission, onEdit }: { dashboard: Dashboard
       </section>
       <div className={styles.pathHeading}><span>MY 10-STEP PATH</span><b>{completedCount} OF 10 COMPLETE</b></div>
       <ol className={styles.pathPreview}>{dashboard.missions.slice(0, afterFour ? 5 : 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : mission.missionNumber === 3 ? 90 : 100} XP` : mission.status === "current" ? `CURRENT · ${mission.missionNumber === 4 ? "20–25" : "18–24"} MIN` : "UP NEXT"}</small></div></li>)}{!afterFour ? <li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li> : null}</ol>
-      <section className={styles.dashboardArtifacts}>{afterFour && dashboard.activeBoundary ? <ArtifactCard eyebrow="MISSION 04 RESULT" title="My active boundary" body={boundarySentence(dashboard.activeBoundary, record)} footer={`Review ${reviewLabel(dashboard.activeBoundary.reviewAt)} · Private · Editable`} onEdit={() => onEdit("boundary")} /> : afterThree && record ? <ArtifactCard eyebrow="MISSION 03 RESULT" title={record.notNow ? "Not now" : "My early signal"} body={signalBody} footer="Private · Editable · Evidence item reviewed" onEdit={() => onEdit("signal")} /> : afterTwo && dashboard.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT" title="My 7-day goal" body={`When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.`} footer={`Review on ${reviewLabel(dashboard.currentGoal.reviewAt)} · Confidence ${dashboard.currentGoal.confidence}/10`} onEdit={() => onEdit("goal")} /> : dashboard.momentMap ? <ArtifactCard eyebrow="MISSION 01 RESULT" title="Your Moment Map" body={momentSummary(dashboard.momentMap)} footer="Saved to your private account · Edit or delete any time" dark onEdit={() => onEdit("moment")} /> : null}<EvidenceCard mission={afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1} /></section>
+      <section className={styles.dashboardArtifacts}>{afterFour && dashboard.activeBoundary ? <ArtifactCard eyebrow="MISSION 04 RESULT · LOCAL WORDING" title="My active boundary" body={boundarySentence(dashboard.activeBoundary, record)} footer={`Review ${reviewLabel(dashboard.activeBoundary.reviewAt)} · Browser session · Editable`} onEdit={() => onEdit("boundary")} /> : afterThree && record ? <ArtifactCard eyebrow="MISSION 03 RESULT · LOCAL WORDING" title={record.notNow ? "Not now" : "My early signal"} body={signalBody} footer="Browser session · Editable · Evidence item reviewed" onEdit={() => onEdit("signal")} /> : afterTwo && dashboard.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT · LOCAL WORDING" title="My 7-day goal" body={dashboard.currentGoal.action ? `When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.` : "Personal wording is not available in this browser session."} footer={`Review on ${reviewLabel(dashboard.currentGoal.reviewAt)} · Confidence ${dashboard.currentGoal.confidence}/10`} onEdit={() => onEdit("goal")} /> : dashboard.momentMap ? <ArtifactCard eyebrow="MISSION 01 RESULT · LOCAL WORDING" title="Your Moment Map" body={momentSummary(dashboard.momentMap) || "Personal wording is not available in this browser session."} footer="Stored only in this browser session · Clear any time" dark onEdit={() => onEdit("moment")} /> : null}<EvidenceCard mission={afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1} /></section>
     </div>
   );
 }
@@ -601,10 +647,10 @@ function MissionTwoScreen({ step, goal, setGoal, map, onNext, busy, error }: { s
   if (step === 1) return <MissionShell mission={2} step={step} xp={60}><section className={styles.learningGrid}><div className={styles.titleBlock}><span>LEARN · ABOUT 2 MIN</span><h1>A useful goal is chosen, not imposed.</h1><p>Use your Moment Map to choose one direction that matters and one action you can review.</p><dl><dt>One direction</dt><dd>Choose what matters most for the next seven days.</dd><dt>Small action</dt><dd>Make it specific enough to know when you did it.</dd><dt>Review</dt><dd>Choose a date and decide what progress will look like.</dd></dl></div><div className={styles.stack}><EvidenceCard mission={2} /><PhotoTheatre compact image={PEOPLE.portrait} eyebrow="NICE NG248 · PERSONALLY IMPORTANT GOALS" title="Choose it. Then make it specific." note="SevenBet uses a self-directed educational adaptation." /></div></section><ActionBar busy={busy}><PrimaryButton onClick={onNext}>Choose my direction</PrimaryButton></ActionBar></MissionShell>;
   if (step === 2) return <MissionShell mission={2} step={step} xp={60}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>APPLY · ABOUT 3 MIN</span><h1>Which part can your goal influence?</h1><p>Review your saved map. Choose a point where a small action could change what happens next.</p></div><div className={styles.choiceList}><Choice active title={map.cues[0] || "Your cue"} description="A useful place to plan before the response." onClick={() => undefined} /><Choice active={false} title={map.thoughtOrFeeling || "The thought or feeling"} onClick={() => undefined} /><Choice active={false} title={map.response || "The response"} onClick={() => undefined} /></div></div><div className={styles.stack}><ArtifactCard eyebrow="YOUR MOMENT MAP" title={map.situation} body={momentSummary(map)} footer={map.noticeRule} dark /><PhotoTheatre compact image={PEOPLE.portrait} eyebrow="START FROM YOUR MAP" title="Use what you already noticed." note="The saved map is the starting point, not a judgement." /></div></section><ActionBar busy={busy}><PrimaryButton onClick={onNext}>Use this part of my map</PrimaryButton></ActionBar></MissionShell>;
   if (step === 3) return <MissionShell mission={2} step={step} xp={60}><section className={styles.formGrid}><div><div className={styles.titleBlock}><span>APPLY · ABOUT 3 MIN</span><h1>Choose one direction for this week.</h1><p>Pick the direction that feels most useful now. You can change it later.</p></div><div className={styles.choiceGrid}>{directions.map(([key, title, description]) => <Choice key={key} active={goal.direction === key} title={title} description={description} onClick={() => setGoal({ ...goal, direction: key })} />)}</div></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="DIRECTION · 01" title="Choose." note="One direction keeps the next action focused." /></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Build the action</PrimaryButton></ActionBar></MissionShell>;
-  if (step === 4) return <MissionShell mission={2} step={step} xp={60}><section className={styles.wideForm}><div className={styles.titleBlock}><span>BUILD · ABOUT 5 MIN</span><h1>Build the action in five parts.</h1><p>Make the goal specific enough to recognise, do and review.</p></div><div className={styles.sequenceGrid}><Field label="01 · Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} placeholder={map.cues[0] || "Payday notification"} /><Field label="02 · Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline placeholder="Wait 20 minutes before opening any gambling app" /><Field label="03 · Alternative" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline placeholder="Walk outside and message someone" /><Field label="04 · Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline placeholder="I completed the pause before deciding" /><Field label="05 · Review date" type="date" value={goal.reviewAt} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} /></div><PhotoTheatre compact image={PEOPLE.planning} eyebrow="IMPLEMENTATION DETAIL" title="Make the next action observable." note="Cue → action → alternative → success signal → review date." /><div className={styles.qualityCheck}><b>QUALITY CHECK</b><span>The action starts after a named cue and success is based on what you do.</span></div></section><ActionBar busy={busy} note="Draft changes are saved to your private account."><PrimaryButton disabled={!canContinue} onClick={onNext}>Check my action</PrimaryButton></ActionBar></MissionShell>;
+  if (step === 4) return <MissionShell mission={2} step={step} xp={60}><section className={styles.wideForm}><div className={styles.titleBlock}><span>BUILD · ABOUT 5 MIN</span><h1>Build the action in five parts.</h1><p>Make the goal specific enough to recognise, do and review.</p></div><div className={styles.sequenceGrid}><Field label="01 · Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} placeholder={map.cues[0] || "Payday notification"} /><Field label="02 · Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline placeholder="Wait 20 minutes before opening any gambling app" /><Field label="03 · Alternative" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline placeholder="Walk outside and message someone" /><Field label="04 · Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline placeholder="I completed the pause before deciding" /><Field label="05 · Review date" type="date" value={goal.reviewAt} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} /></div><PhotoTheatre compact image={PEOPLE.planning} eyebrow="IMPLEMENTATION DETAIL" title="Make the next action observable." note="Cue → action → alternative → success signal → review date." /><div className={styles.qualityCheck}><b>QUALITY CHECK</b><span>The action starts after a named cue and success is based on what you do.</span></div></section><ActionBar busy={busy} note="Personal wording stays only in this browser session."><PrimaryButton disabled={!canContinue} onClick={onNext}>Check my action</PrimaryButton></ActionBar></MissionShell>;
   if (step === 5) return <MissionShell mission={2} step={step} xp={60}><section className={styles.formGrid}><div><div className={styles.titleBlock}><span>BUILD · ABOUT 3 MIN</span><h1>How confident are you that this fits?</h1><p>Choose a private number. If it feels too low, make the action smaller or add support.</p></div><label className={styles.confidence}><span>MY CONFIDENCE</span><strong>{goal.confidence} / 10</strong><input type="range" min="0" max="10" value={goal.confidence} onChange={(event) => setGoal({ ...goal, confidence: Number(event.target.value) })} /></label></div><div className={styles.stack}><Field label="What would raise it by one point?" value={goal.confidenceAdjustment} onChange={(confidenceAdjustment) => setGoal({ ...goal, confidenceAdjustment })} multiline placeholder="Put my phone in another room during the pause." hint="Private planning, not a readiness-to-gamble score." /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="PRACTICE NOTE" title="Smaller can be stronger." note="If confidence is low, reduce the action until it feels realistic." /></div></section><ActionBar busy={busy} note="Confidence helps adjust the plan; it does not assess you."><PrimaryButton disabled={!canContinue} onClick={onNext}>Keep this confidence plan</PrimaryButton></ActionBar></MissionShell>;
   if (step === 6) return <MissionShell mission={2} step={step} xp={60}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>REVIEW · ABOUT 3 MIN</span><h1>Which goal is specific and controllable?</h1><p>Choose the action that can be checked without predicting feelings or losses.</p></div><div className={styles.choiceList}>{[["specific", "Wait 20 minutes after a payday notification"], ["vague", "Never feel an urge again"], ["outcome", "Win less often this week"]].map(([key, label]) => <Choice key={key} active={scenarioAnswer === key} title={label} onClick={() => setScenarioAnswer(key)} />)}</div>{scenarioAnswer ? <div className={`${styles.feedback} ${scenarioAnswer === "specific" ? styles.feedbackGood : ""}`}><b>{scenarioAnswer === "specific" ? "The action can be noticed and reviewed." : "Choose what the person can do directly."}</b><span>Specific actions are easier to recognise, revise and review.</span></div> : null}</div><div className={styles.stack}><article className={styles.evidenceCard}><div><span>EVIDENCE NOTE</span><b>NICE NG248 · 2025</b></div><h3>Why make the plan specific?</h3><p>Behaviour-change approaches often turn broad aims into concrete, reviewable actions.</p><small>SevenBet is not treatment and does not claim a clinical outcome.</small></article><PhotoTheatre compact image={PEOPLE.planning} eyebrow="SCENARIO CHECK" title="Specific beats vague." note="A reviewable action describes what you can do." /></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this review</PrimaryButton></ActionBar></MissionShell>;
-  return <MissionShell mission={2} step={step} xp={60}><section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · ABOUT 2 MIN</span><h1>Your 7-day goal is ready.</h1><p>Review the action, recognition and next check-in date.</p></div><ArtifactCard eyebrow="MISSION 02 RESULT" title="My 7-day goal" body={`When ${goal.triggerOrSituation}, I will ${goal.action}.`} footer={`Review on ${reviewLabel(goal.reviewAt)} · Confidence ${goal.confidence}/10`} /></div><aside className={styles.rewardColumn}><Recognition label="GOAL SAVED" value="+80 XP" note="Mission 02 complete." /><ul><li>+80 XP added to your total</li><li>First Plan achievement unlocked</li><li>Active day remains 1 today</li></ul><Recognition dark label="ACHIEVEMENT EARNED" value="FIRST PLAN" note="Your 7-day goal will be saved." /></aside><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="MISSION 02 · RESULT READY" title="Your first plan is ready." note="The reward recognises the useful plan, never a gambling action." /></section><ActionBar busy={busy} note="Streak advances only after eligible activity on another calendar day."><PrimaryButton onClick={onNext}>Save my 7-day goal</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</MissionShell>;
+  return <MissionShell mission={2} step={step} xp={60}><section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · ABOUT 2 MIN</span><h1>Your 7-day goal is ready.</h1><p>Review the local action, recognition and account-saved check-in facts.</p></div><ArtifactCard eyebrow="MISSION 02 RESULT · LOCAL WORDING" title="My 7-day goal" body={`When ${goal.triggerOrSituation}, I will ${goal.action}.`} footer={`Review on ${reviewLabel(goal.reviewAt)} · Confidence ${goal.confidence}/10`} /></div><aside className={styles.rewardColumn}><Recognition label="PROGRESS SAVED" value="+80 XP" note="Mission 02 complete." /><ul><li>+80 XP added to your total</li><li>First Plan achievement unlocked</li><li>Personal wording stays in this tab</li></ul><Recognition dark label="ACHIEVEMENT EARNED" value="FIRST PLAN" note="Goal direction and review facts save; wording stays local." /></aside><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="MISSION 02 · RESULT READY" title="Your first plan is ready." note="The reward recognises the useful plan, never a gambling action." /></section><ActionBar busy={busy} note="Streak advances only after eligible activity on another calendar day."><PrimaryButton onClick={onNext}>Save progress · earn 80 XP</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</MissionShell>;
 }
 
 function MissionThreeScreen({
@@ -830,7 +876,7 @@ function MissionFourScreen({ step, boundary, setBoundary, onNext, busy, error, d
     ["leave_action", "Leave action", "Close the app or leave the setting."],
   ];
 
-  if (step === 0) return <MissionShell mission={4} step={step} xp={230}><section className={styles.splitHero}><div className={styles.boundaryHero}><div className={styles.titleBlock}><span>MISSION 04 OF 10 · BUILD</span><h1>One clear rule, built before pressure.</h1><p>Turn your goal and early signal into a boundary you can recognise, use and review.</p></div><div className={styles.boundaryMeta}><b>+100 XP</b><span>4 parts</span><span>Private</span></div><BoundaryComposer boundary={boundary} signal={signal} compact /></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="WHAT YOU’LL MAKE · ACTIVE BOUNDARY" title="Specific. Editable. Yours." note="SevenBet saves the plan. External tools do the blocking." /></section><ActionBar busy={busy}><PrimaryButton onClick={onNext}>Start building</PrimaryButton></ActionBar></MissionShell>;
+  if (step === 0) return <MissionShell mission={4} step={step} xp={230}><section className={styles.splitHero}><div className={styles.boundaryHero}><div className={styles.titleBlock}><span>MISSION 04 OF 10 · BUILD</span><h1>One clear rule, built before pressure.</h1><p>Turn your goal and early signal into a boundary you can recognise, use and review.</p></div><div className={styles.boundaryMeta}><b>+100 XP</b><span>4 parts</span><span>Local wording</span></div><BoundaryComposer boundary={boundary} signal={signal} compact /></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="WHAT YOU’LL MAKE · ACTIVE BOUNDARY" title="Specific. Editable. Yours." note="Personal wording stays in this tab. External tools do the blocking." /></section><ActionBar busy={busy}><PrimaryButton onClick={onNext}>Start building</PrimaryButton></ActionBar></MissionShell>;
 
   if (step === 1) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>LEARN · ABOUT 4 MIN</span><h1>A boundary is more than a limit.</h1><p>It needs a decision point, a concrete rule, an execution method and a plan for the difficult moment.</p></div><div className={styles.boundaryAnatomy}>{[["01", "Decision point", "When the rule starts"], ["02", "Concrete rule", "What you will or will not do"], ["03", "Execution", "What adds friction outside SevenBet"], ["04", "Coping + review", "What happens before any later change"]].map(([number, title, copy]) => <article key={number}><b>{number}</b><div><strong>{title}</strong><span>{copy}</span></div></article>)}</div></div><div className={styles.stack}><EvidenceCard mission={4} /><Choice active={boundary.evidenceReviewed} title="I reviewed the evidence and limitation" description="The complete SevenBet mission has not been clinically evaluated." onClick={() => setBoundary({ ...boundary, evidenceReviewed: true })} /></div></section><ActionBar busy={busy} note="A prompt can increase limit-setting without proving reduced gambling intensity."><PrimaryButton disabled={!canContinue} onClick={onNext}>Build the four parts</PrimaryButton></ActionBar></MissionShell>;
 
@@ -838,15 +884,15 @@ function MissionFourScreen({ step, boundary, setBoundary, onNext, busy, error, d
 
   if (step === 3) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div><div className={styles.titleBlock}><span>APPLY · USE WHAT YOU KNOW</span><h1>When should your rule begin?</h1><p>Choose one point you can recognise before or at the earliest signal.</p></div><div className={styles.choiceList}><Choice active={boundary.triggerType === "saved_early_signal"} title="At my saved early signal" description={signal?.earlySignalText || signal?.earlySignalCategory?.replaceAll("_", " ") || "No personal signal is currently saved"} onClick={() => signal && !signal.notNow ? setBoundary({ ...boundary, triggerType: "saved_early_signal", triggerText: "" }) : undefined} /><Choice active={boundary.triggerType === "before_access"} title="Before opening an app or site" description="A neutral access point." onClick={() => setBoundary({ ...boundary, triggerType: "before_access", triggerText: "Before opening a gambling app or site" })} /><Choice active={boundary.triggerType === "scheduled_time"} title="At a scheduled day or time" description="A planned no-start or review point." onClick={() => setBoundary({ ...boundary, triggerType: "scheduled_time", triggerText: "At my scheduled review time" })} /><Choice active={boundary.triggerType === "custom"} title="Write another decision point" description="Keep it concrete and recognisable." onClick={() => setBoundary({ ...boundary, triggerType: "custom" })} /></div>{boundary.triggerType === "custom" ? <Field label="My decision point" value={boundary.triggerText} onChange={(triggerText) => setBoundary({ ...boundary, triggerText })} placeholder="When I notice…" /> : null}</div><div className={styles.stack}>{dashboard?.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT" title="My current goal" body={`When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.`} footer="Use it only if this is the point you want the boundary to start." dark /> : null}<BoundaryComposer boundary={boundary} signal={signal} compact /></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Connect this point</PrimaryButton></ActionBar></MissionShell>;
 
-  if (step === 4) return <MissionShell mission={4} step={step} xp={230}><section className={styles.composerLayout}><div><div className={styles.titleBlock}><span>BUILD · DEFINE THE RULE</span><h1>Make the rule specific.</h1><p>The product checks structure, not whether a value is safe or suitable.</p></div><div className={styles.ruleFields}>{needsValue ? <><Field label={boundary.category === "money" ? "Amount · entered by you" : "Duration · entered by you"} type="number" min={0} value={boundary.limitValue} onChange={(value) => setBoundary({ ...boundary, limitValue: value ? Number(value) : "" })} placeholder="No suggested value" /><Field label="Unit" value={boundary.limitUnit} onChange={(limitUnit) => setBoundary({ ...boundary, limitUnit })} placeholder={boundary.category === "money" ? "GBP" : "minutes"} />{boundary.category === "money" ? <Field label="Reset period" value={boundary.limitPeriod} onChange={(limitPeriod) => setBoundary({ ...boundary, limitPeriod })} placeholder="per calendar day, per week…" /> : null}</> : null}<Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline placeholder={boundary.category === "access" ? "I remove the app and saved payment access before deciding again." : "I pause for the value entered above before another gambling decision."} hint="Describe an action and a clear completion condition." /></div></div><BoundaryComposer boundary={boundary} signal={signal} /></section><ActionBar busy={busy} note="No amount or duration is prefilled or recommended."><PrimaryButton disabled={!canContinue} onClick={onNext}>Save this rule</PrimaryButton></ActionBar></MissionShell>;
+  if (step === 4) return <MissionShell mission={4} step={step} xp={230}><section className={styles.composerLayout}><div><div className={styles.titleBlock}><span>BUILD · DEFINE THE RULE</span><h1>Make the rule specific.</h1><p>The product checks structure, not whether a value is safe or suitable.</p></div><div className={styles.ruleFields}>{needsValue ? <><Field label={boundary.category === "money" ? "Amount · entered by you" : "Duration · entered by you"} type="number" min={0} value={boundary.limitValue} onChange={(value) => setBoundary({ ...boundary, limitValue: value ? Number(value) : "" })} placeholder="No suggested value" /><Field label="Unit" value={boundary.limitUnit} onChange={(limitUnit) => setBoundary({ ...boundary, limitUnit })} placeholder={boundary.category === "money" ? "GBP" : "minutes"} />{boundary.category === "money" ? <Field label="Reset period" value={boundary.limitPeriod} onChange={(limitPeriod) => setBoundary({ ...boundary, limitPeriod })} placeholder="per calendar day, per week…" /> : null}</> : null}<Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline placeholder={boundary.category === "access" ? "I remove the app and saved payment access before deciding again." : "I pause for the value entered above before another gambling decision."} hint="Describe an action and a clear completion condition." /></div></div><BoundaryComposer boundary={boundary} signal={signal} /></section><ActionBar busy={busy} note="No amount or duration is prefilled or recommended."><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this rule</PrimaryButton></ActionBar></MissionShell>;
 
-  if (step === 5) return <MissionShell mission={4} step={step} xp={230}><section className={styles.formGrid}><PhotoTheatre image={PEOPLE.planning} eyebrow="MAKE THE RULE EASIER TO FOLLOW" title="Add real friction." note="Choose one action you can activate outside SevenBet." /><div><div className={styles.titleBlock}><span>BUILD · EXECUTION</span><h1>What makes it easier to carry out?</h1><p>SevenBet saves your choice. The operator, bank, device or person must activate it.</p></div><div className={styles.choiceList}>{executions.map(([key, title, copy]) => <Choice key={key} active={boundary.executionMethod === key} title={title} description={copy} onClick={() => setBoundary({ ...boundary, executionMethod: key })} />)}<Choice active={boundary.executionMethod === "custom"} title="Another method" description="Describe one action you can activate." onClick={() => setBoundary({ ...boundary, executionMethod: "custom" })} /></div>{boundary.executionMethod === "custom" ? <Field label="Execution detail" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} /> : null}</div></section><ActionBar busy={busy} note="Provider-neutral · no operator recommendation."><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this method</PrimaryButton></ActionBar></MissionShell>;
+  if (step === 5) return <MissionShell mission={4} step={step} xp={230}><section className={styles.formGrid}><PhotoTheatre image={PEOPLE.planning} eyebrow="MAKE THE RULE EASIER TO FOLLOW" title="Add real friction." note="Choose one action you can activate outside SevenBet." /><div><div className={styles.titleBlock}><span>BUILD · EXECUTION</span><h1>What makes it easier to carry out?</h1><p>SevenBet saves only the structured method choice. Your detail stays in this tab. The operator, bank, device or person must activate it.</p></div><div className={styles.choiceList}>{executions.map(([key, title, copy]) => <Choice key={key} active={boundary.executionMethod === key} title={title} description={copy} onClick={() => setBoundary({ ...boundary, executionMethod: key })} />)}<Choice active={boundary.executionMethod === "custom"} title="Another method" description="Describe one action you can activate." onClick={() => setBoundary({ ...boundary, executionMethod: "custom" })} /></div>{boundary.executionMethod === "custom" ? <Field label="Execution detail" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} /> : null}</div></section><ActionBar busy={busy} note="Provider-neutral · no operator recommendation."><PrimaryButton disabled={!canContinue} onClick={onNext}>Use this method</PrimaryButton></ActionBar></MissionShell>;
 
   if (step === 6) return <MissionShell mission={4} step={step} xp={230}><section className={styles.copingLayout}><div><div className={styles.titleBlock}><span>BUILD · PROTECT THE RULE</span><h1>Plan for the urge to override it.</h1><p>Choose one action before any change, then choose a later review point.</p></div><div className={styles.choiceList}>{["Leave the app or site", "Message my trusted contact", "Move to another room", "Open protected Help"].map((item) => <Choice key={item} active={boundary.copingAction === item} title={item} onClick={() => setBoundary({ ...boundary, copingAction: item })} />)}</div></div><div className={styles.reviewPanel}><span>04 · REVIEW LATER</span><h2>Not in the pressure moment.</h2><Field label="Review point" type="datetime-local" value={boundary.reviewAt} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} /><blockquote>“If I want to override it, I {boundary.copingAction ? boundary.copingAction.toLowerCase() : "use my coping action"}, then review the boundary later.”</blockquote><small>This is a coping plan, not enforcement.</small></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Add coping and review</PrimaryButton></ActionBar></MissionShell>;
 
   if (step === 7) return <MissionShell mission={4} step={step} xp={230}><section className={styles.learningGrid}><div className={styles.scenarioPanel}><span>NEUTRAL SCENARIO</span><h2>Sam wants to avoid chasing a loss.</h2><p>Which boundary is specific, executable and reviewed later?</p><Choice active={boundary.scenarioAnswer === "vague"} title="I’ll try to be more careful next time." onClick={() => setBoundary({ ...boundary, scenarioAnswer: "vague" })} /><Choice active={boundary.scenarioAnswer === "concrete"} title="After a loss, I leave the app for 30 minutes, message Alex and review tomorrow." onClick={() => setBoundary({ ...boundary, scenarioAnswer: "concrete" })} /></div><div><div className={styles.titleBlock}><span>REVIEW · UNLIMITED RETRY</span><h1>Run four structure checks.</h1><p>These checks do not label the boundary safe, healthy or sufficient.</p></div>{boundary.scenarioAnswer ? <div className={`${styles.feedback} ${boundary.scenarioAnswer === "concrete" ? styles.feedbackGood : ""}`}><b>{boundary.scenarioAnswer === "concrete" ? "That’s the stronger structure." : "Look for a concrete point and action."}</b><span>{boundary.scenarioAnswer === "concrete" ? "It names the point, action, friction and later review." : "The vague intention cannot be checked or carried out."}</span></div> : null}<div className={styles.strengthChecks}>{[["placed_before_pressure", "Placed before pressure"], ["specific", "Specific"], ["executable", "Executable"], ["protected_from_in_moment_editing", "Protected from instant editing"]].map(([key, label]) => <Choice key={key} active={boundary.strengthChecks.includes(key)} title={label} onClick={() => setBoundary({ ...boundary, strengthChecks: boundary.strengthChecks.includes(key) ? boundary.strengthChecks.filter((item) => item !== key) : [...boundary.strengthChecks, key] })} />)}</div></div></section><ActionBar busy={busy}><PrimaryButton disabled={!canContinue} onClick={onNext}>Check my boundary</PrimaryButton></ActionBar></MissionShell>;
 
-  return <MissionShell mission={4} step={step} xp={230}><section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · READY TO SAVE</span><h1>Your boundary is ready.</h1><p>Review the complete rule, privacy controls and evidence limitation.</p></div><ArtifactCard eyebrow="MISSION 04 RESULT" title="My active boundary" body={boundarySentence(boundary, signal)} footer={`Review ${reviewLabel(boundary.reviewAt)} · Edit or delete any time`} /><article className={styles.boundaryDisclosure}><b>BEFORE YOU SAVE</b><p>This plan does not make gambling safe. SevenBet cannot enforce operator, bank or device controls, and the complete mission has not been clinically evaluated.</p></article></div><aside className={styles.rewardColumn}><Recognition label="BOUNDARY SAVED" value="+100 XP" note="Mission 04 complete." /><Recognition dark label="ACHIEVEMENT EARNED" value="BOUNDARY BUILT" note="Your first boundary becomes active." /><div className={styles.disclosureStrip}>330 XP total · 4 of 10 · Mission 05 current</div></aside><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="MISSION 04 · RESULT READY" title="Useful work, recognised." note="The reward recognises a plan, never a gambling action." /></section><ActionBar busy={busy} note="Private Programme data is not used for advertising targeting."><PrimaryButton onClick={onNext}>Save boundary · earn 100 XP</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</MissionShell>;
+  return <MissionShell mission={4} step={step} xp={230}><section className={styles.resultLayout}><div><div className={styles.titleBlock}><span>REVIEW · READY TO SAVE PROGRESS</span><h1>Your boundary is ready.</h1><p>Review the local rule, privacy controls and evidence limitation.</p></div><ArtifactCard eyebrow="MISSION 04 RESULT · LOCAL WORDING" title="My active boundary" body={boundarySentence(boundary, signal)} footer={`Review ${reviewLabel(boundary.reviewAt)} · Local to this tab`} /><article className={styles.boundaryDisclosure}><b>BEFORE SAVING PROGRESS</b><p>This plan does not make gambling safe. SevenBet cannot enforce operator, bank or device controls, and the complete mission has not been clinically evaluated.</p></article></div><aside className={styles.rewardColumn}><Recognition label="PROGRESS SAVED" value="+100 XP" note="Mission 04 complete." /><Recognition dark label="ACHIEVEMENT EARNED" value="BOUNDARY BUILT" note="Structured boundary facts become active; wording stays local." /><div className={styles.disclosureStrip}>330 XP total · 4 of 10 · Mission 05 current</div></aside><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="MISSION 04 · RESULT READY" title="Useful work, recognised." note="The reward recognises a plan, never a gambling action." /></section><ActionBar busy={busy} note="Personal wording stays in this browser session and is not used for advertising targeting."><PrimaryButton onClick={onNext}>Save progress · earn 100 XP</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</MissionShell>;
 }
 
 function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "goal" | "signal" | "boundary"; dashboard: DashboardModel; onClose: () => void; onSaved: (dashboard: DashboardModel) => void }) {
@@ -859,30 +905,21 @@ function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "
   async function save(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {
-      const path = type === "moment"
-        ? "/api/program/artefacts/moment-map"
-        : type === "goal"
-          ? "/api/program/artefacts/current-goal"
-          : type === "signal"
-            ? "/api/program/artefacts/urge-learning-record"
-            : "/api/program/artefacts/active-boundary";
-      const body = type === "moment"
-        ? { ...moment, id: undefined }
-        : type === "goal"
-          ? { ...goal, id: undefined, sourceMomentMapId: undefined, reviewAt: new Date(`${goal.reviewAt.slice(0, 10)}T12:00:00`).toISOString() }
-          : type === "signal"
-            ? { earlySignalCategory: signal.notNow ? undefined : signal.earlySignalCategory, earlySignalText: signal.notNow ? undefined : signal.earlySignalText || undefined, notNow: signal.notNow }
-            : { ruleText: boundary.ruleText, executionMethod: boundary.executionMethod, executionDetail: boundary.executionDetail || undefined, copingAction: boundary.copingAction, reviewAt: new Date(boundary.reviewAt).toISOString(), status: boundary.status };
-      await programmeRequest(path, { method: "PATCH", body: JSON.stringify(body) });
-      const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard");
-      onSaved(payload.dashboard);
+      onSaved({
+        ...dashboard,
+        momentMap: type === "moment" ? moment : dashboard.momentMap,
+        currentGoal: type === "goal" ? goal : dashboard.currentGoal,
+        urgeLearningRecord: type === "signal" ? signal : dashboard.urgeLearningRecord,
+        activeBoundary: type === "boundary" ? boundary : dashboard.activeBoundary,
+      });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save the change"); } finally { setBusy(false); }
   }
-  return <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Edit ${type}`}><form className={styles.editPanel} onSubmit={save}><div><span>PRIVATE PROGRAMME ARTEFACT</span><button onClick={onClose} type="button">Close</button></div><h2>{type === "moment" ? "Edit your Moment Map" : type === "goal" ? "Edit your 7-day goal" : type === "signal" ? "Edit your early signal" : "Edit your active boundary"}</h2>{type === "moment" ? <><Field label="Situation" value={moment.situation} onChange={(situation) => setMoment({ ...moment, situation })} /><Field label="Cues · comma separated" value={moment.cues.join(", ")} onChange={(value) => setMoment({ ...moment, cues: value.split(",").map((item) => item.trim()).filter(Boolean) })} /><Field label="Thought or feeling" value={moment.thoughtOrFeeling} onChange={(thoughtOrFeeling) => setMoment({ ...moment, thoughtOrFeeling })} multiline /><Field label="Response" value={moment.response} onChange={(response) => setMoment({ ...moment, response })} multiline /><Field label="Immediate consequence" value={moment.immediateConsequence} onChange={(immediateConsequence) => setMoment({ ...moment, immediateConsequence })} multiline /><Field label="Notice rule" value={moment.noticeRule} onChange={(noticeRule) => setMoment({ ...moment, noticeRule })} multiline /></> : type === "goal" ? <><Field label="Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} /><Field label="Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline /><Field label="Alternative action" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline /><Field label="Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline /><Field label="Review date" value={goal.reviewAt.slice(0, 10)} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} type="date" /></> : type === "signal" ? <><div className={styles.choiceGrid}>{(["body", "thought", "attention", "action_tendency", "not_sure"] as EarlySignalCategory[]).map((category) => <Choice key={category} active={!signal.notNow && signal.earlySignalCategory === category} title={category.replace("_", " ")} onClick={() => setSignal({ ...signal, earlySignalCategory: category, notNow: false })} />)}</div><Field label="My early signal · optional wording" value={signal.earlySignalText || ""} onChange={(earlySignalText) => setSignal({ ...signal, earlySignalText })} multiline /><button className={styles.notNowButton} data-active={signal.notNow} onClick={() => setSignal({ ...signal, earlySignalCategory: null, earlySignalText: null, notNow: true })} type="button">Not now — remove the personal signal</button></> : <><Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline /><Field label="Execution detail · optional" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} multiline /><Field label="Coping action" value={boundary.copingAction} onChange={(copingAction) => setBoundary({ ...boundary, copingAction })} multiline /><Field label="Review point" value={boundary.reviewAt.slice(0, 16)} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} type="datetime-local" /></>}{error ? <p className={styles.error}>{error}</p> : null}<PrimaryButton disabled={busy || (type === "signal" && !signal.notNow && !signal.earlySignalCategory)} type="submit">{busy ? "Saving…" : "Save changes"}</PrimaryButton></form></div>;
+  return <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Edit ${type}`}><form className={styles.editPanel} onSubmit={save}><div><span>LOCAL PROGRAMME CONTENT · THIS BROWSER SESSION</span><button onClick={onClose} type="button">Close</button></div><h2>{type === "moment" ? "Edit your Moment Map" : type === "goal" ? "Edit your 7-day goal" : type === "signal" ? "Edit your early signal" : "Edit your active boundary"}</h2>{type === "moment" ? <><Field label="Situation" value={moment.situation} onChange={(situation) => setMoment({ ...moment, situation })} /><Field label="Cues · comma separated" value={moment.cues.join(", ")} onChange={(value) => setMoment({ ...moment, cues: value.split(",").map((item) => item.trim()).filter(Boolean) })} /><Field label="Thought or feeling" value={moment.thoughtOrFeeling} onChange={(thoughtOrFeeling) => setMoment({ ...moment, thoughtOrFeeling })} multiline /><Field label="Response" value={moment.response} onChange={(response) => setMoment({ ...moment, response })} multiline /><Field label="Immediate consequence" value={moment.immediateConsequence} onChange={(immediateConsequence) => setMoment({ ...moment, immediateConsequence })} multiline /><Field label="Notice rule" value={moment.noticeRule} onChange={(noticeRule) => setMoment({ ...moment, noticeRule })} multiline /></> : type === "goal" ? <><Field label="Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} /><Field label="Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline /><Field label="Alternative action" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline /><Field label="Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline /><Field label="Review date" value={goal.reviewAt.slice(0, 10)} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} type="date" /></> : type === "signal" ? <><div className={styles.choiceGrid}>{(["body", "thought", "attention", "action_tendency", "not_sure"] as EarlySignalCategory[]).map((category) => <Choice key={category} active={!signal.notNow && signal.earlySignalCategory === category} title={category.replace("_", " ")} onClick={() => setSignal({ ...signal, earlySignalCategory: category, notNow: false })} />)}</div><Field label="My early signal · optional wording" value={signal.earlySignalText || ""} onChange={(earlySignalText) => setSignal({ ...signal, earlySignalText })} multiline /><button className={styles.notNowButton} data-active={signal.notNow} onClick={() => setSignal({ ...signal, earlySignalCategory: null, earlySignalText: null, notNow: true })} type="button">Not now — remove the personal signal</button></> : <><Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline /><Field label="Execution detail · optional" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} multiline /><Field label="Coping action" value={boundary.copingAction} onChange={(copingAction) => setBoundary({ ...boundary, copingAction })} multiline /><Field label="Review point" value={boundary.reviewAt.slice(0, 16)} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} type="datetime-local" /></>}{error ? <p className={styles.error}>{error}</p> : null}<PrimaryButton disabled={busy || (type === "signal" && !signal.notNow && !signal.earlySignalCategory)} type="submit">{busy ? "Saving…" : "Keep changes in this tab"}</PrimaryButton></form></div>;
 }
 
 export function ActiveControlProgramme() {
   const { data: session, isPending: sessionPending } = useSession();
+  const sessionUserId = session?.user?.id || null;
   const [view, setView] = useState<View>("mission-01");
   const [m1Step, setM1Step] = useState(0);
   const [m2Step, setM2Step] = useState(0);
@@ -897,78 +934,163 @@ export function ActiveControlProgramme() {
   const [error, setError] = useState("");
   const [editType, setEditType] = useState<"moment" | "goal" | "signal" | "boundary" | null>(null);
   const [returningSignIn, setReturningSignIn] = useState(false);
-  const authenticated = Boolean(session?.user);
+  const [ageAttested, setAgeAttested] = useState(false);
+  const [localHydrated, setLocalHydrated] = useState(false);
+  const [activeSubject, setActiveSubject] = useState<ProgrammeLocalSubject | null>(null);
+  const [claimTransitionPending, setClaimTransitionPending] = useState(false);
+  const previousSessionUserId = useRef<string | null | undefined>(undefined);
+  const claimedJourneySubject = useRef<ProgrammeLocalSubject | null>(null);
+  const authenticated = Boolean(sessionUserId);
+  const subjectMatchesSession = Boolean(
+    activeSubject
+    && (sessionUserId
+      ? activeSubject.kind === "user" && activeSubject.id === sessionUserId
+      : activeSubject.kind === "journey"),
+  );
 
   useEffect(() => {
+    if (sessionPending) return;
+    if (claimTransitionPending && sessionUserId && activeSubject?.kind === "journey") return;
+    const priorUserId = previousSessionUserId.current;
+    const nextSubject = sessionUserId
+      ? userProgrammeSubject(sessionUserId)
+      : priorUserId
+        ? rotateAnonymousProgrammeSubject(window.sessionStorage)
+        : anonymousProgrammeSubject(window.sessionStorage);
+    previousSessionUserId.current = sessionUserId;
+    if (programmeSubjectsEqual(activeSubject, nextSubject)) return;
+
+    // Fail closed on every subject transition: remove the prior subject from memory
+    // before hydrating only the exact next subject namespace.
+    setLocalHydrated(false);
+    setDashboard(null);
+    setEditType(null);
+    setError("");
+    setMomentMap(emptyMomentMap);
+    setGoal(emptyGoal());
+    setUrgeLearning(emptyUrgeLearning);
+    setActiveBoundary(emptyBoundary);
+    setAgeAttested(false);
+    setActiveSubject(nextSubject);
+
+    const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, nextSubject);
+    if (local.momentMap) setMomentMap({ ...emptyMomentMap, ...local.momentMap });
+    if (local.goal) setGoal({ ...emptyGoal(), ...local.goal });
+    if (local.urgeLearning) setUrgeLearning({ ...emptyUrgeLearning, ...local.urgeLearning });
+    if (local.activeBoundary) setActiveBoundary({ ...emptyBoundary, ...local.activeBoundary });
+    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, nextSubject));
+    setLocalHydrated(true);
     const returning = new URLSearchParams(window.location.search).get("auth") === "sign-in";
-    if (returning) { setReturningSignIn(true); setView("registration"); }
-  }, []);
+    if (returning && nextSubject.kind === "journey") {
+      setReturningSignIn(true);
+      setView("registration");
+    } else if (nextSubject.kind === "journey") {
+      setReturningSignIn(false);
+      setView("mission-01");
+    }
+  }, [activeSubject, claimTransitionPending, sessionPending, sessionUserId]);
 
   useEffect(() => {
-    if (sessionPending || !authenticated) return;
+    if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
+    saveProgrammeSubjectContent(window.sessionStorage, activeSubject, { momentMap, goal, urgeLearning, activeBoundary });
+  }, [activeBoundary, activeSubject, goal, localHydrated, momentMap, subjectMatchesSession, urgeLearning]);
+
+  const request = useCallback(<T,>(path: string, init?: RequestInit) => {
+    if (!activeSubject || !subjectMatchesSession) {
+      return Promise.reject(new Error("Programme subject changed; reload the exact session before continuing"));
+    }
+    return programmeRequest<T>(path, activeSubject, init);
+  }, [activeSubject, subjectMatchesSession]);
+
+  useEffect(() => {
+    if (sessionPending || !authenticated || !activeSubject || activeSubject.kind !== "user" || !subjectMatchesSession) return;
     let cancelled = false;
-    programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard")
-      .then((payload) => { if (!cancelled) { setDashboard(payload.dashboard); setMomentMap(payload.dashboard.momentMap || emptyMomentMap); setActiveBoundary(payload.dashboard.activeBoundary || emptyBoundary); setView("dashboard"); } })
+    const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, activeSubject);
+    request<{ dashboard: DashboardModel }>("/api/program/dashboard")
+      .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard, local); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setUrgeLearning({ ...emptyUrgeLearning, ...(local.urgeLearning || {}) }); setActiveBoundary(next.activeBoundary || emptyBoundary); setView("dashboard"); } })
       .catch(() => undefined);
     return () => { cancelled = true; };
-  }, [authenticated, sessionPending]);
+  }, [activeSubject, authenticated, request, sessionPending, subjectMatchesSession]);
 
   const m1Complete = useMemo(() => Boolean(momentMap.situation && momentMap.cues.length && momentMap.thoughtOrFeeling && momentMap.response && momentMap.immediateConsequence && momentMap.noticeRule), [momentMap]);
 
   async function saveMissionOneStep() {
     setBusy(true); setError("");
     const nextStates = MISSION_ONE_TASKS.slice(0, m1Step + 1);
-    const save = () => programmeRequest("/api/program/session/mission-01", { method: "PATCH", body: JSON.stringify({ taskStates: nextStates, momentMap }) });
+    const save = () => request("/api/program/session/mission-01", { method: "PATCH", body: JSON.stringify({ taskStates: nextStates }) });
     try {
       try { await save(); }
       catch (cause) {
         if ((cause as Error & { status?: number }).status !== 404) throw cause;
-        await programmeRequest("/api/program/session", { method: "POST" });
+        await request("/api/program/session", { method: "POST" });
         await save();
       }
       if (m1Step === 7) {
         if (!m1Complete) throw new Error("Complete the Moment Map before saving it");
-        await programmeRequest("/api/program/session/mission-01/claim", { method: "POST" });
+        await request("/api/program/session/mission-01/claim", { method: "POST" });
+        claimedJourneySubject.current = activeSubject?.kind === "journey" ? activeSubject : null;
         setView("registration-gate");
       } else setM1Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
     finally { setBusy(false); }
   }
 
-  async function redeemClaim() {
-    const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
-    setDashboard(payload.dashboard); setMomentMap(payload.dashboard.momentMap || momentMap); setView("dashboard");
+  async function redeemClaim(targetUserId: string) {
+    const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
+    const targetSubject = userProgrammeSubject(targetUserId);
+    let local: Partial<ProgrammeLocalContent>;
+    if (activeSubject?.kind === "journey") {
+      if (!programmeSubjectsEqual(activeSubject, claimedJourneySubject.current)) {
+        throw new Error("The anonymous Programme journey cannot be matched to this claim");
+      }
+      local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, activeSubject, targetSubject);
+    } else if (programmeSubjectsEqual(activeSubject, targetSubject)) {
+      local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, targetSubject);
+    } else {
+      throw new Error("The Programme claim does not match the active account subject");
+    }
+    claimedJourneySubject.current = null;
+    setActiveSubject(targetSubject);
+    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, targetSubject));
+    const next = mergeDashboardLocal(payload.dashboard, local);
+    setDashboard(next); setMomentMap(next.momentMap || momentMap); setView("dashboard");
   }
 
   async function handleRegistrationContinue() {
     if (!authenticated) { setView("registration"); return; }
     setBusy(true); setError("");
-    try { await redeemClaim(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
+    try {
+      if (!sessionUserId) throw new Error("The authenticated account could not be resolved");
+      await redeemClaim(sessionUserId);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
   }
 
-  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
+  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) {
     setBusy(true); setError("");
+    const continuingCurrentClaim = !(returningSignIn && input.mode === "sign-in")
+      && activeSubject?.kind === "journey"
+      && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current);
+    setClaimTransitionPending(continuingCurrentClaim);
     try {
       const result = input.mode === "sign-up"
-        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "SevenBet member" })
+        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "SevenBet member", fetchOptions: { headers: { "x-sevenbet-age-attestation": input.adultConfirmed ? "18-or-over" : "" } } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
+      const targetUserId = result.data?.user.id;
+      if (!targetUserId) throw new Error("The authenticated account could not be resolved");
       if (returningSignIn && input.mode === "sign-in") {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/dashboard");
-        setDashboard(payload.dashboard);
-        setMomentMap(payload.dashboard.momentMap || emptyMomentMap);
         window.history.replaceState({}, "", "/program");
-        setView("dashboard");
-      } else await redeemClaim();
+        setReturningSignIn(false);
+      } else await redeemClaim(targetUserId);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
-    finally { setBusy(false); }
+    finally { setClaimTransitionPending(false); setBusy(false); }
   }
 
   async function startMissionTwo() {
     if (!dashboard?.momentMap) return;
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { draft?: { currentGoal?: Partial<CurrentGoal> } } }>("/api/program/missions/02");
+      const payload = await request<{ mission: { draft?: { currentGoal?: Partial<CurrentGoal> } } }>("/api/program/missions/02");
       const draft = payload.mission.draft?.currentGoal;
       setGoal({ ...emptyGoal(dashboard.momentMap.id), ...draft, sourceMomentMapId: dashboard.momentMap.id || "", reviewAt: typeof draft?.reviewAt === "string" ? draft.reviewAt.slice(0, 10) : sevenDaysFromNow(), direction: (draft?.direction || "pause") as GoalDirection });
       setM2Step(0); setView("mission-02");
@@ -980,10 +1102,10 @@ export function ActiveControlProgramme() {
     setBusy(true); setError("");
     try {
       const reviewAt = new Date(`${goal.reviewAt.slice(0, 10)}T12:00:00`).toISOString();
-      await programmeRequest("/api/program/missions/02", { method: "PUT", body: JSON.stringify({ taskStates: MISSION_TWO_TASKS.slice(0, m2Step + 1), currentGoal: { ...goal, reviewAt } }) });
+      await request("/api/program/missions/02", { method: "PUT", body: JSON.stringify({ taskStates: MISSION_TWO_TASKS.slice(0, m2Step + 1), currentGoal: { sourceMomentMapId: goal.sourceMomentMapId, direction: goal.direction, reviewAt, confidence: goal.confidence, status: goal.status } }) });
       if (m2Step === 7) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/02/complete", { method: "POST" });
-        setDashboard(payload.dashboard); setView("dashboard");
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/02/complete", { method: "POST" });
+        setDashboard(mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary })); setView("dashboard");
       } else setM2Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
     finally { setBusy(false); }
@@ -992,8 +1114,9 @@ export function ActiveControlProgramme() {
   async function startMissionThree() {
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { taskStates: string[]; draft?: { urgeLearning?: Partial<UrgeLearningDraft> } } }>("/api/program/missions/03");
-      setUrgeLearning({ ...emptyUrgeLearning, ...(payload.mission.draft?.urgeLearning || {}) });
+      const payload = await request<{ mission: { taskStates: string[]; draft?: { urgeLearning?: { evidenceReviewed?: boolean; waveMomentsReviewed?: string[]; scenarioAnswer?: string; signalChoice?: "local" | "not_now"; meaningAnswer?: string } } } }>("/api/program/missions/03");
+      const saved = payload.mission.draft?.urgeLearning;
+      setUrgeLearning({ ...emptyUrgeLearning, ...urgeLearning, ...saved, notNow: saved?.signalChoice === "not_now" ? true : urgeLearning.notNow });
       setM3Step(Math.min(payload.mission.taskStates.length, 6));
       setView("mission-03");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Mission 03 could not be opened"); }
@@ -1003,10 +1126,11 @@ export function ActiveControlProgramme() {
   async function startMissionFour() {
     setBusy(true); setError("");
     try {
-      const payload = await programmeRequest<{ mission: { taskStates: string[]; draft?: { activeBoundary?: Partial<ActiveBoundary> } } }>("/api/program/missions/04");
+      const payload = await request<{ mission: { taskStates: string[]; draft?: { activeBoundary?: Partial<ActiveBoundary> } } }>("/api/program/missions/04");
       const draft = payload.mission.draft?.activeBoundary;
       setActiveBoundary({
         ...emptyBoundary,
+        ...activeBoundary,
         ...draft,
         reviewAt: typeof draft?.reviewAt === "string" ? draft.reviewAt.slice(0, 16) : tomorrowAtTen(),
       });
@@ -1028,13 +1152,13 @@ export function ActiveControlProgramme() {
     try {
       const completing = m3Step === 6;
       const taskStates = completing ? [...MISSION_THREE_TASKS] : MISSION_THREE_TASKS.slice(0, m3Step + 1);
-      await programmeRequest("/api/program/missions/03", {
+      await request("/api/program/missions/03", {
         method: "PUT",
-        body: JSON.stringify({ taskStates, urgeLearning }),
+        body: JSON.stringify({ taskStates, urgeLearning: { evidenceReviewed: urgeLearning.evidenceReviewed, waveMomentsReviewed: urgeLearning.waveMomentsReviewed, scenarioAnswer: urgeLearning.scenarioAnswer || undefined, signalChoice: urgeLearning.notNow ? "not_now" : "local", meaningAnswer: urgeLearning.meaningAnswer || undefined } }),
       });
       if (completing) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/03/complete", { method: "POST" });
-        setDashboard(payload.dashboard);
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/03/complete", { method: "POST" });
+        setDashboard(mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary }));
         setM3Step(7);
       } else setM3Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
@@ -1047,42 +1171,64 @@ export function ActiveControlProgramme() {
       const completing = m4Step === 8;
       const taskStates = completing ? [...MISSION_FOUR_TASKS] : MISSION_FOUR_TASKS.slice(0, m4Step + 1);
       const reviewAt = new Date(activeBoundary.reviewAt).toISOString();
-      await programmeRequest("/api/program/missions/04", {
+      await request("/api/program/missions/04", {
         method: "PATCH",
         body: JSON.stringify({
           taskStates,
           activeBoundary: {
-            ...activeBoundary,
-            id: undefined,
+            evidenceReviewed: activeBoundary.evidenceReviewed,
             category: activeBoundary.category || undefined,
             triggerType: activeBoundary.triggerType || undefined,
             executionMethod: activeBoundary.executionMethod || undefined,
             limitValue: activeBoundary.limitValue || undefined,
-            triggerText: activeBoundary.triggerText || undefined,
-            executionDetail: activeBoundary.executionDetail || undefined,
             reviewAt,
+            scenarioAnswer: activeBoundary.scenarioAnswer || undefined,
+            strengthChecks: activeBoundary.strengthChecks,
+            status: activeBoundary.status,
           },
         }),
       });
       if (completing) {
-        const payload = await programmeRequest<{ dashboard: DashboardModel }>("/api/program/missions/04/complete", { method: "POST" });
-        setDashboard(payload.dashboard);
-        setActiveBoundary(payload.dashboard.activeBoundary || activeBoundary);
+        const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/04/complete", { method: "POST" });
+        const next = mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary });
+        setDashboard(next);
+        setActiveBoundary(next.activeBoundary || activeBoundary);
         setView("dashboard");
       } else setM4Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
     finally { setBusy(false); }
   }
 
+  async function clearLocalContent() {
+    if (!activeSubject || !subjectMatchesSession) return;
+    clearProgrammeSubjectContent(window.sessionStorage, activeSubject);
+    setMomentMap(emptyMomentMap);
+    setGoal(emptyGoal(dashboard?.momentMap?.id));
+    setUrgeLearning(emptyUrgeLearning);
+    setActiveBoundary(emptyBoundary);
+    try {
+      const payload = await request<{ dashboard: DashboardModel }>("/api/program/dashboard");
+      setDashboard(payload.dashboard);
+    } catch {
+      setDashboard(null);
+    }
+  }
+
+  if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession) {
+    return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/responsible-gambling">Protected Help remains available.</Link></p></section></div>;
+  }
+
+  if (!ageAttested) return <AgeGate onConfirm={() => { setProgrammeAgeAttestation(window.sessionStorage, activeSubject); setAgeAttested(true); }} />;
+
   return (
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
       {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} authenticated={authenticated} onContinue={handleRegistrationContinue} onSubmit={handleAuth} busy={busy} error={error} returning={returningSignIn} /> : null}
-      {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} /> : null}
+      {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} onClearLocal={clearLocalContent} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}
       {view === "mission-03" ? <MissionThreeScreen step={m3Step} learning={urgeLearning} setLearning={setUrgeLearning} onNext={saveMissionThreeStep} busy={busy} error={error} dashboard={dashboard} /> : null}
       {view === "mission-04" ? <MissionFourScreen step={m4Step} boundary={activeBoundary} setBoundary={setActiveBoundary} onNext={saveMissionFourStep} busy={busy} error={error} dashboard={dashboard} /> : null}
-      {editType && dashboard ? <EditOverlay type={editType} dashboard={dashboard} onClose={() => setEditType(null)} onSaved={(next) => { setDashboard(next); setEditType(null); }} /> : null}
+      {editType && dashboard ? <EditOverlay type={editType} dashboard={dashboard} onClose={() => setEditType(null)} onSaved={(next) => { setDashboard(next); if (next.momentMap) setMomentMap(next.momentMap); if (next.currentGoal) setGoal(next.currentGoal); if (next.urgeLearningRecord) setUrgeLearning({ ...urgeLearning, earlySignalCategory: next.urgeLearningRecord.earlySignalCategory || undefined, earlySignalText: next.urgeLearningRecord.earlySignalText || undefined, notNow: next.urgeLearningRecord.notNow }); if (next.activeBoundary) setActiveBoundary(next.activeBoundary); setEditType(null); }} /> : null}
     </div>
   );
 }

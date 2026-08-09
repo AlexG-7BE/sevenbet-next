@@ -32,14 +32,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
-    const value = body(await request.json());
-    const reflection = await programReflectionService.save(user.id, {
-      programId: requiredString(value.programId, "programId"),
-      blockId: requiredString(value.blockId, "blockId"),
-      content: requiredString(value.content, "content"),
-    });
-    return NextResponse.json({ ok: true, reflection: { id: reflection.id, blockId: reflection.blockId, content: reflection.content, createdAt: reflection.createdAt.toISOString(), updatedAt: reflection.updatedAt.toISOString() } });
+    await requireCurrentUser(request.headers);
+    return NextResponse.json({ ok: false, error: "Programme reflections are stored only in this browser session", code: "LOCAL_ONLY_CONTENT" }, { status: 410 });
   } catch (error) { return errorResponse(error); }
 }
 

@@ -10,17 +10,22 @@ import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = {
-  title: "Best Published Casino Offers for GB Comparison | SevenBet",
-  description: "An explainable editorial shortlist of current GB-available published casino offers, with complete material terms, methodology and commercial boundaries before action.",
-  alternates: { canonical: absoluteUrl("/best-offers") },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const authority = await resolveServerJurisdiction({ routeCountryOrMarketSlug: "GB" });
+  const result = await publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, authority);
+  const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
+  return {
+    title: containsDemo ? "Casino Offer Ranking Demonstration | SevenBet" : "Casino Offer Comparison for GB | SevenBet",
+    description: containsDemo ? "An explainable ranking demonstration using fictional records, not current GB promotions or partner offers." : "An explainable editorial shortlist with material terms, methodology and commercial boundaries before action.",
+    alternates: { canonical: absoluteUrl("/best-offers") },
+    robots: containsDemo ? { index: false, follow: true } : { index: true, follow: true },
+  };
+}
 
 export default async function BestOffersPage() {
   const authority = await resolveServerJurisdiction({ routeCountryOrMarketSlug: "GB" });
   const result = await publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, authority);
-  const schema = {
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "SevenBet published GB offer shortlist",
@@ -31,25 +36,26 @@ export default async function BestOffersPage() {
       name: `${offer.casino.name}: ${offer.bonus.title}`,
       url: absoluteUrl(`/casino/${offer.casino.slug}`),
     })),
-  };
+  } : null;
 
   return <div className={styles.page}>
-    <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" />
+    {schema ? <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" /> : null}
     <section className={styles.hero}><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>Best offers · GB comparison · 18+</p>
       <h1><span>The shortlist</span><em>that survives the small print.</em></h1>
-      <p className={styles.heroCopy}>A terms-first shortlist of current published offers. See the real cost, ranking reason and commercial boundary before any action.</p>
+      <p className={styles.heroCopy}>A terms-first comparison. See the recorded cost, ranking reason, data status and commercial boundary before any action.</p>
       <div aria-label="Ranking dimensions" className={styles.mobileHeroSignals}><span>Overall</span><span>Wagering</span><span>Payout</span></div>
-      <div className={styles.heroActions}><Link href="#shortlist">See the shortlist</Link><span>Independent ranking · Terms before action</span></div>
+      <div className={styles.heroActions}><Link href="#shortlist">See the shortlist</Link><span>Affiliate compensation does not determine Editor Score or natural editorial ranking</span></div>
     </div></section>
-    {result.status === "available" ? <BestOffersExperience shortlist={result.records} winners={bestFitWinners(result.records)} /> : <section className={styles.statePage}><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible offers"}</p><h2>{result.status === "unavailable" ? "The published shortlist could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current published offer has both GB availability and every required material term. SevenBet does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}
+    {result.inventoryMode !== "PUBLISHED_ONLY" ? <section className={styles.demoDisclosure} role="note"><div className={styles.shell}><p><strong>DEMONSTRATION DATA.</strong> Every fictional record is a product demonstration, not a current GB promotion, partner offer or claimable bonus. No commercial visit is available.</p></div></section> : null}
+    {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} shortlist={result.records} winners={bestFitWinners(result.records)} /> : <section className={styles.statePage}><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible records"}</p><h2>{result.status === "unavailable" ? "The comparison could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current record has both GB availability and every required material term. SevenBet does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}
     <section className={styles.faq}><div className={`${styles.shell} ${styles.faqGrid}`}>
       <div className={styles.faqIntro}><h2><span>Questions?</span><em>Answers.</em></h2><p>What to know before you compare or click.</p><aside><span>Important</span><strong>Offers can change. The operator’s current terms control the final decision.</strong></aside></div>
       <div className={styles.faqList}>
         <details><summary>What does “Best Offer” mean?</summary><p>The strongest balance under the published method: completeness first, then editor score, wagering, deposit and payout visibility.</p></details>
         <details><summary>Are the biggest bonuses ranked first?</summary><p>No. A headline amount never overrides material terms, eligibility or editorial evidence.</p></details>
         <details><summary>Can offer terms change?</summary><p>Yes. Published terms are a comparison snapshot; verify the operator’s current terms before acting.</p></details>
-        <details><summary>Does SevenBet earn a commission?</summary><p>SevenBet may receive compensation from eligible governed links. Commission does not affect ranking.</p></details>
+        <details><summary>Does SevenBet earn a commission?</summary><p>SevenBet may receive compensation from future eligible governed links. Affiliate compensation does not determine Editor Score or natural editorial ranking.</p></details>
         <details><summary>How often is the shortlist checked?</summary><p>The page uses the latest published, non-archived snapshots available to the public service.</p></details>
       </div>
     </div></section>
@@ -60,6 +66,6 @@ export default async function BestOffersPage() {
         <Link href="/bonuses"><span>Bonuses</span><strong>Compare the bonus, not just the number.</strong><p>Standardised wagering, expiry and deposit fields.</p><b>Compare bonuses</b></Link>
       </nav>
     </div></section>
-    <section className={styles.demoDisclosure}><div className={styles.shell}><p><strong>Illustrative pre-launch offer data.</strong> Fictional Demo operators, terms and withdrawal signals are used for product demonstration. They are not real UK operators, partnerships or live promotions and will be replaced with verified partner data before commercial launch.</p></div></section>
+    <section className={styles.demoDisclosure}><div className={styles.shell}><p><strong>Data status stays visible.</strong> Server classification determines whether a record is demonstration or published inventory. Demonstration records never expose a commercial action.</p></div></section>
   </div>;
 }

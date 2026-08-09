@@ -14,6 +14,7 @@ import { casinoProfileMetadata, casinoProfileSchemas } from "../lib/casino-profi
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
+import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 
 function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
   return {
@@ -92,6 +93,18 @@ test("metadata and structured data contain no raw operator destination or fabric
 
   const unavailable = casinoProfileMetadata(null, null);
   assert.deepEqual(unavailable.robots, { index: false, follow: false });
+});
+
+test("exact-ID demo profiles are noindex, truthful and suppress review/commercial schemas", () => {
+  const record = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo", affiliate: { href: "/r/demo", available: true } });
+  assert.equal(profileAction(record, selectProfileBonus(record)), null);
+  const metadata = casinoProfileMetadata(record, editorial);
+  assert.deepEqual(metadata.robots, { index: false, follow: true });
+  assert.match(String(metadata.title), /Fictional Review Demonstration/);
+  assert.match(String(metadata.description), /not a current GB operator/i);
+  const serialized = JSON.stringify(casinoProfileSchemas(record, editorial));
+  assert.match(serialized, /fictional review demonstration/i);
+  assert.doesNotMatch(serialized, /"@type":"Review"|"@type":"FAQPage"|"@type":"Offer"/);
 });
 
 test("published maximum bet is projected from the existing immutable snapshot field", () => {

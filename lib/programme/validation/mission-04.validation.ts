@@ -16,7 +16,6 @@ import {
   objectInput,
   parseTaskStates,
   stringList,
-  text,
 } from "@/lib/programme/validation/common";
 import { ValidationError } from "@/lib/services/service-error";
 
@@ -24,14 +23,8 @@ const activeBoundaryFields = [
   "evidenceReviewed",
   "category",
   "triggerType",
-  "triggerText",
-  "ruleText",
   "limitValue",
-  "limitUnit",
-  "limitPeriod",
   "executionMethod",
-  "executionDetail",
-  "copingAction",
   "reviewAt",
   "scenarioAnswer",
   "strengthChecks",
@@ -108,29 +101,10 @@ export function parseActiveBoundary(
     throw new ValidationError("strengthChecks contains unsupported checks");
   }
 
-  const triggerText = text(body.triggerText, "triggerText", false, 240);
-  const ruleText = text(body.ruleText, "ruleText", complete, 500);
-  const limitUnit = text(body.limitUnit, "limitUnit", false, 60);
-  const limitPeriod = text(body.limitPeriod, "limitPeriod", false, 100);
-  const executionDetail = text(body.executionDetail, "executionDetail", false, 300);
-  const copingAction = text(body.copingAction, "copingAction", complete, 500);
-
   if (complete) {
     if (!evidenceReviewed) throw new ValidationError("Evidence review is required");
-    if (triggerType !== "saved_early_signal" && !triggerText) {
-      throw new ValidationError("A concrete decision point is required");
-    }
     if (["money", "time", "pause"].includes(category!) && !limitValue) {
       throw new ValidationError("A user-entered boundary value is required");
-    }
-    if (["money", "time", "pause"].includes(category!) && !limitUnit) {
-      throw new ValidationError("limitUnit is required for this category");
-    }
-    if (category === "money" && !limitPeriod) {
-      throw new ValidationError("A financial boundary requires a clear period");
-    }
-    if (executionMethod === "custom" && !executionDetail) {
-      throw new ValidationError("A custom execution method requires detail");
     }
     if (scenarioAnswer !== correctBoundaryScenarioAnswer) {
       throw new ValidationError(
@@ -150,14 +124,8 @@ export function parseActiveBoundary(
       evidenceReviewed,
       category,
       triggerType,
-      triggerText,
-      ruleText,
       limitValue,
-      limitUnit,
-      limitPeriod,
       executionMethod,
-      executionDetail,
-      copingAction,
       reviewAt,
       scenarioAnswer,
       strengthChecks: checks

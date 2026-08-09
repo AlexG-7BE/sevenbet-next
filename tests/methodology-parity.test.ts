@@ -33,7 +33,7 @@ test("current Editor's Score weights, criteria, limitations and commercial separ
     "Bonus-related withdrawal conditions",
     "External support links",
     "SevenBet does not guarantee winnings, withdrawals, operator conduct, or dispute outcomes",
-    "Affiliate status does not automatically produce a higher score",
+    "Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial ranking",
   ]) assert.ok(document.includes(content), `missing current methodology content: ${content}`);
 
   assert.match(document, /href="\/affiliate-disclosure"/);
@@ -57,7 +57,7 @@ test("metadata and responsive contracts remain explicit", () => {
   assert.match(route, /alternates: \{ canonical: absoluteUrl\("\/methodology"\) \}/);
   assert.match(route, /BreadcrumbList/);
   assert.match(route, /FAQPage/);
-  assert.match(document, /Last updated[\s\S]*July 12, 2026/);
+  assert.match(document, /Last updated[\s\S]*August 9, 2026/);
   assert.match(css, /grid-template-columns: 256px minmax\(0, 840px\)/);
   assert.match(css, /@media \(max-width: 900px\)/);
   assert.match(css, /@media \(max-width: 375px\)/);

@@ -77,16 +77,6 @@ export class MissionThreeService {
       ...(previousDraft.urgeLearning ?? {}),
       ...input.urgeLearning,
     };
-    if (input.urgeLearning.notNow === true) {
-      delete mergedLearning.earlySignalCategory;
-      delete mergedLearning.earlySignalText;
-    }
-    if (
-      input.urgeLearning.earlySignalCategory !== undefined
-      || input.urgeLearning.earlySignalText !== undefined
-    ) {
-      mergedLearning.notNow = false;
-    }
     const ready = mergedTaskStates.length === definition.completion.taskStates.length;
     if (ready) parseUrgeLearningDraft(mergedLearning, { complete: true });
     const saved = await this.unitOfWork.progress.updateMissionDraftIfOpen({
@@ -135,9 +125,9 @@ export class MissionThreeService {
         reviewedAt: now,
         scenarioCheckCompletedAt: now,
         meaningCheckCompletedAt: now,
-        earlySignalCategory: learning.notNow ? null : learning.earlySignalCategory!,
-        earlySignalText: learning.notNow ? null : learning.earlySignalText ?? null,
-        notNow: Boolean(learning.notNow),
+        earlySignalCategory: null,
+        earlySignalText: null,
+        notNow: learning.signalChoice === "not_now",
       });
       await unitOfWork.progress.upsertMissionProgress({
         enrollmentId: enrollment.id,

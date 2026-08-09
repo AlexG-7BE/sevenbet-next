@@ -1,7 +1,6 @@
 import {
   correctMeaningAnswer,
   correctScenarioAnswer,
-  earlySignalCategories,
   meaningAnswers,
   missionThreeTaskStates,
   scenarioAnswers,
@@ -15,7 +14,6 @@ import {
   objectInput,
   parseTaskStates,
   stringList,
-  text,
 } from "@/lib/programme/validation/common";
 import { ValidationError } from "@/lib/services/service-error";
 
@@ -23,9 +21,7 @@ const urgeLearningFields = [
   "evidenceReviewed",
   "waveMomentsReviewed",
   "scenarioAnswer",
-  "earlySignalCategory",
-  "earlySignalText",
-  "notNow",
+  "signalChoice",
   "meaningAnswer",
 ] as const;
 
@@ -62,14 +58,7 @@ export function parseUrgeLearningDraft(
     meaningAnswers,
     complete,
   );
-  const notNow = booleanValue(body.notNow, "notNow", complete);
-  const earlySignalCategory = member(
-    body.earlySignalCategory,
-    "earlySignalCategory",
-    earlySignalCategories,
-    false,
-  );
-  const earlySignalText = text(body.earlySignalText, "earlySignalText", false, 240);
+  const signalChoice = member(body.signalChoice, "signalChoice", ["local", "not_now"] as const, complete);
 
   if (complete) {
     if (!evidenceReviewed) throw new ValidationError("Evidence review is required");
@@ -91,15 +80,6 @@ export function parseUrgeLearningDraft(
         "The meaning learning check must be answered correctly",
       );
     }
-    if (notNow) {
-      if (earlySignalCategory || earlySignalText) {
-        throw new ValidationError(
-          "Personal signal fields must be empty when notNow is selected",
-        );
-      }
-    } else if (!earlySignalCategory) {
-      throw new ValidationError("Choose an early signal category or select not now");
-    }
   }
 
   return Object.fromEntries(
@@ -109,9 +89,7 @@ export function parseUrgeLearningDraft(
         ? urgeWaveMoments.filter((item) => waveMomentsReviewed.includes(item))
         : undefined,
       scenarioAnswer,
-      earlySignalCategory,
-      earlySignalText,
-      notNow,
+      signalChoice,
       meaningAnswer,
     }).filter(([, item]) => item !== undefined),
   );
@@ -128,22 +106,6 @@ export function parseMissionThreeDraft(value: unknown) {
 
 export function parseEarlySignalChoice(value: unknown) {
   const body = objectInput(value);
-  assertOnlyKeys(body, ["earlySignalCategory", "earlySignalText", "notNow"]);
-  const notNow = booleanValue(body.notNow, "notNow", true)!;
-  const earlySignalCategory = member(
-    body.earlySignalCategory,
-    "earlySignalCategory",
-    earlySignalCategories,
-    false,
-  );
-  const earlySignalText = text(body.earlySignalText, "earlySignalText", false, 240);
-  if (notNow && (earlySignalCategory || earlySignalText)) {
-    throw new ValidationError(
-      "Personal signal fields must be empty when notNow is selected",
-    );
-  }
-  if (!notNow && !earlySignalCategory) {
-    throw new ValidationError("Choose an early signal category or select not now");
-  }
-  return { earlySignalCategory, earlySignalText, notNow };
+  assertOnlyKeys(body, ["signalChoice"]);
+  return { signalChoice: member(body.signalChoice, "signalChoice", ["local", "not_now"] as const, true)! };
 }
