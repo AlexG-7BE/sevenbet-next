@@ -1069,13 +1069,15 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       setOAuthNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
       window.history.replaceState({}, "", "/program");
     }
-    const returning = authAction === "sign-in";
-    if (returning && nextSubject.kind === "journey") {
-      setReturningSignIn(true);
-      setView("registration");
-    } else if (nextSubject.kind === "journey") {
-      setReturningSignIn(false);
-      setView("mission-01");
+    if (authAction !== "google-error") {
+      const returning = authAction === "sign-in";
+      if (returning && nextSubject.kind === "journey") {
+        setReturningSignIn(true);
+        setView("registration");
+      } else if (nextSubject.kind === "journey") {
+        setReturningSignIn(false);
+        setView("mission-01");
+      }
     }
   }, [activeSubject, claimTransitionPending, sessionPending, sessionUserId]);
 
