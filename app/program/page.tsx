@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, Instrument_Serif } from "next/font/google";
 
 import { ActiveControlProgramme } from "@/components/programme/ActiveControlProgramme";
+import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -62,7 +63,7 @@ export default function ProgramPage() {
             ),
           }}
         />
-        <ActiveControlProgramme />
+        <ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} />
       </div>
     </main>
   );

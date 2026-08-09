@@ -4,17 +4,21 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { authClient, useSession } from "@/lib/auth/client";
+import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
   anonymousProgrammeSubject,
+  clearProgrammeOAuthClaimMarker,
   clearProgrammeSubjectContent,
   hasProgrammeAgeAttestation,
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
   programmeSubjectsEqual,
+  readProgrammeOAuthClaimMarker,
   rotateAnonymousProgrammeSubject,
   saveProgrammeSubjectContent,
   setProgrammeAgeAttestation,
   userProgrammeSubject,
+  writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
 import styles from "./ActiveControlProgramme.module.css";
@@ -559,12 +563,25 @@ function ArtifactCard({ eyebrow, title, body, footer, dark = false, onEdit }: { 
   return <article className={`${styles.artifact} ${dark ? styles.artifactDark : ""}`}><div><span>{eyebrow}</span>{onEdit ? <button onClick={onEdit} type="button">EDIT</button> : null}</div><h3>{title}</h3><p>{body}</p><small>{footer}</small></article>;
 }
 
+function GoogleMark() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+      <path d="M21.8 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.5a4.7 4.7 0 0 1-2 3.1v2.6h3.3c1.9-1.8 3-4.4 3-7.6Z" fill="#4285F4" />
+      <path d="M12 22c2.7 0 5-.9 6.8-2.3l-3.3-2.6c-.9.6-2.1 1-3.5 1a6 6 0 0 1-5.6-4.1H3v2.7A10 10 0 0 0 12 22Z" fill="#34A853" />
+      <path d="M6.4 14a6 6 0 0 1 0-3.9V7.4H3A10 10 0 0 0 3 16.7L6.4 14Z" fill="#FBBC05" />
+      <path d="M12 5.9c1.5 0 2.8.5 3.8 1.5l2.9-2.8A9.7 9.7 0 0 0 3 7.4l3.4 2.7A6 6 0 0 1 12 5.9Z" fill="#EA4335" />
+    </svg>
+  );
+}
+
 function Registration({
   gate,
   map,
   authenticated,
   onContinue,
   onSubmit,
+  onGoogle,
+  googleAvailable,
   busy,
   error,
   returning = false,
@@ -574,6 +591,8 @@ function Registration({
   authenticated: boolean;
   onContinue: () => void;
   onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) => Promise<void>;
+  onGoogle: (input: { mode: "sign-up" | "sign-in"; adultConfirmed: boolean; termsAccepted: boolean }) => Promise<void>;
+  googleAvailable: boolean;
   busy: boolean;
   error: string;
   returning?: boolean;
@@ -598,7 +617,45 @@ function Registration({
   }
 
   return (
-    <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><form onSubmit={submit}><div className={styles.titleBlock}><span>PRIVATE SEVENBET ACCOUNT · 18+</span><h1>{mode === "sign-up" ? "Create your account." : returning ? "Return to your programme." : "Sign in to save progress."}</h1><p>Progress and rewards save to your account. Personal narrative stays only in this browser session and is not used for affiliate ranking or advertising targeting.</p></div><Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." /><Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />{mode === "sign-up" ? <><label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /><span>I agree to the Terms and Privacy Notice · required</span></label></> : null}{error ? <p className={styles.error} role="alert">{error}</p> : null}<PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 || !terms || !adultConfirmed : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>{!returning ? <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}</form><div className={styles.stack}>{returning ? <ArtifactCard eyebrow="PRIVATE PROGRAMME" title="Your work stays yours" body="Sign in to continue from the latest completed mission." footer="Personal narrative is not restored from the account" dark /> : <ArtifactCard eyebrow="LOCAL PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="This narrative stays in this browser session · +60 XP saves to the account" dark />}<PhotoTheatre image={PEOPLE.outcome} eyebrow="PRIVATE ACCOUNT · YOUR PLAN" title="Come back to your progress." note="No marketing consent is bundled with account creation." /></div></section></div>
+    <div className={styles.programmeShell}>
+      <Header />
+      <section className={styles.registrationForm}>
+        <form onSubmit={submit}>
+          <div className={styles.titleBlock}>
+            <span>PRIVATE SEVENBET ACCOUNT · 18+</span>
+            <h1>{mode === "sign-up" ? "Create your account." : returning ? "Return to your programme." : "Sign in to save progress."}</h1>
+            <p>Progress and rewards save to your account. Personal narrative stays only in this browser session and is not used for affiliate ranking or advertising targeting.</p>
+          </div>
+          {mode === "sign-up" ? (
+            <div className={styles.accountRequirements}>
+              <label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label>
+              <label className={styles.check}><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link> · required</span></label>
+            </div>
+          ) : null}
+          {googleAvailable ? (
+            <>
+              <button
+                className={styles.googleButton}
+                disabled={busy || (mode === "sign-up" && (!adultConfirmed || !terms))}
+                onClick={() => onGoogle({ mode, adultConfirmed, termsAccepted: terms })}
+                type="button"
+              >
+                <GoogleMark />
+                <span>Continue with Google</span>
+              </button>
+              <p className={styles.googleBoundary}>Google provides account identity only. It is not age verification or marketing consent.</p>
+              <div className={styles.authDivider}><span>or use email</span></div>
+            </>
+          ) : null}
+          <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." />
+          <Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />
+          {error ? <p className={styles.error} role="alert">{error}</p> : null}
+          <PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 || !terms || !adultConfirmed : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>
+          <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
+        </form>
+        <div className={styles.stack}>{returning ? <ArtifactCard eyebrow="PRIVATE PROGRAMME" title="Your work stays yours" body="Sign in to continue from the latest completed mission." footer="Personal narrative is not restored from the account" dark /> : <ArtifactCard eyebrow="LOCAL PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="This narrative stays in this browser session · +60 XP saves to the account" dark />}<PhotoTheatre image={PEOPLE.outcome} eyebrow="PRIVATE ACCOUNT · YOUR PLAN" title="Come back to your progress." note="No marketing consent is bundled with account creation." /></div>
+      </section>
+    </div>
   );
 }
 
@@ -917,7 +974,7 @@ function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "
   return <div className={styles.overlay} role="dialog" aria-modal="true" aria-label={`Edit ${type}`}><form className={styles.editPanel} onSubmit={save}><div><span>LOCAL PROGRAMME CONTENT · THIS BROWSER SESSION</span><button onClick={onClose} type="button">Close</button></div><h2>{type === "moment" ? "Edit your Moment Map" : type === "goal" ? "Edit your 7-day goal" : type === "signal" ? "Edit your early signal" : "Edit your active boundary"}</h2>{type === "moment" ? <><Field label="Situation" value={moment.situation} onChange={(situation) => setMoment({ ...moment, situation })} /><Field label="Cues · comma separated" value={moment.cues.join(", ")} onChange={(value) => setMoment({ ...moment, cues: value.split(",").map((item) => item.trim()).filter(Boolean) })} /><Field label="Thought or feeling" value={moment.thoughtOrFeeling} onChange={(thoughtOrFeeling) => setMoment({ ...moment, thoughtOrFeeling })} multiline /><Field label="Response" value={moment.response} onChange={(response) => setMoment({ ...moment, response })} multiline /><Field label="Immediate consequence" value={moment.immediateConsequence} onChange={(immediateConsequence) => setMoment({ ...moment, immediateConsequence })} multiline /><Field label="Notice rule" value={moment.noticeRule} onChange={(noticeRule) => setMoment({ ...moment, noticeRule })} multiline /></> : type === "goal" ? <><Field label="Cue" value={goal.triggerOrSituation} onChange={(triggerOrSituation) => setGoal({ ...goal, triggerOrSituation })} /><Field label="Action" value={goal.action} onChange={(action) => setGoal({ ...goal, action })} multiline /><Field label="Alternative action" value={goal.alternativeAction} onChange={(alternativeAction) => setGoal({ ...goal, alternativeAction })} multiline /><Field label="Success signal" value={goal.successSignal} onChange={(successSignal) => setGoal({ ...goal, successSignal })} multiline /><Field label="Review date" value={goal.reviewAt.slice(0, 10)} onChange={(reviewAt) => setGoal({ ...goal, reviewAt })} type="date" /></> : type === "signal" ? <><div className={styles.choiceGrid}>{(["body", "thought", "attention", "action_tendency", "not_sure"] as EarlySignalCategory[]).map((category) => <Choice key={category} active={!signal.notNow && signal.earlySignalCategory === category} title={category.replace("_", " ")} onClick={() => setSignal({ ...signal, earlySignalCategory: category, notNow: false })} />)}</div><Field label="My early signal · optional wording" value={signal.earlySignalText || ""} onChange={(earlySignalText) => setSignal({ ...signal, earlySignalText })} multiline /><button className={styles.notNowButton} data-active={signal.notNow} onClick={() => setSignal({ ...signal, earlySignalCategory: null, earlySignalText: null, notNow: true })} type="button">Not now — remove the personal signal</button></> : <><Field label="Plain-language rule" value={boundary.ruleText} onChange={(ruleText) => setBoundary({ ...boundary, ruleText })} multiline /><Field label="Execution detail · optional" value={boundary.executionDetail} onChange={(executionDetail) => setBoundary({ ...boundary, executionDetail })} multiline /><Field label="Coping action" value={boundary.copingAction} onChange={(copingAction) => setBoundary({ ...boundary, copingAction })} multiline /><Field label="Review point" value={boundary.reviewAt.slice(0, 16)} onChange={(reviewAt) => setBoundary({ ...boundary, reviewAt })} type="datetime-local" /></>}{error ? <p className={styles.error}>{error}</p> : null}<PrimaryButton disabled={busy || (type === "signal" && !signal.notNow && !signal.earlySignalCategory)} type="submit">{busy ? "Saving…" : "Keep changes in this tab"}</PrimaryButton></form></div>;
 }
 
-export function ActiveControlProgramme() {
+export function ActiveControlProgramme({ googleAvailable = false }: { googleAvailable?: boolean }) {
   const { data: session, isPending: sessionPending } = useSession();
   const sessionUserId = session?.user?.id || null;
   const [view, setView] = useState<View>("mission-01");
@@ -932,6 +989,7 @@ export function ActiveControlProgramme() {
   const [dashboard, setDashboard] = useState<DashboardModel | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [oauthNotice, setOAuthNotice] = useState("");
   const [editType, setEditType] = useState<"moment" | "goal" | "signal" | "boundary" | null>(null);
   const [returningSignIn, setReturningSignIn] = useState(false);
   const [ageAttested, setAgeAttested] = useState(false);
@@ -940,23 +998,39 @@ export function ActiveControlProgramme() {
   const [claimTransitionPending, setClaimTransitionPending] = useState(false);
   const previousSessionUserId = useRef<string | null | undefined>(undefined);
   const claimedJourneySubject = useRef<ProgrammeLocalSubject | null>(null);
+  const oauthRedemptionStarted = useRef(false);
   const authenticated = Boolean(sessionUserId);
+  const exactClaimTransition = Boolean(
+    claimTransitionPending
+    && sessionUserId
+    && activeSubject?.kind === "journey"
+    && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current),
+  );
   const subjectMatchesSession = Boolean(
     activeSubject
     && (sessionUserId
-      ? activeSubject.kind === "user" && activeSubject.id === sessionUserId
+      ? (activeSubject.kind === "user" && activeSubject.id === sessionUserId) || exactClaimTransition
       : activeSubject.kind === "journey"),
   );
 
   useEffect(() => {
     if (sessionPending) return;
     if (claimTransitionPending && sessionUserId && activeSubject?.kind === "journey") return;
+    const search = new URLSearchParams(window.location.search);
+    const authAction = search.get("auth");
+    const oauthJourney = authAction === "google-return" && sessionUserId
+      ? readProgrammeOAuthClaimMarker(window.sessionStorage)
+      : null;
+    if (oauthJourney) {
+      claimedJourneySubject.current = oauthJourney;
+      setClaimTransitionPending(true);
+    }
     const priorUserId = previousSessionUserId.current;
-    const nextSubject = sessionUserId
+    const nextSubject = oauthJourney || (sessionUserId
       ? userProgrammeSubject(sessionUserId)
       : priorUserId
         ? rotateAnonymousProgrammeSubject(window.sessionStorage)
-        : anonymousProgrammeSubject(window.sessionStorage);
+        : anonymousProgrammeSubject(window.sessionStorage));
     previousSessionUserId.current = sessionUserId;
     if (programmeSubjectsEqual(activeSubject, nextSubject)) return;
 
@@ -980,7 +1054,22 @@ export function ActiveControlProgramme() {
     if (local.activeBoundary) setActiveBoundary({ ...emptyBoundary, ...local.activeBoundary });
     setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, nextSubject));
     setLocalHydrated(true);
-    const returning = new URLSearchParams(window.location.search).get("auth") === "sign-in";
+    const retryJourney = authAction === "google-error" && nextSubject.kind === "journey"
+      ? readProgrammeOAuthClaimMarker(window.sessionStorage)
+      : null;
+    if (retryJourney && programmeSubjectsEqual(retryJourney, nextSubject)) {
+      claimedJourneySubject.current = retryJourney;
+    }
+    if (authAction === "google-error") {
+      setReturningSignIn(!retryJourney);
+      setView("registration");
+      setError("Google sign-in was not completed. Your local Programme work remains in this tab.");
+      window.history.replaceState({}, "", "/program");
+    } else if (authAction === "google-return" && sessionUserId && !oauthJourney) {
+      setOAuthNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
+      window.history.replaceState({}, "", "/program");
+    }
+    const returning = authAction === "sign-in";
     if (returning && nextSubject.kind === "journey") {
       setReturningSignIn(true);
       setView("registration");
@@ -1035,26 +1124,46 @@ export function ActiveControlProgramme() {
     finally { setBusy(false); }
   }
 
-  async function redeemClaim(targetUserId: string) {
-    const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
+  const redeemClaim = useCallback(async (targetUserId: string) => {
+    if (activeSubject?.kind === "journey" && !programmeSubjectsEqual(activeSubject, claimedJourneySubject.current)) {
+      throw new Error("The anonymous Programme journey cannot be matched to this claim");
+    }
     const targetSubject = userProgrammeSubject(targetUserId);
+    if (activeSubject?.kind !== "journey" && !programmeSubjectsEqual(activeSubject, targetSubject)) {
+      throw new Error("The Programme claim does not match the active account subject");
+    }
+    const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
     let local: Partial<ProgrammeLocalContent>;
     if (activeSubject?.kind === "journey") {
-      if (!programmeSubjectsEqual(activeSubject, claimedJourneySubject.current)) {
-        throw new Error("The anonymous Programme journey cannot be matched to this claim");
-      }
       local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, activeSubject, targetSubject);
     } else if (programmeSubjectsEqual(activeSubject, targetSubject)) {
       local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, targetSubject);
-    } else {
-      throw new Error("The Programme claim does not match the active account subject");
-    }
+    } else local = {};
+    clearProgrammeOAuthClaimMarker(window.sessionStorage);
     claimedJourneySubject.current = null;
+    setClaimTransitionPending(false);
+    window.history.replaceState({}, "", "/program");
     setActiveSubject(targetSubject);
     setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, targetSubject));
     const next = mergeDashboardLocal(payload.dashboard, local);
     setDashboard(next); setMomentMap(next.momentMap || momentMap); setView("dashboard");
-  }
+  }, [activeSubject, momentMap, request]);
+
+  useEffect(() => {
+    if (!sessionUserId || !localHydrated || !exactClaimTransition || oauthRedemptionStarted.current) return;
+    oauthRedemptionStarted.current = true;
+    setBusy(true);
+    setError("");
+    redeemClaim(sessionUserId)
+      .catch(() => {
+        setView("registration-gate");
+        setError("You are signed in, but your progress has not been saved yet. Try saving it again.");
+      })
+      .finally(() => {
+        oauthRedemptionStarted.current = false;
+        setBusy(false);
+      });
+  }, [exactClaimTransition, localHydrated, redeemClaim, sessionUserId]);
 
   async function handleRegistrationContinue() {
     if (!authenticated) { setView("registration"); return; }
@@ -1078,12 +1187,50 @@ export function ActiveControlProgramme() {
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
       const targetUserId = result.data?.user.id;
       if (!targetUserId) throw new Error("The authenticated account could not be resolved");
-      if (returningSignIn && input.mode === "sign-in") {
+      if (!continuingCurrentClaim) {
+        clearProgrammeOAuthClaimMarker(window.sessionStorage);
         window.history.replaceState({}, "", "/program");
         setReturningSignIn(false);
       } else await redeemClaim(targetUserId);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
     finally { setClaimTransitionPending(false); setBusy(false); }
+  }
+
+  async function handleGoogle(input: { mode: "sign-up" | "sign-in"; adultConfirmed: boolean; termsAccepted: boolean }) {
+    if (!googleAvailable) return;
+    if (input.mode === "sign-up" && (!input.adultConfirmed || !input.termsAccepted)) {
+      setError("Confirm the adult and account terms before creating an account.");
+      return;
+    }
+    const continuingCurrentClaim = !returningSignIn
+      && activeSubject?.kind === "journey"
+      && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current);
+    if (continuingCurrentClaim && activeSubject) {
+      writeProgrammeOAuthClaimMarker(window.sessionStorage, activeSubject);
+    } else {
+      clearProgrammeOAuthClaimMarker(window.sessionStorage);
+    }
+    setClaimTransitionPending(continuingCurrentClaim);
+    setBusy(true);
+    setError("");
+    try {
+      const result = await authClient.signIn.social({
+        provider: "google",
+        callbackURL: GOOGLE_AUTH_CALLBACK,
+        errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK,
+        requestSignUp: input.mode === "sign-up",
+        fetchOptions: {
+          headers: {
+            "x-sevenbet-age-attestation": ageAttested && (input.mode === "sign-in" || input.adultConfirmed) ? "18-or-over" : "",
+          },
+        },
+      });
+      if (result.error) throw new Error("Google sign-in could not be started. Try again or use email.");
+    } catch (cause) {
+      setClaimTransitionPending(false);
+      setError(cause instanceof Error ? cause.message : "Google sign-in could not be started. Try again or use email.");
+      setBusy(false);
+    }
   }
 
   async function startMissionTwo() {
@@ -1223,7 +1370,8 @@ export function ActiveControlProgramme() {
   return (
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
-      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} authenticated={authenticated} onContinue={handleRegistrationContinue} onSubmit={handleAuth} busy={busy} error={error} returning={returningSignIn} /> : null}
+      {oauthNotice ? <div className={styles.authNotice} role="status"><span>{oauthNotice}</span><button onClick={() => setOAuthNotice("")} type="button">Dismiss</button></div> : null}
+      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} authenticated={authenticated} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} returning={returningSignIn} /> : null}
       {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} onClearLocal={clearLocalContent} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}
       {view === "mission-03" ? <MissionThreeScreen step={m3Step} learning={urgeLearning} setLearning={setUrgeLearning} onNext={saveMissionThreeStep} busy={busy} error={error} dashboard={dashboard} /> : null}
