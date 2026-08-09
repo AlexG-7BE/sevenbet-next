@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-**Detected:** SevenBet is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, authenticated program-progress APIs, and the RFC-008 Mission 01/02 backend flow.
+**Detected, reconciled 2026-08-09:** B4GAMBLE (the consumer brand previously named SevenBet) is a Next.js App Router application with a PostgreSQL/Prisma persistence layer, Better Auth integration, public decision-support pages, a protected admin area, CMS-oriented builders, affiliate operations, media management, authenticated program-progress APIs, and the RFC-008 Mission 01/02 backend flow. The repository, Vercel project and compatibility identifiers remain `sevenbet-next`/`SevenBet` where RFC-019 explicitly preserves them.
 
 ## Frontend architecture
 
