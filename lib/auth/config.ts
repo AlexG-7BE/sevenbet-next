@@ -3,6 +3,10 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 
 import prisma from "@/lib/db/prisma";
 import { resolveGoogleAuthConfig } from "@/lib/auth/google-config";
+import {
+  IDENTITY_ONLY_DISABLED_AUTH_PATHS,
+  identityOnlyOAuthAccountDatabaseHooks,
+} from "@/lib/auth/identity-only-oauth";
 import { resolveBetterAuthRuntimeConfig } from "@/lib/auth/runtime-config";
 
 type SevenBetAuthOptions = {
@@ -27,6 +31,7 @@ export function createSevenBetAuth({
     },
     account: {
       encryptOAuthTokens: true,
+      updateAccountOnSignIn: false,
       accountLinking: {
         enabled: true,
         disableImplicitLinking: false,
@@ -42,11 +47,14 @@ export function createSevenBetAuth({
             google: {
               ...googleConfig,
               accessType: "online" as const,
+              disableIdTokenSignIn: true,
               disableImplicitSignUp: true,
             },
           },
         }
       : {}),
+    databaseHooks: identityOnlyOAuthAccountDatabaseHooks,
+    disabledPaths: [...IDENTITY_ONLY_DISABLED_AUTH_PATHS],
     trustedOrigins: runtimeConfig.trustedOrigins,
   });
 }

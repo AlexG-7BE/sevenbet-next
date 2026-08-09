@@ -1,5 +1,12 @@
 # RFC-018: Google Authentication and Email Communications Foundation
 
+> **OAuth credential supersession — 2026-08-09:**
+> [RFC-020](RFC-020-Google-Identity-Only-Authentication-Hardening.md)
+> supersedes this RFC where it permits durable Google OAuth token/scope storage
+> or leaves explicit provider-linking and provider-token HTTP capabilities
+> available. Google remains identity-only; its durable account relationship now
+> excludes access, refresh and ID tokens, expiry metadata and scope.
+
 - **Status:** Approved
 - **Decision authority:** Founder Office AUTH-COMMS-01 authorization
 - **Approved:** 2026-08-09

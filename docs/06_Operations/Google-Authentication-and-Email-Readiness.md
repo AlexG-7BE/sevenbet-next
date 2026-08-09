@@ -2,7 +2,7 @@
 
 - **Status:** Repository foundation ready; external Google and email activation open
 - **Owner:** Founder Office configuration owner with Engineering and Privacy review
-- **Decision:** RFC-018 / AUTH-COMMS-01
+- **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01
 - **Last reviewed:** 2026-08-09
 
 ## Evidence status
@@ -13,7 +13,9 @@
 - Google is registered only when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are present.
 - The server accepts only the fixed Google provider, fixed internal success/error callbacks and a boolean sign-up intent. Caller-supplied scopes, tokens, provider changes, extra data and callback destinations are rejected.
 - The installed provider requests its default identity scopes: `openid`, `email` and `profile`. No Google client SDK is added.
-- OAuth tokens are encrypted in the Better Auth `Account` row, excluded from normal data-subject export and deleted with the account.
+- Supported Better Auth account create/update hooks strip access, refresh and ID tokens, expiry metadata and scope before persistence. The durable Google `Account` row retains only the identity relationship needed for future authentication.
+- Client-supplied Google ID-token sign-in is disabled. The normal authorization-code redirect and `/api/auth/callback/google` remain enabled.
+- `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are disabled because B4GAMBLE has no approved provider-management or Google API use case.
 - Preview Better Auth continues to derive one exact branch host from `VERCEL_BRANCH_URL`; wildcard or contradictory origins fail closed.
 - The communications module has closed purposes, fixed templates, authoritative recipient resolution, sender categories, idempotency, bounded audit metadata, a disabled runtime transport and an in-memory test transport.
 
@@ -67,13 +69,16 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 3. With a complete Preview pair, confirm the button is visible and labelled `Continue with Google` with the official multicolour mark.
 4. Inspect the authorization request: only `openid`, `email` and `profile`; callback host/path exact; state and PKCE present; no caller-controlled callback.
 5. Exercise a new Google sign-up after the separate 18+ and Terms controls. Confirm one `User`, one Google `Account`, no password requirement and no `AdminUser`.
-6. Exercise a returning Google user. Confirm the provider account ID remains stable and no duplicate `User` is created.
+6. Exercise a returning Google user. Confirm the provider account ID remains stable, no duplicate `User` is created, the session succeeds and all token/scope/expiry fields remain `null`.
 7. Exercise a verified existing email/password account with the same Google email. Confirm one `User` with multiple authentication methods. An unverified local email must fail safely rather than merge.
 8. Confirm a Google identity already owned by User A cannot be reassigned or linked to User B.
 9. Exercise Mission 01 claim continuation: exact marker, server claim redemption, one reward, local journey-to-user migration and source removal. Then exercise expired/mismatched marker, cancellation, ordinary sign-in and User A → logout → User B negative cases.
 10. Confirm Google authentication without the bounded age header is denied, Programme mutations still require age confirmation and `/responsible-gambling` remains open.
-11. Confirm user-visible failures are generic and no token, email, database detail, secret or provider payload appears in HTML, logs or URLs.
-12. Revoke/delete the synthetic accounts and verify the active-database `Account`/session rows follow the approved privacy process.
+11. Confirm direct client-supplied Google ID-token sign-in is rejected while the normal redirect flow remains available.
+12. Confirm `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are unavailable to authenticated and unauthenticated requests; confirm `/get-session` and `/sign-out` remain available.
+13. Confirm user-visible failures are generic and no token, email, database detail, secret or provider payload appears in HTML, logs or URLs.
+14. Use the authenticated Programme logout control. Confirm the B4GAMBLE session ends, a fresh anonymous Programme subject starts and the global Google session is not treated as part of B4GAMBLE logout.
+15. Revoke/delete the synthetic accounts and verify the active-database `Account`/session rows follow the approved privacy process.
 
 ## Account-linking and recovery rules
 
@@ -81,6 +86,7 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 - Implicit same-email linking requires Google to report a verified email and the existing local `User.emailVerified` value to be true.
 - Different-email linking is disabled. Provider account reassignment is prohibited. Provider profile data does not overwrite the local account on link.
 - Google implicit sign-up is disabled. The UI sends an explicit sign-up intent only after the separate account-creation controls.
+- Explicit `/link-social` account management is disabled. Legitimate Google sign-in may still implicitly link only a verified same-email local account under the controls above.
 - The last authentication method cannot be unlinked. No unlink UI is exposed in this release.
 - If Google is a user's only method, do not disable the provider in Production without a tested verified recovery path.
 - Public Google users receive no staff role. Staff access still requires a separately provisioned `AdminUser` relation and server permission checks.
@@ -141,7 +147,7 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 
 ## Founder/Operations inputs still required
 
-- Before PR #59 is merged, apply and verify the approved Production authority `https://b4gamble.com` in the three documented Production-only environment values without triggering a deployment. The automatic exact-main deployment after Founder merge must use that contract, and its B4GAMBLE Production verification must pass before any later Google Production activation.
+- Review and merge AUTH-HARDEN-01 before any Google client or credential activation. The merged B4GAMBLE Production authority remains `https://b4gamble.com` in the three documented Production-only environment values.
 - Register the documented stable Preview origin and callback in the separate Preview Google client.
 - Create and place separate Production and Preview Google client IDs/secrets.
 - Verify the consent screen, authorised origins and exact callbacks.

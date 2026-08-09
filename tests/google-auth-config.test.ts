@@ -30,6 +30,7 @@ test("Google uses Better Auth's bounded identity provider and safe linking optio
   const route = readFileSync("app/api/auth/[...all]/route.ts", "utf8");
 
   assert.match(config, /encryptOAuthTokens: true/);
+  assert.match(config, /updateAccountOnSignIn: false/);
   assert.match(config, /appName: "B4GAMBLE"/);
   assert.match(config, /requireLocalEmailVerified: true/);
   assert.match(config, /allowDifferentEmails: false/);
@@ -37,6 +38,7 @@ test("Google uses Better Auth's bounded identity provider and safe linking optio
   assert.match(config, /updateUserInfoOnLink: false/);
   assert.match(provider, /google:/);
   assert.match(provider, /accessType: "online"/);
+  assert.match(provider, /disableIdTokenSignIn: true/);
   assert.match(provider, /disableImplicitSignUp: true/);
   assert.doesNotMatch(provider, /scope|gmail|contacts|calendar|offline/i);
   assert.match(route, /sign-in\/social/);
@@ -88,10 +90,12 @@ test("privacy and operations evidence describe only the implemented Google bound
   assert.match(privacy, /If you choose Google sign-in/);
   assert.match(privacy, /does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile/);
   assert.match(privacy, /Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission/);
+  assert.match(privacy, /Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored/);
   assert.match(processors, /Google Identity \/ OAuth/);
   assert.match(processors, /external activation not verified/);
   assert.match(retention, /Google claim-continuation marker/);
-  assert.match(retention, /Authentication sessions\/accounts and OAuth tokens/);
+  assert.match(retention, /Authentication sessions and accounts/);
+  assert.match(retention, /Access, refresh and ID tokens, token expiry metadata and scope are stripped before create\/update persistence/);
   assert.match(runbook, /http:\/\/localhost:4173\/api\/auth\/callback\/google/);
   assert.match(runbook, /https:\/\/b4gamble\.com\/api\/auth\/callback\/google/);
   assert.match(runbook, /EMAIL DELIVERY NOT CONFIGURED/);

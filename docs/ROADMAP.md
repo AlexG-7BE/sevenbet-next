@@ -15,18 +15,19 @@
 | 11 | LEGAL-02 | **Analysis complete** | Founder Office accepted the product, privacy, age and closed-beta policy decisions. |
 | 12 | LEGAL-IMPL-01 | **Closed; PR #57 merged** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
 | 13 | AUTH-COMMS-01 | **Closed; PR #58 merged** | RFC-018; bounded Google/Better Auth integration and provider-independent disabled email architecture. No credentials, live provider, reminder send or marketing activation. |
-| 14 | BRAND-CUTOVER-01 | **Delivery candidate — unmerged** | RFC-019; minimal SevenBet → B4GAMBLE consumer-brand replacement and `b4gamble.com` Production canonical readiness. No redesign, data migration, external activation or Preview-domain change. |
-| 15 | B4GAMBLE Production environment cutover | **Founder-controlled pre-merge configuration and merge deployment** | Before merge, set and verify the exact Production-only site/auth URL values without deploying; the automatic exact-main deployment after Founder merge must then pass metadata, schema, robots, sitemap, auth and legacy-host verification. |
-| 16 | External Google OAuth configuration | **Open external** | Create separate Preview/Production Web clients; register exact documented origins/callbacks; install environment-scoped credentials and complete synthetic smoke tests. |
-| 17 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
-| 18 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
-| 19 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
-| 20 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
-| 21 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
-| 22 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
-| 23 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 24 | PROGRAM-AI-01 and Missions 05–10 | **Next product scope / open** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
-| 25 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
+| 14 | BRAND-CUTOVER-01 | **Closed; PR #59 merged** | RFC-019; B4GAMBLE consumer brand and `b4gamble.com` Production canonical authority are merged. No external Google activation accompanied the cutover. |
+| 15 | B4GAMBLE Production environment cutover | **Completed** | Exact Production site/auth authority and post-merge canonical/auth/runtime verification completed under BRAND-CUTOVER-01. |
+| 16 | AUTH-HARDEN-01 | **Delivery candidate — unmerged** | RFC-020; no durable Google OAuth credential material, restricted Better Auth provider API surface, redirect OAuth preserved and bounded Programme logout added. No schema, migration, dependency, credential or external activation change. |
+| 17 | External Google OAuth configuration | **Blocked pending AUTH-HARDEN-01 merge** | After hardening, create separate Preview/Production Web clients; register exact documented origins/callbacks; install environment-scoped credentials and complete synthetic smoke tests. |
+| 18 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
+| 19 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
+| 20 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
+| 21 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
+| 22 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
+| 23 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
+| 24 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
+| 25 | PROGRAM-AI-01 and Missions 05–10 | **Next product scope / open** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
+| 26 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
 
@@ -38,10 +39,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Founder review and merge decision for BRAND-CUTOVER-01 after exact-head CI and Preview evidence is green.
-2. Before merge, Founder/Operations applies and verifies the three exact Production-only B4GAMBLE URL/auth values without deploying or mutating current Production; Founder merge then triggers the automatic exact-main deployment and ordered canonical/auth/runtime verification.
-3. Complete the separate external Google Preview/Production configuration and synthetic smoke verification; BRAND-CUTOVER-01 does not activate it.
-4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
-5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
-6. Open PROGRAM-AI-01 and Mission-specific RFCs for Missions 05–10 as the next separate product scope; do not combine it with communications activation.
-7. Acquire real partner evidence only under a later closed-beta authorisation decision.
+1. Founder review and merge decision for AUTH-HARDEN-01 after exact-head CI and Preview evidence is green.
+2. Only after that merge, resume separate external Google Preview/Production configuration and synthetic smoke verification.
+3. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
+4. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
+5. Open PROGRAM-AI-01 and Mission-specific RFCs for Missions 05–10 as the next separate product scope; do not combine it with communications activation.
+6. Acquire real partner evidence only under a later closed-beta authorisation decision.

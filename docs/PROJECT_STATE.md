@@ -3,13 +3,14 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-09
-- **Current main:** `314639df94082eba6d8499f2ce26dee68ccc5fbe`
+- **Current main:** `6855dbd546006c129ce39b2cff809a5e98164b2b`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
 - **AUTH-COMMS-01:** **CLOSED**; [PR #58](https://github.com/AlexG-7BE/sevenbet-next/pull/58) is merged in current main.
-- **BRAND-CUTOVER-01:** approved under RFC-019; the B4GAMBLE consumer-brand and canonical-domain delivery candidate is on `codex/brand-cutover-01-b4gamble` and remains unmerged.
-- **Production:** <https://b4gamble.com> routes to the current Vercel Production application, but current main still emits pre-cutover SevenBet identity and `sevenbet-next.vercel.app` canonical/schema/sitemap/robots authority. Production environment values and deployment remain unchanged by the unmerged delivery branch.
+- **BRAND-CUTOVER-01:** **CLOSED**; [PR #59](https://github.com/AlexG-7BE/sevenbet-next/pull/59) is merged in current main.
+- **AUTH-HARDEN-01:** approved under RFC-020; the Google identity-only persistence/API hardening candidate is on `codex/auth-harden-01-google-identity-only` and remains unmerged.
+- **Production:** <https://b4gamble.com> serves the merged B4GAMBLE consumer identity and canonical authority. Google credentials and external provider activation remain absent.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -18,8 +19,9 @@
 | LEGAL-02 | **ANALYSIS COMPLETE** |
 | LEGAL-IMPL-01 | **CLOSED — PR #57 MERGED** |
 | AUTH-COMMS-01 | **CLOSED — PR #58 MERGED** |
-| BRAND-CUTOVER-01 | **DELIVERY CANDIDATE — UNMERGED** |
-| Google login code | **READY — existing Better Auth, fail-closed configuration** |
+| BRAND-CUTOVER-01 | **CLOSED — PR #59 MERGED** |
+| AUTH-HARDEN-01 | **DELIVERY CANDIDATE — UNMERGED** |
+| Google login code | **HARDENING CANDIDATE — identity-only persistence and restricted API surface** |
 | Google Production credentials | **OPEN EXTERNAL** |
 | Email communication architecture | **READY — provider-independent, disabled transport** |
 | Email provider | **OPEN — NOT SELECTED** |
@@ -40,7 +42,7 @@
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation; it does not authorise reminders, marketing or provider activation. RFC-019 supersedes earlier current-state references only for the consumer brand and target Production canonical authority. Mission order, prerequisites, content intent and reward amounts are unchanged.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. None authorises reminders, marketing or external provider activation. Mission order, prerequisites, content intent and reward amounts are unchanged.
 
 B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
 
@@ -75,21 +77,23 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 ### Authentication and communication foundation
 
 - Optional Google identity authentication is integrated through Better Auth and appears only when both server-only credentials are complete. The accepted request is restricted to fixed internal callbacks, explicit sign-up intent and the installed `openid`, `email` and `profile` identity scopes; Gmail and other Google product scopes are absent.
+- The AUTH-HARDEN-01 candidate strips access, refresh and ID tokens, expiry metadata and scope through Better Auth create/update hooks before persistence; disables direct client ID-token sign-in and the explicit link/token/account-info endpoints; and retains the normal redirect callback, session and sign-out endpoints.
 - A ten-minute, tab-scoped marker continues only the exact opaque anonymous Programme journey through OAuth. It contains no narrative, email, token or reward data. Exact success redeems the server claim and migrates only that local namespace; cancellation preserves it, while stale or mismatched markers deny.
 - Same-email linking is limited to verified Google identity plus an already verified local account. Different-email linking, provider-account reassignment, implicit sign-up, staff elevation and client-authored scope/callback expansion remain denied.
+- The authenticated Programme header exposes bounded sign-out and starts a fresh anonymous subject after success; account-scoped browser content remains isolated for the same user.
 - Communication purposes are closed and server-owned. Account/security and Programme reminder contracts have fixed non-commercial templates; Programme engagement requires separate opt-in; commercial marketing denies. Delivery remains disabled because no provider, scheduler or preference store is selected.
 
 ### Platform and delivery baseline
 
-- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01 and AUTH-COMMS-01 are merged on main.
-- RFC-019 governs the unmerged B4GAMBLE consumer-brand and Production canonical-domain candidate. Repository, Vercel project, schema, migrations, routes, protocols and compatibility identifiers remain unchanged.
+- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01, AUTH-COMMS-01 and BRAND-CUTOVER-01 are merged on main.
+- RFC-020 governs the unmerged AUTH-HARDEN-01 candidate. Repository, Vercel project, Prisma schema, migrations, dependency versions, protocols and compatibility identifiers remain unchanged.
 - Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
 - CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
 - Recovery is **PARTIAL** because no verified provider snapshot/PITR restore point is available under the current provider plan.
 
 ## Evidence classification
 
-- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; subject-scoped age request gate; bounded Google/Better Auth configuration and OAuth continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
+- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; subject-scoped age request gate; bounded Google/Better Auth configuration, identity-only account hooks, restricted auth paths and OAuth continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
 - **Planned:** external Google Preview/Production client configuration, an approved email transport decision, COMMS-REMINDER-01, durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
 - **Not detected:** live Google credentials or smoke result; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; a completed UK representative appointment; a confirmed ICO registration/fee outcome; outside-counsel sign-off; verified complete processor/transfer evidence; a real signed GB partner; real eligible offer/link authority; Production affiliate activation; or a successful restore drill.
@@ -124,4 +128,4 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Release conclusion
 
-LEGAL-IMPL-01 and AUTH-COMMS-01 are closed on current main. BRAND-CUTOVER-01 is an unmerged delivery candidate. Before merge, Founder/Operations must set and verify the exact Production-only URL/auth environment values without deploying or mutating the current Production application. Founder merge then triggers the automatic exact-main deployment, which must reach Ready and pass the ordered B4GAMBLE canonical/auth/runtime verification before the workstream can close. It does not activate external Google credentials, email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.
+LEGAL-IMPL-01, AUTH-COMMS-01 and BRAND-CUTOVER-01 are closed on current main. AUTH-HARDEN-01 is an unmerged delivery candidate and must pass exact-head CI/Preview review before Founder merge consideration. It does not configure Google Cloud, add credentials, activate Google in Preview or Production, enable email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.

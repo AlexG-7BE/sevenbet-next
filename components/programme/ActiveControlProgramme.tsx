@@ -301,6 +301,38 @@ function reviewLabel(value: string) {
     : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long" }).format(date);
 }
 
+function ProgrammeSignOut() {
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function handleSignOut() {
+    setPending(true);
+    setFailed(false);
+    try {
+      const result = await authClient.signOut();
+      if (result.error) throw new Error("Sign-out failed");
+      clearProgrammeOAuthClaimMarker(window.sessionStorage);
+      rotateAnonymousProgrammeSubject(window.sessionStorage);
+      window.location.assign("/program");
+    } catch {
+      setFailed(true);
+      setPending(false);
+    }
+  }
+
+  return (
+    <button
+      aria-label="Log out of B4GAMBLE"
+      className={styles.accountPill}
+      disabled={pending}
+      onClick={handleSignOut}
+      type="button"
+    >
+      {pending ? "Logging out…" : failed ? "Try log out again" : "Log out"}
+    </button>
+  );
+}
+
 function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean }) {
   return (
     <header className={styles.header}>
@@ -314,7 +346,7 @@ function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean })
       </nav>
       <div className={styles.accountNav}>
         <Link href="/responsible-gambling">Help</Link>
-        {authenticated ? <><span className={styles.xpPill}>{xp ?? 0} XP</span><span className={styles.accountPill}>My programme</span></> : <Link href="/program?auth=sign-in">Log in</Link>}
+        {authenticated ? <><span className={styles.xpPill}>{xp ?? 0} XP</span><ProgrammeSignOut /></> : <Link href="/program?auth=sign-in">Log in</Link>}
       </div>
     </header>
   );
