@@ -12,11 +12,15 @@ test("desktop discovery renders the approved SSR directory without browser error
   await expect(page.getByText(/Search published review snapshots/)).toBeVisible();
   await expect(page.getByText(/Search verified published profiles/)).toHaveCount(0);
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
-  const editorialMedia = page.locator('img[src="/casino-directory/editorial-media.jpg"]');
+  const editorialMedia = page.locator('section[aria-label="Published review preview"] img[aria-hidden="true"]').first();
   await expect(editorialMedia).toBeVisible();
-  expect(await editorialMedia.evaluate((image: HTMLImageElement) => ({ complete: image.complete, width: image.naturalWidth, height: image.naturalHeight }))).toEqual({ complete: true, width: 2400, height: 3600 });
+  const mediaState = await editorialMedia.evaluate((image: HTMLImageElement) => ({ complete: image.complete, currentSrc: image.currentSrc, width: image.naturalWidth, height: image.naturalHeight }));
+  expect(mediaState.complete).toBe(true);
+  expect(mediaState.currentSrc).toContain("/_next/image?url=%2Fcasino-directory%2Feditorial-media.jpg");
+  expect(mediaState.width).toBeGreaterThan(0);
+  expect(mediaState.height / mediaState.width).toBeCloseTo(1.5, 1);
   await expect(page.getByText("Market preference, not location.").first()).toBeVisible();
-  await expect(page.getByRole("status")).toContainText(/Page 1 of/);
+  await expect(page.locator("#casino-results [role=status]")).toContainText(/Page 1 of/);
   await page.getByLabel("Search published reviews").focus();
   expect(await page.getByLabel("Search published reviews").evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
   await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
@@ -123,7 +127,8 @@ test("SSR metadata, canonical rules, ItemList and fail-closed action states rema
   expect(defaultHtml).toContain('<link rel="canonical" href="https://sevenbet-next.vercel.app/casinos"');
   expect(defaultHtml).toContain('"@type":"ItemList"');
   expect(defaultHtml).toContain('"numberOfItems":25');
-  expect(defaultHtml).toMatch(/href="\/r\/[a-z0-9-]+"/);
+  expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
+  expect(defaultHtml).toContain("A governed visit link is not currently available.");
 
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();

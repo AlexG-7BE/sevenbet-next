@@ -9,14 +9,16 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
     return publicCasinoRepository.listPublished();
   }
 
-  async loadContext(casinoIds: string[]): Promise<DiscoveryContext> {
+  async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean } = {}): Promise<DiscoveryContext> {
     if (!casinoIds.length) return { aliases: [], offers: [], redirects: [] };
+    const includeAliases = options.includeAliases ?? true;
+    const includeCommercial = options.includeCommercial ?? true;
     const [aliases, offers, redirects] = await Promise.all([
-      prisma.casinoAlias.findMany({
+      includeAliases ? prisma.casinoAlias.findMany({
         where: { casinoId: { in: casinoIds }, casino: { status: EditorialStatus.PUBLISHED, archivedAt: null } },
         select: { casinoId: true, value: true },
-      }),
-      prisma.affiliateOffer.findMany({
+      }) : [],
+      includeCommercial ? prisma.affiliateOffer.findMany({
         where: { casinoId: { in: casinoIds } },
         select: {
           id: true, casinoId: true, casinoBonusId: true, status: true, archivedAt: true, startAt: true, expiresAt: true,
@@ -30,12 +32,12 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
             },
           },
         },
-      }),
-      prisma.affiliateRedirectSlug.findMany({
+      }) : [],
+      includeCommercial ? prisma.affiliateRedirectSlug.findMany({
         where: { casinoId: { in: casinoIds }, active: true, archivedAt: null },
         orderBy: [{ createdAt: "asc" }, { id: "asc" }],
         select: { casinoId: true, casinoBonusId: true, affiliateOfferId: true, slug: true },
-      }),
+      }) : [],
     ]);
     return { aliases, offers, redirects };
   }

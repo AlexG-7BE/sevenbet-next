@@ -267,6 +267,26 @@ test("commercial action requires an active governed offer and safe internal redi
   assert.doesNotMatch(JSON.stringify(result), /destinationUrl|trackingUrl|https?:\/\//);
 });
 
+test("commercial denial omits aliases, affiliate context and operator evaluation", async () => {
+  let contextOptions: { includeAliases?: boolean; includeCommercial?: boolean } | undefined;
+  let operatorCalls = 0;
+  const service = new PublicComparisonService({
+    listPublished: async () => [record("alpha"), record("beta")],
+    loadContext: async (_ids, options) => {
+      contextOptions = options;
+      return { aliases: [], offers: [], redirects: [] };
+    },
+  }, () => now, {
+    async evaluate() { operatorCalls += 1; throw new Error("must not evaluate"); },
+    async evaluateMany() { operatorCalls += 1; return new Map(); },
+  }, () => true);
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  assert.deepEqual(contextOptions, { includeAliases: false, includeCommercial: false });
+  assert.equal(operatorCalls, 0);
+  assert.equal(result.status, "available");
+  assert.ok(result.casinos.every((casino) => !casino.action.available));
+});
+
 test("repository failures fail closed without legacy or fabricated records", async () => {
   const result = await new PublicComparisonService(store([], {}, true), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
   assert.equal(result.status, "projection-unavailable");
@@ -280,7 +300,7 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   const service = readFileSync("lib/services/public-comparison.service.ts", "utf8");
   const component = readFileSync("components/comparison/ComparisonExperience.tsx", "utf8");
   assert.match(page, /publicComparisonService/);
-  assert.match(component, /method="get"/);
+  assert.match(component, /InstantDiscoveryForm/);
   assert.match(component, /name="casino"/);
   assert.match(component, /mobileMatrix/);
   assert.match(component, /CasinoOutboundAction/);
@@ -290,11 +310,10 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   }
 });
 
-test("comparison loading boundary is truthful, accessible and value-free", () => {
-  const loading = readFileSync("app/(public)/compare/loading.tsx", "utf8");
-  assert.match(loading, /aria-busy="true"/);
-  assert.match(loading, /aria-label="Casino comparison is loading"/);
-  assert.equal(loading.match(/<h1/g)?.length, 1);
-  assert.doesNotMatch(loading, /Demo\s+\w+\s+Casino|demo-(?:northstar|harbour|atlas)|\/r\//i);
-  assert.doesNotMatch(loading, /\d+(?:\.\d+)?\/10|[£$€]|\d+×|\d+%/);
+test("comparison pending feedback is local, accessible and value-free", () => {
+  const pending = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
+  assert.match(pending, /aria-busy=\{pending\}/);
+  assert.match(pending, /aria-live="polite"/);
+  assert.match(pending, /pendingLabel/);
+  assert.doesNotMatch(pending, /Demo\s+\w+\s+Casino|demo-(?:northstar|harbour|atlas)|\/r\//i);
 });

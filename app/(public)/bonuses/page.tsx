@@ -88,7 +88,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <ActiveBonusFilters query={result.query} raw={raw} />
 
         {result.records.length > 0 ? <>
-          <header className={styles.resultsHeader}><div><p className={styles.eyebrow}>Full comparison results</p><h2>{result.total} Matching Offer{result.total === 1 ? "" : "s"}</h2></div><p>Page {result.page} of {result.pageCount} · {result.pageSize} per page. Missing values stay neutral and sort after known values where applicable.</p></header>
+          <header className={styles.resultsHeader}><div><p className={styles.eyebrow}>Full comparison results</p><h2>{result.total} Matching Offer{result.total === 1 ? "" : "s"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount} · {result.pageSize} per page. Missing values stay neutral and sort after known values where applicable.</p></header>
           <BonusComparisonList offers={result.records} startPosition={startPosition} />
           <BonusPagination page={result.page} pageCount={result.pageCount} raw={raw} />
         </> : <section className={styles.empty}><p className={styles.eyebrow}>No matches / no substitute</p><h2>No Published Offers Match These Filters.</h2><p>Reset the comparison instead of substituting an ineligible or commercially available offer. Published casino reviews, methodology, education and protected Help remain available.</p><Link href="/bonuses">Reset Filters</Link></section>}

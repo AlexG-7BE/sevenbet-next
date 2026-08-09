@@ -14,11 +14,11 @@
 | 10 | OPS-01 — Production Engineering & Release Governance | **Completed and merged** | [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) merged as `e140f4d`; three-job CI, branch protection, scheduled smoke and operations runbooks are active. |
 | 11 | ENV-ISO-01 — Preview / Production Environment Isolation | **Completed and merged** | [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged as `a954243`; distinct Preview database/auth/admin authority, exact-host Preview auth and no Production-data copy are proven. Exact-merge Production deployment, smoke and real staff auth E2E passed. Recovery remains a separate PARTIAL pre-closed-beta gate. |
 | 12 | GB-MARKET-01 — GB Market Authority | **Completed and merged** | [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) merged as `5fbb73b`; it establishes a versioned, server-authoritative GB editorial policy and fail-closed jurisdiction/operator/redirect gates. Commercial and referral activation remain off. |
-| 13 | COMM-01 — GB Commercial Partner Authority | **Implementation complete — PR #55 open for Founder review** | RFC-015 adds typed agreement/domain authority, explicit `DIRECT_LINK` outbound approval, programme/offer/link/bonus gates, provider-import safety, a five-candidate shortlist with current regulatory-history diligence, and an onboarding pack. No real partner or destination was added; policy/referral remain off. |
-| 14 | LEGAL-02 and Founder partner application | **Next primary commercial gates** | Final external legal/compliance decision plus real application, negotiation, agreement and exact partner evidence. |
-| 15 | PROGRAM-AI-01, PERF-01 and RECOVERY-01 | **Approved next independent workstreams** | May proceed independently; recovery remains required before stateful Closed Commercial Beta. |
-| 16 | Programme Missions 05–10 | **Future separate product scope** | Requires Mission-specific approval, implementation, regression and documentation gates. |
-| 17 | FILTER-UX-01 | **Later** | Proceed only after performance and authority contracts remain stable. |
+| 13 | COMM-01 — GB Commercial Partner Authority | **Completed and merged** | [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) merged as `82e3985`; RFC-015 adds typed agreement/domain authority, explicit `DIRECT_LINK` outbound approval, programme/offer/link/bonus gates, provider-import safety, a five-candidate shortlist with current regulatory-history diligence, and an onboarding pack. No real partner or destination was added; policy/referral remain off. |
+| 14 | UX-PERF-01 — Production Performance + Instant Discovery | **PR #56 open — exact-head CI and Preview QA passed** | RFC-016 retains server/URL authority while progressively enhancing Casinos, Bonuses and Compare; measured image/query work is bounded, and no schema, dependency, Production-data, cache-authority or visual-system change is included. Implementing agent has not merged the PR. |
+| 15 | LEGAL-02 and Founder partner application | **Next primary commercial gates** | Final external legal/compliance decision plus real application, negotiation, agreement and exact partner evidence. |
+| 16 | PROGRAM-AI-01 and RECOVERY-01 | **Approved next independent workstreams** | May proceed independently; recovery remains required before stateful Closed Commercial Beta. |
+| 17 | Programme Missions 05–10 | **Future separate product scope** | Requires PROGRAM-AI-01 architecture plus Mission-specific approval, implementation, regression and documentation gates. |
 | 18 | Regulated commercial release | **Blocked by separate gates** | Legal approval, real operator/partner agreement/data, policy activation and verified recovery remain outstanding. |
 
 ## FE-DS-01 outcome
@@ -41,18 +41,21 @@ GB-MARKET-01 [PR #54](https://github.com/AlexG-7BE/sevenbet-next/pull/54) is mer
 
 ## COMM-01 outcome
 
-COMM-01 implements [RFC-015](06_RFC/RFC-015-GB-Commercial-Partner-Authority.md) without a schema change. It adds typed partner-agreement evidence with explicit `DIRECT_LINK` authority for outbound referral, a repository-controlled exact-domain evidence authority, server-side programme/offer/tracking/bonus gates, GB provider-import fail-closed behavior, a request-time central readiness evaluator, a five-candidate evidence shortlist with current UKGC regulatory-history diligence, and an onboarding/application/economics package. The real evidence store is empty; no partner, agreement, destination, traffic or Production commercial data was added. See [GB Commercial Partner Authority](05_Engineering/GB-Commercial-Partner-Authority.md).
+COMM-01 [PR #55](https://github.com/AlexG-7BE/sevenbet-next/pull/55) is merged. It implements [RFC-015](06_RFC/RFC-015-GB-Commercial-Partner-Authority.md) without a schema change. It adds typed partner-agreement evidence with explicit `DIRECT_LINK` authority for outbound referral, a repository-controlled exact-domain evidence authority, server-side programme/offer/tracking/bonus gates, GB provider-import fail-closed behavior, a request-time central readiness evaluator, a five-candidate evidence shortlist with current UKGC regulatory-history diligence, and an onboarding/application/economics package. The real evidence store is empty; no partner, agreement, destination, traffic or Production commercial data was added. See [GB Commercial Partner Authority](05_Engineering/GB-Commercial-Partner-Authority.md).
+
+## UX-PERF-01 outcome
+
+UX-PERF-01 [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) implements [RFC-016](06_RFC/RFC-016-Production-Performance-and-Instant-Discovery.md) on its review branch. It adds a bounded progressive enhancer to existing server GET forms, keeps URL/search parser/service authority, preserves no-JavaScript operation, removes result-replacing discovery skeletons, delivers the casino theatre image through responsive Next Image candidates and skips commercial relation work after server-side policy denial. Best Offers has no applicable URL-owned discovery filter and is unchanged. Exact-head CI and Preview QA passed; the PR remains unmerged for Founder review. See [Performance and Instant Discovery](05_Engineering/Performance-and-Instant-Discovery.md).
 
 ## Next sequencing
 
-After COMM-01 merge review, the following may proceed in parallel subject to their own governing approvals and release gates:
+After UX-PERF-01 Founder review, the following may proceed in parallel subject to their own governing approvals and release gates:
 
 - Founder Office application/negotiation with the top real partner candidates;
 - LEGAL-02 — final external GB legal/compliance sign-off;
 - PROGRAM-AI-01 — product/architecture planning only;
-- PERF-01 — separately governed performance work;
 - RECOVERY-01 — stateful pre-closed-beta recovery gate.
 
-FILTER-UX-01 remains later, after performance and authority contracts are stable. No live GB commercial/referral activation is authorized.
+The bounded instant-discovery scope formerly identified as FILTER-UX-01 is covered by UX-PERF-01 for Casinos, Bonuses and Compare. Any broader filtering product change requires its own evidence and approval. No live GB commercial/referral activation is authorized.
 
 No follow-up ENV-ISO or generic OPS cleanup workstream is open.

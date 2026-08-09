@@ -113,16 +113,19 @@ test("mobile uses criterion cards and all approved widths avoid horizontal overf
   }
 });
 
-test("streamed navigation exposes the structural loading state without mobile overflow", async ({ browser }) => {
+test("soft navigation preserves comparison evidence while pending without mobile overflow", async ({ browser }) => {
   for (const width of [390, 375]) {
     const page = await browser.newPage({ viewport: { width, height: 844 }, isMobile: true });
-    const navigation = page.goto(`${baseUrl}/compare?country=GB&loading-check=${width}`, { waitUntil: "networkidle" });
-    const loading = page.locator('[aria-busy="true"][aria-label="Casino comparison is loading"]');
-    await expect(loading, `${width}px loading state`).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1, name: "Checking context and evidence…" })).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px loading overflow`).toBe(false);
-    await navigation;
-    await expect(page.getByRole("heading", { level: 1, name: /Compare what matters/ })).toBeVisible();
+    await page.goto(`${baseUrl}/compare`, { waitUntil: "networkidle" });
+    const heading = page.getByRole("heading", { level: 1, name: /Compare what matters/ });
+    await expect(heading).toBeVisible();
+    await page.route("**/*_rsc=*", async (route) => { await new Promise((resolve) => setTimeout(resolve, 300)); await route.continue(); });
+    const first = page.locator('select[name="casino"]').first();
+    const replacement = await first.locator("option").nth(2).getAttribute("value");
+    await first.selectOption(replacement!);
+    await expect(page.locator('form[data-pending="true"]')).toBeVisible();
+    await expect(heading).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px pending overflow`).toBe(false);
     await page.close();
   }
 });

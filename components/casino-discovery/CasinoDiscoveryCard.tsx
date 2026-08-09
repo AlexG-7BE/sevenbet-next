@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import React from "react";
 import type { ReactNode } from "react";
 
@@ -63,7 +64,7 @@ export function CasinoDiscoveryCardMarkup({ casino, position, classNames }: { ca
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames }) {
   if (!casino) return <div className={classNames.featurePlaceholder}><span>Published directory</span><strong>Reviews appear only after editorial publication.</strong><p>No placeholder casino or promotional claim is substituted.</p></div>;
   return <section aria-label="Published review preview" className={classNames.featureTheatre}>
-    <img alt="" aria-hidden="true" className={classNames.featureMedia} height={720} src={DIRECTORY_EDITORIAL_MEDIA} width={1280} />
+    <Image alt="" aria-hidden="true" className={classNames.featureMedia} fill priority sizes="(max-width: 760px) 1px, (max-width: 1280px) 100vw, 1280px" src={DIRECTORY_EDITORIAL_MEDIA} />
     <div aria-hidden="true" className={classNames.featureOverlay} />
     <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>Published casino review · 18+</span><h2>Know the operator<br /><em>before the offer.</em></h2><p>Licence, payments, controls and material bonus terms—read in one calm snapshot.</p><div className={classNames.featureMetrics}><span><b>10-point</b> Editor Score</span><span><b>Published</b> evidence</span><span><b>Review</b> before visit</span></div></div>
     <article className={classNames.featureCard}><ReviewCardContents casino={casino} classNames={classNames} /></article>

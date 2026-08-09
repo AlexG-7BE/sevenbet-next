@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { cache } from "react";
 
 import { ComparisonExperience } from "@/components/comparison/ComparisonExperience";
 import { parsePublicComparisonQuery, type ComparisonSearchParams } from "@/lib/public-comparison/query";
@@ -20,11 +19,15 @@ function toSearchParams(raw: PageSearchParams) {
   return params;
 }
 
-const loadComparison = cache((raw: string) => publicComparisonService.compare(parsePublicComparisonQuery(new URLSearchParams(raw) as ComparisonSearchParams)));
+async function resolveComparison(raw: URLSearchParams) {
+  const query = parsePublicComparisonQuery(raw as ComparisonSearchParams);
+  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country });
+  return publicComparisonService.compare(query, authority);
+}
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<PageSearchParams> }): Promise<Metadata> {
   const raw = toSearchParams(await searchParams);
-  const result = await loadComparison(raw.toString());
+  const result = await resolveComparison(raw);
   const cleanDefault = result.query.selectionMode === "default" && result.query.country === "GB" && !result.query.differences && !result.query.issues.length;
   const index = cleanDefault && result.status === "available";
   const title = result.status === "available" ? "Compare Published Casino Profiles | SevenBet" : "Casino Comparison | SevenBet";
@@ -40,9 +43,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 
 export default async function ComparePage({ searchParams }: { searchParams: Promise<PageSearchParams> }) {
   const raw = toSearchParams(await searchParams);
-  const query = parsePublicComparisonQuery(new URLSearchParams(raw) as ComparisonSearchParams);
-  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country });
-  const result = await publicComparisonService.compare(query, authority);
+  const result = await resolveComparison(raw);
   const schemas = result.status === "projection-unavailable" ? [] : [
     {
       "@context": "https://schema.org",

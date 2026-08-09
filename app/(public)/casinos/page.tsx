@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ActiveDiscoveryFilters, DirectoryFeaturedTheatre, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
-import { CasinoDiscoveryPending } from "@/components/casino-discovery/CasinoDiscoveryPending";
+import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
@@ -34,13 +34,12 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   ];
 
   return <div className={styles.page}>
-    <CasinoDiscoveryPending />
     {schemas.map((schema, index) => <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} key={index} type="application/ld+json" />)}
     <section className={styles.hero}>
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
           <header><p>Independent casino discovery · Published reviews · 18+</p><h1>A clearer casino<br /><em>choice.</em></h1><span>Search published review snapshots before you compare a bonus or consider a governed visit action.</span></header>
-          <div className={styles.heroSearch}><form action="/casinos" method="get"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></form><p>SevenBet may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
+          <div className={styles.heroSearch}><InstantDiscoveryForm action="/casinos" debouncedFields={["q"]} key={`hero:${result.appliedFilters.search ?? ""}`} pendingLabel="Updating casino results…"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input defaultValue={result.appliedFilters.search ?? ""} id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></InstantDiscoveryForm><p>SevenBet may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
         </div>
         <DirectoryFeaturedTheatre casino={result.items[0]} />
       </div>

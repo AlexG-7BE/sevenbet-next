@@ -5,7 +5,7 @@ import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositori
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 
 export interface PublicOfferStore {
-  listOffers(): Promise<PublicOfferDTO[]>;
+  listOffers(options?: { includeCommercial?: boolean }): Promise<PublicOfferDTO[]>;
 }
 
 export class PublicOfferRepository implements PublicOfferStore {
@@ -14,9 +14,9 @@ export class PublicOfferRepository implements PublicOfferStore {
     private readonly options: { redirectEnabled?: boolean; now?: Date } = {},
   ) {}
 
-  async listOffers() {
+  async listOffers(options: { includeCommercial?: boolean } = {}) {
     const published = await this.casinoStore.listPublished();
-    const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
+    const redirectEnabled = (options.includeCommercial ?? true) && (this.options.redirectEnabled ?? isAffiliateRedirectEnabled());
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (redirectEnabled && published.length) {
       try {

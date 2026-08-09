@@ -19,6 +19,7 @@ const requiredTests = [
   "tests/responsible-gambling-safety.test.ts",
   "tests/ten-steps-parity.test.ts",
   "tests/ten-steps-render.test.cjs",
+  "tests/ux-perf-structural.test.ts",
 ];
 
 const prohibitedRequiredTests = [
