@@ -3,18 +3,28 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-09
-- **Current main:** `b5c5c0317befc1f2a85b6625d6e5d918cf3b7a37`
+- **Current main:** `a2ba5552479a2876dc3b6c153e06e6c0cdf8a35f`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
-- **LEGAL-IMPL-01:** implementation complete with bounded Founder Office privacy corrections on `codex/legal-impl-01-gb-launch-remediation`; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) and exact-head Preview/CI verification pending.
-- **Production:** <https://sevenbet-next.vercel.app>; read-only baseline and smoke healthy before LEGAL-IMPL-01. Production deployment remains unchanged by this branch.
+- **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
+- **AUTH-COMMS-01:** repository delivery ready on `codex/auth-comms-01-google-email-foundation`; [DELIVERY PR #58](https://github.com/AlexG-7BE/sevenbet-next/pull/58) is open for review and unmerged.
+- **Production:** <https://sevenbet-next.vercel.app>; deployment `dpl_6aE2jthovESkm3dKojZxxberCEft` at current main passed the read-only baseline and smoke checks. Production remains unchanged by PR #58.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
 | Gate | Current state |
 | --- | --- |
 | LEGAL-02 | **ANALYSIS COMPLETE** |
-| LEGAL-IMPL-01 | **IMPLEMENTATION COMPLETE — DELIVERY PR #57** |
+| LEGAL-IMPL-01 | **CLOSED — PR #57 MERGED** |
+| AUTH-COMMS-01 | **DELIVERY PR #58 — REVIEW OPEN** |
+| Google login code | **READY — existing Better Auth, fail-closed configuration** |
+| Google Production credentials | **OPEN EXTERNAL** |
+| Email communication architecture | **READY — provider-independent, disabled transport** |
+| Email provider | **OPEN — NOT SELECTED** |
+| Programme reminder delivery | **NOT YET ACTIVE** |
+| Programme reminder permission architecture | **DEFINED** |
+| Commercial marketing email | **DISABLED** |
+| PROGRAM-AI-01 | **NEXT / OPEN — separate scope** |
 | Fixture truthfulness | **CLOSED — exact-ID demo disclosure/action/SEO/schema controls tested** |
 | Privacy complaints | **CLOSED — public policy and operating runbook implemented** |
 | Protected data firewall | **CLOSED / STRENGTHENED** |
@@ -28,7 +38,7 @@
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 is the approved LEGAL-IMPL-01 decision record and supersedes only the narrative-persistence clauses in RFC-002, RFC-008, RFC-009 and RFC-010. Mission order, prerequisites, content intent and reward amounts are unchanged.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation; it does not authorise reminders, marketing or provider activation. Mission order, prerequisites, content intent and reward amounts are unchanged.
 
 SevenBet is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
 
@@ -60,6 +70,13 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 - Exact claimant-owned consumed claims and anonymous sessions are deleted before the User; other users, unconsumed journeys and global content remain outside scope. Deletion is dry-run by default. Output files are exclusive mode `0600`. Every execution requires an exact general user confirmation; Production requires a second exact confirmation and explicit target declaration.
 - Retention, processor/international-transfer, breach and DPIA draft documents distinguish detected, target and unknown facts without inventing contracts or appointments.
 
+### Authentication and communication foundation
+
+- Optional Google identity authentication is integrated through Better Auth and appears only when both server-only credentials are complete. The accepted request is restricted to fixed internal callbacks, explicit sign-up intent and the installed `openid`, `email` and `profile` identity scopes; Gmail and other Google product scopes are absent.
+- A ten-minute, tab-scoped marker continues only the exact opaque anonymous Programme journey through OAuth. It contains no narrative, email, token or reward data. Exact success redeems the server claim and migrates only that local namespace; cancellation preserves it, while stale or mismatched markers deny.
+- Same-email linking is limited to verified Google identity plus an already verified local account. Different-email linking, provider-account reassignment, implicit sign-up, staff elevation and client-authored scope/callback expansion remain denied.
+- Communication purposes are closed and server-owned. Account/security and Programme reminder contracts have fixed non-commercial templates; Programme engagement requires separate opt-in; commercial marketing denies. Delivery remains disabled because no provider, scheduler or preference store is selected.
+
 ### Platform and delivery baseline
 
 - FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01 and UX-PERF-01 are merged on main.
@@ -69,10 +86,10 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ## Evidence classification
 
-- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; subject-scoped age request gate; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
+- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; subject-scoped age request gate; bounded Google/Better Auth configuration and OAuth continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
-- **Not detected:** DOB/KYC, durable age-attestation evidence, a completed UK representative appointment, a confirmed ICO registration/fee outcome, outside-counsel sign-off, verified complete processor/transfer evidence, a real signed GB partner, real eligible offer/link authority, Production affiliate activation, or a successful restore drill.
+- **Planned:** external Google Preview/Production client configuration, an approved email transport decision, COMMS-REMINDER-01, durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
+- **Not detected:** live Google credentials or smoke result; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; a completed UK representative appointment; a confirmed ICO registration/fee outcome; outside-counsel sign-off; verified complete processor/transfer evidence; a real signed GB partner; real eligible offer/link authority; Production affiliate activation; or a successful restore drill.
 
 ## Remaining release gates
 
@@ -94,6 +111,8 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ### Engineering and operations
 
+- Configure separate Google Preview and Production Web clients, exact origins/callbacks and consent-screen evidence; keep the provider absent until each environment has a complete credential pair.
+- Select and approve a SevenBet-controlled sending domain, sender mailboxes and email transport before any delivery work. SPF, DKIM, DMARC, TLS, bounce/complaint handling and monitoring remain open. Actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
 - Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
@@ -102,4 +121,4 @@ SevenBet is positioned as adult gambling education, private behavioural reflecti
 
 ## Release conclusion
 
-LEGAL-IMPL-01 moves the repository to **INTERNAL LEGAL/PRIVACY REMEDIATION IMPLEMENTED** after its PR gates pass. It does not authorise commercial beta, Production data mutation, partner traffic or GB launch.
+LEGAL-IMPL-01 is closed on current main. AUTH-COMMS-01 PR #58 makes the Google-auth code and disabled email architecture ready for Founder review, but it does not activate external Google credentials, email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.

@@ -7,8 +7,21 @@ type SessionStorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 const JOURNEY_POINTER_KEY = "sevenbet.programme.journey.v2";
 const CONTENT_KEY_PREFIX = "sevenbet.programme.local-content.v2";
 const AGE_KEY_PREFIX = "sevenbet.age-attestation.v2";
+const OAUTH_CLAIM_MARKER_KEY = "sevenbet.programme.oauth-claim.v1";
 const LEGACY_KEYS = ["sevenbet.programme.local-content.v1", "sevenbet.age-attestation.v1"] as const;
 const AGE_ATTESTATION_VALUE = "18-or-over";
+const OAUTH_CLAIM_MARKER_VERSION = 1;
+const OAUTH_CLAIM_MARKER_TTL_MS = 10 * 60 * 1000;
+const OAUTH_CLAIM_INTENT = "PROGRAMME_CLAIM_GOOGLE";
+const OPAQUE_JOURNEY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+type ProgrammeOAuthClaimMarker = {
+  version: 1;
+  intent: typeof OAUTH_CLAIM_INTENT;
+  journeyId: string;
+  createdAt: number;
+  expiresAt: number;
+};
 
 function subjectKey(prefix: string, subject: ProgrammeLocalSubject) {
   return `${prefix}:${subject.kind}:${encodeURIComponent(subject.id)}`;
@@ -34,7 +47,7 @@ export function userProgrammeSubject(userId: string): ProgrammeLocalSubject {
 export function anonymousProgrammeSubject(storage: SessionStorageLike): ProgrammeLocalSubject {
   removeLegacyGlobalBuckets(storage);
   const existing = storage.getItem(JOURNEY_POINTER_KEY);
-  if (existing && /^[0-9a-f-]{36}$/i.test(existing)) return { kind: "journey", id: existing };
+  if (existing && OPAQUE_JOURNEY_ID.test(existing)) return { kind: "journey", id: existing };
   const id = newOpaqueJourneyId();
   storage.setItem(JOURNEY_POINTER_KEY, id);
   return { kind: "journey", id };
@@ -76,6 +89,60 @@ export function setProgrammeAgeAttestation(storage: SessionStorageLike, subject:
   storage.setItem(subjectKey(AGE_KEY_PREFIX, subject), AGE_ATTESTATION_VALUE);
 }
 
+export function writeProgrammeOAuthClaimMarker(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  if (subject.kind !== "journey" || !OPAQUE_JOURNEY_ID.test(subject.id)) {
+    throw new Error("OAuth claim continuation requires an exact anonymous journey");
+  }
+  const marker: ProgrammeOAuthClaimMarker = {
+    version: OAUTH_CLAIM_MARKER_VERSION,
+    intent: OAUTH_CLAIM_INTENT,
+    journeyId: subject.id,
+    createdAt: now,
+    expiresAt: now + OAUTH_CLAIM_MARKER_TTL_MS,
+  };
+  storage.setItem(OAUTH_CLAIM_MARKER_KEY, JSON.stringify(marker));
+  return marker;
+}
+
+export function clearProgrammeOAuthClaimMarker(storage: SessionStorageLike) {
+  storage.removeItem(OAUTH_CLAIM_MARKER_KEY);
+}
+
+export function readProgrammeOAuthClaimMarker(
+  storage: SessionStorageLike,
+  now = Date.now(),
+): ProgrammeLocalSubject | null {
+  try {
+    const raw = storage.getItem(OAUTH_CLAIM_MARKER_KEY);
+    if (!raw) return null;
+    const marker = JSON.parse(raw) as Partial<ProgrammeOAuthClaimMarker>;
+    const journeyId = typeof marker.journeyId === "string" ? marker.journeyId : null;
+    const valid = marker.version === OAUTH_CLAIM_MARKER_VERSION
+      && marker.intent === OAUTH_CLAIM_INTENT
+      && Boolean(journeyId && OPAQUE_JOURNEY_ID.test(journeyId))
+      && typeof marker.createdAt === "number"
+      && Number.isFinite(marker.createdAt)
+      && typeof marker.expiresAt === "number"
+      && Number.isFinite(marker.expiresAt)
+      && marker.createdAt <= now
+      && marker.expiresAt > now
+      && marker.expiresAt - marker.createdAt === OAUTH_CLAIM_MARKER_TTL_MS
+      && storage.getItem(JOURNEY_POINTER_KEY) === journeyId;
+    if (!valid || !journeyId) {
+      clearProgrammeOAuthClaimMarker(storage);
+      return null;
+    }
+    return { kind: "journey", id: journeyId };
+  } catch {
+    clearProgrammeOAuthClaimMarker(storage);
+    return null;
+  }
+}
+
 export function migrateClaimedJourneyToUser<T extends object>(
   storage: SessionStorageLike,
   journey: ProgrammeLocalSubject,
@@ -97,5 +164,7 @@ export const programmeLocalStorageKeysForTests = {
   journeyPointer: JOURNEY_POINTER_KEY,
   contentPrefix: CONTENT_KEY_PREFIX,
   agePrefix: AGE_KEY_PREFIX,
+  oauthClaimMarker: OAUTH_CLAIM_MARKER_KEY,
+  oauthClaimMarkerTtlMs: OAUTH_CLAIM_MARKER_TTL_MS,
   legacy: LEGACY_KEYS,
 } as const;

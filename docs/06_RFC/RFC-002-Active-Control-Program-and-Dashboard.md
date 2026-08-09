@@ -201,6 +201,8 @@ A visitor may use Discovery, public education and Help without an account. A vis
 
 **Detected baseline (2026-08-02):** `lib/auth/config.ts` enables Better Auth email-and-password authentication. The initial product UI SHALL use email and password; it must not imply magic-link, social, or identity-verification support unless a later technical decision adds it.
 
+**Approved overlay (2026-08-09):** [RFC-018](./RFC-018-Google-Authentication-and-Email-Communications-Foundation.md) is that later decision. It adds optional Better Auth Google identity with exact-journey OAuth claim continuation while preserving email/password, local-first narrative, 18+ enforcement, Mission ordering and server-authoritative rewards.
+
 On successful account creation, SevenBet persists the Mission 01 cue, creates a new personal Programme state, and enters Mission 02. A failed or abandoned registration discards the ephemeral cue at session end and cannot expose or create a partial commercial user state; it should return the visitor to Mission 01, the public Program explainer, Discovery or Help. The implemented retention, deletion, timezone, reward and claim semantics are governed by [RFC-008](./RFC-008-Programme-Persistence-Rewards-and-Privacy.md); account-wide export/erasure remains a broader privacy delivery gate.
 
 The minimum conceptual record is:

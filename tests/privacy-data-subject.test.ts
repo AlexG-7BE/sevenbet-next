@@ -43,7 +43,11 @@ function fakeDatabase() {
     users: [{ id: "user-a", email: "a@example.test", adminUser: null }, { id: "user-b", email: "b@example.test", adminUser: null }] as Row[],
     enrollments: [{ id: "enrollment-a", userId: "user-a" }, { id: "enrollment-b", userId: "user-b" }] as Row[],
     sessions: [{ id: "session-a", userId: "user-a" }, { id: "session-b", userId: "user-b" }] as Row[],
-    accounts: [{ id: "account-a", userId: "user-a" }, { id: "account-b", userId: "user-b" }] as Row[],
+    accounts: [
+      { id: "password-a", accountId: "user-a", providerId: "credential", userId: "user-a", scope: null, password: "PASSWORD-HASH-SENTINEL" },
+      { id: "google-a", accountId: "google-sub-a", providerId: "google", userId: "user-a", scope: "email profile openid", accessToken: "GOOGLE-ACCESS-TOKEN-SENTINEL", refreshToken: "GOOGLE-REFRESH-TOKEN-SENTINEL", idToken: "GOOGLE-ID-TOKEN-SENTINEL" },
+      { id: "google-b", accountId: "google-sub-b", providerId: "google", userId: "user-b", scope: "email profile openid", accessToken: "USER-B-TOKEN-SENTINEL" },
+    ] as Row[],
     enrollmentChildren: [{ id: "child-a", enrollmentId: "enrollment-a" }, { id: "child-b", enrollmentId: "enrollment-b" }] as Row[],
     xp: [{ id: "xp-a", userId: "user-a" }, { id: "xp-b", userId: "user-b" }] as Row[],
     achievements: [{ id: "achievement-a", userId: "user-a" }, { id: "achievement-b", userId: "user-b" }] as Row[],
@@ -75,7 +79,12 @@ function fakeDatabase() {
         return {
           ...user,
           sessions: rows.sessions.filter((row) => row.userId === userId),
-          accounts: rows.accounts.filter((row) => row.userId === userId),
+          accounts: rows.accounts.filter((row) => row.userId === userId).map((row) => ({
+            id: row.id,
+            accountId: row.accountId,
+            providerId: row.providerId,
+            scope: row.scope,
+          })),
           programEnrollments: enrollments.map((enrollment) => ({
             ...enrollment,
             progressEvents: children,
@@ -126,11 +135,14 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   const serializedExport = JSON.stringify(exported);
   assert.match(serializedExport, /user-a/);
   assert.match(serializedExport, /A-LEGACY-DRAFT-SENTINEL/);
+  assert.match(serializedExport, /google-sub-a|email profile openid/);
+  assert.doesNotMatch(serializedExport, /PASSWORD-HASH-SENTINEL|GOOGLE-(ACCESS|REFRESH|ID)-TOKEN-SENTINEL/);
   assert.doesNotMatch(serializedExport, /user-b|b@example\.test|B-DRAFT-SENTINEL/);
 
   const plan = await buildDataSubjectDeletionPlan(database, "user-a");
   assert.equal(plan?.counts.users, 1);
   assert.equal(plan?.counts.sessions, 1);
+  assert.equal(plan?.counts.accounts, 2);
   assert.equal(plan?.counts.consumedClaims, 1);
   assert.equal(plan?.counts.linkedAnonymousSessions, 1);
   assert.equal(plan?.counts.legacyDraftBearingAnonymousSessions, 1);
@@ -139,7 +151,8 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   await executeDataSubjectDeletion(database, "user-a");
   assert.deepEqual(rows.users.map((row) => row.id), ["user-b"]);
   assert.deepEqual(rows.sessions.map((row) => row.userId), ["user-b"]);
-  assert.deepEqual(rows.accounts.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.accounts.map((row) => [row.userId, row.providerId, row.accountId]), [["user-b", "google", "google-sub-b"]]);
+  assert.doesNotMatch(JSON.stringify(rows.accounts), /GOOGLE-(ACCESS|REFRESH|ID)-TOKEN-SENTINEL|PASSWORD-HASH-SENTINEL/);
   assert.deepEqual(rows.enrollments.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.xp.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.achievements.map((row) => row.userId), ["user-b"]);

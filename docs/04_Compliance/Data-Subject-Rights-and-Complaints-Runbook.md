@@ -11,8 +11,8 @@
 
 - The public Privacy Policy directs requests and complaints to `privacy@7be.io` and identifies 7BE Inc. as controller.
 - `scripts/privacy-data-subject.ts` supports exact account lookup, restricted JSON export and dry-run-first deletion over the active Prisma relations.
-- The export excludes credentials, session tokens, provider tokens and verification secrets.
-- Account deletion cascades or explicitly removes active authentication, Programme, XP and achievement data. Exact consumed Programme claims and their linked anonymous sessions are captured and deleted before the user row, including any legacy draft they contain.
+- The export includes bounded provider/account identifiers and granted scope but excludes passwords, session tokens, OAuth access/refresh/ID tokens and verification secrets.
+- Account deletion cascades or explicitly removes password and Google-linked `Account` rows, sessions, Programme, XP and achievement data. Exact consumed Programme claims and their linked anonymous sessions are captured and deleted before the user row, including any legacy draft they contain.
 
 ### Inferred
 
@@ -37,7 +37,7 @@
 2. Record channel, request type, receipt time, identity used, requested scope, jurisdiction and the one-month response deadline. Do not copy unnecessary narrative into general logs.
 3. Acknowledge receipt promptly. Explain any proportionate identity evidence needed. Do not request date of birth merely because the product uses an 18+ self-attestation.
 4. Pause substantive disclosure until identity is sufficiently established. Record the verification decision, not copies of identity material unless strictly necessary.
-5. Search by exact user ID or normalized exact email. Check authentication, Programme, XP/achievement and verification relations. Check separately managed support correspondence and provider records where applicable.
+5. Search by exact user ID or normalized exact email. Check authentication (including linked provider account metadata), Programme, XP/achievement and verification relations. Check separately managed support correspondence and provider records where applicable. Provider tokens remain excluded from the ordinary export and are removed from the active database with the account row.
 6. Apply exemptions, legal holds, third-party rights and manifestly unfounded/excessive analysis only with Privacy or legal approval. Record the ground and affected records.
 7. Complete the response without undue delay and ordinarily within one month of receipt. If a lawful extension is considered necessary for complexity or volume, notify the requester within the first month, explain why and record the revised deadline.
 8. Deliver exports through an approved secure channel. Never attach an unrestricted export to a public ticket or ordinary shared channel.

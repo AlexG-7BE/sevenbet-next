@@ -162,7 +162,7 @@
   transition: transform .2s ease, filter .2s ease, opacity .2s ease;
 }
 .primaryButton:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.03); }
-.primaryButton:focus-visible, .choice:focus-visible, .textButton:focus-visible, .artifact button:focus-visible, .waveMoments button:focus-visible, .notNowButton:focus-visible, .exampleChips button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.primaryButton:focus-visible, .googleButton:focus-visible, .choice:focus-visible, .textButton:focus-visible, .artifact button:focus-visible, .authNotice button:focus-visible, .waveMoments button:focus-visible, .notNowButton:focus-visible, .exampleChips button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .primaryButton:disabled { cursor: not-allowed; opacity: .42; }
 .saving { color: var(--muted); font-size: 13px; }
 .error { margin: 0; color: #9c231d; font-size: 14px; line-height: 20px; font-weight: 650; }
@@ -312,9 +312,36 @@
 .registrationGate .recognition { width: 236px; }
 .registrationForm { grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr); }
 .registrationForm form { gap: 18px; }
+.accountRequirements { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--muted); border-radius: 12px; background: var(--white); }
 .check { display: flex; gap: 12px; align-items: center; font-size: 13px; line-height: 19px; }
 .check input { width: 20px; height: 20px; accent-color: var(--teal); }
+.check a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.googleButton {
+  width: 100%;
+  min-height: 56px;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: 24px 1fr 24px;
+  align-items: center;
+  color: var(--ink);
+  background: var(--white);
+  border: 1px solid #aaa89f;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease;
+}
+.googleButton svg { width: 22px; height: 22px; }
+.googleButton span { grid-column: 2; }
+.googleButton:hover:not(:disabled) { border-color: var(--ink); background: #fff; }
+.googleButton:disabled { cursor: not-allowed; opacity: .45; }
+.googleBoundary { margin: -8px 0 0; color: var(--muted); font-size: 12px; line-height: 17px; }
+.authDivider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: .3px; text-transform: uppercase; }
+.authDivider::before, .authDivider::after { content: ""; height: 1px; background: var(--muted); }
 .textButton { width: max-content; padding: 4px 0; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); font-size: 13px; cursor: pointer; }
+.authNotice { margin: 0 64px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--ink); background: var(--acid-soft); border-left: 4px solid var(--teal); font-size: 13px; line-height: 19px; }
+.authNotice button { padding: 4px 0; color: inherit; background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; }
 
 .dashboardHeading { display: grid; grid-template-columns: 520px 1fr; gap: 52px; }
 .recognitionGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
@@ -450,6 +477,7 @@
   .modelStrip { grid-template-columns: 1fr; }
   .composerLayout, .copingLayout { grid-template-columns: 1fr; }
   .modelStrip > i { transform: rotate(90deg); justify-self: center; }
+  .authNotice { margin: 0 32px; }
 }
 
 @media (max-width: 820px) {
@@ -484,8 +512,9 @@
   .signalScan > :last-child { grid-column: auto; }
   .boundaryCategoryGrid, .ruleFields { grid-template-columns: 1fr; }
   .ruleFields > :last-child { grid-column: auto; }
+  .authNotice { margin: 0 16px; align-items: flex-start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .primaryButton { transition: none; }
+  .primaryButton, .googleButton { transition: none; }
 }

@@ -3,14 +3,17 @@ import test from "node:test";
 
 import {
   anonymousProgrammeSubject,
+  clearProgrammeOAuthClaimMarker,
   hasProgrammeAgeAttestation,
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
   programmeLocalStorageKeysForTests,
+  readProgrammeOAuthClaimMarker,
   rotateAnonymousProgrammeSubject,
   saveProgrammeSubjectContent,
   setProgrammeAgeAttestation,
   userProgrammeSubject,
+  writeProgrammeOAuthClaimMarker,
 } from "../lib/programme/local-subject-storage";
 
 class MemoryStorage implements Storage {
@@ -77,4 +80,45 @@ test("sign-out rotation starts a new anonymous namespace without prior in-memory
   const after = rotateAnonymousProgrammeSubject(storage);
   assert.notEqual(after.id, before.id);
   assert.deepEqual(loadProgrammeSubjectContent(storage, after), {});
+});
+
+test("OAuth claim continuation stores only a bounded exact-journey marker", () => {
+  const storage = new MemoryStorage();
+  const journey = anonymousProgrammeSubject(storage);
+  const now = Date.parse("2026-08-09T10:00:00.000Z");
+
+  writeProgrammeOAuthClaimMarker(storage, journey, now);
+  const serialized = storage.getItem(programmeLocalStorageKeysForTests.oauthClaimMarker) || "";
+
+  assert.deepEqual(readProgrammeOAuthClaimMarker(storage, now + 1_000), journey);
+  assert.match(serialized, /PROGRAMME_CLAIM_GOOGLE/);
+  assert.match(serialized, new RegExp(journey.id));
+  assert.doesNotMatch(serialized, /moment|cue|signal|boundary|reflection|email|token/i);
+
+  clearProgrammeOAuthClaimMarker(storage);
+  assert.equal(readProgrammeOAuthClaimMarker(storage, now + 2_000), null);
+});
+
+test("OAuth claim continuation rejects stale, future, malformed and mismatched markers", () => {
+  const now = Date.parse("2026-08-09T10:00:00.000Z");
+
+  for (const scenario of ["expired", "future", "malformed", "mismatched"] as const) {
+    const storage = new MemoryStorage();
+    const journey = anonymousProgrammeSubject(storage);
+    if (scenario === "malformed") {
+      storage.setItem(programmeLocalStorageKeysForTests.oauthClaimMarker, "{not-json");
+    } else {
+      writeProgrammeOAuthClaimMarker(
+        storage,
+        journey,
+        scenario === "future" ? now + 60_000 : now,
+      );
+      if (scenario === "mismatched") storage.setItem(programmeLocalStorageKeysForTests.journeyPointer, crypto.randomUUID());
+    }
+    const readAt = scenario === "expired"
+      ? now + programmeLocalStorageKeysForTests.oauthClaimMarkerTtlMs
+      : now;
+    assert.equal(readProgrammeOAuthClaimMarker(storage, readAt), null, scenario);
+    assert.equal(storage.getItem(programmeLocalStorageKeysForTests.oauthClaimMarker), null, `${scenario} marker is removed`);
+  }
 });
