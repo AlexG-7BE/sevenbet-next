@@ -1,0 +1,36 @@
+# Personal-Data Retention Schedule
+
+- **Status:** Launch baseline with open verification actions
+- **Last reviewed:** 2026-08-09
+
+“Implemented” below means repository evidence enforces the stated access or deletion behaviour. A logical expiry is not described as physical deletion.
+
+| Data class | Purpose | Implemented state | Target/control | Evidence status and open action |
+|---|---|---|---|---|
+| Browser-session Programme narrative | Private reflection and plan composition | `sessionStorage`; cleared by explicit local clear or browser tab-session end | No server copy; no `localStorage` | **Detected.** Browser crash/session restoration behaviour is browser-controlled. |
+| Anonymous Mission 01 token and neutral task state | Short-lived continuity before account | Access expires after about 24 hours; token is stored server-side only as a hash | Physically purge expired rows on an approved schedule | **Detected** logical expiry. **Not detected** purge job/physical deletion period. |
+| Pending Programme claim | One-time account handoff | Access expires after about 30 minutes; token stored as a hash | Physically purge expired/consumed claims after an approved audit window | **Detected** logical expiry. **Not detected** purge period. |
+| Account profile | Authentication and requested account service | Retained until account deletion or another approved event | Delete on verified erasure request, subject to holds | **Detected** deletion tool and cascades. Inactivity schedule **not detected**. |
+| Authentication sessions/accounts | Authentication and security | Expiry fields exist; rows delete with user | Provider/library cleanup and inactive credential schedule to be verified | **Detected** schema expiry/cascade. Physical expired-session cleanup **not detected**. |
+| Programme completion, tasks, XP, achievements, streak | Requested continuity and reward integrity | Retained with account; deletes with verified account erasure | Retain while account is active, then erase subject to holds | **Detected** active-database deletion. Inactive-account period **planned**. |
+| Structured goal/boundary continuity | Requested Programme continuity | Minimum direction/date/confidence/category/value/method facts retained with account | Retain while active/relevant or until erasure | **Detected.** Product-level expiry/review cleanup **not detected**. |
+| Legacy Programme reflection/narrative | Historic records created before local-first remediation | New writes are blocked; historic rows may remain until deletion | Determine population, notify where required, export/erase on request, approve cleanup | **Detected** legacy schema and blocked writes. Population and cleanup date **unknown**. |
+| Self-Check answers/results | Local reflection | No application-database write path | Browser memory only | **Detected.** |
+| Personal Limit Tracker entries | Local calculation | No application-database write path | Browser memory only | **Detected.** |
+| Verification records | Short-lived authentication verification | Expiry field exists; exact-email rows are included in deletion | Approve physical cleanup interval | **Detected** expiry field/deletion. Cleanup interval **not detected**. |
+| Application/security logs | Security, reliability and debugging | Hosting/runtime logs may contain request and diagnostic data | Minimise; approve provider period and access roles | **Detected** logging calls/provider hosting. Exact retention **unknown**. |
+| Vercel/runtime logs | Application operation, security and incident diagnosis | Provider-managed runtime output; application avoids logging raw Programme request bodies | Verify platform period, regions, access and deletion controls | **Detected** provider/runtime use. Exact physical retention **unknown / owner evidence required**. |
+| Support correspondence | Responding to user support and safety enquiries | Public contact routes exist; no repository-owned support system detected | Approve case-system, minimisation and closure period before operational intake scales | **Inferred** operational processing; system and exact retention **unknown**. |
+| Privacy request/complaint register | Rights compliance and accountability | Runbook defined; no dedicated system detected | Approve a proportionate post-closure period with counsel | **Planned**; exact period **open**. |
+| Incident/breach register | Accountability and security response | Runbook defined; no dedicated system detected | Retain for approved legal/security period | **Planned**; exact period **open**. |
+| Affiliate redirect diagnostics | Future governed redirect integrity and fraud diagnosis | Redirect engine and GB referral are off; no new attribution storage introduced | Define minimum diagnostic fields and period before activation | **Not currently used** for live GB referrals; future retention **open**. |
+| Partner conversion data | Future commission reconciliation | No live GB partner/conversion integration detected | Approve contract, data fields, purpose and retention before collection | **Not currently used**. |
+| Operator/licence evidence | Editorial qualification and future commercial gate | Published snapshots and eligibility evidence models exist | Preserve evidence versions for an approved editorial/compliance period | **Detected** records; exact archival period **unknown**. |
+| Bonus/offer evidence | Editorial comparison and future offer verification | Published bonus snapshots and evidence records exist; current temporary records are fictional demonstrations | Preserve superseded real evidence for an approved substantiation period; remove bounded demo data under RFC-012 cleanup | **Detected** records; exact archival period **unknown**. |
+| Admin audit records | Privileged change accountability | Admin audit model detected | Approve tamper/access controls and exact accountability period | **Detected**; exact retention **unknown**. |
+| Partner agreement/contract evidence | Future commercial authority | Models support agreement/evidence gates; no real GB partner is active | Retain for contract/legal period after termination when introduced | **Not currently used** for a real GB partner; period **open**. |
+| Database backups | Recovery | Provider capability/period not verified in repository evidence | Verify encryption, geography, retention, deletion expiry and restore re-erasure | **Not detected.** Never promise immediate selective backup deletion. |
+
+## Review rule
+
+Privacy owns the schedule; Engineering provides implementation evidence. Review at least annually and before a new processor, analytics/tracking technology, sensitive field, new market, material Programme change, backup change or new legal obligation. Unknown periods are launch actions, not silent assumptions.
