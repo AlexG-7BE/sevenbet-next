@@ -14,8 +14,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "SevenBet FAQ | Product, Programme, Privacy and Commercial Boundaries",
-  description: "Clear answers about what SevenBet is, how its Programme and private tools work, and how editorial, affiliate, privacy and Protected Help boundaries are kept visible.",
+  title: "B4GAMBLE FAQ | Product, Programme, Privacy and Commercial Boundaries",
+  description: "Clear answers about what B4GAMBLE is, how its Programme and private tools work, and how editorial, affiliate, privacy and Protected Help boundaries are kept visible.",
   alternates: { canonical: absoluteUrl("/faq") },
   robots: { index: true, follow: true },
 };
@@ -23,11 +23,11 @@ export const metadata: Metadata = {
 const groups = [
   {
     eyebrow: "01 · About the product",
-    title: "What SevenBet is — and is not.",
+    title: "What B4GAMBLE is — and is not.",
     items: [
-      ["What is SevenBet?", "SevenBet is an editorial, educational, comparison and affiliate information service. It is not a gambling operator."],
-      ["Is SevenBet an online casino?", "No. SevenBet does not accept wagers or deposits, hold gambling balances, determine outcomes or pay winnings."],
-      ["Who are SevenBet’s commercial features for?", "Commercial casino, offer and affiliate features are for adults aged 18 or over, and only where lawful. A visible action is not proof of personal eligibility."],
+      ["What is B4GAMBLE?", "B4GAMBLE is an editorial, educational, comparison and affiliate information service. It is not a gambling operator."],
+      ["Is B4GAMBLE an online casino?", "No. B4GAMBLE does not accept wagers or deposits, hold gambling balances, determine outcomes or pay winnings."],
+      ["Who are B4GAMBLE’s commercial features for?", "Commercial casino, offer and affiliate features are for adults aged 18 or over, and only where lawful. A visible action is not proof of personal eligibility."],
     ],
   },
   {
@@ -36,42 +36,42 @@ const groups = [
     items: [
       ["What is the 10-Step Programme?", "It is an educational and control-oriented sequence for reflection, learning and a personal plan. It is not treatment, and it does not reward gambling, deposits or commercial clicks."],
       ["Does Self-Check diagnose gambling addiction?", "No. Self-Check is a private, non-clinical reflection. Its answers stay local to the browser session and do not drive casino or bonus recommendations."],
-      ["Does the Personal Gambling Limit Tracker tell me what is safe to spend?", "No. It uses a limit chosen by you. SevenBet does not calculate a safe or affordable gambling amount and does not generate a stop-loss recommendation."],
+      ["Does the Personal Gambling Limit Tracker tell me what is safe to spend?", "No. It uses a limit chosen by you. B4GAMBLE does not calculate a safe or affordable gambling amount and does not generate a stop-loss recommendation."],
     ],
   },
   {
     eyebrow: "03 · Casinos, offers & money",
     title: "Commercial without the spin.",
     items: [
-      ["How does SevenBet decide which casinos appear?", "SevenBet uses the latest published evidence available to the public service and keeps missing or unverified facts visible. Commercial availability and editorial review remain separate."],
+      ["How does B4GAMBLE decide which casinos appear?", "B4GAMBLE uses the latest published evidence available to the public service and keeps missing or unverified facts visible. Commercial availability and editorial review remain separate."],
       ["Are the biggest bonuses automatically ranked first?", "No. Headline size does not override eligibility, material terms, evidence quality or the published editorial method."],
-      ["Can bonus or operator terms change?", "Yes. Current operator terms control the gambling transaction or promotion. SevenBet should show uncertainty or remove an action when material facts cannot be verified."],
+      ["Can bonus or operator terms change?", "Yes. Current operator terms control the gambling transaction or promotion. B4GAMBLE should show uncertainty or remove an action when material facts cannot be verified."],
     ],
   },
   {
     eyebrow: "04 · Affiliate & editorial",
     title: "Paid relationships. Visible boundaries.",
     items: [
-      ["Does SevenBet earn affiliate commission?", "It may. When an affiliate link leads to a qualifying action, SevenBet may receive commission. Commercial relationships must not alter factual licensing status, material terms, Protected Help or private control data."],
+      ["Does B4GAMBLE earn affiliate commission?", "It may. When an affiliate link leads to a qualifying action, B4GAMBLE may receive commission. Commercial relationships must not alter factual licensing status, material terms, Protected Help or private control data."],
       ["Can commission personalise my ranking after Self-Check?", "No. Self-Check, Programme, pause and Protected Help information must not be used to personalise casino rankings, offers or affiliate targeting."],
-      ["What happens when an operator or outbound action is unavailable?", "The action fails closed. SevenBet does not invent a destination, claim a redirect succeeded or substitute another operator, bonus or sponsored offer."],
+      ["What happens when an operator or outbound action is unavailable?", "The action fails closed. B4GAMBLE does not invent a destination, claim a redirect succeeded or substitute another operator, bonus or sponsored offer."],
     ],
   },
   {
     eyebrow: "05 · Privacy & Help",
     title: "Private means non-commercial.",
     items: [
-      ["How are Self-Check and Limit Tracker entries stored?", "The current Self-Check and Personal Gambling Limit Tracker process entries locally in the browser. Individual answers and entered amounts are not stored in SevenBet’s application database."],
+      ["How are Self-Check and Limit Tracker entries stored?", "The current Self-Check and Personal Gambling Limit Tracker process entries locally in the browser. Individual answers and entered amounts are not stored in B4GAMBLE’s application database."],
       ["Where can I get help with gambling?", "Protected Help provides independent support routes and safer-gambling information. It remains separate from casino, bonus and affiliate actions."],
     ],
   },
 ] as const;
 
 const initiallyOpen = new Set([
-  "What is SevenBet?",
+  "What is B4GAMBLE?",
   "Does Self-Check diagnose gambling addiction?",
   "Can bonus or operator terms change?",
-  "Does SevenBet earn affiliate commission?",
+  "Does B4GAMBLE earn affiliate commission?",
   "Where can I get help with gambling?",
 ]);
 
@@ -85,15 +85,15 @@ export default function FAQPage() {
     >
       <section className={styles.hero} aria-labelledby="faq-title">
         <div className={styles.heroCopy}>
-          <p className={styles.heroEyebrow}>SevenBet FAQ · Product / Trust</p>
+          <p className={styles.heroEyebrow}>B4GAMBLE FAQ · Product / Trust</p>
           <h1 id="faq-title">Questions?</h1>
           <p className={styles.heroSerif}>Clear answers.</p>
-          <p className={styles.heroLead}>How SevenBet works, what it does not do, how commercial relationships are handled, and where private control tools stay separate.</p>
+          <p className={styles.heroLead}>How B4GAMBLE works, what it does not do, how commercial relationships are handled, and where private control tools stay separate.</p>
         </div>
-        <aside className={styles.heroBoundary} aria-label="SevenBet service boundary">
+        <aside className={styles.heroBoundary} aria-label="B4GAMBLE service boundary">
           <p>Start with the boundary</p>
-          <strong>SevenBet informs.<br />Operators provide gambling.</strong>
-          <span>SevenBet does not accept wagers, deposits or gambling balances.</span>
+          <strong>B4GAMBLE informs.<br />Operators provide gambling.</strong>
+          <span>B4GAMBLE does not accept wagers, deposits or gambling balances.</span>
         </aside>
       </section>
 

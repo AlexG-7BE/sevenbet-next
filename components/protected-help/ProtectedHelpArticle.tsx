@@ -13,7 +13,7 @@ const articlePresentation: Record<string, { title: string; answer: string; note:
   "time-management": {
     title: "Time management: plan the stop.",
     answer: "Choose a time boundary before play starts and use reminders to pause.",
-    note: "SevenBet does not prescribe a session length. The useful step is choosing your limit in advance.",
+    note: "B4GAMBLE does not prescribe a session length. The useful step is choosing your limit in advance.",
   },
   "bonus-terms": {
     title: "Bonus terms: read the real cost.",
@@ -53,7 +53,7 @@ const articlePresentation: Record<string, { title: string; answer: string; note:
   faq: {
     title: "Responsible gambling: clear answers.",
     answer: "Planning, limits and verified information should come before any gambling decision.",
-    note: "SevenBet provides education and control information, not medical advice or operator-specific instructions.",
+    note: "B4GAMBLE provides education and control information, not medical advice or operator-specific instructions.",
   },
 };
 
@@ -70,7 +70,7 @@ function SourceCard({ article }: { article: LearningArticle }) {
         <div>
           <p className={styles.articleStatus}>Verified source</p>
           <h2>GAMSTOP Online</h2>
-          <p>Official Great Britain online self-exclusion information. This link leaves SevenBet and opens the provider&apos;s own site and privacy practices.</p>
+          <p>Official Great Britain online self-exclusion information. This link leaves B4GAMBLE and opens the provider&apos;s own site and privacy practices.</p>
         </div>
         <a href="https://www.gamstop.co.uk/" rel="noopener noreferrer" target="_blank">
           Review official terms <span aria-hidden="true">↗</span>
@@ -143,8 +143,8 @@ export function ProtectedHelpArticle({ article }: { article: LearningArticle }) 
           ))}
           <li>
             <span>{String(sections.length + 1).padStart(2, "0")}</span>
-            <h2>SevenBet boundary</h2>
-            <p>Information only. SevenBet does not diagnose, provide treatment, confirm a local tool or replace current official instructions.</p>
+            <h2>B4GAMBLE boundary</h2>
+            <p>Information only. B4GAMBLE does not diagnose, provide treatment, confirm a local tool or replace current official instructions.</p>
           </li>
         </ol>
         <SourceCard article={article} />

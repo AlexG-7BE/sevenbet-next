@@ -145,9 +145,9 @@ export function LearningArticleView({
             <h2>READY TO APPLY THE CHECKLIST?</h2>
           </div>
           <div>
-            <p>Compare current SevenBet records only when the educational context is clear. This is an internal navigation link, not a personalised recommendation.</p>
+            <p>Compare current B4GAMBLE records only when the educational context is clear. This is an internal navigation link, not a personalised recommendation.</p>
             <Link href="/compare">Open comparison <span aria-hidden="true">↗</span></Link>
-            <small>Commercial disclosure: SevenBet may receive compensation from some outbound links reached later. Rankings remain editorial.</small>
+            <small>Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Rankings remain editorial.</small>
           </div>
         </aside>
       ) : (

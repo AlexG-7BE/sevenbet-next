@@ -305,12 +305,12 @@ export function MethodologyDisclosureSection() {
           ))}
         </div>
       </Section>
-      <Section eyebrow="Methodology" title="How SevenBet reviews casinos.">
+      <Section eyebrow="Methodology" title="How B4GAMBLE reviews casinos.">
         <Card className="ctaBlock" tone="soft">
           <div>
             <h2>Reviews use transparent criteria.</h2>
             <p className="muted">
-              SevenBet reviews casino profiles using available data for licensing, bonus terms, wagering, payments,
+              B4GAMBLE reviews casino profiles using available data for licensing, bonus terms, wagering, payments,
               withdrawal speed, support and responsible gambling features.
             </p>
           </div>

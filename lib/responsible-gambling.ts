@@ -43,7 +43,7 @@ export const learningCategories: LearningCategory[] = [
   {
     id: "casino-reviews-explained",
     title: "Casino Reviews Explained",
-    description: "See how SevenBet compares casinos using factual criteria and visible risk context.",
+    description: "See how B4GAMBLE compares casinos using factual criteria and visible risk context.",
   },
   {
     id: "responsible-gambling-tools",
@@ -226,7 +226,7 @@ export const learningArticles: LearningArticle[] = [
       "Treat bonus expiry pressure as a reason to slow down, not speed up.",
     ],
     faq: [
-      ["How long should a gambling session be?", "SevenBet does not prescribe a session length. The important step is choosing a limit in advance and respecting it."],
+      ["How long should a gambling session be?", "B4GAMBLE does not prescribe a session length. The important step is choosing a limit in advance and respecting it."],
       ["Are session reminders enough?", "They are useful prompts, but they work best with budget limits and clear stop rules."],
       ["Can I continue after the timer?", "Pause first and review the original plan. Avoid extending sessions to recover losses."],
     ],
@@ -298,7 +298,7 @@ export const learningArticles: LearningArticle[] = [
       },
       {
         title: "When to consider it",
-        body: "Self-exclusion may be useful when ordinary planning tools are not enough to maintain control. SevenBet presents this as education, not medical advice.",
+        body: "Self-exclusion may be useful when ordinary planning tools are not enough to maintain control. B4GAMBLE presents this as education, not medical advice.",
       },
     ],
     examples: [
@@ -313,7 +313,7 @@ export const learningArticles: LearningArticle[] = [
     ],
     faq: [
       ["Is self-exclusion the same as cooling-off?", "No. Cooling-off is usually shorter. Self-exclusion is generally a stronger and longer restriction."],
-      ["Can SevenBet activate self-exclusion for me?", "No. SevenBet can explain the concept, but operator or regulator tools must be used directly."],
+      ["Can B4GAMBLE activate self-exclusion for me?", "No. B4GAMBLE can explain the concept, but operator or regulator tools must be used directly."],
       ["Is this medical guidance?", "No. This is educational information only."],
     ],
     related: ["cooling-off", "deposit-limits", "reality-checks"],
@@ -486,7 +486,7 @@ export const learningArticles: LearningArticle[] = [
     faq: [
       ["Does a license prove everything is safe?", "No. A license is an important signal, but users still need to review terms and local legality."],
       ["What if I cannot verify a license?", "Treat the profile as needing more review before registration."],
-      ["Does SevenBet replace regulator checks?", "No. SevenBet provides comparison context and links users to methodology."],
+      ["Does B4GAMBLE replace regulator checks?", "No. B4GAMBLE provides comparison context and links users to methodology."],
     ],
     related: ["payment-safety", "bonus-terms", "self-exclusion"],
     next: "payment-safety",
@@ -543,7 +543,7 @@ export const learningArticles: LearningArticle[] = [
     takeaways: [
       "Responsible gambling is about planning, limits and informed decisions.",
       "Casino tools vary by operator and jurisdiction.",
-      "SevenBet provides education and comparison context, not medical advice.",
+      "B4GAMBLE provides education and comparison context, not medical advice.",
     ],
     sections: [
       {

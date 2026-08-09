@@ -130,7 +130,7 @@ function buildGroups(casinos: PublicCasinoDTO[], projected: PublicComparisonCasi
       id: "identity",
       label: "Identity and editorial context",
       rows: rows([
-        { id: "editor-score", label: "Editorial score", description: "SevenBet editorial assessment, not an operator rating.", get: (casino) => value(`${casino.editorScore.toFixed(1)}/10`, "Editorial") },
+        { id: "editor-score", label: "Editorial score", description: "B4GAMBLE editorial assessment, not an operator rating.", get: (casino) => value(`${casino.editorScore.toFixed(1)}/10`, "Editorial") },
         { id: "summary", label: "Review summary", description: "Summary from the latest published profile.", get: (casino) => value(casino.summary, "Editorial") },
         { id: "freshness", label: "Review freshness", description: "Latest published review or snapshot date.", get: (casino) => value(date(casino.lastReviewedAt) ?? date(casino.publishedAt), "Published") },
       ]),
@@ -158,7 +158,7 @@ function buildGroups(casinos: PublicCasinoDTO[], projected: PublicComparisonCasi
         { id: "minimum-deposit", label: "Minimum deposit", description: "Current published cash requirement.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? money(bonus.minimumDeposit, bonus.currency) : null, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
         { id: "wagering", label: "Wagering", description: "Missing wagering remains unknown and never becomes an advantage.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus?.wageringText ?? (bonus?.wageringMultiplier === null || bonus?.wageringMultiplier === undefined ? null : `${bonus.wageringMultiplier}×`), "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
         { id: "maximum-bet", label: "Maximum bet", description: "Published maximum stake during wagering, where supplied.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? money(bonus.maximumBet, bonus.currency) : null, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
-        { id: "eligibility", label: "Eligibility", description: "Operator-published offer eligibility; not a SevenBet eligibility decision.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus?.eligibility, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
+        { id: "eligibility", label: "Eligibility", description: "Operator-published offer eligibility; not a B4GAMBLE eligibility decision.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus?.eligibility, "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
         { id: "conditions", label: "Important conditions", description: "Material published restrictions shown before commercial action.", get: (casino) => { const bonus = selectComparisonBonus(casino); return listValue(bonus?.importantConditions ?? [], "Operator-published", bonus ? "Unknown" : "Unavailable"); } },
         { id: "expiry", label: "Expiry / current status", description: "Only current published offers enter the projection.", get: (casino) => { const bonus = selectComparisonBonus(casino); return value(bonus ? date(bonus.expiresAt) ?? "Current · no fixed expiry published" : null, "Published", "Unavailable"); } },
       ]),

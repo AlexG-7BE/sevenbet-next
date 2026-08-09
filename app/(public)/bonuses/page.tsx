@@ -30,9 +30,9 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country ?? null });
   const result = await publicOfferService.searchOffers(query, authority);
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
-  const title = query.page > 1 ? `Casino Bonus Comparison — Page ${query.page} | SevenBet` : containsDemo ? "Casino Bonus Demonstration | SevenBet" : "Casino Bonus Comparison | SevenBet";
+  const title = query.page > 1 ? `Casino Bonus Comparison — Page ${query.page} | B4GAMBLE` : containsDemo ? "Casino Bonus Demonstration | B4GAMBLE" : "Casino Bonus Comparison | B4GAMBLE";
   const description = containsDemo
-    ? "Fictional demonstration records showing how SevenBet compares casino bonus terms. Not current GB promotions or partner offers."
+    ? "Fictional demonstration records showing how B4GAMBLE compares casino bonus terms. Not current GB promotions or partner offers."
     : "Compare casino bonus terms by country preference, type, payment, deposit, wagering and governed action availability.";
   return {
     title,
@@ -77,10 +77,10 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <p className={`${styles.mobileHeroMicrocopy} ${styles.mobileOnly}`}>Read the conditions before you compare.</p>
       </div>
       <div aria-hidden="true" className={styles.termsScene}>
-        <div className={styles.termSheet}><span>SevenBet / Terms Sheet</span><strong>Welcome Terms</strong><ul><li>Wagering / must be legible</li><li>Deposit / cash cost first</li><li>Expiry / time is material</li><li>Withdrawal / restrictions visible</li></ul></div>
-        <div className={`${styles.termSheet} ${styles.termSheetSmall}`}><span>SevenBet / Terms Sheet</span><strong>Limits</strong><ul><li>Eligibility</li><li>Market</li><li>Availability</li></ul></div>
+        <div className={styles.termSheet}><span>B4GAMBLE / Terms Sheet</span><strong>Welcome Terms</strong><ul><li>Wagering / must be legible</li><li>Deposit / cash cost first</li><li>Expiry / time is material</li><li>Withdrawal / restrictions visible</li></ul></div>
+        <div className={`${styles.termSheet} ${styles.termSheetSmall}`}><span>B4GAMBLE / Terms Sheet</span><strong>Limits</strong><ul><li>Eligibility</li><li>Market</li><li>Availability</li></ul></div>
       </div>
-      <div aria-hidden="true" className={styles.mobileTermSheet}><span>SevenBet / Terms Sheet</span><strong>Terms</strong><ul><li>Wagering</li><li>Min deposit</li><li>Expiry</li></ul></div>
+      <div aria-hidden="true" className={styles.mobileTermSheet}><span>B4GAMBLE / Terms Sheet</span><strong>Terms</strong><ul><li>Wagering</li><li>Min deposit</li><li>Expiry</li></ul></div>
     </section>
 
     <section className={styles.directorySection}>
@@ -103,6 +103,6 @@ export default async function BonusesPage({ searchParams }: PageProps) {
 
     <BonusEducation />
     <BonusRelatedNavigation />
-    <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>SevenBet may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
+    <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>B4GAMBLE may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
   </div>;
 }

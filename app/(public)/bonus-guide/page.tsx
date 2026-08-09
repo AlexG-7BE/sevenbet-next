@@ -4,7 +4,7 @@ import { BonusGuideDocument, bonusGuideFaq } from "./BonusGuideDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "Casino Bonus Terms Guide | SevenBet",
+  title: "Casino Bonus Terms Guide | B4GAMBLE",
   description: "Learn how to read wagering, max-bet, expiry, deposit, and withdrawal terms before considering an offer.",
   alternates: { canonical: absoluteUrl("/bonus-guide") },
 };

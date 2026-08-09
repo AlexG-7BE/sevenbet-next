@@ -15,7 +15,7 @@ import styles from "./Comparison.module.css";
 
 const evidenceDescriptions: Record<PublicComparisonEvidenceStatus, string> = {
   Published: "Present in the latest public snapshot.",
-  Editorial: "SevenBet editorial assessment.",
+  Editorial: "B4GAMBLE editorial assessment.",
   "Operator-published": "Published operator information; verify current terms.",
   Unknown: "Not established and never inferred.",
   Unavailable: "Not published or not currently available.",
@@ -100,7 +100,7 @@ function ComparisonMatrix({ result }: { result: PublicComparisonResult }) {
   return <section className={styles.matrixSection} aria-labelledby="matrix-title">
     <div className={styles.shell}>
       <p className={styles.kicker}>Published facts · same source order</p>
-      <div className={styles.matrixHeading}><div><h2 id="matrix-title">The facts stay aligned.</h2><p>Unknown and unavailable values remain visible. SevenBet does not calculate a winner.</p></div><Link href={comparisonHref(result.query, result.selectedSlugs, { differences: !result.query.differences })}>{result.query.differences ? "Show all criteria" : "Show only differences"}</Link></div>
+      <div className={styles.matrixHeading}><div><h2 id="matrix-title">The facts stay aligned.</h2><p>Unknown and unavailable values remain visible. B4GAMBLE does not calculate a winner.</p></div><Link href={comparisonHref(result.query, result.selectedSlugs, { differences: !result.query.differences })}>{result.query.differences ? "Show all criteria" : "Show only differences"}</Link></div>
       {result.query.differences ? <p className={styles.differenceStatus} role="status">Showing differences · {result.hiddenEqualRows} identical {result.hiddenEqualRows === 1 ? "criterion" : "criteria"} hidden</p> : null}
       <div aria-label={`Comparison of ${result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => casino.name).join(", ")}`} className={styles.desktopMatrix} data-columns={result.casinos.filter((casino) => casino.marketState === "AVAILABLE").length} role="table">
         <div className={styles.operatorHeader} role="row">
@@ -132,7 +132,7 @@ function ResultState({ result }: { result: PublicComparisonResult }) {
   const content = result.status === "projection-unavailable"
     ? ["Comparison unavailable", "The latest published projection could not be loaded. No cached, legacy or invented record is substituted."]
     : result.status === "empty"
-      ? ["Start with two profiles", "The explicit selection is empty. Choose published profiles above; SevenBet will not fill this state automatically."]
+      ? ["Start with two profiles", "The explicit selection is empty. Choose published profiles above; B4GAMBLE will not fill this state automatically."]
       : result.status === "one-selected"
         ? ["Add one more to compare", `${result.casinos[0]?.name ?? "The selected profile"} remains visible. A meaningful comparison needs at least two declared-available profiles.`]
         : ["These profiles do not align", "Fewer than two selected profiles are published as available in the declared market context. No matrix or commercial substitute is created."];
@@ -148,7 +148,7 @@ function DecisionCheckpoint({ result }: { result: PublicComparisonResult }) {
 
 function CommercialBoundary({ result }: { result: PublicComparisonResult }) {
   return <section className={styles.commercialSection} aria-labelledby="commercial-title"><div className={styles.shell}>
-    <p className={styles.kicker}>Before you leave SevenBet</p><h2 id="commercial-title">Referral comes after the evidence.</h2><p className={styles.sectionCopy}>SevenBet may receive compensation from a governed outbound link. Commission does not set comparison criteria or turn an unknown field into a positive one.</p>
+    <p className={styles.kicker}>Before you leave B4GAMBLE</p><h2 id="commercial-title">Referral comes after the evidence.</h2><p className={styles.sectionCopy}>B4GAMBLE may receive compensation from a governed outbound link. Commission does not set comparison criteria or turn an unknown field into a positive one.</p>
     <div className={styles.boundaryList}><div><strong>Declared context</strong><span>{result.query.country} preference · location not detected</span></div><div><strong>Material terms</strong><span>Shown before any action</span></div><div><strong>Neutral exit</strong><span>Always available</span></div></div>
     <div className={styles.commercialCards}>{result.casinos.map((casino) => <article key={casino.slug}><span>{casino.name}</span><p>{casino.action.reason}</p><Link href={casino.reviewHref}>Full review</Link>{casino.action.available && casino.action.href ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.outboundAction} /> : <span aria-disabled="true" className={styles.unavailableAction}>Commercial action unavailable</span>}</article>)}</div>
   </div></section>;
@@ -158,10 +158,10 @@ function MethodologyAndFaq() {
   return <>
     <section className={styles.methodSection} aria-labelledby="method-title"><div className={styles.shell}><p className={styles.kicker}>Methodology</p><h2 id="method-title">Comparable means comparable.</h2><ol><li><span>01</span><strong>Resolve context</strong><p>Use one declared market preference without claiming detected location.</p></li><li><span>02</span><strong>Align criteria</strong><p>Read every published profile on the same evidence structure.</p></li><li><span>03</span><strong>Explain uncertainty</strong><p>Unknown, unavailable and policy-gated states remain distinct.</p></li><li><span>04</span><strong>Separate referral</strong><p>Commercial availability never determines editorial order.</p></li></ol><aside><div><span>10 STEPS BEFORE YOU CHOOSE</span><strong>Slow down the next decision.</strong><p>Programme, pause and Help data never personalise this comparison.</p></div><Link href="/program">Start Mission 01</Link></aside></div></section>
     <section className={styles.faqSection} aria-labelledby="faq-title"><div className={styles.shell}><p className={styles.kicker}>Comparison FAQ</p><h2 id="faq-title">Questions, without a sales pitch.</h2><div className={styles.faqList}>
-      <details><summary>Why is there no winner?</summary><p>A single winner would hide trade-offs and personal constraints. SevenBet keeps the evidence aligned and leaves the decision with the user.</p></details>
+      <details><summary>Why is there no winner?</summary><p>A single winner would hide trade-offs and personal constraints. B4GAMBLE keeps the evidence aligned and leaves the decision with the user.</p></details>
       <details><summary>What does unknown mean?</summary><p>The latest published record does not establish that value. Unknown is not treated as a benefit, drawback or implied fact.</p></details>
       <details><summary>Can a profile have no visit action?</summary><p>Yes. Editorial review availability and governed commercial availability are separate.</p></details>
-      <details><summary>How are commissions handled?</summary><p>Some governed outbound routes may compensate SevenBet. Commission is not a comparison or ranking input.</p></details>
+      <details><summary>How are commissions handled?</summary><p>Some governed outbound routes may compensate B4GAMBLE. Commission is not a comparison or ranking input.</p></details>
       <details><summary>Why can results change?</summary><p>The page reads the latest published, non-archived database snapshots. A new publication can change the visible facts and default selection.</p></details>
     </div></div></section>
   </>;
@@ -173,7 +173,7 @@ export function ComparisonExperience({ result }: { result: PublicComparisonResul
       <div className={styles.shell}>
         <p className={styles.kicker}>Compare · {result.query.country} declared context · illustrative pre-launch data</p>
         <h1 id="comparison-title">Compare what matters.<em>No winner. Just the evidence.</em></h1>
-        <p className={styles.heroCopy}>Choose up to three published casino profiles. SevenBet keeps material differences, missing fields, source status and limitations visible before any commercial action.</p>
+        <p className={styles.heroCopy}>Choose up to three published casino profiles. B4GAMBLE keeps material differences, missing fields, source status and limitations visible before any commercial action.</p>
         <div className={styles.contextNotice}><strong>Preference, not detected location.</strong><span>This comparison does not decide legal eligibility. Check operator terms and applicable law.</span></div>
         {result.defaulted ? <p className={styles.defaultNote}>Default view · selected generically from complete current {result.query.country}-available published profiles.</p> : null}
         <SelectionSummary result={result} />

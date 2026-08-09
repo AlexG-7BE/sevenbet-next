@@ -17,11 +17,11 @@ export async function generateMetadata({
   const category = getLearningCategory(categorySlug);
 
   if (!category) {
-    return { title: "Learning Category | SevenBet" };
+    return { title: "Learning Category | B4GAMBLE" };
   }
 
   return {
-    title: `${category.title} | SevenBet Learning Center`,
+    title: `${category.title} | B4GAMBLE Learning Center`,
     description: category.description,
     alternates: {
       canonical: absoluteUrl(`/learn/${category.slug}`),

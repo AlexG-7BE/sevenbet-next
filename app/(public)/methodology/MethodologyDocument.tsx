@@ -4,24 +4,24 @@ import styles from "./MethodologyPage.module.css";
 
 export const methodologyFaqItems: Array<[string, string]> = [
   [
-    "How does SevenBet calculate the Editor's Score?",
+    "How does B4GAMBLE calculate the Editor's Score?",
     "The Editor's Score is a 10-point editorial comparison score based on licensing, bonus clarity, payments, responsible gambling tools, usability, support information, and account restrictions.",
   ],
   [
     "Does a high score remove gambling risk?",
-    "No. A high score means the casino has a stronger editorial assessment against SevenBet criteria. Gambling still involves financial risk and outcomes are not guaranteed.",
+    "No. A high score means the casino has a stronger editorial assessment against B4GAMBLE criteria. Gambling still involves financial risk and outcomes are not guaranteed.",
   ],
   [
     "Do affiliate commissions affect rankings?",
-    "Affiliate compensation does not determine SevenBet's Editor Score or natural editorial ranking. Commercial relationships do not remove limitations, risk notes, or negative findings.",
+    "Affiliate compensation does not determine B4GAMBLE's Editor Score or natural editorial ranking. Commercial relationships do not remove limitations, risk notes, or negative findings.",
   ],
   [
     "How often are reviews updated?",
     "Pages should be reviewed periodically and prioritized when major offer, licensing, payment, or operator information changes. Not every operator change will appear immediately.",
   ],
   [
-    "Does SevenBet test deposits and withdrawals?",
-    "The current methodology is based on available information and editorial review. SevenBet does not claim routine account testing, deposits, withdrawals, or support interactions unless stated on a specific review.",
+    "Does B4GAMBLE test deposits and withdrawals?",
+    "The current methodology is based on available information and editorial review. B4GAMBLE does not claim routine account testing, deposits, withdrawals, or support interactions unless stated on a specific review.",
   ],
   [
     "Why can bonus information change?",
@@ -33,7 +33,7 @@ export const methodologyFaqItems: Array<[string, string]> = [
   ],
   [
     "How can users report inaccurate information?",
-    "Users can use the contact route listed on SevenBet pages where available. Reported issues should be checked against relevant sources before a page is updated.",
+    "Users can use the contact route listed on B4GAMBLE pages where available. Reported issues should be checked against relevant sources before a page is updated.",
   ],
 ];
 
@@ -141,7 +141,7 @@ export function MethodologyDocument() {
           <h1>THE SCORE<br />{" "}SHOWS ITS WORK.</h1>
           <div className={styles.highlight} aria-hidden="true" />
           <p className={styles.heroLead}>
-            SevenBet evaluates casino operators, welcome offers, responsible gambling tools, and editorial limitations through a structured comparison framework.
+            B4GAMBLE evaluates casino operators, welcome offers, responsible gambling tools, and editorial limitations through a structured comparison framework.
           </p>
           <p className={styles.heroCaveat}>
             The Editor&apos;s Score is an editorial comparison score—not a promise of winnings, availability, suitability, withdrawals, or dispute outcomes.
@@ -170,7 +170,7 @@ export function MethodologyDocument() {
             number="01"
             id="purpose"
             title="WHY THIS METHODOLOGY EXISTS"
-            intro="SevenBet uses a consistent editorial framework to make casino reviews and bonus comparisons easier to understand."
+            intro="B4GAMBLE uses a consistent editorial framework to make casino reviews and bonus comparisons easier to understand."
           >
             <div className={styles.twoColumnNotes}>
               <div>
@@ -259,7 +259,7 @@ export function MethodologyDocument() {
             intro="Information is reviewed, but operator changes can happen between updates."
           >
             <p className={styles.bodyCopy}>
-              SevenBet pages should show a visible last reviewed date, receive periodic checks, and be prioritized after major offer, licensing, payment, or operator changes. Outdated offers may be revised or removed when appropriate.
+              B4GAMBLE pages should show a visible last reviewed date, receive periodic checks, and be prioritized after major offer, licensing, payment, or operator changes. Outdated offers may be revised or removed when appropriate.
             </p>
             <ol className={styles.correctionLedger}>
               {correctionSteps.map((step, index) => <li key={step}><span>{String(index + 1).padStart(2, "0")}</span>{step}</li>)}
@@ -275,11 +275,11 @@ export function MethodologyDocument() {
             <div className={styles.boundaryLedger}>
               <div>
                 <h3>Editorial independence</h3>
-                <p>Affiliate compensation does not determine SevenBet&apos;s Editor Score or natural editorial ranking. Any future sponsored or paid placement must be identified separately. Comparison criteria are applied consistently, material limitations remain visible, and a commercial partner may be excluded when information is insufficient or concerns are significant.</p>
+                <p>Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial ranking. Any future sponsored or paid placement must be identified separately. Comparison criteria are applied consistently, material limitations remain visible, and a commercial partner may be excluded when information is insufficient or concerns are significant.</p>
               </div>
               <div>
                 <h3>Affiliate relationships</h3>
-                <p>SevenBet may receive a commission when a user follows a future eligible governed link and completes a qualifying action. Users do not usually pay SevenBet directly for comparison content. Not every reviewed casino must be an affiliate partner, and affiliate relationships do not remove negative findings.</p>
+                <p>B4GAMBLE may receive a commission when a user follows a future eligible governed link and completes a qualifying action. Users do not usually pay B4GAMBLE directly for comparison content. Not every reviewed casino must be an affiliate partner, and affiliate relationships do not remove negative findings.</p>
                 <Link href="/affiliate-disclosure">Read the full affiliate disclosure <span aria-hidden="true">→</span></Link>
               </div>
             </div>
@@ -293,12 +293,12 @@ export function MethodologyDocument() {
           >
             <div className={styles.limitations}>
               <strong>Limitations remain visible.</strong>
-              <p>Offers can change, availability differs by country, operator terms may be updated, and actual user experiences vary. SevenBet does not guarantee winnings, withdrawals, operator conduct, or dispute outcomes. Users should always review current operator terms before registering or depositing.</p>
-              <p>SevenBet does not claim routine account testing, deposits, withdrawals, or support interactions unless stated on a specific review.</p>
+              <p>Offers can change, availability differs by country, operator terms may be updated, and actual user experiences vary. B4GAMBLE does not guarantee winnings, withdrawals, operator conduct, or dispute outcomes. Users should always review current operator terms before registering or depositing.</p>
+              <p>B4GAMBLE does not claim routine account testing, deposits, withdrawals, or support interactions unless stated on a specific review.</p>
             </div>
           </DocumentSection>
 
-          <DocumentSection number="09" id="related-resources" title="RELATED SEVENBET RESOURCES">
+          <DocumentSection number="09" id="related-resources" title="RELATED B4GAMBLE RESOURCES">
             <nav className={styles.relatedLinks} aria-label="Related methodology resources">
               {[
                 ["Casino reviews", "/casinos"],
@@ -306,7 +306,7 @@ export function MethodologyDocument() {
                 ["Responsible gambling hub", "/responsible-gambling"],
                 ["10-Step Program", "/program"],
                 ["Self-Check", "/self-check"],
-                ["About SevenBet", "/about"],
+                ["About B4GAMBLE", "/about"],
               ].map(([label, href], index) => (
                 <Link href={href} key={href}><span>{String(index + 1).padStart(2, "0")}</span><strong>{label}</strong><small>Open resource</small></Link>
               ))}

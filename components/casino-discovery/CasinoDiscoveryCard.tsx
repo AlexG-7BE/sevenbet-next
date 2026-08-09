@@ -52,7 +52,7 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     <div className={classNames.offerBlock}>
       {casino.featuredBonus ? <><span>{demo ? "Fictional demonstration fields · 18+" : "Published bonus terms · 18+"}</span><strong>{casino.featuredBonus.title}</strong>{casino.featuredBonus.summary && <p>{casino.featuredBonus.summary}</p>}{casino.featuredBonus.keyTerms.length > 0 && <small>{casino.featuredBonus.keyTerms.slice(0, 3).join(" · ")} · {demo ? "Not claimable" : "Terms apply"}</small>}</> : <><span>Bonus unavailable</span><strong>No active public bonus</strong><p>The review remains available without a commercial bonus.</p></>}
     </div>
-    <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate SevenBet."}</p>
+    <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate B4GAMBLE."}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
     <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>{demo ? "View demonstration" : "Read review"}</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
   </>;

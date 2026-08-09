@@ -84,7 +84,7 @@ export function BonusGuideDocument() {
             <span className={styles.desktopIntro}>A practical guide to wagering, expiry and withdrawal rules — before you compare an offer.</span>
             <span className={styles.mobileIntro}>Direct answer and source state before any comparison link.</span>
           </p>
-          <p className={styles.heroMeta}>By SevenBet Editorial <span aria-hidden="true">·</span> Sources checked 07 Aug 2026</p>
+          <p className={styles.heroMeta}>By B4GAMBLE Editorial <span aria-hidden="true">·</span> Sources checked 07 Aug 2026</p>
         </div>
       </header>
 
@@ -125,7 +125,7 @@ export function BonusGuideDocument() {
               <div><dt>Qualifying play</dt><dd>£200</dd></div>
             </dl>
             <p><strong>Arithmetic:</strong> £20 bonus × 10 = £200 qualifying play.</p>
-            <p>This educational arithmetic is not a current operator offer, an available SevenBet bonus or a recommendation. It does not mean every GB bonus uses 10×. Check the operator&apos;s current terms because lower or zero wagering requirements and other significant conditions may apply.</p>
+            <p>This educational arithmetic is not a current operator offer, an available B4GAMBLE bonus or a recommendation. It does not mean every GB bonus uses 10×. Check the operator&apos;s current terms because lower or zero wagering requirements and other significant conditions may apply.</p>
           </section>
 
           <section id="expiry-withdrawal" className={styles.proseSection}>
@@ -204,7 +204,7 @@ export function BonusGuideDocument() {
         <div className={styles.commercialInner}>
           <p className={styles.eyebrow}>After the guide</p>
           <h2>Ready to compare published offers?</h2>
-          <p>Commercial disclosure: SevenBet may receive compensation from some outbound links reached later. Published terms and editorial context remain separate from compensation.</p>
+          <p>Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Published terms and editorial context remain separate from compensation.</p>
           <Link href="/bonuses">Compare published offers</Link>
         </div>
       </aside>

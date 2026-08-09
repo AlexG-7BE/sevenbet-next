@@ -16,11 +16,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const article = getLearningArticle(slug);
 
   if (!article) {
-    return { title: "Responsible Gambling Guide | SevenBet" };
+    return { title: "Responsible Gambling Guide | B4GAMBLE" };
   }
 
   return {
-    title: `${article.title} | SevenBet`,
+    title: `${article.title} | B4GAMBLE`,
     description: article.summary,
     alternates: { canonical: absoluteUrl(`/responsible-gambling/${article.slug}`) },
   };
@@ -63,12 +63,12 @@ function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle
     dateModified: "2026-07-12",
     author: {
       "@type": "Organization",
-      name: "SevenBet",
+      name: "B4GAMBLE",
       url: absoluteUrl("/"),
     },
     publisher: {
       "@type": "Organization",
-      name: "SevenBet",
+      name: "B4GAMBLE",
     },
     mainEntityOfPage: absoluteUrl(`/responsible-gambling/${article.slug}`),
   };

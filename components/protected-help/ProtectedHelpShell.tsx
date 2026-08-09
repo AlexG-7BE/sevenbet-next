@@ -7,8 +7,8 @@ export function ProtectedHelpHeader() {
     <div className={styles.headerWrap}>
       <header className={styles.header} data-protected-help="header">
         <div className={styles.identity}>
-          <Link className={styles.brand} href="/responsible-gambling" aria-label="SevenBet Help home" translate="no">
-            SEVENBET
+          <Link className={styles.brand} href="/responsible-gambling" aria-label="B4GAMBLE Help home" translate="no">
+            B4GAMBLE
           </Link>
           <span className={styles.protectedBadge}>Protected Help</span>
         </div>
@@ -35,7 +35,7 @@ export function ProtectedHelpFooter() {
           <p className={styles.footerEyebrow}>Control &amp; support</p>
           <p className={styles.footerTitle}>Help stays non-commercial.</p>
           <p className={styles.footerCopy}>
-            SevenBet provides information, not emergency or clinical care. External support opens on another site and should be checked for your location.
+            B4GAMBLE provides information, not emergency or clinical care. External support opens on another site and should be checked for your location.
           </p>
         </div>
         <div className={styles.footerUtility}>
@@ -46,7 +46,7 @@ export function ProtectedHelpFooter() {
             <Link href="/terms">Terms</Link>
             <Link href="/about">About</Link>
           </nav>
-          <p className={styles.copyright}>© 2026 SevenBet</p>
+          <p className={styles.copyright}>© 2026 B4GAMBLE</p>
         </div>
       </footer>
     </div>

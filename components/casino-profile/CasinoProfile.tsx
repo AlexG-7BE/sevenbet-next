@@ -181,7 +181,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
                 <p>{demo ? "No operator, licence, offer or availability field on this fictional profile is current commercial evidence." : "Availability, licence status and offer terms can change. Review the current terms before acting."}</p>
               </div>
               {casino.responsibleGamblingTools.length ? <div className={styles.controlTools}><strong>Published control tools</strong><ul>{casino.responsibleGamblingTools.map((tool) => <li key={tool}>{tool}</li>)}</ul></div> : null}
-              <p className={styles.affiliateCopy}>SevenBet may receive compensation from some eligible outbound links. Editorial review access does not depend on a commercial route.</p>
+              <p className={styles.affiliateCopy}>B4GAMBLE may receive compensation from some eligible outbound links. Editorial review access does not depend on a commercial route.</p>
             </div>
           </div>
         </div>
@@ -191,7 +191,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       <section aria-labelledby="verdict-heading" className={styles.verdict} id="verdict">
         <div>
-          <p>SEVENBET VERDICT</p>
+          <p>B4GAMBLE VERDICT</p>
           <h2 id="verdict-heading">Published evidence, visible limits.</h2>
           <span>{editorial?.summary || casino.reviewContent}</span>
           {casino.cons.length ? <div className={styles.verdictLimit}><strong>Keep in view</strong><span>{casino.cons[0]}</span></div> : null}
