@@ -141,7 +141,7 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 
 ## Founder/Operations inputs still required
 
-- Apply the approved Production authority `https://b4gamble.com` to the three documented environment values and redeploy exact merged `main` before any later Google Production activation.
+- Before PR #59 is merged, apply and verify the approved Production authority `https://b4gamble.com` in the three documented Production-only environment values without triggering a deployment. The automatic exact-main deployment after Founder merge must use that contract, and its B4GAMBLE Production verification must pass before any later Google Production activation.
 - Register the documented stable Preview origin and callback in the separate Preview Google client.
 - Create and place separate Production and Preview Google client IDs/secrets.
 - Verify the consent screen, authorised origins and exact callbacks.

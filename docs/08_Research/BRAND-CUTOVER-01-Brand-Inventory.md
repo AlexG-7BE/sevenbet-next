@@ -28,4 +28,4 @@ No secret values or local environment contents were inspected or recorded.
 
 **Not detected:** a Prisma schema change, migration, seed execution, Production data mutation, new API, dependency upgrade, Preview-domain change, Google activation, email transport activation or commercial activation in BRAND-CUTOVER-01.
 
-**Planned:** after Founder-approved merge, Production-only environment cutover and redeployment must make `https://b4gamble.com` authoritative. External Google activation, email infrastructure and any legacy Vercel-alias redirect remain separate controlled actions.
+**Planned:** before Founder-approved merge, Founder/Operations must set and verify the Production-only environment contract without deploying or mutating current Production. The automatic exact-main deployment after merge must make `https://b4gamble.com` authoritative and pass the ordered release verification. External Google activation, email infrastructure and any legacy Vercel-alias redirect remain separate controlled actions.

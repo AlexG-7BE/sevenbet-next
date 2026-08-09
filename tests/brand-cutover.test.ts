@@ -70,10 +70,12 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
 
 test("root identity, legal trading name and approved contacts are exact", () => {
   const layout = source("app/layout.tsx");
+  const home = source("app/(public)/page.tsx");
   assert.match(layout, /default: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
   assert.match(layout, /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
+  assert.match(home, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
 
   for (const path of ["app/(public)/privacy/page.tsx", "app/(public)/terms/page.tsx"]) {
     const legal = source(path);
@@ -83,7 +85,9 @@ test("root identity, legal trading name and approved contacts are exact", () => 
     assert.doesNotMatch(legal, /Suite 1663/);
   }
   assert.match(source("app/(public)/privacy/page.tsx"), /privacy@7be\.io/);
-  assert.match(source("app/(public)/terms/page.tsx"), /info@7be\.io/);
+  const terms = source("app/(public)/terms/page.tsx");
+  assert.match(terms, /info@7be\.io/);
+  assert.match(terms, /effective="7 August 2026" updated="9 August 2026"/);
 });
 
 test("Production-style canonical, robots and sitemap output use b4gamble.com", async () => {

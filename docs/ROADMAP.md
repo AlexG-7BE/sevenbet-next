@@ -16,7 +16,7 @@
 | 12 | LEGAL-IMPL-01 | **Closed; PR #57 merged** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
 | 13 | AUTH-COMMS-01 | **Closed; PR #58 merged** | RFC-018; bounded Google/Better Auth integration and provider-independent disabled email architecture. No credentials, live provider, reminder send or marketing activation. |
 | 14 | BRAND-CUTOVER-01 | **Delivery candidate — unmerged** | RFC-019; minimal SevenBet → B4GAMBLE consumer-brand replacement and `b4gamble.com` Production canonical readiness. No redesign, data migration, external activation or Preview-domain change. |
-| 15 | B4GAMBLE Production environment cutover | **Founder-controlled post-merge action** | Set exact Production-only site/auth URL values, redeploy exact merged main, and verify metadata, schema, robots, sitemap, auth and legacy-host behaviour. |
+| 15 | B4GAMBLE Production environment cutover | **Founder-controlled pre-merge configuration and merge deployment** | Before merge, set and verify the exact Production-only site/auth URL values without deploying; the automatic exact-main deployment after Founder merge must then pass metadata, schema, robots, sitemap, auth and legacy-host verification. |
 | 16 | External Google OAuth configuration | **Open external** | Create separate Preview/Production Web clients; register exact documented origins/callbacks; install environment-scoped credentials and complete synthetic smoke tests. |
 | 17 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
 | 18 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
@@ -39,7 +39,7 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 ## Immediate next gates
 
 1. Founder review and merge decision for BRAND-CUTOVER-01 after exact-head CI and Preview evidence is green.
-2. After merge approval only, apply the three exact Production-only B4GAMBLE URL/auth values, redeploy exact merged main and complete the ordered canonical/auth verification.
+2. Before merge, Founder/Operations applies and verifies the three exact Production-only B4GAMBLE URL/auth values without deploying or mutating current Production; Founder merge then triggers the automatic exact-main deployment and ordered canonical/auth/runtime verification.
 3. Complete the separate external Google Preview/Production configuration and synthetic smoke verification; BRAND-CUTOVER-01 does not activate it.
 4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
 5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.

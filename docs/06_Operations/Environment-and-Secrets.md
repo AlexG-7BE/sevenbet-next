@@ -83,7 +83,7 @@ BETTER_AUTH_URL=https://b4gamble.com
 BETTER_AUTH_TRUSTED_ORIGINS=https://b4gamble.com
 ```
 
-Apply the three values together, redeploy exact merged `main`, and verify metadata, canonical links, structured data, robots, sitemap and Better Auth session behaviour. Preview values and its dynamic exact-host contract do not change. The legacy `sevenbet-next.vercel.app` project alias is an internal compatibility hostname, not the target public authority.
+Before PR #59 is merged, Founder/Operations must apply and verify the three values together in Production only. Changing the values must not deploy or otherwise mutate the current Production application. After Founder merges PR #59 by merge commit, the automatic exact-main Vercel Production deployment must build with this environment contract. Wait for the exact merged SHA to be Ready, then verify metadata, canonical links, structured data, robots, sitemap, Better Auth session behaviour, safe account access, legacy-host canonical behaviour and runtime errors. Preview values and its dynamic exact-host contract do not change. The legacy `sevenbet-next.vercel.app` project alias is an internal compatibility hostname, not the target public authority.
 
 ## Handling rules
 

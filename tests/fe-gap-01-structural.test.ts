@@ -54,6 +54,7 @@ test("Terms is substantive, server rendered, noindex/follow, and preserves consu
   assert.match(terms, /does not use it to determine how much gambling is safe or affordable/);
   assert.match(terms, /Nothing in these Terms excludes or limits liability where doing so would be unlawful/);
   assert.match(terms, /mandatory consumer protections/);
+  assert.match(terms, /effective="7 August 2026" updated="9 August 2026"/);
   assert.doesNotMatch(terms, placeholders);
   assert.doesNotMatch(terms + legalDocument, /accept terms checkbox|I accept|Agree to Terms/iu);
 });

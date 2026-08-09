@@ -9,6 +9,10 @@ test("desktop and mobile Public Shell expose B4GAMBLE without wordmark overflow"
   await expect(desktopBrand).toHaveText("B4GAMBLE");
   await expect(page.locator("footer[data-public-shell]")).toContainText("B4GAMBLE");
   await expect(page.locator("footer[data-public-shell]")).toContainText("Know your limits before you play.");
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
+  );
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 
   await page.setViewportSize({ width: 390, height: 844 });
@@ -32,6 +36,11 @@ test("Programme, protected Help, legal and unavailable states expose the current
     await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
     await expect(page.getByText(/7BE Inc\., trading as B4GAMBLE/).first()).toBeVisible();
     await expect(page.locator("body")).not.toContainText(/SevenBet|SEVENBET/);
+    if (route === "/terms") {
+      await expect(page.locator('[data-legal-document="terms"]')).toContainText(
+        "EFFECTIVE 7 AUGUST 2026 · LAST UPDATED 9 AUGUST 2026",
+      );
+    }
   }
 
   await page.goto(`${baseUrl}/outbound/unavailable`, { waitUntil: "domcontentloaded" });
