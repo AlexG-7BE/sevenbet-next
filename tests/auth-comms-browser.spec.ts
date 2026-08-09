@@ -118,3 +118,125 @@ test("Google control honours reduced motion when configured", async ({ browser }
   expect(await google.evaluate((element) => getComputedStyle(element).transitionDuration)).toBe("0s");
   await context.close();
 });
+
+test("authenticated Programme logout ends the session and starts a fresh anonymous subject", async ({ page }) => {
+  const userId = "auth-harden-browser-user";
+  const priorJourneyId = "8a6bf1a5-b7f5-497d-883f-3b3f1ebd0fb8";
+  let authenticated = true;
+  let signOutRequests = 0;
+
+  await page.addInitScript(({ id, journeyId }) => {
+    if (sessionStorage.getItem("auth-harden-browser-seeded") === "true") return;
+    sessionStorage.setItem("auth-harden-browser-seeded", "true");
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journeyId);
+    sessionStorage.setItem(
+      `sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journeyId)}`,
+      JSON.stringify({ privateSentinel: "PRIOR-ANONYMOUS-SENTINEL" }),
+    );
+    sessionStorage.setItem(
+      `sevenbet.age-attestation.v2:user:${encodeURIComponent(id)}`,
+      "18-or-over",
+    );
+  }, { id: userId, journeyId: priorJourneyId });
+
+  await page.route("**/api/auth/get-session", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify(authenticated ? {
+        session: {
+          id: "auth-harden-session",
+          token: "browser-session-token",
+          userId,
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        user: {
+          id: userId,
+          name: "Auth Harden User",
+          email: "auth-harden@example.com",
+          emailVerified: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      } : null),
+    });
+  });
+  await page.route("**/api/program/dashboard", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 60,
+          currentMission: 2,
+          missions: [
+            { missionNumber: 1, title: "Map the moment", status: "completed" },
+            { missionNumber: 2, title: "Set a 7-day goal", status: "current" },
+            { missionNumber: 3, title: "Understand the urge", status: "locked" },
+          ],
+          activeDays: 1,
+          currentStreak: 0,
+          achievements: [],
+          momentMap: null,
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+  await page.route("**/api/auth/sign-out", async (route) => {
+    signOutRequests += 1;
+    authenticated = false;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ success: true }),
+    });
+  });
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await open(page, "/program");
+  await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
+  const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
+  await expect(logout).toBeVisible();
+  await logout.focus();
+  await expect(logout).toBeFocused();
+  expect(await logout.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe("3px");
+  await page.evaluate((id) => {
+    sessionStorage.setItem(
+      `sevenbet.programme.local-content.v2:user:${encodeURIComponent(id)}`,
+      JSON.stringify({ privateSentinel: "AUTHENTICATED-USER-SENTINEL" }),
+    );
+  }, userId);
+  await logout.click();
+
+  await expect(page).toHaveURL(`${baseUrl}/program`);
+  await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toHaveCount(0);
+  expect(signOutRequests).toBe(1);
+  const storage = await page.evaluate(({ id, journeyId }) => {
+    const pointer = sessionStorage.getItem("sevenbet.programme.journey.v2");
+    return {
+      pointer,
+      priorJourney: sessionStorage.getItem(
+        `sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journeyId)}`,
+      ),
+      freshJourney: pointer ? sessionStorage.getItem(
+        `sevenbet.programme.local-content.v2:journey:${encodeURIComponent(pointer)}`,
+      ) : null,
+      authenticatedUser: sessionStorage.getItem(
+        `sevenbet.programme.local-content.v2:user:${encodeURIComponent(id)}`,
+      ),
+    };
+  }, { id: userId, journeyId: priorJourneyId });
+  expect(storage.pointer).not.toBe(priorJourneyId);
+  expect(storage.priorJourney).toContain("PRIOR-ANONYMOUS-SENTINEL");
+  expect(storage.freshJourney ?? "").not.toContain("PRIOR-ANONYMOUS-SENTINEL");
+  expect(storage.freshJourney ?? "").not.toContain("AUTHENTICATED-USER-SENTINEL");
+  expect(storage.authenticatedUser).toContain("AUTHENTICATED-USER-SENTINEL");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+});

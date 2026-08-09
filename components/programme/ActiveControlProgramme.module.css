@@ -53,18 +53,19 @@
 }
 
 .nav { display: flex; justify-content: center; gap: 32px; }
-.nav a, .accountNav > a, .accountNav > span {
+.nav a, .accountNav > a, .accountNav > span, .accountNav > button {
   color: var(--ink);
   font-size: 12px;
   line-height: 16px;
   font-weight: 650;
   letter-spacing: .2px;
 }
-.nav a, .accountNav a { transition: opacity .2s ease; }
-.nav a:hover, .accountNav a:hover { opacity: .55; }
+.nav a, .accountNav a, .accountNav button { transition: opacity .2s ease; }
+.nav a:hover, .accountNav a:hover, .accountNav button:hover { opacity: .55; }
 .accountNav { display: flex; align-items: center; justify-content: flex-end; gap: 16px; }
 .xpPill { padding: 8px 16px; background: var(--acid-soft); border-radius: var(--sb-radius-full); }
-.accountPill { padding: 8px 16px; border: 1px solid var(--muted); border-radius: var(--sb-radius-full); }
+.accountPill { padding: 8px 16px; border: 1px solid var(--muted); border-radius: var(--sb-radius-full); background: transparent; cursor: pointer; }
+.accountPill:disabled { cursor: wait; opacity: .65; }
 
 .missionMeta { display: flex; align-items: flex-start; justify-content: space-between; }
 .progressPanel { width: 640px; padding: 16px; background: var(--white); display: grid; gap: 12px; }
@@ -162,7 +163,7 @@
   transition: transform .2s ease, filter .2s ease, opacity .2s ease;
 }
 .primaryButton:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.03); }
-.primaryButton:focus-visible, .googleButton:focus-visible, .choice:focus-visible, .textButton:focus-visible, .artifact button:focus-visible, .authNotice button:focus-visible, .waveMoments button:focus-visible, .notNowButton:focus-visible, .exampleChips button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.primaryButton:focus-visible, .googleButton:focus-visible, .choice:focus-visible, .textButton:focus-visible, .accountPill:focus-visible, .artifact button:focus-visible, .authNotice button:focus-visible, .waveMoments button:focus-visible, .notNowButton:focus-visible, .exampleChips button:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .primaryButton:disabled { cursor: not-allowed; opacity: .42; }
 .saving { color: var(--muted); font-size: 13px; }
 .error { margin: 0; color: #9c231d; font-size: 14px; line-height: 20px; font-weight: 650; }
@@ -485,7 +486,7 @@
   .header { grid-template-columns: 1fr auto; padding: 14px 16px; }
   .wordmark { font-size: 24px; }
   .nav { grid-column: 1 / -1; order: 3; justify-content: flex-start; overflow-x: auto; padding-top: 12px; border-top: 1px solid #dddcd5; }
-  .accountNav > span:last-child { display: none; }
+  .accountNav > .xpPill { display: none; }
   .missionMeta { gap: 16px; }
   .progressPanel { width: auto; flex: 1; }
   .metaPills { flex-direction: column; }
