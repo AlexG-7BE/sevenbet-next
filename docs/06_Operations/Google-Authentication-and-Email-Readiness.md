@@ -40,10 +40,10 @@ Better Auth's provider callback path is exactly `/api/auth/callback/google`.
 | Environment | SevenBet origin | Exact callback to register | Credential boundary |
 | --- | --- | --- | --- |
 | Local | `http://localhost:4173` | `http://localhost:4173/api/auth/callback/google` | Developer-owned client only; synthetic accounts |
-| Preview | Exact stable host emitted as `VERCEL_BRANCH_URL` for this branch | `https://<exact-stable-VERCEL_BRANCH_URL>/api/auth/callback/google` | Separate Preview client and Preview database/session secret |
+| Preview | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app` | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app/api/auth/callback/google` | Separate Preview client and Preview database/session secret |
 | Production | `https://sevenbet-next.vercel.app` | `https://sevenbet-next.vercel.app/api/auth/callback/google` | Separate Production client and Production database/session secret |
 
-The Preview placeholder must be replaced in this record with the exact stable branch alias after the first deployment exposes it and before Google Preview activation. Do not register a random generated deployment hostname, a wildcard `*.vercel.app` redirect, the Production host for Preview, or a substring/pattern. The application deliberately rejects a Preview base URL that does not equal the exact `VERCEL_BRANCH_URL` origin.
+The Preview host above is the stable branch alias exposed by PR #58; the first generated deployment hostname was deliberately not used. Register only this exact callback before Google Preview activation. Do not register a random generated deployment hostname, a wildcard `*.vercel.app` redirect, the Production host for Preview, or a substring/pattern. The application deliberately rejects a Preview base URL that does not equal the exact `VERCEL_BRANCH_URL` origin.
 
 If the canonical Production domain changes, update `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS`, Google authorised JavaScript origin and Google callback together through release governance. Do not leave the Vercel hostname and custom domain mixed across state/cookie boundaries.
 
@@ -142,7 +142,7 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 ## Founder/Operations inputs still required
 
 - Confirm the canonical Production SevenBet domain and whether the current Vercel domain remains authoritative.
-- Supply the exact stable Preview alias exposed by the first Preview deployment for this branch.
+- Register the documented stable Preview origin and callback in the separate Preview Google client.
 - Create and place separate Production and Preview Google client IDs/secrets.
 - Verify the consent screen, authorised origins and exact callbacks.
 - Select the future SevenBet-controlled sending domain.

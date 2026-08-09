@@ -13,14 +13,18 @@
 | 9 | COMM-01 | **Completed and merged** | PR #55; fail-closed partner authority machinery, no real partner or destination. |
 | 10 | UX-PERF-01 | **Completed and merged** | [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56); server-authoritative progressive discovery and measured performance work. |
 | 11 | LEGAL-02 | **Analysis complete** | Founder Office accepted the product, privacy, age and closed-beta policy decisions. |
-| 12 | LEGAL-IMPL-01 | **Implementation complete; PR #57 pending review** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
-| 13 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
-| 14 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
-| 15 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
-| 16 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
-| 17 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 18 | PROGRAM-AI-01 and Missions 05–10 | **Future separate product scope** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
-| 19 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
+| 12 | LEGAL-IMPL-01 | **Closed; PR #57 merged** | RFC-017, demo truthfulness, local-first Programme narrative, age request gate, privacy operations/runbooks, claims precision and regression coverage. Commercial/referral remains off. |
+| 13 | AUTH-COMMS-01 | **Delivery PR #58 — Founder review open** | RFC-018; bounded Google/Better Auth integration and provider-independent disabled email architecture. No credentials, live provider, reminder send or marketing activation. |
+| 14 | External Google OAuth configuration | **Open external** | Create separate Preview/Production Web clients; register exact documented origins/callbacks; install environment-scoped credentials and complete synthetic smoke tests. |
+| 15 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
+| 16 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
+| 17 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
+| 18 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
+| 19 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
+| 20 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
+| 21 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
+| 22 | PROGRAM-AI-01 and Missions 05–10 | **Next product scope / open** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
+| 23 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
 
@@ -32,9 +36,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Founder review and merge decision for the LEGAL-IMPL-01 PR after all automated and Preview evidence is green.
-2. UK representative and ICO assessment/payment actions.
-3. Processor/transfer evidence completion, DPIA approval and outside-counsel review.
-4. RECOVERY-01 plus distributed Programme rate limiting and expiry operations.
-5. Real partner/evidence acquisition, followed by a separate closed-beta authorisation decision.
-6. PROGRAM-AI-01 and Mission-specific RFCs for Missions 05–10.
+1. Founder review and merge decision for AUTH-COMMS-01 PR #58 after exact-head CI and Preview evidence is green.
+2. Complete the external Google Preview/Production configuration and synthetic smoke verification.
+3. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
+4. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
+5. Open PROGRAM-AI-01 and Mission-specific RFCs for Missions 05–10 as the next separate product scope; do not combine it with communications activation.
+6. Acquire real partner evidence only under a later closed-beta authorisation decision.
