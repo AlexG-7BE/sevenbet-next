@@ -1,4 +1,4 @@
-# SevenBet Operations
+# B4GAMBLE Operations
 
 These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-Release-Governance.md) for the current closed-beta operating model.
 

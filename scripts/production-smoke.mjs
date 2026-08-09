@@ -1,4 +1,4 @@
-const productionOrigin = "https://sevenbet-next.vercel.app";
+const productionOrigin = "https://b4gamble.com";
 const baseUrl = (process.env.PRODUCTION_SMOKE_BASE_URL ?? productionOrigin).replace(/\/$/, "");
 const routes = [
   "/",
@@ -23,7 +23,7 @@ async function requestRoute(route) {
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {
       const response = await fetch(`${baseUrl}${route}`, {
-        headers: { "user-agent": "SevenBet-Production-Smoke/1.0" },
+        headers: { "user-agent": "B4GAMBLE-Production-Smoke/1.0" },
         redirect: "follow",
         signal: AbortSignal.timeout(timeoutMs),
       });

@@ -35,7 +35,7 @@ The Git commit SHA is the release identifier. Record the pull request and Vercel
 ## Post-merge verification
 
 1. In Vercel, confirm the Production deployment source commit equals the merged `main` SHA and status is Ready.
-2. Run `npm run ops:smoke` against the fixed production origin. The script performs read-only GET requests only.
+2. Run `npm run ops:smoke` against the fixed canonical Production origin `https://b4gamble.com`. The script performs read-only GET requests only.
 3. Confirm `/`, `/responsible-gambling`, `/privacy`, `/terms`, `/self-check`, `/tools/budget-calculator`, `/faq`, `/casinos`, and `/bonuses` return HTTP 200; root must return HTML.
 4. Review Vercel deployment/runtime logs for new errors without copying personal data, protected Self-Check answers, limit values, Programme data, raw affiliate URLs or secrets into the incident record.
 5. Observe the next scheduled `Production Smoke` result and confirm its GitHub notification reaches the accountable owner.
