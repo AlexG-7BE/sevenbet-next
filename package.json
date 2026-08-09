@@ -21,6 +21,7 @@
     "cms:test": "node scripts/cms-smoke-tests.mjs && node scripts/program-builder-smoke-tests.mjs",
     "auth:bootstrap-admin": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/bootstrap-first-admin.ts",
     "auth:test": "node --import tsx --test tests/admin-auth.test.ts tests/auth-runtime-config.test.ts tests/google-auth-config.test.ts",
+    "auth-comms:test": "node --import tsx --test tests/google-auth-config.test.ts tests/programme-local-subject.test.ts tests/communications-foundation.test.ts",
     "create-admin-profile": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/create-admin-profile.ts",
     "progress:check-orphans": "node --import tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/check-progress-user-orphans.ts",
     "privacy:data-subject": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/privacy-data-subject.ts",
