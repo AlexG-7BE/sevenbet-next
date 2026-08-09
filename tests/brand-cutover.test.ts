@@ -46,7 +46,9 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
     "lib/learning-center.ts",
     "lib/programme/contract.ts",
     "lib/responsible-gambling.ts",
+    "lib/services/public-casino-discovery.service.ts",
     "lib/services/public-comparison.service.ts",
+    "lib/services/public-offer.service.ts",
   ].filter((path) => /\.(?:ts|tsx)$/.test(path));
   const renderedSources = publicSources.map(source).join("\n");
 
@@ -61,6 +63,9 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /Know your limits before you play\./);
+  assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
+  assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
+  assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
 });
 
 test("root identity, legal trading name and approved contacts are exact", () => {

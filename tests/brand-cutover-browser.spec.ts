@@ -12,7 +12,7 @@ test("desktop and mobile Public Shell expose B4GAMBLE without wordmark overflow"
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/methodology`, { waitUntil: "networkidle" });
   await page.getByRole("button", { name: "Open navigation" }).click();
   const dialog = page.getByRole("dialog", { name: "Site navigation" });
   await expect(dialog.getByRole("link", { name: "B4GAMBLE" })).toBeVisible();
@@ -46,10 +46,6 @@ test("representative current public HTML contains no legacy active consumer bran
     "/self-check",
     "/responsible-gambling",
     "/tools/budget-calculator",
-    "/casinos",
-    "/bonuses",
-    "/best-offers",
-    "/compare",
     "/methodology",
     "/affiliate-disclosure",
     "/privacy",
