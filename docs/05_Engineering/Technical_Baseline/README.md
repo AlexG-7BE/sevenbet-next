@@ -4,10 +4,10 @@
 
 | Field | Value |
 | --- | --- |
-| Audit date | 2026-08-08 |
+| Audit date | 2026-08-10 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | Rescanned for GB-MARKET-01 at base `9620a9c89afda57ea168f3edbf398ba0c4e450d4`. The delivery adds repository policy/evidence authority and public commercial enforcement; Prisma schema/migrations, dependencies, hosted values and Production data do not change. |
+| Change scope | Entire active repository rescanned for PROGRAM-AI-IMPL-01A at exact main base `240dff31537bf4f42978ad7aebe94ae6b60074cc`. Dependencies, generated directories, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. The branch adds the RFC-022 default-off M1 foundation, exactly two schema concepts and migration 0018; dependencies, hosted values and Production configuration do not change. |
 
 ## Evidence vocabulary
 
@@ -29,3 +29,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [07_Known_Technical_Debt.md](07_Known_Technical_Debt.md) — evidence-based debt and architecture blockers.
 - [08_Assumptions_and_Constraints.md](08_Assumptions_and_Constraints.md) — detected constraints and explicitly unconfirmed assumptions.
 - [09_Programme_Backend_Audit.md](09_Programme_Backend_Audit.md) — evidence audit and implemented Active Control Programme backend delta.
+- [10_PROGRAM_AI_M1_Foundation_Audit.md](10_PROGRAM_AI_M1_Foundation_Audit.md) — detected RFC-022 feature-gated M1 foundation, privacy, progression and provider boundaries.

@@ -33,6 +33,18 @@ export async function collectDataSubjectExport(database: PrismaClient, userId: s
           urgeLearningRecord: true,
           activeBoundary: true,
           activeDays: true,
+          programmeStartingPoint: true,
+        },
+      },
+      programmeSensitiveInputAuthorities: {
+        select: {
+          id: true,
+          purposeVersion: true,
+          statementVersion: true,
+          confirmedAt: true,
+          withdrawnAt: true,
+          createdAt: true,
+          updatedAt: true,
         },
       },
       xpEvents: true,
@@ -91,7 +103,7 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
   const [
     sessions, accounts, enrollments, progressEvents, reflections, missionProgress,
     momentMaps, currentGoals, urgeRecords, boundaries, xpEvents, achievements,
-    activeDays, verifications,
+    activeDays, startingPoints, sensitiveInputAuthorities, verifications,
   ] = await Promise.all([
     database.session.count({ where: { userId } }),
     database.account.count({ where: { userId } }),
@@ -106,6 +118,8 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
     database.userXpEvent.count({ where: { userId } }),
     database.userAchievement.count({ where: { userId } }),
     database.programmeActiveDay.count({ where: { userId } }),
+    database.programmeStartingPoint.count({ where: { userId } }),
+    database.programmeSensitiveInputAuthority.count({ where: { userId } }),
     database.verification.count({ where: { identifier: { equals: user.email, mode: "insensitive" } } }),
   ]);
   return {
@@ -129,6 +143,8 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
       xpEvents,
       achievements,
       activeDays,
+      startingPoints,
+      sensitiveInputAuthorities,
       consumedClaims: consumedClaimRows.length,
       linkedAnonymousSessions: linkedAnonymousSessionIds.size,
       legacyDraftBearingAnonymousSessions,
@@ -160,12 +176,14 @@ export async function executeDataSubjectDeletion(database: PrismaClient, userId:
     await transaction.programProgressEvent.deleteMany({ where: enrollmentWhere });
     await transaction.programmeMissionProgress.deleteMany({ where: enrollmentWhere });
     await transaction.programmeActiveDay.deleteMany({ where: { OR: [{ userId }, enrollmentWhere] } });
+    await transaction.programmeStartingPoint.deleteMany({ where: { userId } });
     await transaction.momentMap.deleteMany({ where: enrollmentWhere });
     await transaction.programEnrollment.deleteMany({ where: { userId } });
     await transaction.userXpEvent.deleteMany({ where: { userId } });
     await transaction.userAchievement.deleteMany({ where: { userId } });
     await transaction.session.deleteMany({ where: { userId } });
     await transaction.account.deleteMany({ where: { userId } });
+    await transaction.programmeSensitiveInputAuthority.deleteMany({ where: { userId } });
     if (consumedClaimIds.length > 0) await transaction.pendingProgrammeClaim.deleteMany({ where: { id: { in: consumedClaimIds } } });
     if (linkedAnonymousSessionIds.length > 0) await transaction.anonymousProgrammeSession.deleteMany({ where: { id: { in: linkedAnonymousSessionIds } } });
     await transaction.verification.deleteMany({ where: { identifier: { equals: plan.email, mode: "insensitive" } } });

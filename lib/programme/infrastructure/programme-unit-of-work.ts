@@ -6,6 +6,7 @@ import { ProgrammeDashboardRepository } from "@/lib/programme/infrastructure/rep
 import { ProgrammeProgressRepository } from "@/lib/programme/infrastructure/repositories/programme-progress.repository";
 import { ProgrammeRewardRepository } from "@/lib/programme/infrastructure/repositories/programme-reward.repository";
 import { ProgrammeSessionRepository } from "@/lib/programme/infrastructure/repositories/programme-session.repository";
+import { ProgrammeAiMissionOneRepository } from "@/lib/programme/infrastructure/repositories/programme-ai-mission-one.repository";
 
 function isRetryableTransactionError(error: unknown) {
   return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034";
@@ -17,6 +18,7 @@ export class ProgrammeUnitOfWork {
   readonly artefacts: ProgrammeArtefactRepository;
   readonly rewards: ProgrammeRewardRepository;
   readonly dashboard: ProgrammeDashboardRepository;
+  readonly programAiMissionOne: ProgrammeAiMissionOneRepository;
 
   constructor(private readonly database: Prisma.TransactionClient = prisma) {
     this.sessions = new ProgrammeSessionRepository(database);
@@ -24,6 +26,7 @@ export class ProgrammeUnitOfWork {
     this.artefacts = new ProgrammeArtefactRepository(database);
     this.rewards = new ProgrammeRewardRepository(database);
     this.dashboard = new ProgrammeDashboardRepository(database);
+    this.programAiMissionOne = new ProgrammeAiMissionOneRepository(database);
   }
 
   async serializable<T>(operation: (unitOfWork: ProgrammeUnitOfWork) => Promise<T>) {

@@ -356,14 +356,16 @@ model User {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  sessions                Session[]
-  accounts                Account[]
-  adminUser               AdminUser?
-  programEnrollments      ProgramEnrollment[]
-  xpEvents                UserXpEvent[]
-  achievements            UserAchievement[]
-  consumedProgrammeClaims PendingProgrammeClaim[]
-  programmeActiveDays     ProgrammeActiveDay[]
+  sessions                           Session[]
+  accounts                           Account[]
+  adminUser                          AdminUser?
+  programEnrollments                 ProgramEnrollment[]
+  xpEvents                           UserXpEvent[]
+  achievements                       UserAchievement[]
+  consumedProgrammeClaims            PendingProgrammeClaim[]
+  programmeActiveDays                ProgrammeActiveDay[]
+  programmeSensitiveInputAuthorities ProgrammeSensitiveInputAuthority[]
+  programmeStartingPoints            ProgrammeStartingPoint[]
 }
 
 model Session {
@@ -554,17 +556,18 @@ model ProgramEnrollment {
   currentStepId    String?   @db.Uuid
   timezone         String    @default("UTC")
 
-  program            Program                    @relation(fields: [programId], references: [id], onDelete: Restrict)
-  programVersion     ProgramVersion             @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
-  user               User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  progressEvents     ProgramProgressEvent[]
-  reflections        ProgramReflection[]
-  missionProgress    ProgrammeMissionProgress[]
-  momentMap          MomentMap?
-  currentGoal        CurrentGoal?
-  urgeLearningRecord UrgeLearningRecord?
-  activeBoundary     ActiveBoundary?
-  activeDays         ProgrammeActiveDay[]
+  program                Program                    @relation(fields: [programId], references: [id], onDelete: Restrict)
+  programVersion         ProgramVersion             @relation(fields: [programVersionId], references: [id], onDelete: Restrict)
+  user                   User                       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  progressEvents         ProgramProgressEvent[]
+  reflections            ProgramReflection[]
+  missionProgress        ProgrammeMissionProgress[]
+  momentMap              MomentMap?
+  currentGoal            CurrentGoal?
+  urgeLearningRecord     UrgeLearningRecord?
+  activeBoundary         ActiveBoundary?
+  activeDays             ProgrammeActiveDay[]
+  programmeStartingPoint ProgrammeStartingPoint?
 
   @@unique([userId, programId])
   @@index([programVersionId])
@@ -666,9 +669,33 @@ model AnonymousProgrammeSession {
   updatedAt       DateTime               @updatedAt
   deletedAt       DateTime?
 
-  pendingClaim PendingProgrammeClaim?
+  pendingClaim              PendingProgrammeClaim?
+  sensitiveInputAuthorities ProgrammeSensitiveInputAuthority[]
 
   @@index([expiresAt])
+}
+
+/// Minimum evidence for the narrow authority required before processing
+/// unrestricted voluntarily supplied health/addiction information. This is
+/// purpose-separated from Programme access, Terms, Privacy and marketing.
+model ProgrammeSensitiveInputAuthority {
+  id                 String    @id @default(uuid()) @db.Uuid
+  anonymousSessionId String?   @db.Uuid
+  userId             String?
+  purposeVersion     String
+  statementVersion   String
+  confirmedAt        DateTime
+  withdrawnAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  anonymousSession AnonymousProgrammeSession? @relation(fields: [anonymousSessionId], references: [id], onDelete: Cascade)
+  user             User?                      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([anonymousSessionId, purposeVersion, statementVersion])
+  @@unique([userId, purposeVersion, statementVersion])
+  @@index([anonymousSessionId, withdrawnAt])
+  @@index([userId, withdrawnAt])
 }
 
 /// One-time bridge between the anonymous Mission 01 result and the Better
@@ -804,6 +831,29 @@ model ActiveBoundary {
 
   @@index([sourceCurrentGoalId])
   @@index([sourceUrgeLearningRecordId])
+}
+
+/// The closed, user-confirmed PROGRAM-AI Mission 01 result. Candidate text,
+/// raw narrative, transcripts and clarification conversations never enter it.
+model ProgrammeStartingPoint {
+  id                   String   @id @default(uuid()) @db.Uuid
+  userId               String   @unique
+  enrollmentId         String   @unique @db.Uuid
+  startingPoint        String
+  desiredChange        String
+  broadContext         String
+  continuationCue      String
+  chosenBoundaryAction String?
+  provenance           String
+  version              String
+  confirmedAt          DateTime
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  enrollment ProgramEnrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, confirmedAt])
 }
 
 /// One eligible programme day per user-local date. Voiding preserves the

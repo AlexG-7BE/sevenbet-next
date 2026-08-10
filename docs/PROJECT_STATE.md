@@ -3,7 +3,7 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-10
-- **Current main:** `324a5b51e2e37f456c2386413a6d6c4831607914`
+- **Current main at implementation base:** `240dff31537bf4f42978ad7aebe94ae6b60074cc`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
@@ -12,7 +12,7 @@
 - **AUTH-HARDEN-01:** **CLOSED**; [PR #60](https://github.com/AlexG-7BE/sevenbet-next/pull/60) is merged in current main under RFC-020.
 - **GOOGLE-OAUTH-ACTIVATE-01:** **CLOSED**; [PR #61](https://github.com/AlexG-7BE/sevenbet-next/pull/61) merged head `d129130acd982624aa7cf5d31ce4a8b8e81dfa58` into current main as `324a5b51e2e37f456c2386413a6d6c4831607914`. RFC-021 v2.1 remains the architecture authority for the merged access, authentication-continuation and authenticated-Programme runtime.
 - **Production:** <https://b4gamble.com> reached **READY** after the merge and continues to serve the B4GAMBLE consumer identity and canonical authority. Production Google OAuth remains **OFF**; Production Google credentials are **not detected**, and Google remains identity-only rather than age verification or KYC.
-- **PROGRAM-AI-01:** **PRODUCT/COMPLIANCE WORKSTREAM COMPLETED — PRODUCT DIRECTION v2.2 FOUNDER APPROVED / GO**. The [final workstream-40 handoff](08_Research/PROGRAM-AI-01-Product-Compliance-Architecture-Handoff.md) is tracked as Research/Product evidence. Implementation remains **STOP / NOT AUTHORISED**; workstream 45 — Legal & Compliance is the next gate before any bounded Design or Backend/CMS architecture work.
+- **PROGRAM-AI-IMPL-01A:** **BOUNDED M1 FOUNDATION + PREVIEW VERTICAL SLICE IMPLEMENTED ON FEATURE BRANCH; PR/PREVIEW EVIDENCE PENDING**. Founder Office authority and [RFC-022](06_RFC/RFC-022-PROGRAM-AI-M1-Foundation-and-Preview-Vertical-Slice.md) supersede the earlier implementation stop only for this bounded package. `PROGRAM_AI_V1_ENABLED` is server-controlled, exact-`true` and default-off; Production configuration is unchanged and legacy M1 remains the default runtime. No real AI/transcription provider or SDK is connected.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -31,7 +31,7 @@
 | Programme reminder delivery | **NOT YET ACTIVE** |
 | Programme reminder permission architecture | **DEFINED** |
 | Commercial marketing email | **DISABLED** |
-| PROGRAM-AI-01 | **PRODUCT/COMPLIANCE COMPLETED — DIRECTION v2.2 APPROVED / GO; IMPLEMENTATION BLOCKED** |
+| PROGRAM-AI-IMPL-01A | **IMPLEMENTED ON FEATURE BRANCH — DEFAULT OFF; PR/PREVIEW GATES PENDING** |
 | Fixture truthfulness | **CLOSED — exact-ID demo disclosure/action/SEO/schema controls tested** |
 | Privacy complaints | **CLOSED — public policy and operating runbook implemented** |
 | Protected data firewall | **CLOSED / STRENGTHENED** |
@@ -45,9 +45,9 @@
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. None authorises reminders, marketing, Production Google activation or Programme AI.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. RFC-022 authorises only the default-off PROGRAM-AI M1 foundation and Preview vertical slice. None authorises reminders, marketing, Production Google activation or a real Programme AI/transcription provider.
 
-The [PROGRAM-AI-01 Product Direction v2.2](07_Decisions/PROGRAM-AI-01-Product-Direction-v2.2.md) is Founder-approved target product direction and is not an implementation RFC. The current hard-coded Programme is frozen for further product/content expansion under its previous static model. That freeze does not delete or disable the deployed Missions 01–04, change their current order, prerequisites, content intent or reward amounts, or weaken their runtime privacy, safety and exactly-once guarantees.
+The [PROGRAM-AI-01 Product Direction v2.2](07_Decisions/PROGRAM-AI-01-Product-Direction-v2.2.md) remains target product direction. Founder Office `PROGRAM-AI-IMPL-01A` and RFC-022 provide the separate bounded implementation authority that document required. The current hard-coded Programme remains frozen for unrelated expansion and remains the runtime whenever the new flag is absent or malformed. Missions 02–04 reward amounts are unchanged.
 
 B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is positioned as adult gambling education, private behavioural reflection, decision support, personal-boundary planning and transparent comparison. It is not positioned as treatment, therapy, rehabilitation, clinical assessment, recovery-to-gambling or a product that makes gambling safe.
 
@@ -75,7 +75,18 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - Protected Help remains accessible without age or Programme completion gating and remains commercially isolated.
 - Structural tests prevent Programme, Self-Check, personal-limit, Help, vulnerability and local-session state from entering commercial modules or DTOs.
 
-### Active Control Programme — approved target product direction, not implemented
+### PROGRAM-AI M1 foundation — detected on the implementation branch
+
+- A server-only, exact-`true` `PROGRAM_AI_V1_ENABLED` gate selects the new experience. Every new service operation denies while disabled; missing/malformed values render the legacy Programme.
+- The combined mobile/desktop intake keeps concise JIT disclosure, one narrow Article 9 authority and text/recorder input on one surface. Typed input completes the entire path. The recorder has idle, permission, recording, stop, cancel, denied, transcribing and error/fallback states; no audio is uploaded.
+- Raw audio, typed situation, clarification answers and candidate drafts remain in memory or exact-subject tab `sessionStorage`. Database drafts contain only structural lifecycle/input-mode/clarification-count state. Successful claim clears the anonymous browser namespace.
+- Provider-neutral `TranscriptionPort` and `ProgrammeAiPort` contracts exist with no adapters. The runtime truthfully produces a user-controlled editable fallback and never claims AI analysis.
+- `ProgrammeSensitiveInputAuthority` and `ProgrammeStartingPoint` are the only new schema concepts. Starting Point persistence is `USER_CONFIRMED`, exact-once and inside the existing Serializable claim transaction.
+- M1 awards use distinct versioned `20 + 20` step-completion keys. Clarification and registration award zero. Existing complete M1, higher progress or an existing Starting Point dominates an anonymous collision and receives no duplicate/new M1 reward.
+- Feature-on Home projects exact current/completed/locked Mission state without percentages. Review entitlement is limited to completion of M3, M6 and M10. Existing Missions 02–04 continue through their current vertical services.
+- Commercial import/DTO firewall, raw-data, runtime-gate, provider-output, legacy-collision and exact-once structural tests are included. Data-subject export/deletion includes both new concepts.
+
+### Active Control Programme — deferred target beyond RFC-022
 
 - **Approved direction:** retain a deterministic public 10-Step Programme structure and outcomes, add bounded AI-guided personalised interaction, keep progression/rewards server-owned, and preserve regulated safety/compliance boundaries.
 - **Mission 01 target:** a short voice-first or typed Situation Intake should provide first personalised value before registration, with P75 fewer than 90 seconds to first personalised value and P75 fewer than 120 seconds to the registration CTA as Product targets, not guarantees. Google is the primary registration continuation and email the secondary route. It must not become diagnosis, therapy, clinical intake, a long questionnaire or another static lesson.
@@ -83,7 +94,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - **Approved Review direction:** Mission 01's Starting Point is not a separate Review. Mission 03 completion unlocks the First Personal Review, Mission 06 completion unlocks the Mid-Programme Personal Review and Mission 10 completion unlocks the Full Programme Personal Review. Raw or farmed XP cannot bypass those milestones; exact cumulative display thresholds are derived later from the final deterministic reward budget.
 - **Missions 02–10 balancing hypothesis:** `+25 XP` is the default completion-bonus assumption, not an immutable reward amount. Final per-Mission mapping may adjust it deterministically; AI cannot change it dynamically.
 - **Data and authority boundary:** raw Programme narrative, AI-generated Programme summaries and vulnerability-derived Programme information must not become commercial recommendation inputs. AI may later support bounded conversation, clarification, explanation, personalisation, reflection and approved synthesis, but it may not independently control legal/age gates, safety policy, commercial routing, deterministic progression or reward integrity.
-- **Delivery boundary:** Product/Compliance workstream 40 is complete and its detailed handoff is tracked. Workstream 45 — Legal & Compliance is next. Bounded Product Design and Backend/CMS architecture may begin only after Founder Office accepts the Legal data envelope. Implementation requires a later Founder-authorised RFC or equivalent bounded implementation authority; no implementation RFC is authorised now.
+- **Delivery boundary:** RFC-022 closes authority only for the M1 foundation/Preview slice. Real providers, Production activation, generated Personal Reviews, Missions 05–10, a general orchestration platform, provider data transfers/training terms and wider target architecture remain separately gated.
 
 ### Privacy operations
 
@@ -113,10 +124,10 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Evidence classification
 
-- **Detected:** current main `324a5b51e2e37f456c2386413a6d6c4831607914`; Missions 01–04 routes, vertical application services and deterministic reward policies; local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; consolidated subject-scoped access marker backed by current purpose-separated server HMAC authority; session-derived Programme home/header routing; truthful zero-progress Dashboard; exact Preview deployment-to-branch host canonicalisation before rendering/auth; bounded stable-origin-only Google/Better Auth configuration; successful Founder-controlled real Google Test User Preview OAuth and final authenticated Mission 01/logout smoke; identity-only account hooks; restricted auth paths and separate OAuth-claim continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
+- **Detected:** base main `240dff31537bf4f42978ad7aebe94ae6b60074cc`; Missions 01–04 vertical services and deterministic reward policies; the default-off RFC-022 PROGRAM-AI M1 code, two additive models/migration, provider-neutral ports with no adapters, typed fallback path, recorder state UI, exact claim compatibility, Home/Review entitlement projection, commercial firewall tests and updated account export/deletion operations on the implementation branch.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** implementation of the Founder-approved PROGRAM-AI-01 target direction only after the Legal/Compliance, Founder, Design/Backend architecture and later implementation-authority gates; any later separately authorised Production Google client configuration/activation; an approved email transport decision; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; approved legacy raw-data cleanup; and recovery architecture. Planned Programme AI direction is not implemented functionality.
-- **Not detected:** runtime Programme AI or speech-provider integration; Production Google credentials or Production provider activation; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; a completed UK representative appointment; a confirmed ICO registration/fee outcome; outside-counsel sign-off; verified complete processor/transfer evidence; a real signed GB partner; real eligible offer/link authority; Production affiliate activation; or a successful restore drill.
+- **Planned:** RFC-022 branch PR/Preview verification; any real Programme AI/transcription provider decision; generated Reviews; Missions 05–10; any separately authorised Production Google or PROGRAM-AI activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; approved legacy raw-data cleanup; and recovery architecture.
+- **Not detected:** a runtime Programme AI or speech-provider adapter; external AI/audio call; Production PROGRAM-AI flag activation; Production Google credentials or provider activation; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; completed UK representative/ICO/counsel/processor-transfer gates; a real signed GB partner; Production affiliate activation; or a successful restore drill.
 
 ## Remaining release gates
 
@@ -134,7 +145,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - Contract and manually approve 1–3 eligible GB operators only under a separately authorised closed beta.
 - Supply and verify current licence, exact-domain, agreement, offer, material-condition, tracking-link and redirect evidence.
 - Keep commercial/referral policy and the affiliate engine off until those gates are separately approved.
-- Complete workstream 45 — Legal & Compliance across legal classification, voice/transcript/raw narrative, Article 6/9, derived profiles, AI DPIA, profiling/automated decisions, crisis/safety, memory, transparency, retention/deletion, provider DPA/subprocessors/transfers/training/human review and commercial-data separation. Only after Founder acceptance of that envelope may bounded Product Design and Backend/CMS architecture proceed; later Founder implementation authority remains mandatory.
+- Before any real provider or Production activation, close the still-open provider/DPIA/processor/transfer/training, operational safety, retention/deletion and human-review evidence identified by workstream 45 and RFC-022.
 
 ### Engineering and operations
 
@@ -148,4 +159,4 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Release conclusion
 
-LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01 and GOOGLE-OAUTH-ACTIVATE-01 are closed on current main. Production reached READY after the PR #61 merge, but Production Google OAuth remains off. PROGRAM-AI-01 Product/Compliance workstream 40 is completed and Product Direction v2.2 is Founder-approved / GO; implementation remains STOP / not authorised with workstream 45 — Legal & Compliance next. Neither the merged OAuth runtime nor the PROGRAM-AI-01 direction activates Google in Production, runtime AI, voice processing, email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.
+LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01 and GOOGLE-OAUTH-ACTIVATE-01 are closed on base main. Production Google OAuth remains off. PROGRAM-AI-IMPL-01A is implemented on its focused branch under RFC-022 but remains default-off and pending PR/Preview evidence. It does not activate Google or PROGRAM-AI in Production, connect runtime AI/voice providers, enable email/reminders, mutate Production data, activate commercial traffic or make B4GAMBLE GB launch-ready.

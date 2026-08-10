@@ -36,6 +36,21 @@ export class ProgrammeRewardRepository {
     });
   }
 
+  recordProgrammeAiXp(input: {
+    userId: string;
+    programId: string;
+    missionNumber: number;
+    xp: number;
+    awardKey: string;
+    sourceArtifactType: string;
+    sourceArtifactId: string;
+  }) {
+    return this.database.userXpEvent.createMany({
+      data: [{ ...input, eventType: "STEP_COMPLETION" }],
+      skipDuplicates: true,
+    });
+  }
+
   recordActiveDay(input: {
     userId: string;
     enrollmentId: string;
