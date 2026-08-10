@@ -118,6 +118,24 @@ test("access continuation is versioned, bounded, current-journey-only and contai
   });
 });
 
+test("fresh server authority tolerates bounded browser clock skew without changing its lifetime", () => {
+  const storage = new MemoryStorage();
+  const journey = anonymousProgrammeSubject(storage);
+  const serverIssuedAt = Date.parse("2026-08-10T10:00:00.000Z");
+  const browserNow = serverIssuedAt - 2 * 60 * 1000;
+
+  const marker = writeProgrammeAccessContinuation(
+    storage,
+    journey,
+    authority(journey.id, serverIssuedAt),
+    browserNow,
+  );
+
+  assert.equal(marker.createdAt, serverIssuedAt);
+  assert.equal(marker.expiresAt - marker.createdAt, programmeLocalStorageKeysForTests.accessTtlMs);
+  assert.equal(readProgrammeAccessContinuation(storage, browserNow)?.journeyId, journey.id);
+});
+
 test("access continuation rejects expired, future, malformed, mismatched and obsolete-copy markers", () => {
   const now = Date.parse("2026-08-10T10:00:00.000Z");
 
@@ -127,7 +145,9 @@ test("access continuation rejects expired, future, malformed, mismatched and obs
     if (scenario === "malformed") {
       storage.setItem(programmeLocalStorageKeysForTests.accessContinuation, "{not-json");
     } else {
-      const issuedAt = scenario === "future" ? now + 60_000 : now;
+      const issuedAt = scenario === "future"
+        ? now + programmeLocalStorageKeysForTests.accessClientClockSkewMs + 1
+        : now;
       writeProgrammeAccessContinuation(storage, journey, authority(journey.id, issuedAt), issuedAt);
       if (scenario === "mismatched") storage.setItem(programmeLocalStorageKeysForTests.journeyPointer, crypto.randomUUID());
       if (scenario === "obsolete") {
@@ -141,6 +161,32 @@ test("access continuation rejects expired, future, malformed, mismatched and obs
       : now;
     assert.equal(readProgrammeAccessContinuation(storage, readAt), null, scenario);
     assert.equal(storage.getItem(programmeLocalStorageKeysForTests.accessContinuation), null, `${scenario} marker is removed`);
+  }
+});
+
+test("client access guard rejects TTL, journey, version, intent, purpose, legal-copy and proof-shape tampering", () => {
+  const now = Date.parse("2026-08-10T10:00:00.000Z");
+  const scenarios = [
+    ["ttl", (marker: Record<string, unknown>) => { marker.expiresAt = Number(marker.expiresAt) + 1; }],
+    ["journey", (marker: Record<string, unknown>) => { marker.journeyId = crypto.randomUUID(); }],
+    ["version", (marker: Record<string, unknown>) => { marker.version = 2; }],
+    ["intent", (marker: Record<string, unknown>) => { marker.intent = "PROGRAMME_CONTENT_CLAIM"; }],
+    ["purpose", (marker: Record<string, unknown>) => { marker.purpose = "PROGRAMME_CLAIM_GOOGLE"; }],
+    ["terms", (marker: Record<string, unknown>) => { marker.termsVersion = "obsolete"; }],
+    ["privacy", (marker: Record<string, unknown>) => { marker.privacyVersion = "obsolete"; }],
+    ["proof", (marker: Record<string, unknown>) => { marker.proof = "not-a-proof"; }],
+  ] as const;
+
+  for (const [name, tamper] of scenarios) {
+    const storage = new MemoryStorage();
+    const journey = anonymousProgrammeSubject(storage);
+    writeProgrammeAccessContinuation(storage, journey, authority(journey.id, now), now);
+    const marker = JSON.parse(storage.getItem(programmeLocalStorageKeysForTests.accessContinuation) || "{}") as Record<string, unknown>;
+    tamper(marker);
+    storage.setItem(programmeLocalStorageKeysForTests.accessContinuation, JSON.stringify(marker));
+
+    assert.equal(readProgrammeAccessContinuation(storage, now), null, name);
+    assert.equal(storage.getItem(programmeLocalStorageKeysForTests.accessContinuation), null, `${name} marker is removed`);
   }
 });
 

@@ -380,6 +380,8 @@ function AccessGate({ onConfirm, busy, error }: { onConfirm: () => void; busy: b
   return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · ACCOUNT ACCESS</span><h1>Confirm before you continue.</h1><p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p></div><div className={styles.accountRequirements}><label className={styles.check}><input checked={adultConfirmed} disabled={busy} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={legalAcknowledged} disabled={busy} onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</span></label></div><PrimaryButton disabled={!ready || busy} onClick={onConfirm}>{busy ? "Confirming…" : "Continue to the Programme"}</PrimaryButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}<p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." /></section></div>;
 }
 
+const PROGRAMME_ACCESS_RETRY_MESSAGE = "We couldn’t confirm your access. Please try again.";
+
 function MissionProgress({ mission, step }: { mission: 1 | 2 | 3 | 4; step: number }) {
   const stageIndex = mission === 4
     ? step <= 0 ? 0 : step === 1 ? 1 : step <= 3 ? 2 : step <= 6 ? 3 : 4
@@ -1490,8 +1492,8 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         transitionProgrammeAccessToUser(window.sessionStorage, journey, activeSubject);
       }
       setAccessGranted(true);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Current access could not be verified. Try again.");
+    } catch {
+      setError(PROGRAMME_ACCESS_RETRY_MESSAGE);
     } finally {
       setBusy(false);
     }

@@ -24,6 +24,9 @@ const LEGACY_KEYS = ["sevenbet.programme.local-content.v1", "sevenbet.age-attest
 const OAUTH_CLAIM_MARKER_VERSION = 1;
 const OAUTH_CLAIM_MARKER_TTL_MS = 10 * 60 * 1000;
 const OAUTH_CLAIM_INTENT = "PROGRAMME_CLAIM_GOOGLE";
+// Client parsing is a UX guard, not proof verification. This narrow allowance
+// covers ordinary browser/server wall-clock drift without extending expiry.
+const PROGRAMME_ACCESS_CLIENT_CLOCK_SKEW_MS = 5 * 60 * 1000;
 const OPAQUE_JOURNEY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type ProgrammeOAuthClaimMarker = {
@@ -103,10 +106,10 @@ function parseProgrammeAccessMarker(raw: string | null, now: number) {
       && typeof marker.journeyId === "string"
       && OPAQUE_JOURNEY_ID.test(marker.journeyId)
       && typeof marker.createdAt === "number"
-      && Number.isFinite(marker.createdAt)
+      && Number.isSafeInteger(marker.createdAt)
       && typeof marker.expiresAt === "number"
-      && Number.isFinite(marker.expiresAt)
-      && marker.createdAt <= now
+      && Number.isSafeInteger(marker.expiresAt)
+      && marker.createdAt <= now + PROGRAMME_ACCESS_CLIENT_CLOCK_SKEW_MS
       && marker.expiresAt > now
       && marker.expiresAt - marker.createdAt === PROGRAMME_ACCESS_TTL_MS
       && marker.termsVersion === PROGRAMME_TERMS_VERSION
@@ -307,6 +310,7 @@ export const programmeLocalStorageKeysForTests = {
   accessContinuation: ACCESS_CONTINUATION_KEY,
   userAccessPrefix: USER_ACCESS_KEY_PREFIX,
   accessTtlMs: PROGRAMME_ACCESS_TTL_MS,
+  accessClientClockSkewMs: PROGRAMME_ACCESS_CLIENT_CLOCK_SKEW_MS,
   oauthClaimMarker: OAUTH_CLAIM_MARKER_KEY,
   oauthClaimMarkerTtlMs: OAUTH_CLAIM_MARKER_TTL_MS,
   legacy: LEGACY_KEYS,

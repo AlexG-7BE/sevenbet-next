@@ -12,7 +12,7 @@ async function open(page: Page, route: string) {
 async function passAccessGate(page: Page) {
   await page.route("**/api/programme-access/authority", async (route) => {
     const input = route.request().postDataJSON() as { journeyId: string };
-    const now = Date.now();
+    const now = Date.now() + 2 * 60 * 1000;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -124,6 +124,44 @@ test("authentication choice is responsive, accessible and fail-closed with provi
   expect(proofHeader).toBe("pa1.browser-test.browser-signature");
   expect(journeyHeader).toMatch(/^[0-9a-f-]{36}$/);
   expect(ageHeader).toBeNull();
+});
+
+test("AccessGate renders a safe retry message instead of internal authority diagnostics", async ({ page }) => {
+  await open(page, "/program");
+  await page.route("**/api/programme-access/authority", async (route) => {
+    const input = route.request().postDataJSON() as { journeyId: string };
+    const materiallyFuture = Date.now() + 5 * 60 * 1000 + 1_000;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        authority: {
+          version: 1,
+          intent: "PROGRAMME_ACCESS",
+          purpose: "PROGRAMME_AUTH_ACCESS",
+          journeyId: input.journeyId,
+          createdAt: materiallyFuture,
+          expiresAt: materiallyFuture + 60 * 60 * 1000,
+          termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+          privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+          adultConfirmedAt: materiallyFuture,
+          termsAcceptedAt: materiallyFuture,
+          privacyAcknowledgedAt: materiallyFuture,
+          proof: "pa1.browser-test.browser-signature",
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms and acknowledge the Privacy Notice/ }).check();
+  await page.getByRole("button", { name: "Continue to the Programme" }).click();
+
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toHaveText("We couldn’t confirm your access. Please try again.");
+  await expect(alert).not.toContainText("Programme access continuation");
+  await expect(alert).not.toContainText("server authority");
 });
 
 test("Google cancellation preserves the exact local journey without exposing the marker in the URL", async ({ page }) => {

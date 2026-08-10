@@ -1,7 +1,7 @@
 # RFC-021: Programme Access Continuation and Authenticated Home
 
 - **Status:** Approved
-- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1 and Preview canonical-host correction
+- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1, Preview canonical-host correction and client authority clock-skew correction
 - **Approved:** 2026-08-10
 - **Scope:** One-screen Programme access, server-verifiable bounded same-tab account/access authority, Google/email transition, authenticated Programme routing and exact Vercel Preview deployment-to-branch host canonicalisation
 - **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-008, RFC-017, RFC-018, RFC-019 and RFC-020
@@ -33,7 +33,9 @@ The browser stores one `sessionStorage` continuation marker containing a server-
 
 The marker contains no date of birth, account, email, Google subject or token, Programme narrative, control-tool content, vulnerability signal, commercial preference or affiliate information. It is valid in the browser only when its schema, intent, journey syntax, current journey pointer, timestamps, duration, required acknowledgements, legal-copy versions and proof shape all match exactly. Browser validation is only a UX guard; it is not account-creation authority.
 
-The time-to-live is 60 minutes. This is long enough for the approved 17–22 minute Mission 01, the earned-result account step and an OAuth redirect, while remaining bounded to the current tab. Missing, malformed, future, expired, mismatched or obsolete-version markers fail closed and return the user to the consolidated access screen.
+Because issuance uses the server clock while this UX guard reads the browser clock, client validation allows `createdAt` to be at most five minutes ahead of the browser. Five minutes is an explicit bounded device/edge clock-skew allowance and only one-twelfth of the fixed authority lifetime. It does not extend or round `expiresAt`: expiry remains `expiresAt > browserNow`, exact `expiresAt - createdAt === 60 minutes` remains mandatory, and an authority more than five minutes in the browser's future fails closed. The server remains the cryptographic and account-creation authority and applies its unchanged strict current-time verification, so a client-accepted proof that is expired or tampered at the server is still denied.
+
+The time-to-live is 60 minutes. This is long enough for the approved 17–22 minute Mission 01, the earned-result account step and an OAuth redirect, while remaining bounded to the current tab. Missing, malformed, materially future, expired, mismatched or obsolete-version markers fail closed and return the user to the consolidated access screen.
 
 On successful email or Google authentication, valid access authority transitions explicitly from the exact journey to the exact `user:<userId>` local subject for the remainder of its original lifetime. The transition moves access authority only. It does not move local Programme content and does not extend the expiry.
 
@@ -52,7 +54,7 @@ This applies to:
 
 Returning email sign-in does not require the proof because it cannot create an account. Returning Google sign-in requires current signed access authority, preserving the approved adult access boundary without treating Google identity as age verification; it is not recorded as a new durable legal acceptance. The existing Google request allow-list, fixed callbacks and provider restriction remain.
 
-Missing, malformed, modified, expired, future-issued, wrong-duration, wrong-intent, wrong-version, wrong-purpose, obsolete-copy, invalid-signature or wrong-journey proofs fail closed with `403`. Secret rotation invalidates outstanding proofs. The proof is a bounded bearer authority and may be replayed only within its original lifetime and signed journey; no one-time-use claim is made without server state. An attacker can truthfully submit the same self-attestation endpoint as a user can tick the controls, but cannot fabricate or alter server authority merely by choosing headers. This decision proves current server issuance and integrity, not DOB/KYC or the identity of the person making the self-attestation.
+Missing, malformed, modified, expired, future-issued, wrong-duration, wrong-intent, wrong-version, wrong-purpose, obsolete-copy, invalid-signature or wrong-journey proofs fail closed with `403`. The client clock-skew allowance does not apply here. Secret rotation invalidates outstanding proofs. The proof is a bounded bearer authority and may be replayed only within its original lifetime and signed journey; no one-time-use claim is made without server state. An attacker can truthfully submit the same self-attestation endpoint as a user can tick the controls, but cannot fabricate or alter server authority merely by choosing headers. This decision proves current server issuance and integrity, not DOB/KYC or the identity of the person making the self-attestation.
 
 No database field, acceptance history, schema migration or dependency is introduced. If durable legal acceptance evidence becomes required, it needs a separate legal/schema decision.
 
@@ -88,6 +90,8 @@ This is not a redesign. The existing Programme shell, typography, color, spacing
 
 The account-creation screen shows Google and email/password choices without duplicate compliance checkboxes. Google remains described as identity only, not age verification or marketing consent.
 
+An access-authority storage/validation failure is presented at the consolidated access screen as a concise retry message. Internal marker-policy or architecture diagnostics are not rendered to the user.
+
 ## 7. Privacy and commercial containment
 
 Access and authentication state is not available to casino or bonus ranking, operator selection, affiliate routing, retargeting, commercial personalisation, Programme AI or risk scoring. GB remains `editorialAllowed = true`, `commercialAllowed = false`, `referralAllowed = false`.
@@ -96,7 +100,7 @@ Protected Help remains available without acceptance, account or Programme comple
 
 ## 8. Verification and release boundary
 
-Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
+Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, server-ahead/browser-behind skew acceptance inside the exact client allowance, materially future and expired client rejection, safe access-screen retry copy, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
 
 No Prisma schema, migration, dependency, package-lock, Production credential, Production environment, Production database, email, analytics, CMP, commercial, affiliate or AI change is authorised.
 
