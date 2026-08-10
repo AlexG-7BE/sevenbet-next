@@ -15,6 +15,7 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   reporter: process.env.CI ? "line" : "list",
   use: {
+    baseURL: baseUrl,
     browserName: "chromium",
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
