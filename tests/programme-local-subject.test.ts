@@ -8,7 +8,7 @@ import {
   hasProgrammeAccessAuthority,
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
-  programmeAccountCreationHeaders,
+  programmeAuthAccessHeaders,
   programmeLocalStorageKeysForTests,
   readProgrammeAccessContinuation,
   readProgrammeOAuthClaimMarker,
@@ -20,12 +20,19 @@ import {
   writeProgrammeOAuthClaimMarker,
 } from "../lib/programme/local-subject-storage";
 import {
-  PROGRAMME_ACCESS_HEADER_VALUES,
-  PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_INTENT,
+  PROGRAMME_AUTH_ACCESS_HEADERS,
+  PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE,
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
 } from "../lib/programme/access-contract";
+import { issueProgrammeAccessProof } from "../lib/auth/programme-access-proof";
+
+const ACCESS_SECRET = "programme-local-test-secret-with-at-least-32-bytes";
+
+function authority(journeyId: string, now = Date.now()) {
+  return issueProgrammeAccessProof({ journeyId, secret: ACCESS_SECRET, now });
+}
 
 class MemoryStorage implements Storage {
   private readonly values = new Map<string, string>();
@@ -51,7 +58,7 @@ test("Programme local content and access authority remain isolated across User A
 
   saveProgrammeSubjectContent(storage, userA, sentinelA);
   const journey = anonymousProgrammeSubject(storage);
-  writeProgrammeAccessContinuation(storage, journey);
+  writeProgrammeAccessContinuation(storage, journey, authority(journey.id));
   transitionProgrammeAccessToUser(storage, journey, userA);
   const userBInitial = loadProgrammeSubjectContent<typeof sentinelA>(storage, userB);
 
@@ -73,7 +80,7 @@ test("access transition and exact claimed-content migration remain separate oper
   const unrelated = userProgrammeSubject("unrelated-user-id");
   const content = { momentMap: { situation: "CLAIMED-JOURNEY-SENTINEL" } };
   saveProgrammeSubjectContent(storage, journey, content);
-  writeProgrammeAccessContinuation(storage, journey);
+  writeProgrammeAccessContinuation(storage, journey, authority(journey.id));
 
   assert.equal(storage.getItem(programmeLocalStorageKeysForTests.legacy[0]), null);
   assert.equal(storage.getItem(programmeLocalStorageKeysForTests.legacy[1]), null);
@@ -93,21 +100,21 @@ test("access continuation is versioned, bounded, current-journey-only and contai
   const journey = anonymousProgrammeSubject(storage);
   const now = Date.parse("2026-08-10T10:00:00.000Z");
 
-  writeProgrammeAccessContinuation(storage, journey, now);
+  writeProgrammeAccessContinuation(storage, journey, authority(journey.id, now), now);
   const serialized = storage.getItem(programmeLocalStorageKeysForTests.accessContinuation) || "";
   const marker = readProgrammeAccessContinuation(storage, now + 1_000);
 
   assert.ok(marker);
   assert.equal(marker.intent, PROGRAMME_ACCESS_INTENT);
+  assert.equal(marker.purpose, PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE);
   assert.equal(marker.journeyId, journey.id);
   assert.equal(marker.termsVersion, PROGRAMME_TERMS_VERSION);
   assert.equal(marker.privacyVersion, PROGRAMME_PRIVACY_VERSION);
   assert.equal(marker.expiresAt - marker.createdAt, programmeLocalStorageKeysForTests.accessTtlMs);
   assert.doesNotMatch(serialized, /moment|goal|urge|boundary|self.?check|limit|health|email|google|token|affiliate/i);
-  assert.deepEqual(programmeAccountCreationHeaders(storage, journey, now + 1_000), {
-    [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
-    [PROGRAMME_ACCESS_HEADERS.terms]: PROGRAMME_ACCESS_HEADER_VALUES.terms,
-    [PROGRAMME_ACCESS_HEADERS.privacy]: PROGRAMME_ACCESS_HEADER_VALUES.privacy,
+  assert.deepEqual(programmeAuthAccessHeaders(storage, journey, now + 1_000), {
+    [PROGRAMME_AUTH_ACCESS_HEADERS.proof]: marker.proof,
+    [PROGRAMME_AUTH_ACCESS_HEADERS.journey]: journey.id,
   });
 });
 
@@ -120,7 +127,8 @@ test("access continuation rejects expired, future, malformed, mismatched and obs
     if (scenario === "malformed") {
       storage.setItem(programmeLocalStorageKeysForTests.accessContinuation, "{not-json");
     } else {
-      writeProgrammeAccessContinuation(storage, journey, scenario === "future" ? now + 60_000 : now);
+      const issuedAt = scenario === "future" ? now + 60_000 : now;
+      writeProgrammeAccessContinuation(storage, journey, authority(journey.id, issuedAt), issuedAt);
       if (scenario === "mismatched") storage.setItem(programmeLocalStorageKeysForTests.journeyPointer, crypto.randomUUID());
       if (scenario === "obsolete") {
         const marker = JSON.parse(storage.getItem(programmeLocalStorageKeysForTests.accessContinuation) || "{}");
@@ -140,7 +148,7 @@ test("sign-out rotation starts a new anonymous namespace without prior in-memory
   const storage = new MemoryStorage();
   const before = anonymousProgrammeSubject(storage);
   saveProgrammeSubjectContent(storage, before, { momentMap: { situation: "SIGNED-IN-SUBJECT-SENTINEL" } });
-  writeProgrammeAccessContinuation(storage, before);
+  writeProgrammeAccessContinuation(storage, before, authority(before.id));
   clearProgrammeAccessAuthority(storage, before);
   const after = rotateAnonymousProgrammeSubject(storage);
   assert.notEqual(after.id, before.id);

@@ -1,11 +1,12 @@
 import {
-  PROGRAMME_ACCESS_HEADER_VALUES,
-  PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_INTENT,
   PROGRAMME_ACCESS_TTL_MS,
   PROGRAMME_ACCESS_VERSION,
+  PROGRAMME_AUTH_ACCESS_HEADERS,
+  PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE,
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
+  type ProgrammeAccessAuthority,
 } from "@/lib/programme/access-contract";
 
 export type ProgrammeLocalSubject =
@@ -33,18 +34,7 @@ type ProgrammeOAuthClaimMarker = {
   expiresAt: number;
 };
 
-type ProgrammeAccessMarker = {
-  version: typeof PROGRAMME_ACCESS_VERSION;
-  intent: typeof PROGRAMME_ACCESS_INTENT;
-  journeyId: string;
-  createdAt: number;
-  expiresAt: number;
-  termsVersion: typeof PROGRAMME_TERMS_VERSION;
-  privacyVersion: typeof PROGRAMME_PRIVACY_VERSION;
-  adultConfirmedAt: number;
-  termsAcceptedAt: number;
-  privacyAcknowledgedAt: number;
-};
+type ProgrammeAccessMarker = ProgrammeAccessAuthority;
 
 function subjectKey(prefix: string, subject: ProgrammeLocalSubject) {
   return `${prefix}:${subject.kind}:${encodeURIComponent(subject.id)}`;
@@ -109,6 +99,7 @@ function parseProgrammeAccessMarker(raw: string | null, now: number) {
     const marker = JSON.parse(raw) as Partial<ProgrammeAccessMarker>;
     const valid = marker.version === PROGRAMME_ACCESS_VERSION
       && marker.intent === PROGRAMME_ACCESS_INTENT
+      && marker.purpose === PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE
       && typeof marker.journeyId === "string"
       && OPAQUE_JOURNEY_ID.test(marker.journeyId)
       && typeof marker.createdAt === "number"
@@ -122,7 +113,10 @@ function parseProgrammeAccessMarker(raw: string | null, now: number) {
       && marker.privacyVersion === PROGRAMME_PRIVACY_VERSION
       && marker.adultConfirmedAt === marker.createdAt
       && marker.termsAcceptedAt === marker.createdAt
-      && marker.privacyAcknowledgedAt === marker.createdAt;
+      && marker.privacyAcknowledgedAt === marker.createdAt
+      && typeof marker.proof === "string"
+      && /^pa1\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(marker.proof)
+      && marker.proof.length <= 4096;
     return valid ? marker as ProgrammeAccessMarker : null;
   } catch {
     return null;
@@ -132,6 +126,7 @@ function parseProgrammeAccessMarker(raw: string | null, now: number) {
 export function writeProgrammeAccessContinuation(
   storage: SessionStorageLike,
   subject: ProgrammeLocalSubject,
+  authority: ProgrammeAccessAuthority,
   now = Date.now(),
 ) {
   if (subject.kind !== "journey" || !OPAQUE_JOURNEY_ID.test(subject.id)) {
@@ -140,18 +135,10 @@ export function writeProgrammeAccessContinuation(
   if (storage.getItem(JOURNEY_POINTER_KEY) !== subject.id) {
     throw new Error("Programme access continuation requires the current anonymous journey");
   }
-  const marker: ProgrammeAccessMarker = {
-    version: PROGRAMME_ACCESS_VERSION,
-    intent: PROGRAMME_ACCESS_INTENT,
-    journeyId: subject.id,
-    createdAt: now,
-    expiresAt: now + PROGRAMME_ACCESS_TTL_MS,
-    termsVersion: PROGRAMME_TERMS_VERSION,
-    privacyVersion: PROGRAMME_PRIVACY_VERSION,
-    adultConfirmedAt: now,
-    termsAcceptedAt: now,
-    privacyAcknowledgedAt: now,
-  };
+  const marker = parseProgrammeAccessMarker(JSON.stringify(authority), now);
+  if (!marker || marker.journeyId !== subject.id) {
+    throw new Error("Programme access continuation requires current server authority for the exact journey");
+  }
   storage.setItem(ACCESS_CONTINUATION_KEY, JSON.stringify(marker));
   return marker;
 }
@@ -201,16 +188,19 @@ export function programmeAccessExpiresAt(
   return marker?.expiresAt ?? null;
 }
 
-export function programmeAccountCreationHeaders(
+export function programmeAuthAccessHeaders(
   storage: SessionStorageLike,
   subject: ProgrammeLocalSubject,
   now = Date.now(),
 ): Record<string, string> {
   if (!hasProgrammeAccessAuthority(storage, subject, now)) return {};
+  const marker = subject.kind === "journey"
+    ? readProgrammeAccessContinuation(storage, now)
+    : readUserProgrammeAccess(storage, subject, now);
+  if (!marker) return {};
   return {
-    [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
-    [PROGRAMME_ACCESS_HEADERS.terms]: PROGRAMME_ACCESS_HEADER_VALUES.terms,
-    [PROGRAMME_ACCESS_HEADERS.privacy]: PROGRAMME_ACCESS_HEADER_VALUES.privacy,
+    [PROGRAMME_AUTH_ACCESS_HEADERS.proof]: marker.proof,
+    [PROGRAMME_AUTH_ACCESS_HEADERS.journey]: marker.journeyId,
   };
 }
 

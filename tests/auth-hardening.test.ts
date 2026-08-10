@@ -461,7 +461,7 @@ test("application config preserves safe implicit linking, age enforcement and th
   assert.match(config, /IDENTITY_ONLY_DISABLED_AUTH_PATHS/);
   assert.doesNotMatch(config, /trustedProviders/);
   assert.match(route, /programmeAuthAccessDenial/);
-  assert.match(accessPolicy, /PROGRAMME_ACCESS_HEADERS\.age/);
+  assert.match(accessPolicy, /verifyProgrammeAccessProof/);
   assert.match(accessContract, /x-sevenbet-age-attestation/);
   assert.match(route, /sign-in\/social/);
 });

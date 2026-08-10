@@ -1,7 +1,7 @@
 import {
-  PROGRAMME_ACCESS_HEADERS,
-  PROGRAMME_ACCESS_HEADER_VALUES,
+  PROGRAMME_AUTH_ACCESS_HEADERS,
 } from "@/lib/programme/access-contract";
+import { verifyProgrammeAccessProof } from "@/lib/auth/programme-access-proof";
 
 export type ProgrammeAuthAccessBoundary = {
   emailAccountCreation: boolean;
@@ -12,27 +12,23 @@ export type ProgrammeAuthAccessBoundary = {
 export function programmeAuthAccessDenial(
   headers: Pick<Headers, "get">,
   boundary: ProgrammeAuthAccessBoundary,
+  { secret, now = Date.now() }: { secret: string; now?: number },
 ) {
-  if (
-    (boundary.emailAccountCreation || boundary.socialAuthentication)
-    && headers.get(PROGRAMME_ACCESS_HEADERS.age) !== PROGRAMME_ACCESS_HEADER_VALUES.age
-  ) {
-    return Response.json(
-      { code: "AGE_ATTESTATION_REQUIRED", message: "Confirm that you are 18 or over to use a persistent account" },
-      { status: 403, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-  if (
-    (boundary.emailAccountCreation || boundary.socialAccountCreation)
-    && (
-      headers.get(PROGRAMME_ACCESS_HEADERS.terms) !== PROGRAMME_ACCESS_HEADER_VALUES.terms
-      || headers.get(PROGRAMME_ACCESS_HEADERS.privacy) !== PROGRAMME_ACCESS_HEADER_VALUES.privacy
-    )
-  ) {
-    return Response.json(
-      { code: "ACCOUNT_ACCESS_ACKNOWLEDGEMENT_REQUIRED", message: "Current Terms agreement and Privacy Notice acknowledgement are required for account creation" },
-      { status: 403, headers: { "Cache-Control": "no-store" } },
-    );
-  }
-  return null;
+  if (!boundary.emailAccountCreation && !boundary.socialAuthentication) return null;
+  const verification = verifyProgrammeAccessProof({
+    proof: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.proof),
+    journeyId: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.journey),
+    secret,
+    now,
+  });
+  if (verification.ok) return null;
+  return Response.json(
+    {
+      code: "CURRENT_ACCESS_AUTHORITY_REQUIRED",
+      message: boundary.emailAccountCreation || boundary.socialAccountCreation
+        ? "Current server-verified access authority is required for account creation"
+        : "Current server-verified adult access authority is required for Google sign-in",
+    },
+    { status: 403, headers: { "Cache-Control": "no-store" } },
+  );
 }

@@ -1,9 +1,9 @@
 # RFC-021: Programme Access Continuation and Authenticated Home
 
 - **Status:** Approved
-- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2
+- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1
 - **Approved:** 2026-08-10
-- **Scope:** One-screen Programme access, bounded same-tab account-creation authority, Google/email transition and authenticated Programme routing
+- **Scope:** One-screen Programme access, server-verifiable bounded same-tab account/access authority, Google/email transition and authenticated Programme routing
 - **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-008, RFC-017, RFC-018, RFC-019 and RFC-020
 - **Supersedes:** RFC-017 and RFC-018 only where their separate age/account controls or age-only OAuth continuation cause repeated controls in one valid current-tab journey
 
@@ -22,15 +22,16 @@ Programme content claim authority remains separate. Access acceptance never auth
 
 ## 2. Access continuation contract
 
-The browser stores one `sessionStorage` continuation marker with:
+The browser stores one `sessionStorage` continuation marker containing a server-issued proof and its non-sensitive authority metadata:
 
 - exact schema version and fixed access intent;
 - exact opaque journey ID;
 - creation and expiry timestamps;
 - current Terms and Privacy Notice contract versions;
 - adult-confirmation, Terms-agreement and Privacy-acknowledgement timestamps.
+- a server-generated, purpose-separated HMAC proof over those exact claims.
 
-The marker contains no date of birth, account, email, Google subject, Programme narrative, control-tool content, vulnerability signal, commercial preference or affiliate information. It is valid only when its schema, intent, journey syntax, current journey pointer, timestamps, duration, required acknowledgements and legal-copy versions all match exactly.
+The marker contains no date of birth, account, email, Google subject or token, Programme narrative, control-tool content, vulnerability signal, commercial preference or affiliate information. It is valid in the browser only when its schema, intent, journey syntax, current journey pointer, timestamps, duration, required acknowledgements, legal-copy versions and proof shape all match exactly. Browser validation is only a UX guard; it is not account-creation authority.
 
 The time-to-live is 60 minutes. This is long enough for the approved 17–22 minute Mission 01, the earned-result account step and an OAuth redirect, while remaining bounded to the current tab. Missing, malformed, future, expired, mismatched or obsolete-version markers fail closed and return the user to the consolidated access screen.
 
@@ -38,16 +39,20 @@ On successful email or Google authentication, valid access authority transitions
 
 On logout, the authenticated access authority, access-continuation marker and OAuth claim marker are removed and a new opaque anonymous journey is created. The new journey inherits no access authority or private content.
 
-## 3. Server account-creation boundary
+## 3. Server-verifiable auth access boundary
 
-The Better Auth application route continues to require the fixed 18+ self-attestation header for persistent email signup and social authentication. Account creation additionally requires exact current Terms-agreement and Privacy-acknowledgement headers.
+After the two explicit controls are accepted, a dedicated same-origin endpoint issues the bounded proof. The server, not the browser, fixes the intent, proof version, purpose, current Terms version, current Privacy Notice version, issuance time and expiry. The request supplies only the exact opaque current journey and the explicit boolean affirmations. The proof uses HMAC-SHA-256 with a signing key derived from existing `BETTER_AUTH_SECRET` material under a fixed Programme-auth domain-separation label. Raw secret material is never returned, logged or placed in browser storage.
+
+The Better Auth application route verifies the proof signature and every current claim before allowing either persistent email account creation or Google authentication. It also requires the separately supplied exact journey to equal the signed journey. The legacy static age, Terms and Privacy headers are not proof and cannot authorize these boundaries, even when all three values are forged correctly.
 
 This applies to:
 
 - `POST /api/auth/sign-up/email`;
-- `POST /api/auth/sign-in/social` when `requestSignUp === true`.
+- `POST /api/auth/sign-in/social` for both returning access and `requestSignUp === true` account creation.
 
-Returning email sign-in and returning Google sign-in do not require account-creation Terms/Privacy acknowledgement. The existing Google request allow-list, fixed callbacks, provider restriction and age boundary remain. Client UI state alone does not make a server request eligible; missing or wrong header values deny with `403`.
+Returning email sign-in does not require the proof because it cannot create an account. Returning Google sign-in requires current signed access authority, preserving the approved adult access boundary without treating Google identity as age verification; it is not recorded as a new durable legal acceptance. The existing Google request allow-list, fixed callbacks and provider restriction remain.
+
+Missing, malformed, modified, expired, future-issued, wrong-duration, wrong-intent, wrong-version, wrong-purpose, obsolete-copy, invalid-signature or wrong-journey proofs fail closed with `403`. Secret rotation invalidates outstanding proofs. The proof is a bounded bearer authority and may be replayed only within its original lifetime and signed journey; no one-time-use claim is made without server state. An attacker can truthfully submit the same self-attestation endpoint as a user can tick the controls, but cannot fabricate or alter server authority merely by choosing headers. This decision proves current server issuance and integrity, not DOB/KYC or the identity of the person making the self-attestation.
 
 No database field, acceptance history, schema migration or dependency is introduced. If durable legal acceptance evidence becomes required, it needs a separate legal/schema decision.
 
@@ -63,7 +68,7 @@ Every Programme header derives account state from the settled Better Auth sessio
 
 `My Programme` means the authenticated home/resume state. `Start the 10-Step Program` means onboarding/start. Both may use `/program`, but the session and entry state must preserve those distinct semantics. A fresh authenticated user is not dropped directly into Mission 01 and never sees a logged-out Programme header.
 
-The empty authenticated Dashboard is a server DTO assembled from the approved Mission registry. The client does not calculate Mission eligibility, XP, progress or the next Mission.
+The empty authenticated Dashboard is a server DTO assembled from the approved Mission registry. It reports exactly `0 XP`, zero completed Missions and Mission 01 as current. Its visual treatment names only Mission 01 and an explicit start action; Mission 02, a 7-day goal and the `FIRST PLAN` achievement do not impersonate current or earned progress. Progressed-user Dashboard behaviour is unchanged. The client does not calculate Mission eligibility, XP, progress or the next Mission.
 
 ## 5. OAuth transition and security
 
@@ -87,7 +92,7 @@ Protected Help remains available without acceptance, account or Programme comple
 
 ## 8. Verification and release boundary
 
-Automated evidence must cover consolidated-screen content and disabled state, marker validation/expiry/version/journey binding, email and Google signup enforcement, returning sign-in exceptions, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
+Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
 
 No Prisma schema, migration, dependency, package-lock, Production credential, Production environment, Production database, email, analytics, CMP, commercial, affiliate or AI change is authorised.
 

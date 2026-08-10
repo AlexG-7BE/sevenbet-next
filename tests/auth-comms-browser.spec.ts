@@ -10,6 +10,32 @@ async function open(page: Page, route: string) {
 }
 
 async function passAccessGate(page: Page) {
+  await page.route("**/api/programme-access/authority", async (route) => {
+    const input = route.request().postDataJSON() as { journeyId: string };
+    const now = Date.now();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "cache-control": "no-store" },
+      body: JSON.stringify({
+        ok: true,
+        authority: {
+          version: 1,
+          intent: "PROGRAMME_ACCESS",
+          purpose: "PROGRAMME_AUTH_ACCESS",
+          journeyId: input.journeyId,
+          createdAt: now,
+          expiresAt: now + 60 * 60 * 1000,
+          termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+          privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+          adultConfirmedAt: now,
+          termsAcceptedAt: now,
+          privacyAcknowledgedAt: now,
+          proof: "pa1.browser-test.browser-signature",
+        },
+      }),
+    });
+  });
   await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
   await expect(page.getByRole("link", { name: /Protected Help remains available/ })).toHaveAttribute("href", "/responsible-gambling");
   await expect(page.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
@@ -36,6 +62,26 @@ test("authentication choice is responsive, accessible and fail-closed with provi
   await page.getByRole("button", { name: "Need an account? Create one" }).click();
   await expect(page.getByRole("heading", { name: "Create your account." })).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(0);
+  let emailProofHeader: string | null = null;
+  let emailJourneyHeader: string | null = null;
+  let emailStaticTermsHeader: string | null = null;
+  await page.route("**/api/auth/sign-up/email", async (route) => {
+    emailProofHeader = await route.request().headerValue("x-sevenbet-programme-access-proof");
+    emailJourneyHeader = await route.request().headerValue("x-sevenbet-programme-access-journey");
+    emailStaticTermsHeader = await route.request().headerValue("x-sevenbet-terms-acceptance");
+    await route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({ code: "TEST_SIGNUP_STOP" }),
+    });
+  });
+  await page.getByLabel("Email address").fill("proof-check@example.com");
+  await page.getByLabel("Create a password").fill("test-password-1234");
+  await page.getByRole("button", { name: "Create private account" }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText("could not be created");
+  expect(emailProofHeader).toBe("pa1.browser-test.browser-signature");
+  expect(emailJourneyHeader).toMatch(/^[0-9a-f-]{36}$/);
+  expect(emailStaticTermsHeader).toBeNull();
   await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
 
   const google = page.getByRole("button", { name: "Continue with Google" });
@@ -53,9 +99,13 @@ test("authentication choice is responsive, accessible and fail-closed with provi
   expect(await google.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe("3px");
 
   let requestBody: Record<string, unknown> | null = null;
+  let proofHeader: string | null = null;
+  let journeyHeader: string | null = null;
   let ageHeader: string | null = null;
   await page.route("**/api/auth/sign-in/social", async (route) => {
     requestBody = route.request().postDataJSON() as Record<string, unknown>;
+    proofHeader = await route.request().headerValue("x-sevenbet-programme-access-proof");
+    journeyHeader = await route.request().headerValue("x-sevenbet-programme-access-journey");
     ageHeader = await route.request().headerValue("x-sevenbet-age-attestation");
     await route.fulfill({
       status: 503,
@@ -71,7 +121,9 @@ test("authentication choice is responsive, accessible and fail-closed with provi
     errorCallbackURL: "/program?auth=google-error",
     requestSignUp: false,
   });
-  expect(ageHeader).toBe("18-or-over");
+  expect(proofHeader).toBe("pa1.browser-test.browser-signature");
+  expect(journeyHeader).toMatch(/^[0-9a-f-]{36}$/);
+  expect(ageHeader).toBeNull();
 });
 
 test("Google cancellation preserves the exact local journey without exposing the marker in the URL", async ({ page }) => {
@@ -82,6 +134,7 @@ test("Google cancellation preserves the exact local journey without exposing the
     sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
       version: 1,
       intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
       journeyId: id,
       createdAt: now,
       expiresAt: now + 60 * 60 * 1000,
@@ -90,6 +143,7 @@ test("Google cancellation preserves the exact local journey without exposing the
       adultConfirmedAt: now,
       termsAcceptedAt: now,
       privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
     }));
     sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(id)}`, JSON.stringify({
       momentMap: {
@@ -141,6 +195,7 @@ test("Google return transfers only active access authority to the authenticated 
     sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
       version: 1,
       intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
       journeyId: journey,
       createdAt: now,
       expiresAt: now + 60 * 60 * 1000,
@@ -149,6 +204,7 @@ test("Google return transfers only active access authority to the authenticated 
       adultConfirmedAt: now,
       termsAcceptedAt: now,
       privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
     }));
   }, { journey: journeyId });
   await page.route("**/api/auth/get-session", async (route) => {
@@ -206,6 +262,7 @@ test("expired access continuation returns to the consolidated access screen", as
     sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
       version: 1,
       intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
       journeyId: journey,
       createdAt,
       expiresAt: createdAt + 60 * 60 * 1000,
@@ -214,6 +271,7 @@ test("expired access continuation returns to the consolidated access screen", as
       adultConfirmedAt: createdAt,
       termsAcceptedAt: createdAt,
       privacyAcknowledgedAt: createdAt,
+      proof: "pa1.browser-test.browser-signature",
     }));
   }, { journey: journeyId });
 
@@ -242,6 +300,7 @@ test("fresh authenticated user resolves to Programme home and starts Mission 01 
     sessionStorage.setItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`, JSON.stringify({
       version: 1,
       intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
       journeyId: journey,
       createdAt: now,
       expiresAt: now + 60 * 60 * 1000,
@@ -250,6 +309,7 @@ test("fresh authenticated user resolves to Programme home and starts Mission 01 
       adultConfirmedAt: now,
       termsAcceptedAt: now,
       privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
     }));
   }, { id: userId, journey: journeyId });
   await page.route("**/api/auth/get-session", async (route) => {
@@ -292,9 +352,19 @@ test("fresh authenticated user resolves to Programme home and starts Mission 01 
   await open(page, "/program");
   await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await expect(page.getByText("0 missions completed.", { exact: true })).toBeVisible();
+  await expect(page.getByText("MISSION 01", { exact: true })).toBeVisible();
+  await expect(page.getByText("CURRENT · 17–22 MIN · NOT STARTED", { exact: true })).toBeVisible();
+  await expect(page.getByText(/COMPLETE MISSION 02|FIRST PLAN|7-day goal/i)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start Mission 01" })).toBeVisible();
+  await page.screenshot({ path: "test-results/programme-fresh-zero-progress-dashboard.png", fullPage: true });
   await expect(page.getByRole("link", { name: "Log in" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toBeVisible();
   await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await page.getByRole("button", { name: "Start Mission 01" }).click();
+  await expect(page.getByRole("heading", { name: "Map one real moment." })).toBeVisible();
+  await open(page, "/program");
   await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
   await open(page, "/program?entry=start");
   await expect(page).toHaveURL(`${baseUrl}/program`);
@@ -321,6 +391,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
     sessionStorage.setItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`, JSON.stringify({
       version: 1,
       intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
       journeyId,
       createdAt: now,
       expiresAt: now + 60 * 60 * 1000,
@@ -329,6 +400,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
       adultConfirmedAt: now,
       termsAcceptedAt: now,
       privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
     }));
   }, { id: userId, journeyId: priorJourneyId });
 
@@ -394,6 +466,9 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/program");
   await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your first map is complete." })).toBeVisible();
+  await expect(page.getByText("COMPLETE MISSION 02", { exact: true })).toBeVisible();
+  await expect(page.getByText("FIRST PLAN", { exact: true })).toBeVisible();
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.focus();

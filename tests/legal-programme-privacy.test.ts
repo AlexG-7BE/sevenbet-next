@@ -51,12 +51,13 @@ test("Programme client uses tab-scoped storage and sends bounded server payloads
   assert.match(active, /Personal wording stays only in this browser session/);
 });
 
-test("the consolidated access screen is unchecked and account creation enforces current age and legal-copy authority", () => {
+test("the consolidated access screen is unchecked and account creation enforces current signed access authority", () => {
   const active = source("components/programme/ActiveControlProgramme.tsx");
   const middleware = source("middleware.ts");
   const authRoute = source("app/api/auth/[...all]/route.ts");
   const accessPolicy = source("lib/auth/programme-access-policy.ts");
   const accessContract = source("lib/programme/access-contract.ts");
+  const accessProof = source("lib/auth/programme-access-proof.ts");
   assert.match(active, /const \[adultConfirmed, setAdultConfirmed\] = useState\(false\)/);
   assert.match(active, /const \[legalAcknowledged, setLegalAcknowledged\] = useState\(false\)/);
   assert.equal(active.match(/I confirm I am 18 or over · required/g)?.length, 1);
@@ -65,8 +66,11 @@ test("the consolidated access screen is unchecked and account creation enforces 
   assert.match(middleware, /\/api\/program\/:path\*/);
   assert.match(authRoute, /sign-up\/email/);
   assert.match(authRoute, /programmeAuthAccessDenial/);
-  assert.match(accessPolicy, /AGE_ATTESTATION_REQUIRED/);
-  assert.match(accessPolicy, /ACCOUNT_ACCESS_ACKNOWLEDGEMENT_REQUIRED/);
+  assert.match(accessPolicy, /CURRENT_ACCESS_AUTHORITY_REQUIRED/);
+  assert.match(accessPolicy, /verifyProgrammeAccessProof/);
+  assert.match(accessProof, /createHmac/);
+  assert.match(accessProof, /PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE/);
+  assert.match(accessContract, /x-sevenbet-programme-access-proof/);
   assert.match(accessContract, /x-sevenbet-terms-acceptance/);
   assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
 });

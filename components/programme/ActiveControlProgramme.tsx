@@ -8,6 +8,9 @@ import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/goo
 import {
   PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_HEADER_VALUES,
+  PROGRAMME_PRIVACY_VERSION,
+  PROGRAMME_TERMS_VERSION,
+  type ProgrammeAccessAuthority,
 } from "@/lib/programme/access-contract";
 import {
   anonymousProgrammeSubject,
@@ -19,7 +22,7 @@ import {
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
   programmeAccessExpiresAt,
-  programmeAccountCreationHeaders,
+  programmeAuthAccessHeaders,
   programmeSubjectsEqual,
   readProgrammeAccessContinuation,
   readProgrammeOAuthClaimMarker,
@@ -370,11 +373,11 @@ function Header({ xp }: { xp?: number }) {
   );
 }
 
-function AccessGate({ onConfirm }: { onConfirm: () => void }) {
+function AccessGate({ onConfirm, busy, error }: { onConfirm: () => void; busy: boolean; error: string }) {
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [legalAcknowledged, setLegalAcknowledged] = useState(false);
   const ready = adultConfirmed && legalAcknowledged;
-  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · ACCOUNT ACCESS</span><h1>Confirm before you continue.</h1><p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p></div><div className={styles.accountRequirements}><label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={legalAcknowledged} onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</span></label></div><PrimaryButton disabled={!ready} onClick={onConfirm}>Continue to the Programme</PrimaryButton><p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." /></section></div>;
+  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · ACCOUNT ACCESS</span><h1>Confirm before you continue.</h1><p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p></div><div className={styles.accountRequirements}><label className={styles.check}><input checked={adultConfirmed} disabled={busy} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={legalAcknowledged} disabled={busy} onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</span></label></div><PrimaryButton disabled={!ready || busy} onClick={onConfirm}>{busy ? "Confirming…" : "Continue to the Programme"}</PrimaryButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}<p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." /></section></div>;
 }
 
 function MissionProgress({ mission, step }: { mission: 1 | 2 | 3 | 4; step: number }) {
@@ -718,14 +721,14 @@ function Dashboard({ dashboard, onStartMission, onEdit, onClearLocal }: { dashbo
       <Header xp={dashboard.totalXp} />
       <section className={styles.dashboardHeading}>
         <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{fresh ? "Your Programme is ready." : afterFour ? "Your boundary progress is active." : afterThree ? "Your signal step is complete." : afterTwo ? "Your 7-day goal progress is active." : "Your first map is complete."}</h1><p>{fresh ? "Mission 01 is current and ready when you choose to start. You are signed in; no anonymous step has started for you." : afterFour ? "Personal wording remains in this browser session. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns the local signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 uses your local map to build one specific 7-day goal."}</p><button className={styles.textButton} onClick={onClearLocal} type="button">Clear local Programme content</button></div>
-        <div className={styles.recognitionGrid}><Recognition label="TOTAL EARNED" value={`${dashboard.totalXp} XP`} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
+        <div className={styles.recognitionGrid}><Recognition label="TOTAL EARNED" value={`${dashboard.totalXp} XP`} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." />{fresh ? <Recognition label="CURRENT MISSION" value="MISSION 01" note="Start explicitly when you are ready." /> : <Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} />}</div>
       </section>
       <section className={styles.currentMission}>
         <div><span>CURRENT MISSION · {fresh ? "17–22" : afterThree && !afterFour ? "20–25" : "18–24"} MIN</span><h2>{currentTitle}</h2><p>{currentCopy}</p></div>
         <div className={styles.currentPhoto}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={afterThree ? PEOPLE.planning : afterTwo ? PEOPLE.outcome : PEOPLE.portrait} alt="Adult ready to continue a practical plan" /><span>{fresh ? "CURRENT · START WHEN READY" : afterFour ? "UP NEXT · CHECK BEFORE DECIDING" : afterThree ? "UP NEXT · BUILD ONE BOUNDARY" : afterTwo ? "UP NEXT · UNDERSTAND THE URGE" : "NEXT · ONE USEFUL ACTION"}</span>{afterFour ? <button className={styles.primaryButton} disabled type="button">Mission 05 · next package</button> : <PrimaryButton onClick={onStartMission}>Start Mission {String(dashboard.currentMission).padStart(2, "0")}</PrimaryButton>}</div>
       </section>
       <div className={styles.pathHeading}><span>MY 10-STEP PATH</span><b>{completedCount} OF 10 COMPLETE</b></div>
-      <ol className={styles.pathPreview}>{dashboard.missions.slice(0, afterFour ? 5 : 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : mission.missionNumber === 3 ? 90 : 100} XP` : mission.status === "current" ? `CURRENT · ${mission.missionNumber === 4 ? "20–25" : "18–24"} MIN` : "UP NEXT"}</small></div></li>)}{!afterFour ? <li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li> : null}</ol>
+      <ol className={styles.pathPreview}>{fresh ? <><li data-status="current"><span>01</span><div><b>Map the moment</b><small>CURRENT · 17–22 MIN · NOT STARTED</small></div></li><li><span>02–10</span><div><b>Nine later Missions</b><small>LOCKED UNTIL MISSION 01 IS COMPLETE</small></div></li></> : <>{dashboard.missions.slice(0, afterFour ? 5 : 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : mission.missionNumber === 3 ? 90 : 100} XP` : mission.status === "current" ? `CURRENT · ${mission.missionNumber === 4 ? "20–25" : "18–24"} MIN` : "UP NEXT"}</small></div></li>)}{!afterFour ? <li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li> : null}</>}</ol>
       <section className={styles.dashboardArtifacts}>{afterFour && dashboard.activeBoundary ? <ArtifactCard eyebrow="MISSION 04 RESULT · LOCAL WORDING" title="My active boundary" body={boundarySentence(dashboard.activeBoundary, record)} footer={`Review ${reviewLabel(dashboard.activeBoundary.reviewAt)} · Browser session · Editable`} onEdit={() => onEdit("boundary")} /> : afterThree && record ? <ArtifactCard eyebrow="MISSION 03 RESULT · LOCAL WORDING" title={record.notNow ? "Not now" : "My early signal"} body={signalBody} footer="Browser session · Editable · Evidence item reviewed" onEdit={() => onEdit("signal")} /> : afterTwo && dashboard.currentGoal ? <ArtifactCard eyebrow="MISSION 02 RESULT · LOCAL WORDING" title="My 7-day goal" body={dashboard.currentGoal.action ? `When ${dashboard.currentGoal.triggerOrSituation}, I will ${dashboard.currentGoal.action}.` : "Personal wording is not available in this browser session."} footer={`Review on ${reviewLabel(dashboard.currentGoal.reviewAt)} · Confidence ${dashboard.currentGoal.confidence}/10`} onEdit={() => onEdit("goal")} /> : dashboard.momentMap ? <ArtifactCard eyebrow="MISSION 01 RESULT · LOCAL WORDING" title="Your Moment Map" body={momentSummary(dashboard.momentMap) || "Personal wording is not available in this browser session."} footer="Stored only in this browser session · Clear any time" dark onEdit={() => onEdit("moment")} /> : null}<EvidenceCard mission={afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1} /></section>
     </div>
   );
@@ -1271,7 +1274,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     setClaimTransitionPending(continuingCurrentClaim);
     try {
       const result = input.mode === "sign-up"
-        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAccountCreationHeaders(window.sessionStorage, activeSubject) } })
+        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, activeSubject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
       const targetUserId = result.data?.user.id;
@@ -1318,9 +1321,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK,
         requestSignUp: input.mode === "sign-up",
         fetchOptions: {
-          headers: input.mode === "sign-up"
-            ? programmeAccountCreationHeaders(window.sessionStorage, activeSubject)
-            : { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age },
+          headers: programmeAuthAccessHeaders(window.sessionStorage, activeSubject),
         },
       });
       if (result.error) throw new Error("Google sign-in could not be started. Try again or use email.");
@@ -1460,23 +1461,47 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     }
   }
 
-  function grantProgrammeAccess() {
+  async function grantProgrammeAccess() {
     if (!activeSubject) return;
-    if (activeSubject.kind === "journey") {
-      writeProgrammeAccessContinuation(window.sessionStorage, activeSubject);
-    } else {
-      const journey = anonymousProgrammeSubject(window.sessionStorage);
-      writeProgrammeAccessContinuation(window.sessionStorage, journey);
-      transitionProgrammeAccessToUser(window.sessionStorage, journey, activeSubject);
+    setBusy(true);
+    setError("");
+    try {
+      const journey = activeSubject.kind === "journey"
+        ? activeSubject
+        : anonymousProgrammeSubject(window.sessionStorage);
+      const response = await fetch("/api/programme-access/authority", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          journeyId: journey.id,
+          adultConfirmed: true,
+          termsAccepted: true,
+          privacyAcknowledged: true,
+          termsVersion: PROGRAMME_TERMS_VERSION,
+          privacyVersion: PROGRAMME_PRIVACY_VERSION,
+        }),
+      });
+      const payload = await response.json() as ApiPayload<{ authority?: ProgrammeAccessAuthority }>;
+      if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
+      writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+      if (activeSubject.kind === "user") {
+        transitionProgrammeAccessToUser(window.sessionStorage, journey, activeSubject);
+      }
+      setAccessGranted(true);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Current access could not be verified. Try again.");
+    } finally {
+      setBusy(false);
     }
-    setAccessGranted(true);
   }
 
   if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession || dashboardPending || (claimTransitionPending && authenticated)) {
     return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/responsible-gambling">Protected Help remains available.</Link></p></section></div>;
   }
 
-  if (!accessGranted) return <AccessGate onConfirm={grantProgrammeAccess} />;
+  if (!accessGranted) return <AccessGate onConfirm={grantProgrammeAccess} busy={busy} error={error} />;
 
   return (
     <div className={`activeProgrammePage ${styles.page}`}>

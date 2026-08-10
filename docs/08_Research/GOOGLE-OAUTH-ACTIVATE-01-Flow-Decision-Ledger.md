@@ -20,6 +20,7 @@ Designing a corrected Programme access and authentication journey for adults usi
 - Styles reviewed: Vectary, N26 and imgs.so Sign in.
 - Screens reviewed: ElevenLabs account creation and Fingerprint authentication.
 - Flows reviewed: Pattern Brands account creation→profile, Cohere sign-in→dashboard and Duolingo earned work→profile→learning dashboard.
+- v2.1 state references reviewed: Brilliant empty learning home and Duolingo first-lesson course paths with an explicit active start action.
 
 ### Reference lock
 
@@ -49,11 +50,14 @@ Reject: new modal/card language, marketing-style hero treatment, three legal che
 | Account screen contains auth methods only | RFC-021; ElevenLabs/Fingerprint | Provider and email are alternative methods after access authority exists | Avoids duplicating compliance controls. |
 | Header reads settled Better Auth session | RFC-021; Pattern Brands/Cohere flows | Successful auth must visibly change global account treatment | Prevents authenticated users seeing `Log in`. |
 | Fresh authenticated user gets empty Programme home | RFC-002 Dashboard authority; Duolingo post-profile flow | Personal home precedes explicit first-task start | Preserves My Programme semantics and user agency. |
+| Zero progress names only the active first step | Founder Office v2.1; Brilliant empty home; Duolingo first-lesson paths | `0 XP`, zero complete, Mission 01 current and one explicit start action | Prevents locked downstream work or achievements from reading as current progress. |
+| Server-signed access proof replaces static auth authority | Founder Office v2.1; RFC-021 | HMAC proof binds fixed purpose, current copy, exact journey and original 60-minute lifetime | Makes manually selected header values insufficient while retaining stateless self-attestation. |
 | Access and content claim markers remain separate | RFC-017, RFC-018, RFC-021 | Compliance authority cannot imply private-content migration | Preserves privacy and exact-claim isolation. |
 
 ## Implementation classification boundary
 
 - **Detected:** subject-isolated session storage, Better Auth session, exact Google callback allow-list, age header enforcement, server Dashboard projection, RFC-020 identity-only hardening.
 - **Inferred:** a 60-minute same-tab TTL is the smallest bounded interval that accommodates the approved 17–22 minute Mission 01 plus account/OAuth transition without becoming device-persistent.
-- **Detected in this branch:** versioned access marker, exact legal-copy headers, empty authenticated Dashboard DTO, shared session-derived Programme header and browser regressions.
+- **Detected in this v2.1 branch:** purpose-separated server HMAC proof, exact signed-journey verification, current-copy/original-lifetime enforcement and a Mission-01-only fresh Dashboard treatment.
+- **Detected in the v2 baseline and retained:** versioned browser access marker, empty authenticated Dashboard DTO, shared session-derived Programme header and browser regressions.
 - **Not detected / not claimed:** durable acceptance ledger, DOB/KYC, Production Google activation, Production credential mutation, commercial activation or real Preview E2E on the new branch alias.
