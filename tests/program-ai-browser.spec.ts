@@ -6,6 +6,7 @@ import {
   request as playwrightRequest,
   test,
   type APIRequestContext,
+  type APIResponse,
   type BrowserContext,
   type Page,
 } from "@playwright/test";
@@ -48,6 +49,12 @@ type AccessAuthority = {
   proof: string;
 };
 
+type ProgrammeSession = {
+  access: AccessAuthority;
+  cookieHeader: string;
+  token: string;
+};
+
 function tokenHash(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
@@ -76,6 +83,21 @@ function accessHeaders(authority: AccessAuthority) {
   };
 }
 
+function responseCookie(response: APIResponse, name: string) {
+  const prefix = `${name}=`;
+  const header = response.headersArray()
+    .filter((item) => item.name.toLowerCase() === "set-cookie")
+    .map((item) => item.value)
+    .find((value) => value.startsWith(prefix));
+  const token = header?.slice(prefix.length).split(";", 1)[0];
+  expect(token, `${name} response cookie`).toBeTruthy();
+  return { token: token!, header: `${name}=${token}` };
+}
+
+function storedCookieHeader(cookies: Array<{ name: string; value: string }>) {
+  return cookies.map((cookie) => `${cookie.name}=${cookie.value}`).join("; ");
+}
+
 async function issueAccess(client: APIRequestContext, journeyId = randomUUID()) {
   const response = await client.post("/api/programme-access/authority", {
     data: {
@@ -93,17 +115,18 @@ async function issueAccess(client: APIRequestContext, journeyId = randomUUID()) 
 }
 
 async function createProgrammeSession(client: APIRequestContext) {
-  const authority = await issueAccess(client);
+  const access = await issueAccess(client);
   const response = await client.post("/api/program/program-ai/session", {
-    headers: { ...programmeAgeHeader, ...accessHeaders(authority) },
+    headers: { ...programmeAgeHeader, ...accessHeaders(access) },
   });
   expect(response.status()).toBe(201);
-  return authority;
+  const cookie = responseCookie(response, "sevenbet_programme_session");
+  return { access, cookieHeader: cookie.header, token: cookie.token } satisfies ProgrammeSession;
 }
 
-async function confirmSensitiveAuthority(client: APIRequestContext) {
+async function confirmSensitiveAuthority(client: APIRequestContext, cookieHeader?: string) {
   const response = await client.post("/api/program/program-ai/authority", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, ...(cookieHeader ? { cookie: cookieHeader } : {}) },
     data: {
       confirmed: true,
       purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
@@ -115,21 +138,28 @@ async function confirmSensitiveAuthority(client: APIRequestContext) {
 }
 
 async function prepareReadyClaim(client: APIRequestContext) {
-  const access = await createProgrammeSession(client);
-  await confirmSensitiveAuthority(client);
+  const session = await createProgrammeSession(client);
+  await confirmSensitiveAuthority(client, session.cookieHeader);
   const turn = await client.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: { inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(turn.status()).toBe(200);
   const confirm = await client.post("/api/program/program-ai/starting-point", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: startingPoint,
   });
   expect(confirm.status()).toBe(200);
-  const claim = await client.post("/api/program/program-ai/claim", { headers: programmeAgeHeader });
+  const claim = await client.post("/api/program/program-ai/claim", {
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
+  });
   expect(claim.status()).toBe(201);
-  return access;
+  const claimCookie = responseCookie(claim, "sevenbet_programme_claim");
+  return {
+    ...session,
+    claimToken: claimCookie.token,
+    claimCookieHeader: claimCookie.header,
+  };
 }
 
 async function signUp(client: APIRequestContext, authority: AccessAuthority, email: string) {
@@ -138,7 +168,12 @@ async function signUp(client: APIRequestContext, authority: AccessAuthority, ema
     data: { email, password: "Programme-test-password-42!", name: "Programme browser test" },
   });
   expect(response.status(), await response.text()).toBe(200);
-  return prisma.user.findUniqueOrThrow({ where: { email } });
+  const sessionCookie = (await client.storageState()).cookies.find((cookie) => cookie.name.includes("session_token"));
+  expect(sessionCookie, "Better Auth session cookie").toBeTruthy();
+  return {
+    user: await prisma.user.findUniqueOrThrow({ where: { email } }),
+    authCookieHeader: `${sessionCookie!.name}=${sessionCookie!.value}`,
+  };
 }
 
 async function anonymousSessionFromContext(context: BrowserContext) {
@@ -221,10 +256,8 @@ test("session creation rejects every direct access-proof bypass", async ({ reque
 
   const valid = await postSession(accessHeaders(authority));
   expect(valid.status()).toBe(201);
-  const cookie = (await request.storageState()).cookies.find((item) => item.name === "sevenbet_programme_session");
-  if (cookie) {
-    await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
-  }
+  const cookie = responseCookie(valid, "sevenbet_programme_session");
+  await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.token) } });
 });
 
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
@@ -268,7 +301,10 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(anonymousAuthority.userId).toBeNull();
 
   const duplicateTurn = await page.request.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: {
+      ...programmeAgeHeader,
+      cookie: `sevenbet_programme_session=${(await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_session")!.value}`,
+    },
     data: { inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(duplicateTurn.status()).toBe(200);
@@ -285,7 +321,10 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await expect(page.getByRole("heading", { name: "Your Starting Point is ready." })).toBeVisible();
 
   const duplicateStartingPoint = await page.request.post("/api/program/program-ai/starting-point", {
-    headers: programmeAgeHeader,
+    headers: {
+      ...programmeAgeHeader,
+      cookie: `sevenbet_programme_session=${(await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_session")!.value}`,
+    },
     data: startingPoint,
   });
   expect(duplicateStartingPoint.status()).toBe(200);
@@ -329,7 +368,10 @@ test("typed fallback path binds exact authority and is idempotent through real e
 
   await page.context().addCookies([claimCookie!]);
   const duplicateClaim = await page.request.post("/api/program/program-ai/claims/redeem", {
-    headers: programmeAgeHeader,
+    headers: {
+      ...programmeAgeHeader,
+      cookie: storedCookieHeader(await page.context().cookies()),
+    },
     data: { timeZone: "UTC", startingPoint },
   });
   expect(duplicateClaim.status()).toBe(200);
@@ -339,7 +381,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
 
   const wrongClient = await playwrightRequest.newContext({ baseURL });
   const wrongAccess = await issueAccess(wrongClient);
-  const wrongUser = await signUp(wrongClient, wrongAccess, wrongUserEmail);
+  const { user: wrongUser } = await signUp(wrongClient, wrongAccess, wrongUserEmail);
   const wrongState = await wrongClient.storageState();
   await wrongClient.dispose();
   const wrongClaimClient = await playwrightRequest.newContext({
@@ -350,7 +392,10 @@ test("typed fallback path binds exact authority and is idempotent through real e
     },
   });
   const wrongClaim = await wrongClaimClient.post("/api/program/program-ai/claims/redeem", {
-    headers: programmeAgeHeader,
+    headers: {
+      ...programmeAgeHeader,
+      cookie: storedCookieHeader([...wrongState.cookies, claimCookie!]),
+    },
     data: { timeZone: "UTC", startingPoint },
   });
   expect(wrongClaim.status()).toBe(409);
@@ -370,60 +415,59 @@ test("typed fallback path binds exact authority and is idempotent through real e
 
 test("clarification cannot refresh authority, withdrawal blocks turns, and a new action can reconfirm", async ({ page }) => {
   const request = page.request;
-  await createProgrammeSession(request);
-  const initial = await confirmSensitiveAuthority(request);
-  const sessionCookie = (await request.storageState()).cookies.find((item) => item.name === "sevenbet_programme_session");
-  expect(sessionCookie).toBeTruthy();
+  const session = await createProgrammeSession(request);
+  const initial = await confirmSensitiveAuthority(request, session.cookieHeader);
 
   const firstTurn = await request.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: { inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(firstTurn.status()).toBe(200);
   const clarification = await request.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: { inputMode: "text", situation, clarificationAnswers: ["I want a pause before I open the app."] },
   });
   expect(clarification.status()).toBe(200);
-  const afterClarification = await request.get("/api/program/program-ai/authority");
+  const afterClarification = await request.get("/api/program/program-ai/authority", {
+    headers: { cookie: session.cookieHeader },
+  });
   expect(afterClarification.status()).toBe(200);
   expect((await afterClarification.json()).authority.confirmedAt).toBe(initial.authority.confirmedAt);
 
-  const withdrawal = await request.delete("/api/program/program-ai/authority", { headers: programmeAgeHeader });
+  const withdrawal = await request.delete("/api/program/program-ai/authority", {
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
+  });
   expect(withdrawal.status()).toBe(200);
   const blocked = await request.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: { inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(blocked.status()).toBe(403);
   expect((await blocked.json()).code).toBe("SENSITIVE_INPUT_AUTHORITY_REQUIRED");
 
-  const reconfirmed = await confirmSensitiveAuthority(request);
+  const reconfirmed = await confirmSensitiveAuthority(request, session.cookieHeader);
   expect(new Date(reconfirmed.authority.confirmedAt).getTime()).toBeGreaterThanOrEqual(
     new Date(initial.authority.confirmedAt).getTime(),
   );
   const resumed = await request.post("/api/program/program-ai/turn", {
-    headers: programmeAgeHeader,
+    headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
     data: { inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(resumed.status()).toBe(200);
 
   await prisma.anonymousProgrammeSession.deleteMany({
-    where: { tokenHash: tokenHash(sessionCookie!.value) },
+    where: { tokenHash: tokenHash(session.token) },
   });
 });
 
 test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP", async ({ page }) => {
   const client = page.request;
-  const access = await prepareReadyClaim(client);
-  const stateBeforeAuth = await client.storageState();
-  const anonymousCookie = stateBeforeAuth.cookies.find((item) => item.name === "sevenbet_programme_session");
-  expect(anonymousCookie).toBeTruthy();
+  const ready = await prepareReadyClaim(client);
   const anonymousSession = await prisma.anonymousProgrammeSession.findUniqueOrThrow({
-    where: { tokenHash: tokenHash(anonymousCookie!.value) },
+    where: { tokenHash: tokenHash(ready.token) },
   });
   const email = `program-ai-legacy-${randomUUID()}@example.test`;
-  const user = await signUp(client, access, email);
+  const { user, authCookieHeader } = await signUp(client, ready.access, email);
   const program = await prisma.program.findFirstOrThrow({
     where: { slug: "sevenbet-10-step-control-program" },
     include: { steps: { orderBy: { order: "asc" } }, versions: { where: { status: "PUBLISHED" } } },
@@ -460,7 +504,10 @@ test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP"
   });
 
   const redeem = await client.post("/api/program/program-ai/claims/redeem", {
-    headers: programmeAgeHeader,
+    headers: {
+      ...programmeAgeHeader,
+      cookie: `${ready.cookieHeader}; ${ready.claimCookieHeader}; ${authCookieHeader}`,
+    },
     data: { timeZone: "UTC", startingPoint },
   });
   expect(redeem.status(), await redeem.text()).toBe(200);
@@ -486,9 +533,9 @@ test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP"
 test("support-first keeps 20 XP, protected Help, and no registration CTA", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 760 });
   await page.goto("/program");
-  for (const checkbox of await page.getByRole("checkbox").all()) {
-    await checkbox.check();
-  }
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
   await page.getByRole("checkbox").check();
