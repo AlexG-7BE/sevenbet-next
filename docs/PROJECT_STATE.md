@@ -10,8 +10,8 @@
 - **AUTH-COMMS-01:** **CLOSED**; [PR #58](https://github.com/AlexG-7BE/sevenbet-next/pull/58) is merged in current main.
 - **BRAND-CUTOVER-01:** **CLOSED**; [PR #59](https://github.com/AlexG-7BE/sevenbet-next/pull/59) is merged in current main.
 - **AUTH-HARDEN-01:** **CLOSED**; [PR #60](https://github.com/AlexG-7BE/sevenbet-next/pull/60) is merged in current main under RFC-020.
-- **GOOGLE-OAUTH-ACTIVATE-01:** RFC-021 v2.1 correction candidate on `codex/google-oauth-activate-01-b4gamble`; consolidates Programme access confirmation, adds current server-verifiable bounded auth authority, preserves separate OAuth/content-claim continuation, makes actual Better Auth session state authoritative for Programme home/header routing, canonicalises the exact Vercel Preview deployment host to the exact stable branch host before application or Better Auth handling, and gives the client-only issuance guard a bounded five-minute server/browser skew allowance without extending the fixed expiry or weakening server proof verification. External Preview credential reconfiguration and real-provider E2E remain Founder-controlled.
-- **Production:** <https://b4gamble.com> serves the merged B4GAMBLE consumer identity and canonical authority. Google credentials and external provider activation remain absent.
+- **GOOGLE-OAUTH-ACTIVATE-01:** **READY FOR FOUNDER MERGE** on [PR #61](https://github.com/AlexG-7BE/sevenbet-next/pull/61), which remains open and is not yet closed. RFC-021 v2.1 consolidates Programme access confirmation, adds current server-verifiable bounded auth authority, preserves separate OAuth/content-claim continuation, makes the Better Auth user the sole interactive Programme subject after authentication, canonicalises the exact Vercel Preview deployment host to the stable branch host, and retains the fixed proof lifetime and strict server verification. Founder-controlled real Google Test User E2E completed successfully on the isolated Preview branch on 2026-08-10.
+- **Production:** <https://b4gamble.com> serves the merged B4GAMBLE consumer identity and canonical authority. Production Google OAuth remains **OFF**; Production Google credentials/configuration/database were untouched by GOOGLE-OAUTH-ACTIVATE-01.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -22,8 +22,8 @@
 | AUTH-COMMS-01 | **CLOSED — PR #58 MERGED** |
 | BRAND-CUTOVER-01 | **CLOSED — PR #59 MERGED** |
 | AUTH-HARDEN-01 | **CLOSED — PR #60 MERGED** |
-| GOOGLE-OAUTH-ACTIVATE-01 | **DELIVERY CANDIDATE — EXTERNAL PREVIEW E2E PENDING** |
-| Google login code | **MERGED IDENTITY-ONLY BASELINE; PREVIEW FLOW CORRECTION CANDIDATE** |
+| GOOGLE-OAUTH-ACTIVATE-01 | **READY FOR FOUNDER MERGE — PR #61 OPEN / NOT CLOSED** |
+| Google login code | **IDENTITY-ONLY BASELINE; CONTROLLED PREVIEW E2E VERIFIED** |
 | Google Production credentials | **OPEN EXTERNAL** |
 | Email communication architecture | **READY — provider-independent, disabled transport** |
 | Email provider | **OPEN — NOT SELECTED** |
@@ -86,23 +86,24 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - A ten-minute, tab-scoped marker continues only the exact opaque anonymous Programme journey through OAuth. It contains no narrative, email, token or reward data. Exact success redeems the server claim and migrates only that local namespace; cancellation preserves it, while stale or mismatched markers deny.
 - Same-email linking is limited to verified Google identity plus an already verified local account. Different-email linking, provider-account reassignment, implicit sign-up, staff elevation and client-authored scope/callback expansion remain denied.
 - In Vercel Preview only, the exact current `VERCEL_URL` deployment host is a redirect source, never auth authority. Edge middleware issues a method-preserving temporary redirect to the exact `VERCEL_BRANCH_URL` branch host before rendering or Better Auth, preserving path and query. Stable-host requests continue without redirect; malformed metadata and unexpected Preview hosts fail closed. Better Auth still trusts only the exact branch origin, so no wildcard or ephemeral deployment host enters its allowlist and tab-scoped Programme/OAuth/journey state remains same-origin.
+- **Detected Founder-controlled Preview evidence, 2026-08-10:** Google credentials/configuration were active only for the isolated Preview branch. A real Google Test User completed `POST /api/auth/sign-in/social` with `200`, `GET /api/auth/callback/google` with `302`, and established an authenticated Better Auth session. The consolidated access screen passed; account creation introduced no duplicate age, Terms or Privacy controls; and Google remained identity-only rather than age verification. The isolated Preview Control Programme was seeded with B4GAMBLE naming. After the discovered post-OAuth claim defect was corrected, authenticated Mission 01 used the user-owned endpoints and the final authenticated Mission 01 smoke succeeded. Logout then produced a fresh isolated anonymous journey and required the consolidated access gate again.
 - The authenticated Programme header exposes bounded sign-out and starts a fresh anonymous subject after success; account-scoped browser content remains isolated for the same user.
 - Communication purposes are closed and server-owned. Account/security and Programme reminder contracts have fixed non-commercial templates; Programme engagement requires separate opt-in; commercial marketing denies. Delivery remains disabled because no provider, scheduler or preference store is selected.
 
 ### Platform and delivery baseline
 
 - FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01, AUTH-COMMS-01 and BRAND-CUTOVER-01 are merged on main.
-- RFC-020 governs merged AUTH-HARDEN-01. RFC-021 v2.1 governs the GOOGLE-OAUTH-ACTIVATE-01 correction candidate. The v2.1 candidate adds no Prisma/schema/migration/dependency or protocol-provider change.
+- RFC-020 governs merged AUTH-HARDEN-01. RFC-021 v2.1 governs GOOGLE-OAUTH-ACTIVATE-01, now ready for Founder merge on open PR #61 after controlled Preview verification. It adds no Prisma/schema/migration/dependency or protocol-provider change.
 - Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
 - CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
 - Recovery is **PARTIAL** because no verified provider snapshot/PITR restore point is available under the current provider plan.
 
 ## Evidence classification
 
-- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; consolidated subject-scoped access marker backed by current purpose-separated server HMAC authority; session-derived Programme home/header routing; truthful zero-progress Dashboard; exact Preview deployment-to-branch host canonicalisation before rendering/auth; bounded stable-origin-only Google/Better Auth configuration, identity-only account hooks, restricted auth paths and separate OAuth-claim continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
+- **Detected:** local-first subject-isolated active Programme narrative; server allow-lists; redacted presenters; consolidated subject-scoped access marker backed by current purpose-separated server HMAC authority; session-derived Programme home/header routing; truthful zero-progress Dashboard; exact Preview deployment-to-branch host canonicalisation before rendering/auth; bounded stable-origin-only Google/Better Auth configuration; successful Founder-controlled real Google Test User Preview OAuth and final authenticated Mission 01/logout smoke; identity-only account hooks; restricted auth paths and separate OAuth-claim continuation; closed communication-purpose and protected-content firewalls; demo disclosure/SEO/schema/action containment; commercial firewall; account export/deletion operations including exact consumed-journey erasure; substantive compliance runbooks.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** external Google Preview/Production client configuration, an approved email transport decision, COMMS-REMINDER-01, durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
-- **Not detected:** live Google credentials or smoke result; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; a completed UK representative appointment; a confirmed ICO registration/fee outcome; outside-counsel sign-off; verified complete processor/transfer evidence; a real signed GB partner; real eligible offer/link authority; Production affiliate activation; or a successful restore drill.
+- **Planned:** any separately authorised Production Google client configuration/activation, an approved email transport decision, COMMS-REMINDER-01, durable age evidence, distributed Programme rate limiting, automated anonymous-data purge, approved legacy raw-data cleanup, recovery architecture and Missions 05–10.
+- **Not detected:** Production Google credentials or Production provider activation; an email provider, preference store, scheduler or Production email send; DOB/KYC; durable age-attestation evidence; a completed UK representative appointment; a confirmed ICO registration/fee outcome; outside-counsel sign-off; verified complete processor/transfer evidence; a real signed GB partner; real eligible offer/link authority; Production affiliate activation; or a successful restore drill.
 
 ## Remaining release gates
 
@@ -124,7 +125,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ### Engineering and operations
 
-- Configure separate Google Preview and Production Web clients, exact origins/callbacks and consent-screen evidence; keep the provider absent until each environment has a complete credential pair.
+- Keep Production Google OAuth off. Any future Production Google Web client, credentials, exact origins/callbacks and consent-screen evidence require a separate Founder-authorised activation and must remain isolated from the verified Preview configuration.
 - Select and approve a B4GAMBLE-controlled sending domain, sender mailboxes and email transport before any delivery work. SPF, DKIM, DMARC, TLS, bounce/complaint handling and monitoring remain open. Actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
@@ -134,4 +135,4 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Release conclusion
 
-LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01 and AUTH-HARDEN-01 are closed on current main. GOOGLE-OAUTH-ACTIVATE-01 is a correction candidate and must pass exact-head CI/Preview review before Founder merge consideration. It does not configure Google Cloud, add credentials, activate Google in Production, enable email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.
+LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01 and AUTH-HARDEN-01 are closed on current main. GOOGLE-OAUTH-ACTIVATE-01 is **READY FOR FOUNDER MERGE** after its controlled Preview E2E and final authenticated Programme smoke; it is not closed because PR #61 remains open and unmerged. Preview-only Google configuration does not activate Google in Production, enable email delivery, reminders, commercial beta, Production data mutation, partner traffic or GB launch.
