@@ -59,6 +59,11 @@ function tokenHash(value: string) {
   return createHash("sha256").update(value, "utf8").digest("hex");
 }
 
+function testClientAddress(identity: string) {
+  const octet = Number.parseInt(createHash("sha256").update(identity, "utf8").digest("hex").slice(0, 2), 16);
+  return `203.0.113.${Math.max(1, octet)}`;
+}
+
 function programmeProofSignature(encodedClaims: string) {
   const key = createHmac("sha256", authSecret)
     .update("sevenbet/programme-auth-access/hmac-sha256/v1")
@@ -164,7 +169,11 @@ async function prepareReadyClaim(client: APIRequestContext) {
 
 async function signUp(client: APIRequestContext, authority: AccessAuthority, email: string) {
   const response = await client.post("/api/auth/sign-up/email", {
-    headers: { ...accessHeaders(authority), origin: baseURL },
+    headers: {
+      ...accessHeaders(authority),
+      origin: baseURL,
+      "x-forwarded-for": testClientAddress(email),
+    },
     data: { email, password: "Programme-test-password-42!", name: "Programme browser test" },
   });
   expect(response.status(), await response.text()).toBe(200);
@@ -261,6 +270,7 @@ test("session creation rejects every direct access-proof bypass", async ({ reque
 });
 
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
@@ -399,7 +409,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
     data: { timeZone: "UTC", startingPoint },
   });
   expect(wrongClaim.status()).toBe(409);
-  expect((await wrongClaim.json()).code).toBe("PROGRAMME_STATE_CONFLICT");
+  expect((await wrongClaim.json()).code).toBe("CONFLICT");
   await wrongClaimClient.dispose();
   expect((await prisma.programmeSensitiveInputAuthority.findUniqueOrThrow({ where: { id: boundAuthority.id } })).userId).toBe(user.id);
 
