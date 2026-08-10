@@ -250,7 +250,9 @@ test("typed fallback path binds exact authority and is idempotent through real e
   const recorder = page.getByRole("button", { name: "Start recording" });
   await recorder.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("alert").or(page.getByRole("status"))).toBeVisible();
+  const recorderState = page.locator("[data-state]").first();
+  await expect(recorderState).not.toHaveAttribute("data-state", "idle");
+  await expect(recorderState).toContainText(/Requesting microphone|Listening locally|Microphone permission was denied|Voice transcription is not connected/);
   const situationField = page.getByLabel("Your situation");
   await situationField.focus();
   await situationField.fill(situation);
@@ -366,7 +368,8 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await prisma.user.deleteMany({ where: { id: { in: [user.id, wrongUser.id] } } });
 });
 
-test("clarification cannot refresh authority, withdrawal blocks turns, and a new action can reconfirm", async ({ request }) => {
+test("clarification cannot refresh authority, withdrawal blocks turns, and a new action can reconfirm", async ({ page }) => {
+  const request = page.request;
   await createProgrammeSession(request);
   const initial = await confirmSensitiveAuthority(request);
   const sessionCookie = (await request.storageState()).cookies.find((item) => item.name === "sevenbet_programme_session");
@@ -410,8 +413,8 @@ test("clarification cannot refresh authority, withdrawal blocks turns, and a new
   });
 });
 
-test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP", async () => {
-  const client = await playwrightRequest.newContext({ baseURL });
+test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP", async ({ page }) => {
+  const client = page.request;
   const access = await prepareReadyClaim(client);
   const stateBeforeAuth = await client.storageState();
   const anonymousCookie = stateBeforeAuth.cookies.find((item) => item.name === "sevenbet_programme_session");
@@ -476,7 +479,6 @@ test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP"
     },
   })).toBe(0);
 
-  await client.dispose();
   await prisma.user.delete({ where: { id: user.id } });
   await prisma.anonymousProgrammeSession.deleteMany({ where: { id: anonymousSession.id } });
 });
@@ -488,6 +490,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
     await checkbox.check();
   }
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
   await page.getByRole("checkbox").check();
   await page.getByLabel("Your situation").fill(situation);
   await page.route("**/api/program/program-ai/turn", async (route) => {
