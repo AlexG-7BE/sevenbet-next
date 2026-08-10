@@ -1,9 +1,9 @@
 # RFC-021: Programme Access Continuation and Authenticated Home
 
 - **Status:** Approved
-- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1
+- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1 and Preview canonical-host correction
 - **Approved:** 2026-08-10
-- **Scope:** One-screen Programme access, server-verifiable bounded same-tab account/access authority, Google/email transition and authenticated Programme routing
+- **Scope:** One-screen Programme access, server-verifiable bounded same-tab account/access authority, Google/email transition, authenticated Programme routing and exact Vercel Preview deployment-to-branch host canonicalisation
 - **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-008, RFC-017, RFC-018, RFC-019 and RFC-020
 - **Supersedes:** RFC-017 and RFC-018 only where their separate age/account controls or age-only OAuth continuation cause repeated controls in one valid current-tab journey
 
@@ -74,6 +74,10 @@ The empty authenticated Dashboard is a server DTO assembled from the approved Mi
 
 The access-continuation marker and `PROGRAMME_CLAIM_GOOGLE` marker remain distinct. A valid Google callback may establish the Better Auth session, transition current access authority and then, only when the separate claim marker and server claim are valid, redeem Programme progress.
 
+In Vercel Preview only, the exact current `VERCEL_URL` deployment host is a redirect source, never an application or authentication authority. Middleware runs before application rendering and Better Auth handling and issues a `307 Temporary Redirect` to the exact `VERCEL_BRANCH_URL` stable branch host, preserving HTTP method semantics, complete path and query. Requests already on the stable branch host continue without redirect. Any missing, malformed, wildcard, contradictory or unexpected Preview host metadata/request host fails closed.
+
+This canonicalization does not add the deployment host or a wildcard to Better Auth. Better Auth continues to allow and trust only the exact stable Preview branch origin, and the Google callback remains on that origin. Production, local development and ordinary CI do not enter this Preview-only boundary. Redirect-before-render ensures Programme access authority, `PROGRAMME_CLAIM_GOOGLE` and anonymous journey state are created only in the stable-origin `sessionStorage`; no cross-origin state copying is permitted.
+
 A successful callback cleans the temporary `auth` query state. A replayed or consumed Google callback remains rejected by the Better Auth state/PKCE boundary together with Google's one-use authorization-code validation and must not create a second account, session mutation or redirect loop.
 
 RFC-020 remains fully in force: Better Auth stays at `1.6.23`; access, refresh and ID tokens, expiry metadata and scope remain `null`; direct ID-token sign-in and explicit provider-management/token endpoints remain disabled; linking safeguards remain unchanged.
@@ -92,7 +96,7 @@ Protected Help remains available without acceptance, account or Programme comple
 
 ## 8. Verification and release boundary
 
-Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
+Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
 
 No Prisma schema, migration, dependency, package-lock, Production credential, Production environment, Production database, email, analytics, CMP, commercial, affiliate or AI change is authorised.
 

@@ -1,3 +1,5 @@
+import { isValidVercelBranchHost } from "@/lib/auth/preview-canonical-host";
+
 type AuthRuntimeEnvironment = {
   [key: string]: string | undefined;
   BETTER_AUTH_TRUSTED_ORIGINS?: string;
@@ -16,9 +18,6 @@ export type BetterAuthRuntimeConfig = {
   trustedOrigins: string[];
 };
 
-const VERCEL_BRANCH_HOST =
-  /^(?=.{1,63}\.vercel\.app$)[a-z0-9](?:[a-z0-9-]*[a-z0-9])?-git-[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.vercel\.app$/;
-
 function configuredOrigins(value: string | undefined) {
   return (value ?? "")
     .split(",")
@@ -29,7 +28,7 @@ function configuredOrigins(value: string | undefined) {
 function previewBranchHost(value: string | undefined) {
   const host = value?.trim();
 
-  if (!host || !VERCEL_BRANCH_HOST.test(host)) {
+  if (!isValidVercelBranchHost(host)) {
     throw new Error(
       "Preview Better Auth requires a valid Vercel branch host",
     );

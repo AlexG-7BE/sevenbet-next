@@ -63,7 +63,8 @@ test("the consolidated access screen is unchecked and account creation enforces 
   assert.equal(active.match(/I confirm I am 18 or over · required/g)?.length, 1);
   assert.equal(active.match(/I agree to the .*Terms.* and acknowledge the .*Privacy Notice.* · required/g)?.length, 1);
   assert.match(middleware, /x-sevenbet-age-attestation/);
-  assert.match(middleware, /\/api\/program\/:path\*/);
+  assert.match(middleware, /pathname\.startsWith\("\/api\/program\/"\)/);
+  assert.match(middleware, /matcher: \["\/:path\*"\]/);
   assert.match(authRoute, /sign-up\/email/);
   assert.match(authRoute, /programmeAuthAccessDenial/);
   assert.match(accessPolicy, /CURRENT_ACCESS_AUTHORITY_REQUIRED/);
