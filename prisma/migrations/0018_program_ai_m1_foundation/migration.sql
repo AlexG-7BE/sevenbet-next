@@ -84,3 +84,25 @@ ALTER TABLE "ProgrammeStartingPoint"
   ADD CONSTRAINT "ProgrammeStartingPoint_enrollmentId_fkey"
   FOREIGN KEY ("enrollmentId") REFERENCES "ProgramEnrollment"("id")
   ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "UserXpEvent"
+  DROP CONSTRAINT "UserXpEvent_mission_source_check";
+ALTER TABLE "UserXpEvent"
+  ADD CONSTRAINT "UserXpEvent_mission_source_check"
+  CHECK (
+    ("missionNumber" IS NULL AND "sourceArtifactType" IS NULL AND "sourceArtifactId" IS NULL)
+    OR (
+      "missionNumber" BETWEEN 1 AND 10
+      AND "programId" IS NOT NULL
+      AND "sourceArtifactType" IS NOT NULL
+      AND "sourceArtifactId" IS NOT NULL
+      AND (
+        "eventType" = 'MISSION_COMPLETION'
+        OR (
+          "missionNumber" = 1
+          AND "eventType" = 'STEP_COMPLETION'
+          AND "sourceArtifactType" IN ('PROGRAM_AI_M1_PROGRESS', 'PROGRAMME_STARTING_POINT')
+        )
+      )
+    )
+  );

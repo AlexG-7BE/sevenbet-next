@@ -32,6 +32,18 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'PROGRAM-AI M1 preflight failed: invalid authority subject row detected';
     END IF;
+
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conrelid = 'public."UserXpEvent"'::regclass
+        AND conname = 'UserXpEvent_mission_source_check'
+        AND pg_get_constraintdef(oid) LIKE '%STEP_COMPLETION%'
+        AND pg_get_constraintdef(oid) LIKE '%PROGRAM_AI_M1_PROGRESS%'
+        AND pg_get_constraintdef(oid) LIKE '%PROGRAMME_STARTING_POINT%'
+    ) THEN
+      RAISE EXCEPTION 'PROGRAM-AI M1 preflight failed: exact M1 step-reward source constraint is missing';
+    END IF;
   END IF;
 END $$;
 

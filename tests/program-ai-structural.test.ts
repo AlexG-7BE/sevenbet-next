@@ -23,6 +23,9 @@ test("the schema change is limited to the two approved Program AI concepts", () 
   assert.match(migration, /CHECK \(\("anonymousSessionId" IS NOT NULL\) <> \("userId" IS NOT NULL\)\)/);
   assert.match(preflight, /exact-one authority subject constraint is missing/);
   assert.match(preflight, /\("anonymousSessionId" IS NOT NULL\) = \("userId" IS NOT NULL\)/);
+  assert.match(migration, /"eventType" = 'STEP_COMPLETION'/);
+  assert.match(migration, /"sourceArtifactType" IN \('PROGRAM_AI_M1_PROGRESS', 'PROGRAMME_STARTING_POINT'\)/);
+  assert.match(preflight, /exact M1 step-reward source constraint is missing/);
   assert.match(schema, /userId\s+String\s+@unique/);
   assert.match(schema, /enrollmentId\s+String\s+@unique/);
 });
