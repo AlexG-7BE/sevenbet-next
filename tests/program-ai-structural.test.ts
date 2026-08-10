@@ -71,6 +71,8 @@ test("Program AI reuses the signed two-control access contract and clarification
   assert.doesNotMatch(frontend, /Three checks before you begin|I accept the current|I have read the current/);
   assert.match(frontend, /submitTurn\(local\.clarificationAnswers, true\)/);
   assert.match(frontend, /await submitTurn\(answers\)/);
+  assert.match(frontend, /emailRedeemStarted\.current = true/);
+  assert.match(frontend, /session\?\.user\.id && emailRedeemStarted\.current/);
   assert.match(repository, /if \(current && !current\.withdrawnAt\) return current/);
   assert.match(repository, /data: \{ anonymousSessionId: null, userId: input\.userId \}/);
 });

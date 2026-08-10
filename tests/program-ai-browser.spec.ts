@@ -500,6 +500,8 @@ test("completed legacy Mission 01 dominates a new claim and awards no new 40 XP"
       awardKey: "programme:mission:01:save:v1",
       eventType: "MISSION_COMPLETION",
       xp: 60,
+      sourceArtifactType: "MOMENT_MAP",
+      sourceArtifactId: enrollment.id,
     },
   });
 

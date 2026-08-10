@@ -433,6 +433,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
+  const emailRedeemStarted = useRef(false);
 
   const persist = useCallback((next: ProgramAiLocalState, exactSubject = subject) => {
     setLocal(next);
@@ -478,6 +479,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       }
       return;
     }
+    if (session?.user.id && emailRedeemStarted.current) return;
     if (session?.user.id) {
       const userSubject = userProgrammeSubject(session.user.id);
       setSubject(userSubject);
@@ -642,6 +644,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   async function handleEmail(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
     if (!subject) return;
+    emailRedeemStarted.current = true;
     setBusy(true); setError("");
     try {
       const result = input.mode === "sign-up"
@@ -650,7 +653,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       if (result.error || !result.data?.user.id) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if it already exists." : "Email or password is incorrect.");
       await redeem(result.data.user.id, subject, local);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
-    finally { setBusy(false); }
+    finally { emailRedeemStarted.current = false; setBusy(false); }
   }
 
   async function handleGoogle(mode: "sign-up" | "sign-in") {
