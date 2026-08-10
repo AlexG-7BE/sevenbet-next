@@ -29,6 +29,7 @@ import {
   rotateAnonymousProgrammeSubject,
   saveProgrammeSubjectContent,
   transitionProgrammeAccessToUser,
+  transitionProgrammeAccessToUserForPendingClaim,
   userProgrammeSubject,
   writeProgrammeAccessContinuation,
   writeProgrammeOAuthClaimMarker,
@@ -200,6 +201,17 @@ type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
 type View = "mission-01" | "registration-gate" | "registration" | "dashboard" | "mission-02" | "mission-03" | "mission-04";
 
 const CLAIM_REDEMPTION_RETRY_MESSAGE = "You’re signed in, but your progress hasn’t been saved yet. Please try again.";
+const CLAIM_REDEMPTION_UNAVAILABLE_MESSAGE = "You’re signed in. Your earlier progress could not be recovered, so you can start Mission 01 when you’re ready.";
+
+function isTerminalClaimRedemptionError(error: unknown) {
+  const claimError = error as Error & { status?: number; code?: string };
+  return claimError.code === "PENDING_PROGRAMME_CLAIM_UNAVAILABLE"
+    || claimError.code === "CLAIM_EXPIRED"
+    || claimError.code === "CONFLICT"
+    || claimError.status === 404
+    || claimError.status === 409
+    || claimError.status === 410;
+}
 
 const emptyMomentMap: MomentMap = {
   situation: "",
@@ -324,6 +336,15 @@ function ProgrammeSignOut({ userId }: { userId: string }) {
     setPending(true);
     setFailed(false);
     try {
+      const programmeTransition = await fetch("/api/program/session", {
+        method: "DELETE",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: {
+          [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
+        },
+      });
+      if (!programmeTransition.ok) throw new Error("Programme subject transition failed");
       const result = await authClient.signOut();
       if (result.error) throw new Error("Sign-out failed");
       clearProgrammeAccessAuthority(window.sessionStorage, userProgrammeSubject(userId));
@@ -1058,54 +1079,71 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   const exactClaimTransition = Boolean(
     (claimTransitionPending || claimTransitionFailed)
     && sessionUserId
-    && activeSubject?.kind === "journey"
-    && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current),
+    && activeSubject?.kind === "user"
+    && activeSubject.id === sessionUserId
+    && claimedJourneySubject.current?.kind === "journey",
   );
   const subjectMatchesSession = Boolean(
     activeSubject
     && (sessionUserId
-      ? (activeSubject.kind === "user" && activeSubject.id === sessionUserId) || exactClaimTransition
+      ? activeSubject.kind === "user" && activeSubject.id === sessionUserId
       : activeSubject.kind === "journey"),
   );
 
   useEffect(() => {
     if (sessionPending) return;
     if (pendingAuthenticatedUserId.current && !sessionUserId) return;
-    if ((claimTransitionPending || claimTransitionFailed) && sessionUserId && activeSubject?.kind === "journey") return;
+    if (exactClaimTransition) return;
     const search = new URLSearchParams(window.location.search);
     const authAction = search.get("auth");
-    const oauthJourney = authAction === "google-return" && sessionUserId
+    const oauthJourney = sessionUserId
       ? readProgrammeOAuthClaimMarker(window.sessionStorage)
       : null;
-    const returnedAccess = authAction === "google-return" && sessionUserId
+    const returnedAccess = sessionUserId
       ? readProgrammeAccessContinuation(window.sessionStorage)
       : null;
     const returnedAccessJourney = returnedAccess
       ? ({ kind: "journey", id: returnedAccess.journeyId } satisfies ProgrammeLocalSubject)
       : null;
-    let returnedUserSubject: ProgrammeLocalSubject | null = null;
-    if (sessionUserId && returnedAccessJourney && !oauthJourney) {
-      returnedUserSubject = userProgrammeSubject(sessionUserId);
+    const pendingClaimJourney = oauthJourney || (
+      (claimTransitionPending || claimTransitionFailed)
+      && claimedJourneySubject.current?.kind === "journey"
+        ? claimedJourneySubject.current
+        : null
+    );
+    const returnedUserSubject = sessionUserId ? userProgrammeSubject(sessionUserId) : null;
+    if (returnedUserSubject && returnedAccessJourney) {
       try {
-        transitionProgrammeAccessToUser(
-          window.sessionStorage,
-          returnedAccessJourney,
-          returnedUserSubject,
-        );
+        if (pendingClaimJourney && programmeSubjectsEqual(pendingClaimJourney, returnedAccessJourney)) {
+          transitionProgrammeAccessToUserForPendingClaim(
+            window.sessionStorage,
+            returnedAccessJourney,
+            returnedUserSubject,
+          );
+        } else {
+          transitionProgrammeAccessToUser(
+            window.sessionStorage,
+            returnedAccessJourney,
+            returnedUserSubject,
+          );
+        }
       } catch {
-        returnedUserSubject = null;
+        // Invalid or mismatched continuation stays fail closed. The authenticated
+        // subject is still authoritative, but it receives no access authority.
       }
     }
-    if (oauthJourney) {
-      claimedJourneySubject.current = oauthJourney;
-      setClaimTransitionFailed(false);
-      setClaimTransitionPending(true);
-    } else if (!sessionUserId || activeSubject?.kind !== "journey") {
+    if (pendingClaimJourney) {
+      claimedJourneySubject.current = pendingClaimJourney;
+      if (oauthJourney) {
+        setClaimTransitionFailed(false);
+        setClaimTransitionPending(true);
+      }
+    } else {
       setClaimTransitionFailed(false);
       setClaimTransitionPending(false);
     }
     const priorUserId = previousSessionUserId.current;
-    const nextSubject = oauthJourney || returnedUserSubject || (sessionUserId
+    const nextSubject = returnedUserSubject || (sessionUserId
       ? userProgrammeSubject(sessionUserId)
       : priorUserId
         ? rotateAnonymousProgrammeSubject(window.sessionStorage)
@@ -1118,9 +1156,9 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     // before hydrating only the exact next subject namespace.
     setLocalHydrated(false);
     setDashboard(null);
-    setDashboardPending(nextSubject.kind === "user");
+    setDashboardPending(nextSubject.kind === "user" && !pendingClaimJourney);
     setEditType(null);
-    setError("");
+    if (!pendingClaimJourney) setError("");
     setMomentMap(emptyMomentMap);
     setGoal(emptyGoal());
     setUrgeLearning(emptyUrgeLearning);
@@ -1146,7 +1184,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       setView("registration");
       setError("Google sign-in was not completed. Your local Programme work remains in this tab.");
       window.history.replaceState({}, "", "/program");
-    } else if (authAction === "google-return" && sessionUserId && !oauthJourney && !returnedUserSubject) {
+    } else if (authAction === "google-return" && sessionUserId && !oauthJourney) {
       setOAuthNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
       window.history.replaceState({}, "", "/program");
     } else if (authAction === "google-return" && sessionUserId) {
@@ -1162,7 +1200,11 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         setView("mission-01");
       }
     }
-  }, [activeSubject, claimTransitionFailed, claimTransitionPending, sessionPending, sessionUserId]);
+    if (pendingClaimJourney && claimTransitionFailed) {
+      setView("registration-gate");
+      setError(CLAIM_REDEMPTION_RETRY_MESSAGE);
+    }
+  }, [activeSubject, claimTransitionFailed, claimTransitionPending, exactClaimTransition, sessionPending, sessionUserId]);
 
   useEffect(() => {
     if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
@@ -1188,6 +1230,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
 
   useEffect(() => {
     if (sessionPending || !authenticated || !activeSubject || activeSubject.kind !== "user" || !subjectMatchesSession) return;
+    if (claimTransitionPending || claimTransitionFailed) return;
     let cancelled = false;
     setDashboardPending(true);
     const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, activeSubject);
@@ -1197,75 +1240,107 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       .catch(() => { if (!cancelled) setOAuthNotice("Your Programme home could not be loaded. No anonymous Mission was started."); })
       .finally(() => { if (!cancelled) setDashboardPending(false); });
     return () => { cancelled = true; };
-  }, [activeSubject, authenticated, request, sessionPending, subjectMatchesSession]);
+  }, [activeSubject, authenticated, claimTransitionFailed, claimTransitionPending, request, sessionPending, subjectMatchesSession]);
 
   const m1Complete = useMemo(() => Boolean(momentMap.situation && momentMap.cues.length && momentMap.thoughtOrFeeling && momentMap.response && momentMap.immediateConsequence && momentMap.noticeRule), [momentMap]);
 
   async function saveMissionOneStep() {
     setBusy(true); setError("");
     const nextStates = MISSION_ONE_TASKS.slice(0, m1Step + 1);
-    const save = () => request("/api/program/session/mission-01", { method: "PATCH", body: JSON.stringify({ taskStates: nextStates }) });
+    const authenticatedMissionOne = authenticated && activeSubject?.kind === "user";
+    const save = () => request(
+      authenticatedMissionOne ? "/api/program/missions/01" : "/api/program/session/mission-01",
+      { method: "PATCH", body: JSON.stringify({ taskStates: nextStates }) },
+    );
     try {
       try { await save(); }
       catch (cause) {
-        if ((cause as Error & { status?: number }).status !== 404) throw cause;
+        if (authenticatedMissionOne || (cause as Error & { status?: number }).status !== 404) throw cause;
         await request("/api/program/session", { method: "POST" });
         await save();
       }
       if (m1Step === 7) {
         if (!m1Complete) throw new Error("Complete the Moment Map before saving it");
-        await request("/api/program/session/mission-01/claim", { method: "POST" });
-        claimedJourneySubject.current = activeSubject?.kind === "journey" ? activeSubject : null;
-        setView("registration-gate");
+        if (authenticatedMissionOne) {
+          const payload = await request<{ dashboard: DashboardModel }>("/api/program/missions/01/complete", {
+            method: "POST",
+            body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }),
+          });
+          const next = mergeDashboardLocal(payload.dashboard, { momentMap, goal, urgeLearning, activeBoundary });
+          setDashboard(next);
+          setMomentMap(next.momentMap || momentMap);
+          setView("dashboard");
+        } else {
+          await request("/api/program/session/mission-01/claim", { method: "POST" });
+          claimedJourneySubject.current = activeSubject?.kind === "journey" ? activeSubject : null;
+          setView("registration-gate");
+        }
       } else setM1Step((value) => value + 1);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save this step"); }
     finally { setBusy(false); }
   }
 
   const redeemClaim = useCallback(async (targetUserId: string) => {
-    if (activeSubject?.kind === "journey" && !programmeSubjectsEqual(activeSubject, claimedJourneySubject.current)) {
+    const targetSubject = userProgrammeSubject(targetUserId);
+    const claimJourney = claimedJourneySubject.current;
+    if (!claimJourney || claimJourney.kind !== "journey") {
       throw new Error("The anonymous Programme journey cannot be matched to this claim");
     }
-    const targetSubject = userProgrammeSubject(targetUserId);
-    if (activeSubject?.kind !== "journey" && !programmeSubjectsEqual(activeSubject, targetSubject)) {
+    if (activeSubject && !programmeSubjectsEqual(activeSubject, targetSubject) && !programmeSubjectsEqual(activeSubject, claimJourney)) {
       throw new Error("The Programme claim does not match the active account subject");
     }
-    const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
-    let local: Partial<ProgrammeLocalContent>;
-    if (activeSubject?.kind === "journey") {
-      transitionProgrammeAccessToUser(window.sessionStorage, activeSubject, targetSubject);
-      local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, activeSubject, targetSubject);
-    } else if (programmeSubjectsEqual(activeSubject, targetSubject)) {
-      local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, targetSubject);
-    } else local = {};
+    if (!hasProgrammeAccessAuthority(window.sessionStorage, targetSubject)) {
+      transitionProgrammeAccessToUserForPendingClaim(window.sessionStorage, claimJourney, targetSubject);
+    }
+    const payload = await programmeRequest<{ dashboard: DashboardModel }>(
+      "/api/program/claims/redeem",
+      targetSubject,
+      { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) },
+    );
+    const local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, claimJourney, targetSubject);
     clearProgrammeOAuthClaimMarker(window.sessionStorage);
     claimedJourneySubject.current = null;
     setClaimTransitionFailed(false);
     setClaimTransitionPending(false);
+    setDashboardPending(false);
     window.history.replaceState({}, "", "/program");
     setActiveSubject(targetSubject);
     setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, targetSubject));
     const next = mergeDashboardLocal(payload.dashboard, local);
     setDashboard(next); setMomentMap(next.momentMap || momentMap); setView("dashboard");
-  }, [activeSubject, momentMap, request]);
+  }, [activeSubject, momentMap]);
+
+  const settleClaimFailure = useCallback((cause: unknown) => {
+    setClaimTransitionPending(false);
+    setDashboardPending(false);
+    if (isTerminalClaimRedemptionError(cause)) {
+      clearProgrammeOAuthClaimMarker(window.sessionStorage);
+      claimedJourneySubject.current = null;
+      setClaimTransitionFailed(false);
+      setDashboard(null);
+      setView("dashboard");
+      setOAuthNotice(CLAIM_REDEMPTION_UNAVAILABLE_MESSAGE);
+      setError("");
+      return;
+    }
+    setClaimTransitionFailed(true);
+    setView("registration-gate");
+    setError(CLAIM_REDEMPTION_RETRY_MESSAGE);
+  }, []);
 
   useEffect(() => {
     if (!sessionUserId || !localHydrated || !exactClaimTransition || oauthRedemptionStarted.current) return;
+    if (!readProgrammeOAuthClaimMarker(window.sessionStorage)) return;
     oauthRedemptionStarted.current = true;
     setBusy(true);
     setError("");
     redeemClaim(sessionUserId)
-      .catch(() => {
-        setClaimTransitionPending(false);
-        setClaimTransitionFailed(true);
-        setView("registration-gate");
-        setError(CLAIM_REDEMPTION_RETRY_MESSAGE);
-      })
+      .catch(settleClaimFailure)
       .finally(() => {
         oauthRedemptionStarted.current = false;
         setBusy(false);
       });
-  }, [exactClaimTransition, localHydrated, redeemClaim, sessionUserId]);
+  }, [exactClaimTransition, localHydrated, redeemClaim, sessionUserId, settleClaimFailure]);
 
   async function handleRegistrationContinue() {
     if (!authenticated) { setView("registration"); return; }
@@ -1273,7 +1348,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     try {
       if (!sessionUserId) throw new Error("The authenticated account could not be resolved");
       await redeemClaim(sessionUserId);
-    } catch { setClaimTransitionPending(false); setClaimTransitionFailed(true); setError(CLAIM_REDEMPTION_RETRY_MESSAGE); } finally { setBusy(false); }
+    } catch (cause) { settleClaimFailure(cause); } finally { setBusy(false); }
   }
 
   async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {

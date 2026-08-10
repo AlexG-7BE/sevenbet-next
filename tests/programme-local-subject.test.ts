@@ -15,6 +15,7 @@ import {
   rotateAnonymousProgrammeSubject,
   saveProgrammeSubjectContent,
   transitionProgrammeAccessToUser,
+  transitionProgrammeAccessToUserForPendingClaim,
   userProgrammeSubject,
   writeProgrammeAccessContinuation,
   writeProgrammeOAuthClaimMarker,
@@ -93,6 +94,23 @@ test("access transition and exact claimed-content migration remain separate oper
   assert.deepEqual(loadProgrammeSubjectContent<typeof content>(storage, journey), {});
   assert.equal(hasProgrammeAccessAuthority(storage, journey), false);
   assert.equal(hasProgrammeAccessAuthority(storage, unrelated), false);
+});
+
+test("pending claim access transition makes the user authoritative while keeping only the dormant journey pointer", () => {
+  const storage = new MemoryStorage();
+  const journey = anonymousProgrammeSubject(storage);
+  const claimant = userProgrammeSubject("pending-claim-user");
+  saveProgrammeSubjectContent(storage, journey, { momentMap: { situation: "LOCAL-ONLY-SENTINEL" } });
+  writeProgrammeAccessContinuation(storage, journey, authority(journey.id));
+
+  transitionProgrammeAccessToUserForPendingClaim(storage, journey, claimant);
+
+  assert.equal(hasProgrammeAccessAuthority(storage, claimant), true);
+  assert.equal(hasProgrammeAccessAuthority(storage, journey), false);
+  assert.equal(readProgrammeAccessContinuation(storage), null);
+  assert.equal(storage.getItem(programmeLocalStorageKeysForTests.journeyPointer), journey.id);
+  assert.deepEqual(loadProgrammeSubjectContent(storage, claimant), {});
+  assert.match(JSON.stringify(loadProgrammeSubjectContent(storage, journey)), /LOCAL-ONLY-SENTINEL/);
 });
 
 test("access continuation is versioned, bounded, current-journey-only and contains no private content", () => {

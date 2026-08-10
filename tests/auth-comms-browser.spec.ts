@@ -419,14 +419,16 @@ test("failed Google-return claim redemption exits loading and retries without lo
     continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
     journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
     userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+    userAuthority: sessionStorage.getItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(user)}`),
     browserStorageContainsRawClaim: [...Object.values(sessionStorage), ...Object.values(localStorage)].some((value) => value?.includes(rawClaim)),
   }), { journey: journeyId, user: userId, rawClaim: syntheticHttpOnlyClaim });
   expect(failedStorage.url).toBe(`${baseUrl}/program`);
   expect(failedStorage.url).not.toContain(syntheticHttpOnlyClaim);
   expect(failedStorage.marker).toContain(journeyId);
-  expect(failedStorage.continuation).toContain(journeyId);
+  expect(failedStorage.continuation).toBeNull();
   expect(failedStorage.journeyContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
-  expect(failedStorage.userContent).toBeNull();
+  expect(failedStorage.userContent ?? "").not.toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(failedStorage.userAuthority).toContain(journeyId);
   expect(failedStorage.browserStorageContainsRawClaim).toBe(false);
   expect((await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_claim")?.value).toBe(syntheticHttpOnlyClaim);
 
@@ -445,6 +447,123 @@ test("failed Google-return claim redemption exits loading and retries without lo
   expect(succeededStorage.journeyContent).toBeNull();
   expect(succeededStorage.userContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
   expect(succeededStorage.userAuthority).toContain(journeyId);
+});
+
+test("expired claim settles to an authenticated zero-progress subject and never writes through the stale anonymous session", async ({ page }) => {
+  const userId = "expired-claim-authenticated-user";
+  const journeyId = "d1088123-d838-47ef-bc46-20a237e56194";
+  await page.context().addCookies([
+    { name: "sevenbet_programme_claim", value: "expired-claim-cookie", url: baseUrl, httpOnly: true, sameSite: "Lax" },
+    { name: "sevenbet_programme_session", value: "stale-anonymous-cookie", url: baseUrl, httpOnly: true, sameSite: "Lax" },
+  ]);
+  await page.addInitScript(({ journey }) => {
+    if (sessionStorage.getItem("expired-claim-browser-seeded") === "true") return;
+    sessionStorage.setItem("expired-claim-browser-seeded", "true");
+    const now = Date.now();
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      momentMap: { situation: "EXPIRED-CLAIM-LOCAL-SENTINEL" },
+    }));
+    sessionStorage.setItem("sevenbet.programme.oauth-claim.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_CLAIM_GOOGLE",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 10 * 60 * 1000,
+    }));
+  }, { journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "expired-claim-session", token: "session-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Expired Claim", email: "expired@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  let redemptionRequests = 0;
+  await page.route("**/api/program/claims/redeem", async (route) => {
+    redemptionRequests += 1;
+    await route.fulfill({
+      status: 410,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: false, code: "CLAIM_EXPIRED", error: "Pending programme claim has expired" }),
+    });
+  });
+  await page.route("**/api/program/dashboard", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 0,
+          currentMission: 1,
+          missions: [
+            { missionNumber: 1, title: "Map the moment", status: "current" },
+            { missionNumber: 2, title: "Set a 7-day goal", status: "locked" },
+          ],
+          activeDays: 0,
+          currentStreak: 0,
+          achievements: [],
+          momentMap: null,
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+  let authenticatedWrites = 0;
+  let anonymousWrites = 0;
+  await page.route("**/api/program/missions/01", async (route) => {
+    authenticatedWrites += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, mission: { missionNumber: 1, status: "in_progress", taskStates: ["brief"] } }) });
+  });
+  await page.route("**/api/program/session/mission-01", async (route) => {
+    anonymousWrites += 1;
+    await route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, code: "CONFLICT", error: "stale anonymous session" }) });
+  });
+
+  await open(page, "/program?auth=google-return");
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await expect(page.getByText("You’re signed in. Your earlier progress could not be recovered, so you can start Mission 01 when you’re ready.")).toBeVisible();
+  await expect(page.getByText(/Pending programme claim has expired|CLAIM_EXPIRED|Mission 01 draft can no longer be changed/)).toHaveCount(0);
+  expect(redemptionRequests).toBe(1);
+
+  const settled = await page.evaluate(({ journey, user }) => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+  }), { journey: journeyId, user: userId });
+  expect(settled.marker).toBeNull();
+  expect(settled.journeyContent).toContain("EXPIRED-CLAIM-LOCAL-SENTINEL");
+  expect(settled.userContent ?? "").not.toContain("EXPIRED-CLAIM-LOCAL-SENTINEL");
+
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  expect(redemptionRequests).toBe(1);
+  await page.getByRole("button", { name: "Start Mission 01" }).click();
+  await page.getByRole("button", { name: "Begin with one moment" }).click();
+  await expect(page.getByRole("heading", { name: "Triggers are not the same as choices." })).toBeVisible();
+  expect(authenticatedWrites).toBe(1);
+  expect(anonymousWrites).toBe(0);
 });
 
 test("expired access continuation returns to the consolidated access screen", async ({ page }) => {
@@ -541,6 +660,20 @@ test("fresh authenticated user resolves to Programme home and starts Mission 01 
       }),
     });
   });
+  let authenticatedMissionOneWrites = 0;
+  let anonymousMissionOneWrites = 0;
+  await page.route("**/api/program/missions/01", async (route) => {
+    authenticatedMissionOneWrites += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, mission: { missionNumber: 1, status: "in_progress", taskStates: ["brief"] } }),
+    });
+  });
+  await page.route("**/api/program/session/mission-01", async (route) => {
+    anonymousMissionOneWrites += 1;
+    await route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, code: "CONFLICT", error: "stale anonymous session" }) });
+  });
 
   await open(page, "/program");
   await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
@@ -557,6 +690,10 @@ test("fresh authenticated user resolves to Programme home and starts Mission 01 
   await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
   await page.getByRole("button", { name: "Start Mission 01" }).click();
   await expect(page.getByRole("heading", { name: "Map one real moment." })).toBeVisible();
+  await page.getByRole("button", { name: "Begin with one moment" }).click();
+  await expect(page.getByRole("heading", { name: "Triggers are not the same as choices." })).toBeVisible();
+  expect(authenticatedMissionOneWrites).toBe(1);
+  expect(anonymousMissionOneWrites).toBe(0);
   await open(page, "/program");
   await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
   await open(page, "/program?entry=start");
@@ -571,6 +708,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   const priorJourneyId = "8a6bf1a5-b7f5-497d-883f-3b3f1ebd0fb8";
   let authenticated = true;
   let signOutRequests = 0;
+  let subjectTransitionRequests = 0;
 
   await page.addInitScript(({ id, journeyId }) => {
     if (sessionStorage.getItem("auth-harden-browser-seeded") === "true") return;
@@ -655,6 +793,18 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
       body: JSON.stringify({ success: true }),
     });
   });
+  await page.route("**/api/program/session", async (route) => {
+    if (route.request().method() !== "DELETE") return route.continue();
+    subjectTransitionRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "set-cookie": "sevenbet_programme_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+      },
+      body: JSON.stringify({ ok: true }),
+    });
+  });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/program");
@@ -679,6 +829,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toHaveCount(0);
   expect(signOutRequests).toBe(1);
+  expect(subjectTransitionRequests).toBe(1);
   const storage = await page.evaluate(({ id, journeyId }) => {
     const pointer = sessionStorage.getItem("sevenbet.programme.journey.v2");
     return {

@@ -38,8 +38,10 @@ The older `ProgrammeFlowService` remains as a compatibility façade for existing
 ### Mission 01
 
 - **Detected:** anonymous draft input accepts only `taskStates`.
+- **Detected:** authenticated Mission 01 draft/completion uses dedicated Better Auth user-owned routes. It accepts only `taskStates` and `timeZone`, never resolves the anonymous cookie, and conditionally awards completion once.
 - **Detected:** `AnonymousProgrammeSession` stores token hash, mission/task state, versions, expiry/activity times and `{ contentStorage: "browser_session" }`.
 - **Detected:** claim redemption creates the required `MomentMap` relation with neutral implementation markers, then awards Mission 1 progression/XP server-side.
+- **Detected:** after authentication the Better Auth user is the only interactive subject. Pending anonymous journeys remain dormant claim inputs; terminal claim failure resolves to the authenticated zero-progress projection without copying or mutating the anonymous narrative/session.
 - **Not detected:** raw situation, cue, thought/feeling, response, consequence or notice-rule text in active requests.
 
 ### Mission 02

@@ -1,5 +1,6 @@
 import { ActiveDayService } from "@/lib/programme/application/active-day.service";
 import { MissionFourService } from "@/lib/programme/application/mission-04.service";
+import { MissionOneService } from "@/lib/programme/application/mission-01.service";
 import { MissionThreeService } from "@/lib/programme/application/mission-03.service";
 import { MissionTwoService } from "@/lib/programme/application/mission-02.service";
 import { ProgrammeArtefactService } from "@/lib/programme/application/programme-artefact.service";
@@ -19,6 +20,7 @@ import {
 export class ProgrammeFlowService {
   private readonly sessions: ProgrammeSessionService;
   private readonly claims: ProgrammeClaimService;
+  private readonly missionOne: MissionOneService;
   private readonly dashboard: ProgrammeDashboardService;
   private readonly missionTwo: MissionTwoService;
   private readonly missionThree: MissionThreeService;
@@ -30,6 +32,7 @@ export class ProgrammeFlowService {
   constructor(unitOfWork: ProgrammeUnitOfWork = programmeUnitOfWork) {
     this.sessions = new ProgrammeSessionService(unitOfWork);
     this.claims = new ProgrammeClaimService(unitOfWork);
+    this.missionOne = new MissionOneService(unitOfWork);
     this.dashboard = new ProgrammeDashboardService(unitOfWork);
     this.missionTwo = new MissionTwoService(unitOfWork);
     this.missionThree = new MissionThreeService(unitOfWork);
@@ -50,6 +53,12 @@ export class ProgrammeFlowService {
   }
   redeemPendingClaim(userId: string, token: string, timezone: unknown, now?: Date) {
     return this.claims.redeemPendingClaim(userId, token, timezone, now);
+  }
+  saveAuthenticatedMissionOneDraft(userId: string, value: unknown) {
+    return this.missionOne.saveDraft(userId, value);
+  }
+  completeAuthenticatedMissionOne(userId: string, timezone: unknown, now?: Date) {
+    return this.missionOne.complete(userId, timezone, now);
   }
   getDashboard(userId: string) {
     return this.dashboard.getDashboard(userId);

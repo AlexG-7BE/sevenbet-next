@@ -29,7 +29,7 @@ Routes do not import Prisma, calculate rewards/progression, decide Mission eligi
 ## Transactions and idempotency
 
 - The transaction boundary is the complete user result, not an individual table write.
-- Mission 01 claim and Missions 02–04 completion use `Serializable` Prisma transactions with bounded retry for transaction conflicts.
+- Mission 01 claim/direct authenticated completion and Missions 02–04 completion use `Serializable` Prisma transactions with bounded retry for transaction conflicts.
 - Dashboard projection returned by completion uses the same transaction context.
 - No network call, external provider request or unbounded work runs inside a database transaction.
 - Claim consumption is conditional. Mission, artefact, progress-event, XP, achievement and active-day identities are database-constrained.

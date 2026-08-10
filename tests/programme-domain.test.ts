@@ -131,6 +131,8 @@ test("Programme delivery and domain dependency boundaries remain explicit", () =
   const routeFiles = [
     "app/api/program/claims/redeem/route.ts",
     "app/api/program/dashboard/route.ts",
+    "app/api/program/missions/01/route.ts",
+    "app/api/program/missions/01/complete/route.ts",
     "app/api/program/missions/02/route.ts",
     "app/api/program/missions/03/route.ts",
     "app/api/program/missions/04/route.ts",
@@ -153,6 +155,17 @@ test("Programme delivery and domain dependency boundaries remain explicit", () =
   for (const file of domainFiles) {
     const source = readFileSync(file, "utf8");
     assert.doesNotMatch(source, /next\/|@prisma\/client|infrastructure\//);
+  }
+});
+
+test("authenticated Mission 01 routes never resolve an anonymous cookie subject", () => {
+  for (const file of [
+    "app/api/program/missions/01/route.ts",
+    "app/api/program/missions/01/complete/route.ts",
+  ]) {
+    const route = readFileSync(file, "utf8");
+    assert.match(route, /requireCurrentUser\(request\.headers\)/);
+    assert.doesNotMatch(route, /anonymousProgrammeCookie|requestCookie|ProgrammeSessionService/);
   }
 });
 

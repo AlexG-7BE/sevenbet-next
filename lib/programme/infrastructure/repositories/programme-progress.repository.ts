@@ -66,6 +66,13 @@ export class ProgrammeProgressRepository {
     });
   }
 
+  setEnrollmentTimezone(enrollmentId: string, timezone: string) {
+    return this.database.programEnrollment.update({
+      where: { id: enrollmentId },
+      data: { timezone },
+    });
+  }
+
   findMissionProgress(enrollmentId: string, missionNumber: number) {
     return this.database.programmeMissionProgress.findUnique({
       where: { enrollmentId_missionNumber: { enrollmentId, missionNumber } },
@@ -91,6 +98,27 @@ export class ProgrammeProgressRepository {
       where: { enrollmentId_missionNumber: { enrollmentId, missionNumber } },
       update: data,
       create: { enrollmentId, missionNumber, ...data },
+    });
+  }
+
+  completeMissionProgressIfReady(input: {
+    enrollmentId: string;
+    missionNumber: number;
+    taskStates: string[];
+    completedAt: Date;
+  }) {
+    return this.database.programmeMissionProgress.updateMany({
+      where: {
+        enrollmentId: input.enrollmentId,
+        missionNumber: input.missionNumber,
+        status: "READY_TO_SAVE",
+      },
+      data: {
+        status: "COMPLETED",
+        taskStates: input.taskStates,
+        draft: Prisma.JsonNull,
+        completedAt: input.completedAt,
+      },
     });
   }
 

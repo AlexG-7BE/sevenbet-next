@@ -264,6 +264,12 @@ class MemoryProgrammeRepository {
     return row;
   }
 
+  async setEnrollmentTimezone(enrollmentId: string, timezone: string) {
+    const row = this.enrollments.find((item) => item.id === enrollmentId)!;
+    row.timezone = timezone;
+    return row;
+  }
+
   async findMissionProgress(enrollmentId: string, missionNumber: number) {
     return this.missions.find((item) => item.enrollmentId === enrollmentId && item.missionNumber === missionNumber) ?? null;
   }
@@ -276,6 +282,19 @@ class MemoryProgrammeRepository {
       this.missions.push(row);
     }
     return row;
+  }
+
+  async completeMissionProgressIfReady(input: any) {
+    const row = await this.findMissionProgress(input.enrollmentId, input.missionNumber);
+    if (!row || row.status !== "READY_TO_SAVE") return { count: 0 };
+    Object.assign(row, {
+      status: "COMPLETED",
+      taskStates: input.taskStates,
+      draft: null,
+      completedAt: input.completedAt,
+      updatedAt: input.completedAt,
+    });
+    return { count: 1 };
   }
 
   async updateMissionDraftIfOpen(input: any) {
@@ -541,6 +560,56 @@ test("anonymous Mission 01 reaches registration_required without persistent XP",
   assert.equal(repository.xpEvents.length, 0);
 });
 
+test("fresh authenticated Mission 01 uses only user-owned progress and completes exactly once", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+
+  const first = await service.saveAuthenticatedMissionOneDraft("fresh-user", {
+    taskStates: [missionOneTaskStates[0]],
+  });
+  assert.equal(first.status, "in_progress");
+  assert.equal(repository.anonymousSessions.length, 0);
+  assert.equal(repository.xpEvents.length, 0);
+  const zeroProgress = await service.getDashboard("fresh-user");
+  assert.equal(zeroProgress.totalXp, 0);
+  assert.equal(zeroProgress.currentMission, 1);
+
+  await service.saveAuthenticatedMissionOneDraft("fresh-user", {
+    taskStates: [...missionOneTaskStates],
+  });
+  const [completed, retried] = await Promise.all([
+    service.completeAuthenticatedMissionOne("fresh-user", "Asia/Almaty", now),
+    service.completeAuthenticatedMissionOne("fresh-user", "Asia/Almaty", now),
+  ]);
+  assert.equal(completed.totalXp, 60);
+  assert.equal(retried.totalXp, 60);
+  assert.equal(completed.currentMission, 2);
+  assert.equal(repository.xpEvents.length, 1);
+  assert.equal(repository.momentMaps.length, 1);
+  assert.equal(repository.missions.filter((mission) => mission.missionNumber === 1 && mission.status === "COMPLETED").length, 1);
+});
+
+test("expired anonymous claim cannot keep an authenticated user on the anonymous write subject", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  const expiredAt = new Date(new Date(started.claim.expiresAt).getTime() + 1);
+
+  await assert.rejects(
+    () => service.redeemPendingClaim("fresh-after-expiry", started.claim.claimToken, "UTC", expiredAt),
+    /expired/i,
+  );
+  await service.saveAuthenticatedMissionOneDraft("fresh-after-expiry", {
+    taskStates: [missionOneTaskStates[0]],
+  });
+
+  assert.equal(repository.anonymousSessions[0].missionState, "REGISTRATION_REQUIRED");
+  assert.equal(repository.claims[0].consumedAt, null);
+  assert.equal(repository.enrollments.length, 1);
+  assert.equal(repository.missions[0].status, "IN_PROGRESS");
+  assert.equal(repository.xpEvents.length, 0);
+});
+
 test("anonymous autosave stores neutral continuity and concurrent claim creation has one winner", async () => {
   const repository = new MemoryProgrammeRepository();
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
@@ -582,6 +651,11 @@ test("claim redemption saves a neutral continuity marker, gives exactly 60 XP an
   );
   assert.equal(repository.xpEvents.length, 1);
   assert.equal(repository.momentMaps.length, 1);
+  await assert.rejects(
+    () => service.saveAuthenticatedMissionOneDraft("user-1", { taskStates: [missionOneTaskStates[0]] }),
+    /already completed/i,
+  );
+  assert.equal(repository.anonymousSessions[0].missionState, "COMPLETED");
 });
 
 test("invalid claims fail closed without creating persistent Programme state", async () => {

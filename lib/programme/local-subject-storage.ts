@@ -207,11 +207,12 @@ export function programmeAuthAccessHeaders(
   };
 }
 
-export function transitionProgrammeAccessToUser(
+function transitionProgrammeAccess(
   storage: SessionStorageLike,
   journey: ProgrammeLocalSubject,
   user: ProgrammeLocalSubject,
-  now = Date.now(),
+  preserveJourneyPointer: boolean,
+  now: number,
 ) {
   if (journey.kind !== "journey" || user.kind !== "user") {
     throw new Error("Programme access can transition only from an exact journey to an exact user");
@@ -222,8 +223,28 @@ export function transitionProgrammeAccessToUser(
   }
   storage.setItem(subjectKey(USER_ACCESS_KEY_PREFIX, user), JSON.stringify(marker));
   clearProgrammeAccessContinuation(storage);
-  if (storage.getItem(JOURNEY_POINTER_KEY) === journey.id) storage.removeItem(JOURNEY_POINTER_KEY);
+  if (!preserveJourneyPointer && storage.getItem(JOURNEY_POINTER_KEY) === journey.id) {
+    storage.removeItem(JOURNEY_POINTER_KEY);
+  }
   return marker;
+}
+
+export function transitionProgrammeAccessToUser(
+  storage: SessionStorageLike,
+  journey: ProgrammeLocalSubject,
+  user: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  return transitionProgrammeAccess(storage, journey, user, false, now);
+}
+
+export function transitionProgrammeAccessToUserForPendingClaim(
+  storage: SessionStorageLike,
+  journey: ProgrammeLocalSubject,
+  user: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  return transitionProgrammeAccess(storage, journey, user, true, now);
 }
 
 export function clearProgrammeAccessAuthority(storage: SessionStorageLike, subject: ProgrammeLocalSubject) {
