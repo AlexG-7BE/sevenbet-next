@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Archivo, Instrument_Serif } from "next/font/google";
 
 import { ActiveControlProgramme } from "@/components/programme/ActiveControlProgramme";
+import { ProgramAiExperience } from "@/components/programme/ProgramAiExperience";
 import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
+import { isProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +65,9 @@ export default function ProgramPage() {
             ),
           }}
         />
-        <ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} />
+        {isProgramAiV1Enabled()
+          ? <ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} />
+          : <ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} />}
       </div>
     </main>
   );

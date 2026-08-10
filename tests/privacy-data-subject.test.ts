@@ -52,6 +52,8 @@ function fakeDatabase() {
     xp: [{ id: "xp-a", userId: "user-a" }, { id: "xp-b", userId: "user-b" }] as Row[],
     achievements: [{ id: "achievement-a", userId: "user-a" }, { id: "achievement-b", userId: "user-b" }] as Row[],
     activeDays: [{ id: "day-a", userId: "user-a", enrollmentId: "enrollment-a" }, { id: "day-b", userId: "user-b", enrollmentId: "enrollment-b" }] as Row[],
+    startingPoints: [{ id: "starting-point-a", userId: "user-a", enrollmentId: "enrollment-a", startingPoint: "A-CONFIRMED-STARTING-POINT" }, { id: "starting-point-b", userId: "user-b", enrollmentId: "enrollment-b", startingPoint: "B-CONFIRMED-STARTING-POINT" }] as Row[],
+    sensitiveInputAuthorities: [{ id: "authority-a", userId: "user-a", purposeVersion: "purpose-v1", statementVersion: "statement-v1" }, { id: "authority-b", userId: "user-b", purposeVersion: "purpose-v1", statementVersion: "statement-v1" }] as Row[],
     anonymousSessions: [
       { id: "anonymous-a", draft: { momentMap: "A-LEGACY-DRAFT-SENTINEL" } },
       { id: "anonymous-b", draft: { momentMap: "B-DRAFT-SENTINEL" } },
@@ -95,11 +97,13 @@ function fakeDatabase() {
             urgeLearningRecord: children,
             activeBoundary: children,
             activeDays: rows.activeDays.filter((row) => row.enrollmentId === enrollment.id),
+            programmeStartingPoint: rows.startingPoints.find((row) => row.enrollmentId === enrollment.id) ?? null,
           })),
           xpEvents: rows.xp.filter((row) => row.userId === userId),
           achievements: rows.achievements.filter((row) => row.userId === userId),
           consumedProgrammeClaims: rows.claims.filter((row) => row.consumedByUserId === userId),
           programmeActiveDays: rows.activeDays.filter((row) => row.userId === userId),
+          programmeSensitiveInputAuthorities: rows.sensitiveInputAuthorities.filter((row) => row.userId === userId),
         };
       },
       delete: async ({ where }: { where: Row }) => {
@@ -121,6 +125,8 @@ function fakeDatabase() {
     userXpEvent: model(rows.xp),
     userAchievement: model(rows.achievements),
     programmeActiveDay: model(rows.activeDays),
+    programmeStartingPoint: model(rows.startingPoints),
+    programmeSensitiveInputAuthority: model(rows.sensitiveInputAuthorities),
     pendingProgrammeClaim: model(rows.claims),
     anonymousProgrammeSession: model(rows.anonymousSessions),
     verification: model(rows.verifications),
@@ -146,6 +152,8 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.equal(plan?.counts.consumedClaims, 1);
   assert.equal(plan?.counts.linkedAnonymousSessions, 1);
   assert.equal(plan?.counts.legacyDraftBearingAnonymousSessions, 1);
+  assert.equal(plan?.counts.startingPoints, 1);
+  assert.equal(plan?.counts.sensitiveInputAuthorities, 1);
   assert.equal(rows.users.length, 2, "planning must not mutate either user");
 
   await executeDataSubjectDeletion(database, "user-a");
@@ -157,6 +165,8 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.deepEqual(rows.xp.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.achievements.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.activeDays.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.startingPoints.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.sensitiveInputAuthorities.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.verifications.map((row) => row.identifier), ["b@example.test"]);
   assert.equal(rows.claims.find((row) => row.id === "claim-a"), undefined);
   assert.equal(rows.claims.find((row) => row.id === "claim-b")?.consumedByUserId, "user-b");

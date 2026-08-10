@@ -27,4 +27,6 @@ The complete configuration-name inventory, classifications, consumers and handli
 
 **Detected:** controlled Better Auth secret recovery/rotation evidence and independent Preview auth/admin authority.
 
+**Detected on PROGRAM-AI-IMPL-01A branch:** `.env.example` documents `PROGRAM_AI_V1_ENABLED=false`. Only exact server-side `true` enables the RFC-022 slice. No hosted environment value or Production configuration change is detected.
+
 **Not detected:** a short-lived Production migration credential, provider-native migration hook or proven backup/restore configuration. Production migration automation remains provider/secret-architecture gated.

@@ -12,6 +12,15 @@ const nextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
         ],
       },
+      {
+        // The default stays deny-all. Only the Programme recorder may ask the
+        // browser for same-origin microphone permission; the user still owns
+        // the browser prompt and no audio is uploaded by this foundation.
+        source: "/program",
+        headers: [
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=(), payment=(), usb=()" },
+        ],
+      },
     ];
   },
 };

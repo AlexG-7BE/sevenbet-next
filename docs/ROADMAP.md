@@ -27,7 +27,7 @@
 | 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
 | 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
 | 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 26 | PROGRAM-AI-01 | **PRODUCT/COMPLIANCE v2.2 COMPLETED — FOUNDER APPROVED / GO; IMPLEMENTATION BLOCKED** | The [final workstream-40 handoff](08_Research/PROGRAM-AI-01-Product-Compliance-Architecture-Handoff.md) is tracked. The current hard-coded Programme remains deployed through Mission 04 but is frozen for further expansion under the previous static model. Approved direction includes M1 `40 XP` before registration (`20 + 20`; clarification/signup `0`), Reviews after M3/M6/M10, and `+25 XP` for M2–M10 only as a default balancing hypothesis. Workstream 45 — Legal & Compliance is next; runtime AI, voice integration and Programme implementation are not authorised. |
+| 26 | PROGRAM-AI-IMPL-01A | **FOUNDER SECURITY/AUTHORITY CORRECTION IMPLEMENTED; EXACT-HEAD CI GREEN; PR REVIEW/PREVIEW QA PENDING** | The bounded RFC-022 slice now includes signed exact-journey session entry, the exact two-control access contract, anonymous-only → user-only authority evidence, immutable original confirmation, withdrawal/reconfirmation semantics and passing isolated feature-on/off browser lanes. No provider/SDK, Production flag/configuration, Google Production activation, generated Review or Mission 05–10 implementation is included. Legacy M1 remains the default. |
 | 27 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
@@ -40,10 +40,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Workstream 45 — Legal & Compliance resolves product classification, voice/transcript/raw narrative processing, Article 6/9, derived profiles, AI DPIA, profiling/automated decisions, crisis/safety, memory, transparency, retention/deletion, provider DPA/subprocessors/transfers/training/human review and commercial-data separation.
-2. Only after Founder Office accepts that Legal data envelope may workstream 20 — Product Design and workstream 30 — Backend/CMS proceed in parallel on bounded design and technical architecture.
-3. Do not create an implementation RFC or implement PROGRAM-AI-01 until Founder Office reconciles those later handoffs and issues new bounded implementation authority.
-4. Keep Production Google OAuth off unless a separate Founder-authorised Production activation closes its own credentials, origin/callback and verification gates.
-5. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
-6. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
-7. Acquire real partner evidence only under a later closed-beta authorisation decision.
+1. Complete PROGRAM-AI-IMPL-01A review and Preview responsive/accessibility, feature-on visual, feature-off legacy and rollback evidence without enabling Production; exact-head CI, fresh migration, typed fallback and Better Auth email continuation are green.
+2. Keep all real AI/transcription providers and data transfers off until a separate Founder decision closes provider DPA/subprocessor/transfer/training, DPIA, retention, monitoring and human-review gates.
+3. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
+4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
+5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
+6. Acquire real partner evidence only under a later closed-beta authorisation decision.

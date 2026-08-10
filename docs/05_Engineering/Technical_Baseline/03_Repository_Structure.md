@@ -9,7 +9,7 @@ sevenbet-next/
 ├── data/             Local JSON data
 ├── docs/             Product, implementation, and baseline documentation
 ├── lib/              Auth, CMS, Programme slices, media, affiliate and public-domain logic
-├── prisma/           Prisma schema and 17 SQL migrations
+├── prisma/           Prisma schema and 18 SQL migrations
 ├── scripts/          Admin bootstrap, integrity, smoke and visual-QA scripts
 ├── tests/            Node tests and Playwright browser test
 ├── .github/          Required CI, scheduled smoke, CODEOWNERS, PR template and Dependabot
@@ -38,14 +38,14 @@ The counts exclude `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverag
 | Measure | Count / result |
 | --- | --- |
 | Relevant directories | 235 |
-| Relevant files | 478 |
-| Source files | 390 |
-| Test files | 23 |
-| Prisma migrations | 17 |
-| Application page routes | 56 |
+| Relevant files | 851 |
+| Source files | 567 |
+| Test files | 77 |
+| Prisma migrations | 18 |
+| Application page routes | 60 |
 | Admin page routes | 32 |
-| API route handlers | 71 |
-| Prisma models | 65 |
+| API route handlers | 82 |
+| Prisma models | 67 |
 | Prisma enums | 38 |
 | Languages | TypeScript/TSX, JavaScript (MJS), SQL, Prisma schema language, CSS, JSON, Markdown |
 | Frameworks | Next.js App Router, React |
@@ -60,6 +60,7 @@ lib/programme/
 ├── domain/           Mission registry, reward policy, state rules and typed errors
 ├── infrastructure/   Prisma unit of work and scoped repositories
 ├── validation/       Shared primitives plus Mission 01–04 validators
+├── program-ai/       M1 contracts, exact validation, reward/gate policy and provider-neutral orchestration
 ├── contract.ts       Stable Programme transport/domain data contracts
 ├── http.ts           Public error-envelope mapping
 ├── rate-limit.ts     Provider contract and in-memory development implementation
@@ -69,5 +70,7 @@ lib/programme/
 **Detected:** scoped Programme routes import bounded application use cases and do not import Prisma or the compatibility `ProgrammeFlowService`. The 121-line compatibility facade remains for existing non-route callers and regression coverage; the former central Programme repository is not detected.
 
 **Detected:** `ProgrammeUnitOfWork` provides serializable completion transactions with bounded conflict retry and repeatable-read Dashboard/reward snapshots. Persistence is split across session, progression, artefact, reward/active-day and Dashboard repositories.
+
+**Detected, PROGRAM-AI-IMPL-01A branch:** the new M1 foundation adds one mission-specific application service and repository to the existing unit of work. It does not add a Mission switch, central repository, generic workflow engine or provider adapter.
 
 **Inferred:** this layout is a bounded hardening of the implemented Missions 01–04, not evidence that Missions 05–10 or the wider target architecture are implemented.

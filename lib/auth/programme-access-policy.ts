@@ -9,18 +9,25 @@ export type ProgrammeAuthAccessBoundary = {
   socialAccountCreation: boolean;
 };
 
+export function verifyProgrammeAccessHeaders(
+  headers: Pick<Headers, "get">,
+  { secret, now = Date.now() }: { secret: string; now?: number },
+) {
+  return verifyProgrammeAccessProof({
+    proof: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.proof),
+    journeyId: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.journey),
+    secret,
+    now,
+  });
+}
+
 export function programmeAuthAccessDenial(
   headers: Pick<Headers, "get">,
   boundary: ProgrammeAuthAccessBoundary,
   { secret, now = Date.now() }: { secret: string; now?: number },
 ) {
   if (!boundary.emailAccountCreation && !boundary.socialAuthentication) return null;
-  const verification = verifyProgrammeAccessProof({
-    proof: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.proof),
-    journeyId: headers.get(PROGRAMME_AUTH_ACCESS_HEADERS.journey),
-    secret,
-    now,
-  });
+  const verification = verifyProgrammeAccessHeaders(headers, { secret, now });
   if (verification.ok) return null;
   return Response.json(
     {

@@ -49,6 +49,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_NAME`, `BOOTSTRAP_ADMIN_PASSWORD`, `BOOTSTRAP_ADMIN_PROFILE_ID` | Personal/sensitive bootstrap inputs | Manual bootstrap script only | Founder Office decision owner; never routine runtime/CI |
 | `ADMIN_PROFILE_EMAIL`, `ADMIN_PROFILE_NAME` | Personal/sensitive operator input | Manual profile script only | Founder Office decision owner |
 | `PUBLIC_CASINO_CMS_ENABLED` | Sensitive feature flag | Public CMS-backed casino discovery; disabled in Preview | Repository maintainer |
+| `PROGRAM_AI_V1_ENABLED` | Sensitive feature flag | RFC-022 M1 Preview slice; exact `true` only; default off and Production unchanged | Founder Office plus repository maintainer |
 | `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | High-risk exceptional flag | RFC-012 scripts/public guard | Founder Office under RFC-012 only |
 | `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server redirect and confirmation paths; public affiliate redirects disabled in Preview | Founder Office plus compliance review |
 | `JURISDICTION_RESOLVER_SHADOW_ENABLED` | Diagnostic configuration | Obsolete bounded shadow-comparison helper only; no active public authority consumer | Repository maintainer |

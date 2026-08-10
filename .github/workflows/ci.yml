@@ -55,6 +55,22 @@ jobs:
     name: Build / Browser
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sevenbet
+          POSTGRES_PASSWORD: sevenbet
+          POSTGRES_DB: sevenbet_ci
+        ports:
+          - 54329:5432
+        options: >-
+          --health-cmd="pg_isready -U sevenbet -d sevenbet_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      CI: "true"
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -66,6 +82,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run ci:migrations
+      - run: npm run programme:seed
       - run: npm run build
       - run: npm run ci:build-secrets
       - run: npx playwright install --with-deps chromium
