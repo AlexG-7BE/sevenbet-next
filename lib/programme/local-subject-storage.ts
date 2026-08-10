@@ -1,3 +1,13 @@
+import {
+  PROGRAMME_ACCESS_HEADER_VALUES,
+  PROGRAMME_ACCESS_HEADERS,
+  PROGRAMME_ACCESS_INTENT,
+  PROGRAMME_ACCESS_TTL_MS,
+  PROGRAMME_ACCESS_VERSION,
+  PROGRAMME_PRIVACY_VERSION,
+  PROGRAMME_TERMS_VERSION,
+} from "@/lib/programme/access-contract";
+
 export type ProgrammeLocalSubject =
   | { kind: "journey"; id: string }
   | { kind: "user"; id: string };
@@ -6,10 +16,10 @@ type SessionStorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
 
 const JOURNEY_POINTER_KEY = "sevenbet.programme.journey.v2";
 const CONTENT_KEY_PREFIX = "sevenbet.programme.local-content.v2";
-const AGE_KEY_PREFIX = "sevenbet.age-attestation.v2";
+const ACCESS_CONTINUATION_KEY = "sevenbet.programme.access-continuation.v1";
+const USER_ACCESS_KEY_PREFIX = "sevenbet.programme.access-authority.v1";
 const OAUTH_CLAIM_MARKER_KEY = "sevenbet.programme.oauth-claim.v1";
 const LEGACY_KEYS = ["sevenbet.programme.local-content.v1", "sevenbet.age-attestation.v1"] as const;
-const AGE_ATTESTATION_VALUE = "18-or-over";
 const OAUTH_CLAIM_MARKER_VERSION = 1;
 const OAUTH_CLAIM_MARKER_TTL_MS = 10 * 60 * 1000;
 const OAUTH_CLAIM_INTENT = "PROGRAMME_CLAIM_GOOGLE";
@@ -21,6 +31,19 @@ type ProgrammeOAuthClaimMarker = {
   journeyId: string;
   createdAt: number;
   expiresAt: number;
+};
+
+type ProgrammeAccessMarker = {
+  version: typeof PROGRAMME_ACCESS_VERSION;
+  intent: typeof PROGRAMME_ACCESS_INTENT;
+  journeyId: string;
+  createdAt: number;
+  expiresAt: number;
+  termsVersion: typeof PROGRAMME_TERMS_VERSION;
+  privacyVersion: typeof PROGRAMME_PRIVACY_VERSION;
+  adultConfirmedAt: number;
+  termsAcceptedAt: number;
+  privacyAcknowledgedAt: number;
 };
 
 function subjectKey(prefix: string, subject: ProgrammeLocalSubject) {
@@ -80,13 +103,143 @@ export function clearProgrammeSubjectContent(storage: SessionStorageLike, subjec
   storage.removeItem(subjectKey(CONTENT_KEY_PREFIX, subject));
 }
 
-export function hasProgrammeAgeAttestation(storage: SessionStorageLike, subject: ProgrammeLocalSubject) {
-  removeLegacyGlobalBuckets(storage);
-  return storage.getItem(subjectKey(AGE_KEY_PREFIX, subject)) === AGE_ATTESTATION_VALUE;
+function parseProgrammeAccessMarker(raw: string | null, now: number) {
+  if (!raw) return null;
+  try {
+    const marker = JSON.parse(raw) as Partial<ProgrammeAccessMarker>;
+    const valid = marker.version === PROGRAMME_ACCESS_VERSION
+      && marker.intent === PROGRAMME_ACCESS_INTENT
+      && typeof marker.journeyId === "string"
+      && OPAQUE_JOURNEY_ID.test(marker.journeyId)
+      && typeof marker.createdAt === "number"
+      && Number.isFinite(marker.createdAt)
+      && typeof marker.expiresAt === "number"
+      && Number.isFinite(marker.expiresAt)
+      && marker.createdAt <= now
+      && marker.expiresAt > now
+      && marker.expiresAt - marker.createdAt === PROGRAMME_ACCESS_TTL_MS
+      && marker.termsVersion === PROGRAMME_TERMS_VERSION
+      && marker.privacyVersion === PROGRAMME_PRIVACY_VERSION
+      && marker.adultConfirmedAt === marker.createdAt
+      && marker.termsAcceptedAt === marker.createdAt
+      && marker.privacyAcknowledgedAt === marker.createdAt;
+    return valid ? marker as ProgrammeAccessMarker : null;
+  } catch {
+    return null;
+  }
 }
 
-export function setProgrammeAgeAttestation(storage: SessionStorageLike, subject: ProgrammeLocalSubject) {
-  storage.setItem(subjectKey(AGE_KEY_PREFIX, subject), AGE_ATTESTATION_VALUE);
+export function writeProgrammeAccessContinuation(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  if (subject.kind !== "journey" || !OPAQUE_JOURNEY_ID.test(subject.id)) {
+    throw new Error("Programme access continuation requires an exact anonymous journey");
+  }
+  if (storage.getItem(JOURNEY_POINTER_KEY) !== subject.id) {
+    throw new Error("Programme access continuation requires the current anonymous journey");
+  }
+  const marker: ProgrammeAccessMarker = {
+    version: PROGRAMME_ACCESS_VERSION,
+    intent: PROGRAMME_ACCESS_INTENT,
+    journeyId: subject.id,
+    createdAt: now,
+    expiresAt: now + PROGRAMME_ACCESS_TTL_MS,
+    termsVersion: PROGRAMME_TERMS_VERSION,
+    privacyVersion: PROGRAMME_PRIVACY_VERSION,
+    adultConfirmedAt: now,
+    termsAcceptedAt: now,
+    privacyAcknowledgedAt: now,
+  };
+  storage.setItem(ACCESS_CONTINUATION_KEY, JSON.stringify(marker));
+  return marker;
+}
+
+export function clearProgrammeAccessContinuation(storage: SessionStorageLike) {
+  storage.removeItem(ACCESS_CONTINUATION_KEY);
+}
+
+export function readProgrammeAccessContinuation(storage: SessionStorageLike, now = Date.now()) {
+  const marker = parseProgrammeAccessMarker(storage.getItem(ACCESS_CONTINUATION_KEY), now);
+  if (!marker || storage.getItem(JOURNEY_POINTER_KEY) !== marker.journeyId) {
+    clearProgrammeAccessContinuation(storage);
+    return null;
+  }
+  return marker;
+}
+
+function readUserProgrammeAccess(storage: SessionStorageLike, subject: ProgrammeLocalSubject, now: number) {
+  if (subject.kind !== "user") return null;
+  const key = subjectKey(USER_ACCESS_KEY_PREFIX, subject);
+  const marker = parseProgrammeAccessMarker(storage.getItem(key), now);
+  if (!marker) storage.removeItem(key);
+  return marker;
+}
+
+export function hasProgrammeAccessAuthority(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  removeLegacyGlobalBuckets(storage);
+  if (subject.kind === "journey") {
+    const marker = readProgrammeAccessContinuation(storage, now);
+    return marker?.journeyId === subject.id;
+  }
+  return Boolean(readUserProgrammeAccess(storage, subject, now));
+}
+
+export function programmeAccessExpiresAt(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  const marker = subject.kind === "journey"
+    ? readProgrammeAccessContinuation(storage, now)
+    : readUserProgrammeAccess(storage, subject, now);
+  return marker?.expiresAt ?? null;
+}
+
+export function programmeAccountCreationHeaders(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  now = Date.now(),
+): Record<string, string> {
+  if (!hasProgrammeAccessAuthority(storage, subject, now)) return {};
+  return {
+    [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
+    [PROGRAMME_ACCESS_HEADERS.terms]: PROGRAMME_ACCESS_HEADER_VALUES.terms,
+    [PROGRAMME_ACCESS_HEADERS.privacy]: PROGRAMME_ACCESS_HEADER_VALUES.privacy,
+  };
+}
+
+export function transitionProgrammeAccessToUser(
+  storage: SessionStorageLike,
+  journey: ProgrammeLocalSubject,
+  user: ProgrammeLocalSubject,
+  now = Date.now(),
+) {
+  if (journey.kind !== "journey" || user.kind !== "user") {
+    throw new Error("Programme access can transition only from an exact journey to an exact user");
+  }
+  const marker = readProgrammeAccessContinuation(storage, now);
+  if (!marker || marker.journeyId !== journey.id) {
+    throw new Error("Programme access continuation is missing, expired or mismatched");
+  }
+  storage.setItem(subjectKey(USER_ACCESS_KEY_PREFIX, user), JSON.stringify(marker));
+  clearProgrammeAccessContinuation(storage);
+  if (storage.getItem(JOURNEY_POINTER_KEY) === journey.id) storage.removeItem(JOURNEY_POINTER_KEY);
+  return marker;
+}
+
+export function clearProgrammeAccessAuthority(storage: SessionStorageLike, subject: ProgrammeLocalSubject) {
+  if (subject.kind === "journey") {
+    const marker = readProgrammeAccessContinuation(storage);
+    if (!marker || marker.journeyId === subject.id) clearProgrammeAccessContinuation(storage);
+    return;
+  }
+  storage.removeItem(subjectKey(USER_ACCESS_KEY_PREFIX, subject));
 }
 
 export function writeProgrammeOAuthClaimMarker(
@@ -153,9 +306,7 @@ export function migrateClaimedJourneyToUser<T extends object>(
   }
   const content = loadProgrammeSubjectContent<T>(storage, journey);
   if (Object.keys(content).length > 0) saveProgrammeSubjectContent(storage, user, content);
-  if (hasProgrammeAgeAttestation(storage, journey)) setProgrammeAgeAttestation(storage, user);
   clearProgrammeSubjectContent(storage, journey);
-  storage.removeItem(subjectKey(AGE_KEY_PREFIX, journey));
   if (storage.getItem(JOURNEY_POINTER_KEY) === journey.id) storage.removeItem(JOURNEY_POINTER_KEY);
   return content;
 }
@@ -163,7 +314,9 @@ export function migrateClaimedJourneyToUser<T extends object>(
 export const programmeLocalStorageKeysForTests = {
   journeyPointer: JOURNEY_POINTER_KEY,
   contentPrefix: CONTENT_KEY_PREFIX,
-  agePrefix: AGE_KEY_PREFIX,
+  accessContinuation: ACCESS_CONTINUATION_KEY,
+  userAccessPrefix: USER_ACCESS_KEY_PREFIX,
+  accessTtlMs: PROGRAMME_ACCESS_TTL_MS,
   oauthClaimMarker: OAUTH_CLAIM_MARKER_KEY,
   oauthClaimMarkerTtlMs: OAUTH_CLAIM_MARKER_TTL_MS,
   legacy: LEGACY_KEYS,

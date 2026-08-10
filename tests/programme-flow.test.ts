@@ -949,7 +949,11 @@ test("commercial activity cannot enter the Programme reward or active-day ledger
 test("foreign artefacts cannot be read, edited or deleted", async () => {
   const { service } = await missionFourFlow();
   await service.completeMissionFour("user-1", now);
-  await assert.rejects(() => service.getDashboard("user-2"), /enrollment not found/i);
+  const emptyDashboard = await service.getDashboard("user-2");
+  assert.equal(emptyDashboard.currentMission, 1);
+  assert.equal(emptyDashboard.totalXp, 0);
+  assert.equal(emptyDashboard.missions[0].status, "current");
+  assert.equal(emptyDashboard.missions.filter((mission: { status: string }) => mission.status === "completed").length, 0);
   await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /stored only in this browser session/i);
   await assert.rejects(() => service.deleteMomentMap("user-2", now), /enrollment not found/i);
   await assert.rejects(() => service.updateCurrentGoal("user-2", { action: "foreign" }, now), /enrollment not found/i);

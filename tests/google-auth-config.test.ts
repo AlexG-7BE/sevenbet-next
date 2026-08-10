@@ -28,6 +28,8 @@ test("Google uses Better Auth's bounded identity provider and safe linking optio
   const config = readFileSync("lib/auth/config.ts", "utf8");
   const provider = config.slice(config.indexOf("socialProviders"), config.indexOf("trustedOrigins"));
   const route = readFileSync("app/api/auth/[...all]/route.ts", "utf8");
+  const accessContract = readFileSync("lib/programme/access-contract.ts", "utf8");
+  const accessPolicy = readFileSync("lib/auth/programme-access-policy.ts", "utf8");
 
   assert.match(config, /encryptOAuthTokens: true/);
   assert.match(config, /updateAccountOnSignIn: false/);
@@ -42,7 +44,13 @@ test("Google uses Better Auth's bounded identity provider and safe linking optio
   assert.match(provider, /disableImplicitSignUp: true/);
   assert.doesNotMatch(provider, /scope|gmail|contacts|calendar|offline/i);
   assert.match(route, /sign-in\/social/);
-  assert.match(route, /x-sevenbet-age-attestation/);
+  assert.match(route, /programmeAuthAccessDenial/);
+  assert.match(accessPolicy, /PROGRAMME_ACCESS_HEADERS\.age/);
+  assert.match(accessPolicy, /PROGRAMME_ACCESS_HEADERS\.terms/);
+  assert.match(accessPolicy, /PROGRAMME_ACCESS_HEADERS\.privacy/);
+  assert.match(accessContract, /x-sevenbet-age-attestation/);
+  assert.match(accessContract, /x-sevenbet-terms-acceptance/);
+  assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
 });
 
 test("Google credentials remain server-named and are never public build variables", () => {

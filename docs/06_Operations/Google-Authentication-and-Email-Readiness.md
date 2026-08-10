@@ -1,9 +1,9 @@
 # Google Authentication and Email Readiness
 
-- **Status:** Repository foundation ready; external Google and email activation open
+- **Status:** Identity-only baseline merged; GOOGLE-OAUTH-ACTIVATE-01 Preview flow correction under review; external Google and email activation open
 - **Owner:** Founder Office configuration owner with Engineering and Privacy review
-- **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01
-- **Last reviewed:** 2026-08-09
+- **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01 and for Programme access continuation/home routing by RFC-021
+- **Last reviewed:** 2026-08-10
 
 ## Evidence status
 
@@ -17,6 +17,8 @@
 - Client-supplied Google ID-token sign-in is disabled. The normal authorization-code redirect and `/api/auth/callback/google` remain enabled.
 - `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are disabled because B4GAMBLE has no approved provider-management or Google API use case.
 - Preview Better Auth continues to derive one exact branch host from `VERCEL_BRANCH_URL`; wildcard or contradictory origins fail closed.
+- The GOOGLE-OAUTH-ACTIVATE-01 candidate uses one two-control Programme access screen and a separate, exact-journey, 60-minute tab authority. Email and explicit Google account creation require current age/Terms/Privacy headers; returning sign-in does not recreate Terms acceptance.
+- Programme headers and `/program` home routing resolve actual Better Auth session state. A signed-in user without enrollment receives a non-mutating Mission 01-current, 0-XP Dashboard projection and starts Mission 01 explicitly.
 - The communications module has closed purposes, fixed templates, authoritative recipient resolution, sender categories, idempotency, bounded audit metadata, a disabled runtime transport and an in-memory test transport.
 
 ### Inferred
@@ -42,10 +44,10 @@ Better Auth's provider callback path is exactly `/api/auth/callback/google`.
 | Environment | B4GAMBLE origin | Exact callback to register | Credential boundary |
 | --- | --- | --- | --- |
 | Local | `http://localhost:4173` | `http://localhost:4173/api/auth/callback/google` | Developer-owned client only; synthetic accounts |
-| Preview | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app` | `https://sevenbet-next-git-codex-auth-comms-0-22e2e7-alexg-7bes-projects.vercel.app/api/auth/callback/google` | Separate Preview client and Preview database/session secret |
+| Preview | `https://<ACTIVE_OAUTH_TEST_BRANCH_STABLE_ALIAS>` | `https://<ACTIVE_OAUTH_TEST_BRANCH_STABLE_ALIAS>/api/auth/callback/google` | Separate Preview client and Preview database/session secret, scoped to the exact active OAuth test branch |
 | Production | `https://b4gamble.com` | `https://b4gamble.com/api/auth/callback/google` | Separate Production client and Production database/session secret |
 
-The Preview host above is the stable branch alias exposed by PR #58; the first generated deployment hostname was deliberately not used. Register only this exact callback before Google Preview activation. Do not register a random generated deployment hostname, a wildcard `*.vercel.app` redirect, the Production host for Preview, or a substring/pattern. The application deliberately rejects a Preview base URL that does not equal the exact `VERCEL_BRANCH_URL` origin.
+The Preview value is deliberately operational rather than a permanent historical branch hostname. The active OAuth work-package handoff must record the exact current stable branch alias, deployment ID and source SHA; Founder Office must then register that one exact origin/callback and scope the Preview credentials to that branch. Do not reuse an earlier AUTH-COMMS/AUTH-HARDEN alias, a generated deployment hostname, wildcard `*.vercel.app`, Production host, substring or pattern. The application rejects a Preview base URL that does not equal the exact `VERCEL_BRANCH_URL` origin.
 
 The approved canonical Production origin is `https://b4gamble.com`. Set `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` to that exact origin together through release governance. When Google Production activation is separately authorised, register that exact JavaScript origin and callback. Do not leave the Vercel hostname and custom domain mixed across state/cookie boundaries.
 
@@ -68,12 +70,12 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 2. Confirm the Google option is absent with no credentials and with only one credential.
 3. With a complete Preview pair, confirm the button is visible and labelled `Continue with Google` with the official multicolour mark.
 4. Inspect the authorization request: only `openid`, `email` and `profile`; callback host/path exact; state and PKCE present; no caller-controlled callback.
-5. Exercise a new Google sign-up after the separate 18+ and Terms controls. Confirm one `User`, one Google `Account`, no password requirement and no `AdminUser`.
+5. Exercise a new Google sign-up after the one consolidated 18+/Terms/Privacy access screen. Confirm the later account form has no duplicate controls, then confirm one `User`, one Google `Account`, no password requirement and no `AdminUser`.
 6. Exercise a returning Google user. Confirm the provider account ID remains stable, no duplicate `User` is created, the session succeeds and all token/scope/expiry fields remain `null`.
 7. Exercise a verified existing email/password account with the same Google email. Confirm one `User` with multiple authentication methods. An unverified local email must fail safely rather than merge.
 8. Confirm a Google identity already owned by User A cannot be reassigned or linked to User B.
-9. Exercise Mission 01 claim continuation: exact marker, server claim redemption, one reward, local journey-to-user migration and source removal. Then exercise expired/mismatched marker, cancellation, ordinary sign-in and User A → logout → User B negative cases.
-10. Confirm Google authentication without the bounded age header is denied, Programme mutations still require age confirmation and `/responsible-gambling` remains open.
+9. Exercise access continuation and Mission 01 claim continuation as separate authorities: exact marker, access-only transition, server claim redemption, one reward, exact local content migration and source removal. Then exercise expired/mismatched markers, cancellation, ordinary sign-in and User A → logout → User B negative cases.
+10. Confirm Google signup without bounded age/current Terms/Privacy headers is denied, returning login does not require account-creation Terms, Programme mutations still require age confirmation and `/responsible-gambling` remains open.
 11. Confirm direct client-supplied Google ID-token sign-in is rejected while the normal redirect flow remains available.
 12. Confirm `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are unavailable to authenticated and unauthenticated requests; confirm `/get-session` and `/sign-out` remain available.
 13. Confirm user-visible failures are generic and no token, email, database detail, secret or provider payload appears in HTML, logs or URLs.
@@ -147,8 +149,8 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 
 ## Founder/Operations inputs still required
 
-- Review and merge AUTH-HARDEN-01 before any Google client or credential activation. The merged B4GAMBLE Production authority remains `https://b4gamble.com` in the three documented Production-only environment values.
-- Register the documented stable Preview origin and callback in the separate Preview Google client.
+- Review the GOOGLE-OAUTH-ACTIVATE-01 correction exact diff/checks. Do not merge until the reconfigured Preview E2E is accepted.
+- Register the handoff's exact current stable Preview origin and callback in the separate Preview Google client; do not reuse the historical AUTH-COMMS/AUTH-HARDEN alias.
 - Create and place separate Production and Preview Google client IDs/secrets.
 - Verify the consent screen, authorised origins and exact callbacks.
 - Select the future B4GAMBLE-controlled sending domain.

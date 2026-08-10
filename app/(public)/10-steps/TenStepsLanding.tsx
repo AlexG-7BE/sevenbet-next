@@ -24,6 +24,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
   const confirmedProgramme = state.kind === "returning" || state.kind === "available-programme-complete";
   const signedIn = state.kind !== "anonymous";
   const actionLabel = confirmedProgramme ? "Open My Programme" : state.kind === "signed-in-fallback" ? "Open the Programme" : "Start Mission 01";
+  const actionHref = confirmedProgramme || state.kind === "signed-in-fallback" ? "/program" : "/program?entry=start";
   const finalAction = confirmedProgramme
     ? {
         eyebrow: "YOUR PROGRAMME",
@@ -149,7 +150,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <span>{finalAction.eyebrow}</span>
         <h2 id="final-action-title">{finalAction.title}</h2>
         <p>{finalAction.copy}</p>
-        <ActionLink className={styles.primaryButton} href="/program" size="large">{actionLabel}</ActionLink>
+        <ActionLink className={styles.primaryButton} href={actionHref} size="large">{actionLabel}</ActionLink>
       </section>
     </div>
   );
@@ -162,7 +163,7 @@ function AnonymousHero() {
         <span>PUBLIC PROGRAMME · START WITHOUT AN ACCOUNT</span>
         <h1 id="ten-steps-title"><strong>10 STEPS</strong><em>before you choose.</em></h1>
         <p>Compare casinos, understand offers, build your own rules.</p>
-        <ActionLink className={styles.primaryButton} href="/program" size="large">Start Mission 01</ActionLink>
+        <ActionLink className={styles.primaryButton} href="/program?entry=start" size="large">Start Mission 01</ActionLink>
         <small>MISSION 01 IS PRIVATE. CREATE AN ACCOUNT ONLY AFTER COMPLETION TO SAVE +60 XP.</small>
       </div>
       <div className={styles.heroVisual}>

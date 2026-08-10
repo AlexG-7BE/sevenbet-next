@@ -240,10 +240,15 @@ test("installed authorization-code flow creates, returns and safely same-email l
     emailVerified: true,
     name: "First Google User",
   };
+  let tokenExchangeCalls = 0;
 
   globalThis.fetch = (async (input) => {
     const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     assert.equal(url, "https://oauth2.googleapis.com/token");
+    tokenExchangeCalls += 1;
+    if (tokenExchangeCalls % 2 === 0) {
+      return Response.json({ error: "invalid_grant" }, { status: 400 });
+    }
     return Response.json({
       access_token: GOOGLE_ACCESS_SECRET_SENTINEL,
       refresh_token: GOOGLE_REFRESH_SECRET_SENTINEL,
@@ -269,11 +274,13 @@ test("installed authorization-code flow creates, returns and safely same-email l
     const payload = await start.json() as { url: string };
     const state = new URL(payload.url).searchParams.get("state");
     assert.ok(state);
-    const callback = await auth.handler(new Request(
-      `${BASE_URL}/api/auth/callback/google?code=synthetic-code&state=${encodeURIComponent(state)}`,
-      { headers: { cookie: responseCookies(start) } },
-    ));
+    const callbackUrl = `${BASE_URL}/api/auth/callback/google?code=synthetic-code&state=${encodeURIComponent(state)}`;
+    const callbackCookie = responseCookies(start);
+    const callback = await auth.handler(new Request(callbackUrl, { headers: { cookie: callbackCookie } }));
     assert.ok([302, 303].includes(callback.status));
+    const replay = await auth.handler(new Request(callbackUrl, { headers: { cookie: callbackCookie } }));
+    assert.ok([302, 303].includes(replay.status));
+    assert.match(replay.headers.get("location") || "", /auth=google-error/);
     return callback;
   }
 
@@ -441,6 +448,8 @@ test("normal redirect OAuth and required session endpoints remain available whil
 test("application config preserves safe implicit linking, age enforcement and the exact identity-only perimeter", () => {
   const config = readFileSync("lib/auth/config.ts", "utf8");
   const route = readFileSync("app/api/auth/[...all]/route.ts", "utf8");
+  const accessContract = readFileSync("lib/programme/access-contract.ts", "utf8");
+  const accessPolicy = readFileSync("lib/auth/programme-access-policy.ts", "utf8");
 
   assert.match(config, /updateAccountOnSignIn: false/);
   assert.match(config, /disableIdTokenSignIn: true/);
@@ -451,6 +460,8 @@ test("application config preserves safe implicit linking, age enforcement and th
   assert.match(config, /identityOnlyOAuthAccountDatabaseHooks/);
   assert.match(config, /IDENTITY_ONLY_DISABLED_AUTH_PATHS/);
   assert.doesNotMatch(config, /trustedProviders/);
-  assert.match(route, /x-sevenbet-age-attestation/);
+  assert.match(route, /programmeAuthAccessDenial/);
+  assert.match(accessPolicy, /PROGRAMME_ACCESS_HEADERS\.age/);
+  assert.match(accessContract, /x-sevenbet-age-attestation/);
   assert.match(route, /sign-in\/social/);
 });

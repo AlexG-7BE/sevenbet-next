@@ -6,18 +6,28 @@ import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type
 import { authClient, useSession } from "@/lib/auth/client";
 import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
+  PROGRAMME_ACCESS_HEADERS,
+  PROGRAMME_ACCESS_HEADER_VALUES,
+} from "@/lib/programme/access-contract";
+import {
   anonymousProgrammeSubject,
+  clearProgrammeAccessAuthority,
+  clearProgrammeAccessContinuation,
   clearProgrammeOAuthClaimMarker,
   clearProgrammeSubjectContent,
-  hasProgrammeAgeAttestation,
+  hasProgrammeAccessAuthority,
   loadProgrammeSubjectContent,
   migrateClaimedJourneyToUser,
+  programmeAccessExpiresAt,
+  programmeAccountCreationHeaders,
   programmeSubjectsEqual,
+  readProgrammeAccessContinuation,
   readProgrammeOAuthClaimMarker,
   rotateAnonymousProgrammeSubject,
   saveProgrammeSubjectContent,
-  setProgrammeAgeAttestation,
+  transitionProgrammeAccessToUser,
   userProgrammeSubject,
+  writeProgrammeAccessContinuation,
   writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
@@ -267,14 +277,14 @@ function mergeDashboardLocal(dashboard: DashboardModel, local: Partial<Programme
 }
 
 async function programmeRequest<T>(path: string, subject: ProgrammeLocalSubject, init?: RequestInit) {
-  const ageAttested = hasProgrammeAgeAttestation(window.sessionStorage, subject);
+  const accessGranted = hasProgrammeAccessAuthority(window.sessionStorage, subject);
   const response = await fetch(path, {
     credentials: "same-origin",
     cache: "no-store",
     ...init,
     headers: {
       ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...(ageAttested ? { "x-sevenbet-age-attestation": "18-or-over" } : {}),
+      ...(accessGranted ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age } : {}),
       ...init?.headers,
     },
   });
@@ -301,7 +311,7 @@ function reviewLabel(value: string) {
     : new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long" }).format(date);
 }
 
-function ProgrammeSignOut() {
+function ProgrammeSignOut({ userId }: { userId: string }) {
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -311,6 +321,8 @@ function ProgrammeSignOut() {
     try {
       const result = await authClient.signOut();
       if (result.error) throw new Error("Sign-out failed");
+      clearProgrammeAccessAuthority(window.sessionStorage, userProgrammeSubject(userId));
+      clearProgrammeAccessContinuation(window.sessionStorage);
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
       rotateAnonymousProgrammeSubject(window.sessionStorage);
       window.location.assign("/program");
@@ -333,7 +345,9 @@ function ProgrammeSignOut() {
   );
 }
 
-function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean }) {
+function Header({ xp }: { xp?: number }) {
+  const { data: session, isPending } = useSession();
+  const userId = session?.user?.id;
   return (
     <header className={styles.header}>
       <Link className={styles.wordmark} href="/">B4GAMBLE</Link>
@@ -346,15 +360,21 @@ function Header({ xp, authenticated }: { xp?: number; authenticated?: boolean })
       </nav>
       <div className={styles.accountNav}>
         <Link href="/responsible-gambling">Help</Link>
-        {authenticated ? <><span className={styles.xpPill}>{xp ?? 0} XP</span><ProgrammeSignOut /></> : <Link href="/program?auth=sign-in">Log in</Link>}
+        {isPending
+          ? <span className={styles.accountPill} role="status">Checking account…</span>
+          : userId
+            ? <><span className={styles.xpPill}>{xp ?? 0} XP</span><ProgrammeSignOut userId={userId} /></>
+            : <Link href="/program?auth=sign-in">Log in</Link>}
       </div>
     </header>
   );
 }
 
-function AgeGate({ onConfirm }: { onConfirm: () => void }) {
-  const [confirmed, setConfirmed] = useState(false);
-  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · 18+</span><h1>Confirm before you continue.</h1><p>Persistent B4GAMBLE accounts and Programme saving are for adults aged 18 or over. We do not ask for your date of birth or perform identity checks here.</p></div><label className={styles.check}><input checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><PrimaryButton disabled={!confirmed} onClick={onConfirm}>Continue to the Programme</PrimaryButton><p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth or KYC is collected by this step." /></section></div>;
+function AccessGate({ onConfirm }: { onConfirm: () => void }) {
+  const [adultConfirmed, setAdultConfirmed] = useState(false);
+  const [legalAcknowledged, setLegalAcknowledged] = useState(false);
+  const ready = adultConfirmed && legalAcknowledged;
+  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · ACCOUNT ACCESS</span><h1>Confirm before you continue.</h1><p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p></div><div className={styles.accountRequirements}><label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={legalAcknowledged} onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</span></label></div><PrimaryButton disabled={!ready} onClick={onConfirm}>Continue to the Programme</PrimaryButton><p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." /></section></div>;
 }
 
 function MissionProgress({ mission, step }: { mission: 1 | 2 | 3 | 4; step: number }) {
@@ -463,7 +483,7 @@ function Field({ label, value, onChange, placeholder, multiline = false, hint, t
 function MissionShell({ mission, step, xp, children }: { mission: 1 | 2 | 3 | 4; step: number; xp: number; children: ReactNode }) {
   return (
     <div className={styles.programmeShell}>
-      <Header xp={xp} authenticated={mission !== 1} />
+      <Header xp={xp} />
       <MissionProgress mission={mission} step={step} />
       {children}
     </div>
@@ -609,7 +629,6 @@ function GoogleMark() {
 function Registration({
   gate,
   map,
-  authenticated,
   onContinue,
   onSubmit,
   onGoogle,
@@ -620,32 +639,29 @@ function Registration({
 }: {
   gate: boolean;
   map: MomentMap;
-  authenticated: boolean;
   onContinue: () => void;
-  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) => Promise<void>;
-  onGoogle: (input: { mode: "sign-up" | "sign-in"; adultConfirmed: boolean; termsAccepted: boolean }) => Promise<void>;
+  onSubmit: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => Promise<void>;
+  onGoogle: (input: { mode: "sign-up" | "sign-in" }) => Promise<void>;
   googleAvailable: boolean;
   busy: boolean;
   error: string;
   returning?: boolean;
 }) {
+  const { data: session } = useSession();
+  const authenticated = Boolean(session?.user?.id);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [terms, setTerms] = useState(false);
-  const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [mode, setMode] = useState<"sign-up" | "sign-in">(returning ? "sign-in" : "sign-up");
 
   if (gate) {
     return (
-      <div className={styles.programmeShell}><Header authenticated={authenticated} xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · ACCOUNT FOR PROGRESS</span><h1>Keep your progress. Keep the words local.</h1><p>Create a private B4GAMBLE account so mission completion and +60 XP remain available. Your Moment Map narrative stays in this browser session.</p><ul><li>Keep the Moment Map locally in this tab</li><li>Save mission completion and receive 60 XP</li><li>Return to Mission 02 with neutral continuity</li></ul><Recognition label="ACCOUNT REWARD" value="+60 XP" note="Awarded after successful progress claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="LOCAL RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Stored only in this browser session" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the progress. Continue the path." note="The account stores completion and rewards, not this personal narrative." /></div></section><ActionBar busy={busy} note="No marketing consent is requested."><PrimaryButton onClick={onContinue}>{authenticated ? "Save my progress" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
+      <div className={styles.programmeShell}><Header xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · ACCOUNT FOR PROGRESS</span><h1>Keep your progress. Keep the words local.</h1><p>Create a private B4GAMBLE account so mission completion and +60 XP remain available. Your Moment Map narrative stays in this browser session.</p><ul><li>Keep the Moment Map locally in this tab</li><li>Save mission completion and receive 60 XP</li><li>Return to Mission 02 with neutral continuity</li></ul><Recognition label="ACCOUNT REWARD" value="+60 XP" note="Awarded after successful progress claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="LOCAL RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Stored only in this browser session" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the progress. Continue the path." note="The account stores completion and rewards, not this personal narrative." /></div></section><ActionBar busy={busy} note="No marketing consent is requested."><PrimaryButton onClick={onContinue}>{authenticated ? "Save my progress" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
     );
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (mode === "sign-up" && !terms) return;
-    if (mode === "sign-up" && !adultConfirmed) return;
-    await onSubmit({ email, password, mode, adultConfirmed });
+    await onSubmit({ email, password, mode });
   }
 
   return (
@@ -654,22 +670,16 @@ function Registration({
       <section className={styles.registrationForm}>
         <form onSubmit={submit}>
           <div className={styles.titleBlock}>
-            <span>PRIVATE B4GAMBLE ACCOUNT · 18+</span>
+            <span>PRIVATE B4GAMBLE ACCOUNT</span>
             <h1>{mode === "sign-up" ? "Create your account." : returning ? "Return to your programme." : "Sign in to save progress."}</h1>
             <p>Progress and rewards save to your account. Personal narrative stays only in this browser session and is not used for affiliate ranking or advertising targeting.</p>
           </div>
-          {mode === "sign-up" ? (
-            <div className={styles.accountRequirements}>
-              <label className={styles.check}><input checked={adultConfirmed} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label>
-              <label className={styles.check}><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link> · required</span></label>
-            </div>
-          ) : null}
           {googleAvailable ? (
             <>
               <button
                 className={styles.googleButton}
-                disabled={busy || (mode === "sign-up" && (!adultConfirmed || !terms))}
-                onClick={() => onGoogle({ mode, adultConfirmed, termsAccepted: terms })}
+                disabled={busy}
+                onClick={() => onGoogle({ mode })}
                 type="button"
               >
                 <GoogleMark />
@@ -682,7 +692,7 @@ function Registration({
           <Field label="Email address" type="email" value={email} onChange={setEmail} placeholder="you@example.com" hint="Used to sign in and recover access." />
           <Field label={mode === "sign-up" ? "Create a password" : "Password"} type="password" value={password} onChange={setPassword} placeholder="At least 12 characters" hint="Use a unique password you can save." />
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
-          <PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 || !terms || !adultConfirmed : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>
+          <PrimaryButton disabled={busy || !email || (mode === "sign-up" ? password.length < 12 : !password)} type="submit">{busy ? "Saving…" : mode === "sign-up" ? "Create private account" : returning ? "Sign in to my Dashboard" : "Sign in and save progress"}</PrimaryButton>
           <button className={styles.textButton} onClick={() => setMode(mode === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
         </form>
         <div className={styles.stack}>{returning ? <ArtifactCard eyebrow="PRIVATE PROGRAMME" title="Your work stays yours" body="Sign in to continue from the latest completed mission." footer="Personal narrative is not restored from the account" dark /> : <ArtifactCard eyebrow="LOCAL PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="This narrative stays in this browser session · +60 XP saves to the account" dark />}<PhotoTheatre image={PEOPLE.outcome} eyebrow="PRIVATE ACCOUNT · YOUR PLAN" title="Come back to your progress." note="No marketing consent is bundled with account creation." /></div>
@@ -692,26 +702,27 @@ function Registration({
 }
 
 function Dashboard({ dashboard, onStartMission, onEdit, onClearLocal }: { dashboard: DashboardModel; onStartMission: () => void; onEdit: (type: "moment" | "goal" | "signal" | "boundary") => void; onClearLocal: () => void }) {
+  const fresh = dashboard.currentMission === 1;
   const afterTwo = dashboard.currentMission >= 3;
   const afterThree = dashboard.currentMission >= 4;
   const afterFour = dashboard.currentMission >= 5;
-  const currentTitle = afterFour ? "05 · Check before deciding" : afterThree ? "04 · Build one boundary" : afterTwo ? "03 · Understand the urge" : "02 · Set a 7-day goal";
-  const currentCopy = afterFour ? "Run a short check before the next gambling decision." : afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and keep one local early signal." : "Turn the Moment Map into one specific action and a review date.";
-  const completedCount = afterFour ? 4 : afterThree ? 3 : afterTwo ? 2 : 1;
+  const currentTitle = fresh ? "01 · Map the moment" : afterFour ? "05 · Check before deciding" : afterThree ? "04 · Build one boundary" : afterTwo ? "03 · Understand the urge" : "02 · Set a 7-day goal";
+  const currentCopy = fresh ? "Create one private Moment Map and a notice rule before deciding whether to save progress." : afterFour ? "Run a short check before the next gambling decision." : afterThree ? "Create one personal rule you can edit, review or remove." : afterTwo ? "Learn what an urge can feel like and keep one local early signal." : "Turn the Moment Map into one specific action and a review date.";
+  const completedCount = dashboard.missions.filter((mission) => mission.status === "completed").length;
   const record = dashboard.urgeLearningRecord;
   const signalBody = record?.notNow
     ? "No personal signal saved yet. The evidence item and learning checks are complete."
     : record?.earlySignalText || `I will notice a change in ${(record?.earlySignalCategory || "my attention").replace("_", " ")} as information to pause.`;
   return (
     <div className={styles.dashboardPage}>
-      <Header authenticated xp={dashboard.totalXp} />
+      <Header xp={dashboard.totalXp} />
       <section className={styles.dashboardHeading}>
-        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{afterFour ? "Your boundary progress is active." : afterThree ? "Your signal step is complete." : afterTwo ? "Your 7-day goal progress is active." : "Your first map is complete."}</h1><p>{afterFour ? "Personal wording remains in this browser session. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns the local signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 uses your local map to build one specific 7-day goal."}</p><button className={styles.textButton} onClick={onClearLocal} type="button">Clear local Programme content</button></div>
-        <div className={styles.recognitionGrid}><Recognition label={afterTwo ? "TOTAL EARNED" : "MOMENT MAP SAVED"} value={afterTwo ? `${dashboard.totalXp} XP` : "+60 XP"} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
+        <div className={styles.titleBlock}><span>PERSONAL CONTROL DASHBOARD</span><h1>{fresh ? "Your Programme is ready." : afterFour ? "Your boundary progress is active." : afterThree ? "Your signal step is complete." : afterTwo ? "Your 7-day goal progress is active." : "Your first map is complete."}</h1><p>{fresh ? "Mission 01 is current and ready when you choose to start. You are signed in; no anonymous step has started for you." : afterFour ? "Personal wording remains in this browser session. Mission 05 is ready when the next design package is approved." : afterThree ? "Mission 04 turns the local signal into one concrete, editable boundary." : afterTwo ? "Mission 03 helps you notice what can happen before an action." : "Mission 02 uses your local map to build one specific 7-day goal."}</p><button className={styles.textButton} onClick={onClearLocal} type="button">Clear local Programme content</button></div>
+        <div className={styles.recognitionGrid}><Recognition label="TOTAL EARNED" value={`${dashboard.totalXp} XP`} note={`${completedCount} mission${completedCount === 1 ? "" : "s"} completed.`} /><Recognition label="ACTIVE DAY" value={String(dashboard.activeDays)} note="Truthful calendar activity." /><Recognition dark={afterTwo} label={afterTwo ? "ACHIEVEMENT EARNED" : "COMPLETE MISSION 02"} value={afterFour ? "BOUNDARY BUILT" : "FIRST PLAN"} note={afterFour ? "Your first boundary remains editable." : afterTwo ? "Your 7-day goal remains saved." : "Create a 7-day goal to earn."} /></div>
       </section>
       <section className={styles.currentMission}>
-        <div><span>CURRENT MISSION · {afterThree && !afterFour ? "20–25" : "18–24"} MIN</span><h2>{currentTitle}</h2><p>{currentCopy}</p></div>
-        <div className={styles.currentPhoto}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={afterThree ? PEOPLE.planning : afterTwo ? PEOPLE.outcome : PEOPLE.portrait} alt="Adult ready to continue a practical plan" /><span>{afterFour ? "UP NEXT · CHECK BEFORE DECIDING" : afterThree ? "UP NEXT · BUILD ONE BOUNDARY" : afterTwo ? "UP NEXT · UNDERSTAND THE URGE" : "NEXT · ONE USEFUL ACTION"}</span>{afterFour ? <button className={styles.primaryButton} disabled type="button">Mission 05 · next package</button> : <PrimaryButton onClick={onStartMission}>Start Mission {String(dashboard.currentMission).padStart(2, "0")}</PrimaryButton>}</div>
+        <div><span>CURRENT MISSION · {fresh ? "17–22" : afterThree && !afterFour ? "20–25" : "18–24"} MIN</span><h2>{currentTitle}</h2><p>{currentCopy}</p></div>
+        <div className={styles.currentPhoto}>{/* eslint-disable-next-line @next/next/no-img-element */}<img src={afterThree ? PEOPLE.planning : afterTwo ? PEOPLE.outcome : PEOPLE.portrait} alt="Adult ready to continue a practical plan" /><span>{fresh ? "CURRENT · START WHEN READY" : afterFour ? "UP NEXT · CHECK BEFORE DECIDING" : afterThree ? "UP NEXT · BUILD ONE BOUNDARY" : afterTwo ? "UP NEXT · UNDERSTAND THE URGE" : "NEXT · ONE USEFUL ACTION"}</span>{afterFour ? <button className={styles.primaryButton} disabled type="button">Mission 05 · next package</button> : <PrimaryButton onClick={onStartMission}>Start Mission {String(dashboard.currentMission).padStart(2, "0")}</PrimaryButton>}</div>
       </section>
       <div className={styles.pathHeading}><span>MY 10-STEP PATH</span><b>{completedCount} OF 10 COMPLETE</b></div>
       <ol className={styles.pathPreview}>{dashboard.missions.slice(0, afterFour ? 5 : 3).map((mission) => <li key={mission.missionNumber} data-status={mission.status}><span>{String(mission.missionNumber).padStart(2, "0")}</span><div><b>{mission.title}</b><small>{mission.status === "completed" ? `COMPLETED · +${mission.missionNumber === 1 ? 60 : mission.missionNumber === 2 ? 80 : mission.missionNumber === 3 ? 90 : 100} XP` : mission.status === "current" ? `CURRENT · ${mission.missionNumber === 4 ? "20–25" : "18–24"} MIN` : "UP NEXT"}</small></div></li>)}{!afterFour ? <li data-status={afterThree ? "current" : undefined}><span>04–10</span><div><b>{afterThree ? "Mission 04 current · six more follow" : "Seven more practical missions"}</b></div></li> : null}</ol>
@@ -1024,11 +1035,13 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   const [oauthNotice, setOAuthNotice] = useState("");
   const [editType, setEditType] = useState<"moment" | "goal" | "signal" | "boundary" | null>(null);
   const [returningSignIn, setReturningSignIn] = useState(false);
-  const [ageAttested, setAgeAttested] = useState(false);
+  const [accessGranted, setAccessGranted] = useState(false);
   const [localHydrated, setLocalHydrated] = useState(false);
+  const [dashboardPending, setDashboardPending] = useState(false);
   const [activeSubject, setActiveSubject] = useState<ProgrammeLocalSubject | null>(null);
   const [claimTransitionPending, setClaimTransitionPending] = useState(false);
   const previousSessionUserId = useRef<string | null | undefined>(undefined);
+  const pendingAuthenticatedUserId = useRef<string | null>(null);
   const claimedJourneySubject = useRef<ProgrammeLocalSubject | null>(null);
   const oauthRedemptionStarted = useRef(false);
   const authenticated = Boolean(sessionUserId);
@@ -1047,36 +1060,58 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
 
   useEffect(() => {
     if (sessionPending) return;
+    if (pendingAuthenticatedUserId.current && !sessionUserId) return;
     if (claimTransitionPending && sessionUserId && activeSubject?.kind === "journey") return;
     const search = new URLSearchParams(window.location.search);
     const authAction = search.get("auth");
     const oauthJourney = authAction === "google-return" && sessionUserId
       ? readProgrammeOAuthClaimMarker(window.sessionStorage)
       : null;
+    const returnedAccess = authAction === "google-return" && sessionUserId
+      ? readProgrammeAccessContinuation(window.sessionStorage)
+      : null;
+    const returnedAccessJourney = returnedAccess
+      ? ({ kind: "journey", id: returnedAccess.journeyId } satisfies ProgrammeLocalSubject)
+      : null;
+    let returnedUserSubject: ProgrammeLocalSubject | null = null;
+    if (sessionUserId && returnedAccessJourney && !oauthJourney) {
+      returnedUserSubject = userProgrammeSubject(sessionUserId);
+      try {
+        transitionProgrammeAccessToUser(
+          window.sessionStorage,
+          returnedAccessJourney,
+          returnedUserSubject,
+        );
+      } catch {
+        returnedUserSubject = null;
+      }
+    }
     if (oauthJourney) {
       claimedJourneySubject.current = oauthJourney;
       setClaimTransitionPending(true);
     }
     const priorUserId = previousSessionUserId.current;
-    const nextSubject = oauthJourney || (sessionUserId
+    const nextSubject = oauthJourney || returnedUserSubject || (sessionUserId
       ? userProgrammeSubject(sessionUserId)
       : priorUserId
         ? rotateAnonymousProgrammeSubject(window.sessionStorage)
         : anonymousProgrammeSubject(window.sessionStorage));
     previousSessionUserId.current = sessionUserId;
+    if (pendingAuthenticatedUserId.current === sessionUserId) pendingAuthenticatedUserId.current = null;
     if (programmeSubjectsEqual(activeSubject, nextSubject)) return;
 
     // Fail closed on every subject transition: remove the prior subject from memory
     // before hydrating only the exact next subject namespace.
     setLocalHydrated(false);
     setDashboard(null);
+    setDashboardPending(nextSubject.kind === "user");
     setEditType(null);
     setError("");
     setMomentMap(emptyMomentMap);
     setGoal(emptyGoal());
     setUrgeLearning(emptyUrgeLearning);
     setActiveBoundary(emptyBoundary);
-    setAgeAttested(false);
+    setAccessGranted(false);
     setActiveSubject(nextSubject);
 
     const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, nextSubject);
@@ -1084,7 +1119,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     if (local.goal) setGoal({ ...emptyGoal(), ...local.goal });
     if (local.urgeLearning) setUrgeLearning({ ...emptyUrgeLearning, ...local.urgeLearning });
     if (local.activeBoundary) setActiveBoundary({ ...emptyBoundary, ...local.activeBoundary });
-    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, nextSubject));
+    setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, nextSubject));
     setLocalHydrated(true);
     const retryJourney = authAction === "google-error" && nextSubject.kind === "journey"
       ? readProgrammeOAuthClaimMarker(window.sessionStorage)
@@ -1097,8 +1132,10 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
       setView("registration");
       setError("Google sign-in was not completed. Your local Programme work remains in this tab.");
       window.history.replaceState({}, "", "/program");
-    } else if (authAction === "google-return" && sessionUserId && !oauthJourney) {
+    } else if (authAction === "google-return" && sessionUserId && !oauthJourney && !returnedUserSubject) {
       setOAuthNotice("You signed in, but this browser session could not be matched to an active Programme claim. No anonymous content was moved.");
+      window.history.replaceState({}, "", "/program");
+    } else if (authAction === "google-return" && sessionUserId) {
       window.history.replaceState({}, "", "/program");
     }
     if (authAction !== "google-error") {
@@ -1115,6 +1152,16 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
 
   useEffect(() => {
     if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
+    const expiresAt = programmeAccessExpiresAt(window.sessionStorage, activeSubject);
+    setAccessGranted(Boolean(expiresAt));
+    if (!expiresAt) return;
+    const delay = Math.max(0, expiresAt - Date.now());
+    const timer = window.setTimeout(() => setAccessGranted(false), delay);
+    return () => window.clearTimeout(timer);
+  }, [activeSubject, localHydrated, subjectMatchesSession]);
+
+  useEffect(() => {
+    if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
     saveProgrammeSubjectContent(window.sessionStorage, activeSubject, { momentMap, goal, urgeLearning, activeBoundary });
   }, [activeBoundary, activeSubject, goal, localHydrated, momentMap, subjectMatchesSession, urgeLearning]);
 
@@ -1128,10 +1175,13 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   useEffect(() => {
     if (sessionPending || !authenticated || !activeSubject || activeSubject.kind !== "user" || !subjectMatchesSession) return;
     let cancelled = false;
+    setDashboardPending(true);
     const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, activeSubject);
+    const startEntryRequested = new URLSearchParams(window.location.search).get("entry") === "start";
     request<{ dashboard: DashboardModel }>("/api/program/dashboard")
-      .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard, local); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setUrgeLearning({ ...emptyUrgeLearning, ...(local.urgeLearning || {}) }); setActiveBoundary(next.activeBoundary || emptyBoundary); setView("dashboard"); } })
-      .catch(() => undefined);
+      .then((payload) => { if (!cancelled) { const next = mergeDashboardLocal(payload.dashboard, local); setDashboard(next); setMomentMap(next.momentMap || emptyMomentMap); setGoal(next.currentGoal || emptyGoal(next.momentMap?.id)); setUrgeLearning({ ...emptyUrgeLearning, ...(local.urgeLearning || {}) }); setActiveBoundary(next.activeBoundary || emptyBoundary); setView(startEntryRequested && next.currentMission === 1 ? "mission-01" : "dashboard"); if (startEntryRequested) window.history.replaceState({}, "", "/program"); } })
+      .catch(() => { if (!cancelled) setOAuthNotice("Your Programme home could not be loaded. No anonymous Mission was started."); })
+      .finally(() => { if (!cancelled) setDashboardPending(false); });
     return () => { cancelled = true; };
   }, [activeSubject, authenticated, request, sessionPending, subjectMatchesSession]);
 
@@ -1169,6 +1219,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     const payload = await request<{ dashboard: DashboardModel }>("/api/program/claims/redeem", { method: "POST", body: JSON.stringify({ timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC" }) });
     let local: Partial<ProgrammeLocalContent>;
     if (activeSubject?.kind === "journey") {
+      transitionProgrammeAccessToUser(window.sessionStorage, activeSubject, targetSubject);
       local = migrateClaimedJourneyToUser<ProgrammeLocalContent>(window.sessionStorage, activeSubject, targetSubject);
     } else if (programmeSubjectsEqual(activeSubject, targetSubject)) {
       local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, targetSubject);
@@ -1178,7 +1229,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     setClaimTransitionPending(false);
     window.history.replaceState({}, "", "/program");
     setActiveSubject(targetSubject);
-    setAgeAttested(hasProgrammeAgeAttestation(window.sessionStorage, targetSubject));
+    setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, targetSubject));
     const next = mergeDashboardLocal(payload.dashboard, local);
     setDashboard(next); setMomentMap(next.momentMap || momentMap); setView("dashboard");
   }, [activeSubject, momentMap, request]);
@@ -1208,7 +1259,11 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
   }
 
-  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in"; adultConfirmed: boolean }) {
+  async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
+    if (!activeSubject || !hasProgrammeAccessAuthority(window.sessionStorage, activeSubject)) {
+      setAccessGranted(false);
+      return;
+    }
     setBusy(true); setError("");
     const continuingCurrentClaim = !(returningSignIn && input.mode === "sign-in")
       && activeSubject?.kind === "journey"
@@ -1216,24 +1271,33 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     setClaimTransitionPending(continuingCurrentClaim);
     try {
       const result = input.mode === "sign-up"
-        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: { "x-sevenbet-age-attestation": input.adultConfirmed ? "18-or-over" : "" } } })
+        ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAccountCreationHeaders(window.sessionStorage, activeSubject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
       if (result.error) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if the email already exists." : "Email or password is incorrect.");
       const targetUserId = result.data?.user.id;
       if (!targetUserId) throw new Error("The authenticated account could not be resolved");
+      pendingAuthenticatedUserId.current = targetUserId;
       if (!continuingCurrentClaim) {
+        const targetSubject = userProgrammeSubject(targetUserId);
+        if (activeSubject.kind === "journey") {
+          transitionProgrammeAccessToUser(window.sessionStorage, activeSubject, targetSubject);
+        }
         clearProgrammeOAuthClaimMarker(window.sessionStorage);
+        claimedJourneySubject.current = null;
         window.history.replaceState({}, "", "/program");
         setReturningSignIn(false);
+        setDashboardPending(true);
+        setActiveSubject(targetSubject);
+        setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, targetSubject));
       } else await redeemClaim(targetUserId);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
     finally { setClaimTransitionPending(false); setBusy(false); }
   }
 
-  async function handleGoogle(input: { mode: "sign-up" | "sign-in"; adultConfirmed: boolean; termsAccepted: boolean }) {
+  async function handleGoogle(input: { mode: "sign-up" | "sign-in" }) {
     if (!googleAvailable) return;
-    if (input.mode === "sign-up" && (!input.adultConfirmed || !input.termsAccepted)) {
-      setError("Confirm the adult and account terms before creating an account.");
+    if (!activeSubject || !hasProgrammeAccessAuthority(window.sessionStorage, activeSubject)) {
+      setAccessGranted(false);
       return;
     }
     const continuingCurrentClaim = !returningSignIn
@@ -1254,9 +1318,9 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK,
         requestSignUp: input.mode === "sign-up",
         fetchOptions: {
-          headers: {
-            "x-sevenbet-age-attestation": ageAttested && (input.mode === "sign-in" || input.adultConfirmed) ? "18-or-over" : "",
-          },
+          headers: input.mode === "sign-up"
+            ? programmeAccountCreationHeaders(window.sessionStorage, activeSubject)
+            : { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age },
         },
       });
       if (result.error) throw new Error("Google sign-in could not be started. Try again or use email.");
@@ -1322,7 +1386,8 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   }
 
   async function startCurrentMission() {
-    if (dashboard?.currentMission === 2) await startMissionTwo();
+    if (dashboard?.currentMission === 1) { setM1Step(0); setView("mission-01"); }
+    else if (dashboard?.currentMission === 2) await startMissionTwo();
     else if (dashboard?.currentMission === 3) await startMissionThree();
     else if (dashboard?.currentMission === 4) await startMissionFour();
   }
@@ -1395,17 +1460,29 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     }
   }
 
-  if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession) {
+  function grantProgrammeAccess() {
+    if (!activeSubject) return;
+    if (activeSubject.kind === "journey") {
+      writeProgrammeAccessContinuation(window.sessionStorage, activeSubject);
+    } else {
+      const journey = anonymousProgrammeSubject(window.sessionStorage);
+      writeProgrammeAccessContinuation(window.sessionStorage, journey);
+      transitionProgrammeAccessToUser(window.sessionStorage, journey, activeSubject);
+    }
+    setAccessGranted(true);
+  }
+
+  if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession || dashboardPending || (claimTransitionPending && authenticated)) {
     return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/responsible-gambling">Protected Help remains available.</Link></p></section></div>;
   }
 
-  if (!ageAttested) return <AgeGate onConfirm={() => { setProgrammeAgeAttestation(window.sessionStorage, activeSubject); setAgeAttested(true); }} />;
+  if (!accessGranted) return <AccessGate onConfirm={grantProgrammeAccess} />;
 
   return (
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
       {oauthNotice ? <div className={styles.authNotice} role="status"><span>{oauthNotice}</span><button onClick={() => setOAuthNotice("")} type="button">Dismiss</button></div> : null}
-      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} authenticated={authenticated} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} returning={returningSignIn} /> : null}
+      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} returning={returningSignIn} /> : null}
       {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} onClearLocal={clearLocalContent} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}
       {view === "mission-03" ? <MissionThreeScreen step={m3Step} learning={urgeLearning} setLearning={setUrgeLearning} onNext={saveMissionThreeStep} busy={busy} error={error} dashboard={dashboard} /> : null}

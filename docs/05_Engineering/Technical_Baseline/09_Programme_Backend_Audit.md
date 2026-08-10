@@ -1,10 +1,10 @@
 # Active Control Programme Backend Technical Baseline
 
-Baseline date: **2026-08-09**
+Baseline date: **2026-08-10**
 
 Repository root: `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`
 
-Branch baseline: `b5c5c0317befc1f2a85b6625d6e5d918cf3b7a37` plus LEGAL-IMPL-01 implementation commits.
+Branch baseline: main `9c3e1aab825bdc5a6cb587a7efb8d030b8e4ea4c` plus the GOOGLE-OAUTH-ACTIVATE-01 correction candidate.
 
 The full active repository inventory was scanned before this update. Dependencies, `.next`, generated output, caches, coverage, test results and `tsconfig.tsbuildinfo` were excluded from source claims. This document records implementation evidence, not target architecture.
 
@@ -13,7 +13,9 @@ The full active repository inventory was scanned before this update. Dependencie
 - **Detected:** route handlers remain thin, do not import Prisma, authenticate where required, parse bounded inputs and delegate to mission-specific application services.
 - **Detected:** the Active Programme is split across session, claim, Missions 02–04, artefact, dashboard, reward and active-day application services, focused infrastructure repositories and one unit-of-work boundary. There is no central Mission switch, generic workflow DSL or new shared Mission engine.
 - **Detected:** Missions 01–04 keep server-owned completion, XP, achievement, active-day and next-Mission decisions.
-- **Detected:** raw participant narrative is held in React state and the tab-scoped `sevenbet.programme.local-content.v1` `sessionStorage` record. It is not part of active request DTOs.
+- **Detected:** raw participant narrative is held in React state and subject-scoped `sevenbet.programme.local-content.v2:*` tab `sessionStorage` records. It is not part of active request DTOs.
+- **Detected:** one unchecked access screen records bounded 18+, current Terms and Privacy acknowledgement authority for exactly 60 minutes. The anonymous marker is journey-bound and moves to an exact user namespace after authentication; that transition is separate from content migration and the ten-minute OAuth claim marker.
+- **Detected:** authenticated Dashboard reads with no enrollment return a server-owned empty projection: Mission 01 current/startable, later Missions locked, zero XP and zero completed activity. Better Auth session state, not the visible Mission, owns authenticated header and `/program` home routing.
 - **Detected:** exact key allow-lists reject unexpected raw fields; presenters redact raw legacy artefact columns; legacy reflection creation returns `410` before parsing the request body.
 - **Detected:** existing database columns that require text receive an implementation-owned neutral marker. This release has no Prisma schema or migration change.
 - **Detected limitation:** historic raw `ProgramReflection` and artefact rows may remain for authenticated export and erasure. They are not repopulated into active narrative inputs.
@@ -74,8 +76,9 @@ Existing records remain connected to `ProgramEnrollment` and to reward/progress 
 - **Detected:** responses use private/no-store handling at Programme HTTP boundaries.
 - **Detected:** protected Help remains outside Programme completion and commercial event flows.
 - **Detected:** commercial modules are covered by an import/contract firewall test against Programme, Help, Self-Check, limit and vulnerability state.
-- **Detected:** an unchecked client age control sets a tab-scoped bounded attestation; middleware rejects non-GET `/api/program/**` requests without `x-sevenbet-age-attestation: 18-or-over`.
-- **Detected:** signup also requires bounded age confirmation.
+- **Detected:** the two unchecked access controls set current, versioned, tab-scoped authority; middleware rejects non-GET `/api/program/**` requests without `x-sevenbet-age-attestation: 18-or-over`.
+- **Detected:** email signup and explicit Google sign-up require the age header plus exact current Terms and Privacy header versions. Returning email sign-in does not require account-creation legal authority; returning Google sign-in retains the age boundary.
+- **Detected:** access authority contains no narrative, identity, token, reward, DOB, KYC or marketing field. Sign-out clears the exact user's authority, global continuation and claim marker while leaving other subject namespaces isolated.
 - **Not detected:** stored DOB, KYC or durable age-attestation evidence. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 
 ## Transaction and integrity baseline
@@ -109,7 +112,9 @@ The repository includes focused tests for:
 
 - exact M1–M4 sensitive-field rejection and bounded request DTOs;
 - client `sessionStorage` use and absence of local storage/server raw content;
-- age gate default and middleware enforcement;
+- the exact two-control access screen, 60-minute continuation validation, subject transition/isolation and middleware/account-creation enforcement;
+- actual-session header/home routing, fresh authenticated Dashboard projection, explicit Mission 01 start and logout isolation;
+- Google success/cancellation continuation, provider one-use callback-code replay failure and stale/mismatched marker denial;
 - retired legacy reflection creation;
 - commercial import/DTO firewall invariants;
 - neutral completion, XP, achievement, active-day and next-Mission behaviour;

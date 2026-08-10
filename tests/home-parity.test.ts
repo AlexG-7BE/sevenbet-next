@@ -25,6 +25,7 @@ test("Home route renders TiltHome with the approved metadata and canonical", () 
   assert.match(page, /title: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
+  assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
 });
 
 test("Home records every approved canonical and responsive Figma authority", () => {
@@ -71,7 +72,7 @@ test("Home uses exact bounded local Figma assets and no remote production URL", 
 });
 
 test("Home Programme entry stays internal and commercial acquisition stays outside its narrative", () => {
-  assert.equal((home.match(/href="\/program"/g) ?? []).length, 2);
+  assert.equal((home.match(/href="\/program\?entry=start"/g) ?? []).length, 2);
   assert.doesNotMatch(home, /href="\/(?:r|go)\//);
   assert.doesNotMatch(home, /casino card|bonus card|best offers|affiliate cta/iu);
   assert.match(layout, /getServerSession/);
