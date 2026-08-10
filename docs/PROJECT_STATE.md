@@ -78,13 +78,14 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 ### PROGRAM-AI M1 foundation — detected on the implementation branch
 
 - A server-only, exact-`true` `PROGRAM_AI_V1_ENABLED` gate selects the new experience. Every new service operation denies while disabled; missing/malformed values render the legacy Programme.
+- Entry uses exactly the RFC-021 18+ and combined Terms/Privacy controls. Session creation now verifies the current signed exact-journey proof server-side; no/static/forged/mismatched/expired/stale-copy proofs deny before anonymous session creation.
 - The combined mobile/desktop intake keeps concise JIT disclosure, one narrow Article 9 authority and text/recorder input on one surface. Typed input completes the entire path. The recorder has idle, permission, recording, stop, cancel, denied, transcribing and error/fallback states; no audio is uploaded.
 - Raw audio, typed situation, clarification answers and candidate drafts remain in memory or exact-subject tab `sessionStorage`. Database drafts contain only structural lifecycle/input-mode/clarification-count state. Successful claim clears the anonymous browser namespace.
 - Provider-neutral `TranscriptionPort` and `ProgrammeAiPort` contracts exist with no adapters. The runtime truthfully produces a user-controlled editable fallback and never claims AI analysis.
-- `ProgrammeSensitiveInputAuthority` and `ProgrammeStartingPoint` are the only new schema concepts. Starting Point persistence is `USER_CONFIRMED`, exact-once and inside the existing Serializable claim transaction.
+- `ProgrammeSensitiveInputAuthority` and `ProgrammeStartingPoint` are the only new schema concepts. Authority is database-constrained to anonymous-only before claim and user-only afterward; active `confirmedAt` is immutable, clarification cannot reconfirm, and withdrawal requires a new explicit intake action. Starting Point persistence is `USER_CONFIRMED`, exact-once and inside the existing Serializable claim transaction.
 - M1 awards use distinct versioned `20 + 20` step-completion keys. Clarification and registration award zero. Existing complete M1, higher progress or an existing Starting Point dominates an anonymous collision and receives no duplicate/new M1 reward.
 - Feature-on Home projects exact current/completed/locked Mission state without percentages. Review entitlement is limited to completion of M3, M6 and M10. Existing Missions 02–04 continue through their current vertical services.
-- Commercial import/DTO firewall, raw-data, runtime-gate, provider-output, legacy-collision and exact-once structural tests are included. Data-subject export/deletion includes both new concepts.
+- Commercial import/DTO firewall, raw-data, runtime-gate, signed-entry, authority-transition, provider-output, legacy-collision and exact-once structural tests are included. An isolated feature-on browser lane covers real Better Auth email/claim persistence and a feature-off lane asserts the legacy runtime. Data-subject export/deletion includes both new concepts.
 
 ### Active Control Programme — deferred target beyond RFC-022
 

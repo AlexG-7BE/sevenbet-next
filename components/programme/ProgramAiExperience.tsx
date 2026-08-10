@@ -142,8 +142,7 @@ function AccessScreen({ busy, error, onConfirm }: {
   onConfirm: () => void;
 }) {
   const [adult, setAdult] = useState(false);
-  const [terms, setTerms] = useState(false);
-  const [privacy, setPrivacy] = useState(false);
+  const [legal, setLegal] = useState(false);
   return (
     <div className={styles.page}>
       <Header />
@@ -156,11 +155,10 @@ function AccessScreen({ busy, error, onConfirm }: {
         </section>
         <section className={styles.accessCard} aria-labelledby="access-title">
           <span>PROGRAMME ACCESS</span>
-          <h2 id="access-title">Three checks before you begin</h2>
-          <label><input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" /> I confirm I am 18 or over.</label>
-          <label><input checked={terms} onChange={(event) => setTerms(event.target.checked)} type="checkbox" /> I accept the current <Link href="/terms">Terms</Link>.</label>
-          <label><input checked={privacy} onChange={(event) => setPrivacy(event.target.checked)} type="checkbox" /> I have read the current <Link href="/privacy">Privacy notice</Link>.</label>
-          <ActionButton disabled={busy || !adult || !terms || !privacy} onClick={onConfirm} size="large">
+          <h2 id="access-title">Two checks before you begin</h2>
+          <label><input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" /> I confirm I am 18 or over · required</label>
+          <label><input checked={legal} onChange={(event) => setLegal(event.target.checked)} type="checkbox" /> I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</label>
+          <ActionButton disabled={busy || !adult || !legal} onClick={onConfirm} size="large">
             {busy ? "Verifying access…" : "Enter Mission 01"}
           </ActionButton>
           <StatusMessage error={error} />
@@ -245,20 +243,23 @@ function Recorder({ state, onState, onUseTyped }: {
 }
 
 function IntakeScreen({
+  authorityActive,
   busy,
   error,
   situation,
   onSituation,
   onSubmit,
 }: {
+  authorityActive: boolean;
   busy: boolean;
   error: string;
   situation: string;
   onSituation: (value: string) => void;
   onSubmit: () => void;
 }) {
-  const [authority, setAuthority] = useState(false);
+  const [authority, setAuthority] = useState(authorityActive);
   const [recorderState, setRecorderState] = useState<RecorderState>("idle");
+  useEffect(() => setAuthority(authorityActive), [authorityActive]);
   return (
     <div className={styles.page}>
       <Header />
@@ -270,7 +271,7 @@ function IntakeScreen({
           <div className={styles.jitCard}>
             <strong>Before you share</strong>
             <p>Your words may include health or addiction information. B4GAMBLE may process them only to draft this Starting Point. They are not used for advertising, affiliate targeting or diagnosis.</p>
-            <label><input checked={authority} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
+            <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
           </div>
           <Link className={styles.helpLink} href="/responsible-gambling">Protected Help / pause options</Link>
         </section>
@@ -428,6 +429,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const [local, setLocal] = useState<ProgramAiLocalState>(emptyLocalState);
   const [home, setHome] = useState<ProgramAiHome | null>(null);
   const [clarificationValue, setClarificationValue] = useState("");
+  const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
@@ -491,9 +493,17 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     }
     const journey = anonymousProgrammeSubject(window.sessionStorage);
     const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, journey).programAi;
+    const accessActive = hasProgrammeAccessAuthority(window.sessionStorage, journey);
     setSubject(journey);
     setLocal(restored || emptyLocalState);
-    setPhase(restored?.phase && restored.phase !== "home" ? restored.phase : hasProgrammeAccessAuthority(window.sessionStorage, journey) ? "intake" : "access");
+    setPhase(restored?.phase && restored.phase !== "home" ? restored.phase : accessActive ? "intake" : "access");
+    if (accessActive) {
+      programAiRequest<{ authority: { active: boolean } }>("/api/program/program-ai/authority", journey)
+        .then((payload) => setSensitiveAuthorityActive(Boolean(payload.authority?.active)))
+        .catch(() => setSensitiveAuthorityActive(false));
+    } else {
+      setSensitiveAuthorityActive(false);
+    }
   }, [redeem, session?.user.id, sessionPending]);
 
   async function grantAccess() {
@@ -518,7 +528,11 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
       if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
-      await programAiRequest("/api/program/program-ai/session", journey, { method: "POST" });
+      await programAiRequest("/api/program/program-ai/session", journey, {
+        method: "POST",
+        headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
+      });
+      setSensitiveAuthorityActive(false);
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch (cause) {
@@ -526,18 +540,21 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } finally { setBusy(false); }
   }
 
-  async function submitTurn(answers = local.clarificationAnswers) {
+  async function submitTurn(answers = local.clarificationAnswers, confirmSensitiveAuthority = false) {
     if (!subject) return;
     setBusy(true); setError("");
     try {
-      await programAiRequest("/api/program/program-ai/authority", subject, {
-        method: "POST",
-        body: JSON.stringify({
-          confirmed: true,
-          purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
-          statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-        }),
-      });
+      if (confirmSensitiveAuthority && !sensitiveAuthorityActive) {
+        await programAiRequest("/api/program/program-ai/authority", subject, {
+          method: "POST",
+          body: JSON.stringify({
+            confirmed: true,
+            purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
+            statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
+          }),
+        });
+        setSensitiveAuthorityActive(true);
+      }
       const payload = await programAiRequest<{
         result: {
           kind: "CLARIFICATION_REQUIRED" | "STARTING_POINT_CANDIDATE";
@@ -557,7 +574,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       } else if (payload.result.candidate) {
         persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate, candidateGeneration: payload.result.generation, phase: "candidate" });
       }
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Your Starting Point could not be prepared"); }
+    } catch (cause) {
+      const requestError = cause as Error & { code?: string };
+      if (requestError.code === "SENSITIVE_INPUT_AUTHORITY_REQUIRED") {
+        setSensitiveAuthorityActive(false);
+        persist({ ...local, clarificationAnswers: [], clarificationPrompt: "", phase: "intake" });
+      }
+      setError(cause instanceof Error ? cause.message : "Your Starting Point could not be prepared");
+    }
     finally { setBusy(false); }
   }
 
@@ -592,6 +616,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setBusy(true); setError("");
     try {
       await programAiRequest("/api/program/program-ai/authority", subject, { method: "DELETE" });
+      setSensitiveAuthorityActive(false);
       persist({ ...emptyLocalState, phase: "intake" });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Authority could not be withdrawn"); }
     finally { setBusy(false); }
@@ -652,6 +677,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
     setSubject(journey);
     setLocal(emptyLocalState);
+    setSensitiveAuthorityActive(false);
     setPhase("access");
     setHome(null);
   }
@@ -659,7 +685,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   if (phase === "legacy") return <ActiveControlProgramme googleAvailable={googleAvailable} />;
   if (phase === "loading" || sessionPending) return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>;
   if (phase === "access") return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
-  if (phase === "intake") return <IntakeScreen busy={busy} error={error} onSituation={(situation) => { const next = { ...local, situation, inputMode: "text" as const }; setLocal(next); if (subject) saveProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn()} situation={local.situation} />;
+  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} onSituation={(situation) => { const next = { ...local, situation, inputMode: "text" as const }; setLocal(next); if (subject) saveProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} situation={local.situation} />;
   if (phase === "clarification") return <ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />;
   if (phase === "candidate" && local.candidate) return <CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />;
   if (phase === "support") return <SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />;

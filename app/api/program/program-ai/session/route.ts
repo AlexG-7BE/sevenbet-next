@@ -1,3 +1,5 @@
+import { verifyProgrammeAccessHeaders } from "@/lib/auth/programme-access-policy";
+import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof";
 import { programmeAiMissionOneService } from "@/lib/programme/application/programme-ai-mission-one.service";
 import {
   anonymousProgrammeCookie,
@@ -8,6 +10,7 @@ import {
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { anonymousSessionLifetimeMs } from "@/lib/programme/security";
+import { ServiceError } from "@/lib/services/service-error";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +20,16 @@ export async function POST(request: Request) {
       limit: 10,
       windowMs: 60_000,
     });
+    const access = verifyProgrammeAccessHeaders(request.headers, {
+      secret: programmeAccessSigningSecret(),
+    });
+    if (!access.ok) {
+      throw new ServiceError(
+        "Current server-verified Programme access authority is required",
+        "CURRENT_ACCESS_AUTHORITY_REQUIRED",
+        403,
+      );
+    }
     const result = await programmeAiMissionOneService.createAnonymousSession();
     const response = programmeResponse({ ok: true, session: result.session }, 201);
     response.cookies.set(anonymousProgrammeCookie, result.token, {

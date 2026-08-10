@@ -12,6 +12,8 @@ Scope: default-off M1 foundation and Preview vertical slice only
 - Exactly two additive schema concepts, non-destructive migration and preflight.
 - Dedicated M1 vertical service/repository using the existing Serializable unit of work.
 - Narrow sensitive-input authority, withdrawal route and exact-subject checks.
+- Server-verified signed access proof on PROGRAM-AI session creation and exactly two access controls.
+- Database-enforced anonymous-only to user-only authority transition with immutable active confirmation evidence.
 - No durable raw audio/transcript/narrative/clarification/provider payload.
 - Provider-neutral ports with no adapter/SDK/credential.
 - Full typed path and truthful no-provider fallback.
@@ -23,15 +25,16 @@ Scope: default-off M1 foundation and Preview vertical slice only
 - Truthful Home and M3/M6/M10-only Review entitlements.
 - Commercial firewall, privacy export/deletion and focused regression tests.
 - Fresh PostgreSQL 16 CI migration verification for migration 0018.
+- Isolated non-Production feature-on Playwright lane plus explicit feature-off regression, including real Better Auth email, idempotency, authority lifecycle, legacy dominance, support-first and 390/320 px automated checks.
 
 ## Unmet before Preview acceptance
 
 - Pull request review and required exact-head CI.
 - Preview deploy verification for migration 0018.
+- Exact-head execution of the feature-off and feature-on browser lanes and fresh-database migration/preflight.
 - Feature-off Preview regression against legacy M1–M4.
 - Feature-on mobile/desktop visual comparison against Figma families `954:3`–`954:6`.
-- Preview keyboard, screen-reader announcement, reduced-motion and responsive QA.
-- Preview typed happy path through actual Better Auth email registration and claim retry/cancellation.
+- Manual Preview screen-reader announcement QA and exact Figma comparison.
 - Controlled Preview Google Test User continuation, only if Preview credentials are separately available; Production Google remains off.
 - Preview authority withdrawal, support-first test-port interception and rollback-by-flag evidence.
 

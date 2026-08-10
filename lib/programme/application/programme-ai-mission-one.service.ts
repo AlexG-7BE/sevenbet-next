@@ -98,6 +98,7 @@ export class ProgrammeAiMissionOneService {
     });
     return {
       active: Boolean(authority),
+      confirmedAt: authority?.confirmedAt.toISOString() ?? null,
       purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
       statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
     };

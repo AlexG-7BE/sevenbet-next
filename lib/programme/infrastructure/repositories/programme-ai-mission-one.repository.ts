@@ -16,12 +16,22 @@ export class ProgrammeAiMissionOneRepository {
     });
   }
 
-  confirmAnonymousAuthority(input: {
+  async confirmAnonymousAuthority(input: {
     anonymousSessionId: string;
     purposeVersion: string;
     statementVersion: string;
     confirmedAt: Date;
   }) {
+    const current = await this.database.programmeSensitiveInputAuthority.findUnique({
+      where: {
+        anonymousSessionId_purposeVersion_statementVersion: {
+          anonymousSessionId: input.anonymousSessionId,
+          purposeVersion: input.purposeVersion,
+          statementVersion: input.statementVersion,
+        },
+      },
+    });
+    if (current && !current.withdrawnAt) return current;
     return this.database.programmeSensitiveInputAuthority.upsert({
       where: {
         anonymousSessionId_purposeVersion_statementVersion: {
@@ -66,7 +76,7 @@ export class ProgrammeAiMissionOneRepository {
     if (existing) {
       await this.database.programmeSensitiveInputAuthority.update({
         where: { id: existing.id },
-        data: { confirmedAt: anonymous.confirmedAt, withdrawnAt: null },
+        data: { anonymousSessionId: null, confirmedAt: anonymous.confirmedAt, withdrawnAt: null },
       });
       await this.database.programmeSensitiveInputAuthority.delete({
         where: { id: anonymous.id },
@@ -74,8 +84,13 @@ export class ProgrammeAiMissionOneRepository {
       return { count: 1 };
     }
     return this.database.programmeSensitiveInputAuthority.updateMany({
-      where: { id: anonymous.id, withdrawnAt: null },
-      data: { userId: input.userId },
+      where: {
+        id: anonymous.id,
+        anonymousSessionId: input.anonymousSessionId,
+        userId: null,
+        withdrawnAt: null,
+      },
+      data: { anonymousSessionId: null, userId: input.userId },
     });
   }
 

@@ -11,7 +11,7 @@ CREATE TABLE "ProgrammeSensitiveInputAuthority" (
 
   CONSTRAINT "ProgrammeSensitiveInputAuthority_pkey" PRIMARY KEY ("id"),
   CONSTRAINT "ProgrammeSensitiveInputAuthority_subject_check"
-    CHECK ("anonymousSessionId" IS NOT NULL OR "userId" IS NOT NULL),
+    CHECK (("anonymousSessionId" IS NOT NULL) <> ("userId" IS NOT NULL)),
   CONSTRAINT "ProgrammeSensitiveInputAuthority_versions_check"
     CHECK (
       NULLIF(BTRIM("purposeVersion"), '') IS NOT NULL

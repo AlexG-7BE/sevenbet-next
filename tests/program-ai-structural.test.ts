@@ -8,6 +8,7 @@ function read(path: string) {
 
 const schema = read("prisma/schema.prisma");
 const migration = read("prisma/migrations/0018_program_ai_m1_foundation/migration.sql");
+const preflight = read("prisma/preflight/0018_program_ai_m1_foundation.sql");
 const service = read("lib/programme/application/programme-ai-mission-one.service.ts");
 const repository = read("lib/programme/infrastructure/repositories/programme-ai-mission-one.repository.ts");
 const frontend = read("components/programme/ProgramAiExperience.tsx");
@@ -19,6 +20,9 @@ test("the schema change is limited to the two approved Program AI concepts", () 
   assert.equal((migration.match(/CREATE TABLE "ProgrammeSensitiveInputAuthority"/g) || []).length, 1);
   assert.equal((migration.match(/CREATE TABLE "ProgrammeStartingPoint"/g) || []).length, 1);
   assert.match(schema, /@@unique\(\[userId, purposeVersion, statementVersion\]\)/);
+  assert.match(migration, /CHECK \(\("anonymousSessionId" IS NOT NULL\) <> \("userId" IS NOT NULL\)\)/);
+  assert.match(preflight, /exact-one authority subject constraint is missing/);
+  assert.match(preflight, /\("anonymousSessionId" IS NOT NULL\) = \("userId" IS NOT NULL\)/);
   assert.match(schema, /userId\s+String\s+@unique/);
   assert.match(schema, /enrollmentId\s+String\s+@unique/);
 });
@@ -57,6 +61,18 @@ test("combined intake includes JIT authority and does not introduce a separate l
   assert.match(frontend, /I choose to share this for Programme personalisation/);
   assert.match(frontend, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
+});
+
+test("Program AI reuses the signed two-control access contract and clarifications cannot reconfirm authority", () => {
+  const sessionRoute = read("app/api/program/program-ai/session/route.ts");
+  assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
+  assert.match(frontend, /Two checks before you begin/);
+  assert.equal((frontend.match(/type="checkbox"/g) || []).length >= 3, true);
+  assert.doesNotMatch(frontend, /Three checks before you begin|I accept the current|I have read the current/);
+  assert.match(frontend, /submitTurn\(local\.clarificationAnswers, true\)/);
+  assert.match(frontend, /await submitTurn\(answers\)/);
+  assert.match(repository, /if \(current && !current\.withdrawnAt\) return current/);
+  assert.match(repository, /data: \{ anonymousSessionId: null, userId: input\.userId \}/);
 });
 
 test("commercial firewall excludes Program AI data in both directions", () => {

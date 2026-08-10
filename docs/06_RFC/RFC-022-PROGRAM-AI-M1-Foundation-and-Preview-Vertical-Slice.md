@@ -36,6 +36,8 @@ existing access gate
 → authenticated Programme continuation
 ```
 
+The existing access gate is the RFC-021 two-control contract: one required 18+ confirmation and one required combined Terms agreement/Privacy Notice acknowledgement. PROGRAM-AI must not add a third Privacy checkbox or a separate mobile legal page. Creation of an anonymous PROGRAM-AI session is itself privileged: `POST /api/program/program-ai/session` verifies the current server-signed, exact-journey RFC-021 proof. Static age/legal headers, missing or malformed proofs, forged signatures, wrong journey or purpose, expired proofs and stale Terms or Privacy copy all deny before a session is created.
+
 P75 first personalised value under 90 seconds and registration CTA under 120 seconds are Product targets, not server guarantees.
 
 ## 2. Design authority and Founder mobile override
@@ -84,9 +86,9 @@ Historical and current legacy reward identities remain immutable.
 
 This model stores minimum evidence and withdrawal state for the narrow authority required before processing unrestricted voluntarily supplied health/addiction information.
 
-Allowed fields are limited to an opaque ID, exact anonymous-session and/or authenticated-user binding, purpose/version, statement/version, confirmation/withdrawal timestamps and repository-standard timestamps. It stores no transcript, narrative, diagnosis, Starting Point, commercial consent, marketing consent or generic consent-management state.
+Allowed fields are limited to an opaque ID, exactly one current subject binding, purpose/version, statement/version, confirmation/withdrawal timestamps and repository-standard timestamps. Before claim the subject is anonymous-session-only (`userId = null`); after the exact successful claim it is authenticated-user-only (`anonymousSessionId = null`). A database XOR constraint rejects both-bound and neither-bound rows. It stores no transcript, narrative, diagnosis, Starting Point, commercial consent, marketing consent or generic consent-management state.
 
-It is purpose-separated from RFC-021's HMAC access authority. A current, unwithdrawn exact-subject row is checked server-side before every unrestricted situation or clarification submission. Withdrawal denies further processing immediately. Anonymous-to-authenticated rebinding occurs only inside the exact claim transaction.
+It is purpose-separated from RFC-021's HMAC access authority. The original intake's explicit affirmative action is the only confirmation action. A current active row is idempotent and its `confirmedAt` is immutable; submitting a clarification cannot reconfirm it or change that timestamp. A current, unwithdrawn exact-subject row is checked server-side before every unrestricted situation or clarification submission. Withdrawal denies further processing immediately and returns the UI to intake; only a new genuine affirmative intake action may reconfirm. Anonymous-to-authenticated rebinding occurs only inside the exact claim transaction. Duplicate callback/claim processing and anonymous-session cleanup must not delete or reassign authenticated authority evidence.
 
 ### 5.2 `ProgrammeStartingPoint`
 
@@ -161,6 +163,6 @@ Rollback disables `PROGRAM_AI_V1_ENABLED` and restores the exact legacy runtime 
 
 ## 12. Verification and release boundary
 
-Required evidence covers feature-off regression, feature-on text path, exact `20 + 20`, duplicate/idempotent operations, zero-XP clarification, correction, cancellation/retry, exact claim, Starting Point persistence, legacy-complete and higher-progress dominance, subject isolation, authority withdrawal, support-first suppression, commercial firewall, raw-data absence, OAuth containment, migration/fresh database, TypeScript, lint, build, browser accessibility and responsive states.
+Required evidence covers feature-off regression, feature-on text path, exact `20 + 20`, duplicate/idempotent situation/auth/claim/Starting Point operations, zero-XP clarification with an unchanged authority timestamp, correction, cancellation/retry, exact claim, Starting Point persistence, legacy-complete and higher-progress dominance without a new `+40`, anonymous-only to user-only subject transition, wrong-user denial, authority survival after anonymous cleanup, withdrawal and genuine reconfirmation, support-first suppression, commercial firewall, raw-data absence, OAuth containment, migration/preflight/fresh database, TypeScript, lint, build, browser accessibility and responsive states. The feature-on browser path uses an isolated non-Production PostgreSQL database and a real Better Auth email session. Manual screen-reader inspection may remain a recorded Preview gate; keyboard, focus, reduced-motion state communication and 390/320 px overflow checks are automated.
 
 Production with the feature missing or malformed continues to serve the legacy Programme. No real provider, external AI/transcription call, Production data transfer to AI, Production Google activation or merge is part of this implementation authority.

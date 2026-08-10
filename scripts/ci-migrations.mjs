@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const allowedHosts = new Set(["127.0.0.1", "localhost"]);
+const allowedPorts = new Set(["5432", "54329"]);
 
 function assertDisposableDatabase(variableName) {
   const value = process.env[variableName];
@@ -20,11 +21,11 @@ function assertDisposableDatabase(variableName) {
   if (
     !["postgres:", "postgresql:"].includes(url.protocol) ||
     !allowedHosts.has(url.hostname) ||
-    url.port !== "5432" ||
+    !allowedPorts.has(url.port) ||
     !databaseName.endsWith("_ci")
   ) {
     throw new Error(
-      `${variableName} refused: CI migrations require localhost:5432 and an _ci database`,
+      `${variableName} refused: CI migrations require localhost:5432 or :54329 and an _ci database`,
     );
   }
 }
