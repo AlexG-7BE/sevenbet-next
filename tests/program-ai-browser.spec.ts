@@ -269,6 +269,92 @@ test("session creation rejects every direct access-proof bypass", async ({ reque
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.token) } });
 });
 
+test("voice recording produces an editable transcript, releases tracks and can be cancelled", async ({ page }) => {
+  await page.addInitScript(() => {
+    let stoppedTracks = 0;
+    class FakeMediaRecorder {
+      static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
+      state = "inactive";
+      mimeType: string;
+      ondataavailable: ((event: { data: Blob }) => void) | null = null;
+      onstop: (() => void) | null = null;
+      constructor(_stream: MediaStream, options?: { mimeType?: string }) {
+        this.mimeType = options?.mimeType || "audio/webm";
+      }
+      start() { this.state = "recording"; }
+      stop() {
+        this.state = "inactive";
+        this.ondataavailable?.({ data: new Blob([new Uint8Array([1, 2, 3])], { type: this.mimeType }) });
+        this.onstop?.();
+      }
+    }
+    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: FakeMediaRecorder });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => ({
+          getTracks: () => [{ stop: () => { stoppedTracks += 1; } }],
+        }),
+      },
+    });
+    Object.defineProperty(window, "__programAiStoppedTracks", { get: () => stoppedTracks });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/program/program-ai/session", async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }),
+    });
+  });
+  await page.route("**/api/program/program-ai/authority", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, authority: { active: true } }),
+    });
+  });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
+  let transcriptionCalls = 0;
+  await page.route("**/api/program/program-ai/transcription", async (route) => {
+    transcriptionCalls += 1;
+    expect(route.request().method()).toBe("POST");
+    expect(route.request().headers()["content-type"]).toContain("multipart/form-data");
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        transcript: "After difficult work days I keep opening betting apps late at night.",
+        timing: { transcriptionRequestMs: 321 },
+      }),
+    });
+  });
+
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
+  await page.getByRole("button", { name: "Stop recording" }).click();
+  await expect(page.getByLabel("Editable transcript")).toHaveValue(situation);
+  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  expect(transcriptionCalls).toBe(1);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
+
+  await page.getByRole("button", { name: "Record again" }).click();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
+  expect(transcriptionCalls).toBe(1);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
+  await expect(page.getByText("Type instead")).toBeVisible();
+  await noHorizontalOverflow(page);
+
+  const cookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_session");
+  if (cookie) await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
+});
+
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": testClientAddress(randomUUID()) });
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -302,7 +388,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
   await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toBeVisible();
-  await expect(page.getByText("No AI provider is connected in this preview.")).toBeVisible();
+  await expect(page.getByText("Personalisation did not produce this draft.")).toBeVisible();
   await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const anonymousAuthority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({

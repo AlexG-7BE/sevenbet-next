@@ -6,6 +6,8 @@ import type {
 export type TranscriptionRequest = {
   audio: Uint8Array;
   mimeType: string;
+  fileName: string;
+  durationMs: number;
 };
 
 export type TranscriptionResult = {

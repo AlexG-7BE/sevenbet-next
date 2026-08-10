@@ -1,7 +1,7 @@
 # Processor and International-Transfer Register
 
 - **Status:** Evidence register; contracting and transfer review open
-- **Last reviewed:** 2026-08-09
+- **Last reviewed:** 2026-08-10
 
 This register records repository evidence only. It does not prove a contract, processing location, subprocessor list, adequacy status or transfer safeguard unless the corresponding evidence has been reviewed and recorded.
 
@@ -14,11 +14,11 @@ This register records repository evidence only. It does not prove a contract, pr
 | Email delivery | Provider-independent policy/transport foundation only; disabled in normal runtime | No provider-held message or recipient data established from repository evidence | **Provider not selected / no Production send path:** closed purposes, fixed templates, disabled and in-memory test adapters | Provider, role, location, DPA, transfer, retention, suppression and complaint handling all **not applicable until separately selected and verified** |
 | Public media | Repository-owned static assets and configured public URLs | Public images only; no user-upload processor path detected | **Detected:** static public assets; no separate processor detected | External processor/transfer **not detected** |
 | Gambling operators / affiliate networks | Future governed referral only | A future click may disclose normal request data to the selected destination | **Not currently used:** GB commercial/referral disabled; redirect engine off | Partner/controller terms, tracking, transfer and retention **open before any activation** |
-| AI provider | Future Programme architecture only | None | **Not currently used** | Separate architecture, DPIA, processor and transfer approval required before use |
+| OpenAI API | Preview-only completed-file transcription and bounded Mission 01 Starting Point transformation under RFC-023 | Current in-memory audio file and transcript for transcription; current bounded situation, up to two clarification answers and generated candidate for Programme AI; technical token/latency counts | **Detected in activation-branch code; successful live call not detected:** direct server adapters use `gpt-4o-transcribe` and `gpt-5.6-terra`; Responses request uses `store=false`, no background/conversation/previous response/tools; no application database retention of raw audio/transcript/provider messages | Exact contracting entity, DPA, controller/processor roles, account data-sharing/training setting, locations, subprocessors, support access, deletion, default abuse-monitoring retention and UK transfer mechanism **not verified**. Founder/team/synthetic Preview only; unrestricted Production data blocked pending approved ZDR/MAM or another reviewed retention position |
 
 ## Not detected
 
-- No behavioural analytics, advertising SDK, CRM, email/SMS marketing provider, affiliate pixel/postback processor, APM provider, external queue or automated paging provider is detected in the active application dependencies. Google identity code does not add a Google client SDK or mailbox API.
+- No behavioural analytics, advertising SDK, CRM, email/SMS marketing provider, affiliate pixel/postback processor, APM provider, external queue or automated paging provider is detected in the active application dependencies. Google identity code does not add a Google client SDK or mailbox API. The OpenAI integration uses platform fetch and adds no provider SDK dependency.
 - No current real GB gambling operator or affiliate network receives a SevenBet referral because GB commercial/referral policy remains disabled and the affiliate engine remains off.
 - No evidence proves that Protected Help, Self-Check, Personal Limit Tracker or raw Programme narrative is supplied to a gambling operator.
 

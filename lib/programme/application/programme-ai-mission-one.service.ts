@@ -20,7 +20,10 @@ import {
 } from "@/lib/programme/program-ai/contracts";
 import { ProgrammeAiOrchestrator, programmeAiOrchestrator } from "@/lib/programme/program-ai/orchestration";
 import { programAiMissionOneRewardPolicy } from "@/lib/programme/program-ai/reward-policy";
-import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
+import {
+  assertProgramAiV1Enabled,
+  isProgramAiRealProviderEnabled,
+} from "@/lib/programme/program-ai/runtime-config";
 import { parseProgrammeAiTurn, parseStartingPoint } from "@/lib/programme/program-ai/validation";
 import {
   anonymousSessionLifetimeMs,
@@ -39,12 +42,16 @@ function mergedActions(current: readonly string[], next: readonly string[]) {
 }
 
 function structuralDraft(value: unknown) {
-  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
-  const draft = value as Record<string, unknown>;
+  const draft = value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
   return {
     inputMode: draft.inputMode === "voice" ? "voice" : "text",
     clarificationCount: typeof draft.clarificationCount === "number"
       ? Math.min(2, Math.max(0, draft.clarificationCount))
+      : 0,
+    providerCallCount: typeof draft.providerCallCount === "number"
+      ? Math.min(3, Math.max(0, Math.trunc(draft.providerCallCount)))
       : 0,
     lifecycle: draft.lifecycle === "SUPPORT_FIRST" ? "SUPPORT_FIRST" : "INTAKE",
   };
@@ -140,35 +147,62 @@ export class ProgrammeAiMissionOneService {
   async createTurn(token: string, value: unknown, now = new Date()) {
     assertProgramAiV1Enabled();
     const input = parseProgrammeAiTurn(value);
-    const session = await this.requireSession(this.unitOfWork, token, now);
-    await this.requireAuthority(session.id);
+    const reserveProviderCall = isProgramAiRealProviderEnabled();
+    const reservation = await this.unitOfWork.serializable(async (unitOfWork) => {
+      const session = await this.requireSession(unitOfWork, token, now);
+      await this.requireAuthority(session.id, unitOfWork);
+      const draft = structuralDraft(session.draft);
+      const providerAllowed = !reserveProviderCall || draft.providerCallCount < 3;
+      const taskStates = mergedActions(session.taskStates, [programAiMissionOneActions[0]]);
+      await unitOfWork.sessions.updateAnonymousSession(session.id, {
+        missionState: "IN_PROGRESS",
+        taskStates,
+        draft: {
+          ...draft,
+          inputMode: input.inputMode,
+          providerCallCount: reserveProviderCall && providerAllowed
+            ? draft.providerCallCount + 1
+            : draft.providerCallCount,
+        },
+        expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+        lastActivityAt: now,
+      });
+      return { sessionId: session.id, providerAllowed, taskStates };
+    });
 
     // The unrestricted input exists only in this call and the configured port.
-    // It is deliberately processed before, and outside, any database transaction.
-    let result = await this.orchestrator.createTurn(input);
+    // Provider work runs after the metadata-only reservation and outside every database transaction.
+    let result = reservation.providerAllowed
+      ? await this.orchestrator.createTurn(input)
+      : await new ProgrammeAiOrchestrator(null).createTurn(input);
     if (result.kind === "CLARIFICATION_REQUIRED" && input.clarificationAnswers.length >= 2) {
       result = await new ProgrammeAiOrchestrator(null).createTurn(input);
     }
-    const currentDraft = structuralDraft(session.draft);
     const clarificationCount = result.kind === "CLARIFICATION_REQUIRED"
       ? Math.min(2, input.clarificationAnswers.length + 1)
       : input.clarificationAnswers.length;
-    const taskStates = mergedActions(session.taskStates, [programAiMissionOneActions[0]]);
-    await this.unitOfWork.sessions.updateAnonymousSession(session.id, {
-      missionState: "IN_PROGRESS",
-      taskStates,
-      draft: {
-        ...currentDraft,
-        inputMode: input.inputMode,
-        clarificationCount,
-        lifecycle: result.disposition === "SUPPORT_FIRST" ? "SUPPORT_FIRST" : "INTAKE",
-      },
-      expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
-      lastActivityAt: now,
+    await this.unitOfWork.serializable(async (unitOfWork) => {
+      const session = await this.requireSession(unitOfWork, token, now);
+      const currentDraft = structuralDraft(session.draft);
+      await unitOfWork.sessions.updateAnonymousSession(session.id, {
+        missionState: "IN_PROGRESS",
+        taskStates: mergedActions(session.taskStates, reservation.taskStates),
+        draft: {
+          ...currentDraft,
+          inputMode: input.inputMode,
+          clarificationCount,
+          lifecycle: result.disposition === "SUPPORT_FIRST" ? "SUPPORT_FIRST" : "INTAKE",
+        },
+        expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+        lastActivityAt: now,
+      });
     });
     return {
       result,
-      progress: { taskStates, xpPreview: anonymousProgramAiXp(taskStates) },
+      progress: {
+        taskStates: reservation.taskStates,
+        xpPreview: anonymousProgramAiXp(reservation.taskStates),
+      },
     };
   }
 

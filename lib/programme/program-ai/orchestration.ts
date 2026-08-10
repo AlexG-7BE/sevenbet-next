@@ -7,6 +7,8 @@ import {
   parseFallbackCandidate,
   parseProgrammeAiPortResult,
 } from "@/lib/programme/program-ai/validation";
+import { programmeAiPortFromEnvironment } from "@/lib/programme/program-ai/openai-adapters";
+import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
 
 function userControlledFallback(input: ProgrammeAiTurn): ProgrammeAiTurnResult {
   const concise = input.situation.replace(/\s+/g, " ").trim().slice(0, 320);
@@ -24,11 +26,17 @@ function userControlledFallback(input: ProgrammeAiTurn): ProgrammeAiTurnResult {
 }
 
 export class ProgrammeAiOrchestrator {
-  constructor(private readonly port: ProgrammeAiPort | null = null) {}
+  constructor(private readonly port?: ProgrammeAiPort | null) {}
 
   async createTurn(input: ProgrammeAiTurn): Promise<ProgrammeAiTurnResult> {
-    if (!this.port) return userControlledFallback(input);
-    return parseProgrammeAiPortResult(await this.port.createTurn(input));
+    try {
+      const port = this.port === undefined ? programmeAiPortFromEnvironment() : this.port;
+      if (!port) return userControlledFallback(input);
+      return parseProgrammeAiPortResult(await port.createTurn(input));
+    } catch (error) {
+      if (error instanceof ProgrammeProviderError) return userControlledFallback(input);
+      throw error;
+    }
   }
 }
 
