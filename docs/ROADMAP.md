@@ -27,7 +27,7 @@
 | 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
 | 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
 | 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 26 | PROGRAM-AI-01 | **ACTIVE PRODUCT/COMPLIANCE DESIGN — FOUNDER DIRECTION v2.2 APPROVED; IMPLEMENTATION BLOCKED** | The current hard-coded Programme remains deployed through Mission 04 but is frozen for further product/content expansion under the previous static model. The approved target is deterministic Programme structure/outcomes plus bounded AI-guided personalisation, server-owned progression/rewards and regulated safety/compliance boundaries. The detailed Product/Compliance handoff is in progress outside current main; runtime AI, voice integration and Programme implementation are not authorised. |
+| 26 | PROGRAM-AI-01 | **PRODUCT/COMPLIANCE v2.2 COMPLETED — FOUNDER APPROVED / GO; IMPLEMENTATION BLOCKED** | The [final workstream-40 handoff](08_Research/PROGRAM-AI-01-Product-Compliance-Architecture-Handoff.md) is tracked. The current hard-coded Programme remains deployed through Mission 04 but is frozen for further expansion under the previous static model. Approved direction includes M1 `40 XP` before registration (`20 + 20`; clarification/signup `0`), Reviews after M3/M6/M10, and `+25 XP` for M2–M10 only as a default balancing hypothesis. Workstream 45 — Legal & Compliance is next; runtime AI, voice integration and Programme implementation are not authorised. |
 | 27 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
@@ -40,9 +40,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Complete and review the PROGRAM-AI-01 detailed Product/Compliance handoff; do not represent the in-progress local workstream-40 file as an approved main-branch deliverable.
-2. Run the Legal & Compliance AI/voice/privacy/data/DPIA/provider/safety gate. Only after Founder review of that legal envelope may Product Design and Backend/CMS work in parallel on bounded design and technical architecture.
-3. Do not implement PROGRAM-AI-01 until Founder Office reconciles those handoffs and issues a new bounded implementation authority/RFC.
+1. Workstream 45 — Legal & Compliance resolves product classification, voice/transcript/raw narrative processing, Article 6/9, derived profiles, AI DPIA, profiling/automated decisions, crisis/safety, memory, transparency, retention/deletion, provider DPA/subprocessors/transfers/training/human review and commercial-data separation.
+2. Only after Founder Office accepts that Legal data envelope may workstream 20 — Product Design and workstream 30 — Backend/CMS proceed in parallel on bounded design and technical architecture.
+3. Do not create an implementation RFC or implement PROGRAM-AI-01 until Founder Office reconciles those later handoffs and issues new bounded implementation authority.
 4. Keep Production Google OAuth off unless a separate Founder-authorised Production activation closes its own credentials, origin/callback and verification gates.
 5. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
 6. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.

@@ -30,7 +30,7 @@ The deployed/current implementation remains in place:
 
 The current hard-coded Programme is frozen for further product/content expansion under its previous static model. Do not invest further in polishing its old Mission content, XP copy, Dashboard gamification or Missions 05–10 under that model. Reusable infrastructure may survive into PROGRAM-AI-01. This record does not delete or disable the current implementation.
 
-PROGRAM-AI-01 is the active next Programme product workstream. No runtime AI is authorised yet.
+PROGRAM-AI-01 remains the active Programme governance programme: Product/Compliance workstream 40 is complete and workstream 45 — Legal & Compliance is next. No runtime AI is authorised yet.
 
 ## 2. Overall Programme model
 
@@ -60,18 +60,20 @@ Target journey:
 ```text
 Access Gate
 → voice-first or typed situation description
-→ 0–2 AI clarification questions, only when useful
-→ concise personalised understanding
-→ initial XP already earned
-→ registration CTA
-→ Continue with Google or email
+→ 0–2 AI clarification questions, only when needed
+→ concise personalised Starting Point
+→ 40 XP already earned
+→ registration continuation
+→ Google primary or email secondary
 → authenticated Programme continuation
 ```
 
 Product targets:
 
-- time to first personalised value: less than 90 seconds;
-- time to registration CTA: less than two minutes.
+- P75 time to first personalised value: less than 90 seconds;
+- P75 time to registration CTA: less than 120 seconds.
+
+These are Product targets, not guarantees. The currently deployed Mission 01 remains unchanged until later implementation authority is approved.
 
 Mission 01 must not become:
 
@@ -85,17 +87,25 @@ These targets supersede the old Mission 01 duration only as future product direc
 
 ## 4. Voice-first input and retention
 
-The primary input direction is **voice**. **Type instead** is the secondary path.
+The primary input direction is **voice**. **Type instead** is always available as the fallback. Recording starts only through an explicit user action; the microphone must not start automatically.
 
 Preferred processing direction:
 
 ```text
-voice → transcription → Programme processing
+voice → transcription → Programme processing → audio deletion
 ```
 
 Audio must not be durably retained by default. Durable audio storage requires separate justification and approval.
 
 Durable raw transcript or narrative retention is not authorised by this record. It remains subject to Legal/DPIA, provider and data-architecture review.
+
+Voice v1 does not include:
+
+- an AI voice companion or required text-to-speech;
+- voice biometrics or voiceprints;
+- speaker identification;
+- acoustic emotion detection; or
+- acoustic addiction, vulnerability or health inference.
 
 ## 5. First value before registration
 
@@ -159,15 +169,31 @@ meaningful completed Mission action → deterministic XP
 Mission completion → larger deterministic completion bonus
 ```
 
-Exact XP values are not approved. Example values or thresholds such as 120, 300 or 600 must not be presented as final.
+The Founder-approved Mission 01 Product reward model is:
+
+| Logical reward action | XP |
+| --- | ---: |
+| First valid substantive situation submission | `+20 XP` |
+| AI clarification response | `0 XP` |
+| Personalised Starting Point successfully completed | `+20 XP` |
+| Google or email registration | `0 XP` |
+| **Mission 01 total before registration** | **`40 XP`** |
+
+The reward recognises completion of the logical action, never disclosure severity, the number of problems mentioned, narrative length or the number of clarification questions.
+
+Clarifications receive `0 XP` because AI must not indirectly determine reward opportunity. A user whose narrative needs clarification must not earn more than a user understood immediately, and the Programme must not incentivise additional private or sensitive disclosure to obtain reward currency.
+
+Registration receives `0 XP` because it preserves already-earned Programme value; it is not itself Programme achievement. Google and email signup are not rewardable actions. The intended conversion mechanic is already-earned XP plus already-delivered personalised value plus continuity at stake—not a signup reward or a false threat that earned XP will be lost.
+
+For Missions 02–10, `+25 XP` is the default completion-bonus balancing hypothesis. It is not an immutable or constitutional reward amount. Final per-Mission completion bonuses may be adjusted during exact Mission-content and reward mapping, must remain deterministic and server-authoritative, and cannot be changed dynamically by AI. As Product balancing guidance rather than a compliance rule, the completion bonus should generally be approximately 20–35% of the total XP available in a Mission.
 
 Reward events remain deterministic, server-authoritative and exactly-once. AI does not decide XP amounts.
 
-XP farming through refresh, editing, duplicate submission, back/forward navigation or repeated API calls is prohibited.
+The same subject, Mission and logical reward action produces XP once. XP farming through refresh, resubmission, editing, delete/retype, browser back/forward, duplicate API calls, multi-tab races, OAuth or callback retry, AI retry or repeated Mission completion is prohibited. AI never returns XP amount, reward entitlement, Mission completion or milestone entitlement.
 
 ### 7.3 Anonymous XP before signup
 
-Mission 01 may award XP before registration so that the registration moment reflects already invested progress and a personalised starting point ready to save or continue through Google or email.
+Mission 01 awards `40 XP` in the approved future Product model before registration: `+20 XP` for the first valid substantive situation submission and `+20 XP` for successful Starting Point completion. This creates an invested-progress registration moment with personalised value already delivered.
 
 Anonymous XP must transition to the authenticated user exactly once. This direction is not implemented or authorised for implementation by this record.
 
@@ -184,19 +210,28 @@ If a user exits a Mission before completion:
 
 Return UX should expose a near-term completion pull: Mission in progress, XP already earned, actions remaining, completion bonus available and distance to the next meaningful unlock. Exact copy and values remain Design/Product work. There is no punitive XP loss.
 
-### 7.5 Meaningful unlocks
+### 7.5 Personal Review milestones
 
-XP must not be only a meaningless accumulating number. Founder-approved direction is for XP thresholds to unlock meaningful Programme value, with **Personal AI Reviews** as the preferred concept.
+XP must not be only a meaningless accumulating number. Founder-approved v1 Product architecture anchors Personal Reviews to substantive Mission completion:
 
-Potential categories are:
+- Mission 01: the Starting Point itself, not a separate Review;
+- after Mission 03: **First Personal Review**;
+- after Mission 06: **Mid-Programme Personal Review**; and
+- after Mission 10: **Full Programme Personal Review**.
 
-- first Personal Review;
-- mid-Programme Personal Review; and
-- final or full Programme Review.
+Mission 03 completion is required for the First Personal Review, Mission 06 completion for the Mid-Programme Personal Review, and Mission 10 completion for the Full Programme Personal Review. A raw or farmed XP total cannot bypass the substantive Mission milestone.
+
+The logic is:
+
+```text
+substantive Programme milestone
+→ deterministic cumulative XP map
+→ displayed XP distance to that Review
+```
+
+Exact numeric cumulative thresholds are derived later from the completed deterministic Mission XP budget. Values such as 120, 300 or 600 are not approved final thresholds and must not be invented now.
 
 These reviews may synthesise work already completed and help frame patterns or the next Programme focus. They are not diagnosis, clinical assessment, treatment assessment, gambling recommendation or casino recommendation.
-
-The number, thresholds, placement and contents of reviews remain open PROGRAM-AI-01 Product decisions.
 
 ### 7.6 Retention boundaries
 
@@ -215,23 +250,32 @@ Allowed direction includes:
 Separate approval is required before introducing:
 
 - XP expiry;
-- loss of earned XP;
-- random rewards;
+- XP reduction or loss of earned XP;
+- random XP or variable reward schedules;
 - loot or mystery rewards;
-- chance-based mechanics; or
-- punitive streak loss.
+- spin/wheel, near-miss or jackpot mechanics;
+- reward multipliers designed around chance;
+- fake scarcity or countdown pressure;
+- punitive streak loss;
+- casino or bonus unlocks tied to Programme progression; or
+- affiliate rewards tied to XP.
 
 ### 7.7 Existing streak and achievements
 
-Existing streak and achievement functionality is not removed by this documentation package. Its future user-facing role remains open. PROGRAM-AI-01 must later decide whether it materially improves retention or creates unnecessary complexity. Do not expand the old gamification system now.
+Existing streak and achievement functionality is not removed by this documentation package. Keep streak infrastructure if useful, de-emphasise its user-facing role and do not expand it. It must not create an XP multiplier, required daily login, punitive reset message, “save your streak” pressure or purchasable repair.
+
+Achievements are secondary to XP, Mission completion and Personal Reviews. If retained later, they represent only substantive deterministic Programme milestones; they must not become a second progression economy.
 
 ## 8. Minimum commercial data boundary
 
 Founder Office does not approve heavyweight standalone firewall infrastructure at this stage. Minimum technical separation is nevertheless required as product direction:
 
 - raw Programme narrative;
-- AI-generated Programme summaries; and
-- vulnerability-derived Programme information
+- transcript;
+- AI-generated Programme summaries;
+- vulnerability-derived Programme information;
+- private boundaries;
+- private urge or reflection content
 
 must not be directly exposed as commercial recommendation inputs.
 
@@ -242,7 +286,7 @@ Nothing in this record authorises:
 - vulnerability-based casino ranking;
 - vulnerability-based bonus ranking;
 - affiliate destination selection from Programme narrative; or
-- commercial AI targeting from sensitive Programme content.
+- retargeting, paid commercial audience optimisation or commercial AI targeting from sensitive Programme content.
 
 ## 9. AI and safety authority boundary
 
@@ -265,6 +309,42 @@ AI must not independently control:
 - deterministic progression; or
 - XP and reward integrity.
 
+### 9.1 Crisis and support-first override
+
+A later legally approved crisis/support-first branch overrides normal registration and engagement optimisation. When a qualifying severe crisis condition is detected under that future approved contract:
+
+- normal persuasive continuation may be interrupted;
+- no casino or bonus recommendation is shown;
+- no conversion pressure or celebratory/pressure XP messaging is used;
+- existing earned XP is preserved; and
+- leaving is not punished.
+
+This record does not define or implement the detection criteria, legal basis, processing/retention rules or response contract. Those remain Legal/Compliance authority.
+
+### 9.2 Strategic funnel
+
+The approved Product funnel is:
+
+```text
+Programme opened
+→ access completed
+→ voice or type started
+→ situation submitted
+→ AI response
+→ Starting Point viewed
+→ XP earned
+→ registration CTA
+→ Google clicked or email selected
+→ registration completed
+→ Mission 02 started
+→ Mission completion
+→ next Mission
+→ Personal Review milestones
+→ Programme completion
+```
+
+The detailed KPI table in the Product/Compliance research handoff remains a set of internal operating hypotheses, not external promises or constitutional Founder authority. The two binding speed targets in this record are P75 personalised value under 90 seconds and P75 registration CTA under 120 seconds.
+
 ## 10. Explicit non-authorisations
 
 This decision does not authorise:
@@ -286,11 +366,12 @@ This decision does not authorise:
 Current governance state:
 
 - **PROGRAM-AI-01 Product Direction v2.2:** FOUNDER APPROVED;
-- **detailed Product/Compliance handoff:** IN PROGRESS in workstream 40 and not represented as an approved main-branch deliverable.
+- **Product/Compliance workstream 40:** COMPLETED; the final detailed handoff is tracked as Research/Product evidence;
+- **implementation:** STOP / NOT AUTHORISED.
 
-Expected sequence after the Product handoff:
+Next governance sequence:
 
-1. Workstream 45 — Legal & Compliance reviews AI, voice, privacy, data, DPIA, provider and safety boundaries.
+1. Workstream 45 — Legal & Compliance resolves product/legal classification; raw narrative and transcript processing; voice processing; Article 6 and Article 9; derived profiles; AI DPIA; profiling/automated decisions; crisis/safety contract; memory; transparency; retention/deletion; provider DPA, subprocessors, transfers, training/product improvement and human review; and the commercial-data boundary.
 2. Founder Office reviews the Legal envelope.
 3. Only after that review, workstream 20 — Product Design and workstream 30 — Backend/CMS may proceed in parallel on bounded design and technical architecture.
 4. Founder Office reconciles those handoffs and issues a new bounded implementation authority/RFC before implementation.
@@ -303,10 +384,10 @@ The following remain open and must not be inferred as approved:
 
 - AI, speech and transcription providers;
 - raw transcript and narrative retention;
-- exact XP values;
-- Personal AI Review thresholds, number, placement and content;
+- final Missions 02–10 action/reward budgets and any justified departure from the `+25 XP` default completion-bonus hypothesis;
+- exact cumulative XP display thresholds derived from the completed Mission reward budget;
+- detailed Personal Review contents;
 - final Mission interaction and resume UX;
-- the future user-facing role of streaks and achievements;
 - detailed safety escalation and provider controls;
 - data architecture, DPIA and retention controls; and
 - any production rollout plan.

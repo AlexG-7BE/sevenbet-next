@@ -11,6 +11,7 @@ Stores evidence that informs product, market, user, regulatory, and technical de
 - Regulatory research.
 - Experiment findings and evidence summaries.
 - [GB commercial partner shortlist, application and economics evidence](GB-Partner-Readiness-Package.md).
+- [PROGRAM-AI-01 Product Direction v2.2 Product/Compliance handoff](PROGRAM-AI-01-Product-Compliance-Architecture-Handoff.md).
 
 ## When this folder should be updated
 
