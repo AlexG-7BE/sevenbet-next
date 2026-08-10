@@ -17,17 +17,18 @@
 | 13 | AUTH-COMMS-01 | **Closed; PR #58 merged** | RFC-018; bounded Google/Better Auth integration and provider-independent disabled email architecture. No credentials, live provider, reminder send or marketing activation. |
 | 14 | BRAND-CUTOVER-01 | **Closed; PR #59 merged** | RFC-019; B4GAMBLE consumer brand and `b4gamble.com` Production canonical authority are merged. No external Google activation accompanied the cutover. |
 | 15 | B4GAMBLE Production environment cutover | **Completed** | Exact Production site/auth authority and post-merge canonical/auth/runtime verification completed under BRAND-CUTOVER-01. |
-| 16 | AUTH-HARDEN-01 | **Delivery candidate — unmerged** | RFC-020; no durable Google OAuth credential material, restricted Better Auth provider API surface, redirect OAuth preserved and bounded Programme logout added. No schema, migration, dependency, credential or external activation change. |
-| 17 | External Google OAuth configuration | **Blocked pending AUTH-HARDEN-01 merge** | After hardening, create separate Preview/Production Web clients; register exact documented origins/callbacks; install environment-scoped credentials and complete synthetic smoke tests. |
-| 18 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
-| 19 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
-| 20 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
-| 21 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
-| 22 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
-| 23 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
-| 24 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 25 | PROGRAM-AI-01 and Missions 05–10 | **Next product scope / open** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
-| 26 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
+| 16 | AUTH-HARDEN-01 | **Closed; PR #60 merged** | RFC-020; no durable Google OAuth credential material, restricted Better Auth provider API surface, redirect OAuth preserved and bounded Programme logout added. No schema, migration, dependency, credential or external activation change. |
+| 17 | GOOGLE-OAUTH-ACTIVATE-01 | **READY FOR FOUNDER MERGE — PR #61 OPEN / NOT CLOSED** | RFC-021; the consolidated access screen, current server HMAC authority, stable-host canonicalisation, identity-only Google boundary, user-owned authenticated Mission 01 and isolated logout transition passed Founder-controlled real Google Test User Preview E2E on 2026-08-10. `POST /api/auth/sign-in/social` returned `200`, callback returned `302`, and Better Auth established the session. Production Google OAuth remains off; no schema, dependency, commercial or Production mutation occurred. |
+| 18 | External Google OAuth configuration | **CONTROLLED PREVIEW COMPLETE; PRODUCTION OFF / SEPARATE** | Preview credentials/configuration are scoped to the correction branch's stable origin and the real-provider Test User journey passed. Any Production Google client, credentials or activation require a separate Founder decision. |
+| 19 | Email transport/domain decision | **Open external** | Select provider, controlled sending domain, senders and owners; verify privacy terms, SPF, DKIM, DMARC, TLS, bounce/complaint and monitoring evidence. |
+| 20 | COMMS-REMINDER-01 | **Future separate activation** | Add preference/opt-out, scheduling and actual user-requested/opted-in Programme reminders only after provider and authority gates. Commercial email remains denied. |
+| 21 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
+| 22 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
+| 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
+| 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
+| 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
+| 26 | PROGRAM-AI-01 and Missions 05–10 | **Next product scope / open** | Mission-specific approval, implementation, clinical/compliance review, regression and documentation gates. |
+| 27 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
 
@@ -39,8 +40,8 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Founder review and merge decision for AUTH-HARDEN-01 after exact-head CI and Preview evidence is green.
-2. Only after that merge, resume separate external Google Preview/Production configuration and synthetic smoke verification.
+1. Founder reviews and, if accepted, merges GOOGLE-OAUTH-ACTIVATE-01 via open PR #61; the workstream remains not closed until merge.
+2. Keep Production Google OAuth off unless a separate Founder-authorised Production activation closes its own credentials, origin/callback and verification gates.
 3. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
 4. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
 5. Open PROGRAM-AI-01 and Mission-specific RFCs for Missions 05–10 as the next separate product scope; do not combine it with communications activation.

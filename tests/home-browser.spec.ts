@@ -92,7 +92,7 @@ test("Home renders all four canonical hero crops and the primary CTA works", asy
   const cta = hero.getByRole("link", { name: "Start the 10-Step Program" });
   await expect(cta).toBeVisible();
   await cta.click();
-  await expect(page).toHaveURL(/\/program$/);
+  await expect(page).toHaveURL(/\/program\?entry=start$/);
 });
 
 test("Home hydrates without browser errors and keeps accessible action targets", async ({ page }) => {

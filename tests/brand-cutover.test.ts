@@ -194,7 +194,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
   assert.match(environment, /SEVENBET_ACCOUNT_EMAIL_FROM/);
   assert.match(environment, /SEVENBET_PROGRAMME_EMAIL_FROM/);
   assert.match(environment, /SEVENBET_EMAIL_REPLY_TO/);
-  assert.match(source("components/programme/ActiveControlProgramme.tsx"), /x-sevenbet-age-attestation/);
+  assert.match(source("lib/programme/access-contract.ts"), /x-sevenbet-age-attestation/);
   assert.match(source("lib/programme/local-subject-storage.ts"), /sevenbet\.programme\./);
   assert.equal(JSON.parse(source("package.json")).name, "sevenbet-next");
 

@@ -118,8 +118,8 @@ async function seed() {
     const program = await database.program.create({
       data: {
         slug: CONTROL_PROGRAM_SLUG,
-        internalName: "SevenBet Active Control Program",
-        title: "SevenBet 10-Step Control Program",
+        internalName: "B4GAMBLE Active Control Programme",
+        title: "B4GAMBLE 10-Step Control Programme",
         summary: "Ten practical missions that turn difficult gambling-decision moments into a private, editable control plan.",
         introduction: "A self-directed educational programme for recognising cues, creating practical rules and reviewing decisions. It is not diagnosis or treatment.",
         estimatedTotalMinutes: missionContent.reduce((total, mission) => total + mission.minutes, 0),
@@ -133,7 +133,7 @@ async function seed() {
           type: "ALL_TEN_MISSIONS_REVIEWED",
           rewardPolicy: "DETERMINISTIC_PROGRAMME_ACTIONS_ONLY",
         },
-        seoTitle: "SevenBet 10-Step Control Program",
+        seoTitle: "B4GAMBLE 10-Step Control Programme",
         seoDescription: "Build a private Moment Map, practical boundaries and a reviewable personal control plan.",
         canonicalUrl: "/program",
         publishedVersion: 1,

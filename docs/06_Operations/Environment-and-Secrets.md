@@ -2,7 +2,7 @@
 
 ## Trust zones and active evidence
 
-Reconciled on 2026-08-09 for the approved B4GAMBLE canonical-domain release contract after ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged and passed post-merge Production verification. Secret values are intentionally omitted.
+Reconciled on 2026-08-10 for the approved B4GAMBLE canonical-domain release contract and the GOOGLE-OAUTH-ACTIVATE-01 Preview canonical-host correction. Secret values are intentionally omitted.
 
 | Zone | Database authority | Auth/admin authority | External integrations | Allowed data and mutation | Deployment source |
 | --- | --- | --- | --- | --- | --- |
@@ -19,7 +19,7 @@ Preview is an engineering/review environment, not Demo/Staging. It must never be
 - **Detected:** Preview and Production use different Vercel/Prisma resource IDs and different database credentials. `DATABASE_URL` and `DIRECT_URL` relations are `DIFFERENT`.
 - **Detected:** both resources have all 17 repository migrations; representative Preview user, admin, CMS, casino and Programme counts were zero before the isolation canary.
 - **Detected:** Preview and Production Better Auth secrets and admin tokens are independently generated. Production values were unchanged after the accepted ENV-REC-01 recovery baseline.
-- **Detected:** Preview Better Auth uses `VERCEL_BRANCH_URL` only when `VERCEL_ENV=preview`. The host must be an exact generated `*-git-*.vercel.app` branch host; wildcard, Production fallback and contradictory static origins fail closed.
+- **Detected:** Preview Better Auth uses `VERCEL_BRANCH_URL` only when `VERCEL_ENV=preview`. The host must be an exact generated `*-git-*.vercel.app` branch host; wildcard, Production fallback and contradictory static origins fail closed. Exact requests to the current valid `VERCEL_URL` deployment host are redirected with status 307 to that exact branch host before rendering/auth, with path and query preserved; malformed metadata and unexpected Preview hosts reject. Production, local and ordinary CI do not canonicalise.
 - **Detected:** an `example.invalid` Preview account and session succeeded, the exact account was absent from Production, Production rejected the Preview session, and the Preview account was deleted. No canary remains.
 - **Detected:** the Production marketplace connection is Production-only under `PRODDB_*`; the Preview connection is Preview-only under `ENVISO_*`. The application continues to consume separately scoped `DATABASE_URL`/`DIRECT_URL` values.
 - **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; exact-merge main CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected admin, refresh/session persistence and logout.
@@ -41,7 +41,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` | Sensitive configuration | Production target is exact `https://b4gamble.com`; Local/CI use explicit loopback origins; intentionally absent in Preview | Same as authentication configuration |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sensitive OAuth client configuration / secret | Optional Better Auth Google identity provider; both required; independent Production and Preview clients | Founder Office/Google Cloud owner; repository maintainer technical consumer |
 | `SEVENBET_ACCOUNT_EMAIL_FROM`, `SEVENBET_PROGRAMME_EMAIL_FROM`, `SEVENBET_EMAIL_REPLY_TO` | Sender configuration, not delivery credentials | Future server-only communications sender categories; currently no selected provider or Production send path | Founder Office/communications owner; values require verified domain/mailbox authority before activation |
-| `VERCEL`, `VERCEL_ENV`, `VERCEL_BRANCH_URL` | Vercel system configuration | Trusted request-country runtime boundary and bounded Preview Better Auth origin derivation | Vercel control plane |
+| `VERCEL`, `VERCEL_ENV`, `VERCEL_URL`, `VERCEL_BRANCH_URL` | Vercel system configuration | Trusted request-country runtime boundary; exact Preview deployment redirect source; bounded stable Preview Better Auth origin derivation | Vercel control plane |
 | `NEXT_PUBLIC_SITE_URL` | Public configuration | Production target is exact `https://b4gamble.com`; canonical links, metadata, structured data, sitemap, robots and media fallback derive from it | Repository maintainer |
 | `SEVENBET_ADMIN_PREVIEW_TOKEN` | Secret, legacy/admin gate | Independent Preview and Production values | Founder Office/config owner |
 | `CMS_PHASE1_ALLOW_DEV_ADMIN`, `CMS_AUTH_PROVIDER` | Sensitive feature/auth configuration | Admin auth compatibility | Repository maintainer; remove only through governed auth work |
@@ -65,7 +65,7 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 1. Create one clearly named non-production Prisma Postgres resource in the same provider family. Connect it to Preview only under a non-Production prefix. Never clone, dump or restore Production into it.
 2. Install only the existing migration history with `npx prisma validate`, `npx prisma generate` and `npx prisma migrate deploy`. Do not seed, run `db push`, create a migration or reset a database.
 3. Generate new high-entropy Preview-only Better Auth and admin secrets. Add them only to Preview. Never move or copy the Production values.
-4. Keep Preview `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` absent. Vercel must expose system variables; runtime code derives and allowlists the exact branch host. Any wildcard or conflicting static origin is a failure.
+4. Keep Preview `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` absent. Vercel must expose valid, distinct `VERCEL_URL` and `VERCEL_BRANCH_URL` system variables; middleware redirects only the exact deployment host to the exact branch host, while runtime auth allowlists only the branch host. Any wildcard, conflicting static origin, malformed metadata or unexpected Preview host is a failure.
 5. Disable affiliate redirects and public CMS writes, use local media storage, and keep Production S3, email-delivery, webhook, analytics and affiliate credentials absent. Preview Google OAuth may use a separate non-Production client only after its exact stable branch callback is registered; never copy the Production Google secret. Add any other sandbox credential only through separate approval.
 6. Trigger a new Preview deployment after every environment change. Verify the deployment SHA, resource scopes, migration count, empty/allowed data state, public routes and runtime errors.
 7. Run `scripts/verify-preview-auth-isolation.mjs` with provider-managed Preview and read-only Production database authority supplied only in process memory. Required output proves Preview session success, Production rejection, Preview-only mutation and cleanup without printing values.

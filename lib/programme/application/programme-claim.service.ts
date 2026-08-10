@@ -1,27 +1,19 @@
 import { requireControlProgram } from "@/lib/programme/application/programme-context";
 import { ProgrammeDashboardService } from "@/lib/programme/application/programme-dashboard.service";
+import { persistMissionOneCompletion } from "@/lib/programme/application/mission-01.service";
 import {
   ClaimExpiredError,
-  ProgrammeResourceNotFoundError,
+  PendingProgrammeClaimUnavailableError,
   ProgrammeStateConflictError,
 } from "@/lib/programme/domain/programme-errors";
-import {
-  implementedMissionDefinition,
-  progressEventKey,
-} from "@/lib/programme/domain/mission-registry";
+import { implementedMissionDefinition } from "@/lib/programme/domain/mission-registry";
 import { assertMissionTasksComplete } from "@/lib/programme/domain/programme-state";
-import { rewardPolicyForMission } from "@/lib/programme/domain/reward-policy";
 import {
   ProgrammeUnitOfWork,
   programmeUnitOfWork,
 } from "@/lib/programme/infrastructure/programme-unit-of-work";
-import {
-  dateOnlyUtc,
-  hashOpaqueToken,
-  localDateAt,
-} from "@/lib/programme/security";
+import { hashOpaqueToken } from "@/lib/programme/security";
 import { parseTimeZone } from "@/lib/programme/validation";
-import { localOnlyMomentMap } from "@/lib/programme/privacy";
 
 export class ProgrammeClaimService {
   private readonly dashboardService: ProgrammeDashboardService;
@@ -38,10 +30,9 @@ export class ProgrammeClaimService {
   ) {
     const timeZone = parseTimeZone(timeZoneValue);
     const definition = implementedMissionDefinition(1);
-    const reward = rewardPolicyForMission(1);
     return this.unitOfWork.serializable(async (unitOfWork) => {
       const claim = await unitOfWork.sessions.findClaim(hashOpaqueToken(claimToken));
-      if (!claim) throw new ProgrammeResourceNotFoundError("Pending programme claim");
+      if (!claim) throw new PendingProgrammeClaimUnavailableError();
       if (claim.consumedAt) {
         throw new ProgrammeStateConflictError(
           "Pending programme claim has already been used",
@@ -69,9 +60,9 @@ export class ProgrammeClaimService {
           enrollment.id,
           1,
         );
-        if (existingMission?.status === "COMPLETED") {
+        if (existingMission) {
           throw new ProgrammeStateConflictError(
-            "Mission 01 is already completed for this account",
+            "Mission 01 already has authenticated account progress",
           );
         }
       } else {
@@ -83,60 +74,33 @@ export class ProgrammeClaimService {
           timezone: timeZone,
         });
       }
+      await unitOfWork.progress.upsertMissionProgress({
+        enrollmentId: enrollment.id,
+        missionNumber: 1,
+        status: "READY_TO_SAVE",
+        taskStates: [...definition.completion.taskStates],
+        draft: { contentStorage: "browser_session" },
+        completedAt: null,
+      });
       const claimed = await unitOfWork.sessions.consumeClaim(claim.id, userId, now);
       if (claimed.count !== 1) {
         throw new ProgrammeStateConflictError(
           "Pending programme claim is no longer available",
         );
       }
-      const momentMap = await unitOfWork.artefacts.createMomentMap({
-        enrollmentId: enrollment.id,
-        ...localOnlyMomentMap,
+      const completed = await persistMissionOneCompletion({
+        unitOfWork,
+        userId,
+        source,
+        enrollment,
+        timeZone,
         missionVersion: anonymousSession.missionVersion,
         evidenceVersion: anonymousSession.evidenceVersion,
+        now,
       });
-      await unitOfWork.progress.upsertMissionProgress({
-        enrollmentId: enrollment.id,
-        missionNumber: 1,
-        status: "COMPLETED",
-        taskStates: [...definition.completion.taskStates],
-        draft: null,
-        completedAt: now,
-      });
-      await unitOfWork.progress.upsertMissionProgress({
-        enrollmentId: enrollment.id,
-        missionNumber: 2,
-        status: "IN_PROGRESS",
-        taskStates: [],
-        draft: null,
-        completedAt: null,
-      });
-      await unitOfWork.progress.setEnrollmentCurrentStep(
-        enrollment.id,
-        source.program.steps[1].id,
-      );
-      await unitOfWork.rewards.recordProgressEvent({
-        enrollmentId: enrollment.id,
-        entityId: source.program.steps[0].id,
-        eventKey: progressEventKey(source.program.steps[0].id),
-      });
-      await unitOfWork.rewards.recordMissionXp({
-        userId,
-        programId: source.program.id,
-        missionNumber: 1,
-        xp: reward.xp,
-        awardKey: reward.awardKey,
-        sourceArtifactType: reward.sourceArtifactType,
-        sourceArtifactId: momentMap.id,
-      });
-      await unitOfWork.rewards.recordActiveDay({
-        userId,
-        enrollmentId: enrollment.id,
-        localDate: dateOnlyUtc(localDateAt(now, enrollment.timezone)),
-        timezone: enrollment.timezone,
-        sourceEventKey: reward.awardKey,
-        eligibleActivityAt: now,
-      });
+      if (!completed) {
+        throw new ProgrammeStateConflictError("Mission 01 claim could not be completed");
+      }
       await unitOfWork.sessions.completeAnonymousSession(anonymousSession.id, now);
       return this.dashboardService.project(
         unitOfWork,

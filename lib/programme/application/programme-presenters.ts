@@ -147,6 +147,38 @@ export function activeBoundaryDto(value: {
   };
 }
 
+export function emptyProgrammeDashboardDto(programId: string) {
+  return {
+    programId,
+    totalXp: 0,
+    currentMission: 1,
+    missions: missionRegistry.map((definition) => ({
+      missionNumber: definition.missionNumber,
+      title: definition.title,
+      status: definition.missionNumber === 1 ? "current" as const : "locked" as const,
+    })),
+    activeDays: 0,
+    activeDayDates: [],
+    currentStreak: 0,
+    timezone: null,
+    achievements: [
+      { slug: "first-plan", title: "First Plan", state: "locked" as const, awardedAt: null },
+      { slug: "boundary-built", title: "Boundary Built", state: "locked" as const, awardedAt: null },
+    ],
+    momentMap: null,
+    currentGoal: null,
+    urgeLearningRecord: null,
+    activeBoundary: null,
+    evidence: {
+      mission01: programmeEvidence.mission01,
+      mission02: programmeEvidence.mission02,
+      mission03: programmeEvidence.mission03,
+      mission04: programmeEvidence.mission04,
+    },
+    rewardLedger: [],
+  };
+}
+
 export function programmeDashboardDto(
   programId: string,
   data: readonly [any, any[], any[]],

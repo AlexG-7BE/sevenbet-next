@@ -11,6 +11,10 @@ import {
 } from "../lib/programme/contract";
 import { programmeErrorResponse } from "../lib/programme/http";
 import {
+  PendingProgrammeClaimUnavailableError,
+  ProgrammeDefinitionUnavailableError,
+} from "../lib/programme/domain/programme-errors";
+import {
   assertProgrammeRateLimit,
   resetProgrammeRateLimitsForTests,
 } from "../lib/programme/rate-limit";
@@ -80,6 +84,7 @@ class MemoryProgrammeRepository {
   private sequence = 10;
   private transactionQueue: Promise<void> = Promise.resolve();
   private failureStage: string | null = null;
+  controlProgramAvailable = true;
   anonymousSessions: any[] = [];
   claims: any[] = [];
   enrollments: any[] = [];
@@ -227,6 +232,7 @@ class MemoryProgrammeRepository {
   }
 
   async findControlProgram() {
+    if (!this.controlProgramAvailable) return null;
     return {
       program: {
         id: programmeId,
@@ -258,6 +264,12 @@ class MemoryProgrammeRepository {
     return row;
   }
 
+  async setEnrollmentTimezone(enrollmentId: string, timezone: string) {
+    const row = this.enrollments.find((item) => item.id === enrollmentId)!;
+    row.timezone = timezone;
+    return row;
+  }
+
   async findMissionProgress(enrollmentId: string, missionNumber: number) {
     return this.missions.find((item) => item.enrollmentId === enrollmentId && item.missionNumber === missionNumber) ?? null;
   }
@@ -270,6 +282,19 @@ class MemoryProgrammeRepository {
       this.missions.push(row);
     }
     return row;
+  }
+
+  async completeMissionProgressIfReady(input: any) {
+    const row = await this.findMissionProgress(input.enrollmentId, input.missionNumber);
+    if (!row || row.status !== "READY_TO_SAVE") return { count: 0 };
+    Object.assign(row, {
+      status: "COMPLETED",
+      taskStates: input.taskStates,
+      draft: null,
+      completedAt: input.completedAt,
+      updatedAt: input.completedAt,
+    });
+    return { count: 1 };
   }
 
   async updateMissionDraftIfOpen(input: any) {
@@ -535,6 +560,56 @@ test("anonymous Mission 01 reaches registration_required without persistent XP",
   assert.equal(repository.xpEvents.length, 0);
 });
 
+test("fresh authenticated Mission 01 uses only user-owned progress and completes exactly once", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+
+  const first = await service.saveAuthenticatedMissionOneDraft("fresh-user", {
+    taskStates: [missionOneTaskStates[0]],
+  });
+  assert.equal(first.status, "in_progress");
+  assert.equal(repository.anonymousSessions.length, 0);
+  assert.equal(repository.xpEvents.length, 0);
+  const zeroProgress = await service.getDashboard("fresh-user");
+  assert.equal(zeroProgress.totalXp, 0);
+  assert.equal(zeroProgress.currentMission, 1);
+
+  await service.saveAuthenticatedMissionOneDraft("fresh-user", {
+    taskStates: [...missionOneTaskStates],
+  });
+  const [completed, retried] = await Promise.all([
+    service.completeAuthenticatedMissionOne("fresh-user", "Asia/Almaty", now),
+    service.completeAuthenticatedMissionOne("fresh-user", "Asia/Almaty", now),
+  ]);
+  assert.equal(completed.totalXp, 60);
+  assert.equal(retried.totalXp, 60);
+  assert.equal(completed.currentMission, 2);
+  assert.equal(repository.xpEvents.length, 1);
+  assert.equal(repository.momentMaps.length, 1);
+  assert.equal(repository.missions.filter((mission) => mission.missionNumber === 1 && mission.status === "COMPLETED").length, 1);
+});
+
+test("expired anonymous claim cannot keep an authenticated user on the anonymous write subject", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  const expiredAt = new Date(new Date(started.claim.expiresAt).getTime() + 1);
+
+  await assert.rejects(
+    () => service.redeemPendingClaim("fresh-after-expiry", started.claim.claimToken, "UTC", expiredAt),
+    /expired/i,
+  );
+  await service.saveAuthenticatedMissionOneDraft("fresh-after-expiry", {
+    taskStates: [missionOneTaskStates[0]],
+  });
+
+  assert.equal(repository.anonymousSessions[0].missionState, "REGISTRATION_REQUIRED");
+  assert.equal(repository.claims[0].consumedAt, null);
+  assert.equal(repository.enrollments.length, 1);
+  assert.equal(repository.missions[0].status, "IN_PROGRESS");
+  assert.equal(repository.xpEvents.length, 0);
+});
+
 test("anonymous autosave stores neutral continuity and concurrent claim creation has one winner", async () => {
   const repository = new MemoryProgrammeRepository();
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
@@ -576,6 +651,11 @@ test("claim redemption saves a neutral continuity marker, gives exactly 60 XP an
   );
   assert.equal(repository.xpEvents.length, 1);
   assert.equal(repository.momentMaps.length, 1);
+  await assert.rejects(
+    () => service.saveAuthenticatedMissionOneDraft("user-1", { taskStates: [missionOneTaskStates[0]] }),
+    /already completed/i,
+  );
+  assert.equal(repository.anonymousSessions[0].missionState, "COMPLETED");
 });
 
 test("invalid claims fail closed without creating persistent Programme state", async () => {
@@ -583,11 +663,54 @@ test("invalid claims fail closed without creating persistent Programme state", a
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
   await assert.rejects(
     () => service.redeemPendingClaim("user-1", "unknown-claim", "UTC", now),
-    /claim not found/i,
+    PendingProgrammeClaimUnavailableError,
   );
   assert.equal(repository.enrollments.length, 0);
   assert.equal(repository.momentMaps.length, 0);
   assert.equal(repository.xpEvents.length, 0);
+});
+
+test("claim and Programme availability use distinct safe error contracts", async () => {
+  const missingClaimRepository = new MemoryProgrammeRepository();
+  const missingClaimService = new ProgrammeFlowService(missingClaimRepository as unknown as ProgrammeFlowRepository);
+  await assert.rejects(
+    () => missingClaimService.redeemPendingClaim("user-1", "unknown-claim", "UTC", now),
+    PendingProgrammeClaimUnavailableError,
+  );
+
+  const missingProgrammeRepository = new MemoryProgrammeRepository();
+  const missingProgrammeService = new ProgrammeFlowService(missingProgrammeRepository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(missingProgrammeService);
+  missingProgrammeRepository.controlProgramAvailable = false;
+  await assert.rejects(
+    () => missingProgrammeService.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    ProgrammeDefinitionUnavailableError,
+  );
+  assert.equal(missingProgrammeRepository.claims[0].consumedAt, null);
+  assert.equal(missingProgrammeRepository.enrollments.length, 0);
+  assert.equal(missingProgrammeRepository.xpEvents.length, 0);
+});
+
+test("failed Programme lookup can retry once with exactly-once claim, completion and XP", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  repository.controlProgramAvailable = false;
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    ProgrammeDefinitionUnavailableError,
+  );
+  repository.controlProgramAvailable = true;
+  const dashboard = await service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now);
+  assert.equal(dashboard.totalXp, 60);
+  assert.equal(repository.claims.filter((claim) => claim.consumedAt).length, 1);
+  assert.equal(repository.missions.filter((mission) => mission.missionNumber === 1 && mission.status === "COMPLETED").length, 1);
+  assert.equal(repository.xpEvents.length, 1);
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    /already been used/i,
+  );
+  assert.equal(repository.xpEvents.length, 1);
 });
 
 test("one pending claim cannot be redeemed concurrently by two users", async () => {
@@ -949,7 +1072,11 @@ test("commercial activity cannot enter the Programme reward or active-day ledger
 test("foreign artefacts cannot be read, edited or deleted", async () => {
   const { service } = await missionFourFlow();
   await service.completeMissionFour("user-1", now);
-  await assert.rejects(() => service.getDashboard("user-2"), /enrollment not found/i);
+  const emptyDashboard = await service.getDashboard("user-2");
+  assert.equal(emptyDashboard.currentMission, 1);
+  assert.equal(emptyDashboard.totalXp, 0);
+  assert.equal(emptyDashboard.missions[0].status, "current");
+  assert.equal(emptyDashboard.missions.filter((mission: { status: string }) => mission.status === "completed").length, 0);
   await assert.rejects(() => service.updateMomentMap("user-2", { situation: "foreign" }), /stored only in this browser session/i);
   await assert.rejects(() => service.deleteMomentMap("user-2", now), /enrollment not found/i);
   await assert.rejects(() => service.updateCurrentGoal("user-2", { action: "foreign" }, now), /enrollment not found/i);
@@ -1074,6 +1201,14 @@ test("schema and migration enforce idempotency, ownership, confidence and non-ne
   assert.match(missionFourMigration, /ActiveBoundary_material_value_check/);
   assert.match(missionFourMigration, /ActiveBoundary_enrollmentId_key/);
   assert.match(missionFourMigration, /boundary-built/);
+});
+
+test("Control Programme seed uses current B4GAMBLE naming without changing its fixed slug", () => {
+  const seed = readFileSync("scripts/seed-active-control-program.ts", "utf8");
+  assert.match(seed, /B4GAMBLE Active Control Programme/);
+  assert.match(seed, /B4GAMBLE 10-Step Control Programme/);
+  assert.doesNotMatch(seed, /SevenBet Active Control Program|SevenBet 10-Step Control Program/);
+  assert.match(seed, /CONTROL_PROGRAM_SLUG/);
 });
 
 test("validation rejects invalid confidence and client-authored reward fields", async () => {

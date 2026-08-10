@@ -9,20 +9,80 @@ async function open(page: Page, route: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 }
 
-async function passAgeGate(page: Page) {
+async function passAccessGate(page: Page) {
+  await page.route("**/api/programme-access/authority", async (route) => {
+    const input = route.request().postDataJSON() as { journeyId: string };
+    const now = Date.now() + 2 * 60 * 1000;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "cache-control": "no-store" },
+      body: JSON.stringify({
+        ok: true,
+        authority: {
+          version: 1,
+          intent: "PROGRAMME_ACCESS",
+          purpose: "PROGRAMME_AUTH_ACCESS",
+          journeyId: input.journeyId,
+          createdAt: now,
+          expiresAt: now + 60 * 60 * 1000,
+          termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+          privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+          adultConfirmedAt: now,
+          termsAcceptedAt: now,
+          privacyAcknowledgedAt: now,
+          proof: "pa1.browser-test.browser-signature",
+        },
+      }),
+    });
+  });
   await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
   await expect(page.getByRole("link", { name: /Protected Help remains available/ })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
+  await expect(page.getByRole("link", { name: "Privacy Notice" })).toHaveAttribute("href", "/privacy");
+  const required = page.getByRole("checkbox");
+  await expect(required).toHaveCount(2);
+  const continueButton = page.getByRole("button", { name: "Continue to the Programme" });
+  await expect(continueButton).toBeDisabled();
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
-  await page.getByRole("button", { name: "Continue to the Programme" }).click();
+  await expect(continueButton).toBeDisabled();
+  await page.getByRole("checkbox", { name: /I agree to the Terms and acknowledge the Privacy Notice/ }).check();
+  await expect(continueButton).toBeEnabled();
+  await continueButton.click();
 }
 
 test("authentication choice is responsive, accessible and fail-closed with provider configuration", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, "/program?auth=sign-in");
-  await passAgeGate(page);
+  await passAccessGate(page);
   await expect(page.getByRole("heading", { name: "Return to your programme." })).toBeVisible();
   await expect(page.getByLabel("Email address")).toBeVisible();
   await expect(page.getByLabel("Password")).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await page.getByRole("button", { name: "Need an account? Create one" }).click();
+  await expect(page.getByRole("heading", { name: "Create your account." })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  let emailProofHeader: string | null = null;
+  let emailJourneyHeader: string | null = null;
+  let emailStaticTermsHeader: string | null = null;
+  await page.route("**/api/auth/sign-up/email", async (route) => {
+    emailProofHeader = await route.request().headerValue("x-sevenbet-programme-access-proof");
+    emailJourneyHeader = await route.request().headerValue("x-sevenbet-programme-access-journey");
+    emailStaticTermsHeader = await route.request().headerValue("x-sevenbet-terms-acceptance");
+    await route.fulfill({
+      status: 403,
+      contentType: "application/json",
+      body: JSON.stringify({ code: "TEST_SIGNUP_STOP" }),
+    });
+  });
+  await page.getByLabel("Email address").fill("proof-check@example.com");
+  await page.getByLabel("Create a password").fill("test-password-1234");
+  await page.getByRole("button", { name: "Create private account" }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText("could not be created");
+  expect(emailProofHeader).toBe("pa1.browser-test.browser-signature");
+  expect(emailJourneyHeader).toMatch(/^[0-9a-f-]{36}$/);
+  expect(emailStaticTermsHeader).toBeNull();
+  await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
 
   const google = page.getByRole("button", { name: "Continue with Google" });
   if (!expectGoogle) {
@@ -39,9 +99,13 @@ test("authentication choice is responsive, accessible and fail-closed with provi
   expect(await google.evaluate((element) => getComputedStyle(element).outlineWidth)).toBe("3px");
 
   let requestBody: Record<string, unknown> | null = null;
+  let proofHeader: string | null = null;
+  let journeyHeader: string | null = null;
   let ageHeader: string | null = null;
   await page.route("**/api/auth/sign-in/social", async (route) => {
     requestBody = route.request().postDataJSON() as Record<string, unknown>;
+    proofHeader = await route.request().headerValue("x-sevenbet-programme-access-proof");
+    journeyHeader = await route.request().headerValue("x-sevenbet-programme-access-journey");
     ageHeader = await route.request().headerValue("x-sevenbet-age-attestation");
     await route.fulfill({
       status: 503,
@@ -57,7 +121,47 @@ test("authentication choice is responsive, accessible and fail-closed with provi
     errorCallbackURL: "/program?auth=google-error",
     requestSignUp: false,
   });
-  expect(ageHeader).toBe("18-or-over");
+  expect(proofHeader).toBe("pa1.browser-test.browser-signature");
+  expect(journeyHeader).toMatch(/^[0-9a-f-]{36}$/);
+  expect(ageHeader).toBeNull();
+});
+
+test("AccessGate renders a safe retry message instead of internal authority diagnostics", async ({ page }) => {
+  await open(page, "/program");
+  await page.route("**/api/programme-access/authority", async (route) => {
+    const input = route.request().postDataJSON() as { journeyId: string };
+    const materiallyFuture = Date.now() + 5 * 60 * 1000 + 1_000;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        authority: {
+          version: 1,
+          intent: "PROGRAMME_ACCESS",
+          purpose: "PROGRAMME_AUTH_ACCESS",
+          journeyId: input.journeyId,
+          createdAt: materiallyFuture,
+          expiresAt: materiallyFuture + 60 * 60 * 1000,
+          termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+          privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+          adultConfirmedAt: materiallyFuture,
+          termsAcceptedAt: materiallyFuture,
+          privacyAcknowledgedAt: materiallyFuture,
+          proof: "pa1.browser-test.browser-signature",
+        },
+      }),
+    });
+  });
+
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms and acknowledge the Privacy Notice/ }).check();
+  await page.getByRole("button", { name: "Continue to the Programme" }).click();
+
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toHaveText("We couldn’t confirm your access. Please try again.");
+  await expect(alert).not.toContainText("Programme access continuation");
+  await expect(alert).not.toContainText("server authority");
 });
 
 test("Google cancellation preserves the exact local journey without exposing the marker in the URL", async ({ page }) => {
@@ -65,7 +169,20 @@ test("Google cancellation preserves the exact local journey without exposing the
   await page.addInitScript(({ id }) => {
     const now = Date.now();
     sessionStorage.setItem("sevenbet.programme.journey.v2", id);
-    sessionStorage.setItem(`sevenbet.age-attestation.v2:journey:${encodeURIComponent(id)}`, "18-or-over");
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: id,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
     sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(id)}`, JSON.stringify({
       momentMap: {
         situation: "CANCELLED-OAUTH-LOCAL-SENTINEL",
@@ -107,16 +224,483 @@ test("Google cancellation preserves the exact local journey without exposing the
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
+test("Google return transfers only active access authority to the authenticated user", async ({ page }) => {
+  const userId = "google-return-fresh-user";
+  const journeyId = "19dde0a8-e33b-40a7-88c3-a50d0942ce57";
+  await page.addInitScript(({ journey }) => {
+    const now = Date.now();
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+  }, { journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "google-return-session", token: "test-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Google Return", email: "return@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  await page.route("**/api/program/dashboard", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 0,
+          currentMission: 1,
+          missions: [{ missionNumber: 1, title: "Map the moment", status: "current" }],
+          activeDays: 0,
+          currentStreak: 0,
+          achievements: [],
+          momentMap: null,
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+
+  await open(page, "/program?auth=google-return");
+  await expect(page).toHaveURL(`${baseUrl}/program`);
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log in" })).toHaveCount(0);
+  const access = await page.evaluate((id) => ({
+    continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+    authority: sessionStorage.getItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`),
+    claim: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+  }), userId);
+  expect(access.continuation).toBeNull();
+  expect(access.authority).toContain(journeyId);
+  expect(access.claim).toBeNull();
+});
+
+test("failed Google-return claim redemption exits loading and retries without losing authenticated or journey state", async ({ page }) => {
+  const userId = "google-claim-retry-user";
+  const journeyId = "0f182b74-f246-47cb-809c-f47de6659c3d";
+  const syntheticHttpOnlyClaim = "synthetic-http-only-claim-token";
+  await page.context().addCookies([{
+    name: "sevenbet_programme_claim",
+    value: syntheticHttpOnlyClaim,
+    url: baseUrl,
+    httpOnly: true,
+    sameSite: "Lax",
+  }]);
+  await page.addInitScript(({ journey }) => {
+    const now = Date.now();
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      momentMap: {
+        situation: "CLAIM-RETRY-LOCAL-SENTINEL",
+        cues: ["private cue"],
+        thoughtOrFeeling: "private thought",
+        response: "private response",
+        immediateConsequence: "private consequence",
+        noticeRule: "private rule",
+        neutralFlags: [],
+        notSureFlags: [],
+      },
+    }));
+    sessionStorage.setItem("sevenbet.programme.oauth-claim.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_CLAIM_GOOGLE",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 10 * 60 * 1000,
+    }));
+  }, { journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "google-claim-retry-session", token: "test-session-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Claim Retry", email: "retry@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  let redemptionRequests = 0;
+  await page.route("**/api/program/claims/redeem", async (route) => {
+    redemptionRequests += 1;
+    if (redemptionRequests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: false,
+          code: "PROGRAMME_DEFINITION_UNAVAILABLE",
+          error: "Programme definition is unavailable",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "set-cookie": "sevenbet_programme_claim=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" },
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 60,
+          currentMission: 2,
+          missions: Array.from({ length: 10 }, (_, index) => ({
+            missionNumber: index + 1,
+            title: index === 0 ? "Map the moment" : index === 1 ? "Set a 7-day goal" : `Mission ${index + 1}`,
+            status: index === 0 ? "completed" : index === 1 ? "current" : "locked",
+          })),
+          activeDays: 1,
+          currentStreak: 1,
+          achievements: [{ slug: "first-plan", title: "First Plan", state: "locked" }],
+          momentMap: {
+            id: "30000000-0000-4000-8000-000000000001",
+            situation: "",
+            cues: [],
+            thoughtOrFeeling: "",
+            response: "",
+            immediateConsequence: "",
+            noticeRule: "",
+            neutralFlags: [],
+            notSureFlags: [],
+          },
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+
+  await open(page, "/program?auth=google-return");
+  await expect(page.getByRole("heading", { name: "Keep your progress. Keep the words local." })).toBeVisible();
+  await expect(page.getByText("Loading your private Programme session…")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toBeVisible();
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toHaveText("You’re signed in, but your progress hasn’t been saved yet. Please try again.");
+  await expect(alert).not.toContainText("Programme definition");
+  await expect(alert).not.toContainText("PROGRAMME_DEFINITION_UNAVAILABLE");
+  await expect(page.getByRole("button", { name: "Try saving progress again" })).toBeVisible();
+  expect(redemptionRequests).toBe(1);
+
+  const failedStorage = await page.evaluate(({ journey, user, rawClaim }) => ({
+    url: window.location.href,
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+    userAuthority: sessionStorage.getItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(user)}`),
+    browserStorageContainsRawClaim: [...Object.values(sessionStorage), ...Object.values(localStorage)].some((value) => value?.includes(rawClaim)),
+  }), { journey: journeyId, user: userId, rawClaim: syntheticHttpOnlyClaim });
+  expect(failedStorage.url).toBe(`${baseUrl}/program`);
+  expect(failedStorage.url).not.toContain(syntheticHttpOnlyClaim);
+  expect(failedStorage.marker).toContain(journeyId);
+  expect(failedStorage.continuation).toBeNull();
+  expect(failedStorage.journeyContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(failedStorage.userContent ?? "").not.toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(failedStorage.userAuthority).toContain(journeyId);
+  expect(failedStorage.browserStorageContainsRawClaim).toBe(false);
+  expect((await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_claim")?.value).toBe(syntheticHttpOnlyClaim);
+
+  await page.getByRole("button", { name: "Try saving progress again" }).click();
+  await expect(page.getByRole("heading", { name: "Your first map is complete." })).toBeVisible();
+  expect(redemptionRequests).toBe(2);
+  const succeededStorage = await page.evaluate(({ journey, user }) => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+    userAuthority: sessionStorage.getItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(user)}`),
+  }), { journey: journeyId, user: userId });
+  expect(succeededStorage.marker).toBeNull();
+  expect(succeededStorage.continuation).toBeNull();
+  expect(succeededStorage.journeyContent).toBeNull();
+  expect(succeededStorage.userContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(succeededStorage.userAuthority).toContain(journeyId);
+});
+
+test("expired claim settles to an authenticated zero-progress subject and never writes through the stale anonymous session", async ({ page }) => {
+  const userId = "expired-claim-authenticated-user";
+  const journeyId = "d1088123-d838-47ef-bc46-20a237e56194";
+  await page.context().addCookies([
+    { name: "sevenbet_programme_claim", value: "expired-claim-cookie", url: baseUrl, httpOnly: true, sameSite: "Lax" },
+    { name: "sevenbet_programme_session", value: "stale-anonymous-cookie", url: baseUrl, httpOnly: true, sameSite: "Lax" },
+  ]);
+  await page.addInitScript(({ journey }) => {
+    if (sessionStorage.getItem("expired-claim-browser-seeded") === "true") return;
+    sessionStorage.setItem("expired-claim-browser-seeded", "true");
+    const now = Date.now();
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      momentMap: { situation: "EXPIRED-CLAIM-LOCAL-SENTINEL" },
+    }));
+    sessionStorage.setItem("sevenbet.programme.oauth-claim.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_CLAIM_GOOGLE",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 10 * 60 * 1000,
+    }));
+  }, { journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "expired-claim-session", token: "session-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Expired Claim", email: "expired@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  let redemptionRequests = 0;
+  await page.route("**/api/program/claims/redeem", async (route) => {
+    redemptionRequests += 1;
+    await route.fulfill({
+      status: 410,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: false, code: "CLAIM_EXPIRED", error: "Pending programme claim has expired" }),
+    });
+  });
+  await page.route("**/api/program/dashboard", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 0,
+          currentMission: 1,
+          missions: [
+            { missionNumber: 1, title: "Map the moment", status: "current" },
+            { missionNumber: 2, title: "Set a 7-day goal", status: "locked" },
+          ],
+          activeDays: 0,
+          currentStreak: 0,
+          achievements: [],
+          momentMap: null,
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+  let authenticatedWrites = 0;
+  let anonymousWrites = 0;
+  await page.route("**/api/program/missions/01", async (route) => {
+    authenticatedWrites += 1;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, mission: { missionNumber: 1, status: "in_progress", taskStates: ["brief"] } }) });
+  });
+  await page.route("**/api/program/session/mission-01", async (route) => {
+    anonymousWrites += 1;
+    await route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, code: "CONFLICT", error: "stale anonymous session" }) });
+  });
+
+  await open(page, "/program?auth=google-return");
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await expect(page.getByText("You’re signed in. Your earlier progress could not be recovered, so you can start Mission 01 when you’re ready.")).toBeVisible();
+  await expect(page.getByText(/Pending programme claim has expired|CLAIM_EXPIRED|Mission 01 draft can no longer be changed/)).toHaveCount(0);
+  expect(redemptionRequests).toBe(1);
+
+  const settled = await page.evaluate(({ journey, user }) => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+  }), { journey: journeyId, user: userId });
+  expect(settled.marker).toBeNull();
+  expect(settled.journeyContent).toContain("EXPIRED-CLAIM-LOCAL-SENTINEL");
+  expect(settled.userContent ?? "").not.toContain("EXPIRED-CLAIM-LOCAL-SENTINEL");
+
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  expect(redemptionRequests).toBe(1);
+  await page.getByRole("button", { name: "Start Mission 01" }).click();
+  await page.getByRole("button", { name: "Begin with one moment" }).click();
+  await expect(page.getByRole("heading", { name: "Triggers are not the same as choices." })).toBeVisible();
+  expect(authenticatedWrites).toBe(1);
+  expect(anonymousWrites).toBe(0);
+});
+
+test("expired access continuation returns to the consolidated access screen", async ({ page }) => {
+  const journeyId = "2a5dfb88-a766-4ac1-9b1b-b8e5eac1aef4";
+  await page.addInitScript(({ journey }) => {
+    const createdAt = Date.now() - 2 * 60 * 60 * 1000;
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt,
+      expiresAt: createdAt + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: createdAt,
+      termsAcceptedAt: createdAt,
+      privacyAcknowledgedAt: createdAt,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+  }, { journey: journeyId });
+
+  await open(page, "/program");
+  await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
+});
+
 test("Google control honours reduced motion when configured", async ({ browser }) => {
   test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await open(page, "/program?auth=sign-in");
-  await passAgeGate(page);
+  await passAccessGate(page);
   const google = page.getByRole("button", { name: "Continue with Google" });
   await expect(google).toBeVisible();
   expect(await google.evaluate((element) => getComputedStyle(element).transitionDuration)).toBe("0s");
   await context.close();
+});
+
+test("fresh authenticated user resolves to Programme home and starts Mission 01 explicitly", async ({ page }) => {
+  const userId = "fresh-authenticated-programme-user";
+  const journeyId = "4e5c7a66-33dd-4bb7-a237-4ee9ad01caf7";
+  await page.addInitScript(({ id, journey }) => {
+    const now = Date.now();
+    sessionStorage.setItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`, JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+  }, { id: userId, journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "fresh-session", token: "fresh-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Fresh User", email: "fresh@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  await page.route("**/api/program/dashboard", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 0,
+          currentMission: 1,
+          missions: [
+            { missionNumber: 1, title: "Map the moment", status: "current" },
+            { missionNumber: 2, title: "Set a 7-day goal", status: "locked" },
+            { missionNumber: 3, title: "Understand the urge", status: "locked" },
+          ],
+          activeDays: 0,
+          currentStreak: 0,
+          achievements: [],
+          momentMap: null,
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+  let authenticatedMissionOneWrites = 0;
+  let anonymousMissionOneWrites = 0;
+  await page.route("**/api/program/missions/01", async (route) => {
+    authenticatedMissionOneWrites += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, mission: { missionNumber: 1, status: "in_progress", taskStates: ["brief"] } }),
+    });
+  });
+  await page.route("**/api/program/session/mission-01", async (route) => {
+    anonymousMissionOneWrites += 1;
+    await route.fulfill({ status: 409, contentType: "application/json", body: JSON.stringify({ ok: false, code: "CONFLICT", error: "stale anonymous session" }) });
+  });
+
+  await open(page, "/program");
+  await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await expect(page.getByText("0 missions completed.", { exact: true })).toBeVisible();
+  await expect(page.getByText("MISSION 01", { exact: true })).toBeVisible();
+  await expect(page.getByText("CURRENT · 17–22 MIN · NOT STARTED", { exact: true })).toBeVisible();
+  await expect(page.getByText(/COMPLETE MISSION 02|FIRST PLAN|7-day goal/i)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Start Mission 01" })).toBeVisible();
+  await page.screenshot({ path: "test-results/programme-fresh-zero-progress-dashboard.png", fullPage: true });
+  await expect(page.getByRole("link", { name: "Log in" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toBeVisible();
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await page.getByRole("button", { name: "Start Mission 01" }).click();
+  await expect(page.getByRole("heading", { name: "Map one real moment." })).toBeVisible();
+  await page.getByRole("button", { name: "Begin with one moment" }).click();
+  await expect(page.getByRole("heading", { name: "Triggers are not the same as choices." })).toBeVisible();
+  expect(authenticatedMissionOneWrites).toBe(1);
+  expect(anonymousMissionOneWrites).toBe(0);
+  await open(page, "/program");
+  await expect(page.getByRole("heading", { name: "Your Programme is ready." })).toBeVisible();
+  await open(page, "/program?entry=start");
+  await expect(page).toHaveURL(`${baseUrl}/program`);
+  await expect(page.getByRole("heading", { name: "Map one real moment." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Log in" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toBeVisible();
 });
 
 test("authenticated Programme logout ends the session and starts a fresh anonymous subject", async ({ page }) => {
@@ -124,6 +708,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   const priorJourneyId = "8a6bf1a5-b7f5-497d-883f-3b3f1ebd0fb8";
   let authenticated = true;
   let signOutRequests = 0;
+  let subjectTransitionRequests = 0;
 
   await page.addInitScript(({ id, journeyId }) => {
     if (sessionStorage.getItem("auth-harden-browser-seeded") === "true") return;
@@ -133,10 +718,21 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
       `sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journeyId)}`,
       JSON.stringify({ privateSentinel: "PRIOR-ANONYMOUS-SENTINEL" }),
     );
-    sessionStorage.setItem(
-      `sevenbet.age-attestation.v2:user:${encodeURIComponent(id)}`,
-      "18-or-over",
-    );
+    const now = Date.now();
+    sessionStorage.setItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`, JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
   }, { id: userId, journeyId: priorJourneyId });
 
   await page.route("**/api/auth/get-session", async (route) => {
@@ -197,10 +793,25 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
       body: JSON.stringify({ success: true }),
     });
   });
+  await page.route("**/api/program/session", async (route) => {
+    if (route.request().method() !== "DELETE") return route.continue();
+    subjectTransitionRequests += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: {
+        "set-cookie": "sevenbet_programme_session=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax",
+      },
+      body: JSON.stringify({ ok: true }),
+    });
+  });
 
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/program");
   await expect(page.getByText("PERSONAL CONTROL DASHBOARD", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your first map is complete." })).toBeVisible();
+  await expect(page.getByText("COMPLETE MISSION 02", { exact: true })).toBeVisible();
+  await expect(page.getByText("FIRST PLAN", { exact: true })).toBeVisible();
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.focus();
@@ -218,6 +829,7 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toHaveCount(0);
   expect(signOutRequests).toBe(1);
+  expect(subjectTransitionRequests).toBe(1);
   const storage = await page.evaluate(({ id, journeyId }) => {
     const pointer = sessionStorage.getItem("sevenbet.programme.journey.v2");
     return {
@@ -231,6 +843,11 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
       authenticatedUser: sessionStorage.getItem(
         `sevenbet.programme.local-content.v2:user:${encodeURIComponent(id)}`,
       ),
+      authenticatedAccess: sessionStorage.getItem(
+        `sevenbet.programme.access-authority.v1:user:${encodeURIComponent(id)}`,
+      ),
+      continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+      claim: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
     };
   }, { id: userId, journeyId: priorJourneyId });
   expect(storage.pointer).not.toBe(priorJourneyId);
@@ -238,5 +855,8 @@ test("authenticated Programme logout ends the session and starts a fresh anonymo
   expect(storage.freshJourney ?? "").not.toContain("PRIOR-ANONYMOUS-SENTINEL");
   expect(storage.freshJourney ?? "").not.toContain("AUTHENTICATED-USER-SENTINEL");
   expect(storage.authenticatedUser).toContain("AUTHENTICATED-USER-SENTINEL");
+  expect(storage.authenticatedAccess).toBeNull();
+  expect(storage.continuation).toBeNull();
+  expect(storage.claim).toBeNull();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });

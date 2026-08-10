@@ -1,6 +1,8 @@
 import { requireControlProgram } from "@/lib/programme/application/programme-context";
-import { programmeDashboardDto } from "@/lib/programme/application/programme-presenters";
-import { ProgrammeResourceNotFoundError } from "@/lib/programme/domain/programme-errors";
+import {
+  emptyProgrammeDashboardDto,
+  programmeDashboardDto,
+} from "@/lib/programme/application/programme-presenters";
 import {
   ProgrammeUnitOfWork,
   programmeUnitOfWork,
@@ -22,7 +24,7 @@ export class ProgrammeDashboardService {
     programId: string,
   ) {
     const data = await unitOfWork.dashboard.findDashboardData(userId, programId);
-    if (!data[0]) throw new ProgrammeResourceNotFoundError("Program enrollment");
+    if (!data[0]) return emptyProgrammeDashboardDto(programId);
     return programmeDashboardDto(programId, data);
   }
 }

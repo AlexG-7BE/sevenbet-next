@@ -59,6 +59,6 @@ test("anonymous hero preserves Mission 01 entry and pending reward boundary", ()
   assert.match(hero, /\+60 XP/);
   assert.match(hero, /CREATE AN ACCOUNT ONLY AFTER COMPLETION TO SAVE \+60 XP/);
   assert.match(hero, /Awarded when Mission 01 completion is saved to your account\./);
-  assert.match(hero, /href="\/program"/);
+  assert.match(hero, /href="\/program\?entry=start"/);
   assert.doesNotMatch(hero, /WELCOME BACK|MY PROGRAMME|of 10 complete/);
 });

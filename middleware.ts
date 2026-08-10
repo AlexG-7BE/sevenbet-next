@@ -4,6 +4,7 @@ import {
   getAdminLoginUrl,
   isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
+import { resolvePreviewCanonicalHost } from "@/lib/auth/preview-canonical-host";
 
 const adminCookieName = "sevenbet_admin_preview";
 
@@ -25,6 +26,25 @@ function hasPossibleBetterAuthSession(request: NextRequest) {
 }
 
 export function middleware(request: NextRequest) {
+  const canonicalHost = resolvePreviewCanonicalHost(request.url);
+  if (canonicalHost.kind === "redirect") {
+    return NextResponse.redirect(canonicalHost.location, 307);
+  }
+  if (canonicalHost.kind === "reject") {
+    return NextResponse.json(
+      {
+        ok: false,
+        code: canonicalHost.reason === "metadata"
+          ? "PREVIEW_CANONICAL_HOST_UNAVAILABLE"
+          : "PREVIEW_HOST_NOT_ALLOWED",
+      },
+      {
+        status: canonicalHost.reason === "metadata" ? 503 : 421,
+        headers: { "Cache-Control": "no-store" },
+      },
+    );
+  }
+
   const { pathname, searchParams } = request.nextUrl;
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";
   if (programmeMutation && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over") {
@@ -92,5 +112,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*", "/api/program/:path*"],
+  matcher: ["/:path*"],
 };

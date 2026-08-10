@@ -5,6 +5,8 @@ import test from "node:test";
 import { programmeErrorResponse } from "../lib/programme/http";
 import {
   MissionLockedError,
+  PendingProgrammeClaimUnavailableError,
+  ProgrammeDefinitionUnavailableError,
   ProgrammePermissionError,
   ProgrammeResourceNotFoundError,
 } from "../lib/programme/domain/programme-errors";
@@ -113,6 +115,8 @@ test("active-day key uses the enrollment timezone around a UTC day boundary", ()
 test("typed Programme errors preserve normalized HTTP semantics", async () => {
   const cases = [
     [new ProgrammeResourceNotFoundError("Active Boundary"), 404, "NOT_FOUND"],
+    [new PendingProgrammeClaimUnavailableError(), 404, "PENDING_PROGRAMME_CLAIM_UNAVAILABLE"],
+    [new ProgrammeDefinitionUnavailableError(), 503, "PROGRAMME_DEFINITION_UNAVAILABLE"],
     [new MissionLockedError(3, 4), 409, "CONFLICT"],
     [new ProgrammePermissionError("SUPER_ADMIN access required"), 403, "STAFF_PERMISSION_REQUIRED"],
   ] as const;
@@ -127,6 +131,8 @@ test("Programme delivery and domain dependency boundaries remain explicit", () =
   const routeFiles = [
     "app/api/program/claims/redeem/route.ts",
     "app/api/program/dashboard/route.ts",
+    "app/api/program/missions/01/route.ts",
+    "app/api/program/missions/01/complete/route.ts",
     "app/api/program/missions/02/route.ts",
     "app/api/program/missions/03/route.ts",
     "app/api/program/missions/04/route.ts",
@@ -150,4 +156,27 @@ test("Programme delivery and domain dependency boundaries remain explicit", () =
     const source = readFileSync(file, "utf8");
     assert.doesNotMatch(source, /next\/|@prisma\/client|infrastructure\//);
   }
+});
+
+test("authenticated Mission 01 routes never resolve an anonymous cookie subject", () => {
+  for (const file of [
+    "app/api/program/missions/01/route.ts",
+    "app/api/program/missions/01/complete/route.ts",
+  ]) {
+    const route = readFileSync(file, "utf8");
+    assert.match(route, /requireCurrentUser\(request\.headers\)/);
+    assert.doesNotMatch(route, /anonymousProgrammeCookie|requestCookie|ProgrammeSessionService/);
+  }
+});
+
+test("claim cookies are cleared only after successful server redemption", () => {
+  const route = readFileSync("app/api/program/claims/redeem/route.ts", "utf8");
+  const redemption = route.indexOf("programmeClaimService.redeemPendingClaim");
+  const clearPendingClaim = route.indexOf("response.cookies.set(pendingProgrammeClaimCookie");
+  const clearAnonymousSession = route.indexOf("response.cookies.set(anonymousProgrammeCookie");
+  const failureBoundary = route.indexOf("} catch (error)");
+  assert.ok(redemption >= 0);
+  assert.ok(clearPendingClaim > redemption);
+  assert.ok(clearAnonymousSession > clearPendingClaim);
+  assert.ok(failureBoundary > clearAnonymousSession);
 });

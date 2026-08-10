@@ -59,6 +59,8 @@ test("Mission path is registry-owned and exposes ten exact titles without future
 
 test("10 Steps uses only the canonical Programme body destination", () => {
   assert.match(landing, /href="\/program"/);
+  assert.match(landing, /href="\/program\?entry=start"/);
+  assert.match(landing, /href="\/program"[^>]*>Open My Programme/);
   assert.doesNotMatch(landing, /href="\/(?:casinos|bonuses|best-offers|catalog|compare|r\/|go\/)/);
   assert.doesNotMatch(landing, /\?mission=|missionIndex|localStorage|sessionStorage/);
   assert.doesNotMatch(landing, /CasinoCard|BonusCard|BestOffers|Affiliate|Outbound/);
