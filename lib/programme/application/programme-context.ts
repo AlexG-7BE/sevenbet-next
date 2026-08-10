@@ -1,22 +1,15 @@
-import { CONTROL_PROGRAM_SLUG } from "@/lib/programme/contract";
 import {
+  ProgrammeDefinitionUnavailableError,
   ProgrammeResourceNotFoundError,
-  ProgrammeStateConflictError,
 } from "@/lib/programme/domain/programme-errors";
 import { ProgrammeUnitOfWork } from "@/lib/programme/infrastructure/programme-unit-of-work";
 
 export async function requireControlProgram(unitOfWork: ProgrammeUnitOfWork) {
   const source = await unitOfWork.progress.findControlProgram();
   if (!source) {
-    throw new ProgrammeResourceNotFoundError("Published Control Program", {
-      slug: CONTROL_PROGRAM_SLUG,
-    });
+    throw new ProgrammeDefinitionUnavailableError();
   }
-  if (source.program.steps.length < 10) {
-    throw new ProgrammeStateConflictError(
-      "Published Control Program must contain ten missions",
-    );
-  }
+  if (source.program.steps.length < 10) throw new ProgrammeDefinitionUnavailableError();
   return source;
 }
 

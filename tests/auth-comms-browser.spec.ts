@@ -292,6 +292,161 @@ test("Google return transfers only active access authority to the authenticated 
   expect(access.claim).toBeNull();
 });
 
+test("failed Google-return claim redemption exits loading and retries without losing authenticated or journey state", async ({ page }) => {
+  const userId = "google-claim-retry-user";
+  const journeyId = "0f182b74-f246-47cb-809c-f47de6659c3d";
+  const syntheticHttpOnlyClaim = "synthetic-http-only-claim-token";
+  await page.context().addCookies([{
+    name: "sevenbet_programme_claim",
+    value: syntheticHttpOnlyClaim,
+    url: baseUrl,
+    httpOnly: true,
+    sameSite: "Lax",
+  }]);
+  await page.addInitScript(({ journey }) => {
+    const now = Date.now();
+    sessionStorage.setItem("sevenbet.programme.journey.v2", journey);
+    sessionStorage.setItem("sevenbet.programme.access-continuation.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_ACCESS",
+      purpose: "PROGRAMME_AUTH_ACCESS",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 60 * 60 * 1000,
+      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
+      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-09",
+      adultConfirmedAt: now,
+      termsAcceptedAt: now,
+      privacyAcknowledgedAt: now,
+      proof: "pa1.browser-test.browser-signature",
+    }));
+    sessionStorage.setItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`, JSON.stringify({
+      momentMap: {
+        situation: "CLAIM-RETRY-LOCAL-SENTINEL",
+        cues: ["private cue"],
+        thoughtOrFeeling: "private thought",
+        response: "private response",
+        immediateConsequence: "private consequence",
+        noticeRule: "private rule",
+        neutralFlags: [],
+        notSureFlags: [],
+      },
+    }));
+    sessionStorage.setItem("sevenbet.programme.oauth-claim.v1", JSON.stringify({
+      version: 1,
+      intent: "PROGRAMME_CLAIM_GOOGLE",
+      journeyId: journey,
+      createdAt: now,
+      expiresAt: now + 10 * 60 * 1000,
+    }));
+  }, { journey: journeyId });
+  await page.route("**/api/auth/get-session", async (route) => {
+    const timestamp = new Date().toISOString();
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        session: { id: "google-claim-retry-session", token: "test-session-token", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: timestamp, updatedAt: timestamp },
+        user: { id: userId, name: "Claim Retry", email: "retry@example.com", emailVerified: true, createdAt: timestamp, updatedAt: timestamp },
+      }),
+    });
+  });
+  let redemptionRequests = 0;
+  await page.route("**/api/program/claims/redeem", async (route) => {
+    redemptionRequests += 1;
+    if (redemptionRequests === 1) {
+      await route.fulfill({
+        status: 503,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: false,
+          code: "PROGRAMME_DEFINITION_UNAVAILABLE",
+          error: "Programme definition is unavailable",
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "set-cookie": "sevenbet_programme_claim=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax" },
+      body: JSON.stringify({
+        ok: true,
+        dashboard: {
+          totalXp: 60,
+          currentMission: 2,
+          missions: Array.from({ length: 10 }, (_, index) => ({
+            missionNumber: index + 1,
+            title: index === 0 ? "Map the moment" : index === 1 ? "Set a 7-day goal" : `Mission ${index + 1}`,
+            status: index === 0 ? "completed" : index === 1 ? "current" : "locked",
+          })),
+          activeDays: 1,
+          currentStreak: 1,
+          achievements: [{ slug: "first-plan", title: "First Plan", state: "locked" }],
+          momentMap: {
+            id: "30000000-0000-4000-8000-000000000001",
+            situation: "",
+            cues: [],
+            thoughtOrFeeling: "",
+            response: "",
+            immediateConsequence: "",
+            noticeRule: "",
+            neutralFlags: [],
+            notSureFlags: [],
+          },
+          currentGoal: null,
+          urgeLearningRecord: null,
+          activeBoundary: null,
+        },
+      }),
+    });
+  });
+
+  await open(page, "/program?auth=google-return");
+  await expect(page.getByRole("heading", { name: "Keep your progress. Keep the words local." })).toBeVisible();
+  await expect(page.getByText("Loading your private Programme session…")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Log out of B4GAMBLE" })).toBeVisible();
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toHaveText("You’re signed in, but your progress hasn’t been saved yet. Please try again.");
+  await expect(alert).not.toContainText("Programme definition");
+  await expect(alert).not.toContainText("PROGRAMME_DEFINITION_UNAVAILABLE");
+  await expect(page.getByRole("button", { name: "Try saving progress again" })).toBeVisible();
+  expect(redemptionRequests).toBe(1);
+
+  const failedStorage = await page.evaluate(({ journey, user, rawClaim }) => ({
+    url: window.location.href,
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+    browserStorageContainsRawClaim: [...Object.values(sessionStorage), ...Object.values(localStorage)].some((value) => value?.includes(rawClaim)),
+  }), { journey: journeyId, user: userId, rawClaim: syntheticHttpOnlyClaim });
+  expect(failedStorage.url).toBe(`${baseUrl}/program`);
+  expect(failedStorage.url).not.toContain(syntheticHttpOnlyClaim);
+  expect(failedStorage.marker).toContain(journeyId);
+  expect(failedStorage.continuation).toContain(journeyId);
+  expect(failedStorage.journeyContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(failedStorage.userContent).toBeNull();
+  expect(failedStorage.browserStorageContainsRawClaim).toBe(false);
+  expect((await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_claim")?.value).toBe(syntheticHttpOnlyClaim);
+
+  await page.getByRole("button", { name: "Try saving progress again" }).click();
+  await expect(page.getByRole("heading", { name: "Your first map is complete." })).toBeVisible();
+  expect(redemptionRequests).toBe(2);
+  const succeededStorage = await page.evaluate(({ journey, user }) => ({
+    marker: sessionStorage.getItem("sevenbet.programme.oauth-claim.v1"),
+    continuation: sessionStorage.getItem("sevenbet.programme.access-continuation.v1"),
+    journeyContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:journey:${encodeURIComponent(journey)}`),
+    userContent: sessionStorage.getItem(`sevenbet.programme.local-content.v2:user:${encodeURIComponent(user)}`),
+    userAuthority: sessionStorage.getItem(`sevenbet.programme.access-authority.v1:user:${encodeURIComponent(user)}`),
+  }), { journey: journeyId, user: userId });
+  expect(succeededStorage.marker).toBeNull();
+  expect(succeededStorage.continuation).toBeNull();
+  expect(succeededStorage.journeyContent).toBeNull();
+  expect(succeededStorage.userContent).toContain("CLAIM-RETRY-LOCAL-SENTINEL");
+  expect(succeededStorage.userAuthority).toContain(journeyId);
+});
+
 test("expired access continuation returns to the consolidated access screen", async ({ page }) => {
   const journeyId = "2a5dfb88-a766-4ac1-9b1b-b8e5eac1aef4";
   await page.addInitScript(({ journey }) => {

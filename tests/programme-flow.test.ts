@@ -11,6 +11,10 @@ import {
 } from "../lib/programme/contract";
 import { programmeErrorResponse } from "../lib/programme/http";
 import {
+  PendingProgrammeClaimUnavailableError,
+  ProgrammeDefinitionUnavailableError,
+} from "../lib/programme/domain/programme-errors";
+import {
   assertProgrammeRateLimit,
   resetProgrammeRateLimitsForTests,
 } from "../lib/programme/rate-limit";
@@ -80,6 +84,7 @@ class MemoryProgrammeRepository {
   private sequence = 10;
   private transactionQueue: Promise<void> = Promise.resolve();
   private failureStage: string | null = null;
+  controlProgramAvailable = true;
   anonymousSessions: any[] = [];
   claims: any[] = [];
   enrollments: any[] = [];
@@ -227,6 +232,7 @@ class MemoryProgrammeRepository {
   }
 
   async findControlProgram() {
+    if (!this.controlProgramAvailable) return null;
     return {
       program: {
         id: programmeId,
@@ -583,11 +589,54 @@ test("invalid claims fail closed without creating persistent Programme state", a
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
   await assert.rejects(
     () => service.redeemPendingClaim("user-1", "unknown-claim", "UTC", now),
-    /claim not found/i,
+    PendingProgrammeClaimUnavailableError,
   );
   assert.equal(repository.enrollments.length, 0);
   assert.equal(repository.momentMaps.length, 0);
   assert.equal(repository.xpEvents.length, 0);
+});
+
+test("claim and Programme availability use distinct safe error contracts", async () => {
+  const missingClaimRepository = new MemoryProgrammeRepository();
+  const missingClaimService = new ProgrammeFlowService(missingClaimRepository as unknown as ProgrammeFlowRepository);
+  await assert.rejects(
+    () => missingClaimService.redeemPendingClaim("user-1", "unknown-claim", "UTC", now),
+    PendingProgrammeClaimUnavailableError,
+  );
+
+  const missingProgrammeRepository = new MemoryProgrammeRepository();
+  const missingProgrammeService = new ProgrammeFlowService(missingProgrammeRepository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(missingProgrammeService);
+  missingProgrammeRepository.controlProgramAvailable = false;
+  await assert.rejects(
+    () => missingProgrammeService.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    ProgrammeDefinitionUnavailableError,
+  );
+  assert.equal(missingProgrammeRepository.claims[0].consumedAt, null);
+  assert.equal(missingProgrammeRepository.enrollments.length, 0);
+  assert.equal(missingProgrammeRepository.xpEvents.length, 0);
+});
+
+test("failed Programme lookup can retry once with exactly-once claim, completion and XP", async () => {
+  const repository = new MemoryProgrammeRepository();
+  const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
+  const started = await startMissionOne(service);
+  repository.controlProgramAvailable = false;
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    ProgrammeDefinitionUnavailableError,
+  );
+  repository.controlProgramAvailable = true;
+  const dashboard = await service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now);
+  assert.equal(dashboard.totalXp, 60);
+  assert.equal(repository.claims.filter((claim) => claim.consumedAt).length, 1);
+  assert.equal(repository.missions.filter((mission) => mission.missionNumber === 1 && mission.status === "COMPLETED").length, 1);
+  assert.equal(repository.xpEvents.length, 1);
+  await assert.rejects(
+    () => service.redeemPendingClaim("user-1", started.claim.claimToken, "UTC", now),
+    /already been used/i,
+  );
+  assert.equal(repository.xpEvents.length, 1);
 });
 
 test("one pending claim cannot be redeemed concurrently by two users", async () => {
@@ -1078,6 +1127,14 @@ test("schema and migration enforce idempotency, ownership, confidence and non-ne
   assert.match(missionFourMigration, /ActiveBoundary_material_value_check/);
   assert.match(missionFourMigration, /ActiveBoundary_enrollmentId_key/);
   assert.match(missionFourMigration, /boundary-built/);
+});
+
+test("Control Programme seed uses current B4GAMBLE naming without changing its fixed slug", () => {
+  const seed = readFileSync("scripts/seed-active-control-program.ts", "utf8");
+  assert.match(seed, /B4GAMBLE Active Control Programme/);
+  assert.match(seed, /B4GAMBLE 10-Step Control Programme/);
+  assert.doesNotMatch(seed, /SevenBet Active Control Program|SevenBet 10-Step Control Program/);
+  assert.match(seed, /CONTROL_PROGRAM_SLUG/);
 });
 
 test("validation rejects invalid confidence and client-authored reward fields", async () => {

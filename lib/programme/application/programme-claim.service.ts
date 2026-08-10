@@ -2,7 +2,7 @@ import { requireControlProgram } from "@/lib/programme/application/programme-con
 import { ProgrammeDashboardService } from "@/lib/programme/application/programme-dashboard.service";
 import {
   ClaimExpiredError,
-  ProgrammeResourceNotFoundError,
+  PendingProgrammeClaimUnavailableError,
   ProgrammeStateConflictError,
 } from "@/lib/programme/domain/programme-errors";
 import {
@@ -41,7 +41,7 @@ export class ProgrammeClaimService {
     const reward = rewardPolicyForMission(1);
     return this.unitOfWork.serializable(async (unitOfWork) => {
       const claim = await unitOfWork.sessions.findClaim(hashOpaqueToken(claimToken));
-      if (!claim) throw new ProgrammeResourceNotFoundError("Pending programme claim");
+      if (!claim) throw new PendingProgrammeClaimUnavailableError();
       if (claim.consumedAt) {
         throw new ProgrammeStateConflictError(
           "Pending programme claim has already been used",

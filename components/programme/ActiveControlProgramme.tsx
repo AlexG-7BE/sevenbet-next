@@ -199,6 +199,8 @@ type ProgrammeLocalContent = {
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
 type View = "mission-01" | "registration-gate" | "registration" | "dashboard" | "mission-02" | "mission-03" | "mission-04";
 
+const CLAIM_REDEMPTION_RETRY_MESSAGE = "You’re signed in, but your progress hasn’t been saved yet. Please try again.";
+
 const emptyMomentMap: MomentMap = {
   situation: "",
   cues: [],
@@ -640,6 +642,7 @@ function Registration({
   googleAvailable,
   busy,
   error,
+  claimRetry = false,
   returning = false,
 }: {
   gate: boolean;
@@ -650,6 +653,7 @@ function Registration({
   googleAvailable: boolean;
   busy: boolean;
   error: string;
+  claimRetry?: boolean;
   returning?: boolean;
 }) {
   const { data: session } = useSession();
@@ -660,7 +664,7 @@ function Registration({
 
   if (gate) {
     return (
-      <div className={styles.programmeShell}><Header xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · ACCOUNT FOR PROGRESS</span><h1>Keep your progress. Keep the words local.</h1><p>Create a private B4GAMBLE account so mission completion and +60 XP remain available. Your Moment Map narrative stays in this browser session.</p><ul><li>Keep the Moment Map locally in this tab</li><li>Save mission completion and receive 60 XP</li><li>Return to Mission 02 with neutral continuity</li></ul><Recognition label="ACCOUNT REWARD" value="+60 XP" note="Awarded after successful progress claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="LOCAL RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Stored only in this browser session" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the progress. Continue the path." note="The account stores completion and rewards, not this personal narrative." /></div></section><ActionBar busy={busy} note="No marketing consent is requested."><PrimaryButton onClick={onContinue}>{authenticated ? "Save my progress" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
+      <div className={styles.programmeShell}><Header xp={0} /><section className={styles.registrationGate}><div className={styles.titleBlock}><span>MISSION 01 COMPLETE · ACCOUNT FOR PROGRESS</span><h1>Keep your progress. Keep the words local.</h1><p>Create a private B4GAMBLE account so mission completion and +60 XP remain available. Your Moment Map narrative stays in this browser session.</p><ul><li>Keep the Moment Map locally in this tab</li><li>Save mission completion and receive 60 XP</li><li>Return to Mission 02 with neutral continuity</li></ul><Recognition label="ACCOUNT REWARD" value="+60 XP" note="Awarded after successful progress claim." /></div><div className={styles.stack}><ArtifactCard eyebrow="LOCAL RESULT PREVIEW" title="Your Moment Map" body={momentSummary(map)} footer="Stored only in this browser session" dark /><PhotoTheatre compact image={PEOPLE.outcome} eyebrow="EARNED-RESULT REGISTRATION" title="Keep the progress. Continue the path." note="The account stores completion and rewards, not this personal narrative." /></div></section><ActionBar busy={busy} note="No marketing consent is requested."><PrimaryButton onClick={onContinue}>{claimRetry ? "Try saving progress again" : authenticated ? "Save my progress" : "Create my private account"}</PrimaryButton></ActionBar>{error ? <p className={styles.error} role="alert">{error}</p> : null}</div>
     );
   }
 
@@ -1045,13 +1049,14 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   const [dashboardPending, setDashboardPending] = useState(false);
   const [activeSubject, setActiveSubject] = useState<ProgrammeLocalSubject | null>(null);
   const [claimTransitionPending, setClaimTransitionPending] = useState(false);
+  const [claimTransitionFailed, setClaimTransitionFailed] = useState(false);
   const previousSessionUserId = useRef<string | null | undefined>(undefined);
   const pendingAuthenticatedUserId = useRef<string | null>(null);
   const claimedJourneySubject = useRef<ProgrammeLocalSubject | null>(null);
   const oauthRedemptionStarted = useRef(false);
   const authenticated = Boolean(sessionUserId);
   const exactClaimTransition = Boolean(
-    claimTransitionPending
+    (claimTransitionPending || claimTransitionFailed)
     && sessionUserId
     && activeSubject?.kind === "journey"
     && programmeSubjectsEqual(activeSubject, claimedJourneySubject.current),
@@ -1066,7 +1071,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   useEffect(() => {
     if (sessionPending) return;
     if (pendingAuthenticatedUserId.current && !sessionUserId) return;
-    if (claimTransitionPending && sessionUserId && activeSubject?.kind === "journey") return;
+    if ((claimTransitionPending || claimTransitionFailed) && sessionUserId && activeSubject?.kind === "journey") return;
     const search = new URLSearchParams(window.location.search);
     const authAction = search.get("auth");
     const oauthJourney = authAction === "google-return" && sessionUserId
@@ -1093,7 +1098,11 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     }
     if (oauthJourney) {
       claimedJourneySubject.current = oauthJourney;
+      setClaimTransitionFailed(false);
       setClaimTransitionPending(true);
+    } else if (!sessionUserId || activeSubject?.kind !== "journey") {
+      setClaimTransitionFailed(false);
+      setClaimTransitionPending(false);
     }
     const priorUserId = previousSessionUserId.current;
     const nextSubject = oauthJourney || returnedUserSubject || (sessionUserId
@@ -1153,7 +1162,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         setView("mission-01");
       }
     }
-  }, [activeSubject, claimTransitionPending, sessionPending, sessionUserId]);
+  }, [activeSubject, claimTransitionFailed, claimTransitionPending, sessionPending, sessionUserId]);
 
   useEffect(() => {
     if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
@@ -1231,6 +1240,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     } else local = {};
     clearProgrammeOAuthClaimMarker(window.sessionStorage);
     claimedJourneySubject.current = null;
+    setClaimTransitionFailed(false);
     setClaimTransitionPending(false);
     window.history.replaceState({}, "", "/program");
     setActiveSubject(targetSubject);
@@ -1246,8 +1256,10 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     setError("");
     redeemClaim(sessionUserId)
       .catch(() => {
+        setClaimTransitionPending(false);
+        setClaimTransitionFailed(true);
         setView("registration-gate");
-        setError("You are signed in, but your progress has not been saved yet. Try saving it again.");
+        setError(CLAIM_REDEMPTION_RETRY_MESSAGE);
       })
       .finally(() => {
         oauthRedemptionStarted.current = false;
@@ -1257,11 +1269,11 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
 
   async function handleRegistrationContinue() {
     if (!authenticated) { setView("registration"); return; }
-    setBusy(true); setError("");
+    setBusy(true); setError(""); setClaimTransitionFailed(false); setClaimTransitionPending(true);
     try {
       if (!sessionUserId) throw new Error("The authenticated account could not be resolved");
       await redeemClaim(sessionUserId);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not save your result"); } finally { setBusy(false); }
+    } catch { setClaimTransitionPending(false); setClaimTransitionFailed(true); setError(CLAIM_REDEMPTION_RETRY_MESSAGE); } finally { setBusy(false); }
   }
 
   async function handleAuth(input: { email: string; password: string; mode: "sign-up" | "sign-in" }) {
@@ -1295,7 +1307,13 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         setActiveSubject(targetSubject);
         setAccessGranted(hasProgrammeAccessAuthority(window.sessionStorage, targetSubject));
       } else await redeemClaim(targetUserId);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
+    } catch (cause) {
+      if (continuingCurrentClaim && pendingAuthenticatedUserId.current) {
+        setClaimTransitionFailed(true);
+        setView("registration-gate");
+        setError(CLAIM_REDEMPTION_RETRY_MESSAGE);
+      } else setError(cause instanceof Error ? cause.message : "Account access failed");
+    }
     finally { setClaimTransitionPending(false); setBusy(false); }
   }
 
@@ -1509,7 +1527,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     <div className={`activeProgrammePage ${styles.page}`}>
       {view === "mission-01" ? <MissionOneScreen step={m1Step} map={momentMap} setMap={setMomentMap} onNext={saveMissionOneStep} busy={busy} error={error} /> : null}
       {oauthNotice ? <div className={styles.authNotice} role="status"><span>{oauthNotice}</span><button onClick={() => setOAuthNotice("")} type="button">Dismiss</button></div> : null}
-      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} returning={returningSignIn} /> : null}
+      {view === "registration-gate" || view === "registration" ? <Registration gate={view === "registration-gate"} map={momentMap} onContinue={handleRegistrationContinue} onSubmit={handleAuth} onGoogle={handleGoogle} googleAvailable={googleAvailable} busy={busy} error={error} claimRetry={claimTransitionFailed} returning={returningSignIn} /> : null}
       {view === "dashboard" && dashboard ? <Dashboard dashboard={dashboard} onStartMission={startCurrentMission} onEdit={setEditType} onClearLocal={clearLocalContent} /> : null}
       {view === "mission-02" && dashboard?.momentMap ? <MissionTwoScreen step={m2Step} goal={goal} setGoal={setGoal} map={dashboard.momentMap} onNext={saveMissionTwoStep} busy={busy} error={error} /> : null}
       {view === "mission-03" ? <MissionThreeScreen step={m3Step} learning={urgeLearning} setLearning={setUrgeLearning} onNext={saveMissionThreeStep} busy={busy} error={error} dashboard={dashboard} /> : null}

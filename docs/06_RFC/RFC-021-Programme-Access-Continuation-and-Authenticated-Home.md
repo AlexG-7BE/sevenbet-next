@@ -1,7 +1,7 @@
 # RFC-021: Programme Access Continuation and Authenticated Home
 
 - **Status:** Approved
-- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1, Preview canonical-host correction and client authority clock-skew correction
+- **Decision authority:** Founder Office `GOOGLE-OAUTH-ACTIVATE-01` Preview flow correction v2.1, Preview canonical-host correction, client authority clock-skew correction and post-OAuth claim-redemption correction
 - **Approved:** 2026-08-10
 - **Scope:** One-screen Programme access, server-verifiable bounded same-tab account/access authority, Google/email transition, authenticated Programme routing and exact Vercel Preview deployment-to-branch host canonicalisation
 - **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-008, RFC-017, RFC-018, RFC-019 and RFC-020
@@ -82,6 +82,8 @@ This canonicalization does not add the deployment host or a wildcard to Better A
 
 A successful callback cleans the temporary `auth` query state. A replayed or consumed Google callback remains rejected by the Better Auth state/PKCE boundary together with Google's one-use authorization-code validation and must not create a second account, session mutation or redirect loop.
 
+After authentication succeeds, claim redemption is a separate retryable transition. The authenticated session remains authoritative while the exact journey subject is held only for the pending claim. A failed redemption must leave the HTTP-only pending-claim cookie, OAuth claim marker, access continuation and journey-scoped local content unchanged; it must exit the loading state and offer one bounded `Try saving progress again` action. Only a successful server response may consume the claim, award XP, migrate the exact local journey to the user namespace, transition access authority or clear claim state. Server errors distinguish a missing/unavailable pending claim from an unavailable published Programme definition using stable non-narrative codes; the interface renders one generic safe retry message rather than server or architecture detail. The transaction, one-use claim update and existing unique reward/event keys make retry exactly-once.
+
 RFC-020 remains fully in force: Better Auth stays at `1.6.23`; access, refresh and ID tokens, expiry metadata and scope remain `null`; direct ID-token sign-in and explicit provider-management/token endpoints remain disabled; linking safeguards remain unchanged.
 
 ## 6. Design and content contract
@@ -100,7 +102,7 @@ Protected Help remains available without acceptance, account or Programme comple
 
 ## 8. Verification and release boundary
 
-Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, server-ahead/browser-behind skew acceptance inside the exact client allowance, materially future and expired client rejection, safe access-screen retry copy, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
+Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, server-ahead/browser-behind skew acceptance inside the exact client allowance, materially future and expired client rejection, safe access-screen retry copy, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, failed post-OAuth claim redemption exiting loading without losing the authenticated session, exact claim/local-state preservation across retry, distinct pending-claim and Programme-definition server codes, exactly-once claim/XP/completion migration after retry, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
 
 No Prisma schema, migration, dependency, package-lock, Production credential, Production environment, Production database, email, analytics, CMP, commercial, affiliate or AI change is authorised.
 

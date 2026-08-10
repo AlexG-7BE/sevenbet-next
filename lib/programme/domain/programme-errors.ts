@@ -42,6 +42,28 @@ export class ClaimExpiredError extends ServiceError {
   }
 }
 
+export class PendingProgrammeClaimUnavailableError extends ServiceError {
+  constructor() {
+    super(
+      "Pending Programme progress is unavailable",
+      "PENDING_PROGRAMME_CLAIM_UNAVAILABLE",
+      404,
+    );
+    this.name = "PendingProgrammeClaimUnavailableError";
+  }
+}
+
+export class ProgrammeDefinitionUnavailableError extends ServiceError {
+  constructor() {
+    super(
+      "Programme definition is unavailable",
+      "PROGRAMME_DEFINITION_UNAVAILABLE",
+      503,
+    );
+    this.name = "ProgrammeDefinitionUnavailableError";
+  }
+}
+
 export class ProgrammeSessionExpiredError extends ServiceError {
   constructor() {
     super("Anonymous programme session has expired", "SESSION_EXPIRED", 410);
