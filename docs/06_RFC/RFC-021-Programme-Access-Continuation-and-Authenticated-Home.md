@@ -7,6 +7,8 @@
 - **Depends on:** Product Vision & Principles v2.0, RFC-002, RFC-008, RFC-017, RFC-018, RFC-019 and RFC-020
 - **Supersedes:** RFC-017 and RFC-018 only where their separate age/account controls or age-only OAuth continuation cause repeated controls in one valid current-tab journey
 
+> **Implementation closure — 2026-08-10:** [PR #61](https://github.com/AlexG-7BE/sevenbet-next/pull/61) merged head `d129130acd982624aa7cf5d31ce4a8b8e81dfa58` into main as `324a5b51e2e37f456c2386413a6d6c4831607914`; GOOGLE-OAUTH-ACTIVATE-01 is closed. Production reached READY after merge. Production Google OAuth remains off, and no Production Google credentials, age-verification or KYC authority is established. This RFC remains the historical and current-runtime architecture authority for the merged access, continuation and authenticated-home contract. It does not describe or authorise the later PROGRAM-AI-01 target direction.
+
 ## 1. Decision
 
 B4GAMBLE will replace the fragmented Programme age and account-creation controls with one access screen. The screen has exactly two unchecked required controls:
@@ -112,4 +114,4 @@ No Prisma schema, migration, dependency, package-lock, Production credential, Pr
 
 Founder-controlled real Google Preview verification completed on 2026-08-10 using a Google Test User and credentials/configuration scoped only to the isolated correction branch. The consolidated access screen passed without duplicate account-creation controls; `POST /api/auth/sign-in/social` returned `200`; `GET /api/auth/callback/google` returned `302`; and Better Auth established the authenticated session. Google remained identity-only and did not become age verification. The isolated Preview Control Programme was seeded with B4GAMBLE naming. The verification exposed the post-OAuth Programme claim defect, which was corrected before the final authenticated Mission 01 smoke passed through user-owned endpoints. Logout produced a fresh isolated anonymous journey and required the consolidated access gate again.
 
-GOOGLE-OAUTH-ACTIVATE-01 is **READY FOR FOUNDER MERGE**, but it is not closed while PR #61 remains open and unmerged. Production Google OAuth remains off. Production credentials, configuration and database were untouched; this evidence does not establish KYC/age verification, GB launch readiness, commercial/referral activation or any Production provider activation. Founder Office alone performs any merge.
+At this RFC's pre-merge release checkpoint, GOOGLE-OAUTH-ACTIVATE-01 was **READY FOR FOUNDER MERGE** while PR #61 remained open and unmerged. The implementation-closure note above records the later merge without rewriting this release evidence. Production Google OAuth remains off. The Preview evidence does not establish Production credentials or provider activation, KYC/age verification, GB launch readiness or commercial/referral activation.

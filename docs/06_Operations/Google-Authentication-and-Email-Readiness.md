@@ -1,6 +1,6 @@
 # Google Authentication and Email Readiness
 
-- **Status:** Identity-only baseline merged; GOOGLE-OAUTH-ACTIVATE-01 Preview flow correction under review; external Google and email activation open
+- **Status:** Identity-only baseline and GOOGLE-OAUTH-ACTIVATE-01 closed on main through merged PR #61; Production Google OAuth off; future Production Google and email activation separate
 - **Owner:** Founder Office configuration owner with Engineering and Privacy review
 - **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01 and for Programme access continuation/home routing by RFC-021
 - **Last reviewed:** 2026-08-10
@@ -17,7 +17,7 @@
 - Client-supplied Google ID-token sign-in is disabled. The normal authorization-code redirect and `/api/auth/callback/google` remain enabled.
 - `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are disabled because B4GAMBLE has no approved provider-management or Google API use case.
 - Preview Better Auth continues to derive one exact branch host from `VERCEL_BRANCH_URL`; wildcard, ephemeral deployment-host and contradictory origin trust fail closed. Before rendering or Better Auth handling, an exact request to the current `VERCEL_URL` deployment host receives a 307 to that exact branch host with path and query preserved. Requests already on the branch host continue normally; malformed metadata or another Preview host is rejected.
-- The GOOGLE-OAUTH-ACTIVATE-01 v2.1 candidate uses one two-control Programme access screen and a separate, exact-journey, 60-minute tab authority. The server fixes current copy and time claims and signs them with a Programme-auth-purpose key derived from existing Better Auth secret material. Email account creation and all Google authentication verify that proof; forged static age/Terms/Privacy headers alone cannot authorize an account. Returning email sign-in remains proof-free, and returning Google retains signed adult access without treating Google as age verification or recording a durable legal ledger.
+- The merged GOOGLE-OAUTH-ACTIVATE-01 v2.1 runtime uses one two-control Programme access screen and a separate, exact-journey, 60-minute tab authority. The server fixes current copy and time claims and signs them with a Programme-auth-purpose key derived from existing Better Auth secret material. Email account creation and all Google authentication verify that proof; forged static age/Terms/Privacy headers alone cannot authorize an account. Returning email sign-in remains proof-free, and returning Google retains signed adult access without treating Google as age verification or recording a durable legal ledger.
 - The browser treats marker validation only as a bounded UX guard: server issuance may be at most five minutes ahead of the browser clock, expiry is not extended, and the exact 60-minute duration remains mandatory. More-future, expired or malformed markers deny locally; Better Auth still performs strict server-clock signature and claim verification before account creation.
 - Programme headers and `/program` home routing resolve actual Better Auth session state. A signed-in user without enrollment receives a non-mutating Mission 01-current, 0-XP Dashboard projection and starts Mission 01 explicitly.
 - The communications module has closed purposes, fixed templates, authoritative recipient resolution, sender categories, idempotency, bounded audit metadata, a disabled runtime transport and an in-memory test transport.
@@ -29,7 +29,7 @@
 
 ### Planned
 
-- Create and verify the external Google Cloud clients and exact authorised redirects.
+- Create and verify a Production Google Cloud client and exact authorised redirects only under a later Founder-authorised Production activation; no Production credentials or activation are detected.
 - Select and legally/operationally review an email delivery provider only under a separate activation decision.
 - Verify a B4GAMBLE-controlled sending domain and monitored mailboxes.
 
@@ -150,10 +150,10 @@ Treat unexpected OAuth scope, callback, account merge, token exposure, Preview/P
 
 ## Founder/Operations inputs still required
 
-- Review the GOOGLE-OAUTH-ACTIVATE-01 correction exact diff/checks. Do not merge until the reconfigured Preview E2E is accepted.
-- Register the handoff's exact current stable Preview origin and callback in the separate Preview Google client; do not reuse the historical AUTH-COMMS/AUTH-HARDEN alias.
-- Create and place separate Production and Preview Google client IDs/secrets.
-- Verify the consent screen, authorised origins and exact callbacks.
+- Preserve the accepted GOOGLE-OAUTH-ACTIVATE-01 Preview evidence with PR #61; the workstream is closed on main and must not be re-opened as a Production activation shortcut.
+- Keep any Preview Google client scoped to its exact stable Preview origin and callback; do not reuse it for Production or a historical AUTH-COMMS/AUTH-HARDEN alias.
+- Do not create or place Production Google client credentials without a separate Founder-authorised Production activation.
+- Under any later activation, verify the consent screen, authorised origins and exact callbacks for that environment.
 - Select the future B4GAMBLE-controlled sending domain.
 - Select account/security From, Programme From and monitored Reply-To mailboxes.
 - Decide whether/when to select an email transport provider under a separate activation decision.
