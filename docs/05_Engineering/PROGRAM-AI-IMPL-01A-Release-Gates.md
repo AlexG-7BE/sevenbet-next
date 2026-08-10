@@ -22,11 +22,12 @@ Scope: default-off M1 foundation and Preview vertical slice only
 - Support-first UI suppresses celebration/registration and keeps Protected Help visible.
 - Truthful Home and M3/M6/M10-only Review entitlements.
 - Commercial firewall, privacy export/deletion and focused regression tests.
+- Fresh PostgreSQL 16 CI migration verification for migration 0018.
 
 ## Unmet before Preview acceptance
 
 - Pull request review and required exact-head CI.
-- Fresh PostgreSQL migration/deploy verification for migration 0018.
+- Preview deploy verification for migration 0018.
 - Feature-off Preview regression against legacy M1–M4.
 - Feature-on mobile/desktop visual comparison against Figma families `954:3`–`954:6`.
 - Preview keyboard, screen-reader announcement, reduced-motion and responsive QA.

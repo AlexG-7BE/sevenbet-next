@@ -131,7 +131,15 @@ test("Public Shell keeps its approved architecture while exposing the current br
     .trim()
     .split("\n")
     .filter(Boolean);
-  assert.equal(changed.includes("prisma/schema.prisma"), false);
-  assert.equal(changed.some((file) => /^prisma\/migrations\//.test(file)), false);
+  const schemaChanges = changed
+    .filter((file) => file === "prisma/schema.prisma" || /^prisma\/(?:migrations|preflight)\//.test(file))
+    .sort();
+  if (schemaChanges.length > 0) {
+    assert.deepEqual(schemaChanges, [
+      "prisma/migrations/0018_program_ai_m1_foundation/migration.sql",
+      "prisma/preflight/0018_program_ai_m1_foundation.sql",
+      "prisma/schema.prisma",
+    ]);
+  }
   assert.equal(changed.includes("package-lock.json"), false);
 });

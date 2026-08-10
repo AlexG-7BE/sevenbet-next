@@ -25,6 +25,7 @@ The entire active repository was scanned. Dependencies, generated directories, b
 - Feature-on Home reads server-owned exact Mission states and exposes Reviews only after M3/M6/M10 completion. It does not calculate arbitrary percentages.
 - Data-subject export/deletion includes the new authority and Starting Point relations.
 - Structural tests deny commercial imports/fields in both directions and confirm raw durable fields are absent.
+- The PostgreSQL 16 CI migration job has applied the migration chain, including migration 0018 and its preflight, to a fresh database successfully.
 
 ## Inferred
 
@@ -40,7 +41,7 @@ The entire active repository was scanned. Dependencies, generated directories, b
 
 ## Planned
 
-- Exact-head CI, fresh PostgreSQL migration, Preview feature-on deployment, mobile/desktop visual/accessibility QA, Better Auth email/Google continuation QA and Preview rollback evidence.
+- Exact-head CI completion, Preview feature-on deployment, mobile/desktop visual/accessibility QA, Better Auth email/Google continuation QA and Preview rollback evidence.
 - Any real AI/transcription adapter, provider contract, DPA/subprocessor/transfer/training decision, monitoring, retention automation or Production activation.
 - Generated Personal Reviews and Missions 05–10.
 

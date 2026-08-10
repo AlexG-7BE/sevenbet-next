@@ -199,7 +199,15 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
   assert.equal(JSON.parse(source("package.json")).name, "sevenbet-next");
 
   const changed = execFileSync("git", ["diff", "--name-only", "origin/main...HEAD"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-  assert.equal(changed.includes("prisma/schema.prisma"), false);
-  assert.equal(changed.some((path) => path.startsWith("prisma/migrations/")), false);
+  const schemaChanges = changed
+    .filter((path) => path === "prisma/schema.prisma" || /^prisma\/(?:migrations|preflight)\//.test(path))
+    .sort();
+  if (schemaChanges.length > 0) {
+    assert.deepEqual(schemaChanges, [
+      "prisma/migrations/0018_program_ai_m1_foundation/migration.sql",
+      "prisma/preflight/0018_program_ai_m1_foundation.sql",
+      "prisma/schema.prisma",
+    ]);
+  }
   assert.equal(changed.includes("package-lock.json"), false);
 });
