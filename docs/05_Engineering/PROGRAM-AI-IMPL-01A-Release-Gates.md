@@ -26,12 +26,12 @@ Scope: default-off M1 foundation and Preview vertical slice only
 - Commercial firewall, privacy export/deletion and focused regression tests.
 - Fresh PostgreSQL 16 CI migration verification for migration 0018.
 - Isolated non-Production feature-on Playwright lane plus explicit feature-off regression, including real Better Auth email, idempotency, authority lifecycle, legacy dominance, support-first and 390/320 px automated checks.
+- Required exact-head PR CI: Quality, Database / Migration Verification and Build / Browser passed; the browser evidence was 24 passed / 1 pre-existing skipped feature-off checks and 5 passed feature-on checks.
 
 ## Unmet before Preview acceptance
 
-- Pull request review and required exact-head CI.
+- Founder/maintainer pull request review and merge decision.
 - Preview deploy verification for migration 0018.
-- Exact-head execution of the feature-off and feature-on browser lanes and fresh-database migration/preflight.
 - Feature-off Preview regression against legacy M1–M4.
 - Feature-on mobile/desktop visual comparison against Figma families `954:3`–`954:6`.
 - Manual Preview screen-reader announcement QA and exact Figma comparison.

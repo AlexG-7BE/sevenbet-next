@@ -43,7 +43,7 @@ The entire active repository was scanned. Dependencies, generated directories, b
 
 ## Planned
 
-- Exact-head CI completion, Preview feature-on deployment, mobile/desktop visual/accessibility QA, Better Auth email/Google continuation QA and Preview rollback evidence.
+- Preview feature-on deployment, mobile/desktop visual/accessibility QA, optional controlled Google Test User continuation and Preview rollback evidence. Exact-head CI, fresh migration and real Better Auth email continuation are detected as passing repository evidence.
 - Any real AI/transcription adapter, provider contract, DPA/subprocessor/transfer/training decision, monitoring, retention automation or Production activation.
 - Generated Personal Reviews and Missions 05–10.
 

@@ -27,7 +27,7 @@
 | 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
 | 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
 | 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
-| 26 | PROGRAM-AI-IMPL-01A | **FOUNDER SECURITY/AUTHORITY CORRECTION IMPLEMENTED ON FEATURE BRANCH; EXACT-HEAD PR/PREVIEW EVIDENCE PENDING** | The bounded RFC-022 slice now includes signed exact-journey session entry, the exact two-control access contract, anonymous-only → user-only authority evidence, immutable original confirmation, withdrawal/reconfirmation semantics and isolated feature-on/off browser lanes. No provider/SDK, Production flag/configuration, Google Production activation, generated Review or Mission 05–10 implementation is included. Legacy M1 remains the default. |
+| 26 | PROGRAM-AI-IMPL-01A | **FOUNDER SECURITY/AUTHORITY CORRECTION IMPLEMENTED; EXACT-HEAD CI GREEN; PR REVIEW/PREVIEW QA PENDING** | The bounded RFC-022 slice now includes signed exact-journey session entry, the exact two-control access contract, anonymous-only → user-only authority evidence, immutable original confirmation, withdrawal/reconfirmation semantics and passing isolated feature-on/off browser lanes. No provider/SDK, Production flag/configuration, Google Production activation, generated Review or Mission 05–10 implementation is included. Legacy M1 remains the default. |
 | 27 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
@@ -40,7 +40,7 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Complete PROGRAM-AI-IMPL-01A review, exact-head CI, fresh migration, Preview responsive/accessibility, typed flow, auth continuation and feature-off regression evidence without enabling Production.
+1. Complete PROGRAM-AI-IMPL-01A review and Preview responsive/accessibility, feature-on visual, feature-off legacy and rollback evidence without enabling Production; exact-head CI, fresh migration, typed fallback and Better Auth email continuation are green.
 2. Keep all real AI/transcription providers and data transfers off until a separate Founder decision closes provider DPA/subprocessor/transfer/training, DPIA, retention, monitoring and human-review gates.
 3. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
 4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
