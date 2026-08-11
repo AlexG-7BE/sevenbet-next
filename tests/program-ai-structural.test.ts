@@ -12,6 +12,8 @@ const preflight = read("prisma/preflight/0018_program_ai_m1_foundation.sql");
 const service = read("lib/programme/application/programme-ai-mission-one.service.ts");
 const repository = read("lib/programme/infrastructure/repositories/programme-ai-mission-one.repository.ts");
 const frontend = read("components/programme/ProgramAiExperience.tsx");
+const authenticatedHome = read("components/programme/ProgramAiHome.tsx");
+const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
 
 test("the schema change is limited to the two approved Program AI concepts", () => {
@@ -109,8 +111,9 @@ test("exact-once claim storage is backed by unique keys and idempotent ledgers",
 });
 
 test("Home exposes truthful states and only the approved review entitlements", () => {
-  assert.match(service, /reviews: \[3, 6, 10\]/);
-  assert.doesNotMatch(frontend, /% complete|progressPercent|Math\.round\([^)]*100/);
-  assert.match(frontend, /Progress is shown as completed, current or locked/);
-  assert.match(frontend, /Only the approved review moments unlock/);
+  assert.match(missionsService, /programAiReviewDefinitions/);
+  assert.match(missionsService, /status: byMission\.get\(review\.unlockMission\)\?\.status === "COMPLETED"/);
+  assert.doesNotMatch(frontend + authenticatedHome, /% complete|progressPercent|Math\.round\([^)]*100/);
+  assert.match(authenticatedHome, /Completion, current position and locks come from your server record/);
+  assert.match(authenticatedHome, /Reviews unlock from Mission completion and award 0 XP/);
 });

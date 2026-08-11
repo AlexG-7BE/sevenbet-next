@@ -1,0 +1,267 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { ProgrammeAiGuidanceService } from "../lib/programme/application/programme-ai-guidance.service";
+import { ProgrammeAiMissionsService } from "../lib/programme/application/programme-ai-missions.service";
+import { MissionLockedError } from "../lib/programme/domain/programme-errors";
+import {
+  actionAwardKey,
+  actionTaskState,
+  commercialDiscoveryLinks,
+  completionAwardKey,
+  programAiMissionRegistry,
+} from "../lib/programme/program-ai/mission-registry";
+import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
+import { parseGeneratedResult } from "../lib/programme/program-ai/mission-guidance";
+import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
+
+const actionInputs: Record<string, Record<string, unknown>> = {
+  choose_direction: { direction: "pause" },
+  build_7_day_goal: { goalStyle: "pause_first", reviewWindowDays: 7 },
+  reality_check: { realityCheck: "restart_next_day" },
+  map_urge_sequence: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] },
+  name_early_signal: { earlySignalCategory: "thought" },
+  choose_pause_move: { pauseMove: "wait_ten_minutes" },
+  choose_boundary: { boundaryCategory: "pause", triggerType: "saved_early_signal" },
+  build_boundary_rule: { executionMethod: "bank_block" },
+  choose_execution: { pressureCheck: "needs_setup" },
+  run_decision_check: { scenarioChoice: "unexpected_offer" },
+  build_three_checks: { decisionChecks: ["purpose", "terms", "exit"] },
+  commit_pause_rule: { pauseRuleType: "pause_when_terms_are_unclear" },
+  choose_friction_layer: { frictionMethods: ["bank_block"] },
+  build_friction_stack: { frictionMethods: ["bank_block", "remove_saved_payment"] },
+  rehearse_bypass: { fallbackMethod: "leave", bypassReason: "easy_to_disable" },
+  choose_support_route: { supportModes: ["protected_help"] },
+  build_support_card: { supportCardStyle: "when_then" },
+  choose_exit_action: { exitActionType: "open_help" },
+  learn_comparison_signals: { comparisonSignals: ["licensing_status", "material_terms"] },
+  decode_offer_terms: { offerTermSignal: "wagering_requirement" },
+  build_research_checklist: { researchCriteria: ["licensing_status", "terms", "withdrawals"] },
+  choose_scenario: { scenarioType: "unclear_terms" },
+  rehearse_response: { responseStrategy: "pause_and_check" },
+  build_fallback_response: { fallbackStrategy: "leave_and_return" },
+  review_my_plan: { timelineReviewed: true },
+  assemble_final_plan: { planPriorityIds: ["pause_move", "boundary", "fallback"] },
+  choose_review_cadence: { reviewCadenceDays: 14 },
+};
+
+type Progress = {
+  id: string;
+  enrollmentId: string;
+  missionNumber: number;
+  status: "NOT_STARTED" | "IN_PROGRESS" | "READY_TO_SAVE" | "COMPLETED";
+  taskStates: string[];
+  draft: Record<string, unknown> | null;
+  completedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
+function fakeUnitOfWork({ legacy = false }: { legacy?: boolean } = {}) {
+  const programId = "00000000-0000-4000-8000-000000000010";
+  const enrollment = {
+    id: "00000000-0000-4000-8000-000000000020",
+    userId: "user-a",
+    programId,
+    programVersionId: "00000000-0000-4000-8000-000000000030",
+    currentStepId: "00000000-0000-4000-8000-000000000101",
+    timezone: "UTC",
+  };
+  const steps = Array.from({ length: 10 }, (_, index) => ({
+    id: `00000000-0000-4000-8000-${String(index + 100).padStart(12, "0")}`,
+    order: index + 1,
+  }));
+  const now = new Date("2026-08-11T10:00:00.000Z");
+  const progress = new Map<number, Progress>();
+  const completedThrough = legacy ? 4 : 1;
+  for (let missionNumber = 1; missionNumber <= completedThrough; missionNumber += 1) {
+    progress.set(missionNumber, {
+      id: `00000000-0000-4000-8000-${String(missionNumber).padStart(12, "0")}`,
+      enrollmentId: enrollment.id,
+      missionNumber,
+      status: "COMPLETED",
+      taskStates: legacy ? [`legacy-mission-${missionNumber}`] : ["program_ai_situation_submitted", "program_ai_starting_point_complete"],
+      draft: null,
+      completedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  if (!legacy) {
+    progress.set(2, { id: "00000000-0000-4000-8000-000000000002", enrollmentId: enrollment.id, missionNumber: 2, status: "IN_PROGRESS", taskStates: [], draft: null, completedAt: null, createdAt: now, updatedAt: now });
+  }
+  const xpEvents = new Map<string, number>(legacy
+    ? [["legacy:m1", 60], ["legacy:m2", 80], ["legacy:m3", 90], ["legacy:m4", 100]]
+    : [["programme-ai-m1", 40]]);
+  const progressEvents = new Set<string>();
+  let queue = Promise.resolve();
+  const source = { program: { id: programId, steps }, version: { id: enrollment.programVersionId, status: "PUBLISHED" } };
+  const unit = {
+    serializable<T>(operation: (value: unknown) => Promise<T>) {
+      const result = queue.then(() => operation(unit));
+      queue = result.then(() => undefined, () => undefined);
+      return result;
+    },
+    snapshot<T>(operation: (value: unknown) => Promise<T>) { return operation(unit); },
+    progress: {
+      findControlProgram: async () => source,
+      findEnrollment: async (userId: string) => userId === enrollment.userId ? enrollment : null,
+      findMissionProgress: async (_enrollmentId: string, missionNumber: number) => progress.get(missionNumber) ?? null,
+      upsertMissionProgress: async (input: Omit<Progress, "id" | "createdAt" | "updatedAt">) => {
+        const existing = progress.get(input.missionNumber);
+        const saved: Progress = {
+          id: existing?.id ?? `00000000-0000-4000-8000-${String(input.missionNumber).padStart(12, "0")}`,
+          createdAt: existing?.createdAt ?? now,
+          updatedAt: now,
+          ...input,
+          draft: input.draft === undefined ? existing?.draft ?? null : input.draft,
+        };
+        progress.set(input.missionNumber, saved);
+        return saved;
+      },
+      setEnrollmentCurrentStep: async (_id: string, currentStepId: string) => { enrollment.currentStepId = currentStepId; return enrollment; },
+    },
+    rewards: {
+      recordProgrammeAiMissionXp: async (input: { awardKey: string; xp: number }) => {
+        if (xpEvents.has(input.awardKey)) return { count: 0 };
+        xpEvents.set(input.awardKey, input.xp);
+        return { count: 1 };
+      },
+      recordProgressEvent: async (input: { eventKey: string }) => {
+        const fresh = !progressEvents.has(input.eventKey);
+        progressEvents.add(input.eventKey);
+        return { count: fresh ? 1 : 0 };
+      },
+      recordActiveDay: async () => ({ count: 1 }),
+    },
+    programAiMissionOne: {
+      home: async (userId: string) => ({
+        enrollment: userId === enrollment.userId ? {
+          ...enrollment,
+          missionProgress: [...progress.values()].sort((a, b) => a.missionNumber - b.missionNumber),
+          programmeStartingPoint: {
+            startingPoint: "I return quickly after a difficult day.",
+            desiredChange: "Pause before deciding.",
+            broadContext: "HOME",
+            continuationCue: "The quick-return cue.",
+            chosenBoundaryAction: null,
+          },
+        } : null,
+        totalXp: [...xpEvents.values()].reduce((sum, value) => sum + value, 0),
+      }),
+    },
+  };
+  return { unit, progress, xpEvents };
+}
+
+test("Missions 02–10 expose exact immutable action and reward contracts", () => {
+  assert.equal(programAiMissionRegistry.length, 9);
+  assert.deepEqual(programAiMissionRegistry.map((mission) => mission.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  const keys = new Set<string>();
+  for (const mission of programAiMissionRegistry) {
+    assert.deepEqual(mission.actions.map((action) => action.xp), [15, 20, 15]);
+    for (const action of mission.actions) {
+      assert.match(actionTaskState(mission.missionNumber, action.id), /^programme-ai-v1:m\d{2}:/);
+      keys.add(actionAwardKey(mission.missionNumber, action.id));
+    }
+    keys.add(completionAwardKey(mission.missionNumber));
+  }
+  assert.equal(keys.size, 36);
+  assert.equal(40 + programAiMissionRegistry.length * 75, 715);
+});
+
+test("every Mission action validates its exact closed artifact and rejects unknown client fields", () => {
+  for (const mission of programAiMissionRegistry) {
+    for (const action of mission.actions) {
+      const parsed = parseProgramAiMissionAction(mission.missionNumber, { action: action.id, artifact: actionInputs[action.id] });
+      assert.equal(parsed.action.id, action.id);
+      assert.throws(() => parseProgramAiMissionAction(mission.missionNumber, { action: action.id, artifact: { ...actionInputs[action.id], privateNarrative: "do not persist" } }), /unsupported/i);
+    }
+    assert.throws(() => parseProgramAiMissionAction(mission.missionNumber, { action: "client_awards_xp", artifact: {} }), /not supported/i);
+  }
+});
+
+test("clean sequential and concurrent duplicate progression reaches exactly 715 XP", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+    for (const mission of programAiMissionRegistry) {
+      for (const action of mission.actions) {
+        const duplicate = await Promise.all([
+          service.recordAction("user-a", mission.missionNumber, { action: action.id, artifact: actionInputs[action.id] }),
+          service.recordAction("user-a", mission.missionNumber, { action: action.id, artifact: actionInputs[action.id] }),
+        ]);
+        assert.deepEqual(duplicate.map((result) => result.xpAwarded).sort((a, b) => a - b), [0, action.xp]);
+      }
+      const duplicateCompletion = await Promise.all([
+        service.complete("user-a", mission.missionNumber),
+        service.complete("user-a", mission.missionNumber),
+      ]);
+      assert.deepEqual(duplicateCompletion.map((result) => result.xpAwarded).sort((a, b) => a - b), [0, 25]);
+    }
+    const home = await service.home("user-a");
+    assert.equal(home.totalXp, 715);
+    assert.deepEqual(home.reviews.map((review) => review.status), ["available", "available", "available"]);
+    assert.equal(home.nextReview, null);
+    assert.equal(fake.xpEvents.size, 37);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("prerequisites and enrollment ownership deny bypass while legacy completion remains dominant", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fresh = fakeUnitOfWork();
+    const service = new ProgrammeAiMissionsService(fresh.unit as never);
+    await assert.rejects(() => service.recordAction("user-a", 3, { action: "map_urge_sequence", artifact: actionInputs.map_urge_sequence }), MissionLockedError);
+    await assert.rejects(() => service.mission("foreign-user", 2), /enrollment/i);
+
+    const legacy = fakeUnitOfWork({ legacy: true });
+    const legacyService = new ProgrammeAiMissionsService(legacy.unit as never);
+    const before = legacy.xpEvents.size;
+    const result = await legacyService.recordAction("user-a", 4, { action: "choose_boundary", artifact: actionInputs.choose_boundary });
+    assert.equal(result.xpAwarded, 0);
+    assert.equal(legacy.xpEvents.size, before);
+    const home = await legacyService.home("user-a");
+    assert.equal(home.totalXp, 330);
+    assert.equal(home.currentMission, 5);
+    assert.deepEqual(home.missions.slice(1, 4).map((mission) => mission.xpEarnedHere), [0, 0, 0]);
+    assert.equal(home.reviews[0].status, "available");
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("Reviews fall back safely, stay completion-derived and never call a reward port", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const missions = {
+      mission: async () => ({ title: "Set a 7-day goal", artifact: {}, actionsCompleted: 1 }),
+      home: async () => ({ startingPoint: null }),
+      reviewContext: async () => ({ startingPoint: null, facts: [{ title: "Set a 7-day goal", artifact: { direction: "pause" } }] }),
+    };
+    const unavailable = { generate: async () => { throw new ProgrammeProviderError("PROVIDER_UNAVAILABLE"); } };
+    const guidance = new ProgrammeAiGuidanceService(missions as never, unavailable);
+    const review = await guidance.review("user-a", "first", {}, true);
+    assert.equal(review.kind, "review");
+    assert.equal(review.generation, "deterministic_fallback");
+    assert.equal(review.sections.length, 3);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("provider output is locally strict and commercial navigation is immutable", () => {
+  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/compare", "/bonuses", "/best-offers"]);
+  const valid = parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Rehearse once", summary: "Choose the response that makes a clear decision point.", options: [{ id: "pause_and_check", text: "Pause and run the checks." }] });
+  assert.equal(valid.generation, "provider");
+  assert.throws(() => parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Play safely", summary: "We recommend a casino bonus for you.", options: [{ id: "cashout", text: "Continue" }] }), /Personalisation|valid/i);
+});

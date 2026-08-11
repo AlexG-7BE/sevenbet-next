@@ -26,6 +26,7 @@ import {
   type ProgrammeStartingPointValue,
 } from "../lib/programme/program-ai/contracts";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
+import { programAiMissionRegistry } from "../lib/programme/program-ai/mission-registry";
 
 const baseURL = "http://127.0.0.1:4173";
 const authSecret = "program-ai-ci-auth-secret-not-used-by-production";
@@ -40,6 +41,17 @@ const startingPoint: ProgrammeStartingPointValue = {
 };
 
 const situation = "After difficult work days I keep opening betting apps late at night.";
+const missionActionArtifacts: Record<string, Record<string, unknown>> = {
+  choose_direction: { direction: "pause" }, build_7_day_goal: { goalStyle: "pause_first", reviewWindowDays: 7 }, reality_check: { realityCheck: "restart_next_day" },
+  map_urge_sequence: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, name_early_signal: { earlySignalCategory: "thought" }, choose_pause_move: { pauseMove: "wait_ten_minutes" },
+  choose_boundary: { boundaryCategory: "pause", triggerType: "saved_early_signal" }, build_boundary_rule: { executionMethod: "bank_block" }, choose_execution: { pressureCheck: "needs_setup" },
+  run_decision_check: { scenarioChoice: "unexpected_offer" }, build_three_checks: { decisionChecks: ["purpose", "terms", "exit"] }, commit_pause_rule: { pauseRuleType: "pause_when_terms_are_unclear" },
+  choose_friction_layer: { frictionMethods: ["bank_block"] }, build_friction_stack: { frictionMethods: ["bank_block", "remove_saved_payment"] }, rehearse_bypass: { fallbackMethod: "leave", bypassReason: "easy_to_disable" },
+  choose_support_route: { supportModes: ["protected_help"] }, build_support_card: { supportCardStyle: "when_then" }, choose_exit_action: { exitActionType: "open_help" },
+  learn_comparison_signals: { comparisonSignals: ["licensing_status", "material_terms"] }, decode_offer_terms: { offerTermSignal: "wagering_requirement" }, build_research_checklist: { researchCriteria: ["licensing_status", "terms", "withdrawals"] },
+  choose_scenario: { scenarioType: "unclear_terms" }, rehearse_response: { responseStrategy: "pause_and_check" }, build_fallback_response: { fallbackStrategy: "leave_and_return" },
+  review_my_plan: { timelineReviewed: true }, assemble_final_plan: { planPriorityIds: ["pause_move", "boundary", "fallback"] }, choose_review_cadence: { reviewCadenceDays: 14 },
+};
 const programmeAgeHeader = {
   [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
 };
@@ -516,7 +528,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.getByRole("heading", { name: "Continue with Mission 2." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
   await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 
@@ -588,6 +600,80 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(authorityAfterAnonymousCleanup.userId).toBe(user.id);
 
   await prisma.user.deleteMany({ where: { id: { in: [user.id, wrongUser.id] } } });
+});
+
+test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches exactly 715 XP", async ({ page }) => {
+  const client = page.request;
+  const ready = await prepareReadyClaim(client);
+  const email = `program-ai-ten-step-${randomUUID()}@example.test`;
+  const { user, authCookieHeader } = await signUp(client, ready.access, email);
+  const redeem = await client.post("/api/program/program-ai/claims/redeem", {
+    headers: { ...programmeAgeHeader, cookie: `${ready.cookieHeader}; ${ready.claimCookieHeader}; ${authCookieHeader}` },
+    data: { timeZone: "UTC", startingPoint },
+  });
+  const redeemPayload = await redeem.json();
+  expect(redeem.status(), JSON.stringify(redeemPayload)).toBe(200);
+  expect(redeemPayload.home.totalXp).toBe(40);
+
+  for (const mission of programAiMissionRegistry) {
+    for (const [index, action] of mission.actions.entries()) {
+      const requestAction = () => client.post(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, {
+        headers: { cookie: authCookieHeader },
+        data: { action: action.id, artifact: missionActionArtifacts[action.id] },
+      });
+      if (mission.missionNumber === 2 && index === 0) {
+        const concurrent = await Promise.all([requestAction(), requestAction()]);
+        expect(concurrent.map((response) => response.status())).toEqual([200, 200]);
+        const awards = await Promise.all(concurrent.map(async (response) => (await response.json()).xpAwarded as number));
+        expect(awards.sort((left, right) => left - right)).toEqual([0, 15]);
+        await page.setViewportSize({ width: 375, height: 812 });
+        await page.goto("/program");
+        await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await noHorizontalOverflow(page);
+        await page.reload();
+        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+      } else {
+        const response = await requestAction();
+        expect(response.status(), `${mission.missionNumber}:${action.id} ${await response.text()}`).toBe(200);
+      }
+    }
+    const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
+      headers: { cookie: authCookieHeader },
+      data: {},
+    });
+    const completePayload = await complete.json();
+    expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
+    expect(completePayload.xpAwarded).toBe(25);
+
+    const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
+    if (milestone) {
+      const beforeReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+      const review = await client.get(`/api/program/program-ai/reviews/${milestone}`, { headers: { cookie: authCookieHeader } });
+      expect(review.status()).toBe(200);
+      expect((await review.json()).review.generation).toBe("deterministic_fallback");
+      const afterReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+      expect(afterReview._sum.xp).toBe(beforeReview._sum.xp);
+    }
+  }
+
+  const xp = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+  expect(xp._sum.xp).toBe(715);
+  expect(await prisma.userXpEvent.count({ where: { userId: user.id } })).toBe(38);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/program");
+  await expect(page.getByText("715 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
+  await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
+  await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
+  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
+  await noHorizontalOverflow(page);
+
+  await page.getByRole("button", { name: "Open review" }).last().click();
+  await expect(page.getByRole("heading", { name: "Full Programme Personal Review" })).toBeVisible();
+  await expect(page.getByText("0 XP", { exact: false }).first()).toBeVisible();
+  await noHorizontalOverflow(page);
+  await prisma.user.delete({ where: { id: user.id } });
 });
 
 test("clarification cannot refresh authority, withdrawal blocks turns, and a new action can reconfirm", async ({ page }) => {
