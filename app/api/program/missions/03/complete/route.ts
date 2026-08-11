@@ -8,10 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
-    assertProgrammeRateLimit(`mission-03:complete:${user.id}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const dashboard = await missionThreeService.complete(user.id);
     return programmeResponse({ ok: true, dashboard });
   } catch (error) {

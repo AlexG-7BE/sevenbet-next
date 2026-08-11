@@ -1,5 +1,6 @@
 import type { ProgrammeMissionStatus } from "@prisma/client";
 
+import { programmeEngagementDayBucket } from "@/lib/analytics/product-analytics-events";
 import { requireControlProgram, requireEnrollment } from "@/lib/programme/application/programme-context";
 import {
   MissionLockedError,
@@ -180,6 +181,7 @@ export class ProgrammeAiMissionsService {
       await this.assertAccessible(unitOfWork, enrollment.id, missionNumber, progress);
       if (progress?.status === "COMPLETED") {
         return {
+          actionPosition: null,
           xpAwarded: 0,
           mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
           home: await this.projectHome(unitOfWork, userId),
@@ -197,6 +199,7 @@ export class ProgrammeAiMissionsService {
       if (existingStates.includes(taskState)) {
         if (!progress) throw new ProgrammeResourceNotFoundError(`Mission ${missionNumber} progress`);
         return {
+          actionPosition: null,
           xpAwarded: 0,
           mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
           home: await this.projectHome(unitOfWork, userId),
@@ -235,6 +238,7 @@ export class ProgrammeAiMissionsService {
         eligibleActivityAt: now,
       });
       return {
+        actionPosition: (targetIndex + 1) as 1 | 2 | 3,
         xpAwarded: xpEvent.count ? input.action.xp : 0,
         mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, saved, source.program.steps[missionNumber - 1].id),
         home: await this.projectHome(unitOfWork, userId),
@@ -422,6 +426,7 @@ export class ProgrammeAiMissionsService {
       return {
         totalXp: result.totalXp,
         currentMission: 1,
+        engagementDayBucket: "unknown" as const,
         currentAction: null,
         startingPoint: null,
         missions: programmeMissionTitles.map((title, index) => ({ missionNumber: index + 1, title, status: index === 0 ? "current" : "locked", actionsCompleted: 0, xpEarnedHere: 0 })),
@@ -463,6 +468,7 @@ export class ProgrammeAiMissionsService {
     return {
       totalXp: result.totalXp,
       currentMission,
+      engagementDayBucket: programmeEngagementDayBucket(enrollment.startedAt),
       currentAction: currentDefinition
         ? currentDefinition.actions.find((action) => !currentProgress?.taskStates.includes(actionTaskState(currentMission, action.id)))?.id ?? null
         : null,

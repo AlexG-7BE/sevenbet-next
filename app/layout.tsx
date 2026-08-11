@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
+import { ProductAnalytics } from "@/components/analytics/ProductAnalytics";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 import "./design-system.css";
 import "./globals.css";
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }) }}
         />
         {children}
+        <ProductAnalytics />
       </body>
     </html>
   );

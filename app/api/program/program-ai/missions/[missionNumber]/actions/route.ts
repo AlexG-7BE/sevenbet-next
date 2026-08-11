@@ -1,4 +1,5 @@
 import { requireCurrentUser } from "@/lib/auth/session";
+import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
@@ -13,12 +14,15 @@ export async function POST(
   try {
     const user = await requireCurrentUser(request.headers);
     const missionNumber = routeMissionNumber((await context.params).missionNumber);
-    assertProgrammeRateLimit(`program-ai:mission-action:${user.id}:${missionNumber}`, { limit: 20, windowMs: 60_000 });
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const result = await programmeAiMissionsService.recordAction(
       user.id,
       missionNumber,
       await readProgrammeJson(request),
     );
+    if (result.xpAwarded > 0 && result.actionPosition) {
+      productAnalyticsServer.missionActionCompleted(missionNumber, result.actionPosition);
+    }
     return programmeResponse({ ok: true, ...result });
   } catch (error) {
     return programmeErrorResponse(error);

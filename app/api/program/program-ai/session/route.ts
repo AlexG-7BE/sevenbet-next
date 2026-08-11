@@ -16,10 +16,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    assertProgrammeRateLimit(`program-ai:session:${requestAddress(request)}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_SESSION_CREATE_IP", requestAddress(request));
     const access = verifyProgrammeAccessHeaders(request.headers, {
       secret: programmeAccessSigningSecret(),
     });

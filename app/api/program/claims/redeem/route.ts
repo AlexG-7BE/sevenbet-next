@@ -9,7 +9,6 @@ import {
   requestCookie,
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
-import { hashOpaqueToken } from "@/lib/programme/security";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
 import { programmeClaimService } from "@/lib/programme/application/programme-claim.service";
 
@@ -19,10 +18,7 @@ export async function POST(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
     const claimToken = requestCookie(request, pendingProgrammeClaimCookie);
-    assertProgrammeRateLimit(`redeem:${user.id}:${hashOpaqueToken(claimToken)}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone"]);
     const dashboard = await programmeClaimService.redeemPendingClaim(

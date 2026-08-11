@@ -12,6 +12,8 @@ import type {
   ProgramAiMission,
   ProgramAiReview,
 } from "@/components/programme/ProgramAiAuthenticated.types";
+import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
 import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
@@ -251,8 +253,10 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
         recordingDurationMs: durationMs,
         transcriptionRequestMs: result.transcriptionRequestMs,
       });
+      productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
     } catch {
+      productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
     }
   }
@@ -264,6 +268,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
 
   async function start() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
       return;
     }
@@ -303,6 +308,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       };
       recorder.current.onerror = () => {
         recorderFailed.current = true;
+        productAnalyticsClient.voiceOutcome("transcription_error");
         clearMaximumTimer();
         clearRecordingTimer();
         if (recorder.current?.state === "recording") {
@@ -316,6 +322,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       cancelling.current = false;
       recorderFailed.current = false;
       recorder.current.start();
+      productAnalyticsClient.voiceOutcome("recording_started");
       startRecordingTimer();
       maximumTimer.current = window.setTimeout(() => {
         stop();
@@ -325,7 +332,9 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       clearMaximumTimer();
       clearRecordingTimer();
       stopTracks();
-      onState(cause instanceof DOMException && cause.name === "NotAllowedError" ? "denied" : "error");
+      const denied = cause instanceof DOMException && cause.name === "NotAllowedError";
+      productAnalyticsClient.voiceOutcome(denied ? "permission_denied" : "transcription_error");
+      onState(denied ? "denied" : "error");
     }
   }
 
@@ -339,6 +348,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   function cancel() {
     if (recorder.current?.state !== "recording") return;
     cancelling.current = true;
+    productAnalyticsClient.voiceOutcome("cancelled");
     stop();
   }
 
@@ -575,6 +585,20 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     transcriptionRequestMs: number;
   } | null>(null);
 
+  useEffect(() => {
+    if (phase !== "home" || !home) return;
+    const programmeState = home.missions.every((mission) => mission.status === "completed")
+      ? "completed"
+      : home.startingPoint || home.missions.some((mission) => mission.status === "completed" || mission.actionsCompleted > 0)
+        ? "in_progress"
+        : "not_started";
+    productAnalyticsClient.homeViewed({
+      currentMission: home.currentMission as ProgrammeMissionNumber,
+      programmeState,
+      engagementDayBucket: home.engagementDayBucket,
+    });
+  }, [home, phase]);
+
   const persist = useCallback((next: ProgramAiLocalState, exactSubject = subject) => {
     setLocal(next);
     setPhase(next.phase);
@@ -653,6 +677,8 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   async function grantAccess() {
     if (!subject) return;
+    const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
+    productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
     try {
       const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
@@ -677,6 +703,8 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
       });
+      productAnalyticsClient.accessGranted(entryMode);
+      productAnalyticsClient.missionOpened(1, entryMode);
       setSensitiveAuthorityActive(false);
       personalisationStartedAt.current = null;
       accumulatedAiLatencyMs.current = 0;
@@ -712,8 +740,10 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate || local.candidate, candidateGeneration: payload.result.generation || local.candidateGeneration, phase: "support" });
       } else if (payload.result.kind === "CLARIFICATION_REQUIRED") {
         persist({ ...local, clarificationAnswers: answers, clarificationPrompt: payload.result.prompt || "What would feel different if this situation were more under your control?", phase: "clarification" });
+        productAnalyticsClient.personalisedValue("clarification");
       } else if (payload.result.candidate) {
         persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate, candidateGeneration: payload.result.generation, phase: "candidate" });
+        productAnalyticsClient.personalisedValue("starting_point");
         console.info(JSON.stringify({
           event: "programme_ai_m1_client_latency",
           inputMode: local.inputMode,
@@ -800,6 +830,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     try {
       await programAiRequest("/api/program/program-ai/support/continue", subject, { method: "POST" });
       persist({ ...local, phase: local.candidate ? "candidate" : "intake" });
+      if (local.candidate) productAnalyticsClient.personalisedValue("starting_point");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The Programme could not resume"); }
     finally { setBusy(false); }
   }
@@ -831,6 +862,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     try {
       await programAiRequest("/api/program/program-ai/claim", subject, { method: "POST" });
       persist({ ...local, phase: "registration" });
+      productAnalyticsClient.registrationCtaPresented();
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The account step could not be opened"); }
     finally { setBusy(false); }
   }
@@ -887,6 +919,10 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       );
       setActiveMission(payload.mission);
       setPhase("mission");
+      productAnalyticsClient.missionOpened(
+        missionNumber as ProgrammeMissionNumber,
+        payload.mission.status === "completed" ? "review" : payload.mission.actionsCompleted > 0 ? "resume" : "start",
+      );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The Mission could not be opened");
       setPhase("home");
@@ -903,6 +939,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       );
       setActiveReview({ milestone, review: payload.review });
       setPhase("review");
+      productAnalyticsClient.reviewOpened(milestone);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "The Review could not be opened");
       setPhase("home");

@@ -32,6 +32,10 @@ const baseURL = "http://127.0.0.1:4173";
 const authSecret = "program-ai-ci-auth-secret-not-used-by-production";
 const prisma = new PrismaClient();
 
+test.beforeEach(async () => {
+  await prisma.programmeRuntimeRateLimitBucket.deleteMany();
+});
+
 const startingPoint: ProgrammeStartingPointValue = {
   startingPoint: "I open betting apps after difficult work days.",
   desiredChange: "Pause before opening an app",
@@ -302,6 +306,32 @@ test("session creation rejects every direct access-proof bypass", async ({ reque
   expect(valid.status()).toBe(201);
   const cookie = responseCookie(valid, "sevenbet_programme_session");
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.token) } });
+});
+
+test("distributed session creation limiting returns a safe 429 while Help stays public", async ({ page }) => {
+  const authority = await issueAccess(page.request);
+  const tokenHashes: string[] = [];
+  const headers = {
+    ...programmeAgeHeader,
+    ...accessHeaders(authority),
+    "x-forwarded-for": "203.0.113.211",
+  };
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const response = await page.request.post("/api/program/program-ai/session", { headers });
+    expect(response.status(), `allowed attempt ${attempt + 1}`).toBe(201);
+    tokenHashes.push(tokenHash(responseCookie(response, "sevenbet_programme_session").token));
+  }
+  const limited = await page.request.post("/api/program/program-ai/session", { headers });
+  expect(limited.status()).toBe(429);
+  expect(Number(limited.headers()["retry-after"])).toBeGreaterThan(0);
+  expect(await limited.json()).toEqual({
+    code: "RATE_LIMITED",
+    retryAfterSeconds: Number(limited.headers()["retry-after"]),
+  });
+
+  await page.goto("/responsible-gambling");
+  await expect(page.getByRole("heading", { name: /Get support without offers/i })).toBeVisible();
+  await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
 
 test("voice recording produces an editable transcript, releases tracks and can be cancelled", async ({ page }) => {

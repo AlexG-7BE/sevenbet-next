@@ -1,6 +1,6 @@
 import Image from "next/image";
 
-import { ActionLink } from "@/components/design-system/Action";
+import { ProgrammeStartActionLink } from "@/components/analytics/ProgrammeStartActionLink";
 import { HomeProgrammeCarousel } from "./HomeProgrammeCarousel";
 import styles from "./TiltHome.module.css";
 
@@ -80,7 +80,7 @@ export function TiltHome() {
         <div className={styles.heroCopy}>
           <h1 id="home-title"><strong>CONTROL</strong><em>starts here.</em></h1>
           <p>Ten practical missions turn difficult moments into a plan you wrote yourself.</p>
-          <ActionLink className={styles.primaryButton} href="/program?entry=start" size="large">Start the 10-Step Program</ActionLink>
+          <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start the 10-Step Program</ProgrammeStartActionLink>
           <span className={styles.heroProof}>10 missions · practical rules · progress you can see</span>
         </div>
         <a className={styles.scrollCue} href="#programme" aria-label="Scroll to the programme"><span /></a>
@@ -173,7 +173,7 @@ export function TiltHome() {
         <span>READY WHEN YOU ARE</span>
         <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>useful mission.</em></h2>
         <p>No promise of a perfect outcome. Just a practical first step you can finish.</p>
-        <ActionLink className={styles.primaryButton} href="/program?entry=start" size="large">Start the 10-Step Program</ActionLink>
+        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start the 10-Step Program</ProgrammeStartActionLink>
         <small>Next: Mission 01 · private narrative stays in this browser session</small>
       </section>
     </div>

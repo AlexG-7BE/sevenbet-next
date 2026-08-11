@@ -56,12 +56,18 @@ test("route focus scopes preserve shared Action ownership", () => {
   }
 });
 
-test("production consumers reuse Action without moving protected or commercial decisions into it", () => {
+test("production consumers reuse Action directly or through the analytics-only Programme composite", () => {
   for (const path of [
-    "components/home/TiltHome.tsx",
     "app/(public)/10-steps/TenStepsLanding.tsx",
     "app/(public)/tools/budget-calculator/PersonalLimitTracker.tsx",
   ]) assert.match(read(path), /@\/components\/design-system\/Action/);
+
+  const home = read("components/home/TiltHome.tsx");
+  const programmeStartAction = read("components/analytics/ProgrammeStartActionLink.tsx");
+  assert.match(home, /@\/components\/analytics\/ProgrammeStartActionLink/);
+  assert.match(programmeStartAction, /@\/components\/design-system\/Action/);
+  assert.doesNotMatch(programmeStartAction, /affiliate|outbound|casino|bonus|responsible-gambling|programmeDashboardService/iu);
+
   const action = read("components/design-system/Action.tsx");
   assert.doesNotMatch(action, /affiliate|outbound|casino|bonus|responsible-gambling|programmeDashboardService/iu);
 });

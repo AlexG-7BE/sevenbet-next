@@ -144,15 +144,21 @@ export class ProgrammeAiMissionOneService {
     return { active: false };
   }
 
-  async createTurn(token: string, value: unknown, now = new Date()) {
+  async createTurn(
+    token: string,
+    value: unknown,
+    now = new Date(),
+    providerAllowedByRateLimit = true,
+  ) {
     assertProgramAiV1Enabled();
     const input = parseProgrammeAiTurn(value);
-    const reserveProviderCall = isProgramAiRealProviderEnabled();
+    const providerConfigured = isProgramAiRealProviderEnabled();
+    const reserveProviderCall = providerConfigured && providerAllowedByRateLimit;
     const reservation = await this.unitOfWork.serializable(async (unitOfWork) => {
       const session = await this.requireSession(unitOfWork, token, now);
       await this.requireAuthority(session.id, unitOfWork);
       const draft = structuralDraft(session.draft);
-      const providerAllowed = !reserveProviderCall || draft.providerCallCount < 3;
+      const providerAllowed = reserveProviderCall && draft.providerCallCount < 3;
       const taskStates = mergedActions(session.taskStates, [programAiMissionOneActions[0]]);
       await unitOfWork.sessions.updateAnonymousSession(session.id, {
         missionState: "IN_PROGRESS",
@@ -167,16 +173,23 @@ export class ProgrammeAiMissionOneService {
         expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
         lastActivityAt: now,
       });
-      return { sessionId: session.id, providerAllowed, taskStates };
+      return {
+        sessionId: session.id,
+        providerAllowed,
+        situationFirstAccepted: !session.taskStates.includes(programAiMissionOneActions[0]),
+        taskStates,
+      };
     });
 
     // The unrestricted input exists only in this call and the configured port.
     // Provider work runs after the metadata-only reservation and outside every database transaction.
-    let result = reservation.providerAllowed
-      ? await this.orchestrator.createTurn(input)
-      : await new ProgrammeAiOrchestrator(null).createTurn(input);
+    let generation = reservation.providerAllowed
+      ? await this.orchestrator.createTurnWithOutcome(input)
+      : await new ProgrammeAiOrchestrator(null).createTurnWithOutcome(input);
+    let result = generation.result;
     if (result.kind === "CLARIFICATION_REQUIRED" && input.clarificationAnswers.length >= 2) {
-      result = await new ProgrammeAiOrchestrator(null).createTurn(input);
+      generation = await new ProgrammeAiOrchestrator(null).createTurnWithOutcome(input);
+      result = generation.result;
     }
     const clarificationCount = result.kind === "CLARIFICATION_REQUIRED"
       ? Math.min(2, input.clarificationAnswers.length + 1)
@@ -203,6 +216,9 @@ export class ProgrammeAiMissionOneService {
         taskStates: reservation.taskStates,
         xpPreview: anonymousProgramAiXp(reservation.taskStates),
       },
+      inputMode: input.inputMode,
+      situationFirstAccepted: reservation.situationFirstAccepted,
+      providerOutcome: generation.providerOutcome,
     };
   }
 
@@ -294,7 +310,10 @@ export class ProgrammeAiMissionOneService {
         if (claim.consumedByUserId !== userId) {
           throw new ProgrammeStateConflictError("Pending programme claim belongs to another account");
         }
-        return this.projectHome(unitOfWork, userId);
+        return {
+          home: await this.projectHome(unitOfWork, userId),
+          claimRedeemed: false,
+        };
       }
       if (claim.expiresAt <= now) throw new ClaimExpiredError();
       const anonymousSession = claim.anonymousSession;
@@ -411,7 +430,10 @@ export class ProgrammeAiMissionOneService {
         void momentMap;
       }
       await unitOfWork.sessions.completeAnonymousSession(anonymousSession.id, now);
-      return this.projectHome(unitOfWork, userId);
+      return {
+        home: await this.projectHome(unitOfWork, userId),
+        claimRedeemed: true,
+      };
     });
   }
 

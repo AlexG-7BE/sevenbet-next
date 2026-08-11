@@ -1235,19 +1235,29 @@ test("validation rejects invalid confidence and client-authored reward fields", 
 
 test("rate-limit errors keep the normalized public response contract", async () => {
   resetProgrammeRateLimitsForTests();
-  assertProgrammeRateLimit("regression-rate-limit", { limit: 1, windowMs: 60_000 }, 1);
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    await assertProgrammeRateLimit(
+      "PROGRAMME_SESSION_CREATE_IP",
+      "198.51.100.9",
+      new Date("2026-08-11T10:01:00.000Z"),
+    );
+  }
   let captured: unknown;
   try {
-    assertProgrammeRateLimit("regression-rate-limit", { limit: 1, windowMs: 60_000 }, 2);
+    await assertProgrammeRateLimit(
+      "PROGRAMME_SESSION_CREATE_IP",
+      "198.51.100.9",
+      new Date("2026-08-11T10:01:01.000Z"),
+    );
   } catch (error) {
     captured = error;
   }
   const response = programmeErrorResponse(captured);
   assert.equal(response.status, 429);
   assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("retry-after"), "539");
   assert.deepEqual(await response.json(), {
-    ok: false,
-    error: "Too many programme requests",
     code: "RATE_LIMITED",
+    retryAfterSeconds: 539,
   });
 });

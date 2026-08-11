@@ -7,18 +7,13 @@ import {
   programmeResponse,
   requestCookie,
 } from "@/lib/programme/http";
-import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
-import { hashOpaqueToken, pendingClaimLifetimeMs } from "@/lib/programme/security";
+import { pendingClaimLifetimeMs } from "@/lib/programme/security";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
-    assertProgrammeRateLimit(`program-ai:claim:${hashOpaqueToken(token)}`, {
-      limit: 5,
-      windowMs: 60_000,
-    });
     const claim = await programmeAiMissionOneService.createPendingClaim(
       token,
     );

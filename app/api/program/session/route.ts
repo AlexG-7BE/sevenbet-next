@@ -15,10 +15,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    assertProgrammeRateLimit(`session:create:${requestAddress(request)}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_SESSION_CREATE_IP", requestAddress(request));
     const result = await programmeSessionService.createAnonymousSession();
     const response = programmeResponse({ ok: true, session: result.session }, 201);
     response.cookies.set(anonymousProgrammeCookie, result.token, {
