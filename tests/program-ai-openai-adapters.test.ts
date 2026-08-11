@@ -138,6 +138,8 @@ test("Responses request is bounded, stateless, strict and keeps injection text a
     assert.equal(Object.hasOwn(body, forbidden), false, `${forbidden} must be absent`);
   }
   assert.equal(String(body.instructions).includes(PROGRAM_AI_OPENAI_PROMPT_VERSION), true);
+  assert.match(String(body.instructions), /does not contain enough relevant information about the user's gambling or play-related situation/);
+  assert.match(String(body.instructions), /CLARIFICATION_REQUIRED with CONTEXT_UNCLEAR/);
   assert.deepEqual(logs, [{
     event: "programme_provider_operation",
     provider: "openai",

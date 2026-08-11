@@ -187,14 +187,31 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
   const retainedRecording = useRef<Blob | null>(null);
+  const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const recordingStartedAt = useRef(0);
   const recordingDurationMs = useRef(0);
   const maximumTimer = useRef<number | null>(null);
+  const recordingTimer = useRef<number | null>(null);
   const cancelling = useRef(false);
+  const recorderFailed = useRef(false);
 
   function clearMaximumTimer() {
     if (maximumTimer.current !== null) window.clearTimeout(maximumTimer.current);
     maximumTimer.current = null;
+  }
+
+  function clearRecordingTimer(reset = true) {
+    if (recordingTimer.current !== null) window.clearInterval(recordingTimer.current);
+    recordingTimer.current = null;
+    if (reset) setRecordingElapsedSeconds(0);
+  }
+
+  function startRecordingTimer() {
+    clearRecordingTimer();
+    recordingStartedAt.current = Date.now();
+    recordingTimer.current = window.setInterval(() => {
+      setRecordingElapsedSeconds(Math.min(90, Math.floor((Date.now() - recordingStartedAt.current) / 1_000)));
+    }, 1_000);
   }
 
   function stopTracks() {
@@ -209,9 +226,11 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
 
   useEffect(() => () => {
     clearMaximumTimer();
+    clearRecordingTimer(false);
     if (recorder.current) {
       recorder.current.ondataavailable = null;
       recorder.current.onstop = null;
+      recorder.current.onerror = null;
       if (recorder.current.state === "recording") recorder.current.stop();
       recorder.current = null;
     }
@@ -256,8 +275,15 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       };
       recorder.current.onstop = () => {
         clearMaximumTimer();
+        clearRecordingTimer();
         recordingDurationMs.current = Math.min(90_000, Math.max(1, Date.now() - recordingStartedAt.current));
         stopTracks();
+        if (recorderFailed.current) {
+          recorderFailed.current = false;
+          releaseRecording();
+          onState("error");
+          return;
+        }
         if (cancelling.current) {
           cancelling.current = false;
           releaseRecording();
@@ -271,27 +297,45 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
         chunks.current = [];
         void transcribe(audio, recordingDurationMs.current);
       };
+      recorder.current.onerror = () => {
+        recorderFailed.current = true;
+        clearMaximumTimer();
+        clearRecordingTimer();
+        if (recorder.current?.state === "recording") {
+          recorder.current.stop();
+          return;
+        }
+        stopTracks();
+        releaseRecording();
+        onState("error");
+      };
+      cancelling.current = false;
+      recorderFailed.current = false;
       recorder.current.start();
-      recordingStartedAt.current = Date.now();
+      startRecordingTimer();
       maximumTimer.current = window.setTimeout(() => {
-        if (recorder.current?.state === "recording") recorder.current.stop();
+        stop();
       }, 90_000);
       onState("recording");
     } catch (cause) {
       clearMaximumTimer();
+      clearRecordingTimer();
       stopTracks();
       onState(cause instanceof DOMException && cause.name === "NotAllowedError" ? "denied" : "error");
     }
   }
 
   function stop() {
-    if (recorder.current?.state === "recording") recorder.current.stop();
+    if (recorder.current?.state !== "recording") return;
+    clearMaximumTimer();
+    clearRecordingTimer();
+    recorder.current.stop();
   }
 
   function cancel() {
     if (recorder.current?.state !== "recording") return;
     cancelling.current = true;
-    recorder.current.stop();
+    stop();
   }
 
   function retry() {
@@ -302,6 +346,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
 
   function useTyped() {
     clearMaximumTimer();
+    clearRecordingTimer();
     stopTracks();
     releaseRecording();
     onState("idle");
@@ -310,10 +355,10 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
 
   return (
     <div className={styles.recorder} data-state={state}>
-      <div aria-hidden="true" className={styles.mic}>●</div>
-      <div><strong>{state === "recording" ? "Listening locally · stops at 1:30" : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" ? "Microphone permission was denied" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
+      <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator>●</span></div>
+      <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" ? "Microphone permission was denied" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
       {["idle", "denied", "cancelled", "success"].includes(state) ? <button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Start recording"}</button> : null}
-      {state === "recording" ? <span className={styles.recorderActions}><button onClick={stop} type="button">Stop recording</button><button onClick={cancel} type="button">Cancel</button></span> : null}
+      {state === "recording" ? <span className={styles.recorderActions}><button className={styles.stopRecording} onClick={stop} type="button">Stop recording</button><button className={styles.cancelRecording} onClick={cancel} type="button">Cancel</button></span> : null}
       {state === "requesting" || state === "transcribing" ? <span role="status">{state === "requesting" ? "Requesting microphone…" : "Transcribing…"}</span> : null}
       {state === "success" ? <p role="status">Check and correct the editable transcript below before creating your Starting Point.</p> : null}
       {state === "error" ? <p role="alert">Voice transcription could not be completed. {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}

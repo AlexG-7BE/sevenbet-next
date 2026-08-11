@@ -271,15 +271,19 @@ test("session creation rejects every direct access-proof bypass", async ({ reque
 
 test("voice recording produces an editable transcript, releases tracks and can be cancelled", async ({ page }) => {
   await page.addInitScript(() => {
-    let stoppedTracks = 0;
+    const stoppedTracksKey = "program-ai-test-stopped-tracks";
+    if (window.sessionStorage.getItem(stoppedTracksKey) === null) window.sessionStorage.setItem(stoppedTracksKey, "0");
+    let failRecorder: (() => void) | null = null;
     class FakeMediaRecorder {
       static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
       state = "inactive";
       mimeType: string;
       ondataavailable: ((event: { data: Blob }) => void) | null = null;
       onstop: (() => void) | null = null;
+      onerror: (() => void) | null = null;
       constructor(_stream: MediaStream, options?: { mimeType?: string }) {
         this.mimeType = options?.mimeType || "audio/webm";
+        failRecorder = () => this.onerror?.();
       }
       start() { this.state = "recording"; }
       stop() {
@@ -293,12 +297,14 @@ test("voice recording produces an editable transcript, releases tracks and can b
       configurable: true,
       value: {
         getUserMedia: async () => ({
-          getTracks: () => [{ stop: () => { stoppedTracks += 1; } }],
+          getTracks: () => [{ stop: () => window.sessionStorage.setItem(stoppedTracksKey, String(Number(window.sessionStorage.getItem(stoppedTracksKey)) + 1)) }],
         }),
       },
     });
-    Object.defineProperty(window, "__programAiStoppedTracks", { get: () => stoppedTracks });
+    Object.defineProperty(window, "__programAiStoppedTracks", { get: () => Number(window.sessionStorage.getItem(stoppedTracksKey)) });
+    Object.defineProperty(window, "__programAiFailRecorder", { value: () => failRecorder?.() });
   });
+  await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.route("**/api/program/program-ai/session", async (route) => {
     await route.fulfill({
@@ -337,22 +343,97 @@ test("voice recording produces an editable transcript, releases tracks and can b
 
   await page.getByRole("button", { name: "Start recording" }).click();
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
+  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  const recordingDot = page.locator("[data-recording-indicator]");
+  expect(await recordingDot.evaluate((element) => getComputedStyle(element).animationName)).not.toBe("none");
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(recordingDot).toHaveCSS("animation-name", "none");
+  await page.clock.fastForward(1_000);
+  await expect(page.getByText("Recording · 00:01 / 01:30")).toBeVisible();
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByLabel("Editable transcript")).toHaveValue(situation);
+  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await page.clock.fastForward(2_000);
   await expect(page.getByText("Transcript ready to review")).toBeVisible();
   expect(transcriptionCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
 
   await page.getByRole("button", { name: "Record again" }).click();
+  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
+  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
+  await page.clock.fastForward(2_000);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   expect(transcriptionCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
   await expect(page.getByText("Type instead")).toBeVisible();
+
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.clock.fastForward(90_000);
+  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  expect(transcriptionCalls).toBe(2);
+
+  await page.getByRole("button", { name: "Record again" }).click();
+  await page.evaluate(() => (window as unknown as { __programAiFailRecorder: () => void }).__programAiFailRecorder());
+  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "error");
+  await page.clock.fastForward(2_000);
+  await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "error");
+  expect(transcriptionCalls).toBe(2);
+  await page.getByRole("button", { name: "type instead" }).click();
+
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  await page.getByRole("link", { name: "B4GAMBLE" }).click();
+  await expect(page).toHaveURL("/");
+  expect(transcriptionCalls).toBe(2);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(5);
   await noHorizontalOverflow(page);
 
   const cookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_session");
   if (cookie) await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: tokenHash(cookie.value) } });
+});
+
+test("fresh microphone access uses the browser request before denied recovery", async ({ page }) => {
+  await page.addInitScript(() => {
+    let permissionRequests = 0;
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: {
+        getUserMedia: async () => {
+          permissionRequests += 1;
+          throw new DOMException("Permission denied by test user", "NotAllowedError");
+        },
+      },
+    });
+    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
+  });
+  await page.route("**/api/program/program-ai/session", async (route) => {
+    await route.fulfill({
+      status: 201,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }),
+    });
+  });
+  await page.route("**/api/program/program-ai/authority", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, authority: { active: true } }),
+    });
+  });
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
+
+  await expect(page.getByText("Prefer to speak?")).toBeVisible();
+  await expect(page.getByText("Microphone permission was denied")).toHaveCount(0);
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
+  await page.getByRole("button", { name: "Start recording" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
+  await expect(page.getByText("Microphone permission was denied")).toBeVisible();
+  await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 
 test("typed fallback path binds exact authority and is idempotent through real email auth", async ({ page }) => {
