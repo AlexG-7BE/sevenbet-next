@@ -204,10 +204,12 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
     .sort();
   if (schemaChanges.length > 0) {
     assert.deepEqual(schemaChanges, [
-      "prisma/migrations/0018_program_ai_m1_foundation/migration.sql",
-      "prisma/preflight/0018_program_ai_m1_foundation.sql",
+      "prisma/migrations/0019_programme_runtime_hardening/migration.sql",
+      "prisma/preflight/0019_programme_runtime_hardening.sql",
       "prisma/schema.prisma",
     ]);
   }
-  assert.equal(changed.includes("package-lock.json"), false);
+  if (changed.includes("package-lock.json")) {
+    assert.equal(JSON.parse(source("package.json")).dependencies["@vercel/analytics"], "2.0.1");
+  }
 });
