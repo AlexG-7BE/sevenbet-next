@@ -15,3 +15,6 @@ test-results
 tsconfig.tsbuildinfo
 *.before-uuid-fix
 .media-storage/
+*.backup
+*.dump
+.recovery-*

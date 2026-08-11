@@ -25,10 +25,10 @@
 | 21 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
 | 22 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
 | 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
-| 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
+| 24 | RECOVERY-01 | **PARTIAL — LOGICAL DRILL PASSED; MANAGED PRODUCTION BACKUP OPEN** | RFC-024 approved. Preview-only logical backup restored into disposable PostgreSQL 16 and passed 18-migration/schema/count/canary/FK/application-read verification plus cleanup. Both Prisma resources remain Free with no provider restore point; Production backup state is unchanged. |
 | 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
 | 26 | PROGRAM-AI-IMPL-01A | **CLOSED — PR #63 MERGED** | The bounded default-off RFC-022 foundation is on main at `5a6ede5b45ad4cb3c71ac14190ad12286b335ac7`, including exact access/authority, claim, deterministic `20 + 20`, Home and isolated browser lanes. Legacy M1 remains the default. |
-| 27 | PROGRAM-AI-ACTIVATE-01 | **IMPLEMENTED ON FEATURE BRANCH; LIVE PREVIEW GATES PENDING** | RFC-023 adds direct OpenAI `gpt-4o-transcribe`/`gpt-5.6-terra` adapters, voice/transcript UX, stateless strict Responses requests, dual fail-closed gates, three-call budget, technical-only logs and a separately invoked synthetic eval. No schema/dependency/Production configuration change. Credential, Preview database/migration and live QA evidence remain open. |
+| 27 | PROGRAM-AI-ACTIVATE-01 | **IMPLEMENTATION MERGED — PR #64; LIVE PREVIEW VALIDATION SEPARATE** | PR #64 merged approved head `377777d5c6e9f03f6eae9d9e9bb1293191873720` as `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`. RFC-023 adds the bounded direct OpenAI adapters and voice/transcript UX. No schema/dependency/Production configuration change; a successful live provider call is not claimed here. |
 | 28 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
@@ -41,9 +41,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Complete PROGRAM-AI-ACTIVATE-01 credential presence, safe Preview/Production database fingerprint comparison and Preview migration-0018 verification; only then configure the two Preview gates and run controlled live typed/voice QA.
+1. For PROGRAM-AI-ACTIVATE-01, retain the detected Preview-only credential/configuration boundary and use the re-proven distinct database fingerprints plus verified Preview migration 0018; restore the missing runtime database aliases for the exact controlled branch before live typed/voice QA.
 2. Keep Production provider flags/credentials absent or false. Default OpenAI Responses abuse-monitoring retention remains a gate before unrestricted real-user Production data unless Founder Office separately accepts an approved ZDR/MAM or another reviewed position.
 3. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
 4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
-5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
+5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with the remaining RECOVERY-01 managed Production backup/provider-native restore gate.
 6. Acquire real partner evidence only under a later closed-beta authorisation decision.

@@ -17,7 +17,7 @@
 
 **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; its exact-merge CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected `/admin`, refresh/session persistence and normal logout. Production is healthy and ENV-ISO-01 is closed.
 
-**Not detected:** automated backup/PITR capability on the verified Prisma Free plan. Recovery remains PARTIAL and separate from the proven environment-isolation boundary.
+**Not detected:** automated backup/PITR capability on the verified Prisma Free plan. **Detected:** RECOVERY-01 restored a Preview logical backup to a disposable local PostgreSQL 16 target, proved migration/schema/count/canary/application-read parity and destroyed all temporary data. Recovery remains `PARTIAL` because that drill is not a managed Production recovery point.
 
 The complete configuration-name inventory, classifications, consumers and handling rules are maintained in [Environment and Secrets](../../06_Operations/Environment-and-Secrets.md).
 
@@ -29,4 +29,4 @@ The complete configuration-name inventory, classifications, consumers and handli
 
 **Detected on PROGRAM-AI-IMPL-01A branch:** `.env.example` documents `PROGRAM_AI_V1_ENABLED=false`. Only exact server-side `true` enables the RFC-022 slice. No hosted environment value or Production configuration change is detected.
 
-**Not detected:** a short-lived Production migration credential, provider-native migration hook or proven backup/restore configuration. Production migration automation remains provider/secret-architecture gated.
+**Not detected:** a short-lived Production migration credential, provider-native migration hook or managed Production backup/restore configuration. Production migration automation and managed recovery remain provider/secret-architecture gated.

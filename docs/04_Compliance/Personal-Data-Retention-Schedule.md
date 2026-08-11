@@ -1,7 +1,7 @@
 # Personal-Data Retention Schedule
 
 - **Status:** Launch baseline with open verification actions
-- **Last reviewed:** 2026-08-09
+- **Last reviewed:** 2026-08-11
 
 “Implemented” below means repository evidence enforces the stated access or deletion behaviour. A logical expiry is not described as physical deletion.
 
@@ -32,7 +32,7 @@
 | Bonus/offer evidence | Editorial comparison and future offer verification | Published bonus snapshots and evidence records exist; current temporary records are fictional demonstrations | Preserve superseded real evidence for an approved substantiation period; remove bounded demo data under RFC-012 cleanup | **Detected** records; exact archival period **unknown**. |
 | Admin audit records | Privileged change accountability | Admin audit model detected | Approve tamper/access controls and exact accountability period | **Detected**; exact retention **unknown**. |
 | Partner agreement/contract evidence | Future commercial authority | Models support agreement/evidence gates; no real GB partner is active | Retain for contract/legal period after termination when introduced | **Not currently used** for a real GB partner; period **open**. |
-| Database backups | Recovery | Provider capability/period not verified in repository evidence | Verify encryption, geography, retention, deletion expiry and restore re-erasure | **Not detected.** Never promise immediate selective backup deletion. |
+| Database backups | Recovery | Both Prisma resources are detected on Free with no managed snapshots. The 2026-08-11 drill used Preview synthetic/test data in a private logical archive and disposable local target; both were destroyed immediately after verification. | Founder decision on managed backup; then verify encryption, geography, retention, deletion expiry, access and restore re-erasure before activation | **Detected:** bounded logical drill and immediate temporary-data destruction. **Not detected:** Production recovery points or provider snapshot retention. Never promise immediate selective backup deletion. |
 
 ## Review rule
 

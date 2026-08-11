@@ -2,13 +2,13 @@
 
 ## Trust zones and active evidence
 
-Reconciled on 2026-08-10 for the approved B4GAMBLE canonical-domain release contract and the GOOGLE-OAUTH-ACTIVATE-01 Preview canonical-host correction. Secret values are intentionally omitted.
+Reconciled on 2026-08-11 for the approved B4GAMBLE canonical-domain release contract, Preview isolation and RECOVERY-01. Secret values are intentionally omitted.
 
 | Zone | Database authority | Auth/admin authority | External integrations | Allowed data and mutation | Deployment source |
 | --- | --- | --- | --- | --- | --- |
 | Local | **Detected:** developer-owned local configuration | **Detected:** developer-owned secrets | Local/synthetic only | Synthetic/local data; developer-owned mutations | Developer checkout |
 | CI | **Detected:** disposable PostgreSQL 16 service | **Detected:** fake auth/admin sentinels; no Vercel secret | Disabled/fake only | Disposable test data; migrations and tests may mutate the disposable service | Pull-request GitHub Actions |
-| Preview | **Blocked current runtime:** dedicated Prisma Postgres aliases for `sevenbet-preview` (`store_hLPkkgamL7rJNmCe`) are present, but a redacted 2026-08-10 pull found runtime `DATABASE_URL` and `DIRECT_URL` empty | **Detected:** Preview-only Better Auth secret and admin token; exact Vercel branch host is derived from system metadata | Affiliate redirects and public CMS disabled; local media provider; no OpenAI, S3, email, webhook, analytics or affiliate credentials detected | Non-production disposable test data only after runtime database authority is restored and reverified; no Production copy | Non-`main` Vercel Preview deployment |
+| Preview | **Blocked current runtime:** dedicated Prisma Postgres aliases for `sevenbet-preview` (`store_hLPkkgamL7rJNmCe`) are present, but a redacted 2026-08-11 pull for the RECOVERY-01 branch found runtime `DATABASE_URL` and `DIRECT_URL` absent | **Detected:** Preview-only Better Auth secret and admin token; exact Vercel branch host is derived from system metadata | Affiliate redirects and public CMS disabled; local media provider; OpenAI credential and Programme configuration exist only in Preview metadata/authorised branch scopes and were not read or used by RECOVERY-01; no S3, email, webhook, analytics or affiliate credentials detected | Non-production disposable test data only after runtime database authority is restored and reverified; no Production copy | Non-`main` Vercel Preview deployment |
 | Production | **Detected:** Prisma Postgres `prisma-postgres-cobalt-school` (`store_1I4F54ETrwSKS42o`), provider connection restricted to Production only | **Detected:** Production-only Better Auth/admin configuration | Production authority only when separately approved and configured | Governed Production data and mutations only | `main` Vercel Production deployment |
 | Demo/Staging | **Planned:** separate project and database | **Planned:** separate auth/admin authority | Sandbox or separately approved non-production authority | Curated synthetic/demo data only | Future separately authorised deployment |
 
@@ -17,8 +17,8 @@ Preview is an engineering/review environment, not Demo/Staging. It must never be
 ## ENV-ISO-01 isolation evidence
 
 - **Historic detected evidence:** ENV-ISO-01 proved Preview and Production used different Vercel/Prisma resource IDs and different database credentials; their runtime URL relations were `DIFFERENT` at that verification point.
-- **Current detected exception, 2026-08-10:** Preview provider aliases remain populated but Preview runtime `DATABASE_URL` and `DIRECT_URL` are empty. A new contemporaneous Production-secret fingerprint was not retrieved. PROGRAM-AI Preview activation and migration verification are blocked until the minimum isolated runtime bindings are restored and the comparison is repeated without printing values.
-- **Detected:** both resources have all 17 repository migrations; representative Preview user, admin, CMS, casino and Programme counts were zero before the isolation canary.
+- **Current detected exception, 2026-08-11:** Preview provider aliases remain populated but the RECOVERY-01 branch pull contains no runtime `DATABASE_URL` or `DIRECT_URL`. The provider-owned Preview and Production direct aliases were compared in process memory: resource IDs and connection-authority fingerprints were `DIFFERENT`. This authorises the bounded recovery drill only; application runtime aliases remain a separate activation gate.
+- **Detected:** the Preview backup point contains all 18 repository migrations through `0018_program_ai_m1_foundation`. Historic ENV-ISO-01 evidence proved 17 migrations on both resources; RECOVERY-01 did not query current Production migration rows.
 - **Detected:** Preview and Production Better Auth secrets and admin tokens are independently generated. Production values were unchanged after the accepted ENV-REC-01 recovery baseline.
 - **Detected:** Preview Better Auth uses `VERCEL_BRANCH_URL` only when `VERCEL_ENV=preview`. The host must be an exact generated `*-git-*.vercel.app` branch host; wildcard, Production fallback and contradictory static origins fail closed. Exact requests to the current valid `VERCEL_URL` deployment host are redirected with status 307 to that exact branch host before rendering/auth, with path and query preserved; malformed metadata and unexpected Preview hosts reject. Production, local and ordinary CI do not canonicalise.
 - **Detected:** an `example.invalid` Preview account and session succeeded, the exact account was absent from Production, Production rejected the Preview session, and the Preview account was deleted. No canary remains.
@@ -26,7 +26,7 @@ Preview is an engineering/review environment, not Demo/Staging. It must never be
 - **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; exact-merge main CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected admin, refresh/session persistence and logout.
 - **Not detected:** any Production database, user, Programme, protected-support or CMS record copied to Preview.
 
-ENV-ISO-01 and the associated Production configuration incident are closed. Recovery remains PARTIAL and is governed separately before stateful closed beta.
+ENV-ISO-01 and the associated Production configuration incident are closed. Recovery remains **PARTIAL** under RFC-024: the Preview logical restore drill passed, but both live Free-plan backup pages expose no managed restore point.
 
 The provider connection prefixes are control-plane aliases. No repository runtime consumer uses `PRODDB_*` or `ENVISO_*`; the separately scoped runtime/direct variables remain authoritative.
 
@@ -38,6 +38,9 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `ENVISO_DATABASE_URL`, `ENVISO_POSTGRES_URL`, `ENVISO_PRISMA_DATABASE_URL` | Provider-injected sensitive aliases | Preview-only control-plane connection; no repository consumer detected | Founder Office/config owner |
 | `PRODDB_DATABASE_URL`, `PRODDB_POSTGRES_URL`, `PRODDB_PRISMA_DATABASE_URL` | Provider-injected sensitive aliases | Production-only control-plane connection; no repository consumer detected | Founder Office/config owner |
 | `PRISMA_DATABASE_URL`, `POSTGRES_URL` | Sensitive provider aliases | Production-only preserved aliases; no repository consumer detected | Founder Office/config owner |
+| `RECOVERY_SOURCE_URL`, `RECOVERY_TARGET_URL`, `RECOVERY_PREVIEW_REFERENCE_URL`, `RECOVERY_PRODUCTION_REFERENCE_URL` | Operator-supplied secret database authorities | Local, explicitly invoked RECOVERY-01 tooling only; never hosted runtime or CI | Founder Office/config owner supplies; technical responder consumes in process memory |
+| `RECOVERY_PREVIEW_RESOURCE_ID`, `RECOVERY_PRODUCTION_RESOURCE_ID`, `RECOVERY_TARGET_LABEL`, `RECOVERY_DRILL_ACKNOWLEDGEMENT`, `RECOVERY_CANARY_ACKNOWLEDGEMENT` | Non-secret recovery guard authority | Exact local recovery preflight/canary commands only | RFC-024; repository maintainer technical owner |
+| `RECOVERY_CANARY_MANIFEST_PATH`, `RECOVERY_SNAPSHOT_MANIFEST_PATH`, `RECOVERY_DRILL_ID` | Sensitive operational path / safe drill identifier | Private temporary drill directory only; never committed or uploaded | Technical responder; delete immediately after drill |
 | `BETTER_AUTH_SECRET` | Secret | Better Auth runtime convention; independent per environment | Founder Office/config owner; repository maintainer technical owner |
 | `BETTER_AUTH_URL`, `BETTER_AUTH_TRUSTED_ORIGINS` | Sensitive configuration | Production target is exact `https://b4gamble.com`; Local/CI use explicit loopback origins; intentionally absent in Preview | Same as authentication configuration |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Sensitive OAuth client configuration / secret | Optional Better Auth Google identity provider; both required; independent Production and Preview clients | Founder Office/Google Cloud owner; repository maintainer technical consumer |

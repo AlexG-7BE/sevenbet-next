@@ -22,3 +22,7 @@ Create or update an RFC before and during any substantial decision that changes 
 
 - [RFC-022 — PROGRAM-AI M1 Foundation and Preview Vertical Slice](RFC-022-PROGRAM-AI-M1-Foundation-and-Preview-Vertical-Slice.md) authorises the bounded feature-off-by-default M1 foundation, exactly two narrow persistence concepts, provider-neutral ports, legacy compatibility and Preview vertical slice for `PROGRAM-AI-IMPL-01A`.
 - [RFC-023 — OpenAI Preview Voice and Personalisation Activation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) selects the two narrow OpenAI adapters, exact models, dual real-provider gate and Preview-only data/operations boundary for `PROGRAM-AI-ACTIVATE-01`. Production remains off.
+
+## Current database recovery decision
+
+- [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) approves the fail-closed Preview-to-isolated-target recovery architecture, Production read-only boundary, logical restore drill, internal RPO/RTO targets and managed-backup release ceiling for `RECOVERY-01`.
