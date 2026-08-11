@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 
 import { ActionButton, ActionLink } from "@/components/design-system/Action";
-import { ActiveControlProgramme } from "@/components/programme/ActiveControlProgramme";
+import { ProgramAiHomeScreen } from "@/components/programme/ProgramAiHome";
+import { ProgramAiMissionExperience } from "@/components/programme/ProgramAiMissionExperience";
+import { ProgramAiReviewScreen } from "@/components/programme/ProgramAiReviewScreen";
+import type {
+  ProgramAiHome,
+  ProgramAiMission,
+  ProgramAiReview,
+} from "@/components/programme/ProgramAiAuthenticated.types";
 import { authClient, useSession } from "@/lib/auth/client";
 import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
 import {
@@ -26,10 +33,10 @@ import {
   clearProgrammeSubjectContent,
   hasProgrammeAccessAuthority,
   loadProgrammeSubjectContent,
+  mergeProgrammeSubjectContent,
   programmeAuthAccessHeaders,
   readProgrammeOAuthClaimMarker,
   rotateAnonymousProgrammeSubject,
-  saveProgrammeSubjectContent,
   transitionProgrammeAccessToUserForPendingClaim,
   userProgrammeSubject,
   writeProgrammeAccessContinuation,
@@ -48,7 +55,8 @@ type Phase =
   | "reward"
   | "registration"
   | "home"
-  | "legacy";
+  | "mission"
+  | "review";
 
 type RecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "transcribing" | "success" | "error";
 
@@ -62,15 +70,11 @@ type ProgramAiLocalState = {
   inputMode: "text" | "voice";
 };
 
-type ProgramAiHome = {
-  totalXp: number;
-  currentMission: number;
-  startingPoint: ProgrammeStartingPointValue | null;
-  missions: Array<{ missionNumber: number; status: "completed" | "current" | "locked" }>;
-  reviews: Array<{ missionNumber: number; status: "available" | "locked" }>;
-};
-
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
+type ProgramAiAuthenticatedLocalContent = {
+  programAiMissionWording: Record<string, string>;
+  programAiReviewWording: Record<string, string>;
+};
 
 const emptyLocalState: ProgramAiLocalState = {
   phase: "access",
@@ -548,26 +552,16 @@ function RegistrationScreen({
   );
 }
 
-function HomeScreen({ home, onContinue, onStart }: { home: ProgramAiHome; onContinue: () => void; onStart: () => void }) {
-  const hasStartingPoint = Boolean(home.startingPoint);
-  const hasCompletedMissionOne = home.missions.some((mission) => mission.missionNumber === 1 && mission.status === "completed");
-  const continueExistingProgress = hasStartingPoint || hasCompletedMissionOne || home.currentMission > 1;
-  return (
-    <div className={styles.page}><Header xp={home.totalXp} /><main className={styles.home}>
-      <section className={styles.homeHero}><div><span>MY PROGRAMME</span><h1>{continueExistingProgress ? `Continue with Mission ${home.currentMission}.` : "Your private Programme is ready."}</h1><p>{home.startingPoint?.continuationCue || (continueExistingProgress ? "Your existing Programme progress remains in control." : "Start Mission 01 when you are ready.")}</p></div><ActionButton onClick={continueExistingProgress ? onContinue : onStart} size="large">{continueExistingProgress ? `Continue Mission ${home.currentMission}` : "Start Mission 01"}</ActionButton></section>
-      {home.startingPoint ? <article className={styles.homeStartingPoint}><span>YOUR STARTING POINT</span><h2>{home.startingPoint.startingPoint}</h2><p>{home.startingPoint.desiredChange}</p><small>{contextLabels[home.startingPoint.broadContext]}</small></article> : null}
-      <section><div className={styles.sectionHeading}><span>THE 10-STEP PATH</span><h2>Progress is shown as completed, current or locked.</h2></div><div className={styles.missionPath}>{Array.from({ length: 10 }, (_, index) => { const item = home.missions.find((mission) => mission.missionNumber === index + 1); return <article data-state={item?.status || (index === 0 ? "current" : "locked")} key={index}><span>{String(index + 1).padStart(2, "0")}</span><b>Mission {String(index + 1).padStart(2, "0")}</b><small>{item?.status || (index === 0 ? "current" : "locked")}</small></article>; })}</div></section>
-      <section><div className={styles.sectionHeading}><span>REVIEWS</span><h2>Only the approved review moments unlock.</h2></div><div className={styles.reviews}>{[3, 6, 10].map((missionNumber) => { const review = home.reviews.find((item) => item.missionNumber === missionNumber); return <article key={missionNumber}><span>AFTER MISSION {missionNumber}</span><h3>{missionNumber === 3 ? "Starting Point review" : missionNumber === 6 ? "Mid-programme review" : "Ten-step review"}</h3><p>{review?.status === "available" ? "Available now" : `Unlocks after Mission ${missionNumber}`}</p></article>; })}</div></section>
-    </main></div>
-  );
-}
-
 export function ProgramAiExperience({ googleAvailable = false }: { googleAvailable?: boolean }) {
   const { data: session, isPending: sessionPending } = useSession();
   const [phase, setPhase] = useState<Phase>("loading");
   const [subject, setSubject] = useState<ProgrammeLocalSubject | null>(null);
   const [local, setLocal] = useState<ProgramAiLocalState>(emptyLocalState);
   const [home, setHome] = useState<ProgramAiHome | null>(null);
+  const [activeMission, setActiveMission] = useState<ProgramAiMission | null>(null);
+  const [activeReview, setActiveReview] = useState<{ milestone: "first" | "mid" | "full"; review: ProgramAiReview } | null>(null);
+  const [missionWording, setMissionWording] = useState<Record<string, string>>({});
+  const [reviewWording, setReviewWording] = useState<Record<string, string>>({});
   const [clarificationValue, setClarificationValue] = useState("");
   const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -584,7 +578,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const persist = useCallback((next: ProgramAiLocalState, exactSubject = subject) => {
     setLocal(next);
     setPhase(next.phase);
-    if (exactSubject) saveProgrammeSubjectContent(window.sessionStorage, exactSubject, { programAi: next });
+    if (exactSubject) mergeProgrammeSubjectContent(window.sessionStorage, exactSubject, { programAi: next });
   }, [subject]);
 
   const redeem = useCallback(async (userId: string, journey: ProgrammeLocalSubject, state: ProgramAiLocalState) => {
@@ -629,6 +623,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     if (session?.user.id) {
       const userSubject = userProgrammeSubject(session.user.id);
       setSubject(userSubject);
+      const localContent = loadProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, userSubject);
+      setMissionWording(localContent.programAiMissionWording ?? {});
+      setReviewWording(localContent.programAiReviewWording ?? {});
       fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" })
         .then(async (response) => {
           const payload = await response.json() as ApiPayload<{ home: ProgramAiHome }>;
@@ -880,6 +877,52 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     }
   }
 
+  async function openMission(missionNumber: number) {
+    if (!subject || missionNumber < 2 || missionNumber > 10) return;
+    setBusy(true); setError("");
+    try {
+      const payload = await programAiRequest<{ mission: ProgramAiMission }>(
+        `/api/program/program-ai/missions/${missionNumber}`,
+        subject,
+      );
+      setActiveMission(payload.mission);
+      setPhase("mission");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The Mission could not be opened");
+      setPhase("home");
+    } finally { setBusy(false); }
+  }
+
+  async function openReview(milestone: "first" | "mid" | "full") {
+    if (!subject) return;
+    setBusy(true); setError("");
+    try {
+      const payload = await programAiRequest<{ review: ProgramAiReview }>(
+        `/api/program/program-ai/reviews/${milestone}`,
+        subject,
+      );
+      setActiveReview({ milestone, review: payload.review });
+      setPhase("review");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "The Review could not be opened");
+      setPhase("home");
+    } finally { setBusy(false); }
+  }
+
+  function saveMissionWording(missionNumber: number, value: string) {
+    if (!subject) return;
+    const next = { ...missionWording, [missionNumber]: value };
+    setMissionWording(next);
+    mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiMissionWording: next });
+  }
+
+  function saveReviewWording(milestone: string, value: string) {
+    if (!subject) return;
+    const next = { ...reviewWording, [milestone]: value };
+    setReviewWording(next);
+    mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
+  }
+
   function startFromHome() {
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
     setSubject(journey);
@@ -889,15 +932,17 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setHome(null);
   }
 
-  if (phase === "legacy") return <ActiveControlProgramme googleAvailable={googleAvailable} />;
   if (phase === "loading" || sessionPending) return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>;
   if (phase === "access") return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
-  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) saveProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />;
+  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />;
   if (phase === "clarification") return <ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />;
   if (phase === "candidate" && local.candidate) return <CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />;
   if (phase === "support") return <SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />;
   if (phase === "reward") return <RewardScreen busy={busy} error={error} onContinue={openRegistration} />;
   if (phase === "registration") return <RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} onEmail={handleEmail} onGoogle={handleGoogle} onSave={saveAuthenticated} />;
-  if (phase === "home") return <HomeScreen home={home || { totalXp: 0, currentMission: 1, startingPoint: null, missions: [], reviews: [] }} onContinue={() => setPhase("legacy")} onStart={startFromHome} />;
+  if (phase === "mission" && activeMission && home && session?.user.id) return <ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />;
+  if (phase === "review" && activeReview && home && session?.user.id) return <ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />;
+  if (phase === "home" && home && session?.user.id) return <ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />;
+  if (phase === "home") return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="alert">{error || "Programme Home is unavailable. Refresh to retry."}</p></main></div>;
   return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
 }
