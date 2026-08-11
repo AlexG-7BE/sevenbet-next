@@ -110,6 +110,8 @@ function missionOneXpEarned(progress?: MissionProgress | null) {
 }
 
 function highestActiveMission(progress: readonly MissionProgress[]) {
+  const missionOne = progress.find((item) => item.missionNumber === 1);
+  if (missionOne?.status !== "COMPLETED") return 1;
   const highestCompleted = Math.max(1, ...progress.filter((item) => item.status === "COMPLETED").map((item) => item.missionNumber));
   const highestOpen = Math.max(0, ...progress.filter((item) => item.status !== "COMPLETED" && item.status !== "NOT_STARTED").map((item) => item.missionNumber));
   return Math.min(10, Math.max(2, highestCompleted + 1, highestOpen));

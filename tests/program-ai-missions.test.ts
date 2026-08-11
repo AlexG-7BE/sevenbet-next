@@ -12,7 +12,8 @@ import {
   programAiMissionRegistry,
 } from "../lib/programme/program-ai/mission-registry";
 import { parseProgramAiMissionAction } from "../lib/programme/program-ai/mission-validation";
-import { parseGeneratedResult } from "../lib/programme/program-ai/mission-guidance";
+import { deterministicGuidance, parseGeneratedResult } from "../lib/programme/program-ai/mission-guidance";
+import { presentMissionArtifact } from "../lib/programme/program-ai/mission-presentation";
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
 
 const actionInputs: Record<string, Record<string, unknown>> = {
@@ -57,7 +58,7 @@ type Progress = {
   updatedAt: Date;
 };
 
-function fakeUnitOfWork({ legacy = false }: { legacy?: boolean } = {}) {
+function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boolean; m1Incomplete?: boolean } = {}) {
   const programId = "00000000-0000-4000-8000-000000000010";
   const enrollment = {
     id: "00000000-0000-4000-8000-000000000020",
@@ -73,7 +74,7 @@ function fakeUnitOfWork({ legacy = false }: { legacy?: boolean } = {}) {
   }));
   const now = new Date("2026-08-11T10:00:00.000Z");
   const progress = new Map<number, Progress>();
-  const completedThrough = legacy ? 4 : 1;
+  const completedThrough = legacy ? 4 : m1Incomplete ? 0 : 1;
   for (let missionNumber = 1; missionNumber <= completedThrough; missionNumber += 1) {
     progress.set(missionNumber, {
       id: `00000000-0000-4000-8000-${String(missionNumber).padStart(12, "0")}`,
@@ -87,12 +88,14 @@ function fakeUnitOfWork({ legacy = false }: { legacy?: boolean } = {}) {
       updatedAt: now,
     });
   }
-  if (!legacy) {
+  if (m1Incomplete) {
+    progress.set(1, { id: "00000000-0000-4000-8000-000000000001", enrollmentId: enrollment.id, missionNumber: 1, status: "IN_PROGRESS", taskStates: ["program_ai_situation_submitted"], draft: null, completedAt: null, createdAt: now, updatedAt: now });
+  } else if (!legacy) {
     progress.set(2, { id: "00000000-0000-4000-8000-000000000002", enrollmentId: enrollment.id, missionNumber: 2, status: "IN_PROGRESS", taskStates: [], draft: null, completedAt: null, createdAt: now, updatedAt: now });
   }
   const xpEvents = new Map<string, number>(legacy
     ? [["legacy:m1", 60], ["legacy:m2", 80], ["legacy:m3", 90], ["legacy:m4", 100]]
-    : [["programme-ai-m1", 40]]);
+    : m1Incomplete ? [["programme-ai-m1-situation", 20]] : [["programme-ai-m1", 40]]);
   const progressEvents = new Set<string>();
   let queue = Promise.resolve();
   const source = { program: { id: programId, steps }, version: { id: enrollment.programVersionId, status: "PUBLISHED" } };
@@ -179,6 +182,7 @@ test("every Mission action validates its exact closed artifact and rejects unkno
     }
     assert.throws(() => parseProgramAiMissionAction(mission.missionNumber, { action: "client_awards_xp", artifact: {} }), /not supported/i);
   }
+  assert.throws(() => parseProgramAiMissionAction(3, { action: "map_urge_sequence", artifact: { sequenceOrder: ["choice_point", "cue", "early_signal", "urge_builds"] } }), /approved sequence/i);
 });
 
 test("clean sequential and concurrent duplicate progression reaches exactly 715 XP", async () => {
@@ -240,6 +244,25 @@ test("prerequisites and enrollment ownership deny bypass while legacy completion
   }
 });
 
+test("an authenticated incomplete Mission 01 remains current without fabricated completion or XP", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork({ m1Incomplete: true });
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+    const home = await service.home("user-a");
+    assert.equal(home.currentMission, 1);
+    assert.equal(home.missions[0].status, "current");
+    assert.equal(home.missions[1].status, "locked");
+    assert.equal(home.totalXp, 20);
+    assert.equal(home.missions[0].xpEarnedHere, 0);
+    assert.equal(fake.xpEvents.size, 1);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
 test("Reviews fall back safely, stay completion-derived and never call a reward port", async () => {
   const previous = process.env.PROGRAM_AI_V1_ENABLED;
   process.env.PROGRAM_AI_V1_ENABLED = "true";
@@ -266,4 +289,41 @@ test("provider output is locally strict and commercial navigation is immutable",
   const valid = parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Rehearse once", summary: "Choose the response that makes a clear decision point.", options: [{ id: "pause_and_check", text: "Pause and run the checks." }] });
   assert.equal(valid.generation, "provider");
   assert.throws(() => parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Play safely", summary: "We recommend a casino bonus for you.", options: [{ id: "cashout", text: "Continue" }] }), /Personalisation|valid/i);
+});
+
+test("consumer artifact presentation maps every representative field and never exposes internal names", () => {
+  const rows = presentMissionArtifact({
+    goalStyle: "pause_first",
+    reviewWindowDays: 7,
+    earlySignalCategory: "action_tendency",
+    executionMethod: "bank_block",
+    supportCardStyle: "when_then",
+    responseStrategy: "leave_and_return",
+  });
+  const renderedText = rows.flatMap((row) => [row.label, row.value]).join(" ");
+  assert.match(renderedText, /Your 7-day approach/);
+  assert.match(renderedText, /Pause before one decision/);
+  assert.match(renderedText, /In the urge to act/);
+  assert.match(renderedText, /Bank block/);
+  assert.match(renderedText, /Leave and return later/);
+  for (const internal of ["pause_first", "action_tendency", "bank_block", "goalStyle", "supportCardStyle", "reviewWindowDays"]) {
+    assert.doesNotMatch(renderedText, new RegExp(internal));
+  }
+});
+
+test("provider-off M9 rehearsal keeps contextual closed option IDs for responseStrategy", () => {
+  const rehearsal = deterministicGuidance("M9_REHEARSAL", {
+    mission: { artifact: { scenarioType: "unclear_terms" } },
+  });
+  assert.match(rehearsal.title, /terms/i);
+  assert.deepEqual(rehearsal.options.map((option) => option.id), [
+    "pause_and_check",
+    "leave_and_return",
+    "use_boundary",
+    "ask_for_support",
+  ]);
+  for (const option of rehearsal.options) {
+    const parsed = parseProgramAiMissionAction(9, { action: "rehearse_response", artifact: { responseStrategy: option.id } });
+    assert.equal(parsed.artifact.responseStrategy, option.id);
+  }
 });

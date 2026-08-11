@@ -25,7 +25,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
             <span className={styles.eyebrow}>MY PROGRAMME · RESUME</span>
             <h1>{authenticatedMission ? `${String(home.currentMission).padStart(2, "0")} · ${current?.title}` : "Your private Programme is ready."}</h1>
             <p>{home.startingPoint?.continuationCue || "Continue from the first action that is not yet complete."}</p>
-            {current ? <div className={styles.continueMeta}><span>{current.actionsCompleted}/3 actions</span><span>{current.xpEarnedHere} XP earned here</span><span>+25 XP completion bonus</span></div> : null}
+            {current && authenticatedMission ? <div className={styles.continueMeta}><span>{current.actionsCompleted}/3 actions</span><span>{current.xpEarnedHere} XP earned here</span><span>+25 XP completion bonus</span></div> : null}
           </div>
           <ActionButton onClick={() => authenticatedMission ? onMission(home.currentMission) : onStart()} size="large">
             {authenticatedMission ? `${home.currentAction ? "Resume" : "Review"} Mission ${String(home.currentMission).padStart(2, "0")}` : "Start Mission 01"}
@@ -56,16 +56,16 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
         </section> : null}
 
         <section aria-labelledby="personal-reviews-title">
-          <div className={styles.sectionHead}><span className={styles.eyebrow}>PERSONAL REVIEWS</span><h2 id="personal-reviews-title">Pause and see what you built.</h2><p>Reviews unlock from Mission completion and award 0 XP.</p></div>
+          <div className={styles.sectionHead}><span className={styles.eyebrow}>PERSONAL REVIEWS</span><h2 id="personal-reviews-title">Pause and see what you built.</h2><p>Each Review becomes available at a meaningful point in the Programme.</p></div>
           <div className={styles.reviews}>{home.reviews.map((review) => <article className={styles.reviewCard} data-state={review.status} key={review.milestone}>
             <span className={styles.eyebrow}>AFTER MISSION {review.unlockMission}</span><h3>{review.title}</h3>
-            <p>{review.status === "available" ? "Available now. Regenerating does not change progress or XP." : `Complete Mission ${review.unlockMission} to unlock.`}</p>
+            <p>{review.status === "available" ? "Available now. See the choices and tools you have built so far." : `Complete Mission ${review.unlockMission} to unlock.`}</p>
             <button className={styles.reviewButton} disabled={review.status !== "available"} onClick={() => onReview(review.milestone)} type="button">{review.status === "available" ? "Open review" : "Locked"}</button>
           </article>)}</div>
         </section>
 
         <section className={styles.explore} aria-labelledby="explore-title">
-          <div className={styles.sectionHead}><span className={styles.eyebrow}>SEPARATE FROM YOUR PROGRAMME</span><h2 id="explore-title">Explore B4GAMBLE</h2><p>Generic public navigation. No Programme data is sent and clicks award 0 XP.</p></div>
+          <div className={styles.sectionHead}><span className={styles.eyebrow}>EXPLORE B4GAMBLE</span><h2 id="explore-title">Ready to research?</h2><p>Compare casinos and offers using B4GAMBLE’s public guides.</p></div>
           <nav aria-label="Explore B4GAMBLE" className={styles.exploreLinks}>{home.discoveryLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}</nav>
         </section>
       </main>

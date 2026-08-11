@@ -39,16 +39,17 @@ export function ProgramAiReviewScreen({ initialReview, milestone, totalXp, userI
     catch (cause) { setError(cause instanceof Error ? cause.message : "The Review could not be prepared"); }
     finally { setBusy(false); }
   }
+  const reviewLabel = milestone === "first" ? "FIRST PERSONAL REVIEW" : milestone === "mid" ? "MID-PROGRAMME PERSONAL REVIEW" : "FULL PROGRAMME PERSONAL REVIEW";
   return <div className={styles.shell}>
-    <ProgramAiAuthenticatedHeader label="PERSONAL REVIEW · 0 XP" totalXp={totalXp} userId={userId} />
+    <ProgramAiAuthenticatedHeader label={reviewLabel} totalXp={totalXp} userId={userId} />
     <main className={styles.reviewMain}>
       <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← Programme Home</button><span className={styles.eyebrow}>UNLOCKED BY MISSION COMPLETION</span></div>
-      <section className={styles.reviewIntro}><span className={styles.eyebrow}>PRIVATE STRUCTURAL REVIEW</span><h1>{review.title}</h1><p>This Review summarises confirmed structural facts. It awards 0 XP and does not diagnose, score or recommend a commercial action.</p></section>
+      <section className={styles.reviewIntro}><span className={styles.eyebrow}>{reviewLabel}</span><h1>{review.title}</h1><p>Here’s what your Programme looks like so far.</p></section>
       <label className={styles.localField}><span>Optional current wording · this tab only</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder="Add a current note for this generation, or leave blank." value={localWording} /></label>
-      {!generated ? <div className={styles.submitRow}><ActionButton disabled={busy} onClick={personalise} size="large">{busy ? "Preparing…" : "Prepare this Review"}</ActionButton><span>Provider-off or provider-failure uses the same truthful deterministic structure.</span></div> : null}
+      {!generated ? <div className={styles.submitRow}><ActionButton disabled={busy} onClick={personalise} size="large">{busy ? "Preparing…" : "Personalise this Review"}</ActionButton><span>Add your current wording above if you want it reflected here.</span></div> : null}
       {error ? <p className={styles.error} role="alert">{error}</p> : null}
       <article className={styles.reviewSurface} aria-live="polite">
-        <span className={styles.eyebrow}>{review.generation === "provider" ? "BOUNDED AI REVIEW" : "DETERMINISTIC REVIEW"}</span>
+        <span className={styles.eyebrow}>HERE’S WHAT YOU’VE BUILT</span>
         {review.sections.map((section) => <section className={styles.reviewSection} key={section.id}><h2>{section.title}</h2><p>{section.body}</p></section>)}
       </article>
       <ActionButton onClick={onBack} size="large">Return to Programme Home</ActionButton>

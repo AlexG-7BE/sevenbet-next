@@ -669,9 +669,15 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
   await noHorizontalOverflow(page);
 
+  for (const width of [375, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
+    await noHorizontalOverflow(page);
+  }
+
   await page.getByRole("button", { name: "Open review" }).last().click();
   await expect(page.getByRole("heading", { name: "Full Programme Personal Review" })).toBeVisible();
-  await expect(page.getByText("0 XP", { exact: false }).first()).toBeVisible();
+  await expect(page.getByText("Here’s what your Programme looks like so far.")).toBeVisible();
+  await expect(page.getByText(/DETERMINISTIC REVIEW|BOUNDED AI REVIEW|Provider-off|provider-failure/)).toHaveCount(0);
   await noHorizontalOverflow(page);
   await prisma.user.delete({ where: { id: user.id } });
 });

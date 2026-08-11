@@ -13,6 +13,9 @@ const service = read("lib/programme/application/programme-ai-mission-one.service
 const repository = read("lib/programme/infrastructure/repositories/programme-ai-mission-one.repository.ts");
 const frontend = read("components/programme/ProgramAiExperience.tsx");
 const authenticatedHome = read("components/programme/ProgramAiHome.tsx");
+const missionExperience = read("components/programme/ProgramAiMissionExperience.tsx");
+const missionPrimitives = read("components/programme/ProgramAiMissionPrimitives.tsx");
+const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
 const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
 
@@ -115,5 +118,21 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.match(missionsService, /status: byMission\.get\(review\.unlockMission\)\?\.status === "COMPLETED"/);
   assert.doesNotMatch(frontend + authenticatedHome, /% complete|progressPercent|Math\.round\([^)]*100/);
   assert.match(authenticatedHome, /Completion, current position and locks come from your server record/);
-  assert.match(authenticatedHome, /Reviews unlock from Mission completion and award 0 XP/);
+  assert.match(authenticatedHome, /Each Review becomes available at a meaningful point/);
+});
+
+test("consumer Programme uses distinct interaction primitives and hides provider/debug language", () => {
+  for (const primitive of ["ChoiceCards", "SequenceBuilder", "DecisionApplication", "StackBuilder", "AiCandidatePicker", "ProgrammeTimeline"]) {
+    assert.match(missionExperience + missionPrimitives, new RegExp(primitive));
+  }
+  assert.doesNotMatch(missionExperience + reviewScreen + authenticatedHome, /PRIVATE STRUCTURAL REVIEW|BOUNDED AI REVIEW|DETERMINISTIC REVIEW|Provider-off|provider-failure|Generic public navigation|No Programme data is sent|criterion IDs/);
+  assert.doesNotMatch(missionPrimitives, /guidance\.generation|deterministic_fallback|provider/);
+  assert.match(missionExperience, /Check sequence · \+\$\{current\.xp\} XP when correct/);
+  assert.match(missionExperience, /No XP awarded\. Adjust the order and try again/);
+});
+
+test("public 10-steps metadata uses Starting Point truth and removes stale Moment Map copy", () => {
+  const tenStepsPage = read("app/(public)/10-steps/page.tsx");
+  assert.match(tenStepsPage, /build a personal Starting Point/);
+  assert.doesNotMatch(tenStepsPage, /Moment Map/);
 });

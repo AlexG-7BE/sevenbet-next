@@ -50,7 +50,7 @@ export class ProgrammeAiGuidanceService {
       },
       ...(localWording ? { localWording } : {}),
     };
-    return this.generateOrFallback(operation, context, () => deterministicGuidance(operation));
+    return this.generateOrFallback(operation, context, () => deterministicGuidance(operation, context));
   }
 
   async review(

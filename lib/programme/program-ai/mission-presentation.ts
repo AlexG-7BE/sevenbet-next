@@ -1,0 +1,215 @@
+import type { ProgramAiStructuralArtifact } from "@/lib/programme/program-ai/mission-validation";
+
+const fieldLabels: Record<string, string> = {
+  direction: "Your direction",
+  goalStyle: "Your 7-day approach",
+  reviewWindowDays: "Review point",
+  realityCheck: "Difficult-day version",
+  sequenceOrder: "Your choice-point sequence",
+  earlySignalCategory: "Where you may notice it first",
+  pauseMove: "Your pause move",
+  boundaryCategory: "Your boundary",
+  triggerType: "When it acts",
+  executionMethod: "How you will put it in place",
+  pressureCheck: "What it needs next",
+  scenarioChoice: "Practice moment",
+  decisionChecks: "Your 3 checks",
+  pauseRuleType: "Your pause rule",
+  frictionMethods: "Your friction layers",
+  fallbackMethod: "Your fallback",
+  bypassReason: "What could undo it",
+  supportModes: "Support routes",
+  supportCardStyle: "Support card",
+  exitActionType: "Your exit action",
+  comparisonSignals: "Comparison signals",
+  offerTermSignal: "Offer term to check",
+  researchCriteria: "Your research checklist",
+  scenarioType: "Rehearsal moment",
+  responseStrategy: "First response",
+  fallbackStrategy: "Fallback response",
+  timelineReviewed: "Programme timeline",
+  planPriorityIds: "Plan priorities",
+  reviewCadenceDays: "Review cadence",
+};
+
+const valueLabels: Record<string, string> = {
+  understand: "Understand the pattern",
+  pause: "Practise a pause",
+  reduce_impulse: "Reduce one impulsive route",
+  set_boundary: "Set one boundary",
+  research_later: "Research only after a pause",
+  seek_support: "Prepare support",
+  notice_and_note: "Notice and note one moment",
+  pause_first: "Pause before one decision",
+  use_one_boundary: "Use one boundary",
+  research_after_pause: "Research after a pause",
+  ask_for_support: "Use a support route",
+  make_it_smaller: "Make the experiment smaller",
+  use_the_pause: "Use the pause only",
+  restart_next_day: "Restart the next day",
+  cue: "Cue",
+  early_signal: "Early signal",
+  urge_builds: "Urge builds",
+  choice_point: "Choice point",
+  body: "In the body",
+  thought: "In a thought",
+  attention: "In where attention goes",
+  action_tendency: "In the urge to act",
+  not_sure: "Not sure yet",
+  three_slow_breaths: "Take three slow breaths",
+  leave_the_screen: "Leave the screen",
+  wait_ten_minutes: "Wait 10 minutes",
+  message_support: "Use a support message",
+  open_help: "Open Help",
+  money: "Money",
+  time: "Time",
+  access: "Access",
+  before_access: "Before access",
+  saved_early_signal: "When the early signal appears",
+  scheduled_time: "At a scheduled time",
+  custom_local: "A moment you word in this tab",
+  operator_limit: "Account limit",
+  bank_block: "Bank block",
+  device_or_site_block: "Device or site block",
+  remove_payment: "Remove saved payment",
+  remove_saved_payment: "Remove saved payment",
+  trusted_contact: "Trusted contact",
+  leave: "Leave",
+  self_exclusion_or_help: "Self-exclusion or Help",
+  easy_to_use: "Ready and easy to use",
+  needs_setup: "Needs setup",
+  needs_support: "Needs support",
+  choose_another: "Choose another method",
+  unexpected_offer: "An unexpected offer appears",
+  difficult_day: "A difficult day",
+  social_prompt: "A social prompt",
+  quick_return: "The temptation to return quickly",
+  purpose: "Why am I considering this?",
+  terms: "Are the material terms clear?",
+  mood: "Am I reacting to the moment?",
+  exit: "What is my exit route?",
+  pause_before_access: "Pause before access",
+  pause_before_payment: "Pause before payment",
+  pause_when_signal_appears: "Pause when the early signal appears",
+  pause_when_terms_are_unclear: "Pause when terms are unclear",
+  too_many_steps: "It feels like too many steps",
+  easy_to_disable: "The layer is easy to disable",
+  another_device: "Another device is available",
+  change_of_mind: "I change my mind in the moment",
+  wait_twenty_minutes: "Wait 20 minutes",
+  contact_support: "Use support",
+  use_second_layer: "Use the second layer",
+  trusted_person: "A trusted person",
+  professional_support: "Professional support",
+  peer_support: "Peer support",
+  protected_help: "Help",
+  not_ready: "Not ready",
+  when_then: "When this happens, I can take the next step",
+  short_prompt: "One short prompt",
+  two_step: "A 2-step route",
+  leave_page: "Leave the page",
+  close_account_tools: "Open account control tools",
+  take_a_walk: "Step away",
+  licensing_status: "Licence and regulatory status",
+  operator_identity: "Who operates the casino",
+  material_terms: "Material terms",
+  withdrawal_conditions: "Withdrawal conditions",
+  payments: "Payments",
+  safer_gambling_tools: "Tools and limits",
+  offer_conditions: "Offer conditions",
+  wagering_requirement: "Wagering requirement",
+  expiry: "Expiry",
+  eligible_games: "Eligible games",
+  deposit_condition: "Deposit condition",
+  withdrawal_limit: "Withdrawal limit",
+  unclear_terms: "Terms remain unclear",
+  withdrawals: "Withdrawal conditions",
+  urge_after_stress: "An urge after stress",
+  social_invitation: "A social invitation",
+  pause_and_check: "Pause and run the checks",
+  leave_and_return: "Leave and return later",
+  use_boundary: "Use the boundary",
+  starting_point: "Starting Point",
+  goal: "7-day goal",
+  pause_move: "Pause move",
+  boundary: "Boundary",
+  decision_checks: "Decision checks",
+  friction: "Friction",
+  support: "Support",
+  research: "Research checklist",
+  fallback: "Fallback",
+};
+
+const fieldValueLabels: Record<string, Record<string, string>> = {
+  boundaryCategory: { money: "Money", time: "Time", access: "Access", pause: "Pause" },
+  decisionChecks: {
+    purpose: "Why am I considering this?",
+    time: "What time boundary applies?",
+    money: "What money boundary applies?",
+    terms: "Are the material terms clear?",
+    mood: "Am I reacting to the moment?",
+    exit: "What is my exit route?",
+  },
+  researchCriteria: {
+    licensing_status: "Licence and regulatory status",
+    operator_identity: "Who operates the casino",
+    terms: "Material terms",
+    withdrawals: "Withdrawal conditions",
+    payments: "Payments",
+    safer_gambling_tools: "Tools and limits",
+    offer_conditions: "Bonus conditions",
+  },
+};
+
+export const missionResultTitles: Record<number, string> = {
+  2: "MY 7-DAY GOAL",
+  3: "MY CHOICE POINT",
+  4: "MY BOUNDARY",
+  5: "MY 3-CHECK ROUTINE",
+  6: "MY FRICTION STACK",
+  7: "MY SUPPORT ROUTE",
+  8: "MY RESEARCH CHECKLIST",
+  9: "MY REHEARSED DECISION",
+  10: "MY PLAN",
+};
+
+export type PresentedArtifactRow = { key: string; label: string; value: string };
+
+function presentValue(key: string, value: string | number | boolean | string[]) {
+  if (key === "reviewWindowDays") return "In 7 days";
+  if (key === "reviewCadenceDays") return `Every ${value} days`;
+  if (key === "timelineReviewed") return value === true ? "Reviewed" : "Not reviewed yet";
+  const values = Array.isArray(value) ? value : [value];
+  return values.map((item) => fieldValueLabels[key]?.[String(item)] ?? valueLabels[String(item)] ?? "Unavailable").join(" · ");
+}
+
+export function presentMissionArtifact(
+  artifact: ProgramAiStructuralArtifact,
+): PresentedArtifactRow[] {
+  return Object.entries(artifact)
+    .filter(([key]) => Boolean(fieldLabels[key]))
+    .map(([key, value]) => ({ key, label: fieldLabels[key], value: presentValue(key, value) }));
+}
+
+export function humanValue(value: string) {
+  return valueLabels[value] ?? "Unavailable";
+}
+
+export const scenarioCopy: Record<string, string> = {
+  unexpected_offer: "A headline appears when you were not planning to look. The quick route is open.",
+  difficult_day: "The day has been difficult and an old route feels easier than making another decision.",
+  social_prompt: "Someone else brings up gambling and the decision suddenly feels immediate.",
+  quick_return: "You have just stepped away, but returning now feels easier than waiting.",
+  urge_after_stress: "After a stressful moment, the quickest familiar route comes back into view.",
+  social_invitation: "A social invitation arrives and there is little time to think through the terms.",
+  unclear_terms: "The headline is clear, but the conditions that would shape the decision are not.",
+};
+
+export const offerExplanations: Record<string, string> = {
+  wagering_requirement: "This tells you how much activity may be required before bonus-linked funds can be withdrawn.",
+  expiry: "This tells you how long the terms remain available and whether pressure is being created by a deadline.",
+  eligible_games: "This shows which activity counts toward the stated conditions and which does not.",
+  deposit_condition: "This shows what must be paid before the headline becomes relevant.",
+  withdrawal_limit: "This shows whether access to funds is restricted after the offer is used.",
+  unclear_terms: "If the material conditions are not clear, the headline is not enough to judge the offer.",
+};

@@ -62,6 +62,7 @@ const guidanceFallbacks: Record<ProgramAiGuidanceResult["operation"], Omit<Progr
     options: [
       { id: "candidate_1", text: "For seven days, I will pause once when my chosen cue appears." },
       { id: "candidate_2", text: "For seven days, I will use one boundary before I decide." },
+      { id: "candidate_3", text: "For seven days, I will notice one decision point and choose my next move deliberately." },
     ],
   },
   M3_PATTERN_REFLECTION: {
@@ -120,8 +121,23 @@ function factSummary(context: unknown) {
 
 export function deterministicGuidance(
   operation: ProgramAiGuidanceResult["operation"],
+  context?: unknown,
 ): ProgramAiGuidanceResult {
-  return { ...guidanceFallbacks[operation], operation, generation: "deterministic_fallback" };
+  const base = guidanceFallbacks[operation];
+  if (operation !== "M9_REHEARSAL") {
+    return { ...base, operation, options: base.options.map((option) => ({ ...option })), generation: "deterministic_fallback" };
+  }
+  const record = context && typeof context === "object" && !Array.isArray(context) ? context as Record<string, unknown> : {};
+  const mission = record.mission && typeof record.mission === "object" && !Array.isArray(record.mission) ? record.mission as Record<string, unknown> : {};
+  const artifact = mission.artifact && typeof mission.artifact === "object" && !Array.isArray(mission.artifact) ? mission.artifact as Record<string, unknown> : {};
+  const scenarios: Record<string, { title: string; summary: string }> = {
+    unexpected_offer: { title: "The headline arrives unexpectedly", summary: "You were not planning to look, but the quick route is open. What creates enough space to check the decision?" },
+    urge_after_stress: { title: "The urge follows a stressful moment", summary: "A familiar route feels immediate after stress. Which response gives you a clear next move before acting?" },
+    social_invitation: { title: "A social invitation changes the pace", summary: "Someone else is ready to continue and the decision feels immediate. Which response keeps the choice yours?" },
+    unclear_terms: { title: "The headline is clear; the terms are not", summary: "The offer is easy to see, but the conditions are not. Which response gives you time to check what matters?" },
+  };
+  const scenario = typeof artifact.scenarioType === "string" ? scenarios[artifact.scenarioType] : undefined;
+  return { ...base, ...scenario, operation, options: base.options.map((option) => ({ ...option })), generation: "deterministic_fallback" };
 }
 
 export function deterministicReview(

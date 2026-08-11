@@ -9,7 +9,7 @@
 
 ## Repository evidence method
 
-The active repository root was confirmed with Git before this record was written. All 907 tracked files were included in the repository inventory. Source claims below were checked against the active `app`, `components`, `lib`, `tests`, `prisma`, `scripts`, `docs`, configuration and package files. Dependencies, `.next`, Playwright artefacts, caches and `tsconfig.tsbuildinfo` were excluded from implementation analysis. No secret value was inspected or recorded.
+The active repository root was confirmed with Git before this record was updated. All 909 tracked files were included in the repository inventory. Source claims below were checked against the active `app`, `components`, `lib`, `tests`, `prisma`, `scripts`, `docs`, configuration and package files. Dependencies, `.next`, Playwright artefacts, caches and `tsconfig.tsbuildinfo` were excluded from implementation analysis. No secret value was inspected or recorded.
 
 ## Detected
 
@@ -27,7 +27,12 @@ The active repository root was confirmed with Git before this record was written
 - Programme Home and the optional Mission 08/Mission 10 discovery sections use fixed internal routes. They do not pass Programme state, call ranking or affiliate resolution, award XP or gate completion.
 - The public `/10-steps` product copy now describes Mission 01 as a `40 XP` Starting Point, registration as `0 XP`, and Missions 02–10 as the approved MVP path.
 - The authenticated experience is split into shared Header, Home, Mission and Review components with one scoped style module. It reuses the existing Design System tokens and Action control.
-- Automated browser evidence covers real authentication/claim, refresh/resume, concurrent duplicate action submission, all nine later Missions, three Review unlocks, final `715 XP`, legacy collision, protected Help, reduced motion, keyboard operation and representative 375/390/1440 rendering without horizontal overflow.
+- The Founder product-quality correction adds six reusable consumer interaction primitives: choice cards, sequence building, scenario application, guided candidate selection, friction-stack building and human-readable artefact presentation. Missions still persist only the RFC-approved closed structural values.
+- Mission 03 now begins with a deliberately incorrect sequence and blocks save, XP and progression until the user corrects it. Mission 05 requires a first decision check, a second scenario and application of all three confirmed checks before its pause rule can be completed.
+- Mission 09’s provider-off candidates are contextual to the chosen scenario and map back to the exact closed `responseStrategy` contract. The selected candidate remains visible through the action rather than becoming an unseen payload.
+- Consumer Home, Reviews, Mission results and commercial discovery rails present human labels and product language; internal field names, raw enum values, provider state, source/debug markers and zero-XP implementation metadata are not rendered as the primary interface.
+- Responsive presentation rules explicitly cover 375, 390, 768, 1024 and 1440 pixel viewports, keyboard focus and reduced-motion behavior.
+- Automated browser evidence covers real authentication/claim, refresh/resume, concurrent duplicate action submission, all nine later Missions, three Review unlocks, final `715 XP`, legacy collision, protected Help, reduced motion, keyboard operation and 375/390/768/1024/1440 rendering without horizontal overflow.
 - Local verification passed: lint, typecheck, Prisma validation, Programme tests, PROGRAM-AI tests, production build, disposable-database migration/seed and all eight database-backed PROGRAM-AI browser tests.
 
 ## Inferred
@@ -35,6 +40,7 @@ The active repository root was confirmed with Git before this record was written
 - The existing `ProgrammeMissionProgress.draft` JSON field is sufficient for this bounded MVP because every write is namespaced, versioned and validated against a closed Mission-specific structural allow-list.
 - The current `UserXpEvent_mission_source_check` makes the existing `MISSION_COMPLETION` value the only migration-free storage discriminator for Mission 02–10 action and completion ledgers. Product semantics remain recoverable from immutable action-specific award/event keys and XP values.
 - The existing paper/night Programme visual language and shared interaction primitives are sufficient for the MVP without new imagery, Figma production or a global Design System revision.
+- The Founder quality correction is a presentation and interaction refinement within RFC-025’s existing action grammars; it does not introduce a new product, architecture, reward or persistence decision requiring another RFC.
 
 ## Planned outside this implementation
 

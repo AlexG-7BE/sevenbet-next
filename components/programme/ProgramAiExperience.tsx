@@ -533,9 +533,9 @@ function RegistrationScreen({
   const [password, setPassword] = useState("");
   return (
     <div className={styles.page}><Header xp={40} /><main className={styles.registrationGrid}>
-      <section className={styles.heroCopy}><span>SAVE ONLY AFTER ACCOUNT ACCESS</span><h1>Keep the Starting Point you confirmed.</h1><p>Your raw audio, provider payload and unconfirmed drafts are not saved. Registration earns 0 XP and includes no marketing consent.</p><ul><li>Confirmed Starting Point saved exactly once</li><li>Mission 01 marked complete</li><li>Continue to Mission 02</li></ul></section>
+      <section className={styles.heroCopy}><span>SAVE ONLY AFTER ACCOUNT ACCESS</span><h1>Keep the Starting Point you confirmed.</h1><p>Your raw audio and unconfirmed drafts are not saved. Registration earns 0 XP and includes no marketing consent.</p><ul><li>Confirmed Starting Point saved</li><li>Mission 01 marked complete</li><li>Continue to Mission 02</li></ul></section>
       <section className={styles.registrationCard}>
-        {authenticated ? <ActionButton disabled={busy} onClick={onSave} size="large">{busy ? "Saving exactly once…" : "Save to my account"}</ActionButton> : <>
+        {authenticated ? <ActionButton disabled={busy} onClick={onSave} size="large">{busy ? "Saving…" : "Save to my account"}</ActionButton> : <>
           {googleAvailable ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google</ActionButton> : null}
           <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button>
           {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>

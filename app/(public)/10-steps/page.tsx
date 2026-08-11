@@ -20,19 +20,19 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "10-Step Programme | Start Mission 01 | B4GAMBLE",
   description:
-    "Start Mission 01 privately, build a personal Moment Map and choose whether to save your result in B4GAMBLE's 10-Step Programme.",
+    "Start Mission 01 privately, build a personal Starting Point and choose whether to save your result in B4GAMBLE's 10-Step Programme.",
   alternates: { canonical: absoluteUrl("/10-steps") },
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     title: "10-Step Programme | Start Mission 01 | B4GAMBLE",
-    description: "Start Mission 01 privately and build a personal result before choosing whether to create an account.",
+    description: "Start Mission 01 privately and build a personal Starting Point before choosing whether to create an account.",
     url: absoluteUrl("/10-steps"),
   },
   twitter: {
     card: "summary",
     title: "10-Step Programme | Start Mission 01 | B4GAMBLE",
-    description: "Start Mission 01 privately and choose whether to save the result after completion.",
+    description: "Start Mission 01 privately and choose whether to save your Starting Point after completion.",
   },
 };
 
