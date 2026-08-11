@@ -40,4 +40,7 @@ test("recovery tooling has no one-click Production restore path", () => {
   assert.match(preflight, /PRODUCTION_SOURCE_DENIED/);
   assert.match(preflight, /PRODUCTION_TARGET_DENIED/);
   assert.match(preflight, /RECOVERY_DRILL_ACKNOWLEDGEMENT/);
+  assert.match(preflight, /RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT/);
+  assert.match(preflight, /MANAGED_TARGET_DATABASE_ID_MISMATCH/);
+  assert.match(verification, /verify-managed/);
 });

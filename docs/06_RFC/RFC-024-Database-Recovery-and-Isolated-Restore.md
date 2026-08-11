@@ -20,17 +20,21 @@ The internal closed-beta objectives are:
 | Recovery time objective | no greater than 4 hours | Internal operating target, not a customer promise or SLA |
 | Recoverability window | at least seven daily restore points or equivalent | Desired managed-provider capability |
 
-RECOVERY-01 may be classified `CLOSED` only after managed Production backup capability and an isolated restore are both proven. A successful logical Preview restore with no managed Production backup is `PARTIAL`. No implementation may upgrade a plan, accept a recurring charge or present documented provider behaviour as tested evidence.
+RECOVERY-01 may be classified `CLOSED` only after managed Production backup capability, a provider-native isolated restore and snapshot-contained deterministic canary parity are proven. A logical Preview restore or a provider restore of a pre-canary snapshot is `PARTIAL`. No implementation may upgrade a plan, accept a recurring charge beyond separate Founder authority or present documented provider behaviour as tested evidence.
 
 ## 2. Current provider decision
 
-**Detected on 2026-08-11:** Vercel resource inspection classifies both `sevenbet-preview` (`store_hLPkkgamL7rJNmCe`) and `prisma-postgres-cobalt-school` (`store_1I4F54ETrwSKS42o`) as available, owned Prisma Postgres resources on the Free plan. The Preview resource is connected only to Preview and the Production resource only to Production. Both live Prisma Console backup pages report no backups and require a Starter, Pro or Business upgrade.
+**Detected on 2026-08-11:** Founder Office enabled Starter. Vercel and Prisma control-plane evidence identifies workspace `cmrixpep23o54wfdvy6ikjzc1`, project `cmrixqbwl21xsyif8kj8xl01s` and Vercel billing context `alexg-7bes-projects`. `sevenbet-preview` (`cn8xojfxs6i5z82riihkfjfy`, `store_hLPkkgamL7rJNmCe`) remains Preview-only; `prisma-postgres-cobalt-school` (`cmrixqbwl21xqyif8ab2vr2xw`, `store_1I4F54ETrwSKS42o`) remains Production-only. Both resources report `Prisma Postgres - Starter` and have different safe connection fingerprints.
+
+**Detected:** the documented Management API reports `backupRetentionDays=7` for both. Production has 14 completed snapshots; newest `backup-01kzq2vm7gagejt88nn3hjqgpz` at `2026-08-11T00:16:47.856Z`. Preview has six; selected newest `backup-01kzqcxb1ak4rx3amh1snpwdag` at `2026-08-11T03:12:29.738Z`.
 
 **Documented:** Prisma's detailed [backup documentation](https://www.prisma.io/docs/postgres/database/backups) says Starter, Pro and Business receive activity-day daily snapshots; Starter and Pro retain the last seven days and Business retains the last 30 days. It describes point-in-time restore as future functionality. The broader product overview currently uses contradictory point-in-time-recovery language, so the detailed backup contract and live console state govern this decision conservatively. Prisma's current [pricing](https://www.prisma.io/pricing) lists Starter at USD 10 per month and does not list daily backups for Free.
 
 **Documented:** The live Prisma Console states that an available snapshot can be restored to a new or existing database. Prisma's Management API also exposes a destructive restore into an existing target while retaining that target's connections and credentials. RECOVERY-01 therefore permits only a newly created, identity-proven recovery target. It never permits restore over Preview or Production.
 
-**Unknown:** The current region of each existing database is not exposed by the inspected Vercel resource metadata or Prisma database settings. Prisma documents the regions available for new databases, but that list is not evidence of either resource's actual region. Backup storage location and encryption details specific to snapshots are not documented in the detailed backup contract. Prisma publicly states that Prisma Postgres data is encrypted at rest and in transit; direct connections additionally require SSL. These provider statements do not establish the storage location of a particular backup.
+**Detected/unknown:** Preview's Vercel metadata reports `iad1`; Production's actual region remains unknown. The temporary restored target reported `us-east-1` / `US East (N. Virginia)` and the restore dialog exposed no region selector. Backup storage location and encryption details specific to snapshots are not established by the detailed backup contract. Prisma publicly states that Prisma Postgres data is encrypted at rest and in transit; direct connections additionally require SSL. These general provider statements do not establish the storage location of a particular backup.
+
+**Tested:** Prisma Console's `Restore backup` → `Restore to a new database` flow instantiated the selected Preview point as new database `cmsodg4461nfn17e56q2juff7`, disconnected from every runtime. It reached `ready`, passed connectivity, exact 18-migration and schema parity, zero-orphan/FK checks, auth/Programme structure and a repository read with external systems disabled. Exact-ID Management API deletion returned 204; exact lookup then returned 404 and the console list showed it absent.
 
 ## 3. Recovery architecture
 
@@ -44,7 +48,7 @@ The logical drill is evidence that a coherent Preview backup can produce a usabl
 
 ## 4. Identity and fail-closed authority
 
-Before any dump or restore, the operator supplies source, target, Preview reference and Production reference connection authorities only through process environment or restrictive temporary files. The recovery guard:
+Before any dump or restore, the operator supplies source, target, Preview reference and Production reference connection authorities only through process environment or restrictive temporary files. The local recovery guard:
 
 - parses only PostgreSQL connection URLs;
 - derives SHA-256 fingerprints without printing credentials or URLs;
@@ -56,6 +60,8 @@ Before any dump or restore, the operator supplies source, target, Preview refere
 
 Provider resource IDs remain independent control-plane evidence. A connection fingerprint never replaces the resource-ID check.
 
+The provider-native path is deliberately separate and smaller. It additionally requires the exact workspace/project, exact Preview source database ID, exact newly created target database ID supplied twice, Prisma Postgres provider classification, `RECOVERY_TEMP`, a managed-restore acknowledgement and non-Production runtime. It denies either real database ID, a mismatched/unknown target ID, loopback in managed mode or any source/target authority match. It is not a general remote-database administration path.
+
 ## 5. Logical backup and temporary-data handling
 
 Prisma documents direct connections for `pg_dump` and `pg_restore`. PostgreSQL documents custom archives as compressed, portable inputs to `pg_restore`. The drill uses a private temporary directory, restrictive permissions, a custom-format archive, no owner or access-control replay, and an empty disposable target. The archive is never committed, uploaded, retained as a CI artifact or copied to shared storage.
@@ -64,7 +70,9 @@ The temporary archive contains Preview test/synthetic data only. It is deleted i
 
 ## 6. Recovery canary and validation
 
-The drill canary uses the existing Programme session repository to create one synthetic anonymous-session root and one related pending-claim row. It stores only opaque hashes and versioned structural fields, has no email address or real-person data, and invokes no external provider. Its safe manifest contains only the canary row ID, hashes, versions, timestamps and aggregate counts.
+The drill canary uses the existing Programme session repository to create one synthetic anonymous-session root and one related pending-claim row. It stores only opaque hashes and versioned structural fields, has no email address or real-person data, and invokes no external provider. Its safe manifest contains only the canary row ID, hashes, versions and timestamps.
+
+When the selected snapshot predates a new managed-snapshot canary, restore mechanics, migration/schema parity and structural integrity may be tested, but current source/target count parity and canary parity are `NOT_APPLICABLE`. The one canary remains in Preview until a later snapshot captures it. For the current pending canary, the safe root ID is `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`, safe hash is `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`, and creation time is `2026-08-11T08:00:45.569Z`.
 
 Validation requires:
 
@@ -95,12 +103,12 @@ After a serious incident, operators assess rotation of database connection strin
 
 ## 9. Cost and provider gap
 
-The live Free plan has no managed snapshots. The smallest current provider upgrade that documents seven-day daily backups is Starter at USD 10 per month. Founder Office has not authorised that recurring commitment. Production backup state therefore remains unchanged and the managed recovery gate remains open after a logical drill.
+Founder Office authorised and manually enabled Starter at the documented USD 10/month base price. Starter scope, the Vercel billing owner/context, seven-day retention metadata and completed snapshots on both databases are detected. No Pro/Business change, second paid service or additional recurring commitment was accepted; no separately itemised incremental restore charge was detected.
 
-A future paid-plan decision must verify the actual plan, billing owner, backup activation time, first available snapshot, activity-day schedule, retention, restore permissions, target creation semantics and region before RECOVERY-01 can close.
+The remaining gap is not plan activation. It is a later completed Preview snapshot that contains the exact pending canary, followed by another new-target restore, canary parity, exact canary cleanup and exact target cleanup.
 
 ## 10. Rollback and stop conditions
 
-Repository rollback removes the recovery scripts and documentation through the normal protected PR flow; it does not mutate a database. Drill rollback deletes the Preview canary, stops the disposable local server and removes the private archive/data directory after exact identity checks.
+Repository rollback removes the recovery scripts and documentation through the normal protected PR flow; it does not mutate a database. Drill rollback normally deletes the Preview canary, stops a disposable local server and removes private archive/data after exact identity checks. The sole exception is a managed canary intentionally awaiting snapshot capture; it remains only in Preview until the later restore proves parity, then must be removed immediately by exact identity.
 
 Live work stops when any identity is unknown or matching, a target could be Production, a paid acceptance appears, a Production dump would be needed, credentials could be printed, the provider would overwrite a shared database, or schema change/migration becomes necessary. Documentation and deterministic tests may continue while the live gate is reported truthfully.

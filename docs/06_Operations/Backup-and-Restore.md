@@ -2,18 +2,18 @@
 
 ## Status
 
-**RECOVERY-01: PARTIAL.** RFC-024 is approved and the 2026-08-11 Preview-sourced logical restore drill passed. Production still has no automatic backup, retained restore point or provider-native recovery evidence on the current Free plan. The logical drill proves that a Preview backup can produce a usable isolated database; it does not provide a recurring Production backup or satisfy the ongoing RPO target.
+**RECOVERY-01: PARTIAL — MANAGED CANARY SNAPSHOT PENDING.** RFC-024 is approved. The Preview-sourced logical restore drill passed, Starter is detected for the exact Vercel-billed Prisma workspace, completed managed Production snapshots are visible, and a provider-native Preview snapshot restored into a new isolated database and passed validation. The selected snapshot predates the one pending synthetic Preview canary, so canary parity remains not applicable until a later snapshot captures it.
 
 The internal closed-beta targets are RPO no greater than 24 hours, RTO no greater than 4 hours and at least seven daily restore points or equivalent provider-native recoverability. These are internal objectives, not customer promises, SLAs or public copy.
 
 ## Database identities
 
-| Environment | Resource | Immutable Vercel resource ID | Connection | Detected plan | Backup state |
-| --- | --- | --- | --- | --- | --- |
-| Preview | `sevenbet-preview` | `store_hLPkkgamL7rJNmCe` | Preview only | Free | No backups available |
-| Production | `prisma-postgres-cobalt-school` | `store_1I4F54ETrwSKS42o` | Production only | Free | No backups available |
+| Environment | Resource | Prisma database ID | Immutable Vercel resource ID | Connection | Detected plan | Backup state |
+| --- | --- | --- | --- | --- | --- | --- |
+| Preview | `sevenbet-preview` | `cn8xojfxs6i5z82riihkfjfy` | `store_hLPkkgamL7rJNmCe` | Preview only | Starter, workspace inherited | 6 completed snapshots |
+| Production | `prisma-postgres-cobalt-school` | `cmrixqbwl21xqyif8ab2vr2xw` | `store_1I4F54ETrwSKS42o` | Production only | Starter, workspace inherited | 14 completed snapshots |
 
-**Detected on 2026-08-11:** Vercel resource inspection reported both resources available and owned. Preview and Production connection-authority fingerprints were `DIFFERENT`. The exact fingerprints are operational evidence, not durable credentials; repeat the comparison before every drill or incident.
+**Detected on 2026-08-11:** both databases belong to Prisma workspace `cmrixpep23o54wfdvy6ikjzc1` and project `cmrixqbwl21xsyif8kj8xl01s`. The workspace is Starter, billing is owned through the existing `alexg-7bes-projects` Vercel context, and both installed resources report `Prisma Postgres - Starter`. Preview and Production connection-authority fingerprints were `DIFFERENT`. The exact fingerprints are operational evidence, not durable credentials; repeat the comparison before every drill or incident.
 
 Never identify a database by display name alone. Require the immutable resource ID, environment connection, parsed database authority and safe SHA-256 fingerprint. A `MATCH` or `UNKNOWN` relation stops work.
 
@@ -21,19 +21,19 @@ Never identify a database by display name alone. Require the immutable resource 
 
 | Capability | Production | Preview | Classification and evidence |
 | --- | --- | --- | --- |
-| Automatic backup state | **No** | **No** | **Detected:** each live Prisma Console Backups page reported `No Backups Available` and required a Starter, Pro or Business upgrade. |
-| Snapshot capability | Not available on Free | Not available on Free | **Documented:** [Prisma backups](https://www.prisma.io/docs/postgres/database/backups) list snapshots for Starter, Pro and Business. |
-| Schedule | None | None | **Documented for paid plans only:** daily on days with database activity. |
-| Retention | None | None | **Documented for paid plans only:** Starter/Pro last seven days; Business last 30 days. |
-| Point-in-time recovery | Not available | Not available | **Documented:** the detailed backup page describes fine-grained/PITR restore as future functionality. The broader overview currently conflicts; use the detailed feature contract and live console conservatively. |
-| Latest recoverable timestamp | None | None | **Detected:** no snapshot or recovery range exists on either live backup page. |
-| Provider restore | No point to restore | No point to restore | **Documented:** Prisma Console says an available snapshot can restore to a new or existing database. The Management API's existing-target restore is destructive. B4GAMBLE permits a newly created isolated target only. |
-| Restore permissions | Not exercised | Not exercised | **Detected:** authenticated Vercel-to-Prisma console access can inspect backups. **Unknown:** exact least-privilege restore role; verify before provider-native recovery. |
-| Billing dependency | Starter or higher | Starter or higher | **Documented:** current [Prisma pricing](https://www.prisma.io/pricing) starts Starter at USD 10/month with seven-day daily backups. No upgrade is authorised. |
-| Region | Unknown | Unknown | **Unknown:** current region is not exposed by the inspected Vercel resource metadata or Prisma database settings. Do not infer it from Prisma's available-region list. |
+| Automatic backup state | **Yes** | **Yes** | **Detected:** 14 completed Production snapshots and six completed Preview snapshots. |
+| Snapshot capability | Active | Active | **Detected:** backup lists are queryable through Prisma Console and the documented Management API. **Documented:** [Prisma backups](https://www.prisma.io/docs/postgres/database/backups) provide snapshots for Starter, Pro and Business. |
+| Schedule | Activity-day snapshots detected | Activity-day snapshots detected | **Documented:** daily on days with database activity. Multiple completed restore points can appear within a calendar day; do not convert that observation into a guaranteed higher-frequency SLA. |
+| Retention | 7 days metadata | 7 days metadata | **Detected:** Management API `backupRetentionDays=7` for both databases. **Documented:** Starter/Pro retain the last seven days; Business retains 30 days. |
+| Point-in-time recovery | Not detected | Not detected | **Documented:** the detailed backup page describes fine-grained/PITR restore as future functionality. Use the detailed feature contract and live console conservatively. |
+| Latest recoverable timestamp | `2026-08-11T00:16:47.856Z` | `2026-08-11T03:12:29.738Z` | **Detected:** both newest points were `completed`; exact IDs are recorded below. |
+| Provider restore | Not exercised; no Production restore authorised | Tested to a new isolated target | **Detected:** Prisma Console's `Restore backup` → `Restore to a new database` path succeeded for Preview. Existing-target restore remains destructive and prohibited for drills. |
+| Restore permissions | Backup inspection only | New-target restore exercised | **Detected:** authenticated console restored the snapshot. A one-use `workspace:admin` service token used the documented exact-ID delete endpoint and was immediately revoked. |
+| Billing dependency | Starter | Starter | **Detected:** Starter is active through Vercel. **Documented:** current [Prisma pricing](https://www.prisma.io/pricing) lists USD 10/month with seven-day daily backups. No Pro/Business change or second paid service was accepted. |
+| Region | Unknown | Vercel `iad1` | **Detected:** Preview's source resource reports `iad1`. The temporary restored target reported `us-east-1` / `US East (N. Virginia)`; the restore dialog exposed no region selector. Production region remains unknown. |
 | Encryption/storage | General service claim only | General service claim only | **Documented:** Prisma states encryption at rest and in transit; direct connections require SSL. Snapshot-specific storage location and encryption details are not documented by the detailed backup page. |
 
-Production backup state before RECOVERY-01 was **NO** and after RECOVERY-01 is **UNCHANGED / NO**. No provider setting, plan, deployment, runtime route or Production row changed.
+Production backup state before Starter activation was **NO**. After the Founder-enabled Starter change it is **ACTIVE / DETECTED** with 14 completed snapshots. This continuation performed no Production row mutation, dump, restore, deployment, runtime-environment change or plan change.
 
 ## Passed isolated restore drill — 2026-08-11
 
@@ -62,11 +62,48 @@ Production backup state before RECOVERY-01 was **NO** and after RECOVERY-01 is *
 
 The first fresh target stopped before schema creation because the PostgreSQL 17 restore client emitted `transaction_timeout` to PostgreSQL 16. The second fresh target stopped on the provider-only `prisma_postgres` extension. Neither target was reused. The third fresh target used the bounded compatibility handling above and passed. Recording these failed attempts prevents a future operator from improvising or retrying over a partial target.
 
+## Passed provider-native new-target restore drill — 2026-08-11
+
+| Evidence | Result |
+| --- | --- |
+| Workspace / project | `cmrixpep23o54wfdvy6ikjzc1` / `cmrixqbwl21xsyif8kj8xl01s`; Starter; Vercel-billed |
+| Production snapshot evidence | 14 `completed`; newest `backup-01kzq2vm7gagejt88nn3hjqgpz` at `2026-08-11T00:16:47.856Z`; `backupRetentionDays=7` |
+| Preview snapshot evidence | 6 `completed`; selected newest `backup-01kzqcxb1ak4rx3amh1snpwdag` at `2026-08-11T03:12:29.738Z`; `backupRetentionDays=7` |
+| Method | Prisma Console `Restore backup` → `Restore to a new database`; no existing target overwritten |
+| Source | Exact Preview database `cn8xojfxs6i5z82riihkfjfy`; Production was not a source |
+| Target | `sevenbet-recovery-managed-20260811-394gow`; Prisma database `cmsodg4461nfn17e56q2juff7`; no Vercel binding, deployment or public traffic |
+| Target region | Management API: `us-east-1`, `US East (N. Virginia)`; the restore flow exposed no region selector |
+| Identity proof | Exact workspace/project/source/target database IDs plus distinct safe authority fingerprints; target differed from Preview and Production |
+| Restore operation | Started `2026-08-11T08:01:23Z`; database reached provider `ready` within the observed 15-second check window; separate operation ID/completion timestamp not exposed |
+| Repository migrations | 18/18 exact parity through `0018_program_ai_m1_foundation` |
+| Schema | Source/target parity PASS; fingerprint `23c26a4a98f8651ef71ab5958abde5c0935315016e6230cb5f6c478b9f0ea327` |
+| Selected counts | `NOT_APPLICABLE_POINT_IN_TIME_GAP`; current Preview contains a post-snapshot canary, so current counts are not snapshot-point evidence |
+| Canary parity | `NOT_APPLICABLE_SNAPSHOT_PREDATES_CANARY` |
+| Integrity and structure | Connectivity, zero-orphan/FK integrity, auth/session tables and Programme tables PASS; no restored login attempted |
+| Application read | `ProgrammeSessionRepository` deterministic absent-record read PASS |
+| External systems | OpenAI, Google, email and affiliate calls absent; target had no environment binding |
+| Prisma checks | Repository `prisma validate` and `prisma generate` PASS with the target authority held in process memory |
+| Cleanup | Management API pre-delete identity matched exact database/name/project and excluded both real database IDs; DELETE returned 204, exact GET returned 404, and the console list showed the target absent |
+| Temporary authority | Two one-use service tokens supported exact metadata/delete evidence; both were revoked and the workspace returned to zero service tokens |
+| Cost | Existing Starter base plan: USD 10/month. No additional recurring plan/service accepted; no separately itemised incremental restore charge detected. |
+
+### Pending managed-snapshot canary
+
+The selected snapshot was created before the managed canary. One Preview-only synthetic structural canary therefore remains intentionally pending:
+
+- root ID `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`;
+- safe canary hash `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`;
+- root created `2026-08-11T08:00:45.569Z`, after the selected snapshot by 4 hours 48 minutes 15.831 seconds;
+- one `AnonymousProgrammeSession` plus one related `PendingProgrammeClaim`, containing only opaque hashes and versioned structural fields;
+- no real email, narrative, audio, transcript, OpenAI, Google, email delivery, affiliate or commercial data/call.
+
+A bounded second backup-list check still showed `backup-01kzqcxb1ak4rx3amh1snpwdag` as newest, so the canary was not deleted. The next drill must select a completed snapshot later than the canary, restore it to another new isolated target, prove exact canary parity, then remove the canary and target by exact identity.
+
 ## Normal recovery tooling
 
 - `npm run recovery:preflight` classifies and compares source, target, Preview and Production authorities. It requires the exact acknowledgement and refuses Production, matching, malformed, missing, non-loopback or unknown identities.
 - `npm run recovery:canary -- create|cleanup` creates and removes the Preview-only structural canary. It requires separate Preview mutation authority.
-- `npm run recovery:verify -- capture|verify` captures safe source evidence and verifies the restored target. Evidence contains counts, hashes, migration names and PASS/FAIL only.
+- `npm run recovery:verify -- capture|verify` captures safe logical-source evidence and verifies a local restored target. `verify-managed` adds a separate exact Prisma workspace/project/source/target database-ID path for a newly created remote recovery target; it does not weaken the local loopback guard or authorise a Production target.
 - `npm run recovery:test` runs deterministic guard and structural tests without live credentials or databases.
 
 The repository deliberately contains no Production restore script. Commands receive credentials through process environment only; URLs and passwords must never appear in command output or shell history.
@@ -77,16 +114,16 @@ The repository deliberately contains no Production restore script. Commands rece
 
 | # | Operator question | Current answer |
 | --- | --- | --- |
-| 1 | What is backed up? | No managed Production or Preview snapshot exists. The drill backed up the complete Preview PostgreSQL database at one point in time, including schema, migration history and Preview test/synthetic rows. |
+| 1 | What is backed up? | Starter-managed snapshots cover both exact databases on activity days. The API currently lists 14 completed Production points and six completed Preview points. The logical drill also backed up Preview at one point in time. |
 | 2 | Which database is Production? | `prisma-postgres-cobalt-school`, immutable resource ID `store_1I4F54ETrwSKS42o`. |
 | 3 | Which database is Preview? | `sevenbet-preview`, immutable resource ID `store_hLPkkgamL7rJNmCe`. |
-| 4 | What is the current backup mechanism? | No recurring managed mechanism on Free. The proven fallback is a private custom-format logical Preview dump for isolated verification only. |
-| 5 | What is the current retention? | Zero managed restore points. Paid Starter/Pro documentation says the last seven activity-day daily snapshots; that is not enabled or tested here. |
-| 6 | What is the internal RPO target? | No greater than 24 hours. Current managed capability does not meet it. |
-| 7 | What is the internal RTO target? | No greater than 4 hours. The 4m45 Preview drill is useful evidence, not a Production guarantee. |
+| 4 | What is the current backup mechanism? | Prisma Starter managed activity-day snapshots; the proven logical Preview dump remains a drill fallback, not a Production backup service. |
+| 5 | What is the current retention? | Management API metadata reports seven days for both resources, matching Starter documentation. Do not promise selective backup deletion or a customer SLA. |
+| 6 | What is the internal RPO target? | No greater than 24 hours. Completed Production restore points are detected within that interval, but this remains an internal target rather than a provider/customer guarantee. |
+| 7 | What is the internal RTO target? | No greater than 4 hours. The provider-native Preview target reached `ready` within the observed 15-second check and validation passed; neither timing is a Production RTO guarantee. |
 | 8 | How is an outage/data-loss event identified? | Production Smoke plus Vercel deployment/runtime evidence, application errors and database/provider state; broad loss/corruption or personal-data compromise is SEV-1. |
 | 9 | Who decides to restore? | Founder Office as incident commander, with the verified provider/project owner and technical responder executing. |
-| 10 | How is a restore point selected? | Choose the newest coherent available point with an acceptable explicitly recorded loss window; never infer one when the provider lists none. |
+| 10 | How is a restore point selected? | Query exact provider IDs/status/timestamps, choose the newest coherent `completed` point with an acceptable explicitly recorded loss window, and distinguish its timestamp from any canary or incident boundary. |
 | 11 | Why restore to a new isolated target first? | It preserves the original, prevents overwrite, supports validation before traffic and makes a failed attempt abandonable. |
 | 12 | How is the target proven not to be Production? | Match immutable control-plane IDs, compare credential-free connection fingerprints, require `TARGET=RECOVERY_TEMP` and stop on `MATCH` or `UNKNOWN`. |
 | 13 | How is the target validated? | Connectivity, exact migrations, selected counts, schema fingerprint, canary/relation/FK integrity, auth/Programme structure, repository read, Prisma validation/generation and external-provider-off checks. |
@@ -107,7 +144,7 @@ The repository deliberately contains no Production restore script. Commands rece
 
 1. List available provider restore points without restoring. Record timestamps, plan, retention and provider operation IDs outside public logs.
 2. Select the newest coherent point whose expected loss window is acceptable. State the estimated data-loss interval against the internal 24-hour RPO.
-3. If no provider restore point exists, the current Production recovery gate is blocked. A Preview logical dump is drill evidence only and cannot recover Production.
+3. If no provider restore point exists during an incident, the Production recovery gate is blocked. A Preview logical dump is drill evidence only and cannot recover Production.
 
 ### 3. Restore to a new isolated target
 
@@ -137,6 +174,6 @@ After evidence/cutover, confirm the exact temporary resource ID, disconnect it, 
 
 ## Remaining Founder action
 
-`FOUNDER ACTION REQUIRED — PRODUCTION BACKUP CONFIGURATION`
+`FOUNDER ACTION REQUIRED — AUTHORISE THE FOLLOW-UP AFTER CANARY CAPTURE`
 
-Approve or decline the smallest recurring plan change that supplies managed snapshots. If approved, upgrade the exact Production Prisma Postgres installation to at least Starter, verify billing ownership and no runtime/resource replacement, wait for and inspect the first snapshot, confirm the actual region/retention/permissions, then run a Preview-snapshot restore into a new isolated provider target. Only that evidence can move RECOVERY-01 from `PARTIAL` to `CLOSED`.
+Do not change plan. After Prisma creates a completed Preview snapshot later than `2026-08-11T08:00:45.569Z`, authorise the bounded continuation to restore that exact point into another new isolated target, verify the pending canary's exact parity, delete the canary from Preview, delete the target by exact immutable ID and confirm both absent. That is the only remaining RECOVERY-01 closure action.

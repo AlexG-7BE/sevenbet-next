@@ -16,10 +16,16 @@ import { PrismaClient } from "@prisma/client";
 import { ProgrammeSessionRepository } from "../lib/programme/infrastructure/repositories/programme-session.repository.ts";
 import { readCanaryManifest } from "./recovery-canary.mjs";
 import {
+  EXPECTED_PREVIEW_DATABASE_ID,
   EXPECTED_PREVIEW_RESOURCE_ID,
+  EXPECTED_PRISMA_PROJECT_ID,
+  EXPECTED_PRISMA_WORKSPACE_ID,
+  EXPECTED_PRODUCTION_DATABASE_ID,
   EXPECTED_PRODUCTION_RESOURCE_ID,
   RECOVERY_DRILL_ACKNOWLEDGEMENT,
+  RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT,
   RecoveryGuardError,
+  assertManagedRecoveryPreflight,
   assertRecoveryPreflight,
 } from "./recovery-preflight.mjs";
 
@@ -193,6 +199,35 @@ async function canaryEvidence(database, canary) {
   };
 }
 
+async function orphanCount(database) {
+  const orphanRows = await database.$queryRawUnsafe(
+    `SELECT COUNT(*)::bigint AS count
+       FROM "PendingProgrammeClaim" claim
+       LEFT JOIN "AnonymousProgrammeSession" root
+         ON root.id = claim."anonymousSessionId"
+      WHERE root.id IS NULL`,
+  );
+  return numberFromCountRow(orphanRows[0]);
+}
+
+async function unvalidatedForeignKeyCount(database) {
+  const rows = await database.$queryRawUnsafe(
+    `SELECT COUNT(*)::bigint AS count
+       FROM pg_constraint
+      WHERE contype = 'f'
+        AND NOT convalidated`,
+  );
+  return numberFromCountRow(rows[0]);
+}
+
+function assertStructuralTables(tables) {
+  for (const tableName of [...EXPECTED_AUTH_TABLES, ...EXPECTED_PROGRAMME_TABLES]) {
+    if (!tables.includes(tableName)) {
+      throw new RecoveryGuardError("RECOVERY_STRUCTURAL_TABLE_MISSING");
+    }
+  }
+}
+
 function assertProviderFlagsDisabled() {
   for (const name of [
     "PROGRAM_AI_V1_ENABLED",
@@ -245,6 +280,28 @@ function preflightFromEnvironment() {
   });
 }
 
+function managedPreflightFromEnvironment() {
+  return assertManagedRecoveryPreflight({
+    sourceUrl: required("RECOVERY_SOURCE_URL"),
+    targetUrl: required("RECOVERY_TARGET_URL"),
+    previewReferenceUrl: required("RECOVERY_PREVIEW_REFERENCE_URL"),
+    productionReferenceUrl: required("RECOVERY_PRODUCTION_REFERENCE_URL"),
+    previewResourceId: required("RECOVERY_PREVIEW_RESOURCE_ID"),
+    productionResourceId: required("RECOVERY_PRODUCTION_RESOURCE_ID"),
+    workspaceId: required("RECOVERY_PRISMA_WORKSPACE_ID"),
+    projectId: required("RECOVERY_PRISMA_PROJECT_ID"),
+    sourceDatabaseId: required("RECOVERY_SOURCE_DATABASE_ID"),
+    productionDatabaseId: required("RECOVERY_PRODUCTION_DATABASE_ID"),
+    targetDatabaseId: required("RECOVERY_TARGET_DATABASE_ID"),
+    expectedTargetDatabaseId: required("RECOVERY_EXPECTED_TARGET_DATABASE_ID"),
+    targetProvider: required("RECOVERY_TARGET_PROVIDER"),
+    acknowledgement: required("RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT"),
+    targetLabel: required("RECOVERY_TARGET_LABEL"),
+    runtimeEnvironment:
+      process.env.VERCEL_ENV ?? process.env.RECOVERY_RUNTIME_ENVIRONMENT,
+  });
+}
+
 async function captureSourceEvidence() {
   preflightFromEnvironment();
   assertProviderFlagsDisabled();
@@ -266,11 +323,7 @@ async function captureSourceEvidence() {
       publicTableNames(source),
       canaryEvidence(source, canary),
     ]);
-    for (const tableName of [...EXPECTED_AUTH_TABLES, ...EXPECTED_PROGRAMME_TABLES]) {
-      if (!tables.includes(tableName)) {
-        throw new RecoveryGuardError("RECOVERY_STRUCTURAL_TABLE_MISSING");
-      }
-    }
+    assertStructuralTables(tables);
 
     writeExclusiveJson(outputPath, {
       version: SNAPSHOT_VERSION,
@@ -326,11 +379,7 @@ export async function verifyRestoredTarget() {
     ) {
       throw new RecoveryGuardError("RECOVERY_CANARY_PARITY_FAILED");
     }
-    for (const tableName of [...EXPECTED_AUTH_TABLES, ...EXPECTED_PROGRAMME_TABLES]) {
-      if (!tables.includes(tableName)) {
-        throw new RecoveryGuardError("RECOVERY_STRUCTURAL_TABLE_MISSING");
-      }
-    }
+    assertStructuralTables(tables);
 
     const repository = new ProgrammeSessionRepository(target);
     const applicationRead = await repository.findAnonymousSession(canary.rootTokenHash);
@@ -360,9 +409,112 @@ export async function verifyRestoredTarget() {
   }
 }
 
+export async function verifyManagedRestoredTarget() {
+  managedPreflightFromEnvironment();
+  assertProviderFlagsDisabled();
+  const repositoryRoot = resolve(process.env.RECOVERY_REPOSITORY_ROOT ?? process.cwd());
+  const repositoryMigrations = repositoryMigrationNames(repositoryRoot);
+  const canary = readCanaryManifest(required("RECOVERY_CANARY_MANIFEST_PATH"));
+  const snapshotAt = new Date(required("RECOVERY_SELECTED_SNAPSHOT_AT"));
+  const canaryCreatedAt = new Date(canary.rootCreatedAt);
+  if (
+    Number.isNaN(snapshotAt.valueOf()) ||
+    Number.isNaN(canaryCreatedAt.valueOf()) ||
+    snapshotAt >= canaryCreatedAt
+  ) {
+    throw new RecoveryGuardError("RECOVERY_MANAGED_SNAPSHOT_CANARY_RELATION_INVALID");
+  }
+
+  const source = new PrismaClient({
+    datasourceUrl: required("RECOVERY_SOURCE_URL"),
+    log: ["error"],
+  });
+  const target = new PrismaClient({
+    datasourceUrl: required("RECOVERY_TARGET_URL"),
+    log: ["error"],
+  });
+  try {
+    await Promise.all([source.$queryRawUnsafe("SELECT 1"), target.$queryRawUnsafe("SELECT 1")]);
+    const [
+      sourceMigrations,
+      targetMigrations,
+      sourceSchemaFingerprint,
+      targetSchemaFingerprint,
+      sourceCounts,
+      targetCounts,
+      targetTables,
+      sourceCanary,
+      targetOrphans,
+      targetUnvalidatedForeignKeys,
+      restoredPendingCanaryCount,
+    ] = await Promise.all([
+      appliedMigrationNames(source),
+      appliedMigrationNames(target),
+      publicSchemaFingerprint(source),
+      publicSchemaFingerprint(target),
+      selectedCounts(source),
+      selectedCounts(target),
+      publicTableNames(target),
+      canaryEvidence(source, canary),
+      orphanCount(target),
+      unvalidatedForeignKeyCount(target),
+      target.anonymousProgrammeSession.count({ where: { id: canary.rootId } }),
+    ]);
+
+    assertExactSet(sourceMigrations, repositoryMigrations, "RECOVERY_MIGRATION_PARITY_FAILED");
+    assertExactSet(targetMigrations, repositoryMigrations, "RECOVERY_MIGRATION_PARITY_FAILED");
+    if (sourceSchemaFingerprint !== targetSchemaFingerprint) {
+      throw new RecoveryGuardError("RECOVERY_SCHEMA_DRIFT_DETECTED");
+    }
+    assertStructuralTables(targetTables);
+    if (
+      sourceCanary.orphanCount !== 0 ||
+      targetOrphans !== 0 ||
+      targetUnvalidatedForeignKeys !== 0
+    ) {
+      throw new RecoveryGuardError("RECOVERY_FOREIGN_KEY_INTEGRITY_FAILED");
+    }
+    if (restoredPendingCanaryCount !== 0) {
+      throw new RecoveryGuardError("RECOVERY_MANAGED_CANARY_TIMING_FAILED");
+    }
+
+    const repository = new ProgrammeSessionRepository(target);
+    const representativeRead = await repository.findAnonymousSession(
+      digest("recovery-managed-representative-absent:v1"),
+    );
+    if (representativeRead !== null) {
+      throw new RecoveryGuardError("RECOVERY_APPLICATION_READ_FAILED");
+    }
+
+    console.log(`MIGRATION_COUNT=${targetMigrations.length}`);
+    console.log(`SELECTED_TABLE_COUNT=${Object.keys(targetCounts).length}`);
+    console.log(`SOURCE_SELECTED_TABLE_COUNT=${Object.keys(sourceCounts).length}`);
+    console.log(`SCHEMA_FINGERPRINT=${targetSchemaFingerprint}`);
+    console.log("CONNECTIVITY=PASS");
+    console.log("MIGRATION_HISTORY_PARITY=PASS");
+    console.log("SCHEMA_PARITY=PASS");
+    console.log("SELECTED_TABLE_COUNT_PARITY=NOT_APPLICABLE_POINT_IN_TIME_GAP");
+    console.log("MANAGED_CANARY_PARITY=NOT_APPLICABLE_SNAPSHOT_PREDATES_CANARY");
+    console.log("PENDING_MANAGED_SNAPSHOT_CANARY=PASS");
+    console.log("FOREIGN_KEY_INTEGRITY=PASS");
+    console.log("AUTH_SESSION_STRUCTURE=PASS");
+    console.log("PROGRAMME_STRUCTURE=PASS");
+    console.log("PROGRAMME_REPOSITORY_READ=PASS");
+    console.log("OPENAI_CALLS=ABSENT");
+    console.log("GOOGLE_CALLS=ABSENT");
+    console.log("EMAIL_CALLS=ABSENT");
+    console.log("AFFILIATE_CALLS=ABSENT");
+    console.log("EXTERNAL_PROVIDER_CALLS=ABSENT");
+    console.log("MANAGED_RESTORE_VERIFICATION=PASS");
+  } finally {
+    await Promise.all([source.$disconnect(), target.$disconnect()]);
+  }
+}
+
 export async function runVerificationCommand(command) {
   if (command === "capture") return captureSourceEvidence();
   if (command === "verify") return verifyRestoredTarget();
+  if (command === "verify-managed") return verifyManagedRestoredTarget();
   throw new RecoveryGuardError("RECOVERY_VERIFY_COMMAND_UNKNOWN");
 }
 
@@ -380,9 +532,14 @@ if (isDirectExecution()) {
 
 export {
   EXPECTED_AUTH_TABLES,
+  EXPECTED_PREVIEW_DATABASE_ID,
   EXPECTED_PREVIEW_RESOURCE_ID,
+  EXPECTED_PRISMA_PROJECT_ID,
+  EXPECTED_PRISMA_WORKSPACE_ID,
+  EXPECTED_PRODUCTION_DATABASE_ID,
   EXPECTED_PRODUCTION_RESOURCE_ID,
   EXPECTED_PROGRAMME_TABLES,
   RECOVERY_DRILL_ACKNOWLEDGEMENT,
+  RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT,
   repositoryMigrationNames,
 };

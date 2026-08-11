@@ -2,11 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  EXPECTED_PREVIEW_DATABASE_ID,
   EXPECTED_PREVIEW_RESOURCE_ID,
+  EXPECTED_PRISMA_PROJECT_ID,
+  EXPECTED_PRISMA_WORKSPACE_ID,
+  EXPECTED_PRODUCTION_DATABASE_ID,
   EXPECTED_PRODUCTION_RESOURCE_ID,
   RECOVERY_CANARY_ACKNOWLEDGEMENT,
   RECOVERY_DRILL_ACKNOWLEDGEMENT,
+  RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT,
   RecoveryGuardError,
+  assertManagedRecoveryPreflight,
   assertPreviewCanaryAuthority,
   assertRecoveryPreflight,
   parseConnectionIdentity,
@@ -19,6 +25,8 @@ const TARGET_SECRET = "TARGET_DATABASE_SECRET_SENTINEL";
 const previewUrl = `postgresql://preview-user:${PREVIEW_SECRET}@db.prisma.io:5432/postgres?sslmode=require`;
 const productionUrl = `postgresql://production-user:${PRODUCTION_SECRET}@db.prisma.io:5432/postgres?sslmode=require`;
 const targetUrl = `postgresql://postgres:${TARGET_SECRET}@127.0.0.1:55432/sevenbet_recovery_20260811_test01`;
+const managedTargetUrl = `postgresql://managed-user:${TARGET_SECRET}@db.prisma.io:5432/postgres?sslmode=require`;
+const MANAGED_TARGET_DATABASE_ID = "cmsodg4461nfn17e56q2juff7";
 
 function validInput(overrides = {}) {
   return {
@@ -38,6 +46,35 @@ function validInput(overrides = {}) {
 function assertDenied(input, code) {
   assert.throws(
     () => assertRecoveryPreflight(input),
+    (error) => error instanceof RecoveryGuardError && error.code === code,
+  );
+}
+
+function validManagedInput(overrides = {}) {
+  return {
+    sourceUrl: previewUrl,
+    targetUrl: managedTargetUrl,
+    previewReferenceUrl: previewUrl,
+    productionReferenceUrl: productionUrl,
+    previewResourceId: EXPECTED_PREVIEW_RESOURCE_ID,
+    productionResourceId: EXPECTED_PRODUCTION_RESOURCE_ID,
+    workspaceId: EXPECTED_PRISMA_WORKSPACE_ID,
+    projectId: EXPECTED_PRISMA_PROJECT_ID,
+    sourceDatabaseId: EXPECTED_PREVIEW_DATABASE_ID,
+    productionDatabaseId: EXPECTED_PRODUCTION_DATABASE_ID,
+    targetDatabaseId: MANAGED_TARGET_DATABASE_ID,
+    expectedTargetDatabaseId: MANAGED_TARGET_DATABASE_ID,
+    targetProvider: "PRISMA_POSTGRES",
+    acknowledgement: RECOVERY_MANAGED_RESTORE_ACKNOWLEDGEMENT,
+    targetLabel: "RECOVERY_TEMP",
+    runtimeEnvironment: "local",
+    ...overrides,
+  };
+}
+
+function assertManagedDenied(input, code) {
+  assert.throws(
+    () => assertManagedRecoveryPreflight(input),
     (error) => error instanceof RecoveryGuardError && error.code === code,
   );
 }
@@ -154,5 +191,77 @@ test("credential rotation does not change the authority fingerprint", () => {
   assert.equal(
     parseConnectionIdentity(previewUrl).fingerprint,
     parseConnectionIdentity(rotated).fingerprint,
+  );
+});
+
+test("exact created Prisma recovery target passes managed preflight", () => {
+  const result = assertManagedRecoveryPreflight(validManagedInput());
+  assert.equal(result.sourceClass, "PREVIEW");
+  assert.equal(result.targetClass, "RECOVERY_TEMP");
+  assert.equal(result.targetDatabaseId, MANAGED_TARGET_DATABASE_ID);
+});
+
+test("Preview database is denied as a managed target", () => {
+  assertManagedDenied(
+    validManagedInput({ targetUrl: previewUrl }),
+    "SOURCE_TARGET_RELATION_MATCH",
+  );
+});
+
+test("Production database is denied as a managed target", () => {
+  assertManagedDenied(
+    validManagedInput({ targetUrl: productionUrl }),
+    "PRODUCTION_TARGET_DENIED",
+  );
+});
+
+test("unknown provider target database ID is denied", () => {
+  assertManagedDenied(
+    validManagedInput({ targetDatabaseId: "unknown" }),
+    "MANAGED_TARGET_DATABASE_ID_UNKNOWN",
+  );
+});
+
+test("arbitrary non-Prisma remote target is denied", () => {
+  assertManagedDenied(
+    validManagedInput({
+      targetUrl: `postgresql://managed-user:${TARGET_SECRET}@postgres.example.test:5432/postgres?sslmode=require`,
+    }),
+    "MANAGED_TARGET_IDENTITY_UNKNOWN",
+  );
+});
+
+test("wrong exact target database ID is denied", () => {
+  assertManagedDenied(
+    validManagedInput({ expectedTargetDatabaseId: "cmsodg4461nfn17e56q2juff8" }),
+    "MANAGED_TARGET_DATABASE_ID_MISMATCH",
+  );
+});
+
+test("missing managed-recovery acknowledgement is denied", () => {
+  assertManagedDenied(
+    validManagedInput({ acknowledgement: undefined }),
+    "RECOVERY_MANAGED_ACKNOWLEDGEMENT_MISSING",
+  );
+});
+
+test("Production runtime is denied for managed recovery", () => {
+  assertManagedDenied(
+    validManagedInput({ runtimeEnvironment: "production" }),
+    "PRODUCTION_RUNTIME_DENIED",
+  );
+});
+
+test("managed preflight safe result contains no secret value", () => {
+  const result = assertManagedRecoveryPreflight(validManagedInput());
+  const safe = JSON.stringify({
+    sourceClass: result.sourceClass,
+    targetClass: result.targetClass,
+    targetDatabaseId: result.targetDatabaseId,
+    targetFingerprint: result.target.fingerprint,
+  });
+  assert.doesNotMatch(
+    safe,
+    new RegExp(`${PREVIEW_SECRET}|${PRODUCTION_SECRET}|${TARGET_SECRET}|postgresql://`),
   );
 });
