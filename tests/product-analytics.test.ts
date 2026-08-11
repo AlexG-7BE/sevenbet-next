@@ -9,6 +9,7 @@ import {
 } from "../lib/analytics/product-analytics-client";
 import {
   parseProductAnalyticsEvent,
+  productAnalyticsEventNames,
   programmeEngagementDayBucket,
 } from "../lib/analytics/product-analytics-events";
 import { isProductAnalyticsEnabled } from "../lib/analytics/product-analytics";
@@ -23,7 +24,7 @@ const validEvents = {
   programme_m1_personalised_value_presented: { resultType: "starting_point", elapsedBucket: "lt_30s" },
   programme_registration_cta_presented: { elapsedBucket: "lt_60s" },
   programme_claim_redeemed: { authMethod: "unknown" },
-  programme_home_viewed: { currentMission: 1, programmeState: "not_started", engagementDayBucket: "unknown" },
+  programme_home_viewed: { currentMission: 1, engagementDayBucket: "unknown" },
   programme_mission_opened: { mission: 2, mode: "start" },
   programme_mission_action_completed: { mission: 2, actionPosition: 1 },
   programme_mission_completed: { mission: 2 },
@@ -42,9 +43,17 @@ test("the closed event taxonomy accepts every approved event and rejects unknown
     }
   }
   assert.throws(() => parseProductAnalyticsEvent("programme_home_viewed", { ...validEvents.programme_home_viewed, currentMission: 11 }));
+  assert.throws(() => parseProductAnalyticsEvent("programme_home_viewed", { ...validEvents.programme_home_viewed, programmeState: "in_progress" }));
   assert.throws(() => parseProductAnalyticsEvent("programme_discovery_clicked", { sourceSurface: "mission_08", destinationRoute: "/casinos?affiliate=1" }));
   assert.throws(() => parseProductAnalyticsEvent("programme_ai_outcome", { operation: "free_text", result: "provider" }));
   assert.throws(() => parseProductAnalyticsEvent("unknown" as never, {}));
+});
+
+test("every approved custom event uses at most two Vercel Pro properties", () => {
+  assert.deepEqual(Object.keys(validEvents), [...productAnalyticsEventNames]);
+  for (const [name, properties] of Object.entries(validEvents)) {
+    assert.ok(Object.keys(properties).length <= 2, `${name} exceeds the two-property Vercel Pro ceiling`);
+  }
 });
 
 test("analytics is default-off and requires the exact public flag value", () => {

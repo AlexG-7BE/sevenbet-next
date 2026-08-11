@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { DELETE as withdrawAuthority, POST as confirmAuthority } from "../app/api/program/program-ai/authority/route";
+import { POST as createProgramAiClaim } from "../app/api/program/program-ai/claim/route";
+import { POST as confirmStartingPoint } from "../app/api/program/program-ai/starting-point/route";
+import { POST as continueAfterSupport } from "../app/api/program/program-ai/support/continue/route";
+import { POST as createProgramAiTurn } from "../app/api/program/program-ai/turn/route";
+import { POST as createLegacyClaim } from "../app/api/program/session/mission-01/claim/route";
+import { PATCH as saveLegacyMissionOne } from "../app/api/program/session/mission-01/route";
 import { ProgrammeAiGuidanceService } from "../lib/programme/application/programme-ai-guidance.service";
-import { programmeErrorResponse } from "../lib/programme/http";
+import { anonymousProgrammeCookie, programmeErrorResponse } from "../lib/programme/http";
 import { ProgrammeProviderError } from "../lib/programme/program-ai/provider-errors";
 import {
   PROGRAMME_RATE_LIMIT_WINDOW_MS,
@@ -14,6 +21,7 @@ import {
   programmeRateLimitPolicies,
   resetProgrammeRateLimitsForTests,
 } from "../lib/programme/rate-limit";
+import { hashOpaqueToken } from "../lib/programme/security";
 
 function rateLimitDatabase() {
   const counts = new Map<string, number>();
@@ -82,6 +90,68 @@ test("IP, anonymous-session, and user sources remain independent and 429 respons
   assert.deepEqual(await response.json(), { code: "RATE_LIMITED", retryAfterSeconds: 42 });
 });
 
+test("anonymous mutation scope allows 60, limits 61, and isolates sessions", async () => {
+  const state = rateLimitDatabase();
+  const limiter = new PrismaProgrammeRateLimiter(state.database, "test-secret");
+  const now = new Date("2026-08-11T10:01:00.000Z");
+  const sessionA = hashOpaqueToken("anonymous-session-a");
+  const sessionB = hashOpaqueToken("anonymous-session-b");
+  for (let index = 0; index < programmeRateLimitPolicies.PROGRAMME_MUTATION_SESSION; index += 1) {
+    assert.equal((await limiter.consume({ scope: "PROGRAMME_MUTATION_SESSION", source: sessionA, now })).allowed, true);
+  }
+  assert.equal((await limiter.consume({ scope: "PROGRAMME_MUTATION_SESSION", source: sessionA, now })).allowed, false);
+  assert.equal((await limiter.consume({ scope: "PROGRAMME_MUTATION_SESSION", source: sessionB, now })).allowed, true);
+});
+
+test("every previously protected anonymous mutation uses the distributed session scope", async () => {
+  const rawToken = "anonymous-route-wiring-token";
+  const expectedSource = hashOpaqueToken(rawToken);
+  const consumed: Array<{ scope: string; source: string }> = [];
+  configureProgrammeRateLimiter({
+    consume: async ({ scope, source }) => {
+      consumed.push({ scope, source });
+      return { allowed: false, retryAfterSeconds: 42 };
+    },
+  });
+  const request = (method: string) => new Request("https://b4gamble.com/api/program/test", {
+    method,
+    headers: { cookie: `${anonymousProgrammeCookie}=${rawToken}` },
+  });
+  try {
+    const responses = await Promise.all([
+      confirmAuthority(request("POST")),
+      withdrawAuthority(request("DELETE")),
+      createProgramAiClaim(request("POST")),
+      confirmStartingPoint(request("POST")),
+      continueAfterSupport(request("POST")),
+      createProgramAiTurn(request("POST")),
+      createLegacyClaim(request("POST")),
+      saveLegacyMissionOne(request("PATCH")),
+    ]);
+    assert.ok(responses.every((response) => response.status === 429));
+    assert.equal(consumed.length, 8);
+    assert.ok(consumed.every(({ scope, source }) => (
+      scope === "PROGRAMME_MUTATION_SESSION" && source === expectedSource
+    )));
+    assert.ok(consumed.every(({ source }) => source !== rawToken));
+  } finally {
+    resetProgrammeRateLimitsForTests();
+  }
+});
+
+test("a normal Mission 01 anonymous mutation path remains well below the generic threshold", async () => {
+  const state = rateLimitDatabase();
+  const limiter = new PrismaProgrammeRateLimiter(state.database, "test-secret");
+  const source = hashOpaqueToken("normal-m1-session");
+  const decisions = await Promise.all(Array.from({ length: 8 }, () => limiter.consume({
+    scope: "PROGRAMME_MUTATION_SESSION",
+    source,
+    now: new Date("2026-08-11T10:01:00.000Z"),
+  })));
+  assert.ok(decisions.every((decision) => decision.allowed));
+  assert.equal(programmeRateLimitPolicies.PROGRAMME_MUTATION_SESSION - decisions.length, 52);
+});
+
 test("concurrent attempts use one atomic bucket and permit only the configured allowance", async () => {
   const state = rateLimitDatabase();
   const limiter = new PrismaProgrammeRateLimiter(state.database, "test-secret");
@@ -112,6 +182,20 @@ test("bucket keys are deterministic HMAC digests and raw sources never enter wri
   await limiter.consume({ scope: input.scope, source: input.source, now: new Date("2026-08-11T10:01:00.000Z") });
   assert.doesNotMatch(JSON.stringify(state.writes), /198\.51\.100\.42/);
   assert.match(JSON.stringify(state.writes), /PROGRAMME_TRANSCRIPTION_IP/);
+
+  const rawToken = "anonymous-private-token";
+  const tokenHash = hashOpaqueToken(rawToken);
+  const mutationState = rateLimitDatabase();
+  const mutationLimiter = new PrismaProgrammeRateLimiter(mutationState.database, input.secret);
+  await mutationLimiter.consume({
+    scope: "PROGRAMME_MUTATION_SESSION",
+    source: tokenHash,
+    now: new Date("2026-08-11T10:01:00.000Z"),
+  });
+  const mutationWrites = JSON.stringify(mutationState.writes);
+  assert.doesNotMatch(mutationWrites, new RegExp(rawToken));
+  assert.doesNotMatch(mutationWrites, new RegExp(tokenHash));
+  assert.notEqual((mutationState.writes[0].where as { bucketKey: string }).bucketKey, tokenHash);
 });
 
 test("a limiter failure suppresses provider work instead of bypassing protection", async () => {

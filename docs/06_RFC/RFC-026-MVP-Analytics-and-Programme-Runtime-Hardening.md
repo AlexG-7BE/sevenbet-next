@@ -3,6 +3,7 @@
 - **Status:** Approved for bounded implementation
 - **Decision authority:** Founder Office `MVP-RUNTIME-01`
 - **Approved:** 2026-08-11
+- **Amended:** 2026-08-11 by Founder Final Code Gate for Vercel Pro property compatibility, anonymous mutation coverage and migration-before-merge sequencing
 - **Scope:** Privacy-safe aggregate product analytics, distributed Programme runtime rate limiting, bounded transient expiry purge, one authenticated Vercel Cron route, runtime database binding verification and activation-readiness evidence
 - **Base:** `0a904a3b8dbf95de4a290ba9b071785f0bbbcfc3`
 - **Depends on:** Product Vision & Principles v2.0, RFC-017, RFC-021, RFC-022, RFC-023, RFC-025, Programme Architecture Standards, Backend Programme Standards and Programme Definition of Done
@@ -63,7 +64,7 @@ The approved events are:
 | `programme_m1_personalised_value_presented` | `resultType: starting_point | clarification`; `elapsedBucket: lt_30s | 30_60s | 60_90s | 90_120s | gt_120s | unknown` |
 | `programme_registration_cta_presented` | `elapsedBucket: lt_60s | 60_90s | 90_120s | gt_120s | unknown` |
 | `programme_claim_redeemed` | `authMethod: google | email | unknown` |
-| `programme_home_viewed` | `currentMission: 1..10`; `programmeState: not_started | in_progress | completed`; `engagementDayBucket: day_0 | day_1 | day_2_3 | day_4_7 | day_8_plus | unknown` |
+| `programme_home_viewed` | `currentMission: 1..10`; `engagementDayBucket: day_0 | day_1 | day_2_3 | day_4_7 | day_8_plus | unknown` |
 | `programme_mission_opened` | `mission: 1..10`; `mode: start | resume | review` |
 | `programme_mission_action_completed` | `mission: 1..10`; `actionPosition: 1 | 2 | 3` |
 | `programme_mission_completed` | `mission: 1..10` |
@@ -72,6 +73,8 @@ The approved events are:
 | `programme_discovery_clicked` | `sourceSurface: programme_home | mission_08 | mission_10`; `destinationRoute: casinos | compare | bonuses | best_offers | bonus_guide` |
 | `programme_ai_outcome` | `operation`: one RFC-023/RFC-025 closed operation; `result: provider | fallback | rate_limited | timeout | invalid_output | provider_error` |
 | `programme_voice_outcome` | `result: recording_started | transcription_success | permission_denied | transcription_error | cancelled` |
+
+The taxonomy remains exactly 15 events and every event has zero, one or two properties. This is the ordinary Vercel Pro Custom Events ceiling. `programmeState` is not an analytics property and is not replaced by another dimension; aggregate completion analysis uses Mission events plus `programme_completed` where appropriate. Web Analytics Plus is neither required nor approved.
 
 Authoritative milestones emit only after the corresponding server operation succeeds. Mission and Programme completion events are first-completion events where the authoritative result exposes that distinction. Client exposure events use bounded `sessionStorage` deduplication. The M1 start timestamp is stored only in the current tab and converted to an approved bucket; the raw timestamp and exact duration are never transmitted.
 
@@ -88,6 +91,7 @@ Analytics remains aggregate product measurement. It is not imported by casino/bo
 The report supports `--since 7d` or bounded `--from`/`--to` dates and reports:
 
 - adjacent M1 activation counts and conversion percentages;
+- aggregate Programme Home return counts by `currentMission` and `engagementDayBucket`;
 - Mission 02–10 completion counts and adjacent continuation ratios;
 - First/Mid/Full Review-open counts;
 - generic Programme discovery click counts by approved surface/route;
@@ -128,6 +132,7 @@ The persistence operation is one atomic PostgreSQL upsert that creates `count=1`
 | `PROGRAMME_M1_AI_IP` | client IP | 30 | truthful existing provider-off/fallback path |
 | `PROGRAMME_MISSION_GUIDANCE_USER` | authenticated user | 30 | no provider call; deterministic fallback |
 | `PROGRAMME_REVIEW_USER` | authenticated user | 12 | no provider call; deterministic fallback |
+| `PROGRAMME_MUTATION_SESSION` | `hashOpaqueToken` of anonymous Programme session token | 60 | `429 RATE_LIMITED` before mutation |
 | `PROGRAMME_MUTATION_USER` | authenticated user | 120 | `429 RATE_LIMITED` |
 
 Hard denials return HTTP 429 with `Retry-After` and only `{ code: "RATE_LIMITED", retryAfterSeconds: integer }`. Static/public pages, ordinary Programme reads, Protected Help and commercial discovery clicks have no Programme rate-limit dependency.
@@ -163,7 +168,17 @@ The additive migration is expected to be `0019_programme_runtime_hardening` afte
 
 RECOVERY-01 remains open and owns PR #65, RFC-024 and recovery canary `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`. This workstream must not switch to or modify that branch/PR, access the canary, reset/seed shared Preview, apply migration 0019 to shared Preview or Production, or mutate Production data. Migration, concurrency, purge and browser evidence use local/disposable PostgreSQL until RECOVERY-01 closes.
 
-If RECOVERY-01 merges before schema finalisation, the branch must update from new main, inspect migration history and retain a unique next migration identifier.
+After RECOVERY-01 closes, rollout order is mandatory:
+
+1. fetch new main, reconcile this branch and confirm migration `0019` is still unique;
+2. verify isolated Preview identity, apply `0019` to Preview and pass limiter, Programme mutation, purge dry-run, authenticated Cron-handler and feature-off smoke;
+3. obtain Founder review;
+4. under explicit later Founder authority, apply additive migration `0019` to Production while the old current-main application remains deployed;
+5. verify the new unused table/index/check constraints exist, no existing table changed and the old Production Programme remains operational without synthetic rows;
+6. only after that verification, merge PR #67 by merge commit and allow the automatic Production deployment; and
+7. configure `CRON_SECRET`, analytics flag, Vercel Pro Custom Events and matched pooling bindings separately under Founder authority.
+
+Merge-before-Production-migration is prohibited because the new runtime code queries the limiter table. The additive migration is deliberately compatible with base-main semantics because it creates only one unused table, its primary/check constraints and one index; it does not alter an existing table or column.
 
 ## 12. Database runtime target
 
@@ -184,7 +199,7 @@ Operational logs may contain fixed analytics event/result names, rate-limit scop
 
 ## 14. Rollout, cost and rollback
 
-Initial delivery is code/disposable-database complete with shared activation pending. Vercel Web Analytics may be enabled on the existing project only when control-plane evidence confirms no plan upgrade or incremental recurring commitment. No plan upgrade or paid analytics product is authorised. Expected incremental recurring infrastructure cost is USD 0.
+Initial delivery is code/disposable-database complete with shared activation pending. The current plan is Hobby: pageviews are available and Custom Events are unavailable. The target before commercial custom-event activation is Founder-managed Vercel Pro, whose base Custom Events contract permits at most two properties per event. Web Analytics Plus is not required or approved. Codex may not upgrade the account. Expected incremental recurring code-package cost remains USD 0; any Vercel Pro subscription is a separate external Founder activation.
 
 Analytics rollback sets `NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED` to a value other than exact `true` or removes the root component. Rate-limit code rollback must occur only with an explicit runtime decision; database rollback drops only the new operational table after code no longer depends on it. Cron rollback removes/disables the one schedule after ensuring no active invocation depends on it.
 
@@ -195,9 +210,11 @@ Production PROGRAM-AI, real provider, Google OAuth and commercial/referral flags
 Required evidence includes:
 
 - exact event-contract allow/deny tests, URL redaction and admin suppression;
+- a global proof that every one of the 15 custom events has at most two properties;
 - M1 ordered funnel, elapsed buckets, Mission/Review/completion/discovery events and no-content payload checks;
 - analytics failure non-authority and aggregate-report API mocks;
 - limit/limit+1, reset, source isolation, digest privacy, Retry-After and concurrent atomic-increment tests;
+- distributed anonymous mutation protection for authority confirm/withdrawal, PROGRAM-AI and legacy claim creation, Starting Point, support continuation, PROGRAM-AI turns and legacy M1 draft writes;
 - provider-call suppression and deterministic fallback/Type Instead behaviour;
 - clean M1–M10 progression below thresholds and exact-once regressions;
 - purge grace, dry-run, bounded execute, cascade, consumed-claim/user-authority preservation, bucket cleanup and idempotency;
@@ -206,4 +223,4 @@ Required evidence includes:
 - data-subject, Help, feature-off, auth, privacy, build-secret and browser regressions; and
 - exact-head CI/build evidence.
 
-The package remains a draft and must not merge. It may be described as `CODE COMPLETE / ACTIVATION PENDING` only after local/disposable gates pass. It may not be described as Production hardened until RECOVERY-01 closes, the unique migration is applied through the controlled shared-environment procedure, Preview smoke passes, and Founder Office separately approves Production environment activation.
+The package remains a draft and must not merge. It may be described as `CODE COMPLETE / ACTIVATION PENDING` only after local/disposable gates pass. It may not be described as Production hardened until RECOVERY-01 closes, Preview migration/smoke passes, Production migration is applied and verified while old main is still deployed, PR #67 subsequently merges, and Founder Office separately approves runtime configuration.

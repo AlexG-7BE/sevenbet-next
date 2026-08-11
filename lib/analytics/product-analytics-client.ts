@@ -92,7 +92,7 @@ export function createProductAnalyticsClient({
     },
     homeViewed(properties: ProductAnalyticsEventMap["programme_home_viewed"]) {
       once(
-        `home:${properties.currentMission}:${properties.programmeState}:${properties.engagementDayBucket}`,
+        `home:${properties.currentMission}:${properties.engagementDayBucket}`,
         "programme_home_viewed",
         properties,
       );

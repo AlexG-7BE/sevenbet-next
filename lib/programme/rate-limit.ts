@@ -1,6 +1,7 @@
 import { createHmac } from "node:crypto";
 
 import prisma from "@/lib/db/prisma";
+import { hashOpaqueToken } from "@/lib/programme/security";
 import { ServiceError } from "@/lib/services/service-error";
 
 export const PROGRAMME_RATE_LIMIT_WINDOW_MS = 10 * 60 * 1000;
@@ -14,6 +15,7 @@ export const programmeRateLimitPolicies = {
   PROGRAMME_M1_AI_IP: 30,
   PROGRAMME_MISSION_GUIDANCE_USER: 30,
   PROGRAMME_REVIEW_USER: 12,
+  PROGRAMME_MUTATION_SESSION: 60,
   PROGRAMME_MUTATION_USER: 120,
 } as const;
 
@@ -233,6 +235,10 @@ export async function assertProgrammeRateLimit(
     throw new ProgrammeRateLimitError(decision.retryAfterSeconds);
   }
   return decision;
+}
+
+export function assertAnonymousProgrammeMutationRateLimit(token: string, now?: Date) {
+  return assertProgrammeRateLimit("PROGRAMME_MUTATION_SESSION", hashOpaqueToken(token), now);
 }
 
 export async function programmeProviderRateLimitAllowance(

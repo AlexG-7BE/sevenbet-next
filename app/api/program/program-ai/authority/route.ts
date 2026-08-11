@@ -6,6 +6,7 @@ import {
   readProgrammeJson,
   requestCookie,
 } from "@/lib/programme/http";
+import { assertAnonymousProgrammeMutationRateLimit } from "@/lib/programme/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const authority = await programmeAiMissionOneService.confirmAuthority(
       token,
       await readProgrammeJson(request),
@@ -36,6 +38,7 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const authority = await programmeAiMissionOneService.withdrawAuthority(
       token,
     );

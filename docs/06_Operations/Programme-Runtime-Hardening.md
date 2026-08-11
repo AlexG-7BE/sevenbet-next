@@ -19,7 +19,10 @@ The runtime model is `ProgrammeRuntimeRateLimitBucket`. It has no user/session r
 | `PROGRAMME_M1_AI_IP` | 30 | provider suppressed; safe fallback |
 | `PROGRAMME_MISSION_GUIDANCE_USER` | 30 | provider suppressed; deterministic fallback |
 | `PROGRAMME_REVIEW_USER` | 12 | provider suppressed; deterministic fallback |
+| `PROGRAMME_MUTATION_SESSION` | 60 | HTTP 429 before anonymous mutation |
 | `PROGRAMME_MUTATION_USER` | 120 | HTTP 429 before mutation |
+
+The anonymous mutation source is the existing `hashOpaqueToken(token)` result passed ephemerally into the domain-separated HMAC limiter. Neither the raw token nor that intermediate token hash is persisted or logged; only the final 64-character HMAC bucket key is stored. The generic anonymous scope covers authority confirmation/withdrawal, PROGRAM-AI and legacy pending-claim creation, Starting Point confirmation, support continuation, PROGRAM-AI turn mutation and legacy M1 draft mutation. Provider scopes remain separate and unchanged.
 
 Hard denials return only `RATE_LIMITED` and an integer `retryAfterSeconds`, plus `Retry-After`. A database failure fails safe on provider cost and returns the bounded typed service failure before non-provider mutation. Public pages, ordinary reads and Protected Help do not depend on this limiter.
 
@@ -61,6 +64,18 @@ This procedure is **Planned**, not executed:
 
 No binding was changed by MVP-RUNTIME-01 because only direct aliases are currently available and the recovery programme owns shared-environment sequencing.
 
+### Mandatory post-RECOVERY rollout order
+
+1. Fetch new main after RECOVERY-01 closes, reconcile PR #67 and confirm `0019` remains unique.
+2. Resolve matched Preview pooled/direct bindings, prove Preview differs from Production, apply `0019` to Preview and pass limiter, Programme mutation, purge dry-run, synthetic-secret Cron-handler and feature-off smoke.
+3. Obtain Founder review.
+4. Under explicit Founder authority, apply additive `0019` to Production while the old current-main code is still deployed.
+5. Verify only the new unused limiter table/index/check constraints were added and the old Production Programme remains operational; create no synthetic Production rows.
+6. Only after successful Production migration verification, merge PR #67 by merge commit and allow the automatic Production deployment.
+7. Configure `CRON_SECRET`, the analytics flag, Vercel Pro Custom Events and matched runtime pooling separately under Founder authority.
+
+Do not merge PR #67 before Production migration 0019 is applied and verified. The new code consumes the table; the old code safely ignores the additive unused table.
+
 ## Migration 0019
 
 `0019_programme_runtime_hardening` creates one table and one expiry index. Its preflight requires Programme relations and rejects an incompatible existing bucket table. It does not alter, backfill, delete or relate existing rows.
@@ -73,7 +88,7 @@ npx prisma generate
 npm run programme:migrate
 ```
 
-Shared Preview and Production application are pending separate authority. Rollback is controlled SQL, only after code no longer consumes the table:
+Shared Preview and Production application are pending the separate authority and strict migration-before-merge order above. Rollback is controlled SQL, only after code no longer consumes the table:
 
 ```sql
 DROP TABLE IF EXISTS "ProgrammeRuntimeRateLimitBucket";

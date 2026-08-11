@@ -65,6 +65,7 @@ test("distributed rate limiting uses exact fixed-window scopes, HMAC keys, and o
     PROGRAMME_M1_AI_IP: 30,
     PROGRAMME_MISSION_GUIDANCE_USER: 30,
     PROGRAMME_REVIEW_USER: 12,
+    PROGRAMME_MUTATION_SESSION: 60,
     PROGRAMME_MUTATION_USER: 120,
   })) {
     assert.match(rateLimit, new RegExp(`${scope}: ${limit}`));
@@ -74,6 +75,7 @@ test("distributed rate limiting uses exact fixed-window scopes, HMAC keys, and o
   assert.match(rateLimit, /process\.env\.NODE_TEST_CONTEXT/);
   assert.doesNotMatch(rateLimit, /NODE_ENV\s*!==\s*["']production["']/);
   assert.doesNotMatch(rateLimit, /x-forwarded-for|localStorage/);
+  assert.match(migration, /'PROGRAMME_MUTATION_SESSION'/);
 });
 
 test("purge scope is restricted to anonymous sessions, unconsumed claims, and expired limiter buckets", () => {

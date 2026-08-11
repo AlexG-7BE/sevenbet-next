@@ -12,6 +12,7 @@ BEGIN
       FROM pg_constraint
       WHERE conrelid = 'public."ProgrammeRuntimeRateLimitBucket"'::regclass
         AND conname = 'ProgrammeRuntimeRateLimitBucket_scope_check'
+        AND pg_get_constraintdef(oid) LIKE '%PROGRAMME_MUTATION_SESSION%'
     ) THEN
       RAISE EXCEPTION 'Programme runtime hardening preflight failed: target table has an incompatible scope contract';
     END IF;

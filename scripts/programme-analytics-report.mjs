@@ -75,10 +75,12 @@ export const programmeAnalyticsQueries = {
   registrationCta: ["programme_registration_cta_presented"],
   claimRedeemed: ["programme_claim_redeemed"],
   ...Object.fromEntries(
-    ["day_0", "day_1", "day_2_3", "day_4_7", "day_8_plus", "unknown"].map((engagementDayBucket) => [
-      `engagement:${engagementDayBucket}`,
-      ["programme_home_viewed", { engagementDayBucket }],
-    ]),
+    Array.from({ length: 10 }, (_, index) => index + 1).flatMap((currentMission) =>
+      ["day_0", "day_1", "day_2_3", "day_4_7", "day_8_plus", "unknown"].map((engagementDayBucket) => [
+        `engagement:${currentMission}:${engagementDayBucket}`,
+        ["programme_home_viewed", { currentMission, engagementDayBucket }],
+      ]),
+    ),
   ),
   ...Object.fromEntries(Array.from({ length: 9 }, (_, index) => [
     `mission${index + 2}Completed`,
@@ -195,8 +197,11 @@ export function formatProgrammeAnalyticsReport(report, range) {
     ...report.activation.map((row) => `${row.label}: ${row.count}${row.fromPrevious ? ` · from previous ${row.fromPrevious}` : ""}`),
     `Voice / type submissions: ${report.inputMode.voice} / ${report.inputMode.text}`,
     "",
-    "PROGRAMME RETURN DAYS (aggregate home views)",
-    ...Object.entries(report.engagement).map(([key, count]) => `${key.slice("engagement:".length)}: ${count}`),
+    "PROGRAMME RETURN DAYS BY CURRENT MISSION (aggregate home views)",
+    ...Object.entries(report.engagement).map(([key, count]) => {
+      const [mission, bucket] = key.slice("engagement:".length).split(":");
+      return `M${mission} ${bucket}: ${count}`;
+    }),
     "",
     "MISSION RETENTION",
     ...report.missionRetention.map((row) => `M${row.mission} completion: ${row.count} · continuation ${row.continuationFromPrevious}`),

@@ -7,6 +7,7 @@ import {
   programmeResponse,
   requestCookie,
 } from "@/lib/programme/http";
+import { assertAnonymousProgrammeMutationRateLimit } from "@/lib/programme/rate-limit";
 import { pendingClaimLifetimeMs } from "@/lib/programme/security";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const claim = await programmeAiMissionOneService.createPendingClaim(
       token,
     );

@@ -14,6 +14,8 @@ Control-plane evidence was refreshed on 2026-08-11 without sending synthetic eve
 | Web Analytics after bounded provider action | Enabled; no event data generated | **Detected** |
 | Hobby page-view allowance | 50,000 events/month, 30-day retention, no overage billing | **Detected** from the current provider control plane |
 | Custom Events | Unavailable on the current Hobby plan | **Detected** |
+| Target Custom Events plan | Founder-managed Vercel Pro; maximum two properties per event | **Planned** |
+| Web Analytics Plus | Not required and not approved | **Not detected** |
 | Repository flag | Exact `NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED=true` required; default off | **Detected** in code |
 | Preview/Production flag | Absent | **Detected** in redacted Vercel inventories |
 | Custom-event activation | Blocked by plan and absent flag | **Not detected** |
@@ -21,7 +23,7 @@ Control-plane evidence was refreshed on 2026-08-11 without sending synthetic eve
 
 The provider enablement used the existing free Hobby Web Analytics entitlement only. No plan upgrade, payment method, recurring service or deployment was created.
 
-**FOUNDER ACTION REQUIRED — WEB ANALYTICS PLAN:** custom events require a Vercel Pro plan under the provider state detected on 2026-08-11. Founder Office must separately approve or reject that paid-plan change. Until then, do not set the repository analytics flag to `true` in Preview or Production merely to activate custom events. Recheck current official [Web Analytics limits](https://vercel.com/docs/analytics/limits-and-pricing) and [Custom Events documentation](https://vercel.com/docs/analytics/custom-events) at decision time.
+**FOUNDER ACTION REQUIRED — WEB ANALYTICS PLAN:** custom events require a Vercel Pro plan under the provider state detected on 2026-08-11. Base Pro supports at most two custom properties per event; the repository globally enforces that ceiling across all 15 events. Web Analytics Plus is not required or approved. Founder Office must separately approve or reject the Pro plan change. Until then, do not set the repository analytics flag to `true` in Preview or Production merely to activate custom events. Recheck current official [Web Analytics limits](https://vercel.com/docs/analytics/limits-and-pricing) and [Custom Events documentation](https://vercel.com/docs/analytics/custom-events) at decision time.
 
 ## Runtime controls
 
@@ -44,7 +46,7 @@ Analytics delivery failures log only a fixed event name and failure category. Pr
 
 ## Event dictionary and denylist
 
-The exact 15-event dictionary and property values are normative in RFC-026 section 4 and enforced by `lib/analytics/product-analytics-events.ts`. Product code receives named methods, not a generic tracking API. The runtime parser rejects extra keys, missing keys, open strings, invalid Mission numbers and invalid action positions.
+The exact 15-event dictionary and property values are normative in RFC-026 section 4 and enforced by `lib/analytics/product-analytics-events.ts`. Product code receives named methods, not a generic tracking API. The runtime parser rejects extra keys, missing keys, open strings, invalid Mission numbers and invalid action positions. Every event has at most two properties. `programme_home_viewed` has exactly `currentMission` and `engagementDayBucket`; `programmeState` is absent and must not be recreated as a third property.
 
 Never add any of the following without a new approved RFC:
 
@@ -76,9 +78,9 @@ VERCEL_TOKEN=<operator-process-secret> npm run analytics:programme -- --from 202
 
 The report queries Vercel's aggregate Web Analytics endpoint only. It requests event counts grouped by event name and closed properties. It does not query application tables, visitor rows or identities. `VERCEL_TOKEN` is read only from the process environment and is never printed or accepted as a CLI argument.
 
-Output includes M1 activation, voice/text mix, bounded later-day Programme home views, M2–M10 completion continuation, Review openings, Programme completion, discovery clicks and AI/voice reliability. `N/A` is emitted for zero denominators. All percentages are labelled aggregate event continuation, not cohort-perfect retention.
+Output includes M1 activation, voice/text mix, bounded later-day Programme home views by current Mission and engagement-day bucket, M2–M10 completion continuation, Review openings, Programme completion, discovery clicks and AI/voice reliability. Completion is read from `programme_completed`, not a removed Home-state dimension. `N/A` is emitted for zero denominators. All percentages are labelled aggregate event continuation, not cohort-perfect retention.
 
-On Hobby, the report's custom-event portion remains unavailable/empty until Founder Office approves a provider plan with Custom Events and separately approves flag activation.
+On Hobby, the report's custom-event portion remains unavailable/empty until Founder Office manually approves Vercel Pro and separately approves flag activation. Codex made no plan change; code-package incremental recurring cost remains USD 0.
 
 ## Activation checklist
 

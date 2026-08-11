@@ -8,7 +8,10 @@ import {
   requestAddress,
   requestCookie,
 } from "@/lib/programme/http";
-import { programmeProviderRateLimitAllowance } from "@/lib/programme/rate-limit";
+import {
+  assertAnonymousProgrammeMutationRateLimit,
+  programmeProviderRateLimitAllowance,
+} from "@/lib/programme/rate-limit";
 import { hashOpaqueToken } from "@/lib/programme/security";
 import { isProgramAiRealProviderEnabled } from "@/lib/programme/program-ai/runtime-config";
 
@@ -18,6 +21,7 @@ export async function POST(request: Request) {
   const startedAt = performance.now();
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const providerConfigured = isProgramAiRealProviderEnabled();
     const providerAllowed = !providerConfigured || (
       await programmeProviderRateLimitAllowance("PROGRAMME_M1_AI_SESSION", hashOpaqueToken(token))

@@ -6,12 +6,14 @@ import {
   readProgrammeJson,
   requestCookie,
 } from "@/lib/programme/http";
+import { assertAnonymousProgrammeMutationRateLimit } from "@/lib/programme/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const result = await programmeAiMissionOneService.confirmStartingPoint(
       token,
       await readProgrammeJson(request),

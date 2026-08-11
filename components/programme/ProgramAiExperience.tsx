@@ -587,14 +587,8 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   useEffect(() => {
     if (phase !== "home" || !home) return;
-    const programmeState = home.missions.every((mission) => mission.status === "completed")
-      ? "completed"
-      : home.startingPoint || home.missions.some((mission) => mission.status === "completed" || mission.actionsCompleted > 0)
-        ? "in_progress"
-        : "not_started";
     productAnalyticsClient.homeViewed({
       currentMission: home.currentMission as ProgrammeMissionNumber,
-      programmeState,
       engagementDayBucket: home.engagementDayBucket,
     });
   }, [home, phase]);

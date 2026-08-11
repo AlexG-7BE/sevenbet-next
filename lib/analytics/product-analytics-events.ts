@@ -33,7 +33,6 @@ export type ProductAnalyticsEventMap = {
   programme_claim_redeemed: { authMethod: "google" | "email" | "unknown" };
   programme_home_viewed: {
     currentMission: ProgrammeMissionNumber;
-    programmeState: "not_started" | "in_progress" | "completed";
     engagementDayBucket: "day_0" | "day_1" | "day_2_3" | "day_4_7" | "day_8_plus" | "unknown";
   };
   programme_mission_opened: {
@@ -95,7 +94,6 @@ const personalisedResultTypes = ["starting_point", "clarification"] as const;
 const valueElapsedBuckets = ["lt_30s", "30_60s", "60_90s", "90_120s", "gt_120s", "unknown"] as const;
 const registrationElapsedBuckets = ["lt_60s", "60_90s", "90_120s", "gt_120s", "unknown"] as const;
 const authMethods = ["google", "email", "unknown"] as const;
-const programmeStates = ["not_started", "in_progress", "completed"] as const;
 const engagementDayBuckets = ["day_0", "day_1", "day_2_3", "day_4_7", "day_8_plus", "unknown"] as const;
 const missionModes = ["start", "resume", "review"] as const;
 const milestones = ["first", "mid", "full"] as const;
@@ -187,10 +185,9 @@ export function parseProductAnalyticsEvent<N extends ProductAnalyticsEventName>(
       exactKeys(value, ["authMethod"]);
       return { name, properties: { authMethod: closedString(value.authMethod, authMethods) } } as ProductAnalyticsEvent<N>;
     case "programme_home_viewed":
-      exactKeys(value, ["currentMission", "programmeState", "engagementDayBucket"]);
+      exactKeys(value, ["currentMission", "engagementDayBucket"]);
       return { name, properties: {
         currentMission: missionNumber(value.currentMission),
-        programmeState: closedString(value.programmeState, programmeStates),
         engagementDayBucket: closedString(value.engagementDayBucket, engagementDayBuckets),
       } } as ProductAnalyticsEvent<N>;
     case "programme_mission_opened":

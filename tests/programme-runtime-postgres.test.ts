@@ -4,6 +4,7 @@ import test from "node:test";
 import prisma from "../lib/db/prisma";
 import { PrismaProgrammeRateLimiter, programmeRateLimitPolicies } from "../lib/programme/rate-limit";
 import { PROGRAMME_EXPIRY_GRACE_MS, purgeExpiredProgrammeRuntime } from "../lib/programme/runtime-expiry-purge";
+import { hashOpaqueToken } from "../lib/programme/security";
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -34,6 +35,27 @@ test("real PostgreSQL serializes concurrent fixed-window increments", async () =
   assert.equal(rows[0].count, 50);
   assert.match(rows[0].bucketKey, /^[a-f0-9]{64}$/);
   assert.doesNotMatch(JSON.stringify(rows), /203\.0\.113\.80/);
+  await clearRuntimeFixtures();
+});
+
+test("real PostgreSQL persists only the final HMAC for an anonymous mutation source", async () => {
+  assertDisposablePostgres();
+  await clearRuntimeFixtures();
+  const rawToken = "disposable-raw-anonymous-token";
+  const tokenHash = hashOpaqueToken(rawToken);
+  const limiter = new PrismaProgrammeRateLimiter(prisma, "disposable-postgres-test-secret");
+  await limiter.consume({
+    scope: "PROGRAMME_MUTATION_SESSION",
+    source: tokenHash,
+    now: new Date("2026-08-11T10:01:00.000Z"),
+  });
+  const rows = await prisma.programmeRuntimeRateLimitBucket.findMany();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].scope, "PROGRAMME_MUTATION_SESSION");
+  assert.match(rows[0].bucketKey, /^[a-f0-9]{64}$/);
+  assert.notEqual(rows[0].bucketKey, tokenHash);
+  assert.doesNotMatch(JSON.stringify(rows), new RegExp(rawToken));
+  assert.doesNotMatch(JSON.stringify(rows), new RegExp(tokenHash));
   await clearRuntimeFixtures();
 });
 
