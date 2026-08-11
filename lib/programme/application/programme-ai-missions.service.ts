@@ -131,7 +131,14 @@ export class ProgrammeAiMissionsService {
       const { source, enrollment } = await requireEnrollment(unitOfWork, userId);
       const progress = await unitOfWork.progress.findMissionProgress(enrollment.id, missionNumber);
       await this.assertAccessible(unitOfWork, enrollment.id, missionNumber, progress);
-      return this.projectMission(definitionFor(missionNumber), progress, source.program.steps[missionNumber - 1]?.id ?? "");
+      return this.projectMissionForUser(
+        unitOfWork,
+        userId,
+        source.program.id,
+        definitionFor(missionNumber),
+        progress,
+        source.program.steps[missionNumber - 1]?.id ?? "",
+      );
     });
   }
 
@@ -139,23 +146,12 @@ export class ProgrammeAiMissionsService {
     assertProgramAiV1Enabled();
     return this.unitOfWork.snapshot(async (unitOfWork) => {
       const { source } = await requireEnrollment(unitOfWork, userId);
-      const result = await unitOfWork.programAiMissionOne.home(userId, source.program.id);
-      const progress = new Map(
-        (result.enrollment?.missionProgress as MissionProgress[] | undefined)?.map((item) => [item.missionNumber, item]) ?? [],
-      );
+      const { startingPoint, progress } = await this.loadProgrammeHistory(unitOfWork, userId, source.program.id);
       if (progress.get(unlockMission)?.status !== "COMPLETED") {
         throw new ProgrammeStateConflictError(`Mission ${unlockMission} must be completed before this Personal Review`);
       }
       return {
-        startingPoint: result.enrollment?.programmeStartingPoint
-          ? {
-              startingPoint: result.enrollment.programmeStartingPoint.startingPoint,
-              desiredChange: result.enrollment.programmeStartingPoint.desiredChange,
-              broadContext: result.enrollment.programmeStartingPoint.broadContext,
-              continuationCue: result.enrollment.programmeStartingPoint.continuationCue,
-              chosenBoundaryAction: result.enrollment.programmeStartingPoint.chosenBoundaryAction,
-            }
-          : null,
+        startingPoint,
         facts: programAiMissionRegistry
           .filter((definition) => definition.missionNumber <= unlockMission)
           .map((definition) => ({
@@ -185,7 +181,7 @@ export class ProgrammeAiMissionsService {
       if (progress?.status === "COMPLETED") {
         return {
           xpAwarded: 0,
-          mission: this.projectMission(definition, progress, source.program.steps[missionNumber - 1].id),
+          mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
           home: await this.projectHome(unitOfWork, userId),
         };
       }
@@ -202,7 +198,7 @@ export class ProgrammeAiMissionsService {
         if (!progress) throw new ProgrammeResourceNotFoundError(`Mission ${missionNumber} progress`);
         return {
           xpAwarded: 0,
-          mission: this.projectMission(definition, progress, source.program.steps[missionNumber - 1].id),
+          mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
           home: await this.projectHome(unitOfWork, userId),
         };
       }
@@ -240,7 +236,7 @@ export class ProgrammeAiMissionsService {
       });
       return {
         xpAwarded: xpEvent.count ? input.action.xp : 0,
-        mission: this.projectMission(definition, saved, source.program.steps[missionNumber - 1].id),
+        mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, saved, source.program.steps[missionNumber - 1].id),
         home: await this.projectHome(unitOfWork, userId),
       };
     });
@@ -257,7 +253,7 @@ export class ProgrammeAiMissionsService {
       if (progress.status === "COMPLETED") {
         return {
           xpAwarded: 0,
-          mission: this.projectMission(definition, progress, source.program.steps[missionNumber - 1].id),
+          mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, progress, source.program.steps[missionNumber - 1].id),
           home: await this.projectHome(unitOfWork, userId),
         };
       }
@@ -316,7 +312,7 @@ export class ProgrammeAiMissionsService {
       });
       return {
         xpAwarded: xpEvent.count ? 25 : 0,
-        mission: this.projectMission(definition, saved, source.program.steps[missionNumber - 1].id),
+        mission: await this.projectMissionForUser(unitOfWork, userId, source.program.id, definition, saved, source.program.steps[missionNumber - 1].id),
         home: await this.projectHome(unitOfWork, userId),
       };
     });
@@ -364,6 +360,58 @@ export class ProgrammeAiMissionsService {
       completionBonus: 25,
       completedAt: progress?.completedAt?.toISOString() ?? null,
       legacyCompletion: progress?.status === "COMPLETED" && !hasNewContract,
+    };
+  }
+
+  private async projectMissionForUser(
+    unitOfWork: ProgrammeUnitOfWork,
+    userId: string,
+    programId: string,
+    definition: ProgramAiMissionDefinition,
+    progress: MissionProgress | null,
+    stepId: string,
+  ) {
+    const mission = this.projectMission(definition, progress, stepId);
+    if (definition.missionNumber !== 10) return mission;
+    const history = await this.loadProgrammeHistory(unitOfWork, userId, programId);
+    return {
+      ...mission,
+      programmeFacts: {
+        startingPoint: history.startingPoint,
+        facts: programAiMissionRegistry
+          .filter((item) => item.missionNumber <= 9)
+          .flatMap((item) => {
+            const itemProgress = history.progress.get(item.missionNumber);
+            if (itemProgress?.status !== "COMPLETED") return [];
+            const artifact = artifactFromDraft(itemProgress.draft, item);
+            return Object.keys(artifact).length
+              ? [{ missionNumber: item.missionNumber, title: item.title, artifact }]
+              : [];
+          }),
+      },
+    };
+  }
+
+  private async loadProgrammeHistory(
+    unitOfWork: ProgrammeUnitOfWork,
+    userId: string,
+    programId: string,
+  ) {
+    const result = await unitOfWork.programAiMissionOne.home(userId, programId);
+    const programmeStartingPoint = result.enrollment?.programmeStartingPoint;
+    return {
+      startingPoint: programmeStartingPoint
+        ? {
+            startingPoint: programmeStartingPoint.startingPoint,
+            desiredChange: programmeStartingPoint.desiredChange,
+            broadContext: programmeStartingPoint.broadContext,
+            continuationCue: programmeStartingPoint.continuationCue,
+            chosenBoundaryAction: programmeStartingPoint.chosenBoundaryAction,
+          }
+        : null,
+      progress: new Map(
+        (result.enrollment?.missionProgress as MissionProgress[] | undefined)?.map((item) => [item.missionNumber, item]) ?? [],
+      ),
     };
   }
 

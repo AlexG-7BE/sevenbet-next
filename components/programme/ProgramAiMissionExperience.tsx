@@ -56,8 +56,8 @@ const actionUi: Record<string, ActionUi> = {
   rehearse_response: { prompt: "Rehearse the response at the choice point.", explanation: "Choose a strategy; feedback stays short and non-shaming.", fields: [{ key: "responseStrategy", legend: "Response strategy", options: responseOptions() }] },
   build_fallback_response: { prompt: "If the first response is hard to use, what is the fallback?", explanation: "A fallback keeps the plan usable without claiming certainty.", fields: [{ key: "fallbackStrategy", legend: "Fallback strategy", options: responseOptions() }] },
   review_my_plan: { prompt: "Review what is legitimately present.", explanation: "Missing outputs are omitted. Nothing is invented to make the timeline look complete.", constants: { timelineReviewed: true }, sequence: ["Starting Point", "Goal", "Pause", "Boundary", "Checks", "Friction", "Support", "Research", "Fallback"], fields: [{ key: "confirm", legend: "Timeline check", options: [option("yes", "I reviewed the available structural facts")] }] },
-  assemble_final_plan: { prompt: "Choose up to three priorities for the one-screen plan.", explanation: "The final draft only uses facts you confirmed.", fields: [{ key: "planPriorityIds", legend: "Plan priorities", multiple: true, minimum: 1, maximum: 3, options: [option("starting_point", "Starting Point"), option("goal", "7-day goal"), option("early_signal", "Early signal"), option("pause_move", "Pause move"), option("boundary", "Boundary"), option("decision_checks", "Decision checks"), option("friction", "Friction"), option("support", "Support"), option("research", "Research checklist"), option("fallback", "Fallback")] }] },
-  choose_review_cadence: { prompt: "When will you review the plan?", explanation: "This saves a cadence only. It does not create an email or reminder.", fields: [{ key: "reviewCadenceDays", legend: "Review cadence", options: [option("7", "Every 7 days"), option("14", "Every 14 days"), option("30", "Every 30 days")] }] },
+  assemble_final_plan: { prompt: "Choose up to three priorities for the one-screen plan.", explanation: "Save the parts you want the final plan to emphasise. Only confirmed facts from those parts will be used.", fields: [{ key: "planPriorityIds", legend: "Plan priorities", multiple: true, minimum: 1, maximum: 3, options: [option("starting_point", "Starting Point"), option("goal", "7-day goal"), option("early_signal", "Early signal"), option("pause_move", "Pause move"), option("boundary", "Boundary"), option("decision_checks", "Decision checks"), option("friction", "Friction"), option("support", "Support"), option("research", "Research checklist"), option("fallback", "Fallback")] }] },
+  choose_review_cadence: { prompt: "Build the plan, then choose when to review it.", explanation: "The draft uses your persisted priorities and confirmed Programme facts. The cadence creates no email or reminder.", fields: [{ key: "reviewCadenceDays", legend: "Review cadence", options: [option("7", "Every 7 days"), option("14", "Every 14 days"), option("30", "Every 30 days")] }] },
 };
 
 function frictionOptions() { return [option("operator_limit", "Operator limit"), option("bank_block", "Bank block"), option("device_or_site_block", "Device or site block"), option("remove_saved_payment", "Remove saved payment"), option("trusted_contact", "Trusted contact"), option("self_exclusion_or_help", "Self-exclusion or protected Help")]; }
@@ -65,9 +65,9 @@ function comparisonOptions() { return [option("licensing_status", "Licence / reg
 function researchOptions() { return [option("licensing_status", "Licensing or regulatory status"), option("operator_identity", "Operator identity"), option("terms", "Material terms"), option("withdrawals", "Withdrawal conditions"), option("payments", "Payments"), option("safer_gambling_tools", "Safer-gambling tools"), option("offer_conditions", "Offer conditions")]; }
 function responseOptions() { return [option("pause_and_check", "Pause and run the checks"), option("leave_and_return", "Leave and return later"), option("use_boundary", "Use the boundary"), option("ask_for_support", "Use support")]; }
 
-const guidanceActions = new Set(["build_7_day_goal", "name_early_signal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response", "assemble_final_plan"]);
-const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_support_card", "assemble_final_plan"]);
-const guidanceBuilderActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response", "assemble_final_plan"]);
+const guidanceActions = new Set(["build_7_day_goal", "name_early_signal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response"]);
+const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_support_card"]);
+const guidanceBuilderActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response"]);
 const correctSequence = ["cue", "early_signal", "urge_builds", "choice_point"];
 
 async function request<T>(path: string, userId: string, init?: RequestInit) {
@@ -111,6 +111,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const [firstCheck, setFirstCheck] = useState("");
   const current = mission.actions.find((action) => action.id === mission.currentAction);
   const ui = current ? actionUi[current.id] : null;
+  const finalPlanStage = mission.missionNumber === 10 && current?.id === "choose_review_cadence";
   useEffect(() => {
     if (ui) setValues(initialValues(ui, mission.artifact));
     setGuidance(null); setGuidanceSelected(""); setSequenceFeedback(""); setAppliedChecks([]); setFirstCheck("");
@@ -122,6 +123,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     return count >= (field.minimum ?? 1) && count <= (field.maximum ?? 1);
     });
     if (!fieldsValid) return false;
+    if (finalPlanStage && !guidance) return false;
     if (guidanceBuilderActions.has(current.id) && !guidance) return false;
     if (["build_7_day_goal", "build_boundary_rule", "rehearse_response"].includes(current.id) && !guidanceSelected) return false;
     if (current.id === "run_decision_check" && !firstCheck) return false;
@@ -130,7 +132,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       return checks.length > 0 && checks.every((check) => appliedChecks.includes(check));
     }
     return true;
-  }, [appliedChecks, current, firstCheck, guidance, guidanceSelected, mission.artifact.decisionChecks, ui, values]);
+  }, [appliedChecks, current, finalPlanStage, firstCheck, guidance, guidanceSelected, mission.artifact.decisionChecks, ui, values]);
 
   function choose(field: Field, value: string) {
     setValues((currentValues) => {
@@ -190,9 +192,10 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     try {
       const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, userId, { method: "POST", body: JSON.stringify({ ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
       setGuidance(result.guidance);
-      if (["build_support_card", "assemble_final_plan"].includes(current?.id ?? "") && !localWording.trim() && result.guidance.options[0]) {
+      if ((current?.id === "build_support_card" || finalPlanStage) && !localWording.trim() && result.guidance.options[0]) {
         onLocalWording(result.guidance.options[0].text);
       }
+      if (finalPlanStage && result.guidance.options[0]) setGuidanceSelected(result.guidance.options[0].id);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Guidance is unavailable"); }
     finally { setBusy(false); }
   }
@@ -236,22 +239,26 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
         <section className={styles.challenge}>
           <span className={styles.eyebrow}>ACTION {mission.actionsCompleted + 1} · +{current.xp} XP</span><h2>{ui.prompt}</h2><p>{ui.explanation}</p>
           {current.id === "map_urge_sequence" ? <SequenceBuilder feedback={sequenceFeedback} onMove={moveSequence} order={sequenceOrder} /> : null}
-          {current.id === "review_my_plan" ? <ProgrammeTimeline completedMissionNumbers={home.missions.filter((item) => item.status === "completed").map((item) => item.missionNumber)} startingPoint={home.startingPoint?.startingPoint} /> : null}
+          {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
           {current.id === "reality_check" ? <ScenarioPanel eyebrow="REALITY CHECK" scenario="It’s been a difficult day. Which version still feels realistic?" /> : null}
           {["run_decision_check", "choose_scenario"].includes(current.id) && (values.scenarioChoice?.[0] || values.scenarioType?.[0]) ? <ScenarioPanel scenario={values.scenarioChoice?.[0] ?? values.scenarioType?.[0] ?? ""} /> : null}
           {current.id === "rehearse_response" && typeof mission.artifact.scenarioType === "string" ? <ScenarioPanel eyebrow="YOUR REHEARSAL" scenario={mission.artifact.scenarioType} /> : null}
           {current.id === "choose_execution" ? <ScenarioPanel eyebrow="PRESSURE CHECK" scenario="The boundary is ready on paper. What would it need before a pressured moment?" /> : null}
           {current.id === "rehearse_bypass" ? <ScenarioPanel eyebrow="BYPASS TEST" scenario="What could make this easy to undo?" /> : null}
           {current.id === "commit_pause_rule" ? <><ScenarioPanel eyebrow="APPLY YOUR CHECKS" scenario="A second decision appears with less time and more pressure. Use the routine before choosing your pause rule." /><DecisionApplication applied={appliedChecks} checks={Array.isArray(mission.artifact.decisionChecks) ? mission.artifact.decisionChecks : []} onToggle={toggleAppliedCheck} /></> : null}
-          {ui.fields.filter(() => current.id !== "map_urge_sequence" && current.id !== "rehearse_response").map((field) => <ChoiceCards key={field.key} legend={field.legend} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={field.options} selected={values[field.key] ?? []} selectionNote={field.multiple ? `choose ${field.minimum === field.maximum ? field.minimum : `${field.minimum}–${field.maximum}`}` : undefined} />)}
+          {finalPlanStage ? <>
+            {!guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">Build my plan</ActionButton> : <AiCandidatePicker guidance={guidance} heading="Review your one-screen plan" onSelect={selectGuidance} selectedId={guidanceSelected} />}
+            {guidance ? <label className={styles.localField}><span>Your wording · kept in this tab</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder="Use the grounded draft above or write your own version…" value={localWording} /></label> : null}
+            {guidance ? ui.fields.map((field) => <ChoiceCards key={field.key} legend={field.legend} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={field.options} selected={values[field.key] ?? []} selectionNote={field.multiple ? `choose ${field.minimum === field.maximum ? field.minimum : `${field.minimum}–${field.maximum}`}` : undefined} />) : null}
+          </> : ui.fields.filter(() => current.id !== "map_urge_sequence" && current.id !== "rehearse_response").map((field) => <ChoiceCards key={field.key} legend={field.legend} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={field.options} selected={values[field.key] ?? []} selectionNote={field.multiple ? `choose ${field.minimum === field.maximum ? field.minimum : `${field.minimum}–${field.maximum}`}` : undefined} />)}
           {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <ChoiceCards legend="What would you check first?" onChoose={setFirstCheck} options={[option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")]} selected={firstCheck ? [firstCheck] : []} /> : null}
           {current.id === "build_friction_stack" ? <StackBuilder onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
           {current.id === "decode_offer_terms" ? <OfferDecoder selected={values.offerTermSignal?.[0] ?? ""} /> : null}
-          {guidance && guidanceBuilderActions.has(current.id) ? <AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : current.id === "assemble_final_plan" ? "Review your one-screen plan" : "Choose or edit the wording that fits"} onSelect={selectGuidance} selectedId={guidanceSelected} /> : null}
+          {guidance && guidanceBuilderActions.has(current.id) ? <AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : "Choose or edit the wording that fits"} onSelect={selectGuidance} selectedId={guidanceSelected} /> : null}
           {guidance && !guidanceBuilderActions.has(current.id) ? <aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>USEFUL INSIGHT</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside> : null}
           {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">That response creates a clear next move. You can still choose a different option before confirming it.</p> : null}
           {localWordingActions.has(current.id) ? <label className={styles.localField}><span>Your wording · kept in this tab</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder="Choose a draft above or write your own version…" value={localWording} /></label> : null}
-          <div className={styles.submitRow}>{guidanceActions.has(current.id) && !guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">{current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "assemble_final_plan" ? "Build my plan" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts"}</ActionButton> : null}<ActionButton disabled={busy || !valid} onClick={saveAction} size="large">{busy ? "Saving…" : current.id === "map_urge_sequence" ? `Check sequence · +${current.xp} XP when correct` : `Confirm action · +${current.xp} XP`}</ActionButton></div>
+          <div className={styles.submitRow}>{guidanceActions.has(current.id) && !guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">{current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts"}</ActionButton> : null}<ActionButton disabled={busy || !valid} onClick={saveAction} size="large">{busy ? "Saving…" : current.id === "map_urge_sequence" ? `Check sequence · +${current.xp} XP when correct` : `Confirm action · +${current.xp} XP`}</ActionButton></div>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}<p aria-live="polite" className={styles.status}>{announcement}</p>
         </section>
         <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} localWording={localWording} missionNumber={mission.missionNumber} />

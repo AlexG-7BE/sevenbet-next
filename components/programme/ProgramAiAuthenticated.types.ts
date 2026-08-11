@@ -44,6 +44,14 @@ export type ProgramAiMission = {
   completionBonus: 25;
   completedAt: string | null;
   legacyCompletion: boolean;
+  programmeFacts?: {
+    startingPoint: ProgrammeStartingPointValue | null;
+    facts: Array<{
+      missionNumber: number;
+      title: string;
+      artifact: Record<string, string | number | boolean | string[]>;
+    }>;
+  };
 };
 
 export type ProgramAiGuidance = {

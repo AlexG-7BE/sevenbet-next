@@ -195,6 +195,58 @@ export function humanValue(value: string) {
   return valueLabels[value] ?? "Unavailable";
 }
 
+const planPriorityFacts: Record<string, { missionNumber: number; fields: readonly string[] }> = {
+  goal: { missionNumber: 2, fields: ["direction", "goalStyle", "reviewWindowDays"] },
+  early_signal: { missionNumber: 3, fields: ["earlySignalCategory"] },
+  pause_move: { missionNumber: 3, fields: ["pauseMove"] },
+  boundary: { missionNumber: 4, fields: ["boundaryCategory", "triggerType", "executionMethod"] },
+  decision_checks: { missionNumber: 5, fields: ["decisionChecks", "pauseRuleType"] },
+  friction: { missionNumber: 6, fields: ["frictionMethods", "fallbackMethod"] },
+  support: { missionNumber: 7, fields: ["supportModes", "exitActionType"] },
+  research: { missionNumber: 8, fields: ["researchCriteria"] },
+  fallback: { missionNumber: 9, fields: ["responseStrategy", "fallbackStrategy"] },
+};
+
+function boundedSegment(value: string, maximum = 84) {
+  return value.length <= maximum ? value : `${value.slice(0, maximum - 1).trimEnd()}…`;
+}
+
+export function deterministicFinalPlanText(context: unknown) {
+  const record = context && typeof context === "object" && !Array.isArray(context)
+    ? context as Record<string, unknown>
+    : {};
+  const startingPoint = record.startingPoint && typeof record.startingPoint === "object" && !Array.isArray(record.startingPoint)
+    ? record.startingPoint as Record<string, unknown>
+    : {};
+  const facts = Array.isArray(record.facts) ? record.facts : [];
+  const priorities = Array.isArray(record.planPriorityIds)
+    ? record.planPriorityIds.filter((value): value is string => typeof value === "string")
+    : [];
+  const segments = priorities.flatMap((priority) => {
+    if (priority === "starting_point") {
+      return typeof startingPoint.startingPoint === "string" && startingPoint.startingPoint.trim()
+        ? [`Starting Point: ${boundedSegment(startingPoint.startingPoint.trim())}`]
+        : [];
+    }
+    const projection = planPriorityFacts[priority];
+    if (!projection) return [];
+    const fact = facts.find((value) => value && typeof value === "object" && !Array.isArray(value)
+      && (value as Record<string, unknown>).missionNumber === projection.missionNumber) as Record<string, unknown> | undefined;
+    const artifact = fact?.artifact && typeof fact.artifact === "object" && !Array.isArray(fact.artifact)
+      ? fact.artifact as ProgramAiStructuralArtifact
+      : {};
+    const values = presentMissionArtifact(artifact)
+      .filter((row) => projection.fields.includes(row.key) && row.value !== "Unavailable")
+      .map((row) => row.value);
+    return values.length ? [`${humanValue(priority)}: ${boundedSegment(values.join("; "))}`] : [];
+  });
+  if (!segments.length) return "Review only the confirmed parts of your Programme; add nothing that is missing.";
+  return segments.reduce((result, segment) => {
+    const candidate = result ? `${result}. ${segment}` : segment;
+    return candidate.length <= 238 ? candidate : result;
+  }, "") || boundedSegment(segments[0], 238);
+}
+
 export const scenarioCopy: Record<string, string> = {
   unexpected_offer: "A headline appears when you were not planning to look. The quick route is open.",
   difficult_day: "The day has been difficult and an old route feels easier than making another decision.",

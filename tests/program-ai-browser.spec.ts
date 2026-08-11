@@ -664,7 +664,10 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       await openCurrentMission(page, 10, 768);
       await expect(page.getByRole("heading", { name: "What you have built, in order." })).toBeVisible();
       await expect(page.getByText("Starting Point", { exact: true })).toBeVisible();
-      await expect(page.getByText("Rehearsal", { exact: true })).toBeVisible();
+      await expect(page.getByText("Pause before one decision", { exact: true })).toBeVisible();
+      await expect(page.getByText("Bank block", { exact: true })).toBeVisible();
+      await expect(page.getByText("Pause and run the checks", { exact: true })).toBeVisible();
+      await expect(page.getByText("Built and ready to review")).toHaveCount(0);
       await noHorizontalOverflow(page);
     }
     for (const [index, action] of mission.actions.entries()) {
@@ -755,9 +758,14 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
           for (const priority of ["Pause move", "Boundary", "Fallback"]) {
             await page.getByRole("checkbox", { name: priority }).check();
           }
+          await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+          await expect(page.getByRole("heading", { name: "Build the plan, then choose when to review it." })).toBeVisible();
           await page.getByRole("button", { name: "Build my plan" }).click();
           await expect(page.getByRole("heading", { name: "Review your one-screen plan" })).toBeVisible();
-          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Pause move: Wait 10 minutes");
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Boundary: When the early signal appears; Bank block; Pause");
+          await page.getByRole("radio", { name: "Every 14 days" }).check();
+          await page.getByRole("button", { name: "Confirm action · +15 XP" }).click();
           await noHorizontalOverflow(page);
         }
       }

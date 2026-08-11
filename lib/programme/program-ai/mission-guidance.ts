@@ -1,4 +1,5 @@
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
+import { deterministicFinalPlanText } from "@/lib/programme/program-ai/mission-presentation";
 import type {
   ProgramAiMissionNumber,
   ProgramAiReviewMilestone,
@@ -124,6 +125,15 @@ export function deterministicGuidance(
   context?: unknown,
 ): ProgramAiGuidanceResult {
   const base = guidanceFallbacks[operation];
+  if (operation === "M10_FINAL_PLAN") {
+    return {
+      ...base,
+      operation,
+      summary: "This one-screen plan uses the confirmed Programme facts behind your selected priorities.",
+      options: [{ id: "plan", text: deterministicFinalPlanText(context) }],
+      generation: "deterministic_fallback",
+    };
+  }
   if (operation !== "M9_REHEARSAL") {
     return { ...base, operation, options: base.options.map((option) => ({ ...option })), generation: "deterministic_fallback" };
   }

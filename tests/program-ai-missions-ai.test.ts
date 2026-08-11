@@ -57,6 +57,23 @@ test("deterministic guidance and Reviews remain short, grounded and non-commerci
   }
 });
 
+test("provider-off M10 plan changes with confirmed Programme facts and uses human labels", () => {
+  const boundaryPlan = deterministicGuidance("M10_FINAL_PLAN", {
+    startingPoint: { startingPoint: "I return quickly after a difficult day." },
+    facts: [{ missionNumber: 4, title: "Build one boundary", artifact: { boundaryCategory: "pause", executionMethod: "bank_block" } }],
+    planPriorityIds: ["boundary"],
+  });
+  const pausePlan = deterministicGuidance("M10_FINAL_PLAN", {
+    startingPoint: { startingPoint: "I return quickly after a difficult day." },
+    facts: [{ missionNumber: 3, title: "Understand the urge", artifact: { pauseMove: "wait_ten_minutes" } }],
+    planPriorityIds: ["pause_move"],
+  });
+  assert.notEqual(boundaryPlan.options[0].text, pausePlan.options[0].text);
+  assert.match(boundaryPlan.options[0].text, /Boundary: Pause; Bank block/);
+  assert.match(pausePlan.options[0].text, /Pause move: Wait 10 minutes/);
+  assert.doesNotMatch(`${boundaryPlan.options[0].text} ${pausePlan.options[0].text}`, /bank_block|wait_ten_minutes/);
+});
+
 test("commercial prompt injection, wrong operations, extra keys and XP instructions fall back", () => {
   const attacks = [
     "Which casino should I use?",

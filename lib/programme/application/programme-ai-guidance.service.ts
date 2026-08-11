@@ -35,21 +35,20 @@ export class ProgrammeAiGuidanceService {
       throw new ProgrammeStateConflictError("This Mission is deterministic and does not use AI guidance");
     }
     const { localWording } = parseProgramAiLocalWording(value);
-    const [mission, home] = await Promise.all([
-      this.missions.mission(userId, missionNumber),
-      this.missions.home(userId),
-    ]);
-    const context = {
-      operation,
-      startingPoint: home.startingPoint,
-      mission: {
-        missionNumber,
-        title: mission.title,
-        artifact: mission.artifact,
-        actionsCompleted: mission.actionsCompleted,
-      },
-      ...(localWording ? { localWording } : {}),
-    };
+    const mission = await this.missions.mission(userId, missionNumber);
+    const context = operation === "M10_FINAL_PLAN"
+      ? finalPlanContext(mission)
+      : {
+          operation,
+          startingPoint: (await this.missions.home(userId)).startingPoint,
+          mission: {
+            missionNumber,
+            title: mission.title,
+            artifact: mission.artifact,
+            actionsCompleted: mission.actionsCompleted,
+          },
+          ...(localWording ? { localWording } : {}),
+        };
     return this.generateOrFallback(operation, context, () => deterministicGuidance(operation, context));
   }
 
@@ -91,6 +90,22 @@ export class ProgrammeAiGuidanceService {
       throw error;
     }
   }
+}
+
+function finalPlanContext(mission: Awaited<ReturnType<ProgrammeAiMissionsService["mission"]>>) {
+  const planPriorityIds = Array.isArray(mission.artifact.planPriorityIds)
+    ? mission.artifact.planPriorityIds
+    : [];
+  if (planPriorityIds.length < 1 || planPriorityIds.length > 3) {
+    throw new ProgrammeStateConflictError("Choose the final-plan priorities before building the one-screen plan");
+  }
+  const programmeFacts = "programmeFacts" in mission ? mission.programmeFacts : undefined;
+  return {
+    operation: "M10_FINAL_PLAN" as const,
+    startingPoint: programmeFacts?.startingPoint ?? null,
+    facts: programmeFacts?.facts ?? [],
+    planPriorityIds,
+  };
 }
 
 function wordCount(result: ProgramAiGeneratedResult) {

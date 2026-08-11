@@ -121,20 +121,24 @@ export function OfferDecoder({ selected }: { selected: string }) {
   </section>;
 }
 
-export function ProgrammeTimeline({ startingPoint, completedMissionNumbers }: {
+export function ProgrammeTimeline({ startingPoint, facts }: {
   startingPoint?: string | null;
-  completedMissionNumbers: readonly number[];
+  facts: ReadonlyArray<{
+    missionNumber: number;
+    title: string;
+    artifact: Record<string, string | number | boolean | string[]>;
+  }>;
 }) {
   const items = [
-    ...(startingPoint ? [{ number: 1, label: "Starting Point", value: startingPoint }] : []),
-    ...[
-      [2, "Goal"], [3, "Early signal / pause"], [4, "Boundary"], [5, "Decision checks"],
-      [6, "Friction"], [7, "Support"], [8, "Research"], [9, "Rehearsal"],
-    ].filter(([number]) => completedMissionNumbers.includes(number as number)).map(([number, label]) => ({ number: number as number, label: label as string, value: "Built and ready to review" })),
+    ...(startingPoint ? [{ number: 1, label: "Starting Point", rows: [{ key: "startingPoint", label: "Confirmed Starting Point", value: startingPoint }] }] : []),
+    ...facts.flatMap((fact) => {
+      const rows = presentMissionArtifact(fact.artifact).filter((row) => row.value !== "Unavailable");
+      return rows.length ? [{ number: fact.missionNumber, label: fact.title, rows }] : [];
+    }),
   ];
   return <section className={styles.programmeTimeline} aria-labelledby="programme-timeline-title">
     <span className={styles.eyebrow}>YOUR PROGRAMME TIMELINE</span><h3 id="programme-timeline-title">What you have built, in order.</h3>
-    <ol>{items.map((item) => <li key={item.number}><span>{String(item.number).padStart(2, "0")}</span><div><strong>{item.label}</strong><p>{item.value}</p></div></li>)}</ol>
+    <ol>{items.map((item) => <li key={item.number}><span>{String(item.number).padStart(2, "0")}</span><div><strong>{item.label}</strong><dl>{item.rows.map((row) => <div key={row.key}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl></div></li>)}</ol>
   </section>;
 }
 

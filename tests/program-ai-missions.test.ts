@@ -217,6 +217,81 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
   }
 });
 
+test("Mission 10 receives completed Programme facts and omits missing artifacts", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+    for (const mission of programAiMissionRegistry.filter((item) => item.missionNumber <= 9)) {
+      for (const action of mission.actions) {
+        await service.recordAction("user-a", mission.missionNumber, { action: action.id, artifact: actionInputs[action.id] });
+      }
+      await service.complete("user-a", mission.missionNumber);
+    }
+
+    const mission = await service.mission("user-a", 10);
+    assert.ok("programmeFacts" in mission);
+    assert.equal(mission.programmeFacts?.startingPoint?.startingPoint, "I return quickly after a difficult day.");
+    assert.deepEqual(mission.programmeFacts?.facts.map((fact) => fact.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9]);
+    const rendered = mission.programmeFacts?.facts.flatMap((fact) => presentMissionArtifact(fact.artifact)) ?? [];
+    const text = rendered.flatMap((row) => [row.label, row.value]).join(" ");
+    assert.match(text, /Pause before one decision/);
+    assert.match(text, /Bank block/);
+    assert.match(text, /Pause and run the checks/);
+    assert.doesNotMatch(text, /pause_first|bank_block|pause_and_check/);
+
+    fake.progress.get(7)!.draft = null;
+    const withMissingSupport = await service.mission("user-a", 10);
+    assert.ok("programmeFacts" in withMissingSupport);
+    assert.equal(withMissingSupport.programmeFacts?.facts.some((fact) => fact.missionNumber === 7), false);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("M10 final-plan context contains only confirmed history and persisted priorities", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const missions = new ProgrammeAiMissionsService(fake.unit as never);
+    for (const mission of programAiMissionRegistry.filter((item) => item.missionNumber <= 9)) {
+      for (const action of mission.actions) {
+        await missions.recordAction("user-a", mission.missionNumber, { action: action.id, artifact: actionInputs[action.id] });
+      }
+      await missions.complete("user-a", mission.missionNumber);
+    }
+    await missions.recordAction("user-a", 10, { action: "review_my_plan", artifact: actionInputs.review_my_plan });
+
+    let captured: unknown;
+    const guidance = new ProgrammeAiGuidanceService(missions, {
+      generate: async (operation, context) => {
+        captured = context;
+        return deterministicGuidance(operation as "M10_FINAL_PLAN", context);
+      },
+    });
+    await assert.rejects(
+      () => guidance.missionGuidance("user-a", 10, {}),
+      /priorities before building/i,
+    );
+    assert.equal(captured, undefined);
+    await missions.recordAction("user-a", 10, { action: "assemble_final_plan", artifact: actionInputs.assemble_final_plan });
+    const result = await guidance.missionGuidance("user-a", 10, { localWording: "Unrestricted old narrative must not be forwarded." });
+    assert.equal(result.operation, "M10_FINAL_PLAN");
+    const context = captured as Record<string, unknown>;
+    assert.deepEqual(Object.keys(context).sort(), ["facts", "operation", "planPriorityIds", "startingPoint"]);
+    assert.deepEqual(context.planPriorityIds, ["pause_move", "boundary", "fallback"]);
+    assert.deepEqual((context.facts as Array<{ missionNumber: number }>).map((fact) => fact.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9]);
+    const serialized = JSON.stringify(context);
+    assert.doesNotMatch(serialized, /transcript|rawNarrative|unrestricted old narrative|commercial|affiliate|href|ranking/i);
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
 test("prerequisites and enrollment ownership deny bypass while legacy completion remains dominant", async () => {
   const previous = process.env.PROGRAM_AI_V1_ENABLED;
   process.env.PROGRAM_AI_V1_ENABLED = "true";

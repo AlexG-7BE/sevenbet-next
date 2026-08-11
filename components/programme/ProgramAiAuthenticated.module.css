@@ -131,7 +131,10 @@
 .programmeTimeline li > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--sb-night); color: var(--sb-acid); font-family: var(--sb-font-mono); font-weight: 850; }
 .programmeTimeline li > div { min-height: 74px; padding: 4px 0 18px; border-bottom: 1px solid var(--sb-border-subtle); }
 .programmeTimeline li strong { font-size: 18px; }
-.programmeTimeline li p { margin-top: 4px; }
+.programmeTimeline dl { margin: 8px 0 0; display: grid; gap: 6px; }
+.programmeTimeline dl > div { display: grid; grid-template-columns: minmax(120px, .65fr) minmax(0, 1fr); gap: 12px; }
+.programmeTimeline dt { color: var(--sb-metal); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
+.programmeTimeline dd { margin: 0; line-height: 1.45; }
 .contextFeedback { padding: 12px 14px; border-radius: var(--sb-radius-s); background: var(--sb-acid-soft); color: var(--sb-night) !important; font-weight: 750; }
 .artifact, .reviewSurface, .reward { animation: programme-reveal 260ms ease-out both; }
 @keyframes programme-reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -156,6 +159,7 @@
   .sequenceBuilder li, .stackBuilder li { grid-template-columns: 34px 1fr; }
   .sequenceBuilder li div, .stackBuilder li div { grid-column: 1 / -1; }
   .offerDecoder > div { grid-template-columns: 1fr; }
+  .programmeTimeline dl > div { grid-template-columns: 1fr; gap: 2px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shell *, .shell *::before, .shell *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
