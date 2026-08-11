@@ -61,7 +61,8 @@
 .sequence li + li::before { content: "→"; position: absolute; }
 .localField { display: grid; gap: 7px; }
 .localField span { font-size: 12px; font-weight: 800; }
-.localField textarea { min-height: 94px; padding: 12px; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-s); resize: vertical; }
+.localField textarea { min-height: 94px; padding: 12px; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-s); background: var(--sb-white); color: var(--sb-night); resize: vertical; }
+.localField textarea::placeholder { color: var(--sb-metal); opacity: 1; }
 .guidance { padding: 22px; display: grid; gap: 12px; border-left: 4px solid var(--sb-teal); background: var(--sb-field); }
 .guidance h3, .guidance p { margin: 0; }
 .guidance p, .guidance small { color: var(--sb-metal); line-height: 1.45; }

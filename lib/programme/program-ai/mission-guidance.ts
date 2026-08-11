@@ -170,7 +170,7 @@ function safeString(value: unknown, maximum: number) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   const result = value.trim();
-  if (/\b(diagnos|risk score|safe to gamble|recommended casino|bonus recommendation|\bxp\b)/i.test(result)) {
+  if (/diagnos|risk score|safe to gamble|\bcasino(?:s)?\b|\boperator(?:s)?\b|\bbonus(?:es)?\b|where to play|\bsafest\b|\bxp\b/i.test(result)) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   return result;

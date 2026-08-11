@@ -618,7 +618,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   for (const mission of programAiMissionRegistry) {
     for (const [index, action] of mission.actions.entries()) {
       const requestAction = () => client.post(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, {
-        headers: { cookie: authCookieHeader },
+        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
         data: { action: action.id, artifact: missionActionArtifacts[action.id] },
       });
       if (mission.missionNumber === 2 && index === 0) {
@@ -639,7 +639,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       }
     }
     const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
-      headers: { cookie: authCookieHeader },
+      headers: { ...programmeAgeHeader, cookie: authCookieHeader },
       data: {},
     });
     const completePayload = await complete.json();
@@ -649,7 +649,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
     const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
     if (milestone) {
       const beforeReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
-      const review = await client.get(`/api/program/program-ai/reviews/${milestone}`, { headers: { cookie: authCookieHeader } });
+      const review = await client.get(`/api/program/program-ai/reviews/${milestone}`, { headers: { ...programmeAgeHeader, cookie: authCookieHeader } });
       expect(review.status()).toBe(200);
       expect((await review.json()).review.generation).toBe("deterministic_fallback");
       const afterReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });

@@ -25,6 +25,7 @@ import {
   type ProgramAiStructuralArtifact,
 } from "@/lib/programme/program-ai/mission-validation";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
+import { programAiMissionOneActions } from "@/lib/programme/program-ai/contracts";
 import { dateOnlyUtc, localDateAt } from "@/lib/programme/security";
 
 type MissionProgress = {
@@ -101,6 +102,11 @@ function actionXpEarned(definition: ProgramAiMissionDefinition, progress?: Missi
   );
   const hasNewContract = missionActionStates(definition).every((state) => progress.taskStates.includes(state));
   return actionXp + (progress.status === "COMPLETED" && hasNewContract ? 25 : 0);
+}
+
+function missionOneXpEarned(progress?: MissionProgress | null) {
+  if (progress?.status !== "COMPLETED") return 0;
+  return programAiMissionOneActions.every((action) => progress.taskStates.includes(action)) ? 40 : 60;
 }
 
 function highestActiveMission(progress: readonly MissionProgress[]) {
@@ -430,7 +436,7 @@ export class ProgrammeAiMissionsService {
           actionsCompleted: definition
             ? definition.actions.filter((action) => missionProgress?.taskStates.includes(actionTaskState(missionNumber, action.id))).length
             : missionProgress?.status === "COMPLETED" ? 2 : 0,
-          xpEarnedHere: definition ? actionXpEarned(definition, missionProgress) : missionProgress?.status === "COMPLETED" ? 40 : 0,
+          xpEarnedHere: definition ? actionXpEarned(definition, missionProgress) : missionOneXpEarned(missionProgress),
         };
       }),
       reviews,

@@ -203,6 +203,7 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
     }
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);
+    assert.equal(home.missions[0].xpEarnedHere, 40);
     assert.deepEqual(home.reviews.map((review) => review.status), ["available", "available", "available"]);
     assert.equal(home.nextReview, null);
     assert.equal(fake.xpEvents.size, 37);
@@ -229,6 +230,7 @@ test("prerequisites and enrollment ownership deny bypass while legacy completion
     assert.equal(legacy.xpEvents.size, before);
     const home = await legacyService.home("user-a");
     assert.equal(home.totalXp, 330);
+    assert.equal(home.missions[0].xpEarnedHere, 60);
     assert.equal(home.currentMission, 5);
     assert.deepEqual(home.missions.slice(1, 4).map((mission) => mission.xpEarnedHere), [0, 0, 0]);
     assert.equal(home.reviews[0].status, "available");
