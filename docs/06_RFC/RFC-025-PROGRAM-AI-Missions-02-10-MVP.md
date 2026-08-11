@@ -115,6 +115,8 @@ The clean PROGRAM-AI-v1 cumulative map is:
 
 Each logical action has one versioned server award key. A duplicate action, completion request, provider retry, refresh, navigation, multi-tab race or request retry cannot award XP again. Reviews, registration, commercial navigation and public page visits award zero XP. AI never decides reward amount or eligibility.
 
+The existing deployed `UserXpEvent_mission_source_check` database constraint permits Missions 02–10 only with the ledger `eventType` value `MISSION_COMPLETION`; broadening that constraint would require the schema migration this package explicitly forbids. Missions 02–10 therefore use that existing storage discriminator for both their three logical action awards and their completion award. This is a storage-compatibility detail, not a product classification: exact versioned `awardKey`, `ProgramProgressEvent.eventKey`, XP amount and source artifact identify the logical action. No existing Mission 01 event semantics change.
+
 ## 5. Exact Mission contracts
 
 ### 5.1 Mission 02 — Set a 7-day goal
@@ -295,6 +297,8 @@ Every action transaction:
 4. records the action task state;
 5. records its exact append-only XP event once; and
 6. returns the server projection from the same transaction.
+
+For the compatibility reason in section 4, step 5 writes the existing `MISSION_COMPLETION` XP ledger discriminator with an action-specific immutable award key. Eligibility and idempotency are still action-level and server-owned.
 
 Every completion transaction:
 

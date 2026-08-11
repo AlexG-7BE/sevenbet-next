@@ -1,5 +1,6 @@
 import { requireCurrentUser } from "@/lib/auth/session";
 import { programmeAiMissionOneService } from "@/lib/programme/application/programme-ai-mission-one.service";
+import { programmeAiMissionsService } from "@/lib/programme/application/programme-ai-missions.service";
 import {
   anonymousProgrammeCookie,
   pendingProgrammeClaimCookie,
@@ -25,11 +26,12 @@ export async function POST(request: Request) {
     });
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone", "startingPoint"]);
-    const home = await programmeAiMissionOneService.redeemPendingClaim(
+    await programmeAiMissionOneService.redeemPendingClaim(
       user.id,
       claimToken,
       { timeZone: body.timeZone, startingPoint: body.startingPoint },
     );
+    const home = await programmeAiMissionsService.home(user.id);
     const response = programmeResponse({ ok: true, home });
     response.cookies.set(pendingProgrammeClaimCookie, "", {
       ...privateCookieOptions,

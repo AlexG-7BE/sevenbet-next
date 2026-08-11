@@ -51,6 +51,25 @@ export class ProgrammeRewardRepository {
     });
   }
 
+  /**
+   * Missions 02–10 use action-specific award keys while retaining the deployed
+   * MISSION_COMPLETION discriminator required by UserXpEvent_mission_source_check.
+   */
+  recordProgrammeAiMissionXp(input: {
+    userId: string;
+    programId: string;
+    missionNumber: number;
+    xp: number;
+    awardKey: string;
+    sourceArtifactType: "PROGRAM_AI_MISSION_PROGRESS";
+    sourceArtifactId: string;
+  }) {
+    return this.database.userXpEvent.createMany({
+      data: [{ ...input, eventType: "MISSION_COMPLETION" }],
+      skipDuplicates: true,
+    });
+  }
+
   recordActiveDay(input: {
     userId: string;
     enrollmentId: string;
