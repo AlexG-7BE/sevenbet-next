@@ -265,10 +265,10 @@ test("M10 final-plan context contains only confirmed history and persisted prior
     }
     await missions.recordAction("user-a", 10, { action: "review_my_plan", artifact: actionInputs.review_my_plan });
 
-    let captured: unknown;
+    const capture: { value?: unknown } = {};
     const guidance = new ProgrammeAiGuidanceService(missions, {
       generate: async (operation, context) => {
-        captured = context;
+        capture.value = context;
         return deterministicGuidance(operation as "M10_FINAL_PLAN", context);
       },
     });
@@ -276,11 +276,11 @@ test("M10 final-plan context contains only confirmed history and persisted prior
       () => guidance.missionGuidance("user-a", 10, {}),
       /priorities before building/i,
     );
-    assert.equal(captured, undefined);
+    assert.equal(Object.prototype.hasOwnProperty.call(capture, "value"), false);
     await missions.recordAction("user-a", 10, { action: "assemble_final_plan", artifact: actionInputs.assemble_final_plan });
     const result = await guidance.missionGuidance("user-a", 10, { localWording: "Unrestricted old narrative must not be forwarded." });
     assert.equal(result.operation, "M10_FINAL_PLAN");
-    const context = captured as Record<string, unknown>;
+    const context = capture.value as Record<string, unknown>;
     assert.deepEqual(Object.keys(context).sort(), ["facts", "operation", "planPriorityIds", "startingPoint"]);
     assert.deepEqual(context.planPriorityIds, ["pause_move", "boundary", "fallback"]);
     assert.deepEqual((context.facts as Array<{ missionNumber: number }>).map((fact) => fact.missionNumber), [2, 3, 4, 5, 6, 7, 8, 9]);
