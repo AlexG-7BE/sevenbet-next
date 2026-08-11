@@ -21,6 +21,8 @@ import type {
   ProgramAiHome,
   ProgramAiMission,
 } from "@/components/programme/ProgramAiAuthenticated.types";
+import { PROGRAMME_ACCESS_HEADERS, PROGRAMME_ACCESS_HEADER_VALUES } from "@/lib/programme/access-contract";
+import { hasProgrammeAccessAuthority, userProgrammeSubject } from "@/lib/programme/local-subject-storage";
 import styles from "./ProgramAiAuthenticated.module.css";
 
 type Option = { value: string; label: string; description?: string };
@@ -68,8 +70,9 @@ const localWordingActions = new Set(["build_7_day_goal", "build_boundary_rule", 
 const guidanceBuilderActions = new Set(["build_7_day_goal", "build_boundary_rule", "build_friction_stack", "build_support_card", "rehearse_response", "assemble_final_plan"]);
 const correctSequence = ["cue", "early_signal", "urge_builds", "choice_point"];
 
-async function request<T>(path: string, init?: RequestInit) {
-  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { ...(init?.body ? { "content-type": "application/json" } : {}), ...init?.headers } });
+async function request<T>(path: string, userId: string, init?: RequestInit) {
+  const subject = userProgrammeSubject(userId);
+  const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { ...(init?.body ? { "content-type": "application/json" } : {}), ...(hasProgrammeAccessAuthority(window.sessionStorage, subject) ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age } : {}), ...init?.headers } });
   const payload = await response.json() as T & { ok?: boolean; error?: string };
   if (!response.ok || payload.ok === false) throw new Error(payload.error || "The Mission could not be updated");
   return payload;
@@ -175,7 +178,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
         const selected = values[field.key] ?? [];
         artifact[field.key] = field.multiple ? selected : field.key === "reviewCadenceDays" ? Number(selected[0]) : selected[0];
       }
-      const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, { method: "POST", body: JSON.stringify({ action: current.id, artifact }) });
+      const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, userId, { method: "POST", body: JSON.stringify({ action: current.id, artifact }) });
       setMission(result.mission); setHome(result.home); onHome(result.home);
       setAnnouncement(result.xpAwarded ? `Action complete. ${result.xpAwarded} XP earned.` : "This action was already saved.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The action could not be saved"); }
@@ -185,7 +188,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   async function getGuidance() {
     setBusy(true); setError("");
     try {
-      const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, { method: "POST", body: JSON.stringify({ ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
+      const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, userId, { method: "POST", body: JSON.stringify({ ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
       setGuidance(result.guidance);
       if (["build_support_card", "assemble_final_plan"].includes(current?.id ?? "") && !localWording.trim() && result.guidance.options[0]) {
         onLocalWording(result.guidance.options[0].text);
@@ -212,7 +215,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   async function complete() {
     setBusy(true); setError("");
     try {
-      const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, { method: "POST", body: "{}" });
+      const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, userId, { method: "POST", body: "{}" });
       setMission(result.mission); setHome(result.home); onHome(result.home); setCompletedNow(true);
       setAnnouncement(result.xpAwarded ? "Mission complete. 25 XP earned." : "This Mission was already complete.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The Mission could not be completed"); }

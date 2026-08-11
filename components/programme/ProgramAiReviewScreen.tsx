@@ -5,14 +5,22 @@ import { useState } from "react";
 import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import type { ProgramAiReview } from "@/components/programme/ProgramAiAuthenticated.types";
+import { PROGRAMME_ACCESS_HEADERS, PROGRAMME_ACCESS_HEADER_VALUES } from "@/lib/programme/access-contract";
+import { hasProgrammeAccessAuthority, userProgrammeSubject } from "@/lib/programme/local-subject-storage";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-async function generateReview(milestone: string, localWording: string) {
+async function generateReview(milestone: string, localWording: string, userId: string) {
+  const subject = userProgrammeSubject(userId);
   const response = await fetch(`/api/program/program-ai/reviews/${milestone}`, {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(hasProgrammeAccessAuthority(window.sessionStorage, subject)
+        ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age }
+        : {}),
+    },
     body: JSON.stringify({ ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }),
   });
   const payload = await response.json() as { ok?: boolean; error?: string; review?: ProgramAiReview };
@@ -35,7 +43,7 @@ export function ProgramAiReviewScreen({ initialReview, milestone, totalXp, userI
   const [generated, setGenerated] = useState(false);
   async function personalise() {
     setBusy(true); setError("");
-    try { setReview(await generateReview(milestone, localWording)); setGenerated(true); }
+    try { setReview(await generateReview(milestone, localWording, userId)); setGenerated(true); }
     catch (cause) { setError(cause instanceof Error ? cause.message : "The Review could not be prepared"); }
     finally { setBusy(false); }
   }

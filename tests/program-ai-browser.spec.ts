@@ -209,6 +209,29 @@ async function noHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 }
 
+async function openCurrentMission(page: Page, missionNumber: number, width: number) {
+  const mission = programAiMissionRegistry.find((item) => item.missionNumber === missionNumber)!;
+  await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
+  await page.goto("/program");
+  await page.getByRole("button", { name: `Resume Mission ${String(missionNumber).padStart(2, "0")}` }).click();
+  await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
+  await noHorizontalOverflow(page);
+}
+
+async function installUserAccessMarker(page: Page, userId: string, authority: AccessAuthority) {
+  const [, encodedClaims] = authority.proof.split(".");
+  const marker = {
+    ...JSON.parse(Buffer.from(encodedClaims, "base64url").toString("utf8")),
+    proof: authority.proof,
+  };
+  await page.addInitScript(({ key, value }) => {
+    window.sessionStorage.setItem(key, value);
+  }, {
+    key: `sevenbet.programme.access-authority.v1:user:${encodeURIComponent(userId)}`,
+    value: JSON.stringify(marker),
+  });
+}
+
 test.afterAll(async () => {
   await prisma.$disconnect();
 });
@@ -607,6 +630,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   const ready = await prepareReadyClaim(client);
   const email = `program-ai-ten-step-${randomUUID()}@example.test`;
   const { user, authCookieHeader } = await signUp(client, ready.access, email);
+  await installUserAccessMarker(page, user.id, ready.access);
   const redeem = await client.post("/api/program/program-ai/claims/redeem", {
     headers: { ...programmeAgeHeader, cookie: `${ready.cookieHeader}; ${ready.claimCookieHeader}; ${authCookieHeader}` },
     data: { timeZone: "UTC", startingPoint },
@@ -616,6 +640,33 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   expect(redeemPayload.home.totalXp).toBe(40);
 
   for (const mission of programAiMissionRegistry) {
+    if (mission.missionNumber === 3) {
+      await openCurrentMission(page, 3, 390);
+      const builder = page.getByRole("region", { name: "Place the earliest moment first." });
+      await expect(builder.getByRole("listitem").nth(0)).toContainText("Choice point");
+      await page.getByRole("button", { name: /Check sequence/ }).click();
+      await expect(page.getByText("No XP awarded. Adjust the order and try again.")).toBeVisible();
+      await builder.getByRole("listitem").filter({ hasText: "Cue" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Early signal" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Early signal" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Choice point" }).getByRole("button", { name: "Move down" }).click();
+      await page.getByRole("button", { name: /Check sequence/ }).click();
+      await expect(page.getByText("Action complete. 15 XP earned.")).toBeVisible();
+    }
+    if (mission.missionNumber === 5) {
+      await openCurrentMission(page, 5, 768);
+      await page.getByRole("radio", { name: "An unexpected offer" }).check();
+      await expect(page.getByText("A headline appears when you were not planning to look.")).toBeVisible();
+      await page.getByRole("radio", { name: "Are the material terms clear?" }).check();
+      await noHorizontalOverflow(page);
+    }
+    if (mission.missionNumber === 10) {
+      await openCurrentMission(page, 10, 768);
+      await expect(page.getByRole("heading", { name: "What you have built, in order." })).toBeVisible();
+      await expect(page.getByText("Starting Point", { exact: true })).toBeVisible();
+      await expect(page.getByText("Rehearsal", { exact: true })).toBeVisible();
+      await noHorizontalOverflow(page);
+    }
     for (const [index, action] of mission.actions.entries()) {
       const requestAction = () => client.post(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, {
         headers: { ...programmeAgeHeader, cookie: authCookieHeader },
@@ -633,9 +684,82 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         await noHorizontalOverflow(page);
         await page.reload();
         await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await page.getByRole("button", { name: "Resume Mission 02" }).click();
+        await page.getByRole("radio", { name: "Pause before one decision" }).check();
+        await page.getByRole("button", { name: "Create personal drafts" }).click();
+        await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
+        await expect(page.locator("[aria-pressed]")).toHaveCount(3);
+        await page.locator("[aria-pressed]").nth(1).click();
+        await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("seven days");
+        await noHorizontalOverflow(page);
       } else {
         const response = await requestAction();
         expect(response.status(), `${mission.missionNumber}:${action.id} ${await response.text()}`).toBe(200);
+        if (mission.missionNumber === 4 && index === 0) {
+          await openCurrentMission(page, 4, 1024);
+          await page.getByRole("radio", { name: "Bank block" }).check();
+          await page.getByRole("button", { name: "Create personal drafts" }).click();
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 5 && index === 1) {
+          await openCurrentMission(page, 5, 768);
+          await expect(page.getByText("SECOND PRACTICE MOMENT")).toBeVisible();
+          for (const check of ["Why am I considering this?", "Are the material terms clear?", "What is my exit route?"]) {
+            await page.getByRole("checkbox", { name: check }).check();
+          }
+          await expect(page.getByText("Apply each check you built before choosing the pause rule.")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 6 && index === 0) {
+          await openCurrentMission(page, 6, 1024);
+          await page.getByRole("checkbox", { name: "Remove saved payment" }).check();
+          await expect(page.getByText("YOUR STACK · 2 LAYERS")).toBeVisible();
+          await page.getByRole("button", { name: "Suggest an order" }).click();
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 7 && index === 0) {
+          await openCurrentMission(page, 7, 375);
+          await page.getByRole("radio", { name: "When X, I can Y" }).check();
+          await page.getByRole("button", { name: "Create personal drafts" }).click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 8 && index === 0) {
+          await openCurrentMission(page, 8, 1440);
+          await expect(page.getByRole("heading", { name: "What would you check before judging the headline?" })).toBeVisible();
+          await page.getByRole("radio", { name: "Wagering requirement" }).check();
+          await expect(page.getByText("bonus-linked funds can be withdrawn")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 8 && index === 1) {
+          await openCurrentMission(page, 8, 1440);
+          await expect(page.getByRole("group", { name: /Research checklist/ })).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 9 && index === 0) {
+          await openCurrentMission(page, 9, 390);
+          await expect(page.getByText("The headline is clear, but the conditions")).toBeVisible();
+          await page.getByRole("button", { name: "Create my rehearsal" }).click();
+          await expect(page.getByRole("heading", { name: "The headline is clear; the terms are not" })).toBeVisible();
+          await expect(page.locator("[aria-pressed]")).toHaveCount(4);
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByText("That response creates a clear next move.")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 10 && index === 0) {
+          await openCurrentMission(page, 10, 768);
+          for (const priority of ["Pause move", "Boundary", "Fallback"]) {
+            await page.getByRole("checkbox", { name: priority }).check();
+          }
+          await page.getByRole("button", { name: "Build my plan" }).click();
+          await expect(page.getByRole("heading", { name: "Review your one-screen plan" })).toBeVisible();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
       }
     }
     const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
