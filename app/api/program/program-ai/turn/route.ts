@@ -12,6 +12,7 @@ import { hashOpaqueToken } from "@/lib/programme/security";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  const startedAt = performance.now();
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
     assertProgrammeRateLimit(`program-ai:turn:${hashOpaqueToken(token)}`, {
@@ -22,7 +23,11 @@ export async function POST(request: Request) {
       token,
       await readProgrammeJson(request),
     );
-    return programmeResponse({ ok: true, ...turn });
+    return programmeResponse({
+      ok: true,
+      ...turn,
+      timing: { programmeAiTurnMs: Math.round(performance.now() - startedAt) },
+    });
   } catch (error) {
     return programmeErrorResponse(error);
   }

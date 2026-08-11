@@ -29,6 +29,22 @@ All responses are JSON and `Cache-Control: no-store`. Authenticated routes resol
 | `GET /api/program/rewards` | Better Auth | Returns Programme XP ledger, First Plan state and active-day summary. |
 | `POST /api/admin/programme/active-days/:id/void` | SUPER_ADMIN | Requires `{reason}`; records an attributed active-day correction. |
 
+The following routes exist only when the exact server-side `PROGRAM_AI_V1_ENABLED=true` gate is active. Real OpenAI requests additionally require `PROGRAM_AI_REAL_PROVIDER_ENABLED=true`, `PROGRAM_AI_PROVIDER=openai` and a valid server-only key.
+
+| Method and route | Auth | Contract |
+| --- | --- | --- |
+| `POST /api/program/program-ai/session` | Signed anonymous access proof | Creates the RFC-022 anonymous M1 session and HttpOnly cookie. |
+| `GET`, `POST`, `DELETE /api/program/program-ai/authority` | Anonymous cookie | Reads, confirms or withdraws the narrow current sensitive-input authority. |
+| `POST /api/program/program-ai/transcription` | Anonymous cookie + active authority | Multipart `audio` plus `durationMs`; accepts allow-listed audio up to 8 MiB/90 seconds and returns an editable transcript. Rate limit: 6/minute per session. |
+| `POST /api/program/program-ai/turn` | Anonymous cookie + active authority | Strict `{inputMode,situation,clarificationAnswers}`; returns the closed clarification/candidate union and server-derived `20 XP` situation progress. At most three real-provider attempts per M1. Rate limit: 12/minute per session. |
+| `POST /api/program/program-ai/support/continue` | Anonymous cookie + active authority | Leaves the transient support-first interruption without creating a risk label or reward. |
+| `POST /api/program/program-ai/starting-point` | Anonymous cookie + active authority | Confirms the closed browser-held Starting Point and derives `40 XP`; the raw intake/transcript is not accepted. |
+| `POST /api/program/program-ai/claim` | Anonymous cookie | Issues the exact pending claim only from ready-to-save state. |
+| `POST /api/program/program-ai/claims/redeem` | Better Auth + claim cookie | Atomically persists the exact user-confirmed Starting Point and two distinct `20 XP` events, respecting legacy-progress dominance. |
+| `GET /api/program/program-ai/home` | Better Auth | Returns exact M1–M10 current/completed/locked state and M3/M6/M10 Review entitlement. |
+
+Provider failures use only `PROVIDER_UNAVAILABLE`, `PROVIDER_TIMEOUT`, `PROVIDER_RATE_LIMIT`, `PROVIDER_INVALID_OUTPUT`, `TRANSCRIPTION_FAILED` or `INPUT_TOO_LARGE`. Raw OpenAI errors and request content are never returned. Timing objects expose only bounded request durations and responses remain `Cache-Control: no-store`.
+
 Malformed JSON is `400`; missing authentication is `401`; forbidden staff action is `403`; missing/foreign resources are `404`; expired session/claim is `410`; conflicts are `409`; schema/state validation is `422`; rate limiting is `429`.
 
 Idempotency is server-authored: claim consumption is conditional; mission/progress, XP, achievement and active-day rows have database uniqueness constraints; Mission 02–04 completion retries return the existing Dashboard. Client idempotency keys are not trusted or required.

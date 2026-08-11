@@ -68,11 +68,16 @@
 .recorder { padding: 18px; display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-field); }
 .recorder[data-state="recording"] { border-color: var(--sb-danger); }
 .recorder .mic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--sb-night); color: var(--sb-acid); }
+.recordingDot { display: inline-block; }
+.recorder[data-state="recording"] .recordingDot { animation: recording-dot-pulse 1.4s ease-in-out infinite; }
 .recorder div:nth-child(2) { display: grid; gap: 3px; }
 .recorder small { color: var(--sb-metal); line-height: 1.35; }
 .recorder button, .emailToggle, .textButton { padding: 0; border: 0; background: transparent; color: var(--sb-teal); font-weight: 750; text-decoration: underline; cursor: pointer; }
 .recorderActions { display: flex; gap: 12px; }
+.recorder .stopRecording { padding: 8px 12px; border-radius: var(--sb-radius-s); background: var(--sb-night); color: var(--sb-white); text-decoration: none; }
+.recorder .cancelRecording { color: var(--sb-metal); }
 .recorder p { grid-column: 1 / -1; margin: 0; color: var(--sb-danger-text); font-size: 13px; }
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 .or { display: flex; align-items: center; gap: 12px; color: var(--sb-metal); font-size: 12px; text-transform: uppercase; }
 .or::before, .or::after { content: ""; height: 1px; flex: 1; background: var(--sb-grey-200); }
 
@@ -138,6 +143,15 @@
 .reviews span { color: var(--sb-teal); font-size: 11px; font-weight: 750; }
 .reviews h3 { margin: 18px 0 8px; font-size: 24px; }
 .reviews p { margin: 0; color: var(--sb-metal); }
+
+@keyframes recording-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.82); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recorder[data-state="recording"] .recordingDot { animation: none; }
+}
 
 @media (max-width: 860px) {
   .header { grid-template-columns: 1fr auto; }

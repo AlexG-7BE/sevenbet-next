@@ -50,7 +50,7 @@ type Phase =
   | "home"
   | "legacy";
 
-type RecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "transcribing" | "error";
+type RecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "transcribing" | "success" | "error";
 
 type ProgramAiLocalState = {
   phase: Phase;
@@ -101,7 +101,7 @@ async function programAiRequest<T>(
     cache: "no-store",
     ...init,
     headers: {
-      ...(init?.body ? { "content-type": "application/json" } : {}),
+      ...(init?.body && !(init.body instanceof FormData) ? { "content-type": "application/json" } : {}),
       ...(hasProgrammeAccessAuthority(window.sessionStorage, subject)
         ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age }
         : {}),
@@ -169,17 +169,94 @@ function AccessScreen({ busy, error, onConfirm }: {
   );
 }
 
-function Recorder({ state, onState, onUseTyped }: {
+function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseTyped }: {
+  disabled: boolean;
   state: RecorderState;
   onState: (state: RecorderState) => void;
+  onTranscript: (transcript: string, timing: {
+    recordingDurationMs: number;
+    transcriptionRequestMs: number;
+  }) => void;
+  onTranscribe: (audio: Blob, durationMs: number) => Promise<{
+    transcript: string;
+    transcriptionRequestMs: number;
+  }>;
   onUseTyped: () => void;
 }) {
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
+  const retainedRecording = useRef<Blob | null>(null);
+  const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
+  const recordingStartedAt = useRef(0);
+  const recordingDurationMs = useRef(0);
+  const maximumTimer = useRef<number | null>(null);
+  const recordingTimer = useRef<number | null>(null);
   const cancelling = useRef(false);
+  const recorderFailed = useRef(false);
 
-  useEffect(() => () => stream.current?.getTracks().forEach((track) => track.stop()), []);
+  function clearMaximumTimer() {
+    if (maximumTimer.current !== null) window.clearTimeout(maximumTimer.current);
+    maximumTimer.current = null;
+  }
+
+  function clearRecordingTimer(reset = true) {
+    if (recordingTimer.current !== null) window.clearInterval(recordingTimer.current);
+    recordingTimer.current = null;
+    if (reset) setRecordingElapsedSeconds(0);
+  }
+
+  function startRecordingTimer() {
+    clearRecordingTimer();
+    recordingStartedAt.current = Date.now();
+    recordingTimer.current = window.setInterval(() => {
+      setRecordingElapsedSeconds(Math.min(90, Math.floor((Date.now() - recordingStartedAt.current) / 1_000)));
+    }, 1_000);
+  }
+
+  function stopTracks() {
+    stream.current?.getTracks().forEach((track) => track.stop());
+    stream.current = null;
+  }
+
+  function releaseRecording() {
+    retainedRecording.current = null;
+    chunks.current = [];
+  }
+
+  useEffect(() => () => {
+    clearMaximumTimer();
+    clearRecordingTimer(false);
+    if (recorder.current) {
+      recorder.current.ondataavailable = null;
+      recorder.current.onstop = null;
+      recorder.current.onerror = null;
+      if (recorder.current.state === "recording") recorder.current.stop();
+      recorder.current = null;
+    }
+    stopTracks();
+    releaseRecording();
+  }, []);
+
+  async function transcribe(audio: Blob, durationMs: number) {
+    onState("transcribing");
+    try {
+      const result = await onTranscribe(audio, durationMs);
+      releaseRecording();
+      onTranscript(result.transcript, {
+        recordingDurationMs: durationMs,
+        transcriptionRequestMs: result.transcriptionRequestMs,
+      });
+      onState("success");
+    } catch {
+      onState("error");
+    }
+  }
+
+  function preferredMimeType() {
+    return ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"]
+      .find((mimeType) => MediaRecorder.isTypeSupported(mimeType));
+  }
 
   async function start() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
@@ -188,55 +265,104 @@ function Recorder({ state, onState, onUseTyped }: {
     }
     onState("requesting");
     try {
+      releaseRecording();
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      recorder.current = new MediaRecorder(stream.current);
+      const mimeType = preferredMimeType();
+      recorder.current = new MediaRecorder(stream.current, mimeType ? { mimeType } : undefined);
       chunks.current = [];
       recorder.current.ondataavailable = (event) => {
         if (event.data.size) chunks.current.push(event.data);
       };
       recorder.current.onstop = () => {
+        clearMaximumTimer();
+        clearRecordingTimer();
+        recordingDurationMs.current = Math.min(90_000, Math.max(1, Date.now() - recordingStartedAt.current));
+        stopTracks();
+        if (recorderFailed.current) {
+          recorderFailed.current = false;
+          releaseRecording();
+          onState("error");
+          return;
+        }
         if (cancelling.current) {
           cancelling.current = false;
-          chunks.current = [];
-          stream.current?.getTracks().forEach((track) => track.stop());
-          stream.current = null;
+          releaseRecording();
           onState("cancelled");
           return;
         }
-        onState("transcribing");
-        stream.current?.getTracks().forEach((track) => track.stop());
-        stream.current = null;
+        const audio = new Blob(chunks.current, {
+          type: recorder.current?.mimeType || chunks.current[0]?.type || "audio/webm",
+        });
+        retainedRecording.current = audio;
         chunks.current = [];
-        window.setTimeout(() => onState("error"), 450);
+        void transcribe(audio, recordingDurationMs.current);
       };
+      recorder.current.onerror = () => {
+        recorderFailed.current = true;
+        clearMaximumTimer();
+        clearRecordingTimer();
+        if (recorder.current?.state === "recording") {
+          recorder.current.stop();
+          return;
+        }
+        stopTracks();
+        releaseRecording();
+        onState("error");
+      };
+      cancelling.current = false;
+      recorderFailed.current = false;
       recorder.current.start();
+      startRecordingTimer();
+      maximumTimer.current = window.setTimeout(() => {
+        stop();
+      }, 90_000);
       onState("recording");
     } catch (cause) {
-      stream.current?.getTracks().forEach((track) => track.stop());
-      stream.current = null;
+      clearMaximumTimer();
+      clearRecordingTimer();
+      stopTracks();
       onState(cause instanceof DOMException && cause.name === "NotAllowedError" ? "denied" : "error");
     }
   }
 
   function stop() {
-    if (recorder.current?.state === "recording") recorder.current.stop();
+    if (recorder.current?.state !== "recording") return;
+    clearMaximumTimer();
+    clearRecordingTimer();
+    recorder.current.stop();
   }
 
   function cancel() {
     if (recorder.current?.state !== "recording") return;
     cancelling.current = true;
-    recorder.current.stop();
+    stop();
+  }
+
+  function retry() {
+    if (retainedRecording.current) {
+      void transcribe(retainedRecording.current, recordingDurationMs.current);
+    }
+  }
+
+  function useTyped() {
+    clearMaximumTimer();
+    clearRecordingTimer();
+    stopTracks();
+    releaseRecording();
+    onState("idle");
+    onUseTyped();
   }
 
   return (
     <div className={styles.recorder} data-state={state}>
-      <div aria-hidden="true" className={styles.mic}>●</div>
-      <div><strong>{state === "recording" ? "Listening locally" : state === "transcribing" ? "Preparing your words" : state === "denied" ? "Microphone permission was denied" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio is kept in memory only and is never saved by this preview.</small></div>
-      {["idle", "error", "denied", "cancelled"].includes(state) ? <button onClick={start} type="button">Start recording</button> : null}
-      {state === "recording" ? <span className={styles.recorderActions}><button onClick={stop} type="button">Stop recording</button><button onClick={cancel} type="button">Cancel</button></span> : null}
+      <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator>●</span></div>
+      <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" ? "Microphone permission was denied" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
+      {["idle", "denied", "cancelled", "success"].includes(state) ? <button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Start recording"}</button> : null}
+      {state === "recording" ? <span className={styles.recorderActions}><button className={styles.stopRecording} onClick={stop} type="button">Stop recording</button><button className={styles.cancelRecording} onClick={cancel} type="button">Cancel</button></span> : null}
       {state === "requesting" || state === "transcribing" ? <span role="status">{state === "requesting" ? "Requesting microphone…" : "Transcribing…"}</span> : null}
-      {state === "error" ? <p role="alert">Voice transcription is not connected in this preview. Nothing was uploaded or stored. <button onClick={onUseTyped} type="button">Use typed input</button>.</p> : null}
-      {state === "denied" ? <p role="alert">You can allow microphone access in your browser, or <button onClick={onUseTyped} type="button">use typed input</button>. Nothing was recorded.</p> : null}
+      {state === "success" ? <p role="status">Check and correct the editable transcript below before creating your Starting Point.</p> : null}
+      {state === "error" ? <p role="alert">Voice transcription could not be completed. {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}
+      {state === "denied" ? <p role="alert">You can allow microphone access in your browser, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
       {state === "cancelled" ? <p role="status">The recording was discarded. Nothing was submitted.</p> : null}
     </div>
   );
@@ -249,6 +375,10 @@ function IntakeScreen({
   situation,
   onSituation,
   onSubmit,
+  onTranscript,
+  onTranscribe,
+  onUseTyped,
+  inputMode,
 }: {
   authorityActive: boolean;
   busy: boolean;
@@ -256,6 +386,16 @@ function IntakeScreen({
   situation: string;
   onSituation: (value: string) => void;
   onSubmit: () => void;
+  onTranscript: (transcript: string, timing: {
+    recordingDurationMs: number;
+    transcriptionRequestMs: number;
+  }) => void;
+  onTranscribe: (audio: Blob, durationMs: number) => Promise<{
+    transcript: string;
+    transcriptionRequestMs: number;
+  }>;
+  onUseTyped: () => void;
+  inputMode: "text" | "voice";
 }) {
   const [authority, setAuthority] = useState(authorityActive);
   const [recorderState, setRecorderState] = useState<RecorderState>("idle");
@@ -276,12 +416,12 @@ function IntakeScreen({
           <Link className={styles.helpLink} href="/responsible-gambling">Protected Help / pause options</Link>
         </section>
         <section className={styles.inputPanel}>
-          <Recorder state={recorderState} onState={setRecorderState} onUseTyped={() => setRecorderState("idle")} />
-          <div className={styles.or}><span>or type it</span></div>
+          <Recorder disabled={busy || !authority} state={recorderState} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} />
+          <div className={styles.or}><span>Type instead</span></div>
           <label className={styles.field}>
-            <span>Your situation</span>
+            <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
             <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={8} value={situation} />
-            <small>{situation.length}/4000 · Stored only in this browser session.</small>
+            <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything before submitting. " : ""}Stored only in this browser session.</small>
           </label>
           <ActionButton disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} size="large">
             {busy ? "Preparing your Starting Point…" : "Create my Starting Point"}
@@ -331,7 +471,7 @@ function CandidateScreen({ candidate, generation, busy, error, onChange, onConfi
     <div className={styles.page}><Header xp={20} /><main className={styles.candidateGrid}>
       <section className={styles.heroCopy}><span>DRAFT · YOU ARE THE AUTHORITY</span><h1>Check your Starting Point.</h1><p>This is a draft, not a diagnosis. Edit anything that does not sound like you. Only your confirmed version can be saved after account access.</p><div className={styles.xpNote}><b>+20 XP</b><span>earned for describing the situation</span></div></section>
       <section className={styles.startingPointCard}>
-        {generation === "USER_CONTROLLED_FALLBACK" ? <p className={styles.fallbackNotice} role="status"><strong>No AI provider is connected in this preview.</strong> This editable draft only carries forward words you supplied. Complete the missing fields yourself.</p> : null}
+        {generation === "USER_CONTROLLED_FALLBACK" ? <p className={styles.fallbackNotice} role="status"><strong>Personalisation did not produce this draft.</strong> This editable fallback only carries forward words you supplied. Complete the missing fields yourself.</p> : null}
         <label className={styles.field}><span>What is happening now?</span><textarea maxLength={320} onChange={(event) => onChange({ ...candidate, startingPoint: event.target.value })} rows={4} value={candidate.startingPoint} /></label>
         <label className={styles.field}><span>What would you like to change?</span><textarea maxLength={200} onChange={(event) => onChange({ ...candidate, desiredChange: event.target.value })} placeholder="Write this in your own words" rows={3} value={candidate.desiredChange} /></label>
         <label className={styles.field}><span>Broad context</span><select onChange={(event) => onChange({ ...candidate, broadContext: event.target.value as ProgramAiBroadContext })} value={candidate.broadContext}>{Object.entries(contextLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
@@ -434,6 +574,12 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
   const emailRedeemStarted = useRef(false);
+  const personalisationStartedAt = useRef<number | null>(null);
+  const accumulatedAiLatencyMs = useRef(0);
+  const voiceTiming = useRef<{
+    recordingDurationMs: number;
+    transcriptionRequestMs: number;
+  } | null>(null);
 
   const persist = useCallback((next: ProgramAiLocalState, exactSubject = subject) => {
     setLocal(next);
@@ -535,6 +681,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
       });
       setSensitiveAuthorityActive(false);
+      personalisationStartedAt.current = null;
+      accumulatedAiLatencyMs.current = 0;
+      voiceTiming.current = null;
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch (cause) {
@@ -544,19 +693,10 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   async function submitTurn(answers = local.clarificationAnswers, confirmSensitiveAuthority = false) {
     if (!subject) return;
+    if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
     setBusy(true); setError("");
     try {
-      if (confirmSensitiveAuthority && !sensitiveAuthorityActive) {
-        await programAiRequest("/api/program/program-ai/authority", subject, {
-          method: "POST",
-          body: JSON.stringify({
-            confirmed: true,
-            purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
-            statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-          }),
-        });
-        setSensitiveAuthorityActive(true);
-      }
+      if (confirmSensitiveAuthority) await ensureSensitiveAuthority();
       const payload = await programAiRequest<{
         result: {
           kind: "CLARIFICATION_REQUIRED" | "STARTING_POINT_CANDIDATE";
@@ -565,16 +705,31 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
           generation?: "PROVIDER" | "USER_CONTROLLED_FALLBACK";
           disposition: "CONTINUE" | "SUPPORT_FIRST";
         };
+        timing?: { programmeAiTurnMs?: number };
       }>("/api/program/program-ai/turn", subject, {
         method: "POST",
         body: JSON.stringify({ inputMode: local.inputMode, situation: local.situation, clarificationAnswers: answers }),
       });
+      accumulatedAiLatencyMs.current += payload.timing?.programmeAiTurnMs ?? 0;
       if (payload.result.disposition === "SUPPORT_FIRST") {
         persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate || local.candidate, candidateGeneration: payload.result.generation || local.candidateGeneration, phase: "support" });
       } else if (payload.result.kind === "CLARIFICATION_REQUIRED") {
         persist({ ...local, clarificationAnswers: answers, clarificationPrompt: payload.result.prompt || "What would feel different if this situation were more under your control?", phase: "clarification" });
       } else if (payload.result.candidate) {
         persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate, candidateGeneration: payload.result.generation, phase: "candidate" });
+        console.info(JSON.stringify({
+          event: "programme_ai_m1_client_latency",
+          inputMode: local.inputMode,
+          recordingDurationMs: voiceTiming.current?.recordingDurationMs,
+          transcriptionRequestMs: voiceTiming.current?.transcriptionRequestMs,
+          programmeAiTurnMs: accumulatedAiLatencyMs.current,
+          totalSubmitToStartingPointMs: personalisationStartedAt.current === null
+            ? undefined
+            : Math.round(performance.now() - personalisationStartedAt.current),
+          summedTechnicalLatencyMs: (voiceTiming.current?.transcriptionRequestMs ?? 0)
+            + accumulatedAiLatencyMs.current,
+          clarificationCount: answers.length,
+        }));
       }
     } catch (cause) {
       const requestError = cause as Error & { code?: string };
@@ -591,6 +746,55 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     const answers = [...local.clarificationAnswers, clarificationValue.trim()].slice(0, 2);
     setClarificationValue("");
     await submitTurn(answers);
+  }
+
+  async function transcribeVoice(audio: Blob, durationMs: number) {
+    if (!subject) throw new Error("Programme session unavailable");
+    await ensureSensitiveAuthority();
+    const form = new FormData();
+    form.set("audio", audio, "programme-m1-recording");
+    form.set("durationMs", String(durationMs));
+    const payload = await programAiRequest<{
+      transcript: string;
+      timing?: { transcriptionRequestMs?: number };
+    }>("/api/program/program-ai/transcription", subject, {
+      method: "POST",
+      body: form,
+    });
+    return {
+      transcript: payload.transcript,
+      transcriptionRequestMs: payload.timing?.transcriptionRequestMs ?? 0,
+    };
+  }
+
+  async function ensureSensitiveAuthority() {
+    if (!subject || sensitiveAuthorityActive) return;
+    await programAiRequest("/api/program/program-ai/authority", subject, {
+      method: "POST",
+      body: JSON.stringify({
+        confirmed: true,
+        purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
+        statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
+      }),
+    });
+    setSensitiveAuthorityActive(true);
+  }
+
+  function acceptTranscript(transcript: string, timing: {
+    recordingDurationMs: number;
+    transcriptionRequestMs: number;
+  }) {
+    voiceTiming.current = timing;
+    personalisationStartedAt.current = null;
+    accumulatedAiLatencyMs.current = 0;
+    persist({ ...local, situation: transcript, inputMode: "voice", phase: "intake" });
+  }
+
+  function useTypedInput() {
+    voiceTiming.current = null;
+    personalisationStartedAt.current = null;
+    accumulatedAiLatencyMs.current = 0;
+    persist({ ...local, inputMode: "text", phase: "intake" });
   }
 
   async function continueAfterSupport() {
@@ -688,7 +892,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   if (phase === "legacy") return <ActiveControlProgramme googleAvailable={googleAvailable} />;
   if (phase === "loading" || sessionPending) return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>;
   if (phase === "access") return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
-  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} onSituation={(situation) => { const next = { ...local, situation, inputMode: "text" as const }; setLocal(next); if (subject) saveProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} situation={local.situation} />;
+  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) saveProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />;
   if (phase === "clarification") return <ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />;
   if (phase === "candidate" && local.candidate) return <CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />;
   if (phase === "support") return <SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />;

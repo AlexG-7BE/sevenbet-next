@@ -4,7 +4,10 @@ import test from "node:test";
 
 import { POST as createProgramAiSession } from "../app/api/program/program-ai/session/route";
 import { issueProgrammeAccessProof } from "../lib/auth/programme-access-proof";
-import { resolveProgramAiClaimCompatibility } from "../lib/programme/application/programme-ai-mission-one.service";
+import {
+  ProgrammeAiMissionOneService,
+  resolveProgramAiClaimCompatibility,
+} from "../lib/programme/application/programme-ai-mission-one.service";
 import {
   PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_HEADER_VALUES,
@@ -14,6 +17,7 @@ import {
 import { ProgrammeAiMissionOneRepository } from "../lib/programme/infrastructure/repositories/programme-ai-mission-one.repository";
 import {
   anonymousProgramAiXp,
+  PROGRAM_AI_M1_VERSION,
   programAiMissionOneActions,
 } from "../lib/programme/program-ai/contracts";
 import { ProgrammeAiOrchestrator } from "../lib/programme/program-ai/orchestration";
@@ -244,6 +248,18 @@ test("provider output is a strict union and cannot smuggle authority, raw payloa
     generation: "USER_CONTROLLED_FALLBACK",
     disposition: "CONTINUE",
   }), /generation/i);
+  assert.throws(() => parseProgrammeAiPortResult({
+    kind: "STARTING_POINT_CANDIDATE",
+    candidate: { ...startingPoint, startingPoint: "short" },
+    generation: "PROVIDER",
+    disposition: "CONTINUE",
+  }), /at least 10/i);
+  assert.throws(() => parseProgrammeAiPortResult({
+    kind: "CLARIFICATION_REQUIRED",
+    prompt: "Why?",
+    reason: "CONTEXT_UNCLEAR",
+    disposition: "CONTINUE",
+  }), /at least 8/i);
 });
 
 test("no-adapter orchestration is truthful, deterministic and leaves user-controlled fields incomplete", async () => {
@@ -261,6 +277,69 @@ test("no-adapter orchestration is truthful, deterministic and leaves user-contro
   assert.equal(result.candidate.desiredChange, "");
   assert.equal(result.candidate.continuationCue, "");
   assert.equal(result.candidate.broadContext, "NOT_SPECIFIED");
+});
+
+test("Mission 01 reserves at most three real-provider calls and then falls back", async () => {
+  const previousFoundationFlag = process.env.PROGRAM_AI_V1_ENABLED;
+  const previousProviderFlag = process.env.PROGRAM_AI_REAL_PROVIDER_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  process.env.PROGRAM_AI_REAL_PROVIDER_ENABLED = "true";
+  const session = {
+    id: "session-call-budget",
+    missionVersion: PROGRAM_AI_M1_VERSION,
+    deletedAt: null,
+    expiresAt: new Date("2026-08-11T00:00:00.000Z"),
+    taskStates: [] as string[],
+    draft: {} as Record<string, unknown>,
+    missionState: "NOT_STARTED",
+  };
+  const fakeUnitOfWork = {
+    serializable: async (operation: (unitOfWork: unknown) => Promise<unknown>) => operation(fakeUnitOfWork),
+    sessions: {
+      findAnonymousSession: async () => session,
+      updateAnonymousSession: async (_id: string, input: Record<string, unknown>) => {
+        Object.assign(session, input);
+        return session;
+      },
+    },
+    programAiMissionOne: {
+      findActiveAnonymousAuthority: async () => ({ id: "authority-call-budget" }),
+    },
+  };
+  let providerCalls = 0;
+  const service = new ProgrammeAiMissionOneService(
+    fakeUnitOfWork as never,
+    new ProgrammeAiOrchestrator({
+      async createTurn() {
+        providerCalls += 1;
+        return {
+          kind: "STARTING_POINT_CANDIDATE",
+          candidate: startingPoint,
+          generation: "PROVIDER",
+          disposition: "CONTINUE",
+        };
+      },
+    }),
+  );
+  try {
+    const generations: string[] = [];
+    for (let index = 0; index < 4; index += 1) {
+      const turn = await service.createTurn(
+        "opaque-token",
+        { inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
+        new Date("2026-08-10T12:00:00.000Z"),
+      );
+      if (turn.result.kind === "STARTING_POINT_CANDIDATE") generations.push(turn.result.generation);
+    }
+    assert.equal(providerCalls, 3);
+    assert.deepEqual(generations, ["PROVIDER", "PROVIDER", "PROVIDER", "USER_CONTROLLED_FALLBACK"]);
+    assert.equal((session.draft as Record<string, unknown>).providerCallCount, 3);
+  } finally {
+    if (previousFoundationFlag === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previousFoundationFlag;
+    if (previousProviderFlag === undefined) delete process.env.PROGRAM_AI_REAL_PROVIDER_ENABLED;
+    else process.env.PROGRAM_AI_REAL_PROVIDER_ENABLED = previousProviderFlag;
+  }
 });
 
 test("support-first is a transient port disposition, not a classifier or persisted label", async () => {

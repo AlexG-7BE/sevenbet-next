@@ -81,14 +81,26 @@ function parseCandidate(value: unknown, allowIncomplete = false) {
     "chosenBoundaryAction",
   ]);
   const candidate = {
-    startingPoint: text(body.startingPoint, "candidate.startingPoint", true, 320)!,
+    startingPoint: minimumText(
+      text(body.startingPoint, "candidate.startingPoint", true, 320)!,
+      "candidate.startingPoint",
+      10,
+    ),
     desiredChange: allowIncomplete && body.desiredChange === ""
       ? ""
-      : text(body.desiredChange, "candidate.desiredChange", true, 200)!,
+      : minimumText(
+          text(body.desiredChange, "candidate.desiredChange", true, 200)!,
+          "candidate.desiredChange",
+          2,
+        ),
     broadContext: member(body.broadContext, "candidate.broadContext", broadContexts, true)!,
     continuationCue: allowIncomplete && body.continuationCue === ""
       ? ""
-      : text(body.continuationCue, "candidate.continuationCue", true, 200)!,
+      : minimumText(
+          text(body.continuationCue, "candidate.continuationCue", true, 200)!,
+          "candidate.continuationCue",
+          2,
+        ),
     chosenBoundaryAction: text(body.chosenBoundaryAction, "candidate.chosenBoundaryAction", false, 200),
   };
   return candidate;
@@ -100,7 +112,7 @@ export function parseProgrammeAiPortResult(value: unknown): ProgrammeAiTurnResul
     assertOnlyKeys(body, ["kind", "prompt", "reason", "disposition"]);
     return {
       kind: "CLARIFICATION_REQUIRED",
-      prompt: text(body.prompt, "prompt", true, 240)!,
+      prompt: minimumText(text(body.prompt, "prompt", true, 240)!, "prompt", 8),
       reason: member(body.reason, "reason", clarificationReasons, true)!,
       disposition: member(body.disposition, "disposition", supportDispositions, true)!,
     };

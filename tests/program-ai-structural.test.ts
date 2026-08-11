@@ -40,7 +40,7 @@ test("raw Programme input cannot enter either new durable model", () => {
   );
   assert.doesNotMatch(durableModels, /audio|transcript|narrative|clarification|providerPayload|prompt|response/iu);
   assert.doesNotMatch(repository, /affiliate|casino|offer|tracking|marketing/iu);
-  assert.match(service, /processed before, and outside, any database transaction/);
+  assert.match(service, /Provider work runs after the metadata-only reservation and outside every database transaction/);
   assert.match(service, /confirmedContentStorage: "browser_session"/);
 });
 
@@ -55,8 +55,10 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /window\.sessionStorage/);
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
-  assert.match(frontend, /Audio is kept in memory only and is never saved/);
-  assert.match(frontend, /Voice transcription is not connected in this preview/);
+  assert.match(frontend, /Audio stays in short-lived memory/);
+  assert.match(frontend, /Editable transcript/);
+  assert.match(frontend, /new FormData\(\)/);
+  assert.match(frontend, /90_000/);
 });
 
 test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {
