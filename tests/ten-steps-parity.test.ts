@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { missionRegistry } from "../lib/programme/domain/mission-registry";
+import { programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 import { resolveTenStepsLandingState } from "../lib/ten-steps-landing";
 
 const page = readFileSync("app/(public)/10-steps/page.tsx", "utf8");
@@ -38,9 +38,9 @@ test("10 Steps keeps the approved Figma hierarchy inside the Public Shell", () =
   assert.match(landing, /<ol className=\{styles\.missionList\}>/);
 });
 
-test("Mission path is registry-owned and exposes ten exact titles without future task copy", () => {
-  assert.equal(missionRegistry.length, 10);
-  assert.deepEqual(missionRegistry.map((mission) => mission.title), [
+test("Mission path is feature-on registry-owned and exposes ten exact MVP titles", () => {
+  assert.equal(programmeMissionTitles.length, 10);
+  assert.deepEqual(programmeMissionTitles, [
     "Map the moment",
     "Set a 7-day goal",
     "Understand the urge",
@@ -52,8 +52,9 @@ test("Mission path is registry-owned and exposes ten exact titles without future
     "Rehearse the decision",
     "Make the plan reviewable",
   ]);
-  assert.match(landing, /import \{ missionRegistry \}/);
-  assert.match(landing, /PLANNED · NOT YET AVAILABLE/);
+  assert.match(landing, /import \{ programmeMissionTitles \}/);
+  assert.match(landing, /MVP PATH · AFTER ACCOUNT/);
+  assert.doesNotMatch(landing, /PLANNED · NOT YET AVAILABLE/);
   assert.doesNotMatch(landing, /future mission about|fact-check exercise|environmental friction|support option ready/i);
 });
 
@@ -67,12 +68,12 @@ test("10 Steps uses only the canonical Programme body destination", () => {
 });
 
 test("Mission 01 reward and post-mission account boundary are exact", () => {
-  assert.doesNotMatch(combined, /\+\s*20\s*XP/i);
-  assert.match(landing, /\+60 XP/);
-  assert.match(landing, /Awarded when Mission 01 completion is saved to your account\./);
-  assert.doesNotMatch(landing, /Awarded after account creation\./);
+  assert.match(landing, /\+40 XP/);
+  assert.doesNotMatch(landing, /\+60 XP/);
+  assert.match(landing, /Its two actions earn 40 XP before registration\./);
+  assert.match(landing, /REGISTRATION EARNS 0 XP\./);
   assert.match(landing, /Mission 01 does not require an account/);
-  assert.match(landing, /Create an account to save completion and \+60 XP/);
+  assert.match(landing, /Create an account to save the already-earned 40 XP/);
   assert.doesNotMatch(combined, /cash value|money value|bonus eligibility|winnings|deposit reward/i);
 });
 
@@ -141,7 +142,7 @@ test("returning state exposes server-owned current Mission, completion and XP", 
   assert.doesNotMatch(landing, /330 XP|3 rules active|1 of 10 complete/);
 });
 
-test("Mission 04 remains current while Mission 05 fails closed as unavailable", async () => {
+test("Mission 04 and Mission 05 remain server-owned current states", async () => {
   const missionFour = await resolveTenStepsLandingState({
     getSession: async () => ({ user: { id: "user-1" } }),
     getDashboard: async () => ({
@@ -168,8 +169,7 @@ test("Mission 04 remains current while Mission 05 fails closed as unavailable", 
       ],
     }),
   });
-  assert.deepEqual(missionFive, { kind: "available-programme-complete", totalXp: 330, completedMissions: 4 });
-  assert.ok(!("currentMission" in missionFive));
+  assert.deepEqual(missionFive, { kind: "returning", totalXp: 330, completedMissions: 4, currentMission: 5 });
 });
 
 test("core content remains SSR-first, visible by default and responsive", () => {

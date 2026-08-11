@@ -1,5 +1,5 @@
 import { ActionLink } from "@/components/design-system/Action";
-import { missionRegistry } from "@/lib/programme/domain/mission-registry";
+import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-registry";
 import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
 import styles from "./TenStepsLanding.module.css";
 
@@ -8,16 +8,11 @@ const contractImage = "https://images.pexels.com/photos/37057075/pexels-photo-37
 const accountImage = "https://images.pexels.com/photos/34947154/pexels-photo-34947154.jpeg?auto=compress&cs=tinysrgb&w=1800";
 const returningImage = "https://images.pexels.com/photos/4450147/pexels-photo-4450147.jpeg?auto=compress&cs=tinysrgb&w=1800";
 
-const programmeMissions = missionRegistry.map((mission) => ({
-  number: String(mission.missionNumber).padStart(2, "0"),
-  title: mission.title,
-  status:
-    mission.missionNumber === 1
-      ? "START HERE · AVAILABLE NOW"
-      : mission.completion
-        ? "UPCOMING · AFTER ACCOUNT"
-        : "PLANNED · NOT YET AVAILABLE",
-  current: mission.missionNumber === 1,
+const programmeMissions = programmeMissionTitles.map((title, index) => ({
+  number: String(index + 1).padStart(2, "0"),
+  title,
+  status: index === 0 ? "START HERE · NO ACCOUNT REQUIRED" : "MVP PATH · AFTER ACCOUNT",
+  current: index === 0,
 }));
 
 export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
@@ -69,8 +64,8 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
           <article>
             <span>MISSION 01</span>
             <h3>Map the moment.</h3>
-            <p>Notice the context and cue, then write one personal notice rule.</p>
-            <div className={styles.miniResult}><small>PRIVATE RESULT</small><b>Moment Map</b><i /></div>
+            <p>Turn one current situation into a personalised Starting Point you control.</p>
+            <div className={styles.miniResult}><small>PRIVATE RESULT</small><b>Starting Point</b><i /></div>
           </article>
           <article>
             <span>YOUR WORK</span>
@@ -81,7 +76,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
           <article>
             <span>10 MISSIONS</span>
             <h3>A path you can finish.</h3>
-            <p>See every approved title while unavailable Missions stay clearly locked.</p>
+            <p>See the complete approved MVP path from Starting Point to a reviewable plan.</p>
             <div className={styles.miniResult}><small>VISIBLE PATH</small><b>01 → 10</b><i /></div>
           </article>
         </div>
@@ -105,7 +100,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <div className={styles.pathIntro}>
           <span>THE FULL PATH</span>
           <h2 id="mission-map-title">Ten missions. One decision you can review.</h2>
-          <p>Mission 01 is available now. Later Missions remain visible without pretending they are complete or available.</p>
+          <p>Mission 01 starts without an account. Missions 02–10 continue the MVP after you choose to save the Starting Point.</p>
         </div>
         <ol className={styles.missionList}>
           {programmeMissions.map((mission) => (
@@ -121,11 +116,12 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <div className={styles.accountCopy}>
           <span>ACCOUNT BOUNDARY</span>
           <h2 id="account-boundary-title"><strong>Start private.</strong><em>Save progress if you choose.</em></h2>
-          <p>Mission 01 does not require an account. After completion, create one only if you want to save completion and claim +60 XP. Your Moment Map wording stays in this browser session.</p>
+          <p>Mission 01 does not require an account. Its two actions earn 40 XP before registration. Create an account only if you want to save the already-earned Starting Point, completion and XP. Personal wording stays in this browser session.</p>
           <ol>
             <li>Open Mission 01</li>
             <li>Complete it privately</li>
-            <li>Create an account to save completion and +60 XP</li>
+            <li>Earn 20 + 20 XP for the two Mission actions</li>
+            <li>Create an account to save the already-earned 40 XP</li>
           </ol>
         </div>
         <div className={styles.accountImage}><img alt="" height="1200" loading="eager" src={accountImage} width="1800" /></div>
@@ -164,12 +160,12 @@ function AnonymousHero() {
         <h1 id="ten-steps-title"><strong>10 STEPS</strong><em>before you choose.</em></h1>
         <p>Compare casinos, understand offers, build your own rules.</p>
         <ActionLink className={styles.primaryButton} href="/program?entry=start" size="large">Start Mission 01</ActionLink>
-        <small>MISSION 01 IS PRIVATE. CREATE AN ACCOUNT ONLY AFTER COMPLETION TO SAVE +60 XP.</small>
+        <small>MISSION 01 IS PRIVATE. ITS TWO ACTIONS EARN 40 XP. REGISTRATION EARNS 0 XP.</small>
       </div>
       <div className={styles.heroVisual}>
         <img alt="" fetchPriority="high" height="1200" src={heroImage} width="1800" />
         <div className={styles.rewardCard} aria-label="Mission 01 pending recognition">
-          <span>SAVE PROGRESS TO EARN</span><strong>+60 XP</strong><small>Awarded when Mission 01 completion is saved to your account. Personal wording stays in your browser session.</small>
+          <span>EARNED IN MISSION 01</span><strong>+40 XP</strong><small>20 XP for describing the situation and 20 XP for confirming the Starting Point. Registration adds 0 XP.</small>
         </div>
       </div>
     </div>
@@ -181,7 +177,7 @@ type ConfirmedProgrammeState = Extract<TenStepsLandingState, { kind: "returning"
 function ReturningHero({ state }: { state: ConfirmedProgrammeState }) {
   const progress = state.kind === "returning"
     ? `Mission ${String(state.currentMission).padStart(2, "0")} · ${state.completedMissions} of 10 complete · ${state.totalXp} XP`
-    : `${state.completedMissions} of 10 complete · ${state.totalXp} XP · later Missions unavailable`;
+    : `${state.completedMissions} of 10 complete · ${state.totalXp} XP`;
 
   return (
     <div className={styles.returningInner}>

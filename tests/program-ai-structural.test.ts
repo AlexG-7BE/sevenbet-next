@@ -12,6 +12,11 @@ const preflight = read("prisma/preflight/0018_program_ai_m1_foundation.sql");
 const service = read("lib/programme/application/programme-ai-mission-one.service.ts");
 const repository = read("lib/programme/infrastructure/repositories/programme-ai-mission-one.repository.ts");
 const frontend = read("components/programme/ProgramAiExperience.tsx");
+const authenticatedHome = read("components/programme/ProgramAiHome.tsx");
+const missionExperience = read("components/programme/ProgramAiMissionExperience.tsx");
+const missionPrimitives = read("components/programme/ProgramAiMissionPrimitives.tsx");
+const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
+const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
 
 test("the schema change is limited to the two approved Program AI concepts", () => {
@@ -109,8 +114,25 @@ test("exact-once claim storage is backed by unique keys and idempotent ledgers",
 });
 
 test("Home exposes truthful states and only the approved review entitlements", () => {
-  assert.match(service, /reviews: \[3, 6, 10\]/);
-  assert.doesNotMatch(frontend, /% complete|progressPercent|Math\.round\([^)]*100/);
-  assert.match(frontend, /Progress is shown as completed, current or locked/);
-  assert.match(frontend, /Only the approved review moments unlock/);
+  assert.match(missionsService, /programAiReviewDefinitions/);
+  assert.match(missionsService, /status: byMission\.get\(review\.unlockMission\)\?\.status === "COMPLETED"/);
+  assert.doesNotMatch(frontend + authenticatedHome, /% complete|progressPercent|Math\.round\([^)]*100/);
+  assert.match(authenticatedHome, /Completion, current position and locks come from your server record/);
+  assert.match(authenticatedHome, /Each Review becomes available at a meaningful point/);
+});
+
+test("consumer Programme uses distinct interaction primitives and hides provider/debug language", () => {
+  for (const primitive of ["ChoiceCards", "SequenceBuilder", "DecisionApplication", "StackBuilder", "AiCandidatePicker", "ProgrammeTimeline"]) {
+    assert.match(missionExperience + missionPrimitives, new RegExp(primitive));
+  }
+  assert.doesNotMatch(missionExperience + reviewScreen + authenticatedHome, /PRIVATE STRUCTURAL REVIEW|BOUNDED AI REVIEW|DETERMINISTIC REVIEW|Provider-off|provider-failure|Generic public navigation|No Programme data is sent|criterion IDs/);
+  assert.doesNotMatch(missionPrimitives, /guidance\.generation|deterministic_fallback|provider/);
+  assert.match(missionExperience, /Check sequence · \+\$\{current\.xp\} XP when correct/);
+  assert.match(missionExperience, /No XP awarded\. Adjust the order and try again/);
+});
+
+test("public 10-steps metadata uses Starting Point truth and removes stale Moment Map copy", () => {
+  const tenStepsPage = read("app/(public)/10-steps/page.tsx");
+  assert.match(tenStepsPage, /build a personal Starting Point/);
+  assert.doesNotMatch(tenStepsPage, /Moment Map/);
 });
