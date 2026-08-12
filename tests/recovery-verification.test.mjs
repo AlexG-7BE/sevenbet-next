@@ -44,3 +44,13 @@ test("recovery tooling has no one-click Production restore path", () => {
   assert.match(preflight, /MANAGED_TARGET_DATABASE_ID_MISMATCH/);
   assert.match(verification, /verify-managed/);
 });
+
+test("managed verification supports a completed snapshot containing the exact canary", () => {
+  const verification = readFileSync("scripts/recovery-verify.mjs", "utf8");
+
+  assert.match(verification, /snapshotContainsCanary/);
+  assert.match(verification, /restoredPendingClaimCount !== 1/);
+  assert.match(verification, /RECOVERY_CANARY_PARITY_FAILED/);
+  assert.match(verification, /MANAGED_CANARY_PARITY=PASS/);
+  assert.match(verification, /PENDING_MANAGED_SNAPSHOT_CANARY=CLOSED/);
+});
