@@ -1,27 +1,23 @@
-import Link from "next/link";
+import { ActionLink } from "@/components/design-system/Action";
 import { PublicFooter } from "@/components/public-shell/PublicFooter";
 import { PublicHeader } from "@/components/public-shell/PublicHeader";
-import { getServerSession } from "@/lib/auth/session";
+import styles from "@/components/public-shell/PublicStatus.module.css";
 import { accountNavigationFor } from "@/lib/public-shell";
 
-export default async function NotFound() {
-  const session = await getServerSession();
-  const authenticated = Boolean(session?.user);
+export default function NotFound() {
   return (
     <>
       <a className="skipLink" href="#main-content">Skip to main content</a>
-      <PublicHeader account={accountNavigationFor({ authenticated })} authenticated={authenticated} />
+      <PublicHeader account={accountNavigationFor({ authenticated: false })} authenticated={false} />
       <main id="main-content">
-        <section className="pageShell">
-          <div className="container">
-            <div className="card discoveryEmpty">
-              <p className="eyebrow">Page not found</p>
-              <h1>This page is unavailable.</h1>
-              <p>The link may be outdated, or the content may no longer be published. You can return to educational resources or casino reviews.</p>
-              <div className="heroActions">
-                <Link className="button gold" href="/">Go home</Link>
-                <Link className="button ghost" href="/responsible-gambling">Responsible gambling resources</Link>
-              </div>
+        <section className={styles.page}>
+          <div className={styles.panel}>
+            <p className={styles.eyebrow}>404 · Page not found</p>
+            <h1>This page isn&apos;t here.</h1>
+            <p className={styles.copy}>The link may be outdated, moved or no longer published.</p>
+            <div className={styles.actions}>
+              <ActionLink href="/">Go home</ActionLink>
+              <ActionLink href="/responsible-gambling" variant="ghost-paper">Open Help</ActionLink>
             </div>
           </div>
         </section>

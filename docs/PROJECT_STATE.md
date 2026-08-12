@@ -3,7 +3,7 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-12
-- **Current main at implementation base:** `0a904a3b8dbf95de4a290ba9b071785f0bbbcfc3`
+- **Current main at implementation base:** `64aba31c300984deb128bd6d06495f2bfaceb510`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
@@ -18,6 +18,7 @@
 - **Detected controlled activation evidence:** the approved feature-on Preview used an isolated configured database with migration `0018`, a Preview-only real OpenAI key and valid runtime bindings. Real typed OpenAI passed; the deployed 20-case corpus scored 20/20 with 20/20 schema validity and 0% unnecessary clarification. Real microphone capture, OpenAI transcription and editable transcript passed; Founder Office physically accepted the timer/pulse UX. Deterministic `20 + 20` XP, Better Auth claim, durable Starting Point and the provider kill switch passed. Production remained legacy/off.
 - **Environment nuance:** the RECOVERY-01 branch pull did not expose generic runtime `DATABASE_URL`/`DIRECT_URL`, while provider-owned Preview aliases remained available. That branch-specific visibility is not evidence against the working isolated bindings used by the approved PR #64 Preview validation. RECOVERY-01 changed no Vercel runtime value, deployment or Production setting.
 - **RECOVERY-01:** **MANAGED RESTORE DRILL COMPLETE.** Starter managed snapshots remain active for the distinct Preview and Production databases. Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` was restored provider-natively to a fresh disconnected database, passed exact 18-migration, 12-table, schema, FK/orphan, auth/Programme, repository-read and deterministic canary parity, then the exact target and Preview canary were deleted and verified absent. Production remained read-only.
+- **LAUNCH-POLISH-01:** **IMPLEMENTED ON DRAFT REVIEW BRANCH; EXTERNAL MAIL ACTIVATION DEFERRED.** RFC-027 governs the resilient public 404/error hierarchy, `/contact`, `POST /api/contact`, isolated direct-HTTPS Resend adapter, privacy/retention delta, bounded link audit and WAF activation contract. Local code, build, browser, no-JavaScript and link gates pass. No mail DNS, provider account, Preview/Production secret, WAF, Production data or runtime flag was changed; the 2026-08-14 09:00 Asia/Almaty mail-DNS boundary has not passed.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -32,7 +33,9 @@
 | Google login code | **IDENTITY-ONLY BASELINE; CONTROLLED PREVIEW E2E VERIFIED** |
 | Google Production credentials | **NOT DETECTED — PRODUCTION GOOGLE OAUTH OFF** |
 | Email communication architecture | **READY — provider-independent, disabled transport** |
-| Email provider | **OPEN — NOT SELECTED** |
+| Account/Programme email provider | **OPEN — NOT SELECTED** |
+| Contact transactional provider | **RESEND ADAPTER DETECTED — EXTERNAL ACTIVATION DEFERRED** |
+| Public Contact | **IMPLEMENTED ON LAUNCH-POLISH-01 REVIEW BRANCH — NO APPLICATION DB PERSISTENCE** |
 | Programme reminder delivery | **NOT YET ACTIVE** |
 | Programme reminder permission architecture | **DEFINED** |
 | Commercial marketing email | **DISABLED** |
@@ -51,7 +54,7 @@
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. RFC-022 governs the default-off PROGRAM-AI M1 foundation. RFC-023 authorises only OpenAI-backed Founder/team/synthetic Preview validation; it does not authorise unrestricted real-user Production data. RFC-024 governs restore-to-new-target recovery, Production read-only drills and the current logical-fallback boundary. None authorises reminders, marketing or Production Google/PROGRAM-AI activation.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. RFC-022 governs the default-off PROGRAM-AI M1 foundation. RFC-023 authorises only OpenAI-backed Founder/team/synthetic Preview validation; it does not authorise unrestricted real-user Production data. RFC-024 governs restore-to-new-target recovery, Production read-only drills and the current logical-fallback boundary. RFC-027 governs only the public Contact-to-support-mailbox delivery boundary and does not activate account, Programme, reminder or marketing email. None authorises reminders, marketing or Production Google/PROGRAM-AI activation.
 
 The [PROGRAM-AI-01 Product Direction v2.2](07_Decisions/PROGRAM-AI-01-Product-Direction-v2.2.md) remains target product direction. Founder Office `PROGRAM-AI-IMPL-01A` and RFC-022 provide the separate bounded implementation authority that document required. The current hard-coded Programme remains frozen for unrelated expansion and remains the runtime whenever the new flag is absent or malformed. Missions 02–04 reward amounts are unchanged.
 
@@ -133,6 +136,14 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - The authenticated Programme header exposes bounded sign-out and starts a fresh anonymous subject after success; account-scoped browser content remains isolated for the same user.
 - Communication purposes are closed and server-owned. Account/security and Programme reminder contracts have fixed non-commercial templates; Programme engagement requires separate opt-in; commercial marketing denies. Delivery remains disabled because no provider, scheduler or preference store is selected.
 
+### Public Contact and launch polish — detected on review branch
+
+- The root `not-found` surface is anonymous and static with no auth, database, Programme or CMS dependency. Unknown paths retain truthful HTTP `404` and `noindex`, while Home and protected Help navigation works without JavaScript.
+- `/contact` exposes the existing `support@b4gamble.com` human mailbox, separates general enquiries from protected Help, provides the approved four-field form plus honeypot, and retains direct email/Privacy/Help when JavaScript is disabled.
+- `POST /api/contact` is a Node-only JSON route with same-origin enforcement, an 8 KiB body guard, strict accepted keys, bounded text validation, CR/LF rejection, no-store responses and metadata-only operational logging. Contact bodies have no Prisma model or application-database write and do not enter analytics.
+- A narrow Contact-only direct-HTTPS Resend adapter is fail-closed unless the exact server-only enable, key, From and To contract is valid. It creates one plain-text internal envelope, uses the validated visitor email only as Reply-To, has an eight-second timeout and performs no automatic retry. Existing account/Programme communications remain on their disabled transport.
+- **External activation not detected:** no Resend account/domain verification, `send.b4gamble.com` SPF/DKIM, DMARC mutation, real delivery smoke, Preview/Production Contact secret, Production WAF rule or provider commitment was made. The documented WAF target is `POST /api/contact`, fixed window, IP key, five requests per ten minutes, `429`.
+
 ### Platform and delivery baseline
 
 - FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01 and PROGRAM-AI-ACTIVATE-01 are merged on main.
@@ -143,10 +154,10 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Evidence classification
 
-- **Detected:** base main `0a904a3b8dbf95de4a290ba9b071785f0bbbcfc3`; merged RFC-022/RFC-023/RFC-025 Programme AI implementation, feature-on Missions 02–10 and exact `715 XP` clean-path policy plus successful controlled live Preview validation; distinct Preview/Production resource IDs and connection fingerprints; Starter workspace scope; completed Production and Preview snapshots with seven-day retention metadata; a passed Preview logical restore; and a passed, fully deleted provider-native Preview restore target with exact managed canary parity.
+- **Detected:** base main `64aba31c300984deb128bd6d06495f2bfaceb510`; merged RFC-022/RFC-023/RFC-025 Programme AI implementation, feature-on Missions 02–10 and exact `715 XP` clean-path policy plus successful controlled live Preview validation; distinct Preview/Production resource IDs and connection fingerprints; Starter workspace scope; completed Production and Preview snapshots with seven-day retention metadata; a passed Preview logical restore; a passed, fully deleted provider-native Preview restore target with exact managed canary parity; and the RFC-027 Contact/error implementation on the current review branch.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** any separately authorised Production Google or PROGRAM-AI provider activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; and approved legacy raw-data cleanup.
-- **Not detected:** unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, an email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation, or fine-grained PITR.
+- **Planned:** any separately authorised Production Google or PROGRAM-AI provider activation; Contact provider/DNS/WAF/real-delivery activation after its external gates; an account/Programme email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; and approved legacy raw-data cleanup.
+- **Not detected:** unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, active Contact delivery/DNS/WAF configuration, an account/Programme email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation, or fine-grained PITR.
 
 ## Remaining release gates
 
@@ -169,7 +180,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 ### Engineering and operations
 
 - Keep Production Google OAuth off. Any future Production Google Web client, credentials, exact origins/callbacks and consent-screen evidence require a separate Founder-authorised activation and must remain isolated from the verified Preview configuration.
-- Select and approve a B4GAMBLE-controlled sending domain, sender mailboxes and email transport before any delivery work. SPF, DKIM, DMARC, TLS, bounce/complaint handling and monitoring remain open. Actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
+- Keep Contact delivery disabled until RFC-027's Founder, provider, privacy, mail-DNS, Preview-smoke and WAF gates pass. Account/Programme delivery remains a separate open decision; actual reminders require COMMS-REMINDER-01 and an appropriate preference/opt-out decision.
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
 - Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
@@ -178,4 +189,4 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ## Release conclusion
 
-LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01, PROGRAM-AI-IMPL-01A, PROGRAM-AI-IMPL-01B and the successfully Preview-validated PROGRAM-AI-ACTIVATE-01 are on base main. RFC-025’s feature-on Missions 02–10 path retains exact `715 XP` clean-path truth. Production Google OAuth and PROGRAM-AI providers remain off. RECOVERY-01 is `MANAGED RESTORE DRILL COMPLETE`; the closure used Preview only and left Production read-only. None of this enables email/reminders, mutates Production data, activates commercial traffic or makes B4GAMBLE GB launch-ready.
+LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01, PROGRAM-AI-IMPL-01A, PROGRAM-AI-IMPL-01B and the successfully Preview-validated PROGRAM-AI-ACTIVATE-01 are on base main. RFC-025’s feature-on Missions 02–10 path retains exact `715 XP` clean-path truth. LAUNCH-POLISH-01 is implemented only on its unmerged review branch: the public Contact/error code exists there, but external Contact delivery, mail DNS and WAF activation remain deferred. Production Google OAuth and PROGRAM-AI providers remain off. RECOVERY-01 is `MANAGED RESTORE DRILL COMPLETE`; the closure used Preview only and left Production read-only. None of this enables reminders, mutates Production data, activates commercial traffic or makes B4GAMBLE GB launch-ready.

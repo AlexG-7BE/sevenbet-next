@@ -5,6 +5,8 @@
 - **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01 and for Programme access continuation/home routing by RFC-021
 - **Last reviewed:** 2026-08-10
 
+Scope note, 2026-08-12: RFC-027 selects Resend only for the isolated public Contact form. That adapter does not enter this account/Programme communications boundary, activate its transports or authorise reminders, engagement or marketing delivery. Contact operations and DNS gates are recorded in `Contact-Service-and-Mail-Readiness.md`.
+
 ## Evidence status
 
 ### Detected
@@ -30,13 +32,13 @@
 ### Planned
 
 - Create and verify a Production Google Cloud client and exact authorised redirects only under a later Founder-authorised Production activation; no Production credentials or activation are detected.
-- Select and legally/operationally review an email delivery provider only under a separate activation decision.
-- Verify a B4GAMBLE-controlled sending domain and monitored mailboxes.
+- Select and legally/operationally review an account/Programme email delivery provider only under a separate activation decision.
+- Verify B4GAMBLE-controlled account/Programme sending identities and monitored reply mailboxes.
 
 ### Not detected
 
 - No Google credentials, consent-screen publication, exact Preview callback registration or live Google smoke result is proven by repository evidence.
-- No email delivery provider, provider credential, scheduler, queue, outbox, preference store, suppression list, bounce/complaint handler, tracking or Production email send path exists.
+- No account/Programme email delivery provider, provider credential, scheduler, queue, outbox, preference store, suppression list, bounce/complaint handler, tracking or Production account/Programme send path exists. RFC-027 Contact delivery is separate and remains externally inactive at this review point.
 
 ## Google callback matrix
 

@@ -13,6 +13,7 @@ export const coreRoutes = [
   "/methodology",
   "/affiliate-disclosure",
   "/about",
+  "/contact",
   "/faq",
   "/bonus-guide",
   "/tools/budget-calculator",

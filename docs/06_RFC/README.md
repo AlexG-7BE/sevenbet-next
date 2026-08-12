@@ -31,3 +31,7 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current analytics and runtime-hardening decision
 
 - [RFC-026 — MVP Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) authorises the closed privacy-safe Vercel event contract, aggregate-only report, one PostgreSQL fixed-window rate-limit model, bounded transient expiry purge, authenticated daily Cron and database-binding readiness evidence for `MVP-RUNTIME-01`. Preview migration and Production activation remain gated by the approved rollout sequence and Founder review.
+
+## Current public Contact and transactional-mail decision
+
+- [RFC-027 — Public Contact and Transactional Mail Boundary](RFC-027-Public-Contact-and-Transactional-Mail-Boundary.md) authorises the bounded public Contact route, strict no-database submission contract, isolated Resend HTTPS adapter, existing Google Workspace support mailbox authority, Vercel WAF abuse policy and fail-closed mail/DNS activation boundary for `LAUNCH-POLISH-01`. Account, Programme and commercial communications remain disabled.
