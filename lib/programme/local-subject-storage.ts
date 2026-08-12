@@ -92,6 +92,15 @@ export function saveProgrammeSubjectContent<T extends object>(storage: SessionSt
   storage.setItem(subjectKey(CONTENT_KEY_PREFIX, subject), JSON.stringify(value));
 }
 
+export function mergeProgrammeSubjectContent<T extends object>(
+  storage: SessionStorageLike,
+  subject: ProgrammeLocalSubject,
+  value: Partial<T>,
+) {
+  const current = loadProgrammeSubjectContent<T>(storage, subject);
+  saveProgrammeSubjectContent(storage, subject, { ...current, ...value } as T);
+}
+
 export function clearProgrammeSubjectContent(storage: SessionStorageLike, subject: ProgrammeLocalSubject) {
   storage.removeItem(subjectKey(CONTENT_KEY_PREFIX, subject));
 }

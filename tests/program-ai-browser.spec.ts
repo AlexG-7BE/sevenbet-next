@@ -26,6 +26,7 @@ import {
   type ProgrammeStartingPointValue,
 } from "../lib/programme/program-ai/contracts";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
+import { programAiMissionRegistry } from "../lib/programme/program-ai/mission-registry";
 
 const baseURL = "http://127.0.0.1:4173";
 const authSecret = "program-ai-ci-auth-secret-not-used-by-production";
@@ -40,6 +41,17 @@ const startingPoint: ProgrammeStartingPointValue = {
 };
 
 const situation = "After difficult work days I keep opening betting apps late at night.";
+const missionActionArtifacts: Record<string, Record<string, unknown>> = {
+  choose_direction: { direction: "pause" }, build_7_day_goal: { goalStyle: "pause_first", reviewWindowDays: 7 }, reality_check: { realityCheck: "restart_next_day" },
+  map_urge_sequence: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, name_early_signal: { earlySignalCategory: "thought" }, choose_pause_move: { pauseMove: "wait_ten_minutes" },
+  choose_boundary: { boundaryCategory: "pause", triggerType: "saved_early_signal" }, build_boundary_rule: { executionMethod: "bank_block" }, choose_execution: { pressureCheck: "needs_setup" },
+  run_decision_check: { scenarioChoice: "unexpected_offer" }, build_three_checks: { decisionChecks: ["purpose", "terms", "exit"] }, commit_pause_rule: { pauseRuleType: "pause_when_terms_are_unclear" },
+  choose_friction_layer: { frictionMethods: ["bank_block"] }, build_friction_stack: { frictionMethods: ["bank_block", "remove_saved_payment"] }, rehearse_bypass: { fallbackMethod: "leave", bypassReason: "easy_to_disable" },
+  choose_support_route: { supportModes: ["protected_help"] }, build_support_card: { supportCardStyle: "when_then" }, choose_exit_action: { exitActionType: "open_help" },
+  learn_comparison_signals: { comparisonSignals: ["licensing_status", "material_terms"] }, decode_offer_terms: { offerTermSignal: "wagering_requirement" }, build_research_checklist: { researchCriteria: ["licensing_status", "terms", "withdrawals"] },
+  choose_scenario: { scenarioType: "unclear_terms" }, rehearse_response: { responseStrategy: "pause_and_check" }, build_fallback_response: { fallbackStrategy: "leave_and_return" },
+  review_my_plan: { timelineReviewed: true }, assemble_final_plan: { planPriorityIds: ["pause_move", "boundary", "fallback"] }, choose_review_cadence: { reviewCadenceDays: 14 },
+};
 const programmeAgeHeader = {
   [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age,
 };
@@ -195,6 +207,29 @@ async function anonymousSessionFromContext(context: BrowserContext) {
 
 async function noHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+}
+
+async function openCurrentMission(page: Page, missionNumber: number, width: number) {
+  const mission = programAiMissionRegistry.find((item) => item.missionNumber === missionNumber)!;
+  await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
+  await page.goto("/program");
+  await page.getByRole("button", { name: `Resume Mission ${String(missionNumber).padStart(2, "0")}` }).click();
+  await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
+  await noHorizontalOverflow(page);
+}
+
+async function installUserAccessMarker(page: Page, userId: string, authority: AccessAuthority) {
+  const [, encodedClaims] = authority.proof.split(".");
+  const marker = {
+    ...JSON.parse(Buffer.from(encodedClaims, "base64url").toString("utf8")),
+    proof: authority.proof,
+  };
+  await page.addInitScript(({ key, value }) => {
+    window.sessionStorage.setItem(key, value);
+  }, {
+    key: `sevenbet.programme.access-authority.v1:user:${encodeURIComponent(userId)}`,
+    value: JSON.stringify(marker),
+  });
 }
 
 test.afterAll(async () => {
@@ -516,7 +551,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.getByRole("heading", { name: "Continue with Mission 2." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
   await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 
@@ -588,6 +623,195 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(authorityAfterAnonymousCleanup.userId).toBe(user.id);
 
   await prisma.user.deleteMany({ where: { id: { in: [user.id, wrongUser.id] } } });
+});
+
+test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches exactly 715 XP", async ({ page }) => {
+  const client = page.request;
+  const ready = await prepareReadyClaim(client);
+  const email = `program-ai-ten-step-${randomUUID()}@example.test`;
+  const { user, authCookieHeader } = await signUp(client, ready.access, email);
+  await installUserAccessMarker(page, user.id, ready.access);
+  const redeem = await client.post("/api/program/program-ai/claims/redeem", {
+    headers: { ...programmeAgeHeader, cookie: `${ready.cookieHeader}; ${ready.claimCookieHeader}; ${authCookieHeader}` },
+    data: { timeZone: "UTC", startingPoint },
+  });
+  const redeemPayload = await redeem.json();
+  expect(redeem.status(), JSON.stringify(redeemPayload)).toBe(200);
+  expect(redeemPayload.home.totalXp).toBe(40);
+
+  for (const mission of programAiMissionRegistry) {
+    if (mission.missionNumber === 3) {
+      await openCurrentMission(page, 3, 390);
+      const builder = page.getByRole("region", { name: "Place the earliest moment first." });
+      await expect(builder.getByRole("listitem").nth(0)).toContainText("Choice point");
+      await page.getByRole("button", { name: /Check sequence/ }).click();
+      await expect(page.getByText("No XP awarded. Adjust the order and try again.")).toBeVisible();
+      await builder.getByRole("listitem").filter({ hasText: "Cue" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Early signal" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Early signal" }).getByRole("button", { name: "Move up" }).click();
+      await builder.getByRole("listitem").filter({ hasText: "Choice point" }).getByRole("button", { name: "Move down" }).click();
+      await page.getByRole("button", { name: /Check sequence/ }).click();
+      await expect(page.getByText("Action complete. 15 XP earned.")).toBeVisible();
+    }
+    if (mission.missionNumber === 5) {
+      await openCurrentMission(page, 5, 768);
+      await page.getByRole("radio", { name: "An unexpected offer" }).check();
+      await expect(page.getByText("A headline appears when you were not planning to look.")).toBeVisible();
+      await page.getByRole("radio", { name: "Are the material terms clear?" }).check();
+      await noHorizontalOverflow(page);
+    }
+    if (mission.missionNumber === 10) {
+      await openCurrentMission(page, 10, 768);
+      await expect(page.getByRole("heading", { name: "What you have built, in order." })).toBeVisible();
+      await expect(page.getByText("Starting Point", { exact: true })).toBeVisible();
+      await expect(page.getByText("Pause before one decision", { exact: true })).toBeVisible();
+      await expect(page.getByText("Bank block", { exact: true })).toBeVisible();
+      await expect(page.getByText("Pause and run the checks", { exact: true })).toBeVisible();
+      await expect(page.getByText("Built and ready to review")).toHaveCount(0);
+      await noHorizontalOverflow(page);
+    }
+    for (const [index, action] of mission.actions.entries()) {
+      const requestAction = () => client.post(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, {
+        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+        data: { action: action.id, artifact: missionActionArtifacts[action.id] },
+      });
+      if (mission.missionNumber === 2 && index === 0) {
+        const concurrent = await Promise.all([requestAction(), requestAction()]);
+        expect(concurrent.map((response) => response.status())).toEqual([200, 200]);
+        const awards = await Promise.all(concurrent.map(async (response) => (await response.json()).xpAwarded as number));
+        expect(awards.sort((left, right) => left - right)).toEqual([0, 15]);
+        await page.setViewportSize({ width: 375, height: 812 });
+        await page.goto("/program");
+        await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await noHorizontalOverflow(page);
+        await page.reload();
+        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await page.getByRole("button", { name: "Resume Mission 02" }).click();
+        await page.getByRole("radio", { name: "Pause before one decision" }).check();
+        await page.getByRole("button", { name: "Create personal drafts" }).click();
+        await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
+        await expect(page.locator("[aria-pressed]")).toHaveCount(3);
+        await page.locator("[aria-pressed]").nth(1).click();
+        await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("seven days");
+        await noHorizontalOverflow(page);
+      } else {
+        const response = await requestAction();
+        expect(response.status(), `${mission.missionNumber}:${action.id} ${await response.text()}`).toBe(200);
+        if (mission.missionNumber === 4 && index === 0) {
+          await openCurrentMission(page, 4, 1024);
+          await page.getByRole("radio", { name: "Bank block" }).check();
+          await page.getByRole("button", { name: "Create personal drafts" }).click();
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 5 && index === 1) {
+          await openCurrentMission(page, 5, 768);
+          await expect(page.getByText("SECOND PRACTICE MOMENT")).toBeVisible();
+          for (const check of ["Why am I considering this?", "Are the material terms clear?", "What is my exit route?"]) {
+            await page.getByRole("checkbox", { name: check }).check();
+          }
+          await expect(page.getByText("Apply each check you built before choosing the pause rule.")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 6 && index === 0) {
+          await openCurrentMission(page, 6, 1024);
+          await page.getByRole("checkbox", { name: "Remove saved payment" }).check();
+          await expect(page.getByText("YOUR STACK · 2 LAYERS")).toBeVisible();
+          await page.getByRole("button", { name: "Suggest an order" }).click();
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 7 && index === 0) {
+          await openCurrentMission(page, 7, 375);
+          await page.getByRole("radio", { name: "When X, I can Y" }).check();
+          await page.getByRole("button", { name: "Create personal drafts" }).click();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 8 && index === 0) {
+          await openCurrentMission(page, 8, 1440);
+          await expect(page.getByRole("heading", { name: "What would you check before judging the headline?" })).toBeVisible();
+          await page.getByRole("radio", { name: "Wagering requirement" }).check();
+          await expect(page.getByText("bonus-linked funds can be withdrawn")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 8 && index === 1) {
+          await openCurrentMission(page, 8, 1440);
+          await expect(page.getByRole("group", { name: /Research checklist/ })).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 9 && index === 0) {
+          await openCurrentMission(page, 9, 390);
+          await expect(page.getByText("The headline is clear, but the conditions")).toBeVisible();
+          await page.getByRole("button", { name: "Create my rehearsal" }).click();
+          await expect(page.getByRole("heading", { name: "The headline is clear; the terms are not" })).toBeVisible();
+          await expect(page.locator("[aria-pressed]")).toHaveCount(4);
+          await page.locator("[aria-pressed]").first().click();
+          await expect(page.getByText("That response creates a clear next move.")).toBeVisible();
+          await noHorizontalOverflow(page);
+        }
+        if (mission.missionNumber === 10 && index === 0) {
+          await openCurrentMission(page, 10, 768);
+          for (const priority of ["Pause move", "Boundary", "Fallback"]) {
+            await page.getByRole("checkbox", { name: priority }).check();
+          }
+          await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+          await expect(page.getByRole("heading", { name: "Build the plan, then choose when to review it." })).toBeVisible();
+          await page.getByRole("button", { name: "Build my plan" }).click();
+          await expect(page.getByRole("heading", { name: "Review your one-screen plan" })).toBeVisible();
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Pause move: Wait 10 minutes");
+          await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("Boundary: When the early signal appears; Bank block; Pause");
+          await page.getByRole("radio", { name: "Every 14 days" }).check();
+          await page.getByRole("button", { name: "Confirm action · +15 XP" }).click();
+          await noHorizontalOverflow(page);
+        }
+      }
+    }
+    const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
+      headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+      data: {},
+    });
+    const completePayload = await complete.json();
+    expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
+    expect(completePayload.xpAwarded).toBe(25);
+
+    const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
+    if (milestone) {
+      const beforeReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+      const review = await client.get(`/api/program/program-ai/reviews/${milestone}`, { headers: { ...programmeAgeHeader, cookie: authCookieHeader } });
+      expect(review.status()).toBe(200);
+      expect((await review.json()).review.generation).toBe("deterministic_fallback");
+      const afterReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+      expect(afterReview._sum.xp).toBe(beforeReview._sum.xp);
+    }
+  }
+
+  const xp = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
+  expect(xp._sum.xp).toBe(715);
+  expect(await prisma.userXpEvent.count({ where: { userId: user.id } })).toBe(38);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/program");
+  await expect(page.getByText("715 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
+  await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
+  await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
+  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
+  await noHorizontalOverflow(page);
+
+  for (const width of [375, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
+    await noHorizontalOverflow(page);
+  }
+
+  await page.getByRole("button", { name: "Open review" }).last().click();
+  await expect(page.getByRole("heading", { name: "Full Programme Personal Review" })).toBeVisible();
+  await expect(page.getByText("Here’s what your Programme looks like so far.")).toBeVisible();
+  await expect(page.getByText(/DETERMINISTIC REVIEW|BOUNDED AI REVIEW|Provider-off|provider-failure/)).toHaveCount(0);
+  await noHorizontalOverflow(page);
+  await prisma.user.delete({ where: { id: user.id } });
 });
 
 test("clarification cannot refresh authority, withdrawal blocks turns, and a new action can reconfirm", async ({ page }) => {

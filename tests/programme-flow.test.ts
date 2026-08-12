@@ -25,9 +25,13 @@ import { ProgrammeFlowService } from "../lib/services/programme-flow.service";
 type ProgrammeFlowRepository = ProgrammeUnitOfWork;
 import { parseActiveBoundary } from "../lib/programme/validation";
 
-const now = new Date("2026-08-04T10:00:00.000Z");
+const now = new Date();
 const programmeId = "10000000-0000-4000-8000-000000000001";
 const versionId = "10000000-0000-4000-8000-000000000002";
+
+function currentReviewBase() {
+  return now;
+}
 
 function goal(sourceMomentMapId: string, base = now) {
   return {
@@ -518,7 +522,7 @@ async function startMissionOne(service: ProgrammeFlowService) {
   return { ...created, claim };
 }
 
-async function registeredFlow(completionDate = now) {
+async function registeredFlow() {
   const repository = new MemoryProgrammeRepository();
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
   const started = await startMissionOne(service);
@@ -526,13 +530,13 @@ async function registeredFlow(completionDate = now) {
   const mapId = dashboard.momentMap!.id;
   await service.saveMissionTwoDraft("user-1", {
     taskStates: [...missionTwoTaskStates],
-    currentGoal: goal(mapId, completionDate),
+    currentGoal: goal(mapId, currentReviewBase()),
   });
   return { repository, service, started, dashboard, mapId };
 }
 
 async function missionThreeFlow(completionDate = now) {
-  const flow = await registeredFlow(completionDate);
+  const flow = await registeredFlow();
   await flow.service.completeMissionTwo("user-1", completionDate);
   await flow.service.saveMissionThreeDraft("user-1", {
     taskStates: [...missionThreeTaskStates],
@@ -546,7 +550,7 @@ async function missionFourFlow(completionDate = now) {
   await flow.service.completeMissionThree("user-1", completionDate);
   await flow.service.saveMissionFourDraft("user-1", {
     taskStates: [...missionFourTaskStates],
-    activeBoundary: activeBoundary(completionDate),
+    activeBoundary: activeBoundary(currentReviewBase()),
   });
   return flow;
 }
@@ -767,7 +771,7 @@ test("Mission 02 draft is owner-scoped and incomplete tasks cannot complete", as
   missionTwo.draft = null;
   await service.saveMissionTwoDraft("user-1", {
     taskStates: missionTwoTaskStates.slice(0, 7),
-    currentGoal: goal(mapId),
+    currentGoal: goal(mapId, currentReviewBase()),
   });
   await assert.rejects(() => service.completeMissionTwo("user-1", now), /task states are incomplete/i);
   await assert.rejects(() => service.getMissionTwoDraft("user-2"), /enrollment not found/i);
@@ -780,7 +784,7 @@ test("Mission 02 remains locked until Mission 01 is completed", async () => {
   await assert.rejects(
     () => service.saveMissionTwoDraft("user-1", {
       taskStates: [...missionTwoTaskStates],
-      currentGoal: goal(mapId),
+      currentGoal: goal(mapId, currentReviewBase()),
     }),
     /Mission 01 must be completed/i,
   );
@@ -938,7 +942,7 @@ test("Mission 04 is authenticated, resumable and requires all structure checks",
   await flow.service.saveMissionFourDraft("user-1", {
     taskStates: missionFourTaskStates.slice(0, 8),
     activeBoundary: {
-      ...activeBoundary(),
+      ...activeBoundary(currentReviewBase()),
       strengthChecks: ["placed_before_pressure", "specific"],
     },
   });
@@ -959,7 +963,7 @@ test("Mission 04 remains locked until Mission 03 is completed", async () => {
   await assert.rejects(
     () => service.saveMissionFourDraft("user-1", {
       taskStates: [...missionFourTaskStates],
-      activeBoundary: activeBoundary(),
+      activeBoundary: activeBoundary(currentReviewBase()),
     }),
     /Mission 03 must be completed/i,
   );
@@ -1051,13 +1055,13 @@ test("same local day is one active day; next local day advances the streak", asy
   assert.equal(dashboard.activeDays, 1);
   assert.equal(dashboard.currentStreak, 1);
 
-  const nextDay = new Date("2026-08-05T10:00:00.000Z");
-  const later = await registeredFlow(nextDay);
+  const nextDay = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const later = await registeredFlow();
   const laterDashboard = await later.service.completeMissionTwo("user-1", nextDay);
   assert.equal(laterDashboard.activeDays, 2);
   assert.equal(laterDashboard.currentStreak, 2);
   assert.equal(activeDayStreak(["2026-08-04", "2026-08-05"]), 2);
-  assert.equal(localDateAt(now, "Asia/Almaty"), "2026-08-04");
+  assert.equal(localDateAt(new Date("2026-08-04T10:00:00.000Z"), "Asia/Almaty"), "2026-08-04");
 });
 
 test("commercial activity cannot enter the Programme reward or active-day ledger", async () => {
@@ -1216,14 +1220,14 @@ test("validation rejects invalid confidence and client-authored reward fields", 
   await assert.rejects(
     () => service.saveMissionTwoDraft("user-1", {
       taskStates: [...missionTwoTaskStates],
-      currentGoal: { ...goal(mapId), confidence: 11 },
+      currentGoal: { ...goal(mapId, currentReviewBase()), confidence: 11 },
     }),
     ValidationError,
   );
   await assert.rejects(
     () => service.saveMissionTwoDraft("user-1", {
       taskStates: [...missionTwoTaskStates],
-      currentGoal: { ...goal(mapId), xp: 999 },
+      currentGoal: { ...goal(mapId, currentReviewBase()), xp: 999 },
     }),
     ValidationError,
   );

@@ -42,23 +42,22 @@ test("confirmed returning renders only the supplied server-owned values", () => 
   assert.doesNotMatch(hero, /330 XP|4 of 10 complete/);
 });
 
-test("available Programme complete renders supplied totals and keeps later Missions unavailable", () => {
-  const { hero } = renderState({ kind: "available-programme-complete", completedMissions: 4, totalXp: 275 });
+test("available Programme complete renders only supplied final totals", () => {
+  const { hero } = renderState({ kind: "available-programme-complete", completedMissions: 10, totalXp: 715 });
 
-  assert.match(hero, /4 of 10 complete/);
-  assert.match(hero, /275 XP/);
-  assert.match(hero, /later Missions unavailable/);
+  assert.match(hero, /10 of 10 complete/);
+  assert.match(hero, /715 XP/);
   assert.match(hero, /href="\/program"/);
-  assert.doesNotMatch(hero, /Mission 05|Mission 5|available now/i);
+  assert.doesNotMatch(hero, /Mission 11|available now/i);
 });
 
 test("anonymous hero preserves Mission 01 entry and pending reward boundary", () => {
   const { hero } = renderState({ kind: "anonymous" });
 
   assert.match(hero, /Start Mission 01/);
-  assert.match(hero, /\+60 XP/);
-  assert.match(hero, /CREATE AN ACCOUNT ONLY AFTER COMPLETION TO SAVE \+60 XP/);
-  assert.match(hero, /Awarded when Mission 01 completion is saved to your account\./);
+  assert.match(hero, /\+40 XP/);
+  assert.match(hero, /20 XP for describing the situation and 20 XP for confirming the Starting Point\./);
+  assert.match(hero, /Registration adds 0 XP\./);
   assert.match(hero, /href="\/program\?entry=start"/);
   assert.doesNotMatch(hero, /WELCOME BACK|MY PROGRAMME|of 10 complete/);
 });

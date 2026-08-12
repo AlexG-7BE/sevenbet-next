@@ -22,6 +22,7 @@ Create or update an RFC before and during any substantial decision that changes 
 
 - [RFC-022 — PROGRAM-AI M1 Foundation and Preview Vertical Slice](RFC-022-PROGRAM-AI-M1-Foundation-and-Preview-Vertical-Slice.md) authorises the bounded feature-off-by-default M1 foundation, exactly two narrow persistence concepts, provider-neutral ports, legacy compatibility and Preview vertical slice for `PROGRAM-AI-IMPL-01A`.
 - [RFC-023 — OpenAI Preview Voice and Personalisation Activation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) selects the two narrow OpenAI adapters, exact models, dual real-provider gate and Preview-only data/operations boundary for `PROGRAM-AI-ACTIVATE-01`. Production remains off.
+- [RFC-025 — PROGRAM-AI Missions 02–10 MVP](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) authorises the bounded feature-on Missions 02–10 contracts, exact `15 + 20 + 15 + 25` reward policy, three completion-derived Personal Reviews, closed JSON persistence, Mission guidance operations, Programme Home/resume and private-data-separated public discovery navigation for `PROGRAM-AI-IMPL-01B`. Production remains off.
 
 ## Current database recovery decision
 
