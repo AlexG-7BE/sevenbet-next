@@ -417,13 +417,10 @@ export async function verifyManagedRestoredTarget() {
   const canary = readCanaryManifest(required("RECOVERY_CANARY_MANIFEST_PATH"));
   const snapshotAt = new Date(required("RECOVERY_SELECTED_SNAPSHOT_AT"));
   const canaryCreatedAt = new Date(canary.rootCreatedAt);
-  if (
-    Number.isNaN(snapshotAt.valueOf()) ||
-    Number.isNaN(canaryCreatedAt.valueOf()) ||
-    snapshotAt >= canaryCreatedAt
-  ) {
+  if (Number.isNaN(snapshotAt.valueOf()) || Number.isNaN(canaryCreatedAt.valueOf())) {
     throw new RecoveryGuardError("RECOVERY_MANAGED_SNAPSHOT_CANARY_RELATION_INVALID");
   }
+  const snapshotContainsCanary = snapshotAt >= canaryCreatedAt;
 
   const source = new PrismaClient({
     datasourceUrl: required("RECOVERY_SOURCE_URL"),
@@ -444,9 +441,11 @@ export async function verifyManagedRestoredTarget() {
       targetCounts,
       targetTables,
       sourceCanary,
+      targetCanary,
       targetOrphans,
       targetUnvalidatedForeignKeys,
       restoredPendingCanaryCount,
+      restoredPendingClaimCount,
     ] = await Promise.all([
       appliedMigrationNames(source),
       appliedMigrationNames(target),
@@ -456,9 +455,15 @@ export async function verifyManagedRestoredTarget() {
       selectedCounts(target),
       publicTableNames(target),
       canaryEvidence(source, canary),
+      snapshotContainsCanary ? canaryEvidence(target, canary) : Promise.resolve(null),
       orphanCount(target),
       unvalidatedForeignKeyCount(target),
-      target.anonymousProgrammeSession.count({ where: { id: canary.rootId } }),
+      target.anonymousProgrammeSession.count({
+        where: { OR: [{ id: canary.rootId }, { tokenHash: canary.rootTokenHash }] },
+      }),
+      target.pendingProgrammeClaim.count({
+        where: { OR: [{ id: canary.claimId }, { tokenHash: canary.claimTokenHash }] },
+      }),
     ]);
 
     assertExactSet(sourceMigrations, repositoryMigrations, "RECOVERY_MIGRATION_PARITY_FAILED");
@@ -474,15 +479,37 @@ export async function verifyManagedRestoredTarget() {
     ) {
       throw new RecoveryGuardError("RECOVERY_FOREIGN_KEY_INTEGRITY_FAILED");
     }
-    if (restoredPendingCanaryCount !== 0) {
+    if (!snapshotContainsCanary && restoredPendingCanaryCount !== 0) {
       throw new RecoveryGuardError("RECOVERY_MANAGED_CANARY_TIMING_FAILED");
+    }
+    if (
+      snapshotContainsCanary &&
+      (restoredPendingCanaryCount !== 1 ||
+        restoredPendingClaimCount !== 1 ||
+        targetCanary?.rootId !== sourceCanary.rootId ||
+        targetCanary?.relationHash !== sourceCanary.relationHash)
+    ) {
+      throw new RecoveryGuardError("RECOVERY_CANARY_PARITY_FAILED");
+    }
+    if (
+      snapshotContainsCanary &&
+      JSON.stringify(sourceCounts) !== JSON.stringify(targetCounts)
+    ) {
+      throw new RecoveryGuardError("RECOVERY_TABLE_COUNT_PARITY_FAILED");
     }
 
     const repository = new ProgrammeSessionRepository(target);
     const representativeRead = await repository.findAnonymousSession(
-      digest("recovery-managed-representative-absent:v1"),
+      snapshotContainsCanary
+        ? canary.rootTokenHash
+        : digest("recovery-managed-representative-absent:v1"),
     );
-    if (representativeRead !== null) {
+    if (
+      snapshotContainsCanary
+        ? representativeRead?.id !== canary.rootId ||
+          representativeRead.pendingClaim?.id !== canary.claimId
+        : representativeRead !== null
+    ) {
       throw new RecoveryGuardError("RECOVERY_APPLICATION_READ_FAILED");
     }
 
@@ -493,9 +520,21 @@ export async function verifyManagedRestoredTarget() {
     console.log("CONNECTIVITY=PASS");
     console.log("MIGRATION_HISTORY_PARITY=PASS");
     console.log("SCHEMA_PARITY=PASS");
-    console.log("SELECTED_TABLE_COUNT_PARITY=NOT_APPLICABLE_POINT_IN_TIME_GAP");
-    console.log("MANAGED_CANARY_PARITY=NOT_APPLICABLE_SNAPSHOT_PREDATES_CANARY");
-    console.log("PENDING_MANAGED_SNAPSHOT_CANARY=PASS");
+    console.log(
+      snapshotContainsCanary
+        ? "SELECTED_TABLE_COUNT_PARITY=PASS"
+        : "SELECTED_TABLE_COUNT_PARITY=NOT_APPLICABLE_POINT_IN_TIME_GAP",
+    );
+    console.log(
+      snapshotContainsCanary
+        ? "MANAGED_CANARY_PARITY=PASS"
+        : "MANAGED_CANARY_PARITY=NOT_APPLICABLE_SNAPSHOT_PREDATES_CANARY",
+    );
+    console.log(
+      snapshotContainsCanary
+        ? "PENDING_MANAGED_SNAPSHOT_CANARY=CLOSED"
+        : "PENDING_MANAGED_SNAPSHOT_CANARY=PASS",
+    );
     console.log("FOREIGN_KEY_INTEGRITY=PASS");
     console.log("AUTH_SESSION_STRUCTURE=PASS");
     console.log("PROGRAMME_STRUCTURE=PASS");

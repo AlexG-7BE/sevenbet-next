@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- **Reconciled:** 2026-08-11
+- **Reconciled:** 2026-08-12
 - **Current main at implementation base:** `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
@@ -16,7 +16,7 @@
 - **PROGRAM-AI-ACTIVATE-01:** **CLOSED; PR #64 MERGED AFTER CONTROLLED LIVE PREVIEW VALIDATION.** [PR #64](https://github.com/AlexG-7BE/sevenbet-next/pull/64) merged approved head `377777d5c6e9f03f6eae9d9e9bb1293191873720` as `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`. [RFC-023](06_RFC/RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) authorised Founder/team/synthetic Preview use. Production configuration remained unchanged and legacy M1 remains the Production runtime.
 - **Detected controlled activation evidence:** the approved feature-on Preview used an isolated configured database with migration `0018`, a Preview-only real OpenAI key and valid runtime bindings. Real typed OpenAI passed; the deployed 20-case corpus scored 20/20 with 20/20 schema validity and 0% unnecessary clarification. Real microphone capture, OpenAI transcription and editable transcript passed; Founder Office physically accepted the timer/pulse UX. Deterministic `20 + 20` XP, Better Auth claim, durable Starting Point and the provider kill switch passed. Production remained legacy/off.
 - **Environment nuance:** the RECOVERY-01 branch pull did not expose generic runtime `DATABASE_URL`/`DIRECT_URL`, while provider-owned Preview aliases remained available. That branch-specific visibility is not evidence against the working isolated bindings used by the approved PR #64 Preview validation. RECOVERY-01 changed no Vercel runtime value, deployment or Production setting.
-- **RECOVERY-01:** **PARTIAL — MANAGED CANARY SNAPSHOT PENDING.** Starter is detected for the Vercel-billed Prisma workspace and both isolated databases. Production exposes 14 completed managed snapshots with seven-day retention metadata. A completed Preview snapshot was restored provider-natively into a new disconnected Prisma database, passed 18-migration/schema/FK/structure/repository-read validation and was deleted by exact immutable ID. The selected snapshot predates the one pending synthetic Preview canary, so managed canary parity remains not applicable until a later snapshot captures it.
+- **RECOVERY-01:** **MANAGED RESTORE DRILL COMPLETE.** Starter managed snapshots remain active for the distinct Preview and Production databases. Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` was restored provider-natively to a fresh disconnected database, passed exact 18-migration, 12-table, schema, FK/orphan, auth/Programme, repository-read and deterministic canary parity, then the exact target and Preview canary were deleted and verified absent. Production remained read-only.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -46,7 +46,7 @@
 | ICO fee | **OPEN EXTERNAL** |
 | Real partner | **OPEN** |
 | Commercial/referral | **OFF** |
-| Recovery | **PARTIAL — MANAGED CANARY SNAPSHOT PENDING** |
+| Recovery | **RECOVERY-01 — MANAGED RESTORE DRILL COMPLETE** |
 
 ## Governing product boundary
 
@@ -119,7 +119,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - Verification passed exact 18-migration parity, 12 selected table-count parity, source/target schema fingerprint parity, canary parent/child parity, zero orphans, auth/session and Programme structure, and an application repository read.
 - The Preview canary was deleted and verified absent. All local targets, dumps, SQL, manifests, environment files and the temporary server directory were destroyed. Production data and configuration remained untouched.
 - The provider-native drill selected Preview backup `backup-01kzqcxb1ak4rx3amh1snpwdag` at `2026-08-11T03:12:29.738Z` and restored it through Prisma Console's **Restore to a new database** path. Temporary target `cmsodg4461nfn17e56q2juff7` in `us-east-1` reached `ready`, passed connectivity, exact 18-migration parity, schema parity, zero-orphan/FK checks, auth/Programme structure and a `ProgrammeSessionRepository` read with external providers disabled. Exact-ID deletion returned HTTP 204; a subsequent exact lookup returned 404 and the target disappeared from the console list.
-- One synthetic structural canary remains intentionally in Preview pending capture: root `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`, safe hash `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`, created `2026-08-11T08:00:45.569Z`. The selected snapshot predates it, so selected table-count and canary parity are not comparable to current Preview state. No real-person content, audio, transcript or external-provider call is present in the canary.
+- On 2026-08-12, completed Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` captured the synthetic structural canary. Fresh target `cmspkm3vo22py12f5nej7sdfc` reached ready and passed exact 18-migration, 12 selected table-count, schema, FK/orphan, auth/Programme, repository-read and canary parent/claim parity. Exact target deletion returned HTTP 204, subsequent GET returned 404, and console absence was confirmed. The exact Preview canary root and claim were then deleted; both were verified absent and all unrelated selected-table counts were unchanged. Temporary credentials were revoked. No real-person content or external-provider call was involved; Production remained read-only.
 
 ### Authentication and communication foundation
 
@@ -138,14 +138,14 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - RFC-020 governs merged AUTH-HARDEN-01. RFC-021 v2.1 governs the merged GOOGLE-OAUTH-ACTIVATE-01 current runtime. PR #61 is closed and merged; it added no Prisma/schema/migration/dependency or protocol-provider change.
 - Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
 - CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
-- Recovery is **PARTIAL — MANAGED CANARY SNAPSHOT PENDING**: Production snapshots and provider-native new-target restore mechanics are proven, but the selected Preview snapshot predates the pending synthetic canary.
+- Recovery is **RECOVERY-01 — MANAGED RESTORE DRILL COMPLETE**: managed snapshots, isolated provider-native restoration, exact deterministic canary parity and exact cleanup are detected; Production remained read-only.
 
 ## Evidence classification
 
 - **Detected:** base main `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`; Missions 01–04 vertical services and deterministic reward policies; merged RFC-022/RFC-023 Programme AI implementation plus successful controlled live Preview validation; distinct Preview/Production resource IDs and connection fingerprints; Starter workspace scope; completed Production and Preview snapshots with seven-day retention metadata; a passed Preview logical restore; and a passed, fully deleted provider-native Preview restore target.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** generated Reviews; Missions 05–10; any separately authorised Production Google or PROGRAM-AI activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; approved legacy raw-data cleanup; and a later managed Preview snapshot/restore that captures and verifies the pending recovery canary.
-- **Not detected:** unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, an email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation, or managed restore parity for a snapshot containing the pending Preview canary.
+- **Planned:** generated Reviews; Missions 05–10; any separately authorised Production Google or PROGRAM-AI activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; and approved legacy raw-data cleanup.
+- **Not detected:** unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, an email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation, or fine-grained PITR.
 
 ## Remaining release gates
 
@@ -172,9 +172,9 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
 - Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
-- Keep RECOVERY-01 `PARTIAL — MANAGED CANARY SNAPSHOT PENDING` until a later completed Preview snapshot contains the exact pending canary, a new isolated restore verifies its parity, and the canary and target are deleted by exact identity. Starter activation, Production snapshot visibility and provider-native restore mechanics are already proven.
+- Preserve RECOVERY-01 evidence and continue routine managed-snapshot monitoring; any Production restore remains a separately authorised incident action.
 - Close remaining multi-process concurrency, autosave ordering, APM/paging and operational evidence gaps.
 
 ## Release conclusion
 
-LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01, PROGRAM-AI-IMPL-01A and the successfully Preview-validated PROGRAM-AI-ACTIVATE-01 are on base main. Production Google OAuth and PROGRAM-AI remain off. RECOVERY-01 is `PARTIAL — MANAGED CANARY SNAPSHOT PENDING`: managed Production snapshots and provider-native Preview restore mechanics passed, while the selected snapshot predates the pending synthetic canary. None of this activates Google or PROGRAM-AI in Production, enables email/reminders, mutates Production data, activates commercial traffic or makes B4GAMBLE GB launch-ready.
+LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01, PROGRAM-AI-IMPL-01A and the successfully Preview-validated PROGRAM-AI-ACTIVATE-01 are on base main. Production Google OAuth and PROGRAM-AI remain off. RECOVERY-01 is `MANAGED RESTORE DRILL COMPLETE`; the closure used Preview only and left Production read-only. None of this activates Google or PROGRAM-AI in Production, enables email/reminders, mutates Production data, activates commercial traffic or makes B4GAMBLE GB launch-ready.
