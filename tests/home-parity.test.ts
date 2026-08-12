@@ -127,19 +127,29 @@ test("Public Shell keeps its approved architecture while exposing the current br
 
   execFileSync("git", ["diff", "--quiet", "origin/main", "--", "app/(public)/layout.tsx", "components/public-shell/PublicShell.module.css", "app/design-system.css"]);
 
-  const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })
-    .trim()
-    .split("\n")
-    .filter(Boolean);
+  const changed = [...new Set([
+    ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })
+      .trim()
+      .split("\n")
+      .filter(Boolean),
+    ...execFileSync("git", ["status", "--short", "--untracked-files=all"], { encoding: "utf8" })
+      .trim()
+      .split("\n")
+      .filter(Boolean)
+      .map((line) => line.slice(3)),
+  ])];
   const schemaChanges = changed
     .filter((file) => file === "prisma/schema.prisma" || /^prisma\/(?:migrations|preflight)\//.test(file))
     .sort();
   if (schemaChanges.length > 0) {
     assert.deepEqual(schemaChanges, [
-      "prisma/migrations/0018_program_ai_m1_foundation/migration.sql",
-      "prisma/preflight/0018_program_ai_m1_foundation.sql",
+      "prisma/migrations/0019_programme_runtime_hardening/migration.sql",
+      "prisma/preflight/0019_programme_runtime_hardening.sql",
       "prisma/schema.prisma",
     ]);
   }
-  assert.equal(changed.includes("package-lock.json"), false);
+  if (changed.includes("package-lock.json")) {
+    const packageLock = readFileSync("package-lock.json", "utf8");
+    assert.match(packageLock, /"@vercel\/analytics": "2\.0\.1"/);
+  }
 });

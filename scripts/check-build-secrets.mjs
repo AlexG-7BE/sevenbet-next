@@ -18,6 +18,8 @@ const forbidden = [
   "ops-ci-database-password",
   "ops-ci-auth-secret-not-used-by-production",
   "ops-ci-admin-token-not-used-by-production",
+  "ops-ci-cron-secret-not-used-by-production",
+  "ops-ci-vercel-token-not-used-by-production",
   "postgresql://",
   "postgres://",
   "AFFILIATE_CREDENTIALS_",

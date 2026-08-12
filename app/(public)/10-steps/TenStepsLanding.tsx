@@ -1,3 +1,4 @@
+import { ProgrammeStartActionLink } from "@/components/analytics/ProgrammeStartActionLink";
 import { ActionLink } from "@/components/design-system/Action";
 import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-registry";
 import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
@@ -146,7 +147,9 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         <span>{finalAction.eyebrow}</span>
         <h2 id="final-action-title">{finalAction.title}</h2>
         <p>{finalAction.copy}</p>
-        <ActionLink className={styles.primaryButton} href={actionHref} size="large">{actionLabel}</ActionLink>
+        {confirmedProgramme || state.kind === "signed-in-fallback"
+          ? <ActionLink className={styles.primaryButton} href={actionHref} size="large">{actionLabel}</ActionLink>
+          : <ProgrammeStartActionLink className={styles.primaryButton} href={actionHref} size="large" sourceSurface="ten_steps">{actionLabel}</ProgrammeStartActionLink>}
       </section>
     </div>
   );
@@ -159,7 +162,7 @@ function AnonymousHero() {
         <span>PUBLIC PROGRAMME · START WITHOUT AN ACCOUNT</span>
         <h1 id="ten-steps-title"><strong>10 STEPS</strong><em>before you choose.</em></h1>
         <p>Compare casinos, understand offers, build your own rules.</p>
-        <ActionLink className={styles.primaryButton} href="/program?entry=start" size="large">Start Mission 01</ActionLink>
+        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink>
         <small>MISSION 01 IS PRIVATE. ITS TWO ACTIONS EARN 40 XP. REGISTRATION EARNS 0 XP.</small>
       </div>
       <div className={styles.heroVisual}>

@@ -83,6 +83,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run ci:migrations
+      - run: npm run mvp-runtime:postgres-test
       - run: npm run programme:seed
       - run: npm run build
       - run: npm run ci:build-secrets
@@ -123,3 +124,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run ci:migrations
+      - run: npm run mvp-runtime:postgres-test

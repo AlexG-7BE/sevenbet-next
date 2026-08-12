@@ -10,6 +10,14 @@ import {
 import { programmeAiPortFromEnvironment } from "@/lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
 
+export type ProgrammeAiProviderOutcome =
+  | "provider"
+  | "fallback"
+  | "rate_limited"
+  | "timeout"
+  | "invalid_output"
+  | "provider_error";
+
 function userControlledFallback(input: ProgrammeAiTurn): ProgrammeAiTurnResult {
   const concise = input.situation.replace(/\s+/g, " ").trim().slice(0, 320);
   return {
@@ -29,12 +37,31 @@ export class ProgrammeAiOrchestrator {
   constructor(private readonly port?: ProgrammeAiPort | null) {}
 
   async createTurn(input: ProgrammeAiTurn): Promise<ProgrammeAiTurnResult> {
+    return (await this.createTurnWithOutcome(input)).result;
+  }
+
+  async createTurnWithOutcome(input: ProgrammeAiTurn): Promise<{
+    result: ProgrammeAiTurnResult;
+    providerOutcome: ProgrammeAiProviderOutcome;
+  }> {
     try {
       const port = this.port === undefined ? programmeAiPortFromEnvironment() : this.port;
-      if (!port) return userControlledFallback(input);
-      return parseProgrammeAiPortResult(await port.createTurn(input));
+      if (!port) return { result: userControlledFallback(input), providerOutcome: "fallback" };
+      return {
+        result: parseProgrammeAiPortResult(await port.createTurn(input)),
+        providerOutcome: "provider",
+      };
     } catch (error) {
-      if (error instanceof ProgrammeProviderError) return userControlledFallback(input);
+      if (error instanceof ProgrammeProviderError) {
+        const providerOutcome = error.providerCode === "PROVIDER_TIMEOUT"
+          ? "timeout"
+          : error.providerCode === "PROVIDER_INVALID_OUTPUT"
+            ? "invalid_output"
+            : error.providerCode === "PROVIDER_RATE_LIMIT"
+              ? "rate_limited"
+              : "provider_error";
+        return { result: userControlledFallback(input), providerOutcome };
+      }
       throw error;
     }
   }

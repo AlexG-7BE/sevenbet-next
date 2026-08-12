@@ -2,7 +2,7 @@
 
 ## Trust zones and active evidence
 
-Reconciled on 2026-08-11 for the approved B4GAMBLE canonical-domain release contract, Preview isolation and RECOVERY-01. Secret values are intentionally omitted.
+Reconciled on 2026-08-11 for the approved B4GAMBLE canonical-domain release contract, Preview isolation, RECOVERY-01 and MVP-RUNTIME-01 redacted runtime-binding inspection. Secret values are intentionally omitted.
 
 | Zone | Database authority | Auth/admin authority | External integrations | Allowed data and mutation | Deployment source |
 | --- | --- | --- | --- | --- | --- |
@@ -23,6 +23,7 @@ Preview is an engineering/review environment, not Demo/Staging. It must never be
 - **Detected:** Preview Better Auth uses `VERCEL_BRANCH_URL` only when `VERCEL_ENV=preview`. The host must be an exact generated `*-git-*.vercel.app` branch host; wildcard, Production fallback and contradictory static origins fail closed. Exact requests to the current valid `VERCEL_URL` deployment host are redirected with status 307 to that exact branch host before rendering/auth, with path and query preserved; malformed metadata and unexpected Preview hosts reject. Production, local and ordinary CI do not canonicalise.
 - **Detected:** an `example.invalid` Preview account and session succeeded, the exact account was absent from Production, Production rejected the Preview session, and the Preview account was deleted. No ENV-ISO auth canary remains. RECOVERY-01 separately retains one synthetic structural canary pending managed-snapshot capture.
 - **Detected:** the Production marketplace connection is Production-only under `PRODDB_*`; the Preview connection is Preview-only under `ENVISO_*`. The application continues to consume separately scoped `DATABASE_URL`/`DIRECT_URL` values.
+- **Detected 2026-08-11:** both Preview and Production base `DATABASE_URL`/`DIRECT_URL` values are empty. Their provider aliases are present, direct `db.prisma.io` authorities and have different redacted database fingerprints. No pooled `pooled.db.prisma.io` authority was detected. This blocks approval of a future database-consuming deployment and migration; it does not prove the environment snapshot held by an already-built deployment.
 - **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; exact-merge main CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected admin, refresh/session persistence and logout.
 - **Not detected:** any Production database, user, Programme, protected-support or CMS record copied to Preview.
 
@@ -58,6 +59,9 @@ The provider connection prefixes are control-plane aliases. No repository runtim
 | `PROGRAM_AI_REAL_PROVIDER_ENABLED` | Sensitive provider kill switch | RFC-023 real OpenAI adapter; exact `true` only and Preview-only; default off | Founder Office plus repository maintainer |
 | `PROGRAM_AI_PROVIDER`, `PROGRAM_AI_OPENAI_MODEL`, `PROGRAM_AI_TRANSCRIPTION_MODEL` | Server-only provider configuration | Preview values are respectively `openai`, `gpt-5.6-terra`, `gpt-4o-transcribe`; any other configured model fails closed | Repository maintainer under RFC-023 |
 | `OPENAI_API_KEY` | Secret | Preview-only OpenAI API authentication after database isolation; never client-exposed, printed, documented as a value or copied to Production | Founder Office/OpenAI account owner; repository maintainer technical consumer |
+| `NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED` | Public kill switch | Exact `true` enables root Web Analytics/custom-event code; absent/default off as of 2026-08-11 | Founder Office plus repository maintainer |
+| `CRON_SECRET` | Secret | Exact Bearer authentication for the Programme expiry cron; absent as of 2026-08-11 | Founder Office/config owner; repository maintainer technical consumer |
+| `VERCEL_TOKEN` | Secret operator credential | Aggregate Founder analytics report only; process environment, never hosted client configuration | Founder Office/Vercel owner |
 | `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | High-risk exceptional flag | RFC-012 scripts/public guard | Founder Office under RFC-012 only |
 | `AFFILIATE_REDIRECT_ENGINE_ENABLED` | High-risk commercial kill switch | Server redirect and confirmation paths; public affiliate redirects disabled in Preview | Founder Office plus compliance review |
 | `JURISDICTION_RESOLVER_SHADOW_ENABLED` | Diagnostic configuration | Obsolete bounded shadow-comparison helper only; no active public authority consumer | Repository maintainer |

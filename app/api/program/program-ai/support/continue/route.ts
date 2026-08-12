@@ -5,18 +5,14 @@ import {
   programmeResponse,
   requestCookie,
 } from "@/lib/programme/http";
-import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
-import { hashOpaqueToken } from "@/lib/programme/security";
+import { assertAnonymousProgrammeMutationRateLimit } from "@/lib/programme/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
-    assertProgrammeRateLimit(`program-ai:support:${hashOpaqueToken(token)}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertAnonymousProgrammeMutationRateLimit(token);
     const result = await programmeAiMissionOneService.continueAfterSupport(
       token,
     );

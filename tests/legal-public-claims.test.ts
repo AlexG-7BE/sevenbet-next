@@ -56,8 +56,6 @@ test("local control tools remain client-local, non-commercial and free of tracki
   const limitTracker = source("app/(public)/tools/budget-calculator/PersonalLimitTracker.tsx");
   for (const text of [selfCheck, limitTracker]) {
     assert.doesNotMatch(text, /fetch\(|axios|localStorage|\/api\/|href=["'{]\/(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/i);
+    assert.doesNotMatch(text, /@vercel\/analytics|@\/lib\/analytics|@\/components\/analytics|google-analytics|googletagmanager|\bgtag\(|\bfbq\(|clarity\.ms|segment\.com/i);
   }
-  const runtime = [...filesBelow("app"), ...filesBelow("components"), ...filesBelow("lib")]
-    .filter((path) => /\.(ts|tsx|js|jsx)$/.test(path)).map(source).join("\n");
-  assert.doesNotMatch(runtime, /@vercel\/analytics|google-analytics|googletagmanager|\bgtag\(|\bfbq\(|clarity\.ms|segment\.com/i);
 });

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import type { ProgramAiHome } from "@/components/programme/ProgramAiAuthenticated.types";
+import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import styles from "./ProgramAiAuthenticated.module.css";
 
 export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart }: {
@@ -66,9 +67,23 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
 
         <section className={styles.explore} aria-labelledby="explore-title">
           <div className={styles.sectionHead}><span className={styles.eyebrow}>EXPLORE B4GAMBLE</span><h2 id="explore-title">Ready to research?</h2><p>Compare casinos and offers using B4GAMBLE’s public guides.</p></div>
-          <nav aria-label="Explore B4GAMBLE" className={styles.exploreLinks}>{home.discoveryLinks.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}</nav>
+          <nav aria-label="Explore B4GAMBLE" className={styles.exploreLinks}>{home.discoveryLinks.map((item) => <Link href={item.href} key={item.href} onClick={() => {
+            const destinationRoute = discoveryDestination(item.href);
+            if (destinationRoute) productAnalyticsClient.discoveryClicked({ sourceSurface: "programme_home", destinationRoute });
+          }}>{item.label}</Link>)}</nav>
         </section>
       </main>
     </div>
   );
+}
+
+function discoveryDestination(href: string) {
+  switch (href) {
+    case "/casinos": return "casinos" as const;
+    case "/compare": return "compare" as const;
+    case "/bonuses": return "bonuses" as const;
+    case "/best-offers": return "best_offers" as const;
+    case "/bonus-guide": return "bonus_guide" as const;
+    default: return null;
+  }
 }

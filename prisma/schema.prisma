@@ -675,6 +675,20 @@ model AnonymousProgrammeSession {
   @@index([expiresAt])
 }
 
+/// Transient distributed fixed-window counters. bucketKey is a one-way HMAC
+/// digest and intentionally has no relation to a user or Programme session.
+model ProgrammeRuntimeRateLimitBucket {
+  bucketKey       String   @id @db.Char(64)
+  scope           String   @db.VarChar(64)
+  count           Int
+  windowStartedAt DateTime
+  expiresAt       DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([expiresAt])
+}
+
 /// Minimum evidence for the narrow authority required before processing
 /// unrestricted voluntarily supplied health/addiction information. This is
 /// purpose-separated from Programme access, Terms, Privacy and marketing.

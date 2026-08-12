@@ -27,3 +27,7 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current database recovery decision
 
 - [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) approves the fail-closed Preview-to-isolated-target recovery architecture, Production read-only boundary, logical restore drill, internal RPO/RTO targets and managed-backup release ceiling for `RECOVERY-01`.
+
+## Current analytics and runtime-hardening decision
+
+- [RFC-026 — MVP Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) authorises the closed privacy-safe Vercel event contract, aggregate-only report, one PostgreSQL fixed-window rate-limit model, bounded transient expiry purge, authenticated daily Cron and database-binding readiness evidence for `MVP-RUNTIME-01`. Preview migration and Production activation remain gated by the approved rollout sequence and Founder review.

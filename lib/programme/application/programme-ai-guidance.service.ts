@@ -18,6 +18,7 @@ import {
   OpenAiMissionGuidanceAdapter,
 } from "@/lib/programme/program-ai/openai-mission-guidance";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
+import type { ProgrammeAiProviderOutcome } from "@/lib/programme/program-ai/orchestration";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
 
 type GuidanceAdapter = Pick<OpenAiMissionGuidanceAdapter, "generate">;
@@ -28,7 +29,12 @@ export class ProgrammeAiGuidanceService {
     private readonly adapter?: GuidanceAdapter | null,
   ) {}
 
-  async missionGuidance(userId: string, missionNumber: ProgramAiMissionNumber, value: unknown) {
+  async missionGuidance(
+    userId: string,
+    missionNumber: ProgramAiMissionNumber,
+    value: unknown,
+    allowProvider = true,
+  ) {
     assertProgramAiV1Enabled();
     const operation = missionGuidanceOperation[missionNumber];
     if (!operation) {
@@ -49,7 +55,9 @@ export class ProgrammeAiGuidanceService {
           },
           ...(localWording ? { localWording } : {}),
         };
-    return this.generateOrFallback(operation, context, () => deterministicGuidance(operation, context));
+    return allowProvider
+      ? this.generateOrFallback(operation, context, () => deterministicGuidance(operation, context))
+      : { ...deterministicGuidance(operation, context), providerOutcome: "fallback" as const };
   }
 
   async review(
@@ -71,8 +79,10 @@ export class ProgrammeAiGuidanceService {
     const fallback = () => deterministicReview(operation, context);
     const result = allowProvider
       ? await this.generateOrFallback(operation, context, fallback)
-      : fallback();
-    if (result.kind !== "review" || wordCount(result) > definition.maxWords) return fallback();
+      : { ...fallback(), providerOutcome: "fallback" as const };
+    if (result.kind !== "review" || wordCount(result) > definition.maxWords) {
+      return { ...fallback(), providerOutcome: "invalid_output" as const };
+    }
     return result;
   }
 
@@ -80,13 +90,22 @@ export class ProgrammeAiGuidanceService {
     operation: T["operation"],
     context: unknown,
     fallback: () => T,
-  ): Promise<T> {
+  ): Promise<T & { providerOutcome: ProgrammeAiProviderOutcome }> {
     try {
       const adapter = this.adapter === undefined ? missionGuidanceAdapterFromEnvironment() : this.adapter;
-      if (!adapter) return fallback();
-      return await adapter.generate(operation, context) as T;
+      if (!adapter) return { ...fallback(), providerOutcome: "fallback" };
+      return { ...await adapter.generate(operation, context) as T, providerOutcome: "provider" };
     } catch (error) {
-      if (error instanceof ProgrammeProviderError) return fallback();
+      if (error instanceof ProgrammeProviderError) {
+        const providerOutcome = error.providerCode === "PROVIDER_TIMEOUT"
+          ? "timeout"
+          : error.providerCode === "PROVIDER_INVALID_OUTPUT"
+            ? "invalid_output"
+            : error.providerCode === "PROVIDER_RATE_LIMIT"
+              ? "rate_limited"
+              : "provider_error";
+        return { ...fallback(), providerOutcome };
+      }
       throw error;
     }
   }

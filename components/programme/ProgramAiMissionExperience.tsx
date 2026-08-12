@@ -21,6 +21,7 @@ import type {
   ProgramAiHome,
   ProgramAiMission,
 } from "@/components/programme/ProgramAiAuthenticated.types";
+import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { PROGRAMME_ACCESS_HEADERS, PROGRAMME_ACCESS_HEADER_VALUES } from "@/lib/programme/access-contract";
 import { hasProgrammeAccessAuthority, userProgrammeSubject } from "@/lib/programme/local-subject-storage";
 import styles from "./ProgramAiAuthenticated.module.css";
@@ -269,5 +270,9 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
 }
 
 function CommercialNext({ missionNumber }: { missionNumber: number }) {
-  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>PUT IT TO USE</span><h3>{missionNumber === 8 ? "Research with your checklist" : "Explore when you are ready"}</h3><p>Use B4GAMBLE’s public guides to compare facts and understand offers.</p><nav className={styles.exploreLinks} aria-label="Public guides"><Link href="/casinos">Compare casinos</Link><Link href="/compare">Comparison guide</Link><Link href="/bonuses">Explore bonuses</Link><Link href="/best-offers">Best offers</Link>{missionNumber === 8 ? <Link href="/bonus-guide">Bonus guide</Link> : null}</nav></aside>;
+  const sourceSurface = missionNumber === 8 ? "mission_08" : "mission_10";
+  const discovery = (destinationRoute: "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide") => {
+    productAnalyticsClient.discoveryClicked({ sourceSurface, destinationRoute });
+  };
+  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>PUT IT TO USE</span><h3>{missionNumber === 8 ? "Research with your checklist" : "Explore when you are ready"}</h3><p>Use B4GAMBLE’s public guides to compare facts and understand offers.</p><nav className={styles.exploreLinks} aria-label="Public guides"><Link href="/casinos" onClick={() => discovery("casinos")}>Compare casinos</Link><Link href="/compare" onClick={() => discovery("compare")}>Comparison guide</Link><Link href="/bonuses" onClick={() => discovery("bonuses")}>Explore bonuses</Link><Link href="/best-offers" onClick={() => discovery("best_offers")}>Best offers</Link>{missionNumber === 8 ? <Link href="/bonus-guide" onClick={() => discovery("bonus_guide")}>Bonus guide</Link> : null}</nav></aside>;
 }

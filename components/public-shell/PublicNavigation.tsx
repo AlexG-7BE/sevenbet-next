@@ -9,6 +9,7 @@ import {
   isCurrentPublicRoute,
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
+import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import styles from "./PublicShell.module.css";
 
 export function PublicNavigation({
@@ -75,7 +76,9 @@ export function PublicNavigation({
         <div className={styles.accountNavigation}>
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{account.accountLabel}</Link> : null}
-          <Link className={styles.primaryAction} href={account.primaryHref}>{account.primaryLabel}</Link>
+          <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
+            if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+          }}>{account.primaryLabel}</Link>
         </div>
       </div>
 
@@ -125,7 +128,10 @@ export function PublicNavigation({
           </div>
           <div className={styles.mobileAccount}>
             {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{account.accountLabel}</Link> : null}
-            <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => closeMenu({ restoreFocus: false })}>
+            <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
+              if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+              closeMenu({ restoreFocus: false });
+            }}>
               {authenticated ? "Open My Programme" : account.primaryLabel}
             </Link>
           </div>

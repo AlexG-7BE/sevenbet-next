@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { inspectPrismaRuntimeConnection, warnForUnsafePrismaRuntimeConnection } from "../lib/db/prisma-runtime-config";
+import { inspectProgrammeDatabaseReadiness } from "../lib/db/programme-database-readiness";
 
 const directUrl = "postgresql://runtime-user:super-secret@db.prisma.io:5432/postgres?sslmode=require";
 const pooledUrl = "postgresql://runtime-user:super-secret@pooled.db.prisma.io:5432/postgres?sslmode=require&connection_limit=1";
@@ -41,4 +42,19 @@ test("Prisma CLI has a direct URL while the application keeps one module-level c
   assert.match(example, /DIRECT_URL="postgresql:\/\/USER:PASSWORD@db\.prisma\.io:5432\/postgres\?sslmode=require"/);
   assert.equal((client.match(/new PrismaClient\(/g) ?? []).length, 1);
   assert.doesNotMatch(client, /\$disconnect\(/);
+});
+
+test("Programme database readiness compares only redacted identities and requires pooled runtime plus direct migration URLs", () => {
+  const ready = inspectProgrammeDatabaseReadiness({
+    DATABASE_URL: pooledUrl,
+    DIRECT_URL: directUrl,
+  });
+  assert.equal(ready.ready, true);
+  assert.equal(ready.sameDatabaseIdentity, true);
+  assert.match(ready.runtimeTargetFingerprint ?? "", /^[a-f0-9]{64}$/);
+  assert.doesNotMatch(JSON.stringify(ready), /runtime-user|super-secret|postgresql:\/\//);
+
+  const blocked = inspectProgrammeDatabaseReadiness({ DATABASE_URL: directUrl, DIRECT_URL: directUrl });
+  assert.equal(blocked.ready, false);
+  assert.equal(blocked.runtimeMode, "direct");
 });

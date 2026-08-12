@@ -334,6 +334,17 @@ test("Mission 01 reserves at most three real-provider calls and then falls back"
     assert.equal(providerCalls, 3);
     assert.deepEqual(generations, ["PROVIDER", "PROVIDER", "PROVIDER", "USER_CONTROLLED_FALLBACK"]);
     assert.equal((session.draft as Record<string, unknown>).providerCallCount, 3);
+
+    session.draft = { ...(session.draft as Record<string, unknown>), providerCallCount: 0 };
+    const rateLimited = await service.createTurn(
+      "opaque-token",
+      { inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
+      new Date("2026-08-10T12:00:00.000Z"),
+      false,
+    );
+    assert.equal(providerCalls, 3);
+    assert.equal(rateLimited.providerOutcome, "fallback");
+    assert.equal((session.draft as Record<string, unknown>).providerCallCount, 0);
   } finally {
     if (previousFoundationFlag === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
     else process.env.PROGRAM_AI_V1_ENABLED = previousFoundationFlag;

@@ -7,6 +7,7 @@ import {
   anonymousProgrammeCookie,
   programmeErrorResponse,
   programmeResponse,
+  requestAddress,
   requestCookie,
 } from "@/lib/programme/http";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
@@ -21,10 +22,8 @@ export async function POST(request: Request) {
   const startedAt = performance.now();
   try {
     const token = requestCookie(request, anonymousProgrammeCookie);
-    assertProgrammeRateLimit(`program-ai:transcription:${hashOpaqueToken(token)}`, {
-      limit: 6,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_TRANSCRIPTION_SESSION", hashOpaqueToken(token));
+    await assertProgrammeRateLimit("PROGRAMME_TRANSCRIPTION_IP", requestAddress(request));
     const contentLength = Number(request.headers.get("content-length") || "0");
     if (
       Number.isFinite(contentLength)

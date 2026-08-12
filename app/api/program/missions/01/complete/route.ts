@@ -13,10 +13,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
-    assertProgrammeRateLimit(`mission-01:complete:${user.id}`, {
-      limit: 10,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone"]);
     const dashboard = await missionOneService.complete(user.id, body.timeZone);

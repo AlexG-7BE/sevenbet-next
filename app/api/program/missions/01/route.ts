@@ -12,10 +12,7 @@ export const dynamic = "force-dynamic";
 export async function PATCH(request: Request) {
   try {
     const user = await requireCurrentUser(request.headers);
-    assertProgrammeRateLimit(`mission-01:user:${user.id}`, {
-      limit: 60,
-      windowMs: 60_000,
-    });
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const mission = await missionOneService.saveDraft(
       user.id,
       await readProgrammeJson(request),

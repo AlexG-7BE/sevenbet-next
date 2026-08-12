@@ -59,7 +59,7 @@ Before governed MVP implementation, an RFC must define telemetry and logging own
 
 Before governed MVP implementation, an RFC must define data-class-specific backup and restoration requirements, RPO/RTO objectives, restore validation, incident command and communications, and preservation of compliance evidence and audit records.
 
-**Decision:** RFC-024 defines the bounded database recovery architecture, internal RPO/RTO objectives, identity proof, isolated restore validation and incident procedure. Its logical Preview restore is detected evidence; managed Production recovery remains an open release gate.
+**Decision:** RFC-024 defines the bounded database recovery architecture, internal RPO/RTO objectives, identity proof, isolated restore validation and incident procedure. Managed provider-native restore evidence is complete using an isolated Preview snapshot and fresh target, and Production snapshot authority exists. No Production restore was performed, intentionally; RECOVERY-01 is closed.
 
 ### ARCH-OD-14 — Existing implementation conformance plan
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { AuthenticationRequiredError } from "@/lib/auth/errors";
 import { ServiceError } from "@/lib/services/service-error";
+import { ProgrammeRateLimitError } from "@/lib/programme/rate-limit";
 
 export const anonymousProgrammeCookie = "sevenbet_programme_session";
 export const pendingProgrammeClaimCookie = "sevenbet_programme_claim";
@@ -47,6 +48,14 @@ export function programmeErrorResponse(error: unknown) {
     );
   }
   if (error instanceof ServiceError) {
+    if (error instanceof ProgrammeRateLimitError) {
+      const response = programmeResponse(
+        { code: "RATE_LIMITED", retryAfterSeconds: error.retryAfterSeconds },
+        429,
+      );
+      response.headers.set("Retry-After", String(error.retryAfterSeconds));
+      return response;
+    }
     return programmeResponse(
       {
         ok: false,
