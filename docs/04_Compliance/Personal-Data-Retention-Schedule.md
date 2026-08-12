@@ -1,7 +1,7 @@
 # Personal-Data Retention Schedule
 
 - **Status:** Launch baseline with open verification actions
-- **Last reviewed:** 2026-08-09
+- **Last reviewed:** 2026-08-11
 
 “Implemented” below means repository evidence enforces the stated access or deletion behaviour. A logical expiry is not described as physical deletion.
 
@@ -32,7 +32,7 @@
 | Bonus/offer evidence | Editorial comparison and future offer verification | Published bonus snapshots and evidence records exist; current temporary records are fictional demonstrations | Preserve superseded real evidence for an approved substantiation period; remove bounded demo data under RFC-012 cleanup | **Detected** records; exact archival period **unknown**. |
 | Admin audit records | Privileged change accountability | Admin audit model detected | Approve tamper/access controls and exact accountability period | **Detected**; exact retention **unknown**. |
 | Partner agreement/contract evidence | Future commercial authority | Models support agreement/evidence gates; no real GB partner is active | Retain for contract/legal period after termination when introduced | **Not currently used** for a real GB partner; period **open**. |
-| Database backups | Recovery | Provider capability/period not verified in repository evidence | Verify encryption, geography, retention, deletion expiry and restore re-erasure | **Not detected.** Never promise immediate selective backup deletion. |
+| Database backups | Recovery | Both isolated Prisma resources are detected on Starter with Management API `backupRetentionDays=7`; 14 completed Production and six completed Preview snapshots were listed. The provider-native drill used only Preview test/synthetic data in a new disconnected target, which was deleted by exact ID after validation. One structural Preview canary remains pending capture by a later snapshot. | After capture, restore the later Preview point, verify exact canary parity, remove the canary and target, and confirm both absent; separately verify snapshot-specific encryption/geography and restore re-erasure procedure | **Detected:** managed snapshot activation, retention metadata, provider-native new-target restore and exact temporary-target destruction. **Documented:** Starter activity-day daily snapshots and seven-day retention. Never promise immediate selective backup deletion. |
 
 ## Review rule
 

@@ -2,8 +2,8 @@
 
 ## Snapshot
 
-- **Reconciled:** 2026-08-10
-- **Current main at implementation base:** `5a6ede5b45ad4cb3c71ac14190ad12286b335ac7`
+- **Reconciled:** 2026-08-12
+- **Current main at implementation base:** `0a904a3b8dbf95de4a290ba9b071785f0bbbcfc3`
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.
@@ -13,8 +13,11 @@
 - **GOOGLE-OAUTH-ACTIVATE-01:** **CLOSED**; [PR #61](https://github.com/AlexG-7BE/sevenbet-next/pull/61) merged head `d129130acd982624aa7cf5d31ce4a8b8e81dfa58` into current main as `324a5b51e2e37f456c2386413a6d6c4831607914`. RFC-021 v2.1 remains the architecture authority for the merged access, authentication-continuation and authenticated-Programme runtime.
 - **Production:** <https://b4gamble.com> reached **READY** after the merge and continues to serve the B4GAMBLE consumer identity and canonical authority. Production Google OAuth remains **OFF**; Production Google credentials are **not detected**, and Google remains identity-only rather than age verification or KYC.
 - **PROGRAM-AI-IMPL-01A:** **CLOSED; PR #63 MERGED**. The default-off RFC-022 M1 foundation is present on main at `5a6ede5b45ad4cb3c71ac14190ad12286b335ac7`.
-- **PROGRAM-AI-ACTIVATE-01:** **IMPLEMENTED ON FEATURE BRANCH; LIVE PREVIEW ACTIVATION PENDING INFRASTRUCTURE GATES**. [RFC-023](06_RFC/RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) authorises OpenAI adapters for Founder/team/synthetic Preview use only. The branch adds server-side `gpt-4o-transcribe` and `gpt-5.6-terra` calls behind both exact gates, with no schema or migration. Production configuration is unchanged and legacy M1 remains the Production runtime. No successful live provider call or Preview deployment is claimed until credential and database checks pass.
-- **Current activation blockers:** `OPENAI_API_KEY` and Program AI/provider variables are absent from Vercel metadata. Preview provider database aliases exist, but its runtime `DATABASE_URL`/`DIRECT_URL` values are empty; migration 0018 cannot be checked against an active Preview target. No Vercel value, deployment, migration or Production setting was changed.
+- **PROGRAM-AI-ACTIVATE-01:** **CLOSED; PR #64 MERGED AFTER CONTROLLED LIVE PREVIEW VALIDATION.** [PR #64](https://github.com/AlexG-7BE/sevenbet-next/pull/64) merged approved head `377777d5c6e9f03f6eae9d9e9bb1293191873720` as `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`. [RFC-023](06_RFC/RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) authorised Founder/team/synthetic Preview use. Production configuration remained unchanged and legacy M1 remains the Production runtime.
+- **PROGRAM-AI-IMPL-01B:** **CLOSED; PR #66 MERGED.** [RFC-025](06_RFC/RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) governs the feature-on Missions 02–10 MVP, three completion-derived Personal Reviews, Home/resume and bounded guidance. The clean M1→M10 path is server-owned and deterministic at exactly `715 XP`; feature-off remains legacy and Production provider activation remains off.
+- **Detected controlled activation evidence:** the approved feature-on Preview used an isolated configured database with migration `0018`, a Preview-only real OpenAI key and valid runtime bindings. Real typed OpenAI passed; the deployed 20-case corpus scored 20/20 with 20/20 schema validity and 0% unnecessary clarification. Real microphone capture, OpenAI transcription and editable transcript passed; Founder Office physically accepted the timer/pulse UX. Deterministic `20 + 20` XP, Better Auth claim, durable Starting Point and the provider kill switch passed. Production remained legacy/off.
+- **Environment nuance:** the RECOVERY-01 branch pull did not expose generic runtime `DATABASE_URL`/`DIRECT_URL`, while provider-owned Preview aliases remained available. That branch-specific visibility is not evidence against the working isolated bindings used by the approved PR #64 Preview validation. RECOVERY-01 changed no Vercel runtime value, deployment or Production setting.
+- **RECOVERY-01:** **MANAGED RESTORE DRILL COMPLETE.** Starter managed snapshots remain active for the distinct Preview and Production databases. Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` was restored provider-natively to a fresh disconnected database, passed exact 18-migration, 12-table, schema, FK/orphan, auth/Programme, repository-read and deterministic canary parity, then the exact target and Preview canary were deleted and verified absent. Production remained read-only.
 - **Commercial state:** GB editorial access available; GB commercial/referral capability **OFF**; affiliate engine **OFF**; no real GB partner authority detected.
 - **Launch state:** **NOT GB LAUNCH READY.** Internal legal/privacy remediation does not close external legal, regulatory, partner, processor, recovery or operations gates.
 
@@ -34,7 +37,7 @@
 | Programme reminder permission architecture | **DEFINED** |
 | Commercial marketing email | **DISABLED** |
 | PROGRAM-AI-IMPL-01A | **CLOSED — PR #63 MERGED; DEFAULT OFF** |
-| PROGRAM-AI-ACTIVATE-01 | **ADAPTER/VOICE IMPLEMENTED ON FEATURE BRANCH; LIVE PREVIEW GATES PENDING** |
+| PROGRAM-AI-ACTIVATE-01 | **CLOSED — PR #64 MERGED; CONTROLLED LIVE PREVIEW VALIDATION PASSED** |
 | Fixture truthfulness | **CLOSED — exact-ID demo disclosure/action/SEO/schema controls tested** |
 | Privacy complaints | **CLOSED — public policy and operating runbook implemented** |
 | Protected data firewall | **CLOSED / STRENGTHENED** |
@@ -44,11 +47,11 @@
 | ICO fee | **OPEN EXTERNAL** |
 | Real partner | **OPEN** |
 | Commercial/referral | **OFF** |
-| Recovery | **OPEN / PARTIAL** |
+| Recovery | **RECOVERY-01 — MANAGED RESTORE DRILL COMPLETE** |
 
 ## Governing product boundary
 
-Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. RFC-022 governs the default-off PROGRAM-AI M1 foundation. RFC-023 authorises only OpenAI-backed Founder/team/synthetic Preview validation; it does not authorise unrestricted real-user Production data. None authorises reminders, marketing or Production Google/PROGRAM-AI activation.
+Product Vision & Principles v2.0 remains constitutional authority. RFC-017 governs the merged legal/privacy remediation. RFC-018 governs AUTH-COMMS-01 and authorises only bounded Google identity authentication and the disabled communication foundation. RFC-019 governs the merged consumer brand and Production canonical authority. RFC-020 supersedes RFC-018 for Google credential persistence, direct ID-token sign-in, provider-token/account-management paths and public sign-out. RFC-021 v2.1 governs the merged current-runtime Programme access, Google/email continuation and authenticated-home contract. RFC-022 governs the default-off PROGRAM-AI M1 foundation. RFC-023 authorises only OpenAI-backed Founder/team/synthetic Preview validation; it does not authorise unrestricted real-user Production data. RFC-024 governs restore-to-new-target recovery, Production read-only drills and the current logical-fallback boundary. None authorises reminders, marketing or Production Google/PROGRAM-AI activation.
 
 The [PROGRAM-AI-01 Product Direction v2.2](07_Decisions/PROGRAM-AI-01-Product-Direction-v2.2.md) remains target product direction. Founder Office `PROGRAM-AI-IMPL-01A` and RFC-022 provide the separate bounded implementation authority that document required. The current hard-coded Programme remains frozen for unrelated expansion and remains the runtime whenever the new flag is absent or malformed. Missions 02–04 reward amounts are unchanged.
 
@@ -99,7 +102,7 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - **Approved Review direction:** Mission 01's Starting Point is not a separate Review. Mission 03 completion unlocks the First Personal Review, Mission 06 completion unlocks the Mid-Programme Personal Review and Mission 10 completion unlocks the Full Programme Personal Review. Raw or farmed XP cannot bypass those milestones; exact cumulative display thresholds are derived later from the final deterministic reward budget.
 - **Missions 02–10 balancing hypothesis:** `+25 XP` is the default completion-bonus assumption, not an immutable reward amount. Final per-Mission mapping may adjust it deterministically; AI cannot change it dynamically.
 - **Data and authority boundary:** raw Programme narrative, AI-generated Programme summaries and vulnerability-derived Programme information must not become commercial recommendation inputs. AI may later support bounded conversation, clarification, explanation, personalisation, reflection and approved synthesis, but it may not independently control legal/age gates, safety policy, commercial routing, deterministic progression or reward integrity.
-- **Delivery boundary:** RFC-022 closes authority for the M1 foundation and RFC-023 separately closes OpenAI implementation authority for controlled Preview test use. Live Preview activation still requires credential, isolated-database/migration and configuration evidence. Unrestricted Production data, generated Personal Reviews, Missions 05–10, a general orchestration platform and wider target architecture remain separately gated.
+- **Delivery boundary:** RFC-022 closes authority for the M1 foundation, RFC-023 closes the controlled Preview OpenAI activation, and RFC-025 closes the bounded feature-on Missions 02–10 MVP at exactly `715 XP`. Unrestricted Production provider data, a general orchestration platform and wider target architecture remain separately gated.
 
 ### Privacy operations
 
@@ -107,6 +110,17 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - The internal data-subject CLI performs deterministic account lookup, structured JSON export and ordered relation-count deletion planning, including consumed claims and linked/draft-bearing anonymous sessions.
 - Exact claimant-owned consumed claims and anonymous sessions are deleted before the User; other users, unconsumed journeys and global content remain outside scope. Deletion is dry-run by default. Output files are exclusive mode `0600`. Every execution requires an exact general user confirmation; Production requires a second exact confirmation and explicit target declaration.
 - Retention, processor/international-transfer, breach and DPIA draft documents distinguish detected, target and unknown facts without inventing contracts or appointments.
+
+### Database recovery
+
+- RFC-024 owns the restore-to-new-target architecture, exact identity guard, internal RPO/RTO targets, temporary-copy handling and Production read-only drill boundary.
+- **Detected:** Prisma workspace `cmrixpep23o54wfdvy6ikjzc1`, billed through the existing Vercel team context, is Starter. Preview `cn8xojfxs6i5z82riihkfjfy` / `store_hLPkkgamL7rJNmCe` and Production `cmrixqbwl21xqyif8ab2vr2xw` / `store_1I4F54ETrwSKS42o` are distinct databases in project `cmrixqbwl21xsyif8kj8xl01s`, with Starter applying to both.
+- **Detected:** the Management API reports seven-day retention metadata, 14 completed Production snapshots and six completed Preview snapshots. Production's newest completed snapshot is `backup-01kzq2vm7gagejt88nn3hjqgpz` at `2026-08-11T00:16:47.856Z`; Production remained read-only.
+- The 2026-08-11 logical drill used only Preview test/synthetic data. A custom PostgreSQL 17 backup restored into a disposable loopback PostgreSQL 16 database after excluding only the provider-owned `prisma_postgres` extension and its PostgreSQL 17-only session setting.
+- Verification passed exact 18-migration parity, 12 selected table-count parity, source/target schema fingerprint parity, canary parent/child parity, zero orphans, auth/session and Programme structure, and an application repository read.
+- The Preview canary was deleted and verified absent. All local targets, dumps, SQL, manifests, environment files and the temporary server directory were destroyed. Production data and configuration remained untouched.
+- The provider-native drill selected Preview backup `backup-01kzqcxb1ak4rx3amh1snpwdag` at `2026-08-11T03:12:29.738Z` and restored it through Prisma Console's **Restore to a new database** path. Temporary target `cmsodg4461nfn17e56q2juff7` in `us-east-1` reached `ready`, passed connectivity, exact 18-migration parity, schema parity, zero-orphan/FK checks, auth/Programme structure and a `ProgrammeSessionRepository` read with external providers disabled. Exact-ID deletion returned HTTP 204; a subsequent exact lookup returned 404 and the target disappeared from the console list.
+- On 2026-08-12, completed Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` captured the synthetic structural canary. Fresh target `cmspkm3vo22py12f5nej7sdfc` reached ready and passed exact 18-migration, 12 selected table-count, schema, FK/orphan, auth/Programme, repository-read and canary parent/claim parity. Exact target deletion returned HTTP 204, subsequent GET returned 404, and console absence was confirmed. The exact Preview canary root and claim were then deleted; both were verified absent and all unrelated selected-table counts were unchanged. Temporary credentials were revoked. No real-person content or external-provider call was involved; Production remained read-only.
 
 ### Authentication and communication foundation
 
@@ -121,18 +135,18 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 
 ### Platform and delivery baseline
 
-- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01, AUTH-COMMS-01 and BRAND-CUTOVER-01 are merged on main.
+- FE-MIG, FE-GAP, FE-DS, OPS-01, ENV-ISO-01, GB-MARKET-01, COMM-01, UX-PERF-01, LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01 and PROGRAM-AI-ACTIVATE-01 are merged on main.
 - RFC-020 governs merged AUTH-HARDEN-01. RFC-021 v2.1 governs the merged GOOGLE-OAUTH-ACTIVATE-01 current runtime. PR #61 is closed and merged; it added no Prisma/schema/migration/dependency or protocol-provider change.
 - Preview and Production use isolated database/auth/admin authority. No Production data is copied into Preview.
 - CI includes structural, browser, build-secret and migration/fresh-database gates; scheduled Production smoke remains active.
-- Recovery is **PARTIAL** because no verified provider snapshot/PITR restore point is available under the current provider plan.
+- Recovery is **RECOVERY-01 — MANAGED RESTORE DRILL COMPLETE**: managed snapshots, isolated provider-native restoration, exact deterministic canary parity and exact cleanup are detected; Production remained read-only.
 
 ## Evidence classification
 
-- **Detected:** base main `5a6ede5b45ad4cb3c71ac14190ad12286b335ac7`; Missions 01–04 vertical services and deterministic reward policies; merged default-off RFC-022 M1 foundation; feature-branch OpenAI adapters, completed-file voice path, dual real-provider gate, strict stateless Responses request, technical-only logging, three-call budget, synthetic eval command and deterministic adapter/recorder regression coverage.
+- **Detected:** base main `0a904a3b8dbf95de4a290ba9b071785f0bbbcfc3`; merged RFC-022/RFC-023/RFC-025 Programme AI implementation, feature-on Missions 02–10 and exact `715 XP` clean-path policy plus successful controlled live Preview validation; distinct Preview/Production resource IDs and connection fingerprints; Starter workspace scope; completed Production and Preview snapshots with seven-day retention metadata; a passed Preview logical restore; and a passed, fully deleted provider-native Preview restore target with exact managed canary parity.
 - **Inferred:** neutral legacy markers preserve existing progression/reward relations without a schema change while avoiding new raw narrative persistence.
-- **Planned:** controlled feature-on Preview deployment and live eval after credential/database gates; generated Reviews; Missions 05–10; any separately authorised Production Google or PROGRAM-AI activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; approved legacy raw-data cleanup; and recovery architecture.
-- **Not detected:** a successful external OpenAI call from this branch, feature-on Preview URL, unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, an email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation or a successful restore drill.
+- **Planned:** any separately authorised Production Google or PROGRAM-AI provider activation; an approved email transport; COMMS-REMINDER-01; durable age evidence; distributed Programme rate limiting; automated anonymous-data purge; and approved legacy raw-data cleanup.
+- **Not detected:** unrestricted Production-provider authority, Production PROGRAM-AI/provider flags or credential changes, Production Google credentials/provider activation, an email provider/preference store/scheduler/Production send, DOB/KYC, durable age evidence, completed UK representative/ICO/counsel/processor-transfer gates, a real signed GB partner, Production affiliate activation, or fine-grained PITR.
 
 ## Remaining release gates
 
@@ -159,9 +173,9 @@ B4GAMBLE, the consumer brand approved to replace SevenBet under RFC-019, is posi
 - Implement durable age-attestation evidence under an approved schema/privacy decision. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 - Select a distributed Programme limiter and automated expired-session/claim purge.
 - Approve legacy Programme-content retention/cleanup after access, export and erasure safeguards.
-- Complete RECOVERY-01 with a governed backup architecture and isolated restore drill.
+- Preserve RECOVERY-01 evidence and continue routine managed-snapshot monitoring; any Production restore remains a separately authorised incident action.
 - Close remaining multi-process concurrency, autosave ordering, APM/paging and operational evidence gaps.
 
 ## Release conclusion
 
-LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01 and PROGRAM-AI-IMPL-01A are closed on base main. Production Google OAuth and PROGRAM-AI remain off. PROGRAM-AI-ACTIVATE-01 implements runtime OpenAI/voice adapters on its focused branch under RFC-023, but live Preview evidence remains gated. It does not activate Google or PROGRAM-AI in Production, enable email/reminders, mutate Production data, activate commercial traffic or make B4GAMBLE GB launch-ready.
+LEGAL-IMPL-01, AUTH-COMMS-01, BRAND-CUTOVER-01, AUTH-HARDEN-01, GOOGLE-OAUTH-ACTIVATE-01, PROGRAM-AI-IMPL-01A, PROGRAM-AI-IMPL-01B and the successfully Preview-validated PROGRAM-AI-ACTIVATE-01 are on base main. RFC-025’s feature-on Missions 02–10 path retains exact `715 XP` clean-path truth. Production Google OAuth and PROGRAM-AI providers remain off. RECOVERY-01 is `MANAGED RESTORE DRILL COMPLETE`; the closure used Preview only and left Production read-only. None of this enables email/reminders, mutates Production data, activates commercial traffic or makes B4GAMBLE GB launch-ready.
