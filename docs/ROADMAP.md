@@ -25,11 +25,12 @@
 | 21 | UK representative + ICO actions | **External launch gate — open** | Do not fabricate an appointment or registration/fee conclusion. |
 | 22 | Processor/transfer evidence + outside counsel | **External launch gate — open** | Complete contracts/evidence, transfer assessment, DPIA approval and counsel review. |
 | 23 | Partner evidence / closed commercial beta decision | **Not authorised** | Requires 1–3 manually approved GB operators and complete licence/domain/agreement/offer/link/redirect evidence under a separate decision. |
-| 24 | RECOVERY-01 | **Required before stateful closed beta** | Approve backup architecture and pass an isolated restore drill. |
+| 24 | RECOVERY-01 | **MANAGED RESTORE DRILL COMPLETE** | RFC-024 approved. Preview backup `backup-01kzszywy038jepagf0zk705zs` restored provider-natively to a fresh disconnected database and passed exact 18-migration, 12-table, schema, FK/orphan, auth/Programme, repository-read and deterministic canary parity. Exact target deletion returned 204, GET returned 404, console absence passed, and the exact Preview canary root/claim were deleted with unrelated selected tables unchanged. Production remained read-only. |
 | 25 | Programme operational hardening | **P1 open** | Durable age evidence, distributed rate limiting, automatic expiry purge and approved legacy-content cleanup. |
 | 26 | PROGRAM-AI-IMPL-01A | **CLOSED — PR #63 MERGED** | The bounded default-off RFC-022 foundation is on main at `5a6ede5b45ad4cb3c71ac14190ad12286b335ac7`, including exact access/authority, claim, deterministic `20 + 20`, Home and isolated browser lanes. Legacy M1 remains the default. |
-| 27 | PROGRAM-AI-ACTIVATE-01 | **IMPLEMENTED ON FEATURE BRANCH; LIVE PREVIEW GATES PENDING** | RFC-023 adds direct OpenAI `gpt-4o-transcribe`/`gpt-5.6-terra` adapters, voice/transcript UX, stateless strict Responses requests, dual fail-closed gates, three-call budget, technical-only logs and a separately invoked synthetic eval. No schema/dependency/Production configuration change. Credential, Preview database/migration and live QA evidence remain open. |
-| 28 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, recovery, privacy/processor and separate activation gates remain. |
+| 27 | PROGRAM-AI-ACTIVATE-01 | **CLOSED — PR #64 MERGED AFTER LIVE PREVIEW VALIDATION** | PR #64 merged approved head `377777d5c6e9f03f6eae9d9e9bb1293191873720` as `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`. Before merge, its isolated feature-on Preview passed migration `0018`, real typed OpenAI, 20/20 corpus and schema validity, 0% unnecessary clarification, real microphone/transcription/editing, Founder-accepted timer/pulse UX, deterministic `20 + 20` XP, Better Auth claim, durable Starting Point and provider kill-switch checks. Production stayed legacy/off. |
+| 28 | PROGRAM-AI-IMPL-01B | **CLOSED — PR #66 MERGED** | RFC-025 governs the bounded feature-on Missions 02–10 MVP, three completion-derived Reviews, Home/resume and bounded guidance. A clean M1→M10 path is exactly `715 XP`; feature-off remains legacy and Production provider activation remains off. No migration `0019` is introduced. |
+| 29 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, privacy/processor and separate activation gates remain. |
 
 ## LEGAL-IMPL-01 outcome boundary
 
@@ -41,9 +42,9 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Complete PROGRAM-AI-ACTIVATE-01 credential presence, safe Preview/Production database fingerprint comparison and Preview migration-0018 verification; only then configure the two Preview gates and run controlled live typed/voice QA.
+1. Preserve the closed PROGRAM-AI-ACTIVATE-01 evidence and its Preview-only credential/database boundary. A different branch's missing generic runtime database aliases do not negate the approved PR #64 feature-on Preview validation.
 2. Keep Production provider flags/credentials absent or false. Default OpenAI Responses abuse-monitoring retention remains a gate before unrestricted real-user Production data unless Founder Office separately accepts an approved ZDR/MAM or another reviewed position.
 3. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
 4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
-5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01.
+5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01's remaining managed-canary snapshot/restore/cleanup gate.
 6. Acquire real partner evidence only under a later closed-beta authorisation decision.

@@ -17,7 +17,7 @@
 
 **Detected:** PR #52 merged as `a954243786af83ec6ce97f8a1a0527d0b6a3cf2b`; its exact-merge CI passed, Production deployment `dpl_4xhpC5sQwQuuzLp9RZkNi8YVG4uL` is Ready, Production Smoke run `31254902719` passed and a real Production staff auth E2E passed login, protected `/admin`, refresh/session persistence and normal logout. Production is healthy and ENV-ISO-01 is closed.
 
-**Not detected:** automated backup/PITR capability on the verified Prisma Free plan. Recovery remains PARTIAL and separate from the proven environment-isolation boundary.
+**Detected through 2026-08-12:** workspace `cmrixpep23o54wfdvy6ikjzc1` is Starter and billed through the existing Vercel team context. Both isolated Prisma databases inherit Starter with seven-day retention metadata and completed snapshots. RECOVERY-01 restored Preview backup `backup-01kzszywy038jepagf0zk705zs` into a fresh disconnected database, proved exact 18-migration/12-table/schema/FK/canary/structure/repository-read parity, and deleted the exact target and Preview canary with verified absence. Production remained read-only. Fine-grained PITR remains **Not detected**.
 
 The complete configuration-name inventory, classifications, consumers and handling rules are maintained in [Environment and Secrets](../../06_Operations/Environment-and-Secrets.md).
 
@@ -27,6 +27,6 @@ The complete configuration-name inventory, classifications, consumers and handli
 
 **Detected:** controlled Better Auth secret recovery/rotation evidence and independent Preview auth/admin authority.
 
-**Detected on PROGRAM-AI-IMPL-01A branch:** `.env.example` documents `PROGRAM_AI_V1_ENABLED=false`. Only exact server-side `true` enables the RFC-022 slice. No hosted environment value or Production configuration change is detected.
+**Detected:** `.env.example` documents `PROGRAM_AI_V1_ENABLED=false`; only exact server-side `true` enables the RFC-022 slice. The approved PR #64 feature-on Preview used its isolated database, migration `0018`, real Preview-only OpenAI key and valid runtime bindings to complete controlled typed and voice provider validation before merge. Production remained legacy/off. The RECOVERY-01 branch's lack of generic `DATABASE_URL`/`DIRECT_URL` aliases is branch-specific and does not retroactively invalidate that approved Preview evidence.
 
-**Not detected:** a short-lived Production migration credential, provider-native migration hook or proven backup/restore configuration. Production migration automation remains provider/secret-architecture gated.
+**Not detected:** a short-lived Production migration credential or provider-native migration hook. **Detected:** managed Production snapshots are active under Starter and the full provider-native new-target restore/canary-parity/cleanup drill passed using Preview only.
