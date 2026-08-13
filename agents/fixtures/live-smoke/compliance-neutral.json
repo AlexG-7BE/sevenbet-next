@@ -1,0 +1,21 @@
+{
+  "request": "Review a proposed internal checklist note that tells editors to cite supplied evidence, preserve uncertainty, and stop before publishing unsupported commercial facts. This proposal changes no consumer page, Programme behaviour, XP, authentication, commercial availability, database, affiliate setting, or Production configuration.",
+  "context": "This is a non-personal, neutral connectivity fixture for the isolated B4GAMBLE operational agent package.",
+  "evidence": [
+    {
+      "id": "agent-core-brief",
+      "kind": "SUPPLIED_FILE",
+      "title": "AGENT-CORE-01 bounded foundation brief",
+      "source": "Founder Office supplied work package",
+      "excerpt": "Wave 1 agents are READ, ANALYSE, DRAFT only. No autonomous external action."
+    }
+  ],
+  "claims": [
+    {
+      "statement": "The checklist note is proposed and has not been published or activated.",
+      "category": "GENERAL",
+      "classification": "PROPOSED",
+      "evidenceIds": ["agent-core-brief"]
+    }
+  ]
+}
