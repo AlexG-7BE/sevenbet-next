@@ -4,7 +4,7 @@
 - **Decision authority:** Founder Office `AGENT-CORE-01`
 - **Approved:** 2026-08-13
 - **Scope:** Isolated internal OpenAI Agents SDK foundation, eight Wave 1 specialist definitions, shared policy and result contracts, explicit cost-aware routing, bounded manual runner and no-key structural evaluation
-- **Base:** current `codex/agent-core-01` branch; exact implementation head to be recorded at review
+- **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
 
@@ -88,6 +88,8 @@ Evidence kinds are closed and describe only how evidence reached the runner: sup
 
 Claim classifications use only `DETECTED`, `INFERRED`, `PROPOSED` and `UNKNOWN`. `VERIFIED` is intentionally absent from input and output classification vocabulary. A commercial claim without a valid supplied evidence reference is deterministically identified as an evidence gap before provider execution.
 
+For material commercial claims in the `OPERATOR_LICENCE`, `BONUS`, `AVAILABILITY`, `COMMERCIAL_RELATIONSHIP` and `PARTNER` categories, every supporting `PUBLIC_WEB_EVIDENCE` item must carry a supplied `observedAt` timestamp. The timestamp records when the source evidence was observed; it does not prove source validity, present availability, licence status or commercial approval. Undated public-web commercial evidence produces a deterministic `REVIEW` evidence gap and cannot establish a current claim. This RFC sets no arbitrary freshness window.
+
 Inputs have count and length ceilings. The runner rejects additional properties, malformed evidence references and oversized files before an API call. It does not load the repository automatically.
 
 ## 6. Shared result contract
@@ -152,7 +154,7 @@ The registry contains exactly these specialists:
 | `partner-intelligence` | Partner Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `digital-pr-data-story` | Digital PR & Data Story Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 
-Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
+Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Organisation, brands, jurisdiction or market relevance may be described only to the extent directly supported by supplied evidence; a generic register entry, organisation/brand name, source URL or affiliate page cannot establish jurisdiction, Great Britain relevance, regulator or licence scope, eligibility, availability or commercial approval. Supplied public-web sources are described neutrally unless authority, provenance, ownership or official status is explicitly supported; kind, title, URL, excerpt, timestamp, organisation or brand name do not establish source authority. Its fixed eight-case corpus passed a human-reviewed live evaluation at exact head `eb14b33e110451f9b3855fedfa938ef1802936d7`: `8 PASS / 0 REVIEW / 0 FAIL`. This is bounded corpus evidence, not automatic source verification or universal real-world validation. A public-web tool is not authorised. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
 
 ## 9. Deterministic preflight
 
@@ -181,7 +183,7 @@ The recommended local destination is `agents/.env.local`, covered by the reposit
 
 The observed run was `compliance-gate` / `COMPLETED` / `PASS`, with provider invocation true, explicit `bulk` selection of `gpt-5.6-luna`, low reasoning effort, one request, 1,157 input tokens, 275 output tokens, 1,432 total tokens and a conservative estimated upper-bound cost of `$0.002807`. It validates connectivity, SDK execution, structured-output compatibility, model access and execution/cost accounting only. It does not validate agent quality, approve Luna for compliance, establish production readiness, complete an eval, activate commercial capability or approve autonomous agents.
 
-Founder review recorded one non-blocking quality signal: a `DETECTED` finding was worded more broadly than its specific cited evidence excerpt. This is evidence that dedicated specialist-quality evaluation is required later; no semantic verifier or additional agent architecture is authorised by this record.
+Founder review recorded one non-blocking quality signal: a `DETECTED` finding was worded more broadly than its specific cited evidence excerpt. That signal led to the separately governed Partner Intelligence corpus evaluation recorded below; it did not authorise a semantic verifier or additional agent architecture. Dedicated quality evidence for the other seven specialists remains pending.
 
 ## 12. Privacy, security and integration boundary
 
@@ -207,9 +209,18 @@ No-key tests must cover:
 - max-turn and timeout bounds;
 - cost calculation;
 - input-claim and provider-output evidence integrity; and
+- Partner Intelligence public-web observation timestamps and its curated no-key eval corpus; and
 - credential/logging/source scans.
 
-The single authorised neutral smoke verified SDK connectivity and one schema-valid Compliance Gate result. It does not constitute an eval programme, Production activation or approval of model quality. Dedicated specialist-quality evaluation requires curated expected outcomes, cost limits, privacy review and separate Founder authority.
+The single authorised neutral smoke verified SDK connectivity and one schema-valid Compliance Gate result. It does not constitute an eval programme, Production activation or approval of model quality. Partner Intelligence was evaluated separately against its committed deterministic eight-case corpus:
+
+- The initial exact-head run at `aac2393553e26d88ca6e2c563cdb5196d5b2c1f0` produced `7 PASS / 1 REVIEW / 0 FAIL`; the sole REVIEW was Great Britain relevance wording broader than generic register-entry evidence.
+- The second exact-head run at `a54b15f3d6a87c890b4a4154b3b39918ba83c97a` produced `7 PASS / 1 REVIEW / 0 FAIL`: the jurisdiction defect was fixed, while ordinary supplied public-web pages were inaccurately labelled authoritative status evidence.
+- The final exact-head run at `eb14b33e110451f9b3855fedfa938ef1802936d7` produced `8 PASS / 0 REVIEW / 0 FAIL`: eight cases, seven provider requests, one deterministic Programme/commercial-firewall block before provider invocation, 9,651 input tokens, 3,491 output tokens, 13,142 total tokens and `$0.0764925` aggregate conservative cost. It had zero retries and no technical boundary failure, repository change, Production mutation, external mutation or partner action. Generic register evidence did not establish jurisdiction, Great Britain relevance, regulator or licence scope, eligibility, availability, partnership or approval; ordinary public-web sources were not upgraded; contradictions and missing material facts remained `UNKNOWN`; Programme/private-data commercial targeting was blocked before provider invocation; and neutral research remained bounded `DRAFT`.
+
+Across the three fixed-corpus runs, the bounded campaign executed 24 cases through 21 provider requests, used 26,874 input tokens and 10,834 output tokens (37,708 total), and recorded `$0.229695` conservative cumulative cost, zero retries and zero technical-boundary failures. Both measured wording defects were fixed without regression in the other cases.
+
+`PARTNER-INTEL-EVAL-01` is `FIXED EIGHT-CASE CORPUS PASSED AT EXACT HEAD / 8 PASS / 0 REVIEW / 0 FAIL / HUMAN-REVIEWED QUALITY EVIDENCE COMPLETE`. The bounded Partner Intelligence implementation passed its committed fixed eight-case human-reviewed live evaluation only at the exact head stated above. This establishes acceptable behaviour only for the committed corpus and tested boundaries. Human review remains mandatory for real commercial evidence and decisions. It does not establish universal correctness, automatic source validity/currentness, real-world partner approval or full agent-set quality; the other seven specialists remain unevaluated by this campaign.
 
 ## 14. Documentation and extension rule
 
@@ -219,6 +230,6 @@ Adding a specialist requires a registry entry, purpose and prohibited actions, c
 
 ## 15. Release boundary
 
-This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / QUALITY EVAL PENDING / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks have passed, and its one authorised neutral smoke is recorded above.
+This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / PARTNER-INTEL-EVAL-01 FIXED EIGHT-CASE CORPUS PASSED AT EXACT HEAD / 8 PASS / 0 REVIEW / 0 FAIL / HUMAN-REVIEWED QUALITY EVIDENCE COMPLETE / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks, one authorised neutral connectivity smoke and bounded Partner Intelligence corpus campaign are recorded above. The isolated package has no public-web tool, partner contact or commercial activation authority, and full eight-specialist quality is not established.
 
-It must remain unmerged, undeployed, unscheduled and inactive in Production pending Founder Office review. The review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.
+PR #69 merged the isolated package to `main`. It remains undeployed, unscheduled and inactive in Production; merge did not authorise agent quality claims, tools, external integrations or Production use. Any later activation review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.

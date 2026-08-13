@@ -137,8 +137,21 @@ This establishes connectivity, SDK execution, structured-output compatibility,
 model access, and execution/cost accounting only. It does not approve agent
 quality, Luna for compliance, production readiness, an eval, commercial
 activation, or autonomous operation. Founder review observed one broader-than-
-excerpt `DETECTED` finding; dedicated specialist-quality evaluation remains
-pending. No second live call is authorised by this record.
+excerpt `DETECTED` finding. That connectivity smoke does not establish
+specialist quality.
+
+Partner Intelligence separately passed its committed fixed eight-case,
+human-reviewed live quality corpus at exact head
+`eb14b33e110451f9b3855fedfa938ef1802936d7` after two measured prompt-precision
+remediations: `8 PASS / 0 REVIEW / 0 FAIL`, seven provider requests, one
+deterministic pre-provider block, 9,651 input tokens, 3,491 output tokens,
+13,142 total tokens, `$0.0764925` conservative cost, zero retries and zero
+technical-boundary failures. This establishes acceptable behaviour only for
+the committed corpus and tested boundaries. It does not validate the other
+seven specialists or authorise tools, autonomous operation, schedules,
+Production use, partner activity or commercial activation. Human review
+remains mandatory for real commercial evidence and decisions; full agent-set
+quality remains pending.
 
 `agents/.env.local` remains the recommended ignored local destination. Never
 commit or print it, paste a key into chat, or pass a key as an argument.

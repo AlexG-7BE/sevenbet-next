@@ -33,6 +33,9 @@ const COMMERCIAL_CLAIM_CATEGORIES = new Set([
   "PARTNER",
 ]);
 
+const UNDATED_PUBLIC_WEB_COMMERCIAL_EVIDENCE_RULE =
+  "UNDATED_PUBLIC_WEB_COMMERCIAL_EVIDENCE";
+
 const SYNTHETIC_PRODUCTION_PATTERN =
   /(?:seed|insert|load|create|add|use|publish|deploy).{0,100}(?:(?:synthetic|fictional|fake|dummy|fabricated).{0,40}\bproduction\b|\bproduction\b.{0,40}(?:synthetic|fictional|fake|dummy|fabricated))/is;
 const VULNERABILITY_PATTERN = /vulnerab|at[ -]?risk|risk signal|problem gambler/is;
@@ -71,6 +74,9 @@ export function assessPreflight(
   const issues: PreflightIssue[] = [];
   const evidenceGaps: PreflightEvidenceGap[] = [];
   const text = joinedInputText(input);
+  const evidenceById = new Map(
+    input.evidence.map((evidence) => [evidence.id, evidence]),
+  );
 
   if (SYNTHETIC_PRODUCTION_PATTERN.test(text)) {
     issues.push({
@@ -117,10 +123,36 @@ export function assessPreflight(
   }
 
   for (const claim of input.claims) {
+    const referencedEvidence = claim.evidenceIds.flatMap((evidenceId) => {
+      const evidence = evidenceById.get(evidenceId);
+      return evidence ? [evidence] : [];
+    });
+    const hasUndatedPublicWebCommercialEvidence =
+      COMMERCIAL_CLAIM_CATEGORIES.has(claim.category) &&
+      referencedEvidence.some(
+        (evidence) =>
+          evidence.kind === "PUBLIC_WEB_EVIDENCE" && !evidence.observedAt,
+      );
     const missingCommercialEvidence =
       COMMERCIAL_CLAIM_CATEGORIES.has(claim.category) &&
       claim.evidenceIds.length === 0;
     const explicitlyUnknown = claim.classification === "UNKNOWN";
+
+    if (hasUndatedPublicWebCommercialEvidence) {
+      issues.push({
+        ruleId: UNDATED_PUBLIC_WEB_COMMERCIAL_EVIDENCE_RULE,
+        disposition: "REVIEW",
+        description:
+          "Public-web evidence supporting a material commercial claim requires an observedAt timestamp.",
+      });
+      evidenceGaps.push({
+        claim: claim.statement,
+        requiredEvidence:
+          "A truthful observedAt timestamp for each supplied PUBLIC_WEB_EVIDENCE item supporting this material commercial claim.",
+        impact:
+          "Undated public-web evidence does not establish that the claim is current and cannot support approval, availability, partnership, or commercial activation.",
+      });
+    }
 
     if (!missingCommercialEvidence && !explicitlyUnknown) {
       continue;
