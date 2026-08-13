@@ -2,6 +2,16 @@
 
 ## Evidence classification
 
+### Current repository evidence — 2026-08-13
+
+- **Detected on the unmerged `RUNTIME-PRODUCT-POLISH-01` review branch:** `/best-offers` retains the strict published GB/material-term shortlist as its first source when CMS projection is enabled. When that read succeeds but returns zero eligible records, or when CMS projection is explicitly disabled and its compatibility shortlist is empty, the service projects only the exact RFC-012 source-controlled manifest through the existing public casino/offer mappers.
+- **Detected:** every fallback result is classified by exact casino ID as `DEMO_FIXTURE`, has no action or raw destination, receives the existing demonstration disclosure and uses `noindex,follow` without ItemList/Offer structured data.
+- **Detected:** a repository read failure remains `unavailable`; it does not invoke the demonstration. An eligible published shortlist remains `PUBLISHED_ONLY` and is not mixed with manifest records.
+- **Detected:** the fallback is confined to `getBestOffersPageData`; `/bonuses`, public search, repository results and public casino inventory do not receive source-controlled manifest records.
+- **Inferred:** the confirmed empty Production shortlist is consistent with the current strict completeness gate rejecting published records whose eligibility or other material terms are absent. This branch does not claim a direct Production database audit and does not edit or reseed Production.
+- **Detected in Preview at `4112a2a`:** the protected branch Preview renders 12 complete demonstration records, the exact demonstration disclosure and no governed outbound action. The same Preview initially exposed an empty CMS-disabled compatibility shortlist; the review branch was corrected and reverified before handoff.
+- **Planned:** Founder review of the exact Preview rendering before any merge or Production request.
+
 - **Detected:** `CasinoService.publishCasino` persists an immutable `CasinoVersion.snapshot` after the governed draft, review and approval workflow.
 - **Detected:** `PublicCasinoRepository` selects published versions only for non-archived casinos whose current workflow status is `PUBLISHED`, then keeps the highest version per casino.
 - **Detected:** `mapPublishedCasino` already validates published snapshot identity, filters bonus status/date eligibility, maps public-safe media and exposes governed `/r/[slug]` actions without raw destinations.
@@ -24,6 +34,18 @@ Casino Builder / CMS
   → PublicOfferRepository
   → PublicOfferService
   → server-rendered /best-offers and /bonuses
+```
+
+RFC-029 adds one presentation-only branch after a successful published read:
+
+```text
+published shortlist empty after a successful read
+  OR CMS-disabled compatibility shortlist empty
+  → exact RFC-012 source-controlled manifest
+  → existing public casino mapper
+  → existing public offer mapper
+  → exact-ID DEMO_FIXTURE classification
+  → existing /best-offers full experience with no actions
 ```
 
 Page components do not import Prisma. The offer repository does not read live bonus rows as public truth and does not add a second publication model. It flattens the already public-safe latest casino snapshots into one offer projection per eligible published bonus.
@@ -52,11 +74,11 @@ The service validates and owns:
 - stable tie-breakers by score, publication time, casino name, casino slug and bonus slug;
 - one-based pagination and eligible-offer facet counts.
 
-CMS mode is fail closed: repository failure returns no offer records and never expands visibility with legacy records. Legacy offers are used only when CMS mode is explicitly disabled for local or test operation.
+CMS mode remains fail closed on repository failure and never expands visibility with legacy records. Legacy offers are used only when CMS mode is explicitly disabled for local or test operation. The RFC-029 Best Offers exception is not a repository-data fallback: it runs after a successful read with no eligible shortlist or after the explicitly CMS-disabled compatibility shortlist is empty, uses exact authorised manifest IDs, exposes no action and is isolated to the one page-data method.
 
 ## Page behavior
 
-`/best-offers` requests the default GB shortlist and presents at most 12 offers, with three featured cards when available. `/bonuses` serializes its filter form into query parameters, uses a page size of 24 and keeps the unfiltered route canonical. Filtered pages use the same canonical plus `noindex,follow`.
+`/best-offers` requests the default GB shortlist and presents at most 12 offers. Eligible published records remain authoritative. If none clear the unchanged gate after a successful read, the full existing experience presents an exact no-action demonstration instead of an empty shell. `/bonuses` serializes its filter form into query parameters, uses a page size of 24 and keeps the unfiltered route canonical. Filtered pages use the same canonical plus `noindex,follow`.
 
 Both pages render meaningful HTML without client JavaScript. Material terms and editorial review access precede action. Unavailable actions are explicit non-links.
 

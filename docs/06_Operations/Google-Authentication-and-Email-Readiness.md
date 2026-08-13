@@ -1,9 +1,9 @@
 # Google Authentication and Email Readiness
 
-- **Status:** Identity-only baseline and GOOGLE-OAUTH-ACTIVATE-01 closed on main through merged PR #61; Production Google OAuth off; future Production Google and email activation separate
+- **Status:** Identity-only baseline and GOOGLE-OAUTH-ACTIVATE-01 closed on main through merged PR #61; explicit recovery implemented only on the unmerged RFC-029 review branch; Production Google OAuth off; future Production Google and email activation separate
 - **Owner:** Founder Office configuration owner with Engineering and Privacy review
-- **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01 and for Programme access continuation/home routing by RFC-021
-- **Last reviewed:** 2026-08-10
+- **Decision:** RFC-018 / AUTH-COMMS-01, superseded for OAuth persistence and HTTP perimeter by RFC-020 / AUTH-HARDEN-01, for Programme access continuation/home routing by RFC-021 and for exact authenticated Google-link recovery by RFC-029
+- **Last reviewed:** 2026-08-13
 
 Scope note, 2026-08-12: RFC-028 selects Resend only for the isolated public Contact form. That adapter does not enter this account/Programme communications boundary, activate its transports or authorise reminders, engagement or marketing delivery. Contact operations and DNS gates are recorded in `Contact-Service-and-Mail-Readiness.md`.
 
@@ -13,13 +13,14 @@ Scope note, 2026-08-12: RFC-028 selects Resend only for the isolated public Cont
 
 - Better Auth `1.6.23` owns the Google authorization, state, PKCE, callback, user/session and provider-account flow.
 - Google is registered only when both `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` are present.
-- The server accepts only the fixed Google provider, fixed internal success/error callbacks and a boolean sign-up intent. Caller-supplied scopes, tokens, provider changes, extra data and callback destinations are rejected.
+- The server accepts only the fixed Google provider, allow-listed internal Programme or validated `/login` success/error callback pairs and a boolean sign-up intent. Standalone login is returning-user-only (`requestSignUp: false`). Caller-supplied scopes, tokens, provider changes, extra data and arbitrary callback destinations are rejected.
 - The installed provider requests its default identity scopes: `openid`, `email` and `profile`. No Google client SDK is added.
 - Supported Better Auth account create/update hooks strip access, refresh and ID tokens, expiry metadata and scope before persistence. The durable Google `Account` row retains only the identity relationship needed for future authentication.
 - Client-supplied Google ID-token sign-in is disabled. The normal authorization-code redirect and `/api/auth/callback/google` remain enabled.
-- `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are disabled because B4GAMBLE has no approved provider-management or Google API use case.
+- `/get-access-token`, `/refresh-token` and `/account-info` remain disabled. RFC-029 permits `/link-social` only for an authenticated session, Google, an exact allow-listed callback/error pair and a body with no ID token, requested scopes, additional data, sign-up override or arbitrary destination.
+- The standalone `/login` route uses existing Better Auth email/password and returning Google sign-in. Its `returnTo` accepts only a root-relative same-origin path and rejects absolute, protocol-relative, backslash/control-containing and `/login` loop inputs to `/program`.
 - Preview Better Auth continues to derive one exact branch host from `VERCEL_BRANCH_URL`; wildcard, ephemeral deployment-host and contradictory origin trust fail closed. Before rendering or Better Auth handling, an exact request to the current `VERCEL_URL` deployment host receives a 307 to that exact branch host with path and query preserved. Requests already on the branch host continue normally; malformed metadata or another Preview host is rejected.
-- The merged GOOGLE-OAUTH-ACTIVATE-01 v2.1 runtime uses one two-control Programme access screen and a separate, exact-journey, 60-minute tab authority. The server fixes current copy and time claims and signs them with a Programme-auth-purpose key derived from existing Better Auth secret material. Email account creation and all Google authentication verify that proof; forged static age/Terms/Privacy headers alone cannot authorize an account. Returning email sign-in remains proof-free, and returning Google retains signed adult access without treating Google as age verification or recording a durable legal ledger.
+- The merged GOOGLE-OAUTH-ACTIVATE-01 v2.1 runtime uses one two-control Programme access screen and a separate, exact-journey, 60-minute tab authority. The server fixes current copy and time claims and signs them with a Programme-auth-purpose key derived from existing Better Auth secret material. Email account creation, social account creation and Google authentication through the Programme callback verify that proof; forged static age/Terms/Privacy headers alone cannot authorize an account. Returning email sign-in and RFC-029 standalone returning-user Google login remain proof-free because they cannot create an account or Programme claim. Google is not treated as age verification and no durable legal ledger is recorded.
 - The browser treats marker validation only as a bounded UX guard: server issuance may be at most five minutes ahead of the browser clock, expiry is not extended, and the exact 60-minute duration remains mandatory. More-future, expired or malformed markers deny locally; Better Auth still performs strict server-clock signature and claim verification before account creation.
 - Programme headers and `/program` home routing resolve actual Better Auth session state. A signed-in user without enrollment receives a non-mutating Mission 01-current, 0-XP Dashboard projection and starts Mission 01 explicitly.
 - The communications module has closed purposes, fixed templates, authoritative recipient resolution, sender categories, idempotency, bounded audit metadata, a disabled runtime transport and an in-memory test transport.
@@ -75,12 +76,12 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 4. Inspect the authorization request: only `openid`, `email` and `profile`; callback host/path exact; state and PKCE present; no caller-controlled callback.
 5. Exercise a new Google sign-up after the one consolidated 18+/Terms/Privacy access screen. Confirm the later account form has no duplicate controls, then confirm one `User`, one Google `Account`, no password requirement and no `AdminUser`.
 6. Exercise a returning Google user. Confirm the provider account ID remains stable, no duplicate `User` is created, the session succeeds and all token/scope/expiry fields remain `null`.
-7. Exercise a verified existing email/password account with the same Google email. Confirm one `User` with multiple authentication methods. An unverified local email must fail safely rather than merge.
+7. Exercise `account_not_linked` for an existing email/password account. Confirm the pending Programme claim and Starting Point remain in exact-journey sessionStorage, wrong password does not start linking, successful password authentication establishes the existing session, explicit `linkSocial` requires the same verified Google email and the final return redeems the claim once.
 8. Confirm a Google identity already owned by User A cannot be reassigned or linked to User B.
 9. Exercise access continuation and Mission 01 claim continuation as separate authorities: exact marker, access-only transition, server claim redemption, one reward, exact local content migration and source removal. Then exercise expired/mismatched markers, cancellation, ordinary sign-in and User A → logout → User B negative cases.
 10. Confirm Google signup without bounded age/current Terms/Privacy headers is denied, returning login does not require account-creation Terms, Programme mutations still require age confirmation and `/responsible-gambling` remains open.
 11. Confirm direct client-supplied Google ID-token sign-in is rejected while the normal redirect flow remains available.
-12. Confirm `/link-social`, `/get-access-token`, `/refresh-token` and `/account-info` are unavailable to authenticated and unauthenticated requests; confirm `/get-session` and `/sign-out` remain available.
+12. Confirm `/get-access-token`, `/refresh-token` and `/account-info` are unavailable to authenticated and unauthenticated requests. Confirm `/link-social` rejects unauthenticated, other-provider, extra-field, token/scope and arbitrary-callback requests while the exact authenticated Google-link request succeeds; confirm `/get-session` and `/sign-out` remain available.
 13. Confirm user-visible failures are generic and no token, email, database detail, secret or provider payload appears in HTML, logs or URLs.
 14. Use the authenticated Programme logout control. Confirm the B4GAMBLE session ends, a fresh anonymous Programme subject starts and the global Google session is not treated as part of B4GAMBLE logout.
 15. Revoke/delete the synthetic accounts and verify the active-database `Account`/session rows follow the approved privacy process.
@@ -91,7 +92,7 @@ Use synthetic/non-sensitive accounts in Preview. Do not enter Programme narrativ
 - Implicit same-email linking requires Google to report a verified email and the existing local `User.emailVerified` value to be true.
 - Different-email linking is disabled. Provider account reassignment is prohibited. Provider profile data does not overwrite the local account on link.
 - Google implicit sign-up is disabled. The UI sends an explicit sign-up intent only after the separate account-creation controls.
-- Explicit `/link-social` account management is disabled. Legitimate Google sign-in may still implicitly link only a verified same-email local account under the controls above.
+- Explicit `/link-social` is not a general account-management surface. It is reachable only for the RFC-029 recovery after existing-account authentication, and Better Auth still requires the verified Google identity to match that authenticated account because different-email linking is disabled.
 - The last authentication method cannot be unlinked. No unlink UI is exposed in this release.
 - If Google is a user's only method, do not disable the provider in Production without a tested verified recovery path.
 - Public Google users receive no staff role. Staff access still requires a separately provisioned `AdminUser` relation and server permission checks.

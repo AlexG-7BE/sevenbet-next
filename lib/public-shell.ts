@@ -47,7 +47,7 @@ export function accountNavigationFor({
       }
     : {
         accountLabel: "Log in",
-        accountHref: "/program?auth=sign-in",
+        accountHref: "/login",
         primaryLabel: "Start 10 Steps",
         primaryHref: "/program",
         xpLabel: null,

@@ -9,7 +9,7 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
-  await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/program?auth=sign-in");
+  await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
   await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
   await expect(page.getByText(/B4GAMBLE may receive compensation from some outbound links/i)).toBeVisible();
   const undersizedTargets = await page.locator("[data-public-shell] a, [data-public-shell] button").evaluateAll((targets) => targets
@@ -30,11 +30,27 @@ test("mobile menu is modal, Escape-closeable and restores focus", async ({ brows
   await menu.click();
   await expect(page.getByRole("dialog", { name: "Site navigation" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Close navigation" })).toBeFocused();
+  await expect(page.getByRole("dialog", { name: "Site navigation" }).getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Site navigation" })).not.toBeVisible();
   await expect(menu).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await page.close();
+});
+
+test("standalone login is a responsive public account surface with Programme account creation secondary", async ({ page }) => {
+  await page.goto(`${baseUrl}/login?returnTo=https%3A%2F%2Fattacker.invalid`, { waitUntil: "networkidle" });
+  await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
+  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
+  await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
+  await expect(page.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start the 10-Step Programme" })).toHaveAttribute("href", "/program");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
 test("Programme and protected Help never receive the commercial public shell", async ({ page }) => {

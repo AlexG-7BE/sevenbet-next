@@ -349,7 +349,82 @@ test("installed authorization-code flow creates, returns and safely same-email l
   }
 });
 
-test("disabled Better Auth provider capabilities reject unauthenticated and authenticated HTTP requests", async () => {
+test("installed explicit link-social flow requires a session and links the verified same-email Google identity", async () => {
+  const auth = createIdentityOnlyTestAuth();
+  const unauthenticated = await auth.handler(new Request(`${BASE_URL}/api/auth/link-social`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      provider: "google",
+      callbackURL: "/program?auth=google-link-return",
+      errorCallbackURL: "/program?auth=google-link-error",
+    }),
+  }));
+  assert.equal(unauthenticated.status, 401);
+
+  const email = "explicit-link@example.com";
+  const signUp = await auth.handler(new Request(`${BASE_URL}/api/auth/sign-up/email`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ name: "Explicit Link User", email, password: "correct horse battery staple" }),
+  }));
+  assert.equal(signUp.status, 200);
+  const sessionCookie = responseCookies(signUp);
+  assert.ok(sessionCookie);
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = (async () => Response.json({
+    access_token: GOOGLE_ACCESS_SECRET_SENTINEL,
+    refresh_token: GOOGLE_REFRESH_SECRET_SENTINEL,
+    id_token: unsignedGoogleIdToken({
+      sub: "explicit-google-subject",
+      email,
+      emailVerified: true,
+      name: "Explicit Link User",
+    }),
+    expires_in: 3600,
+    scope: "openid email profile",
+    token_type: "Bearer",
+  })) as typeof fetch;
+
+  try {
+    const start = await auth.handler(new Request(`${BASE_URL}/api/auth/link-social`, {
+      method: "POST",
+      headers: { "content-type": "application/json", cookie: sessionCookie },
+      body: JSON.stringify({
+        provider: "google",
+        callbackURL: "/program?auth=google-link-return",
+        errorCallbackURL: "/program?auth=google-link-error",
+      }),
+    }));
+    assert.equal(start.status, 200);
+    const payload = await start.json() as { url: string };
+    const state = new URL(payload.url).searchParams.get("state");
+    assert.ok(state);
+    const oauthCookie = responseCookies(start);
+    const callback = await auth.handler(new Request(
+      `${BASE_URL}/api/auth/callback/google?code=synthetic-code&state=${encodeURIComponent(state)}`,
+      { headers: { cookie: `${sessionCookie}; ${oauthCookie}` } },
+    ));
+    assert.ok([302, 303].includes(callback.status));
+    assert.equal(callback.headers.get("location"), "/program?auth=google-link-return");
+
+    const context = await auth.$context;
+    const linked = await context.internalAdapter.findUserByEmail(email, { includeAccounts: true });
+    assert.ok(linked);
+    assert.deepEqual(linked.accounts.map((account) => account.providerId).sort(), ["credential", "google"]);
+    const google = linked.accounts.find((account) => account.providerId === "google");
+    assert.equal(google?.accountId, "explicit-google-subject");
+    assert.equal(google?.accessToken, null);
+    assert.equal(google?.refreshToken, null);
+    assert.equal(google?.idToken, null);
+    assert.equal(google?.scope, null);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("token-retrieval Better Auth provider capabilities reject unauthenticated and authenticated HTTP requests", async () => {
   const auth = createIdentityOnlyTestAuth();
   const signUpResponse = await auth.handler(new Request(`${BASE_URL}/api/auth/sign-up/email`, {
     method: "POST",
@@ -365,7 +440,6 @@ test("disabled Better Auth provider capabilities reject unauthenticated and auth
   assert.ok(cookie, "sign-up must establish a real authenticated test session");
 
   const requests: Array<[string, "GET" | "POST"]> = [
-    ["/link-social", "POST"],
     ["/get-access-token", "POST"],
     ["/refresh-token", "POST"],
     ["/account-info", "GET"],
@@ -464,4 +538,7 @@ test("application config preserves safe implicit linking, age enforcement and th
   assert.match(accessPolicy, /verifyProgrammeAccessProof/);
   assert.match(accessContract, /x-sevenbet-age-attestation/);
   assert.match(route, /sign-in\/social/);
+  assert.match(route, /link-social/);
+  assert.match(route, /isAllowedGoogleLinkRequest/);
+  assert.doesNotMatch(IDENTITY_ONLY_DISABLED_AUTH_PATHS.join("\n"), /link-social/);
 });
