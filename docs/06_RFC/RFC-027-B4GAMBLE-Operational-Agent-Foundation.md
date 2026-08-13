@@ -129,8 +129,8 @@ The 2026-08-13 official model catalogue establishes these Wave 1 tiers and liste
 
 | Tier | Model | Purpose | Input | Output | Reasoning |
 | --- | --- | --- | ---: | ---: | --- |
-| `bulk` | `gpt-5.6-luna` | classification, extraction and narrow high-volume work | $0.20 | $1.20 | low |
-| `standard` | `gpt-5.6-terra` | normal operational analysis | $2.00 | $12.00 | medium |
+| `bulk` | `gpt-5.6-luna` | classification, extraction and narrow high-volume work | $1.00 | $6.00 | low |
+| `standard` | `gpt-5.6-terra` | normal operational analysis | $2.50 | $15.00 | medium |
 | `high_consequence` | `gpt-5.6-sol` | difficult or high-consequence review | $5.00 | $30.00 | high |
 
 Rates are configuration evidence, not a promise. They must be rechecked against current official OpenAI pricing before a later pricing update or material live-evaluation programme. Estimates charge all input tokens at the uncached rate and are therefore a simple conservative upper bound for text tokens; they exclude any unapproved tool or regional surcharge because Wave 1 has no tools or regional-processing selection.
@@ -149,14 +149,14 @@ The registry contains exactly these specialists:
 | `programme-ai-eval` | Programme AI Eval Agent | `high_consequence` | `PASS`, `REVIEW`, `BLOCK` |
 | `growth-opportunity-radar` | Growth Opportunity Radar | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `serp-competitor-intelligence` | SERP & Competitor Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
-| `partner-intelligence` | Partner Intelligence Agent | `high_consequence` | `DRAFT`, `REVIEW`, `BLOCK` |
+| `partner-intelligence` | Partner Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `digital-pr-data-story` | Digital PR & Data Story Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 
 Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
 
 ## 9. Deterministic preflight
 
-Ordinary code owns schema validation, input size, evidence-reference integrity, model/tier validation, cost arithmetic and unambiguous hard-boundary detection. Conservative preflight rules identify explicit proposals for:
+Ordinary code owns schema validation, input size, evidence-reference integrity, model/tier validation, cost arithmetic and unambiguous hard-boundary detection. `DETECTED` and `INFERRED` input claims and provider findings require at least one supplied evidence ID. Post-provider validation rejects every finding or risk citation not present in the supplied evidence with a safe `PROVIDER_OUTPUT_INVALID` failure; `PROPOSED` and `UNKNOWN` may remain unsupported where appropriate. Conservative preflight rules identify explicit proposals for:
 
 - synthetic Production data;
 - vulnerability-derived commercial targeting;
@@ -203,7 +203,8 @@ No-key tests must cover:
 - architecture scope creep producing `STOP` or conditions;
 - explicit model selection, override observability and no escalation;
 - max-turn and timeout bounds;
-- cost calculation; and
+- cost calculation;
+- input-claim and provider-output evidence integrity; and
 - credential/logging/source scans.
 
 A later live provider smoke verifies SDK connectivity and one schema-valid Compliance Gate result using only the neutral fixture. It does not constitute an eval programme, Production activation or approval of model quality. Broader live evals require curated expected outcomes, cost limits, privacy review and separate Founder authority.

@@ -23,6 +23,19 @@ test("explicit cheaper tier never silently escalates", () => {
   assert.equal(route.selectionSource, "EXPLICIT_TIER");
 });
 
+test("partner intelligence defaults to Terra and retains an explicit Sol override", () => {
+  const specialist = getSpecialist("partner-intelligence");
+  const defaultRoute = resolveModelRoute(specialist.defaultTier);
+  const overrideRoute = resolveModelRoute(specialist.defaultTier, {
+    model: "gpt-5.6-sol",
+  });
+
+  assert.equal(defaultRoute.model, "gpt-5.6-terra");
+  assert.equal(defaultRoute.selectionSource, "REGISTRY_DEFAULT");
+  assert.equal(overrideRoute.model, "gpt-5.6-sol");
+  assert.equal(overrideRoute.selectionSource, "EXPLICIT_MODEL");
+});
+
 test("explicit model is restricted to the closed catalogue", () => {
   assert.throws(() => resolveModelRoute("standard", { model: "unknown-model" }));
   assert.throws(() =>
@@ -40,5 +53,5 @@ test("cost estimate uses the selected model rates as a conservative upper bound"
     outputTokens: 1_000_000,
   });
 
-  assert.equal(estimate, 1.4);
+  assert.equal(estimate, 7);
 });

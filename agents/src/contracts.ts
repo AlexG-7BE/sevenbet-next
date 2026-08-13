@@ -81,6 +81,18 @@ export const OperationalAgentInputSchema = z
     const evidenceIds = new Set(input.evidence.map((item) => item.id));
 
     for (const [claimIndex, claim] of input.claims.entries()) {
+      if (
+        (claim.classification === "DETECTED" ||
+          claim.classification === "INFERRED") &&
+        claim.evidenceIds.length === 0
+      ) {
+        refinementContext.addIssue({
+          code: "custom",
+          message: `${claim.classification} claims require supplied evidence.`,
+          path: ["claims", claimIndex, "evidenceIds"],
+        });
+      }
+
       for (const [evidenceIndex, evidenceId] of claim.evidenceIds.entries()) {
         if (!evidenceIds.has(evidenceId)) {
           refinementContext.addIssue({

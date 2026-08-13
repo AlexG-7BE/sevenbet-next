@@ -55,6 +55,84 @@ test("evidence classifications cannot represent unsupported verified certainty",
   assert.equal(EvidenceClassificationSchema.safeParse("UNKNOWN").success, true);
 });
 
+test("DETECTED input claims require supplied evidence", () => {
+  assert.equal(
+    OperationalAgentInputSchema.safeParse({
+      request: "Review this.",
+      claims: [
+        {
+          statement: "A detected claim",
+          category: "GENERAL",
+          classification: "DETECTED",
+          evidenceIds: [],
+        },
+      ],
+    }).success,
+    false,
+  );
+});
+
+test("INFERRED input claims require supplied evidence", () => {
+  assert.equal(
+    OperationalAgentInputSchema.safeParse({
+      request: "Review this.",
+      claims: [
+        {
+          statement: "An inferred claim",
+          category: "GENERAL",
+          classification: "INFERRED",
+          evidenceIds: [],
+        },
+      ],
+    }).success,
+    false,
+  );
+});
+
+test("grounded input claims accept a valid supplied evidence reference", () => {
+  assert.equal(
+    OperationalAgentInputSchema.safeParse({
+      request: "Review this.",
+      evidence: [
+        {
+          id: "brief",
+          kind: "SUPPLIED_FILE",
+          title: "Review brief",
+          source: "Founder review",
+        },
+      ],
+      claims: [
+        {
+          statement: "A detected claim",
+          category: "GENERAL",
+          classification: "DETECTED",
+          evidenceIds: ["brief"],
+        },
+      ],
+    }).success,
+    true,
+  );
+});
+
+test("UNKNOWN and PROPOSED input claims may remain unsupported", () => {
+  for (const classification of ["UNKNOWN", "PROPOSED"] as const) {
+    assert.equal(
+      OperationalAgentInputSchema.safeParse({
+        request: "Review this.",
+        claims: [
+          {
+            statement: "An unsupported claim",
+            category: "GENERAL",
+            classification,
+            evidenceIds: [],
+          },
+        ],
+      }).success,
+      true,
+    );
+  }
+});
+
 test("shared result contract is strict and accepts the required envelope", () => {
   assert.equal(OperationalAgentResultSchema.safeParse(validResult).success, true);
   assert.equal(

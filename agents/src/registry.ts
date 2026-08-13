@@ -148,7 +148,7 @@ const specialists = [
     name: "Partner Intelligence Agent",
     purpose:
       "Research potential regulated commercial partners from supplied public evidence.",
-    defaultTier: "high_consequence",
+    defaultTier: "standard",
     allowedRecommendations: ["DRAFT", "REVIEW", "BLOCK"],
     checks: [
       "Organisation, brands, and apparent Great Britain relevance",

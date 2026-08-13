@@ -78,9 +78,22 @@ function buildExecutionMetadata(
   } as const;
 }
 
-function assertProviderResult(
+function assertKnownEvidenceReferences(
+  evidenceIds: readonly string[],
+  suppliedEvidenceIds: ReadonlySet<string>,
+): void {
+  if (evidenceIds.some((evidenceId) => !suppliedEvidenceIds.has(evidenceId))) {
+    throw new AgentCoreError(
+      "PROVIDER_OUTPUT_INVALID",
+      "The provider result cited evidence that was not supplied.",
+    );
+  }
+}
+
+export function assertProviderOutputIntegrity(
   result: OperationalAgentResult,
   agent: AgentKey,
+  input: OperationalAgentInput,
 ): void {
   const definition = getSpecialist(agent);
 
@@ -96,6 +109,27 @@ function assertProviderResult(
       "PROVIDER_OUTPUT_INVALID",
       "The provider result used a recommendation outside the specialist contract.",
     );
+  }
+
+  const suppliedEvidenceIds = new Set(input.evidence.map((item) => item.id));
+
+  for (const finding of result.findings) {
+    if (
+      (finding.classification === "DETECTED" ||
+        finding.classification === "INFERRED") &&
+      finding.evidenceIds.length === 0
+    ) {
+      throw new AgentCoreError(
+        "PROVIDER_OUTPUT_INVALID",
+        "Detected and inferred findings require supplied evidence.",
+      );
+    }
+
+    assertKnownEvidenceReferences(finding.evidenceIds, suppliedEvidenceIds);
+  }
+
+  for (const risk of result.risks) {
+    assertKnownEvidenceReferences(risk.evidenceIds, suppliedEvidenceIds);
   }
 }
 
@@ -188,7 +222,7 @@ export async function runOperationalAgent(
     }
 
     const providerResult = OperationalAgentResultSchema.parse(result.finalOutput);
-    assertProviderResult(providerResult, agentKey);
+    assertProviderOutputIntegrity(providerResult, agentKey, input);
 
     const finalResult = enforcePreflight(providerResult, preflight, definition);
     const usage: TokenUsage = {

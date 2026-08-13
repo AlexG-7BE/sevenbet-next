@@ -44,7 +44,7 @@ interpretation is required.
 | `programme-ai-eval` | Evaluate supplied Programme AI output/eval evidence | `high_consequence` | PASS / REVIEW / BLOCK |
 | `growth-opportunity-radar` | Rank safe evidence-backed growth opportunities | `standard` | DRAFT / REVIEW / BLOCK |
 | `serp-competitor-intelligence` | Analyse supplied public search/competitor evidence | `standard` | DRAFT / REVIEW / BLOCK |
-| `partner-intelligence` | Analyse supplied public potential-partner evidence | `high_consequence` | DRAFT / REVIEW / BLOCK |
+| `partner-intelligence` | Analyse supplied public potential-partner evidence | `standard` | DRAFT / REVIEW / BLOCK |
 | `digital-pr-data-story` | Draft credible PR/data-story opportunities | `standard` | DRAFT / REVIEW / BLOCK |
 
 List the runtime registry without an API key:
@@ -58,6 +58,9 @@ npm run agent:run -- list
 The runner accepts one UTF-8 JSON file of at most 256 KiB. Its closed root
 contains `request`, optional `context`, `evidence[]`, and `claims[]`. Evidence
 IDs are the only citations an agent may place on a finding or risk.
+`DETECTED` and `INFERRED` claims and findings require at least one supplied
+evidence ID. Every finding and risk citation is checked against the supplied
+evidence after provider output; invented IDs fail safely.
 
 The structured result always contains:
 
@@ -81,8 +84,8 @@ The closed catalogue follows the official OpenAI model page reviewed on
 
 | Tier | Model | Input / MTok | Output / MTok |
 | --- | --- | ---: | ---: |
-| `bulk` | `gpt-5.6-luna` | $0.20 | $1.20 |
-| `standard` | `gpt-5.6-terra` | $2.00 | $12.00 |
+| `bulk` | `gpt-5.6-luna` | $1.00 | $6.00 |
+| `standard` | `gpt-5.6-terra` | $2.50 | $15.00 |
 | `high_consequence` | `gpt-5.6-sol` | $5.00 | $30.00 |
 
 The specialist default is explicit. `--tier` or `--model` can override it, but
