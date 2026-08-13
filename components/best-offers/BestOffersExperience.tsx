@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 import { offerWithdrawalBucket, shortlistReason, type BestFitCriterion } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
@@ -114,9 +114,30 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
   const [activeSlide, setActiveSlide] = useState(0);
   const [criterion, setCriterion] = useState<BestFitCriterion>("overall");
   const pointerStart = useRef<number | null>(null);
+  const fitTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const winner = winners[criterion];
   const featured = winners.overall ?? shortlist[0] ?? null;
   const move = (next: number) => setActiveSlide((next + slides.length) % slides.length);
+  const moveFitTab = (next: number) => {
+    const index = (next + criteria.length) % criteria.length;
+    setCriterion(criteria[index]);
+    fitTabRefs.current[index]?.focus();
+  };
+  const handleFitTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveFitTab(index + 1);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveFitTab(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      moveFitTab(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      moveFitTab(criteria.length - 1);
+    }
+  };
 
   return <>
     <section className={styles.shortlistSection} id="shortlist" aria-labelledby="shortlist-title">
@@ -159,6 +180,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
           <div aria-label="Choose a shortlist position" className={styles.stageDots}>
             {slides.map((slide, index) => <button aria-current={index === activeSlide ? "true" : undefined} aria-label={`Show ${criterionLabels[slide.criterion]}`} key={slide.criterion} onClick={() => setActiveSlide(index)} type="button" />)}
           </div>
+          <p aria-atomic="true" aria-live="polite" className="srOnly">Shortlist slide {activeSlide + 1} of {slides.length}: {criterionLabels[slides[activeSlide].criterion]}, {slides[activeSlide].offer.casino.name}.</p>
         </div> : null}
         <div className={styles.metrics}>
           <div><strong>GB-FIRST</strong><span>Declared comparison context</span></div>
@@ -194,7 +216,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
         <h2 id="fit-title">Find your best fit.</h2>
         <p className={styles.fitSupport}>“Best” changes with the question. Choose one lens and see the exact published signal behind the result.</p>
         <div aria-label="Best fit criterion" className={styles.fitTabs} role="tablist">
-          {criteria.map((key, index) => <button aria-controls={`best-fit-${key}`} aria-selected={criterion === key} id={`best-fit-tab-${key}`} key={key} onClick={() => setCriterion(key)} role="tab" type="button"><span>{index + 1}</span>{criterionLabels[key]}</button>)}
+          {criteria.map((key, index) => <button aria-controls={`best-fit-${key}`} aria-selected={criterion === key} id={`best-fit-tab-${key}`} key={key} onClick={() => setCriterion(key)} onKeyDown={(event) => handleFitTabKey(event, index)} ref={(node) => { fitTabRefs.current[index] = node; }} role="tab" tabIndex={criterion === key ? 0 : -1} type="button"><span>{index + 1}</span>{criterionLabels[key]}</button>)}
         </div>
         {winner ? <div aria-labelledby={`best-fit-tab-${criterion}`} className={styles.fitStage} id={`best-fit-${criterion}`} role="tabpanel">
           <div className={styles.stageDisc} />
@@ -203,7 +225,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
           <div className={styles.fitNoteRight}><span>Keep the exit visible</span><p>Withdrawal and cash-out conditions stay beside the bonus terms.</p></div>
           {criterion === "payout" ? <small className={styles.fitBucket}>Signal bucket: {offerWithdrawalBucket(winner).replaceAll("-", " ")}</small> : null}
         </div> : <div className={styles.statePanel} role="status"><h3>No winner is available.</h3><p>The current eligible shortlist has no published value for this criterion.</p></div>}
-        <div className={styles.decisionStrip}>
+        <div aria-label="Best fit explanation cards" className={styles.decisionStrip} role="region" tabIndex={0}>
           <div><span>01</span><strong>Balance</strong><p>Strong across terms, usability and payout visibility.</p></div>
           <div><span>02</span><strong>Wagering</strong><p>Prioritises a lower play-through requirement.</p></div>
           <div><span>03</span><strong>Payout</strong><p>Prioritises a clearer, faster withdrawal signal.</p></div>

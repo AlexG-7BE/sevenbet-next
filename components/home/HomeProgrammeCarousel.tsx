@@ -18,9 +18,9 @@ const slides = [
     key: "path",
     eyebrow: "10-MISSION PATH",
     title: "A path you can review.",
-    body: "Missions 01–04 are implemented. Later missions remain planned.",
-    metric: "Mission 01 available",
-    status: "Missions 05–10 · not yet available",
+    body: "Ten practical Missions form one reviewable path.",
+    metric: "Mission 01 · start here",
+    status: "Missions 02–10 · unlock in sequence",
     progress: 18,
   },
   {

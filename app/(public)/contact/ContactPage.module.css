@@ -19,13 +19,14 @@
 .eyebrow,
 .sectionLabel {
   margin: 0;
-  color: var(--sb-action-primary);
   font-size: var(--sb-type-label-size);
   line-height: var(--sb-type-label-line);
   font-weight: 700;
   letter-spacing: .1em;
   text-transform: uppercase;
 }
+.eyebrow { color: var(--sb-action-primary); }
+.sectionLabel { color: var(--sb-focus-acid-contrast); }
 
 .hero h1 {
   max-width: 880px;

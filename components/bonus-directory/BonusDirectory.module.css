@@ -108,7 +108,7 @@
 .rowContext small { margin-top: auto; color: var(--metal); font-size: 10px; }
 .rowCommercial { display: flex; flex-direction: column; align-items: stretch; }
 .availableBadge, .unavailableBadge { align-self: flex-start; padding: 6px 8px; background: var(--teal); color: var(--white); font-size: 9px; font-weight: 800; text-transform: uppercase; }
-.unavailableBadge { background: #dedcd2; color: var(--metal); }
+.unavailableBadge { background: #dedcd2; color: #4f4e49; }
 .rowCommercial p { margin: 10px 0; color: var(--metal); font-size: 10px; line-height: 1.35; }
 .offerActionCompact, .actionUnavailableCompact { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; margin-top: auto; padding: 8px; border: 1px solid var(--ink); background: var(--night); color: var(--white); font-size: 10px; font-weight: 800; text-align: center; text-transform: uppercase; }
 .page .offerActionCompact { color: var(--white); }
@@ -265,25 +265,25 @@
   .filterSummary { margin: 12px 0 18px; font-size: 10px; }
   .resultsHeader { display: none; }
   .comparison { display: grid; grid-template-columns: 1fr; gap: 8px; border: 0; }
-  .comparisonRow { min-height: 124px; display: block; padding: 0; overflow: hidden; border: 0 !important; border-radius: 10px; }
+  .comparisonRow { min-height: 0; display: block; padding: 0; overflow: visible; border: 0 !important; border-radius: 10px; }
   .desktopComparisonCell { display: none; }
-  .mobileMaterialResult { position: relative; width: 100%; height: 124px; display: block; overflow: hidden; border: 1px solid var(--metal); border-radius: 10px; background: var(--white); color: var(--ink); }
+  .mobileMaterialResult { width: 100%; min-height: 178px; display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; grid-template-areas: "rank title status" "headline headline headline" "terms terms terms" "evidence evidence action"; gap: 10px 8px; padding: 14px; overflow: visible; border: 1px solid var(--metal); border-radius: 10px; background: var(--white); color: var(--ink); }
   .mobileMaterialResultFeatured { border-color: var(--teal); background: var(--night); color: var(--white); }
-  .mobileResultRank { position: absolute; top: 13px; left: 13px; width: 28px; color: var(--teal); font-size: 16px; font-weight: 900; line-height: 18px; }
+  .mobileResultRank { grid-area: rank; width: 28px; color: var(--teal); font-size: 16px; font-weight: 900; line-height: 20px; }
   .mobileMaterialResultFeatured .mobileResultRank { color: var(--acid); }
-  .mobileMaterialResult h3 { position: absolute; top: 13px; left: 47px; width: calc(100% - 178px); margin: 0; overflow: hidden; font-size: 15px; font-weight: 900; line-height: 18px; letter-spacing: -.01em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-  .mobileResultStatus { position: absolute; top: 9px; right: 13px; width: 76px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--metal); border-radius: 12px; font-size: 8px; font-weight: 800; line-height: 9px; text-transform: uppercase; }
+  .mobileMaterialResult h3 { grid-area: title; min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 15px; font-weight: 900; line-height: 20px; letter-spacing: -.01em; text-transform: uppercase; }
+  .mobileResultStatus { grid-area: status; min-width: 76px; min-height: 28px; display: inline-flex; align-items: center; justify-content: center; align-self: start; padding: 4px 10px; border: 1px solid var(--metal); border-radius: 14px; font-size: 11px; font-weight: 800; line-height: 14px; text-transform: uppercase; }
   .mobileMaterialResultFeatured .mobileResultStatus { border-color: var(--acid); background: var(--acid); color: var(--ink); }
-  .mobileResultHeadline { position: absolute; top: 39px; left: 13px; width: calc(100% - 26px); height: 16px; margin: 0; overflow: hidden; font-size: 11px; font-weight: 650; line-height: 14px; text-overflow: ellipsis; white-space: nowrap; }
-  .mobileResultTerms { position: absolute; top: 63px; left: 13px; width: calc(100% - 26px); height: 51px; display: grid; grid-template-columns: 23% 28% 25%; gap: 2%; padding-top: 10px; border-top: 1px solid var(--metal); }
+  .mobileResultHeadline { grid-area: headline; min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 13px; font-weight: 650; line-height: 18px; }
+  .mobileResultTerms { grid-area: terms; min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding-top: 10px; border-top: 1px solid var(--metal); }
   .mobileMaterialResultFeatured .mobileResultTerms { border-color: var(--acid); }
-  .mobileResultTerms span { overflow: hidden; font-size: 9px; font-weight: 800; line-height: 11px; text-overflow: ellipsis; white-space: nowrap; }
-  .mobileResultEvidence { position: absolute; bottom: 9px; left: 13px; width: calc(100% - 118px); height: 12px; margin: 0; overflow: hidden; color: var(--metal); font-size: 8px; line-height: 10px; text-overflow: ellipsis; white-space: nowrap; }
+  .mobileResultTerms span { min-width: 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 800; line-height: 16px; }
+  .mobileResultEvidence { grid-area: evidence; min-width: 0; margin: 0; align-self: center; overflow-wrap: anywhere; color: var(--metal); font-size: 12px; line-height: 16px; }
   .mobileMaterialResultFeatured .mobileResultEvidence { color: var(--white); }
-  .mobileReviewAction { position: absolute; right: 13px; bottom: 10px; width: 80px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 8px; font-weight: 800; line-height: 9px; text-transform: uppercase; }
+  .mobileReviewAction { grid-area: action; min-width: 88px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; align-self: end; padding: 8px 12px; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 12px; font-weight: 800; line-height: 16px; text-transform: uppercase; }
   .mobileMaterialResultFeatured .mobileReviewAction { background: var(--acid); color: var(--ink) !important; }
   .reviewSeparationNote { min-height: 96px; display: block; margin-top: 10px; padding: 16px; border-radius: 10px; background: var(--night); color: var(--white); }
-  .reviewSeparationNote strong { color: var(--teal); font-size: 9px; line-height: 11px; text-transform: uppercase; }
+  .reviewSeparationNote strong { color: var(--acid); font-size: 11px; line-height: 14px; text-transform: uppercase; }
   .reviewSeparationNote p { margin: 10px 0 0; font-size: 10px; line-height: 14px; }
   .pagination { grid-template-columns: 1fr 1fr; }
   .pagination div { grid-column: 1 / -1; grid-row: 1; }
@@ -325,8 +325,7 @@
   .mobileTermSheet { left: calc(100% - 248px); width: 220px; }
   .featureMobileTerms div { grid-template-columns: 84px 1fr; gap: 10px; }
   .featureActions { grid-template-columns: 1fr 1fr; }
-  .mobileResultTerms { grid-template-columns: 26% 34% 28%; gap: 1%; }
-  .mobileResultTerms span { font-size: 8px; }
+  .mobileResultTerms { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
   .relatedSection nav a { grid-template-columns: 1fr; gap: 6px; padding: 18px 0; }
 }
 

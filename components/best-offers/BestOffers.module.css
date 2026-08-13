@@ -59,9 +59,10 @@
 .stageArrowPrevious { left: 32px; }
 .stageArrowNext { right: 32px; }
 .stageArrow:focus-visible, .fitTabs button:focus-visible, .stageDots button:focus-visible { outline: 3px solid var(--night); outline-offset: 3px; }
-.stageDots { position: absolute; bottom: 40px; left: 50%; min-width: 80px; height: 28px; padding: 10px; display: flex; align-items: center; gap: 10px; border-radius: var(--sb-radius-full); background: var(--white); transform: translateX(-50%); }
-.stageDots button { width: 8px; height: 8px; padding: 0; border: 0; border-radius: var(--sb-radius-full); background: #77766f; cursor: pointer; transition: width .2s ease, background .2s ease; }
-.stageDots button[aria-current="true"] { width: 24px; background: var(--night); }
+.stageDots { position: absolute; bottom: 30px; left: 50%; min-width: 52px; height: 48px; padding: 2px 4px; display: flex; align-items: center; gap: 0; border-radius: var(--sb-radius-full); background: var(--white); transform: translateX(-50%); }
+.stageDots button { width: 44px; height: 44px; padding: 0; display: grid; place-items: center; border: 0; border-radius: var(--sb-radius-full); background: transparent; cursor: pointer; }
+.stageDots button::before { width: 8px; height: 8px; border-radius: var(--sb-radius-full); background: #77766f; content: ""; transition: width .2s ease, background-color .2s ease; }
+.stageDots button[aria-current="true"]::before { width: 24px; background: var(--night); }
 .metrics { height: 150px; margin-top: 70px; display: grid; grid-template-columns: repeat(3, 1fr); }
 .metrics > div { position: relative; min-width: 0; padding-right: 44px; }
 .metrics > div + div { padding-left: 36px; }
@@ -102,6 +103,7 @@
 .fitNoteLeft p, .fitNoteRight p { margin: 28px 0 0; font-size: 30px; line-height: 34px; font-weight: 700; letter-spacing: -.5px; }
 .fitBucket { position: absolute; bottom: 32px; left: 50%; color: var(--muted); transform: translateX(-50%); text-transform: uppercase; }
 .decisionStrip { min-height: 184px; margin-top: 60px; padding: 28px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 56px; border-radius: 28px; background: var(--deep); }
+.decisionStrip:focus-visible { outline: 3px solid var(--acid); outline-offset: 4px; }
 .decisionStrip div { min-width: 0; }
 .decisionStrip span { color: var(--acid); font-size: 12px; line-height: 16px; }
 .decisionStrip strong { display: block; margin-top: 18px; font-size: 30px; line-height: 34px; letter-spacing: -.5px; text-transform: uppercase; }
@@ -138,8 +140,8 @@
 .rankedReason { min-height: 112px; margin-top: 16px; padding: 15px; border-radius: 16px; background: var(--soft); }
 .rankedReason span { color: var(--muted); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; }
 .rankedReason p { margin: 7px 0 0; display: -webkit-box; overflow: hidden; font-size: 12px; line-height: 17px; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
-.rankedConditions { min-height: 58px; margin: 12px 0 14px; overflow: hidden; color: var(--muted); font-size: 11px; line-height: 15px; }
-.rankedConditions p { margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.rankedConditions { min-height: 76px; margin: 12px 0 14px; color: var(--muted); font-size: 11px; line-height: 15px; }
+.rankedConditions p { margin: 0; overflow-wrap: anywhere; }
 .rankedConditions p + p { margin-top: 5px; }
 .rankedConditions strong { color: var(--ink); }
 .rankedCta { min-height: 48px; margin-top: auto; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-radius: var(--sb-radius-full); background: var(--acid); color: var(--ink); font-size: 12px; line-height: 16px; font-weight: 700; }
@@ -156,8 +158,9 @@
 .evidenceCards h3 { margin: 64px 0 18px; font-size: 30px; line-height: 34px; letter-spacing: -.5px; }
 .evidenceCards p { margin: 0; color: var(--on-night-muted); font-size: 15px; line-height: 22px; }
 .editorialDesk { height: 570px; margin-top: 140px; padding: 48px; display: grid; grid-template-columns: 1fr 352px; gap: 56px; overflow: hidden; border-radius: 28px; background: var(--acid); }
+.editorialDesk .kicker { color: var(--ink); }
 .editorialDesk blockquote { max-width: 760px; margin: 44px 0 28px; font-family: var(--font-seven-serif), Georgia, serif; font-size: 66px; line-height: .95; letter-spacing: -1.5px; }
-.editorialDesk > div > p:last-child { max-width: 700px; margin: 0; color: var(--muted); font-size: 16px; line-height: 24px; }
+.editorialDesk > div > p:last-child { max-width: 700px; margin: 0; color: #4f4e48; font-size: 16px; line-height: 24px; }
 .rankSnapshot { min-height: 474px; padding: 28px; border-radius: 24px; background: var(--night); color: var(--white); }
 .rankSnapshot > span { color: var(--acid); font-size: 12px; line-height: 16px; font-weight: 700; text-transform: uppercase; }
 .rankSnapshot h3 { margin: 28px 0 20px; font-size: 44px; line-height: 44px; letter-spacing: -1px; }
@@ -209,7 +212,7 @@
 .loadingCard { height: 900px; margin-top: 50px; border-radius: 28px; background: linear-gradient(100deg, #e5e3da 20%, #f8f7f1 40%, #e5e3da 60%); background-size: 200% 100%; animation: pulse 1.6s infinite linear; }
 @keyframes pulse { to { background-position: -200% 0; } }
 
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .shell { width: min(100% - 40px, 820px); }
   .hero { height: auto; min-height: 560px; }
   .heroInner { padding-block: 72px; }
@@ -273,9 +276,9 @@
   .stageArrow { top: auto; bottom: 16px; width: 48px; height: 48px; padding-bottom: 3px; font-size: 24px; line-height: 28px; }
   .stageArrowPrevious { left: 16px; }
   .stageArrowNext { right: 16px; }
-  .stageDots { bottom: 26px; min-width: 68px; height: 28px; gap: 8px; }
-  .stageDots button { width: 7px; height: 7px; }
-  .stageDots button[aria-current="true"] { width: 20px; }
+  .stageDots { bottom: 16px; min-width: 50px; height: 48px; gap: 0; }
+  .stageDots button::before { width: 7px; height: 7px; }
+  .stageDots button[aria-current="true"]::before { width: 20px; }
   .metrics { margin-top: 30px; grid-template-columns: 1fr 1fr; gap: 10px; }
   .metrics > div, .metrics > div + div { min-height: 126px; padding: 18px; border: 1px solid #d8d7d0; border-radius: 18px; background: var(--white); }
   .metrics > div:last-child { grid-column: 1 / -1; }
@@ -379,4 +382,4 @@
   .rankedCard { padding: 18px; }
 }
 
-@media (prefers-reduced-motion: reduce) { .productTrack { transition: none; } .loadingCard { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .productTrack, .stageDots button::before { transition: none; } .loadingCard { animation: none; } }

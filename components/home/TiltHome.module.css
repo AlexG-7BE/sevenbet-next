@@ -29,6 +29,7 @@
   --sb-action-font-size: 14px;
   --sb-action-color: var(--ink);
 }
+.home .primaryButton { color: var(--ink); }
 
 .hero {
   position: relative;
@@ -128,17 +129,17 @@
   text-align: left;
   background: var(--card);
   color: var(--white);
-  transition: transform 420ms cubic-bezier(.2, .8, .2, 1), opacity 300ms ease;
+  transition: transform 420ms cubic-bezier(.2, .8, .2, 1), color 300ms ease;
 }
 .programmeCardActive { z-index: 3; transform: translateX(-50%); opacity: 1; }
-.programmeCardPrevious { z-index: 1; transform: translateX(calc(-50% - 642px)) translateY(36px); opacity: .48; }
-.programmeCardNext { z-index: 1; transform: translateX(calc(-50% + 642px)) translateY(36px); opacity: .48; }
+.programmeCardPrevious { z-index: 1; transform: translateX(calc(-50% - 642px)) translateY(36px) scale(.94); color: var(--night-muted); }
+.programmeCardNext { z-index: 1; transform: translateX(calc(-50% + 642px)) translateY(36px) scale(.94); color: var(--night-muted); }
 .cardEyebrow { color: var(--acid); font-size: 11px; line-height: 13px; font-weight: 650; letter-spacing: .06em; }
 .programmeCard > strong { align-self: end; max-width: 334px; margin-top: 36px; font-size: 36px; line-height: 1.12; letter-spacing: -.045em; }
 .programmeCard > p { align-self: start; margin: 20px 0; font-size: 16px; line-height: 1.25; }
 .miniScreen { align-self: end; min-height: 130px; padding: 18px; border-radius: 18px; display: grid; align-content: start; gap: 20px; background: var(--deep); }
 .miniScreen b, .miniScreen small { font-size: 11px; line-height: 13px; font-style: normal; }
-.miniScreen small { color: var(--muted); }
+.miniScreen small { color: var(--night-muted); }
 .miniScreen i { height: 8px; overflow: hidden; border-radius: 99px; background: #66645f; }
 .miniScreen i span { display: block; height: 100%; border-radius: inherit; background: var(--acid); transition: width 300ms ease; }
 .carouselControls { position: absolute; left: 50%; top: 468px; z-index: 8; width: 312px; height: 52px; padding: 0 18px; border-radius: var(--sb-radius-full); transform: translateX(-50%); display: flex; align-items: center; justify-content: space-between; background: var(--card); }

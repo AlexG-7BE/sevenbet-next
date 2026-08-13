@@ -76,6 +76,7 @@ function SelectedCard({ casino, index, result }: { casino: PublicComparisonCasin
 
 function SelectionSummary({ result }: { result: PublicComparisonResult }) {
   return <div className={styles.selectedGrid}>
+    <h2 className="srOnly">Selected casino profiles</h2>
     {result.casinos.map((casino, index) => <SelectedCard casino={casino} index={index} key={casino.slug} result={result} />)}
     {result.reasons.filter((reason) => !result.casinos.some((casino) => casino.slug === reason.slug)).map((reason, index) => <article className={`${styles.selectedCard} ${styles.unavailableCard}`} key={reason.slug}>
       <p>{String(result.casinos.length + index + 1).padStart(2, "0")} · UNAVAILABLE</p><h3>{reason.slug}</h3><small>{reason.message}</small>
@@ -120,7 +121,7 @@ function ComparisonMatrix({ result }: { result: PublicComparisonResult }) {
           <h3 id={`mobile-group-${group.id}`}>{group.label}</h3>
           {group.rows.map((row) => <article className={styles.criterionCard} key={row.id}>
             <p>{row.label}</p><small>{row.description}</small>
-            <div>{result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => { const cell = row.values[casino.slug]; return <section aria-labelledby={`mobile-${row.id}-${casino.slug}`} data-status={cell.status} key={casino.slug}><h4 id={`mobile-${row.id}-${casino.slug}`}>{casino.name}</h4><strong>{cell.text}</strong><span>{cell.status}</span></section>; })}</div>
+            <div>{result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => { const cell = row.values[casino.slug]; return <div data-status={cell.status} key={casino.slug}><h4>{casino.name}</h4><strong>{cell.text}</strong><span>{cell.status}</span></div>; })}</div>
           </article>)}
         </section>)}
       </div>
@@ -168,10 +169,11 @@ function MethodologyAndFaq() {
 }
 
 export function ComparisonExperience({ result }: { result: PublicComparisonResult }) {
+  const demonstration = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   return <div className={styles.page} data-comparison-page>
     <section className={styles.hero} aria-labelledby="comparison-title">
       <div className={styles.shell}>
-        <p className={styles.kicker}>Compare · {result.query.country} declared context · illustrative pre-launch data</p>
+        <p className={styles.kicker}>Compare · {result.query.country} declared context{demonstration ? " · illustrative pre-launch data" : " · published evidence"}</p>
         <h1 id="comparison-title">Compare what matters.<em>No winner. Just the evidence.</em></h1>
         <p className={styles.heroCopy}>Choose up to three published casino profiles. B4GAMBLE keeps material differences, missing fields, source status and limitations visible before any commercial action.</p>
         <div className={styles.contextNotice}><strong>Preference, not detected location.</strong><span>This comparison does not decide legal eligibility. Check operator terms and applicable law.</span></div>
@@ -183,6 +185,6 @@ export function ComparisonExperience({ result }: { result: PublicComparisonResul
     {result.status === "available" ? <><EvidenceLegend /><ComparisonMatrix result={result} /><DecisionCheckpoint result={result} /><CommercialBoundary result={result} /></> : <ResultState result={result} />}
     <MethodologyAndFaq />
     <section className={styles.relatedSection} aria-labelledby="related-title"><div className={styles.shell}><p className={styles.kicker}>Continue with the source</p><h2 id="related-title">Keep the full decision in view.</h2><nav aria-label="Related routes"><Link href="/casinos"><span>Casino directory</span><strong>Browse every published profile.</strong></Link><Link href="/bonuses"><span>Bonus directory</span><strong>Compare current offer terms.</strong></Link><Link href="/methodology"><span>Methodology</span><strong>See how evidence is handled.</strong></Link></nav></div></section>
-    <aside className={styles.demoDisclosure}><div className={styles.shell}><strong>Illustrative pre-launch product demonstration.</strong><p>Current records describe fictional Demo operators and are not real operator partnerships, live promotions or a claim of legal eligibility. They will be replaced by verified published records through the same contract.</p></div></aside>
+    {demonstration ? <aside className={styles.demoDisclosure}><div className={styles.shell}><strong>Illustrative pre-launch product demonstration.</strong><p>Current records describe fictional Demo operators and are not real operator partnerships, live promotions or a claim of legal eligibility. They will be replaced by verified published records through the same contract.</p></div></aside> : null}
   </div>;
 }

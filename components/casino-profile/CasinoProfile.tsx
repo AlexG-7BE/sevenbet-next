@@ -138,7 +138,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             </div>
           </div>
           {facts.length ? <dl className={styles.facts}>{facts.map((fact) => <div key={fact.label}>
-            <dt>{fact.label}</dt><dd>{fact.value}</dd>{fact.supportingText ? <small className={fact.verified ? styles.verifiedText : ""}>{fact.supportingText}</small> : null}
+            <dt>{fact.label}</dt><dd>{fact.value}</dd>{fact.supportingText ? <dd className={`${styles.supportingText} ${fact.verified ? styles.verifiedText : ""}`}>{fact.supportingText}</dd> : null}
           </div>)}</dl> : <div className={styles.neutralState}><strong>Published facts are limited.</strong><p>No missing operator, licence, country or payment claim has been inferred.</p></div>}
         </div>
       </section>
@@ -149,7 +149,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
           <h2 id="offer-heading">Everything that matters before you click.</h2>
         </div>
         <div className={styles.detailPanel}>
-          <div className={styles.detailTabs} aria-label="Published detail groups"><span aria-current="true">Offer</span><span>Payments</span><span>Safety</span><span>Games</span><span>Control tools</span></div>
+          <div className={styles.detailTabs}><strong>Published detail coverage</strong><ul aria-label="Published detail groups"><li>Offer</li><li>Payments</li><li>Safety</li><li>Games</li><li>Control tools</li></ul></div>
           <div className={styles.detailColumns}>
             <div>
               <span className={styles.detailLabel}>{demo ? "FICTIONAL DEMONSTRATION TERMS" : "PUBLISHED OFFER TERMS"}</span>
