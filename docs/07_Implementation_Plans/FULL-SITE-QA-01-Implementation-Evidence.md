@@ -2,7 +2,7 @@
 
 ## Status
 
-**HOLD / AUDIT AND SAFE FIXES IN PROGRESS / DRAFT PR ONLY.** This evidence record was created on 2026-08-13 from the active repository and read-only Production observations. It does not authorise merge, Production deployment, configuration changes, credential changes, external communications, or data mutation.
+**HOLD / IMPLEMENTATION AND AUDIT EVIDENCE COMPLETE / DRAFT PR ONLY.** This evidence record was created on 2026-08-13 from the active repository and read-only Production observations, then closed with hosted and Preview evidence after implementation-and-audit head `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`. This documentation-only closure follows that head and necessarily receives a later commit SHA; it does not claim that `60c30e3` is its own SHA. It does not authorise merge, Production deployment, configuration changes, credential changes, external communications, or data mutation.
 
 The current HOLD is not a build-status conclusion. Read-only Production evidence shows two environment capabilities that conflict with the approved Production boundary: the feature-on PROGRAM-AI experience renders at `/program`, and Google is offered at `/login`. The repository documentation says both Production capabilities remain off unless separately authorised. The source branch can correct software defects, but it cannot reconcile or change that Production control-plane state under this audit's safety boundary.
 
@@ -15,15 +15,15 @@ The current HOLD is not a build-status conclusion. Read-only Production evidence
 | Repository | **DETECTED:** `AlexG-7BE/sevenbet-next`. |
 | Base SHA | **DETECTED:** `c52595405f0800c8c2b51d5951c4a8d45c133034`. |
 | Source main at audit start | **DETECTED:** `c52595405f0800c8c2b51d5951c4a8d45c133034`; merge commit for PR #71. |
-| Latest main at completion | **UNKNOWN/PENDING:** final divergence fetch has not yet been recorded in this artifact. |
-| Current pushed branch checkpoint | **DETECTED:** `2f67bc1a2acd0e35bc1285a11cd7f447a9579515`, `fix(public): restore exact demo detail destinations`. This is an intermediate pushed checkpoint, not the final branch SHA. Later uncommitted worktree changes strengthen the exact-demo fallback and add adjacent comparison disclosure plus independent sitemap-loader failure containment; they are not attributed to `2f67bc1`. |
-| Final branch SHA | **UNKNOWN/PENDING:** final exact-head commit has not yet been created. |
+| Latest main at completion | **DETECTED:** `c52595405f0800c8c2b51d5951c4a8d45c133034`; direct remote and local `origin/main` verification matched. |
+| Final implementation-and-audit head before closure | **DETECTED:** `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`. It contains the strengthened exact-demo fallback, adjacent comparison disclosure, independent sitemap-loader failure containment, deterministic browser fixtures and mode-neutral Programme metadata. This documentation-only closure follows it and will have a later SHA. |
+| Documentation-closure identity boundary | **DETECTED:** `60c30e3` is the exact implementation-and-audit evidence head verified below, not an impossible self-SHA claim for this later documentation edit. |
 | Branch | **DETECTED:** `codex/full-site-integrity-audit-01`. |
-| Draft PR | **DETECTED:** PR #72, `https://github.com/AlexG-7BE/sevenbet-next/pull/72`; Draft and unmerged at this checkpoint. |
+| Draft PR | **DETECTED:** PR #72, `https://github.com/AlexG-7BE/sevenbet-next/pull/72`; Open, Draft, unmerged and `CLEAN` at the final verification checkpoint. |
 | Production deployment | **DETECTED:** `dpl_Hvvjqn3nDSf59vRMztyvXgQyKNx3`, Ready. |
 | Production source SHA observed | **DETECTED:** `c52595405f0800c8c2b51d5951c4a8d45c133034`. |
 | Source/Production parity at start | **DETECTED:** exact SHA match at `c52595405f0800c8c2b51d5951c4a8d45c133034`. Runtime configuration is not in parity with the documented activation boundary; see Contradictions. |
-| Preview deployment | **DETECTED branch URL:** `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`. **UNKNOWN/PENDING:** final deployment ID, Ready state, exact source SHA, and final-commit Preview identity have not yet been recorded. |
+| Preview deployment | **DETECTED:** deployment `5895324564`, Ready at `2026-08-13T20:14:35Z`, for exact implementation-and-audit head `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`; immutable URL `https://sevenbet-next-95l54yjnq-alexg-7bes-projects.vercel.app`; stable branch alias `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`. |
 | Governing host RFC | **DETECTED:** RFC-030 is approved for the bounded branch implementation. |
 | Voice-limit RFC | **PROPOSED:** RFC-031 remains `Proposed — no implementation or deployment authority`; the RFC-023 8 MiB/Vercel payload conflict remains unresolved. |
 
@@ -48,12 +48,12 @@ The route/API census below is **DETECTED** from the active filesystem. Product c
 | Canonical Production origin | **DETECTED P0:** `https://sevenbet-next.vercel.app/login` returned `200` and rendered the app instead of redirecting. Signed-in inspection also rendered the git-main/account/immutable Production aliases in place. Branch commit `e5bec20` adds a constant-origin Production `308`; Production is unchanged. |
 | Environment authority | **CONTRADICTION P1 / HOLD:** live Production renders feature-on PROGRAM-AI and presents Google, while approved documentation records both Production activations as off/separately gated. |
 | Public data authority | **DETECTED P1:** the starting Production `/api/public/casinos` path exposed legacy operator-like claims; the branch makes deployed public casino/bonus reads CMS-only and fail-closed. Production is unchanged. |
-| Programme integrity | **DETECTED P1:** feature-on legacy mutation endpoints and an incorrect Home reward/remaining-Mission projection were found. Branch guards and server-projection corrections are present; final exact-head verification is **UNKNOWN/PENDING**. |
+| Programme integrity | **DETECTED P1:** feature-on legacy mutation endpoints and an incorrect Home reward/remaining-Mission projection were found. Branch guards and server-projection corrections are present; local Programme 108/108, hosted Quality and signed read-only Programme Preview evidence passed at the recorded implementation head. Real provider/manual flows remain separate. |
 | Voice | **DETECTED P1:** current code/RFC-023 allow 8 MiB, but Vercel documents a 4.5 MB complete Function payload ceiling. RFC-031 proposes 4 MiB plus a bounded envelope but is not approved. |
-| Admin/CMS | **DETECTED:** staff/permission, navigation, direct-data-read, workflow-action, branding, safe-error, and private-cache defects were corrected in the branch worktree. Final isolated role E2E is **UNKNOWN/PENDING**. |
-| Public product | **DETECTED:** demo truthfulness, adjacent selected-card demo disclosure, compare indexability, metadata, independently resilient sitemap loading, Best Offers, responsive, error-state, favicon, and accessibility corrections are present in the worktree. Final Preview verification is **UNKNOWN/PENDING**. |
-| Test checkpoint | **DETECTED branch evidence:** the quality/build/build-secret/disposable-database/seed/standard Chromium gates recorded below passed. The final deterministic `CI=true npm run browser:extended` gate passed 89/89 across nine specs with zero failures, skips or retries: 81/81 clean-CMS tests in 1.8 minutes, followed by exact disposable-demo fixture seeding, 8/8 comparison tests in 21.5 seconds and exact cleanup. The final exact-build read-only Chromium/WebKit matrix passed across all eleven required widths, 13 primary routes plus intentional 404: 308 navigations, 1,848 matrix assertions, 39 WebKit interaction assertions, zero failures and zero non-read-only requests. Its exact command exited 0 and the port was stopped/free. Hosted CI, exact final-head identity, remote Preview verification and Firefox remain pending. |
-| Readiness result | **HOLD:** Production control-plane contradictions and incomplete final Preview/browser/manual evidence prevent Founder-review readiness at this checkpoint. |
+| Admin/CMS | **DETECTED:** staff/permission, navigation, direct-data-read, workflow-action, branding, safe-error, and private-cache defects are committed at implementation head `60c30e3`; exact Preview admin login rendered B4GAMBLE/noindex. Final isolated role E2E remains **UNKNOWN/PENDING**. |
+| Public product | **DETECTED:** demo truthfulness, adjacent selected-card demo disclosure, compare indexability, metadata, independently resilient sitemap loading, Best Offers, responsive, error-state, favicon, and accessibility corrections are committed at the recorded implementation head. Signed read-only exact-deployment checks covered Home, Programme, Best Offers, truthful empty fail-closed comparison, the noindex/non-commercial demo profile and admin login. Full manual/external-provider coverage remains pending. |
+| Test checkpoint | **DETECTED branch evidence:** the quality/build/build-secret/disposable-database/seed/standard Chromium gates recorded below passed. The final deterministic `CI=true npm run browser:extended` gate passed 89/89 across nine specs with zero failures, skips or retries and exact cleanup. The final exact-build read-only Chromium/WebKit matrix passed 308/308 navigations, 1,848/1,848 matrix assertions and 39/39 WebKit interactions across all eleven required widths and 13 primary routes plus intentional 404, with zero failures and zero non-read-only requests. At head `60c30e3`, all six hosted contexts were green: Quality 59s; Database / Migration Verification 1m3s; Build / Browser 3m15s with 43 passes and one intentional missing-Google-credentials skip; Agent Core 13s; Vercel success; Vercel Preview Comments success. Firefox remains pending. |
+| Readiness result | **HOLD:** Production control-plane contradictions and remaining Firefox, real external-provider/device and manual evidence prevent a release-ready conclusion. The hosted/Preview identity placeholders themselves are closed. |
 
 ## Current state
 
@@ -63,12 +63,12 @@ The route/API census below is **DETECTED** from the active filesystem. Product c
 | --- | --- |
 | PR #71 | **DETECTED:** merged as base `c525954…`; microphone recovery, standalone `/login`, Google existing-account recovery/linking, Best Offers demo fallback, tests, and documentation are present in source. |
 | PR #68 | **DETECTED:** Contact/error source is included in current main through PR #71's ancestry. |
-| PR #72 | **DETECTED:** current audit Draft PR; unmerged. |
+| PR #72 | **DETECTED:** Open, Draft, unmerged and `CLEAN` at implementation-and-audit head `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`. This later documentation-only closure does not claim that SHA as its own. |
 | RFC-030 | **DETECTED:** bounded canonical-host implementation authority, with no platform/DNS/environment mutation. See `docs/06_RFC/RFC-030-Production-Canonical-Host-Enforcement.md`. |
 | RFC-031 | **PROPOSED:** no code or deployment authority. See `docs/06_RFC/RFC-031-Vercel-Compatible-Programme-Voice-Upload-Limit.md`. |
 | RFC-032 | **DETECTED APPROVED BOUNDED AUTHORITY:** exact-manifest, noindex, non-commercial review-detail continuity only; no directory, API, sitemap, CMS, commercial, merge or Production authority. See `docs/06_RFC/RFC-032-Exact-Demo-Detail-Continuity.md`. |
 
-### Pushed audit-branch commit checkpoint
+### Pushed implementation-and-audit commits before documentation closure
 
 | SHA | Detected commit subject |
 | --- | --- |
@@ -82,8 +82,10 @@ The route/API census below is **DETECTED** from the active filesystem. Product c
 | `9e7df95090c291e4397d5dad69fbd7391b9828da` | `test(qa): isolate sitemap canonical contract` |
 | `403a0abb2b969b2e241f8cb83a3097a8aefd6673` | `fix(seo): noindex empty public directories` |
 | `2f67bc1a2acd0e35bc1285a11cd7f447a9579515` | `fix(public): restore exact demo detail destinations` |
+| `61b2f034fcd596caca33b76bba185ca11612dabd` | `fix(public): complete classified demo integrity` |
+| `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e` | `docs(qa): reconcile production readiness evidence` |
 
-**DETECTED:** the ten commits above are pushed and descend from exact base `c52595405f0800c8c2b51d5951c4a8d45c133034`. **UNKNOWN/PENDING:** later documentation/evidence commits and the final branch SHA are not represented by this intermediate list.
+**DETECTED:** the twelve commits above are pushed and descend from exact base `c52595405f0800c8c2b51d5951c4a8d45c133034`. `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e` is the final implementation-and-audit head verified by hosted CI and Preview. This documentation-only closure follows it and therefore is intentionally not represented as having the same SHA.
 
 ### Feature flags and manual gates
 
@@ -124,7 +126,7 @@ Manual gates still include a physical/native microphone permission pass, a contr
 
 ## Repository census
 
-**DETECTED at the 2026-08-14 refreshed census checkpoint:** 1,021 active tracked/untracked repository files (`1,014` tracked plus `7` untracked), after excluding `.git`, dependencies, generated/build directories, caches, test output, coverage, visual-regression output, and `tsconfig.tsbuildinfo`. The seven untracked paths are the selected-card component, its focused render test, RFC-031, RFC-032, this evidence artifact, the extended-browser runner and its harness test. Final tracked/untracked totals remain **UNKNOWN/PENDING** until exact-head capture.
+**DETECTED at implementation-and-audit head `60c30e3`:** 1,021 tracked repository files and zero untracked files, after excluding `.git`, dependencies, generated/build directories, caches, test output, coverage, visual-regression output, and `tsconfig.tsbuildinfo`. This documentation-only closure changes content in tracked files but does not change that file count.
 
 | Measure | Detected count |
 | --- | ---: |
@@ -135,10 +137,10 @@ Manual gates still include a physical/native microphone permission pass, a contr
 | Special App Router layout/error/not-found/loading files | 23 |
 | Prisma migration directories | 19 |
 | Public assets | 88 |
-| Root test/spec files at the refreshed shared-worktree scan | 101 |
+| Root test/spec files at the refreshed audit-branch scan | 101 |
 | Isolated `agents/` test/spec files | 7 |
 
-**DETECTED RESOLVED in the shared worktree:** all 11 files in `docs/05_Engineering/Technical_Baseline/` were reconciled to exact current-main `c525954` facts, including 63 pages, 90 API handlers, three non-API handlers, 19 migrations, and 88 public assets. The larger refreshed counts above describe the active audit branch/worktree and therefore must not be substituted for the separately labelled current-main baseline. **UNKNOWN/PENDING:** the final documentation commit SHA is not yet recorded.
+**DETECTED RESOLVED at implementation-and-audit head `60c30e3`:** all 11 files in `docs/05_Engineering/Technical_Baseline/` were reconciled to exact current-main `c525954` facts, including 63 pages, 90 API handlers, three non-API handlers, 19 migrations, and 88 public assets. The larger refreshed counts above describe the active audit branch and therefore must not be substituted for the separately labelled current-main baseline. This later documentation-only closure preserves those counts and will necessarily have a later SHA.
 
 ## Filesystem page-route matrix
 
@@ -348,17 +350,17 @@ Production has not received the branch fix. Source-level `DETECTED` means the br
 | Input | Read-only current Production evidence | Audit-branch expected result | Final Preview/Production verification |
 | --- | --- | --- | --- |
 | `https://b4gamble.com/` | **DETECTED:** canonical app served. | Continue; no loop. | **UNKNOWN/PENDING:** final post-fix Production cannot be tested without a later authorised merge/deploy. |
-| `https://b4gamble.com/best-offers` | **DETECTED:** canonical origin is active. | Continue. | **UNKNOWN/PENDING:** final exact-head Preview content. |
-| `https://b4gamble.com/program` | **DETECTED:** app served; feature-on runtime contradiction observed. | Continue at canonical host. | **UNKNOWN/PENDING.** |
+| `https://b4gamble.com/best-offers` | **DETECTED:** canonical origin is active. | Continue. | **DETECTED on exact Preview:** classified fictional records, 12 internal detail destinations and no `/r` or `/go` action. |
+| `https://b4gamble.com/program` | **DETECTED:** app served; feature-on runtime contradiction observed. | Continue at canonical host. | **DETECTED on exact Preview:** signed read-only route rendered with mode-neutral Programme metadata. Real provider/manual flows were not exercised. |
 | `https://b4gamble.com/login` | **DETECTED:** app served; Google availability contradiction observed. | Continue at canonical host. | **UNKNOWN/PENDING.** |
-| `https://b4gamble.com/admin/login` | **DETECTED:** admin login route is reachable on canonical origin. | Continue, private/no-store. | **UNKNOWN/PENDING.** |
+| `https://b4gamble.com/admin/login` | **DETECTED:** admin login route is reachable on canonical origin. | Continue, private/no-store. | **DETECTED on exact Preview:** B4GAMBLE admin login rendered with `noindex`; no admin write/login flow was performed. |
 | `http://b4gamble.com/...` | **UNKNOWN:** exact live chain was not preserved in supplied evidence. | `308` to constant HTTPS apex, path/query preserved. | **UNKNOWN/PENDING.** |
 | `https://www.b4gamble.com/...` | **DETECTED:** platform returned `308` to apex. | Application fallback also produces constant-origin `308`. | **UNKNOWN/PENDING:** path/query/no-loop recheck. |
 | `https://sevenbet-next.vercel.app/login` | **DETECTED P0:** returned `200` and rendered directly; no canonical redirect. | `308` to `https://b4gamble.com/login`. | **UNKNOWN/PENDING:** only a future authorised Production deploy can prove live correction. |
 | Main Vercel alias | **DETECTED:** signed-in browser rendered the app in place. Unauthenticated protected auto-alias curl received Vercel SSO `302`, which does not establish application canonicalisation. | `308` to constant apex in Vercel Production. | **UNKNOWN/PENDING.** |
 | Immutable Production deployment URL | **DETECTED:** signed-in browser rendered the app in place. Unauthenticated protection behaviour is a separate Vercel layer. | `308` to constant apex in Vercel Production. | **UNKNOWN/PENDING.** |
 | Account/team Production alias | **DETECTED:** signed-in browser rendered the app in place. | `308` to constant apex. | **UNKNOWN/PENDING.** |
-| Preview deployment host | **DETECTED branch URL:** `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`. Deployment identity/state is not yet final evidence. | Exact deployment host `307` to the exact stable branch host; branch host continues; never redirect to Production. | **UNKNOWN/PENDING:** deployment ID, Ready state, exact source SHA, exact-host redirect check, and final-commit Preview identity. |
+| Preview deployment host | **DETECTED:** deployment `5895324564`, Ready at `2026-08-13T20:14:35Z`, immutable `https://sevenbet-next-95l54yjnq-alexg-7bes-projects.vercel.app`, stable branch alias `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`, source `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`. | Exact deployment transport remains on the Preview host; public canonical metadata remains `https://b4gamble.com`; Preview must never be redirected to Production. | **DETECTED:** signed read-only exact-deployment checks preserved Preview transport and public canonical authority. This documentation-only closure follows the verified source head. |
 | Path with repeated/encoded query | **DETECTED in source tests:** pathname and raw query are copied to the constant destination. | Exact path/query preserved. | **UNKNOWN/PENDING:** deployed Preview/source check. |
 | API POST | **DETECTED in source tests:** `308` is method-preserving. | Same path/query on apex; no Host-derived destination. | **UNKNOWN/PENDING:** live future Production. |
 | OAuth callback | **DETECTED in source tests:** callback path/query preserved. | Same path/query on apex. | **UNKNOWN/PENDING:** controlled auth regression. |
@@ -405,7 +407,7 @@ Production has not received the branch fix. Source-level `DETECTED` means the br
 
 ## Functional matrix
 
-Unless stated otherwise, `FIXED` means the correction is **DETECTED in the branch worktree** and has regression source/tests; final exact-head Preview/browser confirmation is **UNKNOWN/PENDING**.
+Unless stated otherwise, `FIXED` means the correction is **DETECTED in the unmerged branch at implementation-and-audit head `60c30e3`** and has regression source/tests. Hosted gates and the bounded signed read-only Preview routes recorded below are detected; unlisted external-provider, device, write, full-grid and manual flows remain pending.
 
 | Product area/state | Result |
 | --- | --- |
@@ -464,7 +466,7 @@ Unless stated otherwise, `FIXED` means the correction is **DETECTED in the branc
 | Reviews | **DETECTED:** First after M3, Mid after M6, Full after M10; completion-derived, zero XP. |
 | Home zero/partial/completed M1 | **DETECTED P1 FIXED:** server projection now uses exact `0/2`, `1/2`, `2/2` M1 state and 20/40/legacy-60 XP truth. |
 | Remaining distance | **DETECTED P1 FIXED:** no enrollment `190 XP / 3 missions`, partial M1 `170 / 3`, completed M1 `150 / 2`, then exact M2/M3 transitions to Mid Review. UI renders server-owned totals rather than hardcoded `/3` or `+25`. |
-| Programme metadata/runtime consistency | **DETECTED P2 FIXED only in the uncommitted worktree:** current-main metadata hard-coded the legacy Moment Map/early-signal journey while Production rendered feature-on. The title, description and breadcrumb now use mode-neutral `10-Step Control Programme` copy valid for either server-selected runtime; the 208/208 structural gate includes the regression. |
+| Programme metadata/runtime consistency | **DETECTED P2 FIXED in commit `61b2f03` and present at `60c30e3`:** current-main metadata hard-coded the legacy Moment Map/early-signal journey while Production rendered feature-on. The title, description and breadcrumb now use mode-neutral `10-Step Control Programme` copy valid for either server-selected runtime; the 208/208 structural gate and signed read-only exact-Preview check include the regression. |
 | Refresh/back/two tabs/stale/duplicate | **DETECTED in service/browser test design and exact-once transactions; UNKNOWN/PENDING:** final deployed cross-tab/browser recheck. |
 | Raw narrative | **DETECTED:** memory/tab-scoped `sessionStorage`; required legacy DB fields receive neutral markers; historic rows remain under access/erasure and approved-cleanup gate. |
 | Durable age evidence | **UNKNOWN/OPEN P1:** UI/request self-attestation exists; durable age-attestation evidence remains an approved future gate, not implemented by this audit. |
@@ -499,8 +501,8 @@ Unless stated otherwise, `FIXED` means the correction is **DETECTED in the branc
 | Repository error | Truthful unavailable/empty; no healthy demo substitution unless the established zero-eligible demo fallback contract specifically applies. | **DETECTED:** casino deployed mode returns empty/null; Best Offers distinguishes repository failure. |
 | Zero eligible | Explicit no-eligible or approved exact demo fallback. | **DETECTED.** |
 | Production legacy public API | Must not expose legacy operator-like claims. | **DETECTED P1 on starting Production:** violated. **DETECTED FIXED in branch:** deployed env forces CMS and API filters `source === "cms"`. |
-| Demo CTA | Internal demo profile only; never `/r`/operator. | **DETECTED P1 starting Preview issue:** 15 demo CTA destinations returned 404. **DETECTED initial fix at `2f67bc1`:** exact canonical demo destinations were restored without enabling `/r` or operator actions. **DETECTED stronger RFC-032 worktree contract:** an exact source demo resolves when CMS is explicitly disabled or successful repository checks prove the slug is outside the managed namespace; malformed publications, repository errors and managed unpublished records fail closed. Public-casino service tests pass 30/30 and the final deterministic browser gate passes 89/89 with exact disposable-demo cleanup. Final Preview recheck is **UNKNOWN/PENDING**. |
-| Selected demo comparison card | Adjacent card-level disclosure must not call a fictional record published or GB-available. | **DETECTED P1:** the shared selected-card copy said `Published profile` / `GB available` even when the page-level mode disclosed demonstration data. **DETECTED FIXED only in the uncommitted worktree:** exact demo cards render `DEMONSTRATION DATA · Fictional profile · GB illustrative context`; published cards retain published copy. Focused render tests pass 2/2, including mixed per-record classification; final Preview is **UNKNOWN/PENDING**. |
+| Demo CTA | Internal demo profile only; never `/r`/operator. | **DETECTED P1 starting Preview issue:** 15 demo CTA destinations returned 404. **DETECTED initial fix at `2f67bc1` and stronger committed RFC-032 contract at `61b2f03`:** an exact source demo resolves when CMS is explicitly disabled or successful repository checks prove the slug is outside the managed namespace; malformed publications, repository errors and managed unpublished records fail closed. Public-casino service tests pass 30/30 and the deterministic browser gate passes 89/89 with exact cleanup. The exact Preview rendered 12 internal Best Offers detail destinations with no `/r`/`/go` action, and `demo-northstar` rendered 200 with fictional disclosure, `noindex, follow`, no commercial link and no commercial schema. |
+| Selected demo comparison card | Adjacent card-level disclosure must not call a fictional record published or GB-available. | **DETECTED P1 FIXED in commit `61b2f03`:** exact demo cards render `DEMONSTRATION DATA · Fictional profile · GB illustrative context`; published cards retain published copy. Focused render tests pass 2/2 and seeded browser comparison tests pass 8/8, including per-record classification. The exact Preview repository was empty, so `/compare` truthfully rendered its fail-closed empty published state with `noindex, follow` and no `ItemList`; it did not supply a seeded adjacent-card screenshot. |
 | Compare index/schema | Only clean default, available, `PUBLISHED_ONLY` may index/emit ItemList. | **DETECTED P1 fixed in branch.** |
 | Best Offers interaction | Overall/Wagering/Payout, full field, arrows/swipe/keyboard/tabs. | **DETECTED source/a11y correction; UNKNOWN/PENDING deployed interaction matrix.** |
 | Affiliate CTA | Only `/r/[slug]` after exact jurisdiction/operator/link authority. | **DETECTED fail-closed:** no real partner/action authority. |
@@ -628,16 +630,16 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | --- | --- |
 | Canonical origin | **DETECTED in branch source:** `https://b4gamble.com` constant at `lib/site.ts:7`; absolute public URLs cannot use a `vercel.app` host. Production host redirect is not deployed. |
 | Root/home metadata | **DETECTED P2 FIXED:** root no longer leaks a home canonical/social URL to every child; home owns its canonical/social copy. |
-| Programme metadata | **DETECTED P2 FIXED only in the uncommitted worktree:** removed legacy-only Moment Map/early-signal claims from route metadata and normalized the breadcrumb/title to mode-neutral `10-Step Control Programme`; Production is unchanged until an authorised deploy. |
+| Programme metadata | **DETECTED P2 FIXED in commit `61b2f03` and exact Preview:** removed legacy-only Moment Map/early-signal claims from route metadata and normalized the breadcrumb/title to mode-neutral `10-Step Control Programme`; Production is unchanged until an authorised deploy. |
 | Dynamic profile metadata/body | **DETECTED P2 FIXED:** React request cache shares the same resolved CMS profile; only CMS source renders. |
 | Best Offers metadata/body | **DETECTED P2 FIXED:** request-scoped cache prevents divergent data reads. |
 | Compare metadata/body | **DETECTED P2 FIXED:** request-scoped cache and published-only index rule. |
-| Sitemap | **DETECTED P2 FIXED in the unmerged worktree:** service-backed classification, no fabricated `lastModified=now`, no demo profiles, conditional casinos/bonuses/Best Offers/Compare, and `/10-steps`. Each dynamic casino/offer/comparison loader now fails closed independently, so one unavailable source cannot remove static, Learn, or Help entries or suppress other healthy dynamic groups. Current worktree brand/canonical tests pass 15/15; final Preview is **UNKNOWN/PENDING**. |
+| Sitemap | **DETECTED P2 FIXED in the unmerged branch at `60c30e3`:** service-backed classification, no fabricated `lastModified=now`, no demo profiles, conditional casinos/bonuses/Best Offers/Compare, and `/10-steps`. Each dynamic casino/offer/comparison loader fails closed independently, so one unavailable source cannot remove static, Learn, or Help entries or suppress other healthy dynamic groups. Brand/canonical tests pass 15/15; a complete deployed sitemap crawl remains pending. |
 | Robots/private surfaces | **DETECTED:** admin, login, privacy, Programme/private/demo surfaces use noindex as appropriate; admin layout applies global noindex. |
 | Demo schema | **DETECTED P1 FIXED:** Review/FAQ/ItemList/offer schema is suppressed for demo or mixed inventory. |
 | Empty public directories | **DETECTED P2 FIXED at `403a0ab`:** `/casinos` and `/bonuses` are noindex when their resolved total is zero, and empty `PUBLISHED_ONLY` results do not emit misleading `ItemList` schema. Final deployed metadata is **UNKNOWN/PENDING**. |
 | `llms.txt` | **DETECTED P2 FIXED:** no legacy data import or stale commercial claims. |
-| Old brand in metadata | **DETECTED FIXED in source:** B4GAMBLE public/admin titles. Final Preview crawl is **UNKNOWN/PENDING**. |
+| Old brand in metadata | **DETECTED FIXED in source and bounded Preview routes:** Home/Programme/Best Offers and B4GAMBLE admin login passed the signed read-only check. A complete rendered Preview crawl remains **UNKNOWN/PENDING**. |
 | App icon | **DETECTED P2 FIXED in source:** `app/icon.svg`; final deployed link/200 is **UNKNOWN/PENDING**. |
 | Final metadata crawl | **UNKNOWN/PENDING:** titles/descriptions/canonicals/robots/OG/Twitter/JSON-LD for every final Preview route. |
 
@@ -657,7 +659,7 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | CORS | **DETECTED:** no broad permissive CORS configuration. |
 | XSS/JSON-LD | **DETECTED:** React escaping and structured object serialization; no confirmed exploitable injection found. Final adversarial corpus is **UNKNOWN/PENDING**. |
 | External targets | **DETECTED:** commercial URLs are server resolved/validated; `.example` demo domains cannot become action URLs. |
-| Secret exposure | **DETECTED:** no secret values recorded; server-only variables have no `NEXT_PUBLIC_` names except intentionally public flags/origin. Current 754-file scan passed; final exact-head scan is **UNKNOWN/PENDING**. |
+| Secret exposure | **DETECTED:** no secret values recorded; server-only variables have no `NEXT_PUBLIC_` names except intentionally public flags/origin. The 754-file scan passed locally and inside the green hosted Build / Browser job at `60c30e3`. |
 | Source maps/client bundles | **UNKNOWN/PENDING:** final build bundle/source-map inspection not yet recorded. |
 
 ## Privacy and analytics findings
@@ -685,7 +687,7 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | Images | **DETECTED:** 88 public assets, plus remote image use. Remote hotlinks add third-party dependency/privacy risk. No complete asset byte budget is recorded. |
 | Hydration/console/network | **DETECTED:** initial Production inspection did not reveal general application warnings/errors. **UNKNOWN/PENDING:** final fresh Preview console/network pass. |
 | Lighthouse/Web Vitals | **UNKNOWN/PENDING:** no final Lighthouse or field-vitals evidence recorded. |
-| Build size/secret scan | **DETECTED at `9e7df95`:** local build passed with 63 generated static targets and the configured scan passed across 754 browser-deliverable files. **UNKNOWN/PENDING:** final exact-head/hosted confirmation. |
+| Build size/secret scan | **DETECTED:** local build passed with 63 generated static targets and the configured scan passed across 754 browser-deliverable files; the hosted Build / Browser job at `60c30e3` also passed the build and secret-scan steps. |
 | Representative route timing | **UNKNOWN/PENDING:** home, casinos, Best Offers, Programme, and login timings not consolidated. |
 
 ## Production log findings
@@ -711,12 +713,12 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | ID | Evidence/root cause | Fix | Verification/status |
 | --- | --- | --- | --- |
 | ENV-01 | **CONTRADICTION:** Production renders PROGRAM-AI and offers Google while approved state says both Production activations are off/separate. Runtime variables/configuration diverged from recorded authority. | **DETECTED:** no Production change was authorised or made; source remains fail-closed by exact gates. | **CONTRADICTION / HOLD / UNRESOLVED:** Founder/operations must reconcile authority and either disable/redeploy or document/approve a controlled state before readiness. |
-| DATA-01 | **DETECTED:** deployed public casino API/page could fall back to legacy `10bet`-like claims when CMS flag was false. | **DETECTED in branch:** Vercel Preview/Production always use CMS snapshots; repository failure returns empty/null; API/profile require CMS source. | **DETECTED:** focused public casino/profile tests passed 32/32 and current `ci:quality` passed. Final Preview route/API/SEO recheck is **UNKNOWN/PENDING**. |
-| DEMO-01 | **DETECTED:** 15 demo Best Offers CTA destinations returned 404 because the generated offer-detail path did not consistently resolve the exact deployed-demo profile record. | **DETECTED initial fix at `2f67bc1`:** canonical detail slugs were restored without a commercial action. **DETECTED stronger RFC-032 worktree fix:** exact CMS-disabled source demo resolution plus fail-closed malformed-publication/repository-error/managed-unpublished handling. | **DETECTED:** public-casino service tests pass 30/30 and the fresh seven-spec Chromium checkpoint passes 73/73. Final deterministic CTA crawl/Preview is **UNKNOWN/PENDING**. |
+| DATA-01 | **DETECTED:** deployed public casino API/page could fall back to legacy `10bet`-like claims when CMS flag was false. | **DETECTED in branch:** Vercel Preview/Production always use CMS snapshots; repository failure returns empty/null; API/profile require CMS source. | **DETECTED:** focused public casino/profile tests passed 32/32, hosted Quality passed, and exact Preview Best Offers/demo-profile/comparison states were truthful. A complete Preview casino-directory/API/SEO crawl remains **UNKNOWN/PENDING**. |
+| DEMO-01 | **DETECTED:** 15 demo Best Offers CTA destinations returned 404 because the generated offer-detail path did not consistently resolve the exact deployed-demo profile record. | **DETECTED initial fix at `2f67bc1`; stronger RFC-032 fix committed at `61b2f03`:** exact CMS-disabled source demo resolution plus fail-closed malformed-publication/repository-error/managed-unpublished handling. | **DETECTED:** public-casino service tests pass 30/30 and the deterministic browser gate passes 89/89. Exact Preview Best Offers exposed 12 internal non-commercial detail destinations, and `demo-northstar` rendered 200/noindex with no commercial link/schema. |
 | DEMO-02 | **DETECTED:** demo comparison/profile content could be indexed and emit commercial-style ItemList/Review/FAQ schema. | **DETECTED in branch:** index/schema only for clean available `PUBLISHED_ONLY`; demo profile SEO is noindex and schema suppressed. | **DETECTED:** comparison tests passed 19/19; final rendered metadata crawl is **UNKNOWN/PENDING**. |
-| DEMO-03 | **DETECTED:** demo profile, Best Offers and comparison surfaces reused publication/current-evidence copy even though their records were fictional. | **DETECTED only in the uncommitted worktree:** presentation branches on exact classification; demo records use adjacent fictional labels, source-neutral criteria and non-commercial copy, while published records retain published copy even in mixed mode. | **DETECTED:** focused server render tests pass 2/2. Final Preview is **UNKNOWN/PENDING**. |
+| DEMO-03 | **DETECTED:** demo profile, Best Offers and comparison surfaces reused publication/current-evidence copy even though their records were fictional. | **DETECTED committed at `61b2f03`:** presentation branches on exact classification; demo records use adjacent fictional labels, source-neutral criteria and non-commercial copy, while published records retain published copy even in mixed mode. | **DETECTED:** focused server render tests pass 2/2 and seeded comparison browser tests pass 8/8. Exact Preview Best Offers/profile copy was classified correctly; Preview comparison truthfully rendered its empty fail-closed state because its repository contained no records. |
 | PROG-01 | **DETECTED:** feature-on Home hardcoded/omitted M1 action/completion distance and could misstate remaining XP/Missions. | **DETECTED in branch:** server-owned exact M1 projection and Review distance, UI consumes returned totals. | **DETECTED:** Programme AI mission tests passed 13/13 focused and the later full Programme suite passed 108/108. |
-| PROG-02 | **DETECTED:** legacy mutation endpoints remained callable while feature-on PROGRAM-AI used the same user progression aggregates, enabling cross-mode overwrite/reward inconsistency. | **DETECTED in branch:** early stable 409 mode-conflict guard across legacy session/claim/progress/M01–M04/reflection/artefact mutations. | **DETECTED:** included in 42/42 MVP runtime and 108/108 Programme passes; deployed Preview is **UNKNOWN/PENDING**. |
+| PROG-02 | **DETECTED:** legacy mutation endpoints remained callable while feature-on PROGRAM-AI used the same user progression aggregates, enabling cross-mode overwrite/reward inconsistency. | **DETECTED in branch:** early stable 409 mode-conflict guard across legacy session/claim/progress/M01–M04/reflection/artefact mutations. | **DETECTED:** included in 42/42 MVP runtime, 108/108 Programme and hosted Quality passes; the exact Preview Programme route passed read-only inspection. No deployed mutation was attempted, so isolated Preview mutation E2E remains **UNKNOWN/PENDING**. |
 | API-01 | **DETECTED:** Programme/progress JSON paths buffered `request.text()` before enforcing 32 KiB, so a large body could be held first. | **DETECTED in branch:** declared-length plus actual streamed-byte counter/cancel before parsing; auth reuses it. | **DETECTED:** included in 42/42 MVP runtime; final malformed deployed matrix is **UNKNOWN/PENDING**. |
 | CACHE-01 | **DETECTED:** starting Production returned `public, max-age=0, must-revalidate` without `Vary: Cookie` on auth/admin/legacy Programme endpoints. Sensitive/session-shaped responses should not be shared-cacheable. | **DETECTED in branch:** auth/admin private no-store + Cookie vary; Programme/progress/reflection private no-store. | **DETECTED:** source tests/`ci:quality` pass. Production remains old until deployment. |
 | ADMIN-01 | **DETECTED:** overbroad admin navigation/direct reads/generic entity permissions could expose functions or data to roles lacking the intended capability. | **DETECTED in branch:** server page-area policy, guard-before-read, corrected mappings, filtered nav/actions. | **DETECTED:** auth/admin tests are included in the current passing quality gate; real isolated-role E2E is **UNKNOWN/PENDING**. |
@@ -727,10 +729,10 @@ Read-only Production rendering/automated accessibility inspection found concrete
 
 | ID/group | Evidence/root cause | Branch result / remaining status |
 | --- | --- | --- |
-| SEO-01 metadata authority | **DETECTED:** root canonical/social inheritance, stale sitemap dates/routes, legacy `llms.txt`, and request-double-read risk. | **DETECTED FIXED:** page-owned metadata, request cache, classified conditional sitemap, truthful `llms.txt`. Final Preview crawl is **UNKNOWN/PENDING**. |
-| SEO-02 empty directories | **DETECTED:** zero-result `PUBLISHED_ONLY` casino/bonus directories could remain indexable and emit an empty `ItemList`. | **DETECTED FIXED at `403a0ab`:** zero results now force noindex/follow and suppress the empty list schema. Post-commit exact gate and deployed Preview checks are **UNKNOWN/PENDING**. |
-| SEO-03 sitemap resilience | **DETECTED:** one rejected dynamic loader in the prior `Promise.all` could reject the entire sitemap and remove static, Learn, Help and otherwise healthy dynamic entries. | **DETECTED FIXED only in the uncommitted worktree:** casino, offer and comparison projections are independently fail-closed; 15/15 brand/canonical tests pass. Final Preview is **UNKNOWN/PENDING**. |
-| SEO-04 Programme runtime metadata | **DETECTED:** current-main `/program` metadata described the legacy Moment Map/early-signal experience even when the feature-on runtime was selected in Production. | **DETECTED FIXED only in the uncommitted worktree:** mode-neutral Programme title, description and breadcrumb plus structural regression. Final Preview is **UNKNOWN/PENDING**. |
+| SEO-01 metadata authority | **DETECTED:** root canonical/social inheritance, stale sitemap dates/routes, legacy `llms.txt`, and request-double-read risk. | **DETECTED FIXED:** page-owned metadata, request cache, classified conditional sitemap, truthful `llms.txt`; bounded signed Preview routes preserved B4GAMBLE canonical authority. A complete Preview crawl remains **UNKNOWN/PENDING**. |
+| SEO-02 empty directories | **DETECTED:** zero-result `PUBLISHED_ONLY` casino/bonus directories could remain indexable and emit an empty `ItemList`. | **DETECTED FIXED at `403a0ab`:** zero results force noindex/follow and suppress empty list schema. Exact Preview comparison demonstrated the equivalent empty fail-closed/no-`ItemList` contract; complete deployed casino/bonus empty-directory checks remain **UNKNOWN/PENDING**. |
+| SEO-03 sitemap resilience | **DETECTED:** one rejected dynamic loader in the prior `Promise.all` could reject the entire sitemap and remove static, Learn, Help and otherwise healthy dynamic entries. | **DETECTED FIXED and committed at `61b2f03`:** casino, offer and comparison projections are independently fail-closed; 15/15 brand/canonical tests and hosted Quality pass. Complete deployed sitemap traversal remains pending. |
+| SEO-04 Programme runtime metadata | **DETECTED:** current-main `/program` metadata described the legacy Moment Map/early-signal experience even when the feature-on runtime was selected in Production. | **DETECTED FIXED and committed at `61b2f03`:** mode-neutral Programme title, description and breadcrumb plus structural regression; exact Preview signed read-only verification passed. |
 | API-02 public limit | **DETECTED:** `limit=abc` could return an empty 200 rather than a stable client error. | **DETECTED FIXED:** exact one integer/range contract and 400 envelope. |
 | PRIV-01 analytics disabled | **DETECTED:** disabled analytics client could still touch marker storage. | **DETECTED FIXED:** no script/event/storage access when disabled; tests included in 42/42 MVP runtime. |
 | A11Y-01 rendered contrast/semantics | **DETECTED:** exact Home, Contact, Best Offers, bonus, casino, profile, 10 Steps, Programme, and admin defects are recorded above. | **DETECTED FIXED IN SOURCE:** CSS/markup/keyboard corrections and regression test. Final axe/manual/contrast pass is **UNKNOWN/PENDING**. |
@@ -741,8 +743,8 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | ADMIN-03 workflow UX | **DETECTED:** workflow actions/role-specific builder sections were not consistently available/hidden. | **DETECTED FIXED:** capability-driven Programme workflow, affiliate/media sections. **DETECTED UNRESOLVED:** granular casino approval permission remains architecture debt. |
 | SEC-02 CSP | **DETECTED:** no CSP header. | **DETECTED UNRESOLVED:** safe nonce/source inventory exceeds a low-risk QA patch; do not deploy a breaking guess. |
 | PRIV-02 remote imagery | **DETECTED:** Pexels hotlinks disclose viewer request metadata; durable licence/provenance is absent from repository evidence. | **DETECTED UNRESOLVED:** rights/provenance decision required before self-hosting/replacement. |
-| CI-01 coverage | **DETECTED:** Programme had been non-blocking; several tests/browser specs were orphaned; CI browser installed Chromium only. | **DETECTED PARTLY FIXED:** Programme is now blocking; casino editorial and focused public-integrity suites are in `ci:quality`; the initial seven-spec diagnostic was 42 passed / 31 failed, focused repairs passed, and the deterministic clean-CMS/disposable-demo Chromium gate now passes 89/89 across nine specs. The final exact-build read-only Chromium/WebKit route matrix passed 308 navigations, 1,848 matrix assertions and 39 WebKit interaction assertions with zero failures/non-read-only requests. **UNKNOWN/PENDING:** hosted extended CI and Firefox lane. |
-| DOC-01 technical baseline | **DETECTED:** the initial baseline drift was reconciled across all 11 Technical Baseline documents against exact current main `c525954`; current-main counts are now clearly separated from audit-branch worktree counts. | **DETECTED RESOLVED:** no remaining route/API/migration/public-asset contradiction is asserted by this record. |
+| CI-01 coverage | **DETECTED:** Programme had been non-blocking; several tests/browser specs were orphaned; CI browser installed Chromium only. | **DETECTED PARTLY FIXED:** Programme is now blocking; casino editorial and focused public-integrity suites are in `ci:quality`; the deterministic clean-CMS/disposable-demo Chromium gate passes 89/89 across nine specs, and the local Chromium/WebKit matrix passes 308 navigations, 1,848 matrix assertions and 39 WebKit interactions. All six configured hosted contexts are green at `60c30e3`, including Build / Browser with 43 passes and one intentional Google skip. The extended 89-test manifest remains local-only, and Firefox coverage is absent. |
+| DOC-01 technical baseline | **DETECTED:** the initial baseline drift was reconciled across all 11 Technical Baseline documents against exact current main `c525954`; current-main counts are clearly separated from audit-branch counts. | **DETECTED RESOLVED:** no remaining route/API/migration/public-asset contradiction is asserted by this record. |
 | DATA-02 article resource | **DETECTED:** public articles API exposes the in-memory CMS seed rather than the static Learning Center corpus. | **DETECTED UNRESOLVED:** durable public contract/retirement decision required; no misleading content claim should be inferred. |
 
 ### P3
@@ -755,9 +757,9 @@ Read-only Production rendering/automated accessibility inspection found concrete
 
 ## Fixed defects summary
 
-**DETECTED in the branch worktree:** HOST-01 source guard; DATA-01; DEMO-01 source path and fail-closed detail authority; DEMO-02; DEMO-03 adjacent selected-card disclosure; PROG-01; PROG-02; API-01; CACHE-01; ADMIN-01/02; metadata/sitemap/`llms.txt` including mode-neutral Programme metadata, empty-directory noindex/schema handling and independent sitemap-loader resilience; public limit validation; disabled-analytics privacy; public/admin branding; standalone login/navigation; Home Mission copy; Best Offers keyboard/responsive behaviour; casino/bonus/profile/compare data and a11y boundaries; legal checkbox semantics; admin error/404/workflow UI; app icon; reduced motion; reviewed visual baselines; regression/CI coverage additions; and Technical Baseline/Project State/Roadmap reconciliation.
+**DETECTED in the unmerged branch at implementation-and-audit head `60c30e3`:** HOST-01 source guard; DATA-01; DEMO-01 source path and fail-closed detail authority; DEMO-02; DEMO-03 adjacent selected-card disclosure; PROG-01; PROG-02; API-01; CACHE-01; ADMIN-01/02; metadata/sitemap/`llms.txt` including mode-neutral Programme metadata, empty-directory noindex/schema handling and independent sitemap-loader resilience; public limit validation; disabled-analytics privacy; public/admin branding; standalone login/navigation; Home Mission copy; Best Offers keyboard/responsive behaviour; casino/bonus/profile/compare data and a11y boundaries; legal checkbox semantics; admin error/404/workflow UI; app icon; reduced motion; reviewed visual baselines; regression/CI coverage additions; and Technical Baseline/Project State/Roadmap reconciliation.
 
-These are not declared Production-fixed. Final exact-head tests and Preview verification are required before they are declared handoff-complete.
+These are not declared Production-fixed. Exact-head hosted gates and the bounded signed read-only Preview checks are complete; Firefox, real external-provider/device flows, isolated write-role tests and the remaining manual/full-grid evidence are explicitly outside that detected closure.
 
 ## Unfixed defects and limitations
 
@@ -768,7 +770,7 @@ These are not declared Production-fixed. Final exact-head tests and Preview veri
 - **DETECTED / P2:** Pexels hotlink privacy/provenance gate.
 - **DETECTED / P2:** article API authority is unresolved.
 - **DETECTED / P2:** extended hosted-CI and Firefox coverage are absent. The deterministic local Chromium gate is green 89/89 with exact fixture cleanup, and the final current-build read-only Chromium/WebKit matrix is green for 308 navigations, 1,848 matrix assertions and 39 WebKit interaction assertions with zero failures/non-read-only requests.
-- **UNKNOWN/PENDING:** final Preview deployment identity/Ready SHA, final branch SHA, final main divergence, final exact-head hosted gates, Firefox, final logs, and all manual gates.
+- **UNKNOWN/PENDING:** Firefox, final Production/Preview log sampling and the external-provider/device/manual/full-grid gates listed below. Preview identity/Ready state, `origin/main`, implementation head and configured hosted contexts are detected.
 
 ## Test evidence
 
@@ -776,12 +778,12 @@ Only completed commands/results are `DETECTED`. A test listing is not an executi
 
 | Command/evidence | Result |
 | --- | --- |
-| `npm run ci:quality` | **DETECTED PASS / exit 0 in the current worktree:** lint, typecheck, Prisma validate, structural, casino-editorial, `public-integrity:test`, MVP runtime, auth/comms, brand/canonical, recovery, and launch-polish chain. |
+| `npm run ci:quality` | **DETECTED PASS / exit 0 locally and inside hosted Quality at `60c30e3`:** lint, typecheck, Prisma validate, structural, casino-editorial, `public-integrity:test`, MVP runtime, auth/comms, brand/canonical, recovery, and launch-polish chain. Hosted Quality completed in 59 seconds and also ran the full Programme suite. |
 | `npm run ci:structural` (inside quality) | **DETECTED PASS:** 208/208 structural plus 6/6 FE-GAP checks. |
 | `npm run casino-editorial:test` (inside quality) | **DETECTED PASS:** 11/11. |
 | `npm run mvp-runtime:test` (inside quality) | **DETECTED PASS:** 42/42. |
 | `npm run auth-comms:test` (inside quality) | **DETECTED PASS:** 41/41. |
-| `npm run brand-cutover:test` | **DETECTED PASS in the current worktree:** 15/15, including canonical-host and independent sitemap-loader resilience tests. The earlier pushed-checkpoint quality run contained 14/14 before the new sitemap case. |
+| `npm run brand-cutover:test` | **DETECTED PASS at `60c30e3`:** 15/15, including canonical-host and independent sitemap-loader resilience tests. The earlier checkpoint contained 14/14 before the new sitemap case. |
 | `npm run recovery:test` (inside quality) | **DETECTED PASS:** 25/25. |
 | `npm run launch-polish:test` (inside quality) | **DETECTED PASS:** 30/30. |
 | `npm run programme:test` | **DETECTED PASS:** 108/108. |
@@ -797,14 +799,14 @@ Only completed commands/results are `DETECTED`. A test listing is not an executi
 | Earlier bonus/offer focused run | **DETECTED FAIL:** 25/26 due to a regression-test matcher ordering issue; matcher was corrected. **UNKNOWN/PENDING:** exact final rerun result is not recorded here. |
 | Earlier typecheck checkpoint | **DETECTED FAIL:** four branch typing errors; all were patched. Current `ci:quality` typecheck passed. |
 | `CI=true npm run browser:extended` | **DETECTED PASS:** 81/81 clean-CMS tests in 1.8 minutes, then exact disposable-demo fixture seeding and 8/8 comparison tests in 21.5 seconds; aggregate 89/89 across nine specs, 0 failed, 0 skipped, 0 retries, exact cleanup complete. |
-| `npm run build` | **DETECTED PASS in the current worktree:** fresh local Production build completed with 63 generated static targets. Direct/non-approved pooled local-database warnings did not fail the build and are not hosted-database evidence. Final commit-SHA/hosted build remains **UNKNOWN/PENDING**. |
-| `npm run ci:build-secrets` | **DETECTED PASS in the current worktree:** the configured browser-deliverable build scan found no secret-pattern match. The earlier `9e7df95` run scanned 754 files; final committed/hosted artifact identity remains **UNKNOWN/PENDING**. |
-| `npm run ci:migrations` | **DETECTED PASS at `9e7df95`:** all 19/19 migrations applied to a guarded disposable local `_ci` PostgreSQL database. **UNKNOWN/PENDING:** final exact-head/hosted rerun. |
+| `npm run build` | **DETECTED PASS locally and inside hosted Build / Browser at `60c30e3`:** the fresh local Production build completed with 63 generated static targets. Direct/non-approved pooled local-database warnings did not fail the local build and are not hosted-database evidence. |
+| `npm run ci:build-secrets` | **DETECTED PASS locally and inside hosted Build / Browser at `60c30e3`:** the configured scan found no secret-pattern match across 754 browser-deliverable files. |
+| `npm run ci:migrations` | **DETECTED PASS:** all 19/19 migrations applied to guarded disposable PostgreSQL databases locally and in the green hosted Build / Browser and Database / Migration Verification jobs at `60c30e3`. |
 | `npm run mvp-runtime:postgres-test` | **DETECTED PASS at `9e7df95`:** 3/3 PostgreSQL runtime cases against the disposable local database. |
 | `npm run programme:seed` | **DETECTED PASS at `9e7df95`:** all ten isolated seed steps completed against the disposable local database. No Production database was involved. |
-| `npm run ci:browser` | **DETECTED PASS at `9e7df95`:** Chromium 43 passed, one intentional Google-credentials skip, zero failed, and zero retries. This is local/CI-browser evidence, not remote Preview or real Google-provider evidence. |
-| Offline audit checkpoint | **DETECTED GREEN:** root quality, fresh build, build-secret scan and the deterministic 89/89 Chromium gate with exact fixture cleanup are green. Final committed exact-head and hosted results remain separately pending. |
-| GitHub Quality job | **DETECTED historical failure:** the initial audit-branch run failed only because the brand sitemap test touched a database absent from the Quality job. Commit `9e7df95` isolates sitemap projections; subsequent no-database brand 14/14 and typecheck passed locally. **UNKNOWN/PENDING:** fresh hosted CI was still running at this checkpoint. |
+| `npm run ci:browser` | **DETECTED PASS inside hosted Build / Browser at `60c30e3`:** Chromium 43 passed, one intentional missing-Google-credentials skip and zero failed. This is configured CI-browser evidence, not a real Google-provider flow. |
+| Offline audit checkpoint | **DETECTED GREEN:** root quality, fresh build, build-secret scan and the deterministic 89/89 Chromium gate with exact fixture cleanup are green at the recorded implementation head. |
+| GitHub hosted rollup | **DETECTED GREEN at `60c30e3`:** Agent Core 13s; Quality 59s; Database / Migration Verification 1m3s; Build / Browser 3m15s with 43 passes and one intentional Google skip; Vercel success; Vercel Preview Comments success. The initial historical Quality failure caused by database-coupled sitemap testing was resolved by `9e7df95`. |
 | Initial `CI=true npm run browser:extended` diagnostic (then-seven-spec manifest) | **DETECTED:** 73 total; 42 passed, 31 failed, 0 skipped, with 21 retry executions. The exact failure taxonomy is recorded below; this was diagnostic evidence, not the current expanded-manifest result. |
 | Focused stale-contract repair command covering 10 Steps, legal anchors and shared-action focus | **DETECTED PASS:** 13/13 in 11.0 seconds on valid elevated Chromium. An earlier sandbox Mach-port denial is invalid evidence and is not counted. |
 | Focused manually reviewed visual-baseline run | **DETECTED PASS:** 14/14 after platform-independent snapshot resolution and deliberate baseline updates; no blind PNG acceptance is claimed. |
@@ -853,20 +855,22 @@ It passed 13/13 in 11.0 seconds. The separately reviewed visual-focused run pass
 | Final exact-build engine/viewport matrix | **DETECTED PASS:** local Chromium and WebKit completed 308/308 route navigations, 1,848/1,848 matrix assertions and 39/39 read-only WebKit interaction assertions across all eleven required widths, 13 primary routes plus intentional 404; zero failures/non-read-only requests. |
 | Governed widths exercised | **DETECTED locally:** the functional suites cover 320, 360, 375, 390, 430, 768, 900, 1024, 1280 and 1440 px; the final exact-build cross-engine matrix covers all eleven required widths, including 820 and 1920 px. The hosted Preview grid remains separately pending. |
 | State/interaction coverage | **DETECTED:** SSR and JavaScript-disabled casino/profile/directory/legal/Programme paths; responsive overflow/reflow; mobile navigation; reduced motion; legal anchors; Self-Check and Limit Tracker interactions; responsible-gambling surfaces; keyboard/focus contracts; demo action/SEO/schema denial; and the reviewed design-system snapshots. |
-| Engines/hosting boundary | **DETECTED:** deterministic functional gate in local Chromium and final current-build read-only route/layout/interaction matrix in local Chromium and WebKit. **UNKNOWN/PENDING:** final remote Preview, hosted CI and Firefox. |
+| Engines/hosting boundary | **DETECTED:** deterministic functional gate in local Chromium; final current-build route/layout/interaction matrix in local Chromium and WebKit; all six configured hosted contexts green; bounded signed Chromium-class read-only checks on the exact Ready Preview. **UNKNOWN/PENDING:** Firefox and a complete remote Preview cross-engine/full-viewport matrix. |
 
 ### Final Preview
 
 | Item | Evidence |
 | --- | --- |
-| URL/deployment/SHA | **DETECTED branch URL:** `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`. **UNKNOWN/PENDING:** final deployment ID, Ready state, exact source SHA, and final-commit Preview identity. |
-| Chromium desktop/mobile | **UNKNOWN/PENDING.** |
+| URL/deployment/SHA | **DETECTED:** deployment `5895324564`, Ready at `2026-08-13T20:14:35Z`, immutable `https://sevenbet-next-95l54yjnq-alexg-7bes-projects.vercel.app`, stable branch alias `https://sevenbet-next-git-codex-full-site-in-ae3239-alexg-7bes-projects.vercel.app`, exact source `60c30e3e0d9b2ebde58bd397fffee3c7ce15997e`. This later documentation-only closure is not attributed to that SHA. |
+| Signed read-only routes | **DETECTED:** `/`, `/program`, `/best-offers`, `/compare`, `/casino/demo-northstar` and `/admin/login` on the exact deployment. Public canonical URLs remained `https://b4gamble.com`; Preview transport remained on the Preview host. |
+| Route findings | **DETECTED:** Programme metadata was mode-neutral; Best Offers rendered classified fictional records and 12 internal detail destinations without `/r`/`/go`; `demo-northstar` returned 200 with fictional disclosure, `noindex, follow` and no commercial link/schema; admin login was B4GAMBLE/noindex; empty Preview comparison truthfully rendered fail-closed, `noindex, follow` and without `ItemList`. Seeded demo comparison behaviour passed 8/8 locally. |
+| Chromium desktop/mobile | **DETECTED bounded Chromium-class signed read-only route check.** A complete final desktop/mobile screenshot and interaction matrix is not claimed. |
 | WebKit/mobile-equivalent | **UNKNOWN/PENDING.** |
 | Firefox | **UNKNOWN/PENDING.** |
 | Viewports | **UNKNOWN/PENDING:** 320, 360, 375, 390, 430, 768, 820, 1024, 1280, 1440, 1920. |
-| Required routes | **UNKNOWN/PENDING:** home, 10 Steps, Programme zero state, login, Best Offers, casinos/detail, bonuses, compare, Learn, Help, Contact, admin login, 404/error. |
+| Required routes | **PARTLY DETECTED:** Home, Programme, Best Offers, comparison empty state, one demo profile and admin login are recorded above. Final exact-Preview 10 Steps, login flows, casino directory/other details, bonuses, Learn, Help, Contact and error-route manual evidence remains pending. |
 | Required interactions | **UNKNOWN/PENDING:** public desktop/mobile nav, login validation/return, Programme typed/voice-recovery simulation, tabs/carousel/filters/dialogs, Contact validation, error recovery, keyboard, focus, console/network. |
-| Authenticated simulation | **UNKNOWN/PENDING:** must use an isolated safe account/database or mocks and must not mutate Production. |
+| Authenticated simulation | **DETECTED bounded signed-in read-only inspection:** no write, provider, email, affiliate or Production action was performed. Any future authenticated write simulation still requires an isolated safe account/database or mocks. |
 
 ## Manual E2E required
 
@@ -880,11 +884,11 @@ It passed 13/13 in 11.0 seconds. The separately reviewed visual-focused run pass
 ## Blockers
 
 - **CONTRADICTION:** Production environment authority for PROGRAM-AI and Google.
-- **UNKNOWN/PENDING:** the branch Preview URL is recorded, but no final deployment ID/Ready state/exact source SHA or final-commit Preview identity is yet recorded.
+- **DETECTED CLOSED:** Preview deployment `5895324564`, Ready state, immutable URL, branch alias and exact implementation source `60c30e3` are recorded. This documentation-only closure follows that source head.
 - **PROPOSED:** RFC-031 supplies no implementation authority, so the voice-cap defect cannot be fixed in code yet.
 - **UNKNOWN:** isolated admin/CMS write-test environment/credentials were not established for this pass.
-- **UNKNOWN/PENDING:** final Preview and Firefox availability/counts. The deterministic local Chromium gate is 89/89, and the final exact-build Chromium/WebKit matrix is 308/308 navigations, 1,848/1,848 matrix assertions and 39/39 WebKit interaction assertions with zero non-read-only requests.
-- **UNKNOWN/PENDING:** final main divergence fetch and integration decision.
+- **UNKNOWN/PENDING:** Firefox and the complete remote Preview cross-engine/full-viewport/manual-flow counts. The bounded signed read-only exact-Preview route evidence, deterministic local Chromium 89/89 and exact-build Chromium/WebKit matrix are detected.
+- **DETECTED:** completion fetch found `origin/main` unchanged at `c52595405f0800c8c2b51d5951c4a8d45c133034`; implementation head `60c30e3` therefore remained based on that exact main. Merge/promotion remains a Founder decision.
 
 ## Known accepted limitations
 
@@ -905,12 +909,9 @@ It passed 13/13 in 11.0 seconds. The separately reviewed visual-focused run pass
 
 ## Unknown / pending completion evidence
 
-- Latest `origin/main` SHA at completion and final merge-base divergence.
-- Final branch SHA and commit list.
-- Final Preview deployment ID, Ready status, exact source SHA, and final-commit Preview identity; the stable branch URL itself is detected above.
-- Final Preview-safe canonical-host behaviour.
-- Final exact-head hosted CI results for quality/build/build-secret/migration/Chromium gates; the deterministic local Chromium gate is 89/89 and the final exact-build Chromium/WebKit route/viewport/interaction matrix is complete, while remote Preview and Firefox remain pending.
-- Exact final Preview screenshots, engines, viewports, console/network results, and accessibility scan totals.
+The implementation head, commit list, completion `origin/main`, Ready Preview identity, bounded signed route evidence and all six configured hosted contexts are detected above. This documentation-only closure intentionally follows `60c30e3` and cannot claim that pre-closure SHA as its own.
+
+- Complete final Preview screenshots, WebKit/Firefox coverage, the full governed viewport/route grid, console/network results and accessibility scan totals beyond the bounded signed read-only routes recorded above.
 - Final Production log one-hour/24-hour grouped evidence.
 - Current Production values for non-exposed flags; no secret value should be retrieved or recorded.
 - Real provider/device/manual gates listed above.
@@ -956,4 +957,4 @@ Production affiliate/commercial action enabled: **NO**
 
 ## Completion gate
 
-This record may move from HOLD to `GO FOR FOUNDER REVIEW` or `GO WITH CONDITIONS` only after the placeholders above are replaced by detected final evidence: final main divergence, exact branch SHA/commits, Ready Preview SHA/URL, complete quality/build/migration/secret gates, fresh Preview Chromium + WebKit critical flows across the recorded widths, final accessibility/console/network/log pass, and explicit treatment of every remaining P0/P1. The PR must remain Draft and Production must remain unchanged.
+The identity, configured hosted-gate and bounded signed read-only Preview placeholders are closed. This record remains on HOLD because Production authority contradictions and live P0/P1 conditions are unresolved. It may move to `GO FOR FOUNDER REVIEW` or `GO WITH CONDITIONS` only after explicit treatment of every remaining P0/P1 and the required Firefox, external-provider/device, isolated-role, accessibility, console/network/log and other manual/full-grid evidence is either completed or formally accepted as a condition. The PR must remain Draft and Production must remain unchanged.
