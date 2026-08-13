@@ -105,7 +105,7 @@ Contact and error surfaces use the approved Design System v1 tokens and shared A
 
 Required evidence includes validation and injection tests, same-origin and content-type denial, body-size and unexpected-key denial, honeypot zero-delivery, one accepted submission producing exactly one memory envelope, safe provider failure, no sensitive logging, duplicate in-flight UI prevention, structural global-error/404 assertions, truthful HTTP status and robots checks, first-party link audit, keyboard/no-JavaScript/accessibility/responsive smoke, build and secret audit.
 
-CI and local tests use no real provider call. After mail DNS is permitted and the sending domain is verified, exactly one Founder-controlled, non-sensitive Preview delivery test may be sent. Production environment preparation, WAF activation and Production contact smoke require the later Founder activation stage. This RFC does not authorise merge; the pull request remains draft until Founder Office GO and the user alone merges with a merge commit.
+CI and local tests use no real provider call. After mail DNS is permitted and the sending domain is verified, exactly one Founder-controlled, non-sensitive Preview delivery test may be sent. Production environment preparation, WAF activation and Production contact smoke require the later Founder activation stage. Founder Office full completion authorisation dated 2026-08-13 now authorises Codex to complete the pull request and merge by merge commit only after every stated gate passes; the pull request remains draft until then.
 
 ## 10. Cost and rollback
 
