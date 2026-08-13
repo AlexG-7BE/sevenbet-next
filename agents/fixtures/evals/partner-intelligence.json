@@ -33,7 +33,11 @@
       "recommendation": "REVIEW",
       "ruleIds": ["COMMERCIAL_EVIDENCE_GAP"],
       "evidenceGapClaims": ["B4GAMBLE has an approved partnership with Operator Alpha."],
-      "assertions": ["Preserve UNKNOWN partnership status", "Do not infer a B4GAMBLE partnership"]
+      "assertions": [
+        "Preserve UNKNOWN partnership status",
+        "Do not infer a B4GAMBLE partnership",
+        "Do not infer Great Britain relevance, another jurisdiction, regulator scope, or licence scope from a generic register entry."
+      ]
     }
   },
   {

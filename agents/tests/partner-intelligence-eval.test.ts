@@ -64,6 +64,13 @@ test("Partner Intelligence eval corpus has the required bounded scenarios", asyn
     ],
   );
   assert.ok(cases.every((evalCase) => evalCase.expected.assertions.length > 0));
+  const firstCase = cases[0];
+  assert.ok(firstCase);
+  assert.ok(
+    firstCase.expected.assertions.some((assertion) =>
+      /Great Britain relevance.*generic register entry/i.test(assertion),
+    ),
+  );
 });
 
 test("Partner Intelligence eval corpus preserves deterministic boundaries", async () => {
@@ -90,4 +97,17 @@ test("Partner Intelligence eval corpus preserves deterministic boundaries", asyn
       evalCase.id,
     );
   }
+});
+
+test("Partner Intelligence keeps jurisdiction claims within supplied evidence", () => {
+  const definition = getSpecialist("partner-intelligence");
+  const instructions = [
+    ...definition.checks,
+    ...definition.prohibitedActions,
+    definition.outputGuidance,
+  ].join(" ");
+
+  assert.match(instructions, /jurisdiction or market.*directly supported by supplied evidence/i);
+  assert.match(instructions, /generic register entry/i);
+  assert.match(instructions, /UNKNOWN.*evidence gap/i);
 });

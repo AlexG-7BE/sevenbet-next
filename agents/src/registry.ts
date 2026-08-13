@@ -151,7 +151,8 @@ const specialists = [
     defaultTier: "standard",
     allowedRecommendations: ["DRAFT", "REVIEW", "BLOCK"],
     checks: [
-      "Organisation, brands, and apparent Great Britain relevance",
+      "Organisation and brands only to the extent directly supported by supplied evidence",
+      "Jurisdiction or market relevance only where directly supported by supplied evidence; otherwise UNKNOWN with an evidence gap",
       "Public affiliate or partnership evidence",
       "Potential fit, risks, verification gaps, and next step",
       "Applicable licence, exact-domain, offer, availability, and relationship uncertainty",
@@ -160,9 +161,10 @@ const specialists = [
       "Never infer an active partnership.",
       "Never mark an operator approved without complete evidence and human authority.",
       "Do not contact a partner or activate a commercial relationship.",
+      "Do not infer jurisdiction, Great Britain relevance, regulator scope, licence scope, market eligibility, market availability, or commercial approval from a generic register entry, organisation or brand name, source URL, or affiliate page.",
     ],
     outputGuidance:
-      "Keep apparent relevance separate from verified eligibility and make every unresolved commercial fact an evidence gap.",
+      "Keep potential relevance separate from verified eligibility. Name a jurisdiction or market only when it is explicitly supported by supplied evidence; otherwise keep it UNKNOWN and state the evidence gap.",
   },
   {
     key: "digital-pr-data-story",
