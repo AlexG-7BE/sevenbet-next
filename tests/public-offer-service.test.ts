@@ -16,6 +16,7 @@ import { PublicOfferRepository } from "../lib/repositories/public-offer.reposito
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
 import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
+import { isTemporaryDemoCasinoId } from "../lib/demo-data/temporary-demo-authority";
 
 function offer(slug: string, patch: {
   score?: number; featured?: boolean; recommended?: boolean; country?: string; type?: string; payment?: string;
@@ -199,6 +200,31 @@ test("CMS retrieval failures fail closed and never fall back to legacy offers", 
   assert.ok(legacy.total > 0);
   assert.ok(legacy.records.every((item) => item.commercialAvailability === "UNAVAILABLE" && item.action.href === null));
   assert.doesNotMatch(JSON.stringify(legacy.records), /https?:\/\//);
+});
+
+test("Best Offers uses the exact no-action RFC-012 demonstration when the published shortlist is empty", async () => {
+  const incomplete = offer("published-incomplete", { score: 10, featured: true });
+  incomplete.bonus.eligibility = null;
+  const result = await new PublicOfferService(store([incomplete]), { cmsEnabled: true }).getBestOffersPageData();
+
+  assert.equal(result.status, "available");
+  assert.equal(result.inventoryMode, "DEMO_ONLY");
+  assert.equal(result.records.length, 12);
+  assert.ok(result.records.every((item) => isTemporaryDemoCasinoId(item.casino.id)));
+  assert.ok(result.records.every((item) => item.dataClassification === "DEMO_FIXTURE"));
+  assert.ok(result.records.every((item) => item.commercialAvailability === "UNAVAILABLE" && item.action.href === null));
+  assert.ok(result.records.every((item) => item.bonus.eligibility && item.bonus.importantConditions.length));
+});
+
+test("Best Offers never replaces a repository failure or eligible published shortlist with demonstrations", async () => {
+  const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }).getBestOffersPageData();
+  assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" });
+
+  const published = offer("published-eligible", { score: 9.4, featured: true });
+  const available = await new PublicOfferService(store([published]), { cmsEnabled: true }).getBestOffersPageData();
+  assert.equal(available.status, "available");
+  assert.equal(available.inventoryMode, "PUBLISHED_ONLY");
+  assert.deepEqual(available.records.map((item) => item.casino.slug), ["published-eligible"]);
 });
 
 test("redirect authority failure preserves published editorial offers without actions", async () => {

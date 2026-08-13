@@ -56,7 +56,6 @@ export const identityOnlyOAuthAccountDatabaseHooks = {
 };
 
 export const IDENTITY_ONLY_DISABLED_AUTH_PATHS = [
-  "/link-social",
   "/get-access-token",
   "/refresh-token",
   "/account-info",

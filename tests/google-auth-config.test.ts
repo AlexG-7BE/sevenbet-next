@@ -9,8 +9,13 @@ import {
 import {
   GOOGLE_AUTH_CALLBACK,
   GOOGLE_AUTH_ERROR_CALLBACK,
+  GOOGLE_LINK_CALLBACK,
+  GOOGLE_LINK_ERROR_CALLBACK,
+  googleLoginCallbacks,
+  isAllowedGoogleLinkRequest,
   isAllowedGoogleSignInRequest,
 } from "../lib/auth/google-flow";
+import { safeAuthReturnTo } from "../lib/auth/return-to";
 
 test("Google authentication fails closed unless both credentials are complete", () => {
   assert.equal(resolveGoogleAuthConfig({}), null);
@@ -90,6 +95,42 @@ test("the Google initiation boundary allows only fixed internal callbacks and no
   ]) {
     assert.equal(isAllowedGoogleSignInRequest(attempt), false);
   }
+
+  const login = googleLoginCallbacks("/best-offers?from=login#shortlist");
+  assert.equal(isAllowedGoogleSignInRequest({ provider: "google", ...login, requestSignUp: false }), true);
+  assert.equal(isAllowedGoogleSignInRequest({ provider: "google", ...login, requestSignUp: true }), false, "standalone login cannot create a social account");
+});
+
+test("explicit Google linking accepts only exact same-origin callback pairs and no credential or scope input", () => {
+  const programme = { provider: "google", callbackURL: GOOGLE_LINK_CALLBACK, errorCallbackURL: GOOGLE_LINK_ERROR_CALLBACK };
+  assert.equal(isAllowedGoogleLinkRequest(programme), true);
+  const login = { provider: "google", ...googleLoginCallbacks("/program?resume=1", "link") };
+  assert.equal(isAllowedGoogleLinkRequest(login), true);
+
+  for (const attempt of [
+    { ...programme, provider: "github" },
+    { ...programme, callbackURL: "https://attacker.invalid" },
+    { ...programme, errorCallbackURL: "/login?auth=google-link-error&returnTo=%2Fadmin" },
+    { ...programme, scopes: ["openid"] },
+    { ...programme, idToken: { token: "sentinel" } },
+    { ...programme, additionalData: { role: "admin" } },
+    { ...programme, disableRedirect: true },
+    { ...programme, requestSignUp: true },
+  ]) assert.equal(isAllowedGoogleLinkRequest(attempt), false);
+});
+
+test("login return paths reject external, protocol-relative, control and login-loop destinations", () => {
+  assert.equal(safeAuthReturnTo("/best-offers?from=login#shortlist"), "/best-offers?from=login#shortlist");
+  for (const unsafe of [
+    "https://attacker.invalid/path",
+    "//attacker.invalid/path",
+    "/\\attacker.invalid/path",
+    "/login?returnTo=/admin",
+    "/login/recovery",
+    "/path\nheader: injected",
+    "javascript:alert(1)",
+    undefined,
+  ]) assert.equal(safeAuthReturnTo(unsafe), "/program");
 });
 
 test("privacy and operations evidence describe only the implemented Google boundary", () => {

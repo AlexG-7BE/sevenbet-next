@@ -461,6 +461,10 @@ test("voice recording produces an editable transcript, releases tracks and can b
 test("fresh microphone access uses the browser request before denied recovery", async ({ page }) => {
   await page.addInitScript(() => {
     let permissionRequests = 0;
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: async () => ({ state: "prompt", addEventListener: () => undefined, removeEventListener: () => undefined }) },
+    });
     Object.defineProperty(navigator, "mediaDevices", {
       configurable: true,
       value: {
@@ -493,11 +497,69 @@ test("fresh microphone access uses the browser request before denied recovery", 
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
 
   await expect(page.getByText("Prefer to speak?")).toBeVisible();
-  await expect(page.getByText("Microphone permission was denied")).toHaveCount(0);
+  await expect(page.getByText("Microphone did not start")).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
   await page.getByRole("button", { name: "Start recording" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await expect(page.getByText("Microphone permission was denied")).toBeVisible();
+  await expect(page.getByText("Microphone did not start")).toBeVisible();
+  await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
+  await page.getByRole("button", { name: "Try microphone again" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
+});
+
+test("persistently denied microphone state explains browser recovery and rechecks before retry", async ({ page }) => {
+  await page.addInitScript(() => {
+    let permissionRequests = 0;
+    const listeners = new Set<() => void>();
+    const status = {
+      state: "denied" as PermissionState,
+      addEventListener: (_name: string, listener: () => void) => listeners.add(listener),
+      removeEventListener: (_name: string, listener: () => void) => listeners.delete(listener),
+    };
+    Object.defineProperty(navigator, "permissions", { configurable: true, value: { query: async () => status } });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: async () => { permissionRequests += 1; throw new DOMException("Blocked", "NotAllowedError"); } },
+    });
+    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
+    Object.defineProperty(window, "__programAiPermissionState", {
+      value: (next: PermissionState) => { status.state = next; listeners.forEach((listener) => listener()); },
+    });
+  });
+  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
+  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
+
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await expect(page.getByText("Microphone is blocked for this site")).toBeVisible();
+  await expect(page.getByText(/browser will not show another prompt/i)).toBeVisible();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
+  await page.getByRole("button", { name: "Check microphone access" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
+  await page.evaluate(() => (window as unknown as { __programAiPermissionState: (state: PermissionState) => void }).__programAiPermissionState("prompt"));
+  await page.getByRole("button", { name: "Try microphone again" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
+});
+
+test("unsupported microphone recording keeps the typed path available", async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, "MediaRecorder", { configurable: true, value: undefined });
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: undefined });
+  });
+  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
+  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await expect(page.getByText("Voice recording is not supported here")).toBeVisible();
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 

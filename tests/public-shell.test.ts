@@ -50,7 +50,7 @@ test("ordinary public, Programme, protected Help and internal routes stay separa
 test("account navigation is server-state-derived and never invents XP", () => {
   assert.deepEqual(accountNavigationFor({ authenticated: false }), {
     accountLabel: "Log in",
-    accountHref: "/program?auth=sign-in",
+    accountHref: "/login",
     primaryLabel: "Start 10 Steps",
     primaryHref: "/program",
     xpLabel: null,

@@ -16,6 +16,7 @@ import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } fro
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
+import { temporaryDemoBestOffers } from "@/lib/demo-data/temporary-demo-best-offers";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
@@ -141,7 +142,7 @@ export class PublicOfferService {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
   }
 
-  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null) {
+  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean } = {}) {
     if (!this.cmsEnabled()) {
       return (this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
         const legacy = mapLegacyCasino(casino);
@@ -159,7 +160,8 @@ export class PublicOfferService {
       if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
       return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record)).map(classifyOffer);
-    } catch {
+    } catch (cause) {
+      if (options.throwOnError) throw cause;
       return [];
     }
   }
@@ -196,8 +198,11 @@ export class PublicOfferService {
       return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
     }
     try {
-      const records = selectOverallShortlist((await this.listEligibleOffers(authority)), { country, limit });
-      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
+      const publishedRecords = await this.listEligibleOffers(authority, { throwOnError: true });
+      const records = selectOverallShortlist(publishedRecords, { country, limit });
+      if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
+      const demoRecords = selectOverallShortlist(temporaryDemoBestOffers().map(classifyOffer), { country, limit });
+      return { status: demoRecords.length ? "available" : "no-eligible", records: demoRecords, inventoryMode: publicOfferInventoryMode(demoRecords) } as const;
     } catch {
       return { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     }

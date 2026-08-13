@@ -64,6 +64,21 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /Editable transcript/);
   assert.match(frontend, /new FormData\(\)/);
   assert.match(frontend, /90_000/);
+  assert.match(frontend, /navigator\.permissions\?\.query/);
+  assert.match(frontend, /name: "microphone"/);
+  assert.match(frontend, /Microphone is blocked for this site/);
+  assert.match(frontend, /Voice recording is not supported here/);
+});
+
+test("account-not-linked recovery preserves the claim and requires authenticated explicit linking", () => {
+  assert.match(frontend, /authError === "account_not_linked"|authError = authQuery\.get\("error"\)/);
+  assert.match(frontend, /accountNotLinked/);
+  assert.match(frontend, /authClient\.signIn\.email/);
+  assert.match(frontend, /authClient\.linkSocial/);
+  assert.match(frontend, /GOOGLE_LINK_CALLBACK/);
+  assert.match(frontend, /Your confirmed Starting Point stays in this browser/);
+  const explicitLink = frontend.slice(frontend.indexOf("async function startGoogleLink"), frontend.indexOf("async function openMission"));
+  assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
 test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {

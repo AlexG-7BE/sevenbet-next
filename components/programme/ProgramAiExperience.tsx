@@ -15,7 +15,12 @@ import type {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
-import { GOOGLE_AUTH_CALLBACK, GOOGLE_AUTH_ERROR_CALLBACK } from "@/lib/auth/google-flow";
+import {
+  GOOGLE_AUTH_CALLBACK,
+  GOOGLE_AUTH_ERROR_CALLBACK,
+  GOOGLE_LINK_CALLBACK,
+  GOOGLE_LINK_ERROR_CALLBACK,
+} from "@/lib/auth/google-flow";
 import {
   PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_HEADER_VALUES,
@@ -60,7 +65,8 @@ type Phase =
   | "mission"
   | "review";
 
-type RecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "transcribing" | "success" | "error";
+type RecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "unsupported" | "transcribing" | "success" | "error";
+type MicrophonePermissionState = PermissionState | "unknown";
 
 type ProgramAiLocalState = {
   phase: Phase;
@@ -194,12 +200,24 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   const chunks = useRef<Blob[]>([]);
   const retainedRecording = useRef<Blob | null>(null);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
+  const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");
   const recordingStartedAt = useRef(0);
   const recordingDurationMs = useRef(0);
   const maximumTimer = useRef<number | null>(null);
   const recordingTimer = useRef<number | null>(null);
   const cancelling = useRef(false);
   const recorderFailed = useRef(false);
+  async function readMicrophonePermission(): Promise<MicrophonePermissionState> {
+    if (!navigator.permissions?.query) return "unknown";
+    try {
+      const status = await navigator.permissions.query({ name: "microphone" as PermissionName });
+      setMicrophonePermission(status.state);
+      return status.state;
+    } catch {
+      setMicrophonePermission("unknown");
+      return "unknown";
+    }
+  }
 
   function clearMaximumTimer() {
     if (maximumTimer.current !== null) window.clearTimeout(maximumTimer.current);
@@ -230,18 +248,39 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
     chunks.current = [];
   }
 
-  useEffect(() => () => {
-    clearMaximumTimer();
-    clearRecordingTimer(false);
-    if (recorder.current) {
-      recorder.current.ondataavailable = null;
-      recorder.current.onstop = null;
-      recorder.current.onerror = null;
-      if (recorder.current.state === "recording") recorder.current.stop();
-      recorder.current = null;
+  useEffect(() => {
+    let active = true;
+    let observedStatus: PermissionStatus | null = null;
+    const onPermissionChange = () => {
+      if (active && observedStatus) setMicrophonePermission(observedStatus.state);
+    };
+    if (navigator.permissions?.query) {
+      navigator.permissions.query({ name: "microphone" as PermissionName })
+        .then((status) => {
+          if (!active) return;
+          observedStatus = status;
+          setMicrophonePermission(status.state);
+          status.addEventListener?.("change", onPermissionChange);
+        })
+        .catch(() => {
+          if (active) setMicrophonePermission("unknown");
+        });
     }
-    stopTracks();
-    releaseRecording();
+    return () => {
+      active = false;
+      observedStatus?.removeEventListener?.("change", onPermissionChange);
+      clearMaximumTimer();
+      clearRecordingTimer(false);
+      if (recorder.current) {
+        recorder.current.ondataavailable = null;
+        recorder.current.onstop = null;
+        recorder.current.onerror = null;
+        if (recorder.current.state === "recording") recorder.current.stop();
+        recorder.current = null;
+      }
+      stopTracks();
+      releaseRecording();
+    };
   }, []);
 
   async function transcribe(audio: Blob, durationMs: number) {
@@ -269,13 +308,14 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   async function start() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
       productAnalyticsClient.voiceOutcome("transcription_error");
-      onState("error");
+      onState("unsupported");
       return;
     }
     onState("requesting");
     try {
       releaseRecording();
       stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicrophonePermission("granted");
       const mimeType = preferredMimeType();
       recorder.current = new MediaRecorder(stream.current, mimeType ? { mimeType } : undefined);
       chunks.current = [];
@@ -333,9 +373,19 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       clearRecordingTimer();
       stopTracks();
       const denied = cause instanceof DOMException && cause.name === "NotAllowedError";
+      if (denied) await readMicrophonePermission();
       productAnalyticsClient.voiceOutcome(denied ? "permission_denied" : "transcription_error");
       onState(denied ? "denied" : "error");
     }
+  }
+
+  async function checkPermissionAndRetry() {
+    const state = await readMicrophonePermission();
+    if (state === "denied") {
+      onState("denied");
+      return;
+    }
+    await start();
   }
 
   function stop() {
@@ -370,13 +420,16 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   return (
     <div className={styles.recorder} data-state={state}>
       <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator>●</span></div>
-      <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" ? "Microphone permission was denied" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
-      {["idle", "denied", "cancelled", "success"].includes(state) ? <button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Start recording"}</button> : null}
+      <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" && microphonePermission === "denied" ? "Microphone is blocked for this site" : state === "denied" ? "Microphone did not start" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
+      {["idle", "cancelled", "success"].includes(state) ? <button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Start recording"}</button> : null}
+      {state === "denied" ? <button disabled={disabled} onClick={microphonePermission === "denied" ? checkPermissionAndRetry : start} type="button">{microphonePermission === "denied" ? "Check microphone access" : "Try microphone again"}</button> : null}
       {state === "recording" ? <span className={styles.recorderActions}><button className={styles.stopRecording} onClick={stop} type="button">Stop recording</button><button className={styles.cancelRecording} onClick={cancel} type="button">Cancel</button></span> : null}
       {state === "requesting" || state === "transcribing" ? <span role="status">{state === "requesting" ? "Requesting microphone…" : "Transcribing…"}</span> : null}
       {state === "success" ? <p role="status">Check and correct the editable transcript below before creating your Starting Point.</p> : null}
       {state === "error" ? <p role="alert">Voice transcription could not be completed. {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}
-      {state === "denied" ? <p role="alert">You can allow microphone access in your browser, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
+      {state === "unsupported" ? <p role="alert">This browser cannot record audio with the features B4GAMBLE needs. You can <button onClick={useTyped} type="button">type instead</button>.</p> : null}
+      {state === "denied" && microphonePermission === "denied" ? <p role="alert">Your browser will not show another prompt while this site is blocked. Use the site controls beside the address bar to allow the microphone, then check access again, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
+      {state === "denied" && microphonePermission !== "denied" ? <p role="alert">The permission prompt was dismissed or the microphone was not made available. Try again, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
       {state === "cancelled" ? <p role="status">The recording was discarded. Nothing was submitted.</p> : null}
     </div>
   );
@@ -522,37 +575,41 @@ function RewardScreen({ busy, error, onContinue }: { busy: boolean; error: strin
 
 function RegistrationScreen({
   authenticated,
+  googleLinkRecovery,
   googleAvailable,
   busy,
   error,
   onSave,
   onEmail,
   onGoogle,
+  onLinkGoogle,
 }: {
   authenticated: boolean;
+  googleLinkRecovery: boolean;
   googleAvailable: boolean;
   busy: boolean;
   error: string;
   onSave: () => void;
   onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => void;
   onGoogle: (mode: "sign-up" | "sign-in") => void;
+  onLinkGoogle: () => void;
 }) {
-  const [emailOpen, setEmailOpen] = useState(!googleAvailable);
-  const [mode, setMode] = useState<"sign-up" | "sign-in">("sign-up");
+  const [emailOpen, setEmailOpen] = useState(!googleAvailable || googleLinkRecovery);
+  const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   return (
     <div className={styles.page}><Header xp={40} /><main className={styles.registrationGrid}>
-      <section className={styles.heroCopy}><span>SAVE ONLY AFTER ACCOUNT ACCESS</span><h1>Keep the Starting Point you confirmed.</h1><p>Your raw audio and unconfirmed drafts are not saved. Registration earns 0 XP and includes no marketing consent.</p><ul><li>Confirmed Starting Point saved</li><li>Mission 01 marked complete</li><li>Continue to Mission 02</li></ul></section>
+      <section className={styles.heroCopy}>{googleLinkRecovery ? <><span>EXISTING ACCOUNT · SECURE RECOVERY</span><h1>Confirm your existing account first.</h1><p>A B4GAMBLE account already owns this email. Sign in with its email and password, then Google can be linked to that authenticated account.</p><ul><li>Your confirmed Starting Point stays in this browser</li><li>Email match alone never links an account</li><li>Google linking earns 0 XP</li></ul></> : <><span>SAVE ONLY AFTER ACCOUNT ACCESS</span><h1>Keep the Starting Point you confirmed.</h1><p>Your raw audio and unconfirmed drafts are not saved. Registration earns 0 XP and includes no marketing consent.</p><ul><li>Confirmed Starting Point saved</li><li>Mission 01 marked complete</li><li>Continue to Mission 02</li></ul></>}</section>
       <section className={styles.registrationCard}>
-        {authenticated ? <ActionButton disabled={busy} onClick={onSave} size="large">{busy ? "Saving…" : "Save to my account"}</ActionButton> : <>
-          {googleAvailable ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google</ActionButton> : null}
-          <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button>
+        {authenticated ? <ActionButton disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} size="large">{busy ? (googleLinkRecovery ? "Opening Google…" : "Saving…") : (googleLinkRecovery ? "Link Google securely" : "Save to my account")}</ActionButton> : <>
+          {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google</ActionButton> : null}
+          {!googleLinkRecovery ? <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
           {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
             <label className={styles.field}><span>Email</span><input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
             <label className={styles.field}><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-            <ActionButton disabled={busy} size="large" type="submit">{mode === "sign-up" ? "Create account with email" : "Sign in with email"}</ActionButton>
-            <button className={styles.textButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button>
+            <ActionButton disabled={busy} size="large" type="submit">{googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email"}</ActionButton>
+            {!googleLinkRecovery ? <button className={styles.textButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}
           </form> : null}
         </>}
         <StatusMessage error={error} />
@@ -574,6 +631,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const [reviewWording, setReviewWording] = useState<Record<string, string>>({});
   const [clarificationValue, setClarificationValue] = useState("");
   const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
+  const [googleLinkRecovery, setGoogleLinkRecovery] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const oauthRedeemStarted = useRef(false);
@@ -622,13 +680,37 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   useEffect(() => {
     if (sessionPending) return;
+    const authQuery = new URLSearchParams(window.location.search);
+    const authState = authQuery.get("auth");
+    const authError = authQuery.get("error");
+    const accountNotLinked = authState === "google-error" && authError === "account_not_linked";
+    const linkFailed = authState === "google-link-error";
+    const linkReturned = authState === "google-link-return";
+    const recoveryActive = accountNotLinked || linkFailed || (googleLinkRecovery && !linkReturned);
+    if (accountNotLinked) {
+      setGoogleLinkRecovery(true);
+      setError("");
+    } else if (linkFailed) {
+      setGoogleLinkRecovery(true);
+      setError("Google linking was not completed. Your Starting Point is still here; retry when you are ready.");
+    } else if (authState === "google-error" && authError) {
+      setError("Google account access was not completed. You can retry or use email instead.");
+    }
     const oauthJourney = readProgrammeOAuthClaimMarker(window.sessionStorage);
+    if (oauthJourney && recoveryActive) {
+      const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, oauthJourney).programAi;
+      setSubject(oauthJourney);
+      if (restored) setLocal(restored);
+      setPhase("registration");
+      return;
+    }
     if (session?.user.id && oauthJourney) {
       const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, oauthJourney).programAi;
       setSubject(oauthJourney);
       if (restored) setLocal(restored);
       setPhase("registration");
       if (!oauthRedeemStarted.current && restored?.candidate) {
+        if (linkReturned) setGoogleLinkRecovery(false);
         oauthRedeemStarted.current = true;
         setBusy(true);
         redeem(session.user.id, oauthJourney, restored)
@@ -667,7 +749,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } else {
       setSensitiveAuthorityActive(false);
     }
-  }, [redeem, session?.user.id, sessionPending]);
+  }, [googleLinkRecovery, redeem, session?.user.id, sessionPending]);
 
   async function grantAccess() {
     if (!subject) return;
@@ -874,10 +956,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     emailRedeemStarted.current = true;
     setBusy(true); setError("");
     try {
-      const result = input.mode === "sign-up"
+      const result = input.mode === "sign-up" && !googleLinkRecovery
         ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
-      if (result.error || !result.data?.user.id) throw new Error(input.mode === "sign-up" ? "This account could not be created. Try signing in if it already exists." : "Email or password is incorrect.");
+      if (result.error || !result.data?.user.id) throw new Error(input.mode === "sign-up" && !googleLinkRecovery ? "This account could not be created. Try signing in if it already exists." : "Email or password is incorrect.");
+      if (googleLinkRecovery) {
+        await startGoogleLink();
+        return;
+      }
       await redeem(result.data.user.id, subject, local);
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
@@ -899,6 +985,21 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } catch (cause) {
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
       setError(cause instanceof Error ? cause.message : "Google account access failed");
+      setBusy(false);
+    }
+  }
+
+  async function startGoogleLink() {
+    setBusy(true); setError("");
+    try {
+      const result = await authClient.linkSocial({
+        provider: "google",
+        callbackURL: GOOGLE_LINK_CALLBACK,
+        errorCallbackURL: GOOGLE_LINK_ERROR_CALLBACK,
+      });
+      if (result.error) throw new Error("Google linking could not be started");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Google linking failed");
       setBusy(false);
     }
   }
@@ -970,7 +1071,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   if (phase === "candidate" && local.candidate) return <CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />;
   if (phase === "support") return <SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />;
   if (phase === "reward") return <RewardScreen busy={busy} error={error} onContinue={openRegistration} />;
-  if (phase === "registration") return <RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} onEmail={handleEmail} onGoogle={handleGoogle} onSave={saveAuthenticated} />;
+  if (phase === "registration") return <RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />;
   if (phase === "mission" && activeMission && home && session?.user.id) return <ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />;
   if (phase === "review" && activeReview && home && session?.user.id) return <ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />;
   if (phase === "home" && home && session?.user.id) return <ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />;
