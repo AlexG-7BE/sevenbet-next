@@ -1,6 +1,6 @@
 # Contact Service and Mail Readiness
 
-- **Status:** Corrected replacement Preview delivered by provider; support-inbox confirmation required
+- **Status:** Corrected replacement Preview delivered and Founder-confirmed in the support inbox; WAF and Production sequence authorised
 - **Decision:** RFC-028 / `LAUNCH-POLISH-01`
 - **Base:** `64aba31c300984deb128bd6d06495f2bfaceb510`
 - **Current main integrated:** `3416a72e469f31dcba06188847e7dd1716f36ae4`
@@ -41,19 +41,18 @@
 - On 2026-08-13, the authenticated Cloudflare console and both authoritative nameservers confirmed that DMARC was absent. The authorised monitoring-only TXT value `v=DMARC1; p=none` was then added at `_dmarc.b4gamble.com` and read back identically from both authoritative nameservers. Exactly one DMARC policy is published; no aggregate-report destination is configured.
 - Google Admin shows `info@b4gamble.com` as an alternate email address on the existing `support@b4gamble.com` user. No additional user or licence was created.
 - Google Admin's DKIM screen for `b4gamble.com` exposes the existing `google._domainkey` selector and an enabled authentication control while concurrently displaying its DNS-update notice. The existing key was not regenerated or changed; authoritative DNS continues to publish the matching selector.
-- At `2026-08-13 17:07:08 Asia/Almaty`, the one authorised corrected replacement submission produced one Vercel `POST /api/contact` request and one Resend message. Vercel recorded HTTP `200`, `contact_result=delivered`, provider class `2xx`, duration `183 ms` and correlation ID `e6ca5a51-3c9f-484a-bf2f-4e40b6299d20`. Resend email ID `569bea8e-9a2d-4edc-a5ff-8916fc8ffd34` and request/log ID `cf8ee319-f995-4824-aef7-f4072d788143` show `delivered`, exact From `B4GAMBLE <info@b4gamble.com>`, To `support@b4gamble.com`, Reply-To `gorlenko.aleks@gmail.com`, no CC/BCC and no visitor confirmation.
+- At `2026-08-13 17:07:08 Asia/Almaty`, the one authorised corrected replacement submission produced one Vercel `POST /api/contact` request and one Resend message. Vercel recorded HTTP `200`, `contact_result=delivered`, provider class `2xx`, duration `183 ms` and correlation ID `e6ca5a51-3c9f-484a-bf2f-4e40b6299d20`. Resend email ID `569bea8e-9a2d-4edc-a5ff-8916fc8ffd34` and request/log ID `cf8ee319-f995-4824-aef7-f4072d788143` show `delivered`, exact From `B4GAMBLE <info@b4gamble.com>`, To `support@b4gamble.com`, a Founder-controlled external Preview test address as Reply-To, no CC/BCC and no visitor confirmation. Founder Office subsequently confirmed actual receipt in `support@b4gamble.com`; `FOUNDER_MAILBOX_CONFIRMATION_REQUIRED` is satisfied.
 
 No DKIM public-key body or secret value is recorded here.
 
 ### Planned
 
-- Obtain authenticated confirmation of actual receipt in the distinct `support@b4gamble.com` inbox without sending another message.
-- Create the Vercel WAF rule only after a valid replacement Preview delivery and actual `support@b4gamble.com` inbox confirmation.
-- Prepare Production Contact variables only after every pre-merge gate passes.
+- Create and verify the authorised Vercel WAF rule.
+- Prepare the authorised fail-closed Production Contact variables, then complete the remaining pre-merge gates.
 
 ### Not detected
 
-- No authenticated `support@b4gamble.com` inbox confirmation, Production Contact environment mutation or applied Production WAF rule is detected.
+- No Production Contact environment mutation or applied Production WAF rule is detected at this documentation checkpoint.
 - No account email, Programme reminder, Programme engagement or marketing delivery activation is detected.
 
 ## Runtime environment contract
@@ -67,7 +66,7 @@ CONTACT_EMAIL_FROM
 CONTACT_EMAIL_TO
 ```
 
-The approved target identities are `B4GAMBLE <info@b4gamble.com>` and `support@b4gamble.com`. `info@b4gamble.com` is the public/general sender and must be a Google Workspace alias delivering to the existing support mailbox; it must not become a separately licensed user. Normal visitor email is used only as validated Reply-To. The replacement Preview uses only `gorlenko.aleks@gmail.com` as the Founder-controlled Reply-To. The provider-managed `send.b4gamble.com` records remain technical Return-Path authority only.
+The approved target identities are `B4GAMBLE <info@b4gamble.com>` and `support@b4gamble.com`. `info@b4gamble.com` is the public/general sender and must be a Google Workspace alias delivering to the existing support mailbox; it must not become a separately licensed user. Each real Contact submission uses only the validated visitor email as Reply-To, so a support-inbox reply is addressed to that visitor. The corrected replacement Preview used a Founder-controlled external Preview test address only as bounded historical verification evidence; it is not part of Production configuration, defaults, tests, runtime configuration or future smoke submissions. The provider-managed `send.b4gamble.com` records remain technical Return-Path authority only.
 
 Anything other than exact enable value `true` fails closed. Partial or unexpected sender/recipient configuration fails closed. No Contact value uses a `NEXT_PUBLIC_` prefix.
 
@@ -89,15 +88,15 @@ At `2026-08-13 16:10:29 Asia/Almaty`, a CR/LF browser test was normalized by the
 - Subject: `[B4GAMBLE Contact] Preview checkBcc: attacker@example.invalid`.
 - Reply-To: `visitor@example.invalid`, which violates the required Founder-controlled Reply-To contract.
 
-No second submission was made. An authenticated personal Founder Gmail session returned no matching message and did not provide access to the distinct `support@b4gamble.com` mailbox, so actual support-inbox receipt is not established. The current state therefore includes `FOUNDER_MAILBOX_CONFIRMATION_REQUIRED`, but inbox confirmation alone cannot cure the invalid Reply-To gate.
+No second submission was made. The authenticated external Founder mailbox session did not provide access to the distinct `support@b4gamble.com` mailbox. That historical first submission still failed the required Reply-To gate and is not cured by later mailbox evidence.
 
 Preview delivery was immediately rolled back to fail closed by changing branch-specific `CONTACT_EMAIL_DELIVERY_ENABLED` to `false`. Vercel redeployment `9owEsaw6ug7oanxu5v3DzzqeXnHd` reached Ready at the same source commit. The API key, From and To variables remain Sensitive and Preview/branch-only for controlled remediation; Production received none of these values.
 
-After the correction gates passed, exact source `315dc440809dc6ead02ccfbaa3a08e3e41674582` was redeployed as Preview `6dVPMXNMKeN8ZcrH9eCQDFDstBCe` with delivery enabled only for the bounded replacement. The exact Founder payload produced the single successful provider event recorded above. Resend displayed the final subject `[B4GAMBLE Contact] B4GAMBLE Contact Preview verification` and exact From/To/Reply-To contract. The authenticated browser then resolved Gmail only to `gorlenko.aleks@gmail.com`, not the distinct support mailbox; therefore actual mailbox receipt is not established and the required stop is `FOUNDER_MAILBOX_CONFIRMATION_REQUIRED`. No second replacement was sent. Delivery was changed back to `false` immediately after evidence capture; branch-specific Preview redeployment `FFbwLJZerUqvM6cZhguxMGZjWzrR` reached Ready at `2026-08-13 17:10:43 Asia/Almaty`. WAF, Production variables, merge and Production smoke remain untouched.
+After the correction gates passed, exact source `315dc440809dc6ead02ccfbaa3a08e3e41674582` was redeployed as Preview `6dVPMXNMKeN8ZcrH9eCQDFDstBCe` with delivery enabled only for the bounded replacement. The exact Founder payload produced the single successful provider event recorded above. Resend displayed the final subject `[B4GAMBLE Contact] B4GAMBLE Contact Preview verification` and exact From/To contract, with a Founder-controlled external Preview test address as Reply-To. Founder Office subsequently confirmed actual receipt in the distinct support inbox, satisfying `FOUNDER_MAILBOX_CONFIRMATION_REQUIRED`; no additional Preview message is permitted or required. Delivery was changed back to `false` immediately after evidence capture; branch-specific Preview redeployment `FFbwLJZerUqvM6cZhguxMGZjWzrR` reached Ready at `2026-08-13 17:10:43 Asia/Almaty`. At this documentation checkpoint, WAF, Production variables, merge and Production smoke remain untouched.
 
 ## Vercel WAF preparation
 
-Prepare, but do not apply before Founder review:
+Apply under the Founder continuation authorisation:
 
 ```text
 Name: contact-form-rate-limit
@@ -108,7 +107,7 @@ Limit: 5 requests / 10 minutes / IP
 Action: 429
 ```
 
-The read-only review confirms the rule is available in the existing Vercel Pro billing surface with the usage price recorded above; no Enterprise, Bot Management, CAPTCHA or recurring add-on is required. Application validation, body limit, same-origin enforcement and honeypot remain required even when WAF is active. The rule remains unapplied because the exact Preview Reply-To and mailbox gates did not pass.
+The read-only review confirms the rule is available in the existing Vercel Pro billing surface with the usage price recorded above; no Enterprise, Bot Management, CAPTCHA or recurring add-on is required. Application validation, body limit, same-origin enforcement and honeypot remain required even when WAF is active. The exact Preview Reply-To and mailbox gates have passed; Founder Office authorised rule creation.
 
 Rollback removes only `contact-form-rate-limit`. Delivery rollback changes `CONTACT_EMAIL_DELIVERY_ENABLED` away from exact `true` and redeploys; the direct `mailto:support@b4gamble.com` fallback remains available.
 
@@ -118,8 +117,8 @@ Rollback removes only `contact-form-rate-limit`. Delivery rollback changes `CONT
 2. Obtain Founder review of the draft PR.
 3. Verify the exact Resend plan/cost and provider-generated domain records.
 4. Verify the sending domain and authoritative DNS preservation without changing Google Workspace root authority.
-5. Send exactly one non-sensitive Preview test and confirm one message arrived.
-6. Only at explicit Founder activation stage, prepare Production variables and WAF before the route reaches Production.
-7. Under the Founder Office full completion authorisation dated 2026-08-13, merge by merge commit only after every gate passes. After the exact merge deployment is Ready, perform one Founder-controlled Production form smoke and inspect only metadata-safe application logs.
+5. Send exactly one non-sensitive Preview test and confirm one message arrived. This is complete; do not send another Preview message.
+6. Under the Founder continuation authorisation dated 2026-08-13, create the exact WAF rule and prepare fail-closed Production variables before merge.
+7. Merge by merge commit only after every gate passes. After the exact merge deployment is Ready, enable delivery and perform exactly one B4GAMBLE-controlled Production form smoke using `info@b4gamble.com` as the submitted synthetic visitor email; inspect only metadata-safe application logs and confirm actual support-inbox receipt.
 
 Do not change Production database, Programme, Google, affiliate, commercial or CMS configuration during this sequence.
