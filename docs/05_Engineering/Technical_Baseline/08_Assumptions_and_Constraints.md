@@ -12,11 +12,11 @@
 
 ## Explicitly unconfirmed assumptions
 
-- Production database backup/restore capability, Production migration automation, Preview isolation completion, or a successful provider restore drill.
+- Production restore execution and Production migration automation. Managed snapshot metadata, Preview/Production isolation and a successful isolated Preview provider restore drill are detected; they do not establish an authorised Production restore.
 - Active Everflow or S3 credentials/connections, even though adapters/providers exist.
-- Automated analytics/APM/paging, central log retention, backups, data-retention automation, account lifecycle, performance budgets, or service-level objectives. Vercel logs, incident runbooks and an hourly read-only smoke are detected but do not establish those broader capabilities.
+- APM/paging, central log retention, complete account lifecycle, performance budgets or service-level objectives. Vercel Analytics source integration, managed snapshot metadata, bounded Programme transient purge, Vercel logs, incident runbooks and an hourly read-only smoke are detected but do not establish those broader capabilities or their current hosted activation.
 - A generic multi-market/multi-jurisdiction persistence model, final GB legal approval, verified age/account authority or a real commercially eligible GB partner. COMM-01 adds a bounded repository-controlled GB licensed-domain evidence representation; its real record set is empty.
-- Generic article CMS/editor functionality, user self-service account UI, payments, notifications, or reporting.
+- Generic article CMS/editor functionality, user self-service account UI, payments or general notifications. A narrow Contact-to-support Resend adapter and aggregate Programme analytics report are detected; they do not establish account/Programme mail or a general reporting platform.
 
 ## Audit boundary
 

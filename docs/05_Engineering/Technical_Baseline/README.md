@@ -4,10 +4,14 @@
 
 | Field | Value |
 | --- | --- |
-| Audit date | 2026-08-10 |
+| Audit date | 2026-08-13 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | Entire active repository rescanned for PROGRAM-AI-IMPL-01A at exact main base `240dff31537bf4f42978ad7aebe94ae6b60074cc`. Dependencies, generated directories, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. The branch adds the RFC-022 default-off M1 foundation, exactly two schema concepts and migration 0018; dependencies, hosted values and Production configuration do not change. |
+| Change scope | Entire active repository rescanned at current main `c52595405f0800c8c2b51d5951c4a8d45c133034`, before treating FULL-SITE-QA-01 worktree changes as merged facts. Dependencies, generated directories, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. Current main includes feature-gated PROGRAM-AI Missions 01–10, migration 0019 runtime hardening, Vercel product analytics, public Contact/Resend delivery code and RFC-029 runtime polish. Draft PR #72 remains unmerged. |
+
+## Current counted inventory
+
+**Detected at current main `c525954`:** 90 `app/api/**/route.ts` files, 63 `app/**/page.tsx` files, 19 ordered Prisma migration directories, 94 TS/TSX/MJS `.test`/`.spec` files under `tests/` plus one CJS test, and 88 tracked assets under `public/`. The active audit worktree may contain additional uncommitted tests; those are not counted as current-main baseline.
 
 ## Evidence vocabulary
 

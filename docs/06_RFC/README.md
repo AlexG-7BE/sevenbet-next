@@ -21,8 +21,9 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current PROGRAM-AI implementation decision
 
 - [RFC-022 — PROGRAM-AI M1 Foundation and Preview Vertical Slice](RFC-022-PROGRAM-AI-M1-Foundation-and-Preview-Vertical-Slice.md) authorises the bounded feature-off-by-default M1 foundation, exactly two narrow persistence concepts, provider-neutral ports, legacy compatibility and Preview vertical slice for `PROGRAM-AI-IMPL-01A`.
-- [RFC-023 — OpenAI Preview Voice and Personalisation Activation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) selects the two narrow OpenAI adapters, exact models, dual real-provider gate and Preview-only data/operations boundary for `PROGRAM-AI-ACTIVATE-01`. Production remains off.
-- [RFC-025 — PROGRAM-AI Missions 02–10 MVP](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) authorises the bounded feature-on Missions 02–10 contracts, exact `15 + 20 + 15 + 25` reward policy, three completion-derived Personal Reviews, closed JSON persistence, Mission guidance operations, Programme Home/resume and private-data-separated public discovery navigation for `PROGRAM-AI-IMPL-01B`. Production remains off.
+- [RFC-023 — OpenAI Preview Voice and Personalisation Activation](RFC-023-OpenAI-Preview-Voice-and-Personalisation-Activation.md) selects the two narrow OpenAI adapters, exact models, dual real-provider gate and Preview-only data/operations boundary for `PROGRAM-AI-ACTIVATE-01`. It provides no Production activation authority; the live Production contradiction is tracked in Project State.
+- [RFC-025 — PROGRAM-AI Missions 02–10 MVP](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) authorises the bounded feature-on Missions 02–10 contracts, exact `15 + 20 + 15 + 25` reward policy, three completion-derived Personal Reviews, closed JSON persistence, Mission guidance operations, Programme Home/resume and private-data-separated public discovery navigation for `PROGRAM-AI-IMPL-01B`. It provides no Production activation authority; the live Production contradiction is tracked in Project State.
+- [RFC-031 — Vercel-Compatible Programme Voice Upload Limit](RFC-031-Vercel-Compatible-Programme-Voice-Upload-Limit.md) is **proposed only**. It would reduce RFC-023's raw audio limit from 8 MiB to 4 MiB while retaining the 90-second ceiling, add complete-request streaming enforcement and client preflight, and preserve the no-storage/type-instead boundary. It provides no implementation or deployment authority until approved.
 
 ## Current database recovery decision
 
@@ -39,3 +40,9 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current public Contact and transactional-mail decision
 
 - [RFC-028 — Public Contact and Transactional Mail Boundary](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) authorises the bounded public Contact route, strict no-database submission contract, isolated Resend HTTPS adapter, existing Google Workspace support mailbox authority, Vercel WAF abuse policy and fail-closed mail/DNS activation boundary for `LAUNCH-POLISH-01`. Account, Programme and commercial communications remain disabled.
+
+## Current runtime and canonical-host decisions
+
+- [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) governs the bounded microphone recovery, explicit same-email Google linking, standalone login and no-action Best Offers demonstration fallback merged by PR #71.
+- [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) governs the current audit branch's bounded canonical-origin source change. Its RFC explicitly does not authorise merge or Production deployment.
+- [RFC-032 — Exact Demo Detail Continuity](RFC-032-Exact-Demo-Detail-Continuity.md) governs the current audit branch's exact-manifest, noindex, review-only detail fallback for otherwise broken Best Offers demonstration links. It does not broaden directory, API, sitemap, CMS or commercial authority and does not authorise merge or Production deployment.
