@@ -12,6 +12,9 @@ import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authorit
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import { absoluteUrl, resolveSiteUrl, siteUrl } from "../lib/site";
 import { enforceTemporaryDemoReviewOnly } from "../lib/services/public-casino.service";
+import { publicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
+import { publicComparisonService } from "../lib/services/public-comparison.service";
+import { publicOfferService } from "../lib/services/public-offer.service";
 
 const OLD_PUBLIC_BRAND = /SevenBet|SEVENBET/;
 
@@ -142,7 +145,27 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
     host: "https://b4gamble.com",
   });
 
-  const entries = await sitemap();
+  const originalDiscover = publicCasinoDiscoveryService.discover;
+  const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalCompare = publicComparisonService.compare;
+  publicCasinoDiscoveryService.discover = async () => ({
+    items: [], total: 0, page: 1, pageSize: 48, pageCount: 0,
+    inventoryMode: "DEMO_ONLY",
+  }) as unknown as Awaited<ReturnType<typeof originalDiscover>>;
+  publicOfferService.getBestOffersPageData = async () => ({
+    status: "unavailable", inventoryMode: "UNAVAILABLE",
+  }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicComparisonService.compare = async () => ({
+    status: "unavailable", inventoryMode: "UNAVAILABLE",
+  }) as unknown as Awaited<ReturnType<typeof originalCompare>>;
+  let entries: Awaited<ReturnType<typeof sitemap>>;
+  try {
+    entries = await sitemap();
+  } finally {
+    publicCasinoDiscoveryService.discover = originalDiscover;
+    publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicComparisonService.compare = originalCompare;
+  }
   assert.ok(entries.length > 10);
   assert.ok(entries.some((entry) => entry.url === "https://b4gamble.com/10-steps"));
   assert.ok(entries.every((entry) => !temporaryDemoCasinoIds.some((id) => entry.url.includes(id))));
