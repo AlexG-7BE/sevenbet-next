@@ -216,6 +216,20 @@ test("Best Offers uses the exact no-action RFC-012 demonstration when the publis
   assert.ok(result.records.every((item) => item.bonus.eligibility && item.bonus.importantConditions.length));
 });
 
+test("Best Offers uses the same exact demonstration when the CMS-disabled compatibility shortlist is empty", async () => {
+  const result = await new PublicOfferService(store([], true), {
+    cmsEnabled: false,
+    legacyCasinos: [],
+  }).getBestOffersPageData();
+
+  assert.equal(result.status, "available");
+  assert.equal(result.inventoryMode, "DEMO_ONLY");
+  assert.equal(result.records.length, 12);
+  assert.ok(result.records.every((item) => isTemporaryDemoCasinoId(item.casino.id)));
+  assert.ok(result.records.every((item) => item.dataClassification === "DEMO_FIXTURE"));
+  assert.ok(result.records.every((item) => item.commercialAvailability === "UNAVAILABLE" && item.action.href === null));
+});
+
 test("Best Offers never replaces a repository failure or eligible published shortlist with demonstrations", async () => {
   const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }).getBestOffersPageData();
   assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" });

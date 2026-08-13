@@ -65,12 +65,13 @@ The existing server-owned ranking method and full `BestOffersExperience` remain 
 
 1. read current published offer projections;
 2. use the strict GB/material-term shortlist when at least one record clears every existing gate;
-3. when the published read succeeds but the shortlist is empty, project only the exact 25 RFC-012 records from the existing source-controlled temporary-production manifest and rank their already-authored synthetic terms; or
-4. when the repository read fails, fail closed and show the unavailable state.
+3. when the published read succeeds but the shortlist is empty, project only the exact 25 RFC-012 records from the existing source-controlled temporary-production manifest and rank their already-authored synthetic terms;
+4. when CMS projection is explicitly disabled and its compatibility shortlist is empty, use that same exact no-action demonstration rather than an empty shell; or
+5. when an attempted repository read fails, fail closed and show the unavailable state.
 
 The demonstration projection is not a commercial-data substitute and is not mixed into `/bonuses`, `/casinos`, search or repository results. Exact manifest IDs are the only demo authority. Every resulting record is `DEMO_FIXTURE`, actions and raw destinations are absent, the page labels the demonstration prominently, `noindex` is used and item-list structured data is suppressed. It does not relax evidence completeness, GB selection, partner eligibility, affiliate routing or referral policy and does not fabricate a real operator or offer.
 
-No Production reseed or data edit is authorised. Genuine current published records automatically replace the demo fallback as soon as one or more clear the unchanged shortlist gates.
+The CMS-disabled case does not claim a published-repository read and does not broaden the compatibility inventory. It is the same page-local, exact-ID demonstration authority. No Production reseed or data edit is authorised. With CMS projection enabled, genuine current published records automatically replace the demo fallback as soon as one or more clear the unchanged shortlist gates.
 
 ## 6. Design decision ledger
 

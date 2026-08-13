@@ -193,16 +193,21 @@ export class PublicOfferService {
   async getBestOffersPageData(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country ?? "GB";
     const limit = options.limit ?? 12;
+    const demonstration = () => {
+      const records = selectOverallShortlist(temporaryDemoBestOffers().map(classifyOffer), { country, limit });
+      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
+    };
     if (!this.cmsEnabled()) {
       const records = await this.getFeaturedOffers({ country, limit }, authority);
-      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
+      return records.length
+        ? { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const
+        : demonstration();
     }
     try {
       const publishedRecords = await this.listEligibleOffers(authority, { throwOnError: true });
       const records = selectOverallShortlist(publishedRecords, { country, limit });
       if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
-      const demoRecords = selectOverallShortlist(temporaryDemoBestOffers().map(classifyOffer), { country, limit });
-      return { status: demoRecords.length ? "available" : "no-eligible", records: demoRecords, inventoryMode: publicOfferInventoryMode(demoRecords) } as const;
+      return demonstration();
     } catch {
       return { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     }

@@ -4,7 +4,7 @@
 
 ### Current repository evidence — 2026-08-13
 
-- **Detected on the unmerged `RUNTIME-PRODUCT-POLISH-01` review branch:** `/best-offers` retains the strict published GB/material-term shortlist as its first source. When that read succeeds but returns zero eligible records, the service projects only the exact RFC-012 source-controlled manifest through the existing public casino/offer mappers.
+- **Detected on the unmerged `RUNTIME-PRODUCT-POLISH-01` review branch:** `/best-offers` retains the strict published GB/material-term shortlist as its first source when CMS projection is enabled. When that read succeeds but returns zero eligible records, or when CMS projection is explicitly disabled and its compatibility shortlist is empty, the service projects only the exact RFC-012 source-controlled manifest through the existing public casino/offer mappers.
 - **Detected:** every fallback result is classified by exact casino ID as `DEMO_FIXTURE`, has no action or raw destination, receives the existing demonstration disclosure and uses `noindex,follow` without ItemList/Offer structured data.
 - **Detected:** a repository read failure remains `unavailable`; it does not invoke the demonstration. An eligible published shortlist remains `PUBLISHED_ONLY` and is not mixed with manifest records.
 - **Detected:** the fallback is confined to `getBestOffersPageData`; `/bonuses`, public search, repository results and public casino inventory do not receive source-controlled manifest records.
@@ -38,7 +38,8 @@ Casino Builder / CMS
 RFC-029 adds one presentation-only branch after a successful published read:
 
 ```text
-published shortlist empty
+published shortlist empty after a successful read
+  OR CMS-disabled compatibility shortlist empty
   → exact RFC-012 source-controlled manifest
   → existing public casino mapper
   → existing public offer mapper
@@ -72,7 +73,7 @@ The service validates and owns:
 - stable tie-breakers by score, publication time, casino name, casino slug and bonus slug;
 - one-based pagination and eligible-offer facet counts.
 
-CMS mode remains fail closed on repository failure and never expands visibility with legacy records. Legacy offers are used only when CMS mode is explicitly disabled for local or test operation. The RFC-029 Best Offers exception is not a legacy/repository fallback: it runs only after a successful read with no eligible shortlist, uses exact authorised manifest IDs, exposes no action and is isolated to the one page-data method.
+CMS mode remains fail closed on repository failure and never expands visibility with legacy records. Legacy offers are used only when CMS mode is explicitly disabled for local or test operation. The RFC-029 Best Offers exception is not a repository-data fallback: it runs after a successful read with no eligible shortlist or after the explicitly CMS-disabled compatibility shortlist is empty, uses exact authorised manifest IDs, exposes no action and is isolated to the one page-data method.
 
 ## Page behavior
 
