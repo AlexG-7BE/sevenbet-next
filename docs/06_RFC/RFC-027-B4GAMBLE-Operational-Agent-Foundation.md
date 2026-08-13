@@ -154,7 +154,7 @@ The registry contains exactly these specialists:
 | `partner-intelligence` | Partner Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `digital-pr-data-story` | Digital PR & Data Story Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 
-Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Its real business run is recorded as completed; its curated quality evaluation remains pending, and a public-web tool is not authorised. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
+Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Its offline curated evaluation corpus is complete; live model-quality evaluation remains pending Founder approval. A public-web tool is not authorised. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
 
 ## 9. Deterministic preflight
 
