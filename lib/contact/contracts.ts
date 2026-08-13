@@ -1,5 +1,5 @@
 export const SUPPORT_MAILBOX = "support@b4gamble.com";
-export const CONTACT_FROM_IDENTITY = "B4GAMBLE Website <website@b4gamble.com>";
+export const CONTACT_FROM_IDENTITY = "B4GAMBLE <info@b4gamble.com>";
 
 export const contactFieldNames = ["name", "email", "subject", "message"] as const;
 export type ContactFieldName = (typeof contactFieldNames)[number];

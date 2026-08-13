@@ -40,7 +40,7 @@ Contact uses a server-only `ContactTransport` port owned by `lib/contact`. This 
 
 The adapter uses direct `fetch` and adds no SDK dependency. It sends one internal notification only:
 
-- From: `B4GAMBLE Website <website@b4gamble.com>` after domain verification;
+- From: `B4GAMBLE <info@b4gamble.com>` after domain and Workspace-alias verification;
 - To: `support@b4gamble.com`;
 - Reply-To: the server-validated visitor email; and
 - Subject: `[B4GAMBLE Contact] ` plus the validated subject.
@@ -58,7 +58,7 @@ CONTACT_EMAIL_FROM
 CONTACT_EMAIL_TO
 ```
 
-Delivery is enabled only when the first variable is exactly `true` and all remaining values pass validation. The configured recipient must be exactly `support@b4gamble.com`; the visible From address must be exactly the approved verified `B4GAMBLE Website <website@b4gamble.com>` identity. Partial, malformed or unexpected configuration resolves to the disabled transport. Memory transport cannot be selected by Production environment input.
+Delivery is enabled only when the first variable is exactly `true` and all remaining values pass validation. The configured recipient must be exactly `support@b4gamble.com`; the visible From address must be exactly the approved verified `B4GAMBLE <info@b4gamble.com>` identity. `info@b4gamble.com` is the public/general sender and must be an alias delivering to the existing human-operated support mailbox, not a separately licensed user. Partial, malformed or unexpected configuration resolves to the disabled transport. Memory transport cannot be selected by Production environment input.
 
 Provider configuration and Production variables do not activate account/security, Programme reminder, Programme engagement or commercial marketing delivery. `PROGRAM_AI`, Google, affiliate, commercial and CMS flags remain unchanged.
 
@@ -87,7 +87,7 @@ The existing human mailbox authority remains Google Workspace Business Starter a
 
 Resend is the approved narrow transactional provider for the verified `b4gamble.com` sending domain. The provider-generated `send.b4gamble.com` MX and SPF records are permitted only as the technical SES Return-Path for that root-domain authority; they are not a second Resend domain and must not become the visible From identity. The implementation must use only provider-generated exact records and must not replace or modify Google Workspace MX, root SPF, Workspace DKIM, DNSSEC or web DNS.
 
-Founder Office override dated 2026-08-13 cancelled and superseded the former `2026-08-14 09:00 Asia/Almaty` mail-DNS date gate. The same override approved immediate audit and bounded activation while preserving the exact Google Workspace and web/DNS controls above. DMARC remains a separate action: if an exact separately approved value is unavailable, no DMARC policy, reporting address, percentage or subdomain policy may be guessed.
+Founder Office override dated 2026-08-13 cancelled and superseded the former `2026-08-14 09:00 Asia/Almaty` mail-DNS date gate. The same override approved immediate audit and bounded activation while preserving the exact Google Workspace and web/DNS controls above. Founder Office correction dated 2026-08-13 approved `B4GAMBLE <info@b4gamble.com>`, an `info@` alias to the support mailbox, one replacement Preview send using the Founder-controlled Reply-To, and the initial monitoring-only DMARC policy `v=DMARC1; p=none`. No reporting address, percentage, subdomain policy, quarantine or reject policy is authorised by that correction.
 
 ## 7. Privacy, retention and processor boundary
 
@@ -107,7 +107,7 @@ Required evidence includes validation and injection tests, same-origin and conte
 
 CI and local tests use no real provider call. After mail DNS is permitted and the sending domain is verified, exactly one Founder-controlled, non-sensitive Preview delivery test may be sent. Production environment preparation, WAF activation and Production contact smoke require the later Founder activation stage. Founder Office full completion authorisation dated 2026-08-13 now authorises Codex to complete the pull request and merge by merge commit only after every stated gate passes; the pull request remains draft until then.
 
-The 2026-08-13 Preview attempt consumed that one-send allowance after the browser normalized a CR/LF test subject. Provider acceptance and delivery passed, and From/To were exact, but Reply-To was `visitor@example.invalid` rather than a Founder-controlled address. Delivery was rolled back off and no second send, WAF, Production activation or merge is authorised by this RFC without a new Founder decision.
+The first 2026-08-13 Preview attempt consumed its one-send allowance after the browser normalized a CR/LF test subject. Provider acceptance and delivery passed, and the then-approved From/To were exact, but Reply-To was `visitor@example.invalid` rather than a Founder-controlled address. Delivery was rolled back off. Founder Office correction dated 2026-08-13 preserves that history and separately authorises exactly one replacement Preview submission only after the sender, Workspace alias, authentication, DMARC, disabled deployment and non-send gates pass. WAF, Production preparation and merge remain conditional on valid support-inbox receipt of that replacement.
 
 ## 10. Cost and rollback
 

@@ -1,6 +1,6 @@
 # Contact Service and Mail Readiness
 
-- **Status:** Preview one-shot contract failed; delivery rolled back off; WAF, Production and merge gates blocked
+- **Status:** Sender correction and DMARC complete; Google Workspace alias verification and replacement Preview remain gated
 - **Decision:** RFC-028 / `LAUNCH-POLISH-01`
 - **Base:** `64aba31c300984deb128bd6d06495f2bfaceb510`
 - **Current main integrated:** `3416a72e469f31dcba06188847e7dd1716f36ae4`
@@ -16,7 +16,7 @@
 - Contact delivery is isolated under `lib/contact`. It does not activate the account/security or Programme transports under `lib/communications`.
 - The Resend adapter uses direct server-side HTTPS, plain text, a bounded timeout and no automatic retry, SDK, tracking pixel, click tracking, visitor confirmation or marketing list.
 - Runtime configuration fails closed unless `CONTACT_EMAIL_DELIVERY_ENABLED` is exactly `true` and the API key, exact approved From identity and exact support recipient are all valid.
-- Founder Office override dated 2026-08-13 superseded the former sender and date gate. The visible sender is now exactly `B4GAMBLE Website <website@b4gamble.com>` and the former `2026-08-14 09:00 Asia/Almaty` mail-DNS gate is cancelled.
+- Founder Office correction dated 2026-08-13 sets the visible sender to exactly `B4GAMBLE <info@b4gamble.com>`, requires `info@b4gamble.com` to be an alias delivering to `support@b4gamble.com`, and separately authorises one replacement Preview submission after every pre-send gate passes. The former `2026-08-14 09:00 Asia/Almaty` mail-DNS gate remains cancelled.
 - The normal merge of current main preserved PR #69 `AGENT-CORE-01` and PR #70 `PARTNER-INTEL-EVAL-01`. Their pre-existing RFC-027 identifier required the unmerged Contact decision to move to RFC-028; no Contact runtime variable or behaviour changed.
 - Exact-head local verification passed: root quality including 196 structural assertions and 30 Contact/launch assertions; legal 20/20; isolated Agent Core 40/40 plus typecheck/lint; production build; 742-file build-secret scan; 71-route/70-link audit with zero broken links; 32 passed non-database browser cases with one configured skip; all 19 migrations against a fresh local `_ci` database; 3/3 PostgreSQL runtime cases; and 9/9 database-backed Programme browser cases.
 - The authenticated Vercel team is on the existing Pro plan. Project Firewall is active, Custom Rules and Rate Limit rules are both `0 / 40`, and the current rule editor supports exact request path, Fixed Window, IP Address key, 10–600 second window and HTTP 429. The required target is therefore representable without Enterprise.
@@ -36,20 +36,22 @@
   - `send.b4gamble.com` MX and SPF match the verified Resend Return-Path records;
   - root and `www` web A records are present; and
   - DNSSEC has both parent DS and zone DNSKEY evidence.
-- The Cloudflare dashboard was not authenticated during this read-back. The evidence above comes directly from the Cloudflare authoritative nameservers and does not claim console access or mutation.
+- During the initial activation read-back, the Cloudflare dashboard was not authenticated and the evidence came directly from authoritative nameservers. The later Founder correction run used the authenticated Cloudflare console for the narrowly authorised DMARC addition; the earlier provider-record evidence remains authoritative DNS evidence rather than a retrospective console claim.
 - Resend API key `B4GAMBLE Website Contact` was created with Sending access restricted to the verified `b4gamble.com` domain. Its value was transferred only in transient browser memory to a Sensitive, Preview-only, `codex/launch-polish-01` Vercel variable and was never printed, written to disk or committed.
+- On 2026-08-13, the authenticated Cloudflare console and both authoritative nameservers confirmed that DMARC was absent. The authorised monitoring-only TXT value `v=DMARC1; p=none` was then added at `_dmarc.b4gamble.com` and read back identically from both authoritative nameservers. Exactly one DMARC policy is published; no aggregate-report destination is configured.
 
 No DKIM public-key body or secret value is recorded here.
 
 ### Planned
 
-- A replacement Preview delivery requires a new explicit Founder authorisation because the one authorised send has been exhausted and no second test is permitted under the current order.
-- Create the Vercel WAF rule only after a separately authorised valid Preview delivery and actual `support@b4gamble.com` inbox confirmation.
+- Complete Google Admin identity re-verification, add/verify `info@b4gamble.com` as an alias to `support@b4gamble.com`, and inspect the existing Google DKIM status if the console exposes it.
+- Use the new explicit Founder authorisation for exactly one replacement Preview delivery only after the corrected fail-closed deployment and all non-send gates pass.
+- Create the Vercel WAF rule only after a valid replacement Preview delivery and actual `support@b4gamble.com` inbox confirmation.
 - Prepare Production Contact variables only after every pre-merge gate passes.
 
 ### Not detected
 
-- No valid Founder-controlled Preview delivery, authenticated `support@b4gamble.com` inbox confirmation, Production Contact environment mutation or applied Production WAF rule is detected.
+- No verified `info@b4gamble.com` Workspace alias, valid replacement Founder-controlled Preview delivery, authenticated `support@b4gamble.com` inbox confirmation, Production Contact environment mutation or applied Production WAF rule is detected.
 - No account email, Programme reminder, Programme engagement or marketing delivery activation is detected.
 
 ## Runtime environment contract
@@ -63,7 +65,7 @@ CONTACT_EMAIL_FROM
 CONTACT_EMAIL_TO
 ```
 
-The approved target identities are `B4GAMBLE Website <website@b4gamble.com>` and `support@b4gamble.com`. `website@b4gamble.com` is a verified-domain transactional From identity and need not be a human mailbox. Visitor email is used only as validated Reply-To. The provider-managed `send.b4gamble.com` records are technical Return-Path authority only.
+The approved target identities are `B4GAMBLE <info@b4gamble.com>` and `support@b4gamble.com`. `info@b4gamble.com` is the public/general sender and must be a Google Workspace alias delivering to the existing support mailbox; it must not become a separately licensed user. Normal visitor email is used only as validated Reply-To. The replacement Preview uses only `gorlenko.aleks@gmail.com` as the Founder-controlled Reply-To. The provider-managed `send.b4gamble.com` records remain technical Return-Path authority only.
 
 Anything other than exact enable value `true` fails closed. Partial or unexpected sender/recipient configuration fails closed. No Contact value uses a `NEXT_PUBLIC_` prefix.
 
@@ -71,7 +73,7 @@ Anything other than exact enable value `true` fails closed. Partial or unexpecte
 
 Founder Office override dated 2026-08-13 explicitly cancelled and superseded the former `2026-08-14 09:00 Asia/Almaty` date gate. No further mail DNS write is required for the currently verified domain. Any later provider-requested record change must still use only exact Resend control-plane values and preserve Google Workspace root MX, root SPF, Workspace DKIM, DNSSEC and web DNS. Mail records remain DNS-only, not proxied.
 
-DMARC is a separate Founder-scheduled action. If the exact previously approved value is unavailable at activation time, report `DMARC_VALUE_REQUIRED` and do not guess a policy, reporting address, percentage or subdomain policy.
+DMARC is now exactly `v=DMARC1; p=none` at `_dmarc.b4gamble.com`, confirmed through both authoritative Cloudflare nameservers. No `rua`, `ruf`, `pct`, subdomain policy, quarantine or reject setting is configured or authorised in this work package.
 
 ## Preview activation evidence and stop state
 
@@ -81,7 +83,7 @@ At `2026-08-13 16:10:29 Asia/Almaty`, a CR/LF browser test was normalized by the
 
 - Vercel: `POST /api/contact`, HTTP `200`, `contact_result=delivered`, provider class `2xx`, duration `139 ms`; application log contained only the approved metadata fields.
 - Resend request/log ID: `e64b5d64-464c-44ab-9fdc-7b91ec8b6d4c`; email ID: `30bc211f-6971-4a38-8715-d316a71233c9`; provider API status `200`; delivery status `delivered`.
-- From: `B4GAMBLE Website <website@b4gamble.com>`; To: `support@b4gamble.com`; no CC/BCC and no visitor confirmation message.
+- Historical From: `B4GAMBLE Website <website@b4gamble.com>`; To: `support@b4gamble.com`; no CC/BCC and no visitor confirmation message. This records the former approved contract and is not the current sender identity.
 - Subject: `[B4GAMBLE Contact] Preview checkBcc: attacker@example.invalid`.
 - Reply-To: `visitor@example.invalid`, which violates the required Founder-controlled Reply-To contract.
 

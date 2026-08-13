@@ -45,7 +45,7 @@ test("one accepted submission creates exactly one plain-text envelope", async ()
   assert.match(response.headers.get("cache-control") ?? "", /no-store/);
   assert.equal(transport.deliveredMessages().length, 1);
   assert.deepEqual(transport.deliveredMessages()[0], {
-    from: "B4GAMBLE Website <website@b4gamble.com>",
+    from: "B4GAMBLE <info@b4gamble.com>",
     to: "support@b4gamble.com",
     replyTo: "founder@example.invalid",
     subject: "[B4GAMBLE Contact] Editorial question",
