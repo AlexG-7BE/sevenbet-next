@@ -71,6 +71,13 @@ test("Partner Intelligence eval corpus has the required bounded scenarios", asyn
       /Great Britain relevance.*generic register entry/i.test(assertion),
     ),
   );
+  const contradictorySourcesCase = cases[3];
+  assert.ok(contradictorySourcesCase);
+  assert.ok(
+    contradictorySourcesCase.expected.assertions.some((assertion) =>
+      /source-a.*source-b.*public-web pages.*authoritative/i.test(assertion),
+    ),
+  );
 });
 
 test("Partner Intelligence eval corpus preserves deterministic boundaries", async () => {
@@ -110,4 +117,26 @@ test("Partner Intelligence keeps jurisdiction claims within supplied evidence", 
   assert.match(instructions, /jurisdiction or market.*directly supported by supplied evidence/i);
   assert.match(instructions, /generic register entry/i);
   assert.match(instructions, /UNKNOWN.*evidence gap/i);
+});
+
+test("Partner Intelligence keeps supplied public-web source authority unresolved", () => {
+  const definition = getSpecialist("partner-intelligence");
+  const instructions = [
+    ...definition.checks,
+    ...definition.prohibitedActions,
+    definition.outputGuidance,
+  ].join(" ");
+
+  assert.match(
+    instructions,
+    /supplied public-web sources described neutrally.*authority.*explicitly supported/i,
+  );
+  assert.match(
+    instructions,
+    /kind, title, URL, excerpt, timestamp, organisation name, or brand name do not establish authority/i,
+  );
+  assert.match(
+    instructions,
+    /Future official, primary, or authoritative evidence may be requested.*must not relabel an existing supplied source/i,
+  );
 });

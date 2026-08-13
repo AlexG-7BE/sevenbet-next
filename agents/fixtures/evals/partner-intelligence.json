@@ -136,7 +136,10 @@
       "recommendation": "REVIEW",
       "ruleIds": ["COMMERCIAL_EVIDENCE_GAP"],
       "evidenceGapClaims": ["Operator Delta currently accepts affiliate applications."],
-      "assertions": ["Do not resolve contradictory sources without human evidence review"]
+      "assertions": [
+        "Do not resolve contradictory sources without human evidence review",
+        "Do not describe source-a, source-b, or supplied public-web pages as authoritative, official, verified, primary, or controlling unless that property is explicitly supported by supplied evidence."
+      ]
     }
   },
   {
