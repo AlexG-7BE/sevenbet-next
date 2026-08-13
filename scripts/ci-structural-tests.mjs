@@ -48,7 +48,7 @@ const feGapResult = spawnSync(
   [
     "--import",
     "tsx",
-    "--test-name-pattern=^(Privacy|Terms|Self-Check|Personal Limit Tracker|About uses)",
+    "--test-name-pattern=^(Privacy|Terms|Self-Check|Personal Limit Tracker|About uses|FE-GAP-01 product boundaries)",
     "--test",
     "tests/fe-gap-01-structural.test.ts",
   ],
