@@ -7,12 +7,16 @@ import { parseProductAnalyticsEvent } from "@/lib/analytics/product-analytics-ev
 
 export type ProductAnalyticsSink = (event: ProductAnalyticsEvent) => void | Promise<void>;
 
-export function isProductAnalyticsEnabled(
-  environment: { NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED?: string } = process.env as {
-    NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED?: string;
-  },
-) {
-  return environment.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED === "true";
+export function parseProductAnalyticsEnabled(value: string | undefined) {
+  return value === "true";
+}
+
+export function isProductAnalyticsEnabled(environment?: { NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED?: string }) {
+  return parseProductAnalyticsEnabled(
+    environment
+      ? environment.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED
+      : process.env.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED,
+  );
 }
 
 export function productAnalyticsEvent<N extends ProductAnalyticsEventName>(

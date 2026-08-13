@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { redactProductAnalyticsPageview } from "../components/analytics/ProductAnalytics";
@@ -61,6 +62,31 @@ test("analytics is default-off and requires the exact public flag value", () => 
   assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "TRUE" }), false);
   assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "1" }), false);
   assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "true" }), true);
+  assert.match(readFileSync("lib/analytics/product-analytics.ts", "utf8"), /process\.env\.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
+});
+
+test("disabled client analytics emits nothing and never touches marker storage", () => {
+  let reads = 0;
+  let writes = 0;
+  const events: unknown[] = [];
+  const client = createProductAnalyticsClient({
+    enabled: false,
+    storage: {
+      getItem: () => { reads += 1; return null; },
+      setItem: () => { writes += 1; },
+    },
+    sink: (event) => { events.push(event); },
+  });
+  client.startClicked("home");
+  client.accessGranted("start");
+  client.personalisedValue("starting_point");
+  client.registrationCtaPresented();
+  client.homeViewed({ currentMission: 1, engagementDayBucket: "unknown" });
+  client.missionOpened(2, "start");
+  client.reviewOpened("first");
+  client.discoveryClicked({ sourceSurface: "programme_home", destinationRoute: "casinos" });
+  client.voiceOutcome("cancelled");
+  assert.deepEqual({ reads, writes, events: events.length }, { reads: 0, writes: 0, events: 0 });
 });
 
 test("pageview redaction excludes admin/API and strips Programme query and fragment data", () => {

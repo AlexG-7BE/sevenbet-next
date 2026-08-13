@@ -5,7 +5,7 @@ export const PROGRAMME_AUTH_ACCESS_PROOF_VERSION = 1;
 export const PROGRAMME_AUTH_ACCESS_PROOF_PURPOSE = "PROGRAMME_AUTH_ACCESS";
 
 export const PROGRAMME_TERMS_VERSION = "terms:effective-2026-08-07:updated-2026-08-09";
-export const PROGRAMME_PRIVACY_VERSION = "privacy:effective-2026-08-09:updated-2026-08-10";
+export const PROGRAMME_PRIVACY_VERSION = "privacy:effective-2026-08-09:updated-2026-08-13";
 
 export const PROGRAMME_ACCESS_HEADERS = {
   age: "x-sevenbet-age-attestation",
