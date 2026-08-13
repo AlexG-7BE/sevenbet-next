@@ -35,3 +35,7 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current internal operational-agent decision
 
 - [RFC-027 — B4GAMBLE Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) authorises the isolated internal `agents/` package, shared policy/result contracts, eight Wave 1 read-analyse-draft specialists, explicit cost-aware routing and no-key structural evaluation for `AGENT-CORE-01`. It authorises no consumer runtime, database, Production, commercial, external-write or scheduled capability.
+
+## Current public Contact and transactional-mail decision
+
+- [RFC-028 — Public Contact and Transactional Mail Boundary](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) authorises the bounded public Contact route, strict no-database submission contract, isolated Resend HTTPS adapter, existing Google Workspace support mailbox authority, Vercel WAF abuse policy and fail-closed mail/DNS activation boundary for `LAUNCH-POLISH-01`. Account, Programme and commercial communications remain disabled.

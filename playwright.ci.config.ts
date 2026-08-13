@@ -38,6 +38,7 @@ export default defineConfig({
       CMS_PHASE1_ALLOW_DEV_ADMIN: "false",
       AFFILIATE_REDIRECT_ENGINE_ENABLED: "false",
       PUBLIC_CASINO_CMS_ENABLED: "false",
+      LAUNCH_POLISH_ERROR_HARNESS: "true",
     },
   },
 });

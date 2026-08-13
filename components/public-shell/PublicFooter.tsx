@@ -35,7 +35,7 @@ export function PublicFooter() {
         </div>
         <div className={styles.footerBaseline}>
           <span>© B4GAMBLE · Information and comparison service</span>
-          <div><Link href="/responsible-gambling">Responsible gambling</Link><Link href="/about">About</Link><span>Contact</span></div>
+          <div><Link href="/responsible-gambling">Responsible gambling</Link><Link href="/about">About</Link><Link href="/contact">Contact</Link></div>
         </div>
       </div>
     </footer>

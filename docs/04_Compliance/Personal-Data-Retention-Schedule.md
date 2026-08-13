@@ -1,7 +1,7 @@
 # Personal-Data Retention Schedule
 
 - **Status:** Launch baseline with open verification actions
-- **Last reviewed:** 2026-08-11
+- **Last reviewed:** 2026-08-12
 
 “Implemented” below means repository evidence enforces the stated access or deletion behaviour. A logical expiry is not described as physical deletion.
 
@@ -22,7 +22,7 @@
 | Verification records | Short-lived authentication verification | Expiry field exists; exact-email rows are included in deletion | Approve physical cleanup interval | **Detected** expiry field/deletion. Cleanup interval **not detected**. |
 | Application/security logs | Security, reliability and debugging | Hosting/runtime logs may contain request and diagnostic data | Minimise; approve provider period and access roles | **Detected** logging calls/provider hosting. Exact retention **unknown**. |
 | Vercel/runtime logs | Application operation, security and incident diagnosis | Provider-managed runtime output; application avoids logging raw Programme request bodies | Verify platform period, regions, access and deletion controls | **Detected** provider/runtime use. Exact physical retention **unknown / owner evidence required**. |
-| Support correspondence | Responding to user support and safety enquiries | Public contact routes exist; no repository-owned support system detected | Approve case-system, minimisation and closure period before operational intake scales | **Inferred** operational processing; system and exact retention **unknown**. |
+| General Contact correspondence | Receiving, routing and responding to general enquiries; protecting the endpoint from abuse | `/contact` and `POST /api/contact` are implemented without application-database persistence. The message is delivered by isolated transactional email to `support@b4gamble.com`; application logging is metadata-only. | Minimise mailbox/provider access; verify actual Resend and Google Workspace message/operational-data retention; approve an operational mailbox closure/deletion practice before intake scales | **Detected:** no Prisma model/write, no Contact analytics content and no application body log. **Planned/external:** Resend activation after DNS/Founder gates. Provider/mailbox exact retention remains **unknown** and is not invented. |
 | Email communications preferences and delivery records | Future account/Programme delivery authority and operational proof | Closed purpose policy and disabled/test transports exist; no preference model, provider, outbox, delivery log or Production send path exists | Approve preference, unsubscribe, provider-log, suppression and audit retention before activation | **Not currently stored or sent.** Do not infer a retention period before a provider/workflow is approved. |
 | Privacy request/complaint register | Rights compliance and accountability | Runbook defined; no dedicated system detected | Approve a proportionate post-closure period with counsel | **Planned**; exact period **open**. |
 | Incident/breach register | Accountability and security response | Runbook defined; no dedicated system detected | Retain for approved legal/security period | **Planned**; exact period **open**. |
