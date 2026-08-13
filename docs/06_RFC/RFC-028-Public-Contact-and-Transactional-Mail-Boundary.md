@@ -107,6 +107,8 @@ Required evidence includes validation and injection tests, same-origin and conte
 
 CI and local tests use no real provider call. After mail DNS is permitted and the sending domain is verified, exactly one Founder-controlled, non-sensitive Preview delivery test may be sent. Production environment preparation, WAF activation and Production contact smoke require the later Founder activation stage. Founder Office full completion authorisation dated 2026-08-13 now authorises Codex to complete the pull request and merge by merge commit only after every stated gate passes; the pull request remains draft until then.
 
+The 2026-08-13 Preview attempt consumed that one-send allowance after the browser normalized a CR/LF test subject. Provider acceptance and delivery passed, and From/To were exact, but Reply-To was `visitor@example.invalid` rather than a Founder-controlled address. Delivery was rolled back off and no second send, WAF, Production activation or merge is authorised by this RFC without a new Founder decision.
+
 ## 10. Cost and rollback
 
 The code package adds no npm dependency, schema change, migration, database or recurring application service. Resend must not be adopted if it requires an unexpected paid plan or material recurring commitment. Vercel WAF must not be enabled if it requires an unexpected material paid add-on or Enterprise upgrade.

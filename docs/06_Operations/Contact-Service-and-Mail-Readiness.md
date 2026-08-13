@@ -1,6 +1,6 @@
 # Contact Service and Mail Readiness
 
-- **Status:** Current main integrated; repository verification complete; Resend domain and DNS preservation verified; Preview activation pending
+- **Status:** Preview one-shot contract failed; delivery rolled back off; WAF, Production and merge gates blocked
 - **Decision:** RFC-028 / `LAUNCH-POLISH-01`
 - **Base:** `64aba31c300984deb128bd6d06495f2bfaceb510`
 - **Current main integrated:** `3416a72e469f31dcba06188847e7dd1716f36ae4`
@@ -37,18 +37,19 @@
   - root and `www` web A records are present; and
   - DNSSEC has both parent DS and zone DNSKEY evidence.
 - The Cloudflare dashboard was not authenticated during this read-back. The evidence above comes directly from the Cloudflare authoritative nameservers and does not claim console access or mutation.
+- Resend API key `B4GAMBLE Website Contact` was created with Sending access restricted to the verified `b4gamble.com` domain. Its value was transferred only in transient browser memory to a Sensitive, Preview-only, `codex/launch-polish-01` Vercel variable and was never printed, written to disk or committed.
 
 No DKIM public-key body or secret value is recorded here.
 
 ### Planned
 
-- Create one narrowly scoped send-only Resend API key for the website Contact purpose without recording its value.
-- Send one non-sensitive Founder-controlled Preview test after provider verification, then verify From, Reply-To, subject, delivery and no duplicate.
-- Prepare the four Production Contact variables and Vercel WAF rule only after code PASS and Founder review.
+- A replacement Preview delivery requires a new explicit Founder authorisation because the one authorised send has been exhausted and no second test is permitted under the current order.
+- Create the Vercel WAF rule only after a separately authorised valid Preview delivery and actual `support@b4gamble.com` inbox confirmation.
+- Prepare Production Contact variables only after every pre-merge gate passes.
 
 ### Not detected
 
-- No Resend API credential created for Contact, Contact delivery environment activation, real Preview delivery, Production Contact environment mutation or applied Production WAF rule is detected yet.
+- No valid Founder-controlled Preview delivery, authenticated `support@b4gamble.com` inbox confirmation, Production Contact environment mutation or applied Production WAF rule is detected.
 - No account email, Programme reminder, Programme engagement or marketing delivery activation is detected.
 
 ## Runtime environment contract
@@ -72,6 +73,22 @@ Founder Office override dated 2026-08-13 explicitly cancelled and superseded the
 
 DMARC is a separate Founder-scheduled action. If the exact previously approved value is unavailable at activation time, report `DMARC_VALUE_REQUIRED` and do not guess a policy, reporting address, percentage or subdomain policy.
 
+## Preview activation evidence and stop state
+
+The exact `e3808a6b03d46c9fa0ec327c741ff0f999d8df4d` Preview deployment reached Ready with all four Contact variables Sensitive, Preview-only and restricted to `codex/launch-polish-01`. The deployed page passed Contact rendering, canonical `https://b4gamble.com/contact`, footer/Privacy/protected-Help navigation, client validation, 4,000-character UI bound, static no-Prisma/no-database path, safe noindex 404 and zero browser warning/error-log checks. The exact server guard, honeypot, 8 KiB, CR/LF, safe-error and no-sensitive-log contracts remain covered by the passing repository tests.
+
+At `2026-08-13 16:10:29 Asia/Almaty`, a CR/LF browser test was normalized by the single-line Subject control into a valid subject and unintentionally consumed the one authorised Preview delivery. The result was exactly one provider request and one internal message:
+
+- Vercel: `POST /api/contact`, HTTP `200`, `contact_result=delivered`, provider class `2xx`, duration `139 ms`; application log contained only the approved metadata fields.
+- Resend request/log ID: `e64b5d64-464c-44ab-9fdc-7b91ec8b6d4c`; email ID: `30bc211f-6971-4a38-8715-d316a71233c9`; provider API status `200`; delivery status `delivered`.
+- From: `B4GAMBLE Website <website@b4gamble.com>`; To: `support@b4gamble.com`; no CC/BCC and no visitor confirmation message.
+- Subject: `[B4GAMBLE Contact] Preview checkBcc: attacker@example.invalid`.
+- Reply-To: `visitor@example.invalid`, which violates the required Founder-controlled Reply-To contract.
+
+No second submission was made. An authenticated personal Founder Gmail session returned no matching message and did not provide access to the distinct `support@b4gamble.com` mailbox, so actual support-inbox receipt is not established. The current state therefore includes `FOUNDER_MAILBOX_CONFIRMATION_REQUIRED`, but inbox confirmation alone cannot cure the invalid Reply-To gate.
+
+Preview delivery was immediately rolled back to fail closed by changing branch-specific `CONTACT_EMAIL_DELIVERY_ENABLED` to `false`. Vercel redeployment `9owEsaw6ug7oanxu5v3DzzqeXnHd` reached Ready at the same source commit. The API key, From and To variables remain Sensitive and Preview/branch-only for controlled remediation; Production received none of these values.
+
 ## Vercel WAF preparation
 
 Prepare, but do not apply before Founder review:
@@ -85,7 +102,7 @@ Limit: 5 requests / 10 minutes / IP
 Action: 429
 ```
 
-The read-only review confirms the rule is available in the existing Vercel Pro billing surface with the usage price recorded above; no Enterprise, Bot Management, CAPTCHA or recurring add-on is required. Application validation, body limit, same-origin enforcement and honeypot remain required even when WAF is active. Do not save or publish the rule until Resend domain verification, the single Preview send and mailbox receipt have passed.
+The read-only review confirms the rule is available in the existing Vercel Pro billing surface with the usage price recorded above; no Enterprise, Bot Management, CAPTCHA or recurring add-on is required. Application validation, body limit, same-origin enforcement and honeypot remain required even when WAF is active. The rule remains unapplied because the exact Preview Reply-To and mailbox gates did not pass.
 
 Rollback removes only `contact-form-rate-limit`. Delivery rollback changes `CONTACT_EMAIL_DELIVERY_ENABLED` away from exact `true` and redeploys; the direct `mailto:support@b4gamble.com` fallback remains available.
 
