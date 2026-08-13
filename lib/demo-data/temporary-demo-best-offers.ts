@@ -22,7 +22,7 @@ function editorMetadata(definition: (typeof temporaryDemoCasinos)[number]) {
  * public DTO mappers as published snapshots. It is Best Offers display data,
  * never repository or commercial inventory.
  */
-export function temporaryDemoBestOffers() {
+export function temporaryDemoCasinoProfiles() {
   return temporaryDemoCasinos.flatMap((definition) => {
     const published: PublishedCasinoSnapshotRecord = {
       casinoId: definition.id,
@@ -52,6 +52,10 @@ export function temporaryDemoBestOffers() {
       },
     };
     const casino = mapPublishedCasino(published, [], { redirectEnabled: false, now: manifestPublishedAt });
-    return casino ? publicCasinoToOffers(casino) : [];
+    return casino ? [casino] : [];
   });
+}
+
+export function temporaryDemoBestOffers() {
+  return temporaryDemoCasinoProfiles().flatMap(publicCasinoToOffers);
 }

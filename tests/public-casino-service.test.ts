@@ -7,6 +7,7 @@ import type { PublicCasinoStore } from "../lib/repositories/public-casino.reposi
 import { isPublicCasinoCmsEnabled, PublicCasinoService } from "../lib/services/public-casino.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { temporaryDemoCasinoProfiles } from "../lib/demo-data/temporary-demo-best-offers";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const legacy = getCasinos().slice(0, 3);
@@ -129,6 +130,16 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
       hasManagedSlug: async () => { throw new Error("managed lookup unavailable"); },
     });
     assert.equal(await service(repository).getCasino(managedSlug), null);
+  });
+
+  await t.test("an exact source-controlled demo slug retains a disclosed review-only detail page", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const result = await service(store([], [expected.slug])).getCasino(expected.slug, allowJurisdictionAuthority);
+    assert.ok(result);
+    assert.equal(result.id, temporaryDemoCasinoIds[0]);
+    assert.equal(result.slug, expected.slug);
+    assert.deepEqual(result.affiliate, { href: null, available: false });
+    assert.ok(result.bonuses.every((bonus) => bonus.affiliate.available === false && bonus.affiliate.href === null));
   });
 
   await t.test("8. an invalid slug returns null without repository access", async () => {

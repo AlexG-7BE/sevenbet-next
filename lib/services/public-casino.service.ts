@@ -8,8 +8,10 @@ import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
+import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best-offers";
 
 export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
+const sourceControlledDemoProfiles = temporaryDemoCasinoProfiles();
 
 type PublicCasinoCmsEnvironment = {
   [key: string]: string | undefined;
@@ -52,6 +54,11 @@ export class PublicCasinoService {
     });
   }
 
+  private sourceControlledDemo(slug: string) {
+    const casino = sourceControlledDemoProfiles.find((entry) => entry.slug === slug);
+    return casino ? enforceTemporaryDemoReviewOnly(casino) : null;
+  }
+
   async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return this.legacy(slug);
@@ -81,7 +88,7 @@ export class PublicCasinoService {
       if (casino) return enforceTemporaryDemoReviewOnly(casino);
     }
 
-    return null;
+    return this.sourceControlledDemo(slug);
   }
 
   async listCasinos(authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO[]> {
