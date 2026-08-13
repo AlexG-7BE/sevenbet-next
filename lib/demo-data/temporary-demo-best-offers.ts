@@ -19,8 +19,9 @@ function editorMetadata(definition: (typeof temporaryDemoCasinos)[number]) {
 }
 /**
  * Projects only the exact RFC-012 source-controlled manifest through the same
- * public DTO mappers as published snapshots. It is Best Offers display data,
- * never repository or commercial inventory.
+ * public DTO mappers as published snapshots. It supplies Best Offers display
+ * data and its linked internal review-only detail, never repository or
+ * commercial inventory.
  */
 export function temporaryDemoCasinoProfiles() {
   return temporaryDemoCasinos.flatMap((definition) => {

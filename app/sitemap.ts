@@ -14,21 +14,35 @@ import { publicOfferService } from "@/lib/services/public-offer.service";
 
 export const dynamic = "force-dynamic";
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [discovery, bestOffers, comparison] = await Promise.all([
-    publicCasinoDiscoveryService.discover({ page: 1, pageSize: 48 }),
-    publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, null),
-    publicComparisonService.compare(parsePublicComparisonQuery(new URLSearchParams()), null),
-  ]);
+async function failClosed<T>(load: () => Promise<T>): Promise<T | null> {
+  try {
+    return await load();
+  } catch {
+    return null;
+  }
+}
+
+async function loadCasinoDiscovery() {
+  const discovery = await publicCasinoDiscoveryService.discover({ page: 1, pageSize: 48 });
   const casinos = [...discovery.items];
   for (let page = 2; page <= Math.min(discovery.pageCount, 11) && casinos.length < 500; page += 1) {
     const result = await publicCasinoDiscoveryService.discover({ page, pageSize: 48 });
     casinos.push(...result.items);
   }
-  const publishedOnly = discovery.total > 0 && discovery.inventoryMode === "PUBLISHED_ONLY";
+  return { casinos, discovery };
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const [casinoDiscovery, bestOffers, comparison] = await Promise.all([
+    failClosed(loadCasinoDiscovery),
+    failClosed(() => publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, null)),
+    failClosed(() => publicComparisonService.compare(parsePublicComparisonQuery(new URLSearchParams()), null)),
+  ]);
+  const casinos = casinoDiscovery?.casinos ?? [];
+  const publishedOnly = Boolean(casinoDiscovery && casinoDiscovery.discovery.total > 0 && casinoDiscovery.discovery.inventoryMode === "PUBLISHED_ONLY");
   const indexableProductRoutes = [
-    ...(bestOffers.status !== "unavailable" && bestOffers.inventoryMode === "PUBLISHED_ONLY" ? ["/best-offers"] : []),
-    ...(comparison.status === "available" && comparison.inventoryMode === "PUBLISHED_ONLY" ? ["/compare"] : []),
+    ...(bestOffers && bestOffers.status !== "unavailable" && bestOffers.inventoryMode === "PUBLISHED_ONLY" ? ["/best-offers"] : []),
+    ...(comparison && comparison.status === "available" && comparison.inventoryMode === "PUBLISHED_ONLY" ? ["/compare"] : []),
   ];
   const casinoRoutes = casinos.filter((casino) => casino.dataClassification === "PUBLISHED_RECORD").slice(0, 500).map((casino) => ({
     url: absoluteUrl(`/casino/${casino.slug}`),

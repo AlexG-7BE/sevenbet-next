@@ -83,6 +83,16 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     assert.equal(casino?.slug, managedSlug);
   });
 
+  await t.test("CMS disabled preserves only exact source-controlled demo detail profiles", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const casino = await service(store(), false).getCasino(expected.slug, allowJurisdictionAuthority);
+    assert.ok(casino);
+    assert.equal(casino.id, temporaryDemoCasinoIds[0]);
+    assert.equal(casino.slug, expected.slug);
+    assert.deepEqual(casino.affiliate, { href: null, available: false });
+    assert.equal(await service(store(), false).getCasino("unknown-demo-profile"), null);
+  });
+
   await t.test("2. a published CMS record wins and uses governed affiliate routes", async () => {
     const record = publishedRecord();
     const routes = [
@@ -134,12 +144,29 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
 
   await t.test("an exact source-controlled demo slug retains a disclosed review-only detail page", async () => {
     const expected = temporaryDemoCasinoProfiles()[0];
-    const result = await service(store([], [expected.slug])).getCasino(expected.slug, allowJurisdictionAuthority);
+    const result = await service(store()).getCasino(expected.slug, allowJurisdictionAuthority);
     assert.ok(result);
     assert.equal(result.id, temporaryDemoCasinoIds[0]);
     assert.equal(result.slug, expected.slug);
     assert.deepEqual(result.affiliate, { href: null, available: false });
     assert.ok(result.bonuses.every((bonus) => bonus.affiliate.available === false && bonus.affiliate.href === null));
+  });
+
+  await t.test("a managed unpublished demo slug never falls through to source-controlled detail", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    assert.equal(await service(store([], [expected.slug])).getCasino(expected.slug, allowJurisdictionAuthority), null);
+  });
+
+  await t.test("a malformed published demo slug never falls through to source-controlled detail", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const malformed = publishedRecord(expected.slug);
+    (malformed.snapshot as Record<string, unknown>).domain = "";
+    let managedLookups = 0;
+    const repository = store([malformed], [], [], {
+      hasManagedSlug: async () => { managedLookups += 1; return false; },
+    });
+    assert.equal(await service(repository).getCasino(expected.slug), null);
+    assert.equal(managedLookups, 0);
   });
 
   await t.test("8. an invalid slug returns null without repository access", async () => {

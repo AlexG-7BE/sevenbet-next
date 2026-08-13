@@ -54,6 +54,8 @@ test("the production path fails closed and the legacy Programme remains the defa
   assert.match(page, /\? <div id="main-content" tabIndex=\{-1\}><ProgramAiExperience/);
   assert.match(page, /: <main id="main-content"><ActiveControlProgramme/);
   assert.match(page, /Skip to main content/);
+  assert.match(page, /10-Step Control Programme \| Personal Control Plan/);
+  assert.doesNotMatch(page, /Build a private Moment Map/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_PROGRAM_AI/);
 });
 

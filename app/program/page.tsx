@@ -24,9 +24,9 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "B4GAMBLE 10-Step Control Program | Personal Control Plan",
+  title: "B4GAMBLE 10-Step Control Programme | Personal Control Plan",
   description:
-    "Build a private Moment Map, a practical seven-day goal and an editable early-signal card through B4GAMBLE's evidence-informed Control Program.",
+    "Begin B4GAMBLE's private 10-Step Control Programme with a personal exercise, then continue through structured goals, limits, reflection and review.",
   alternates: {
     canonical: absoluteUrl("/program"),
   },
@@ -46,7 +46,7 @@ function breadcrumbSchema() {
       {
         "@type": "ListItem",
         position: 2,
-        name: "10-Step Control Program",
+        name: "10-Step Control Programme",
         item: absoluteUrl("/program"),
       },
     ],

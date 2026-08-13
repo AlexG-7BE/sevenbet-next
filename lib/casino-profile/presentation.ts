@@ -73,6 +73,9 @@ export function profileOfferHeadline(bonus: PublicCasinoBonus) {
 }
 
 export function profileReviewFreshness(casino: PublicCasinoDTO) {
+  if (isTemporaryDemoCasinoId(casino.id)) {
+    return { label: "Fictional review", value: "Demonstration" };
+  }
   const reviewed = formatProfileDate(casino.lastReviewedAt);
   if (reviewed) return { label: "Reviewed", value: reviewed };
   const published = formatProfileDate(casino.publishedAt);
@@ -81,48 +84,63 @@ export function profileReviewFreshness(casino: PublicCasinoDTO) {
 
 export function profileFacts(casino: PublicCasinoDTO): CasinoProfileFact[] {
   const facts: CasinoProfileFact[] = [];
+  const demo = isTemporaryDemoCasinoId(casino.id);
   const licence = casino.licenses[0];
   if (licence) {
     const verifiedAt = formatProfileDate(licence.lastVerifiedAt);
     const details = [licence.jurisdiction, licence.licenseNumber ? `No. ${licence.licenseNumber}` : null].filter(Boolean).join(" · ");
     facts.push({
-      label: "Licence",
+      label: demo ? "Fictional licence field" : "Licence",
       value: licence.authority,
-      supportingText: verifiedAt ? `Evidence checked ${verifiedAt}${details ? ` · ${details}` : ""}` : `${details ? `${details} · ` : ""}No independent verification date is published`,
-      verified: Boolean(verifiedAt),
+      supportingText: demo
+        ? "Illustrative product field — not a current licence claim"
+        : verifiedAt ? `Evidence checked ${verifiedAt}${details ? ` · ${details}` : ""}` : `${details ? `${details} · ` : ""}No independent verification date is published`,
+      verified: !demo && Boolean(verifiedAt),
     });
   }
 
-  if (casino.operator) facts.push({ label: "Operator", value: casino.operator });
+  if (casino.operator) facts.push({
+    label: demo ? "Fictional operator field" : "Operator",
+    value: casino.operator,
+    ...(demo ? { supportingText: "Illustrative product field — not a current operator" } : {}),
+  });
 
   const availableCountries = casino.countries.filter((country) => country.availability === "AVAILABLE");
   if (availableCountries.length) {
     facts.push({
-      label: "Published markets",
+      label: demo ? "Fictional market fields" : "Published markets",
       value: availableCountries.map((country) => countryName(country.countryCode)).join(", "),
-      supportingText: "Published profile information — not detected location or legal eligibility",
+      supportingText: demo
+        ? "Illustrative product fields — not detected location or legal eligibility"
+        : "Published profile information — not detected location or legal eligibility",
     });
   }
 
   if (casino.payments.length) {
     facts.push({
-      label: "Payments",
+      label: demo ? "Fictional payment fields" : "Payments",
       value: casino.payments.map((payment) => payment.name).join(", "),
-      supportingText: "Methods listed in the latest published profile",
+      supportingText: demo ? "Illustrative methods — not current operator evidence" : "Methods listed in the latest published profile",
     });
   }
 
   if (casino.providers.length || casino.categories.length) {
     const providers = casino.providers.slice(0, 3).map((provider) => provider.name);
     const categories = casino.categories.slice(0, 3).map((category) => category.name);
-    facts.push({ label: "Games", value: [...categories, ...providers].join(" · ") });
+    facts.push({
+      label: demo ? "Fictional game fields" : "Games",
+      value: [...categories, ...providers].join(" · "),
+      ...(demo ? { supportingText: "Illustrative categories and providers" } : {}),
+    });
   }
 
   if (casino.responsibleGamblingTools.length) {
     facts.push({
-      label: "Control tools",
+      label: demo ? "Fictional control-tool fields" : "Control tools",
       value: casino.responsibleGamblingTools.join(" · "),
-      supportingText: "Check current availability and terms before relying on an operator tool",
+      supportingText: demo
+        ? "Illustrative fields — verify tools with any real operator"
+        : "Check current availability and terms before relying on an operator tool",
     });
   }
   return facts;

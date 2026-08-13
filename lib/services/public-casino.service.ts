@@ -61,13 +61,13 @@ export class PublicCasinoService {
 
   async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
-    if (!this.cmsEnabled()) return this.legacy(slug);
+    if (!this.cmsEnabled()) return this.legacy(slug) ?? this.sourceControlledDemo(slug);
 
     let published = null;
     try {
       published = await this.repository.findPublishedBySlug(slug);
     } catch {
-      // Published content may become temporarily unavailable without expanding legacy visibility.
+      return null;
     }
 
     if (published) {
@@ -86,6 +86,13 @@ export class PublicCasinoService {
 
       const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
       if (casino) return enforceTemporaryDemoReviewOnly(casino);
+      return null;
+    }
+
+    try {
+      if (await this.repository.hasManagedSlug(slug)) return null;
+    } catch {
+      return null;
     }
 
     return this.sourceControlledDemo(slug);

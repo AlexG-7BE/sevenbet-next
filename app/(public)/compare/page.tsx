@@ -31,8 +31,18 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
   const result = await resolveComparison(raw.toString());
   const cleanDefault = result.query.selectionMode === "default" && result.query.country === "GB" && !result.query.differences && !result.query.issues.length;
   const index = cleanDefault && result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY";
-  const title = result.status === "available" ? "Compare Published Casino Profiles | B4GAMBLE" : "Casino Comparison | B4GAMBLE";
-  const description = "Compare up to three latest published casino profiles by licensing context, offer terms, payments, withdrawals and responsible-gambling evidence without a fabricated winner.";
+  const title = result.status === "available"
+    ? result.inventoryMode === "DEMO_ONLY"
+      ? "Compare Fictional Casino Demonstrations | B4GAMBLE"
+      : result.inventoryMode === "MIXED"
+        ? "Compare Published and Fictional Casino Profiles | B4GAMBLE"
+        : "Compare Published Casino Profiles | B4GAMBLE"
+    : "Casino Comparison | B4GAMBLE";
+  const description = result.inventoryMode === "DEMO_ONLY"
+    ? "Compare up to three explicitly fictional demonstration profiles. Their licence, offer, payment and availability fields are illustrative and never enable a commercial action."
+    : result.inventoryMode === "MIXED"
+      ? "Compare published profiles and explicitly labelled fictional demonstrations without mixing their evidence status or enabling a demo commercial action."
+    : "Compare up to three latest published casino profiles by licensing context, offer terms, payments, withdrawals and responsible-gambling evidence without a fabricated winner.";
   return {
     title,
     description,

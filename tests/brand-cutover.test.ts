@@ -177,6 +177,39 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   }
 });
 
+test("sitemap keeps static, learning and protected Help routes when casino discovery throws", async () => {
+  const originalDiscover = publicCasinoDiscoveryService.discover;
+  const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalCompare = publicComparisonService.compare;
+  publicCasinoDiscoveryService.discover = async () => { throw new Error("discovery unavailable"); };
+  publicOfferService.getBestOffersPageData = async () => ({
+    status: "available", records: [], inventoryMode: "PUBLISHED_ONLY",
+  }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicComparisonService.compare = async () => ({
+    status: "available", inventoryMode: "PUBLISHED_ONLY",
+  }) as unknown as Awaited<ReturnType<typeof originalCompare>>;
+
+  let entries: Awaited<ReturnType<typeof sitemap>>;
+  try {
+    entries = await sitemap();
+  } finally {
+    publicCasinoDiscoveryService.discover = originalDiscover;
+    publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicComparisonService.compare = originalCompare;
+  }
+
+  const urls = entries.map((entry) => entry.url);
+  assert.ok(urls.includes("https://b4gamble.com/10-steps"));
+  assert.ok(urls.includes("https://b4gamble.com/learn"));
+  assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/learn/") && url !== "https://b4gamble.com/learn/"));
+  assert.ok(urls.includes("https://b4gamble.com/responsible-gambling"));
+  assert.ok(urls.includes("https://b4gamble.com/responsible-gambling/deposit-limits"));
+  assert.ok(urls.includes("https://b4gamble.com/best-offers"));
+  assert.ok(urls.includes("https://b4gamble.com/compare"));
+  assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/casino/")));
+  assert.ok(urls.every((url) => !["https://b4gamble.com/casinos", "https://b4gamble.com/bonuses"].includes(url)));
+});
+
 test("home-only canonical and social metadata do not leak into auth, outbound or admin routes", () => {
   const root = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");

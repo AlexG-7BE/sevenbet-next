@@ -44,7 +44,10 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
   const socialTitle = demo ? title : seo?.socialTitle || casino.seo.socialTitle || title;
   const socialDescription = demo ? description : seo?.socialDescription || casino.seo.socialDescription || description;
   const socialImage = demo ? demoSocialImage(casino) : casino.seo.socialImage;
-  const images = socialImage ? [{ url: socialImage, alt: `${casino.name} published review` }] : undefined;
+  const images = socialImage ? [{
+    url: socialImage,
+    alt: demo ? `${casino.name} fictional review demonstration` : `${casino.name} published review`,
+  }] : undefined;
 
   return {
     title,
