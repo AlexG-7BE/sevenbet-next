@@ -41,6 +41,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const result = await loadBonusDirectory(query);
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
+  const empty = result.total === 0;
   const title = unavailable
     ? "Casino Bonus Directory Unavailable | B4GAMBLE"
     : query.page > 1
@@ -57,7 +58,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     title,
     description,
     alternates: { canonical: absoluteUrl("/bonuses") },
-    robots: unavailable || filtered || containsDemo ? { index: false, follow: true } : { index: true, follow: true },
+    robots: unavailable || filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true },
     openGraph: { type: "website", title, description, url: absoluteUrl("/bonuses") },
   };
 }
@@ -69,7 +70,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const featured = result.records.slice(0, 3);
   const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability].filter((value) => value !== undefined).length;
   const startPosition = (result.page - 1) * result.pageSize + 1;
-  const schema = result.inventoryMode === "PUBLISHED_ONLY" ? {
+  const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Published casino bonus directory",

@@ -44,8 +44,10 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
   assert.match(page, /parsePublicOfferQuery\(raw, 24\)/);
   assert.match(page, /canonical: absoluteUrl\("\/bonuses"\)/);
   assert.match(page, /index: false, follow: true/);
+  assert.match(page, /const empty = result\.total === 0/);
+  assert.match(page, /unavailable \|\| filtered \|\| containsDemo \|\| empty/);
   assert.match(page, /"@type": "ItemList"/);
-  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" \?/);
+  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \?/);
   assert.match(page, /result\.inventoryMode === "UNAVAILABLE"/);
   assert.match(page, /Casino Bonus Directory Unavailable/);
   assert.match(page, /The Published Directory Could Not Be Loaded/);

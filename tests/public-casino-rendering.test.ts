@@ -150,6 +150,10 @@ test("public routes use the service boundary and invalidate all publication surf
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /publicCasinoDiscoveryService/);
   for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
+  const directory = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  assert.match(directory, /const empty = result\.total === 0/);
+  assert.match(directory, /filtered \|\| containsDemo \|\| empty/);
+  assert.match(directory, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
