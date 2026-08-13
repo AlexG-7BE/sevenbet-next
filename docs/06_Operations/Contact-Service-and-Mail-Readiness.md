@@ -1,7 +1,7 @@
 # Contact Service and Mail Readiness
 
 - **Status:** Code and local verification complete on review branch; external mail activation deferred
-- **Decision:** RFC-027 / `LAUNCH-POLISH-01`
+- **Decision:** RFC-028 / `LAUNCH-POLISH-01`
 - **Base:** `64aba31c300984deb128bd6d06495f2bfaceb510`
 - **Last reviewed:** 2026-08-12
 

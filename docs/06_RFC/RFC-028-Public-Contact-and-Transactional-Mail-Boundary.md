@@ -1,4 +1,4 @@
-# RFC-027: Public Contact and Transactional Mail Boundary
+# RFC-028: Public Contact and Transactional Mail Boundary
 
 - **Status:** Approved for bounded implementation
 - **Decision authority:** Founder Office `LAUNCH-POLISH-01`
