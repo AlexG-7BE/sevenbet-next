@@ -3,7 +3,8 @@
 ## Snapshot
 
 - **Reconciled:** 2026-08-13
-- **Current main integrated into LAUNCH-POLISH-01:** `3416a72e469f31dcba06188847e7dd1716f36ae4`
+- **Current fetched main:** `fa4d86a9cc7b42001bb69f0687ffe1f23c9f4b92` (recorded before `RUNTIME-PRODUCT-POLISH-01` work began).
+- **RUNTIME-PRODUCT-POLISH-01:** **IMPLEMENTED ON UNMERGED REVIEW BRANCH / LOCAL QUALITY AND CONTROLLED BROWSER QA PASS / PREVIEW AND FOUNDER REVIEW PENDING.** RFC-029 governs user-initiated microphone state/recovery, authenticated explicit Google linking after `account_not_linked`, standalone `/login` with safe relative return paths and the exact no-action RFC-012 Best Offers demonstration when a successful published read yields no eligible shortlist. No Production, environment, credential, schema, migration, database, Programme reward/ordering or commercial-policy change is included.
 - **UX-PERF-01:** [PR #56](https://github.com/AlexG-7BE/sevenbet-next/pull/56) merged into current main.
 - **LEGAL-02:** analysis complete; Founder Office decisions accepted.
 - **LEGAL-IMPL-01:** **CLOSED**; [PR #57](https://github.com/AlexG-7BE/sevenbet-next/pull/57) is merged in current main.

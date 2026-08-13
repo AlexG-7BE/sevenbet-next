@@ -63,3 +63,12 @@ The entire active repository was scanned. Dependencies, generated directories, b
 ## Verification boundary
 
 Focused Node tests cover the exact flag, signed session-entry gate, reward identities, input/provider allow-lists, clarification cap, immutable confirmation evidence, fallback truthfulness, support-first union, Starting Point validation, legacy/higher-progress collision policy, exactly-once schema/ledger keys, raw-data absence, commercial firewall, two-control access/intake and truthful Home/Review state. The isolated browser lane adds real-route/database/auth continuity evidence. Passing repository tests do not establish legal approval, provider safety, Production activation or clinical validity.
+
+## RFC-029 review-branch delta — 2026-08-13
+
+- **Detected on the unmerged review branch:** the recorder performs a feature-detected Permissions API query without requesting access on load, observes `granted`/`prompt`/`denied` changes, and preserves direct user-gesture `getUserMedia` as the request authority.
+- **Detected:** persistent denial, prompt/dismissal, unsupported `MediaRecorder`/`getUserMedia`, recording, cancellation, transcription and typed fallback have distinct truthful states. No permission API or copy claims that the site can override a browser block.
+- **Detected:** the audio Blob, 90-second cap, existing transcription route, track cleanup, sessionStorage content and analytics privacy boundaries are unchanged. `Permissions-Policy` is unchanged.
+- **Detected:** browser automation passes the clean request, granted recording, persistent denied/recheck, prompt retry and unsupported-feature paths using controlled browser APIs. This is browser-state handling evidence, not a physical microphone/native prompt E2E claim.
+- **Detected:** `account_not_linked` retains the exact Programme OAuth claim marker, requires email/password authentication of the existing account, then starts installed Better Auth `linkSocial` with an allow-listed Google callback. Claim redemption remains after a successful link return.
+- **Not detected:** a real external Google recovery round trip or physical microphone test on the RFC-029 Preview. Both remain manual Preview gates.
