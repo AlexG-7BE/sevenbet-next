@@ -301,7 +301,17 @@ export function ProgramValidationPanel({ report, onJump }: { report: ProgramVali
   );
 }
 
-export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBuilderSnapshot }) {
+export function ProgramBuilder({
+  initialSnapshot,
+  canReview,
+  canApprove,
+  canPublish,
+}: {
+  initialSnapshot: ProgramBuilderSnapshot;
+  canReview: boolean;
+  canApprove: boolean;
+  canPublish: boolean;
+}) {
   const router = useRouter();
   const [snapshot, setSnapshot] = useState(() => clone(initialSnapshot));
   const [selection, setSelection] = useState<Selection>({ type: "program", id: initialSnapshot.program.id });
@@ -494,10 +504,10 @@ export function ProgramBuilder({ initialSnapshot }: { initialSnapshot: ProgramBu
       </header>
       {message && <div className="builderMessage" role="status">{message}</div>}
       <div className="builderWorkflow">
-        <button type="button" onClick={() => workflow("request-review")}>Request review</button>
-        <button type="button" onClick={() => workflow("request-changes")}>Request changes</button>
-        <button type="button" onClick={() => workflow("approve")}>Approve</button>
-        <button type="button" onClick={() => workflow("publish")} disabled={!validation.ok}>Publish</button>
+        {canReview ? <button type="button" onClick={() => workflow("request-review")}>Request review</button> : null}
+        {canReview ? <button type="button" onClick={() => workflow("request-changes")}>Request changes</button> : null}
+        {canApprove ? <button type="button" onClick={() => workflow("approve")}>Approve</button> : null}
+        {canPublish ? <button type="button" onClick={() => workflow("publish")} disabled={!validation.ok}>Publish</button> : null}
         {selection.type !== "program" && <button type="button" onClick={duplicateSelected}>Duplicate selected</button>}
         {selection.type !== "program" && <button type="button" onClick={archiveSelected}>Archive selected</button>}
       </div>
@@ -551,7 +561,7 @@ export function NewProgramForm() {
   );
 }
 
-export function ProgramListActions({ programId }: { programId: string }) {
+export function ProgramListActions({ programId, canArchive, canDuplicate }: { programId: string; canArchive: boolean; canDuplicate: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   async function act(action: "duplicate" | "archive") {
@@ -563,5 +573,5 @@ export function ProgramListActions({ programId }: { programId: string }) {
     if (action === "duplicate" && data.snapshot) router.push(`/admin/programs/${data.snapshot.program.id}/builder`);
     else router.refresh();
   }
-  return <><button className="button ghost" type="button" disabled={busy} onClick={() => act("duplicate")}>Duplicate</button><button className="button ghost" type="button" disabled={busy} onClick={() => act("archive")}>Archive</button></>;
+  return <>{canDuplicate ? <button className="button ghost" type="button" disabled={busy} onClick={() => act("duplicate")}>Duplicate</button> : null}{canArchive ? <button className="button ghost" type="button" disabled={busy} onClick={() => act("archive")}>Archive</button> : null}</>;
 }

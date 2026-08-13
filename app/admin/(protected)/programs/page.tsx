@@ -1,19 +1,24 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import {
   AdminPageShell,
   AdminStatCard,
 } from "@/components/admin/AdminShell";
+import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { ProgramListActions } from "@/components/admin/ProgramBuilder";
 import { Badge, Card } from "@/components/ui";
 import {
   programBuilderService,
   programService,
 } from "@/lib/services";
+import { getAdminPageAccess } from "@/lib/auth/admin";
+import { canAccessAdminArea } from "@/lib/auth/admin-page-policy";
+import { canPerformAction } from "@/lib/cms/permissions";
 
 export const metadata: Metadata = {
-  title: "Programs | SevenBet CMS",
+  title: "Programs | B4GAMBLE CMS",
   robots: {
     index: false,
     follow: false,
@@ -29,6 +34,8 @@ export default async function ProgramsPage({
     language?: string;
   }>;
 }) {
+  const staff = await getAdminPageAccess(await headers(), "programs");
+  if (!staff) return <AdminPermissionDenied />;
   const {
     q = "",
     status = "",
@@ -87,12 +94,12 @@ export default async function ProgramsPage({
       title="Programs"
       intro="Create, organize, review, version and publish structured educational programs."
       actions={
-        <Link
+        canAccessAdminArea(staff, "program-create") ? <Link
           className="button gold"
           href="/admin/programs/new"
         >
           Create program
-        </Link>
+        </Link> : undefined
       }
     >
       <div className="adminStatsGrid">
@@ -247,14 +254,16 @@ export default async function ProgramsPage({
 
                   <ProgramListActions
                     programId={program.id}
+                    canDuplicate={canAccessAdminArea(staff, "program-create")}
+                    canArchive={canPerformAction(staff, "program.archive")}
                   />
 
-                  <Link
+                  {canAccessAdminArea(staff, "program-edit") ? <Link
                     className="button gold"
                     href={`/admin/programs/${program.id}/builder`}
                   >
                     Open builder
-                  </Link>
+                  </Link> : null}
                 </div>
               </article>
             );

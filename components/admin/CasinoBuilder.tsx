@@ -59,19 +59,21 @@ export function CasinoSidebar({
   activeSection,
   data,
   onSelect,
+  sections,
 }: {
   activeSection: CasinoBuilderSection;
   data: CasinoBuilderData;
   onSelect: (section: CasinoBuilderSection) => void;
+  sections: typeof casinoBuilderSections;
 }) {
   return (
     <aside className="casinoBuilderSidebar" aria-label="Casino sections">
       <div className="builderPanelHeading">
         <strong>Casino sections</strong>
-        <span>{casinoBuilderSections.length}</span>
+        <span>{sections.length}</span>
       </div>
       <nav>
-        {casinoBuilderSections.map((section) => {
+        {sections.map((section) => {
           const count = countForSection(section.id, data);
           return (
             <button
@@ -266,9 +268,13 @@ function HistorySection({ data }: { data: CasinoBuilderData }) {
 export function CasinoBuilderLayout({
   initialData,
   initialSection = "general",
+  canManageAffiliate,
+  canManageMedia,
 }: {
   initialData: CasinoBuilderData;
   initialSection?: CasinoBuilderSection;
+  canManageAffiliate: boolean;
+  canManageMedia: boolean;
 }) {
   const router = useRouter();
   const [data, setData] = useState(initialData);
@@ -277,6 +283,9 @@ export function CasinoBuilderLayout({
   const [message, setMessage] = useState("");
   const [workflowBusy, setWorkflowBusy] = useState(false);
   const dirty = saveState === "unsaved" || saveState === "error";
+  const visibleSections = casinoBuilderSections.filter((section) =>
+    (section.id !== "affiliate-links" || canManageAffiliate)
+    && (section.id !== "media" || canManageMedia));
 
   useEffect(() => {
     function warn(event: BeforeUnloadEvent) {
@@ -404,15 +413,15 @@ export function CasinoBuilderLayout({
   }
 
   const activeDefinition =
-    casinoBuilderSections.find((section) => section.id === activeSection) ??
-    casinoBuilderSections[0];
+    visibleSections.find((section) => section.id === activeSection) ??
+    visibleSections[0];
 
   return (
     <div className="casinoBuilder">
       <CasinoHeader casino={data.casino} />
       <CasinoStatusBar casino={data.casino} busy={workflowBusy} dirty={dirty} onAction={workflow} />
       <div className="casinoBuilderGrid">
-        <CasinoSidebar activeSection={activeSection} data={data} onSelect={selectSection} />
+        <CasinoSidebar activeSection={activeSection} data={data} onSelect={selectSection} sections={visibleSections} />
         <main className="casinoBuilderEditor" aria-label={`${activeDefinition.label} editor`}>
           {activeSection === "general" && <CasinoSectionLayout title="General" description="Identity, scores and internal editorial settings." badge="Editable"><GeneralEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "seo" && <CasinoSectionLayout title="SEO" description="Search, canonical, social and structured metadata." badge="Editable"><SeoEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
@@ -424,9 +433,9 @@ export function CasinoBuilderLayout({
           {activeSection === "bonuses" && <CasinoSectionLayout title="Bonuses" description="Offer terms, GEO availability, lifecycle and deterministic ordering." badge="Editable"><BonusEditor casino={data.casino} onChange={changeCasino} /></CasinoSectionLayout>}
           {activeSection === "publishing" && <PublishingSection data={data} />}
           {activeSection === "history" && <HistorySection data={data} />}
-          {activeSection === "affiliate-links" && <CasinoSectionLayout title="Affiliate Offers" description="New-platform offers linked to this casino. Full editing stays in Affiliate Builder." badge="Integrated"><CasinoAffiliatePanel casinoId={data.casino.id} /></CasinoSectionLayout>}
+          {activeSection === "affiliate-links" && canManageAffiliate && <CasinoSectionLayout title="Affiliate Offers" description="New-platform offers linked to this casino. Full editing stays in Affiliate Builder." badge="Integrated"><CasinoAffiliatePanel casinoId={data.casino.id} /></CasinoSectionLayout>}
           {activeSection === "editorial-review" && <EditorialReviewBuilder casinoId={data.casino.id} casinoTitle={data.casino.title} />}
-          {activeSection === "media" && <MediaSection casinoId={data.casino.id} />}
+          {activeSection === "media" && canManageMedia && <MediaSection casinoId={data.casino.id} />}
         </main>
       </div>
       <CasinoSaveBar state={saveState} message={message} onSave={save} onReload={reload} />

@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { AdminPageShell, AdminStatCard } from "@/components/admin/AdminShell";
+import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { Badge, Card } from "@/components/ui";
+import { getAdminPageAccess } from "@/lib/auth/admin";
 import { loadCasinoBuilderData } from "@/lib/casino-builder/server";
 
 export const metadata: Metadata = {
-  title: "Casino Dashboard | SevenBet CMS",
+  title: "Casino Dashboard | B4GAMBLE CMS",
   robots: { index: false, follow: false },
 };
 
 export default async function CasinoDashboardPage({ params }: { params: Promise<{ casinoId: string }> }) {
+  if (!await getAdminPageAccess(await headers(), "casinos")) return <AdminPermissionDenied />;
   const { casinoId } = await params;
   const data = await loadCasinoBuilderData(casinoId);
   const { casino } = data;

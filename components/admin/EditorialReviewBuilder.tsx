@@ -37,7 +37,7 @@ function newBlock(type: BlockType): EditorialBlock {
 function initialDocument(casinoTitle: string): CasinoEditorialDocument {
   return {
     version: 1, title: `${casinoTitle} review`, summary: "", author: "", relatedCasinoIds: [],
-    seo: { title: `${casinoTitle} review | SevenBet`, description: "" },
+    seo: { title: `${casinoTitle} review | B4GAMBLE`, description: "" },
     sections: [{ id: id("overview"), kind: "overview", title: "Overview", order: 0, blocks: [newBlock("paragraph")] }],
   };
 }

@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isCmsEntity, isProgramManagedEntity, permissionForEntity } from "@/lib/cms/entities";
+import { isCmsEntity, isProgramManagedEntity, permissionForEntity, permissionsForEntity } from "@/lib/cms/entities";
 import { archiveCmsRecord, getCmsRecord, listRevisions, updateCmsRecord } from "@/lib/cms/repository";
 import type { CmsRecord } from "@/lib/cms/types";
 import {
-  adminAuthErrorResponse,
+  requireAdminAnyPermission,
   requireAdminPermission,
 } from "@/lib/auth/admin";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
-    await requireAdminPermission(request, permissionForEntity(entityParam, "read"));
+    await requireAdminAnyPermission(request, permissionsForEntity(entityParam, "read"));
     const record = getCmsRecord(entityParam, id);
     if (!record) return apiError("CMS record not found", 404);
 
@@ -29,9 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       revisions: listRevisions(entityParam, id),
     });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-    return apiError(error instanceof Error ? error.message : "Unauthorized", 401);
+    return adminServiceErrorResponse(error, "Unable to load CMS record");
   }
 }
 
@@ -46,9 +45,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const record = updateCmsRecord(entityParam, id, input, actor);
     return NextResponse.json({ ok: true, record, revisions: listRevisions(entityParam, id) });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-    return apiError(error instanceof Error ? error.message : "Unable to update CMS record", 400);
+    return adminServiceErrorResponse(error, "Unable to update CMS record");
   }
 }
 
@@ -62,8 +59,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const record = archiveCmsRecord(entityParam, id, actor);
     return NextResponse.json({ ok: true, record });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-    return apiError(error instanceof Error ? error.message : "Unable to archive CMS record", 400);
+    return adminServiceErrorResponse(error, "Unable to archive CMS record");
   }
 }

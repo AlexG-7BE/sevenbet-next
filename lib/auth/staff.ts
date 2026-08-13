@@ -79,7 +79,7 @@ export async function requireStaff({
 
   if (status === 403 || !staff) {
     throw new AdminAuthError(
-      "This account is not linked to a SevenBet staff profile",
+      "This account is not linked to a B4GAMBLE staff profile",
       403,
       "STAFF_ACCESS_REQUIRED",
     );

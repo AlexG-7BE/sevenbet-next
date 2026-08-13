@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { adminAuthErrorResponse } from "@/lib/auth/admin";
+import { adminAuthErrorResponse } from "@/lib/http/admin-auth-error";
 import { ServiceError } from "@/lib/services/service-error";
+
+const privateAdminHeaders = {
+  "Cache-Control": "private, no-store, max-age=0",
+  Vary: "Cookie",
+};
 
 export function adminServiceErrorResponse(error: unknown, fallbackMessage: string) {
   const authResponse = adminAuthErrorResponse(error);
@@ -15,7 +20,18 @@ export function adminServiceErrorResponse(error: unknown, fallbackMessage: strin
         code: error.code,
         details: error.details,
       },
-      { status: error.statusCode },
+      { status: error.statusCode, headers: privateAdminHeaders },
+    );
+  }
+
+  if (error instanceof SyntaxError) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "Request body must be valid JSON",
+        code: "INVALID_JSON",
+      },
+      { status: 400, headers: privateAdminHeaders },
     );
   }
 
@@ -25,6 +41,6 @@ export function adminServiceErrorResponse(error: unknown, fallbackMessage: strin
       error: fallbackMessage,
       code: "INTERNAL_ERROR",
     },
-    { status: 500 },
+    { status: 500, headers: privateAdminHeaders },
   );
 }

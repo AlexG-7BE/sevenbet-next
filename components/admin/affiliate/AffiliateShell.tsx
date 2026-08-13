@@ -27,7 +27,7 @@ export function AffiliateSidebar({ active }: { active: AffiliateAdminSection }) 
 }
 
 export function AffiliateHeader({ title, description, actions }: { title: string; description: string; actions?: ReactNode }) {
-  return <header className="affiliateHeader"><div><p className="eyebrow">SevenBet Affiliate Platform</p><h2>{title}</h2><p className="muted">{description}</p></div>{actions}</header>;
+  return <header className="affiliateHeader"><div><p className="eyebrow">B4GAMBLE Affiliate Platform</p><h2>{title}</h2><p className="muted">{description}</p></div>{actions}</header>;
 }
 
 export function AffiliateAdminLayout({ active, title, description, actions, children }: { active: AffiliateAdminSection; title: string; description: string; actions?: ReactNode; children: ReactNode }) {

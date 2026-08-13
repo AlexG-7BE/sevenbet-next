@@ -23,7 +23,7 @@ export function AdminLogoutButton() {
 
   return (
     <button
-      aria-label="Sign out of SevenBet CMS"
+      aria-label="Sign out of B4GAMBLE CMS"
       className="adminLogout"
       disabled={loading}
       onClick={logout}
