@@ -126,22 +126,22 @@ npm run agent:run -- run \
 Never pass an API key as an argument. The runner reads only
 `OPENAI_API_KEY` from its process environment.
 
-## First live smoke gate
+## Neutral live smoke record
 
-Do not run the live smoke until Founder Office confirms that the dedicated key
-is stored safely. The recommended ignored destination is `agents/.env.local`;
-the repository's `.env*` rule already ignores it. Do not commit or print the
-file, and do not paste the key into chat.
+Founder Office authorised and reviewed exactly one neutral smoke. It completed
+with `compliance-gate` / `PASS`, explicit `bulk` `gpt-5.6-luna`, low reasoning,
+one request, 1,157 input tokens, 275 output tokens, 1,432 total tokens, and a
+conservative estimated upper-bound cost of `$0.002807`.
 
-After safe configuration, the exact first smoke command is:
+This establishes connectivity, SDK execution, structured-output compatibility,
+model access, and execution/cost accounting only. It does not approve agent
+quality, Luna for compliance, production readiness, an eval, commercial
+activation, or autonomous operation. Founder review observed one broader-than-
+excerpt `DETECTED` finding; dedicated specialist-quality evaluation remains
+pending. No second live call is authorised by this record.
 
-```bash
-cd agents && npm run smoke:live
-```
-
-The fixture contains no real-person or private Programme data and explicitly
-uses the lowest-cost tier. This smoke proves only connectivity and one
-schema-valid result. It does not approve model quality or activate Production.
+`agents/.env.local` remains the recommended ignored local destination. Never
+commit or print it, paste a key into chat, or pass a key as an argument.
 
 ## Add a specialist
 

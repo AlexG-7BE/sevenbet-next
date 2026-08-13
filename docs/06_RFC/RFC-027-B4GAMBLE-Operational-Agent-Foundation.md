@@ -177,9 +177,11 @@ The runner fails before provider execution when the API key is absent, the input
 
 `OPENAI_API_KEY` is resolved only from the process environment when an explicit live command runs. It is never passed as a CLI argument, printed, logged, stored in source, added to fixtures or assigned a value in an example environment file.
 
-The recommended local destination is `agents/.env.local`, covered by the repository's existing `.env*` ignore rule. No code in this package writes that file. The first live smoke uses a non-personal neutral fixture and the `bulk` tier. It is a separate paid command and is not part of tests, type-checking or linting.
+The recommended local destination is `agents/.env.local`, covered by the repository's existing `.env*` ignore rule. No code in this package writes that file. Founder Office authorised and reviewed exactly one non-personal neutral smoke using the `bulk` tier; it is separate from tests, type-checking and linting.
 
-Implementation must stop before that first live call and report readiness, `OPENAI_API_KEY`, the ignored destination and the exact command to Founder Office.
+The observed run was `compliance-gate` / `COMPLETED` / `PASS`, with provider invocation true, explicit `bulk` selection of `gpt-5.6-luna`, low reasoning effort, one request, 1,157 input tokens, 275 output tokens, 1,432 total tokens and a conservative estimated upper-bound cost of `$0.002807`. It validates connectivity, SDK execution, structured-output compatibility, model access and execution/cost accounting only. It does not validate agent quality, approve Luna for compliance, establish production readiness, complete an eval, activate commercial capability or approve autonomous agents.
+
+Founder review recorded one non-blocking quality signal: a `DETECTED` finding was worded more broadly than its specific cited evidence excerpt. This is evidence that dedicated specialist-quality evaluation is required later; no semantic verifier or additional agent architecture is authorised by this record.
 
 ## 12. Privacy, security and integration boundary
 
@@ -207,7 +209,7 @@ No-key tests must cover:
 - input-claim and provider-output evidence integrity; and
 - credential/logging/source scans.
 
-A later live provider smoke verifies SDK connectivity and one schema-valid Compliance Gate result using only the neutral fixture. It does not constitute an eval programme, Production activation or approval of model quality. Broader live evals require curated expected outcomes, cost limits, privacy review and separate Founder authority.
+The single authorised neutral smoke verified SDK connectivity and one schema-valid Compliance Gate result. It does not constitute an eval programme, Production activation or approval of model quality. Dedicated specialist-quality evaluation requires curated expected outcomes, cost limits, privacy review and separate Founder authority.
 
 ## 14. Documentation and extension rule
 
@@ -217,6 +219,6 @@ Adding a specialist requires a registry entry, purpose and prohibited actions, c
 
 ## 15. Release boundary
 
-This package may be described as `STRUCTURALLY COMPLETE / LIVE SMOKE PENDING` only after dependency installation, agent tests, agent TypeScript checks, touched-file linting and relevant repository structural/build-secret checks pass and the diff is reviewed.
+This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / QUALITY EVAL PENDING / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks have passed, and its one authorised neutral smoke is recorded above.
 
 It must remain unmerged, undeployed, unscheduled and inactive in Production pending Founder Office review. The review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.
