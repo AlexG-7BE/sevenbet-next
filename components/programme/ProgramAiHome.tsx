@@ -26,7 +26,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
             <span className={styles.eyebrow}>MY PROGRAMME · RESUME</span>
             <h1>{authenticatedMission ? `${String(home.currentMission).padStart(2, "0")} · ${current?.title}` : "Your private Programme is ready."}</h1>
             <p>{home.startingPoint?.continuationCue || "Continue from the first action that is not yet complete."}</p>
-            {current && authenticatedMission ? <div className={styles.continueMeta}><span>{current.actionsCompleted}/3 actions</span><span>{current.xpEarnedHere} XP earned here</span><span>+25 XP completion bonus</span></div> : null}
+            {current && authenticatedMission ? <div className={styles.continueMeta}><span>{current.actionsCompleted}/{current.actionsTotal} actions</span><span>{current.xpEarnedHere} XP earned here</span><span>+{current.completionBonus} XP completion bonus</span></div> : null}
           </div>
           <ActionButton onClick={() => authenticatedMission ? onMission(home.currentMission) : onStart()} size="large">
             {authenticatedMission ? `${home.currentAction ? "Resume" : "Review"} Mission ${String(home.currentMission).padStart(2, "0")}` : "Start Mission 01"}
@@ -45,7 +45,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
             {home.missions.map((mission) => <li aria-current={mission.status === "current" ? "step" : undefined} className={styles.pathItem} data-state={mission.status} key={mission.missionNumber}>
               <span className={styles.pathNumber}>{String(mission.missionNumber).padStart(2, "0")}</span>
               <strong className={styles.pathTitle}>{mission.title}</strong>
-              <span className={styles.pathState}>{mission.status === "completed" ? `Complete · ${mission.xpEarnedHere} XP here` : mission.status === "current" ? `${mission.actionsCompleted}/3 actions` : "Locked"}</span>
+              <span className={styles.pathState}>{mission.status === "completed" ? `Complete · ${mission.xpEarnedHere} XP here` : mission.status === "current" ? `${mission.actionsCompleted}/${mission.actionsTotal} actions` : "Locked"}</span>
             </li>)}
           </ol>
         </section>

@@ -5,6 +5,8 @@ import {
   programmeResponse,
   readProgrammeJson,
 } from "@/lib/programme/http";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
+import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +21,9 @@ export async function GET(request: Request) {
 }
 export async function PUT(request: Request) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const user = await requireCurrentUser(request.headers);
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const mission = await missionTwoService.saveDraft(
       user.id,
       await readProgrammeJson(request),

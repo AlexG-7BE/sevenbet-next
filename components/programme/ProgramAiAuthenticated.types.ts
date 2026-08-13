@@ -12,7 +12,9 @@ export type ProgramAiHome = {
     title: string;
     status: "completed" | "current" | "locked";
     actionsCompleted: number;
+    actionsTotal: number;
     xpEarnedHere: number;
+    completionBonus: number;
   }>;
   reviews: Array<{
     milestone: "first" | "mid" | "full";

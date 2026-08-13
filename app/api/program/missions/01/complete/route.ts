@@ -7,11 +7,13 @@ import {
 } from "@/lib/programme/http";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const user = await requireCurrentUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const body = objectInput(await readProgrammeJson(request));

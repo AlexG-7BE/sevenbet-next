@@ -1254,7 +1254,7 @@ test("rate-limit errors keep the normalized public response contract", async () 
   }
   const response = programmeErrorResponse(captured);
   assert.equal(response.status, 429);
-  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
   assert.equal(response.headers.get("retry-after"), "539");
   assert.deepEqual(await response.json(), {
     code: "RATE_LIMITED",

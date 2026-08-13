@@ -1,6 +1,3 @@
-import { NextResponse } from "next/server";
-
-import { AuthenticationRequiredError } from "@/lib/auth/errors";
 import {
   parseCompleteProgramBody,
   parseCurrentStepBody,
@@ -13,7 +10,13 @@ import {
   parseStartProgramBody,
   parseStepBody,
 } from "@/lib/progress/input";
-import { ServiceError } from "@/lib/services/service-error";
+import {
+  programmeErrorResponse,
+  programmeResponse,
+  readBoundedRequestText,
+} from "@/lib/programme/http";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
+import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import type { UserProgressService } from "@/lib/services/user-progress.service";
 import type { ServerProgramState } from "@/lib/progress/types";
 
@@ -39,44 +42,12 @@ export type ProgressHandlerDependencies = {
 const maximumProgressPayloadBytes = 32 * 1024;
 
 async function readProgressJson(request: Request) {
-  const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > maximumProgressPayloadBytes) {
-    throw new ServiceError("Request body is too large", "PAYLOAD_TOO_LARGE", 413);
-  }
+  const text = await readBoundedRequestText(request, maximumProgressPayloadBytes);
   return JSON.parse(text) as unknown;
 }
 
 export function progressErrorResponse(error: unknown) {
-  if (error instanceof AuthenticationRequiredError) {
-    return NextResponse.json(
-      { ok: false, error: "Authentication required", code: error.code },
-      { status: 401 },
-    );
-  }
-
-  if (error instanceof ServiceError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-      },
-      { status: error.statusCode },
-    );
-  }
-
-  if (error instanceof SyntaxError) {
-    return NextResponse.json(
-      { ok: false, error: "Request body must contain valid JSON" },
-      { status: 400 },
-    );
-  }
-
-  return NextResponse.json(
-    { ok: false, error: "Unable to process program progress" },
-    { status: 500 },
-  );
+  return programmeErrorResponse(error);
 }
 
 export async function handleGetProgress(
@@ -90,7 +61,7 @@ export async function handleGetProgress(
       user.id,
       input.programId,
     );
-    return NextResponse.json({ ok: true, ...state });
+    return programmeResponse({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }
@@ -101,10 +72,12 @@ export async function handleStartProgress(
   dependencies: ProgressHandlerDependencies,
 ) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const user = await dependencies.requireUser(request.headers);
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const input = parseStartProgramBody(await readProgressJson(request));
     const state = await dependencies.service.startProgram(user.id, input);
-    return NextResponse.json({ ok: true, ...state });
+    return programmeResponse({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }
@@ -121,10 +94,12 @@ async function handleProgressAction<T>(
   ) => Promise<ServerProgramState>,
 ) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const user = await dependencies.requireUser(request.headers);
+    await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const input = parse(await readProgressJson(request));
     const state = await action(dependencies.service, user.id, input);
-    return NextResponse.json({ ok: true, ...state });
+    return programmeResponse({ ok: true, ...state });
   } catch (error) {
     return progressErrorResponse(error);
   }

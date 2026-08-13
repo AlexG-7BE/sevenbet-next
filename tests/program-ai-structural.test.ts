@@ -51,8 +51,9 @@ test("raw Programme input cannot enter either new durable model", () => {
 
 test("the production path fails closed and the legacy Programme remains the default", () => {
   assert.match(page, /isProgramAiV1Enabled\(\)/);
-  assert.match(page, /\? <ProgramAiExperience/);
-  assert.match(page, /: <ActiveControlProgramme/);
+  assert.match(page, /\? <div id="main-content" tabIndex=\{-1\}><ProgramAiExperience/);
+  assert.match(page, /: <main id="main-content"><ActiveControlProgramme/);
+  assert.match(page, /Skip to main content/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_PROGRAM_AI/);
 });
 
@@ -92,6 +93,10 @@ test("Program AI reuses the signed two-control access contract and clarification
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
   assert.match(frontend, /Two checks before you begin/);
+  assert.match(frontend, /htmlFor="programme-legal-acknowledgement"/);
+  assert.match(frontend, /<Link href="\/terms">Read Terms<\/Link>/);
+  assert.match(frontend, /<Link href="\/privacy">Read Privacy Notice<\/Link>/);
+  assert.doesNotMatch(frontend, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
   assert.equal((frontend.match(/type="checkbox"/g) || []).length >= 3, true);
   assert.doesNotMatch(frontend, /Three checks before you begin|I accept the current|I have read the current/);
   assert.match(frontend, /submitTurn\(local\.clarificationAnswers, true\)/);
@@ -100,6 +105,21 @@ test("Program AI reuses the signed two-control access contract and clarification
   assert.match(frontend, /session\?\.user\.id && emailRedeemStarted\.current/);
   assert.match(repository, /if \(current && !current\.withdrawnAt\) return current/);
   assert.match(repository, /data: \{ anonymousSessionId: null, userId: input\.userId \}/);
+});
+
+test("Programme phase changes and legacy controls preserve keyboard and assistive-technology state", () => {
+  const legacy = read("components/programme/ActiveControlProgramme.tsx");
+  assert.match(frontend, /data-programme-phase=\{phase\}/);
+  assert.match(frontend, /phaseFocusRef\.current/);
+  assert.match(frontend, /name="email"/);
+  assert.match(frontend, /name="password"/);
+  assert.match(legacy, /aria-pressed=\{active\}/);
+  assert.match(legacy, /focusableSelector/);
+  assert.match(legacy, /event\.key === "Escape"/);
+  assert.match(legacy, /element\.inert = true/);
+  assert.match(legacy, /returnFocus\?\.focus\(\)/);
+  assert.match(legacy, /htmlFor="legacy-programme-legal-acknowledgement"/);
+  assert.doesNotMatch(legacy, /<label[^>]*><input checked=\{legalAcknowledged\}[\s\S]*?<\/label>/);
 });
 
 test("commercial firewall excludes Program AI data in both directions", () => {

@@ -9,11 +9,13 @@ import {
 import { assertAnonymousProgrammeMutationRateLimit } from "@/lib/programme/rate-limit";
 import { pendingClaimLifetimeMs } from "@/lib/programme/security";
 import { programmeSessionService } from "@/lib/programme/application/programme-session.service";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const token = requestCookie(request, anonymousProgrammeCookie);
     await assertAnonymousProgrammeMutationRateLimit(token);
     const claim = await programmeSessionService.createPendingClaim(token);

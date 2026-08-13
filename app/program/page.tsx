@@ -55,7 +55,8 @@ function breadcrumbSchema() {
 
 export default function ProgramPage() {
   return (
-    <main id="main-content">
+    <>
+      <a className="skipLink" href="#main-content">Skip to main content</a>
       <div className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <script
           type="application/ld+json"
@@ -66,9 +67,9 @@ export default function ProgramPage() {
           }}
         />
         {isProgramAiV1Enabled()
-          ? <ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} />
-          : <ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} />}
+          ? <div id="main-content" tabIndex={-1}><ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} /></div>
+          : <main id="main-content"><ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} /></main>}
       </div>
-    </main>
+    </>
   );
 }

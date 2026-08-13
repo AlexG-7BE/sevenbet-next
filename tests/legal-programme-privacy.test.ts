@@ -49,6 +49,7 @@ test("Programme client uses tab-scoped storage and sends bounded server payloads
   assert.match(active, /signalChoice: urgeLearning\.notNow \? "not_now" : "local"/);
   assert.match(active, /sourceMomentMapId: goal\.sourceMomentMapId/);
   assert.match(active, /Personal wording stays only in this browser session/);
+  assert.match(active, /<Link href="\/compare">Compare<\/Link>/);
 });
 
 test("the consolidated access screen is unchecked and account creation enforces current signed access authority", () => {
@@ -74,6 +75,8 @@ test("the consolidated access screen is unchecked and account creation enforces 
   assert.match(accessContract, /x-sevenbet-programme-access-proof/);
   assert.match(accessContract, /x-sevenbet-terms-acceptance/);
   assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
+  assert.match(accessContract, /privacy:effective-2026-08-09:updated-2026-08-13/);
+  assert.match(source("app/(public)/privacy/page.tsx"), /updated="13 August 2026"/);
 });
 
 test("legacy reflection creation is retired before request body parsing", () => {
