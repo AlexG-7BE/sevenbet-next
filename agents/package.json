@@ -1,0 +1,28 @@
+{
+  "name": "@b4gamble/operational-agents",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "agent:run": "tsx --env-file-if-exists=.env.local src/cli.ts",
+    "smoke:live": "tsx --env-file-if-exists=.env.local src/cli.ts run --agent compliance-gate --input fixtures/live-smoke/compliance-neutral.json --tier bulk --max-turns 2",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src tests --max-warnings=0",
+    "check": "npm run test && npm run typecheck && npm run lint"
+  },
+  "dependencies": {
+    "@openai/agents": "0.15.0",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "eslint": "9.39.5",
+    "tsx": "4.23.12",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.67.0"
+  }
+}

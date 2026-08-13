@@ -31,3 +31,7 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current analytics and runtime-hardening decision
 
 - [RFC-026 — MVP Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) authorises the closed privacy-safe Vercel event contract, aggregate-only report, one PostgreSQL fixed-window rate-limit model, bounded transient expiry purge, authenticated daily Cron and database-binding readiness evidence for `MVP-RUNTIME-01`. Preview migration and Production activation remain gated by the approved rollout sequence and Founder review.
+
+## Current internal operational-agent decision
+
+- [RFC-027 — B4GAMBLE Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) authorises the isolated internal `agents/` package, shared policy/result contracts, eight Wave 1 read-analyse-draft specialists, explicit cost-aware routing and no-key structural evaluation for `AGENT-CORE-01`. It authorises no consumer runtime, database, Production, commercial, external-write or scheduled capability.

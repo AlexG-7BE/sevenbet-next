@@ -31,6 +31,7 @@
 | 27 | PROGRAM-AI-ACTIVATE-01 | **CLOSED — PR #64 MERGED AFTER LIVE PREVIEW VALIDATION** | PR #64 merged approved head `377777d5c6e9f03f6eae9d9e9bb1293191873720` as `15b6cd61ec7ea8835dce6837984ccc4f7448a0c4`. Before merge, its isolated feature-on Preview passed migration `0018`, real typed OpenAI, 20/20 corpus and schema validity, 0% unnecessary clarification, real microphone/transcription/editing, Founder-accepted timer/pulse UX, deterministic `20 + 20` XP, Better Auth claim, durable Starting Point and provider kill-switch checks. Production stayed legacy/off. |
 | 28 | PROGRAM-AI-IMPL-01B | **CLOSED — PR #66 MERGED** | RFC-025 governs the bounded feature-on Missions 02–10 MVP, three completion-derived Reviews, Home/resume and bounded guidance. A clean M1→M10 path is exactly `715 XP`; feature-off remains legacy and Production provider activation remains off. No migration `0019` is introduced. |
 | 29 | Regulated GB commercial release | **Blocked** | External legal/regulatory, partner/data, privacy/processor and separate activation gates remain. |
+| 30 | AGENT-CORE-01 | **STRUCTURALLY COMPLETE — LIVE SMOKE PENDING / UNMERGED** | RFC-027 governs the isolated internal `agents/` package. Eight read-analyse-draft specialists, shared strict contracts, deterministic preflight, explicit cost routing and 23/23 no-key tests are detected. No live provider call, consumer/runtime/schema/Production change, schedule, external write, deploy or activation occurred. |
 
 ## LEGAL-IMPL-01 outcome boundary
 
@@ -42,9 +43,10 @@ Any future Founder-authorised beta is limited to GB, 1–3 manually approved ope
 
 ## Immediate next gates
 
-1. Preserve the closed PROGRAM-AI-ACTIVATE-01 evidence and its Preview-only credential/database boundary. A different branch's missing generic runtime database aliases do not negate the approved PR #64 feature-on Preview validation.
-2. Keep Production provider flags/credentials absent or false. Default OpenAI Responses abuse-monitoring retention remains a gate before unrestricted real-user Production data unless Founder Office separately accepts an approved ZDR/MAM or another reviewed position.
-3. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
-4. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
-5. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01's remaining managed-canary snapshot/restore/cleanup gate.
-6. Acquire real partner evidence only under a later closed-beta authorisation decision.
+1. Keep AGENT-CORE-01 unmerged and do not perform its first live smoke until Founder Office confirms safe ignored local `OPENAI_API_KEY` configuration; the exact manual lowest-cost command is documented in `agents/README.md`.
+2. Preserve the closed PROGRAM-AI-ACTIVATE-01 evidence and its Preview-only credential/database boundary. A different branch's missing generic runtime database aliases do not negate the approved PR #64 feature-on Preview validation.
+3. Keep Production provider flags/credentials absent or false. Default OpenAI Responses abuse-monitoring retention remains a gate before unrestricted real-user Production data unless Founder Office separately accepts an approved ZDR/MAM or another reviewed position.
+4. Keep Production Google OAuth and `PROGRAM_AI_V1_ENABLED` off unless separately authorised for Production with exact configuration and verification evidence.
+5. If reminder delivery is desired, approve the sending domain, mailboxes and email transport before COMMS-REMINDER-01.
+6. Continue UK representative, ICO, processor/transfer, DPIA and outside-counsel gates in parallel with RECOVERY-01's remaining managed-canary snapshot/restore/cleanup gate.
+7. Acquire real partner evidence only under a later closed-beta authorisation decision.
