@@ -120,13 +120,13 @@ export const temporaryDemoCasinos: TemporaryDemoCasino[] = scenarios.map((item) 
   const scope = recordScope(item.n);
   const title = `Demo ${item.label} Casino`;
   const asset = (suffix: string) => `/demo-casinos/${item.slug}-${suffix}.svg`;
-  const summary = `${title} is a fictional SevenBet product demonstration. It is not a real operator and its commercial details are synthetic.`;
+  const summary = `${title} is a fictional B4GAMBLE product demonstration. It is not a real operator and its commercial details are synthetic.`;
   const pros = ["Clear fictional demo disclosure", "Complete responsive profile presentation", "Illustrative payment and game information"];
   const cons = ["Not a real casino operator", "No live registration, deposit or bonus", "Licence and availability blocks are synthetic UI examples"];
   const draft: CasinoCoreDraft = {
     slug: item.slug, internalName: `${title} — ${TEMPORARY_DEMO_DATASET_ID}${item.revision ? ` — ${item.revision}` : ""}`, title, domain: `${item.slug}.example`, websiteUrl: null,
-    operator: "Fictional SevenBet Demo Studio", tagline: "Fictional profile for product demonstration only", summary,
-    description: `${summary} The review, score, countries, payments, games, licence block and bonus presentation exist only to demonstrate SevenBet's product experience to potential partners. No statement describes an existing gambling business.`,
+    operator: "Fictional B4GAMBLE Demo Studio", tagline: "Fictional profile for product demonstration only", summary,
+    description: `${summary} The review, score, countries, payments, games, licence block and bonus presentation exist only to demonstrate B4GAMBLE's product experience to potential partners. No statement describes an existing gambling business.`,
     foundedYear: 2026, language: "en", languages: ["en"], currencies: [item.currency], editorScore: item.score,
     generalMetadata: { trustScore: item.trust, userExperienceScore: item.score - .2, paymentsScore: item.score - .4, gamesScore: item.score - .1, supportScore: item.score - .6, responsibleGamblingScore: item.score - .3, featured: item.featured, recommended: item.recommended, internalNotes: "Synthetic production demonstration approved by Founder Office on 2026-08-06." },
     licenses: [{ id: id(scope, 10), authority: "Demo Regulatory Sandbox — not a real regulator", licenseNumber: null, jurisdiction: "Synthetic product demonstration only", status: "ACTIVE", verificationUrl: null, issuedAt: null, expiresAt: null, lastVerifiedAt: null, notes: "Fictional UI fixture. No licence has been issued and no regulatory claim is made.", verified: false, archived: false }],
@@ -141,22 +141,22 @@ export const temporaryDemoCasinos: TemporaryDemoCasino[] = scenarios.map((item) 
       { id: id(scope, 41), categoryKey: "demo-live-tables", name: "Demo Live Tables", gameCount: 48 + item.n * 3, featured: true, icon: null, archived: false, sortOrder: 200 },
     ],
     casinoBonuses: [bonus(scope, item)],
-    seo: { id: id(scope, 70), title: `${title} — Fictional SevenBet Demo`, description: `Synthetic ${title} profile for demonstrating SevenBet catalogue and editorial presentation. Not a real operator or offer.`, canonicalUrl: `${PRODUCTION_SITE_ORIGIN}/casino/${item.slug}`, robots: "index,follow", socialTitle: `${title} — Demo Profile`, socialDescription: summary, socialImage: `${PRODUCTION_SITE_ORIGIN}${asset("hero")}`, structuredData: "", robotsIndex: false, robotsFollow: true },
+    seo: { id: id(scope, 70), title: `${title} — Fictional B4GAMBLE Demo`, description: `Synthetic ${title} profile for demonstrating B4GAMBLE catalogue and editorial presentation. Not a real operator or offer.`, canonicalUrl: `${PRODUCTION_SITE_ORIGIN}/casino/${item.slug}`, robots: "noindex,follow", socialTitle: `${title} — Demo Profile`, socialDescription: summary, socialImage: `${PRODUCTION_SITE_ORIGIN}${asset("hero")}`, structuredData: "", robotsIndex: false, robotsFollow: true },
   };
   const editorial: CasinoEditorialDocument = {
-    version: 1, title: `${title}: synthetic editorial demonstration`, summary, author: "SevenBet Demo Editorial Team", factCheckedAt: "2026-08-06T00:00:00.000Z",
+    version: 1, title: `${title}: synthetic editorial demonstration`, summary, author: "B4GAMBLE Demo Editorial Team", factCheckedAt: "2026-08-06T00:00:00.000Z",
     trustScore: { overall: item.trust, confidence: "low", evidence: ["Founder Office approved synthetic dataset manifest"], categories: [{ key: "disclosure", score: 10, comment: "The profile is explicitly fictional." }, { key: "operator-evidence", score: 0, comment: "No real operator evidence exists or is claimed." }] },
     sections: [
       { id: `${item.slug}-overview`, kind: "overview", title: "What this profile demonstrates", order: 0, blocks: [{ id: `${item.slug}-overview-copy`, type: "paragraph", text: `${summary} This page demonstrates catalogue, review and responsive presentation states.` }, { id: `${item.slug}-warning`, type: "warning", title: "Demo data", text: "Do not treat this profile, score, licence block, country or bonus as operator evidence." }] },
       { id: `${item.slug}-pros`, kind: "pros", title: "Presentation strengths", order: 1, blocks: [{ id: `${item.slug}-pros-list`, type: "pros", items: pros }] },
       { id: `${item.slug}-cons`, kind: "cons", title: "Material limitations", order: 2, blocks: [{ id: `${item.slug}-cons-list`, type: "cons", items: cons }] },
       { id: `${item.slug}-licensing`, kind: "licensing", title: "Licence disclosure", order: 3, blocks: [{ id: `${item.slug}-licence-copy`, type: "paragraph", text: "Demo Regulatory Sandbox is fictional. No licence number, regulator verification or real operator claim exists." }] },
-      { id: `${item.slug}-faq`, kind: "faq", title: "Demo FAQ", order: 4, blocks: [{ id: `${item.slug}-faq-item`, type: "faq", question: "Can I register or claim this demo offer?", answer: "No. This is a fictional SevenBet product demonstration with no real operator account, deposit or promotion." }] },
-    ], relatedCasinoIds: [], seo: { title: `${title} synthetic review`, description: summary, canonicalPath: `/casino/${item.slug}`, robots: "noindex,follow", keywords: ["SevenBet demo", "fictional casino profile"] },
+      { id: `${item.slug}-faq`, kind: "faq", title: "Demo FAQ", order: 4, blocks: [{ id: `${item.slug}-faq-item`, type: "faq", question: "Can I register or claim this demo offer?", answer: "No. This is a fictional B4GAMBLE product demonstration with no real operator account, deposit or promotion." }] },
+    ], relatedCasinoIds: [], seo: { title: `${title} synthetic review`, description: summary, canonicalPath: `/casino/${item.slug}`, robots: "noindex,follow", keywords: ["B4GAMBLE demo", "fictional casino profile"] },
   };
   return {
     id: id(scope, 1), slug: item.slug, domain: `${item.slug}.example`, title, style: { accent: item.accent, dark: item.dark, score: item.score, trust: item.trust }, draft, pros, cons,
-    responsibleGamblingTools: ["Synthetic self-exclusion presentation", "Synthetic deposit-limit presentation", "Protected SevenBet Help remains available"],
+    responsibleGamblingTools: ["Synthetic self-exclusion presentation", "Synthetic deposit-limit presentation", "Protected B4GAMBLE Help remains available"],
     images: [
       { id: id(scope, 80), kind: "LOGO", url: asset("logo"), alt: `${title} fictional demo logo`, width: 560, height: 240, sortOrder: 100, isPrimary: true },
       { id: id(scope, 81), kind: "HERO", url: asset("hero"), alt: `${title} synthetic editorial hero artwork`, width: 1600, height: 900, sortOrder: 100, isPrimary: true },

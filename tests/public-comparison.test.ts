@@ -7,6 +7,7 @@ import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicComparisonService } from "../lib/services/public-comparison.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
+import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -42,6 +43,7 @@ function snapshotBonus(casinoSlug: string, bonusSlug: string, patch: {
 }
 
 function record(slug: string, patch: {
+  id?: string;
   score?: number;
   country?: string;
   availability?: string;
@@ -54,7 +56,7 @@ function record(slug: string, patch: {
   responsibleTools?: string[];
   bonuses?: ReturnType<typeof snapshotBonus>[];
 } = {}): PublishedCasinoSnapshotRecord {
-  const id = `${slug}-id`;
+  const id = patch.id ?? `${slug}-id`;
   return {
     casinoId: id,
     version: 2,
@@ -138,6 +140,19 @@ test("clean comparison uses a generic deterministic GB default without slug rule
   assert.equal(result.status, "available");
   assert.deepEqual(result.selectedSlugs, ["alpha", "zulu", "bravo"]);
   assert.ok(result.casinos.every((casino) => casino.marketState === "AVAILABLE"));
+  assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
+});
+
+test("exact-ID demonstrations remain classified, non-commercial and SEO-safe", async () => {
+  const result = await new PublicComparisonService(store([
+    record("fictional-one", { id: temporaryDemoCasinoIds[0], score: 9 }),
+    record("fictional-two", { id: temporaryDemoCasinoIds[1], score: 8 }),
+  ]), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({}), allowJurisdictionAuthority);
+  assert.equal(result.status, "available");
+  assert.equal(result.inventoryMode, "DEMO_ONLY");
+  assert.ok(result.candidates.every((candidate) => candidate.dataClassification === "DEMO_FIXTURE"));
+  assert.ok(result.casinos.every((casino) => casino.dataClassification === "DEMO_FIXTURE"));
+  assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
 });
 
 test("offer completeness treats zero minimum deposit as present and null as missing", async () => {
@@ -304,6 +319,9 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   assert.match(component, /name="casino"/);
   assert.match(component, /mobileMatrix/);
   assert.match(component, /CasinoOutboundAction/);
+  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.casinos\.length/);
+  assert.match(component, /result\.inventoryMode === "DEMO_ONLY" \|\| result\.inventoryMode === "MIXED"/);
   for (const source of [page, service, component]) {
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|destinationUrl|trackingUrl|localStorage/);
     assert.doesNotMatch(source, /demo-(?:northstar|harbour|atlas)/);

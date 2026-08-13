@@ -11,8 +11,15 @@ import { currentPublicCasinoBrand } from "@/lib/public-brand";
 
 export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
 
-export function isPublicCasinoCmsEnabled() {
-  return process.env.PUBLIC_CASINO_CMS_ENABLED === "true";
+type PublicCasinoCmsEnvironment = {
+  [key: string]: string | undefined;
+  PUBLIC_CASINO_CMS_ENABLED?: string | undefined;
+  VERCEL_ENV?: string | undefined;
+};
+
+export function isPublicCasinoCmsEnabled(environment: PublicCasinoCmsEnvironment = process.env) {
+  if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return true;
+  return environment.PUBLIC_CASINO_CMS_ENABLED === "true";
 }
 
 export class PublicCasinoService {
@@ -74,30 +81,17 @@ export class PublicCasinoService {
       if (casino) return enforceTemporaryDemoReviewOnly(casino);
     }
 
-    try {
-      if (await this.repository.hasManagedSlug(slug)) return null;
-    } catch {
-      return null;
-    }
-
-    return this.legacy(slug);
+    return null;
   }
 
   async listCasinos(authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO[]> {
     if (!this.cmsEnabled()) return this.legacyCasinos.map((casino) => this.legacyForMode(casino));
 
-    let managedSlugs: string[];
-    try {
-      managedSlugs = await this.repository.listManagedSlugs();
-    } catch {
-      return [];
-    }
-
     let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>> = [];
     try {
       published = await this.repository.listPublished();
     } catch {
-      // A known managed set still permits review-only fallback for unmanaged legacy slugs.
+      return [];
     }
 
     const operatorDecisions = jurisdictionAllowsReferral(authority)
@@ -121,10 +115,6 @@ export class PublicCasinoService {
     });
     const bySlug = new Map<string, PublicCasinoDTO>();
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
-      if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
-    }
-    const managed = new Set(managedSlugs);
-    for (const casino of this.legacyCasinos.filter((entry) => !managed.has(entry.slug)).map((entry) => this.legacyForMode(entry))) {
       if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
     }
     return [...bySlug.values()].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 
 import { ComparisonExperience } from "@/components/comparison/ComparisonExperience";
 import { parsePublicComparisonQuery, type ComparisonSearchParams } from "@/lib/public-comparison/query";
@@ -19,17 +20,17 @@ function toSearchParams(raw: PageSearchParams) {
   return params;
 }
 
-async function resolveComparison(raw: URLSearchParams) {
-  const query = parsePublicComparisonQuery(raw as ComparisonSearchParams);
+const resolveComparison = cache(async (serialized: string) => {
+  const query = parsePublicComparisonQuery(new URLSearchParams(serialized) as ComparisonSearchParams);
   const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country });
   return publicComparisonService.compare(query, authority);
-}
+});
 
 export async function generateMetadata({ searchParams }: { searchParams: Promise<PageSearchParams> }): Promise<Metadata> {
   const raw = toSearchParams(await searchParams);
-  const result = await resolveComparison(raw);
+  const result = await resolveComparison(raw.toString());
   const cleanDefault = result.query.selectionMode === "default" && result.query.country === "GB" && !result.query.differences && !result.query.issues.length;
-  const index = cleanDefault && result.status === "available";
+  const index = cleanDefault && result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY";
   const title = result.status === "available" ? "Compare Published Casino Profiles | B4GAMBLE" : "Casino Comparison | B4GAMBLE";
   const description = "Compare up to three latest published casino profiles by licensing context, offer terms, payments, withdrawals and responsible-gambling evidence without a fabricated winner.";
   return {
@@ -43,7 +44,7 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 
 export default async function ComparePage({ searchParams }: { searchParams: Promise<PageSearchParams> }) {
   const raw = toSearchParams(await searchParams);
-  const result = await resolveComparison(raw);
+  const result = await resolveComparison(raw.toString());
   const schemas = result.status === "projection-unavailable" ? [] : [
     {
       "@context": "https://schema.org",
@@ -53,7 +54,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
         { "@type": "ListItem", position: 2, name: "Casino comparison", item: absoluteUrl("/compare") },
       ],
     },
-    ...(result.casinos.length ? [{
+    ...(result.inventoryMode === "PUBLISHED_ONLY" && result.casinos.length ? [{
       "@context": "https://schema.org",
       "@type": "ItemList",
       name: `B4GAMBLE ${result.query.country} declared-context casino comparison`,

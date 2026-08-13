@@ -23,6 +23,18 @@ export const metadata: Metadata = {
   description:
     "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
   alternates: { canonical: absoluteUrl("/") },
+  openGraph: {
+    type: "website",
+    siteName: "B4GAMBLE",
+    title: "B4GAMBLE | Know your limits before you play",
+    description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
+    url: absoluteUrl("/"),
+  },
+  twitter: {
+    card: "summary",
+    title: "B4GAMBLE | Know your limits before you play",
+    description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",
+  },
 };
 
 export default function HomePage() {

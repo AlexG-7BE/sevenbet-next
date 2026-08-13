@@ -4,6 +4,7 @@ export type PublicOfferAvailability = "AVAILABLE" | "UNAVAILABLE";
 export type PublicOfferSort = "editorial" | "newest" | "highest-bonus" | "lowest-wagering" | "lowest-deposit";
 export type PublicOfferDataClassification = "DEMO_FIXTURE" | "PUBLISHED_RECORD";
 export type PublicOfferInventoryMode = "DEMO_ONLY" | "MIXED" | "PUBLISHED_ONLY";
+export type PublicOfferProjectionMode = PublicOfferInventoryMode | "UNAVAILABLE";
 
 export interface PublicOfferDTO {
   casino: {
@@ -91,5 +92,5 @@ export interface PublicOfferSearchResult {
   pageCount: number;
   query: PublicOfferQuery;
   facets: PublicOfferFacets;
-  inventoryMode: PublicOfferInventoryMode;
+  inventoryMode: PublicOfferProjectionMode;
 }

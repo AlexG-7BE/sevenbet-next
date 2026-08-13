@@ -1,4 +1,5 @@
 import type { CmsEntity, CmsRecord, CmsValidationResult } from "@/lib/cms/types";
+import { ValidationError } from "@/lib/services/service-error";
 
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -109,6 +110,6 @@ export function validateCmsRecord(record: Partial<CmsRecord>, entity: CmsEntity)
 export function assertValidCmsRecord(record: Partial<CmsRecord>, entity: CmsEntity) {
   const result = validateCmsRecord(record, entity);
   if (!result.ok) {
-    throw new Error(Object.values(result.errors).join(" "));
+    throw new ValidationError(Object.values(result.errors).join(" "), result.errors);
   }
 }

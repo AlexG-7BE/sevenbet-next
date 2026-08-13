@@ -43,7 +43,13 @@ test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page 
   await carousel.focus();
   await page.keyboard.press("ArrowRight");
   await expect(carousel.locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]')).toContainText("Lower wagering");
-  await page.getByRole("tab", { name: "2 Lower wagering" }).click();
+  const overallTab = page.getByRole("tab", { name: "1 Best overall balance" });
+  const wageringTab = page.getByRole("tab", { name: "2 Lower wagering" });
+  await overallTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(wageringTab).toBeFocused();
+  await expect(wageringTab).toHaveAttribute("aria-selected", "true");
+  await expect(overallTab).toHaveAttribute("tabindex", "-1");
   await expect(page.getByRole("tabpanel").getByText("A smaller headline with a lighter play-through requirement.", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "3 Faster payout signal" }).click();
   await expect(page.getByRole("tabpanel").getByText("A clearer, faster published withdrawal signal beside the bonus terms.", { exact: true })).toBeVisible();

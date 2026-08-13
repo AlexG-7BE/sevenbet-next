@@ -15,6 +15,7 @@ import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { absoluteUrl } from "../lib/site";
 
 function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
   return {
@@ -125,12 +126,12 @@ test("exact-ID demo profiles are noindex, truthful and suppress review/commercia
   assert.match(String(metadata.title), /Fictional Review Demonstration/);
   assert.match(String(metadata.description), /not a current GB operator/i);
   const metadataSerialized = JSON.stringify(metadata);
-  assert.match(metadataSerialized, /https:\/\/b4gamble\.com\/casino\/demo-northstar/);
-  assert.match(metadataSerialized, /https:\/\/b4gamble\.com\/demo-casinos\/demo-northstar-hero\.svg/);
+  assert.match(metadataSerialized, new RegExp(absoluteUrl("/casino/demo-northstar").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(metadataSerialized, new RegExp(absoluteUrl("/demo-casinos/demo-northstar-hero.svg").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(metadataSerialized, /vercel\.app/);
   const serialized = JSON.stringify(casinoProfileSchemas(record, editorial));
   assert.match(serialized, /fictional review demonstration/i);
-  assert.match(serialized, /https:\/\/b4gamble\.com\/casino\/demo-northstar/);
+  assert.match(serialized, new RegExp(absoluteUrl("/casino/demo-northstar").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   assert.doesNotMatch(serialized, /vercel\.app/);
   assert.doesNotMatch(serialized, /"@type":"Review"|"@type":"FAQPage"|"@type":"Offer"/);
 });
@@ -152,6 +153,7 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
+  assert.match(route, /candidate\?\.source === "cms"/);
   assert.match(component, /Offer unavailable/);
   assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
   assert.match(action, /href=\{confirmationHref\}/);

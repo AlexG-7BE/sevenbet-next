@@ -35,11 +35,12 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
   }
 
   const demo = isTemporaryDemoCasinoId(casino.id);
+  const legacy = casino.source === "legacy";
   const seo = editorial?.seo;
   const title = demo ? `${casino.name} Fictional Review Demonstration | B4GAMBLE` : seo?.title || casino.seo.title;
   const description = demo ? "A fictional casino review demonstration, not a current GB operator, licence claim, partner offer or live promotion. No commercial visit is available." : seo?.description || casino.seo.description;
   const canonical = profileCanonical(casino, editorial);
-  const robots = demo ? { index: false, follow: true } : parseRobotsMetadata(seo?.robots || casino.seo.robots);
+  const robots = demo || legacy ? { index: false, follow: true } : parseRobotsMetadata(seo?.robots || casino.seo.robots);
   const socialTitle = demo ? title : seo?.socialTitle || casino.seo.socialTitle || title;
   const socialDescription = demo ? description : seo?.socialDescription || casino.seo.socialDescription || description;
   const socialImage = demo ? demoSocialImage(casino) : casino.seo.socialImage;
@@ -58,6 +59,7 @@ export function casinoProfileMetadata(casino: PublicCasinoDTO | null, editorial:
 export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoEditorialDocument | null) {
   const canonical = profileCanonical(casino, editorial);
   const demo = isTemporaryDemoCasinoId(casino.id);
+  const legacy = casino.source === "legacy";
   const faq = profileFaqItems(casino, selectProfileBonus(casino), editorial);
   const schemas: Array<Record<string, unknown>> = [
     {
@@ -79,7 +81,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
     },
   ];
 
-  if (demo) return schemas;
+  if (demo || legacy) return schemas;
 
   if (Number.isFinite(casino.editorScore) && casino.editorScore >= 0 && casino.editorScore <= 10 && casino.reviewContent.trim()) {
     schemas.push({

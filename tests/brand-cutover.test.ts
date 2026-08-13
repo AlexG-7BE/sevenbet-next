@@ -10,7 +10,7 @@ import { profileEditorialDocument } from "../lib/casino-profile/presentation";
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
-import { absoluteUrl, siteUrl } from "../lib/site";
+import { absoluteUrl, resolveSiteUrl, siteUrl } from "../lib/site";
 import { enforceTemporaryDemoReviewOnly } from "../lib/services/public-casino.service";
 
 const OLD_PUBLIC_BRAND = /SevenBet|SEVENBET/;
@@ -68,14 +68,39 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
 });
 
+test("staff UI and generated demonstration assets expose only B4GAMBLE branding", () => {
+  const staffAndDemoSources = [
+    ...filesBelow("app/admin"),
+    ...filesBelow("components/admin"),
+    ...filesBelow("public/demo-casinos"),
+    "lib/cms/seed.ts",
+    "lib/auth/staff.ts",
+    "scripts/generate-temporary-demo-assets.mjs",
+    "scripts/temporary-production-demo-casino.manifest.ts",
+    "scripts/temporary-production-demo-casinos.ts",
+    "app/editorial-preview/[token]/page.tsx",
+  ].filter((path) => /\.(?:ts|tsx|mjs|svg)$/.test(path));
+  const renderedSources = staffAndDemoSources.map(source).join("\n");
+
+  assert.match(renderedSources, /B4GAMBLE/);
+  assert.doesNotMatch(renderedSources, OLD_PUBLIC_BRAND);
+  assert.match(source("components/admin/AdminShell.tsx"), /\/admin\/program-settings/);
+  assert.match(source("app/admin/layout.tsx"), /index: false, follow: false/);
+  assert.doesNotMatch(source("components/ProgramExperience.tsx"), /The SevenBet 10-Step Control Program/);
+});
+
 test("root identity, legal trading name and approved contacts are exact", () => {
   const layout = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");
+  const icon = source("app/icon.svg");
   assert.match(layout, /default: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
   assert.match(layout, /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
   assert.match(home, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
+  assert.match(icon, /<svg/);
+  assert.match(icon, /fill="#ccff00"/);
+  assert.match(icon, /fill="#100f0f"/);
 
   for (const path of ["app/(public)/privacy/page.tsx", "app/(public)/terms/page.tsx"]) {
     const legal = source(path);
@@ -94,7 +119,17 @@ test("root identity, legal trading name and approved contacts are exact", () => 
 
 test("Production-style canonical, robots and sitemap output use b4gamble.com", async () => {
   assert.equal(siteUrl, "https://b4gamble.com");
+  assert.equal(resolveSiteUrl({ VERCEL_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://sevenbet-next.vercel.app" }), "https://b4gamble.com");
+  assert.equal(resolveSiteUrl({ VERCEL_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://attacker.invalid" }), "https://b4gamble.com");
+  assert.equal(resolveSiteUrl({ VERCEL_ENV: "preview", VERCEL_BRANCH_URL: "audit.example.vercel.app", NEXT_PUBLIC_SITE_URL: "https://sevenbet-next.vercel.app" }), "https://b4gamble.com");
+  assert.equal(resolveSiteUrl({ VERCEL_ENV: "preview", VERCEL_URL: "attacker.invalid", NEXT_PUBLIC_SITE_URL: "https://attacker.invalid" }), "https://b4gamble.com");
   assert.equal(absoluteUrl("/privacy"), "https://b4gamble.com/privacy");
+  const publicAuthority = source("lib/site.ts");
+  assert.doesNotMatch(publicAuthority, /VERCEL_BRANCH_URL|VERCEL_URL/);
+  assert.match(source("lib/auth/runtime-config.ts"), /VERCEL_BRANCH_URL/);
+  const contact = source("app/(public)/contact/page.tsx");
+  assert.match(contact, /absoluteUrl\("\/contact"\)/);
+  assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
   assert.deepEqual(robots(), {
     rules: [
       { userAgent: "*", allow: "/" },
@@ -109,10 +144,23 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
 
   const entries = await sitemap();
   assert.ok(entries.length > 10);
+  assert.ok(entries.some((entry) => entry.url === "https://b4gamble.com/10-steps"));
+  assert.ok(entries.every((entry) => !temporaryDemoCasinoIds.some((id) => entry.url.includes(id))));
+  assert.ok(entries.every((entry) => !/\/casino\/demo-/.test(entry.url)));
+  assert.ok(entries.every((entry) => !["https://b4gamble.com/casinos", "https://b4gamble.com/bonuses"].includes(entry.url)));
   for (const entry of entries) {
     assert.match(entry.url, /^https:\/\/b4gamble\.com(?:\/|$)/);
     assert.doesNotMatch(entry.url, /sevenbet-next\.vercel\.app/);
   }
+});
+
+test("home-only canonical and social metadata do not leak into auth, outbound or admin routes", () => {
+  const root = source("app/layout.tsx");
+  const home = source("app/(public)/page.tsx");
+  assert.doesNotMatch(root, /alternates:\s*\{\s*canonical/);
+  assert.match(root, /"@type": "Organization"[\s\S]*url: absoluteUrl\("\/"\)/);
+  assert.match(home, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
+  assert.match(home, /url: absoluteUrl\("\/"\)/);
 });
 
 test("Better Auth and disabled communication templates expose only B4GAMBLE", () => {
