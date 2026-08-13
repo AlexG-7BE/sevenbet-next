@@ -9,7 +9,8 @@
 - **Detected:** a repository read failure remains `unavailable`; it does not invoke the demonstration. An eligible published shortlist remains `PUBLISHED_ONLY` and is not mixed with manifest records.
 - **Detected:** the fallback is confined to `getBestOffersPageData`; `/bonuses`, public search, repository results and public casino inventory do not receive source-controlled manifest records.
 - **Inferred:** the confirmed empty Production shortlist is consistent with the current strict completeness gate rejecting published records whose eligibility or other material terms are absent. This branch does not claim a direct Production database audit and does not edit or reseed Production.
-- **Planned:** Founder review of the exact Preview rendering and its live database outcome before any merge or Production request.
+- **Detected in Preview at `4112a2a`:** the protected branch Preview renders 12 complete demonstration records, the exact demonstration disclosure and no governed outbound action. The same Preview initially exposed an empty CMS-disabled compatibility shortlist; the review branch was corrected and reverified before handoff.
+- **Planned:** Founder review of the exact Preview rendering before any merge or Production request.
 
 - **Detected:** `CasinoService.publishCasino` persists an immutable `CasinoVersion.snapshot` after the governed draft, review and approval workflow.
 - **Detected:** `PublicCasinoRepository` selects published versions only for non-archived casinos whose current workflow status is `PUBLISHED`, then keeps the highest version per casino.
