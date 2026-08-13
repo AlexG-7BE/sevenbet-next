@@ -9,7 +9,7 @@ import { DisabledContactTransport, MemoryContactTransport } from "../lib/contact
 const approvedEnvironment = {
   CONTACT_EMAIL_DELIVERY_ENABLED: "true",
   RESEND_API_KEY: "test-only-contact-key-123456",
-  CONTACT_EMAIL_FROM: "B4GAMBLE Website <website@send.b4gamble.com>",
+  CONTACT_EMAIL_FROM: "B4GAMBLE Website <website@b4gamble.com>",
   CONTACT_EMAIL_TO: "support@b4gamble.com",
 };
 
@@ -21,7 +21,7 @@ test("Contact runtime config requires exact enable, sender and recipient", () =>
   assert.equal(resolveContactRuntimeConfig({ ...approvedEnvironment, CONTACT_EMAIL_TO: "other@example.invalid" }), null);
   assert.deepEqual(resolveContactRuntimeConfig(approvedEnvironment), {
     apiKey: "test-only-contact-key-123456",
-    from: "B4GAMBLE Website <website@send.b4gamble.com>",
+    from: "B4GAMBLE Website <website@b4gamble.com>",
     to: "support@b4gamble.com",
   });
 });
@@ -72,7 +72,7 @@ test("Resend adapter sends once with exact envelope and does not read a provider
   assert.equal(calls[0].input, "https://api.resend.com/emails");
   const sent = JSON.parse(String(calls[0].init?.body));
   assert.deepEqual(sent, {
-    from: "B4GAMBLE Website <website@send.b4gamble.com>",
+    from: "B4GAMBLE Website <website@b4gamble.com>",
     to: ["support@b4gamble.com"],
     reply_to: "visitor@example.invalid",
     subject: "[B4GAMBLE Contact] Question",

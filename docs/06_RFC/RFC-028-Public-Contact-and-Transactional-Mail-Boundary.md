@@ -1,6 +1,6 @@
 # RFC-028: Public Contact and Transactional Mail Boundary
 
-- **Status:** Approved for bounded implementation
+- **Status:** Approved for bounded activation under Founder Office override dated 2026-08-13
 - **Decision authority:** Founder Office `LAUNCH-POLISH-01`
 - **Approved:** 2026-08-12
 - **Scope:** Public Contact page and form, `/api/contact`, isolated transactional delivery to the existing support mailbox, privacy and abuse controls, and error-surface hardening
@@ -40,7 +40,7 @@ Contact uses a server-only `ContactTransport` port owned by `lib/contact`. This 
 
 The adapter uses direct `fetch` and adds no SDK dependency. It sends one internal notification only:
 
-- From: `B4GAMBLE Website <website@send.b4gamble.com>` after domain verification;
+- From: `B4GAMBLE Website <website@b4gamble.com>` after domain verification;
 - To: `support@b4gamble.com`;
 - Reply-To: the server-validated visitor email; and
 - Subject: `[B4GAMBLE Contact] ` plus the validated subject.
@@ -58,7 +58,7 @@ CONTACT_EMAIL_FROM
 CONTACT_EMAIL_TO
 ```
 
-Delivery is enabled only when the first variable is exactly `true` and all remaining values pass validation. The configured recipient must be exactly `support@b4gamble.com`; the From address must be the approved verified `send.b4gamble.com` identity. Partial, malformed or unexpected configuration resolves to the disabled transport. Memory transport cannot be selected by Production environment input.
+Delivery is enabled only when the first variable is exactly `true` and all remaining values pass validation. The configured recipient must be exactly `support@b4gamble.com`; the visible From address must be exactly the approved verified `B4GAMBLE Website <website@b4gamble.com>` identity. Partial, malformed or unexpected configuration resolves to the disabled transport. Memory transport cannot be selected by Production environment input.
 
 Provider configuration and Production variables do not activate account/security, Programme reminder, Programme engagement or commercial marketing delivery. `PROGRAM_AI`, Google, affiliate, commercial and CMS flags remain unchanged.
 
@@ -85,9 +85,9 @@ The rule is not applied before Founder review. No CAPTCHA, challenge service, Re
 
 The existing human mailbox authority remains Google Workspace Business Starter at `support@b4gamble.com`. The application does not use a mailbox password, Google OAuth credential, Gmail API, domain-wide delegation or root-domain mail change.
 
-Resend is the approved narrow transactional provider for `send.b4gamble.com`. It must use only provider-generated exact records and must not replace or modify Google Workspace MX, root SPF, Workspace DKIM, DNSSEC or web DNS.
+Resend is the approved narrow transactional provider for the verified `b4gamble.com` sending domain. The provider-generated `send.b4gamble.com` MX and SPF records are permitted only as the technical SES Return-Path for that root-domain authority; they are not a second Resend domain and must not become the visible From identity. The implementation must use only provider-generated exact records and must not replace or modify Google Workspace MX, root SPF, Workspace DKIM, DNSSEC or web DNS.
 
-No mail DNS mutation is authorised before `2026-08-14 09:00 Asia/Almaty`. If the exact previously approved DMARC value is unavailable at activation time, the DMARC action stops without guessing. Code, local tests and non-DNS Preview tests may proceed while reporting `MAIL_DNS_ACTIVATION_DEFERRED`.
+Founder Office override dated 2026-08-13 cancelled and superseded the former `2026-08-14 09:00 Asia/Almaty` mail-DNS date gate. The same override approved immediate audit and bounded activation while preserving the exact Google Workspace and web/DNS controls above. DMARC remains a separate action: if an exact separately approved value is unavailable, no DMARC policy, reporting address, percentage or subdomain policy may be guessed.
 
 ## 7. Privacy, retention and processor boundary
 
