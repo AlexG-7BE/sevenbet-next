@@ -4,7 +4,7 @@
 - **Decision authority:** Founder Office `AGENT-CORE-01`
 - **Approved:** 2026-08-13
 - **Scope:** Isolated internal OpenAI Agents SDK foundation, eight Wave 1 specialist definitions, shared policy and result contracts, explicit cost-aware routing, bounded manual runner and no-key structural evaluation
-- **Base:** current `codex/agent-core-01` branch; exact implementation head to be recorded at review
+- **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
 
@@ -88,6 +88,8 @@ Evidence kinds are closed and describe only how evidence reached the runner: sup
 
 Claim classifications use only `DETECTED`, `INFERRED`, `PROPOSED` and `UNKNOWN`. `VERIFIED` is intentionally absent from input and output classification vocabulary. A commercial claim without a valid supplied evidence reference is deterministically identified as an evidence gap before provider execution.
 
+For material commercial claims in the `OPERATOR_LICENCE`, `BONUS`, `AVAILABILITY`, `COMMERCIAL_RELATIONSHIP` and `PARTNER` categories, every supporting `PUBLIC_WEB_EVIDENCE` item must carry a supplied `observedAt` timestamp. The timestamp records when the source evidence was observed; it does not prove source validity, present availability, licence status or commercial approval. Undated public-web commercial evidence produces a deterministic `REVIEW` evidence gap and cannot establish a current claim. This RFC sets no arbitrary freshness window.
+
 Inputs have count and length ceilings. The runner rejects additional properties, malformed evidence references and oversized files before an API call. It does not load the repository automatically.
 
 ## 6. Shared result contract
@@ -152,7 +154,7 @@ The registry contains exactly these specialists:
 | `partner-intelligence` | Partner Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `digital-pr-data-story` | Digital PR & Data Story Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 
-Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
+Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Its real business run is recorded as completed; its curated quality evaluation remains pending, and a public-web tool is not authorised. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
 
 ## 9. Deterministic preflight
 
@@ -207,9 +209,10 @@ No-key tests must cover:
 - max-turn and timeout bounds;
 - cost calculation;
 - input-claim and provider-output evidence integrity; and
+- Partner Intelligence public-web observation timestamps and its curated no-key eval corpus; and
 - credential/logging/source scans.
 
-The single authorised neutral smoke verified SDK connectivity and one schema-valid Compliance Gate result. It does not constitute an eval programme, Production activation or approval of model quality. Dedicated specialist-quality evaluation requires curated expected outcomes, cost limits, privacy review and separate Founder authority.
+The single authorised neutral smoke verified SDK connectivity and one schema-valid Compliance Gate result. It does not constitute an eval programme, Production activation or approval of model quality. The Partner Intelligence corpus is deterministic/offline and does not invoke a model. Any live specialist-quality evaluation requires curated expected outcomes, cost limits, privacy review and separate Founder authority.
 
 ## 14. Documentation and extension rule
 
@@ -221,4 +224,4 @@ Adding a specialist requires a registry entry, purpose and prohibited actions, c
 
 This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / QUALITY EVAL PENDING / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks have passed, and its one authorised neutral smoke is recorded above.
 
-It must remain unmerged, undeployed, unscheduled and inactive in Production pending Founder Office review. The review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.
+PR #69 merged the isolated package to `main`. It remains undeployed, unscheduled and inactive in Production; merge did not authorise agent quality claims, tools, external integrations or Production use. Any later activation review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.

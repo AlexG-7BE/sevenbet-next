@@ -28,6 +28,18 @@ const providerPass: OperationalAgentResult = {
   confidence: "MEDIUM",
 };
 
+const partnerDraft: OperationalAgentResult = {
+  agent: "partner-intelligence",
+  status: "COMPLETED",
+  recommendation: "DRAFT",
+  summary: "The supplied evidence supports only a bounded research draft.",
+  findings: [],
+  risks: [],
+  actions: [],
+  evidenceGaps: [],
+  confidence: "MEDIUM",
+};
+
 test("unsupported commercial fact becomes an evidence gap and remains UNKNOWN", () => {
   const unsupported = OperationalAgentInputSchema.parse({
     request: "Review this operator statement.",
@@ -52,6 +64,79 @@ test("unsupported commercial fact becomes an evidence gap and remains UNKNOWN", 
   assert.equal(enforced.status, "NEEDS_REVIEW");
   assert.equal(enforced.recommendation, "REVIEW");
   assert.match(enforced.evidenceGaps[0]?.impact ?? "", /remain UNKNOWN/);
+});
+
+test("undated public-web evidence for a material commercial claim requires review", () => {
+  const unsupported = OperationalAgentInputSchema.parse({
+    request: "Research the supplied operator evidence.",
+    evidence: [
+      {
+        id: "affiliate-page",
+        kind: "PUBLIC_WEB_EVIDENCE",
+        title: "Operator affiliate page",
+        source: "https://example.invalid/affiliates",
+      },
+    ],
+    claims: [
+      {
+        statement: "Operator Alpha has a current affiliate programme.",
+        category: "PARTNER",
+        classification: "DETECTED",
+        evidenceIds: ["affiliate-page"],
+      },
+    ],
+  });
+  const assessment = assessPreflight(unsupported, "partner-intelligence");
+  const enforced = enforcePreflight(
+    partnerDraft,
+    assessment,
+    getSpecialist("partner-intelligence"),
+  );
+
+  assert.equal(assessment.requiredDisposition, null);
+  assert.ok(
+    assessment.issues.some(
+      (issue) => issue.ruleId === "UNDATED_PUBLIC_WEB_COMMERCIAL_EVIDENCE",
+    ),
+  );
+  assert.match(
+    assessment.evidenceGaps[0]?.requiredEvidence ?? "",
+    /observedAt/,
+  );
+  assert.equal(enforced.status, "NEEDS_REVIEW");
+  assert.equal(enforced.recommendation, "REVIEW");
+});
+
+test("an observed public-web timestamp is recorded without an arbitrary expiry window", () => {
+  const current = OperationalAgentInputSchema.parse({
+    request: "Research the supplied operator evidence.",
+    evidence: [
+      {
+        id: "affiliate-page",
+        kind: "PUBLIC_WEB_EVIDENCE",
+        title: "Operator affiliate page",
+        source: "https://example.invalid/affiliates",
+        observedAt: "2020-01-01T00:00:00.000Z",
+      },
+    ],
+    claims: [
+      {
+        statement: "Operator Alpha has a public affiliate programme.",
+        category: "PARTNER",
+        classification: "DETECTED",
+        evidenceIds: ["affiliate-page"],
+      },
+    ],
+  });
+  const assessment = assessPreflight(current, "partner-intelligence");
+
+  assert.equal(
+    assessment.issues.some(
+      (issue) => issue.ruleId === "UNDATED_PUBLIC_WEB_COMMERCIAL_EVIDENCE",
+    ),
+    false,
+  );
+  assert.deepEqual(assessment.evidenceGaps, []);
 });
 
 test("synthetic Production data proposal is deterministically blocked without a provider", async () => {
