@@ -4,7 +4,7 @@ import {
   getAdminLoginUrl,
   isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
-import { resolvePreviewCanonicalHost } from "@/lib/auth/preview-canonical-host";
+import { resolveRuntimeCanonicalHost } from "@/lib/auth/runtime-canonical-host";
 
 const adminCookieName = "sevenbet_admin_preview";
 
@@ -26,9 +26,9 @@ function hasPossibleBetterAuthSession(request: NextRequest) {
 }
 
 export function middleware(request: NextRequest) {
-  const canonicalHost = resolvePreviewCanonicalHost(request.url);
+  const canonicalHost = resolveRuntimeCanonicalHost(request.url);
   if (canonicalHost.kind === "redirect") {
-    return NextResponse.redirect(canonicalHost.location, 307);
+    return NextResponse.redirect(canonicalHost.location, canonicalHost.status);
   }
   if (canonicalHost.kind === "reject") {
     return NextResponse.json(

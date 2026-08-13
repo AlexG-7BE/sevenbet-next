@@ -96,14 +96,42 @@ test("metadata and structured data contain no raw operator destination or fabric
 });
 
 test("exact-ID demo profiles are noindex, truthful and suppress review/commercial schemas", () => {
-  const record = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo", affiliate: { href: "/r/demo", available: true } });
+  const record = casino({
+    id: temporaryDemoCasinoIds[0],
+    slug: "demo-northstar",
+    name: "Fictional Demo",
+    seo: {
+      ...casino().seo,
+      canonical: "https://sevenbet-next.vercel.app/casino/demo-northstar",
+      socialImage: "https://sevenbet-next.vercel.app/demo-casinos/demo-northstar-hero.svg",
+    },
+    media: {
+      ...casino().media,
+      hero: {
+        id: "demo-hero",
+        type: "hero",
+        url: "/demo-casinos/demo-northstar-hero.svg",
+        alt: "Fictional demo hero",
+        width: 1600,
+        height: 900,
+        caption: null,
+      },
+    },
+    affiliate: { href: "/r/demo", available: true },
+  });
   assert.equal(profileAction(record, selectProfileBonus(record)), null);
   const metadata = casinoProfileMetadata(record, editorial);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.match(String(metadata.title), /Fictional Review Demonstration/);
   assert.match(String(metadata.description), /not a current GB operator/i);
+  const metadataSerialized = JSON.stringify(metadata);
+  assert.match(metadataSerialized, /https:\/\/b4gamble\.com\/casino\/demo-northstar/);
+  assert.match(metadataSerialized, /https:\/\/b4gamble\.com\/demo-casinos\/demo-northstar-hero\.svg/);
+  assert.doesNotMatch(metadataSerialized, /vercel\.app/);
   const serialized = JSON.stringify(casinoProfileSchemas(record, editorial));
   assert.match(serialized, /fictional review demonstration/i);
+  assert.match(serialized, /https:\/\/b4gamble\.com\/casino\/demo-northstar/);
+  assert.doesNotMatch(serialized, /vercel\.app/);
   assert.doesNotMatch(serialized, /"@type":"Review"|"@type":"FAQPage"|"@type":"Offer"/);
 });
 

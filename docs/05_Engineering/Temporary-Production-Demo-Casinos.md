@@ -24,7 +24,7 @@ The factory-driven manifest contains exactly:
 
 Every aggregate has one active published synthetic bonus, three deterministic media assets and explicit fictional disclosures. Eighteen scenarios are `GB`-available; twelve are featured for the default shortlist. Types, terms, currencies, payments, crypto states, scores and presentation modes vary through scenario overrides.
 
-Five casino-level internal routes are allowed: Northstar, Harbour, Atlas, Lantern and Summit. Each resolves only to its own `https://sevenbet-next.vercel.app/casino/demo-*` profile. The other 20 offer actions are unavailable.
+Five casino-level internal routes are allowed: Northstar, Harbour, Atlas, Lantern and Summit. Each resolves only to its own `https://b4gamble.com/casino/demo-*` profile. The other 20 offer actions are unavailable.
 
 All seed-owned database identities are deterministic UUIDs. Re-running the v2 seed skips unchanged published snapshots and upserts the same five affiliate graphs, producing no duplicate casino, bonus, media, affiliate or redirect records.
 

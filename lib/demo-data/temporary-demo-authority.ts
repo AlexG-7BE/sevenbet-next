@@ -6,7 +6,7 @@
  */
 export const TEMPORARY_DEMO_DATASET_ID = "temporary-production-demo-casinos-v2";
 export const TEMPORARY_DEMO_ACTOR_LABEL = "Founder Office approved synthetic dataset";
-export const PRODUCTION_SITE_ORIGIN = "https://sevenbet-next.vercel.app";
+export const PRODUCTION_SITE_ORIGIN = "https://b4gamble.com";
 
 function deterministicId(scope: number, slot: number) {
   return `${String(scope).padStart(8, "0")}-0000-4000-8000-${String(slot).padStart(12, "0")}`;
