@@ -1,6 +1,12 @@
 # Roadmap
 
-Reconciled 2026-08-14 against current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. PR #68 and PR #71 are merged. FULL-SITE-QA-01 is in progress on `codex/full-site-integrity-audit-01` as Draft PR #72 and is not merged.
+## RFC-031 focused branch addendum — 2026-08-14
+
+| Sequence | Workstream | Status | Evidence / boundary |
+| --- | --- | --- | --- |
+| 35 | RFC-031 Vercel-compatible Programme voice limit | **IMPLEMENTED AND HOSTED-CI GREEN ON DRAFT PR #73 / NOT MERGED / PRODUCTION NOT CHANGED** | Founder-approved branch `rfc-031-voice-upload-limit` starts from exact main `b6fd5b20edd6fc2fcfc62e7d80ddc75c74968d19`. Independently audited implementation/test head `db4591d11d82dbb205e7e79aae516d12ca06f783` passed Agent Core, Quality, Database / Migration Verification, Build / Browser, Vercel and Vercel Preview Comments. Exact limits are 4,194,304-byte audio, 4,259,840-byte complete multipart request and unchanged 90,000 ms duration; declared and actual bytes are server-enforced before multipart parsing/provider use. Client preflight makes zero authority/transcription requests for an oversized completed Blob, releases it, exposes **Type instead** and offers no unchanged-Blob retry; exact-at-limit upload, editable transcript, typed fallback and recorder cleanup regressions pass. This documentation addendum follows that head and still requires final-head hosted/Preview verification. No schema, migration, object storage, provider, environment, reward, Mission, merge or Production change is authorised or made. |
+
+Historical snapshot below was reconciled 2026-08-14 against then-current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. PR #68 and PR #71 were merged; FULL-SITE-QA-01 was then still in progress on `codex/full-site-integrity-audit-01` as Draft PR #72.
 
 | Sequence | Workstream | Status | Evidence / boundary |
 | --- | --- | --- | --- |
