@@ -1,0 +1,75 @@
+name: RFC031 one-time client patch
+
+on:
+  push:
+    branches:
+      - rfc-031-voice-upload-limit
+
+permissions:
+  contents: write
+
+jobs:
+  patch-client:
+    if: contains(github.event.head_commit.message, '[apply-rfc031-client]')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rfc-031-voice-upload-limit
+          fetch-depth: 0
+      - name: Apply exact client preflight patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('components/programme/ProgramAiExperience.tsx')
+          text = path.read_text()
+
+          replacements = [
+              (
+                  'import {\n  PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,\n  PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,\n  type ProgramAiBroadContext,\n  type ProgrammeStartingPointValue,\n} from "@/lib/programme/program-ai/contracts";\n',
+                  'import {\n  PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,\n  PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,\n  type ProgramAiBroadContext,\n  type ProgrammeStartingPointValue,\n} from "@/lib/programme/program-ai/contracts";\nimport {\n  PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE,\n  programmeAudioBlobFitsUploadLimit,\n} from "@/lib/programme/program-ai/transcription-limits";\n',
+              ),
+              (
+                  '  const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");\n',
+                  '  const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");\n  const [recordingError, setRecordingError] = useState("");\n',
+              ),
+              (
+                  '  async function transcribe(audio: Blob, durationMs: number) {\n    onState("transcribing");\n    try {\n      const result = await onTranscribe(audio, durationMs);\n      releaseRecording();\n      onTranscript(result.transcript, {\n        recordingDurationMs: durationMs,\n        transcriptionRequestMs: result.transcriptionRequestMs,\n      });\n      productAnalyticsClient.voiceOutcome("transcription_success");\n      onState("success");\n    } catch {\n      productAnalyticsClient.voiceOutcome("transcription_error");\n      onState("error");\n    }\n  }\n',
+                  '  async function transcribe(audio: Blob, durationMs: number) {\n    setRecordingError("");\n    if (!programmeAudioBlobFitsUploadLimit(audio.size)) {\n      releaseRecording();\n      setRecordingError(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);\n      productAnalyticsClient.voiceOutcome("transcription_error");\n      onState("error");\n      return;\n    }\n    onState("transcribing");\n    try {\n      const result = await onTranscribe(audio, durationMs);\n      releaseRecording();\n      onTranscript(result.transcript, {\n        recordingDurationMs: durationMs,\n        transcriptionRequestMs: result.transcriptionRequestMs,\n      });\n      productAnalyticsClient.voiceOutcome("transcription_success");\n      onState("success");\n    } catch {\n      setRecordingError("Voice transcription could not be completed.");\n      productAnalyticsClient.voiceOutcome("transcription_error");\n      onState("error");\n    }\n  }\n',
+              ),
+              (
+                  '    onState("requesting");\n    try {\n      releaseRecording();\n',
+                  '    setRecordingError("");\n    onState("requesting");\n    try {\n      releaseRecording();\n',
+              ),
+              (
+                  '      {state === "error" ? <p role="alert">Voice transcription could not be completed. {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}\n',
+                  '      {state === "error" ? <p role="alert">{recordingError || "Voice transcription could not be completed."} {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}\n',
+              ),
+              (
+                  '  async function transcribeVoice(audio: Blob, durationMs: number) {\n    if (!subject) throw new Error("Programme session unavailable");\n    await ensureSensitiveAuthority();\n',
+                  '  async function transcribeVoice(audio: Blob, durationMs: number) {\n    if (!subject) throw new Error("Programme session unavailable");\n    if (!programmeAudioBlobFitsUploadLimit(audio.size)) {\n      throw new Error(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);\n    }\n    await ensureSensitiveAuthority();\n',
+              ),
+          ]
+
+          for old, new in replacements:
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'exact replacement precondition failed: expected 1 match, found {count}')
+              text = text.replace(old, new, 1)
+
+          path.write_text(text)
+          PY
+
+          git diff --check
+          git diff -- components/programme/ProgramAiExperience.tsx
+      - name: Commit patch and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/programme/ProgramAiExperience.tsx
+          git rm .github/workflows/rfc031-one-time-client-patch.yml
+          git commit -m "feat: add RFC-031 client voice preflight"
+          git push origin HEAD:rfc-031-voice-upload-limit
