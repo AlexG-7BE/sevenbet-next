@@ -40,7 +40,7 @@ function requestFromBytes(
       "content-type": contentType,
       ...(contentLength === undefined ? {} : { "content-length": contentLength }),
     },
-    body,
+    body: body as BodyInit,
   });
 }
 
