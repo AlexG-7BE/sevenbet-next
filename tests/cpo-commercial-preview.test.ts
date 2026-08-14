@@ -40,6 +40,28 @@ test("Best Casinos is a three-record decision layer with strict action hierarchy
   assert.match(layer, /Programme answers, limits, Help activity/);
 });
 
+test("Founder A/B routes preserve Variant A and reuse the same bounded decision layer", () => {
+  const variantA = read("app/(public)/best-casinos/page.tsx");
+  const variantB = read("app/(public)/best-casinos-roulette/page.tsx");
+  const layer = read("components/commercial-decision/BestCasinoDecisionLayer.tsx");
+  const hub = read("app/(public)/preview/cpo-commercial-v3/page.tsx");
+  const roulette = read("components/commercial-decision/BestCasinoRoulette.module.css");
+
+  assert.match(variantA, /BestCasinoDecisionLayer inventoryMode=/);
+  assert.doesNotMatch(variantA, /variant="roulette"/);
+  assert.match(variantB, /limit: 3/);
+  assert.match(variantB, /variant="roulette"/);
+  assert.match(variantB, /isCpoCommercialPreviewEnabled\(\)/);
+  assert.match(variantB, /index: false, follow: false/);
+  assert.match(layer, /const shortlist = records\.slice\(0, 3\)/);
+  assert.match(hub, /href="\/best-casinos"/);
+  assert.match(hub, /href="\/best-casinos-roulette"/);
+  assert.match(layer, /data-commercial-variant=\{variant\}/);
+  assert.match(roulette, /body\):has\(\.page\)/);
+  assert.match(roulette, /data-footer-section="help"/);
+  assert.doesNotMatch(variantB + hub + roulette, /\/r\/\[slug\]|destinationUrl|affiliate\.href/);
+});
+
 test("public and Programme paths have one primary commercial decision route", () => {
   const shell = read("lib/public-shell.ts");
   const home = read("components/programme/ProgramAiHome.tsx");

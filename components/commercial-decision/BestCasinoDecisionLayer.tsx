@@ -2,9 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CommercialAnalyticsLink, CommercialDecisionLayerView } from "@/components/commercial-decision/CommercialAnalytics";
-import styles from "@/components/commercial-decision/BestCasinoGolden.module.css";
+import goldenStyles from "@/components/commercial-decision/BestCasinoGolden.module.css";
+import rouletteStyles from "@/components/commercial-decision/BestCasinoRoulette.module.css";
 import { previewOutboundHref } from "@/lib/cpo-commercial-preview";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
+
+type BestCasinoVisualVariant = "golden" | "roulette";
+type DecisionStyles = Record<string, string>;
+
+const visualStyles: Record<BestCasinoVisualVariant, DecisionStyles> = {
+  golden: goldenStyles,
+  roulette: rouletteStyles,
+};
 
 function money(value: number | null, currency: string | null) {
   if (value === null) return "Not listed";
@@ -55,7 +64,7 @@ function mediaAlt(offer: PublicOfferDTO, kind: "hero" | "screen") {
   return "B4GAMBLE editorial shortlist artwork";
 }
 
-function Identity({ offer, compact = false }: { offer: PublicOfferDTO; compact?: boolean }) {
+function Identity({ offer, styles, compact = false }: { offer: PublicOfferDTO; styles: DecisionStyles; compact?: boolean }) {
   const logo = demoAsset(offer, "logo") || offer.casino.logo?.url;
   return <div className={compact ? styles.compactIdentity : styles.identity}>
     {logo
@@ -68,14 +77,14 @@ function Identity({ offer, compact = false }: { offer: PublicOfferDTO; compact?:
   </div>;
 }
 
-function FactLedger({ offer, compact = false }: { offer: PublicOfferDTO; compact?: boolean }) {
+function FactLedger({ offer, styles, compact = false }: { offer: PublicOfferDTO; styles: DecisionStyles; compact?: boolean }) {
   const rows = compact ? facts(offer).slice(1) : facts(offer);
   return <dl className={compact ? styles.compactFacts : styles.factLedger}>
     {rows.map(([label, value]) => <div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
   </dl>;
 }
 
-function RecommendationActions({ offer, rank, compact = false }: { offer: PublicOfferDTO; rank: 1 | 2 | 3; compact?: boolean }) {
+function RecommendationActions({ offer, rank, styles, compact = false }: { offer: PublicOfferDTO; rank: 1 | 2 | 3; styles: DecisionStyles; compact?: boolean }) {
   return <div className={compact ? styles.compactActions : styles.actions}>
     <CommercialAnalyticsLink
       action={{ event: "outbound", operatorSlug: offer.casino.slug, recommendationRank: rank }}
@@ -88,7 +97,7 @@ function RecommendationActions({ offer, rank, compact = false }: { offer: Public
   </div>;
 }
 
-function PreviewNote({ inventoryMode }: { inventoryMode: PublicOfferInventoryMode }) {
+function PreviewNote({ inventoryMode, styles }: { inventoryMode: PublicOfferInventoryMode; styles: DecisionStyles }) {
   if (inventoryMode === "PUBLISHED_ONLY") return null;
   return <aside className={styles.previewNote} role="note">
     <span>{inventoryMode === "DEMO_ONLY" ? "DEMONSTRATION DATA" : "MIXED SOURCE STATUS"}</span>
@@ -96,7 +105,7 @@ function PreviewNote({ inventoryMode }: { inventoryMode: PublicOfferInventoryMod
   </aside>;
 }
 
-function Winner({ offer }: { offer: PublicOfferDTO }) {
+function Winner({ offer, styles }: { offer: PublicOfferDTO; styles: DecisionStyles }) {
   return <section className={styles.winnerSection} data-golden-section="number-one" id="number-one" aria-labelledby="winner-title">
     <div className={styles.shell}>
       <header className={styles.winnerIntro}>
@@ -114,7 +123,7 @@ function Winner({ offer }: { offer: PublicOfferDTO }) {
 
         <div className={styles.winnerDecision}>
           <div className={styles.winnerDecisionTop}>
-            <Identity offer={offer} />
+            <Identity offer={offer} styles={styles} />
             <p className={styles.score}><strong>{offer.casino.editorScore.toFixed(1)}</strong><span>/10<br />EDITOR SCORE</span></p>
           </div>
 
@@ -124,10 +133,10 @@ function Winner({ offer }: { offer: PublicOfferDTO }) {
             <p>{offer.bonus.summary}</p>
           </div>
 
-          <FactLedger offer={offer} />
+          <FactLedger offer={offer} styles={styles} />
 
           <p className={styles.limitation}><strong>Keep in view:</strong><span>{visibleLimitation(offer)}</span></p>
-          <RecommendationActions offer={offer} rank={1} />
+          <RecommendationActions offer={offer} rank={1} styles={styles} />
           <small className={styles.simulation}>Preview simulation · the action stays inside B4GAMBLE</small>
 
           <div className={styles.winnerReason}>
@@ -140,7 +149,7 @@ function Winner({ offer }: { offer: PublicOfferDTO }) {
   </section>;
 }
 
-function Alternative({ offer, rank }: { offer: PublicOfferDTO; rank: 2 | 3 }) {
+function Alternative({ offer, rank, styles }: { offer: PublicOfferDTO; rank: 2 | 3; styles: DecisionStyles }) {
   const isSecond = rank === 2;
   return <li className={isSecond ? styles.secondPlace : styles.thirdPlace}>
     <article>
@@ -151,21 +160,21 @@ function Alternative({ offer, rank }: { offer: PublicOfferDTO; rank: 2 | 3 }) {
       <div className={styles.alternativeCopy}>
         <p className={styles.alternativePosition}>{isSecond ? "STRONG ALTERNATIVE" : "WORTH COMPARING"}</p>
         <div className={styles.alternativeHeading}>
-          <Identity compact offer={offer} />
+          <Identity compact offer={offer} styles={styles} />
           <p><strong>{offer.casino.editorScore.toFixed(1)}</strong><span>/10</span></p>
         </div>
         <div className={styles.alternativeOffer}><span>OFFER RECORD</span><h3>{offer.bonus.title}</h3><p>{offer.bonus.summary}</p></div>
-        <FactLedger compact offer={offer} />
+        <FactLedger compact offer={offer} styles={styles} />
         <p className={styles.alternativeWhy}><strong>Why it is here</strong>{reasons(offer)[0] || "Material evidence remains visible."}</p>
         <p className={styles.alternativeLimit}><strong>Keep in view:</strong>{visibleLimitation(offer)}</p>
-        <RecommendationActions compact offer={offer} rank={rank} />
+        <RecommendationActions compact offer={offer} rank={rank} styles={styles} />
         <small className={styles.simulation}>Preview simulation · no external visit</small>
       </div>
     </article>
   </li>;
 }
 
-function Alternatives({ records }: { records: PublicOfferDTO[] }) {
+function Alternatives({ records, styles }: { records: PublicOfferDTO[]; styles: DecisionStyles }) {
   return <section className={styles.alternatives} data-golden-section="alternatives" aria-labelledby="alternatives-title">
     <div className={styles.shell}>
       <header className={styles.alternativesIntro}>
@@ -174,13 +183,13 @@ function Alternatives({ records }: { records: PublicOfferDTO[] }) {
         <p>Both remain credible options. Their quieter treatment is intentional: compare only if the first recommendation leaves a question.</p>
       </header>
       <ol className={styles.alternativeList} start={2}>
-        {records.slice(0, 2).map((offer, index) => <Alternative key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} rank={(index + 2) as 2 | 3} />)}
+        {records.slice(0, 2).map((offer, index) => <Alternative key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} rank={(index + 2) as 2 | 3} styles={styles} />)}
       </ol>
     </div>
   </section>;
 }
 
-function EvidenceAndResearch() {
+function EvidenceAndResearch({ styles }: { styles: DecisionStyles }) {
   return <div data-golden-section="evidence-research">
     <section className={styles.evidence} aria-labelledby="evidence-title">
       <div className={styles.shell}>
@@ -216,7 +225,7 @@ function EvidenceAndResearch() {
   </div>;
 }
 
-function Closing({ offer }: { offer: PublicOfferDTO }) {
+function Closing({ offer, styles }: { offer: PublicOfferDTO; styles: DecisionStyles }) {
   return <section className={styles.closing} aria-labelledby="closing-title">
     <div className={styles.shell}>
       <div className={styles.closingNumber} aria-hidden="true">01</div>
@@ -237,18 +246,27 @@ function Closing({ offer }: { offer: PublicOfferDTO }) {
   </section>;
 }
 
-export function BestCasinoDecisionLayer({ records, inventoryMode }: { records: PublicOfferDTO[]; inventoryMode: PublicOfferInventoryMode }) {
+export function BestCasinoDecisionLayer({
+  records,
+  inventoryMode,
+  variant = "golden",
+}: {
+  records: PublicOfferDTO[];
+  inventoryMode: PublicOfferInventoryMode;
+  variant?: BestCasinoVisualVariant;
+}) {
   const shortlist = records.slice(0, 3);
   const winner = shortlist[0];
   if (!winner) return null;
+  const styles = visualStyles[variant];
 
-  return <div className={styles.page}>
+  return <div className={styles.page} data-commercial-variant={variant}>
     <CommercialDecisionLayerView placement="shortlist" sourceRoute="best_casinos" />
     <section className={styles.hero} data-golden-section="hero" aria-labelledby="golden-title">
       <div className={styles.heroFrame}>
         <div className={styles.heroUtility}>
-          <p>B4GAMBLE PICKS · EDITORIAL DECISION THEATRE · 18+</p>
-          <PreviewNote inventoryMode={inventoryMode} />
+          <p>{variant === "roulette" ? "B4GAMBLE PICKS · ROULETTE PALETTE VARIANT · 18+" : "B4GAMBLE PICKS · EDITORIAL DECISION THEATRE · 18+"}</p>
+          <PreviewNote inventoryMode={inventoryMode} styles={styles} />
         </div>
         <div className={styles.heroArtwork} aria-hidden="true">
           <Image alt="" fill priority sizes="(max-width: 760px) 100vw, 760px" src="/best-offers/shortlist-art.jpg" />
@@ -263,9 +281,9 @@ export function BestCasinoDecisionLayer({ records, inventoryMode }: { records: P
       </div>
     </section>
 
-    <Winner offer={winner} />
-    {shortlist.length > 1 ? <Alternatives records={shortlist.slice(1)} /> : null}
-    <EvidenceAndResearch />
-    <Closing offer={winner} />
+    <Winner offer={winner} styles={styles} />
+    {shortlist.length > 1 ? <Alternatives records={shortlist.slice(1)} styles={styles} /> : null}
+    <EvidenceAndResearch styles={styles} />
+    <Closing offer={winner} styles={styles} />
   </div>;
 }

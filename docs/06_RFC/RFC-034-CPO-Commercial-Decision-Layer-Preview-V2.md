@@ -172,6 +172,14 @@ The Founder accepts this RFC's product/business architecture and rejects the fir
 
 That Golden record supersedes this section's original presentation target for `/best-casinos` only. It does not supersede the existing B4GAMBLE token roles, Top 3 limit, recommendation order, fact/limitation requirements, CTA hierarchy, Preview boundary, analytics contract, private/safety separation or any other product rule in this RFC. Meaningful existing B4GAMBLE and governed fixture media is now required for the Golden page when its use is truthful. No Phase 2 propagation is authorised before Founder visual approval.
 
+#### 9.1.1 Founder A/B comparison amendment — 2026-08-14
+
+The Founder accepted the Golden implementation as **Variant A** for continued comparison and requested one bounded **Variant B** visual experiment named **B4GAMBLE Editorial Decision Theatre — Roulette Palette Variant**. Variant A remains available at `/best-casinos`; Variant B may be added at `/best-casinos-roulette`; and one noindex Preview comparison hub may be added at `/preview/cpo-commercial-v3`.
+
+Variant B may change only page-scoped presentation and the minimum non-semantic public-shell hooks needed to style that route. Its permitted direction is deep roulette-table green, near-black green, warm paper/ivory and a restrained dark burgundy accent. Recommendation stages, key facts, header typography and footer typography become more legible; recommendation stages must dominate the surrounding atmosphere; and the existing full-width Help emphasis must become a compact support module. Acid may be reduced or omitted inside Variant B, but the change must not alter global B4GAMBLE token meanings or unrelated routes.
+
+Variant B must preserve the same server-owned records, Top 3 order, visible limitation, action order, internal Preview terminal, research routes, analytics metadata, demo-fixture truth and protected-data separation as Variant A. It may not change global navigation information architecture, footer links, the Production public shell, ranking, routing, database, API, authentication, Programme, Help behaviour or any Phase 2 surface. Founder comparison is a visual gate only and provides no merge, Production or rollout authority.
+
 ### 9.2 Original Preview reference lock
 
 Build target: merged B4GAMBLE Design System v1, current public shell and the RFC-025/RFC-033 paper/night product theatre.

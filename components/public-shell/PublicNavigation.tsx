@@ -75,8 +75,8 @@ export function PublicNavigation({
         </nav>
         <div className={styles.accountNavigation}>
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
-          {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{account.accountLabel}</Link> : null}
-          <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
+          {!authenticated ? <Link className={styles.accountLink} data-shell-element="account-link" href={account.accountHref}>{account.accountLabel}</Link> : null}
+          <Link className={styles.primaryAction} data-shell-element="primary-action" href={account.primaryHref} onClick={() => {
             if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
           }}>{account.primaryLabel}</Link>
         </div>

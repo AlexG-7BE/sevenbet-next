@@ -1,9 +1,11 @@
 # CPO Commercial Golden Best Casinos V1
 
-- **Status:** Ready for Founder visual review; Founder visual approval pending
+- **Status:** Ready for Founder A/B visual review; Founder selection pending
 - **Date:** 2026-08-14
 - **Governing decision:** [RFC-034](../06_RFC/RFC-034-CPO-Commercial-Decision-Layer-Preview-V2.md)
-- **Route:** `/best-casinos` only
+- **Variant A route:** `/best-casinos`
+- **Variant B route:** `/best-casinos-roulette`
+- **Comparison hub:** `/preview/cpo-commercial-v3`
 - **Branch:** `codex/cpo-commercial-decision-layer-preview-02`
 - **Draft PR:** #75
 - **Baseline PR #75 head:** `e01f0574b3c19860d8541b67cc29d9c400a8483a`
@@ -13,6 +15,77 @@
 - **Verified review/deployment head:** `f42f872533ad6d8708e809cfe937c4581bd1ed9c`
 - **Immutable deployment:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app>
 - **Golden page:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app/best-casinos>
+
+## Founder A/B comparison amendment
+
+### Variant A summary
+
+- **Detected:** the current Golden page is the first accepted-for-comparison Editorial Decision Theatre direction.
+- **Detected:** it uses the existing B4GAMBLE night/paper/acid/teal system, an oversized image-led opening, one dominant #1 stage, asymmetric #2/#3 alternatives and designed evidence/research chapters.
+- **Decision:** Variant A remains available without visual or route regression while Variant B is developed separately.
+
+### Founder feedback on Variant A
+
+- **Detected from Founder brief:** header and footer type is too small; the footer composition and full-width Open Help emphasis are weak; key casino facts need substantially more visual weight; bright accent fields compete with the recommendation stages; and the recommendation stages themselves should become more expressive.
+- **Decision:** test a deeper roulette-table mood without casino advertising clichés, neon, chips, wheels, money imagery, red/green novelty or glossy Las Vegas styling.
+
+### Variant B build target
+
+**B4GAMBLE Editorial Decision Theatre — Roulette Palette Variant.** Preserve A's product architecture and editorial confidence while making recommendation stages the page's primary visual objects.
+
+What must not drift: Top 3 order, public evidence, visible limitations, Visit/Review/Compare hierarchy, internal Preview outbound simulation, research paths, demo truth, analytics contract, protected-data separation and Variant A availability.
+
+### Variant B reference calibration
+
+- **Primary — Symbol Audio**, Refero style `4b4d9fd8-cf43-4a80-9677-211b180c64d1`: deep forest canvas, sculptural readable sans type, sharp product stages, off-white product surfaces and imagery/content taking priority over chrome.
+- **Secondary — Assembly Coffee**, Refero style `fccbe6e5-8831-4784-b56c-1fc013db61cc`: restrained charcoal/burgundy atmosphere and warm, low-frequency highlights. Do not borrow its small utility typography or decorative serif dependence.
+- **Secondary — Peloton**, Refero style `1b7e4f5c-c3c2-48d5-8f34-3ecdd17f422e`: one red-family accent restricted to decisive actions and critical emphasis, with strong inverse contrast and no competing accent colours.
+- **Product hierarchy screen — Seed Sleep + Restore**, Refero screen `ed73f73f-f6bc-4996-88c7-fd8576b87f73`: a large media stage and clear product-information column keep identity, price/facts and CTA together before deeper evidence.
+- **Footer/support screen — Lulu and Georgia Help**, Refero screen `ee9c1378-28ee-48a4-848a-df075503085d`: readable multi-column footer and a contained Help control rather than a full-width support takeover.
+
+### Variant B reference lock
+
+- Deep near-black green owns the atmosphere; it does not recolour every content surface.
+- Warm ivory owns recommendation information surfaces so facts remain immediately readable.
+- Muted burgundy is restricted to the primary action and rank/selection emphasis inside recommendation stages.
+- Existing teal remains a quiet evidence/trust cue only where needed; acid is not a dominant Variant B field.
+- Archivo remains the readable functional/display voice; Instrument Serif remains limited to editorial statements already justified by the Golden direction.
+- Recommendation media remains governed local B4GAMBLE/demo-fixture media; no new casino imagery or fabricated operator evidence is authorised.
+- Corners stay sharp or minimally softened; cards use composition and contrast rather than decorative shadow stacks.
+
+### Variant B decision ledger
+
+| Decision | Source | Role rule | Why |
+| --- | --- | --- | --- |
+| Forest/near-black canvas | Founder brief + Symbol Audio | Atmosphere and shell only | Creates depth while allowing ivory recommendation stages to win. |
+| Muted burgundy | Founder brief + Peloton | Primary action and selection emphasis only | Replaces broad acid competition with one controlled commercial cue. |
+| Split #1 product stage | Seed screen + existing Golden hierarchy | Media and decision column form one dominant object | Makes casino identity, offer, facts and action the page's visual centre. |
+| Larger facts and shell type | Founder brief + typography craft lock | Decision facts at readable body/heading sizes; utility labels remain subordinate | Fixes the explicit legibility defect without making all metadata large. |
+| Compact Help cell | Founder brief + Lulu and Georgia | Support remains visible but contained | Preserves protected Help access without a stretched footer rectangle. |
+| Scoped shell treatment | RFC-034 boundary | Variant B selector only | Avoids a premature global header/footer redesign. |
+
+### Detected Variant B implementation
+
+- **Detected:** Variant A remains the default `/best-casinos` render and retains its Golden stylesheet.
+- **Detected:** Variant B reuses the same server-fetched, server-ranked three records and the same decision-layer component; only a route-selected CSS module and bounded hero label change.
+- **Detected:** the #1 recommendation is a sharp split media/product stage; facts render at 18px on desktop and 15px on narrow mobile; alternatives remain two visibly secondary but substantial product stages.
+- **Detected:** Variant B scopes its forest header and redesigned footer treatment to the presence of the Variant B page root. Shared shell semantics and links are unchanged on Variant A and unrelated routes.
+- **Detected:** footer group labels are 14px, links are 16px on desktop, and Open Help is a contained 310px support cell rather than a full-width takeover.
+- **Detected:** muted burgundy is confined to primary actions and rank emphasis; teal is a quiet evidence cue; no new casino image, gradient, neon, chip, wheel, money or fabricated operator asset was introduced.
+- **Detected:** `/preview/cpo-commercial-v3` links directly to both variants and states that product logic is unchanged.
+
+### Founder comparison guidance
+
+- Compare desktop hierarchy first: which variant makes the recommendation stages more memorable and easier to scan?
+- Compare mobile first screens second: which variant makes #1 identity, key facts and Visit action clearest without losing B4GAMBLE character?
+- Judge footer legibility and Help containment separately from palette preference.
+
+### Local verification evidence
+
+- **Detected:** `npm run cpo-preview:test` — 24/24 passing.
+- **Detected:** `npm run cpo-preview:browser` — 10/10 passing across Chromium and WebKit after visual-evidence capture at 390px, 430px and 1440px.
+- **Detected:** `npm run typecheck`, `npm run lint`, `CPO_COMMERCIAL_PREVIEW=true npm run build`, `npm run ci:quality` and `git diff --check` pass.
+- **Detected:** browser review confirms zero horizontal overflow at the governed widths, readable #1 identity/facts, visible Visit/Review/Compare hierarchy, compact Open Help and one-click routing to the internal Preview outbound terminal.
 
 ## Evidence classification
 

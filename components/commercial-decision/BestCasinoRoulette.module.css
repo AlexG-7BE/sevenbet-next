@@ -1,0 +1,452 @@
+.page { composes: page from "./BestCasinoGolden.module.css"; }
+.shell { composes: shell from "./BestCasinoGolden.module.css"; }
+.eyebrow { composes: eyebrow from "./BestCasinoGolden.module.css"; }
+.hero { composes: hero from "./BestCasinoGolden.module.css"; }
+.heroFrame { composes: heroFrame from "./BestCasinoGolden.module.css"; }
+.heroUtility { composes: heroUtility from "./BestCasinoGolden.module.css"; }
+.previewNote { composes: previewNote from "./BestCasinoGolden.module.css"; }
+.heroArtwork { composes: heroArtwork from "./BestCasinoGolden.module.css"; }
+.heroPromise { composes: heroPromise from "./BestCasinoGolden.module.css"; }
+.heroIndex { composes: heroIndex from "./BestCasinoGolden.module.css"; }
+.winnerSection { composes: winnerSection from "./BestCasinoGolden.module.css"; }
+.winnerIntro { composes: winnerIntro from "./BestCasinoGolden.module.css"; }
+.winnerStage { composes: winnerStage from "./BestCasinoGolden.module.css"; }
+.winnerMedia { composes: winnerMedia from "./BestCasinoGolden.module.css"; }
+.winnerRank { composes: winnerRank from "./BestCasinoGolden.module.css"; }
+.mediaCaption { composes: mediaCaption from "./BestCasinoGolden.module.css"; }
+.winnerDecision { composes: winnerDecision from "./BestCasinoGolden.module.css"; }
+.winnerDecisionTop { composes: winnerDecisionTop from "./BestCasinoGolden.module.css"; }
+.identity { composes: identity from "./BestCasinoGolden.module.css"; }
+.compactIdentity { composes: compactIdentity from "./BestCasinoGolden.module.css"; }
+.logo { composes: logo from "./BestCasinoGolden.module.css"; }
+.monogram { composes: monogram from "./BestCasinoGolden.module.css"; }
+.identityCopy { composes: identityCopy from "./BestCasinoGolden.module.css"; }
+.score { composes: score from "./BestCasinoGolden.module.css"; }
+.offerMoment { composes: offerMoment from "./BestCasinoGolden.module.css"; }
+.factLedger { composes: factLedger from "./BestCasinoGolden.module.css"; }
+.winnerReason { composes: winnerReason from "./BestCasinoGolden.module.css"; }
+.limitation { composes: limitation from "./BestCasinoGolden.module.css"; }
+.actions { composes: actions from "./BestCasinoGolden.module.css"; }
+.compactActions { composes: compactActions from "./BestCasinoGolden.module.css"; }
+.primaryAction { composes: primaryAction from "./BestCasinoGolden.module.css"; }
+.reviewAction { composes: reviewAction from "./BestCasinoGolden.module.css"; }
+.compareAction { composes: compareAction from "./BestCasinoGolden.module.css"; }
+.simulation { composes: simulation from "./BestCasinoGolden.module.css"; }
+.alternatives { composes: alternatives from "./BestCasinoGolden.module.css"; }
+.alternativesIntro { composes: alternativesIntro from "./BestCasinoGolden.module.css"; }
+.alternativeList { composes: alternativeList from "./BestCasinoGolden.module.css"; }
+.secondPlace { composes: secondPlace from "./BestCasinoGolden.module.css"; }
+.thirdPlace { composes: thirdPlace from "./BestCasinoGolden.module.css"; }
+.alternativeMedia { composes: alternativeMedia from "./BestCasinoGolden.module.css"; }
+.alternativeRank { composes: alternativeRank from "./BestCasinoGolden.module.css"; }
+.alternativeCopy { composes: alternativeCopy from "./BestCasinoGolden.module.css"; }
+.alternativePosition { composes: alternativePosition from "./BestCasinoGolden.module.css"; }
+.alternativeHeading { composes: alternativeHeading from "./BestCasinoGolden.module.css"; }
+.alternativeOffer { composes: alternativeOffer from "./BestCasinoGolden.module.css"; }
+.compactFacts { composes: compactFacts from "./BestCasinoGolden.module.css"; }
+.alternativeWhy { composes: alternativeWhy from "./BestCasinoGolden.module.css"; }
+.alternativeLimit { composes: alternativeLimit from "./BestCasinoGolden.module.css"; }
+.evidence { composes: evidence from "./BestCasinoGolden.module.css"; }
+.evidenceHeading { composes: evidenceHeading from "./BestCasinoGolden.module.css"; }
+.evidenceEditorial { composes: evidenceEditorial from "./BestCasinoGolden.module.css"; }
+.evidenceBoundary { composes: evidenceBoundary from "./BestCasinoGolden.module.css"; }
+.research { composes: research from "./BestCasinoGolden.module.css"; }
+.researchIntro { composes: researchIntro from "./BestCasinoGolden.module.css"; }
+.researchPaths { composes: researchPaths from "./BestCasinoGolden.module.css"; }
+.allCasinosPath { composes: allCasinosPath from "./BestCasinoGolden.module.css"; }
+.methodPath { composes: methodPath from "./BestCasinoGolden.module.css"; }
+.comparePath { composes: comparePath from "./BestCasinoGolden.module.css"; }
+.closing { composes: closing from "./BestCasinoGolden.module.css"; }
+.closingNumber { composes: closingNumber from "./BestCasinoGolden.module.css"; }
+.closingCopy { composes: closingCopy from "./BestCasinoGolden.module.css"; }
+.closingActions { composes: closingActions from "./BestCasinoGolden.module.css"; }
+
+.page {
+  --ink: #10231c;
+  --night: #071813;
+  --deep: #103428;
+  --paper: #f2eee4;
+  --field: #d9dfd6;
+  --white: #fffdf7;
+  --acid: #7a2e39;
+  --acid-hover: #64242d;
+  --teal: #376f5f;
+  --metal: #526159;
+  --line: rgba(16, 35, 28, .28);
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.page :focus-visible { outline-color: #b68a4e; }
+.eyebrow { color: #436f61; font-size: 12px; letter-spacing: .12em; }
+
+/* The opening atmosphere stays quiet enough for the recommendation stages to win. */
+.hero,
+.heroFrame { min-height: 830px; }
+.hero { background: #071813; }
+.heroFrame { padding-top: 44px; }
+.heroUtility > p { color: #d7c9ad; font-size: 12px; }
+.previewNote { border-top-color: rgba(242, 238, 228, .44); }
+.previewNote span { color: #d7c9ad; font-size: 11px; }
+.previewNote p { color: #b6c1bb; font-size: 12px; }
+.heroArtwork {
+  top: 126px;
+  right: 0;
+  width: min(52vw, 730px);
+  height: 520px;
+  border-color: rgba(242, 238, 228, .42);
+  transform: none;
+}
+.heroArtwork::before {
+  content: "";
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  background: rgba(91, 31, 40, .22);
+  pointer-events: none;
+}
+.heroArtwork::after { z-index: 2; border-color: rgba(242, 238, 228, .34); }
+.heroArtwork img { filter: saturate(.58) brightness(.72) contrast(1.08); }
+.heroArtwork > span { z-index: 3; color: rgba(242, 238, 228, .2); }
+.hero h1 { top: 190px; max-width: 1040px; font-size: clamp(88px, 9.8vw, 150px); line-height: .78; }
+.hero h1 em { color: #f2eee4; }
+.heroPromise { bottom: 58px; }
+.heroPromise > p { color: #c2cbc6; font-size: 19px; }
+.heroPromise > a { border-color: #7a2e39; background: #7a2e39; color: #fffdf7; font-size: 13px; }
+.heroPromise > a:hover { background: #64242d; }
+.heroIndex { color: rgba(242, 238, 228, .52); font-size: 10px; }
+
+/* #1 becomes one composed product object: media and decision column share a stage. */
+.winnerSection { padding: 116px 0 144px; background: #f2eee4; }
+.winnerIntro { grid-template-columns: minmax(0, 1fr) minmax(320px, .58fr); }
+.winnerIntro h2 { font-size: clamp(66px, 6.8vw, 98px); line-height: .83; }
+.winnerIntro > p:last-child { color: #46554e; font-size: 19px; }
+.winnerStage {
+  margin-top: 62px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(480px, .92fr);
+  border: 1px solid #153a2e;
+  background: #0c2d22;
+}
+.winnerMedia { min-height: 780px; height: auto; }
+.winnerMedia::after { border-color: rgba(242, 238, 228, .16); }
+.winnerRank {
+  top: 28px;
+  left: 28px;
+  padding: 16px 20px 12px;
+  background: rgba(112, 39, 49, .94);
+  color: #fffdf7;
+  font-size: clamp(98px, 9vw, 136px);
+  letter-spacing: -.09em;
+}
+.mediaCaption { left: 30px; bottom: 26px; background: #0c2d22; color: #e2d4b9; font-size: 10px; }
+.winnerDecision {
+  width: auto;
+  margin: 0;
+  padding: 52px 48px 42px;
+  border: 0;
+  background: #fffdf7;
+  align-self: stretch;
+}
+.winnerDecisionTop {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 24px;
+}
+.identity { gap: 16px; }
+.identity .logo,
+.identity .monogram { width: 128px; height: 70px; border-color: rgba(16, 35, 28, .22); }
+.identityCopy small { color: #376f5f; font-size: 11px; }
+.identityCopy strong { overflow-wrap: normal; font-size: clamp(34px, 2.8vw, 40px); line-height: .9; }
+.score strong { font-size: 72px; }
+.score span { color: #526159; font-size: 10px; }
+.offerMoment { margin-top: 42px; padding: 28px 0 30px; border-top: 1px solid #10231c; }
+.offerMoment > span,
+.alternativeOffer > span,
+.winnerReason > span { color: #6e3039; font-size: 11px; }
+.offerMoment h3 { font-size: clamp(38px, 3.3vw, 50px); line-height: 1; }
+.offerMoment p { color: #46554e; font-size: 16px; }
+.factLedger > div {
+  min-height: 92px;
+  padding-block: 20px;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 8px;
+}
+.factLedger dt,
+.compactFacts dt { color: #53645c; font-size: 11px; letter-spacing: .06em; }
+.factLedger dd { font-size: 18px; font-weight: 780; line-height: 1.25; }
+.limitation {
+  margin: 16px 0 26px;
+  padding: 18px;
+  border: 1px solid rgba(55, 111, 95, .42);
+  border-left-width: 1px;
+  background: #eef1eb;
+}
+.limitation strong { color: #315f52; font-size: 10px; }
+.limitation span { font-size: 14px; }
+.primaryAction,
+.reviewAction,
+.compareAction { min-height: 58px; font-size: 13px; }
+.primaryAction { background: #7a2e39; color: #fffdf7; font-size: 15px; }
+.page .primaryAction { color: #fffdf7; }
+.primaryAction:hover { background: #64242d; }
+.winnerReason li { font-size: 14px; }
+.simulation { color: #526159; font-size: 10px; }
+
+/* Alternatives remain secondary, but now read as authored product stages. */
+.alternatives { padding: 128px 0 148px; background: #102f25; color: #fffdf7; }
+.alternatives .eyebrow { color: #b8c8c0; }
+.alternativesIntro h2 { font-size: clamp(62px, 6.7vw, 94px); }
+.alternativesIntro > p:last-child { color: #c2cec8; font-size: 18px; }
+.alternativeList { margin-top: 72px; }
+.secondPlace article { grid-template-columns: minmax(0, .96fr) minmax(460px, 1.04fr); border: 1px solid rgba(255, 253, 247, .22); background: #fffdf7; color: #10231c; }
+.thirdPlace { width: 90%; margin-top: 112px; }
+.thirdPlace article { grid-template-columns: minmax(390px, .84fr) minmax(0, 1.16fr); border: 1px solid rgba(255, 253, 247, .3); background: #091b15; }
+.alternativeMedia { min-height: 690px; }
+.alternativeRank {
+  padding: 10px 14px 8px;
+  background: rgba(122, 46, 57, .92);
+  color: #fffdf7;
+  font-size: 102px;
+}
+.thirdPlace .alternativeRank { color: #fffdf7; }
+.alternativeCopy { padding: 46px 44px 36px; }
+.alternativePosition { color: #6f313b; font-size: 11px; }
+.thirdPlace .alternativePosition { color: #d9c8a8; }
+.compactIdentity .logo,
+.compactIdentity .monogram { width: 112px; height: 62px; }
+.compactIdentity .identityCopy small { font-size: 10px; }
+.compactIdentity .identityCopy strong { font-size: 34px; }
+.alternativeHeading > p strong { font-size: 56px; }
+.alternativeHeading > p span { font-size: 12px; }
+.alternativeOffer { min-height: 176px; padding: 26px 0; border-top-width: 1px; }
+.alternativeOffer h3 { font-size: 32px; }
+.alternativeOffer p { color: #526159; font-size: 14px; }
+.compactFacts > div { min-height: 58px; }
+.compactFacts dd { font-size: 16px; }
+.alternativeWhy,
+.alternativeLimit { font-size: 13px; }
+.alternativeWhy strong,
+.alternativeLimit strong { color: #376f5f; font-size: 10px; }
+.alternativeLimit { min-height: 70px; padding: 16px; border: 1px solid rgba(55, 111, 95, .34); background: #eef1eb; }
+.thirdPlace .alternativeLimit { border-color: rgba(255, 253, 247, .2); background: rgba(255, 253, 247, .07); }
+.thirdPlace .alternativeWhy strong,
+.thirdPlace .alternativeLimit strong { color: #d9c8a8; }
+.compactActions { margin-top: 26px; }
+
+/* Evidence and research return to quiet, disciplined supporting roles. */
+.evidence { padding: 132px 0 112px; background: #183b2e; }
+.evidence .eyebrow { color: #d9c8a8; }
+.evidenceHeading h2 { font-size: clamp(62px, 6.8vw, 98px); }
+.evidenceEditorial { margin-top: 82px; }
+.evidenceEditorial blockquote { color: #f2eee4; }
+.evidenceEditorial li > span { color: #d9c8a8; }
+.evidenceEditorial strong { font-size: 22px; }
+.evidenceEditorial li p { color: #c5d0ca; font-size: 15px; }
+.evidenceBoundary { border-color: #8fa99d; }
+.evidenceBoundary strong { color: #d9c8a8; }
+.evidenceBoundary span { color: #c5d0ca; font-size: 13px; }
+.research { padding: 126px 0 146px; background: #f2eee4; }
+.researchIntro h2 { font-size: clamp(62px, 6.8vw, 98px); }
+.researchPaths a { border-color: #173a2e; }
+.allCasinosPath { background: #102f25; }
+.allCasinosPath::before { color: rgba(242, 238, 228, .08); }
+.allCasinosPath > span,
+.allCasinosPath > b { color: #d9c8a8; }
+.methodPath { background: #d9dfd6; }
+.comparePath { background: #7a2e39; color: #fffdf7 !important; }
+.comparePath > span { color: #eadfc9; }
+.comparePath:hover { background: #64242d; }
+
+.closing { min-height: 500px; background: #e7e0d2; border-top: 1px solid rgba(16, 35, 28, .2); }
+.closingNumber { color: rgba(122, 46, 57, .18); }
+.closingCopy > p { color: #6f313b; }
+.closingActions > a:first-child { background: #7a2e39; color: #fffdf7; }
+.closingActions > a:first-child:hover { background: #64242d; }
+
+/* Route-scoped shell treatment: semantic DOM is shared; visuals change only when B is present. */
+:global(body):has(.page) :global([data-public-shell="header"]) {
+  min-height: 96px;
+  border-bottom-color: rgba(242, 238, 228, .18);
+  background: #0b241b;
+  color: #fffdf7;
+}
+:global(body):has(.page) :global([data-shell-section="header-inner"]) { min-height: 96px; }
+:global(body):has(.page) :global([data-shell-element="brand"]) { font-size: 32px; }
+:global(body):has(.page) :global([data-public-shell="header"] nav[aria-label="Primary navigation"] a),
+:global(body):has(.page) :global([data-public-shell="header"] [data-shell-element="account-link"]) { font-size: 14px; }
+:global(body):has(.page) :global([data-public-shell="header"] [data-shell-element="primary-action"]) {
+  background: #7a2e39;
+  color: #fffdf7;
+  font-size: 14px;
+}
+:global(body):has(.page) :global(.cpoPreviewBanner) {
+  border-bottom-color: rgba(16, 35, 28, .2);
+  background: #e7e0d2;
+  color: #10231c;
+}
+
+:global(body):has(.page) :global([data-public-shell="footer"]) {
+  min-height: 0;
+  padding: 76px 0 34px;
+  background: #081c15;
+  color: #fffdf7;
+}
+:global(body):has(.page) :global([data-footer-layout]) {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 42px 28px;
+}
+:global(body):has(.page) :global([data-footer-section="lead"]) { grid-column: 1 / 5; }
+:global(body):has(.page) :global([data-footer-section="lead"] > a) { font-size: 38px; }
+:global(body):has(.page) :global([data-footer-section="lead"] > p) { max-width: 340px; color: #c2cec8; font-size: 18px; line-height: 1.45; }
+:global(body):has(.page) :global([data-footer-section="groups"]) {
+  grid-column: 5 / 13;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+}
+:global(body):has(.page) :global([data-footer-section="groups"] h2) { color: #d9c8a8; font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="groups"] a) { font-size: 16px; line-height: 1.35; }
+:global(body):has(.page) :global([data-footer-section="help"]) {
+  grid-column: 1 / 5;
+  width: min(100%, 310px);
+  padding: 20px;
+  border: 1px solid rgba(217, 200, 168, .42);
+  border-radius: 2px;
+  background: rgba(255, 253, 247, .04);
+}
+:global(body):has(.page) :global([data-footer-section="help"] span) { color: #d9c8a8; font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="help"] p) { font-size: 14px; line-height: 1.5; }
+:global(body):has(.page) :global([data-footer-section="help"] a) {
+  min-height: 46px;
+  padding: 0 15px;
+  border: 1px solid #d9c8a8;
+  color: #fffdf7;
+  font-size: 13px;
+}
+:global(body):has(.page) :global([data-footer-section="disclosure"]) {
+  grid-column: 5 / 13;
+  padding-top: 22px;
+  grid-template-columns: 210px 1fr;
+}
+:global(body):has(.page) :global([data-footer-section="disclosure"] strong) { color: #d9c8a8; font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="disclosure"] p) { color: #b6c4bd; font-size: 13px; line-height: 1.55; }
+:global(body):has(.page) :global([data-footer-section="baseline"]) { grid-column: 1 / 13; color: #9fb0a7; font-size: 12px; }
+
+@media (max-width: 1120px) {
+  .winnerStage { grid-template-columns: minmax(0, 1fr) minmax(430px, .92fr); }
+  .winnerDecision { padding-inline: 36px; }
+  .winnerDecisionTop { grid-template-columns: minmax(0, 1fr); }
+  .factLedger > div { grid-template-columns: minmax(0, 1fr); }
+  .factLedger dd { font-size: 16px; }
+  .secondPlace article { grid-template-columns: minmax(0, .9fr) minmax(420px, 1.1fr); }
+}
+
+@media (max-width: 900px) {
+  .hero,
+  .heroFrame { min-height: 800px; }
+  .heroArtwork { right: -8px; width: 62vw; }
+  .winnerIntro { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .winnerIntro .eyebrow { grid-column: auto; }
+  .winnerIntro > p:last-child { margin-left: auto; }
+  .winnerStage { display: block; }
+  .winnerMedia { min-height: 520px; }
+  .winnerDecision { width: 100%; margin: 0; }
+  .winnerDecisionTop { grid-template-columns: minmax(0, 1fr) auto; }
+  .secondPlace article,
+  .thirdPlace article { display: block; }
+  .thirdPlace { width: 88%; }
+
+  :global(body):has(.page) :global([data-public-shell="header"]),
+  :global(body):has(.page) :global([data-shell-section="header-inner"]) { min-height: 76px; }
+  :global(body):has(.page) :global([data-shell-element="brand"]) { font-size: 29px; }
+  :global(body):has(.page) :global([data-public-shell="header"] button) { font-size: 13px; }
+  :global(body):has(.page) :global([data-footer-layout]) { grid-template-columns: 1fr 1fr; gap: 36px 24px; }
+  :global(body):has(.page) :global([data-footer-section="lead"]),
+  :global(body):has(.page) :global([data-footer-section="groups"]),
+  :global(body):has(.page) :global([data-footer-section="disclosure"]),
+  :global(body):has(.page) :global([data-footer-section="baseline"]) { grid-column: 1 / -1; }
+  :global(body):has(.page) :global([data-footer-section="groups"]) { grid-template-columns: 1fr 1fr; }
+  :global(body):has(.page) :global([data-footer-section="help"]) { grid-column: 1; }
+  :global(body):has(.page) :global([data-footer-section="disclosure"]) { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .eyebrow { font-size: 10px; }
+  .hero,
+  .heroFrame { min-height: 750px; }
+  .heroUtility > p { font-size: 10px; }
+  .previewNote span { font-size: 9px; }
+  .previewNote p { font-size: 10px; }
+  .heroArtwork { top: 146px; right: 16px; width: calc(100% - 32px); height: 218px; }
+  .hero h1 { top: 388px; font-size: clamp(54px, 16vw, 68px); }
+  .heroPromise > p { font-size: 15px; }
+  .winnerSection { padding-block: 76px 90px; }
+  .winnerIntro h2 { font-size: clamp(46px, 13vw, 58px); }
+  .winnerIntro > p:last-child { margin: 0; font-size: 16px; }
+  .winnerMedia { min-height: 300px; height: 300px; }
+  .winnerRank { top: 16px; left: 16px; padding: 10px 12px 8px; font-size: 76px; }
+  .winnerDecision { padding: 28px 20px 24px; }
+  .identity .logo,
+  .identity .monogram { width: 96px; height: 54px; }
+  .identityCopy small { font-size: 9px; }
+  .identityCopy strong { font-size: 28px; }
+  .score strong { font-size: 58px; }
+  .score span { font-size: 8px; }
+  .offerMoment { margin-top: 26px; }
+  .offerMoment h3 { font-size: 32px; }
+  .offerMoment p { font-size: 14px; }
+  .factLedger > div,
+  .factLedger > div:nth-child(n) { min-height: 62px; grid-template-columns: 42% minmax(0, 1fr); }
+  .factLedger dt { font-size: 10px; }
+  .factLedger dd { font-size: 15px; }
+  .limitation span { font-size: 13px; }
+  .winnerReason li { font-size: 13px; }
+  .primaryAction { font-size: 14px; }
+
+  .alternatives { padding-block: 84px 96px; }
+  .alternativesIntro h2 { font-size: clamp(44px, 12.8vw, 55px); }
+  .alternativesIntro > p:last-child { font-size: 15px; }
+  .thirdPlace { width: calc(100% - 18px); }
+  .alternativeMedia,
+  .secondPlace .alternativeMedia,
+  .thirdPlace .alternativeMedia { min-height: 300px; }
+  .alternativeRank { font-size: 76px; }
+  .alternativeCopy,
+  .thirdPlace .alternativeCopy { width: 100%; margin: 0; padding: 28px 20px 24px; }
+  .compactIdentity { flex-direction: row; align-items: center; }
+  .compactIdentity .logo,
+  .compactIdentity .monogram { width: 94px; height: 52px; }
+  .compactIdentity .identityCopy strong { font-size: 27px; }
+  .alternativeHeading > p strong { font-size: 46px; }
+  .alternativeOffer h3 { font-size: 27px; }
+  .alternativeOffer p { display: -webkit-box; font-size: 13px; }
+  .compactFacts > div { min-height: 52px; }
+  .compactFacts dd { font-size: 15px; }
+  .alternativeWhy,
+  .alternativeLimit { font-size: 12px; }
+
+  .evidenceHeading h2,
+  .researchIntro h2 { font-size: clamp(45px, 12.8vw, 56px); }
+  .evidenceEditorial blockquote { font-size: 41px; }
+  .evidenceEditorial strong { font-size: 19px; }
+  .evidenceEditorial li p { font-size: 13px; }
+  .researchPaths a > strong { font-size: 38px; }
+  .closingCopy h2 { font-size: 46px; }
+
+  :global(body):has(.page) :global([data-public-shell="footer"]) { padding-top: 56px; }
+  :global(body):has(.page) :global([data-footer-layout]) { display: grid; grid-template-columns: 1fr; }
+  :global(body):has(.page) :global([data-footer-section]) { grid-column: 1 / -1; }
+  :global(body):has(.page) :global([data-footer-section="lead"] > a) { font-size: 34px; }
+  :global(body):has(.page) :global([data-footer-section="lead"] > p) { font-size: 17px; }
+  :global(body):has(.page) :global([data-footer-section="groups"]) { grid-template-columns: 1fr 1fr; gap: 28px 18px; }
+  :global(body):has(.page) :global([data-footer-section="groups"] a) { font-size: 14px; }
+  :global(body):has(.page) :global([data-footer-section="help"]) { width: min(100%, 286px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroArtwork { transform: none !important; }
+}

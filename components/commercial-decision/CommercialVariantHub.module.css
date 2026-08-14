@@ -1,0 +1,66 @@
+.hub {
+  overflow: clip;
+  background: var(--sb-paper);
+  color: var(--sb-night);
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+.hub *, .hub *::before, .hub *::after { box-sizing: border-box; }
+.hub a { color: inherit; text-decoration: none; }
+.hub :focus-visible { outline: 3px solid var(--sb-focus-acid-contrast); outline-offset: 4px; }
+.shell { width: min(1180px, calc(100% - 96px)); margin-inline: auto; }
+.hero { padding: 84px 0 92px; background: var(--sb-night); color: var(--sb-white); }
+.eyebrow { margin: 0; color: var(--sb-acid); font-size: 11px; font-weight: 850; letter-spacing: .13em; }
+.hero h1 { max-width: 980px; margin: 30px 0 0; font-size: clamp(62px, 7.5vw, 108px); font-weight: 900; letter-spacing: -.07em; line-height: .82; text-transform: uppercase; text-wrap: balance; }
+.hero h1 em { display: block; margin: .12em 0 0 .35em; font-family: var(--font-seven-serif), Georgia, serif; font-weight: 400; letter-spacing: -.045em; text-transform: none; }
+.heroMeta { margin-top: 58px; padding-top: 18px; display: flex; flex-wrap: wrap; gap: 18px 38px; border-top: 1px solid rgba(255,255,255,.28); color: var(--sb-grey-300); font-family: var(--sb-font-mono); font-size: 10px; }
+.heroMeta b { color: var(--sb-white); font-weight: 500; }
+.variants { padding: 96px 0 112px; }
+.variantsHeader { display: grid; grid-template-columns: .55fr 1fr; gap: 56px; align-items: end; }
+.variantsHeader p { margin: 0; color: var(--sb-teal); font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+.variantsHeader h2 { margin: 0; font-size: clamp(42px, 5.8vw, 72px); letter-spacing: -.06em; line-height: .9; text-wrap: balance; }
+.variantGrid { margin-top: 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.variant { min-height: 510px; padding: 34px; display: flex; flex-direction: column; border: 1px solid var(--sb-night); }
+.variantA { background: var(--sb-white); }
+.variantB { border-color: #173a2e; background: #102f25; color: #fffdf7; }
+.variantTop { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; }
+.variantTop span { font-size: 11px; font-weight: 850; letter-spacing: .12em; }
+.variantA .variantTop span { color: var(--sb-teal); }
+.variantB .variantTop span { color: #d9c8a8; }
+.variantTop b { font-size: 74px; letter-spacing: -.08em; line-height: .75; }
+.variant h3 { max-width: 520px; margin: auto 0 0; font-size: clamp(40px, 4.8vw, 64px); letter-spacing: -.06em; line-height: .88; text-wrap: balance; }
+.variant p { max-width: 520px; margin: 22px 0 0; font-size: 16px; line-height: 1.55; }
+.variantA p { color: var(--sb-metal); }
+.variantB p { color: #c2cec8; }
+.variant > a { min-height: 58px; margin-top: 30px; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; border: 1px solid currentColor; font-size: 13px; font-weight: 850; }
+.variantA > a { background: var(--sb-acid); color: var(--sb-night); }
+.variantB > a { border-color: #7a2e39; background: #7a2e39; color: #fffdf7; }
+.compare { padding: 92px 0 104px; background: var(--sb-field); }
+.compare h2 { max-width: 900px; margin: 0; font-size: clamp(42px, 5.8vw, 72px); letter-spacing: -.06em; line-height: .9; }
+.compareList { margin: 54px 0 0; padding: 0; border-top: 1px solid rgba(16,15,15,.34); list-style: none; }
+.compareList li { min-height: 90px; padding: 18px 0; display: grid; grid-template-columns: 190px 1fr 1fr; gap: 30px; align-items: center; border-bottom: 1px solid rgba(16,15,15,.24); }
+.compareList strong { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.compareList span { font-size: 15px; line-height: 1.45; }
+.compareList span:last-child { color: #5f2932; font-weight: 700; }
+.boundary { padding: 34px 0; background: #102f25; color: #fffdf7; }
+.boundary .shell { display: grid; grid-template-columns: 220px 1fr; gap: 34px; }
+.boundary strong { color: #d9c8a8; font-size: 11px; letter-spacing: .1em; }
+.boundary p { margin: 0; color: #c2cec8; font-size: 14px; line-height: 1.55; }
+
+@media (max-width: 760px) {
+  .shell { width: calc(100% - 32px); }
+  .hero { padding: 64px 0 70px; }
+  .hero h1 { font-size: clamp(50px, 14vw, 66px); }
+  .hero h1 em { margin-left: .12em; }
+  .heroMeta { display: grid; gap: 10px; }
+  .variants { padding-block: 72px 82px; }
+  .variantsHeader { grid-template-columns: 1fr; gap: 22px; }
+  .variantsHeader h2 { font-size: 48px; }
+  .variantGrid { margin-top: 42px; grid-template-columns: 1fr; }
+  .variant { min-height: 430px; padding: 26px 22px; }
+  .variantTop b { font-size: 60px; }
+  .variant h3 { font-size: 46px; }
+  .compare { padding-block: 72px 82px; }
+  .compare h2 { font-size: 46px; }
+  .compareList li { padding-block: 22px; grid-template-columns: 1fr; gap: 10px; }
+  .boundary .shell { grid-template-columns: 1fr; gap: 12px; }
+}
