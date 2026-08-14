@@ -7,11 +7,14 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   use: { baseURL: "http://127.0.0.1:4173", trace: "retain-on-failure" },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "webkit", use: { ...devices["Desktop Safari"] } },
+  ],
   webServer: {
     command: "CPO_COMMERCIAL_PREVIEW=true npm run dev",
     url: "http://127.0.0.1:4173",
-    reuseExistingServer: false,
+    reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },
 });

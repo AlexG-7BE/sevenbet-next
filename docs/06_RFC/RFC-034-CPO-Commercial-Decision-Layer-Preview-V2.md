@@ -166,6 +166,14 @@ Route/destination values are closed; rank is a bounded small integer; operator s
 
 ## 9. Design reference lock
 
+### 9.1 Founder Golden visual amendment — 2026-08-14
+
+The Founder accepts this RFC's product/business architecture and rejects the first `/best-casinos` visual implementation as the target design. The bounded Phase 1 visual authority is now recorded in [`docs/product/CPO-COMMERCIAL-GOLDEN-BEST-CASINOS-V1.md`](../product/CPO-COMMERCIAL-GOLDEN-BEST-CASINOS-V1.md).
+
+That Golden record supersedes this section's original presentation target for `/best-casinos` only. It does not supersede the existing B4GAMBLE token roles, Top 3 limit, recommendation order, fact/limitation requirements, CTA hierarchy, Preview boundary, analytics contract, private/safety separation or any other product rule in this RFC. Meaningful existing B4GAMBLE and governed fixture media is now required for the Golden page when its use is truthful. No Phase 2 propagation is authorised before Founder visual approval.
+
+### 9.2 Original Preview reference lock
+
 Build target: merged B4GAMBLE Design System v1, current public shell and the RFC-025/RFC-033 paper/night product theatre.
 
 | Decision | Source | Rule | Reason |
