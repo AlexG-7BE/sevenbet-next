@@ -27,32 +27,26 @@ export async function readBoundedProgrammeTranscriptionFormData(request: Request
   }
 
   const reader = request.body.getReader();
-  const chunks: Uint8Array[] = [];
+  const boundedBody = new Uint8Array(PROGRAM_AI_MAX_TRANSCRIPTION_REQUEST_BYTES);
   let totalBytes = 0;
   try {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      totalBytes += value.byteLength;
-      if (totalBytes > PROGRAM_AI_MAX_TRANSCRIPTION_REQUEST_BYTES) {
+      const nextTotal = totalBytes + value.byteLength;
+      if (nextTotal > PROGRAM_AI_MAX_TRANSCRIPTION_REQUEST_BYTES) {
         await reader.cancel();
         throw new ProgrammeProviderError("INPUT_TOO_LARGE");
       }
-      chunks.push(value);
+      boundedBody.set(value, totalBytes);
+      totalBytes = nextTotal;
     }
   } finally {
     reader.releaseLock();
   }
 
-  const boundedBody = new Uint8Array(totalBytes);
-  let offset = 0;
-  for (const chunk of chunks) {
-    boundedBody.set(chunk, offset);
-    offset += chunk.byteLength;
-  }
-
   try {
-    return await new Response(boundedBody, {
+    return await new Response(boundedBody.subarray(0, totalBytes), {
       headers: { "content-type": contentType },
     }).formData();
   } catch {
