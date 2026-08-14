@@ -10,7 +10,9 @@
 - **Branch:** `codex/cpo-commercial-decision-layer-preview-02`
 - **Production before:** <https://b4gamble.com>
 - **Preview SHA:** rendered from `VERCEL_GIT_COMMIT_SHA` in the review hub
-- **Preview / Draft PR:** recorded after the first branch deployment
+- **Verified implementation deployment:** `c639475825397f7ca5816fd1b9151ff06c7429b1`
+- **Preview:** <https://sevenbet-next-git-codex-cpo-commerci-d4239a-alexg-7bes-projects.vercel.app>
+- **Draft PR:** <https://github.com/AlexG-7BE/sevenbet-next/pull/75>
 
 ## Current / before architecture
 
@@ -153,4 +155,4 @@ Implementation-head evidence recorded on 2026-08-14:
 
 Playwright captured and the implementation review inspected full-page evidence at 1440, 430 and 390 pixels for Best Casinos, 390 pixels for Top Offers, and 1440 pixels for the review hub. There was no detected horizontal overflow at 390, 430 or 1440 on the commercial and protected route matrix. The build emitted the repository's existing environment warning that the local Production-mode runtime was not using the approved pooled Prisma endpoint; compilation and static generation completed successfully, and no environment or Production configuration was changed.
 
-Ready Vercel Preview, stable branch URL and open Draft PR evidence are deployment gates, not yet Production approval. Production remains untouched and the branch remains unmerged.
+The Vercel deployment, stable branch URL, internal terminal and review hub were verified Ready while signed in. GitHub Agent Core, Quality, Build / Browser, Database / Migration Verification, Vercel and Vercel Preview Comments checks all passed. The Draft PR remains open, Production remains untouched and the branch remains unmerged.
