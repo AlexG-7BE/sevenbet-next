@@ -63,15 +63,15 @@
 
 .page {
   --ink: #10231c;
-  --night: #071813;
-  --deep: #103428;
-  --paper: #f2eee4;
-  --field: #d9dfd6;
-  --white: #fffdf7;
-  --acid: #7a2e39;
-  --acid-hover: #64242d;
-  --teal: #376f5f;
-  --metal: #526159;
+  --night: #0a2119;
+  --deep: #154737;
+  --paper: #f7f3e9;
+  --field: #e5e8e1;
+  --white: #fffdf8;
+  --acid: #823541;
+  --acid-hover: #6c2933;
+  --teal: #3f7a69;
+  --metal: #465950;
   --line: rgba(16, 35, 28, .28);
   background: var(--paper);
   color: var(--ink);
@@ -83,18 +83,18 @@
 /* The opening atmosphere stays quiet enough for the recommendation stages to win. */
 .hero,
 .heroFrame { min-height: 830px; }
-.hero { background: #071813; }
+.hero { background: #0a2119; }
 .heroFrame { padding-top: 44px; }
-.heroUtility > p { color: #d7c9ad; font-size: 12px; }
-.previewNote { border-top-color: rgba(242, 238, 228, .44); }
-.previewNote span { color: #d7c9ad; font-size: 11px; }
-.previewNote p { color: #b6c1bb; font-size: 12px; }
+.heroUtility > p { color: #f0dcc0; font-size: 12px; }
+.previewNote { border-top-color: rgba(255, 253, 248, .6); }
+.previewNote span { color: #f0dcc0; font-size: 11px; }
+.previewNote p { color: #e4ebe6; font-size: 12px; }
 .heroArtwork {
   top: 126px;
   right: 0;
   width: min(52vw, 730px);
   height: 520px;
-  border-color: rgba(242, 238, 228, .42);
+  border-color: rgba(255, 253, 248, .7);
   transform: none;
 }
 .heroArtwork::before {
@@ -102,36 +102,37 @@
   position: absolute;
   z-index: 1;
   inset: 0;
-  background: rgba(91, 31, 40, .22);
+  background: rgba(91, 31, 40, .07);
   pointer-events: none;
 }
-.heroArtwork::after { z-index: 2; border-color: rgba(242, 238, 228, .34); }
-.heroArtwork img { filter: saturate(.58) brightness(.72) contrast(1.08); }
-.heroArtwork > span { z-index: 3; color: rgba(242, 238, 228, .2); }
+.heroArtwork::after { z-index: 2; border-color: rgba(255, 253, 248, .58); }
+.heroArtwork img { filter: saturate(.84) brightness(.98) contrast(1.02); }
+.heroArtwork > span { z-index: 3; color: rgba(255, 253, 248, .25); }
 .hero h1 { top: 190px; max-width: 1040px; font-size: clamp(88px, 9.8vw, 150px); line-height: .78; }
 .hero h1 em { color: #f2eee4; }
 .heroPromise { bottom: 58px; }
-.heroPromise > p { color: #c2cbc6; font-size: 19px; }
+.heroPromise > p { color: #edf1ee; font-size: 19px; }
 .heroPromise > a { border-color: #7a2e39; background: #7a2e39; color: #fffdf7; font-size: 13px; }
 .heroPromise > a:hover { background: #64242d; }
 .heroIndex { color: rgba(242, 238, 228, .52); font-size: 10px; }
 
 /* #1 becomes one composed product object: media and decision column share a stage. */
-.winnerSection { padding: 116px 0 144px; background: #f2eee4; }
+.winnerSection { padding: 116px 0 144px; background: #f7f3e9; }
 .winnerIntro { grid-template-columns: minmax(0, 1fr) minmax(320px, .58fr); }
 .winnerIntro h2 { font-size: clamp(66px, 6.8vw, 98px); line-height: .83; }
-.winnerIntro > p:last-child { color: #46554e; font-size: 19px; }
+.winnerIntro > p:last-child { color: #3f5149; font-size: 19px; }
 .winnerStage {
   margin-top: 62px;
   padding: 0;
   display: grid;
   grid-template-columns: minmax(0, 1.08fr) minmax(480px, .92fr);
   border: 1px solid #153a2e;
-  background: #0c2d22;
+  background: #164737;
 }
 .winnerMedia { min-height: 780px; height: auto; }
 .winnerMedia::after { border-color: rgba(242, 238, 228, .16); }
 .winnerRank {
+  z-index: 5;
   top: 28px;
   left: 28px;
   padding: 16px 20px 12px;
@@ -140,13 +141,13 @@
   font-size: clamp(98px, 9vw, 136px);
   letter-spacing: -.09em;
 }
-.mediaCaption { left: 30px; bottom: 26px; background: #0c2d22; color: #e2d4b9; font-size: 10px; }
+.mediaCaption { z-index: 5; left: 30px; bottom: 26px; background: #12372b; color: #fff3df; font-size: 10px; }
 .winnerDecision {
   width: auto;
   margin: 0;
   padding: 52px 48px 42px;
   border: 0;
-  background: #fffdf7;
+  background: #fffdf8;
   align-self: stretch;
 }
 .winnerDecisionTop {
@@ -196,23 +197,69 @@
 .winnerReason li { font-size: 14px; }
 .simulation { color: #526159; font-size: 10px; }
 
+/* Governed fixture media becomes a real operator-identity composition. */
+.operatorMedia {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  isolation: isolate;
+  background: #f7f3e9;
+}
+.operatorHero { z-index: 0; object-fit: cover; object-position: center; }
+.operatorLogo,
+.operatorScreen {
+  position: absolute;
+  z-index: 3;
+  display: block;
+  overflow: hidden;
+  border: 1px solid rgba(16, 35, 28, .44);
+  background: #fffdf8;
+}
+.operatorLogo { left: 30px; bottom: 30px; width: min(42%, 310px); aspect-ratio: 7 / 3; }
+.operatorLogo img { object-fit: contain; }
+.operatorScreen { right: 30px; bottom: 30px; width: min(38%, 286px); aspect-ratio: 3 / 4; border-width: 8px; border-color: #fffdf8; }
+.operatorScreen img { object-fit: contain; }
+.operatorAssetLabel {
+  position: absolute;
+  z-index: 4;
+  left: 30px;
+  bottom: 174px;
+  padding: 8px 10px;
+  background: #fffdf8;
+  color: #2e5f50;
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: .09em;
+}
+.winnerStage:hover .operatorMedia img,
+.secondPlace article:hover .operatorMedia img,
+.thirdPlace article:hover .operatorMedia img { transform: none; }
+
 /* Alternatives remain secondary, but now read as authored product stages. */
-.alternatives { padding: 128px 0 148px; background: #102f25; color: #fffdf7; }
-.alternatives .eyebrow { color: #b8c8c0; }
+.alternatives { padding: 128px 0 148px; background: #e5e8e1; color: #10231c; }
+.alternatives .eyebrow { color: #3f7a69; }
 .alternativesIntro h2 { font-size: clamp(62px, 6.7vw, 94px); }
-.alternativesIntro > p:last-child { color: #c2cec8; font-size: 18px; }
+.alternativesIntro > p:last-child { color: #465950; font-size: 18px; }
 .alternativeList { margin-top: 72px; }
-.secondPlace article { grid-template-columns: minmax(0, .96fr) minmax(460px, 1.04fr); border: 1px solid rgba(255, 253, 247, .22); background: #fffdf7; color: #10231c; }
+.secondPlace article { grid-template-columns: minmax(0, .96fr) minmax(460px, 1.04fr); border: 1px solid rgba(255, 253, 248, .62); background: #fffdf8; color: #10231c; }
 .thirdPlace { width: 90%; margin-top: 112px; }
-.thirdPlace article { grid-template-columns: minmax(390px, .84fr) minmax(0, 1.16fr); border: 1px solid rgba(255, 253, 247, .3); background: #091b15; }
+.thirdPlace article { grid-template-columns: minmax(390px, .84fr) minmax(0, 1.16fr); border: 1px solid rgba(255, 253, 248, .5); background: #0b2119; }
 .alternativeMedia { min-height: 690px; }
 .alternativeRank {
+  z-index: 5;
   padding: 10px 14px 8px;
   background: rgba(122, 46, 57, .92);
   color: #fffdf7;
   font-size: 102px;
 }
 .thirdPlace .alternativeRank { color: #fffdf7; }
+.secondPlace .operatorLogo { width: min(44%, 270px); }
+.secondPlace .operatorScreen { width: min(35%, 224px); }
+.secondPlace .operatorAssetLabel { bottom: 160px; }
+.thirdPlace .operatorHero { opacity: .9; object-position: 62% center; }
+.thirdPlace .operatorLogo { left: 22px; bottom: 26px; width: min(66%, 250px); }
+.thirdPlace .operatorScreen { top: 146px; right: 22px; bottom: auto; width: min(58%, 226px); }
+.thirdPlace .operatorAssetLabel { left: 22px; bottom: 146px; max-width: 250px; }
 .alternativeCopy { padding: 46px 44px 36px; }
 .alternativePosition { color: #6f313b; font-size: 11px; }
 .thirdPlace .alternativePosition { color: #d9c8a8; }
@@ -238,18 +285,18 @@
 .compactActions { margin-top: 26px; }
 
 /* Evidence and research return to quiet, disciplined supporting roles. */
-.evidence { padding: 132px 0 112px; background: #183b2e; }
+.evidence { padding: 132px 0 112px; background: #174b3a; }
 .evidence .eyebrow { color: #d9c8a8; }
 .evidenceHeading h2 { font-size: clamp(62px, 6.8vw, 98px); }
 .evidenceEditorial { margin-top: 82px; }
 .evidenceEditorial blockquote { color: #f2eee4; }
 .evidenceEditorial li > span { color: #d9c8a8; }
 .evidenceEditorial strong { font-size: 22px; }
-.evidenceEditorial li p { color: #c5d0ca; font-size: 15px; }
+.evidenceEditorial li p { color: #edf3ef; font-size: 15px; }
 .evidenceBoundary { border-color: #8fa99d; }
 .evidenceBoundary strong { color: #d9c8a8; }
-.evidenceBoundary span { color: #c5d0ca; font-size: 13px; }
-.research { padding: 126px 0 146px; background: #f2eee4; }
+.evidenceBoundary span { color: #edf3ef; font-size: 13px; }
+.research { padding: 126px 0 146px; border-top: 10px solid #823541; background: #fffdf8; }
 .researchIntro h2 { font-size: clamp(62px, 6.8vw, 98px); }
 .researchPaths a { border-color: #173a2e; }
 .allCasinosPath { background: #102f25; }
@@ -261,7 +308,7 @@
 .comparePath > span { color: #eadfc9; }
 .comparePath:hover { background: #64242d; }
 
-.closing { min-height: 500px; background: #e7e0d2; border-top: 1px solid rgba(16, 35, 28, .2); }
+.closing { min-height: 500px; background: #f2eadc; border-top: 1px solid rgba(16, 35, 28, .24); }
 .closingNumber { color: rgba(122, 46, 57, .18); }
 .closingCopy > p { color: #6f313b; }
 .closingActions > a:first-child { background: #7a2e39; color: #fffdf7; }
@@ -270,30 +317,30 @@
 /* Route-scoped shell treatment: semantic DOM is shared; visuals change only when B is present. */
 :global(body):has(.page) :global([data-public-shell="header"]) {
   min-height: 96px;
-  border-bottom-color: rgba(242, 238, 228, .18);
-  background: #0b241b;
-  color: #fffdf7;
+  border-bottom-color: rgba(16, 15, 15, .18);
+  background: var(--sb-paper);
+  color: var(--sb-night);
 }
 :global(body):has(.page) :global([data-shell-section="header-inner"]) { min-height: 96px; }
 :global(body):has(.page) :global([data-shell-element="brand"]) { font-size: 32px; }
 :global(body):has(.page) :global([data-public-shell="header"] nav[aria-label="Primary navigation"] a),
 :global(body):has(.page) :global([data-public-shell="header"] [data-shell-element="account-link"]) { font-size: 14px; }
 :global(body):has(.page) :global([data-public-shell="header"] [data-shell-element="primary-action"]) {
-  background: #7a2e39;
-  color: #fffdf7;
+  background: var(--sb-acid);
+  color: var(--sb-night);
   font-size: 14px;
 }
 :global(body):has(.page) :global(.cpoPreviewBanner) {
-  border-bottom-color: rgba(16, 35, 28, .2);
-  background: #e7e0d2;
-  color: #10231c;
+  border-bottom-color: var(--sb-night);
+  background: var(--sb-acid);
+  color: var(--sb-night);
 }
 
 :global(body):has(.page) :global([data-public-shell="footer"]) {
   min-height: 0;
   padding: 76px 0 34px;
-  background: #081c15;
-  color: #fffdf7;
+  background: var(--sb-night);
+  color: var(--sb-white);
 }
 :global(body):has(.page) :global([data-footer-layout]) {
   display: grid;
@@ -302,29 +349,29 @@
 }
 :global(body):has(.page) :global([data-footer-section="lead"]) { grid-column: 1 / 5; }
 :global(body):has(.page) :global([data-footer-section="lead"] > a) { font-size: 38px; }
-:global(body):has(.page) :global([data-footer-section="lead"] > p) { max-width: 340px; color: #c2cec8; font-size: 18px; line-height: 1.45; }
+:global(body):has(.page) :global([data-footer-section="lead"] > p) { max-width: 340px; color: var(--sb-grey-300); font-size: 18px; line-height: 1.45; }
 :global(body):has(.page) :global([data-footer-section="groups"]) {
   grid-column: 5 / 13;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 28px;
 }
-:global(body):has(.page) :global([data-footer-section="groups"] h2) { color: #d9c8a8; font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="groups"] h2) { color: var(--sb-grey-300); font-size: 14px; }
 :global(body):has(.page) :global([data-footer-section="groups"] a) { font-size: 16px; line-height: 1.35; }
 :global(body):has(.page) :global([data-footer-section="help"]) {
   grid-column: 1 / 5;
   width: min(100%, 310px);
   padding: 20px;
-  border: 1px solid rgba(217, 200, 168, .42);
-  border-radius: 2px;
-  background: rgba(255, 253, 247, .04);
+  border: 1px solid rgba(103, 200, 189, .46);
+  border-radius: 20px;
+  background: rgba(23, 108, 101, .18);
 }
-:global(body):has(.page) :global([data-footer-section="help"] span) { color: #d9c8a8; font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="help"] span) { color: #67c8bd; font-size: 14px; }
 :global(body):has(.page) :global([data-footer-section="help"] p) { font-size: 14px; line-height: 1.5; }
 :global(body):has(.page) :global([data-footer-section="help"] a) {
   min-height: 46px;
   padding: 0 15px;
-  border: 1px solid #d9c8a8;
-  color: #fffdf7;
+  border: 0;
+  color: #67c8bd;
   font-size: 13px;
 }
 :global(body):has(.page) :global([data-footer-section="disclosure"]) {
@@ -332,9 +379,13 @@
   padding-top: 22px;
   grid-template-columns: 210px 1fr;
 }
-:global(body):has(.page) :global([data-footer-section="disclosure"] strong) { color: #d9c8a8; font-size: 14px; }
-:global(body):has(.page) :global([data-footer-section="disclosure"] p) { color: #b6c4bd; font-size: 13px; line-height: 1.55; }
-:global(body):has(.page) :global([data-footer-section="baseline"]) { grid-column: 1 / 13; color: #9fb0a7; font-size: 12px; }
+:global(body):has(.page) :global([data-footer-section="disclosure"] strong) { color: var(--sb-acid); font-size: 14px; }
+:global(body):has(.page) :global([data-footer-section="disclosure"] p) { color: var(--sb-grey-300); font-size: 13px; line-height: 1.55; }
+:global(body):has(.page) :global([data-footer-section="baseline"]) { grid-column: 1 / 13; color: var(--sb-grey-300); font-size: 12px; }
+:global(body):has(.page) :global([data-footer-position="default-trust"]),
+:global(body):has(.page) :global([data-footer-position="default-baseline"]) { display: none; }
+:global(body):has(.page) :global([data-footer-position="roulette-trust"]),
+:global(body):has(.page) :global([data-footer-position="roulette-baseline"]) { display: flex; }
 
 @media (max-width: 1120px) {
   .winnerStage { grid-template-columns: minmax(0, 1fr) minmax(430px, .92fr); }
@@ -389,6 +440,9 @@
   .winnerIntro > p:last-child { margin: 0; font-size: 16px; }
   .winnerMedia { min-height: 300px; height: 300px; }
   .winnerRank { top: 16px; left: 16px; padding: 10px 12px 8px; font-size: 76px; }
+  .operatorLogo { left: 14px; bottom: 14px; width: 45%; }
+  .operatorScreen { right: 14px; bottom: 14px; width: 35%; border-width: 5px; }
+  .operatorAssetLabel { left: 14px; bottom: 92px; max-width: 54%; padding: 6px 7px; font-size: 6px; line-height: 1.35; }
   .winnerDecision { padding: 28px 20px 24px; }
   .identity .logo,
   .identity .monogram { width: 96px; height: 54px; }
@@ -415,6 +469,13 @@
   .secondPlace .alternativeMedia,
   .thirdPlace .alternativeMedia { min-height: 300px; }
   .alternativeRank { font-size: 76px; }
+  .secondPlace .operatorLogo { width: 45%; }
+  .secondPlace .operatorScreen { width: 35%; }
+  .secondPlace .operatorAssetLabel { bottom: 92px; }
+  .thirdPlace .operatorHero { object-position: center; }
+  .thirdPlace .operatorLogo { left: 14px; bottom: 14px; width: 52%; }
+  .thirdPlace .operatorScreen { top: 68px; right: 14px; width: 42%; }
+  .thirdPlace .operatorAssetLabel { left: 14px; bottom: 92px; max-width: 50%; }
   .alternativeCopy,
   .thirdPlace .alternativeCopy { width: 100%; margin: 0; padding: 28px 20px 24px; }
   .compactIdentity { flex-direction: row; align-items: center; }

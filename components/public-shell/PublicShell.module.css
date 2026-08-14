@@ -297,6 +297,8 @@
   line-height: 16px;
 }
 .footerBaseline > div { display: flex; flex-wrap: wrap; gap: 18px; }
+.footer [data-footer-position="roulette-trust"],
+.footer [data-footer-position="roulette-baseline"] { display: none; }
 .footerBaseline a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
 .footerBaseline a:hover { color: var(--shell-white); }
 

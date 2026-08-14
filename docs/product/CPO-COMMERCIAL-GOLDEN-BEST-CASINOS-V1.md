@@ -1,6 +1,6 @@
 # CPO Commercial Golden Best Casinos V1
 
-- **Status:** Ready for Founder A/B visual review; Founder selection pending
+- **Status:** Ready for Founder final A/B visual decision; Founder selection pending
 - **Date:** 2026-08-14
 - **Governing decision:** [RFC-034](../06_RFC/RFC-034-CPO-Commercial-Decision-Layer-Preview-V2.md)
 - **Variant A route:** `/best-casinos`
@@ -8,13 +8,31 @@
 - **Comparison hub:** `/preview/cpo-commercial-v3`
 - **Branch:** `codex/cpo-commercial-decision-layer-preview-02`
 - **Draft PR:** #75
-- **Baseline PR #75 head:** `e01f0574b3c19860d8541b67cc29d9c400a8483a`
-- **Baseline main:** `0c956d0d99c9ac703234e82a0bca3c1d5b3a9167`
-- **Baseline divergence:** 0 commits behind / 2 commits ahead of `origin/main`
-- **Final implementation head:** `a8cdf442e4160b1751f395eff8f00607dd48c543`
-- **Verified review/deployment head:** `f42f872533ad6d8708e809cfe937c4581bd1ed9c`
-- **Immutable deployment:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app>
-- **Golden page:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app/best-casinos>
+- **Final-refinement starting PR #75 head:** `bfb2dbae0d41579523b6863fa880d5f8b32240fd`
+- **Final-refinement baseline main:** `0c956d0d99c9ac703234e82a0bca3c1d5b3a9167`
+- **Final-refinement starting divergence:** 0 commits behind / 6 commits ahead of `origin/main`
+- **Round 1 implementation head:** `a8cdf442e4160b1751f395eff8f00607dd48c543`
+- **Round 1 verified review/deployment head:** `f42f872533ad6d8708e809cfe937c4581bd1ed9c`
+- **Round 1 immutable deployment:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app>
+
+## FOUNDER ROUND 2 FEEDBACK
+
+- **Decision:** Variant B is the preferred base for this final refinement, while the Founder final A/B selection remains pending.
+- **Detected:** brightness moved toward Variant A through a brighter hero crop, warm paper winner stage, light evidence-field alternatives, bright ivory research chapter and reduced burgundy image wash. The page no longer applies a deliberately dim overall treatment.
+- **Detected:** Variant B retains its casino-inspired deep forest, muted burgundy, warm ivory and restrained teal palette inside the page body.
+- **Detected:** the header retains Variant B's 96px desktop sizing, larger brand/type and responsive layout while using Variant A's paper, night and acid colour treatment.
+- **Detected:** the footer retains Variant B's larger typography, multi-column layout, spacing and compact Help module while using Variant A's night, white, grey, acid and teal colour treatment.
+- **Detected:** About and Contact now occupy the Trust-group positions previously used by Privacy and Terms; Privacy and Terms now occupy the footer baseline positions previously used by About and Contact. Their governed destinations remain `/about`, `/contact`, `/privacy` and `/terms`.
+- **Detected:** the operator-media concept is complete for all three ranked demo records. Each stage composes the correctly matched governed fictional logo, hero artwork and product screen, and labels the composition as governed demo media.
+- **Detected:** the repeated green transition is corrected: the light evidence-field alternatives chapter enters the deep-forest “The shortlist is a decision.” chapter, which enters bright ivory research across a 10px muted-burgundy divider.
+- **Decision:** Phase 2 has not started. No rollout, merge, Production change, real external outbound or Founder selection is implied by this refinement.
+
+### Round 2 reference calibration
+
+- **Primary — Symbol Audio**, Refero style `4b4d9fd8-cf43-4a80-9677-211b180c64d1`: high-contrast forest/product staging, bright readable product surfaces and identity media with greater visual authority than surrounding chrome.
+- **Chapter rhythm — Empower**, Refero style `14edc470-fa1c-47f9-9efa-d44194be4aec`: decisive dark/light changes that keep a premium body palette without turning every chapter dark.
+- **Product framing — Altason**, Refero style `6e358cfd-688b-4b88-ab27-0f85ddd7a04b`: complete logo, imagery and screen compositions rather than decorative placeholders.
+- **Concrete hierarchy — Seed**, Refero screen `ed73f73f-f6bc-4996-88c7-fd8576b87f73`, and **AVNIER product detail**, Refero screen `8d171acd-ec95-4308-8653-d497e39ec6fd`: dominant product identity/media beside facts and action, with secondary products remaining materially quieter.
 
 ## Founder A/B comparison amendment
 
@@ -69,9 +87,11 @@ What must not drift: Top 3 order, public evidence, visible limitations, Visit/Re
 - **Detected:** Variant A remains the default `/best-casinos` render and retains its Golden stylesheet.
 - **Detected:** Variant B reuses the same server-fetched, server-ranked three records and the same decision-layer component; only a route-selected CSS module and bounded hero label change.
 - **Detected:** the #1 recommendation is a sharp split media/product stage; facts render at 18px on desktop and 15px on narrow mobile; alternatives remain two visibly secondary but substantial product stages.
-- **Detected:** Variant B scopes its forest header and redesigned footer treatment to the presence of the Variant B page root. Shared shell semantics and links are unchanged on Variant A and unrelated routes.
+- **Detected:** Variant B keeps its larger route-scoped header/footer composition while resetting both shell surfaces to Variant A colours. Variant A and unrelated routes retain their existing shell rendering.
 - **Detected:** footer group labels are 14px, links are 16px on desktop, and Open Help is a contained 310px support cell rather than a full-width takeover.
-- **Detected:** muted burgundy is confined to primary actions and rank emphasis; teal is a quiet evidence cue; no new casino image, gradient, neon, chip, wheel, money or fabricated operator asset was introduced.
+- **Detected:** Variant B swaps About/Contact into the Trust-group positions and Privacy/Terms into the baseline positions without changing their URLs; the swap is route-scoped and responsive.
+- **Detected:** all three recommendation stages use the exact governed demo logo, hero and screen assets associated with Demo Northstar, Demo Lantern and Demo Harbour. No external media, real-operator identity, fabricated partnership or new asset was introduced.
+- **Detected:** muted burgundy is confined to primary actions, rank emphasis and the evidence/research divider; teal remains a quiet evidence cue; no gradient, neon, chip, wheel or money treatment was introduced.
 - **Detected:** `/preview/cpo-commercial-v3` links directly to both variants and states that product logic is unchanged.
 
 ### Founder comparison guidance
@@ -83,7 +103,7 @@ What must not drift: Top 3 order, public evidence, visible limitations, Visit/Re
 ### Local verification evidence
 
 - **Detected:** `npm run cpo-preview:test` — 24/24 passing.
-- **Detected:** `npm run cpo-preview:browser` — 10/10 passing across Chromium and WebKit after visual-evidence capture at 390px, 430px and 1440px.
+- **Detected:** `npm run cpo-preview:browser` — 12/12 passing across Chromium and WebKit after visual-evidence capture at 390px, 430px and 1440px.
 - **Detected:** `npm run typecheck`, `npm run lint`, `CPO_COMMERCIAL_PREVIEW=true npm run build`, `npm run ci:quality` and `git diff --check` pass.
 - **Detected:** browser review confirms zero horizontal overflow at the governed widths, readable #1 identity/facts, visible Visit/Review/Compare hierarchy, compact Open Help and one-click routing to the internal Preview outbound terminal.
 

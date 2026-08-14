@@ -180,6 +180,18 @@ Variant B may change only page-scoped presentation and the minimum non-semantic 
 
 Variant B must preserve the same server-owned records, Top 3 order, visible limitation, action order, internal Preview terminal, research routes, analytics metadata, demo-fixture truth and protected-data separation as Variant A. It may not change global navigation information architecture, footer links, the Production public shell, ranking, routing, database, API, authentication, Programme, Help behaviour or any Phase 2 surface. Founder comparison is a visual gate only and provides no merge, Production or rollout authority.
 
+#### 9.1.2 Founder Round 2 final-refinement amendment — 2026-08-14
+
+The Founder selected Variant B as the preferred foundation for the final A/B decision and authorised one focused refinement of `/best-casinos-roulette`. Variant A remains an unchanged control at `/best-casinos`; this amendment authorises no third direction, Phase 2 propagation, merge or Production rollout.
+
+The refined Variant B must retain its deep-forest, near-black green, warm ivory, muted burgundy and quiet evidence-teal identity while increasing local luminance, typography contrast, light-surface presence, media exposure and chapter separation toward Variant A's visual energy. A page-level brightness filter, acid-led recolour, neon treatment or additional accent system is not authorised.
+
+The public shell combination is explicit: Variant B header and footer sizing, spacing, typography and compact Help architecture remain, while their colour treatment returns to the established Variant A public-shell tokens. On Variant B only, the visual positions of Privacy and Terms move to the footer baseline previously occupied by About and Contact, and About and Contact move into the Trust group positions previously occupied by Privacy and Terms. The actual `/privacy`, `/terms`, `/about` and `/contact` destinations remain unchanged; Variant A and unrelated routes retain their existing footer presentation and order.
+
+Recommendation media is no longer an abstract placeholder. A matching demo fixture may compose only its manifest-governed local logo, hero and product-screen assets into an operator identity stage. Published records may use only repository-authorised media explicitly linked to that operator and otherwise retain a truthful fallback. Media must remain subordinate to identity, rank, score, offer, key facts, limitation and action. The transition after the dark-green “The shortlist is a decision” chapter must move into an unmistakably light paper/ivory research chapter so adjacent major chapters do not repeat the same green treatment.
+
+The Founder comparison hub must label the final control as **Variant A — Acid editorial direction** and the candidate as **Variant B — Refined — Casino-inspired deep palette + brighter execution**. Founder final A/B selection remains required before any merge or rollout decision.
+
 ### 9.2 Original Preview reference lock
 
 Build target: merged B4GAMBLE Design System v1, current public shell and the RFC-025/RFC-033 paper/night product theatre.

@@ -46,6 +46,7 @@ test("Founder A/B routes preserve Variant A and reuse the same bounded decision 
   const layer = read("components/commercial-decision/BestCasinoDecisionLayer.tsx");
   const hub = read("app/(public)/preview/cpo-commercial-v3/page.tsx");
   const roulette = read("components/commercial-decision/BestCasinoRoulette.module.css");
+  const footer = read("components/public-shell/PublicFooter.tsx");
 
   assert.match(variantA, /BestCasinoDecisionLayer inventoryMode=/);
   assert.doesNotMatch(variantA, /variant="roulette"/);
@@ -57,8 +58,20 @@ test("Founder A/B routes preserve Variant A and reuse the same bounded decision 
   assert.match(hub, /href="\/best-casinos"/);
   assert.match(hub, /href="\/best-casinos-roulette"/);
   assert.match(layer, /data-commercial-variant=\{variant\}/);
+  assert.match(layer, /data-media-authority="GOVERNED_DEMO_MEDIA"/);
+  assert.match(layer, /governed fictional identity composition with logo, editorial hero and product screen/);
   assert.match(roulette, /body\):has\(\.page\)/);
   assert.match(roulette, /data-footer-section="help"/);
+  assert.match(roulette, /background: var\(--sb-paper\)/);
+  assert.match(roulette, /background: var\(--sb-night\)/);
+  assert.match(footer, /data-footer-position="roulette-trust" href="\/about"/);
+  assert.match(footer, /data-footer-position="roulette-trust" href="\/contact"/);
+  assert.match(footer, /data-footer-position="roulette-baseline"><Link href="\/privacy"/);
+  assert.match(footer, /<Link href="\/terms">Terms<\/Link>/);
+  assert.match(hub, /VARIANT A/);
+  assert.match(hub, /Acid editorial direction/);
+  assert.match(hub, /VARIANT B — REFINED/);
+  assert.match(hub, /Casino-inspired deep palette \+ brighter execution/);
   assert.doesNotMatch(variantB + hub + roulette, /\/r\/\[slug\]|destinationUrl|affiliate\.href/);
 });
 

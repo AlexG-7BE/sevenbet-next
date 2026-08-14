@@ -21,7 +21,11 @@ export function PublicFooter() {
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>
               <h2>{group.title}</h2>
-              {group.links.map(([label, href]) => <Link href={href} key={href}>{label}</Link>)}
+              {group.links.map(([label, href]) => <Link data-footer-position={href === "/privacy" || href === "/terms" ? "default-trust" : undefined} href={href} key={href}>{label}</Link>)}
+              {group.title === "Trust" ? <>
+                <Link data-footer-position="roulette-trust" href="/about">About</Link>
+                <Link data-footer-position="roulette-trust" href="/contact">Contact</Link>
+              </> : null}
             </div>
           ))}
         </div>
@@ -36,7 +40,8 @@ export function PublicFooter() {
         </div>
         <div className={styles.footerBaseline} data-footer-section="baseline">
           <span>© B4GAMBLE · Information and comparison service</span>
-          <div><Link href="/about">About</Link><Link href="/contact">Contact</Link></div>
+          <div data-footer-position="default-baseline"><Link href="/about">About</Link><Link href="/contact">Contact</Link></div>
+          <div data-footer-position="roulette-baseline"><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link></div>
         </div>
       </div>
     </footer>

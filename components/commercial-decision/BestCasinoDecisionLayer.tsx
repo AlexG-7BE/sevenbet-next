@@ -9,6 +9,7 @@ import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offe
 
 type BestCasinoVisualVariant = "golden" | "roulette";
 type DecisionStyles = Record<string, string>;
+type RecommendationRank = 1 | 2 | 3;
 
 const visualStyles: Record<BestCasinoVisualVariant, DecisionStyles> = {
   golden: goldenStyles,
@@ -64,6 +65,41 @@ function mediaAlt(offer: PublicOfferDTO, kind: "hero" | "screen") {
   return "B4GAMBLE editorial shortlist artwork";
 }
 
+function RecommendationMedia({
+  offer,
+  rank,
+  styles,
+  variant,
+}: {
+  offer: PublicOfferDTO;
+  rank: RecommendationRank;
+  styles: DecisionStyles;
+  variant: BestCasinoVisualVariant;
+}) {
+  const fallbackKind = rank === 3 ? "screen" : "hero";
+  const hero = demoAsset(offer, "hero");
+  const logo = demoAsset(offer, "logo");
+  const screen = demoAsset(offer, "screen");
+
+  if (variant !== "roulette" || !hero || !logo || !screen) {
+    const fallbackSizes = rank === 1 ? "(max-width: 760px) 100vw, 1312px" : rank === 2 ? "(max-width: 760px) 100vw, 760px" : "(max-width: 760px) 100vw, 500px";
+    return <Image alt={mediaAlt(offer, fallbackKind)} fill sizes={fallbackSizes} src={recommendationMedia(offer, fallbackKind)} />;
+  }
+
+  return <div
+    aria-label={`${offer.casino.name} governed fictional identity composition with logo, editorial hero and product screen.`}
+    className={styles.operatorMedia}
+    data-media-authority="GOVERNED_DEMO_MEDIA"
+    data-media-rank={rank}
+    role="img"
+  >
+    <Image alt="" className={styles.operatorHero} fill sizes={rank === 1 ? "(max-width: 760px) 100vw, 760px" : "(max-width: 760px) 100vw, 620px"} src={hero} />
+    <span aria-hidden="true" className={styles.operatorLogo}><Image alt="" fill sizes={rank === 1 ? "320px" : "260px"} src={logo} /></span>
+    <span aria-hidden="true" className={styles.operatorScreen}><Image alt="" fill sizes={rank === 1 ? "340px" : "280px"} src={screen} /></span>
+    <span aria-hidden="true" className={styles.operatorAssetLabel}>GOVERNED DEMO MEDIA · LOGO / HERO / PRODUCT SCREEN</span>
+  </div>;
+}
+
 function Identity({ offer, styles, compact = false }: { offer: PublicOfferDTO; styles: DecisionStyles; compact?: boolean }) {
   const logo = demoAsset(offer, "logo") || offer.casino.logo?.url;
   return <div className={compact ? styles.compactIdentity : styles.identity}>
@@ -105,7 +141,7 @@ function PreviewNote({ inventoryMode, styles }: { inventoryMode: PublicOfferInve
   </aside>;
 }
 
-function Winner({ offer, styles }: { offer: PublicOfferDTO; styles: DecisionStyles }) {
+function Winner({ offer, styles, variant }: { offer: PublicOfferDTO; styles: DecisionStyles; variant: BestCasinoVisualVariant }) {
   return <section className={styles.winnerSection} data-golden-section="number-one" id="number-one" aria-labelledby="winner-title">
     <div className={styles.shell}>
       <header className={styles.winnerIntro}>
@@ -116,7 +152,7 @@ function Winner({ offer, styles }: { offer: PublicOfferDTO; styles: DecisionStyl
 
       <article className={styles.winnerStage}>
         <div className={styles.winnerMedia}>
-          <Image alt={mediaAlt(offer, "hero")} fill sizes="(max-width: 760px) 100vw, 1312px" src={recommendationMedia(offer, "hero")} />
+          <RecommendationMedia offer={offer} rank={1} styles={styles} variant={variant} />
           <span className={styles.winnerRank} aria-hidden="true">01</span>
           <span className={styles.mediaCaption}>B4GAMBLE PICK / PRODUCT VIEW</span>
         </div>
@@ -149,12 +185,12 @@ function Winner({ offer, styles }: { offer: PublicOfferDTO; styles: DecisionStyl
   </section>;
 }
 
-function Alternative({ offer, rank, styles }: { offer: PublicOfferDTO; rank: 2 | 3; styles: DecisionStyles }) {
+function Alternative({ offer, rank, styles, variant }: { offer: PublicOfferDTO; rank: 2 | 3; styles: DecisionStyles; variant: BestCasinoVisualVariant }) {
   const isSecond = rank === 2;
   return <li className={isSecond ? styles.secondPlace : styles.thirdPlace}>
     <article>
       <div className={styles.alternativeMedia}>
-        <Image alt={mediaAlt(offer, isSecond ? "hero" : "screen")} fill sizes={isSecond ? "(max-width: 760px) 100vw, 760px" : "(max-width: 760px) 100vw, 500px"} src={recommendationMedia(offer, isSecond ? "hero" : "screen")} />
+        <RecommendationMedia offer={offer} rank={rank} styles={styles} variant={variant} />
         <span className={styles.alternativeRank}>{String(rank).padStart(2, "0")}</span>
       </div>
       <div className={styles.alternativeCopy}>
@@ -174,7 +210,7 @@ function Alternative({ offer, rank, styles }: { offer: PublicOfferDTO; rank: 2 |
   </li>;
 }
 
-function Alternatives({ records, styles }: { records: PublicOfferDTO[]; styles: DecisionStyles }) {
+function Alternatives({ records, styles, variant }: { records: PublicOfferDTO[]; styles: DecisionStyles; variant: BestCasinoVisualVariant }) {
   return <section className={styles.alternatives} data-golden-section="alternatives" aria-labelledby="alternatives-title">
     <div className={styles.shell}>
       <header className={styles.alternativesIntro}>
@@ -183,7 +219,7 @@ function Alternatives({ records, styles }: { records: PublicOfferDTO[]; styles: 
         <p>Both remain credible options. Their quieter treatment is intentional: compare only if the first recommendation leaves a question.</p>
       </header>
       <ol className={styles.alternativeList} start={2}>
-        {records.slice(0, 2).map((offer, index) => <Alternative key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} rank={(index + 2) as 2 | 3} styles={styles} />)}
+        {records.slice(0, 2).map((offer, index) => <Alternative key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} rank={(index + 2) as 2 | 3} styles={styles} variant={variant} />)}
       </ol>
     </div>
   </section>;
@@ -281,8 +317,8 @@ export function BestCasinoDecisionLayer({
       </div>
     </section>
 
-    <Winner offer={winner} styles={styles} />
-    {shortlist.length > 1 ? <Alternatives records={shortlist.slice(1)} styles={styles} /> : null}
+    <Winner offer={winner} styles={styles} variant={variant} />
+    {shortlist.length > 1 ? <Alternatives records={shortlist.slice(1)} styles={styles} variant={variant} /> : null}
     <EvidenceAndResearch styles={styles} />
     <Closing offer={winner} styles={styles} />
   </div>;
