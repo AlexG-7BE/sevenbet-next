@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { LearningCenterPage } from "./LearningCenterPage";
 import { learningArticles, learningCategories, learningPaths, learningTags } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
@@ -46,14 +47,8 @@ function breadcrumbSchema() {
 export default function LearnPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema()) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
-      />
+      <JsonLd data={organizationSchema()} />
+      <JsonLd data={breadcrumbSchema()} />
       <LearningCenterPage articles={learningArticles} categories={learningCategories} tags={learningTags} paths={learningPaths} />
     </>
   );

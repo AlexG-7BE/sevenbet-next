@@ -4,14 +4,14 @@ import {
   learningArticles as centerArticles,
   learningCategories as centerCategories,
 } from "@/lib/learning-center";
-import { learningArticles } from "@/lib/responsible-gambling";
+import { protectedHelpArticles as helpArticles } from "@/lib/responsible-gambling";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-static";
 
 export function GET() {
-  const learningGuides = learningArticles
-    .map((article) => `- [${article.title}](${absoluteUrl(`/responsible-gambling/${article.slug}`)}): ${article.summary}`)
+  const helpGuides = helpArticles
+    .map((article) => `- [${article.title}](${absoluteUrl(`/help/${article.slug}`)}): ${article.summary}`)
     .join("\n");
   const learningCenterCategories = centerCategories
     .map((category) => `- [${category.title}](${absoluteUrl(getCategoryPath(category.slug))}): ${category.description}`)
@@ -30,7 +30,8 @@ B4GAMBLE is a responsible gambling platform centered on the B4GAMBLE 10-Step Con
 - [10-step program](${absoluteUrl("/program")}) - the primary B4GAMBLE control program.
 - [Self-Check](${absoluteUrl("/self-check")}) - private, non-clinical reflection whose answers remain local to the browser and do not personalise commercial recommendations.
 - [Learning Center](${absoluteUrl("/learn")}) - scalable educational hub for casino basics, bonuses, safety, payments, licensing, games, glossary and country guides.
-- [Protected Help](${absoluteUrl("/responsible-gambling")}) - non-commercial control and support information with no casino, bonus or affiliate actions.
+- [Responsible Gambling](${absoluteUrl("/responsible-gambling")}) - public orientation hub for education, private tools, the 10-step plan and Help.
+- [Protected Help](${absoluteUrl("/help")}) - non-commercial control and support information with no casino, bonus or affiliate actions.
 - [Personal Gambling Limit Tracker](${absoluteUrl("/tools/budget-calculator")}) - works from a gambling limit chosen by the user. B4GAMBLE does not calculate a safe or affordable amount and does not generate a stop-loss recommendation.
 - [Casino bonuses](${absoluteUrl("/bonuses")}) - secondary bonus comparison directory.
 - [Casino reviews](${absoluteUrl("/casinos")}) - reviewed casino profiles.
@@ -49,9 +50,9 @@ ${learningCenterCategories}
 
 ${learningCenterArticles}
 
-## Responsible Gambling Guides
+## Protected Help Guides
 
-${learningGuides}
+${helpGuides}
 
 ## Casino Data Boundary
 

@@ -256,7 +256,7 @@
 .footerBrand { font-size: 30px; }
 .footerLead p { max-width: 260px; margin: 0; color: var(--shell-night-muted); font-size: 15px; line-height: 22px; }
 
-.footerGroups { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; }
+.footerGroups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
 .footerGroup { display: grid; align-content: start; gap: 10px; }
 .footerGroup h2 { margin: 0 0 8px; color: var(--shell-night-muted); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: .1em; text-transform: uppercase; }
 .footerGroup a { width: fit-content; min-width: 44px; min-height: 44px; display: flex; align-items: center; color: var(--shell-white); font-size: 13px; line-height: 18px; }
@@ -348,7 +348,6 @@
   .footer { min-height: 0; padding: 48px 0 24px; }
   .footerInner { width: calc(100% - 32px); grid-template-columns: 1fr; gap: 36px; }
   .footerGroups { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 30px 24px; }
-  .footerGroup:last-child { grid-column: 1 / -1; }
   .footerHelp { grid-column: auto; }
   .footerDisclosure { grid-column: auto; grid-template-columns: 1fr; gap: 10px; }
   .desktopDisclosure { display: none; }

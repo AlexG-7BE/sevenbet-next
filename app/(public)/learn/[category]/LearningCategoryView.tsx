@@ -33,6 +33,15 @@ export function LearningCategoryView({
           <span>{articles.length} published guide{articles.length === 1 ? "" : "s"}</span>
           <span>Current library only</span>
         </div>
+        {category.slug === "responsible-gambling" ? (
+          <aside className={styles.hubBridge} aria-label="Responsible Gambling hub">
+            <div>
+              <strong>Looking for tools, a private reflection or Help?</strong>
+              <span>This page is the educational shelf. The broader hub keeps every control and support path together.</span>
+            </div>
+            <Link href="/responsible-gambling">Open Responsible Gambling hub <span aria-hidden="true">↗</span></Link>
+          </aside>
+        ) : null}
       </section>
 
       <section className={styles.library} aria-labelledby="category-guides-title">

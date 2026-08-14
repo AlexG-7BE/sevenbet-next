@@ -16,7 +16,7 @@ export default function RootGlobalError() {
             <div className={styles.actions}>
               <button onClick={() => window.location.reload()} type="button">Try again</button>
               <a href="/">Go home</a>
-              <a href="/responsible-gambling">Open Help</a>
+              <a href="/help">Open Help</a>
             </div>
           </section>
         </main>

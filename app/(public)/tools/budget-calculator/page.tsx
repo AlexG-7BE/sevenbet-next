@@ -1,15 +1,41 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { JsonLd } from "@/components/seo/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 import { PersonalLimitTracker } from "./PersonalLimitTracker";
 import styles from "./PersonalLimitTracker.module.css";
 
+const title = "Personal Gambling Limit Tracker | B4GAMBLE";
+const description = "Track a gambling limit you choose yourself without B4GAMBLE calculating a safe or affordable gambling amount.";
+const url = absoluteUrl("/tools/budget-calculator");
+
 export const metadata: Metadata = {
-  title: "Personal Gambling Limit Tracker | B4GAMBLE",
-  description: "Track a gambling limit you choose yourself without B4GAMBLE calculating a safe or affordable gambling amount.",
+  title,
+  description,
   alternates: { canonical: absoluteUrl("/tools/budget-calculator") },
+  robots: { index: true, follow: true },
+  openGraph: { type: "website", title, description, url },
+  twitter: { card: "summary", title, description },
 };
+
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
+      { "@type": "ListItem", position: 2, name: "Personal Limit Tracker", item: url },
+    ],
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    description,
+    url,
+  },
+];
 
 export default function PersonalLimitTrackerPage() {
   return (
@@ -20,6 +46,7 @@ export default function PersonalLimitTrackerPage() {
       data-figma-desktop="924:3424"
       data-figma-mobile="924:3555"
     >
+      <JsonLd data={structuredData} />
       <div className={styles.shell}>
         <div className={styles.layout}>
           <header className={styles.intro}>
@@ -36,7 +63,7 @@ export default function PersonalLimitTrackerPage() {
             <h2 id="limit-tracker-nojs-title">Interactive tracker needs JavaScript.</h2>
             <p>Manual fallback: your chosen limit minus the amount already used equals the amount remaining under your own limit.</p>
             <p>B4GAMBLE does not calculate a safe gambling amount.</p>
-            <Link href="/responsible-gambling">Open Protected Help</Link>
+            <Link href="/help">Open Protected Help</Link>
           </section>
         </noscript>
 
@@ -44,7 +71,7 @@ export default function PersonalLimitTrackerPage() {
           <strong>Private by default.</strong>
           <span>Values stay in this browser session and clear when you refresh.</span>
           <span>They are not stored in B4GAMBLE&apos;s application database and are not used to recommend casinos or bonuses.</span>
-          <Link href="/responsible-gambling">Open Protected Help</Link>
+          <Link href="/help">Open Protected Help</Link>
         </aside>
       </div>
     </article>

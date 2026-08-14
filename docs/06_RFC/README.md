@@ -46,3 +46,7 @@ Create or update an RFC before and during any substantial decision that changes 
 - [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) governs the bounded microphone recovery, explicit same-email Google linking, standalone login and no-action Best Offers demonstration fallback merged by PR #71.
 - [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) governs the current audit branch's bounded canonical-origin source change. Its RFC explicitly does not authorise merge or Production deployment.
 - [RFC-032 — Exact Demo Detail Continuity](RFC-032-Exact-Demo-Detail-Continuity.md) governs the current audit branch's exact-manifest, noindex, review-only detail fallback for otherwise broken Best Offers demonstration links. It does not broaden directory, API, sitemap, CMS or commercial authority and does not authorise merge or Production deployment.
+
+## Current public information-architecture and trust-hardening decision
+
+- [RFC-033 — Public Responsible Gambling IA and Trust Hardening](RFC-033-Public-Responsible-Gambling-IA-and-Trust-Hardening.md) authorises the bounded public Responsible Gambling hub, canonical `/help` separation, related navigation/SEO discovery, one durable public Learn manifest, nonce-based CSP and first-party replacement of four Pexels hotlinks for `PUBLIC-IA-AND-HARDENING-01`. It authorises only one Draft-PR Preview and no merge, Production deployment or platform/data/provider mutation.

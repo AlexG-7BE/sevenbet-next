@@ -13,7 +13,7 @@ export default function PublicError({ reset }: { error: Error & { digest?: strin
         <div className={styles.actions}>
           <ActionButton onClick={reset}>Try again</ActionButton>
           <ActionLink href="/" variant="ghost-paper">Go home</ActionLink>
-          <ActionLink href="/responsible-gambling" variant="ghost-paper">Open Help</ActionLink>
+          <ActionLink href="/help" variant="ghost-paper">Open Help</ActionLink>
         </div>
       </div>
     </section>

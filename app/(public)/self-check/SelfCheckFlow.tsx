@@ -40,18 +40,18 @@ const resultContent = {
     title: "No current concerns flagged",
     copy: <>You did not flag any of the situations in this reflection.<br /><br />That does not mean gambling is risk-free or that this tool can decide whether gambling is safe for you.<br /><br />Keep your own limits visible and return to this check if your circumstances change.</>,
     primary: { href: "/program", label: "Review your personal boundaries" },
-    secondary: { href: "/responsible-gambling", label: "Open Protected Help" },
+    secondary: { href: "/help", label: "Open Protected Help" },
   },
   review: {
     title: "Some areas worth reviewing",
     copy: <>Some of your answers point to areas that may be worth reviewing.<br /><br />Consider pausing before your next gambling decision and looking again at the limits or situations you selected.<br /><br />This is a reflection, not a diagnosis.</>,
     primary: { href: "/program", label: "Review 10-Step Programme" },
-    secondary: { href: "/responsible-gambling", label: "Open Protected Help" },
+    secondary: { href: "/help", label: "Open Protected Help" },
   },
   help: {
     title: "Help-first",
     copy: <>Some of your answers suggest gambling may be having a meaningful impact or may be difficult to control.<br /><br />Consider pausing gambling and using the support options below.<br /><br />This tool does not diagnose a condition.</>,
-    primary: { href: "/responsible-gambling", label: "Open Protected Help" },
+    primary: { href: "/help", label: "Open Protected Help" },
     secondary: { href: "/program", label: "Review your control plan" },
   },
 } as const;

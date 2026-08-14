@@ -10,7 +10,7 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
-  await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/help");
   await expect(page.getByText(/B4GAMBLE may receive compensation from some outbound links/i)).toBeVisible();
   const undersizedTargets = await page.locator("[data-public-shell] a, [data-public-shell] button").evaluateAll((targets) => targets
     .filter((target) => {
@@ -54,7 +54,7 @@ test("standalone login is a responsive public account surface with Programme acc
 });
 
 test("Programme and protected Help never receive the commercial public shell", async ({ page }) => {
-  for (const route of ["/program", "/responsible-gambling", "/responsible-gambling/cooling-off"]) {
+  for (const route of ["/program", "/help", "/help/cooling-off"]) {
     await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("[data-public-shell]")).toHaveCount(0);
     await expect(page.locator("main")).toHaveCount(1);
@@ -64,7 +64,7 @@ test("Programme and protected Help never receive the commercial public shell", a
 for (const boundary of [
   { route: "/definitely-missing", publicShell: true },
   { route: "/program/definitely-missing", publicShell: false },
-  { route: "/responsible-gambling/definitely-missing", publicShell: false },
+  { route: "/help/definitely-missing", publicShell: false },
 ]) {
   test(`${boundary.route} keeps its 404 shell boundary`, async ({ page }) => {
     const browserErrors: string[] = [];

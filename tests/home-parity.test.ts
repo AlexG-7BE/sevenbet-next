@@ -122,13 +122,15 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
   assert.match(header, /aria-label="B4GAMBLE home"/);
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /Know your limits before you play\./);
+  assert.match(shellStyles, /\.footerGroups \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
 
-  execFileSync("git", ["diff", "--quiet", "origin/main", "--", "app/(public)/layout.tsx", "components/public-shell/PublicShell.module.css", "app/design-system.css"]);
+  execFileSync("git", ["diff", "--quiet", "origin/main", "--", "app/(public)/layout.tsx", "app/design-system.css"]);
 
   const changed = [...new Set([
     ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })

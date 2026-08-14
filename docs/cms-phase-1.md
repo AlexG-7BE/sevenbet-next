@@ -82,12 +82,16 @@ Supported rollback:
 
 ## Public Publishing Rules
 
-Public CMS API responses only include:
+> **Detected current exception (RFC-033):** `/api/public/articles`, Learn pages, category listings, sitemap and machine-readable discovery share the explicit source-controlled `lib/learning-center.ts` publication manifest. The Phase 1 in-memory CMS article seed remains an admin-development fixture and is not public Learn authority.
+
+Public CMS API responses for the remaining CMS-backed resources only include:
 
 - records with `status = PUBLISHED`;
 - bonuses with `status = PUBLISHED` and `offerStatus = ACTIVE`.
 
 Draft, review, archived and expired offer records are excluded from public APIs.
+
+Public Learn records include an explicit `status`, `publishedAt` and `lastUpdated`; only `PUBLISHED` records appear. Moving public Learn authority to a database-backed workflow is **Planned** and requires a separate approved architecture decision rather than joining two live authorities.
 
 ## API Examples
 
@@ -134,7 +138,7 @@ Phase 1 seed data is generated from the current SevenBet static files:
 
 - current 10-Step Program content from `lib/program.ts`;
 - current casino data from `data/casinos.json`;
-- sample article, bonus and affiliate link objects.
+- sample article, bonus and affiliate link objects. The sample article is **Detected** as an internal Phase 1 fixture, not public Learn content authority.
 
 The next step is to replace the in-memory repository with a Prisma-backed repository and add a formal database seed command.
 

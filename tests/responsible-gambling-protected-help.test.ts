@@ -4,8 +4,8 @@ import test from "node:test";
 
 import { protectedHelpResources } from "../components/protected-help/support-resources";
 
-const page = readFileSync("app/responsible-gambling/page.tsx", "utf8");
-const layout = readFileSync("app/responsible-gambling/layout.tsx", "utf8");
+const page = readFileSync("app/help/page.tsx", "utf8");
+const layout = readFileSync("app/help/layout.tsx", "utf8");
 const hub = readFileSync("components/protected-help/ProtectedHelpHub.tsx", "utf8");
 const shell = readFileSync("components/protected-help/ProtectedHelpShell.tsx", "utf8");
 const css = readFileSync("components/protected-help/ProtectedHelp.module.css", "utf8");
@@ -45,7 +45,7 @@ test("Hub hierarchy follows the approved desktop and mobile Protected Help famil
 });
 
 test("metadata is canonical, indexable and limited to truthful WebPage schemas", () => {
-  assert.match(page, /canonical: absoluteUrl\("\/responsible-gambling"\)/);
+  assert.match(page, /canonical: absoluteUrl\("\/help"\)/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
   assert.match(page, /openGraph:/);
   assert.match(page, /twitter:/);

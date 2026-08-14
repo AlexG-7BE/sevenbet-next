@@ -741,11 +741,11 @@ Read-only Production rendering/automated accessibility inspection found concrete
 | ICON-01 | **DETECTED:** Production icon requests/linkage were absent/404. | **DETECTED FIXED IN SOURCE:** `app/icon.svg`; deployment check is **UNKNOWN/PENDING**. |
 | HOME-01 | **DETECTED:** public copy described stale four-Mission availability. | **DETECTED FIXED:** approved ten-Mission sequence wording without flag jargon. |
 | ADMIN-03 workflow UX | **DETECTED:** workflow actions/role-specific builder sections were not consistently available/hidden. | **DETECTED FIXED:** capability-driven Programme workflow, affiliate/media sections. **DETECTED UNRESOLVED:** granular casino approval permission remains architecture debt. |
-| SEC-02 CSP | **DETECTED:** no CSP header. | **DETECTED UNRESOLVED:** safe nonce/source inventory exceeds a low-risk QA patch; do not deploy a breaking guess. |
-| PRIV-02 remote imagery | **DETECTED:** Pexels hotlinks disclose viewer request metadata; durable licence/provenance is absent from repository evidence. | **DETECTED UNRESOLVED:** rights/provenance decision required before self-hosting/replacement. |
+| SEC-02 CSP | **DETECTED:** no CSP header at the historical FULL-SITE-QA-01 base. | **RESOLVED IN UNMERGED DRAFT PR #74 / NOT PRODUCTION:** RFC-033 implements and verifies enforced per-request nonce CSP, including exact-Preview script nonces and no representative-route violations. Current main/Production are not reclassified until merge/deploy. |
+| PRIV-02 remote imagery | **DETECTED:** Pexels hotlinks disclosed viewer request metadata; durable licence/provenance was absent from repository evidence. | **PRIVACY/AVAILABILITY RESOLVED IN UNMERGED DRAFT PR #74 / NOT PRODUCTION:** direct hotlinks are replaced by already-versioned first-party files and exact Preview emits no Pexels request. Historical per-asset attribution/release evidence remains not detected and is explicitly documented. |
 | CI-01 coverage | **DETECTED:** Programme had been non-blocking; several tests/browser specs were orphaned; CI browser installed Chromium only. | **DETECTED PARTLY FIXED:** Programme is now blocking; casino editorial and focused public-integrity suites are in `ci:quality`; the deterministic clean-CMS/disposable-demo Chromium gate passes 89/89 across nine specs, and the local Chromium/WebKit matrix passes 308 navigations, 1,848 matrix assertions and 39 WebKit interactions. All six configured hosted contexts are green at `60c30e3`, including Build / Browser with 43 passes and one intentional Google skip. The extended 89-test manifest remains local-only, and Firefox coverage is absent. |
 | DOC-01 technical baseline | **DETECTED:** the initial baseline drift was reconciled across all 11 Technical Baseline documents against exact current main `c525954`; current-main counts are clearly separated from audit-branch counts. | **DETECTED RESOLVED:** no remaining route/API/migration/public-asset contradiction is asserted by this record. |
-| DATA-02 article resource | **DETECTED:** public articles API exposes the in-memory CMS seed rather than the static Learning Center corpus. | **DETECTED UNRESOLVED:** durable public contract/retirement decision required; no misleading content claim should be inferred. |
+| DATA-02 article resource | **DETECTED:** public articles API exposed the in-memory CMS seed rather than the static Learning Center corpus. | **RESOLVED IN UNMERGED DRAFT PR #74 / NOT PRODUCTION:** RFC-033 makes the validated source-controlled Learn manifest the sole public authority for pages, API, sitemap and discovery; explicit publication state/dates and duplicate validation fail closed. |
 
 ### P3
 
@@ -766,9 +766,8 @@ These are not declared Production-fixed. Exact-head hosted gates and the bounded
 - **CONTRADICTION / P1:** Production PROGRAM-AI and Google availability lack detected approval.
 - **DETECTED / P0 LIVE:** Production aliases remain directly renderable until a later authorised merge/deploy applies HOST-01.
 - **DETECTED / P1:** VOICE-01 remains unresolved because RFC-031 is Proposed only.
-- **DETECTED / P2:** no CSP.
-- **DETECTED / P2:** Pexels hotlink privacy/provenance gate.
-- **DETECTED / P2:** article API authority is unresolved.
+- **RESOLVED IN UNMERGED DRAFT PR #74 / NOT PRODUCTION:** SEC-02 nonce CSP and DATA-02 public article authority.
+- **PARTLY RESOLVED IN UNMERGED DRAFT PR #74 / NOT PRODUCTION:** PRIV-02 direct-hotlink privacy/availability is closed; historical per-asset attribution/release evidence remains absent.
 - **DETECTED / P2:** extended hosted-CI and Firefox coverage are absent. The deterministic local Chromium gate is green 89/89 with exact fixture cleanup, and the final current-build read-only Chromium/WebKit matrix is green for 308 navigations, 1,848 matrix assertions and 39 WebKit interaction assertions with zero failures/non-read-only requests.
 - **UNKNOWN/PENDING:** Firefox, final Production/Preview log sampling and the external-provider/device/manual/full-grid gates listed below. Preview identity/Ready state, `origin/main`, implementation head and configured hosted contexts are detected.
 

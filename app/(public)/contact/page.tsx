@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ActionLink } from "@/components/design-system/Action";
+import { NonceStyle } from "@/components/security/NonceStyle";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
 import { absoluteUrl } from "@/lib/site";
 import { ContactForm } from "./ContactForm";
@@ -46,12 +47,12 @@ export default function ContactPage() {
               <p className={styles.sectionLabel}>Control &amp; support</p>
               <h2 id="gambling-help-title">Need help with gambling?</h2>
               <p>B4GAMBLE&apos;s Help section opens without casino, bonus or affiliate prompts.</p>
-              <ActionLink className={styles.helpAction} href="/responsible-gambling" variant="ghost-paper">Open Help</ActionLink>
+              <ActionLink className={styles.helpAction} href="/help" variant="ghost-paper">Open Help</ActionLink>
             </section>
           </aside>
 
           <noscript>
-            <style>{"[data-contact-form-panel] { display: none !important; }"}</style>
+            <NonceStyle>{"[data-contact-form-panel] { display: none !important; }"}</NonceStyle>
             <section className={styles.formPanel} aria-labelledby="contact-no-script-title">
               <p className={styles.sectionLabel}>General contact</p>
               <h2 id="contact-no-script-title">Email us directly.</h2>

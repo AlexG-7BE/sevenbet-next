@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { AffiliateDisclosureDocument } from "./AffiliateDisclosureDocument";
 import { absoluteUrl } from "@/lib/site";
 
@@ -33,10 +34,7 @@ function breadcrumbSchema() {
 export default function AffiliateDisclosurePage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
-      />
+      <JsonLd data={breadcrumbSchema()} />
       <AffiliateDisclosureDocument />
     </>
   );

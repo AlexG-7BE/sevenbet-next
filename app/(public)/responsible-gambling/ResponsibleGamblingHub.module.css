@@ -1,0 +1,301 @@
+.page {
+  --hub-ink: var(--sb-night);
+  --hub-paper: var(--sb-field);
+  --hub-acid: var(--sb-acid);
+  --hub-teal: var(--sb-teal);
+  overflow: clip;
+  background: var(--hub-paper);
+  color: var(--hub-ink);
+}
+
+.page :focus-visible {
+  outline: 3px solid var(--hub-teal);
+  outline-offset: 4px;
+}
+
+.hero,
+.paths,
+.boundary {
+  padding-inline: max(32px, calc((100vw - 1240px) / 2));
+}
+
+.hero {
+  padding-top: 36px;
+  padding-bottom: clamp(92px, 12vw, 172px);
+  background: var(--sb-black);
+  color: var(--sb-white);
+}
+
+.breadcrumbs {
+  min-height: 44px;
+  margin-bottom: clamp(78px, 10vw, 138px);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  color: var(--sb-grey-300);
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.breadcrumbs a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, .58fr);
+  gap: clamp(44px, 8vw, 126px);
+  align-items: end;
+}
+
+.kicker {
+  margin: 0 0 18px;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .15em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.hero .kicker {
+  color: #67c8bd;
+}
+
+.hero h1 {
+  max-width: 10ch;
+  margin: 0;
+  font-size: clamp(4rem, 8vw, 8rem);
+  letter-spacing: -.08em;
+  line-height: .84;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
+
+.heroCopy > p {
+  margin: 0;
+  color: #e2dfd7;
+  font-size: clamp(1.05rem, 1.65vw, 1.3rem);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.heroCopy ul {
+  margin: 36px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(255, 255, 255, .35);
+}
+
+.heroCopy li {
+  padding: 13px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, .24);
+  color: var(--sb-grey-300);
+  font-size: .76rem;
+  font-weight: 850;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+.paths {
+  padding-top: clamp(86px, 11vw, 154px);
+  padding-bottom: clamp(86px, 11vw, 154px);
+}
+
+.sectionHeader {
+  display: grid;
+  grid-template-columns: minmax(260px, .85fr) minmax(260px, .55fr);
+  gap: 30px clamp(44px, 9vw, 148px);
+  align-items: end;
+}
+
+.sectionHeader .kicker {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.sectionHeader h2,
+.boundary h2 {
+  max-width: 9ch;
+  margin: 0;
+  font-size: clamp(3.4rem, 7vw, 7rem);
+  letter-spacing: -.075em;
+  line-height: .84;
+  text-transform: uppercase;
+}
+
+.sectionHeader > p:last-child {
+  margin: 0;
+  color: #55514b;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+.pathGrid {
+  margin: clamp(56px, 7vw, 92px) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  border-top: 1px solid var(--hub-ink);
+  border-left: 1px solid var(--hub-ink);
+}
+
+.pathGrid li {
+  min-width: 0;
+  border-right: 1px solid var(--hub-ink);
+  border-bottom: 1px solid var(--hub-ink);
+}
+
+.pathGrid li:last-child {
+  grid-column: 1 / -1;
+}
+
+.pathGrid a {
+  min-height: 340px;
+  padding: clamp(24px, 3vw, 38px);
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+}
+
+.cardTopline {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font-size: .7rem;
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.pathGrid strong {
+  max-width: 13ch;
+  margin-top: 68px;
+  font-size: clamp(2rem, 3.8vw, 3.7rem);
+  letter-spacing: -.055em;
+  line-height: .94;
+}
+
+.cardDescription {
+  max-width: 58ch;
+  margin-top: 20px;
+  color: #55514b;
+  line-height: 1.55;
+}
+
+.cardAction {
+  min-height: 44px;
+  margin-top: auto;
+  padding-top: 34px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.helpCard a {
+  background: var(--hub-teal);
+  color: white;
+}
+
+.helpCard .cardDescription {
+  color: #d7eeeb;
+}
+
+@media (hover: hover) {
+  .pathGrid li:not(.helpCard) a:hover {
+    background: var(--sb-white);
+  }
+
+  .helpCard a:hover {
+    background: color-mix(in srgb, var(--hub-teal) 88%, black);
+  }
+}
+
+.boundary {
+  padding-top: clamp(80px, 10vw, 136px);
+  padding-bottom: clamp(80px, 10vw, 136px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(270px, .5fr);
+  gap: 34px clamp(44px, 9vw, 150px);
+  align-items: end;
+  background: var(--hub-acid);
+}
+
+.boundary .kicker {
+  grid-column: 1 / -1;
+  margin-bottom: 0;
+}
+
+.boundary h2 {
+  max-width: 12ch;
+}
+
+.boundary > p:last-child {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.65;
+}
+
+@media (max-width: 800px) {
+  .heroGrid,
+  .sectionHeader,
+  .boundary {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCopy {
+    max-width: 620px;
+  }
+
+  .sectionHeader .kicker,
+  .boundary .kicker {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .hero,
+  .paths,
+  .boundary {
+    padding-inline: 20px;
+  }
+
+  .hero {
+    padding-top: 28px;
+    padding-bottom: 88px;
+  }
+
+  .breadcrumbs {
+    margin-bottom: 70px;
+  }
+
+  .hero h1 {
+    font-size: clamp(3.6rem, 18vw, 5.3rem);
+  }
+
+  .pathGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .pathGrid li:last-child {
+    grid-column: auto;
+  }
+
+  .pathGrid a {
+    min-height: 310px;
+  }
+
+  .pathGrid strong {
+    margin-top: 50px;
+  }
+}

@@ -7,7 +7,7 @@ test("unknown route is a branded noindex HTTP 404 with safe no-JS links", async 
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1, name: "This page isn't here." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Go home" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/help");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
   await expect(page.locator("body")).not.toContainText(/digest|stack|database|provider/iu);
 });
@@ -17,7 +17,7 @@ test("public error boundary renders safe recovery without exposing the local har
   await expect(page.getByRole("heading", { level: 1, name: "We couldn't load this page." })).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toBeEnabled();
   await expect(page.getByRole("link", { name: "Go home" })).toHaveAttribute("href", "/");
-  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/help");
   await expect(page.locator("body")).not.toContainText(/LAUNCH_POLISH_BROWSER_HARNESS|digest|stack|database|provider/iu);
 });
 
@@ -28,7 +28,7 @@ test("footer Contact link reaches the canonical Contact page", async ({ page }) 
   await expect(page.getByRole("heading", { level: 1, name: "How can we help?" })).toBeVisible();
   await expect(page.locator('link[rel="canonical"][href$="/contact"]')).toHaveCount(1);
   await expect(page.getByRole("link", { name: "support@b4gamble.com" }).first()).toHaveAttribute("href", "mailto:support@b4gamble.com");
-  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/help");
 });
 
 test("Contact form has accessible adjacent validation", async ({ page }) => {

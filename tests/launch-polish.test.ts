@@ -19,7 +19,7 @@ test("root 404 is static, branded and independent of auth and database", () => {
   assert.match(notFound, /404 · Page not found/);
   assert.match(notFound, /This page isn&apos;t here/);
   assert.match(notFound, /href="\/"/);
-  assert.match(notFound, /href="\/responsible-gambling"/);
+  assert.match(notFound, /href="\/help"/);
   assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|programme|cms/iu);
 });
 

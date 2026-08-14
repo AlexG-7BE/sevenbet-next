@@ -3,6 +3,7 @@ import { programBuilderService } from "@/lib/services";
 import type { CmsEntity, CmsRecord } from "@/lib/cms/types";
 
 export type PublicCmsResource = "program" | "program-steps" | "lessons" | "articles" | "casinos" | "bonuses";
+type PublicCmsBackedResource = Exclude<PublicCmsResource, "articles">;
 
 const resourceToEntity: Record<PublicCmsResource, CmsEntity> = {
   program: "program",
@@ -24,7 +25,7 @@ export function isPublicRecord(record: CmsRecord) {
   return record.status === "PUBLISHED";
 }
 
-export async function listPublishedContent(resource: PublicCmsResource): Promise<CmsRecord[]> {
+export async function listPublishedContent(resource: PublicCmsBackedResource): Promise<CmsRecord[]> {
   if (resource === "program" || resource === "program-steps" || resource === "lessons") {
     const snapshot = await programBuilderService.getPublishedSnapshot();
 

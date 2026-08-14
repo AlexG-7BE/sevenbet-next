@@ -4,10 +4,10 @@ import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-regis
 import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
 import styles from "./TenStepsLanding.module.css";
 
-const heroImage = "https://images.pexels.com/photos/5710657/pexels-photo-5710657.jpeg?auto=compress&cs=tinysrgb&w=1800";
-const contractImage = "https://images.pexels.com/photos/37057075/pexels-photo-37057075.jpeg?auto=compress&cs=tinysrgb&w=1800";
-const accountImage = "https://images.pexels.com/photos/34947154/pexels-photo-34947154.jpeg?auto=compress&cs=tinysrgb&w=1800";
-const returningImage = "https://images.pexels.com/photos/4450147/pexels-photo-4450147.jpeg?auto=compress&cs=tinysrgb&w=1800";
+const heroImage = "/home/hero-plan.jpg";
+const contractImage = "/home/hero-outcome.jpg";
+const accountImage = "/home/hero-confidence.jpg";
+const returningImage = "/home/hero-creator.jpg";
 
 const programmeMissions = programmeMissionTitles.map((title, index) => ({
   number: String(index + 1).padStart(2, "0"),

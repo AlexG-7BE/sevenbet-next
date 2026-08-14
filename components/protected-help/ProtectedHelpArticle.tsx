@@ -1,25 +1,10 @@
 import Link from "next/link";
 
-import type { LearningArticle } from "@/lib/responsible-gambling";
+import type { ProtectedHelpArticle } from "@/lib/responsible-gambling";
 
 import styles from "./ProtectedHelp.module.css";
 
 const articlePresentation: Record<string, { title: string; answer: string; note: string }> = {
-  budgeting: {
-    title: "Budgeting: set the boundary first.",
-    answer: "Set your own money boundary before a gambling decision — not during it.",
-    note: "A gambling budget uses optional entertainment money only. It is not a target to spend.",
-  },
-  "time-management": {
-    title: "Time management: plan the stop.",
-    answer: "Choose a time boundary before play starts and use reminders to pause.",
-    note: "B4GAMBLE does not prescribe a session length. The useful step is choosing your limit in advance.",
-  },
-  "bonus-terms": {
-    title: "Bonus terms: read the real cost.",
-    answer: "The headline bonus is only one part of the offer. The conditions determine the real cost.",
-    note: "Wagering, expiry, maximum-bet rules and game contribution can materially change an offer.",
-  },
   "self-exclusion": {
     title: "Self-exclusion: what it changes.",
     answer: "It creates a barrier between you and gambling accounts.",
@@ -40,21 +25,6 @@ const articlePresentation: Record<string, { title: string; answer: string; note:
     answer: "A reminder interrupts continuous play so you can compare the session with your plan.",
     note: "The information shown and whether play is blocked depend on the specific operator tool.",
   },
-  "casino-licenses": {
-    title: "Casino licences: verify the signal.",
-    answer: "A licence is a threshold for oversight, not a guarantee of safety or suitability.",
-    note: "Check the operator, trading name, domain and current register entry where an official source is available.",
-  },
-  "payment-safety": {
-    title: "Payment safety: check the exit.",
-    answer: "Deposit speed does not establish withdrawal speed or payment safety.",
-    note: "Processing time, verification, fees, currency and operator rules can all affect a withdrawal.",
-  },
-  faq: {
-    title: "Responsible gambling: clear answers.",
-    answer: "Planning, limits and verified information should come before any gambling decision.",
-    note: "B4GAMBLE provides education and control information, not medical advice or operator-specific instructions.",
-  },
 };
 
 const coolingSections = [
@@ -63,7 +33,7 @@ const coolingSections = [
   ["Use the pause", "Review your plan, budget, time and triggers before deciding what happens next."],
 ] as const;
 
-function SourceCard({ article }: { article: LearningArticle }) {
+function SourceCard({ article }: { article: ProtectedHelpArticle }) {
   if (article.slug === "self-exclusion") {
     return (
       <aside className={styles.articleSource} aria-label="Official self-exclusion source">
@@ -92,7 +62,7 @@ function SourceCard({ article }: { article: LearningArticle }) {
             <div><dt>Content blocked</dt><dd>Unsupported activation instructions remain hidden.</dd></div>
           </dl>
         </div>
-        <Link href="/responsible-gambling">Return to Help home</Link>
+        <Link href="/help">Return to Help home</Link>
       </aside>
     );
   }
@@ -100,7 +70,7 @@ function SourceCard({ article }: { article: LearningArticle }) {
   return null;
 }
 
-export function ProtectedHelpArticle({ article }: { article: LearningArticle }) {
+export function ProtectedHelpArticle({ article }: { article: ProtectedHelpArticle }) {
   const presentation = articlePresentation[article.slug] ?? {
     title: article.title,
     answer: article.takeaways[0] ?? article.summary,
@@ -119,7 +89,7 @@ export function ProtectedHelpArticle({ article }: { article: LearningArticle }) 
     >
       <header className={styles.articleHero}>
         <nav aria-label="Breadcrumb" className={styles.articleBreadcrumb}>
-          <Link href="/responsible-gambling">Help home</Link><span aria-hidden="true">/</span><span>{article.title}</span>
+          <Link href="/help">Help home</Link><span aria-hidden="true">/</span><span>{article.title}</span>
         </nav>
         <p className={styles.articleBadge}>Protected control article</p>
         <h1>{presentation.title}</h1>
@@ -160,7 +130,7 @@ export function ProtectedHelpArticleUnavailable() {
       <h1>This Help article is not available.</h1>
       <p>The link may be outdated or the article may be under review. No commercial alternative is shown in this protected area.</p>
       <div>
-        <Link className={styles.primaryAction} href="/responsible-gambling">Return to Help home</Link>
+        <Link className={styles.primaryAction} href="/help">Return to Help home</Link>
       </div>
     </section>
   );

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/seo/JsonLd";
 import { BonusGuideDocument, bonusGuideFaq } from "./BonusGuideDocument";
 import { absoluteUrl } from "@/lib/site";
 
@@ -31,8 +32,8 @@ const faqSchema = {
 export default function BonusGuidePage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={faqSchema} />
       <BonusGuideDocument />
     </>
   );

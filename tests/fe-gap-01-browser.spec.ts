@@ -83,14 +83,14 @@ test("Self-Check routes an all-No path to no current concerns", async ({ page })
   await answerSelfCheck(page, Array(8).fill("No"));
   await expect(page.getByRole("heading", { name: "No current concerns flagged" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Review your personal boundaries" })).toHaveAttribute("href", "/program");
-  await expect(page.getByRole("link", { name: "Open Protected Help" }).last()).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Protected Help" }).last()).toHaveAttribute("href", "/help");
 });
 
 test("Self-Check routes material-impact answers Help-first and restarts locally", async ({ page }) => {
   await page.goto(`${baseUrl}/self-check`, { waitUntil: "domcontentloaded" });
   await answerSelfCheck(page, ["No", "No", "No", "No", "Once", "No", "No", "No"]);
   await expect(page.getByRole("heading", { name: "Help-first" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open Protected Help" }).last()).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Protected Help" }).last()).toHaveAttribute("href", "/help");
   await page.getByRole("button", { name: "Restart reflection" }).click();
   await expect(page.getByRole("button", { name: "Start private reflection" })).toBeVisible();
 });
@@ -106,7 +106,7 @@ test("Self-Check responses clear on refresh and no-JS keeps Help available", asy
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/self-check`, { waitUntil: "domcontentloaded" });
   await expect(noJsPage.getByRole("heading", { name: "Self-Check needs JavaScript." })).toBeVisible();
-  await expect(noJsPage.getByRole("link", { name: "Open Protected Help" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(noJsPage.getByRole("link", { name: "Open Protected Help" })).toHaveAttribute("href", "/help");
   await context.close();
 });
 
@@ -137,7 +137,7 @@ test("Limit Tracker validates zero, supports decimals, at/over state and reset",
   await page.getByLabel("Amount already used (£)").fill("100.50");
   await page.getByRole("button", { name: "Check my limit" }).click();
   await expect(page.getByRole("heading", { name: "You have reached or exceeded the limit you set." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Protected Help / Pause options" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Protected Help / Pause options" })).toHaveAttribute("href", "/help");
   await page.getByRole("button", { name: "Reset" }).click();
   await expect(page.getByLabel("Your gambling limit for this period (£)")).toHaveValue("");
 });
@@ -152,7 +152,7 @@ test("Limit Tracker values clear on refresh and no-JS gives a manual fallback", 
   await noJsPage.goto(`${baseUrl}/tools/budget-calculator`, { waitUntil: "domcontentloaded" });
   await expect(noJsPage.getByRole("heading", { name: "Interactive tracker needs JavaScript." })).toBeVisible();
   await expect(noJsPage.getByText(/chosen limit minus the amount already used/)).toBeVisible();
-  await expect(noJsPage.getByRole("link", { name: "Open Protected Help" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(noJsPage.getByRole("link", { name: "Open Protected Help" })).toHaveAttribute("href", "/help");
   await context.close();
 });
 

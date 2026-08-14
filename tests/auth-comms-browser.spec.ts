@@ -37,7 +37,7 @@ async function passAccessGate(page: Page) {
     });
   });
   await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Protected Help remains available/ })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: /Protected Help remains available/ })).toHaveAttribute("href", "/help");
   await expect(page.getByRole("link", { name: "Terms" })).toHaveAttribute("href", "/terms");
   await expect(page.getByRole("link", { name: "Privacy Notice" })).toHaveAttribute("href", "/privacy");
   const required = page.getByRole("checkbox");

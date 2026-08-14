@@ -184,7 +184,7 @@ function AccessScreen({ busy, error, onConfirm }: {
             {busy ? "Verifying access…" : "Enter Mission 01"}
           </ActionButton>
           <StatusMessage error={error} />
-          <Link className={styles.helpLink} href="/responsible-gambling">Protected Help / pause options</Link>
+          <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
         </section>
       </main>
     </div>
@@ -501,7 +501,7 @@ function IntakeScreen({
             <p>Your words may include health or addiction information. B4GAMBLE may process them only to draft this Starting Point. They are not used for advertising, affiliate targeting or diagnosis.</p>
             <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
           </div>
-          <Link className={styles.helpLink} href="/responsible-gambling">Protected Help / pause options</Link>
+          <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
         </section>
         <section className={styles.inputPanel}>
           <Recorder disabled={busy || !authority} state={recorderState} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} />
@@ -538,7 +538,7 @@ function ClarificationScreen({ prompt, value, count, busy, error, onValue, onSub
       <label className={styles.field}><span>Your answer</span><textarea autoFocus maxLength={1000} onChange={(event) => onValue(event.target.value)} rows={5} value={value} /></label>
       <ActionButton disabled={busy || value.trim().length < 2} onClick={onSubmit} size="large">Continue</ActionButton>
       <StatusMessage error={error} />
-      <Link className={styles.helpLink} href="/responsible-gambling">Protected Help / pause options</Link>
+      <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
     </main></div>
   );
 }
@@ -578,7 +578,7 @@ function SupportScreen({ busy, error, onContinue }: { busy: boolean; error: stri
     <div className={styles.supportPage}><Header xp={20} /><main className={styles.supportCard}>
       <span>SUPPORT FIRST</span><h1>Pause the Programme. Keep support close.</h1>
       <p>Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.</p>
-      <div className={styles.supportActions}><ActionLink href="/responsible-gambling" size="large">Open protected Help</ActionLink><ActionButton disabled={busy} onClick={onContinue} size="large" variant="ghost-night">Continue when I’m ready</ActionButton></div>
+      <div className={styles.supportActions}><ActionLink href="/help" size="large">Open protected Help</ActionLink><ActionButton disabled={busy} onClick={onContinue} size="large" variant="ghost-night">Continue when I’m ready</ActionButton></div>
       <StatusMessage error={error} />
       <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
     </main></div>
@@ -1110,7 +1110,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     </div>
   );
 
-  if (phase === "loading" || sessionPending) return renderPhase(<div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>);
+  if (phase === "loading" || sessionPending) return renderPhase(<div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/help">Protected Help remains available.</Link></main></div>);
   if (phase === "access") return renderPhase(<AccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
   if (phase === "intake") return renderPhase(<IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
   if (phase === "clarification") return renderPhase(<ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />);

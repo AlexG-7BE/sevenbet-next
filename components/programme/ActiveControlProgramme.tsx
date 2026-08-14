@@ -94,10 +94,10 @@ const WAVE_MOMENTS = ["cue", "early_signal", "urge_builds", "choice_point"] as c
 const STAGES = ["Orient", "Learn", "Apply", "Build", "Review"] as const;
 
 const PEOPLE = {
-  portrait: "https://images.pexels.com/photos/34947154/pexels-photo-34947154.jpeg?auto=compress&cs=tinysrgb&w=1800",
-  planning: "https://images.pexels.com/photos/5710657/pexels-photo-5710657.jpeg?auto=compress&cs=tinysrgb&w=1800",
-  outcome: "https://images.pexels.com/photos/37057075/pexels-photo-37057075.jpeg?auto=compress&cs=tinysrgb&w=1800",
-  studio: "https://images.pexels.com/photos/4450147/pexels-photo-4450147.jpeg?auto=compress&cs=tinysrgb&w=1800",
+  portrait: "/home/hero-confidence.jpg",
+  planning: "/home/hero-plan.jpg",
+  outcome: "/home/hero-outcome.jpg",
+  studio: "/home/hero-creator.jpg",
 } as const;
 
 type MomentMap = {
@@ -385,7 +385,7 @@ function Header({ xp }: { xp?: number }) {
         <Link href="/compare">Compare</Link>
       </nav>
       <div className={styles.accountNav}>
-        <Link href="/responsible-gambling">Help</Link>
+        <Link href="/help">Help</Link>
         {isPending
           ? <span className={styles.accountPill} role="status">Checking account…</span>
           : userId
@@ -422,7 +422,7 @@ function AccessGate({ onConfirm, busy, error }: { onConfirm: () => void; busy: b
           </div>
           <PrimaryButton disabled={!ready || busy} onClick={onConfirm}>{busy ? "Confirming…" : "Continue to the Programme"}</PrimaryButton>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}
-          <p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p>
+          <p><Link href="/help">Protected Help remains available without creating an account.</Link></p>
         </div>
         <PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." />
       </section>
@@ -1659,7 +1659,7 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
   }
 
   if (sessionPending || !localHydrated || !activeSubject || !subjectMatchesSession || dashboardPending || (claimTransitionPending && authenticated)) {
-    return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/responsible-gambling">Protected Help remains available.</Link></p></section></div>;
+    return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><p role="status">Loading your private Programme session…</p><p><Link href="/help">Protected Help remains available.</Link></p></section></div>;
   }
 
   if (!accessGranted) return <AccessGate onConfirm={grantProgrammeAccess} busy={busy} error={error} />;

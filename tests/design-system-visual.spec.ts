@@ -42,14 +42,14 @@ test("Public shell mobile menu reference", async ({ page }) => {
 
 test("Protected Help desktop reference", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await openStable(page, "/responsible-gambling");
+  await openStable(page, "/help");
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await matchViewport(page, "protected-help-desktop.png");
 });
 
 test("Protected Help mobile reference", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openStable(page, "/responsible-gambling");
+  await openStable(page, "/help");
   await matchViewport(page, "protected-help-mobile.png");
 });
 

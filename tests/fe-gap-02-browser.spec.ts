@@ -18,7 +18,7 @@ async function noOverflow(page: Page) {
 test("all known Protected Help articles preserve the protected shell and commercial firewall", async ({ page }) => {
   const errors = collectErrors(page);
   for (const slug of slugs) {
-    const response = await page.goto(`${baseUrl}/responsible-gambling/${slug}`, { waitUntil: "domcontentloaded" });
+    const response = await page.goto(`${baseUrl}/help/${slug}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), slug).toBe(200);
     await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
     await expect(page.locator("[data-public-shell]")).toHaveCount(0);
@@ -40,7 +40,7 @@ test("representative Protected Help articles fit every required viewport with re
     const page = await context.newPage();
     const errors = collectErrors(page);
     for (const slug of ["self-exclusion", "cooling-off", "budgeting", "payment-safety"]) {
-      await page.goto(`${baseUrl}/responsible-gambling/${slug}`, { waitUntil: "domcontentloaded" });
+      await page.goto(`${baseUrl}/help/${slug}`, { waitUntil: "domcontentloaded" });
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
       expect(await noOverflow(page), `${slug} at ${viewport.width}`).toBe(true);
     }
@@ -50,15 +50,15 @@ test("representative Protected Help articles fit every required viewport with re
 });
 
 test("Cooling-off and unknown Help routes fail closed without unsupported or commercial guidance", async ({ page }) => {
-  await page.goto(`${baseUrl}/responsible-gambling/cooling-off`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/help/cooling-off`, { waitUntil: "domcontentloaded" });
   await expect(page.getByText("Content review required", { exact: true })).toBeVisible();
   await expect(page.getByText("Terms unavailable", { exact: true })).toBeVisible();
   await expect(page.getByText("Content blocked", { exact: true })).toBeVisible();
   await expect(page.locator("[data-protected-help-article='cooling-off']")).not.toContainText(/24-hour|48-hour|cancel early|available everywhere/i);
-  const response = await page.goto(`${baseUrl}/responsible-gambling/not-a-known-help-article`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/help/not-a-known-help-article`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Return to Help home" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Return to Help home" })).toHaveAttribute("href", "/help");
   await expect(page.locator('[data-protected-help-recovery] a[href^="/casinos"], [data-protected-help-recovery] a[href^="/bonuses"], [data-protected-help-recovery] a[href^="/r/"]')).toHaveCount(0);
 });
 
@@ -66,7 +66,7 @@ test("Protected Help articles remain fully readable without JavaScript", async (
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   for (const slug of slugs) {
-    const response = await page.goto(`${baseUrl}/responsible-gambling/${slug}`, { waitUntil: "domcontentloaded" });
+    const response = await page.goto(`${baseUrl}/help/${slug}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.getByText("Direct answer", { exact: true })).toBeVisible();
@@ -102,7 +102,7 @@ test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ brows
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
   await expect(noJsPage.locator("details[open]")).toHaveCount(5);
-  await expect(noJsPage.getByRole("link", { name: /Open Protected Help/ })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(noJsPage.getByRole("link", { name: /Open Protected Help/ })).toHaveAttribute("href", "/help");
   await context.close();
 });
 

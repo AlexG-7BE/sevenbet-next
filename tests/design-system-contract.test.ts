@@ -86,7 +86,7 @@ test("retired unreachable presentation wrappers stay deleted while active safety
 
 test("public and protected shells retain separate landmark ownership", () => {
   const publicLayout = read("app/(public)/layout.tsx");
-  const protectedLayout = read("app/responsible-gambling/layout.tsx");
+  const protectedLayout = read("app/help/layout.tsx");
   assert.match(publicLayout, /<PublicHeader[\s\S]*<main id="main-content">[\s\S]*<PublicFooter/);
   assert.doesNotMatch(publicLayout, /ProtectedHelpHeader|ProtectedHelpFooter/);
   assert.match(protectedLayout, /<ProtectedHelpHeader[\s\S]*<main id="main-content">[\s\S]*<ProtectedHelpFooter/);
@@ -121,7 +121,7 @@ test("the visual snapshot manifest is present, bounded and cross-domain", () => 
   const manifest = read("tests/design-system-visual.spec.ts");
   const snapshots = readdirSync("tests/design-system-visual.spec.ts-snapshots").filter((name) => name.endsWith(".png"));
   assert.equal(snapshots.length, 10);
-  assert.match(manifest, /\/responsible-gambling/);
+  assert.match(manifest, /\/help/);
   assert.match(manifest, /\/privacy/);
   assert.match(manifest, /\/self-check/);
   assert.match(manifest, /\/tools\/budget-calculator/);

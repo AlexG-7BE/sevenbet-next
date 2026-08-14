@@ -122,7 +122,7 @@ export default function FAQPage() {
           <h2>Need support, not an offer?</h2>
           <span>Open Protected Help for independent support routes and control information. No casino or bonus recovery belongs in this path.</span>
         </div>
-        <Link href="/responsible-gambling">Open Protected Help <span aria-hidden="true">→</span></Link>
+        <Link href="/help">Open Protected Help <span aria-hidden="true">→</span></Link>
       </aside>
     </div>
   );

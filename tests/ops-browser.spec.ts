@@ -23,7 +23,7 @@ test("Public Shell renders one semantic, keyboard-usable shell", async ({ page }
 });
 
 test("Protected Help remains isolated and non-commercial", async ({ page }) => {
-  await open(page, "/responsible-gambling");
+  await open(page, "/help");
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await expect(

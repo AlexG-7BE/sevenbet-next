@@ -33,7 +33,7 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   const publicSources = [
     ...filesBelow("app/(public)"),
     ...filesBelow("app/program"),
-    ...filesBelow("app/responsible-gambling"),
+    ...filesBelow("app/help"),
     ...filesBelow("components/public-shell"),
     ...filesBelow("components/home"),
     ...filesBelow("components/programme"),
@@ -203,7 +203,15 @@ test("sitemap keeps static, learning and protected Help routes when casino disco
   assert.ok(urls.includes("https://b4gamble.com/learn"));
   assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/learn/") && url !== "https://b4gamble.com/learn/"));
   assert.ok(urls.includes("https://b4gamble.com/responsible-gambling"));
-  assert.ok(urls.includes("https://b4gamble.com/responsible-gambling/deposit-limits"));
+  assert.ok(urls.includes("https://b4gamble.com/help"));
+  assert.ok(urls.includes("https://b4gamble.com/help/deposit-limits"));
+  for (const educationalHelpPath of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
+    assert.ok(!urls.includes(`https://b4gamble.com/help/${educationalHelpPath}`));
+  }
+  assert.ok(urls.includes("https://b4gamble.com/learn/responsible-gambling/responsible-gambling-tools"));
+  assert.ok(urls.includes("https://b4gamble.com/learn/casino-bonuses/welcome-bonus-terms"));
+  assert.ok(urls.includes("https://b4gamble.com/learn/licensing/casino-licenses-explained"));
+  assert.ok(urls.includes("https://b4gamble.com/learn/payments/casino-payment-methods"));
   assert.ok(urls.includes("https://b4gamble.com/best-offers"));
   assert.ok(urls.includes("https://b4gamble.com/compare"));
   assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/casino/")));

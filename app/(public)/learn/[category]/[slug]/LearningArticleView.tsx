@@ -158,7 +158,10 @@ export function LearningArticleView({
           </div>
           <div>
             <p>This responsible-gambling learning article does not transition into casino, bonus or comparison content.</p>
-            <Link href="/responsible-gambling">Open protected Help <span aria-hidden="true">↗</span></Link>
+            <div className={styles.protectedActions}>
+              <Link href="/responsible-gambling">Explore Responsible Gambling <span aria-hidden="true">↗</span></Link>
+              <Link href="/help">Open protected Help <span aria-hidden="true">↗</span></Link>
+            </div>
           </div>
         </aside>
       )}

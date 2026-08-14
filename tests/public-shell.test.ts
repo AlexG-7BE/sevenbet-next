@@ -15,7 +15,7 @@ test("public navigation follows the approved Figma information architecture", ()
     { label: "Bonuses", href: "/bonuses", commercial: true },
     { label: "Best offers", href: "/best-offers", commercial: true },
     { label: "Learn", href: "/learn" },
-    { label: "Help", href: "/responsible-gambling", safety: true },
+    { label: "Help", href: "/help", safety: true },
   ]);
 });
 
@@ -33,16 +33,18 @@ test("ordinary public, Programme, protected Help and internal routes stay separa
     "/terms",
     "/self-check",
     "/tools/budget-calculator",
+    "/responsible-gambling",
+    "/responsible-gambling/cooling-off",
+    "/responsible-gaming",
   ]) {
     assert.equal(classifyShellRoute(path), "public", path);
   }
 
   assert.equal(classifyShellRoute("/program"), "programme");
   assert.equal(classifyShellRoute("/program/definitely-missing"), "programme");
-  assert.equal(classifyShellRoute("/responsible-gambling"), "protected-help");
-  assert.equal(classifyShellRoute("/responsible-gambling/cooling-off"), "protected-help");
-  assert.equal(classifyShellRoute("/responsible-gambling/definitely-missing"), "protected-help");
-  assert.equal(classifyShellRoute("/responsible-gaming"), "protected-help");
+  assert.equal(classifyShellRoute("/help"), "protected-help");
+  assert.equal(classifyShellRoute("/help/cooling-off"), "protected-help");
+  assert.equal(classifyShellRoute("/help/definitely-missing"), "protected-help");
   assert.equal(classifyShellRoute("/admin"), "internal");
   assert.equal(classifyShellRoute("/editorial-preview/token"), "internal");
 });

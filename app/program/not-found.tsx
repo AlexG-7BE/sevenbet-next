@@ -13,7 +13,7 @@ export default function ProgrammeNotFound() {
               <p>The link may be outdated. Your Programme data and progress have not been changed.</p>
               <div className="heroActions">
                 <Link className="button gold" href="/program">Return to My Programme</Link>
-                <Link className="button ghost" href="/responsible-gambling">Open Help</Link>
+                <Link className="button ghost" href="/help">Open Help</Link>
               </div>
             </div>
           </div>

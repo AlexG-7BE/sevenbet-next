@@ -3,9 +3,9 @@ import Link from "next/link";
 import { cache } from "react";
 
 import { BestOffersExperience } from "@/components/best-offers/BestOffersExperience";
+import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { bestFitWinners } from "@/lib/public-offer/best-offer-ranking";
-import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -68,7 +68,7 @@ export default async function BestOffersPage() {
   } : null;
 
   return <div className={styles.page}>
-    {schema ? <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" /> : null}
+    {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero}><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>{demoOnly ? "Offer ranking demonstration · GB illustrative context" : mixed ? "Published offers + fictional demonstrations · GB comparison" : "Best offers · GB comparison"} · 18+</p>
       <h1><span>The shortlist</span><em>that survives the small print.</em></h1>
