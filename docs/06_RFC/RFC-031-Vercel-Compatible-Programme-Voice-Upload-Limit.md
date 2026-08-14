@@ -1,12 +1,14 @@
 # RFC-031: Vercel-Compatible Programme Voice Upload Limit
 
-- **Status:** Proposed — no implementation or deployment authority
+- **Status:** Approved for implementation and bounded Preview verification
 - **Proposed:** 2026-08-13
-- **Decision authority:** Founder Office approval pending
+- **Approved:** 2026-08-14
+- **Decision authority:** Founder
+- **Production authority:** Not granted; merge/Production deployment require a separate Founder decision after verification
 - **Scope:** Reconcile the RFC-023 completed-file transcription contract with the Vercel Function request-payload ceiling
-- **Base:** `c52595405f0800c8c2b51d5951c4a8d45c133034`
+- **Base:** `b6fd5b20edd6fc2fcfc62e7d80ddc75c74968d19`
 - **Depends on:** Product Vision & Principles v2.0, RFC-017, RFC-021, RFC-022, RFC-023, RFC-025, Programme Architecture Standards, Backend Programme Standards and Programme Definition of Done
-- **Would supersede if approved:** RFC-023 section 4 only for the maximum raw audio-file size and the bounded server/client enforcement described here
+- **Supersedes:** RFC-023 section 4 only for the maximum raw audio-file size and the bounded server/client enforcement described here
 
 ## 1. Problem and evidence
 
@@ -15,15 +17,15 @@ RFC-023 currently permits an 8 MiB raw audio file. The deployed transcription ro
 Primary platform evidence:
 
 - [Vercel `FUNCTION_PAYLOAD_TOO_LARGE` documentation](https://vercel.com/docs/errors/function_payload_too_large) states that Function request payloads must not exceed 4.5 MB and return `413` when the platform ceiling is exceeded.
-- The same Vercel guidance suggests direct client uploads or external storage for larger files. Those alternatives would change the approved RFC-023 privacy and architecture boundary and are not adopted by this proposal.
+- The same Vercel guidance suggests direct client uploads or external storage for larger files. Those alternatives would change the approved RFC-023 privacy and architecture boundary and are not adopted by this decision.
 
 **Detected:** repository code and RFC-023 both use an 8 MiB file ceiling and a 90-second duration ceiling.
 
 **Inferred:** multipart overhead varies with boundaries and headers, so setting the raw file limit equal to the platform limit would remain unsafe.
 
-## 2. Proposed decision
+## 2. Decision
 
-If approved, the completed-file transcription contract changes to:
+The completed-file transcription contract changes to:
 
 ```text
 maximum raw audio file = 4 MiB (4,194,304 bytes)
@@ -33,11 +35,11 @@ maximum declared duration = 90 seconds (unchanged)
 
 The 64 KiB request-envelope allowance is for ordinary multipart boundaries and the existing bounded duration field. It is not additional audio capacity. Any request whose envelope itself exceeds that application limit is rejected even if a parsed file would otherwise fit.
 
-This proposal does not claim that every browser codec can record for 90 seconds within 4 MiB. Duration and byte size are independent limits; the first one reached ends eligibility for upload. Typed input remains an equal, complete path.
+This decision does not claim that every browser codec can record for 90 seconds within 4 MiB. Duration and byte size are independent limits; the first one reached ends eligibility for upload. Typed input remains an equal, complete path.
 
 ## 3. Server enforcement
 
-If approved, the transcription route will enforce both declared and actual body size before provider invocation:
+The transcription route will enforce both declared and actual body size before provider invocation:
 
 1. reject a syntactically invalid or greater-than-envelope `Content-Length` before reading the body;
 2. read the request stream with an actual-byte counter and stop/cancel as soon as the complete multipart request exceeds 4,259,840 bytes;
@@ -59,7 +61,7 @@ The 90-second automatic stop remains unchanged. No background upload, chunked mu
 
 ## 5. Privacy and architecture boundary
 
-This proposal preserves the RFC-023 server-mediated, completed-file path:
+This decision preserves the RFC-023 server-mediated, completed-file path:
 
 ```text
 explicit recording
@@ -72,7 +74,7 @@ explicit recording
 
 No Vercel Blob bucket, object store, presigned upload, public or durable file URL, second transcription provider, browser-held provider credential or direct client-to-provider upload is introduced. Those options require a separate approved privacy, retention, access-control and deletion decision.
 
-## 6. Required verification if approved
+## 6. Required verification
 
 Automated evidence must cover at least:
 
@@ -89,7 +91,7 @@ Automated evidence must cover at least:
 - no audio, transcript, body, credential or provider error body enters logs or analytics; and
 - feature-off, provider-off, Programme reward/claim, typecheck, build and relevant browser tests pass.
 
-A Preview smoke must confirm an at-limit representative upload and the too-large recovery state without using Production data. A platform-generated `413` is not accepted as the product's only validation behavior for requests that fit inside the proposed application envelope.
+A Preview smoke must confirm an at-limit representative upload and the too-large recovery state without using Production data. A platform-generated `413` is not accepted as the product's only validation behavior for requests that fit inside the application envelope.
 
 ## 7. Alternatives considered
 
@@ -101,15 +103,15 @@ A Preview smoke must confirm an at-limit representative upload and the too-large
 
 ## 8. Rollout and rollback
 
-This document is proposed only. No code, environment, credential, provider, Preview or Production change is authorised until Founder Office changes the RFC status to approved.
+This decision authorises implementation on the focused `rfc-031-voice-upload-limit` branch and bounded non-Production/Preview verification only. It does not authorise merge to `main`, Production deployment, Production environment changes, Production database changes or Production-data testing. Those require a separate Founder decision after the required verification evidence is complete.
 
-If approved, rollout remains inside RFC-023's bounded non-Production verification ceiling unless a separate decision authorises Production. The implementation must land through a focused Pull Request with the tests above and exact Preview evidence.
+The implementation must land through a focused Pull Request with the tests above and exact Preview evidence.
 
-Operational rollback disables `PROGRAM_AI_REAL_PROVIDER_ENABLED` or `PROGRAM_AI_V1_ENABLED` and preserves typed input. Rollback must not restore the incompatible 8 MiB upload on Vercel. No schema or data rollback is required.
+Operational rollback after any later separately authorised Production release disables `PROGRAM_AI_REAL_PROVIDER_ENABLED` or `PROGRAM_AI_V1_ENABLED` and preserves typed input. Rollback must not restore the incompatible 8 MiB upload on Vercel. No schema or data rollback is required.
 
-## 9. Evidence classification at proposal
+## 9. Evidence classification at approval
 
 - **Detected:** RFC-023 and current code allow 8 MiB; current code uses one server-mediated multipart upload; Vercel documents a 4.5 MB Function payload ceiling; typed input and a 90-second cap already exist.
 - **Inferred:** 4 MiB raw audio plus a bounded 64 KiB multipart envelope provides necessary headroom under the documented platform ceiling.
-- **Proposed:** the exact byte limits, streamed actual-byte enforcement, client preflight, tests and rollback in this RFC.
-- **Not detected:** an approved amendment, a compliant 4 MiB implementation, object storage, direct upload, Production authority or Production verification.
+- **Approved:** the exact byte limits, streamed actual-byte enforcement, client preflight, tests and bounded Preview verification in this RFC.
+- **Not detected / not authorised:** a compliant implementation, object storage, direct upload, Production merge/deployment, Production environment mutation, Production database mutation or Production verification.
