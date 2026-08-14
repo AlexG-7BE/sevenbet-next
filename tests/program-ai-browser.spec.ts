@@ -339,6 +339,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
     const stoppedTracksKey = "program-ai-test-stopped-tracks";
     if (window.sessionStorage.getItem(stoppedTracksKey) === null) window.sessionStorage.setItem(stoppedTracksKey, "0");
     let failRecorder: (() => void) | null = null;
+    let recordingBytes = 3;
     class FakeMediaRecorder {
       static isTypeSupported(type: string) { return type === "audio/webm;codecs=opus"; }
       state = "inactive";
@@ -353,7 +354,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
       start() { this.state = "recording"; }
       stop() {
         this.state = "inactive";
-        this.ondataavailable?.({ data: new Blob([new Uint8Array([1, 2, 3])], { type: this.mimeType }) });
+        this.ondataavailable?.({ data: new Blob([new Uint8Array(recordingBytes)], { type: this.mimeType }) });
         this.onstop?.();
       }
     }
@@ -368,6 +369,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
     });
     Object.defineProperty(window, "__programAiStoppedTracks", { get: () => Number(window.sessionStorage.getItem(stoppedTracksKey)) });
     Object.defineProperty(window, "__programAiFailRecorder", { value: () => failRecorder?.() });
+    Object.defineProperty(window, "__programAiNextRecordingBytes", { value: (bytes: number) => { recordingBytes = bytes; } });
   });
   await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -433,6 +435,16 @@ test("voice recording produces an editable transcript, releases tracks and can b
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
   await expect(page.getByText("Type instead")).toBeVisible();
 
+  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => void }).__programAiNextRecordingBytes(4_194_305));
+  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Stop recording" }).click();
+  await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry this recording" })).toHaveCount(0);
+  expect(transcriptionCalls).toBe(1);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(3);
+  await page.getByRole("button", { name: "type instead" }).click();
+  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => void }).__programAiNextRecordingBytes(3));
+
   await page.getByRole("button", { name: "Start recording" }).click();
   await page.clock.fastForward(90_000);
   await expect(page.getByText("Transcript ready to review")).toBeVisible();
@@ -451,7 +463,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("link", { name: "B4GAMBLE" }).click();
   await expect(page).toHaveURL("/");
   expect(transcriptionCalls).toBe(2);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(5);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(6);
   await noHorizontalOverflow(page);
 
   const cookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_session");
