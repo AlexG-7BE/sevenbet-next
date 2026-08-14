@@ -3,11 +3,18 @@ import { programmeUnitOfWork } from "@/lib/programme/infrastructure/programme-un
 import { transcriptionPortFromEnvironment } from "@/lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
+import {
+  PROGRAM_AI_MAX_AUDIO_BYTES,
+  PROGRAM_AI_MAX_RECORDING_DURATION_MS,
+} from "@/lib/programme/program-ai/transcription-limits";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
 
-export const PROGRAM_AI_MAX_AUDIO_BYTES = 8 * 1024 * 1024;
-export const PROGRAM_AI_MAX_RECORDING_DURATION_MS = 90_000;
-export const PROGRAM_AI_TRANSCRIPTION_FORM_OVERHEAD_BYTES = 64 * 1024;
+export {
+  PROGRAM_AI_MAX_AUDIO_BYTES,
+  PROGRAM_AI_MAX_RECORDING_DURATION_MS,
+  PROGRAM_AI_MAX_TRANSCRIPTION_REQUEST_BYTES,
+  PROGRAM_AI_TRANSCRIPTION_FORM_OVERHEAD_BYTES,
+} from "@/lib/programme/program-ai/transcription-limits";
 
 const audioFormats = new Map([
   ["audio/webm", "webm"],
@@ -34,6 +41,13 @@ function parseDuration(value: FormDataEntryValue | null) {
     throw new ProgrammeProviderError("INPUT_TOO_LARGE");
   }
   return durationMs;
+}
+
+function assertExactUploadFields(form: FormData) {
+  const keys = Array.from(form.keys()).sort();
+  if (keys.length !== 2 || keys[0] !== "audio" || keys[1] !== "durationMs") {
+    throw new ValidationError("Voice transcription contains unexpected multipart fields");
+  }
 }
 
 export class ProgrammeAiTranscriptionService {
@@ -63,6 +77,7 @@ export class ProgrammeAiTranscriptionService {
 }
 
 export async function parseProgrammeAudioUpload(form: FormData) {
+  assertExactUploadFields(form);
   const file = form.get("audio");
   if (!(file instanceof File)) throw new ValidationError("An audio file is required");
   if (file.size < 1) throw new ValidationError("The audio file is empty");
