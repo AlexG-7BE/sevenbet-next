@@ -115,3 +115,29 @@ Operational rollback after any later separately authorised Production release di
 - **Inferred:** 4 MiB raw audio plus a bounded 64 KiB multipart envelope provides necessary headroom under the documented platform ceiling.
 - **Approved:** the exact byte limits, streamed actual-byte enforcement, client preflight, tests and bounded Preview verification in this RFC.
 - **Not detected / not authorised:** a compliant implementation, object storage, direct upload, Production merge/deployment, Production environment mutation, Production database mutation or Production verification.
+
+## 10. Exact feature-on Preview verification — 2026-08-14
+
+**Detected:** RFC-031 is implemented on open Draft PR #73. Runtime-tested source SHA `cb97d251db1abb4dcb32200228e512c7039b01f9` was redeployed only to Vercel Preview as `dpl_eEE3YCx2YQcducJo2RLnogm8CJDb`. The deployment was Ready, target `preview`, sourced from branch `rfc-031-voice-upload-limit` at that exact SHA, with immutable URL `https://sevenbet-next-6vlt7o6be-alexg-7bes-projects.vercel.app` and branch alias `https://sevenbet-next-git-rfc-031-voice-uplo-3a29de-alexg-7bes-projects.vercel.app`. The immutable host applied the approved method-preserving canonicalisation to that exact alias.
+
+**Detected — database safety:** the current Preview Prisma resource is `store_hLPkkgamL7rJNmCe`, distinct from Production resource `store_1I4F54ETrwSKS42o`; repository-generated non-secret target fingerprints were different. Read-only Preview migration status reported 19 migrations and `Database schema is up to date!`. The feature-on UI then created only isolated synthetic anonymous Programme session/authority state. No raw audio or transcript was persisted. **PREVIEW DATABASE ISOLATION: VERIFIED.**
+
+**Detected — served runtime:** `/program` rendered the feature-on `ProgramAiExperience` access heading `Start with what is happening now.` and intake heading `What feels hardest to control right now?`, not the legacy `ActiveControlProgramme`. The two-control access gate rendered, Protected Help returned its offer-free support surface without an account, and synthetic browser instrumentation recorded zero microphone requests before the explicit **Start recording** action.
+
+**Detected — deployed upload boundary:** zero-filled synthetic audio produced the following exact hosted results:
+
+| Smoke | Audio bytes | Complete request bytes | Hosted result | Provider invocation |
+| --- | ---: | ---: | --- | --- |
+| Exact raw limit | `4,194,304` | `4,194,622` | `503 PROVIDER_UNAVAILABLE` | No; the request passed Vercel, the application envelope and raw-file validation, then reached the intentional provider-off boundary |
+| Raw limit + 1 | `4,194,305` | `4,194,623` | `413 INPUT_TOO_LARGE` | No |
+| Complete-envelope overflow, chunked with no `Content-Length` | `4,194,304` | `4,260,967` | `413 INPUT_TOO_LARGE` | No |
+
+The hosted client could not safely manufacture an understated `Content-Length`; the exact-head local/CI contract remains the evidence for that subcase. It is not claimed as a hosted runtime pass.
+
+**Detected — deployed browser contract:** an oversized synthetic `4,194,305`-byte completed Blob made zero sensitive-authority calls and zero transcription requests, stopped its synthetic media track, rendered the bounded too-large recovery, exposed **Type instead**, offered no unchanged-Blob retry and could not be reused after recovery. A normal three-byte synthetic recording started only after explicit action, rendered recording state, stopped its track, made exactly one authority call and one multipart transcription request, then exposed truthful provider-unavailable recovery with **Type instead**. No real microphone or personal data was used.
+
+**Detected — logs and cleanup:** exact-deployment log review found no multipart body, synthetic filename/text, access proof, session cookie, database variable, OpenAI endpoint or `programme_provider_operation` event. The temporary branch-specific Preview `PROGRAM_AI_V1_ENABLED=true` override was removed after evidence capture; no branch-specific variable remains. The immutable tested deployment retains its historical environment snapshot until replaced.
+
+**Detected — Production safety:** Production remained Ready on pre-existing deployment `dpl_83FL8ZaoDV9t69WPkJqv3rMEzYiG`; read-only `/program` observation still showed the pre-existing feature-on state already recorded as a governance contradiction. This verification did not deploy Production, change Production environment/provider configuration, or mutate Production data. PR #73 remains Draft and unmerged.
+
+**Release recommendation:** RFC-031's bounded branch/Preview gates are closed. The branch may be presented as **GO FOR FOUNDER MERGE DECISION**. Ready status, merge and any Production deployment remain separate Founder actions.
