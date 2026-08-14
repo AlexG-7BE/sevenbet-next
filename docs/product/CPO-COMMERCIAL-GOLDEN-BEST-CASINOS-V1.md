@@ -1,6 +1,6 @@
 # CPO Commercial Golden Best Casinos V1
 
-- **Status:** Golden implementation complete locally; immutable Preview and Founder visual approval pending
+- **Status:** Ready for Founder visual review; Founder visual approval pending
 - **Date:** 2026-08-14
 - **Governing decision:** [RFC-034](../06_RFC/RFC-034-CPO-Commercial-Decision-Layer-Preview-V2.md)
 - **Route:** `/best-casinos` only
@@ -10,6 +10,9 @@
 - **Baseline main:** `0c956d0d99c9ac703234e82a0bca3c1d5b3a9167`
 - **Baseline divergence:** 0 commits behind / 2 commits ahead of `origin/main`
 - **Final implementation head:** `a8cdf442e4160b1751f395eff8f00607dd48c543`
+- **Verified review/deployment head:** `f42f872533ad6d8708e809cfe937c4581bd1ed9c`
+- **Immutable deployment:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app>
+- **Golden page:** <https://sevenbet-next-gjiosjliw-alexg-7bes-projects.vercel.app/best-casinos>
 
 ## Evidence classification
 
@@ -212,21 +215,28 @@ Research was completed with the installed Refero design tooling before implement
 - `npm run cpo-preview:test`: **23 passed, 0 failed**.
 - `npm run ci:quality`: **467 passed, 0 failed** across the repository quality suites.
 - `npm run lint`, `npm run typecheck`, `git diff --check` and the Preview-enabled production build: **passed**.
-- `npm run cpo-preview:browser`: test definitions cover Chromium and WebKit, but both standalone launches are blocked by the managed macOS sandbox. Equivalent Chromium route, click, viewport and overflow checks were completed with the in-app browser.
+- `npm run cpo-preview:browser`: **WebKit 4/4 passed** outside the managed sandbox. Chromium passed the Golden-route, mobile CTA and screenshot tests; the cross-surface test timed out later on `/casinos` because the local dev server could not reach the external Prisma database. Equivalent Chromium route, click, viewport and overflow checks passed independently in the in-app browser.
 
 ## Screenshot evidence
 
-Local production-build evidence is captured outside git under `/tmp/golden-pass{1,2,3}-*.png`. Final exact immutable Vercel Preview evidence remains pending deployment:
+Final evidence was captured from the immutable Vercel deployment for `f42f872` after its governed redirect to the stable branch host for the same deployment. Binary QA files remain outside git:
 
-- 1440 full page, hero, #1, #2/#3 and evidence/research;
-- 430 full page, hero + first CTA, #1 and alternatives; and
-- 390 full page.
+- 1440 full page: `/tmp/golden-preview-f42f872-1440-full.jpg`;
+- 1440 hero: `/tmp/golden-preview-f42f872-1440-hero.jpg`;
+- 1440 #1: `/tmp/golden-preview-f42f872-1440-number-one.jpg`;
+- 1440 #2/#3: `/tmp/golden-preview-f42f872-1440-alternatives.jpg`;
+- 1440 evidence/research: `/tmp/golden-preview-f42f872-1440-evidence-research.jpg`;
+- 430 full page: `/tmp/golden-preview-f42f872-430-full.jpg`;
+- 430 hero + first CTA: `/tmp/golden-preview-f42f872-430-hero-first-cta.jpg`;
+- 430 #1: `/tmp/golden-preview-f42f872-430-number-one.jpg`;
+- 430 alternatives: `/tmp/golden-preview-f42f872-430-alternatives.jpg`; and
+- 390 full page: `/tmp/golden-preview-f42f872-390-full.jpg`.
 
 ## Known limitations
 
 - **Detected:** current Preview recommendations are fictional demo fixtures and all commercial actions end inside B4GAMBLE.
 - **Detected:** `PublicOfferDTO` exposes a governed logo but not the full casino media collection. Golden media use therefore remains a page-level progressive enhancement for recognised local demo fixture assets, with a truthful fallback.
-- **Detected:** Chromium visual QA was completed through the in-app browser. The repository Playwright configuration now includes Chromium and WebKit, but local standalone browser launch is blocked by the managed macOS sandbox (`MachPortRendezvousServer: Permission denied`; WebKit abort); this is an environment limitation rather than a page failure.
+- **Detected:** Chromium visual QA was completed through the in-app browser. The repository Playwright configuration includes Chromium and WebKit; WebKit passed all four CPO browser tests when launched outside the managed macOS sandbox.
 - Founder visual approval is still required. This document does not authorise merge or Production deployment.
 
 ## Phase 2 — not started
