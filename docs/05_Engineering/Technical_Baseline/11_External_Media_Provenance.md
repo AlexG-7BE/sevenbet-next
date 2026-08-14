@@ -47,4 +47,4 @@
 
 1. **Not detected:** complete historical per-file provenance/releases for the four legacy Pexels images. This remains a rights-record gap even though direct hotlink privacy and availability risk are closed.
 2. **Not detected:** source-only proof of the configured Production media storage host. Hosted verification can observe request hosts but must not expose configuration values.
-3. **Planned:** browser verification must show no Pexels request and no unexpected image, media or frame CSP violation on representative Preview routes.
+3. **Detected on RFC-033 Preview:** local Chromium/WebKit and exact deployment `dpl_HSr19yfu1hmRmrYzMmdPaMqiUJRN` showed no Pexels request and no unexpected image, media or frame CSP violation on representative public, Help, Learn, auth, Programme, admin and error routes.
