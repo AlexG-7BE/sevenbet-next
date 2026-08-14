@@ -35,6 +35,10 @@ import {
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
 import {
+  PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE,
+  programmeAudioBlobFitsUploadLimit,
+} from "@/lib/programme/program-ai/transcription-limits";
+import {
   anonymousProgrammeSubject,
   clearProgrammeOAuthClaimMarker,
   clearProgrammeSubjectContent,
@@ -207,6 +211,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   const retainedRecording = useRef<Blob | null>(null);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermissionState>("unknown");
+  const [recordingError, setRecordingError] = useState("");
   const recordingStartedAt = useRef(0);
   const recordingDurationMs = useRef(0);
   const maximumTimer = useRef<number | null>(null);
@@ -290,6 +295,14 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
   }, []);
 
   async function transcribe(audio: Blob, durationMs: number) {
+    setRecordingError("");
+    if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
+      releaseRecording();
+      setRecordingError(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);
+      productAnalyticsClient.voiceOutcome("transcription_error");
+      onState("error");
+      return;
+    }
     onState("transcribing");
     try {
       const result = await onTranscribe(audio, durationMs);
@@ -301,6 +314,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
     } catch {
+      setRecordingError("Voice transcription could not be completed.");
       productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
     }
@@ -317,6 +331,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       onState("unsupported");
       return;
     }
+    setRecordingError("");
     onState("requesting");
     try {
       releaseRecording();
@@ -432,7 +447,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       {state === "recording" ? <span className={styles.recorderActions}><button className={styles.stopRecording} onClick={stop} type="button">Stop recording</button><button className={styles.cancelRecording} onClick={cancel} type="button">Cancel</button></span> : null}
       {state === "requesting" || state === "transcribing" ? <span role="status">{state === "requesting" ? "Requesting microphone…" : "Transcribing…"}</span> : null}
       {state === "success" ? <p role="status">Check and correct the editable transcript below before creating your Starting Point.</p> : null}
-      {state === "error" ? <p role="alert">Voice transcription could not be completed. {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}
+      {state === "error" ? <p role="alert">{recordingError || "Voice transcription could not be completed."} {retainedRecording.current ? <><button onClick={retry} type="button">Retry this recording</button> or </> : null}<button onClick={useTyped} type="button">type instead</button>.</p> : null}
       {state === "unsupported" ? <p role="alert">This browser cannot record audio with the features B4GAMBLE needs. You can <button onClick={useTyped} type="button">type instead</button>.</p> : null}
       {state === "denied" && microphonePermission === "denied" ? <p role="alert">Your browser will not show another prompt while this site is blocked. Use the site controls beside the address bar to allow the microphone, then check access again, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
       {state === "denied" && microphonePermission !== "denied" ? <p role="alert">The permission prompt was dismissed or the microphone was not made available. Try again, or <button onClick={useTyped} type="button">type instead</button>. Nothing was recorded.</p> : null}
@@ -860,6 +875,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   async function transcribeVoice(audio: Blob, durationMs: number) {
     if (!subject) throw new Error("Programme session unavailable");
+    if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
+      throw new Error(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);
+    }
     await ensureSensitiveAuthority();
     const form = new FormData();
     form.set("audio", audio, "programme-m1-recording");
