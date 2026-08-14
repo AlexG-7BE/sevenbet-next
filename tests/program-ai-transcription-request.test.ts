@@ -151,3 +151,19 @@ test("malformed multipart and extra fields fail as validation errors", async () 
     (error) => error instanceof ValidationError,
   );
 });
+
+test("duplicate audio or duration fields fail exact multipart validation", async () => {
+  const duplicateAudio = audioForm(1);
+  duplicateAudio.append("audio", new File([new Uint8Array([2])], "second", { type: "audio/webm" }));
+  await assert.rejects(
+    parseProgrammeAudioUpload(duplicateAudio),
+    (error) => error instanceof ValidationError,
+  );
+
+  const duplicateDuration = audioForm(1);
+  duplicateDuration.append("durationMs", "1000");
+  await assert.rejects(
+    parseProgrammeAudioUpload(duplicateDuration),
+    (error) => error instanceof ValidationError,
+  );
+});

@@ -369,7 +369,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
     });
     Object.defineProperty(window, "__programAiStoppedTracks", { get: () => Number(window.sessionStorage.getItem(stoppedTracksKey)) });
     Object.defineProperty(window, "__programAiFailRecorder", { value: () => failRecorder?.() });
-    Object.defineProperty(window, "__programAiNextRecordingBytes", { value: (bytes: number) => { recordingBytes = bytes; } });
+    Object.defineProperty(window, "__programAiNextRecordingBytes", { value: (bytes: number) => (recordingBytes = bytes) });
   });
   await page.clock.install();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -380,7 +380,9 @@ test("voice recording produces an editable transcript, releases tracks and can b
       body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }),
     });
   });
+  let authorityCalls = 0;
   await page.route("**/api/program/program-ai/authority", async (route) => {
+    authorityCalls += 1;
     await route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -409,6 +411,17 @@ test("voice recording produces an editable transcript, releases tracks and can b
   });
 
   await page.getByRole("button", { name: "Start recording" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_305))).toBe(4_194_305);
+  await page.getByRole("button", { name: "Stop recording" }).click();
+  await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Retry this recording" })).toHaveCount(0);
+  expect(authorityCalls).toBe(0);
+  expect(transcriptionCalls).toBe(0);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
+  await page.getByRole("button", { name: "type instead" }).click();
+
+  await page.getByRole("button", { name: "Start recording" }).click();
+  expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_304))).toBe(4_194_304);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
   await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
   const recordingDot = page.locator("[data-recording-indicator]");
@@ -423,27 +436,19 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.clock.fastForward(2_000);
   await expect(page.getByText("Transcript ready to review")).toBeVisible();
   expect(transcriptionCalls).toBe(1);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
+  expect(authorityCalls).toBe(1);
+  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
 
   await page.getByRole("button", { name: "Record again" }).click();
+  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(3));
   await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   await page.clock.fastForward(2_000);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   expect(transcriptionCalls).toBe(1);
-  expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
-  await expect(page.getByText("Type instead")).toBeVisible();
-
-  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => void }).__programAiNextRecordingBytes(4_194_305));
-  await page.getByRole("button", { name: "Start recording" }).click();
-  await page.getByRole("button", { name: "Stop recording" }).click();
-  await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Retry this recording" })).toHaveCount(0);
-  expect(transcriptionCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(3);
-  await page.getByRole("button", { name: "type instead" }).click();
-  await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => void }).__programAiNextRecordingBytes(3));
+  await expect(page.getByText("Type instead")).toBeVisible();
 
   await page.getByRole("button", { name: "Start recording" }).click();
   await page.clock.fastForward(90_000);
