@@ -295,17 +295,18 @@ test("commercial denial prevents affiliate route projection and operator evaluat
 });
 
 test("public offer pages use the service boundary and expose no raw destination contract", () => {
-  for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) {
+  for (const file of ["app/(public)/best-casinos/page.tsx", "app/(public)/bonuses/page.tsx"]) {
     const source = readFileSync(file, "utf8");
     assert.match(source, /publicOfferService/);
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|listCasinoViews|demo-/);
   }
   const bestOffersPage = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
-  assert.match(bestOffersPage, /const loadBestOffersPageData = cache/);
-  assert.equal((bestOffersPage.match(/getBestOffersPageData\(/g) || []).length, 1);
-  assert.match(bestOffersPage, /result\.status === "available" && result\.inventoryMode === "PUBLISHED_ONLY"/);
-  assert.match(bestOffersPage, /result\.status === "unavailable"/);
-  assert.match(bestOffersPage, /Casino Offer Comparison Unavailable/);
+  assert.match(bestOffersPage, /redirect\("\/bonuses#top-offers"\)/);
+  const bestCasinosPage = readFileSync("app/(public)/best-casinos/page.tsx", "utf8");
+  assert.match(bestCasinosPage, /const loadShortlist = cache/);
+  assert.equal((bestCasinosPage.match(/getBestOffersPageData\(/g) || []).length, 1);
+  assert.match(bestCasinosPage, /result\.status !== "available"/);
+  assert.match(bestCasinosPage, /limit: 3/);
   const experience = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
   assert.match(experience, /tabIndex=\{criterion === key \? 0 : -1\}/);
   for (const key of ["ArrowRight", "ArrowLeft", "Home", "End"]) assert.match(experience, new RegExp(`event\\.key === "${key}"`));
@@ -314,7 +315,7 @@ test("public offer pages use the service boundary and expose no raw destination 
   assert.doesNotMatch(styles, /\.rankedConditions p \{[^}]*white-space: nowrap/s);
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);
-  for (const file of ["app/(public)/best-offers/page.tsx", "components/best-offers/BestOffersExperience.tsx", "lib/public-offer/best-offer-ranking.ts"]) {
+  for (const file of ["app/(public)/best-casinos/page.tsx", "components/commercial-decision/BestCasinoDecisionLayer.tsx", "lib/public-offer/best-offer-ranking.ts"]) {
     assert.doesNotMatch(readFileSync(file, "utf8"), /demo-(?:northstar|harbour|atlas)/, `${file} must not contain winner-specific slugs`);
   }
 });

@@ -34,6 +34,12 @@ const validEvents = {
   programme_discovery_clicked: { sourceSurface: "programme_home", destinationRoute: "casinos" },
   programme_ai_outcome: { operation: "programme_ai", result: "provider" },
   programme_voice_outcome: { result: "recording_started" },
+  commercial_decision_layer_viewed: { sourceRoute: "best_casinos", placement: "shortlist" },
+  commercial_recommendation_clicked: { sourceRoute: "best_casinos", recommendationRank: 1 },
+  commercial_review_opened: { sourceRoute: "best_casinos", operatorSlug: "demo-northstar" },
+  commercial_compare_opened: { sourceRoute: "best_casinos", operatorSlug: "demo-northstar" },
+  commercial_outbound_intent: { sourceRoute: "best_casinos", operatorSlug: "demo-northstar" },
+  commercial_all_results_opened: { sourceRoute: "best_casinos", destinationRoute: "casinos" },
 } as const;
 
 test("the closed event taxonomy accepts every approved event and rejects unknown fields", () => {
@@ -47,6 +53,8 @@ test("the closed event taxonomy accepts every approved event and rejects unknown
   assert.throws(() => parseProductAnalyticsEvent("programme_home_viewed", { ...validEvents.programme_home_viewed, programmeState: "in_progress" }));
   assert.throws(() => parseProductAnalyticsEvent("programme_discovery_clicked", { sourceSurface: "mission_08", destinationRoute: "/casinos?affiliate=1" }));
   assert.throws(() => parseProductAnalyticsEvent("programme_ai_outcome", { operation: "free_text", result: "provider" }));
+  assert.throws(() => parseProductAnalyticsEvent("commercial_outbound_intent", { sourceRoute: "best_casinos", operatorSlug: "https://operator.example" }));
+  assert.throws(() => parseProductAnalyticsEvent("commercial_recommendation_clicked", { sourceRoute: "best_casinos", recommendationRank: 6 }));
   assert.throws(() => parseProductAnalyticsEvent("unknown" as never, {}));
 });
 

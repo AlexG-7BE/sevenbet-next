@@ -14,6 +14,12 @@ export const productAnalyticsEventNames = [
   "programme_discovery_clicked",
   "programme_ai_outcome",
   "programme_voice_outcome",
+  "commercial_decision_layer_viewed",
+  "commercial_recommendation_clicked",
+  "commercial_review_opened",
+  "commercial_compare_opened",
+  "commercial_outbound_intent",
+  "commercial_all_results_opened",
 ] as const;
 
 export type ProductAnalyticsEventName = (typeof productAnalyticsEventNames)[number];
@@ -48,7 +54,7 @@ export type ProductAnalyticsEventMap = {
   programme_completed: { pathVersion: "program_ai_v1" };
   programme_discovery_clicked: {
     sourceSurface: "programme_home" | "mission_08" | "mission_10";
-    destinationRoute: "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide";
+    destinationRoute: "best_casinos" | "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide";
   };
   programme_ai_outcome: {
     operation:
@@ -68,7 +74,16 @@ export type ProductAnalyticsEventMap = {
   programme_voice_outcome: {
     result: "recording_started" | "transcription_success" | "permission_denied" | "transcription_error" | "cancelled";
   };
+  commercial_decision_layer_viewed: { sourceRoute: CommercialSourceRoute; placement: CommercialPlacement };
+  commercial_recommendation_clicked: { sourceRoute: CommercialSourceRoute; recommendationRank: 1 | 2 | 3 | 4 | 5 };
+  commercial_review_opened: { sourceRoute: CommercialSourceRoute; operatorSlug: string };
+  commercial_compare_opened: { sourceRoute: CommercialSourceRoute; operatorSlug: string };
+  commercial_outbound_intent: { sourceRoute: CommercialSourceRoute; operatorSlug: string };
+  commercial_all_results_opened: { sourceRoute: CommercialSourceRoute; destinationRoute: "best_casinos" | "bonuses" | "casinos" | "compare" };
 };
+
+export type CommercialSourceRoute = "best_casinos" | "bonuses" | "casinos" | "casino_review" | "compare" | "learn" | "bonus_guide" | "mission_08" | "mission_10";
+export type CommercialPlacement = "shortlist" | "top_offers" | "all_results" | "review";
 
 export type ProductAnalyticsEvent<N extends ProductAnalyticsEventName = ProductAnalyticsEventName> = {
   name: N;
@@ -98,7 +113,10 @@ const engagementDayBuckets = ["day_0", "day_1", "day_2_3", "day_4_7", "day_8_plu
 const missionModes = ["start", "resume", "review"] as const;
 const milestones = ["first", "mid", "full"] as const;
 const discoverySources = ["programme_home", "mission_08", "mission_10"] as const;
-const destinationRoutes = ["casinos", "compare", "bonuses", "best_offers", "bonus_guide"] as const;
+const destinationRoutes = ["best_casinos", "casinos", "compare", "bonuses", "best_offers", "bonus_guide"] as const;
+const commercialSourceRoutes = ["best_casinos", "bonuses", "casinos", "casino_review", "compare", "learn", "bonus_guide", "mission_08", "mission_10"] as const;
+const commercialPlacements = ["shortlist", "top_offers", "all_results", "review"] as const;
+const commercialDestinationRoutes = ["best_casinos", "bonuses", "casinos", "compare"] as const;
 const aiOperations = [
   "programme_ai",
   "M2_GOAL",
@@ -150,6 +168,20 @@ function missionNumber(value: unknown): ProgrammeMissionNumber {
 function actionPosition(value: unknown): 1 | 2 | 3 {
   if (value !== 1 && value !== 2 && value !== 3) {
     throw new Error("Product analytics action position must be 1, 2 or 3");
+  }
+  return value;
+}
+
+function recommendationRank(value: unknown): 1 | 2 | 3 | 4 | 5 {
+  if (value !== 1 && value !== 2 && value !== 3 && value !== 4 && value !== 5) {
+    throw new Error("Commercial recommendation rank must be an integer from 1 to 5");
+  }
+  return value;
+}
+
+function operatorSlug(value: unknown) {
+  if (typeof value !== "string" || value.length > 80 || !/^[a-z0-9][a-z0-9-]*$/.test(value)) {
+    throw new Error("Commercial operator slug is outside its safe public contract");
   }
   return value;
 }
@@ -226,6 +258,20 @@ export function parseProductAnalyticsEvent<N extends ProductAnalyticsEventName>(
     case "programme_voice_outcome":
       exactKeys(value, ["result"]);
       return { name, properties: { result: closedString(value.result, voiceResults) } } as ProductAnalyticsEvent<N>;
+    case "commercial_decision_layer_viewed":
+      exactKeys(value, ["sourceRoute", "placement"]);
+      return { name, properties: { sourceRoute: closedString(value.sourceRoute, commercialSourceRoutes), placement: closedString(value.placement, commercialPlacements) } } as ProductAnalyticsEvent<N>;
+    case "commercial_recommendation_clicked":
+      exactKeys(value, ["sourceRoute", "recommendationRank"]);
+      return { name, properties: { sourceRoute: closedString(value.sourceRoute, commercialSourceRoutes), recommendationRank: recommendationRank(value.recommendationRank) } } as ProductAnalyticsEvent<N>;
+    case "commercial_review_opened":
+    case "commercial_compare_opened":
+    case "commercial_outbound_intent":
+      exactKeys(value, ["sourceRoute", "operatorSlug"]);
+      return { name, properties: { sourceRoute: closedString(value.sourceRoute, commercialSourceRoutes), operatorSlug: operatorSlug(value.operatorSlug) } } as ProductAnalyticsEvent<N>;
+    case "commercial_all_results_opened":
+      exactKeys(value, ["sourceRoute", "destinationRoute"]);
+      return { name, properties: { sourceRoute: closedString(value.sourceRoute, commercialSourceRoutes), destinationRoute: closedString(value.destinationRoute, commercialDestinationRoutes) } } as ProductAnalyticsEvent<N>;
   }
   throw new Error("Unknown product analytics event");
 }

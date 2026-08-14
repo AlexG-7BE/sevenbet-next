@@ -44,15 +44,14 @@ test("FAQ is the server-rendered product and trust surface with native disclosur
   assert.ok(faq.lastIndexOf("Open Protected Help") > faq.lastIndexOf("Does B4GAMBLE earn affiliate commission?"));
 });
 
-test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {
+test("Best Offers compatibility and Bonuses keep one route-owned landmark", () => {
   const best = read("app/(public)/best-offers/page.tsx");
   const bestLoading = read("app/(public)/best-offers/loading.tsx");
   const bestError = read("app/(public)/best-offers/error.tsx");
-  assert.equal((best.match(/<h1\b/g) ?? []).length, 1);
   assert.equal((bestLoading.match(/<h1\b/g) ?? []).length, 1);
   assert.equal((bestError.match(/<h1\b/g) ?? []).length, 1);
-  assert.match(best, /result\.status === "available"/);
-  assert.match(best, /<h2>\{result\.status === "unavailable"/);
+  assert.match(best, /redirect\("\/bonuses#top-offers"\)/);
+  assert.doesNotMatch(best, /<main\b|<h1\b/);
   for (const path of ["app/(public)/bonuses/page.tsx", "app/(public)/bonuses/error.tsx"]) assert.doesNotMatch(read(path), /<main\b/);
 });
 

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommercialAnalyticsLink } from "@/components/commercial-decision/CommercialAnalytics";
 
 import {
   getArticlePath,
@@ -22,7 +23,7 @@ export function LearningArticleView({
   editor: LearningAuthor;
   relatedArticles: LearningArticle[];
 }) {
-  const commercialEligible = article.categorySlug !== "responsible-gambling";
+  const intent = articleIntent(article.categorySlug);
   const updated = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
     .format(new Date(`${article.lastUpdated}T00:00:00Z`));
 
@@ -138,15 +139,15 @@ export function LearningArticleView({
         </ol>
       </section>
 
-      {commercialEligible ? (
+      {intent !== "protected" ? (
         <aside className={styles.commercial} aria-label="Optional comparison transition">
           <div>
             <p className={styles.kicker}>After the educational answer</p>
             <h2>READY TO APPLY THE CHECKLIST?</h2>
           </div>
           <div>
-            <p>Compare current B4GAMBLE records only when the educational context is clear. This is an internal navigation link, not a personalised recommendation.</p>
-            <Link href="/compare">Open comparison <span aria-hidden="true">↗</span></Link>
+            <p>{intent === "bonuses" ? "Move from the explanation to the terms-first Top Offers shortlist." : intent === "casinos" ? "Move from the explanation to three public editorial picks. The ranking is the same for everyone." : "Continue with another neutral learning route; this reference article does not force a commercial transition."}</p>
+            {intent === "bonuses" ? <CommercialAnalyticsLink action={{ event: "all_results", destinationRoute: "bonuses" }} href="/bonuses#top-offers" sourceRoute="learn">See Top Offers <span aria-hidden="true">↗</span></CommercialAnalyticsLink> : intent === "casinos" ? <CommercialAnalyticsLink action={{ event: "all_results", destinationRoute: "best_casinos" }} href="/best-casinos" sourceRoute="learn">See B4GAMBLE Picks <span aria-hidden="true">↗</span></CommercialAnalyticsLink> : <Link href="/learn">Continue learning <span aria-hidden="true">↗</span></Link>}
             <small>Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Rankings remain editorial.</small>
           </div>
         </aside>
@@ -167,4 +168,11 @@ export function LearningArticleView({
       )}
     </article>
   );
+}
+
+function articleIntent(categorySlug: string): "casinos" | "bonuses" | "protected" | "neutral" {
+  if (categorySlug === "responsible-gambling") return "protected";
+  if (categorySlug === "casino-bonuses") return "bonuses";
+  if (["casino-basics", "casino-reviews", "casino-safety", "payments", "licensing", "crypto-casinos"].includes(categorySlug)) return "casinos";
+  return "neutral";
 }

@@ -66,8 +66,10 @@ test("article template is truthful about missing evidence and preserves the prot
   assert.match(articleView, /SOURCE STATUS: UNAVAILABLE/);
   assert.match(articleView, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
   assert.doesNotMatch(articleView, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
-  assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
-  assert.match(articleView, /href="\/compare"/);
+  assert.match(articleView, /categorySlug === "responsible-gambling"/);
+  assert.doesNotMatch(articleView, /href="\/compare"/);
+  assert.match(articleView, /href="\/best-casinos"/);
+  assert.match(articleView, /href="\/bonuses#top-offers"/);
   assert.match(articleView, /href="\/responsible-gambling"/);
   assert.match(articleView, /href="\/help"/);
   assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);

@@ -112,6 +112,24 @@ export function createProductAnalyticsClient({
     discoveryClicked(properties: ProductAnalyticsEventMap["programme_discovery_clicked"]) {
       emit("programme_discovery_clicked", properties);
     },
+    commercialDecisionLayerViewed(properties: ProductAnalyticsEventMap["commercial_decision_layer_viewed"]) {
+      once(`commercial-view:${properties.sourceRoute}:${properties.placement}`, "commercial_decision_layer_viewed", properties);
+    },
+    commercialRecommendationClicked(properties: ProductAnalyticsEventMap["commercial_recommendation_clicked"]) {
+      emit("commercial_recommendation_clicked", properties);
+    },
+    commercialReviewOpened(properties: ProductAnalyticsEventMap["commercial_review_opened"]) {
+      emit("commercial_review_opened", properties);
+    },
+    commercialCompareOpened(properties: ProductAnalyticsEventMap["commercial_compare_opened"]) {
+      emit("commercial_compare_opened", properties);
+    },
+    commercialOutboundIntent(properties: ProductAnalyticsEventMap["commercial_outbound_intent"]) {
+      emit("commercial_outbound_intent", properties);
+    },
+    commercialAllResultsOpened(properties: ProductAnalyticsEventMap["commercial_all_results_opened"]) {
+      emit("commercial_all_results_opened", properties);
+    },
     voiceOutcome(result: ProductAnalyticsEventMap["programme_voice_outcome"]["result"]) {
       emit("programme_voice_outcome", { result });
     },

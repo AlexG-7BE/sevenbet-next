@@ -59,6 +59,7 @@
 .featureActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 20px; }
 .featureActions a, .offerAction, .actionUnavailable { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 14px; border: 1px solid currentColor; font-size: 11px; font-weight: 800; text-align: center; text-transform: uppercase; }
 .featureActions .offerAction { border-color: var(--acid); background: var(--acid); color: var(--ink); }
+.previewActionNote { margin-top: 7px; color: var(--metal); font-size: 9px; text-align: center; }
 .actionUnavailable { color: var(--metal); }
 
 .controlsIntro { display: grid; grid-template-columns: 1fr 1fr; align-items: end; gap: 56px; margin-bottom: 26px; }
@@ -280,7 +281,9 @@
   .mobileResultTerms span { min-width: 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 800; line-height: 16px; }
   .mobileResultEvidence { grid-area: evidence; min-width: 0; margin: 0; align-self: center; overflow-wrap: anywhere; color: var(--metal); font-size: 12px; line-height: 16px; }
   .mobileMaterialResultFeatured .mobileResultEvidence { color: var(--white); }
-  .mobileReviewAction { grid-area: action; min-width: 88px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; align-self: end; padding: 8px 12px; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 12px; font-weight: 800; line-height: 16px; text-transform: uppercase; }
+  .mobileResultActions { grid-area: action; display: flex; flex-direction: column; gap: 6px; align-self: end; }
+  .mobileResultActions .offerActionCompact { margin: 0; border-radius: 22px; background: var(--acid); color: var(--ink); }
+  .mobileReviewAction { min-width: 88px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 6px 12px; border: 1px solid var(--night); border-radius: 22px; color: var(--night) !important; font-size: 12px; font-weight: 800; line-height: 14px; text-transform: uppercase; }
   .mobileMaterialResultFeatured .mobileReviewAction { background: var(--acid); color: var(--ink) !important; }
   .reviewSeparationNote { min-height: 96px; display: block; margin-top: 10px; padding: 16px; border-radius: 10px; background: var(--night); color: var(--white); }
   .reviewSeparationNote strong { color: var(--acid); font-size: 11px; line-height: 14px; text-transform: uppercase; }

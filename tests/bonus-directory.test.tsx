@@ -27,12 +27,12 @@ test("available actions remain governed internal redirects after material terms"
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
 });
 
-test("FE-MIG-07 isolates Bonuses from the shared Best Offers presentation", () => {
+test("Bonuses owns the offer directory and Best Offers is a compatibility redirect", () => {
   const bonuses = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   const bestOffers = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   assert.match(bonuses, /components\/bonus-directory\/BonusDirectory/);
   assert.doesNotMatch(bonuses, /components\/best-offers\/BestOffersExperience/);
-  assert.match(bestOffers, /components\/best-offers\/BestOffersExperience/);
+  assert.match(bestOffers, /redirect\("\/bonuses#top-offers"\)/);
   assert.doesNotMatch(bestOffers, /components\/bonus-directory/);
 });
 

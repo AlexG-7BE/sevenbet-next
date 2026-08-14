@@ -2,9 +2,8 @@ export type ShellRouteKind = "public" | "programme" | "protected-help" | "intern
 
 export const PUBLIC_NAVIGATION = [
   { label: "10 Steps", href: "/10-steps" },
-  { label: "Casinos", href: "/casinos", commercial: true },
+  { label: "Best Casinos", href: "/best-casinos", commercial: true },
   { label: "Bonuses", href: "/bonuses", commercial: true },
-  { label: "Best offers", href: "/best-offers", commercial: true },
   { label: "Learn", href: "/learn" },
   { label: "Help", href: "/help", safety: true },
 ] as const;
@@ -26,7 +25,7 @@ export function classifyShellRoute(pathname: string): ShellRouteKind {
 
 export function isCurrentPublicRoute(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  if (href === "/casinos" && matchesPrefix(pathname, "/casino")) return true;
+  if (href === "/best-casinos" && matchesPrefix(pathname, "/casino")) return true;
   return matchesPrefix(pathname, href);
 }
 

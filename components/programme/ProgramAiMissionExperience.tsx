@@ -271,8 +271,14 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
 
 function CommercialNext({ missionNumber }: { missionNumber: number }) {
   const sourceSurface = missionNumber === 8 ? "mission_08" : "mission_10";
-  const discovery = (destinationRoute: "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide") => {
-    productAnalyticsClient.discoveryClicked({ sourceSurface, destinationRoute });
-  };
-  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>PUT IT TO USE</span><h3>{missionNumber === 8 ? "Research with your checklist" : "Explore when you are ready"}</h3><p>Use B4GAMBLE’s public guides to compare facts and understand offers.</p><nav className={styles.exploreLinks} aria-label="Public guides"><Link href="/casinos" onClick={() => discovery("casinos")}>Compare casinos</Link><Link href="/compare" onClick={() => discovery("compare")}>Comparison guide</Link><Link href="/bonuses" onClick={() => discovery("bonuses")}>Explore bonuses</Link><Link href="/best-offers" onClick={() => discovery("best_offers")}>Best offers</Link>{missionNumber === 8 ? <Link href="/bonus-guide" onClick={() => discovery("bonus_guide")}>Bonus guide</Link> : null}</nav></aside>;
+  const openPicks = () => productAnalyticsClient.discoveryClicked({ sourceSurface, destinationRoute: "best_casinos" });
+  return <aside className={styles.commercialAside}>
+    <span className={styles.eyebrow}>{missionNumber === 8 ? "PUT YOUR CHECKLIST TO USE" : "OPTIONAL PUBLIC NEXT STEP"}</span>
+    <h3>{missionNumber === 8 ? "See the shortlist when you choose to." : "Explore when you choose to."}</h3>
+    <p>{missionNumber === 8 ? "B4GAMBLE’s public ranking is the same for everyone. Your Programme answers, private wording and Mission choices do not influence it." : "Your Programme is complete without a commercial action. Public picks remain separate, optional and non-personalised."}</p>
+    <nav className={styles.exploreLinks} aria-label="Optional public guides">
+      <Link href="/best-casinos" onClick={openPicks}>See B4GAMBLE Picks</Link>
+      {missionNumber === 8 ? <Link href="/bonus-guide">Bonus Guide</Link> : <Link href="/methodology">Methodology</Link>}
+    </nav>
+  </aside>;
 }

@@ -1,6 +1,6 @@
 import styles from "./AboutPage.module.css";
 
-const operatingSteps = ["Learn", "Reflect", "Understand", "Compare", "Decide", "Review"] as const;
+const operatingSteps = ["Learn", "Control", "Choose", "Verify when needed"] as const;
 
 const boundaries = [
   ["No financial advice", "Decisions remain the reader's."],
@@ -48,7 +48,7 @@ export function AboutDocument() {
           <h1 className={styles.heroTitle}>
             {operatingSteps.map((step, index) => (
               <span className={styles.heroWord} key={step}>
-                {step}{index === operatingSteps.length - 1 && <span className={styles.desktopOnly}> again</span>}
+                {step}
                 <span className={styles.desktopOnly}>.</span>
                 {index < operatingSteps.length - 1 && <span className={styles.mobileArrow} aria-hidden="true">↓</span>}
               </span>
@@ -57,14 +57,14 @@ export function AboutDocument() {
 
           <ol className={styles.heroStairs} aria-label="B4GAMBLE operating sequence">
             {operatingSteps.map((step, index) => (
-              <li key={step} className={index === 3 ? styles.activeStep : undefined}>
+              <li key={step} className={index === 2 ? styles.activeStep : undefined}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <strong>{step}</strong>
               </li>
             ))}
           </ol>
 
-          <p className={styles.heroNote}>The operating model is a sequence,<br />not six equal cards.</p>
+          <p className={styles.heroNote}>Recommendation first.<br />Evidence on demand.</p>
           <span className={styles.mobileMarker} aria-hidden="true" />
         </div>
       </header>
@@ -72,7 +72,7 @@ export function AboutDocument() {
       <section className={styles.sequenceOverview} data-about-section="operating-model" aria-labelledby="operating-model-title">
         <div className={styles.contentShell}>
           <p className={styles.eyebrow}>Expressive section · Operating model</p>
-          <h2 id="operating-model-title">Education enters first.<br />Commercial action enters last.</h2>
+          <h2 id="operating-model-title">Control comes before choice.<br />Evidence stays within reach.</h2>
           <ol className={styles.sequenceLine} aria-label="Education-first operating sequence">
             {operatingSteps.map((step, index) => (
               <li key={step} className={index === operatingSteps.length - 1 ? styles.finalDot : undefined}>
@@ -135,16 +135,16 @@ export function AboutDocument() {
             <span className={styles.mobileOnly}>Six step flow</span>
           </p>
           <h2 id="flow-title">
-            <span className={styles.desktopOnly}>Learn → Reflect → Understand → Compare → Decide → Review again</span>
+            <span className={styles.desktopOnly}>Learn → Control → Choose → Verify when needed</span>
             <span className={styles.mobileOnly}>A path,<br />not a funnel.</span>
           </h2>
 
           <div className={styles.flowPanel}>
             <ol className={styles.flowSteps}>
               {operatingSteps.map((step, index) => (
-                <li key={step} className={index === 3 ? styles.activeStep : undefined}>
+                <li key={step} className={index === 2 ? styles.activeStep : undefined}>
                   <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{index === operatingSteps.length - 1 ? "Review again" : step}</strong>
+                  <strong>{step}</strong>
                 </li>
               ))}
             </ol>
@@ -156,8 +156,8 @@ export function AboutDocument() {
               </article>
               <article>
                 <p>Commercial information</p>
-                <h3>Comparison comes after context.</h3>
-                <p>Structured reviews and comparisons remain informational. The path is not a funnel; readers may stop, return to learning or use protected Help.</p>
+                <h3>Recommendations come before research tools.</h3>
+                <p>Three public editorial picks reduce choice. Full reviews and comparison remain evidence on demand; readers may stop, return to learning or use protected Help.</p>
               </article>
             </div>
           </div>

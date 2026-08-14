@@ -29,6 +29,15 @@ export function LearningCenterPage({
   const feature = articles.find((article) => article.slug === "welcome-bonus-terms") ?? articles[0];
   const shelfArticles = articles.filter((article) => article.slug !== feature.slug).slice(0, 5);
   const difficulties = Array.from(new Set(articles.map((article) => article.difficulty))) as LearningDifficulty[];
+  const bySlug = new Map(categories.map((category) => [category.slug, category]));
+  const subjectGroups = [
+    { title: "Choosing a casino", description: "Basics, reviews and practical comparison checks.", slugs: ["casino-basics", "casino-reviews"] },
+    { title: "Understanding offers", description: "Bonus terms before headline value.", slugs: ["casino-bonuses"] },
+    { title: "Payments, licensing & safety", description: "Evidence about money movement, licences and security.", slugs: ["payments", "licensing", "casino-safety", "crypto-casinos"] },
+    { title: "Control & responsible gambling", description: "Limits, control tools and non-commercial support routes.", slugs: ["responsible-gambling"] },
+    { title: "Reference & other learning", description: "Game guides and plain-language definitions.", slugs: ["game-guides", "casino-glossary"] },
+  ].map((group) => ({ ...group, categories: group.slugs.map((slug) => bySlug.get(slug)).filter((category): category is LearningCategory => Boolean(category)) }));
+  const notYet = categories.filter((category) => ["sports-betting-basics", "country-guides", "industry-news"].includes(category.slug));
 
   return (
     <div className={styles.page} data-learning-center data-figma-authority="835:6356">
@@ -78,20 +87,16 @@ export function LearningCenterPage({
 
       <nav className={styles.categories} id="learning-categories" aria-labelledby="category-nav-title">
         <div className={styles.categoriesHeading}>
-          <p className={styles.kicker}>Browse the taxonomy</p>
-          <h2 id="category-nav-title">13 CURRENT CATEGORIES.</h2>
+          <p className={styles.kicker}>Browse by intent</p>
+          <h2 id="category-nav-title">FIVE SUBJECTS. ONE CLEAR START.</h2>
         </div>
-        <ol>
-          {categories.map((category, index) => (
-            <li key={category.slug}>
-              <Link href={getCategoryPath(category.slug)}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{category.title}</strong>
-                <span aria-hidden="true">↗</span>
-              </Link>
-            </li>
-          ))}
-        </ol>
+        <div className={styles.subjectIndex}>
+          <ol>{subjectGroups.map((group, index) => <li key={group.title}>
+            <div><span>{String(index + 1).padStart(2, "0")}</span><strong>{group.title}</strong><p>{group.description}</p></div>
+            <nav aria-label={`${group.title} categories`}>{group.categories.map((category) => <Link href={getCategoryPath(category.slug)} key={category.slug}>{category.title} <span aria-hidden="true">↗</span></Link>)}</nav>
+          </li>)}</ol>
+          <aside className={styles.notYet}><span>NOT YET · CONTENT DEPTH REQUIRED</span><p>These routed categories remain honest placeholders rather than dominant product areas.</p>{notYet.map((category) => <Link href={getCategoryPath(category.slug)} key={category.slug}>{category.title}</Link>)}</aside>
+        </div>
       </nav>
 
       <section className={styles.catalogue} aria-labelledby="catalogue-title">

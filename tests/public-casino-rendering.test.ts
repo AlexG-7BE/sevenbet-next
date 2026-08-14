@@ -148,7 +148,8 @@ test("casino robots directives preserve noindex and treat none as noindex, nofol
 test("public routes use the service boundary and invalidate all publication surfaces", () => {
   assert.match(readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8"), /publicCasinoService/);
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /publicCasinoDiscoveryService/);
-  for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
+  for (const file of ["app/(public)/best-casinos/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
+  assert.match(readFileSync("app/(public)/best-offers/page.tsx", "utf8"), /redirect\("\/bonuses#top-offers"\)/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
   const directory = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   assert.match(directory, /const empty = result\.total === 0/);

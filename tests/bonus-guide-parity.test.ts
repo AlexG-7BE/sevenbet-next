@@ -65,7 +65,8 @@ test("related reading resolves current Learning records and the late transition 
   const relatedIndex = document.indexOf('id="related-reading"');
   const commercialIndex = document.indexOf("commercialTransition");
   assert.ok(evidenceIndex < faqIndex && faqIndex < relatedIndex && relatedIndex < commercialIndex);
-  assert.match(document, /href="\/bonuses">Compare published offers/);
+  assert.match(document, /href="\/bonuses#top-offers">See Top Offers/);
+  assert.match(document, /href="\/bonuses#browse-all-offers">Browse all offers/);
   assert.doesNotMatch(document, /href="\/(?:r|go)\//);
   assert.doesNotMatch(document, /tools\/budget-calculator|https?:\/\/(?!www\.gamblingcommission\.gov\.uk|www\.asa\.org\.uk)/);
 });

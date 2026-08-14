@@ -38,6 +38,17 @@
 .categories a { display: grid; grid-template-columns: 44px minmax(0, 1fr) 22px; gap: 16px; align-items: center; min-height: 68px; padding: 14px 0; }
 .categories a > span:first-child { font-size: .68rem; font-weight: 900; letter-spacing: .12em; }
 .categories a strong { font-size: clamp(1.1rem, 2vw, 1.75rem); letter-spacing: -.025em; }
+.subjectIndex > ol > li { padding: 22px 0; display: grid; grid-template-columns: 1fr .9fr; gap: 28px; }
+.subjectIndex > ol > li > div { display: grid; grid-template-columns: 44px 1fr; gap: 4px 14px; }
+.subjectIndex > ol > li > div > span { grid-row: 1 / 3; font-size: .68rem; font-weight: 900; letter-spacing: .12em; }
+.subjectIndex > ol > li > div > strong { font-size: clamp(1.2rem, 2vw, 1.8rem); }
+.subjectIndex > ol > li p { margin: 0; font-size: .82rem; line-height: 1.45; }
+.subjectIndex nav { display: flex; flex-wrap: wrap; align-content: center; gap: 7px; }
+.subjectIndex nav a { min-height: 38px; padding: 0 10px; display: inline-flex; gap: 8px; border: 1px solid var(--ink); font-size: .72rem; font-weight: 780; }
+.notYet { margin-top: 24px; padding: 20px; border: 1px solid var(--ink); background: rgba(255,255,255,.38); }
+.notYet > span { font-size: .65rem; font-weight: 900; letter-spacing: .1em; }
+.notYet p { margin: 8px 0 14px; font-size: .8rem; line-height: 1.45; }
+.notYet a { min-height: 34px; display: inline-flex; align-items: center; margin-right: 14px; padding: 0; text-decoration: underline; font-size: .75rem; }
 
 .catalogue { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr); gap: clamp(42px, 8vw, 128px); padding: clamp(90px, 12vw, 180px) max(32px, calc((100vw - 1240px) / 2)); }
 .catalogue > header { grid-row: span 2; }
@@ -108,6 +119,8 @@
   .transition p, .transition strong { font-size: clamp(3.35rem, 18vw, 5.8rem); }
   .categories, .catalogue, .paths { padding-left: 20px; padding-right: 20px; }
   .categories a { grid-template-columns: 34px minmax(0, 1fr) 20px; gap: 8px; }
+  .subjectIndex > ol > li { grid-template-columns: 1fr; }
+  .subjectIndex nav a { display: inline-flex; }
   .dominantStory { min-height: 440px; padding: 28px 24px; }
   .dominantStory strong { font-size: 3.25rem; }
   .story { grid-template-columns: 32px minmax(0, 1fr) 20px; gap: 10px; }

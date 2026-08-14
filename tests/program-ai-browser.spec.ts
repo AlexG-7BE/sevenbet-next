@@ -879,13 +879,40 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         }
       }
     }
-    const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
-      headers: { ...programmeAgeHeader, cookie: authCookieHeader },
-      data: {},
-    });
-    const completePayload = await complete.json();
-    expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
-    expect(completePayload.xpAwarded).toBe(25);
+    if (mission.missionNumber === 8 || mission.missionNumber === 10) {
+      await page.setViewportSize({ width: mission.missionNumber === 8 ? 390 : 430, height: 932 });
+      await page.goto("/program");
+      await page.getByRole("button", { name: `Review Mission ${String(mission.missionNumber).padStart(2, "0")}` }).click();
+      const completeResponsePromise = page.waitForResponse((response) =>
+        response.request().method() === "POST"
+        && response.url().endsWith(`/api/program/program-ai/missions/${mission.missionNumber}/complete`),
+      );
+      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      const complete = await completeResponsePromise;
+      const completePayload = await complete.json();
+      expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
+      expect(completePayload.xpAwarded).toBe(25);
+      await expect(page.getByRole("link", { name: "See B4GAMBLE Picks" })).toHaveAttribute("href", "/best-casinos");
+      if (mission.missionNumber === 8) {
+        await expect(page.getByText("PUT YOUR CHECKLIST TO USE")).toBeVisible();
+        await expect(page.getByText(/same for everyone/)).toBeVisible();
+        await expect(page.getByRole("link", { name: "Bonus Guide" })).toHaveAttribute("href", "/bonus-guide");
+      } else {
+        await expect(page.getByRole("heading", { name: "Explore when you choose to." })).toBeVisible();
+        await expect(page.getByText(/complete without a commercial action/)).toBeVisible();
+        await expect(page.getByRole("link", { name: "Methodology" })).toHaveAttribute("href", "/methodology");
+      }
+      await noHorizontalOverflow(page);
+      await page.getByRole("button", { name: "Continue from Programme Home" }).click();
+    } else {
+      const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
+        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+        data: {},
+      });
+      const completePayload = await complete.json();
+      expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
+      expect(completePayload.xpAwarded).toBe(25);
+    }
 
     const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
     if (milestone) {
@@ -907,7 +934,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
-  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
+  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" })).toHaveCount(0);
   await noHorizontalOverflow(page);
 
   for (const width of [375, 390, 768, 1024, 1440]) {

@@ -106,21 +106,21 @@ export function ActiveDiscoveryFilters({ result }: { result: CasinoDiscoveryResu
   return <div aria-label="Active filters" className={styles.activeFilters}>{chips.map((chip) => <Link aria-label={`Remove ${chip.context} filter ${chip.label}`} href={chip.href} key={`${chip.context}-${chip.label}`}><span>{chip.label}</span><b aria-hidden="true">×</b></Link>)}<Link className={styles.clearAll} href="/casinos">Clear all</Link></div>;
 }
 
-export function CasinoDiscoveryCard({ casino, position }: { casino: PublicCasinoCardDto; position: number }) {
-  return <CasinoDiscoveryCardMarkup casino={casino} classNames={cardClassNames} position={position} />;
+export function CasinoDiscoveryCard({ casino, position, previewSimulation = false }: { casino: PublicCasinoCardDto; position: number; previewSimulation?: boolean }) {
+  return <CasinoDiscoveryCardMarkup casino={casino} classNames={cardClassNames} position={position} previewSimulation={previewSimulation} />;
 }
 
 export function DirectoryFeaturedTheatre({ casino }: { casino: PublicCasinoCardDto | undefined }) {
   return <DirectoryFeaturedTheatreMarkup casino={casino} classNames={cardClassNames} />;
 }
 
-export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) {
+export function DiscoveryResults({ result, previewSimulation = false }: { result: CasinoDiscoveryResult; previewSimulation?: boolean }) {
   const firstPosition = (result.page - 1) * result.pageSize + 1;
   const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
   return <div className={styles.results} id="casino-results">
     <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "review record" : "review records"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} previewSimulation={previewSimulation} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div>}
     {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
   </div>;
 }

@@ -42,7 +42,7 @@
 
 .sequenceOverview { min-height: 800px; padding-top: 80px; background: var(--field); }
 .sequenceOverview h2 { max-width: 1050px; margin: 30px 0 0; font-size: clamp(48px, 4.05vw, 58px); font-weight: 900; letter-spacing: -.035em; line-height: 1; }
-.sequenceLine { position: relative; margin: 110px 0 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); list-style: none; }
+.sequenceLine { position: relative; margin: 110px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); list-style: none; }
 .sequenceLine::before { content: ""; position: absolute; z-index: 0; top: 30px; left: 32px; right: 32px; height: 8px; background: var(--black); }
 .sequenceLine li { position: relative; z-index: 1; display: grid; gap: 24px; }
 .sequenceLine li:nth-child(n + 2):not(:last-child) { justify-items: center; }
@@ -83,7 +83,7 @@
 .flowEyebrow { color: var(--acid); }
 .flow h2 { margin: 30px 0 0; font-size: 30px; font-weight: 900; letter-spacing: -.025em; line-height: 1.05; }
 .flowPanel { margin-top: 42px; }
-.flowSteps { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 34px; list-style: none; }
+.flowSteps { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 34px; list-style: none; }
 .flowSteps li { position: relative; min-height: 110px; padding: 18px 14px; display: grid; align-content: start; gap: 26px; background: var(--paper); color: var(--night); text-transform: uppercase; }
 .flowSteps li:not(:last-child)::after { content: "→"; position: absolute; top: 42px; right: -29px; color: var(--acid); font-size: 24px; font-weight: 900; }
 .flowSteps li span { color: var(--teal); font-weight: 900; }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CommercialAnalyticsLink } from "@/components/commercial-decision/CommercialAnalytics";
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import {
   formatProfileDate,
@@ -14,6 +15,7 @@ import {
 } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { previewOutboundHref } from "@/lib/cpo-commercial-preview";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -23,6 +25,11 @@ function Signal({ children, verified = false }: { children: React.ReactNode; ver
 
 function UnavailableAction() {
   return <span aria-disabled="true" className={styles.unavailableAction}>Offer unavailable</span>;
+}
+
+function ProfileOutboundAction({ action, casinoSlug, previewSimulation, compact = false }: { action: { href: string; label: string } | null; casinoSlug: string; previewSimulation: boolean; compact?: boolean }) {
+  if (previewSimulation) return <CommercialAnalyticsLink action={{ event: "outbound", operatorSlug: casinoSlug }} className={compact ? styles.compactAction : undefined} href={previewOutboundHref({ slug: casinoSlug, sourceRoute: "casino_review", placement: "review" })} sourceRoute="casino_review">Visit Casino</CommercialAnalyticsLink>;
+  return action ? <CasinoOutboundAction action={action} className={compact ? styles.compactAction : undefined} /> : <UnavailableAction />;
 }
 
 function EditorialBlockView({ block }: { block: EditorialBlock }) {
@@ -56,7 +63,7 @@ function EditorialEvidence({ document, demonstration }: { document: CasinoEditor
   </section>;
 }
 
-export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; editorial: CasinoEditorialDocument | null }) {
+export function CasinoProfile({ casino, editorial, previewSimulation = false }: { casino: PublicCasinoDTO; editorial: CasinoEditorialDocument | null; previewSimulation?: boolean }) {
   const demo = isTemporaryDemoCasinoId(casino.id);
   const bonus = selectProfileBonus(casino);
   const action = profileAction(casino, bonus);
@@ -108,7 +115,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
               {bonus.wageringText ? <li>{bonus.wageringText}</li> : bonus.wageringMultiplier !== null ? <li>{bonus.wageringMultiplier}× wagering listed</li> : null}
               {bonus.eligibility ? <li>{bonus.eligibility}</li> : null}
             </ul>
-            {action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}
+            <ProfileOutboundAction action={action} casinoSlug={casino.slug} previewSimulation={previewSimulation} />
             <small>18+ · {demo ? "Not claimable · Demonstration only" : "Terms apply"} · Gambling involves financial risk</small>
           </> : <>
             <span>OFFER INFORMATION</span>
@@ -121,7 +128,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       <nav aria-label="Casino review sections" className={styles.decisionBar}>
         <div><a href="#overview">Overview</a><a href="#offer-evidence">Offer &amp; evidence</a><a href="#verdict">Verdict</a><a href="#faq">FAQ</a></div>
-        {action ? <CasinoOutboundAction action={action} className={styles.compactAction} /> : <UnavailableAction />}
+        <ProfileOutboundAction action={action} casinoSlug={casino.slug} compact previewSimulation={previewSimulation} />
       </nav>
 
       <section aria-labelledby="overview-heading" className={styles.section} id="overview">
@@ -164,7 +171,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
                   {bonus.eligibility ? <div><dt>Eligibility</dt><dd>{bonus.eligibility}</dd></div> : null}
                 </dl>
                 {bonus.importantConditions.length ? <div className={styles.conditions}><strong>Material conditions</strong><ul>{bonus.importantConditions.map((condition) => <li key={condition}>{condition}</li>)}</ul></div> : null}
-                {action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}
+                <ProfileOutboundAction action={action} casinoSlug={casino.slug} previewSimulation={previewSimulation} />
               </> : <div className={styles.neutralState}><strong>{demo ? "No fictional offer field." : "No active published offer."}</strong><p>No bonus value or terms have been invented for this profile.</p></div>}
             </div>
             <div className={styles.evidenceColumn}>
@@ -212,7 +219,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         <div className={styles.faqGrid}>
           <div>{faq.map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
           <aside className={styles.finalOffer}>
-            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span><h3>{profileOfferHeadline(bonus)}</h3><p>{bonus.title}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
+            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span><h3>{profileOfferHeadline(bonus)}</h3><p>{bonus.title}</p><ProfileOutboundAction action={action} casinoSlug={casino.slug} previewSimulation={previewSimulation} /></> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p>{previewSimulation ? <ProfileOutboundAction action={null} casinoSlug={casino.slug} previewSimulation /> : <UnavailableAction />}</>}
           </aside>
         </div>
       </section>

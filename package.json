@@ -99,7 +99,9 @@
     "fe-mig-16:browser": "playwright test tests/home-browser.spec.ts",
     "preux-perf:test": "npm run build",
     "ux-perf:test": "node --import tsx --test tests/ux-perf-structural.test.ts tests/public-casino-discovery.test.ts tests/public-comparison.test.ts tests/public-offer-service.test.ts && playwright test --config=playwright.ux-perf.config.ts tests/ux-perf-browser.spec.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "cpo-preview:test": "node --import tsx --test tests/cpo-commercial-preview.test.ts tests/product-analytics.test.ts tests/public-shell.test.ts",
+    "cpo-preview:browser": "playwright test --config=playwright.cpo.config.ts tests/cpo-commercial-preview-browser.spec.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

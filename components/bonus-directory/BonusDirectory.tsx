@@ -1,11 +1,13 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CommercialAnalyticsLink } from "@/components/commercial-decision/CommercialAnalytics";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import type { PublicOfferSearchParams } from "@/lib/public-offer/query";
+import { previewOutboundHref } from "@/lib/cpo-commercial-preview";
 
 function money(value: number | null, currency: string | null) {
   if (value === null) return "Not listed";
@@ -69,13 +71,15 @@ function mobileFeaturedTerms(offer: PublicOfferDTO) {
   ];
 }
 
-function OfferAction({ offer, compact = false }: { offer: PublicOfferDTO; compact?: boolean }) {
+function OfferAction({ offer, compact = false, previewSimulation = false, rank, placement = "all_results" }: { offer: PublicOfferDTO; compact?: boolean; previewSimulation?: boolean; rank?: number; placement?: "top_offers" | "all_results" }) {
+  const recommendationRank = placement === "top_offers" && rank && rank >= 1 && rank <= 5 ? rank as 1 | 2 | 3 | 4 | 5 : undefined;
+  if (previewSimulation) return <CommercialAnalyticsLink action={{ event: "outbound", operatorSlug: offer.casino.slug, recommendationRank }} className={compact ? styles.offerActionCompact : styles.offerAction} href={previewOutboundHref({ slug: offer.casino.slug, sourceRoute: "bonuses", rank, placement })} sourceRoute="bonuses">View Offer</CommercialAnalyticsLink>;
   const href = safeActionHref(offer);
   if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>No governed visit</span>;
   return <CasinoOutboundAction action={{ href, label: "View Offer" }} className={compact ? styles.offerActionCompact : styles.offerAction} />;
 }
 
-export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {
+export function FeaturedBonusCard({ offer, position, primary = false, previewSimulation = false }: { offer: PublicOfferDTO; position: number; primary?: boolean; previewSimulation?: boolean }) {
   return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`}>
     <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? "Demo fixture" : "Published"}</span><span>{offer.commercialAvailability === "AVAILABLE" ? "Action available" : "Review only"}</span></div>
     <p className={styles.offerType}>{bonusType(offer.bonus.type)}</p>
@@ -85,7 +89,8 @@ export function FeaturedBonusCard({ offer, position, primary = false }: { offer:
     <dl className={styles.featureMobileTerms}>{mobileFeaturedTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>
     {offer.bonus.importantConditions.length > 0 && <p className={styles.conditions}>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</p>}
     <DemoFixtureNotice offer={offer} />
-    <div className={styles.featureActions}><Link href={`/casino/${offer.casino.slug}`}>Read Review <span aria-hidden="true">→</span></Link><OfferAction offer={offer} /></div>
+    <div className={styles.featureActions}><OfferAction offer={offer} placement="top_offers" previewSimulation={previewSimulation} rank={position} /><CommercialAnalyticsLink action={{ event: "review", operatorSlug: offer.casino.slug }} href={`/casino/${offer.casino.slug}`} sourceRoute="bonuses">Read Review <span aria-hidden="true">→</span></CommercialAnalyticsLink></div>
+    {previewSimulation ? <small className={styles.previewActionNote}>Preview simulation · no external visit</small> : null}
   </article>;
 }
 
@@ -139,14 +144,14 @@ export function ActiveBonusFilters({ query, raw }: { query: PublicOfferQuery; ra
   return <div className={styles.activeFilters} aria-label="Active filters"><strong>Active Filters</strong>{values.map(([key, label]) => <Link aria-label={`Remove ${label} filter`} href={filterHref(raw, key)} key={key}>{label}<span aria-hidden="true">×</span></Link>)}<Link className={styles.clearFilters} href="/bonuses">Clear All</Link></div>;
 }
 
-export function BonusComparisonList({ offers, startPosition }: { offers: PublicOfferDTO[]; startPosition: number }) {
+export function BonusComparisonList({ offers, startPosition, previewSimulation = false }: { offers: PublicOfferDTO[]; startPosition: number; previewSimulation?: boolean }) {
   return <div className={styles.comparison}>
     <div aria-hidden="true" className={styles.comparisonHeader}><span>Position / offer</span><span>Headline / material terms</span><span>Licence / payments</span><span>Commercial state</span></div>
     {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <div className={`${styles.rowIdentity} ${styles.desktopComparisonCell}`}><span>{String(startPosition + index).padStart(2, "0")}</span><div><p>{bonusType(offer.bonus.type)}</p><h3>{offer.casino.name}</h3><Link href={`/casino/${offer.casino.slug}`}>Read Review →</Link></div></div>
       <div className={`${styles.rowTerms} ${styles.desktopComparisonCell}`}><strong>{offer.bonus.title}</strong><DemoFixtureNotice offer={offer} /><dl>{materialTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>{offer.bonus.importantConditions.length > 0 && <small>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</small>}</div>
       <div className={`${styles.rowContext} ${styles.desktopComparisonCell}`}><span>Licence</span><strong>{offer.casino.licenses[0]?.authority || "Not listed"}</strong><span>Payments</span><p>{offer.casino.payments.slice(0, 3).map((item) => item.name).join(" · ") || "Not listed"}</p><small>Reviewed {date(offer.casino.lastReviewedAt)}</small></div>
-      <div className={`${styles.rowCommercial} ${styles.desktopComparisonCell}`}><span className={offer.commercialAvailability === "AVAILABLE" ? styles.availableBadge : styles.unavailableBadge}>{offer.commercialAvailability === "AVAILABLE" ? "Available" : "Review only"}</span><p>Publication and position do not depend on affiliate availability.</p><OfferAction compact offer={offer} /></div>
+      <div className={`${styles.rowCommercial} ${styles.desktopComparisonCell}`}><span className={offer.commercialAvailability === "AVAILABLE" ? styles.availableBadge : styles.unavailableBadge}>{previewSimulation ? "Preview action" : offer.commercialAvailability === "AVAILABLE" ? "Available" : "Review only"}</span><p>Publication and position do not depend on affiliate availability.</p><OfferAction compact offer={offer} placement="all_results" previewSimulation={previewSimulation} rank={startPosition + index} /></div>
       <div className={`${styles.mobileMaterialResult} ${index === 0 ? styles.mobileMaterialResultFeatured : ""}`}>
         <span className={styles.mobileResultRank}>{String(startPosition + index).padStart(2, "0")}</span>
         <h3>{offer.casino.name}</h3>
@@ -155,7 +160,7 @@ export function BonusComparisonList({ offers, startPosition }: { offers: PublicO
         <DemoFixtureNotice offer={offer} />
         <div className={styles.mobileResultTerms}><span>DEP&nbsp; {money(offer.bonus.minimumDeposit, offer.bonus.currency)}</span><span>WAGER&nbsp; {offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}×`}</span><span>PAYOUT&nbsp; {payoutEvidence(offer)}</span></div>
         <p className={styles.mobileResultEvidence}>{offer.casino.licenses[0]?.authority || "Not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Not listed"}</p>
-        <Link className={styles.mobileReviewAction} href={`/casino/${offer.casino.slug}`}>Review →</Link>
+        <div className={styles.mobileResultActions}><OfferAction compact offer={offer} placement="all_results" previewSimulation={previewSimulation} rank={startPosition + index} /><CommercialAnalyticsLink action={{ event: "review", operatorSlug: offer.casino.slug }} className={styles.mobileReviewAction} href={`/casino/${offer.casino.slug}`} sourceRoute="bonuses">Review</CommercialAnalyticsLink></div>
       </div>
     </article>)}
     <aside className={styles.reviewSeparationNote}><strong>Review-first contract · {offers.length} results</strong><p>Material terms stay visible in the list. Review access remains separate from governed visit availability.</p></aside>

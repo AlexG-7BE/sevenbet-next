@@ -11,9 +11,8 @@ import {
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
     { label: "10 Steps", href: "/10-steps" },
-    { label: "Casinos", href: "/casinos", commercial: true },
+    { label: "Best Casinos", href: "/best-casinos", commercial: true },
     { label: "Bonuses", href: "/bonuses", commercial: true },
-    { label: "Best offers", href: "/best-offers", commercial: true },
     { label: "Learn", href: "/learn" },
     { label: "Help", href: "/help", safety: true },
   ]);

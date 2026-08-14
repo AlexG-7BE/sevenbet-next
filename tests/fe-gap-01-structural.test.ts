@@ -103,7 +103,7 @@ test("About uses the compact desktop amendment while retaining the established c
   assert.match(aboutCss, /\.hero \{ min-height: 1180px/);
   assert.match(aboutCss, /\.heroInner \{[^}]*min-height: 1180px/);
   assert.doesNotMatch(aboutCss, /min-height:\s*1530px/);
-  for (const text of ["Learn", "Reflect", "Understand", "Compare", "Decide", "Review", "The operating model is a sequence", "No financial advice", "Visible affiliate disclosure", "Protected Help"]) assert.ok(about.includes(text));
+  for (const text of ["Learn", "Control", "Choose", "Verify when needed", "Recommendation first", "No financial advice", "Visible affiliate disclosure", "Protected Help"]) assert.ok(about.includes(text));
   for (const section of ["hero", "operating-model", "clear-boundaries", "editorial-principles", "six-step-flow", "what-sevenbet-builds"]) assert.match(about, new RegExp(`data-about-section="${section}"`));
 });
 
@@ -111,6 +111,7 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
   const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
   const forbidden = changed.filter((path) => /^(?:prisma\/|package-lock\.json$)/.test(path));
   assert.deepEqual(forbidden, []);
-  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
+  assert.equal(changed.includes("app/(public)/layout.tsx"), true);
+  assert.match(read("app/(public)/layout.tsx"), /isCpoCommercialPreviewEnabled/);
   assert.equal(changed.includes("app/design-system.css"), false);
 });

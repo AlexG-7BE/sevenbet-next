@@ -20,7 +20,7 @@
 .sectionHead h2 { margin: 0; font-size: clamp(28px, 3.5vw, 44px); line-height: 1; }
 .sectionHead p { margin: 0; color: var(--sb-metal); }
 .path { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; list-style: none; }
-.pathItem { min-height: 154px; padding: 17px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-white); }
+.pathItem { position: relative; min-height: 154px; padding: 17px; display: grid; grid-template-rows: auto 1fr auto; gap: 10px; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-white); }
 .pathItem[data-state="completed"] { background: var(--sb-acid-soft); }
 .pathItem[data-state="current"] { border: 2px solid var(--sb-night); box-shadow: 5px 5px 0 var(--sb-acid); }
 .pathItem[data-state="locked"] { background: var(--sb-field); color: var(--sb-metal); }

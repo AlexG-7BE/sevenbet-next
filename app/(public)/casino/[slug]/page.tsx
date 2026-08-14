@@ -9,6 +9,7 @@ import { casinoProfileMetadata, casinoProfileSchemas } from "@/lib/casino-profil
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
+import { isCpoCommercialPreviewEnabled } from "@/lib/cpo-commercial-preview";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -44,6 +45,6 @@ export default async function CasinoPage({ params }: { params: Promise<{ slug: s
 
   return <>
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile casino={casino} editorial={editorial} />
+    <CasinoProfile casino={casino} editorial={editorial} previewSimulation={isCpoCommercialPreviewEnabled()} />
   </>;
 }

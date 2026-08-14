@@ -4,6 +4,8 @@ import React from "react";
 import type { ReactNode } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CommercialAnalyticsLink } from "@/components/commercial-decision/CommercialAnalytics";
+import { previewOutboundHref } from "@/lib/cpo-commercial-preview";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
@@ -29,7 +31,7 @@ function Signal({ children, classNames }: { children: ReactNode; classNames: Cas
   return <span className={classNames.signal}><i aria-hidden="true" />{children}</span>;
 }
 
-function ReviewCardContents({ casino, position, classNames }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames }) {
+function ReviewCardContents({ casino, position, classNames, previewSimulation = false }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames; previewSimulation?: boolean }) {
   const demo = casino.dataClassification === "DEMO_FIXTURE";
   const canVisit = casino.visitAction.available && casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug);
   const unavailable = visitActionUnavailableCopy(casino.visitAction);
@@ -54,12 +56,12 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     </div>
     <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate B4GAMBLE."}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
-    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>{demo ? "View demonstration" : "Read review"}</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
+    <div className={classNames.cardActions}>{previewSimulation ? <CommercialAnalyticsLink action={{ event: "outbound", operatorSlug: casino.slug }} href={previewOutboundHref({ slug: casino.slug, sourceRoute: "casinos", rank: position, placement: "all_results" })} sourceRoute="casinos">Visit Casino</CommercialAnalyticsLink> : canVisit ? <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} /> : null}<CommercialAnalyticsLink action={{ event: "review", operatorSlug: casino.slug }} href={`/casino/${casino.slug}`} sourceRoute="casinos">{demo ? "View demonstration" : "Read review"}</CommercialAnalyticsLink></div>
   </>;
 }
 
-export function CasinoDiscoveryCardMarkup({ casino, position, classNames }: { casino: PublicCasinoCardDto; position: number; classNames: CasinoCardClassNames }) {
-  return <article className={classNames.casinoCard}><ReviewCardContents casino={casino} classNames={classNames} position={position} /></article>;
+export function CasinoDiscoveryCardMarkup({ casino, position, classNames, previewSimulation = false }: { casino: PublicCasinoCardDto; position: number; classNames: CasinoCardClassNames; previewSimulation?: boolean }) {
+  return <article className={classNames.casinoCard}><ReviewCardContents casino={casino} classNames={classNames} position={position} previewSimulation={previewSimulation} /></article>;
 }
 
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames }) {

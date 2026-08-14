@@ -203,9 +203,9 @@ export function BonusGuideDocument() {
       <aside className={styles.commercialTransition} aria-label="Optional offer comparison">
         <div className={styles.commercialInner}>
           <p className={styles.eyebrow}>After the guide</p>
-          <h2>Ready to compare published offers?</h2>
+          <h2>Ready to see the top offers?</h2>
           <p>Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Published terms and editorial context remain separate from compensation.</p>
-          <Link href="/bonuses">Compare published offers</Link>
+          <div><Link href="/bonuses#top-offers">See Top Offers</Link><Link href="/bonuses#browse-all-offers">Browse all offers</Link></div>
         </div>
       </aside>
     </article>
