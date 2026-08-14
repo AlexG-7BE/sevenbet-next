@@ -3,11 +3,18 @@ import { programmeUnitOfWork } from "@/lib/programme/infrastructure/programme-un
 import { transcriptionPortFromEnvironment } from "@/lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
+import {
+  PROGRAM_AI_MAX_AUDIO_BYTES,
+  PROGRAM_AI_MAX_RECORDING_DURATION_MS,
+} from "@/lib/programme/program-ai/transcription-limits";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
 
-export const PROGRAM_AI_MAX_AUDIO_BYTES = 8 * 1024 * 1024;
-export const PROGRAM_AI_MAX_RECORDING_DURATION_MS = 90_000;
-export const PROGRAM_AI_TRANSCRIPTION_FORM_OVERHEAD_BYTES = 64 * 1024;
+export {
+  PROGRAM_AI_MAX_AUDIO_BYTES,
+  PROGRAM_AI_MAX_RECORDING_DURATION_MS,
+  PROGRAM_AI_MAX_TRANSCRIPTION_REQUEST_BYTES,
+  PROGRAM_AI_TRANSCRIPTION_FORM_OVERHEAD_BYTES,
+} from "@/lib/programme/program-ai/transcription-limits";
 
 const audioFormats = new Map([
   ["audio/webm", "webm"],
