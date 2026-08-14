@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { cache } from "react";
 
 import { ComparisonExperience } from "@/components/comparison/ComparisonExperience";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { parsePublicComparisonQuery, type ComparisonSearchParams } from "@/lib/public-comparison/query";
-import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { publicComparisonService } from "@/lib/services/public-comparison.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -74,7 +74,7 @@ export default async function ComparePage({ searchParams }: { searchParams: Prom
   ];
 
   return <>
-    {schemas.map((schema, index) => <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} key={index} type="application/ld+json" />)}
+    {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <ComparisonExperience result={result} />
   </>;
 }

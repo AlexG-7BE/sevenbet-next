@@ -188,5 +188,5 @@ export function BonusEducation() {
 }
 
 export function BonusRelatedNavigation() {
-  return <section className={styles.relatedSection}><div className={styles.shell}><div><span>Continue without pressure</span><h2>Keep the decision in context.</h2></div><nav aria-label="Related bonus information"><Link href="/bonus-guide"><span>01 · Learn</span><strong>Read the Bonus Guide</strong></Link><Link href="/methodology"><span>02 · Trust</span><strong>Review the Methodology</strong></Link><Link href="/casinos"><span>03 · Reviews</span><strong>Browse Casino Reviews</strong></Link><Link href="/responsible-gambling"><span>04 · Control</span><strong>Open Protected Help</strong></Link></nav></div></section>;
+  return <section className={styles.relatedSection}><div className={styles.shell}><div><span>Continue without pressure</span><h2>Keep the decision in context.</h2></div><nav aria-label="Related bonus information"><Link href="/bonus-guide"><span>01 · Learn</span><strong>Read the Bonus Guide</strong></Link><Link href="/methodology"><span>02 · Trust</span><strong>Review the Methodology</strong></Link><Link href="/casinos"><span>03 · Reviews</span><strong>Browse Casino Reviews</strong></Link><Link href="/help"><span>04 · Control</span><strong>Open Protected Help</strong></Link></nav></div></section>;
 }

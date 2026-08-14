@@ -8,9 +8,9 @@ const read = (path: string) => readFileSync(path, "utf8");
 const slugs = ["budgeting", "time-management", "bonus-terms", "self-exclusion", "deposit-limits", "cooling-off", "reality-checks", "casino-licenses", "payment-safety", "faq"];
 
 test("all ten Protected Help articles use the dedicated server-rendered article contract", () => {
-  const route = read("app/responsible-gambling/[slug]/page.tsx");
+  const route = read("app/help/[slug]/page.tsx");
   const article = read("components/protected-help/ProtectedHelpArticle.tsx");
-  const recovery = read("app/responsible-gambling/not-found.tsx");
+  const recovery = read("app/help/not-found.tsx");
   assert.deepEqual(learningArticles.map((item) => item.slug), slugs);
   for (const slug of slugs) assert.match(article, new RegExp(`(?:"${slug}"|${slug}:)`));
   assert.match(route, /<ProtectedHelpArticle article=\{article\} \/>/);
@@ -28,7 +28,7 @@ test("Cooling-off uses the approved Pause and Support fail-closed content states
   for (const state of ["Content review required", "Terms unavailable", "Content blocked"]) assert.match(article, new RegExp(state, "i"));
   assert.match(article, /Local availability claims and tool instructions remain blocked/);
   assert.match(article, /No verified local duration or cancellation rule is shown/);
-  assert.match(article, /href="\/responsible-gambling">Return to Help home/);
+  assert.match(article, /href="\/help">Return to Help home/);
   assert.doesNotMatch(article, /24-hour|48-hour|7-day|cancel early|available everywhere/i);
 });
 

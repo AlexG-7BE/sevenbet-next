@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
+import { connection } from "next/server";
 import { ProductAnalytics } from "@/components/analytics/ProductAnalytics";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { absoluteUrl, siteUrl } from "@/lib/site";
 import "./design-system.css";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const archivo = Archivo({
   subsets: ["latin"],
@@ -24,14 +28,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  await connection();
   return (
     <html lang="en">
       <body className={archivo.variable}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }) }}
-        />
+        <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
         {children}
         <ProductAnalytics />
       </body>

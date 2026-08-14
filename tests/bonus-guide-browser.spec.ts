@@ -71,7 +71,7 @@ test("the complete article and transition remain usable without JavaScript", asy
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Claims stay attached to their source state." })).toBeVisible();
   await expect(page.getByRole("link", { name: "Compare published offers" })).toHaveAttribute("href", "/bonuses");
-  await expect(page.getByRole("link", { name: "Open Help" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open Help" })).toHaveAttribute("href", "/help");
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await context.close();
 });

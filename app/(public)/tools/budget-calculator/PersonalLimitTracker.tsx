@@ -91,9 +91,9 @@ export function PersonalLimitTracker() {
           {atOrOver ? <><p className={styles.resultLabel}>At / over your limit</p><h2>You have reached or exceeded the limit you set.</h2><p>B4GAMBLE does not recommend increasing it in response to losses or continued play.</p></> : plannedOver ? <><p className={styles.resultLabel}>Planned amount exceeds your limit</p><h2>Your entries are {money.format(calculation.overBy)} above the limit you set.</h2><p>Consider not adding further gambling spend during this period.</p><p>B4GAMBLE does not recommend increasing your limit to make the planned amount fit.</p></> : <><p className={styles.resultLabel}>Your own limit</p><h2>Remaining under the limit you entered: {money.format(calculation.remaining)}.</h2><p>You have used {Math.round(calculation.usedPercentage)}% of your own limit.</p><p>This is your limit, not a B4GAMBLE recommendation about what is safe to gamble.</p></>}
         </div>
         <div className={styles.resultActions}>
-          {atOrOver ? <ActionLink className={styles.primaryAction} href="/responsible-gambling">Protected Help / Pause options</ActionLink> : <ActionButton className={styles.primaryAction} type="button" onClick={plannedOver ? editPlanned : () => setCalculation(null)}>{plannedOver ? "Reduce planned amount" : "Adjust entries"}</ActionButton>}
+          {atOrOver ? <ActionLink className={styles.primaryAction} href="/help">Protected Help / Pause options</ActionLink> : <ActionButton className={styles.primaryAction} type="button" onClick={plannedOver ? editPlanned : () => setCalculation(null)}>{plannedOver ? "Reduce planned amount" : "Adjust entries"}</ActionButton>}
           <button className={styles.secondaryAction} type="button" onClick={reset}>Reset</button>
-          {!atOrOver ? <Link className={styles.helpLink} href="/responsible-gambling">Protected Help</Link> : <button className={styles.helpLink} type="button" onClick={() => setCalculation(null)}>Adjust entries</button>}
+          {!atOrOver ? <Link className={styles.helpLink} href="/help">Protected Help</Link> : <button className={styles.helpLink} type="button" onClick={() => setCalculation(null)}>Adjust entries</button>}
         </div>
       </section>
     );

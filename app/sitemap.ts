@@ -5,7 +5,7 @@ import {
   learningArticles as centerArticles,
   learningCategories as centerCategories,
 } from "@/lib/learning-center";
-import { learningArticles } from "@/lib/responsible-gambling";
+import { learningArticles as helpArticles } from "@/lib/responsible-gambling";
 import { parsePublicComparisonQuery } from "@/lib/public-comparison/query";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
@@ -52,8 +52,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "weekly" as const,
     priority: 0.7,
   }));
-  const responsibleGamblingRoutes = learningArticles.map((article) => ({
-    url: absoluteUrl(`/responsible-gambling/${article.slug}`),
+  const helpGuideRoutes = helpArticles.map((article) => ({
+    url: absoluteUrl(`/help/${article.slug}`),
     changeFrequency: "monthly" as const,
     priority: 0.72,
   }));
@@ -86,7 +86,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
     ...learningCategoryRoutes,
     ...learningArticleRoutes,
-    ...responsibleGamblingRoutes,
+    ...helpGuideRoutes,
     ...casinoRoutes,
   ];
 }

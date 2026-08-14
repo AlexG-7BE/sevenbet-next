@@ -79,7 +79,7 @@ test("category and article routes preserve content, schemas and truthful evidenc
 
 test("responsible-gambling learning article has no commercial transition", async ({ page }) => {
   await page.goto(`${baseUrl}/learn/responsible-gambling/responsible-gambling-tools`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("link", { name: /Open protected Help/ })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: /Open protected Help/ })).toHaveAttribute("href", "/help");
   await expect(page.locator('[data-learning-article] a[href="/compare"], [data-learning-article] a[href^="/casinos"], [data-learning-article] a[href^="/bonuses"]')).toHaveCount(0);
 });
 

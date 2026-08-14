@@ -3,6 +3,7 @@ import { Archivo, Instrument_Serif } from "next/font/google";
 
 import { ActiveControlProgramme } from "@/components/programme/ActiveControlProgramme";
 import { ProgramAiExperience } from "@/components/programme/ProgramAiExperience";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { isGoogleAuthAvailable } from "@/lib/auth/google-config";
 import { isProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
 import { absoluteUrl } from "@/lib/site";
@@ -58,14 +59,7 @@ export default function ProgramPage() {
     <>
       <a className="skipLink" href="#main-content">Skip to main content</a>
       <div className={`${archivo.variable} ${instrumentSerif.variable}`}>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(
-              breadcrumbSchema(),
-            ),
-          }}
-        />
+        <JsonLd data={breadcrumbSchema()} />
         {isProgramAiV1Enabled()
           ? <div id="main-content" tabIndex={-1}><ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} /></div>
           : <main id="main-content"><ActiveControlProgramme googleAvailable={isGoogleAuthAvailable()} /></main>}

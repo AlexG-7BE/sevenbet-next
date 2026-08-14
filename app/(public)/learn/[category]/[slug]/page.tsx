@@ -1,22 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LearningArticleView } from "./LearningArticleView";
+import { JsonLd } from "@/components/seo/JsonLd";
 import {
   getArticlePath,
   getAuthor,
   getLearningArticle,
   getLearningCategory,
   getRelatedArticles,
-  learningArticles,
 } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
 
-export function generateStaticParams() {
-  return learningArticles.map((article) => ({
-    category: article.categorySlug,
-    slug: article.slug,
-  }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -85,6 +80,7 @@ function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle
     description: article.summary,
     articleSection: getLearningCategory(article.categorySlug)?.title || "Learning Center",
     keywords: article.tags.join(", "),
+    datePublished: article.publishedAt,
     dateModified: article.lastUpdated,
     author: {
       "@type": "Organization",
@@ -132,18 +128,9 @@ export default async function LearningArticlePage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema(article)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema(article)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(article)) }}
-      />
+      <JsonLd data={breadcrumbSchema(article)} />
+      <JsonLd data={articleSchema(article)} />
+      <JsonLd data={faqSchema(article)} />
       <LearningArticleView
         article={article}
         category={getLearningCategory(article.categorySlug)!}

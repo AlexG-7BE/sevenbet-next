@@ -28,7 +28,7 @@ const nextActions = [
 
 export function ProtectedHelpHub() {
   return (
-    <article className={styles.hub} data-protected-help-page="responsible-gambling">
+    <article className={styles.hub} data-protected-help-page="help">
       <section className={styles.hero} aria-labelledby="protected-help-title" data-help-section="hero">
         <p className={styles.heroBadge}>Protected Help · No account needed</p>
         <h1 id="protected-help-title">Get support<br />without offers.</h1>

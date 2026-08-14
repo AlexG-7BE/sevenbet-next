@@ -31,6 +31,7 @@ export const coreRoutes = [
   "/self-check",
   "/learn",
   "/responsible-gambling",
+  "/help",
   "/methodology",
   "/affiliate-disclosure",
   "/about",

@@ -233,7 +233,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   return <div className={styles.shell}>
     <ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · ${mission.title.toUpperCase()}`} totalXp={totalXp} userId={userId} />
     <main className={styles.missionMain}>
-      <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← Programme Home</button><Link className={styles.back} href="/responsible-gambling">Protected Help / pause</Link></div>
+      <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← Programme Home</button><Link className={styles.back} href="/help">Protected Help / pause</Link></div>
       <section className={styles.missionIntro}><span className={styles.eyebrow}>MISSION {String(mission.missionNumber).padStart(2, "0")} · {mission.actionsCompleted}/3 ACTIONS</span><h1>{mission.title}</h1><p>{mission.purpose}</p></section>
       <div aria-label="Mission progress" className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={`${action.label}: ${action.completed ? "complete" : "not complete"}`} />)}<span data-complete={false} title="Mission completion bonus" /></div>
       {ui && current ? <div className={styles.workspace}>
@@ -264,7 +264,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
         </section>
         <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} localWording={localWording} missionNumber={mission.missionNumber} />
       </div> : <section className={styles.challenge}><span className={styles.eyebrow}>YOUR RESULT IS READY</span><h2>Review what you built, then finish the Mission.</h2><p>The final step adds the 25 XP completion reward.</p><HumanArtifact artifact={mission.artifact} guidance={guidance} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? "Completing…" : "Complete Mission · +25 XP"}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
-      {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>Your support route is ready</h3><p>Keep it simple enough to use. <Link href="/responsible-gambling">Help</Link> is always available.</p></aside> : null}
+      {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>Your support route is ready</h3><p>Keep it simple enough to use. <Link href="/help">Help</Link> is always available.</p></aside> : null}
     </main>
   </div>;
 }

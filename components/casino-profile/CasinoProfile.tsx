@@ -219,7 +219,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       <nav aria-label="Related comparison navigation" className={styles.relatedLinks}>
         <div><span>KEEP COMPARING</span><h2>Use the same evidence across every review.</h2></div>
-        <div><Link href="/casinos">Browse casino reviews <span aria-hidden="true">→</span></Link><Link href="/bonuses">{demo ? "Explore bonus information" : "Compare published bonus terms"} <span aria-hidden="true">→</span></Link><Link href="/methodology">Read the methodology <span aria-hidden="true">→</span></Link><Link href="/responsible-gambling">Open protected Help <span aria-hidden="true">→</span></Link></div>
+        <div><Link href="/casinos">Browse casino reviews <span aria-hidden="true">→</span></Link><Link href="/bonuses">{demo ? "Explore bonus information" : "Compare published bonus terms"} <span aria-hidden="true">→</span></Link><Link href="/methodology">Read the methodology <span aria-hidden="true">→</span></Link><Link href="/help">Open protected Help <span aria-hidden="true">→</span></Link></div>
       </nav>
     </div>
   </article>;

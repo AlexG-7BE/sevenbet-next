@@ -75,7 +75,7 @@ test("Self-Check uses exactly eight semantic questions and deterministic non-sco
   assert.match(selfPage, /Answers stay in this browser session/);
   assert.match(selfPage, /data-self-check-nojs/);
   assert.match(selfFlow, /href: "\/program"/);
-  assert.match(selfFlow, /href: "\/responsible-gambling"/);
+  assert.match(selfFlow, /href: "\/help"/);
   assert.doesNotMatch(selfFlow, /getProfile|Planning-Oriented Player|Confident but Continue Reviewing|Building Healthy Habits|localStorage|sessionStorage|fetch\(|axios|use server|score|totalScore/);
   assert.doesNotMatch(selfFlow + selfPage, /href=["'{]\/+(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/);
 });
@@ -91,7 +91,7 @@ test("Personal Limit Tracker is a server route with exact user-defined calculati
   assert.match(tracker, /Enter a limit greater than £0/);
   assert.match(trackerPage, /data-limit-tracker-nojs/);
   assert.match(trackerPage, /Values stay in this browser session/);
-  assert.match(tracker, /href="\/responsible-gambling"/);
+  assert.match(tracker, /href="\/help"/);
   assert.doesNotMatch(tracker, /ratio|0\.1|0\.2|0\.3|Recommended|stopLoss|45 min|localStorage|sessionStorage|fetch\(|axios|use server/);
   assert.doesNotMatch(tracker + trackerPage, /href=["'{]\/+(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/);
 });

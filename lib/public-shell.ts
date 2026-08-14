@@ -6,10 +6,10 @@ export const PUBLIC_NAVIGATION = [
   { label: "Bonuses", href: "/bonuses", commercial: true },
   { label: "Best offers", href: "/best-offers", commercial: true },
   { label: "Learn", href: "/learn" },
-  { label: "Help", href: "/responsible-gambling", safety: true },
+  { label: "Help", href: "/help", safety: true },
 ] as const;
 
-const protectedHelpPrefixes = ["/responsible-gambling", "/responsible-gaming"];
+const protectedHelpPrefixes = ["/help"];
 const internalPrefixes = ["/admin", "/editorial-preview"];
 
 function matchesPrefix(pathname: string, prefix: string) {

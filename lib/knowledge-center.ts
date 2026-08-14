@@ -46,17 +46,17 @@ export const knowledgeCategories: KnowledgeCategory[] = [
   {
     title: "Payments",
     description: "Questions about deposits, withdrawals, payment methods, fees, and verification.",
-    href: "/responsible-gambling/payment-safety",
+    href: "/help/payment-safety",
   },
   {
     title: "Licensing",
     description: "What casino licenses can indicate and what users should still verify.",
-    href: "/responsible-gambling/casino-licenses",
+    href: "/help/casino-licenses",
   },
   {
     title: "Casino Safety",
     description: "Trust signals, account checks, operator transparency, and responsible gambling tools.",
-    href: "/responsible-gambling/casino-licenses",
+    href: "/help/casino-licenses",
   },
   {
     title: "General Questions",
@@ -87,7 +87,7 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "A wagering requirement describes how much qualifying play may be required before bonus-related withdrawals are allowed under operator terms.",
     category: "Casino Bonuses",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
     popular: true,
   },
   {
@@ -168,28 +168,28 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "Wagering refers to the amount of qualifying play that may be required before bonus-related withdrawals are allowed.",
     category: "Casino Bonuses",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
   },
   {
     question: "Can bonuses expire?",
     answer:
       "Yes. Many bonuses include expiry windows. A short expiry window can create pressure, so it should be reviewed before accepting any offer.",
     category: "Casino Bonuses",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
   },
   {
     question: "What is a no-deposit bonus?",
     answer:
       "A no-deposit bonus is an offer that may not require an initial deposit, but it can still include eligibility rules, wagering, expiry, and withdrawal restrictions.",
     category: "Casino Bonuses",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
   },
   {
     question: "How do free spins work?",
     answer:
       "Free spins are promotional spins on selected games. They may include wagering, expiry, game restrictions, and maximum conversion limits.",
     category: "Casino Bonuses",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
   },
   {
     question: "How are casinos scored?",
@@ -210,35 +210,35 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "Payment methods are reviewed from available operator information, including deposit options, withdrawal methods, processing times, currencies, fees, and verification rules where listed.",
     category: "Casino Reviews",
-    href: "/responsible-gambling/payment-safety",
+    href: "/help/payment-safety",
   },
   {
     question: "What is a deposit limit?",
     answer:
       "A deposit limit sets a maximum amount that can be deposited during a chosen period. Availability and rules differ by operator and jurisdiction.",
     category: "Responsible Gambling",
-    href: "/responsible-gambling/deposit-limits",
+    href: "/help/deposit-limits",
   },
   {
     question: "What is self-exclusion?",
     answer:
       "Self-exclusion is a longer restriction on gambling access, usually managed through an operator or regulator tool.",
     category: "Responsible Gambling",
-    href: "/responsible-gambling/self-exclusion",
+    href: "/help/self-exclusion",
   },
   {
     question: "What is a cooling-off period?",
     answer:
       "A cooling-off period is a temporary pause from gambling access. It may be useful when decisions feel rushed, emotional, or connected to losses.",
     category: "Responsible Gambling",
-    href: "/responsible-gambling/cooling-off",
+    href: "/help/cooling-off",
   },
   {
     question: "What is a reality check?",
     answer:
       "A reality check is a reminder that can show elapsed time or session information and encourage users to pause before continuing.",
     category: "Responsible Gambling",
-    href: "/responsible-gambling/reality-checks",
+    href: "/help/reality-checks",
   },
   {
     question: "What is an affiliate link?",

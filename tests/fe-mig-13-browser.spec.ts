@@ -51,7 +51,7 @@ test("About renders the corrected 835:5298 visual family and content order", asy
   await expect(page.getByText("Structured reviews and comparisons remain informational. The path is not a funnel; readers may stop, return to learning or use protected Help.", { exact: true })).toBeVisible();
   await expect(page.locator('[data-about-document] a[href^="/r/"], [data-about-document] a[href^="/go/"]')).toHaveCount(0);
   await expect(page.locator('[data-about-document] a')).toHaveCount(0);
-  await expect(page.locator("body > footer[data-public-shell]").getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.locator("body > footer[data-public-shell]").getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/help");
   expect(errors).toEqual([]);
 });
 
@@ -67,7 +67,7 @@ for (const route of [
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     await expect(page.locator(route.document)).toBeVisible();
     if (route.path === "/about") {
-      await expect(page.locator("body > footer[data-public-shell]").getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/responsible-gambling");
+      await expect(page.locator("body > footer[data-public-shell]").getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/help");
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await context.close();

@@ -8,6 +8,12 @@
 .lead { max-width: 680px; margin: 38px 0 0 auto; font-size: clamp(1.05rem, 2vw, 1.45rem); line-height: 1.55; }
 .categoryMeta { display: flex; flex-wrap: wrap; gap: 8px; margin: 42px 0 0 auto; max-width: 680px; }
 .categoryMeta span { border: 1px solid var(--ink); padding: 10px 12px; font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.hubBridge { max-width: 680px; margin: 28px 0 0 auto; padding-top: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-top: 1px solid var(--ink); }
+.hubBridge > div { display: grid; gap: 8px; }
+.hubBridge strong { font-size: 1rem; }
+.hubBridge span { line-height: 1.5; }
+.hubBridge a { flex: 0 0 auto; min-height: 44px; padding: 10px 14px; display: inline-flex; align-items: center; gap: 12px; background: var(--ink); color: white; font-size: .74rem; font-weight: 900; text-decoration: none; text-transform: uppercase; }
+@media (hover: hover) { .hubBridge a:hover { background: var(--sb-teal); } }
 
 .library, .faq, .related { padding: clamp(86px, 11vw, 160px) max(32px, calc((100vw - 1240px) / 2)); }
 .library { display: grid; grid-template-columns: minmax(250px, .7fr) minmax(0, 1.3fr); gap: clamp(42px, 8vw, 126px); }
@@ -44,7 +50,8 @@
   .hero { padding: 28px 20px 92px; }
   .breadcrumbs { margin-bottom: 72px; }
   .hero h1 { font-size: clamp(4.2rem, 21vw, 6.2rem); }
-  .lead, .categoryMeta { margin-left: 0; }
+  .lead, .categoryMeta, .hubBridge { margin-left: 0; }
+  .hubBridge { align-items: flex-start; flex-direction: column; }
   .library, .faq, .related { padding: 78px 20px; }
   .library, .faq { grid-template-columns: 1fr; }
   .library header, .faq header { margin-bottom: 34px; }

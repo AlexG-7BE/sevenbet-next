@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Instrument_Serif } from "next/font/google";
 
 import { TenStepsLanding } from "./TenStepsLanding";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getServerSession } from "@/lib/auth/session";
 import { programmeDashboardService } from "@/lib/programme/application/programme-dashboard.service";
 import { absoluteUrl } from "@/lib/site";
@@ -64,10 +65,7 @@ export default async function TenStepsPage() {
 
   return (
     <div className={instrumentSerif.variable}>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData()) }}
-      />
+      <JsonLd data={structuredData()} />
       <TenStepsLanding state={state} />
     </div>
   );

@@ -67,6 +67,7 @@
 .commercial a, .protectedBridge a { display: inline-flex; min-height: 50px; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 18px; background: var(--acid); color: var(--ink); font-weight: 900; }
 .commercial small { display: block; margin-top: 20px; color: #aaa9a4; line-height: 1.5; }
 .protectedBridge { background: var(--teal); }
+.protectedActions { display: flex; flex-wrap: wrap; gap: 12px; }
 
 @media (max-width: 800px) {
   .heroGrid { grid-template-columns: 1fr; }

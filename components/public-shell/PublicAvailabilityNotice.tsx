@@ -14,7 +14,7 @@ export function PublicAvailabilityNotice({ state = "unknown" }: { state?: "unkno
       </div>
       <div className={styles.availabilityActions}>
         <Link className={styles.primaryAction} href={unavailable ? "/10-steps" : "/learn"}>{unavailable ? "Open 10 Steps" : "Continue without offers"}</Link>
-        <Link className={styles.availabilityHelp} href="/responsible-gambling">Protected Help</Link>
+        <Link className={styles.availabilityHelp} href="/help">Protected Help</Link>
       </div>
     </aside>
   );

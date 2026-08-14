@@ -28,7 +28,7 @@ test("Programme, protected Help, legal and unavailable states expose the current
   await expect(page.getByRole("link", { name: "B4GAMBLE" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/SevenBet|SEVENBET/);
 
-  await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   await expect(page.getByRole("link", { name: "B4GAMBLE Help home" })).toBeVisible();
   await expect(page.locator("body")).not.toContainText(/SevenBet|SEVENBET/);
 
@@ -75,6 +75,7 @@ test("representative current public HTML contains no legacy active consumer bran
     "/program",
     "/self-check",
     "/responsible-gambling",
+    "/help",
     "/tools/budget-calculator",
     "/methodology",
     "/affiliate-disclosure",

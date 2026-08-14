@@ -18,7 +18,7 @@ export function CasinoProfileUnavailable({
       <p>{description}</p>
       <div className={styles.unavailableMarker}><strong>NO PUBLIC PROFILE</strong><span>Nothing from a draft, archived record or legacy fallback is rendered here.</span></div>
       <div className={styles.unavailableLinks}><Link className={styles.primaryAction} href="/casinos">Browse published reviews</Link><Link className={styles.secondaryAction} href="/methodology">View methodology</Link></div>
-      <Link className={styles.helpLink} href="/responsible-gambling">Open protected Help</Link>
+      <Link className={styles.helpLink} href="/help">Open protected Help</Link>
     </div>
   </article>;
 }

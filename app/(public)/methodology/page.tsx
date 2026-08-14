@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { JsonLd } from "@/components/seo/JsonLd";
 import {
   MethodologyDocument,
   methodologyFaqItems,
@@ -51,14 +52,8 @@ function faqSchema() {
 export default function MethodologyPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema()) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema()) }}
-      />
+      <JsonLd data={breadcrumbSchema()} />
+      <JsonLd data={faqSchema()} />
       <MethodologyDocument />
     </>
   );

@@ -13,7 +13,7 @@ async function browserErrors(page: import("@playwright/test").Page) {
 
 test("Protected Help renders one isolated, non-commercial shell", async ({ page }) => {
   const errors = await browserErrors(page);
-  const response = await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
 
   expect(response?.status()).toBe(200);
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
@@ -28,7 +28,7 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
 });
 
 test("keyboard focus is visible and external-resource meaning is explicit", async ({ page }) => {
-  await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
   const firstLink = page.getByRole("link", { name: "B4GAMBLE Help home" });
   await firstLink.focus();
   const focusStyle = await firstLink.evaluate((element) => getComputedStyle(element).outlineStyle);
@@ -62,7 +62,7 @@ for (const viewport of [
   test(`Protected Help fits ${viewport.width}px without losing content`, async ({ browser }) => {
     const page = await browser.newPage({ viewport });
     const errors = await browserErrors(page);
-    await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "domcontentloaded" });
+    await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await expect(page.getByRole("link", { name: /Find external support/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
@@ -75,7 +75,7 @@ for (const viewport of [
 test("reduced motion and no-JS preserve the full Help route", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
-  const response = await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();

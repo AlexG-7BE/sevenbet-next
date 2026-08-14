@@ -329,7 +329,7 @@ test("distributed session creation limiting returns a safe 429 while Help stays 
     retryAfterSeconds: Number(limited.headers()["retry-after"]),
   });
 
-  await page.goto("/responsible-gambling");
+  await page.goto("/help");
   await expect(page.getByRole("heading", { name: /Get support without offers/i })).toBeVisible();
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
@@ -1072,7 +1072,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
 
   await expect(page.getByRole("heading", { name: "Pause the Programme. Keep support close." })).toBeVisible();
   await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open protected Help" })).toHaveAttribute("href", "/responsible-gambling");
+  await expect(page.getByRole("link", { name: "Open protected Help" })).toHaveAttribute("href", "/help");
   await expect(page.getByRole("button", { name: /register|account|keep this progress/i })).toHaveCount(0);
   await expect(page.getByText("Registration and celebration are paused on this screen.")).toBeVisible();
   await noHorizontalOverflow(page);

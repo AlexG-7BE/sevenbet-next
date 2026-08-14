@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ActiveDiscoveryFilters, DirectoryFeaturedTheatre, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
@@ -38,7 +38,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   ];
 
   return <div className={styles.page}>
-    {schemas.map((schema, index) => <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} key={index} type="application/ld+json" />)}
+    {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <section className={styles.hero}>
       <div className={styles.shell}>
         <div className={styles.heroIntro}>

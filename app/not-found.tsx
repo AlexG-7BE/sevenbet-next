@@ -17,7 +17,7 @@ export default function NotFound() {
             <p className={styles.copy}>The link may be outdated, moved or no longer published.</p>
             <div className={styles.actions}>
               <ActionLink href="/">Go home</ActionLink>
-              <ActionLink href="/responsible-gambling" variant="ghost-paper">Open Help</ActionLink>
+              <ActionLink href="/help" variant="ghost-paper">Open Help</ActionLink>
             </div>
           </div>
         </section>

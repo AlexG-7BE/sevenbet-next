@@ -5,6 +5,12 @@ import {
   isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
 import { resolveRuntimeCanonicalHost } from "@/lib/auth/runtime-canonical-host";
+import {
+  buildContentSecurityPolicy,
+  CONTENT_SECURITY_POLICY_HEADER,
+  createCspNonce,
+  CSP_NONCE_REQUEST_HEADER,
+} from "@/lib/security/content-security-policy";
 
 const adminCookieName = "sevenbet_admin_preview";
 
@@ -35,12 +41,25 @@ function privateAdminResponse(response: NextResponse) {
 }
 
 export function middleware(request: NextRequest) {
+  const nonce = createCspNonce();
+  const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
+    development: process.env.NODE_ENV === "development",
+  });
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set(CSP_NONCE_REQUEST_HEADER, nonce);
+  requestHeaders.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+  const nextResponse = () => NextResponse.next({ request: { headers: requestHeaders } });
+  const secureResponse = (response: NextResponse) => {
+    response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
+    return response;
+  };
+
   const canonicalHost = resolveRuntimeCanonicalHost(request.url);
   if (canonicalHost.kind === "redirect") {
-    return NextResponse.redirect(canonicalHost.location, canonicalHost.status);
+    return secureResponse(NextResponse.redirect(canonicalHost.location, canonicalHost.status));
   }
   if (canonicalHost.kind === "reject") {
-    return NextResponse.json(
+    return secureResponse(NextResponse.json(
       {
         ok: false,
         code: canonicalHost.reason === "metadata"
@@ -51,25 +70,25 @@ export function middleware(request: NextRequest) {
         status: canonicalHost.reason === "metadata" ? 503 : 421,
         headers: { "Cache-Control": "no-store" },
       },
-    );
+    ));
   }
 
   const { pathname, searchParams } = request.nextUrl;
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";
   if (programmeMutation && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over") {
-    return NextResponse.json(
+    return secureResponse(NextResponse.json(
       { ok: false, error: "Confirm that you are 18 or over before saving Programme progress", code: "AGE_ATTESTATION_REQUIRED" },
       { status: 403, headers: { "Cache-Control": "no-store" } },
-    );
+    ));
   }
   const isAdminPath = pathname.startsWith("/admin");
   const isAdminApi = pathname.startsWith("/api/admin");
 
-  if (!isAdminPath && !isAdminApi) return NextResponse.next();
+  if (!isAdminPath && !isAdminApi) return secureResponse(nextResponse());
 
   // API authorization is always resolved by the server route, never by cookie presence.
-  if (isAdminApi) return privateAdminResponse(NextResponse.next());
-  if (pathname === "/admin/login") return privateAdminResponse(NextResponse.next());
+  if (isAdminApi) return privateAdminResponse(secureResponse(nextResponse()));
+  if (pathname === "/admin/login") return privateAdminResponse(secureResponse(nextResponse()));
 
   const configuredToken = getAdminPreviewToken();
   const legacyEnabled = isLegacyPreviewEnabled();
@@ -94,7 +113,7 @@ export function middleware(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       path: "/",
     });
-    return privateAdminResponse(response);
+    return privateAdminResponse(secureResponse(response));
   }
 
   if (
@@ -104,20 +123,20 @@ export function middleware(request: NextRequest) {
       providedTokens: [cookieToken, headerToken],
     })
   ) {
-    return privateAdminResponse(NextResponse.next());
+    return privateAdminResponse(secureResponse(nextResponse()));
   }
 
   // This is only a lightweight UX redirect. The protected layout verifies the session.
-  if (hasPossibleBetterAuthSession(request)) return privateAdminResponse(NextResponse.next());
+  if (hasPossibleBetterAuthSession(request)) return privateAdminResponse(secureResponse(nextResponse()));
 
   const callbackUrl = request.nextUrl.clone();
   callbackUrl.searchParams.delete("token");
-  return privateAdminResponse(NextResponse.redirect(
+  return privateAdminResponse(secureResponse(NextResponse.redirect(
     new URL(
       getAdminLoginUrl(`${callbackUrl.pathname}${callbackUrl.search}`),
       request.url,
     ),
-  ));
+  )));
 }
 
 export const config = {

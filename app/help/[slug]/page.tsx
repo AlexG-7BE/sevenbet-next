@@ -1,28 +1,32 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
 import { ProtectedHelpArticle } from "@/components/protected-help/ProtectedHelpArticle";
+import { JsonLd } from "@/components/seo/JsonLd";
 import {
   getLearningArticle,
-  learningArticles,
 } from "@/lib/responsible-gambling";
 import { absoluteUrl } from "@/lib/site";
 
-export function generateStaticParams() {
-  return learningArticles.map((article) => ({ slug: article.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const article = getLearningArticle(slug);
 
   if (!article) {
-    return { title: "Responsible Gambling Guide | B4GAMBLE" };
+    return { title: "Gambling Help Guide | B4GAMBLE", robots: { index: false, follow: true } };
   }
 
+  const title = `${article.title} | B4GAMBLE Help`;
+  const url = absoluteUrl(`/help/${article.slug}`);
   return {
-    title: `${article.title} | B4GAMBLE`,
+    title,
     description: article.summary,
-    alternates: { canonical: absoluteUrl(`/responsible-gambling/${article.slug}`) },
+    alternates: { canonical: url },
+    robots: { index: true, follow: true },
+    openGraph: { type: "article", title, description: article.summary, url },
+    twitter: { card: "summary", title, description: article.summary },
   };
 }
 
@@ -40,14 +44,14 @@ function breadcrumbSchema(article: NonNullable<ReturnType<typeof getLearningArti
       {
         "@type": "ListItem",
         position: 2,
-        name: "Responsible Gambling",
-        item: absoluteUrl("/responsible-gambling"),
+        name: "Help",
+        item: absoluteUrl("/help"),
       },
       {
         "@type": "ListItem",
         position: 3,
         name: article.title,
-        item: absoluteUrl(`/responsible-gambling/${article.slug}`),
+        item: absoluteUrl(`/help/${article.slug}`),
       },
     ],
   };
@@ -70,11 +74,11 @@ function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle
       "@type": "Organization",
       name: "B4GAMBLE",
     },
-    mainEntityOfPage: absoluteUrl(`/responsible-gambling/${article.slug}`),
+    mainEntityOfPage: absoluteUrl(`/help/${article.slug}`),
   };
 }
 
-export default async function ResponsibleGamblingArticlePage({
+export default async function ProtectedHelpArticlePage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -86,14 +90,8 @@ export default async function ResponsibleGamblingArticlePage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema(article)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema(article)) }}
-      />
+      <JsonLd data={breadcrumbSchema(article)} />
+      <JsonLd data={articleSchema(article)} />
       <ProtectedHelpArticle article={article} />
     </>
   );

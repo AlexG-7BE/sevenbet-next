@@ -7,13 +7,13 @@ export function ProtectedHelpHeader() {
     <div className={styles.headerWrap}>
       <header className={styles.header} data-protected-help="header">
         <div className={styles.identity}>
-          <Link className={styles.brand} href="/responsible-gambling" aria-label="B4GAMBLE Help home" translate="no">
+          <Link className={styles.brand} href="/help" aria-label="B4GAMBLE Help home" translate="no">
             B4GAMBLE
           </Link>
           <span className={styles.protectedBadge}>Protected Help</span>
         </div>
         <nav className={styles.helpNavigation} aria-label="Protected Help navigation">
-          <Link className={styles.desktopHelpLink} href="/responsible-gambling" aria-current="page">
+          <Link className={styles.desktopHelpLink} href="/help" aria-current="page">
             Help home
           </Link>
           <Link className={styles.desktopHelpLink} href="/program">My Programme</Link>
@@ -41,7 +41,7 @@ export function ProtectedHelpFooter() {
         <div className={styles.footerUtility}>
           <p className={styles.separationBadge}>No casino · No bonus · No affiliate</p>
           <nav className={styles.footerLinks} aria-label="Protected Help footer">
-            <Link href="/responsible-gambling">Help home</Link>
+            <Link href="/help">Help home</Link>
             <Link href="/privacy">Privacy</Link>
             <Link href="/terms">Terms</Link>
             <Link href="/about">About</Link>

@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LearningCategoryView } from "./LearningCategoryView";
-import { getArticlesByCategory, getLearningCategory, getRelatedCategories, learningCategories } from "@/lib/learning-center";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { getArticlesByCategory, getLearningCategory, getRelatedCategories } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
 
-export function generateStaticParams() {
-  return learningCategories.map((category) => ({ category: category.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
@@ -20,12 +19,20 @@ export async function generateMetadata({
     return { title: "Learning Category | B4GAMBLE" };
   }
 
+  const title = category.slug === "responsible-gambling"
+    ? "Responsible Gambling Education | B4GAMBLE Learning Center"
+    : `${category.title} | B4GAMBLE Learning Center`;
+  const description = category.description;
+  const url = absoluteUrl(`/learn/${category.slug}`);
   return {
-    title: `${category.title} | B4GAMBLE Learning Center`,
-    description: category.description,
+    title,
+    description,
     alternates: {
-      canonical: absoluteUrl(`/learn/${category.slug}`),
+      canonical: url,
     },
+    robots: { index: true, follow: true },
+    openGraph: { type: "website", title, description, url },
+    twitter: { card: "summary", title, description },
   };
 }
 
@@ -71,6 +78,17 @@ function faqSchema(category: NonNullable<ReturnType<typeof getLearningCategory>>
   };
 }
 
+function webPageSchema(category: NonNullable<ReturnType<typeof getLearningCategory>>) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: category.slug === "responsible-gambling" ? "Responsible Gambling Education" : category.title,
+    description: category.description,
+    url: absoluteUrl(`/learn/${category.slug}`),
+    isPartOf: { "@type": "WebSite", name: "B4GAMBLE Learning Center", url: absoluteUrl("/learn") },
+  };
+}
+
 export default async function LearningCategoryPage({
   params,
 }: {
@@ -83,14 +101,9 @@ export default async function LearningCategoryPage({
 
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema(category)) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema(category)) }}
-      />
+      <JsonLd data={breadcrumbSchema(category)} />
+      <JsonLd data={faqSchema(category)} />
+      <JsonLd data={webPageSchema(category)} />
       <LearningCategoryView
         category={category}
         articles={getArticlesByCategory(category.slug)}

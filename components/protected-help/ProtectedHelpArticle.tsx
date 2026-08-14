@@ -92,7 +92,7 @@ function SourceCard({ article }: { article: LearningArticle }) {
             <div><dt>Content blocked</dt><dd>Unsupported activation instructions remain hidden.</dd></div>
           </dl>
         </div>
-        <Link href="/responsible-gambling">Return to Help home</Link>
+        <Link href="/help">Return to Help home</Link>
       </aside>
     );
   }
@@ -119,7 +119,7 @@ export function ProtectedHelpArticle({ article }: { article: LearningArticle }) 
     >
       <header className={styles.articleHero}>
         <nav aria-label="Breadcrumb" className={styles.articleBreadcrumb}>
-          <Link href="/responsible-gambling">Help home</Link><span aria-hidden="true">/</span><span>{article.title}</span>
+          <Link href="/help">Help home</Link><span aria-hidden="true">/</span><span>{article.title}</span>
         </nav>
         <p className={styles.articleBadge}>Protected control article</p>
         <h1>{presentation.title}</h1>
@@ -160,7 +160,7 @@ export function ProtectedHelpArticleUnavailable() {
       <h1>This Help article is not available.</h1>
       <p>The link may be outdated or the article may be under review. No commercial alternative is shown in this protected area.</p>
       <div>
-        <Link className={styles.primaryAction} href="/responsible-gambling">Return to Help home</Link>
+        <Link className={styles.primaryAction} href="/help">Return to Help home</Link>
       </div>
     </section>
   );

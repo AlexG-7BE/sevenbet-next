@@ -6,6 +6,7 @@ const groups = [
   { title: "Discover", links: [["Casinos", "/casinos"], ["Bonuses", "/bonuses"], ["Best offers", "/best-offers"], ["Compare", "/compare"]] },
   { title: "Programme", links: [["10 Steps", "/10-steps"], ["My Programme", "/program"], ["Learn", "/learn"]] },
   { title: "Trust", links: [["Methodology", "/methodology"], ["Affiliate disclosure", "/affiliate-disclosure"], ["FAQ", "/faq"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
+  { title: "Control & Support", links: [["Responsible gambling", "/responsible-gambling"], ["Self-Check", "/self-check"], ["Personal Limit Tracker", "/tools/budget-calculator"], ["Help", "/help"]] },
 ] as const;
 
 export function PublicFooter() {
@@ -27,7 +28,7 @@ export function PublicFooter() {
         <aside className={styles.footerHelp} aria-label="Control and support">
           <span>CONTROL &amp; SUPPORT</span>
           <p>Help opens without casino, bonus or affiliate prompts.</p>
-          <Link href="/responsible-gambling">Open Help</Link>
+          <Link href="/help">Open Help</Link>
         </aside>
         <div className={styles.footerDisclosure}>
           <strong>18+ · COMMERCIAL DISCLOSURE</strong>
@@ -35,7 +36,7 @@ export function PublicFooter() {
         </div>
         <div className={styles.footerBaseline}>
           <span>© B4GAMBLE · Information and comparison service</span>
-          <div><Link href="/responsible-gambling">Responsible gambling</Link><Link href="/about">About</Link><Link href="/contact">Contact</Link></div>
+          <div><Link href="/about">About</Link><Link href="/contact">Contact</Link></div>
         </div>
       </div>
     </footer>

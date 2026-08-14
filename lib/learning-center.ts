@@ -1,4 +1,5 @@
 export type LearningDifficulty = "Beginner" | "Intermediate" | "Advanced";
+export type LearningPublicationStatus = "DRAFT" | "PUBLISHED";
 
 export type LearningCategory = {
   slug: string;
@@ -20,6 +21,8 @@ export type LearningAuthor = {
 export type LearningArticle = {
   slug: string;
   categorySlug: string;
+  status: LearningPublicationStatus;
+  publishedAt: string;
   title: string;
   summary: string;
   difficulty: LearningDifficulty;
@@ -274,6 +277,8 @@ function articleTemplate({
   return {
     slug,
     categorySlug,
+    status: "PUBLISHED",
+    publishedAt: "2026-07-12",
     title,
     summary,
     difficulty,
@@ -319,7 +324,7 @@ function articleTemplate({
   };
 }
 
-export const learningArticles: LearningArticle[] = [
+const learningArticleManifest: LearningArticle[] = [
   articleTemplate({
     slug: "online-casino-basics",
     categorySlug: "casino-basics",
@@ -430,6 +435,38 @@ export const learningArticles: LearningArticle[] = [
     .map((item) => item.slug),
   nextReading: allArticles.find((item) => item.slug !== article.slug)?.slug,
 }));
+
+export function publishedLearningArticles(records: readonly LearningArticle[]) {
+  return records.filter((article) => article.status === "PUBLISHED");
+}
+
+export function assertValidLearningManifest(records: readonly LearningArticle[]) {
+  const identities = new Set<string>();
+  const slugs = new Set<string>();
+  const categorySlugs = new Set(learningCategories.map((category) => category.slug));
+  const authorIds = new Set(learningAuthors.map((author) => author.id));
+
+  for (const article of records) {
+    const identity = `${article.categorySlug}/${article.slug}`;
+    if (identities.has(identity)) throw new Error(`Duplicate public Learn article identity: ${identity}`);
+    identities.add(identity);
+    if (slugs.has(article.slug)) throw new Error(`Duplicate public Learn article slug: ${article.slug}`);
+    slugs.add(article.slug);
+    if (!categorySlugs.has(article.categorySlug)) throw new Error(`Unknown public Learn category: ${article.categorySlug}`);
+    if (!authorIds.has(article.authorId) || !authorIds.has(article.editorId)) throw new Error(`Unknown public Learn author authority: ${identity}`);
+    if (!Number.isFinite(Date.parse(article.publishedAt)) || !Number.isFinite(Date.parse(article.lastUpdated))) {
+      throw new Error(`Invalid public Learn publication date: ${identity}`);
+    }
+  }
+}
+
+assertValidLearningManifest(learningArticleManifest);
+
+/**
+ * One repository-governed publication projection for public Learn pages,
+ * discovery manifests and /api/public/articles. Draft records stay absent.
+ */
+export const learningArticles: LearningArticle[] = publishedLearningArticles(learningArticleManifest);
 
 export const learningPaths: LearningPath[] = [
   {

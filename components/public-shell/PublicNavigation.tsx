@@ -124,7 +124,7 @@ export function PublicNavigation({
           </nav>
           <div className={styles.mobileHelp}>
             <span>CONTROL &amp; SUPPORT</span>
-            <Link href="/responsible-gambling" onClick={() => closeMenu({ restoreFocus: false })}>Open Help</Link>
+            <Link href="/help" onClick={() => closeMenu({ restoreFocus: false })}>Open Help</Link>
           </div>
           <div className={styles.mobileAccount}>
             {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{account.accountLabel}</Link> : null}

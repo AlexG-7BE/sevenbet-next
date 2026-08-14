@@ -61,32 +61,32 @@ export const responsibleTools = [
   {
     title: "Deposit limits",
     description: "Set a maximum deposit amount for a defined period before any gambling session starts.",
-    href: "/responsible-gambling/deposit-limits",
+    href: "/help/deposit-limits",
   },
   {
     title: "Loss limits",
     description: "Create a boundary for how much money can be lost before play should stop.",
-    href: "/responsible-gambling/budgeting",
+    href: "/help/budgeting",
   },
   {
     title: "Session reminders",
     description: "Use reminders to notice elapsed time and interrupt automatic decisions.",
-    href: "/responsible-gambling/time-management",
+    href: "/help/time-management",
   },
   {
     title: "Cooling-off periods",
     description: "Use a temporary pause when decisions feel rushed, emotional or connected to losses.",
-    href: "/responsible-gambling/cooling-off",
+    href: "/help/cooling-off",
   },
   {
     title: "Self-exclusion options",
     description: "A longer access block that may be useful when ordinary limits are not enough.",
-    href: "/responsible-gambling/self-exclusion",
+    href: "/help/self-exclusion",
   },
   {
     title: "Reality checks",
     description: "On-screen notices that show session duration and help users pause before continuing.",
-    href: "/responsible-gambling/reality-checks",
+    href: "/help/reality-checks",
   },
 ];
 
@@ -127,17 +127,17 @@ export const practicalTools = [
   {
     title: "Session planning checklist",
     text: "Set a start time, end time, deposit limit and reason to stop before logging in.",
-    href: "/responsible-gambling/time-management",
+    href: "/help/time-management",
   },
   {
     title: "Bonus comparison guide",
     text: "Compare wagering, expiry, maximum bet rules and payment restrictions before accepting a bonus.",
-    href: "/responsible-gambling/bonus-terms",
+    href: "/help/bonus-terms",
   },
   {
     title: "Casino evaluation checklist",
     text: "Review license, payment methods, withdrawal speed, support and responsible gambling tools.",
-    href: "/responsible-gambling/casino-licenses",
+    href: "/help/casino-licenses",
   },
   {
     title: "Decision checklist before registering",

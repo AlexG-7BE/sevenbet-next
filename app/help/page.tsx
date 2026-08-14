@@ -1,22 +1,23 @@
 import type { Metadata } from "next";
 
 import { ProtectedHelpHub } from "@/components/protected-help/ProtectedHelpHub";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { absoluteUrl } from "@/lib/site";
 
-const title = "Responsible Gambling Help & Support | B4GAMBLE";
+const title = "Gambling Help & Support | B4GAMBLE";
 const description =
-  "Find practical gambling-control options and independently provided UK support without casino, bonus or affiliate prompts.";
+  "Find practical pause and access-control options plus independently provided UK support, without casino, bonus or affiliate prompts.";
 
 export const metadata: Metadata = {
   title,
   description,
-  alternates: { canonical: absoluteUrl("/responsible-gambling") },
+  alternates: { canonical: absoluteUrl("/help") },
   robots: { index: true, follow: true },
   openGraph: {
     type: "website",
     title,
     description,
-    url: absoluteUrl("/responsible-gambling"),
+    url: absoluteUrl("/help"),
   },
   twitter: {
     card: "summary",
@@ -38,8 +39,8 @@ const breadcrumbSchema = {
     {
       "@type": "ListItem",
       position: 2,
-      name: "Responsible Gambling Help",
-      item: absoluteUrl("/responsible-gambling"),
+      name: "Help",
+      item: absoluteUrl("/help"),
     },
   ],
 };
@@ -49,7 +50,7 @@ const webPageSchema = {
   "@type": "WebPage",
   name: title,
   description,
-  url: absoluteUrl("/responsible-gambling"),
+  url: absoluteUrl("/help"),
   isPartOf: {
     "@type": "WebSite",
     name: "B4GAMBLE",
@@ -57,17 +58,11 @@ const webPageSchema = {
   },
 };
 
-export default function ResponsibleGamblingPage() {
+export default function HelpPage() {
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(webPageSchema) }}
-      />
+      <JsonLd data={breadcrumbSchema} />
+      <JsonLd data={webPageSchema} />
       <ProtectedHelpHub />
     </>
   );

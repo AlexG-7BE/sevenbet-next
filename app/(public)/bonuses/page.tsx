@@ -13,8 +13,8 @@ import {
   BonusRelatedNavigation,
   FeaturedBonusCard,
 } from "@/components/bonus-directory/BonusDirectory";
+import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
-import { safeJsonLd } from "@/lib/public-casino/public-casino-validation";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import type { PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -84,7 +84,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   } : null;
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`}>
-    {schema ? <script dangerouslySetInnerHTML={{ __html: safeJsonLd(schema) }} type="application/ld+json" /> : null}
+    {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero}>
       <Image alt="" aria-hidden="true" className={styles.heroMedia} height={980} priority sizes="(max-width: 760px) 39vw, 53vw" src="/bonus-directory/material-field.png" width={1600} />
       <div className={styles.heroCopy}>
