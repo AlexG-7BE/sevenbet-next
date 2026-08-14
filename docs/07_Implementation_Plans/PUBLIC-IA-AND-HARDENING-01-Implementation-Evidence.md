@@ -4,10 +4,18 @@
 - **Authority:** RFC-033, approved 2026-08-14
 - **Branch:** `codex/public-ia-and-hardening-01`
 - **Base main:** `1d160b94481c7f8915619ef2254c7c2e66ab3209`
-- **Runtime-tested head:** `3042650ffe6785aa23d7600e1ec9348e7bf1208a`
-- **Runtime-tested Preview:** `dpl_HSr19yfu1hmRmrYzMmdPaMqiUJRN`, Ready, immutable `https://sevenbet-next-l4ea1zvjf-alexg-7bes-projects.vercel.app`
+- **Initial runtime-tested head:** `3042650ffe6785aa23d7600e1ec9348e7bf1208a`
+- **Initial runtime-tested Preview:** `dpl_HSr19yfu1hmRmrYzMmdPaMqiUJRN`, Ready, immutable `https://sevenbet-next-l4ea1zvjf-alexg-7bes-projects.vercel.app`
+- **Pre-corrective branch head:** `50c0c0767293ac629c450bad0bf7d43f846bb65e`
+- **Corrective closure evidence:** exact final head, CI and Preview deployment are recorded on Draft PR #74 after this source record is committed; this document does not predict a future deployment ID
 
 This record follows the runtime-tested head and therefore receives a later documentation-only SHA. It records branch evidence, not current-main or Production implementation.
+
+## Founder corrective clarification — 2026-08-14
+
+**Detected:** the former mixed Responsible Gambling corpus is now classified by an explicit source-controlled route authority. Four direct action/control articles remain canonical in Protected Help; six educational articles redirect to existing published Learn canonicals. Unknown slugs return `404`, fixed destinations are same-origin, query parameters are safely encoded and preserved, and every known redirect is one permanent `308` hop.
+
+**Detected:** the nonce architecture received a deliberate comparative review rather than an incidental acceptance. Exact main `1d160b9` and the corrective branch were both built with Next.js 15.5.21. Current official Next.js guidance confirms that per-request framework nonces require dynamic rendering and that the static SRI alternative remains experimental and webpack-only. RFC-033 therefore keeps the supported nonce architecture, explicitly accepts its request-time rendering/cache/cost trade-off and records a measured-runtime revisit trigger.
 
 ## Executive result
 
@@ -23,14 +31,29 @@ This record follows the runtime-tested head and therefore receives a later docum
 | Read responsible-gambling education | `/learn/responsible-gambling` | Public Learn category | Hub → **Learn the patterns**: one link |
 | Complete the private Self-Check | `/self-check` | Public Shell, browser-local state | Home → footer **Self-Check**: one link |
 | Use the Personal Limit Tracker | `/tools/budget-calculator` | Public Shell, browser-local state | Home → footer **Personal Limit Tracker**: one link |
-| Seek immediate support | `/help` and `/help/<slug>` | Protected Help Shell | Home → header or footer **Help**: one link |
+| Seek immediate support or use a direct control | `/help` and the four classified `/help/<slug>` control articles | Protected Help Shell | Home → header or footer **Help**: one link |
 | Start or continue the Programme | `/10-steps` and `/program` | Public entry and authenticated Programme | Hub → **Explore the 10 Steps**: one link |
 
 - **Detected:** the header Help action now targets `/help`; the shared footer owns a `Control & Support` group with all four direct destinations.
-- **Detected:** `/responsible-gambling` is the public hub and does not redirect. Known former guide paths return permanent `308` redirects to `/help/<slug>`; unknown former guide paths return `404`.
+- **Detected:** `/responsible-gambling` is the public hub and does not redirect. Known former guide paths use the exhaustive matrix below; unknown former guide paths return `404`.
 - **Detected:** Help remains visually exceptional and noncommercial. The education, Self-Check, Limit Tracker and Programme paths have equal visual weight and do not imply a universally correct choice.
 - **Detected:** the Learn category is distinct from both the broader navigation hub and immediate Help, with reciprocal contextual links rather than duplicate page purpose.
 - **Detected:** sitemap, `llms.txt`, route manifest and public navigation publish canonical destinations only.
+
+| Former URL | Classification | Final destination | HTTP |
+| --- | --- | --- | --- |
+| `/responsible-gambling/budgeting` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | `308` |
+| `/responsible-gambling/time-management` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | `308` |
+| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn/casino-bonuses/welcome-bonus-terms` | `308` |
+| `/responsible-gambling/self-exclusion` | HELP | `/help/self-exclusion` | `308` |
+| `/responsible-gambling/deposit-limits` | HELP | `/help/deposit-limits` | `308` |
+| `/responsible-gambling/cooling-off` | HELP | `/help/cooling-off` | `308` |
+| `/responsible-gambling/reality-checks` | HELP | `/help/reality-checks` | `308` |
+| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn/licensing/casino-licenses-explained` | `308` |
+| `/responsible-gambling/payment-safety` | EDUCATION | `/learn/payments/casino-payment-methods` | `308` |
+| `/responsible-gambling/faq` | EDUCATION | `/learn/responsible-gambling` | `308` |
+
+No former route is RETIRED because all ten have a truthful current canonical. Educational `/help/budgeting`, `/help/time-management`, `/help/bonus-terms`, `/help/casino-licenses`, `/help/payment-safety` and `/help/faq` resolve `404` and are absent from discovery.
 
 ## Safety, privacy and product boundaries
 
@@ -81,6 +104,32 @@ The Production policy is:
 - **Detected:** broad HTTPS images preserve the existing deployment-configured, validated published-CMS media contract; frames remain limited to the two source-enumerated editorial providers.
 - **Detected on exact Preview:** representative hub, Help, Learn, auth, Programme, admin, contact and error routes returned the enforced policy with matching script nonces and no CSP console violation.
 
+### Rendering-mode comparison and accepted trade-off
+
+| Representative route | Exact main `1d160b9` | Corrective branch | Reason/result |
+| --- | --- | --- | --- |
+| `/` | Dynamic SSR | Dynamic SSR | Public shell already reads server auth; no nonce-only regression. |
+| `/responsible-gambling` | Static | Dynamic SSR | Fresh framework/script nonce requires request-time HTML. |
+| `/responsible-gambling/<known-slug>` | SSG | Dynamic `308` authority | Explicit route matrix replaces generated duplicate pages. |
+| `/help` | Not present as canonical root | Dynamic SSR | New Protected Help canonical under enforced nonce policy. |
+| `/help/<control-slug>` | Not present | Dynamic SSR | Only four action/control articles resolve. |
+| `/learn` | Dynamic SSR | Dynamic SSR | Already auth-aware through the public shell. |
+| `/learn/responsible-gambling` | SSG | Dynamic SSR | Root nonce boundary disables prerendered HTML. |
+| `/learn/responsible-gambling/responsible-gambling-tools` | SSG | Dynamic SSR | Root nonce boundary disables prerendered HTML. |
+| `/self-check` | Dynamic SSR | Dynamic SSR | No nonce-only render-mode regression. |
+| `/tools/budget-calculator` | Dynamic SSR | Dynamic SSR | No nonce-only render-mode regression. |
+| `/casinos` | Dynamic SSR | Dynamic SSR | Existing governed discovery data/public-shell auth already require request time. |
+| `/best-offers` | Dynamic SSR | Dynamic SSR | Existing governed offer data/public-shell auth already require request time. |
+| `/login` | Dynamic SSR | Dynamic SSR | Authentication state already requires request time. |
+| `/program` | Dynamic SSR | Dynamic SSR | Authenticated Programme state already requires request time. |
+| `/_not-found` | Static | Dynamic SSR | Error document must receive the matching request nonce. |
+| `/llms.txt`, `/robots.txt`, `/icon.svg` | Static | Static | Non-HTML/static outputs retain static delivery. |
+
+- **Decision — KEEP:** current Next.js nonce CSP plus the root `connection()` boundary remains the supported production architecture.
+- **Rejected for this workstream:** selectively weakening CSP on static education, splitting root layouts/security policy, or adopting experimental webpack-only SRI. Each would add inconsistent policy or material architecture/release risk.
+- **Accepted impact:** former static/SSG Responsible Gambling and Learn documents lose default CDN/ISR/PPR delivery and may have slower cold TTFB, higher request-time compute and higher hosting cost.
+- **Revisit trigger:** sustained measured latency/cost regression or stable production-grade hash CSP support in the active Next.js bundler, handled through a separate RFC.
+
 ## External media and provenance
 
 - **Detected:** all four direct `images.pexels.com` runtime references were replaced by already-versioned `/home/*.jpg` assets; no new third-party file was downloaded.
@@ -99,12 +148,14 @@ The Production policy is:
 
 | Evidence | Result |
 | --- | --- |
-| `npm run ci:quality` | **Detected pass / exit 0:** lint, TypeScript, Prisma validation and every configured structural/domain regression lane. Focused public IA group: 31/31. |
+| `npm run ci:quality` | **Detected pass / exit 0 at initial closure:** lint, TypeScript, Prisma validation and every configured structural/domain regression lane. Corrective focused public IA group: 32/32. Exact final hosted result is recorded on PR #74. |
 | `NEXT_PUBLIC_SITE_URL=https://b4gamble.com npm run build` | **Detected pass / exit 0:** Next.js 15.5.21 production build. All application HTML routes are dynamic as required by the nonce model. |
 | Final Chromium public/control/help suite | **Detected pass:** 35/35. |
 | Final WebKit public/control/help suite | **Detected pass:** 35/35. |
 | Hosted checks at implementation head | **Detected pass:** Agent Core 20s, Quality 58s, Database / Migration Verification 53s, Build / Browser 3m57s, Vercel and Vercel Preview Comments. Browser lanes passed 67 with one intentional missing-Google-credentials skip, then Programme AI 11/11. |
 | Exact Preview | **Detected Ready:** `dpl_HSr19yfu1hmRmrYzMmdPaMqiUJRN`, immutable URL above, exact runtime-tested head `3042650`. |
+| Exact main vs corrective branch builds | **Detected pass / exit 0:** both Next.js 15.5.21 builds completed; the rendering-mode delta is recorded above. |
+| Corrective legacy-route browser matrix | **Detected local pass:** all ten known routes returned direct `308` destinations, query preservation passed, all destinations returned `200`, unknown legacy returned `404`, six educational Help aliases returned `404`, and the complete public-IA browser spec passed 12/12. |
 
 The local runner initially denied Chromium's macOS Mach rendezvous before any assertion executed. The identical approved-permission rerun passed 35/35; the denied launch is infrastructure noise, not a product failure.
 
@@ -112,7 +163,7 @@ The local runner initially denied Chromium's macOS Mach rendezvous before any as
 
 | Attack/failure surface | Detected result |
 | --- | --- |
-| Legacy/open redirect | Only allowlisted former Help slugs redirect to fixed same-origin `/help/<slug>` destinations; unknown slugs fail `404`. |
+| Legacy/open redirect | One exhaustive source constant classifies all ten former slugs. Fixed same-origin Help/Learn destinations reject host input, preserve encoded queries and redirect once; unknown slugs fail `404`. |
 | JSON-LD/script injection | One escaping nonce serializer owns every JSON-LD block; markup separators are escaped and script nonces match the response policy. |
 | Inline/eval script bypass | Production denies script attributes and contains no script unsafe-inline/eval allowance. |
 | External resource expansion | No new connect/script/font host; frame hosts are closed; no direct Pexels runtime URL remains. |
@@ -129,6 +180,7 @@ The local runner initially denied Chromium's macOS Mach rendezvous before any as
 - **Not detected:** Firefox, physical-device or assistive-technology lab evidence. Chromium, WebKit, keyboard and no-JavaScript coverage are green.
 - **Detected:** Vercel's protected Preview adds platform `noindex`; page metadata/canonicals still target Production canonical URLs as intended.
 - **Detected existing environment warning:** local/Preview logs warn that the configured Prisma runtime is not the approved pooled endpoint. RFC-033 changed no environment or database binding; this remains an operational configuration item outside this workstream.
+- **Detected accepted rendering trade-off:** nonce-protected application HTML is request-time rendered. The build/runtime comparison and revisit trigger above make this an explicit architectural decision, not an undisclosed regression.
 - **Planned before merge:** require all configured hosted checks green on the final documentation head and confirm `origin/main` divergence has not introduced a conflict.
 - **Planned after Founder approval only:** mark the Draft PR Ready, merge and create/verify a Production deployment. None is performed here.
 

@@ -2,6 +2,19 @@ import { expect, test, type Page } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
+const formerResponsibleGamblingRoutes = {
+  budgeting: "/learn/responsible-gambling/responsible-gambling-tools",
+  "time-management": "/learn/responsible-gambling/responsible-gambling-tools",
+  "bonus-terms": "/learn/casino-bonuses/welcome-bonus-terms",
+  "self-exclusion": "/help/self-exclusion",
+  "deposit-limits": "/help/deposit-limits",
+  "cooling-off": "/help/cooling-off",
+  "reality-checks": "/help/reality-checks",
+  "casino-licenses": "/learn/licensing/casino-licenses-explained",
+  "payment-safety": "/learn/payments/casino-payment-methods",
+  faq: "/learn/responsible-gambling",
+} as const;
+
 function collectBrowserErrors(page: Page) {
   const errors: string[] = [];
   page.on("console", (message) => {
@@ -34,9 +47,38 @@ test("public hub and Protected Help expose separate routes, shells and discovery
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/help");
   await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
 
-  const legacy = await request.get(`${baseUrl}/responsible-gambling/cooling-off`, { maxRedirects: 0 });
-  expect(legacy.status()).toBe(308);
-  expect(legacy.headers().location).toBe("/help/cooling-off");
+  for (const [slug, destination] of Object.entries(formerResponsibleGamblingRoutes)) {
+    const legacy = await request.get(`${baseUrl}/responsible-gambling/${slug}`, { maxRedirects: 0 });
+    expect(legacy.status(), slug).toBe(308);
+    expect(legacy.headers().location, slug).toBe(destination);
+    const canonical = await request.get(`${baseUrl}${destination}`, { maxRedirects: 0 });
+    expect(canonical.status(), destination).toBe(200);
+    expect(await canonical.text(), destination).toContain(`rel="canonical" href="https://b4gamble.com${destination}"`);
+  }
+
+  const preservedQuery = await request.get(
+    `${baseUrl}/responsible-gambling/cooling-off?utm_source=legacy&tag=one&tag=two`,
+    { maxRedirects: 0 },
+  );
+  expect(preservedQuery.status()).toBe(308);
+  expect(preservedQuery.headers().location).toBe("/help/cooling-off?utm_source=legacy&tag=one&tag=two");
+
+  expect((await request.get(`${baseUrl}/responsible-gambling/not-a-former-guide`, { maxRedirects: 0 })).status()).toBe(404);
+  for (const slug of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
+    expect((await request.get(`${baseUrl}/help/${slug}`, { maxRedirects: 0 })).status(), slug).toBe(404);
+  }
+
+  const sitemap = await (await request.get(`${baseUrl}/sitemap.xml`)).text();
+  const llms = await (await request.get(`${baseUrl}/llms.txt`)).text();
+  for (const [slug, destination] of Object.entries(formerResponsibleGamblingRoutes)) {
+    expect(sitemap).not.toContain(`/responsible-gambling/${slug}`);
+    expect(llms).not.toContain(`/responsible-gambling/${slug}`);
+    expect(sitemap).toContain(`https://b4gamble.com${destination}`);
+  }
+  for (const slug of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
+    expect(sitemap).not.toContain(`/help/${slug}`);
+    expect(llms).not.toContain(`/help/${slug}`);
+  }
 });
 
 test("SEO identities remain distinct and public article API matches Learn pages", async ({ page, request }) => {
@@ -66,7 +108,17 @@ test("SEO identities remain distinct and public article API matches Learn pages"
 });
 
 test("enforced CSP uses matching nonces and representative routes have no violations", async ({ page }) => {
-  for (const route of ["/responsible-gambling", "/help", "/login", "/program", "/admin/login", "/definitely-missing"]) {
+  for (const route of [
+    "/responsible-gambling",
+    "/help",
+    "/help/cooling-off",
+    "/learn/responsible-gambling",
+    "/learn/casino-bonuses/welcome-bonus-terms",
+    "/login",
+    "/program",
+    "/admin/login",
+    "/definitely-missing",
+  ]) {
     const errors = collectBrowserErrors(page);
     const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
     expect([200, 404]).toContain(response?.status());

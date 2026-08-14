@@ -46,17 +46,17 @@ export const knowledgeCategories: KnowledgeCategory[] = [
   {
     title: "Payments",
     description: "Questions about deposits, withdrawals, payment methods, fees, and verification.",
-    href: "/help/payment-safety",
+    href: "/learn/payments/casino-payment-methods",
   },
   {
     title: "Licensing",
     description: "What casino licenses can indicate and what users should still verify.",
-    href: "/help/casino-licenses",
+    href: "/learn/licensing/casino-licenses-explained",
   },
   {
     title: "Casino Safety",
     description: "Trust signals, account checks, operator transparency, and responsible gambling tools.",
-    href: "/help/casino-licenses",
+    href: "/learn/casino-safety/casino-safety-checklist",
   },
   {
     title: "General Questions",
@@ -87,7 +87,7 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "A wagering requirement describes how much qualifying play may be required before bonus-related withdrawals are allowed under operator terms.",
     category: "Casino Bonuses",
-    href: "/help/bonus-terms",
+    href: "/learn/casino-bonuses/welcome-bonus-terms",
     popular: true,
   },
   {
@@ -168,28 +168,28 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "Wagering refers to the amount of qualifying play that may be required before bonus-related withdrawals are allowed.",
     category: "Casino Bonuses",
-    href: "/help/bonus-terms",
+    href: "/learn/casino-bonuses/welcome-bonus-terms",
   },
   {
     question: "Can bonuses expire?",
     answer:
       "Yes. Many bonuses include expiry windows. A short expiry window can create pressure, so it should be reviewed before accepting any offer.",
     category: "Casino Bonuses",
-    href: "/help/bonus-terms",
+    href: "/learn/casino-bonuses/welcome-bonus-terms",
   },
   {
     question: "What is a no-deposit bonus?",
     answer:
       "A no-deposit bonus is an offer that may not require an initial deposit, but it can still include eligibility rules, wagering, expiry, and withdrawal restrictions.",
     category: "Casino Bonuses",
-    href: "/help/bonus-terms",
+    href: "/learn/casino-bonuses/welcome-bonus-terms",
   },
   {
     question: "How do free spins work?",
     answer:
       "Free spins are promotional spins on selected games. They may include wagering, expiry, game restrictions, and maximum conversion limits.",
     category: "Casino Bonuses",
-    href: "/help/bonus-terms",
+    href: "/learn/casino-bonuses/welcome-bonus-terms",
   },
   {
     question: "How are casinos scored?",
@@ -210,7 +210,7 @@ export const knowledgeQuestions: KnowledgeQuestion[] = [
     answer:
       "Payment methods are reviewed from available operator information, including deposit options, withdrawal methods, processing times, currencies, fees, and verification rules where listed.",
     category: "Casino Reviews",
-    href: "/help/payment-safety",
+    href: "/learn/payments/casino-payment-methods",
   },
   {
     question: "What is a deposit limit?",

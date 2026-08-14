@@ -3,6 +3,7 @@
 - **Status:** Approved for bounded implementation
 - **Decision authority:** Founder Office `PUBLIC-IA-AND-HARDENING-01` consolidated completion brief
 - **Approved:** 2026-08-14
+- **Corrective clarification approved:** 2026-08-14, Founder Office continuation of the same consolidated workstream
 - **Scope:** Separate public Responsible Gambling education from protected Help, close the related navigation/SEO/content-authority/CSP/media findings and verify one Draft-PR Preview
 - **Base:** `1d160b94481c7f8915619ef2254c7c2e66ab3209`
 - **Depends on:** Product Vision & Principles v2.0, RFC-012, RFC-014, RFC-025, RFC-028, RFC-029, RFC-030, RFC-032 and `FULL-SITE-QA-01`
@@ -32,7 +33,24 @@ The repository root was confirmed as `/Users/alex/Documents/Codex/2026-07-09/ns/
 
 The hub may explain choices, risks, personal boundaries and where each path leads. It must not diagnose, assess affordability, promise safety, make medical or financial claims, or personalise commercial content from control/support data.
 
-`/help` becomes the canonical, indexable standalone Protected Help root. Existing protected guides move to `/help/<slug>`. Exact former guide URLs under `/responsible-gambling/<slug>` permanently redirect to their `/help/<slug>` equivalents; the `/responsible-gambling` root itself never redirects. Immediate-support actions, including the compact primary-navigation Help action, point to `/help`.
+`/help` becomes the canonical, indexable standalone Protected Help root. Help owns only direct action, pause and access-control content. Educational articles remain under Learn and must not be duplicated into Help merely to preserve a former slug. The `/responsible-gambling` root itself never redirects. Immediate-support actions, including the compact primary-navigation Help action, point to `/help`.
+
+The Founder-approved corrective route authority is explicit and exhaustive:
+
+| Former route | Classification | Canonical destination | Decision |
+| --- | --- | --- | --- |
+| `/responsible-gambling/budgeting` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | Planning education belongs to Learn. |
+| `/responsible-gambling/time-management` | EDUCATION | `/learn/responsible-gambling/responsible-gambling-tools` | The published Learn guide owns session reminders and time-control education. |
+| `/responsible-gambling/bonus-terms` | EDUCATION | `/learn/casino-bonuses/welcome-bonus-terms` | Bonus mechanics are educational, not Protected Help. |
+| `/responsible-gambling/self-exclusion` | HELP | `/help/self-exclusion` | Direct access-control action. |
+| `/responsible-gambling/deposit-limits` | HELP | `/help/deposit-limits` | Direct account/funds control. |
+| `/responsible-gambling/cooling-off` | HELP | `/help/cooling-off` | Direct temporary-pause control with fail-closed local-term handling. |
+| `/responsible-gambling/reality-checks` | HELP | `/help/reality-checks` | Direct in-session interruption control. |
+| `/responsible-gambling/casino-licenses` | EDUCATION | `/learn/licensing/casino-licenses-explained` | Licence interpretation belongs to Learn. |
+| `/responsible-gambling/payment-safety` | EDUCATION | `/learn/payments/casino-payment-methods` | Payment and withdrawal mechanics belong to Learn. |
+| `/responsible-gambling/faq` | EDUCATION | `/learn/responsible-gambling` | The mixed FAQ is redundant with the canonical Learn category and guide. |
+
+Each known former URL returns one same-origin permanent `308` directly to the listed destination and preserves encoded query parameters. Unknown slugs return `404`; no request input may select a destination host. No former route is classified RETIRED because every item has a truthful current canonical equivalent.
 
 Learn remains a distinct content library. `/learn/responsible-gambling` owns educational article discovery and links back to the broader hub; it does not duplicate the hub's navigation purpose or Protected Help's urgent-support purpose.
 
@@ -64,6 +82,17 @@ Compatibility exceptions are deliberately narrow:
 - `connect-src` remains same-origin because browser analytics uses B4GAMBLE's `/_vercel/insights` endpoint and OAuth/OpenAI/Resend calls are navigation or server-side concerns.
 
 The existing Referrer Policy, Permissions Policy, HSTS at the platform edge and Programme-only microphone permission are preserved. CSP is enforced, not report-only, on the Draft-PR Preview before any release decision.
+
+### 5.1 Corrective rendering-mode decision
+
+The nonce architecture was deliberately re-reviewed against exact-main and corrective-branch production builds plus the current official Next.js App Router CSP guidance on 2026-08-14.
+
+- **Detected on exact main `1d160b9`:** the public Home, authenticated/public-shell surfaces, Self-Check, Personal Limit Tracker, Programme, auth and commercial routes were already request-time rendered. The former `/responsible-gambling` root and redirect articles, the 404, and Learn category/article pages retained Static or SSG output.
+- **Detected on the corrective branch build:** application HTML routes, including Responsible Gambling, Help and Learn, are request-time rendered; non-HTML/static route output such as `icon.svg`, `llms.txt` and `robots.txt` remains static.
+- **Detected in current official Next.js guidance:** a fresh nonce requires dynamic rendering so framework scripts receive the request nonce; static optimisation, ISR and PPR are incompatible with this nonce model. The documented static alternative, Subresource Integrity, remains experimental, App-Router/webpack-only and build-time-only.
+- **Decision — KEEP:** retain the supported root nonce architecture and its explicit `connection()` boundary. Scoping the nonce to selected route families would create inconsistent script policy and still leave the auth-aware public shell dynamic. Splitting root layouts or adopting experimental SRI would materially expand architecture and release risk for a modest static subset. That change is not justified inside this bounded corrective pass.
+- **Accepted trade-off:** the formerly static Responsible Gambling and Learn documents lose default CDN/static delivery, can have slower cold TTFB, consume request-time compute and cannot use ISR/PPR under the current model. This is accepted in return for one enforced production script policy with no `script-src 'unsafe-inline'` or `script-src 'unsafe-eval'`.
+- **Revisit trigger:** measured sustained latency/cost regression, stable production-grade hash CSP support in the project’s active Next.js bundler, or a separately approved root-layout/cache architecture RFC.
 
 ## 6. External media and provenance decision
 

@@ -4,7 +4,7 @@ import {
   learningArticles as centerArticles,
   learningCategories as centerCategories,
 } from "@/lib/learning-center";
-import { learningArticles as helpArticles } from "@/lib/responsible-gambling";
+import { protectedHelpArticles as helpArticles } from "@/lib/responsible-gambling";
 import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-static";

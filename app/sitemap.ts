@@ -5,7 +5,7 @@ import {
   learningArticles as centerArticles,
   learningCategories as centerCategories,
 } from "@/lib/learning-center";
-import { learningArticles as helpArticles } from "@/lib/responsible-gambling";
+import { protectedHelpArticles as helpArticles } from "@/lib/responsible-gambling";
 import { parsePublicComparisonQuery } from "@/lib/public-comparison/query";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";

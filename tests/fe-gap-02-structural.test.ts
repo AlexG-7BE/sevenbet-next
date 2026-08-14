@@ -2,16 +2,16 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { learningArticles } from "../lib/responsible-gambling";
+import { protectedHelpArticles } from "../lib/responsible-gambling";
 
 const read = (path: string) => readFileSync(path, "utf8");
-const slugs = ["budgeting", "time-management", "bonus-terms", "self-exclusion", "deposit-limits", "cooling-off", "reality-checks", "casino-licenses", "payment-safety", "faq"];
+const slugs = ["self-exclusion", "deposit-limits", "cooling-off", "reality-checks"];
 
-test("all ten Protected Help articles use the dedicated server-rendered article contract", () => {
+test("all four action/control Help articles use the dedicated server-rendered article contract", () => {
   const route = read("app/help/[slug]/page.tsx");
   const article = read("components/protected-help/ProtectedHelpArticle.tsx");
   const recovery = read("app/help/not-found.tsx");
-  assert.deepEqual(learningArticles.map((item) => item.slug), slugs);
+  assert.deepEqual(protectedHelpArticles.map((item) => item.slug), slugs);
   for (const slug of slugs) assert.match(article, new RegExp(`(?:"${slug}"|${slug}:)`));
   assert.match(route, /<ProtectedHelpArticle article=\{article\} \/>/);
   assert.doesNotMatch(route, /ArticleLayout|PageHero|ResourceCard/);

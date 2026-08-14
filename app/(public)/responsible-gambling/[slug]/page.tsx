@@ -1,15 +1,21 @@
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { getLearningArticle } from "@/lib/responsible-gambling";
+import {
+  getLegacyResponsibleGamblingRoute,
+  withPreservedLegacyQuery,
+} from "@/lib/responsible-gambling";
 
 export const dynamic = "force-dynamic";
 
 export default async function LegacyResponsibleGamblingGuide({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { slug } = await params;
-  if (!getLearningArticle(slug)) notFound();
-  permanentRedirect(`/help/${slug}`);
+  const route = getLegacyResponsibleGamblingRoute(slug);
+  if (!route) notFound();
+  permanentRedirect(withPreservedLegacyQuery(route.destination, await searchParams));
 }

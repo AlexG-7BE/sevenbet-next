@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ProtectedHelpArticle } from "@/components/protected-help/ProtectedHelpArticle";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
-  getLearningArticle,
+  getProtectedHelpArticle,
 } from "@/lib/responsible-gambling";
 import { absoluteUrl } from "@/lib/site";
 
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const article = getLearningArticle(slug);
+  const article = getProtectedHelpArticle(slug);
 
   if (!article) {
     return { title: "Gambling Help Guide | B4GAMBLE", robots: { index: false, follow: true } };
@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function breadcrumbSchema(article: NonNullable<ReturnType<typeof getLearningArticle>>) {
+function breadcrumbSchema(article: NonNullable<ReturnType<typeof getProtectedHelpArticle>>) {
   return {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -57,7 +57,7 @@ function breadcrumbSchema(article: NonNullable<ReturnType<typeof getLearningArti
   };
 }
 
-function articleSchema(article: NonNullable<ReturnType<typeof getLearningArticle>>) {
+function articleSchema(article: NonNullable<ReturnType<typeof getProtectedHelpArticle>>) {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -84,7 +84,7 @@ export default async function ProtectedHelpArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = getLearningArticle(slug);
+  const article = getProtectedHelpArticle(slug);
 
   if (!article) notFound();
 

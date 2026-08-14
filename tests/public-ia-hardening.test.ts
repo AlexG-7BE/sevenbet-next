@@ -5,11 +5,19 @@ import test from "node:test";
 
 import { serializeJsonLd } from "../components/seo/JsonLd";
 import {
+  getArticleBySlug,
+  getLearningCategory,
   assertValidLearningManifest,
   learningArticles,
   publishedLearningArticles,
   type LearningArticle,
 } from "../lib/learning-center";
+import {
+  LEGACY_RESPONSIBLE_GAMBLING_ROUTES,
+  getLegacyResponsibleGamblingRoute,
+  protectedHelpArticles,
+  withPreservedLegacyQuery,
+} from "../lib/responsible-gambling";
 import {
   buildContentSecurityPolicy,
   createCspNonce,
@@ -39,7 +47,9 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   assert.match(help, /canonical: absoluteUrl\("\/help"\)/);
   assert.match(helpLayout, /data-protected-help-shell="true"/);
   assert.doesNotMatch(helpLayout, /PublicHeader|PublicFooter/);
-  assert.match(legacy, /permanentRedirect\(`\/help\/\$\{slug\}`\)/);
+  assert.match(legacy, /getLegacyResponsibleGamblingRoute\(slug\)/);
+  assert.match(legacy, /withPreservedLegacyQuery\(route\.destination, await searchParams\)/);
+  assert.doesNotMatch(legacy, /`\/help\/\$\{slug\}`|`\/learn\/\$\{slug\}`/);
   for (const requestTimeRoute of [
     "app/help/[slug]/page.tsx",
     "app/(public)/learn/[category]/page.tsx",
@@ -50,6 +60,87 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
     assert.match(source, /export const dynamic = "force-dynamic"/);
     assert.doesNotMatch(source, /generateStaticParams/);
   }
+});
+
+test("every former mixed Responsible Gambling article has one explicit canonical authority", () => {
+  assert.deepEqual(LEGACY_RESPONSIBLE_GAMBLING_ROUTES, {
+    budgeting: {
+      classification: "EDUCATION",
+      destination: "/learn/responsible-gambling/responsible-gambling-tools",
+      reason: "Budget planning is educational context, not an immediate Help action or access control.",
+    },
+    "time-management": {
+      classification: "EDUCATION",
+      destination: "/learn/responsible-gambling/responsible-gambling-tools",
+      reason: "Session planning is educational context; the canonical Learn guide covers reminders and time controls.",
+    },
+    "bonus-terms": {
+      classification: "EDUCATION",
+      destination: "/learn/casino-bonuses/welcome-bonus-terms",
+      reason: "Bonus mechanics belong to the published Learn bonus guide, not Protected Help.",
+    },
+    "self-exclusion": {
+      classification: "HELP",
+      destination: "/help/self-exclusion",
+      reason: "Self-exclusion is a direct access-control action with an official support destination.",
+    },
+    "deposit-limits": {
+      classification: "HELP",
+      destination: "/help/deposit-limits",
+      reason: "A deposit limit is a direct account control that can cap access to funds.",
+    },
+    "cooling-off": {
+      classification: "HELP",
+      destination: "/help/cooling-off",
+      reason: "Cooling-off is a direct temporary pause control and remains fail-closed where local terms are unverified.",
+    },
+    "reality-checks": {
+      classification: "HELP",
+      destination: "/help/reality-checks",
+      reason: "Reality checks are direct in-session controls that interrupt continuous play.",
+    },
+    "casino-licenses": {
+      classification: "EDUCATION",
+      destination: "/learn/licensing/casino-licenses-explained",
+      reason: "Licence interpretation is educational trust context owned by Learn.",
+    },
+    "payment-safety": {
+      classification: "EDUCATION",
+      destination: "/learn/payments/casino-payment-methods",
+      reason: "Payment and withdrawal mechanics are educational comparison context owned by Learn.",
+    },
+    faq: {
+      classification: "EDUCATION",
+      destination: "/learn/responsible-gambling",
+      reason: "The mixed FAQ is redundant with the canonical Responsible Gambling Learn category and its published guide.",
+    },
+  });
+
+  assert.deepEqual(protectedHelpArticles.map((article) => article.slug), [
+    "self-exclusion",
+    "deposit-limits",
+    "cooling-off",
+    "reality-checks",
+  ]);
+  for (const route of Object.values(LEGACY_RESPONSIBLE_GAMBLING_ROUTES)) {
+    assert.match(route.destination, /^\/(?:help|learn)(?:\/|$)/);
+    assert.doesNotMatch(route.destination, /^\/responsible-gambling(?:\/|$)/);
+    if (route.classification === "EDUCATION") {
+      const [, area, category, article] = route.destination.split("/");
+      assert.equal(area, "learn");
+      assert.ok(getLearningCategory(category));
+      if (article) assert.ok(getArticleBySlug(article));
+    } else if (route.classification === "HELP") {
+      assert.match(route.destination, /^\/help\//);
+    }
+  }
+  assert.equal(getLegacyResponsibleGamblingRoute("not-a-former-guide"), null);
+  assert.equal(
+    withPreservedLegacyQuery("/help/cooling-off", { utm_source: "old page", tag: ["one", "two"], empty: undefined }),
+    "/help/cooling-off?utm_source=old+page&tag=one&tag=two",
+  );
+  assert.throws(() => withPreservedLegacyQuery("https://example.com", {}), /Invalid legacy Responsible Gambling destination/);
+  assert.throws(() => withPreservedLegacyQuery("//example.com/help", {}), /Invalid legacy Responsible Gambling destination/);
 });
 
 test("shared navigation exposes the closed Control & Support destinations", () => {
