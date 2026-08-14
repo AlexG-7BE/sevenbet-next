@@ -9,7 +9,11 @@ import {
   getSafeAdminCallback,
   isLegacyPreviewTokenValid,
 } from "../lib/auth/policy";
+import { canAccessAdminArea, type AdminArea } from "../lib/auth/admin-page-policy";
 import { createStaffContext } from "../lib/auth/staff-context";
+import { permissionForEntity, permissionsForEntity } from "../lib/cms/entities";
+import { permissionsForRole } from "../lib/cms/permissions";
+import type { AdminRole, CmsUser } from "../lib/cms/types";
 import { middleware } from "../middleware";
 
 function withLegacyEnvironment(
@@ -59,6 +63,8 @@ test("middleware redirects an anonymous admin page to login", () => {
       response.headers.get("location"),
       "http://localhost:4173/admin/login?callbackUrl=%2Fadmin%2Fprograms%3Fstatus%3DDRAFT",
     );
+    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
+    assert.equal(response.headers.get("vary"), "Cookie");
   });
 });
 
@@ -69,6 +75,7 @@ test("middleware allows the admin login page without a session", () => {
 
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("x-middleware-next"), "1");
+  assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
 test("middleware allows a correctly gated legacy preview token", () => {
@@ -85,6 +92,7 @@ test("middleware allows a correctly gated legacy preview token", () => {
 
       assert.equal(response.status, 200);
       assert.equal(response.headers.get("x-middleware-next"), "1");
+      assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
     },
   );
 });
@@ -208,4 +216,58 @@ test("the audit actor is the AdminUser UUID, not the Better Auth User ID", () =>
 
   assert.equal(context.id, context.adminUser.id);
   assert.notEqual(context.id, context.user.id);
+});
+
+test("generic CMS entity reads use the entity permission contract", () => {
+  assert.equal(permissionForEntity("article", "read"), "article.edit");
+  assert.equal(permissionForEntity("casino", "read"), "casino.edit");
+  assert.equal(permissionForEntity("bonus", "read"), "bonus.edit");
+  assert.equal(permissionForEntity("affiliate-link", "read"), "affiliate.manage");
+  assert.equal(permissionForEntity("navigation", "read"), "settings.manage");
+  assert.equal(permissionForEntity("settings", "read"), "settings.manage");
+  assert.equal(permissionForEntity("program", "read"), "program.view");
+  assert.deepEqual(permissionsForEntity("article", "read"), [
+    "article.create",
+    "article.edit",
+    "article.review",
+    "article.publish",
+  ]);
+});
+
+function staffForRole(role: AdminRole): CmsUser {
+  return {
+    id: role,
+    email: `${role.toLowerCase()}@example.invalid`,
+    name: role,
+    role,
+    permissions: permissionsForRole(role),
+    authProvider: "email",
+    createdAt: "2026-08-13T00:00:00.000Z",
+    updatedAt: "2026-08-13T00:00:00.000Z",
+  };
+}
+
+test("admin page areas enforce the role matrix and any-of editorial access", () => {
+  const allowed: Record<AdminRole, AdminArea[]> = {
+    SUPER_ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "program-settings", "learning", "casinos", "bonuses", "affiliate", "users", "analytics", "settings"],
+    ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "bonuses", "affiliate", "users", "analytics"],
+    EDITOR: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "learning", "casinos", "bonuses"],
+    AUTHOR: ["dashboard", "learning"],
+    REVIEWER: ["dashboard", "programs", "program-preview", "learning", "casinos", "bonuses"],
+    AFFILIATE_MANAGER: ["dashboard", "casinos", "bonuses", "affiliate"],
+    ANALYST: ["dashboard", "analytics"],
+    SUPPORT: ["dashboard", "users"],
+  };
+  const areas = allowed.SUPER_ADMIN;
+
+  for (const role of Object.keys(allowed) as AdminRole[]) {
+    const staff = staffForRole(role);
+    for (const area of areas) {
+      assert.equal(
+        canAccessAdminArea(staff, area),
+        allowed[role].includes(area),
+        `${role} ${area}`,
+      );
+    }
+  }
 });

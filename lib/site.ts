@@ -1,15 +1,36 @@
-export const siteUrl = (
-  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:4173"
-).replace(/\/$/, "");
+type SiteEnvironment = {
+  [key: string]: string | undefined;
+  NEXT_PUBLIC_SITE_URL?: string;
+  VERCEL_ENV?: string;
+};
+
+export const PUBLIC_CANONICAL_ORIGIN = "https://b4gamble.com";
+
+function validOrigin(value: string | undefined) {
+  if (!value) return null;
+  try {
+    const origin = new URL(value.includes("://") ? value : `https://${value}`);
+    if (origin.protocol !== "http:" && origin.protocol !== "https:") return null;
+    return origin.origin;
+  } catch {
+    return null;
+  }
+}
+
+export function resolveSiteUrl(environment: SiteEnvironment = process.env as SiteEnvironment) {
+  if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return PUBLIC_CANONICAL_ORIGIN;
+  return validOrigin(environment.NEXT_PUBLIC_SITE_URL) ?? "http://localhost:4173";
+}
+
+export const siteUrl = resolveSiteUrl();
 
 export const coreRoutes = [
   "",
+  "/10-steps",
   "/program",
   "/self-check",
   "/learn",
   "/responsible-gambling",
-  "/bonuses",
-  "/casinos",
   "/methodology",
   "/affiliate-disclosure",
   "/about",

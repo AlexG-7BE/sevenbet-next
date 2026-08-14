@@ -1,58 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  adminAuthErrorResponse,
-  requireAdminPermission,
-} from "@/lib/auth/admin";
-import {
-  ConflictError,
-  NotFoundError,
-  ServiceError,
-  ValidationError,
-  programService,
-} from "@/lib/services";
+import { requireAdminPermission } from "@/lib/auth/admin";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { programService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-
-function serviceErrorResponse(
-  error: unknown,
-  fallbackMessage: string,
-) {
-  const authResponse = adminAuthErrorResponse(error);
-  if (authResponse) return authResponse;
-
-  if (
-    error instanceof ValidationError ||
-    error instanceof ConflictError ||
-    error instanceof NotFoundError ||
-    error instanceof ServiceError
-  ) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-      },
-      {
-        status: error.statusCode,
-      },
-    );
-  }
-
-  return NextResponse.json(
-    {
-      ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : fallbackMessage,
-    },
-    {
-      status: 500,
-    },
-  );
-}
 
 export async function GET(request: NextRequest) {
   try {
@@ -65,7 +17,7 @@ export async function GET(request: NextRequest) {
       records,
     });
   } catch (error) {
-    return serviceErrorResponse(
+    return adminServiceErrorResponse(
       error,
       "Unable to list programs",
     );
@@ -120,7 +72,7 @@ export async function POST(request: NextRequest) {
       },
     );
   } catch (error) {
-    return serviceErrorResponse(
+    return adminServiceErrorResponse(
       error,
       "Unable to create program",
     );

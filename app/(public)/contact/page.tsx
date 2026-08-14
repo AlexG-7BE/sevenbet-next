@@ -3,10 +3,11 @@ import Link from "next/link";
 
 import { ActionLink } from "@/components/design-system/Action";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
+import { absoluteUrl } from "@/lib/site";
 import { ContactForm } from "./ContactForm";
 import styles from "./ContactPage.module.css";
 
-const contactCanonical = "https://b4gamble.com/contact";
+const contactCanonical = absoluteUrl("/contact");
 
 export const metadata: Metadata = {
   title: "Contact B4GAMBLE | Support and enquiries",

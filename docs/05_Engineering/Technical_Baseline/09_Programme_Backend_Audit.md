@@ -1,37 +1,49 @@
 # Active Control Programme Backend Technical Baseline
 
-Baseline date: **2026-08-10**
+Baseline date: **2026-08-13**
 
 Repository root: `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`
 
-Branch baseline: main `9c3e1aab825bdc5a6cb587a7efb8d030b8e4ea4c` plus the GOOGLE-OAUTH-ACTIVATE-01 correction candidate.
+Branch baseline: current main `c52595405f0800c8c2b51d5951c4a8d45c133034`. FULL-SITE-QA-01 Draft PR #72 worktree changes are not treated as merged baseline facts.
 
 The full active repository inventory was scanned before this update. Dependencies, `.next`, generated output, caches, coverage, test results and `tsconfig.tsbuildinfo` were excluded from source claims. This document records implementation evidence, not target architecture.
 
 ## Summary
 
-- **Detected:** route handlers remain thin, do not import Prisma, authenticate where required, parse bounded inputs and delegate to mission-specific application services.
-- **Detected:** the Active Programme is split across session, claim, Missions 02–04, artefact, dashboard, reward and active-day application services, focused infrastructure repositories and one unit-of-work boundary. There is no central Mission switch, generic workflow DSL or new shared Mission engine.
-- **Detected:** Missions 01–04 keep server-owned completion, XP, achievement, active-day and next-Mission decisions.
+- **Detected:** route handlers remain thin, do not import Prisma, authenticate where required, validate bounded input shapes and delegate to mission-specific application services. **Detected current-main limitation:** several JSON routes buffer `request.text()` before enforcing the 32 KiB contract; unmerged Draft PR #72 adds declared-length and actual streamed-byte enforcement.
+- **Detected:** the legacy Active Programme is split across session, claim, Missions 01–04, artefact, dashboard, reward and active-day application services, focused infrastructure repositories and one unit-of-work boundary.
+- **Detected:** the separately feature-gated PROGRAM-AI path implements Mission 01 plus the RFC-025-approved bounded registry/coordinator for Missions 02–10, three completion-derived Reviews and bounded guidance. This approved package-specific registry is not a runtime plugin system or workflow DSL and does not grow the compatibility `ProgrammeFlowService`.
+- **Detected:** both runtime modes keep completion, XP, achievement/review entitlement, active-day and next-Mission decisions server-owned. A clean PROGRAM-AI M1→M10 path is exactly `715 XP`.
+- **Detected current-main limitation:** the feature flag selects presentation/new operations, but legacy mutation endpoints remain callable while feature-on and share user progression aggregates. Unmerged Draft PR #72 adds an early stable mode-conflict guard; it is not a current-main or Production fact.
 - **Detected:** raw participant narrative is held in React state and subject-scoped `sevenbet.programme.local-content.v2:*` tab `sessionStorage` records. It is not part of active request DTOs.
 - **Detected:** one unchecked access screen records bounded 18+, current Terms and Privacy acknowledgement authority for exactly 60 minutes. The anonymous marker is journey-bound and moves to an exact user namespace after authentication; that transition is separate from content migration and the ten-minute OAuth claim marker.
 - **Detected:** authenticated Dashboard reads with no enrollment return a server-owned empty projection: Mission 01 current/startable, later Missions locked, zero XP and zero completed activity. Better Auth session state, not the visible Mission, owns authenticated header and `/program` home routing.
 - **Detected:** exact key allow-lists reject unexpected raw fields; presenters redact raw legacy artefact columns; legacy reflection creation returns `410` before parsing the request body.
-- **Detected:** existing database columns that require text receive an implementation-owned neutral marker. This release has no Prisma schema or migration change.
+- **Detected:** existing legacy database columns that require text receive an implementation-owned neutral marker. The local-first legacy-content change itself required no destructive migration; current main separately includes additive migrations 0018 and 0019 for PROGRAM-AI M1 and runtime hardening.
 - **Detected limitation:** historic raw `ProgramReflection` and artefact rows may remain for authenticated export and erasure. They are not repopulated into active narrative inputs.
+- **Detected:** migration 0019 and `PrismaProgrammeRateLimiter` provide shared fixed-window counters for deployed Node runtimes; bounded purge code covers expired anonymous sessions, unconsumed claims and expired buckets. Exact deployed migration/Cron activation remains an operations fact.
 
 ## Detected architecture
 
 | Layer | Current implementation |
 | --- | --- |
-| HTTP | `app/api/program/**` routes authenticate, read bounded transport input, apply response/cache policy and call one application operation. |
-| Application | `programme-session`, `programme-claim`, `mission-02`, `mission-03`, `mission-04`, `programme-artefact`, `programme-dashboard`, `programme-reward` and `active-day` services own use-case orchestration. |
+| HTTP | `app/api/program/**` routes authenticate or resolve the approved anonymous authority, read bounded transport input, apply response/cache policy and call one application operation. |
+| Application | Legacy session/claim/Mission 01–04 services plus PROGRAM-AI M1, M2–M10, guidance/transcription, artefact, Dashboard, reward and active-day services own use-case orchestration. |
 | Domain | Mission registry, state-transition rules, reward policy, Programme errors and validation modules own deterministic policy. |
-| Infrastructure | Focused session, progress, artefact, reward and dashboard repositories run behind `ProgrammeUnitOfWork`; Prisma remains below routes and React. |
+| Infrastructure | Focused session, progress, artefact, reward, Dashboard and PROGRAM-AI M1 repositories run behind `ProgrammeUnitOfWork`; shared runtime counters use their dedicated Prisma model. Prisma remains below routes and React. |
 | Presentation | Purpose-specific presenters expose bounded DTOs and blank/redact legacy narrative fields. |
 | Client-local content | `ActiveControlProgramme.tsx` owns Mission-local narrative in React/session storage and sends only the allow-listed continuity fields. |
 
 The older `ProgrammeFlowService` remains as a compatibility façade for existing callers and tests, but delegates to the focused services. It is not a generic Mission engine and new Missions must still receive a dedicated vertical slice under the Programme Architecture Standards.
+
+## Feature-gated PROGRAM-AI Mission 01–10 contract
+
+- **Detected:** exact server flag `PROGRAM_AI_V1_ENABLED=true` selects the PROGRAM-AI experience; missing or malformed values retain the legacy runtime.
+- **Detected:** Mission 01 uses the approved Starting Point, `20 + 20` reward, exact claim and narrow sensitive-input authority. Concrete OpenAI transcription and Programme AI adapters sit behind provider-neutral ports and require additional exact provider gates.
+- **Detected:** Missions 02–10 have three closed structural actions worth `15 + 20 + 15` XP and a `25 XP` completion award. The server registry owns titles, prerequisites, action identities, rewards and next Mission.
+- **Detected:** First, Mid and Full Review entitlement derives from M3, M6 and M10 completion rather than raw XP. Reviews award zero XP and have deterministic provider-off/failure fallbacks.
+- **Detected:** durable Mission 02–10 drafts accept only versioned, allow-listed structural fields. Optional personal wording remains subject-scoped browser-session content and does not enter commercial modules.
+- **Detected:** current transcription code accepts up to 8 MiB/90 seconds. Vercel documents a 4.5 MB complete Function-payload ceiling; proposed RFC-031 identifies the mismatch but is not approved implementation authority.
 
 ## Active request and persistence contracts
 
@@ -75,11 +87,11 @@ Existing records remain connected to `ProgramEnrollment` and to reward/progress 
 - **Detected:** raw narrative uses session storage, not local storage, cookies or URLs.
 - **Detected:** server validators call exact-key assertions and error messages do not interpolate rejected values.
 - **Detected:** no active Programme route logs request bodies or raw narrative.
-- **Detected:** responses use private/no-store handling at Programme HTTP boundaries.
+- **Detected current-main limitation:** private/no-store handling is not uniform across Programme HTTP boundaries. Unmerged Draft PR #72 centralizes `private, no-store, max-age=0` plus `Vary: Cookie`; that branch fix is not a current-main or Production fact.
 - **Detected:** protected Help remains outside Programme completion and commercial event flows.
 - **Detected:** commercial modules are covered by an import/contract firewall test against Programme, Help, Self-Check, limit and vulnerability state.
 - **Detected:** the two unchecked access controls set current, versioned, tab-scoped authority; middleware rejects non-GET `/api/program/**` requests without `x-sevenbet-age-attestation: 18-or-over`.
-- **Detected:** email signup and explicit Google sign-up require the age header plus exact current Terms and Privacy header versions. Returning email sign-in does not require account-creation legal authority; returning Google sign-in retains the age boundary.
+- **Detected:** email signup and Programme Google account creation use the current server-issued, exact-journey signed access proof containing the age/Terms/Privacy claims. Forged static headers alone do not authorise account creation. Returning email sign-in remains proof-free; Google remains identity-only rather than age verification.
 - **Detected:** access authority contains no narrative, identity, token, reward, DOB, KYC or marketing field. Sign-out clears the exact user's authority, global continuation and claim marker while leaving other subject namespaces isolated.
 - **Not detected:** stored DOB, KYC or durable age-attestation evidence. **AGE ATTESTATION PERSISTENCE — P1 OPEN.**
 
@@ -89,7 +101,7 @@ Existing records remain connected to `ProgramEnrollment` and to reward/progress 
 - **Detected:** database uniqueness protects claim consumption, enrolment/Mission rows, one artefact per enrolment, reward keys, achievement keys and active days.
 - **Detected:** completion/reward/next-Mission calculations remain server-side.
 - **Detected limitation:** accepted autosaves do not carry a revision or client sequence; out-of-order field writes remain possible for bounded structured fields.
-- **Inferred risk:** Dashboard projection is not an explicitly isolated read snapshot across all queries, so a concurrent completion could briefly produce a mixed read.
+- **Detected:** Dashboard/reward snapshots use the unit-of-work repeatable-read path when outside an existing completion transaction; completion returns the projection from its transaction context.
 
 ## Legacy and compatibility boundaries
 
@@ -101,11 +113,13 @@ Existing records remain connected to `ProgramEnrollment` and to reward/progress 
 
 ## Operational limitations and open work
 
-- **Detected limitation:** Programme rate limiting is process-local, not distributed.
-- **Detected limitation:** anonymous-session and pending-claim expiry exists in data rules, but automated purge is not implemented.
+- **Detected:** Programme runtime uses shared PostgreSQL fixed-window counters outside isolated Node test workers. Migration 0019 owns the transient bucket table.
+- **Detected:** bounded manual/Cron purge code exists for expired anonymous sessions, unconsumed claims and rate-limit buckets, with a 24-hour grace for Programme session/claim state.
+- **Not detected from repository source:** exact deployed migration, Cron secret/schedule execution, runtime load behavior or alerting. Those remain operational verification gates.
 - **Detected limitation:** durable age evidence is absent.
 - **Detected limitation:** historic raw rows require a separately governed cleanup decision.
-- **Planned:** distributed rate limiting, automated expiry purge, durable age evidence and approved legacy cleanup.
+- **Detected limitation:** current-main feature-on Home can misproject partial M1 action/XP and next-Review distance; unmerged Draft PR #72 corrects the server projection.
+- **Planned:** deployed limiter/Cron verification, durable age evidence and approved legacy cleanup.
 - **Not detected:** Programme telemetry/APM capable of proving scale behaviour; do not claim it.
 
 ## Verification evidence
@@ -120,7 +134,9 @@ The repository includes focused tests for:
 - retired legacy reflection creation;
 - commercial import/DTO firewall invariants;
 - neutral completion, XP, achievement, active-day and next-Mission behaviour;
-- data-subject export/deletion scoping and Production execution guardrails; and
-- existing Programme domain, flow, rendering and user-progress regressions.
+- data-subject export/deletion scoping and Production execution guardrails;
+- existing Programme domain, flow, rendering and user-progress regressions;
+- PROGRAM-AI Missions 02–10 action/completion, exact `715 XP`, Review entitlement, provider fallback and commercial-firewall behavior;
+- and shared limiter limit/reset/concurrency/privacy behavior and bounded purge dry-run/execute/preservation behavior.
 
 Passing tests establish repository behaviour under their fixtures. They do not constitute clinical validation, legal sign-off, Production-data inspection or proof of distributed-runtime behaviour.

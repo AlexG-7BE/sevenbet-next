@@ -21,7 +21,7 @@ test("FE-MIG-06 keeps SSR discovery and published DTO boundaries", () => {
 
 test("public copy has no unsupported verification, featured, ranking-independence, or local-offer claims", () => {
   assert.doesNotMatch(page, /Search verified published profiles/i);
-  assert.match(page, /Search published review snapshots/);
+  assert.match(page, /Search review snapshots/);
   assert.doesNotMatch(page + components + card, /Featured published review|FeaturedCasinoReview/);
   assert.match(card, /Published casino review/);
   assert.doesNotMatch(card, /Rankings and editorial reviews remain independently governed/);

@@ -4,7 +4,7 @@ import {
   getAdminLoginUrl,
   isLegacyPreviewTokenValid,
 } from "@/lib/auth/policy";
-import { resolvePreviewCanonicalHost } from "@/lib/auth/preview-canonical-host";
+import { resolveRuntimeCanonicalHost } from "@/lib/auth/runtime-canonical-host";
 
 const adminCookieName = "sevenbet_admin_preview";
 
@@ -25,10 +25,19 @@ function hasPossibleBetterAuthSession(request: NextRequest) {
   ].some((name) => Boolean(request.cookies.get(name)?.value));
 }
 
+function privateAdminResponse(response: NextResponse) {
+  response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  const vary = response.headers.get("Vary");
+  if (!vary?.split(",").some((value) => value.trim().toLowerCase() === "cookie")) {
+    response.headers.set("Vary", vary ? `${vary}, Cookie` : "Cookie");
+  }
+  return response;
+}
+
 export function middleware(request: NextRequest) {
-  const canonicalHost = resolvePreviewCanonicalHost(request.url);
+  const canonicalHost = resolveRuntimeCanonicalHost(request.url);
   if (canonicalHost.kind === "redirect") {
-    return NextResponse.redirect(canonicalHost.location, 307);
+    return NextResponse.redirect(canonicalHost.location, canonicalHost.status);
   }
   if (canonicalHost.kind === "reject") {
     return NextResponse.json(
@@ -59,8 +68,8 @@ export function middleware(request: NextRequest) {
   if (!isAdminPath && !isAdminApi) return NextResponse.next();
 
   // API authorization is always resolved by the server route, never by cookie presence.
-  if (isAdminApi) return NextResponse.next();
-  if (pathname === "/admin/login") return NextResponse.next();
+  if (isAdminApi) return privateAdminResponse(NextResponse.next());
+  if (pathname === "/admin/login") return privateAdminResponse(NextResponse.next());
 
   const configuredToken = getAdminPreviewToken();
   const legacyEnabled = isLegacyPreviewEnabled();
@@ -85,7 +94,7 @@ export function middleware(request: NextRequest) {
       secure: process.env.NODE_ENV === "production",
       path: "/",
     });
-    return response;
+    return privateAdminResponse(response);
   }
 
   if (
@@ -95,20 +104,20 @@ export function middleware(request: NextRequest) {
       providedTokens: [cookieToken, headerToken],
     })
   ) {
-    return NextResponse.next();
+    return privateAdminResponse(NextResponse.next());
   }
 
   // This is only a lightweight UX redirect. The protected layout verifies the session.
-  if (hasPossibleBetterAuthSession(request)) return NextResponse.next();
+  if (hasPossibleBetterAuthSession(request)) return privateAdminResponse(NextResponse.next());
 
   const callbackUrl = request.nextUrl.clone();
   callbackUrl.searchParams.delete("token");
-  return NextResponse.redirect(
+  return privateAdminResponse(NextResponse.redirect(
     new URL(
       getAdminLoginUrl(`${callbackUrl.pathname}${callbackUrl.search}`),
       request.url,
     ),
-  );
+  ));
 }
 
 export const config = {

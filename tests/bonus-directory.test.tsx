@@ -39,11 +39,18 @@ test("FE-MIG-07 isolates Bonuses from the shared Best Offers presentation", () =
 test("page source preserves SSR, metadata, canonical, noindex and ItemList positions", () => {
   const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
   assert.match(page, /dynamic = "force-dynamic"/);
-  assert.match(page, /publicOfferService\.searchOffers\(query, authority\)/);
+  assert.match(page, /const loadBonusDirectoryResult = cache/);
+  assert.equal((page.match(/publicOfferService\.searchOffers\(/g) || []).length, 1);
   assert.match(page, /parsePublicOfferQuery\(raw, 24\)/);
   assert.match(page, /canonical: absoluteUrl\("\/bonuses"\)/);
   assert.match(page, /index: false, follow: true/);
+  assert.match(page, /const empty = result\.total === 0/);
+  assert.match(page, /unavailable \|\| filtered \|\| containsDemo \|\| empty/);
   assert.match(page, /"@type": "ItemList"/);
+  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \?/);
+  assert.match(page, /result\.inventoryMode === "UNAVAILABLE"/);
+  assert.match(page, /Casino Bonus Directory Unavailable/);
+  assert.match(page, /The Published Directory Could Not Be Loaded/);
   assert.match(page, /position: startPosition \+ index/);
   assert.doesNotMatch(page, /@prisma\/client|staticOffers|demo-/);
 });
@@ -67,4 +74,17 @@ test("pending and error states fail without invented offer truth", () => {
   assert.match(error, /fail closed/i);
   assert.match(error, /No cached or invented commercial record/);
   assert.match(error, /reset/);
+});
+
+test("mobile material results preserve readable text and flexible content height", () => {
+  const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
+  const termsRule = styles.match(/\.mobileResultTerms span \{[^}]*\}/s)?.[0] ?? "";
+  const evidenceRule = styles.match(/\.mobileResultEvidence \{[^}]*\}/s)?.[0] ?? "";
+  assert.match(styles, /\.mobileMaterialResult \{[^}]*min-height: 178px;[^}]*display: grid;/s);
+  assert.match(termsRule, /font-size: 12px;/);
+  assert.match(termsRule, /overflow-wrap: anywhere;/);
+  assert.match(evidenceRule, /font-size: 12px;/);
+  assert.match(evidenceRule, /overflow-wrap: anywhere;/);
+  assert.match(styles, /\.mobileReviewAction \{[^}]*min-height: 44px;[^}]*font-size: 12px;/s);
+  assert.doesNotMatch(styles, /\.mobileMaterialResult \{[^}]*height: 124px/s);
 });

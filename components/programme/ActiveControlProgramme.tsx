@@ -382,7 +382,7 @@ function Header({ xp }: { xp?: number }) {
         <Link href="/bonuses">Bonuses</Link>
         <Link href="/best-offers">Best offers</Link>
         <Link href="/casinos">Reviews</Link>
-        <Link href="/casinos">Compare</Link>
+        <Link href="/compare">Compare</Link>
       </nav>
       <div className={styles.accountNav}>
         <Link href="/responsible-gambling">Help</Link>
@@ -400,7 +400,34 @@ function AccessGate({ onConfirm, busy, error }: { onConfirm: () => void; busy: b
   const [adultConfirmed, setAdultConfirmed] = useState(false);
   const [legalAcknowledged, setLegalAcknowledged] = useState(false);
   const ready = adultConfirmed && legalAcknowledged;
-  return <div className={styles.programmeShell}><Header /><section className={styles.registrationForm}><div><div className={styles.titleBlock}><span>ADULT PROGRAMME · ACCOUNT ACCESS</span><h1>Confirm before you continue.</h1><p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p></div><div className={styles.accountRequirements}><label className={styles.check}><input checked={adultConfirmed} disabled={busy} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label><label className={styles.check}><input checked={legalAcknowledged} disabled={busy} onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" /><span>I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</span></label></div><PrimaryButton disabled={!ready || busy} onClick={onConfirm}>{busy ? "Confirming…" : "Continue to the Programme"}</PrimaryButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}<p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p></div><PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." /></section></div>;
+  return (
+    <div className={styles.programmeShell}>
+      <Header />
+      <section className={styles.registrationForm}>
+        <div>
+          <div className={styles.titleBlock}>
+            <span>ADULT PROGRAMME · ACCOUNT ACCESS</span>
+            <h1>Confirm before you continue.</h1>
+            <p>B4GAMBLE uses self-attestation only. This step does not collect your date of birth, perform KYC or request marketing consent.</p>
+          </div>
+          <div className={styles.accountRequirements}>
+            <label className={styles.check}><input checked={adultConfirmed} disabled={busy} onChange={(event) => setAdultConfirmed(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label>
+            <div className={styles.check}>
+              <input checked={legalAcknowledged} disabled={busy} id="legacy-programme-legal-acknowledgement" onChange={(event) => setLegalAcknowledged(event.target.checked)} type="checkbox" />
+              <div>
+                <label htmlFor="legacy-programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice · required</label>
+                <span><Link href="/terms">Read Terms</Link><span aria-hidden="true"> · </span><Link href="/privacy">Read Privacy Notice</Link></span>
+              </div>
+            </div>
+          </div>
+          <PrimaryButton disabled={!ready || busy} onClick={onConfirm}>{busy ? "Confirming…" : "Continue to the Programme"}</PrimaryButton>
+          {error ? <p className={styles.error} role="alert">{error}</p> : null}
+          <p><Link href="/responsible-gambling">Protected Help remains available without creating an account.</Link></p>
+        </div>
+        <PhotoTheatre image={PEOPLE.portrait} eyebrow="18+ · SELF-ATTESTATION" title="Private reflection. Adult access." note="No date of birth, KYC or marketing consent is collected by this step." />
+      </section>
+    </div>
+  );
 }
 
 const PROGRAMME_ACCESS_RETRY_MESSAGE = "We couldn’t confirm your access. Please try again.";
@@ -488,8 +515,8 @@ function EvidenceCard({ mission }: { mission: 1 | 2 | 3 | 4 }) {
 
 function Choice({ active, title, description, onClick }: { active: boolean; title: string; description?: string; onClick: () => void }) {
   return (
-    <button className={`${styles.choice} ${active ? styles.choiceActive : ""}`} onClick={onClick} type="button">
-      <span>{active ? "✓" : ""}</span><strong>{title}</strong>{description ? <small>{description}</small> : null}
+    <button aria-pressed={active} className={`${styles.choice} ${active ? styles.choiceActive : ""}`} onClick={onClick} type="button">
+      <span aria-hidden="true">{active ? "✓" : ""}</span><strong>{title}</strong>{description ? <small>{description}</small> : null}
     </button>
   );
 }
@@ -1032,6 +1059,45 @@ function EditOverlay({ type, dashboard, onClose, onSaved }: { type: "moment" | "
   const [boundary, setBoundary] = useState<ActiveBoundary>(dashboard.activeBoundary || emptyBoundary);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  useEffect(() => {
+    const dialog = document.querySelector<HTMLElement>(`[role="dialog"][aria-modal="true"]`);
+    if (!dialog) return undefined;
+    const returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const siblings = Array.from(dialog.parentElement?.children ?? [])
+      .filter((element): element is HTMLElement => element instanceof HTMLElement && element !== dialog)
+      .map((element) => ({ element, inert: element.inert }));
+    siblings.forEach(({ element }) => { element.inert = true; });
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusableSelector = "button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href]";
+    dialog.querySelector<HTMLElement>(focusableSelector)?.focus();
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    dialog.addEventListener("keydown", onKeyDown);
+    return () => {
+      dialog.removeEventListener("keydown", onKeyDown);
+      siblings.forEach(({ element, inert }) => { element.inert = inert; });
+      document.body.style.overflow = previousOverflow;
+      returnFocus?.focus();
+    };
+  }, [onClose]);
   async function save(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError("");
     try {

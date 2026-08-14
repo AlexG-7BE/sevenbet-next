@@ -54,10 +54,19 @@ export function permissionForEntity(entity: CmsEntity, action: "create" | "read"
   if (entity === "lesson") return action === "read" ? "program.view" : "lesson.edit";
   if (entity === "achievement") return "achievement.manage";
   if (entity === "xp-rule") return "xp.manage";
-  if (action === "read") return entity === "affiliate-link" ? "affiliate.manage" : "article.edit";
   if (entity === "casino") return "casino.edit";
   if (entity === "bonus") return "bonus.edit";
   if (entity === "affiliate-link") return "affiliate.manage";
   if (entity === "settings" || entity === "navigation") return "settings.manage";
   return action === "create" ? "article.create" : "article.edit";
+}
+
+export function permissionsForEntity(
+  entity: CmsEntity,
+  action: "create" | "read" | "update" | "delete",
+): readonly CmsPermission[] {
+  if (entity === "article" && action === "read") {
+    return ["article.create", "article.edit", "article.review", "article.publish"];
+  }
+  return [permissionForEntity(entity, action)];
 }

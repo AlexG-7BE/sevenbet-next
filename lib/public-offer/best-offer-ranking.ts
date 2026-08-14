@@ -102,17 +102,20 @@ export function bestFitWinners(shortlist: PublicOfferDTO[]) {
 }
 
 export function shortlistReason(offer: PublicOfferDTO) {
+  const demonstration = offer.dataClassification === "DEMO_FIXTURE";
   const signals = [
-    offer.casino.editorScore >= 9 ? "high editorial score" : "published editorial score",
-    offer.casino.featured || offer.casino.recommended ? "editorial selection" : null,
+    offer.casino.editorScore >= 9 ? demonstration ? "high fictional editorial field" : "high editorial score" : demonstration ? "fictional editorial field" : "published editorial score",
+    offer.casino.featured || offer.casino.recommended ? demonstration ? "illustrative selection" : "editorial selection" : null,
     offer.bonus.wageringMultiplier !== null ? `${offer.bonus.wageringMultiplier}× wagering` : null,
     hasPayoutEvidence(offer) ? "withdrawal-time visibility" : null,
   ].filter(Boolean);
-  return `Strong balance of complete published terms, ${signals.slice(0, 3).join(", ")} and stable editorial ordering.`;
+  return demonstration
+    ? `Strong balance of complete fictional fields, ${signals.slice(0, 3).join(", ")} and stable illustrative ordering.`
+    : `Strong balance of complete published terms, ${signals.slice(0, 3).join(", ")} and stable editorial ordering.`;
 }
 
 export const criterionExplanations: Record<BestFitCriterion, string> = {
-  overall: "Strongest overall balance under the published editorial ranking.",
-  wagering: "Lowest published non-null wagering requirement in the current eligible shortlist.",
-  payout: "Fastest published withdrawal-time signal in the current eligible shortlist; this is not a payout guarantee.",
+  overall: "Strongest overall balance under the source-declared editorial ordering.",
+  wagering: "Lowest non-null wagering requirement in the eligible shortlist.",
+  payout: "Fastest source-supplied withdrawal-time signal in the eligible shortlist; this is not a payout guarantee.",
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 
 import { ActionButton, ActionLink } from "@/components/design-system/Action";
 import { ProgramAiHomeScreen } from "@/components/programme/ProgramAiHome";
@@ -168,8 +168,14 @@ function AccessScreen({ busy, error, onConfirm }: {
         <section className={styles.accessCard} aria-labelledby="access-title">
           <span>PROGRAMME ACCESS</span>
           <h2 id="access-title">Two checks before you begin</h2>
-          <label><input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" /> I confirm I am 18 or over · required</label>
-          <label><input checked={legal} onChange={(event) => setLegal(event.target.checked)} type="checkbox" /> I agree to the <Link href="/terms">Terms</Link> and acknowledge the <Link href="/privacy">Privacy Notice</Link> · required</label>
+          <label><input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" /><span>I confirm I am 18 or over · required</span></label>
+          <div className={styles.accessCheck}>
+            <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
+            <div className={styles.accessCheckCopy}>
+              <label htmlFor="programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice · required</label>
+              <span><Link href="/terms">Read Terms</Link><span aria-hidden="true"> · </span><Link href="/privacy">Read Privacy Notice</Link></span>
+            </div>
+          </div>
           <ActionButton disabled={busy || !adult || !legal} onClick={onConfirm} size="large">
             {busy ? "Verifying access…" : "Enter Mission 01"}
           </ActionButton>
@@ -606,8 +612,8 @@ function RegistrationScreen({
           {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google</ActionButton> : null}
           {!googleLinkRecovery ? <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
           {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
-            <label className={styles.field}><span>Email</span><input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
-            <label className={styles.field}><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+            <label className={styles.field}><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
+            <label className={styles.field}><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
             <ActionButton disabled={busy} size="large" type="submit">{googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email"}</ActionButton>
             {!googleLinkRecovery ? <button className={styles.textButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}
           </form> : null}
@@ -642,6 +648,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     recordingDurationMs: number;
     transcriptionRequestMs: number;
   } | null>(null);
+  const phaseFocusRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (phase !== "home" || !home) return;
@@ -1064,17 +1071,38 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setHome(null);
   }
 
-  if (phase === "loading" || sessionPending) return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>;
-  if (phase === "access") return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
-  if (phase === "intake") return <IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />;
-  if (phase === "clarification") return <ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />;
-  if (phase === "candidate" && local.candidate) return <CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />;
-  if (phase === "support") return <SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />;
-  if (phase === "reward") return <RewardScreen busy={busy} error={error} onContinue={openRegistration} />;
-  if (phase === "registration") return <RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />;
-  if (phase === "mission" && activeMission && home && session?.user.id) return <ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />;
-  if (phase === "review" && activeReview && home && session?.user.id) return <ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />;
-  if (phase === "home" && home && session?.user.id) return <ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />;
-  if (phase === "home") return <div className={styles.page}><Header /><main className={styles.singlePanel}><p role="alert">{error || "Programme Home is unavailable. Refresh to retry."}</p></main></div>;
-  return <AccessScreen busy={busy} error={error} onConfirm={grantAccess} />;
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const boundary = phaseFocusRef.current;
+      if (boundary && !boundary.contains(document.activeElement)) boundary.focus();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [phase]);
+
+  const renderPhase = (screen: ReactNode) => (
+    <div
+      aria-label={`Programme ${phase} screen`}
+      className={styles.phaseBoundary}
+      data-programme-phase={phase}
+      ref={phaseFocusRef}
+      role="region"
+      tabIndex={-1}
+    >
+      {screen}
+    </div>
+  );
+
+  if (phase === "loading" || sessionPending) return renderPhase(<div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/responsible-gambling">Protected Help remains available.</Link></main></div>);
+  if (phase === "access") return renderPhase(<AccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
+  if (phase === "intake") return renderPhase(<IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
+  if (phase === "clarification") return renderPhase(<ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />);
+  if (phase === "candidate" && local.candidate) return renderPhase(<CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />);
+  if (phase === "support") return renderPhase(<SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />);
+  if (phase === "reward") return renderPhase(<RewardScreen busy={busy} error={error} onContinue={openRegistration} />);
+  if (phase === "registration") return renderPhase(<RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
+  if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);
+  if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />);
+  if (phase === "home") return renderPhase(<div className={styles.page}><Header /><main className={styles.singlePanel}><p role="alert">{error || "Programme Home is unavailable. Refresh to retry."}</p></main></div>);
+  return renderPhase(<AccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
 }

@@ -5,7 +5,7 @@ import styles from "./PublicShell.module.css";
 const groups = [
   { title: "Discover", links: [["Casinos", "/casinos"], ["Bonuses", "/bonuses"], ["Best offers", "/best-offers"], ["Compare", "/compare"]] },
   { title: "Programme", links: [["10 Steps", "/10-steps"], ["My Programme", "/program"], ["Learn", "/learn"]] },
-  { title: "Trust", links: [["Methodology", "/methodology"], ["Affiliate disclosure", "/affiliate-disclosure"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
+  { title: "Trust", links: [["Methodology", "/methodology"], ["Affiliate disclosure", "/affiliate-disclosure"], ["FAQ", "/faq"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
 ] as const;
 
 export function PublicFooter() {

@@ -193,9 +193,19 @@ test("overall shortlist is GB-only, complete and capped at twelve with stable ti
   assert.ok(shortlist.every((item) => item.bonus.wageringMultiplier !== null));
 });
 
-test("CMS retrieval failures fail closed and never fall back to legacy offers", async () => {
-  const result = await new PublicOfferService(store([], true), { cmsEnabled: true }).searchOffers(parsePublicOfferQuery({}));
-  assert.equal(result.total, 0);
+test("CMS retrieval failures project unavailable without conflating legitimate empty inventory", async () => {
+  const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }).searchOffers(parsePublicOfferQuery({ page: "4" }));
+  assert.equal(unavailable.inventoryMode, "UNAVAILABLE");
+  assert.equal(unavailable.total, 0);
+  assert.equal(unavailable.page, 1);
+  assert.deepEqual(unavailable.records, []);
+  assert.deepEqual(unavailable.facets, buildOfferFacets([]));
+
+  const empty = await new PublicOfferService(store([]), { cmsEnabled: true }).searchOffers(parsePublicOfferQuery({}));
+  assert.equal(empty.inventoryMode, "PUBLISHED_ONLY");
+  assert.equal(empty.total, 0);
+  assert.deepEqual(empty.records, []);
+
   const legacy = await new PublicOfferService(store([], true), { cmsEnabled: false }).searchOffers(parsePublicOfferQuery({}));
   assert.ok(legacy.total > 0);
   assert.ok(legacy.records.every((item) => item.commercialAvailability === "UNAVAILABLE" && item.action.href === null));
@@ -232,7 +242,7 @@ test("Best Offers uses the same exact demonstration when the CMS-disabled compat
 
 test("Best Offers never replaces a repository failure or eligible published shortlist with demonstrations", async () => {
   const unavailable = await new PublicOfferService(store([], true), { cmsEnabled: true }).getBestOffersPageData();
-  assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "PUBLISHED_ONLY" });
+  assert.deepEqual(unavailable, { status: "unavailable", records: [], inventoryMode: "UNAVAILABLE" });
 
   const published = offer("published-eligible", { score: 9.4, featured: true });
   const available = await new PublicOfferService(store([published]), { cmsEnabled: true }).getBestOffersPageData();
@@ -290,6 +300,18 @@ test("public offer pages use the service boundary and expose no raw destination 
     assert.match(source, /publicOfferService/);
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|listCasinoViews|demo-/);
   }
+  const bestOffersPage = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
+  assert.match(bestOffersPage, /const loadBestOffersPageData = cache/);
+  assert.equal((bestOffersPage.match(/getBestOffersPageData\(/g) || []).length, 1);
+  assert.match(bestOffersPage, /result\.status === "available" && result\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(bestOffersPage, /result\.status === "unavailable"/);
+  assert.match(bestOffersPage, /Casino Offer Comparison Unavailable/);
+  const experience = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
+  assert.match(experience, /tabIndex=\{criterion === key \? 0 : -1\}/);
+  for (const key of ["ArrowRight", "ArrowLeft", "Home", "End"]) assert.match(experience, new RegExp(`event\\.key === "${key}"`));
+  const styles = readFileSync("components/best-offers/BestOffers.module.css", "utf8");
+  assert.match(styles, /@media \(max-width: 1100px\)[\s\S]*\.rankedGrid \{ grid-template-columns: repeat\(2/);
+  assert.doesNotMatch(styles, /\.rankedConditions p \{[^}]*white-space: nowrap/s);
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);
   for (const file of ["app/(public)/best-offers/page.tsx", "components/best-offers/BestOffersExperience.tsx", "lib/public-offer/best-offer-ranking.ts"]) {

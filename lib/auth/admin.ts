@@ -7,6 +7,10 @@ import prisma from "@/lib/db/prisma";
 import type { CmsPermission } from "@/lib/cms/types";
 import { canPerformAction } from "@/lib/cms/permissions";
 import {
+  canAccessAdminArea,
+  type AdminArea,
+} from "@/lib/auth/admin-page-policy";
+import {
   AdminAuthError,
   getAdminLoginUrl,
   isAdminAuthError,
@@ -16,10 +20,7 @@ import {
   createStaffContext,
   type StaffContext,
 } from "@/lib/auth/staff-context";
-import {
-  requireStaff,
-  requireStaffPermission,
-} from "@/lib/auth/staff";
+import { requireStaff } from "@/lib/auth/staff";
 
 const adminCookieName = "sevenbet_admin_preview";
 
@@ -125,26 +126,36 @@ export async function requireAdminPermission(
   request: Request | NextRequest,
   permission: CmsPermission,
 ) {
+  return requireAdminAnyPermission(request, [permission]);
+}
+
+export async function requireAdminAnyPermission(
+  request: Request | NextRequest,
+  permissions: readonly CmsPermission[],
+) {
+  const staff = await requireAdminAccess(request);
+  if (!permissions.some((permission) => canPerformAction(staff, permission))) {
+    throw new AdminAuthError(
+      `Missing CMS permission: ${permissions.join(" or ")}`,
+      403,
+      "STAFF_PERMISSION_REQUIRED",
+    );
+  }
+  return staff;
+}
+
+export async function getAdminPageAccess(
+  input: Request | NextRequest | Headers,
+  area: AdminArea,
+) {
   try {
-    return await requireStaffPermission(permission, {
-      headers: request.headers,
+    const staff = await requireAdminAccess(input, {
+      onUnauthenticated: "redirect",
     });
+    return canAccessAdminArea(staff, area) ? staff : null;
   } catch (error) {
-    if (!isAdminAuthError(error)) throw error;
-
-    const legacyStaff = await getLegacyPreviewStaff(request);
-
-    if (!legacyStaff) throw error;
-
-    if (!canPerformAction(legacyStaff, permission)) {
-      throw new AdminAuthError(
-        `Missing CMS permission: ${permission}`,
-        403,
-        "STAFF_PERMISSION_REQUIRED",
-      );
-    }
-
-    return legacyStaff;
+    if (isAdminAuthError(error) && error.statusCode === 403) return null;
+    throw error;
   }
 }
 
@@ -171,18 +182,7 @@ export async function canAdminPerform(
   return canPerformAction(user, permission);
 }
 
-export function adminAuthErrorResponse(error: unknown) {
-  if (!isAdminAuthError(error)) return null;
-
-  return NextResponse.json(
-    {
-      ok: false,
-      error: error.message,
-      code: error.code,
-    },
-    { status: error.statusCode },
-  );
-}
+export { adminAuthErrorResponse } from "@/lib/http/admin-auth-error";
 
 export function createAdminPreviewResponse() {
   const token = getAdminPreviewToken();
@@ -197,6 +197,8 @@ export function createAdminPreviewResponse() {
       process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:4173",
     ),
   );
+  response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  response.headers.set("Vary", "Cookie");
   response.cookies.set(adminCookieName, token, {
     httpOnly: true,
     sameSite: "lax",

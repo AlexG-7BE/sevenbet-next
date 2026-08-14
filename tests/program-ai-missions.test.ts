@@ -150,7 +150,7 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
             chosenBoundaryAction: null,
           },
         } : null,
-        totalXp: [...xpEvents.values()].reduce((sum, value) => sum + value, 0),
+        totalXp: userId === enrollment.userId ? [...xpEvents.values()].reduce((sum, value) => sum + value, 0) : 0,
       }),
     },
   };
@@ -171,6 +171,86 @@ test("Missions 02–10 expose exact immutable action and reward contracts", () =
   }
   assert.equal(keys.size, 36);
   assert.equal(40 + programAiMissionRegistry.length * 75, 715);
+});
+
+test("Programme Home projects exact Mission 01 progress and first Review distance", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const emptyService = new ProgrammeAiMissionsService(fakeUnitOfWork().unit as never);
+    const empty = await emptyService.home("new-user");
+    assert.equal(empty.totalXp, 0);
+    assert.equal(empty.currentMission, 1);
+    assert.equal(empty.currentAction, "program_ai_situation_submitted");
+    assert.deepEqual(
+      { completed: empty.missions[0].actionsCompleted, total: empty.missions[0].actionsTotal, xp: empty.missions[0].xpEarnedHere },
+      { completed: 0, total: 2, xp: 0 },
+    );
+    assert.deepEqual(
+      { xp: empty.nextReview?.xpRemaining, missions: empty.nextReview?.missionsRemaining },
+      { xp: 190, missions: 3 },
+    );
+
+    const partialService = new ProgrammeAiMissionsService(fakeUnitOfWork({ m1Incomplete: true }).unit as never);
+    const partial = await partialService.home("user-a");
+    assert.equal(partial.currentAction, "program_ai_starting_point_complete");
+    assert.deepEqual(
+      { completed: partial.missions[0].actionsCompleted, total: partial.missions[0].actionsTotal, xp: partial.missions[0].xpEarnedHere },
+      { completed: 1, total: 2, xp: 20 },
+    );
+    assert.deepEqual(
+      { xp: partial.nextReview?.xpRemaining, missions: partial.nextReview?.missionsRemaining },
+      { xp: 170, missions: 3 },
+    );
+
+    const completedService = new ProgrammeAiMissionsService(fakeUnitOfWork().unit as never);
+    const completed = await completedService.home("user-a");
+    assert.equal(completed.currentMission, 2);
+    assert.deepEqual(
+      { completed: completed.missions[0].actionsCompleted, total: completed.missions[0].actionsTotal, xp: completed.missions[0].xpEarnedHere },
+      { completed: 2, total: 2, xp: 40 },
+    );
+    assert.deepEqual(
+      { xp: completed.nextReview?.xpRemaining, missions: completed.nextReview?.missionsRemaining },
+      { xp: 150, missions: 2 },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
+test("first Review distance follows each remaining approved action and completion reward", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const fake = fakeUnitOfWork();
+    const service = new ProgrammeAiMissionsService(fake.unit as never);
+    const distance = async () => {
+      const next = (await service.home("user-a")).nextReview;
+      return [next?.xpRemaining, next?.missionsRemaining];
+    };
+    assert.deepEqual(await distance(), [150, 2]);
+    for (const [missionNumber, expected] of [
+      [2, [[135, 2], [115, 2], [100, 2], [75, 1]]],
+      [3, [[60, 1], [40, 1], [25, 1], [225, 3]]],
+    ] as const) {
+      const definition = programAiMissionRegistry[missionNumber - 2];
+      for (let index = 0; index < definition.actions.length; index += 1) {
+        const action = definition.actions[index];
+        await service.recordAction("user-a", definition.missionNumber, { action: action.id, artifact: actionInputs[action.id] });
+        assert.deepEqual(await distance(), expected[index]);
+      }
+      await service.complete("user-a", definition.missionNumber);
+      assert.deepEqual(await distance(), expected[3]);
+    }
+    const home = await service.home("user-a");
+    assert.equal(home.reviews[0].status, "available");
+    assert.equal(home.nextReview?.milestone, "mid");
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
 });
 
 test("every Mission action validates its exact closed artifact and rejects unknown client fields", () => {
@@ -319,7 +399,7 @@ test("prerequisites and enrollment ownership deny bypass while legacy completion
   }
 });
 
-test("an authenticated incomplete Mission 01 remains current without fabricated completion or XP", async () => {
+test("an authenticated incomplete Mission 01 reports its accepted action and XP exactly", async () => {
   const previous = process.env.PROGRAM_AI_V1_ENABLED;
   process.env.PROGRAM_AI_V1_ENABLED = "true";
   try {
@@ -330,7 +410,9 @@ test("an authenticated incomplete Mission 01 remains current without fabricated 
     assert.equal(home.missions[0].status, "current");
     assert.equal(home.missions[1].status, "locked");
     assert.equal(home.totalXp, 20);
-    assert.equal(home.missions[0].xpEarnedHere, 0);
+    assert.equal(home.missions[0].actionsCompleted, 1);
+    assert.equal(home.missions[0].actionsTotal, 2);
+    assert.equal(home.missions[0].xpEarnedHere, 20);
     assert.equal(fake.xpEvents.size, 1);
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;

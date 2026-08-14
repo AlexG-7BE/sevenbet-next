@@ -11,11 +11,13 @@ import {
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { assertOnlyKeys, objectInput } from "@/lib/programme/validation";
 import { programmeClaimService } from "@/lib/programme/application/programme-claim.service";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     const user = await requireCurrentUser(request.headers);
     const claimToken = requestCookie(request, pendingProgrammeClaimCookie);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);

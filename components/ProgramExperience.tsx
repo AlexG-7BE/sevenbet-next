@@ -793,7 +793,7 @@ export function ProgramExperience({
         <Container className="narrow">
           <Card tone="soft">
             <Badge tone="green">Program progress</Badge>
-            <h1>The SevenBet 10-Step Control Program</h1>
+            <h1>The B4GAMBLE 10-Step Control Program</h1>
             <p className="lead">Loading your saved progress...</p>
           </Card>
         </Container>
@@ -806,7 +806,7 @@ export function ProgramExperience({
       <section className="pageShell">
         <Container>
           <p className="eyebrow">Flagship interactive program</p>
-          <h1>The SevenBet 10-Step Control Program</h1>
+          <h1>The B4GAMBLE 10-Step Control Program</h1>
           <p className="lead">
             A guided educational experience with short lessons, scenario questions, quizzes, practical takeaways, saved
             progress, XP, and calm achievement badges.

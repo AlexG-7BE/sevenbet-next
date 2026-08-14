@@ -15,6 +15,7 @@ import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { absoluteUrl } from "../lib/site";
 
 function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
   return {
@@ -96,14 +97,42 @@ test("metadata and structured data contain no raw operator destination or fabric
 });
 
 test("exact-ID demo profiles are noindex, truthful and suppress review/commercial schemas", () => {
-  const record = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo", affiliate: { href: "/r/demo", available: true } });
+  const record = casino({
+    id: temporaryDemoCasinoIds[0],
+    slug: "demo-northstar",
+    name: "Fictional Demo",
+    seo: {
+      ...casino().seo,
+      canonical: "https://sevenbet-next.vercel.app/casino/demo-northstar",
+      socialImage: "https://sevenbet-next.vercel.app/demo-casinos/demo-northstar-hero.svg",
+    },
+    media: {
+      ...casino().media,
+      hero: {
+        id: "demo-hero",
+        type: "hero",
+        url: "/demo-casinos/demo-northstar-hero.svg",
+        alt: "Fictional demo hero",
+        width: 1600,
+        height: 900,
+        caption: null,
+      },
+    },
+    affiliate: { href: "/r/demo", available: true },
+  });
   assert.equal(profileAction(record, selectProfileBonus(record)), null);
   const metadata = casinoProfileMetadata(record, editorial);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.match(String(metadata.title), /Fictional Review Demonstration/);
   assert.match(String(metadata.description), /not a current GB operator/i);
+  const metadataSerialized = JSON.stringify(metadata);
+  assert.match(metadataSerialized, new RegExp(absoluteUrl("/casino/demo-northstar").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(metadataSerialized, new RegExp(absoluteUrl("/demo-casinos/demo-northstar-hero.svg").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(metadataSerialized, /vercel\.app/);
   const serialized = JSON.stringify(casinoProfileSchemas(record, editorial));
   assert.match(serialized, /fictional review demonstration/i);
+  assert.match(serialized, new RegExp(absoluteUrl("/casino/demo-northstar").replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(serialized, /vercel\.app/);
   assert.doesNotMatch(serialized, /"@type":"Review"|"@type":"FAQPage"|"@type":"Offer"/);
 });
 
@@ -124,6 +153,7 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
+  assert.match(route, /candidate\?\.source === "cms"/);
   assert.match(component, /Offer unavailable/);
   assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
   assert.match(action, /href=\{confirmationHref\}/);

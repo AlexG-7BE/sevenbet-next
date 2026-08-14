@@ -13,7 +13,6 @@ import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
 
-const loadCasino = cache((slug: string) => publicCasinoService.getCasino(slug));
 const loadEditorial = cache(async (slug: string) => {
   try {
     return await editorialReviewService.getPublishedBySlug(slug);
@@ -21,17 +20,24 @@ const loadEditorial = cache(async (slug: string) => {
     return null;
   }
 });
+const loadCasinoPage = cache(async (slug: string) => {
+  const [authority, editorialResult] = await Promise.all([resolveServerJurisdiction(), loadEditorial(slug)]);
+  const candidate = await publicCasinoService.getCasino(slug, authority);
+  return {
+    casino: candidate?.source === "cms" ? candidate : null,
+    editorialResult,
+  };
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const [casino, editorialResult] = await Promise.all([loadCasino(slug), loadEditorial(slug)]);
+  const { casino, editorialResult } = await loadCasinoPage(slug);
   return casinoProfileMetadata(casino, casino ? profileEditorialDocument(editorialResult, casino.id) : null);
 }
 
 export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const [authority, editorialResult] = await Promise.all([resolveServerJurisdiction(), loadEditorial(slug)]);
-  const casino = await publicCasinoService.getCasino(slug, authority);
+  const { casino, editorialResult } = await loadCasinoPage(slug);
   if (!casino) notFound();
   const editorial = profileEditorialDocument(editorialResult, casino.id);
   const schemas = casinoProfileSchemas(casino, editorial);

@@ -37,7 +37,7 @@ for (const legal of [
     const firstTocLink = page.getByRole("navigation", { name: "On this page" }).getByRole("link").first();
     await firstTocLink.focus();
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/#who-we-are$|#about-sevenbet$/);
+    await expect(page).toHaveURL(/#who-we-are$|#about-b4gamble$/);
     expect(errors).toEqual([]);
   });
 }

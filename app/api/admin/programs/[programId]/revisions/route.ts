@@ -3,48 +3,11 @@ import {
   type NextRequest,
 } from "next/server";
 
-import {
-  adminAuthErrorResponse,
-  requireAdminPermission,
-} from "@/lib/auth/admin";
-import {
-  ServiceError,
-  programBuilderService,
-} from "@/lib/services";
+import { requireAdminPermission } from "@/lib/auth/admin";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { programBuilderService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-
-function errorResponse(error: unknown) {
-  const authResponse = adminAuthErrorResponse(error);
-  if (authResponse) return authResponse;
-
-  if (error instanceof ServiceError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-      },
-      {
-        status: error.statusCode,
-      },
-    );
-  }
-
-  return NextResponse.json(
-    {
-      ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Revision operation failed",
-    },
-    {
-      status: 400,
-    },
-  );
-}
 
 export async function GET(
   request: NextRequest,
@@ -73,7 +36,7 @@ export async function GET(
       source: "postgresql",
     });
   } catch (error) {
-    return errorResponse(error);
+    return adminServiceErrorResponse(error, "Revision operation failed");
   }
 }
 
@@ -125,6 +88,6 @@ export async function POST(
       source: "postgresql",
     });
   } catch (error) {
-    return errorResponse(error);
+    return adminServiceErrorResponse(error, "Revision operation failed");
   }
 }

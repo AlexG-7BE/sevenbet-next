@@ -1,4 +1,3 @@
-import { getTopCasinos } from "@/lib/data";
 import {
   getArticlePath,
   getCategoryPath,
@@ -11,9 +10,6 @@ import { absoluteUrl } from "@/lib/site";
 export const dynamic = "force-static";
 
 export function GET() {
-  const topCasinos = getTopCasinos(8)
-    .map((casino) => `- [${casino.name}](${absoluteUrl(`/casino/${casino.slug}`)}): ${casino.bonusHeadline}; wagering x${casino.wagering}; license ${casino.license}.`)
-    .join("\n");
   const learningGuides = learningArticles
     .map((article) => `- [${article.title}](${absoluteUrl(`/responsible-gambling/${article.slug}`)}): ${article.summary}`)
     .join("\n");
@@ -57,9 +53,11 @@ ${learningCenterArticles}
 
 ${learningGuides}
 
-## Top Casino Profiles
+## Casino Data Boundary
 
-${topCasinos}
+- [Casino reviews](${absoluteUrl("/casinos")}) publishes only the records and presentation state authorised by the current public casino service.
+- [Best Offers](${absoluteUrl("/best-offers")}) may show a clearly labelled demonstration when no complete published offers pass the evidence contract. Demonstration records are fictional and have no commercial outbound action.
+- Casino and bonus availability, terms, licence context and jurisdiction eligibility must be verified on the current page before a user acts.
 
 ## Important Context
 

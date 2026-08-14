@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { AdminApiActions, AdminPageShell, AdminRecordTable, AdminStatCard } from "@/components/admin/AdminShell";
+import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { Badge, Card } from "@/components/ui";
+import { getAdminPageAccess } from "@/lib/auth/admin";
+import { canAccessAdminArea, type AdminArea } from "@/lib/auth/admin-page-policy";
 import { entityLabels } from "@/lib/cms/entities";
 import { listCmsRecords } from "@/lib/cms/repository";
 import type { CmsEntity } from "@/lib/cms/types";
@@ -46,8 +50,16 @@ const sectionConfig: Record<string, { title: string; intro: string; entities: Cm
   },
 };
 
+const sectionAreas: Record<string, AdminArea> = {
+  learning: "learning",
+  bonuses: "bonuses",
+  users: "users",
+  analytics: "analytics",
+  settings: "settings",
+};
+
 export const metadata: Metadata = {
-  title: "CMS Section | SevenBet",
+  title: "CMS Section | B4GAMBLE",
   robots: { index: false, follow: false },
 };
 
@@ -56,6 +68,11 @@ export default async function AdminSectionPage({ params }: { params: Promise<{ s
   if (section === "program") redirect("/admin/programs");
   const config = sectionConfig[section];
   if (!config) notFound();
+  const area = sectionAreas[section];
+  const staff = area ? await getAdminPageAccess(await headers(), area) : null;
+  if (!area || !staff) {
+    return <AdminPermissionDenied />;
+  }
 
   const records = config.entities.flatMap((entity) => listCmsRecords(entity));
   const primaryEntity = config.entities[0];
@@ -64,7 +81,7 @@ export default async function AdminSectionPage({ params }: { params: Promise<{ s
     <AdminPageShell
       title={config.title}
       intro={config.intro}
-      actions={primaryEntity ? <AdminApiActions entity={primaryEntity} /> : undefined}
+      actions={primaryEntity ? <AdminApiActions entity={primaryEntity} showSettings={canAccessAdminArea(staff, "settings")} /> : undefined}
     >
       <div className="adminStatsGrid">
         <AdminStatCard label="Records" value={records.length} note="Seeded in the Phase 1 CMS repository" />

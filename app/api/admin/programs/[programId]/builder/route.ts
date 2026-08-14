@@ -1,53 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import {
-  adminAuthErrorResponse,
-  requireAdminPermission,
-} from "@/lib/auth/admin";
+import { requireAdminPermission } from "@/lib/auth/admin";
 import { validateProgramSnapshot } from "@/lib/cms/program-validation";
 import type { ProgramBuilderSnapshot } from "@/lib/cms/types";
-import {
-  NotFoundError,
-  ServiceError,
-  programBuilderService,
-} from "@/lib/services";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { programBuilderService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-
-function errorResponse(
-  error: unknown,
-  fallbackMessage: string,
-) {
-  const authResponse = adminAuthErrorResponse(error);
-  if (authResponse) return authResponse;
-
-  if (error instanceof ServiceError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-      },
-      {
-        status: error.statusCode,
-      },
-    );
-  }
-
-  return NextResponse.json(
-    {
-      ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : fallbackMessage,
-    },
-    {
-      status: 500,
-    },
-  );
-}
 
 export async function GET(
   request: NextRequest,
@@ -78,14 +37,7 @@ export async function GET(
       source: "postgresql",
     });
   } catch (error) {
-    if (error instanceof NotFoundError) {
-      return errorResponse(
-        error,
-        "Program not found",
-      );
-    }
-
-    return errorResponse(
+    return adminServiceErrorResponse(
       error,
       "Unable to load program",
     );
@@ -141,26 +93,6 @@ export async function PATCH(
       source: "postgresql",
     });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unable to save program";
-
-    return NextResponse.json(
-      {
-        ok: false,
-        error: message,
-      },
-      {
-        status: message.includes(
-          "another editor",
-        )
-          ? 409
-          : 400,
-      },
-    );
+    return adminServiceErrorResponse(error, "Unable to save program");
   }
 }

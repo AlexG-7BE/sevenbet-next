@@ -66,7 +66,8 @@ test("Contact page has exact public contract and footer navigation", () => {
   const footer = source("components/public-shell/PublicFooter.tsx");
   const site = source("lib/site.ts");
   assert.match(page, /How can we help\?/);
-  assert.match(page, /https:\/\/b4gamble\.com\/contact/);
+  assert.match(page, /absoluteUrl\("\/contact"\)/);
+  assert.doesNotMatch(page, /https:\/\/b4gamble\.com\/contact/);
   assert.match(page, /support@b4gamble\.com|SUPPORT_MAILBOX/);
   assert.match(page, /Open Help/);
   assert.match(form, /name="name"/);

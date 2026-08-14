@@ -105,8 +105,8 @@ export function LoginExperience({ authError, authState, googleAvailable, returnT
           {googleAvailable && !linkRecovery ? <button className={styles.google} disabled={busy} onClick={startGoogleSignIn} type="button"><span aria-hidden="true">G</span>{busy ? "Opening Google…" : "Continue with Google"}</button> : null}
           {googleAvailable && !linkRecovery ? <div className={styles.divider}><span>or use email</span></div> : null}
           <form onSubmit={signInWithEmail}>
-            <label><span>Email</span><input autoComplete="email" onChange={(event) => setEmail(event.target.value)} required type="email" value={email} /></label>
-            <label><span>Password</span><input autoComplete="current-password" minLength={8} onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+            <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
+            <label><span>Password</span><input autoComplete="current-password" minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
             <button className={styles.primary} disabled={busy} type="submit">{busy ? "Checking account…" : linkRecovery ? "Sign in, then link Google" : "Log in"}</button>
           </form>
         </>}

@@ -4,7 +4,7 @@ import { EditorialReviewRenderer } from "@/components/editorial-review/Editorial
 import { editorialReviewService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Editorial Preview | SevenBet CMS", robots: { index: false, follow: false } };
+export const metadata = { title: "Editorial Preview | B4GAMBLE CMS", robots: { index: false, follow: false } };
 
 export default async function EditorialPreviewPage({ params }: { params: Promise<{ token: string }> }) {
   const preview = await editorialReviewService.resolvePreview((await params).token);

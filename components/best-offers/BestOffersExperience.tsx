@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 
 import { offerWithdrawalBucket, shortlistReason, type BestFitCriterion } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
@@ -22,6 +22,13 @@ const cardReasons: Record<BestFitCriterion, string> = {
   payout: "A clearer, faster published withdrawal signal beside the bonus terms.",
 };
 
+function cardReason(criterion: BestFitCriterion, offer: PublicOfferDTO) {
+  if (offer.dataClassification !== "DEMO_FIXTURE") return cardReasons[criterion];
+  if (criterion === "overall") return "Illustrative balance of fictional terms, usability fields and withdrawal visibility.";
+  if (criterion === "wagering") return "A fictional smaller headline with a lighter demonstration play-through field.";
+  return "A clearer, faster fictional withdrawal field beside the demonstration terms.";
+}
+
 function money(value: number | null, currency: string | null) {
   if (value === null) return "Not listed";
   try {
@@ -36,7 +43,8 @@ function money(value: number | null, currency: string | null) {
 }
 
 function payoutSignal(offer: PublicOfferDTO) {
-  return offer.casino.payments.find((item) => item.supportsWithdrawals && item.withdrawalTime)?.withdrawalTime ?? "Not published";
+  return offer.casino.payments.find((item) => item.supportsWithdrawals && item.withdrawalTime)?.withdrawalTime
+    ?? (offer.dataClassification === "DEMO_FIXTURE" ? "Not provided in demonstration" : "Not published");
 }
 
 function expirySignal(offer: PublicOfferDTO) {
@@ -46,10 +54,11 @@ function expirySignal(offer: PublicOfferDTO) {
 }
 
 function ProductCard({ criterion, offer }: { criterion: BestFitCriterion; offer: PublicOfferDTO }) {
+  const demonstration = offer.dataClassification === "DEMO_FIXTURE";
   return <article className={styles.productCard} data-testid="best-offer-product-card">
     <div className={styles.productTop}>
       <span>{criterionLabels[criterion]}</span>
-      <strong aria-label={`Editorial score ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}</strong>
+      <strong aria-label={`${demonstration ? "Fictional editorial score" : "Editorial score"} ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}</strong>
     </div>
     <p className={styles.operatorName}>{offer.casino.name}</p>
     {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.cardDisclosure}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current GB promotion or partner offer.</p> : null}
@@ -61,7 +70,7 @@ function ProductCard({ criterion, offer }: { criterion: BestFitCriterion; offer:
     </dl>
     <div className={styles.whyCard}>
       <span>Why it made the shortlist</span>
-      <p>{cardReasons[criterion]}</p>
+      <p>{cardReason(criterion, offer)}</p>
     </div>
     <Link className={styles.cardCta} href={`/casino/${offer.casino.slug}`}>View full terms</Link>
     <p className={styles.cardDisclosure}>18+ · {offer.dataClassification === "DEMO_FIXTURE" ? "No commercial action" : "Affiliate disclosure"}</p>
@@ -73,13 +82,14 @@ function RankedOfferCard({ index, offer, winners }: {
   offer: PublicOfferDTO;
   winners: Record<BestFitCriterion, PublicOfferDTO | null>;
 }) {
+  const demonstration = offer.dataClassification === "DEMO_FIXTURE";
   const badges = criteria.filter((key) => winners[key]?.casino.id === offer.casino.id && winners[key]?.bonus.id === offer.bonus.id);
   const licence = offer.casino.licenses.find((item) => item.status === "ACTIVE") ?? offer.casino.licenses[0];
 
   return <article className={styles.rankedCard} data-testid="ranked-offer-card">
     <div className={styles.rankedCardTop}>
       <span className={styles.rankNumber}>{String(index + 1).padStart(2, "0")}</span>
-      <strong aria-label={`Editorial score ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}<small>/10</small></strong>
+      <strong aria-label={`${demonstration ? "Fictional editorial score" : "Editorial score"} ${offer.casino.editorScore.toFixed(1)} out of 10`}>{offer.casino.editorScore.toFixed(1)}<small>/10</small></strong>
     </div>
     <div className={styles.rankedBadges}>{badges.map((key) => <span key={key}>{criterionLabels[key]}</span>)}</div>
     <p className={styles.rankedOperator}>{offer.casino.name}</p>
@@ -90,10 +100,10 @@ function RankedOfferCard({ index, offer, winners }: {
       <div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div>
       <div><dt>Max bonus</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency)}</dd></div>
       <div><dt>Payout signal</dt><dd>{payoutSignal(offer)}</dd></div>
-      <div><dt>Licence context</dt><dd>{licence?.authority ?? "Not published"}</dd></div>
+      <div><dt>Licence context</dt><dd>{licence?.authority ?? (demonstration ? "Not provided in demonstration" : "Not published")}</dd></div>
     </dl>
     <div className={styles.rankedReason}>
-      <span>Why it ranks</span>
+      <span>{demonstration ? "Why it is ordered here" : "Why it ranks"}</span>
       <p>{shortlistReason(offer)}</p>
     </div>
     <div className={styles.rankedConditions}>
@@ -101,7 +111,7 @@ function RankedOfferCard({ index, offer, winners }: {
       <p><strong>Material condition:</strong> {offer.bonus.importantConditions[0] || "Check full terms"}</p>
     </div>
     <Link className={styles.rankedCta} href={`/casino/${offer.casino.slug}`}>View full terms <span aria-hidden="true">→</span></Link>
-    <p className={styles.rankedDisclosure}>Editorial rank · Commission is not a ranking input</p>
+    <p className={styles.rankedDisclosure}>{demonstration ? "Illustrative order" : "Editorial rank"} · Commission is not a ranking input</p>
   </article>;
 }
 
@@ -114,16 +124,52 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
   const [activeSlide, setActiveSlide] = useState(0);
   const [criterion, setCriterion] = useState<BestFitCriterion>("overall");
   const pointerStart = useRef<number | null>(null);
+  const fitTabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const winner = winners[criterion];
   const featured = winners.overall ?? shortlist[0] ?? null;
+  const featuredDemo = featured?.dataClassification === "DEMO_FIXTURE";
+  const demoOnly = inventoryMode === "DEMO_ONLY";
+  const mixed = inventoryMode === "MIXED";
+  const methodKicker = demoOnly ? "Fictional demonstration method" : mixed ? "Published and fictional source method" : "Published ranking method";
+  const methodSupport = demoOnly
+    ? "Complete fictional fields are the gate. A stable illustrative method decides the order. Commercial value never buys a position."
+    : mixed
+      ? "Source classification and complete fields are the gate. Editorial evidence decides the order of published records; fictional fields remain visibly separate."
+      : "Eligibility and complete terms are the gate. Editorial evidence decides the order. Commercial value never buys a position.";
+  const fitSupport = demoOnly
+    ? "“Best” changes with the question. Choose one lens and see the exact fictional field behind the illustrative result."
+    : mixed
+      ? "“Best” changes with the question. Choose one lens and see the exact source-labelled signal behind the result."
+      : "“Best” changes with the question. Choose one lens and see the exact published signal behind the result.";
+  const sourceLabel = demoOnly ? "fictional demonstration records" : mixed ? "published and fictional source-labelled records" : "published records";
   const move = (next: number) => setActiveSlide((next + slides.length) % slides.length);
+  const moveFitTab = (next: number) => {
+    const index = (next + criteria.length) % criteria.length;
+    setCriterion(criteria[index]);
+    fitTabRefs.current[index]?.focus();
+  };
+  const handleFitTabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      moveFitTab(index + 1);
+    } else if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      moveFitTab(index - 1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      moveFitTab(0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      moveFitTab(criteria.length - 1);
+    }
+  };
 
   return <>
     <section className={styles.shortlistSection} id="shortlist" aria-labelledby="shortlist-title">
       <div className={styles.shell}>
         <div className={styles.shortlistIntro}>
           <h2 id="shortlist-title">One headline. The full decision.</h2>
-          <p>Swipe the shortlist by what matters to you — then see the material terms before you leave B4GAMBLE.</p>
+          <p>Swipe the shortlist by what matters to you — then see the material fields before any governed commercial action.</p>
         </div>
         {slides.length ? <div
           aria-label="Best offer selectors"
@@ -159,26 +205,27 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
           <div aria-label="Choose a shortlist position" className={styles.stageDots}>
             {slides.map((slide, index) => <button aria-current={index === activeSlide ? "true" : undefined} aria-label={`Show ${criterionLabels[slide.criterion]}`} key={slide.criterion} onClick={() => setActiveSlide(index)} type="button" />)}
           </div>
+          <p aria-atomic="true" aria-live="polite" className="srOnly">Shortlist slide {activeSlide + 1} of {slides.length}: {criterionLabels[slides[activeSlide].criterion]}, {slides[activeSlide].offer.casino.name}.</p>
         </div> : null}
         <div className={styles.metrics}>
           <div><strong>GB-FIRST</strong><span>Declared comparison context</span></div>
           <div><strong>9</strong><span>Material fields</span></div>
-          <div><strong>TERMS FIRST</strong><span>Before the outbound click</span></div>
+          <div><strong>TERMS FIRST</strong><span>{demoOnly ? "No outbound action" : "Before any governed action"}</span></div>
         </div>
-        <p className={styles.dataNote}>{shortlist.length} complete records checked · {inventoryMode === "PUBLISHED_ONLY" ? "Published inventory" : "DEMONSTRATION DATA · Fictional records"} · Verify operator, terms and market eligibility before acting.</p>
+        <p className={styles.dataNote}>{shortlist.length} complete records checked · {demoOnly ? "DEMONSTRATION DATA · Fictional records" : mixed ? "Published records + labelled fictional demonstrations" : "Published inventory"} · {demoOnly ? "These fields are illustrative and not claimable." : "Verify operator, terms and market eligibility before acting."}</p>
       </div>
     </section>
 
     <section className={styles.methodSection} aria-labelledby="method-title">
       <div className={styles.shell}>
-        <p className={styles.kicker}>Published ranking method</p>
+        <p className={styles.kicker}>{methodKicker}</p>
         <h2 id="method-title">Every record follows the same method.</h2>
-        <p className={styles.methodSupport}>Eligibility and complete terms are the gate. Editorial evidence decides the order. Commercial value never buys a position.</p>
+        <p className={styles.methodSupport}>{methodSupport}</p>
         <Link className={styles.lightCta} href="#shortlist">View best offers</Link>
         <ol className={styles.methodCards}>
-          <li><span>01</span><h3>Market and publication first.</h3><p>Only active, current records explicitly available in the selected market can enter.</p></li>
-          <li><span>02</span><h3>Comparable terms, in one place.</h3><p>Deposit, wagering, eligibility and important conditions must all be published.</p></li>
-          <li><span>03</span><h3>Editorial, not commercial.</h3><p>Score and evidence determine order. Affiliate economics are not ranking inputs.</p></li>
+          <li><span>01</span><h3>{demoOnly ? "Illustrative market and source first." : mixed ? "Market and source classification first." : "Market and publication first."}</h3><p>{demoOnly ? "Only complete fictional records marked illustratively available in the selected market can enter." : mixed ? "Only complete source-classified records marked available in the selected market can enter." : "Only active, current records explicitly available in the selected market can enter."}</p></li>
+          <li><span>02</span><h3>Comparable fields, in one place.</h3><p>{demoOnly ? "Deposit, wagering, eligibility and important conditions must all be supplied as fictional demonstration fields." : mixed ? "Deposit, wagering, eligibility and important conditions must be supplied and labelled by source." : "Deposit, wagering, eligibility and important conditions must all be published."}</p></li>
+          <li><span>03</span><h3>{demoOnly ? "Presentation, not commercial." : "Editorial, not commercial."}</h3><p>{demoOnly ? "A stable illustrative method determines order. No affiliate action exists." : "Score and evidence determine order. Affiliate economics are not ranking inputs."}</p></li>
         </ol>
         <aside className={styles.editorialBoundary}>
           <span>Editorial boundary</span>
@@ -192,18 +239,18 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
       <div className={styles.shell}>
         <p className={styles.kicker}>Three questions · three selectors</p>
         <h2 id="fit-title">Find your best fit.</h2>
-        <p className={styles.fitSupport}>“Best” changes with the question. Choose one lens and see the exact published signal behind the result.</p>
+        <p className={styles.fitSupport}>{fitSupport}</p>
         <div aria-label="Best fit criterion" className={styles.fitTabs} role="tablist">
-          {criteria.map((key, index) => <button aria-controls={`best-fit-${key}`} aria-selected={criterion === key} id={`best-fit-tab-${key}`} key={key} onClick={() => setCriterion(key)} role="tab" type="button"><span>{index + 1}</span>{criterionLabels[key]}</button>)}
+          {criteria.map((key, index) => <button aria-controls={`best-fit-${key}`} aria-selected={criterion === key} id={`best-fit-tab-${key}`} key={key} onClick={() => setCriterion(key)} onKeyDown={(event) => handleFitTabKey(event, index)} ref={(node) => { fitTabRefs.current[index] = node; }} role="tab" tabIndex={criterion === key ? 0 : -1} type="button"><span>{index + 1}</span>{criterionLabels[key]}</button>)}
         </div>
         {winner ? <div aria-labelledby={`best-fit-tab-${criterion}`} className={styles.fitStage} id={`best-fit-${criterion}`} role="tabpanel">
           <div className={styles.stageDisc} />
-          <div className={styles.fitNoteLeft}><span>Compare the real cost</span><p>A smaller headline can be the stronger offer when the play-through is lighter.</p></div>
+          <div className={styles.fitNoteLeft}><span>{winner.dataClassification === "DEMO_FIXTURE" ? "Compare fictional fields" : "Compare the real cost"}</span><p>{winner.dataClassification === "DEMO_FIXTURE" ? "A fictional smaller headline demonstrates how a lighter play-through field changes the comparison." : "A smaller headline can be the stronger offer when the play-through is lighter."}</p></div>
           <ProductCard criterion={criterion} offer={winner} />
-          <div className={styles.fitNoteRight}><span>Keep the exit visible</span><p>Withdrawal and cash-out conditions stay beside the bonus terms.</p></div>
+          <div className={styles.fitNoteRight}><span>{winner.dataClassification === "DEMO_FIXTURE" ? "Keep the boundary visible" : "Keep the exit visible"}</span><p>{winner.dataClassification === "DEMO_FIXTURE" ? "Fictional withdrawal and cash-out fields stay beside the demonstration terms; no exit action exists." : "Withdrawal and cash-out conditions stay beside the bonus terms."}</p></div>
           {criterion === "payout" ? <small className={styles.fitBucket}>Signal bucket: {offerWithdrawalBucket(winner).replaceAll("-", " ")}</small> : null}
-        </div> : <div className={styles.statePanel} role="status"><h3>No winner is available.</h3><p>The current eligible shortlist has no published value for this criterion.</p></div>}
-        <div className={styles.decisionStrip}>
+        </div> : <div className={styles.statePanel} role="status"><h3>No winner is available.</h3><p>The current eligible shortlist has no {demoOnly ? "fictional demonstration field" : "source value"} for this criterion.</p></div>}
+        <div aria-label="Best fit explanation cards" className={styles.decisionStrip} role="region" tabIndex={0}>
           <div><span>01</span><strong>Balance</strong><p>Strong across terms, usability and payout visibility.</p></div>
           <div><span>02</span><strong>Wagering</strong><p>Prioritises a lower play-through requirement.</p></div>
           <div><span>03</span><strong>Payout</strong><p>Prioritises a clearer, faster withdrawal signal.</p></div>
@@ -215,50 +262,50 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
       <div className={styles.shell}>
         <div className={styles.fullRankIntro}>
           <div>
-            <p className={styles.kicker}>All comparison records · one natural editorial order</p>
-            <h2 id="full-rank-title">The full ranked field.</h2>
+            <p className={styles.kicker}>All {sourceLabel} · one stable order</p>
+            <h2 id="full-rank-title">{demoOnly ? "The full illustrative field." : "The full ranked field."}</h2>
           </div>
           <p>The three selectors above answer the quickest questions. Open the full field when you want to compare every eligible record, material term and editorial signal.</p>
         </div>
         <details className={styles.fullShortlist}>
           <summary>
-            <span><strong>Compare all {shortlist.length}</strong><small>Every eligible offer, ranked and explained</small></span>
+            <span><strong>Compare all {shortlist.length}</strong><small>{demoOnly ? "Every complete fictional record, ordered and explained" : "Every eligible offer, ranked and explained"}</small></span>
             <b aria-hidden="true">+</b>
           </summary>
           <div className={styles.rankedGrid}>
             {shortlist.map((offer, index) => <RankedOfferCard index={index} key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} winners={winners} />)}
           </div>
         </details>
-        <p className={styles.fullRankFootnote}>Ranking uses market eligibility, material-term completeness and editorial evidence. Withdrawal timing is a published signal, not a guarantee.</p>
+        <p className={styles.fullRankFootnote}>{demoOnly ? "Illustrative ordering uses fictional market fields, material-field completeness and a stable editorial method. Withdrawal timing is a fictional signal, not a guarantee." : mixed ? "Ordering uses source-labelled market availability, material-field completeness and editorial evidence. Withdrawal timing retains its per-record source label and is not a guarantee." : "Ranking uses market eligibility, material-term completeness and editorial evidence. Withdrawal timing is a published signal, not a guarantee."}</p>
       </div>
     </section>
 
     <section className={styles.evidenceSection} aria-labelledby="evidence-title">
       <div className={styles.shell}>
-        <p className={styles.kicker}>The evidence behind the headline</p>
-        <h2 id="evidence-title">What makes an offer worth the shortlist.</h2>
-        <p className={styles.evidenceSupport}>A persuasive offer is not just a large number. It is a set of facts a user can compare before making a decision.</p>
+        <p className={styles.kicker}>{demoOnly ? "The fictional fields behind the headline" : mixed ? "The source-labelled fields behind the headline" : "The evidence behind the headline"}</p>
+        <h2 id="evidence-title">{demoOnly ? "What makes a complete demonstration shortlist." : "What makes an offer worth the shortlist."}</h2>
+        <p className={styles.evidenceSupport}>{demoOnly ? "A fictional headline is not evidence or a live offer. The fixed fields only demonstrate how a future user could compare material information." : mixed ? "A persuasive offer is not just a large number. Published evidence and fictional demonstration fields remain visibly separated before any decision." : "A persuasive offer is not just a large number. It is a set of facts a user can compare before making a decision."}</p>
         <div className={styles.evidenceCards}>
-          <article><span>01 · Terms</span><h3>Terms you can compare.</h3><p>Minimum deposit, wagering and important conditions follow the same structure every time.</p></article>
-          <article><span>02 · Licence</span><h3>Context you can verify.</h3><p>Market availability and licensing context stay visible instead of being buried behind a CTA.</p></article>
-          <article><span>03 · Withdrawal</span><h3>Signals you can plan around.</h3><p>Published withdrawal timing is shown as a signal, never dressed up as a guarantee.</p></article>
+          <article><span>01 · Terms</span><h3>{demoOnly ? "Fields you can compare." : "Terms you can compare."}</h3><p>Minimum deposit, wagering and important conditions follow the same structure every time.</p></article>
+          <article><span>02 · Licence</span><h3>{demoOnly ? "Context explicitly marked fictional." : "Context you can verify."}</h3><p>{demoOnly ? "Illustrative market and licence fields stay visible and are never presented as current evidence." : "Market availability and licensing context stay visible instead of being buried behind a CTA."}</p></article>
+          <article><span>03 · Withdrawal</span><h3>Signals you can plan around.</h3><p>{demoOnly ? "Fictional withdrawal timing is shown as an illustrative field, never dressed up as evidence or a guarantee." : mixed ? "Withdrawal timing retains its source label and is shown as a signal, never dressed up as a guarantee." : "Published withdrawal timing is shown as a signal, never dressed up as a guarantee."}</p></article>
         </div>
         {featured ? <div className={styles.editorialDesk}>
           <div>
             <p className={styles.kicker}>B4GAMBLE editorial desk</p>
-            <blockquote>“A worthwhile offer makes the real cost easy to see.”</blockquote>
-            <p>We compare the terms that affect the decision, explain the ranking, and keep commercial disclosure visible before any handoff.</p>
+            <blockquote>{featuredDemo ? "“A useful demonstration makes each fictional field easy to identify.”" : "“A worthwhile offer makes the real cost easy to see.”"}</blockquote>
+            <p>{featuredDemo ? "We align fictional fields, explain the illustrative order, and keep the no-commercial-action boundary visible." : "We compare the terms that affect the decision, explain the ranking, and keep commercial disclosure visible before any handoff."}</p>
           </div>
           <aside className={styles.rankSnapshot}>
-            <span>Why it ranks</span>
+            <span>{featuredDemo ? "Why it is ordered here" : "Why it ranks"}</span>
             <h3>Overall balance</h3>
             <dl>
-              <div><dt>Terms</dt><dd>Complete</dd></div>
+              <div><dt>Terms</dt><dd>{featuredDemo ? "Complete fictional fields" : "Complete"}</dd></div>
               <div><dt>Wagering</dt><dd>{featured.bonus.wageringMultiplier}×</dd></div>
               <div><dt>Payout signal</dt><dd>{payoutSignal(featured)}</dd></div>
-              <div><dt>Editor score</dt><dd>{featured.casino.editorScore.toFixed(1)}/10</dd></div>
+              <div><dt>{featuredDemo ? "Fictional editor score" : "Editor score"}</dt><dd>{featured.casino.editorScore.toFixed(1)}/10</dd></div>
             </dl>
-            <Link href={`/casino/${featured.casino.slug}`}>Read the evidence →</Link>
+            <Link href={`/casino/${featured.casino.slug}`}>{featured.dataClassification === "DEMO_FIXTURE" ? "Open fictional profile" : "Read the evidence"} →</Link>
           </aside>
         </div> : null}
       </div>

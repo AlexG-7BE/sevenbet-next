@@ -26,7 +26,7 @@ import {
   type ProgramAiStructuralArtifact,
 } from "@/lib/programme/program-ai/mission-validation";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
-import { programAiMissionOneActions } from "@/lib/programme/program-ai/contracts";
+import { anonymousProgramAiXp, programAiMissionOneActions } from "@/lib/programme/program-ai/contracts";
 import { dateOnlyUtc, localDateAt } from "@/lib/programme/security";
 
 type MissionProgress = {
@@ -105,9 +105,50 @@ function actionXpEarned(definition: ProgramAiMissionDefinition, progress?: Missi
   return actionXp + (progress.status === "COMPLETED" && hasNewContract ? 25 : 0);
 }
 
-function missionOneXpEarned(progress?: MissionProgress | null) {
-  if (progress?.status !== "COMPLETED") return 0;
-  return programAiMissionOneActions.every((action) => progress.taskStates.includes(action)) ? 40 : 60;
+function missionOneProjection(progress?: MissionProgress | null) {
+  const states = progress?.taskStates ?? [];
+  const actionsCompleted = programAiMissionOneActions.filter((action) => states.includes(action)).length;
+  const newContractComplete = programAiMissionOneActions.every((action) => states.includes(action));
+  const completed = progress?.status === "COMPLETED";
+  return {
+    actionsCompleted: completed && !newContractComplete ? 2 : actionsCompleted,
+    actionsTotal: 2,
+    currentAction: completed ? null : programAiMissionOneActions.find((action) => !states.includes(action)) ?? null,
+    xpEarnedHere: completed && !newContractComplete ? 60 : anonymousProgramAiXp(states),
+    completionBonus: 0,
+  };
+}
+
+function rewardRemainingThrough(
+  unlockMission: number,
+  byMission: ReadonlyMap<number, MissionProgress>,
+) {
+  const missionOne = byMission.get(1);
+  const missionOneRemaining = missionOne?.status === "COMPLETED"
+    ? 0
+    : 40 - anonymousProgramAiXp(missionOne?.taskStates ?? []);
+  return missionOneRemaining + programAiMissionRegistry
+    .filter((mission) => mission.missionNumber <= unlockMission)
+    .reduce((total, mission) => {
+      const progress = byMission.get(mission.missionNumber);
+      if (progress?.status === "COMPLETED") return total;
+      const actionRemaining = mission.actions.reduce(
+        (sum, action) => sum + (progress?.taskStates.includes(actionTaskState(mission.missionNumber, action.id)) ? 0 : action.xp),
+        0,
+      );
+      return total + actionRemaining + 25;
+    }, 0);
+}
+
+function missionsRemainingThrough(
+  unlockMission: number,
+  byMission: ReadonlyMap<number, MissionProgress>,
+) {
+  return [1, ...programAiMissionRegistry
+    .filter((mission) => mission.missionNumber <= unlockMission)
+    .map((mission) => mission.missionNumber)]
+    .filter((missionNumber) => byMission.get(missionNumber)?.status !== "COMPLETED")
+    .length;
 }
 
 function highestActiveMission(progress: readonly MissionProgress[]) {
@@ -423,15 +464,29 @@ export class ProgrammeAiMissionsService {
     const source = await requireControlProgram(unitOfWork);
     const result = await unitOfWork.programAiMissionOne.home(userId, source.program.id);
     if (!result.enrollment) {
+      const byMission = new Map<number, MissionProgress>();
+      const missionOne = missionOneProjection();
       return {
         totalXp: result.totalXp,
         currentMission: 1,
         engagementDayBucket: "unknown" as const,
-        currentAction: null,
+        currentAction: missionOne.currentAction,
         startingPoint: null,
-        missions: programmeMissionTitles.map((title, index) => ({ missionNumber: index + 1, title, status: index === 0 ? "current" : "locked", actionsCompleted: 0, xpEarnedHere: 0 })),
+        missions: programmeMissionTitles.map((title, index) => ({
+          missionNumber: index + 1,
+          title,
+          status: index === 0 ? "current" : "locked",
+          actionsCompleted: 0,
+          actionsTotal: index === 0 ? 2 : 3,
+          xpEarnedHere: 0,
+          completionBonus: index === 0 ? 0 : 25,
+        })),
         reviews: Object.values(programAiReviewDefinitions).map((review) => ({ ...review, status: "locked" })),
-        nextReview: { ...programAiReviewDefinitions.first, xpRemaining: 150, missionsRemaining: 2 },
+        nextReview: {
+          ...programAiReviewDefinitions.first,
+          xpRemaining: rewardRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
+          missionsRemaining: missionsRemainingThrough(programAiReviewDefinitions.first.unlockMission, byMission),
+        },
         discoveryLinks: commercialDiscoveryLinks,
       };
     }
@@ -441,6 +496,7 @@ export class ProgrammeAiMissionsService {
     const currentMission = highestActiveMission(allProgress);
     const currentDefinition = programAiMissionDefinition(currentMission);
     const currentProgress = byMission.get(currentMission);
+    const missionOne = missionOneProjection(byMission.get(1));
     const reviews = Object.values(programAiReviewDefinitions).map((review) => ({
       ...review,
       status: byMission.get(review.unlockMission)?.status === "COMPLETED" ? "available" : "locked",
@@ -449,27 +505,17 @@ export class ProgrammeAiMissionsService {
     const nextReview = nextLockedReview
       ? {
           ...nextLockedReview,
-          xpRemaining: programAiMissionRegistry
-            .filter((mission) => mission.missionNumber <= nextLockedReview.unlockMission)
-            .reduce((total, mission) => {
-              const missionProgress = byMission.get(mission.missionNumber);
-              if (missionProgress?.status === "COMPLETED") return total;
-              const actionRemaining = mission.actions.reduce(
-                (sum, action) => sum + (missionProgress?.taskStates.includes(actionTaskState(mission.missionNumber, action.id)) ? 0 : action.xp),
-                0,
-              );
-              return total + actionRemaining + 25;
-            }, 0),
-          missionsRemaining: programAiMissionRegistry.filter(
-            (mission) => mission.missionNumber <= nextLockedReview.unlockMission && byMission.get(mission.missionNumber)?.status !== "COMPLETED",
-          ).length,
+          xpRemaining: rewardRemainingThrough(nextLockedReview.unlockMission, byMission),
+          missionsRemaining: missionsRemainingThrough(nextLockedReview.unlockMission, byMission),
         }
       : null;
     return {
       totalXp: result.totalXp,
       currentMission,
       engagementDayBucket: programmeEngagementDayBucket(enrollment.startedAt),
-      currentAction: currentDefinition
+      currentAction: currentMission === 1
+        ? missionOne.currentAction
+        : currentDefinition
         ? currentDefinition.actions.find((action) => !currentProgress?.taskStates.includes(actionTaskState(currentMission, action.id)))?.id ?? null
         : null,
       startingPoint: enrollment.programmeStartingPoint
@@ -485,14 +531,17 @@ export class ProgrammeAiMissionsService {
         const missionNumber = index + 1;
         const missionProgress = byMission.get(missionNumber);
         const definition = programAiMissionDefinition(missionNumber);
+        const missionOneState = missionNumber === 1 ? missionOne : null;
         return {
           missionNumber,
           title,
           status: missionProgress?.status === "COMPLETED" ? "completed" : missionNumber === currentMission ? "current" : "locked",
           actionsCompleted: definition
             ? definition.actions.filter((action) => missionProgress?.taskStates.includes(actionTaskState(missionNumber, action.id))).length
-            : missionProgress?.status === "COMPLETED" ? 2 : 0,
-          xpEarnedHere: definition ? actionXpEarned(definition, missionProgress) : missionOneXpEarned(missionProgress),
+            : missionOneState?.actionsCompleted ?? 0,
+          actionsTotal: definition ? definition.actions.length : missionOneState?.actionsTotal ?? 2,
+          xpEarnedHere: definition ? actionXpEarned(definition, missionProgress) : missionOneState?.xpEarnedHere ?? 0,
+          completionBonus: definition ? 25 : missionOneState?.completionBonus ?? 0,
         };
       }),
       reviews,

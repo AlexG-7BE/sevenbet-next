@@ -18,7 +18,7 @@ function explicitPath(slugs: string[], suffix = "") {
   return `/compare?${params}${suffix}`;
 }
 
-test("desktop comparison renders current published evidence without browser errors", async ({ page }) => {
+test("desktop comparison renders source-classified evidence without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
@@ -68,7 +68,7 @@ test("show-only-differences and malformed or unavailable selections fail closed"
 
   await page.goto(`${baseUrl}/compare?casino=definitely-unpublished-profile&casino=also-unpublished&country=GB`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "These profiles do not align" })).toBeVisible();
-  await expect(page.getByText(/unknown, unpublished, archived or unavailable/).first()).toBeVisible();
+  await expect(page.getByText(/unknown, archived, unavailable or absent from the public projection/).first()).toBeVisible();
   await expect(page.locator('a[href^="http"]')).toHaveCount(0);
 
   const malformed = await request.get(`${baseUrl}/compare?casino=..%2Funsafe&casino=${slugs[0]}&casino=${slugs[1]}&casino=${slugs[2]}&casino=extra&country=GBR&differences=maybe`);
@@ -150,16 +150,26 @@ test("comparison evidence remains available without JavaScript", async ({ browse
   await context.close();
 });
 
-test("metadata and structured data use a clean canonical without commercial schema", async ({ request }) => {
+test("demo metadata uses a clean canonical while suppressing index and commercial schema", async ({ request }) => {
   const defaultResponse = await request.get(`${baseUrl}/compare`);
   const defaultHtml = await defaultResponse.text();
+  const semanticHtml = defaultHtml.replace(/<!--[\s\S]*?-->/g, "");
   expect(defaultResponse.status()).toBe(200);
-  expect(defaultHtml).toContain('<meta name="robots" content="index, follow"');
+  expect(defaultHtml).toContain('<meta name="robots" content="noindex, follow"');
   expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/compare"');
   expect(defaultHtml).toContain('"@type":"BreadcrumbList"');
-  expect(defaultHtml).toContain('"@type":"ItemList"');
+  expect(defaultHtml).not.toContain('"@type":"ItemList"');
   expect(defaultHtml).not.toContain('"@type":"Offer"');
   expect(defaultHtml).not.toContain('"@type":"AggregateRating"');
+  expect(semanticHtml).toContain("DEMONSTRATION DATA");
+  expect(semanticHtml).toContain("Fictional profile · GB illustrative context");
+  expect(semanticHtml).not.toContain("Published profile · GB declared available");
+  expect(semanticHtml).toContain("Compare Fictional Casino Demonstrations");
+  expect(semanticHtml).toContain("Choose up to three fictional demonstration profiles");
+  expect(semanticHtml).toContain("Illustrative fields");
+  expect(semanticHtml).not.toContain("Choose up to three published casino profiles");
+  expect(semanticHtml).not.toContain("Published database profiles only");
+  expect(semanticHtml).not.toContain("Published facts · same source order");
   expect(defaultHtml).not.toMatch(/destinationUrl|trackingUrl/);
   expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
 

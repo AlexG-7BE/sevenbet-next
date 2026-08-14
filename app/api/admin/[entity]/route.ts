@@ -1,11 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isCmsEntity, isProgramManagedEntity, permissionForEntity } from "@/lib/cms/entities";
+import { isCmsEntity, isProgramManagedEntity, permissionForEntity, permissionsForEntity } from "@/lib/cms/entities";
 import { createCmsRecord, listCmsRecords } from "@/lib/cms/repository";
 import type { CmsRecord } from "@/lib/cms/types";
 import {
-  adminAuthErrorResponse,
+  requireAdminAnyPermission,
   requireAdminPermission,
 } from "@/lib/auth/admin";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
 
 export const dynamic = "force-dynamic";
 
@@ -19,14 +20,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (isProgramManagedEntity(entityParam)) return apiError("Use the PostgreSQL Program Builder API for this entity", 410);
 
   try {
-    await requireAdminPermission(request, permissionForEntity(entityParam, "read"));
+    await requireAdminAnyPermission(request, permissionsForEntity(entityParam, "read"));
     const status = request.nextUrl.searchParams.get("status");
     const records = listCmsRecords(entityParam).filter((record) => !status || record.status === status);
     return NextResponse.json({ ok: true, entity: entityParam, count: records.length, records });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-    return apiError(error instanceof Error ? error.message : "Unauthorized", 401);
+    return adminServiceErrorResponse(error, "Unable to list CMS records");
   }
 }
 
@@ -43,8 +42,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const record = createCmsRecord(entityParam, input, actor);
     return NextResponse.json({ ok: true, record }, { status: 201 });
   } catch (error) {
-    const authResponse = adminAuthErrorResponse(error);
-    if (authResponse) return authResponse;
-    return apiError(error instanceof Error ? error.message : "Unable to create CMS record", 400);
+    return adminServiceErrorResponse(error, "Unable to create CMS record");
   }
 }

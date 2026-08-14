@@ -17,6 +17,7 @@ import { publicCasinoToOffers } from "../lib/public-offer/public-offer.mapper";
 
 test("temporary production manifest contains exactly 25 explicitly fictional published scenarios", () => {
   assert.equal(TEMPORARY_DEMO_DATASET_ID, "temporary-production-demo-casinos-v2");
+  assert.equal(PRODUCTION_SITE_ORIGIN, "https://b4gamble.com");
   assert.equal(temporaryDemoCasinos.length, 25);
   assert.equal(new Set(temporaryDemoCasinos.map((item) => item.id)).size, 25);
   assert.equal(new Set(temporaryDemoCasinos.map((item) => item.slug)).size, 25);

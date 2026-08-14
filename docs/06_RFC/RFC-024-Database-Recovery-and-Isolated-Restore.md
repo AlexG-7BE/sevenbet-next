@@ -8,6 +8,8 @@
 - **Depends on:** Product Vision & Principles v2.0, RFC-013, RFC-017, ENV-ISO-01 and the Production release governance
 - **Supersedes:** The provisional recovery direction in the operations baseline where this RFC is more specific
 
+**Implementation outcome — Detected 2026-08-12:** RECOVERY-01's managed Preview restore drill is complete. Completed backup `backup-01kzszywy038jepagf0zk705zs` captured the synthetic canary; a fresh disconnected target passed the required parity checks, then the exact target and canary were deleted and verified absent. Production remained read-only. This outcome does not authorise a Production restore or change the decision ceiling below.
+
 ## 1. Decision and release ceiling
 
 B4GAMBLE will use a restore-to-new-target recovery process. Production is read-only during drills and is never a drill restore target. Preview synthetic/test data is the only authorised live drill source. Recovery copies remain disconnected from Vercel runtimes, public traffic, Google OAuth, OpenAI, email and affiliate systems.
@@ -72,7 +74,7 @@ The temporary archive contains Preview test/synthetic data only. It is deleted i
 
 The drill canary uses the existing Programme session repository to create one synthetic anonymous-session root and one related pending-claim row. It stores only opaque hashes and versioned structural fields, has no email address or real-person data, and invokes no external provider. Its safe manifest contains only the canary row ID, hashes, versions and timestamps.
 
-When the selected snapshot predates a new managed-snapshot canary, restore mechanics, migration/schema parity and structural integrity may be tested, but current source/target count parity and canary parity are `NOT_APPLICABLE`. The one canary remains in Preview until a later snapshot captures it. For the current pending canary, the safe root ID is `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`, safe hash is `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`, and creation time is `2026-08-11T08:00:45.569Z`.
+When the selected snapshot predates a new managed-snapshot canary, restore mechanics, migration/schema parity and structural integrity may be tested, but current source/target count parity and canary parity are `NOT_APPLICABLE`. The canary remains in Preview only until a later snapshot captures it. At approval time, the pending canary's safe root ID was `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`, safe hash was `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`, and creation time was `2026-08-11T08:00:45.569Z`; the implementation outcome above records its later parity and cleanup.
 
 Validation requires:
 
@@ -105,10 +107,10 @@ After a serious incident, operators assess rotation of database connection strin
 
 Founder Office authorised and manually enabled Starter at the documented USD 10/month base price. Starter scope, the Vercel billing owner/context, seven-day retention metadata and completed snapshots on both databases are detected. No Pro/Business change, second paid service or additional recurring commitment was accepted; no separately itemised incremental restore charge was detected.
 
-The remaining gap is not plan activation. It is a later completed Preview snapshot that contains the exact pending canary, followed by another new-target restore, canary parity, exact canary cleanup and exact target cleanup.
+The originally remaining gap was not plan activation: it was a later completed Preview snapshot containing the exact pending canary, followed by another new-target restore, parity and cleanup. The 2026-08-12 implementation outcome above closed that drill gap. Routine monitoring and any separately authorised Production incident restore remain outside that closure.
 
 ## 10. Rollback and stop conditions
 
-Repository rollback removes the recovery scripts and documentation through the normal protected PR flow; it does not mutate a database. Drill rollback normally deletes the Preview canary, stops a disposable local server and removes private archive/data after exact identity checks. The sole exception is a managed canary intentionally awaiting snapshot capture; it remains only in Preview until the later restore proves parity, then must be removed immediately by exact identity.
+Repository rollback removes the recovery scripts and documentation through the normal protected PR flow; it does not mutate a database. Drill rollback normally deletes the Preview canary, stops a disposable local server and removes private archive/data after exact identity checks. If a separately authorised managed canary must await snapshot capture, it may remain only in Preview until the later restore proves parity, then must be removed immediately by exact identity. No such RECOVERY-01 canary remains.
 
 Live work stops when any identity is unknown or matching, a target could be Production, a paid acceptance appears, a Production dump would be needed, credentials could be printed, the provider would overwrite a shared database, or schema change/migration becomes necessary. Documentation and deterministic tests may continue while the live gate is reported truthfully.

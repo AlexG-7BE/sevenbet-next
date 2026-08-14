@@ -37,22 +37,27 @@ function operationalError(eventName: string) {
 }
 
 export function createProductAnalyticsClient({
-  enabled = isProductAnalyticsEnabled(),
+  enabled: configuredEnabled,
   sink = defaultSink,
-  storage = browserStorage(),
+  storage: configuredStorage,
   now = () => Date.now(),
 }: {
   enabled?: boolean;
   sink?: ProductAnalyticsSink;
-  storage?: StorageLike;
+  storage?: StorageLike | null;
   now?: () => number;
 } = {}) {
+  const enabled = configuredEnabled ?? isProductAnalyticsEnabled();
+  const storage = enabled
+    ? configuredStorage === undefined ? browserStorage() : configuredStorage ?? undefined
+    : undefined;
   const emit = createProductAnalyticsEmitter({ enabled, sink, onError: operationalError });
   const once = <N extends keyof ProductAnalyticsEventMap>(
     marker: string,
     name: N,
     properties: ProductAnalyticsEventMap[N],
   ) => {
+    if (!enabled) return;
     const key = `${EVENT_MARKER_PREFIX}${marker}`;
     if (storage?.getItem(key) === "1") return;
     emit(name, properties);
@@ -66,6 +71,7 @@ export function createProductAnalyticsClient({
 
   return {
     startClicked(sourceSurface: ProductAnalyticsEventMap["programme_start_clicked"]["sourceSurface"]) {
+      if (!enabled) return;
       try {
         if (!storage?.getItem(M1_STARTED_AT_KEY)) storage?.setItem(M1_STARTED_AT_KEY, String(now()));
       } catch {

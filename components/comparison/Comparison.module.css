@@ -238,12 +238,12 @@
   .criterionCard > p { margin: 0; font-size: 17px; line-height: 21px; font-weight: 750; }
   .criterionCard > small { margin-top: 5px; display: block; color: var(--muted); font-size: 11px; line-height: 16px; }
   .criterionCard > div { margin-top: 14px; display: grid; gap: 8px; }
-  .criterionCard section { min-width: 0; padding: 12px; display: grid; gap: 7px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
+  .criterionCard > div > div { min-width: 0; padding: 12px; display: grid; gap: 7px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
   .criterionCard h4 { margin: 0; color: var(--muted); font-size: 10px; line-height: 14px; letter-spacing: .06em; text-transform: uppercase; }
   .criterionCard strong { overflow-wrap: anywhere; font-size: 14px; line-height: 20px; }
-  .criterionCard section > span { width: fit-content; padding: 4px 7px; border-radius: var(--sb-radius-full); background: #efeee8; color: var(--muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
-  .criterionCard section[data-status="Published"] > span, .criterionCard section[data-status="Editorial"] > span { background: #dff0ec; color: var(--teal); }
-  .criterionCard section[data-status="Unknown"] > span { background: #f4dfdc; color: var(--danger); }
+  .criterionCard > div > div > span { width: fit-content; padding: 4px 7px; border-radius: var(--sb-radius-full); background: #efeee8; color: var(--muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+  .criterionCard > div > div[data-status="Published"] > span, .criterionCard > div > div[data-status="Editorial"] > span { background: #dff0ec; color: var(--teal); }
+  .criterionCard > div > div[data-status="Unknown"] > span { background: #f4dfdc; color: var(--danger); }
   .decisionCards article, .commercialCards article { min-height: 220px; }
   .boundaryList { grid-template-columns: 1fr; }
   .methodSection ol { grid-template-columns: 1fr; }

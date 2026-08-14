@@ -8,11 +8,20 @@ import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
 import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } from "@/lib/services/gb-operator-eligibility.service";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
+import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best-offers";
 
 export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
+const sourceControlledDemoProfiles = temporaryDemoCasinoProfiles();
 
-export function isPublicCasinoCmsEnabled() {
-  return process.env.PUBLIC_CASINO_CMS_ENABLED === "true";
+type PublicCasinoCmsEnvironment = {
+  [key: string]: string | undefined;
+  PUBLIC_CASINO_CMS_ENABLED?: string | undefined;
+  VERCEL_ENV?: string | undefined;
+};
+
+export function isPublicCasinoCmsEnabled(environment: PublicCasinoCmsEnvironment = process.env) {
+  if (environment.VERCEL_ENV === "production" || environment.VERCEL_ENV === "preview") return true;
+  return environment.PUBLIC_CASINO_CMS_ENABLED === "true";
 }
 
 export class PublicCasinoService {
@@ -45,15 +54,20 @@ export class PublicCasinoService {
     });
   }
 
+  private sourceControlledDemo(slug: string) {
+    const casino = sourceControlledDemoProfiles.find((entry) => entry.slug === slug);
+    return casino ? enforceTemporaryDemoReviewOnly(casino) : null;
+  }
+
   async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
-    if (!this.cmsEnabled()) return this.legacy(slug);
+    if (!this.cmsEnabled()) return this.legacy(slug) ?? this.sourceControlledDemo(slug);
 
     let published = null;
     try {
       published = await this.repository.findPublishedBySlug(slug);
     } catch {
-      // Published content may become temporarily unavailable without expanding legacy visibility.
+      return null;
     }
 
     if (published) {
@@ -72,6 +86,7 @@ export class PublicCasinoService {
 
       const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
       if (casino) return enforceTemporaryDemoReviewOnly(casino);
+      return null;
     }
 
     try {
@@ -80,24 +95,17 @@ export class PublicCasinoService {
       return null;
     }
 
-    return this.legacy(slug);
+    return this.sourceControlledDemo(slug);
   }
 
   async listCasinos(authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO[]> {
     if (!this.cmsEnabled()) return this.legacyCasinos.map((casino) => this.legacyForMode(casino));
 
-    let managedSlugs: string[];
-    try {
-      managedSlugs = await this.repository.listManagedSlugs();
-    } catch {
-      return [];
-    }
-
     let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>> = [];
     try {
       published = await this.repository.listPublished();
     } catch {
-      // A known managed set still permits review-only fallback for unmanaged legacy slugs.
+      return [];
     }
 
     const operatorDecisions = jurisdictionAllowsReferral(authority)
@@ -121,10 +129,6 @@ export class PublicCasinoService {
     });
     const bySlug = new Map<string, PublicCasinoDTO>();
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
-      if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
-    }
-    const managed = new Set(managedSlugs);
-    for (const casino of this.legacyCasinos.filter((entry) => !managed.has(entry.slug)).map((entry) => this.legacyForMode(entry))) {
       if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
     }
     return [...bySlug.values()].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));

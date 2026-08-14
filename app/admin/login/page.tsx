@@ -10,7 +10,7 @@ import { getSafeAdminCallback } from "@/lib/auth/policy";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "CMS Login | SevenBet",
+  title: "CMS Login | B4GAMBLE",
   robots: { index: false, follow: false },
 };
 
@@ -27,13 +27,13 @@ export default async function AdminLoginPage({
   if (staff) redirect(callbackUrl);
 
   return (
-    <div className="pageShell">
+    <main className="pageShell">
       <Container className="narrow">
         <Card className="adminLogin">
           <Badge tone="green">Secure staff access</Badge>
-          <h1>SevenBet CMS Login</h1>
+          <h1>B4GAMBLE CMS Login</h1>
           <p className="lead">
-            Sign in with the Better Auth account linked to your SevenBet staff
+            Sign in with the Better Auth account linked to your B4GAMBLE staff
             profile.
           </p>
           <AdminLoginForm callbackUrl={callbackUrl} />
@@ -46,6 +46,6 @@ export default async function AdminLoginPage({
           </Button>
         </Card>
       </Container>
-    </div>
+    </main>
   );
 }

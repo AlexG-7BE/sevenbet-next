@@ -314,8 +314,10 @@
 .registrationForm { grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr); }
 .registrationForm form { gap: 18px; }
 .accountRequirements { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--muted); border-radius: 12px; background: var(--white); }
-.check { display: flex; gap: 12px; align-items: center; font-size: 13px; line-height: 19px; }
+.check { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; line-height: 19px; }
 .check input { width: 20px; height: 20px; accent-color: var(--teal); }
+.check > div { display: grid; gap: 4px; }
+.check label { cursor: pointer; }
 .check a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .googleButton {
   width: 100%;

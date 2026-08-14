@@ -4,9 +4,10 @@ import test from "node:test";
 import { getCasinos } from "../lib/data";
 import type { PublishedCasinoSnapshotRecord, PublicAffiliateRoute } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
-import { PublicCasinoService } from "../lib/services/public-casino.service";
+import { isPublicCasinoCmsEnabled, PublicCasinoService } from "../lib/services/public-casino.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { temporaryDemoCasinoProfiles } from "../lib/demo-data/temporary-demo-best-offers";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 const legacy = getCasinos().slice(0, 3);
@@ -68,18 +69,28 @@ function authorizedService(repository: PublicCasinoStore) {
   return new PublicCasinoService(repository, legacy, { cmsEnabled: true, redirectEnabled: true, now }, allowOperatorAuthority);
 }
 
-function assertReviewOnly(casino: Awaited<ReturnType<PublicCasinoService["getCasino"]>>) {
-  assert.ok(casino);
-  assert.equal(casino.source, "legacy");
-  assert.deepEqual(casino.affiliate, { href: null, available: false });
-  for (const bonus of casino.bonuses) assert.deepEqual(bonus.affiliate, { href: null, available: false });
-}
+test("deployed runtimes force the governed CMS publication authority", () => {
+  assert.equal(isPublicCasinoCmsEnabled({ VERCEL_ENV: "production", PUBLIC_CASINO_CMS_ENABLED: "false" }), true);
+  assert.equal(isPublicCasinoCmsEnabled({ VERCEL_ENV: "preview" }), true);
+  assert.equal(isPublicCasinoCmsEnabled({ PUBLIC_CASINO_CMS_ENABLED: "true" }), true);
+  assert.equal(isPublicCasinoCmsEnabled({ PUBLIC_CASINO_CMS_ENABLED: "false" }), false);
+});
 
-test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", async (t) => {
+test("getCasino fails closed outside immutable published CMS records", async (t) => {
   await t.test("1. CMS disabled returns the established legacy profile", async () => {
     const casino = await service(store(), false).getCasino(managedSlug);
     assert.equal(casino?.source, "legacy");
     assert.equal(casino?.slug, managedSlug);
+  });
+
+  await t.test("CMS disabled preserves only exact source-controlled demo detail profiles", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const casino = await service(store(), false).getCasino(expected.slug, allowJurisdictionAuthority);
+    assert.ok(casino);
+    assert.equal(casino.id, temporaryDemoCasinoIds[0]);
+    assert.equal(casino.slug, expected.slug);
+    assert.deepEqual(casino.affiliate, { href: null, available: false });
+    assert.equal(await service(store(), false).getCasino("unknown-demo-profile"), null);
   });
 
   await t.test("2. a published CMS record wins and uses governed affiliate routes", async () => {
@@ -98,8 +109,8 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
     assert.equal(await service(store([], [managedSlug])).getCasino(managedSlug), null);
   });
 
-  await t.test("4. no published record and managed=false returns review-only legacy", async () => {
-    assertReviewOnly(await service(store([], [])).getCasino(managedSlug));
+  await t.test("4. no published record and managed=false still returns null", async () => {
+    assert.equal(await service(store([], [])).getCasino(managedSlug), null);
   });
 
   await t.test("5. a published lookup failure and managed=true returns null", async () => {
@@ -109,11 +120,11 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
     assert.equal(await service(repository).getCasino(managedSlug), null);
   });
 
-  await t.test("6. a published lookup failure and managed=false returns review-only legacy", async () => {
+  await t.test("6. a published lookup failure and managed=false fails closed", async () => {
     const repository = store([], [], [], {
       findPublishedBySlug: async () => { throw new Error("published lookup unavailable"); },
     });
-    assertReviewOnly(await service(repository).getCasino(managedSlug));
+    assert.equal(await service(repository).getCasino(managedSlug), null);
   });
 
   await t.test("7. unknown managed status fails closed after a published lookup failure", async () => {
@@ -129,6 +140,33 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
       hasManagedSlug: async () => { throw new Error("managed lookup unavailable"); },
     });
     assert.equal(await service(repository).getCasino(managedSlug), null);
+  });
+
+  await t.test("an exact source-controlled demo slug retains a disclosed review-only detail page", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const result = await service(store()).getCasino(expected.slug, allowJurisdictionAuthority);
+    assert.ok(result);
+    assert.equal(result.id, temporaryDemoCasinoIds[0]);
+    assert.equal(result.slug, expected.slug);
+    assert.deepEqual(result.affiliate, { href: null, available: false });
+    assert.ok(result.bonuses.every((bonus) => bonus.affiliate.available === false && bonus.affiliate.href === null));
+  });
+
+  await t.test("a managed unpublished demo slug never falls through to source-controlled detail", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    assert.equal(await service(store([], [expected.slug])).getCasino(expected.slug, allowJurisdictionAuthority), null);
+  });
+
+  await t.test("a malformed published demo slug never falls through to source-controlled detail", async () => {
+    const expected = temporaryDemoCasinoProfiles()[0];
+    const malformed = publishedRecord(expected.slug);
+    (malformed.snapshot as Record<string, unknown>).domain = "";
+    let managedLookups = 0;
+    const repository = store([malformed], [], [], {
+      hasManagedSlug: async () => { managedLookups += 1; return false; },
+    });
+    assert.equal(await service(repository).getCasino(expected.slug), null);
+    assert.equal(managedLookups, 0);
   });
 
   await t.test("8. an invalid slug returns null without repository access", async () => {
@@ -173,29 +211,28 @@ test("getCasino keeps legacy visibility bounded by CMS managed-slug authority", 
   });
 });
 
-test("listCasinos never expands visibility when a CMS authority is unavailable", async (t) => {
-  await t.test("12. normal CMS results preserve CMS precedence and unmanaged fallback", async () => {
+test("listCasinos never expands visibility beyond published CMS records", async (t) => {
+  await t.test("12. normal CMS results exclude every unmanaged legacy record", async () => {
     const record = publishedRecord();
     const casinos = await service(store([record], [managedSlug])).listCasinos();
     assert.equal(casinos.filter((casino) => casino.slug === managedSlug).length, 1);
     assert.equal(casinos.find((casino) => casino.slug === managedSlug)?.source, "cms");
-    assert.equal(casinos.find((casino) => casino.slug === unmanagedSlug)?.source, "legacy");
+    assert.equal(casinos.some((casino) => casino.slug === unmanagedSlug), false);
   });
 
-  await t.test("13. published retrieval failure returns only unmanaged legacy profiles", async () => {
+  await t.test("13. published retrieval failure returns an empty catalogue", async () => {
     const repository = store([], [managedSlug], [], {
       listPublished: async () => { throw new Error("published list unavailable"); },
     });
     const casinos = await service(repository).listCasinos();
-    assert.equal(casinos.some((casino) => casino.slug === managedSlug), false);
-    assert.deepEqual(casinos.map((casino) => casino.slug).sort(), legacy.slice(1).map((casino) => casino.slug).sort());
+    assert.deepEqual(casinos, []);
   });
 
-  await t.test("14. managed-slug retrieval failure returns an empty catalogue", async () => {
+  await t.test("14. deprecated managed-slug lookup cannot suppress a valid publication", async () => {
     const repository = store([publishedRecord()], [managedSlug], [], {
       listManagedSlugs: async () => { throw new Error("managed list unavailable"); },
     });
-    assert.deepEqual(await service(repository).listCasinos(), []);
+    assert.equal((await service(repository).listCasinos())[0]?.source, "cms");
   });
 
   await t.test("15. affiliate-route failure preserves published profiles without actions", async () => {
@@ -216,12 +253,11 @@ test("listCasinos never expands visibility when a CMS authority is unavailable",
     assert.equal((await service(repository).listCasinos()).some((casino) => casino.slug === managedSlug), false);
   });
 
-  await t.test("17. an unmanaged legacy slug remains available only as review-only fallback", async () => {
+  await t.test("17. an unmanaged legacy slug never appears during a repository failure", async () => {
     const repository = store([], [managedSlug], [], {
       listPublished: async () => { throw new Error("published list unavailable"); },
     });
-    const casino = (await service(repository).listCasinos()).find((entry) => entry.slug === unmanagedSlug) ?? null;
-    assertReviewOnly(casino);
+    assert.equal((await service(repository).listCasinos()).some((entry) => entry.slug === unmanagedSlug), false);
   });
 
   await t.test("18. catalogue sorting remains deterministic", async () => {

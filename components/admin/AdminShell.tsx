@@ -1,25 +1,30 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import type { ReactNode } from "react";
 import { Badge, Button, Card, Container } from "@/components/ui";
 import { entityLabels } from "@/lib/cms/entities";
 import type { AuditLogEntry, CmsEntity, CmsRecord } from "@/lib/cms/types";
 import { AdminLogoutButton } from "@/components/admin/AdminLogoutButton";
+import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
+import { getAdminPageAccess } from "@/lib/auth/admin";
+import { canAccessAdminArea, type AdminArea } from "@/lib/auth/admin-page-policy";
 
-const adminNav: Array<{ href: string; label: string; entity?: CmsEntity }> = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/programs", label: "Programs", entity: "program" },
-  { href: "/admin/achievements", label: "Achievements", entity: "achievement" },
-  { href: "/admin/xp-rules", label: "XP Rules", entity: "xp-rule" },
-  { href: "/admin/learning", label: "Learning Center", entity: "article" },
-  { href: "/admin/casinos", label: "Casinos", entity: "casino" },
-  { href: "/admin/bonuses", label: "Bonuses", entity: "bonus" },
-  { href: "/admin/affiliate", label: "Affiliate", entity: "affiliate-link" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/analytics", label: "Analytics" },
-  { href: "/admin/settings", label: "Settings", entity: "settings" },
+export const adminNav: Array<{ href: string; label: string; area: AdminArea }> = [
+  { href: "/admin", label: "Dashboard", area: "dashboard" },
+  { href: "/admin/programs", label: "Programs", area: "programs" },
+  { href: "/admin/program-settings", label: "Program settings", area: "program-settings" },
+  { href: "/admin/achievements", label: "Achievements", area: "achievements" },
+  { href: "/admin/xp-rules", label: "XP Rules", area: "xp-rules" },
+  { href: "/admin/learning", label: "Learning Center", area: "learning" },
+  { href: "/admin/casinos", label: "Casinos", area: "casinos" },
+  { href: "/admin/bonuses", label: "Bonuses", area: "bonuses" },
+  { href: "/admin/affiliate", label: "Affiliate", area: "affiliate" },
+  { href: "/admin/users", label: "Users", area: "users" },
+  { href: "/admin/analytics", label: "Analytics", area: "analytics" },
+  { href: "/admin/settings", label: "Settings", area: "settings" },
 ];
 
-export function AdminPageShell({
+export async function AdminPageShell({
   title,
   intro,
   children,
@@ -30,17 +35,21 @@ export function AdminPageShell({
   children: ReactNode;
   actions?: ReactNode;
 }) {
+  const staff = await getAdminPageAccess(await headers(), "dashboard");
+  if (!staff) return <AdminPermissionDenied />;
+  const visibleNavigation = adminNav.filter((item) => canAccessAdminArea(staff, item.area));
+
   return (
     <div className="adminPage">
       <Container>
         <div className="adminShell">
           <aside className="adminSidebar" aria-label="CMS navigation">
             <Link className="brand adminBrand" href="/admin">
-              <span className="mark">7</span>
-              <span>SevenBet CMS</span>
+              <span className="mark">B4</span>
+              <span>B4GAMBLE CMS</span>
             </Link>
             <nav>
-              {adminNav.map((item) => (
+              {visibleNavigation.map((item) => (
                 <Link href={item.href} key={item.href}>
                   {item.label}
                 </Link>
@@ -53,7 +62,7 @@ export function AdminPageShell({
             </Card>
           </aside>
 
-          <section className="adminMain">
+          <main className="adminMain">
             <div className="adminHeader">
               <div>
                 <p className="eyebrow">Headless CMS</p>
@@ -63,7 +72,7 @@ export function AdminPageShell({
               {actions}
             </div>
             {children}
-          </section>
+          </main>
         </div>
       </Container>
     </div>
@@ -84,19 +93,19 @@ export function AdminRecordTable({ records }: { records: CmsRecord[] }) {
   return (
     <div className="adminTable" role="table" aria-label="CMS records">
       <div className="adminTableRow adminTableHead" role="row">
-        <span>Title</span>
-        <span>Type</span>
-        <span>Status</span>
-        <span>Updated</span>
+        <span role="columnheader">Title</span>
+        <span role="columnheader">Type</span>
+        <span role="columnheader">Status</span>
+        <span role="columnheader">Updated</span>
       </div>
       {records.map((record) => (
         <div className="adminTableRow" role="row" key={`${record.entity}-${record.id}`}>
-          <strong>{record.title}</strong>
-          <span>{entityLabels[record.entity]}</span>
-          <Badge tone={record.status === "PUBLISHED" || record.status === "ACTIVE" ? "green" : "warning"}>
+          <strong role="cell">{record.title}</strong>
+          <span role="cell">{entityLabels[record.entity]}</span>
+          <span role="cell"><Badge tone={record.status === "PUBLISHED" || record.status === "ACTIVE" ? "green" : "warning"}>
             {record.status}
-          </Badge>
-          <span>{new Date(record.updatedAt).toLocaleDateString("en-US")}</span>
+          </Badge></span>
+          <span role="cell">{new Date(record.updatedAt).toLocaleDateString("en-US")}</span>
         </div>
       ))}
     </div>
@@ -126,15 +135,13 @@ export function AdminAuditList({ entries }: { entries: AuditLogEntry[] }) {
   );
 }
 
-export function AdminApiActions({ entity }: { entity: CmsEntity }) {
+export function AdminApiActions({ entity, showSettings = false }: { entity: CmsEntity; showSettings?: boolean }) {
   return (
     <div className="heroActions">
       <Button href={`/api/admin/${entity}`} variant="primary">
         Open API
       </Button>
-      <Button href="/admin/settings" variant="ghost">
-        Settings
-      </Button>
+      {showSettings ? <Button href="/admin/settings" variant="ghost">Settings</Button> : null}
     </div>
   );
 }

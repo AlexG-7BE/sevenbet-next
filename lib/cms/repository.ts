@@ -3,6 +3,7 @@ import { cmsAffiliateLinks, cmsAuditLog, cmsRecords, cmsRevisions } from "@/lib/
 import { createRevision } from "@/lib/cms/revisions";
 import type { AuditLogEntry, CmsEntity, CmsRecord, CmsUser, ContentRevision } from "@/lib/cms/types";
 import { assertValidCmsRecord } from "@/lib/cms/validation";
+import { ConflictError, NotFoundError } from "@/lib/services/service-error";
 
 const store = globalThis as typeof globalThis & {
   __sevenbetCmsRecords?: CmsRecord[];
@@ -48,9 +49,9 @@ export function createCmsRecord(entity: CmsEntity, input: CmsRecord, actor: CmsU
 
 export function updateCmsRecord(entity: CmsEntity, id: string, input: Partial<CmsRecord>, actor: CmsUser, expectedUpdatedAt?: string) {
   const index = records().findIndex((record) => record.entity === entity && record.id === id);
-  if (index === -1) throw new Error("CMS record not found");
+  if (index === -1) throw new NotFoundError("CMS record", { entity, id });
   if (expectedUpdatedAt && records()[index].updatedAt !== expectedUpdatedAt) {
-    throw new Error("This content was changed by another editor. Reload before saving again.");
+    throw new ConflictError("This content was changed by another editor. Reload before saving again.", { entity, id });
   }
 
   const next = {
@@ -100,7 +101,7 @@ export function addAuditEntry(entry: AuditLogEntry) {
 
 export function restoreCmsRevision(entity: CmsEntity, id: string, revisionId: string, actor: CmsUser) {
   const revision = revisions().find((item) => item.id === revisionId && item.entityType === entity && item.entityId === id);
-  if (!revision) throw new Error("Revision not found");
+  if (!revision) throw new NotFoundError("Revision", { entity, id, revisionId });
   return updateCmsRecord(entity, id, revision.snapshot, actor);
 }
 

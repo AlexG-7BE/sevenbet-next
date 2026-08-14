@@ -132,7 +132,8 @@
 .missionList .currentMission { border-color: var(--night); background: var(--night); color: var(--white); }
 .missionList .currentMission > span { background: var(--acid); }
 .missionList .currentMission p { color: var(--acid); }
-.missionList .futureMission { opacity: .72; }
+.missionList .futureMission { border-color: rgba(16,15,15,.22); background: var(--paper); }
+.missionList .futureMission > span { color: var(--muted); }
 
 .accountBoundary { min-height: 720px; padding: 96px max(64px, calc((100vw - 1312px) / 2)); display: grid; grid-template-columns: 1.15fr .85fr; gap: 72px; align-items: center; background: var(--night); color: var(--white); }
 .accountCopy { display: grid; justify-items: start; }

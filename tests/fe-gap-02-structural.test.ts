@@ -77,15 +77,23 @@ test("commercial actions use confirmation first and neutral managed recovery", (
 test("runtime text and sitemap policy match current product truth", () => {
   const llms = read("app/llms.txt/route.ts");
   const site = read("lib/site.ts");
+  const sitemap = read("app/sitemap.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
   assert.match(llms, /limit chosen by the user/);
   assert.match(llms, /does not calculate a safe or affordable amount/);
   assert.match(llms, /does not generate a stop-loss recommendation/);
   assert.match(llms, /private, non-clinical reflection/);
+  assert.match(llms, /Casino Data Boundary/);
+  assert.match(llms, /Demonstration records are fictional/);
+  assert.doesNotMatch(llms, /getTopCasinos|Top Casino Profiles|wagering x\$\{|license \$\{/);
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   assert.doesNotMatch(site, /["']\/privacy["']|["']\/terms["']/);
   assert.match(footer, /\["Privacy", "\/privacy"\]/);
   assert.match(footer, /\["Terms", "\/terms"\]/);
+  assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(sitemap, /comparison\.status === "available" && comparison\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(sitemap, /"\/best-offers"/);
+  assert.match(sitemap, /"\/compare"/);
 });
 
 test("FE-GAP-02 introduces no forbidden frontend architecture", () => {

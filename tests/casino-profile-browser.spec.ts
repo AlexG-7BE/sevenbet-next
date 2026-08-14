@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
 
+import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
+import { selectOverallShortlist } from "../lib/public-offer/best-offer-ranking";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 test("demo profile renders one disclosed SSR review without governed actions", async ({ page }) => {
@@ -11,9 +14,20 @@ test("demo profile renders one disclosed SSR review without governed actions", a
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino review" })).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("complementary", { name: "Fictional bonus fields with no visit action" })).toBeVisible();
   expect(await page.locator("h1").count()).toBe(1);
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
+  const visibleCopy = await page.locator("body").innerText();
+  for (const falsePublicationClaim of [
+    "Published review",
+    "Published bonus",
+    "Published detail",
+    "Published source",
+    "Published control tools",
+    "Published evidence",
+    "Published facts",
+  ]) expect(visibleCopy).not.toContain(falsePublicationClaim);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   expect(errors).toEqual([]);
 });
@@ -49,11 +63,45 @@ test("demo profile suppresses review, FAQ and commercial structured data", async
 test("outbound confirmation is absent while market authority denies referral", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
   await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
-  const hero = page.getByRole("complementary", { name: "Published bonus and visit action" });
+  const hero = page.getByRole("complementary", { name: "Fictional bonus fields with no visit action" });
   await expect(hero.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
   await expect(hero.getByText("Offer unavailable")).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
   await page.close();
+});
+
+test("every rendered Best Offers demo detail action resolves to a disclosed review-only page", async ({ page }) => {
+  const shortlist = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
+  expect(shortlist?.status()).toBe(200);
+  const hrefs = [...new Set(await page.locator('a[href^="/casino/"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")).filter((href): href is string => Boolean(href))))];
+  const expectedPaths = selectOverallShortlist(temporaryDemoBestOffers(), { country: "GB", limit: 12 })
+    .map((offer) => `/casino/${offer.casino.slug}`)
+    .sort();
+  expect(hrefs.sort()).toEqual(expectedPaths);
+  const exactDemoPaths = new Set(expectedPaths);
+  const shortlistCopy = await page.locator("body").textContent() ?? "";
+  for (const falsePublicationClaim of [
+    "Published ranking method",
+    "Only active, current records explicitly available",
+    "important conditions must all be published",
+    "exact published signal behind the result",
+    "Withdrawal timing is a published signal",
+    "The operator’s current terms control the final decision",
+    "strongest balance under the published method",
+    "Published terms are a comparison snapshot",
+    "latest published, non-archived snapshots",
+    "The evidence behind the headline",
+    "It is a set of facts a user can compare",
+    "Read the evidence",
+  ]) expect(shortlistCopy).not.toContain(falsePublicationClaim);
+
+  for (const href of hrefs) {
+    expect(exactDemoPaths.has(href), href).toBe(true);
+    const response = await page.goto(`${baseUrl}${href}`, { waitUntil: "networkidle" });
+    expect(response?.status(), href).toBe(200);
+    await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
+    expect(await page.locator('a[href^="http"], a[href^="/r/"]').count()).toBe(0);
+  }
 });
 
 test("server HTML remains useful with JavaScript disabled", async ({ browser }) => {

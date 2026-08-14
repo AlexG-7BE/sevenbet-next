@@ -30,7 +30,7 @@ test("Best Offers exposes all ranked records as an accessible comparison", async
   const summary = page.locator("details").getByText(/Compare all \d+/, { exact: true });
   await summary.click();
   await expect(cards.first()).toBeVisible();
-  await expect(cards.first()).toContainText("Why it ranks");
+  await expect(cards.first()).toContainText("Why it is ordered here");
   await expect(cards.first()).toContainText("Commission is not a ranking input");
   await expect(cards.first()).toContainText("DEMONSTRATION DATA");
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
@@ -43,10 +43,16 @@ test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page 
   await carousel.focus();
   await page.keyboard.press("ArrowRight");
   await expect(carousel.locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]')).toContainText("Lower wagering");
-  await page.getByRole("tab", { name: "2 Lower wagering" }).click();
-  await expect(page.getByRole("tabpanel").getByText("A smaller headline with a lighter play-through requirement.", { exact: true })).toBeVisible();
+  const overallTab = page.getByRole("tab", { name: "1 Best overall balance" });
+  const wageringTab = page.getByRole("tab", { name: "2 Lower wagering" });
+  await overallTab.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(wageringTab).toBeFocused();
+  await expect(wageringTab).toHaveAttribute("aria-selected", "true");
+  await expect(overallTab).toHaveAttribute("tabindex", "-1");
+  await expect(page.getByRole("tabpanel").getByText("A fictional smaller headline with a lighter demonstration play-through field.", { exact: true })).toBeVisible();
   await page.getByRole("tab", { name: "3 Faster payout signal" }).click();
-  await expect(page.getByRole("tabpanel").getByText("A clearer, faster published withdrawal signal beside the bonus terms.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("tabpanel").getByText("A clearer, faster fictional withdrawal field beside the demonstration terms.", { exact: true })).toBeVisible();
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
 });
 

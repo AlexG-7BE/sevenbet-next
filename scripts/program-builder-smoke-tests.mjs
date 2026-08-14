@@ -64,7 +64,8 @@ const relatedComparison = { affiliateLinkId: "affiliate_link_sample" };
 assert.equal(Boolean(relatedComparison.affiliateLinkId), true, "commercial references must resolve through internal affiliate IDs");
 
 const middleware = readFileSync(new URL("../middleware.ts", import.meta.url), "utf8");
-assert.match(middleware, /\/admin\/:path\*/, "draft preview must remain behind admin middleware");
+assert.match(middleware, /matcher: \["\/:path\*"\]/, "global canonical-host middleware must cover admin routes");
+assert.match(middleware, /pathname\.startsWith\("\/admin"\)/, "draft preview must remain behind admin middleware");
 const builderRoute = readFileSync(new URL("../app/api/admin/programs/[programId]/builder/route.ts", import.meta.url), "utf8");
 assert.match(builderRoute, /expectedUpdatedAt/, "builder saves must support optimistic concurrency");
 const publishService = readFileSync(new URL("../lib/services/program-builder.service.ts", import.meta.url), "utf8");

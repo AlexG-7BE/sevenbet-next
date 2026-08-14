@@ -2,7 +2,7 @@
 
 ## Status
 
-**RECOVERY-01: PARTIAL — MANAGED CANARY SNAPSHOT PENDING.** RFC-024 is approved. The Preview-sourced logical restore drill passed, Starter is detected for the exact Vercel-billed Prisma workspace, completed managed Production snapshots are visible, and a provider-native Preview snapshot restored into a new isolated database and passed validation. The selected snapshot predates the one pending synthetic Preview canary, so canary parity remains not applicable until a later snapshot captures it.
+**RECOVERY-01: MANAGED RESTORE DRILL COMPLETE.** RFC-024 is approved. The Preview-sourced logical restore drill passed, Starter is detected for the exact Vercel-billed Prisma workspace, completed managed Production snapshots are visible, and provider-native Preview snapshots restored into fresh isolated databases and passed validation. The final follow-up used a completed snapshot containing the synthetic structural canary, proved exact canary parity, and deleted both the target and canary with absence verification. Production remained read-only; any Production restore still requires separate incident authority.
 
 The internal closed-beta targets are RPO no greater than 24 hours, RTO no greater than 4 hours and at least seven daily restore points or equivalent provider-native recoverability. These are internal objectives, not customer promises, SLAs or public copy.
 
@@ -87,17 +87,11 @@ The first fresh target stopped before schema creation because the PostgreSQL 17 
 | Temporary authority | Two one-use service tokens supported exact metadata/delete evidence; both were revoked and the workspace returned to zero service tokens |
 | Cost | Existing Starter base plan: USD 10/month. No additional recurring plan/service accepted; no separately itemised incremental restore charge detected. |
 
-### Pending managed-snapshot canary
+### Completed managed-snapshot canary follow-up — 2026-08-12
 
-The selected snapshot was created before the managed canary. One Preview-only synthetic structural canary therefore remains intentionally pending:
+Completed Preview backup `backup-01kzszywy038jepagf0zk705zs` at `2026-08-12T03:23:52.640Z` captured the synthetic structural canary. It was restored provider-natively to fresh disconnected target `cmspkm3vo22py12f5nej7sdfc`, which reached `ready` and passed exact 18-migration, 12 selected-table-count, schema, FK/orphan, auth/Programme, repository-read and canary parent/claim parity.
 
-- root ID `73a3c254-8ffb-4d35-b91f-9fb7436ad45f`;
-- safe canary hash `dfcb30eb93bac399ac3a342782e23fd6f3f19f3e9e3260d735757d9ae2e08cab`;
-- root created `2026-08-11T08:00:45.569Z`, after the selected snapshot by 4 hours 48 minutes 15.831 seconds;
-- one `AnonymousProgrammeSession` plus one related `PendingProgrammeClaim`, containing only opaque hashes and versioned structural fields;
-- no real email, narrative, audio, transcript, OpenAI, Google, email delivery, affiliate or commercial data/call.
-
-A bounded second backup-list check still showed `backup-01kzqcxb1ak4rx3amh1snpwdag` as newest, so the canary was not deleted. The next drill must select a completed snapshot later than the canary, restore it to another new isolated target, prove exact canary parity, then remove the canary and target by exact identity.
+The exact target deletion returned HTTP 204; subsequent exact GET returned 404 and console absence was confirmed. The exact Preview canary root and claim were then deleted and verified absent, with all unrelated selected-table counts unchanged. Temporary credentials were revoked. No real-person content or external-provider call was involved; Production remained read-only.
 
 ## Normal recovery tooling
 
@@ -172,8 +166,6 @@ Use minimum necessary access. Do not copy Production personal data to Preview, d
 
 After evidence/cutover, confirm the exact temporary resource ID, disconnect it, delete it through the provider, verify deletion and record the provider operation ID. For local drills, stop the exact temporary server, validate its data-directory identity and remove the entire private directory. If deletion identity is ambiguous, leave the target disconnected and return `MANUAL RECOVERY TARGET CLEANUP REQUIRED` with its immutable ID.
 
-## Remaining Founder action
+## Ongoing operational action
 
-`FOUNDER ACTION REQUIRED — AUTHORISE THE FOLLOW-UP AFTER CANARY CAPTURE`
-
-Do not change plan. After Prisma creates a completed Preview snapshot later than `2026-08-11T08:00:45.569Z`, authorise the bounded continuation to restore that exact point into another new isolated target, verify the pending canary's exact parity, delete the canary from Preview, delete the target by exact immutable ID and confirm both absent. That is the only remaining RECOVERY-01 closure action.
+RECOVERY-01 has no remaining drill-closure action. Continue routine snapshot/retention monitoring and preserve the evidence above. A real Production restore, target cutover, plan change or incident mutation remains separately Founder-authorised work under the incident runbook; drill completion does not authorise it.

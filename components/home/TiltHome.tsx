@@ -164,7 +164,7 @@ export function TiltHome() {
         <div className={styles.evidenceGrid}>
           <article><span>NHS</span><strong>Recognition and support guidance</strong><p>Used to shape the self-recognition language.</p></article>
           <article><span>NICE NG248</span><strong>Assessment and treatment guidance</strong><p>A source for bounded Programme language and risk controls.</p></article>
-          <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>Missions 01–04 are implemented; later missions remain planned.</p></article>
+          <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>One approved path, with Reviews at meaningful checkpoints.</p></article>
           <article className={styles.limitCard}><span>CLEAR LIMIT</span><strong>No clinical claim</strong><p>The complete Programme has not yet been clinically evaluated.</p></article>
         </div>
       </section>

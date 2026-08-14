@@ -122,7 +122,7 @@ const sharedActionFocusCases: Array<{
   {
     name: "10 Steps",
     route: "/10-steps",
-    action: (page) => page.getByRole("main").locator('a[href="/program"]').first(),
+    action: (page) => page.getByRole("main").locator('a[href="/program?entry=start"]').first(),
   },
   {
     name: "Personal Limit Tracker",

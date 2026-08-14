@@ -10,11 +10,13 @@ import { requireCurrentUser } from "@/lib/auth/session";
 import { assertProgrammeRateLimit } from "@/lib/programme/rate-limit";
 import { anonymousSessionLifetimeMs } from "@/lib/programme/security";
 import { programmeSessionService } from "@/lib/programme/application/programme-session.service";
+import { assertLegacyProgrammeMutationAllowed } from "@/lib/programme/legacy-runtime";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
+    assertLegacyProgrammeMutationAllowed();
     await assertProgrammeRateLimit("PROGRAMME_SESSION_CREATE_IP", requestAddress(request));
     const result = await programmeSessionService.createAnonymousSession();
     const response = programmeResponse({ ok: true, session: result.session }, 201);

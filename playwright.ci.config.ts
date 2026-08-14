@@ -8,6 +8,7 @@ process.env.PLAYWRIGHT_BASE_URL = baseUrl;
 
 export default defineConfig({
   testDir: "./tests",
+  snapshotPathTemplate: "{testDir}/{testFileName}-snapshots/{arg}{ext}",
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
@@ -28,9 +29,10 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ...process.env,
+      VERCEL_ENV: "",
       DATABASE_URL: ciDatabaseUrl,
       DIRECT_URL: ciDatabaseUrl,
-      NEXT_PUBLIC_SITE_URL: baseUrl,
+      NEXT_PUBLIC_SITE_URL: "https://b4gamble.com",
       BETTER_AUTH_SECRET: "ops-ci-auth-secret-not-used-by-production",
       BETTER_AUTH_URL: baseUrl,
       BETTER_AUTH_TRUSTED_ORIGINS: baseUrl,

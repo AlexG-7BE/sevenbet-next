@@ -108,7 +108,10 @@ test("Self Recognition remains static language rather than a diagnostic form", (
 });
 
 test("Programme availability and evidence limitations remain truthful", () => {
-  assert.match(home + carousel, /Missions 01–04 are implemented; later missions remain planned\./);
+  assert.match(home + carousel, /Ten practical Missions form one reviewable path\./);
+  assert.match(home + carousel, /Missions 02–10 · unlock in sequence/);
+  assert.match(home + carousel, /One approved path, with Reviews at meaningful checkpoints\./);
+  assert.doesNotMatch(home + carousel, /Missions 01–04 are implemented|not yet available|later missions remain planned/);
   assert.match(home, /public NHS and NICE guidance/);
   assert.match(home, /The complete Programme has not yet been clinically evaluated\./);
   assert.doesNotMatch(home, /clinically effective|clinical effectiveness|medical endorsement|NHS endorsement|NICE endorsement|treatment efficacy/iu);

@@ -1,4 +1,5 @@
 import type { PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoDataClassification, PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 export type PublicComparisonEvidenceStatus =
   | "Published"
@@ -26,6 +27,7 @@ export interface PublicComparisonQuery {
 }
 
 export interface PublicComparisonCandidate {
+  dataClassification: PublicCasinoDataClassification;
   slug: string;
   name: string;
   logo: PublicCasinoMedia | null;
@@ -49,6 +51,7 @@ export interface PublicComparisonAction {
 
 export interface PublicComparisonCasino {
   id: string;
+  dataClassification: PublicCasinoDataClassification;
   slug: string;
   name: string;
   summary: string;
@@ -89,4 +92,5 @@ export interface PublicComparisonResult {
   groups: PublicComparisonGroup[];
   hiddenEqualRows: number;
   defaulted: boolean;
+  inventoryMode: PublicCasinoInventoryMode | "UNAVAILABLE";
 }

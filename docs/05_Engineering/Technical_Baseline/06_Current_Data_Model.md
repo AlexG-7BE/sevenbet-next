@@ -2,7 +2,7 @@
 
 ## Persistence foundation
 
-**Detected:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 18 ordered SQL migrations (`0001_cms_foundation` through `0018_program_ai_m1_foundation`). The schema currently declares 67 Prisma models and 38 enums. Application repositories/services directly use this persistence layer.
+**Detected at current main `c525954`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 19 ordered SQL migrations (`0001_cms_foundation` through `0019_programme_runtime_hardening`). The schema currently declares 68 Prisma models and 38 enums. Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
@@ -10,7 +10,7 @@
 | --- | --- |
 | Identity/admin | `User`, `Session`, `Account`, `Verification`, `AdminUser`, `AuditLog` |
 | Program/progress/rewards | `Program`, `ProgramStep`, `Lesson`, `LessonBlock`, `ProgramVersion`, `ProgramEnrollment`, `ProgramReflection`, `ProgramProgressEvent`, `XpRule`, `UserXpEvent`, `Achievement`, `UserAchievement` |
-| Active-control private flow | `AnonymousProgrammeSession`, `PendingProgrammeClaim`, `ProgrammeMissionProgress`, `MomentMap`, `CurrentGoal`, `ProgrammeActiveDay`, `ProgrammeSensitiveInputAuthority`, `ProgrammeStartingPoint` |
+| Active-control private flow | `AnonymousProgrammeSession`, `PendingProgrammeClaim`, `ProgrammeMissionProgress`, `MomentMap`, `CurrentGoal`, `ProgrammeActiveDay`, `ProgrammeSensitiveInputAuthority`, `ProgrammeStartingPoint`, transient `ProgrammeRuntimeRateLimitBucket` |
 | Editorial/CMS | `Article`, `ContentRevision`, `SiteSetting` |
 | Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
 | Affiliate | `AffiliateNetwork`, `AffiliateProgram`, `AffiliateOffer`, `AffiliateOfferCountry`, `AffiliateOfferCurrency`, `AffiliateTrackingLink`, `AffiliateTrackingLinkCountry`, `AffiliateOfferRevision`, `AffiliateTrackingLinkRevision`, `AffiliateRedirectSlug`, `AffiliateRedirectRevision`, `AffiliateExternalMapping`, `AffiliateImportJob`, `AffiliateImportItem` |
@@ -20,7 +20,7 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 
 ## Enums
 
-**Detected:** Editorial and offer lifecycle, CMS block, role, XP, casino attributes/availability/link/bonsus, media, and affiliate network/status/payout/GEO/connection/sync/import/matching/source-policy enums. The precise enum definitions are retained in the schema and intentionally not duplicated here.
+**Detected:** Editorial and offer lifecycle, CMS block, role, XP, casino attributes/availability/link/bonus, media, and affiliate network/status/payout/GEO/connection/sync/import/matching/source-policy enums. The precise enum definitions are retained in the schema and intentionally not duplicated here.
 
 ## Migration inventory
 
@@ -42,5 +42,6 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 16. Mission 03 urge-learning vertical slice
 17. Mission 04 active-boundary vertical slice
 18. PROGRAM-AI M1 narrow authority and confirmed Starting Point
+19. Programme runtime hardening shared fixed-window rate-limit buckets
 
-**Detected:** all migration directories contain `migration.sql`. Whether they have been applied to any particular deployed database is **not detected** from the repository. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.
+**Detected:** all migration directories contain `migration.sql`. Migration 0019 creates only the transient rate-limit bucket and expiry index; bounded purge code uses it together with expired anonymous sessions and unconsumed claims. Whether every migration is applied to any particular deployed database is **not detected** from the repository. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.

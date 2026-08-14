@@ -1,17 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 
 import { AdminPageShell } from "@/components/admin/AdminShell";
+import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { Badge, Card } from "@/components/ui";
+import { getAdminPageAccess } from "@/lib/auth/admin";
 import { loadCasinoBuilderData } from "@/lib/casino-builder/server";
 import { casinoService } from "@/lib/services";
 
 export const metadata: Metadata = {
-  title: "Casino Revisions | SevenBet CMS",
+  title: "Casino Revisions | B4GAMBLE CMS",
   robots: { index: false, follow: false },
 };
 
 export default async function CasinoRevisionsPage({ params }: { params: Promise<{ casinoId: string }> }) {
+  if (!await getAdminPageAccess(await headers(), "casinos")) return <AdminPermissionDenied />;
   const { casinoId } = await params;
   const data = await loadCasinoBuilderData(casinoId);
   const revisions = await casinoService.getRevisionHistory(casinoId);

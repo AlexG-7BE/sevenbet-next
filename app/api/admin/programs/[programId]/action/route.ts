@@ -1,48 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { EditorialStatus } from "@prisma/client";
 
-import {
-  adminAuthErrorResponse,
-  requireAdminPermission,
-} from "@/lib/auth/admin";
-import {
-  ServiceError,
-  programBuilderService,
-} from "@/lib/services";
+import { requireAdminPermission } from "@/lib/auth/admin";
+import { adminServiceErrorResponse } from "@/lib/http/admin-service-error";
+import { programBuilderService } from "@/lib/services";
 
 export const dynamic = "force-dynamic";
-
-function errorResponse(error: unknown) {
-  const authResponse = adminAuthErrorResponse(error);
-  if (authResponse) return authResponse;
-
-  if (error instanceof ServiceError) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-      },
-      {
-        status: error.statusCode,
-      },
-    );
-  }
-
-  return NextResponse.json(
-    {
-      ok: false,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Program action failed",
-    },
-    {
-      status: 400,
-    },
-  );
-}
 
 export async function POST(
   request: NextRequest,
@@ -186,6 +149,6 @@ export async function POST(
       },
     );
   } catch (error) {
-    return errorResponse(error);
+    return adminServiceErrorResponse(error, "Program action failed");
   }
 }

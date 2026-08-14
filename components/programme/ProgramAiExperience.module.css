@@ -59,7 +59,13 @@
   background: var(--sb-white);
 }
 .accessCard h2 { margin: 0; font-size: clamp(28px, 3vw, 40px); line-height: 1.05; }
-.accessCard label, .jitCard label { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; font-size: 15px; line-height: 1.5; }
+.accessCard > label, .jitCard label { display: grid; grid-template-columns: 22px 1fr; gap: 12px; align-items: start; font-size: 15px; line-height: 1.5; }
+.accessCheck { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 12px; align-items: start; font-size: 15px; line-height: 1.5; }
+.accessCheckCopy { display: grid; gap: 4px; }
+.accessCheckCopy > label { cursor: pointer; }
+.accessCheckCopy > span { font-size: 13px; }
+.accessCheckCopy a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+.phaseBoundary { min-height: 100%; outline: none; }
 .accessCard input, .jitCard input { width: 20px; height: 20px; accent-color: var(--sb-teal); }
 .helpLink { width: fit-content; color: var(--sb-teal); font-weight: 700; }
 

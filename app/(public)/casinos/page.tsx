@@ -19,12 +19,13 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
   const result = await publicCasinoDiscoveryService.discover(query, authority);
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
+  const empty = result.total === 0;
   const canonicalParams = new URLSearchParams();
   if (!filtered && (query.page ?? 1) > 1) canonicalParams.set("page", String(query.page));
   const canonical = absoluteUrl(`/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`);
   const title = query.page && query.page > 1 ? `Casino Reviews — Page ${query.page} | B4GAMBLE` : containsDemo ? "Casino Review Demonstration | B4GAMBLE" : "Casino Reviews and Comparisons | B4GAMBLE";
   const description = containsDemo ? "Fictional demonstration casino records showing B4GAMBLE's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by market preference, licence, payments, games, bonus availability and responsible gambling information.";
-  return { title, description, alternates: { canonical }, robots: filtered || containsDemo ? { index: false, follow: true } : { index: true, follow: true }, openGraph: { type: "website", title, description, url: canonical } };
+  return { title, description, alternates: { canonical }, robots: filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true }, openGraph: { type: "website", title, description, url: canonical } };
 }
 
 export default async function CasinosPage({ searchParams }: PageProps) {
@@ -33,7 +34,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const result = await publicCasinoDiscoveryService.discover(query, authority);
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Casino Reviews", item: absoluteUrl("/casinos") }] },
-    ...(result.inventoryMode === "PUBLISHED_ONLY" ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
+    ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
   ];
 
   return <div className={styles.page}>

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { getCasinos } from "../lib/data";
+import { parsePublicResourceLimit, PUBLIC_RESOURCE_LIMIT_ERROR, resolvePublicResourceLimit } from "../lib/http/public-resource-limit";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import { parseRobotsMetadata } from "../lib/public-casino/public-casino-validation";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
@@ -76,16 +77,16 @@ function store(records: PublishedCasinoSnapshotRecord[], managedSlugs = records.
   };
 }
 
-test("published CMS wins over a duplicate legacy slug and legacy remains the fallback", async () => {
+test("published CMS wins over a duplicate legacy slug without expanding to legacy fallback", async () => {
   const legacy = getCasinos().slice(0, 2);
   const service = new PublicCasinoService(store([publishedRecord()]), legacy, { cmsEnabled: true, redirectEnabled: true, now });
   assert.equal((await service.getCasino("10bet"))?.name, "CMS 10Bet");
-  assert.equal((await service.getCasino(legacy[1].slug))?.source, "legacy");
-  assert.equal((await service.getCasino(legacy[1].slug))?.affiliate.href, null);
+  assert.equal(await service.getCasino(legacy[1].slug), null);
   assert.equal(await service.getCasino("unknown-casino"), null);
   const list = await service.listCasinos();
   assert.equal(list.filter((casino) => casino.slug === "10bet").length, 1);
   assert.equal(list.find((casino) => casino.slug === "10bet")?.source, "cms");
+  assert.equal(list.some((casino) => casino.slug === legacy[1].slug), false);
   assert.deepEqual(list.map((casino) => casino.slug), [...list].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug)).map((casino) => casino.slug));
 });
 
@@ -145,11 +146,14 @@ test("casino robots directives preserve noindex and treat none as noindex, nofol
 });
 
 test("public routes use the service boundary and invalidate all publication surfaces", () => {
-  for (const file of ["app/(public)/casino/[slug]/page.tsx", "app/sitemap.ts"]) {
-    assert.match(readFileSync(file, "utf8"), /publicCasinoService/);
-  }
+  assert.match(readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8"), /publicCasinoService/);
+  assert.match(readFileSync("app/sitemap.ts", "utf8"), /publicCasinoDiscoveryService/);
   for (const file of ["app/(public)/best-offers/page.tsx", "app/(public)/bonuses/page.tsx"]) assert.match(readFileSync(file, "utf8"), /publicOfferService/);
   assert.match(readFileSync("app/(public)/casinos/page.tsx", "utf8"), /publicCasinoDiscoveryService/);
+  const directory = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  assert.match(directory, /const empty = result\.total === 0/);
+  assert.match(directory, /filtered \|\| containsDemo \|\| empty/);
+  assert.match(directory, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   const page = readFileSync("app/(public)/casino/[slug]/page.tsx", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
@@ -170,6 +174,27 @@ test("public routes use the service boundary and invalidate all publication surf
   const legacyRedirect = readFileSync("app/go/[slug]/route.ts", "utf8");
   assert.doesNotMatch(legacyRedirect, /resolveAffiliateLink|destinationUrl/);
   assert.match(legacyRedirect, /outbound\/unavailable/);
+});
+
+test("public resource limit accepts only one canonical positive integer within policy", () => {
+  assert.equal(parsePublicResourceLimit(null), 100);
+  assert.equal(parsePublicResourceLimit("1"), 1);
+  assert.equal(parsePublicResourceLimit("99"), 99);
+  assert.equal(parsePublicResourceLimit("100"), 100);
+  for (const invalid of ["", "0", "00", "01", "+1", " 1", "1 ", "1.0", "1e2", "-1", "101", "NaN", "Infinity"]) {
+    assert.equal(parsePublicResourceLimit(invalid), null, invalid);
+  }
+  assert.equal(resolvePublicResourceLimit([]), 100);
+  assert.equal(resolvePublicResourceLimit(["24"]), 24);
+  assert.equal(resolvePublicResourceLimit(["1", "2"]), null);
+  assert.deepEqual(PUBLIC_RESOURCE_LIMIT_ERROR, {
+    ok: false,
+    code: "INVALID_LIMIT",
+    error: "limit must be a canonical integer from 1 to 100",
+  });
+  const route = readFileSync("app/api/public/[resource]/route.ts", "utf8");
+  assert.match(route, /resolvePublicResourceLimit\(limitParams\)/);
+  assert.match(route, /NextResponse\.json\(PUBLIC_RESOURCE_LIMIT_ERROR, \{ status: 400 \}\)/);
 });
 
 test("client components do not import Prisma and public HTML uses internal redirect paths for CMS offers", () => {

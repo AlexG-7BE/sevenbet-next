@@ -76,7 +76,7 @@ test("authority endpoint issues only from the exact consolidated affirmations an
       }),
     }));
     assert.equal(response.status, 200);
-    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
     const payload = await response.json() as { authority: { proof: string; journeyId: string } };
     assert.equal(payload.authority.journeyId, JOURNEY);
     assert.match(payload.authority.proof, /^pa1\./);
@@ -94,6 +94,14 @@ test("authority endpoint issues only from the exact consolidated affirmations an
       }),
     }));
     assert.equal(invalid.status, 400);
+
+    const oversized = await issueAccessAuthority(new Request("http://localhost/api/programme-access/authority", {
+      method: "POST",
+      headers: { "content-type": "application/json", "content-length": String(33 * 1024) },
+      body: "{}",
+    }));
+    assert.equal(oversized.status, 413);
+    assert.equal((await oversized.json()).code, "PAYLOAD_TOO_LARGE");
   } finally {
     if (originalSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
     else process.env.BETTER_AUTH_SECRET = originalSecret;

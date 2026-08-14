@@ -140,9 +140,9 @@ export function ActiveBonusFilters({ query, raw }: { query: PublicOfferQuery; ra
 }
 
 export function BonusComparisonList({ offers, startPosition }: { offers: PublicOfferDTO[]; startPosition: number }) {
-  return <div className={styles.comparison} role="list">
+  return <div className={styles.comparison}>
     <div aria-hidden="true" className={styles.comparisonHeader}><span>Position / offer</span><span>Headline / material terms</span><span>Licence / payments</span><span>Commercial state</span></div>
-    {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`} role="listitem">
+    {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <div className={`${styles.rowIdentity} ${styles.desktopComparisonCell}`}><span>{String(startPosition + index).padStart(2, "0")}</span><div><p>{bonusType(offer.bonus.type)}</p><h3>{offer.casino.name}</h3><Link href={`/casino/${offer.casino.slug}`}>Read Review →</Link></div></div>
       <div className={`${styles.rowTerms} ${styles.desktopComparisonCell}`}><strong>{offer.bonus.title}</strong><DemoFixtureNotice offer={offer} /><dl>{materialTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>{offer.bonus.importantConditions.length > 0 && <small>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</small>}</div>
       <div className={`${styles.rowContext} ${styles.desktopComparisonCell}`}><span>Licence</span><strong>{offer.casino.licenses[0]?.authority || "Not listed"}</strong><span>Payments</span><p>{offer.casino.payments.slice(0, 3).map((item) => item.name).join(" · ") || "Not listed"}</p><small>Reviewed {date(offer.casino.lastReviewedAt)}</small></div>
