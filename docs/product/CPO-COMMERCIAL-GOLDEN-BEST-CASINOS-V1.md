@@ -9,7 +9,7 @@
 - **Baseline PR #75 head:** `e01f0574b3c19860d8541b67cc29d9c400a8483a`
 - **Baseline main:** `0c956d0d99c9ac703234e82a0bca3c1d5b3a9167`
 - **Baseline divergence:** 0 commits behind / 2 commits ahead of `origin/main`
-- **Final implementation head:** Pending commit; resolved in the final handoff and PR #75
+- **Final implementation head:** `a8cdf442e4160b1751f395eff8f00607dd48c543`
 
 ## Evidence classification
 
@@ -206,6 +206,13 @@ Research was completed with the installed Refero design tooling before implement
 1. **Composition:** inspected full route and chapter captures; replaced equal cards with a six-chapter, image-led composition and confirmed #1 dominance. Finding fixed: mobile identity density.
 2. **Commercial hierarchy:** verified the actual one-click terminal, CTA order and 390/430 action path. Finding fixed: moved the two supporting reasons after the primary action while keeping facts and limitation before it.
 3. **Polish:** inspected 390, 430, 768, 1024, 1280, 1440 and 1920 px. Findings fixed: prefixer-safe alignment values, anchor scroll margins and redundant mobile alternative copy.
+
+## Verification result
+
+- `npm run cpo-preview:test`: **23 passed, 0 failed**.
+- `npm run ci:quality`: **467 passed, 0 failed** across the repository quality suites.
+- `npm run lint`, `npm run typecheck`, `git diff --check` and the Preview-enabled production build: **passed**.
+- `npm run cpo-preview:browser`: test definitions cover Chromium and WebKit, but both standalone launches are blocked by the managed macOS sandbox. Equivalent Chromium route, click, viewport and overflow checks were completed with the in-app browser.
 
 ## Screenshot evidence
 
