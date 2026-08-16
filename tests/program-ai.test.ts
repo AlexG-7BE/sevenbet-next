@@ -262,7 +262,7 @@ test("provider output is a strict union and cannot smuggle authority, raw payloa
   }), /at least 8/i);
 });
 
-test("no-adapter orchestration is truthful, deterministic and leaves user-controlled fields incomplete", async () => {
+test("no-adapter orchestration produces a complete best-effort Starting Point without another user question", async () => {
   const orchestrator = new ProgrammeAiOrchestrator(null);
   const result = await orchestrator.createTurn({
     inputMode: "text",
@@ -274,8 +274,32 @@ test("no-adapter orchestration is truthful, deterministic and leaves user-contro
   assert.equal(result.generation, "USER_CONTROLLED_FALLBACK");
   assert.equal(result.disposition, "CONTINUE");
   assert.equal(result.candidate.startingPoint, startingPoint.startingPoint);
-  assert.equal(result.candidate.desiredChange, "");
-  assert.equal(result.candidate.continuationCue, "");
+  assert.equal(result.candidate.desiredChange, "Build more control around the situation described here.");
+  assert.equal(result.candidate.continuationCue, "Continue from the situation described in Mission 01.");
+  assert.equal(result.candidate.broadContext, "NOT_SPECIFIED");
+});
+
+test("provider clarification output becomes a best-effort Starting Point and preserves support-first", async () => {
+  const orchestrator = new ProgrammeAiOrchestrator({
+    async createTurn() {
+      return {
+        kind: "CLARIFICATION_REQUIRED",
+        prompt: "Which change matters most?",
+        reason: "DESIRED_CHANGE_UNCLEAR",
+        disposition: "SUPPORT_FIRST",
+      };
+    },
+  });
+  const result = await orchestrator.createTurn({
+    inputMode: "text",
+    situation: startingPoint.startingPoint,
+    clarificationAnswers: [],
+  });
+  assert.equal(result.kind, "STARTING_POINT_CANDIDATE");
+  if (result.kind !== "STARTING_POINT_CANDIDATE") return;
+  assert.equal(result.generation, "USER_CONTROLLED_FALLBACK");
+  assert.equal(result.disposition, "SUPPORT_FIRST");
+  assert.equal(result.candidate.startingPoint, startingPoint.startingPoint);
   assert.equal(result.candidate.broadContext, "NOT_SPECIFIED");
 });
 
@@ -369,6 +393,7 @@ test("support-first is a transient port disposition, not a classifier or persist
     situation: startingPoint.startingPoint,
     clarificationAnswers: [],
   });
+  assert.equal(result.kind, "STARTING_POINT_CANDIDATE");
   assert.equal(result.disposition, "SUPPORT_FIRST");
   assert.equal("riskLabel" in result, false);
 });

@@ -70,7 +70,7 @@
     "affiliate-integration:test": "node --import tsx --test tests/affiliate-integration-framework.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
-    "public-integrity:test": "node --import tsx --test tests/public-casino-service.test.ts tests/public-comparison.test.ts tests/public-comparison-render.test.tsx",
+    "public-integrity:test": "node --import tsx --test tests/public-casino-service.test.ts tests/public-comparison.test.ts tests/public-comparison-render.test.tsx tests/curated-selector-integrity.test.ts",
     "public-offer:test": "node --import tsx --test tests/public-offer-service.test.ts",
     "discovery:test": "node --import tsx --test tests/public-casino-discovery.test.ts",
     "prod:demo-casinos:assets": "tsx scripts/generate-temporary-demo-assets.mjs",

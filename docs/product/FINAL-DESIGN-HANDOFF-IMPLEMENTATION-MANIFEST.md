@@ -40,6 +40,8 @@ The implementation retains these distinctive choices: paper and near-black field
 - Login and not-found use reduced chrome. Help uses safety-green protected chrome. Programme uses its state-aware shell.
 - Static Draft Preview copy follows the handoff verbatim. Live casino, offer, eligibility, ranking, jurisdiction, reward and account values override illustrative handoff values.
 - Interactive controls must keep visible focus, semantic labels, keyboard operation, reduced-motion handling and adequate contrast.
+- Curated `Crypto` and `Mobile` casino selections require their authoritative public-card booleans to be explicitly true. The bonus `Crypto` selector requires authoritative crypto payment-method evidence. Missing evidence fails closed rather than matching labels or tags.
+- Casino `Best Bonuses` requires an authoritative complete ranking signal. The current casino-card contract does not supply one, so that curated view fails closed. Offer `Best Overall` uses the existing multi-signal offer ranker; it must not collapse to lowest wagering alone.
 
 ## Contextual comparison contract
 
@@ -78,7 +80,7 @@ Completion requires the gates in RFC-034. Until they pass, all new implementatio
 ## Recorded deviations
 
 - The base screenshot environment has no current published casino inventory. Casino, bonus and comparison surfaces therefore show their designed fail-closed state; guarded disposable fixtures verify populated comparison behaviour.
-- Anonymous Programme evidence stops at the existing adult/Terms access gate. Post-gate voice, text, Starting Point, claim and dashboard states are covered by Programme/browser tests without bypassing access architecture.
+- Anonymous Mission 01 passes through the existing adult/Terms access gate and just-in-time authority, accepts one voice-or-text situation submission, produces a best-effort Starting Point, then shows the Google-primary/email-secondary ready/account-claim screen. There is no anonymous clarification, candidate editor or reward screen. Successful claim lands on the real server-owned Dashboard; `20 + 20` XP is unchanged.
 - Protected Help retains verified current resources and omits unsupported prototype response-time and pause-duration promises.
 - Privacy includes the current Google identity boundary, controller identity and 13 August 2026 access-contract date.
 - Bonus Guide retains the supplied Draft copy verbatim and appends current primary-source records for claims review.

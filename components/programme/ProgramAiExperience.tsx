@@ -31,7 +31,6 @@ import {
 import {
   PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-  type ProgramAiBroadContext,
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
 import {
@@ -60,10 +59,7 @@ type Phase =
   | "loading"
   | "access"
   | "intake"
-  | "clarification"
-  | "candidate"
   | "support"
-  | "reward"
   | "registration"
   | "home"
   | "mission"
@@ -75,10 +71,7 @@ type MicrophonePermissionState = PermissionState | "unknown";
 type ProgramAiLocalState = {
   phase: Phase;
   situation: string;
-  clarificationAnswers: string[];
-  clarificationPrompt: string;
   candidate: ProgrammeStartingPointValue | null;
-  candidateGeneration?: "PROVIDER" | "USER_CONTROLLED_FALLBACK";
   inputMode: "text" | "voice";
 };
 
@@ -91,21 +84,20 @@ type ProgramAiAuthenticatedLocalContent = {
 const emptyLocalState: ProgramAiLocalState = {
   phase: "access",
   situation: "",
-  clarificationAnswers: [],
-  clarificationPrompt: "",
   candidate: null,
   inputMode: "voice",
 };
 
-const contextLabels: Record<ProgramAiBroadContext, string> = {
-  WORK: "Work",
-  HOME: "Home",
-  SOCIAL: "Social situations",
-  FINANCIAL_PRESSURE: "Financial pressure",
-  ONLINE_ACCESS: "Online access",
-  OTHER: "Another context",
-  NOT_SPECIFIED: "Prefer not to specify",
-};
+function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): ProgramAiLocalState {
+  if (!value) return emptyLocalState;
+  const legacyPhase = String(value.phase);
+  const phase = legacyPhase === "clarification"
+    ? "intake"
+    : legacyPhase === "candidate" || legacyPhase === "reward"
+      ? value.candidate ? "registration" : "intake"
+      : value.phase === "home" ? "intake" : value.phase;
+  return { phase, situation: value.situation || "", candidate: value.candidate || null, inputMode: value.inputMode === "text" ? "text" : "voice" };
+}
 
 async function programAiRequest<T>(
   path: string,
@@ -522,58 +514,6 @@ function IntakeScreen({
   );
 }
 
-function ClarificationScreen({ prompt, value, count, busy, error, onValue, onSubmit }: {
-  prompt: string;
-  value: string;
-  count: number;
-  busy: boolean;
-  error: string;
-  onValue: (value: string) => void;
-  onSubmit: () => void;
-}) {
-  return (
-    <div className={styles.page}><Header xp={20} /><main className={styles.singlePanel}>
-      <span>ONE SHORT FOLLOW-UP · {count} OF 2 MAXIMUM</span>
-      <h1>{prompt}</h1>
-      <p>This clarification earns no XP. It only helps make the draft more accurate.</p>
-      <label className={styles.field}><span>Your answer</span><textarea autoFocus maxLength={1000} onChange={(event) => onValue(event.target.value)} rows={5} value={value} /></label>
-      <ActionButton disabled={busy || value.trim().length < 2} onClick={onSubmit} size="large">Continue</ActionButton>
-      <StatusMessage error={error} />
-      <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
-    </main></div>
-  );
-}
-
-function CandidateScreen({ candidate, generation, busy, error, onChange, onConfirm, onWithdraw }: {
-  candidate: ProgrammeStartingPointValue;
-  generation?: "PROVIDER" | "USER_CONTROLLED_FALLBACK";
-  busy: boolean;
-  error: string;
-  onChange: (candidate: ProgrammeStartingPointValue) => void;
-  onConfirm: () => void;
-  onWithdraw: () => void;
-}) {
-  const valid = candidate.startingPoint.trim().length >= 10
-    && candidate.desiredChange.trim().length >= 2
-    && candidate.continuationCue.trim().length >= 2;
-  return (
-    <div className={styles.page}><Header xp={20} /><main className={styles.candidateGrid}>
-      <section className={styles.heroCopy}><span>DRAFT · YOU ARE THE AUTHORITY</span><h1>Check your Starting Point.</h1><p>This is a draft, not a diagnosis. Edit anything that does not sound like you. Only your confirmed version can be saved after account access.</p><div className={styles.xpNote}><b>+20 XP</b><span>earned for describing the situation</span></div></section>
-      <section className={styles.startingPointCard}>
-        {generation === "USER_CONTROLLED_FALLBACK" ? <p className={styles.fallbackNotice} role="status"><strong>Personalisation did not produce this draft.</strong> This editable fallback only carries forward words you supplied. Complete the missing fields yourself.</p> : null}
-        <label className={styles.field}><span>What is happening now?</span><textarea maxLength={320} onChange={(event) => onChange({ ...candidate, startingPoint: event.target.value })} rows={4} value={candidate.startingPoint} /></label>
-        <label className={styles.field}><span>What would you like to change?</span><textarea maxLength={200} onChange={(event) => onChange({ ...candidate, desiredChange: event.target.value })} placeholder="Write this in your own words" rows={3} value={candidate.desiredChange} /></label>
-        <label className={styles.field}><span>Broad context</span><select onChange={(event) => onChange({ ...candidate, broadContext: event.target.value as ProgramAiBroadContext })} value={candidate.broadContext}>{Object.entries(contextLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
-        <label className={styles.field}><span>What should Mission 02 continue from?</span><textarea maxLength={200} onChange={(event) => onChange({ ...candidate, continuationCue: event.target.value })} placeholder="A short cue for the next Mission" rows={3} value={candidate.continuationCue} /></label>
-        <label className={styles.field}><span>Optional boundary action</span><input maxLength={200} onChange={(event) => onChange({ ...candidate, chosenBoundaryAction: event.target.value })} value={candidate.chosenBoundaryAction || ""} /></label>
-        <ActionButton disabled={busy || !valid} onClick={onConfirm} size="large">{busy ? "Confirming…" : "Confirm my Starting Point"}</ActionButton>
-        <button className={styles.textButton} disabled={busy} onClick={onWithdraw} type="button">Withdraw sensitive-input authority and clear this draft</button>
-        <StatusMessage error={error} />
-      </section>
-    </main></div>
-  );
-}
-
 function SupportScreen({ busy, error, onContinue }: { busy: boolean; error: string; onContinue: () => void }) {
   return (
     <div className={styles.supportPage}><Header xp={20} /><main className={styles.supportCard}>
@@ -582,15 +522,6 @@ function SupportScreen({ busy, error, onContinue }: { busy: boolean; error: stri
       <div className={styles.supportActions}><ActionLink href="/help" size="large">Open protected Help</ActionLink><ActionButton disabled={busy} onClick={onContinue} size="large" variant="ghost-night">Continue when I’m ready</ActionButton></div>
       <StatusMessage error={error} />
       <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
-    </main></div>
-  );
-}
-
-function RewardScreen({ busy, error, onContinue }: { busy: boolean; error: string; onContinue: () => void }) {
-  return (
-    <div className={styles.rewardPage}><Header xp={40} /><main className={styles.rewardCard}>
-      <span>MISSION 01 COMPLETE</span><div className={styles.rewardNumber}>+40 XP</div><h1>Your Starting Point is ready.</h1><p>20 XP for describing the situation. 20 XP for confirming your Starting Point. Clarifications and registration add 0 XP.</p>
-      <ActionButton disabled={busy} onClick={onContinue} size="large">{busy ? "Opening account step…" : "Keep this progress"}</ActionButton><StatusMessage error={error} />
     </main></div>
   );
 }
@@ -606,6 +537,7 @@ function StartingPointReadyScreen({
   onEmail,
   onGoogle,
   onLinkGoogle,
+  onWithdraw,
 }: {
   authenticated: boolean;
   candidate: ProgrammeStartingPointValue;
@@ -617,13 +549,14 @@ function StartingPointReadyScreen({
   onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => void;
   onGoogle: (mode: "sign-up" | "sign-in") => void;
   onLinkGoogle: () => void;
+  onWithdraw: () => void;
 }) {
   const [emailOpen, setEmailOpen] = useState(!googleAvailable || googleLinkRecovery);
   const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  return <div className={styles.readyPage}><Header xp={40} /><main className={styles.readyShell}>
-    <section className={styles.readyIntro}><span>✓ YOUR STARTING POINT IS READY</span><h1>A plan built around your situation.</h1><p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p></section>
+  return <div className={styles.readyPage}><Header xp={20} /><main className={styles.readyShell}>
+    <section className={styles.readyIntro}><span>✓ YOUR STARTING POINT IS READY</span><h1>Your Starting Point is ready.</h1><p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p></section>
     <section className={styles.readyCard}>
       <small>YOUR STARTING POINT</small><h2>{candidate.startingPoint}</h2>
       <div><span>What changes next</span><p>{candidate.desiredChange}</p></div>
@@ -642,6 +575,7 @@ function StartingPointReadyScreen({
       </>}
       <StatusMessage error={error} />
       <small>Registration adds 0 XP. Your words never feed offers or rankings.</small>
+      {!authenticated && !googleLinkRecovery ? <button className={styles.textButton} disabled={busy} onClick={onWithdraw} type="button">Withdraw sensitive-input authority and clear this draft</button> : null}
     </section>
   </main></div>;
 }
@@ -656,7 +590,6 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   const [activeReview, setActiveReview] = useState<{ milestone: "first" | "mid" | "full"; review: ProgramAiReview } | null>(null);
   const [missionWording, setMissionWording] = useState<Record<string, string>>({});
   const [reviewWording, setReviewWording] = useState<Record<string, string>>({});
-  const [clarificationValue, setClarificationValue] = useState("");
   const [sensitiveAuthorityActive, setSensitiveAuthorityActive] = useState(false);
   const [googleLinkRecovery, setGoogleLinkRecovery] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -765,11 +698,12 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       return;
     }
     const journey = anonymousProgrammeSubject(window.sessionStorage);
-    const restored = loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, journey).programAi;
+    const restored = restoredAnonymousState(loadProgrammeSubjectContent<{ programAi: ProgramAiLocalState }>(window.sessionStorage, journey).programAi);
     const accessActive = hasProgrammeAccessAuthority(window.sessionStorage, journey);
     setSubject(journey);
-    setLocal(restored || emptyLocalState);
-    setPhase(restored?.phase && restored.phase !== "home" ? restored.phase : accessActive ? "intake" : "access");
+    const restoredWithAccess = accessActive ? restored : { ...emptyLocalState, phase: "access" as const };
+    setLocal(restoredWithAccess);
+    setPhase(restoredWithAccess.phase);
     if (accessActive) {
       programAiRequest<{ authority: { active: boolean } }>("/api/program/program-ai/authority", journey)
         .then((payload) => setSensitiveAuthorityActive(Boolean(payload.authority?.active)))
@@ -820,7 +754,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } finally { setBusy(false); }
   }
 
-  async function submitTurn(answers = local.clarificationAnswers, confirmSensitiveAuthority = false) {
+  async function submitTurn(confirmSensitiveAuthority = false) {
     if (!subject) return;
     if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
     setBusy(true); setError("");
@@ -829,25 +763,25 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const payload = await programAiRequest<{
         result: {
           kind: "CLARIFICATION_REQUIRED" | "STARTING_POINT_CANDIDATE";
-          prompt?: string;
           candidate?: ProgrammeStartingPointValue;
-          generation?: "PROVIDER" | "USER_CONTROLLED_FALLBACK";
           disposition: "CONTINUE" | "SUPPORT_FIRST";
         };
         timing?: { programmeAiTurnMs?: number };
       }>("/api/program/program-ai/turn", subject, {
         method: "POST",
-        body: JSON.stringify({ inputMode: local.inputMode, situation: local.situation, clarificationAnswers: answers }),
+        body: JSON.stringify({ inputMode: local.inputMode, situation: local.situation, clarificationAnswers: [] }),
       });
       accumulatedAiLatencyMs.current += payload.timing?.programmeAiTurnMs ?? 0;
+      if (payload.result.kind !== "STARTING_POINT_CANDIDATE" || !payload.result.candidate) {
+        throw new Error("Your Starting Point could not be prepared");
+      }
+      const readyState = { ...local, candidate: payload.result.candidate, phase: "registration" as const };
       if (payload.result.disposition === "SUPPORT_FIRST") {
-        persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate || local.candidate, candidateGeneration: payload.result.generation || local.candidateGeneration, phase: "support" });
-      } else if (payload.result.kind === "CLARIFICATION_REQUIRED") {
-        persist({ ...local, clarificationAnswers: answers, clarificationPrompt: payload.result.prompt || "What would feel different if this situation were more under your control?", phase: "clarification" });
-        productAnalyticsClient.personalisedValue("clarification");
-      } else if (payload.result.candidate) {
-        persist({ ...local, clarificationAnswers: answers, candidate: payload.result.candidate, candidateGeneration: payload.result.generation, phase: "candidate" });
+        persist({ ...readyState, phase: "support" });
+      } else {
+        persist(readyState);
         productAnalyticsClient.personalisedValue("starting_point");
+        productAnalyticsClient.registrationCtaPresented();
         console.info(JSON.stringify({
           event: "programme_ai_m1_client_latency",
           inputMode: local.inputMode,
@@ -859,24 +793,18 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
             : Math.round(performance.now() - personalisationStartedAt.current),
           summedTechnicalLatencyMs: (voiceTiming.current?.transcriptionRequestMs ?? 0)
             + accumulatedAiLatencyMs.current,
-          clarificationCount: answers.length,
+          clarificationCount: 0,
         }));
       }
     } catch (cause) {
       const requestError = cause as Error & { code?: string };
       if (requestError.code === "SENSITIVE_INPUT_AUTHORITY_REQUIRED") {
         setSensitiveAuthorityActive(false);
-        persist({ ...local, clarificationAnswers: [], clarificationPrompt: "", phase: "intake" });
+        persist({ ...local, candidate: null, phase: "intake" });
       }
       setError(cause instanceof Error ? cause.message : "Your Starting Point could not be prepared");
     }
     finally { setBusy(false); }
-  }
-
-  async function submitClarification() {
-    const answers = [...local.clarificationAnswers, clarificationValue.trim()].slice(0, 2);
-    setClarificationValue("");
-    await submitTurn(answers);
   }
 
   async function transcribeVoice(audio: Blob, durationMs: number) {
@@ -936,19 +864,12 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setBusy(true); setError("");
     try {
       await programAiRequest("/api/program/program-ai/support/continue", subject, { method: "POST" });
-      persist({ ...local, phase: local.candidate ? "candidate" : "intake" });
-      if (local.candidate) productAnalyticsClient.personalisedValue("starting_point");
+      persist({ ...local, phase: local.candidate ? "registration" : "intake" });
+      if (local.candidate) {
+        productAnalyticsClient.personalisedValue("starting_point");
+        productAnalyticsClient.registrationCtaPresented();
+      }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The Programme could not resume"); }
-    finally { setBusy(false); }
-  }
-
-  async function confirmStartingPoint() {
-    if (!subject || !local.candidate) return;
-    setBusy(true); setError("");
-    try {
-      await programAiRequest("/api/program/program-ai/starting-point", subject, { method: "POST", body: JSON.stringify(local.candidate) });
-      persist({ ...local, phase: "reward" });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Your Starting Point could not be confirmed"); }
     finally { setBusy(false); }
   }
 
@@ -963,21 +884,22 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     finally { setBusy(false); }
   }
 
-  async function openRegistration() {
-    if (!subject) return;
-    setBusy(true); setError("");
-    try {
-      await programAiRequest("/api/program/program-ai/claim", subject, { method: "POST" });
-      persist({ ...local, phase: "registration" });
-      productAnalyticsClient.registrationCtaPresented();
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The account step could not be opened"); }
-    finally { setBusy(false); }
+  async function prepareClaimForRegistration() {
+    if (!subject || !local.candidate) throw new Error("Your Starting Point is unavailable in this browser session");
+    await programAiRequest("/api/program/program-ai/starting-point", subject, {
+      method: "POST",
+      body: JSON.stringify(local.candidate),
+    });
+    await programAiRequest("/api/program/program-ai/claim", subject, { method: "POST" });
   }
 
   async function saveAuthenticated() {
     if (!session?.user.id || !subject) return;
     setBusy(true); setError("");
-    try { await redeem(session.user.id, subject, local); }
+    try {
+      await prepareClaimForRegistration();
+      await redeem(session.user.id, subject, local);
+    }
     catch (cause) { setError(cause instanceof Error ? cause.message : "Your progress could not be saved yet"); }
     finally { setBusy(false); }
   }
@@ -987,6 +909,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     emailRedeemStarted.current = true;
     setBusy(true); setError("");
     try {
+      if (!googleLinkRecovery) await prepareClaimForRegistration();
       const result = input.mode === "sign-up" && !googleLinkRecovery
         ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
@@ -1004,6 +927,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     if (!subject || subject.kind !== "journey") return;
     setBusy(true); setError("");
     try {
+      await prepareClaimForRegistration();
       writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
       const result = await authClient.signIn.social({
         provider: "google",
@@ -1118,12 +1042,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   if (phase === "loading" || sessionPending) return renderPhase(<div className={styles.page}><Header /><main className={styles.singlePanel}><p role="status">Loading your private Programme session…</p><Link href="/help">Protected Help remains available.</Link></main></div>);
   if (phase === "access") return renderPhase(<AccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
-  if (phase === "intake") return renderPhase(<IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(local.clarificationAnswers, true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
-  if (phase === "clarification") return renderPhase(<ClarificationScreen busy={busy} count={local.clarificationAnswers.length + 1} error={error} onSubmit={submitClarification} onValue={setClarificationValue} prompt={local.clarificationPrompt} value={clarificationValue} />);
-  if (phase === "candidate" && local.candidate) return renderPhase(<CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />);
+  if (phase === "intake") return renderPhase(<IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
   if (phase === "support") return renderPhase(<SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />);
-  if (phase === "reward") return renderPhase(<RewardScreen busy={busy} error={error} onContinue={openRegistration} />);
-  if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
+  if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />);

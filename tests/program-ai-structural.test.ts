@@ -91,7 +91,7 @@ test("combined intake includes JIT authority and does not introduce a separate l
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
 
-test("Program AI reuses the signed two-control access contract and clarifications cannot reconfirm authority", () => {
+test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
   assert.match(frontend, /Two checks before you begin/);
@@ -101,8 +101,15 @@ test("Program AI reuses the signed two-control access contract and clarification
   assert.doesNotMatch(frontend, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
   assert.equal((frontend.match(/type="checkbox"/g) || []).length >= 3, true);
   assert.doesNotMatch(frontend, /Three checks before you begin|I accept the current|I have read the current/);
-  assert.match(frontend, /submitTurn\(local\.clarificationAnswers, true\)/);
-  assert.match(frontend, /await submitTurn\(answers\)/);
+  assert.match(frontend, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
+  assert.match(frontend, /clarificationAnswers: \[\]/);
+  assert.match(frontend, /prepareClaimForRegistration/);
+  assert.match(frontend, /Your Starting Point is ready\./);
+  assert.match(frontend, /Continue with Google — save your plan/);
+  assert.match(frontend, /Use email instead/);
+  assert.doesNotMatch(frontend, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
+  assert.doesNotMatch(frontend, /phase === "(?:clarification|candidate|reward)"/);
+  assert.doesNotMatch(frontend, /What would you like to change\?|What should Mission 02 continue from\?|Confirm my Starting Point|Keep this progress/);
   assert.match(frontend, /emailRedeemStarted\.current = true/);
   assert.match(frontend, /session\?\.user\.id && emailRedeemStarted\.current/);
   assert.match(repository, /if \(current && !current\.withdrawnAt\) return current/);

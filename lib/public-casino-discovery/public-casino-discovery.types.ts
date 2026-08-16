@@ -53,6 +53,8 @@ export interface PublicCasinoCardDto {
   gameProviders: PublicLabelDto[];
   categories: PublicLabelDto[];
   highlights: string[];
+  supportsCrypto?: boolean;
+  supportsMobile?: boolean;
   featuredBonus: PublicBonusSummaryDto | null;
   visitAction: PublicVisitAction;
   responsibleGamblingLabel: string | null;

@@ -83,3 +83,13 @@ Focused Node tests cover the exact flag, signed session-entry gate, reward ident
 - **Detected:** browser automation passes the clean request, granted recording, persistent denied/recheck, prompt retry and unsupported-feature paths using controlled browser APIs. This is browser-state handling evidence, not a physical microphone/native prompt E2E claim.
 - **Detected:** `account_not_linked` retains the exact Programme OAuth claim marker, requires email/password authentication of the existing account, then starts installed Better Auth `linkSocial` with an allow-listed Google callback. Claim redemption remains after a successful link return.
 - **Not detected in the RFC-029 repository evidence:** a real external Google recovery round trip or physical microphone test on that Preview. Both remain separately bounded manual evidence; PR #71 is nevertheless merged.
+
+## PR #76 Founder correction delta — 2026-08-16
+
+- **Detected on `codex/final-design-handoff-v1`:** after the existing adult/Terms access gate and just-in-time authority, anonymous Mission 01 has one voice-or-text situation submission. The application sends no clarification answers and never renders a clarification screen.
+- **Detected:** valid provider output and provider-disabled/error/invalid/clarification output all resolve to a closed best-effort Starting Point candidate. A support-first disposition still interrupts before account claim when required; continuing from it uses that same candidate.
+- **Detected:** the anonymous UI proceeds directly to “Your Starting Point is ready.” with Google primary and email secondary. The visible save/account action is the user's confirmation authority; the former candidate editor and pre-auth reward screen are absent.
+- **Detected:** successful authentication and claim still use the existing serializable claim transaction, durable `USER_CONFIRMED` Starting Point, ownership checks and replay protection, then land on the real server-projected Dashboard.
+- **Detected:** reward identities and amounts are unchanged: 20 XP for the situation action and 20 XP for Mission 01 completion; registration grants zero. Progress, completion and next Mission remain server-owned.
+- **Detected:** focused structural, orchestration and browser regression tests assert the single-submit sequence, best-effort fallback, absence of old screens, account claim, durable output, wrong-user denial and final 40 XP Dashboard state.
+- **Not detected/authorised:** Production activation, Production configuration changes, merge to `main`, legal approval or clinical validation.

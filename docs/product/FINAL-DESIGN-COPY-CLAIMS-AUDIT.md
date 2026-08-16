@@ -47,7 +47,7 @@
 | Supplied/implemented claim | Status | Evidence and Preview disposition |
 | --- | --- | --- |
 | Programme has ten Missions and is free/no upsell | `VERIFIED` | Ten-Mission server-owned Programme and no Programme commercial links/paywall are detected. Reward, completion, next-Mission, streak, active-day and achievement values remain server projections. |
-| Starting Point can be drafted before account claim | `VERIFIED` | Anonymous voice/text flow, maximum-two clarification boundary, candidate review and account-claim continuation are covered by Programme tests. |
+| Starting Point can be drafted before account claim | `VERIFIED` | After the legal/access gate, anonymous Mission 01 accepts one voice-or-text situation submission and produces a best-effort Starting Point. The next screen is the ready/account-claim screen; no anonymous clarification, candidate editor or reward screen remains. Programme tests cover the complete claim continuation. |
 | “Programme does not diagnose or treat” and completion is not a statement that gambling is safe/suitable | `VERIFIED` | Explicit limitations are present in the Ten Steps/Programme presentation and existing safety architecture. |
 | Help pause length “24 hours to 6 weeks” or a B4GAMBLE human response within 24 hours | `UNVERIFIED` | Not implemented on `/help`. The prototype promises conflict with the approved fail-closed Help contract and were replaced there by verified external support, local emergency guidance and neutral unavailable states. |
 | GamCare, GAMSTOP and NHS support links | `VERIFIED` | Existing protected Help destinations and link/accessibility tests are retained. No regional emergency number is inferred. |
@@ -75,6 +75,18 @@
 - `VERIFIED`: dashboard XP, progress, Mission state, active days, streaks, achievements and rewards are server-derived.
 - `DYNAMIC_PLACEHOLDER`: the paired base screenshots intentionally show published-data empty states because the local application database contains no public inventory.
 - `DYNAMIC_PLACEHOLDER`: explicitly labelled fictional `demo-*` casino records exist only in guarded disposable `_ci` browser fixtures and are removed after the test.
+
+## Exact Draft copy deviations for Founder decision
+
+These are the complete deliberate static/editorial deviations from the supplied handoff in this Draft Preview:
+
+1. **Protected Help:** the handoff promises a pause of “24 hours to 6 weeks” and a B4GAMBLE human response within 24 hours. `/help` omits both. It instead names the verified GamCare and GAMSTOP destinations, links to NHS gambling help and tells a person in immediate danger to contact local emergency services; it does not infer a regional emergency number.
+2. **Privacy:** the Preview shows “Updated 13 August 2026” rather than the handoff's 12 August date. It adds the current controller identity and address — 7BE Inc., trading as B4GAMBLE, 447 Broadway, 2nd Floor, 1663, New York, NY 10013, United States — and the paragraph defining the limited Google identity data, transient credential handling, and separation from age verification, Programme participation, reminders and marketing permission.
+3. **Terms:** the Preview shows “Effective 7 August 2026” and “Updated 9 August 2026” rather than the handoff's “Updated 12 Aug 2026”. It adds the same current operator identity and address. Those values replace the handoff's legal-date/controller presentation.
+4. **Bonus Guide:** the handoff article copy is unchanged, but the Preview appends a current primary-source record for the UK Gambling Commission wagering-requirement rule and ASA/CAP significant-conditions guidance.
+5. **Dynamic commercial examples:** illustrative casino and offer names, amounts, terms, ranks, licences, dates and destinations from the handoff are replaced by eligible current DTO/CMS values. Missing authoritative data renders an empty or `Unavailable` state. Crypto, mobile and curated-ranking selectors fail closed when their required evidence is absent.
+6. **Responsive navigation:** the small-screen public header adds the control label “Menu” so the retained destinations remain accessible.
+7. **Programme:** the approved legal/adult access gate and just-in-time sensitive-input authority precede the handoff flow. Founder correction RFC-034 fixes the anonymous sequence to one voice-or-text situation submission, a best-effort ready Starting Point, then Google-primary/email-secondary account claim. It therefore omits the older anonymous clarification, candidate-editor and reward-screen presentation while preserving 20 XP for the situation action and 20 XP for Mission 01 completion after claim.
 
 ## Release disposition
 

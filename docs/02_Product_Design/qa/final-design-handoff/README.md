@@ -7,8 +7,9 @@
 - **Detected:** every captured route returned its expected status, produced no unexpected browser-console or page errors, and had no document-level horizontal overflow.
 - **Detected:** the base matrix uses the real current disposable-CI application state. Its casino inventory is empty, so commercial directories and the contextual comparison visibly fail closed instead of substituting illustrative claims.
 - **Detected:** functional comparison QA used the repository's explicitly labelled fictional demo records in a guarded local `_ci` database. The harness removed all 25 casino fixtures and five redirect fixtures after the run.
+- **Detected:** `founder-acceptance/` contains 22 WebP-compressed, labelled side-by-side comparisons for the 11 requested surfaces at 1440 and 390 CSS pixels. The Programme comparisons expose intake, Starting Point/account claim and Dashboard states with controlled test DTOs; the files are review evidence, not a declaration of Founder acceptance.
 
-The canonical evidence folders are `1440/`, `1024/`, `430/` and `390/`. Each contains the same 22 named surfaces, including `home.png`, `casinos.png`, `programme.png`, `article.png` and `contextual-comparison.png`. The supplied handoff archive and rejected PR #76 baseline were used as the direct visual references during review; copies are not duplicated in Git.
+The canonical evidence folders are `1440/`, `1024/`, `430/` and `390/`. Each contains the same 22 named surfaces, including `home.png`, `casinos.png`, `programme.png`, `article.png` and `contextual-comparison.png`. The supplied handoff archive is the direct visual reference; the bounded side-by-side set avoids duplicating another full matrix.
 
 ## Final verification
 
@@ -16,7 +17,7 @@ The canonical evidence folders are `1440/`, `1024/`, `430/` and `390/`. Each con
 | --- | --- |
 | `npm run ci:quality` | Passed: lint, type checking, Prisma validation and all structural/domain/security suites |
 | `npm run build` | Passed |
-| `npm run programme:test` | Passed: 118/118 |
+| `npm run programme:test` | Passed: 119/119 |
 | Core browser suite | Passed: 60 tests; one intentionally skipped Google-provider test |
 | Programme browser suite | Passed: 11/11 |
 | Extended browser base suite | Passed: 61/61 |

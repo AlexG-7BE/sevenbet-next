@@ -45,6 +45,12 @@ const startingPoint: ProgrammeStartingPointValue = {
 };
 
 const situation = "After difficult work days I keep opening betting apps late at night.";
+const bestEffortStartingPoint: ProgrammeStartingPointValue = {
+  startingPoint: situation,
+  desiredChange: "Build more control around the situation described here.",
+  broadContext: "NOT_SPECIFIED",
+  continuationCue: "Continue from the situation described in Mission 01.",
+};
 const missionActionArtifacts: Record<string, Record<string, unknown>> = {
   choose_direction: { direction: "pause" }, build_7_day_goal: { goalStyle: "pause_first", reviewWindowDays: 7 }, reality_check: { realityCheck: "restart_next_day" },
   map_urge_sequence: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, name_early_signal: { earlySignalCategory: "thought" }, choose_pause_move: { pauseMove: "wait_ten_minutes" },
@@ -607,10 +613,21 @@ test("typed fallback path binds exact authority and is idempotent through real e
   const situationField = page.getByLabel("Your situation");
   await situationField.focus();
   await situationField.fill(situation);
+  let capturedClaimCookie: { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Lax" } | null = null;
+  page.on("response", async (response) => {
+    if (!response.url().endsWith("/api/program/program-ai/claim")) return;
+    const setCookie = (await response.allHeaders())["set-cookie"];
+    const value = setCookie?.match(/sevenbet_programme_claim=([^;]+)/)?.[1];
+    if (value) capturedClaimCookie = { name: "sevenbet_programme_claim", value, domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" };
+  });
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
-  await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toBeVisible();
-  await expect(page.getByText("Personalisation did not produce this draft.")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point is ready." })).toBeVisible();
+  await expect(page.locator('[data-programme-phase="registration"]')).toBeVisible();
+  await expect(page.locator('[data-programme-phase="clarification"], [data-programme-phase="candidate"], [data-programme-phase="reward"]')).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toHaveCount(0);
+  await expect(page.getByText("ONE SHORT FOLLOW-UP", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("MISSION 01 COMPLETE", { exact: true })).toHaveCount(0);
   await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const anonymousAuthority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
@@ -630,28 +647,6 @@ test("typed fallback path binds exact authority and is idempotent through real e
 
   await page.setViewportSize({ width: 320, height: 760 });
   await noHorizontalOverflow(page);
-  await page.getByLabel("What is happening now?").fill(startingPoint.startingPoint);
-  await page.getByLabel("What would you like to change?").fill(startingPoint.desiredChange);
-  await page.getByLabel("Broad context").selectOption(startingPoint.broadContext);
-  await page.getByLabel("What should Mission 02 continue from?").fill(startingPoint.continuationCue);
-  await page.getByLabel("Optional boundary action").fill(startingPoint.chosenBoundaryAction!);
-  await page.getByRole("button", { name: "Confirm my Starting Point" }).click();
-  await expect(page.getByRole("heading", { name: "Your Starting Point is ready." })).toBeVisible();
-
-  const duplicateStartingPoint = await page.request.post("/api/program/program-ai/starting-point", {
-    headers: {
-      ...programmeAgeHeader,
-      cookie: `sevenbet_programme_session=${(await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_session")!.value}`,
-    },
-    data: startingPoint,
-  });
-  expect(duplicateStartingPoint.status()).toBe(200);
-  expect((await duplicateStartingPoint.json()).xpPreview).toBe(40);
-  await page.getByRole("button", { name: "Keep this progress" }).click();
-  await expect(page.getByRole("heading", { name: "A plan built around your situation." })).toBeVisible();
-
-  const claimCookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_claim");
-  expect(claimCookie, "pending claim cookie before auth").toBeTruthy();
   const email = `program-ai-happy-${randomUUID()}@example.test`;
   const wrongUserEmail = `program-ai-wrong-${randomUUID()}@example.test`;
   await page.getByLabel("Email").fill(email);
@@ -660,6 +655,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
   await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
+  expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const [durableStartingPoints, programmeAiXp, boundAuthority, claim] = await Promise.all([
@@ -676,7 +672,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
     prisma.pendingProgrammeClaim.findUniqueOrThrow({ where: { anonymousSessionId: anonymousSession.id } }),
   ]);
   expect(durableStartingPoints).toHaveLength(1);
-  expect(durableStartingPoints[0].startingPoint).toBe(startingPoint.startingPoint);
+  expect(durableStartingPoints[0].startingPoint).toBe(bestEffortStartingPoint.startingPoint);
   expect(programmeAiXp).toHaveLength(2);
   expect(programmeAiXp.reduce((total, event) => total + event.xp, 0)).toBe(40);
   expect(boundAuthority.anonymousSessionId).toBeNull();
@@ -684,13 +680,13 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(claim.consumedByUserId).toBe(user.id);
   expect(claim.consumedAt).not.toBeNull();
 
-  await page.context().addCookies([claimCookie!]);
+  await page.context().addCookies([capturedClaimCookie!]);
   const duplicateClaim = await page.request.post("/api/program/program-ai/claims/redeem", {
     headers: {
       ...programmeAgeHeader,
       cookie: storedCookieHeader(await page.context().cookies()),
     },
-    data: { timeZone: "UTC", startingPoint },
+    data: { timeZone: "UTC", startingPoint: bestEffortStartingPoint },
   });
   expect(duplicateClaim.status()).toBe(200);
   expect((await duplicateClaim.json()).home.totalXp).toBe(40);
@@ -705,16 +701,16 @@ test("typed fallback path binds exact authority and is idempotent through real e
   const wrongClaimClient = await playwrightRequest.newContext({
     baseURL,
     storageState: {
-      cookies: [...wrongState.cookies, claimCookie!],
+      cookies: [...wrongState.cookies, capturedClaimCookie!],
       origins: [],
     },
   });
   const wrongClaim = await wrongClaimClient.post("/api/program/program-ai/claims/redeem", {
     headers: {
       ...programmeAgeHeader,
-      cookie: storedCookieHeader([...wrongState.cookies, claimCookie!]),
+      cookie: storedCookieHeader([...wrongState.cookies, capturedClaimCookie!]),
     },
-    data: { timeZone: "UTC", startingPoint },
+    data: { timeZone: "UTC", startingPoint: bestEffortStartingPoint },
   });
   expect(wrongClaim.status()).toBe(409);
   expect((await wrongClaim.json()).code).toBe("CONFLICT");

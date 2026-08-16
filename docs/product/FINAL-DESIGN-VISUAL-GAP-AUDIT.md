@@ -19,7 +19,7 @@ All 24 handoff HTML files, the README, two SVGs, five supplied photographs and t
 | --- | --- | --- | --- | --- |
 | `/` | `Home.dc.html` | Four-image dark hero, self-recognition panel, plan proof, See/Write/Use chapters, evidence, structural separation and closing action reproduce the supplied composition at all four widths. | Static handoff copy retained. Existing approved photography is used with responsive crops. | `MATCHED` |
 | `/10-steps` | `10Steps.dc.html` | Split hero, three outcomes, compact ten-Mission path, private boundary and final Mission 01 action match the reference hierarchy and mobile reflow. | Mission titles come from the Programme registry; editorial descriptions remain static. | `MATCHED` |
-| `/program` | `Programme.dc.html` | Handoff voice/text/Starting Point/dashboard visual language is implemented inside the existing Programme flow. The anonymous evidence capture shows the required adult/Terms access gate before those states. | Access, progress, XP, streak, achievements, Mission ordering and outputs remain server/Programme-owned. | `MATCHED` with access-state deviation |
+| `/program` | `Programme.dc.html` | Handoff voice/text/Starting Point-ready/dashboard visual language is implemented inside the existing Programme flow. The anonymous evidence capture shows the required adult/Terms access gate before those states. | One submission proceeds directly to a best-effort Starting Point ready/account-claim screen; access, progress, XP, streak, achievements, Mission ordering and outputs remain server/Programme-owned. | `MATCHED` with access-state deviation |
 | `/login` | `Login.dc.html` | Minimal dark auth composition, Google-primary path, email path, acknowledgement and reduced chrome match the handoff. | Existing Better Auth and consent boundaries retained. | `MATCHED` |
 | `/best-offers` | `BestOffers.dc.html` | Three-pick hero, dominant #1, two alternatives, proof sequence, FAQ and final recommendation reproduce the handoff. | Names, scores, terms, ranking and actions use current public offer DTOs; empty/unavailable states fail closed. | `MATCHED` |
 | `/casinos` | `Casinos.dc.html` | Decision hero, compact filters, curated layer when data exists, compact directory rows, contextual compare controls and FAQ match the supplied page. | Base evidence correctly shows zero current records. Seeded disposable QA verifies populated selection and comparison. | `MATCHED` |
@@ -51,11 +51,13 @@ All 24 handoff HTML files, the README, two SVGs, five supplied photographs and t
 ## Known deviations and release limits
 
 1. Dynamic casino/offer names, media, counts, terms, ranks, licences and availability never copy illustrative handoff values. Empty current inventory therefore produces the designed fail-closed state in the base screenshots.
-2. The anonymous `/program` screenshot shows the existing required adult/Terms access gate. The post-gate voice, text, candidate, ready, claim and dashboard states are verified functionally rather than bypassed for a prettier screenshot.
+2. The anonymous `/program` canonical screenshot shows the existing required adult/Terms access gate. The bounded Founder-acceptance set separately compares post-gate intake, Starting Point ready/account-claim and real Dashboard states. No clarification, candidate-editor or reward screen remains in that sequence.
 3. Protected Help uses verified current resources and neutral safety copy instead of the handoff's unsupported 24-hour/6-week promises.
 4. Privacy is dated 13 August 2026 and includes Google identity/controller disclosures required by the current signed access contract.
 5. The Bonus Guide appends current primary-source records; its mobile table remains keyboard-scrollable.
 6. Responsive navigation adds an accessible mobile menu so all retained destinations remain reachable.
 7. Chromium was exercised at four viewport widths. Physical-device, Safari and manual assistive-technology review remain Production release activities.
 
-No unresolved visual blocker remains for the Draft PR or Vercel Preview. This audit does not authorise Production deployment.
+The compact side-by-side evidence set is stored under `docs/02_Product_Design/qa/final-design-handoff/founder-acceptance/`. Those images support Founder review; their presence is evidence, not a declaration that the Founder has accepted each comparison.
+
+No unresolved implementation blocker remains for the Draft PR or Vercel Preview. Founder visual acceptance and Production release gates remain separate. This audit does not authorise Production deployment.

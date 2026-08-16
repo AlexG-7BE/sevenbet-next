@@ -183,17 +183,10 @@ export class ProgrammeAiMissionOneService {
 
     // The unrestricted input exists only in this call and the configured port.
     // Provider work runs after the metadata-only reservation and outside every database transaction.
-    let generation = reservation.providerAllowed
+    const generation = reservation.providerAllowed
       ? await this.orchestrator.createTurnWithOutcome(input)
       : await new ProgrammeAiOrchestrator(null).createTurnWithOutcome(input);
-    let result = generation.result;
-    if (result.kind === "CLARIFICATION_REQUIRED" && input.clarificationAnswers.length >= 2) {
-      generation = await new ProgrammeAiOrchestrator(null).createTurnWithOutcome(input);
-      result = generation.result;
-    }
-    const clarificationCount = result.kind === "CLARIFICATION_REQUIRED"
-      ? Math.min(2, input.clarificationAnswers.length + 1)
-      : input.clarificationAnswers.length;
+    const result = generation.result;
     await this.unitOfWork.serializable(async (unitOfWork) => {
       const session = await this.requireSession(unitOfWork, token, now);
       const currentDraft = structuralDraft(session.draft);
@@ -203,7 +196,7 @@ export class ProgrammeAiMissionOneService {
         draft: {
           ...currentDraft,
           inputMode: input.inputMode,
-          clarificationCount,
+          clarificationCount: 0,
           lifecycle: result.disposition === "SUPPORT_FIRST" ? "SUPPORT_FIRST" : "INTAKE",
         },
         expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),

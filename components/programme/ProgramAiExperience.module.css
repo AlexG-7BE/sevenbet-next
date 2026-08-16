@@ -1,6 +1,5 @@
 .page,
 .supportPage,
-.rewardPage,
 .readyPage {
   min-height: 100vh;
   background: var(--sb-paper);
@@ -8,9 +7,9 @@
   font-family: var(--font-seven-sans), Arial, sans-serif;
 }
 
-.page *, .supportPage *, .rewardPage *, .readyPage * { box-sizing: border-box; }
-.page button, .page input, .page textarea, .page select, .supportPage button, .rewardPage button, .readyPage button, .readyPage input { font: inherit; }
-.page :focus-visible, .supportPage :focus-visible, .rewardPage :focus-visible, .readyPage :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
+.page *, .supportPage *, .readyPage * { box-sizing: border-box; }
+.page button, .page input, .page textarea, .page select, .supportPage button, .readyPage button, .readyPage input { font: inherit; }
+.page :focus-visible, .supportPage :focus-visible, .readyPage :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
 
 .header {
   min-height: 76px;
@@ -28,9 +27,7 @@
 .xpPill { padding: 8px 14px; border-radius: var(--sb-radius-full); background: var(--sb-acid-soft); font-size: 12px; font-weight: 750; }
 
 .accessGrid,
-.intakeGrid,
-.candidateGrid,
-.registrationGrid {
+.intakeGrid {
   width: min(var(--sb-content-shell), 100%);
   min-height: calc(100vh - 76px);
   margin: 0 auto;
@@ -55,16 +52,14 @@
 .intakeGrid .inputPanel { width: min(720px, 100%); justify-self: center; text-align: left; }
 
 .heroCopy { display: grid; gap: 18px; align-content: center; }
-.heroCopy > span, .accessCard > span, .singlePanel > span, .rewardCard > span, .supportCard > span, .homeHero span, .homeStartingPoint > span, .sectionHeading > span { color: var(--sb-teal); font-size: 12px; line-height: 16px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
-.heroCopy h1, .singlePanel h1, .supportCard h1, .rewardCard h1, .homeHero h1 { margin: 0; max-width: 760px; font-size: clamp(42px, 5vw, 70px); line-height: .98; letter-spacing: -1.8px; }
-.heroCopy > p, .singlePanel > p, .supportCard > p, .rewardCard > p, .homeHero p { margin: 0; max-width: 660px; color: var(--sb-metal); font-size: 18px; line-height: 1.55; }
+.heroCopy > span, .accessCard > span, .singlePanel > span, .supportCard > span, .homeHero span, .homeStartingPoint > span, .sectionHeading > span { color: var(--sb-teal); font-size: 12px; line-height: 16px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.heroCopy h1, .singlePanel h1, .supportCard h1, .homeHero h1 { margin: 0; max-width: 760px; font-size: clamp(42px, 5vw, 70px); line-height: .98; letter-spacing: -1.8px; }
+.heroCopy > p, .singlePanel > p, .supportCard > p, .homeHero p { margin: 0; max-width: 660px; color: var(--sb-metal); font-size: 18px; line-height: 1.55; }
 .heroCopy ul { margin: 8px 0 0; padding: 0; display: grid; gap: 10px; list-style: none; }
 .heroCopy li::before { content: "→"; margin-right: 10px; color: var(--sb-teal); }
 
 .accessCard,
-.inputPanel,
-.startingPointCard,
-.registrationCard {
+.inputPanel {
   padding: clamp(24px, 4vw, 48px);
   display: grid;
   gap: 20px;
@@ -111,14 +106,6 @@
 
 .singlePanel { width: min(760px, calc(100% - 40px)); min-height: calc(100vh - 76px); margin: 0 auto; padding: 72px 0; display: grid; gap: 24px; align-content: center; }
 .singlePanel h1 { font-size: clamp(36px, 5vw, 58px); }
-.candidateGrid { align-items: start; }
-.startingPointCard { gap: 18px; }
-.fallbackNotice { margin: 0; padding: 16px; display: grid; gap: 4px; border-left: 4px solid var(--sb-teal); background: var(--sb-field); color: var(--sb-metal); line-height: 1.45; }
-.fallbackNotice strong { color: var(--sb-night); }
-.xpNote { width: fit-content; padding: 16px 20px; display: flex; gap: 12px; align-items: baseline; border-radius: var(--sb-radius-m); background: var(--sb-acid-soft); }
-.xpNote b { font-size: 24px; }
-.xpNote span { color: var(--sb-metal); font-size: 13px; }
-
 .supportPage { background: var(--sb-night); color: var(--sb-white); }
 .supportPage .header { background: var(--sb-night); border-color: var(--sb-border-on-night); }
 .supportPage .wordmark { color: var(--sb-white); }
@@ -129,15 +116,6 @@
 .supportActions { display: flex; flex-wrap: wrap; gap: 12px; }
 .supportCard small { color: var(--sb-grey-300); }
 
-.rewardPage { background: var(--sb-acid); }
-.rewardPage .header { background: transparent; }
-.rewardCard { width: min(780px, calc(100% - 40px)); min-height: calc(100vh - 76px); margin: 0 auto; padding: 64px 0; display: grid; gap: 20px; align-content: center; text-align: center; justify-items: center; }
-.rewardNumber { font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(90px, 16vw, 190px); line-height: .8; letter-spacing: -8px; }
-.rewardCard > p { color: var(--sb-night); }
-.rewardCard button { --sb-action-background: var(--sb-night); --sb-action-background-hover: var(--sb-charcoal); --sb-action-color: var(--sb-white); }
-
-.registrationCard form { display: grid; gap: 16px; }
-.registrationCard > small { color: var(--sb-metal); line-height: 1.5; }
 .googleButton { width: 100%; --sb-action-background: var(--sb-night); --sb-action-background-hover: var(--sb-charcoal); --sb-action-color: var(--sb-white); }
 .emailToggle, .textButton { width: fit-content; }
 
@@ -162,7 +140,7 @@
 .readyCard p { margin: 0; color: var(--sb-grey-300); font-size: 16px; line-height: 1.5; }
 .readyActions { padding-top: 8px; display: grid; gap: 12px; }
 .readyActions > button:first-child { width: 100%; --sb-action-background: var(--sb-acid); --sb-action-background-hover: var(--sb-white); --sb-action-color: var(--sb-night); }
-.readyActions .emailToggle { color: var(--sb-white); }
+.readyActions .emailToggle { color: var(--sb-teal); }
 
 .home { width: min(var(--sb-content-shell), 100%); margin: 0 auto; padding: clamp(32px, 6vw, 80px) clamp(20px, 5vw, 64px); display: grid; gap: 64px; }
 .homeHero { padding-bottom: 40px; display: flex; justify-content: space-between; gap: 40px; align-items: flex-end; border-bottom: 1px solid var(--sb-border-subtle); }
@@ -199,7 +177,7 @@
 @media (max-width: 860px) {
   .header { grid-template-columns: 1fr auto; }
   .missionLabel { display: none; }
-  .accessGrid, .intakeGrid, .candidateGrid, .registrationGrid { min-height: 0; grid-template-columns: 1fr; gap: 32px; align-items: start; }
+  .accessGrid, .intakeGrid { min-height: 0; grid-template-columns: 1fr; gap: 32px; align-items: start; }
   .heroCopy h1 { font-size: clamp(38px, 12vw, 54px); }
   .recorder { grid-template-columns: 42px 1fr; }
   .recorder > button, .recorder > span { grid-column: 1 / -1; justify-self: flex-start; }
@@ -212,11 +190,10 @@
 @media (max-width: 520px) {
   .header { min-height: 64px; }
   .wordmark { font-size: 23px; }
-  .accessGrid, .intakeGrid, .candidateGrid, .registrationGrid { padding-top: 32px; }
-  .accessCard, .inputPanel, .startingPointCard, .registrationCard { padding: 20px; }
+  .accessGrid, .intakeGrid { padding-top: 32px; }
+  .accessCard, .inputPanel { padding: 20px; }
   .missionPath { grid-template-columns: 1fr; }
   .supportActions > * { width: 100%; }
-  .rewardNumber { letter-spacing: -4px; }
   .readyShell { padding-top: 42px; }
   .readyCard { padding: 24px; }
 }
