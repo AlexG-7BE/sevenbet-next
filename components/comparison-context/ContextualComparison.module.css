@@ -1,4 +1,4 @@
-.tray, .dialog { --night:#100f0f; --paper:#fafaf7; --field:#f0eee7; --acid:#e4e24e; --red:#ff3b22; --muted:#77756e; font-family:var(--font-seven-sans),Arial,sans-serif; }
+.tray, .dialog { --night:#100f0f; --paper:#fafaf7; --field:#f0eee7; --acid:#e4e24e; --red:#bf4d48; --muted:#77756e; font-family:var(--font-seven-sans),Arial,sans-serif; }
 .tray { position:fixed; z-index:55; left:50%; bottom:28px; width:min(560px,calc(100vw - 32px)); min-height:76px; padding:14px 18px 14px 24px; border:1px solid var(--acid); border-radius:20px; display:flex; align-items:center; justify-content:space-between; gap:24px; transform:translateX(-50%); box-shadow:0 24px 70px rgba(0,0,0,.38); background:var(--night); color:var(--paper); }
 .tray > div:first-child { display:grid; gap:4px; }
 .tray strong { font-size:14px; }

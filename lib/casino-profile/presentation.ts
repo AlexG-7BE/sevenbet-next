@@ -66,7 +66,10 @@ export function profileAction(casino: PublicCasinoDTO, bonus: PublicCasinoBonus 
 
 export function profileOfferHeadline(bonus: PublicCasinoBonus) {
   const maximum = formatProfileMoney(bonus.maximumBonus, bonus.currency);
-  if (bonus.percentage !== null && maximum) return `${bonus.percentage}% up to ${maximum}`;
+  if (bonus.percentage !== null && maximum) {
+    const spins = bonus.freeSpins !== null && bonus.freeSpins > 0 ? ` + ${bonus.freeSpins} free spins` : "";
+    return `${bonus.percentage}% up to ${maximum}${spins}`;
+  }
   if (bonus.freeSpins !== null && bonus.freeSpins > 0) return `${bonus.freeSpins} free spins`;
   if (maximum) return `Up to ${maximum}`;
   return bonus.title;

@@ -63,6 +63,14 @@ const majorPages = new Set([
   "help",
 ]);
 
+const dynamicRuntimePages = new Map([
+  ["best-offers", "best-offers"],
+  ["casinos", "casinos"],
+  ["casino-review", "casino-review"],
+  ["bonuses", "bonuses"],
+  ["learn-article", "learn-article"],
+]);
+
 function artifactPath(name, width, kind) {
   return join(outputRoot, `${name}-${width}-${kind}.webp`);
 }
@@ -80,7 +88,7 @@ async function settle(page) {
   await page.waitForTimeout(180);
 }
 
-async function captureFullPage(page, url, output, expectedStatus) {
+async function captureFullPage(page, url, output, expectedStatus, assertIntegrity) {
   const response = await page.goto(url, { waitUntil: "domcontentloaded" });
   if (expectedStatus && response?.status() !== expectedStatus) {
     throw new Error(`${url} returned ${response?.status() ?? "no response"}; expected ${expectedStatus}`);
@@ -88,6 +96,7 @@ async function captureFullPage(page, url, output, expectedStatus) {
   if (!expectedStatus && (!response || response.status() >= 500)) {
     throw new Error(`${url} returned ${response?.status() ?? "no response"}`);
   }
+  if (assertIntegrity) await assertIntegrity(page);
   await settle(page);
   const screenshot = await page.screenshot({ type: "png", animations: "disabled", fullPage: true });
   await sharp(screenshot).webp({ quality: 74, effort: 5 }).toFile(output);
@@ -109,11 +118,16 @@ async function captureReference(context, name, handoffFile, width) {
 async function captureImplementation(context, name, route, width) {
   const page = await context.newPage();
   try {
+    const renderer = dynamicRuntimePages.get(name);
     await captureFullPage(
       page,
       `${implementationBaseUrl}${route}${route.includes("?") ? "&" : "?"}visualFixture=true`,
-      artifactPath(name, width, "implementation"),
+      artifactPath(name, width, "runtime-implementation"),
       name === "not-found" ? 404 : undefined,
+      renderer ? async (runtimePage) => {
+        if (await runtimePage.locator("[data-handoff-page]").count()) throw new Error(`${name} switched to the alternate HandoffPage renderer`);
+        if (await runtimePage.locator(`[data-runtime-renderer="${renderer}"]`).count() !== 1) throw new Error(`${name} did not render its real runtime component`);
+      } : undefined,
     );
   } finally {
     await page.close();
@@ -153,8 +167,11 @@ async function captureComparisonImplementation(context, width) {
     await page.goto(`${implementationBaseUrl}${contextualComparisonSurface[2]}?casino=demo-northstar&casino=demo-summit&country=GB&visualFixture=true`, { waitUntil: "domcontentloaded" });
     await page.getByRole("heading", { name: "Side by side" }).waitFor();
     await page.locator('[data-screen-label="Compare overlay"]').waitFor({ timeout: 10_000 });
+    if (await page.locator("[data-handoff-page]").count()) throw new Error("contextual comparison switched to the alternate HandoffPage renderer");
+    if (await page.locator('[data-runtime-renderer="contextual-comparison"]').count() !== 1) throw new Error("contextual comparison did not render the real runtime dialog");
+    await page.locator('[data-runtime-renderer="contextual-comparison"]').getByRole("heading", { name: "Solvane Casino" }).waitFor({ timeout: 10_000 });
     await page.waitForTimeout(180);
-    await screenshotViewportWebp(page, artifactPath(contextualComparisonSurface[0], width, "implementation"));
+    await screenshotViewportWebp(page, artifactPath(contextualComparisonSurface[0], width, "runtime-implementation"));
   } finally {
     await page.close();
   }
@@ -167,9 +184,9 @@ async function captureProgrammeReference(context, name, state, width) {
     await page.evaluate(() => document.fonts?.ready).catch(() => undefined);
     await page.waitForTimeout(300);
     const selector = state === "intake"
-      ? "section:nth-of-type(1) > div:nth-child(2) > div:nth-child(1)"
+      ? "section:nth-of-type(1) > div:nth-child(2) > div:nth-child(1) > div:nth-child(1)"
       : state === "registration"
-        ? "section:nth-of-type(1) > div:nth-child(2) > div:nth-child(3)"
+        ? "section:nth-of-type(1) > div:nth-child(2) > div:nth-child(3) > div:nth-child(1)"
         : width <= 430
           ? 'div[style*="width: 375px"][style*="background: rgb(23, 22, 22)"]'
           : "section:nth-of-type(2) > div:nth-child(2)";
@@ -209,25 +226,29 @@ async function captureProgrammeImplementation(context, name, state, width) {
       const now = new Date().toISOString();
       const userId = "true-parity-user";
       await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ session: { id: "true-parity-session", token: "visual", userId, expiresAt: new Date(Date.now() + 60_000).toISOString(), createdAt: now, updatedAt: now }, user: { id: userId, name: "Visual review", email: "visual-review@example.invalid", emailVerified: true, createdAt: now, updatedAt: now } }) }));
-      const titles = ["Create your Starting Point", "Set a 7-day goal", "Map the urge sequence", "Build one boundary", "Add friction", "Create a support route", "Read offers clearly", "Rehearse a pressure moment", "Assemble your plan", "Keep the plan current"];
-      const missions = titles.map((title, index) => ({ missionNumber: index + 1, title, status: index === 0 ? "completed" : index === 1 ? "current" : "locked", actionsCompleted: index === 0 ? 1 : 0, actionsTotal: index === 0 ? 1 : 3, xpEarnedHere: index === 0 ? 40 : 0, completionBonus: index === 0 ? 20 : 25 }));
-      await page.route("**/api/program/program-ai/home", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ home: { totalXp: 40, activeDays: 1, currentStreak: 1, achievements: [], currentMission: 2, engagementDayBucket: "day_1", currentAction: "choose_direction", startingPoint: { startingPoint: "After difficult work days I keep opening betting apps late at night.", desiredChange: "Build more control around the situation described here.", broadContext: "NOT_SPECIFIED", continuationCue: "Continue from the situation described in Mission 01." }, missions, reviews: [{ milestone: "first", unlockMission: 3, title: "First Review", maxWords: 200, status: "locked" }, { milestone: "mid", unlockMission: 6, title: "Mid Review", maxWords: 250, status: "locked" }, { milestone: "full", unlockMission: 10, title: "Full Review", maxWords: 300, status: "locked" }], nextReview: { milestone: "first", unlockMission: 3, title: "First Review", xpRemaining: 125, missionsRemaining: 2 }, discoveryLinks: [] } }) }));
+      const titles = ["Get started", "Set your limits", "Understand your triggers", "Build one boundary", "Reality check", "Decision framework", "Play plan", "Safer play", "Review & adjust", "Long-term control"];
+      const missions = titles.map((title, index) => ({ missionNumber: index + 1, title, status: index < 3 ? "completed" : index === 3 ? "current" : "locked", actionsCompleted: index < 3 ? 1 : index === 3 ? 1 : 0, actionsTotal: index < 3 ? 1 : index === 3 ? 5 : 3, xpEarnedHere: index < 3 ? 40 : 0, completionBonus: index < 3 ? 20 : 25 }));
+      await page.route("**/api/program/program-ai/home", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ home: { totalXp: 1240, activeDays: 18, currentStreak: 12, achievements: [{ slug: "first-boundary", title: "First boundary", state: "earned", awardedAt: now }, { slug: "seven-day-streak", title: "7-day streak", state: "earned", awardedAt: now }, { slug: "honest-review", title: "Honest review", state: "locked", awardedAt: null }], currentMission: 4, engagementDayBucket: "day_30_plus", currentAction: "choose_boundary", startingPoint: { startingPoint: "Autopilot sessions after work that grow by the weekend. Your plan focuses on catching that moment before it starts.", desiredChange: "Build more control around the situation described here.", broadContext: "NOT_SPECIFIED", continuationCue: "Pick a single limit you can keep this week. Small, specific, yours." }, missions, reviews: [{ milestone: "first", unlockMission: 3, title: "First Review", maxWords: 200, status: "locked" }, { milestone: "mid", unlockMission: 6, title: "Mid Review", maxWords: 250, status: "locked" }, { milestone: "full", unlockMission: 10, title: "Full Review", maxWords: 300, status: "locked" }], nextReview: { milestone: "mid", unlockMission: 6, title: "Mid Review", xpRemaining: 125, missionsRemaining: 2 }, discoveryLinks: [] } }) }));
       await page.goto(`${implementationBaseUrl}/program`, { waitUntil: "domcontentloaded" });
       await page.locator('[data-programme-phase="home"]').waitFor();
     } else {
       await installAnonymousProgrammeRoutes(page);
       await enterProgrammeIntake(page);
       if (state === "registration") {
-        await page.route("**/api/program/program-ai/turn", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ result: { kind: "STARTING_POINT_CANDIDATE", disposition: "CONTINUE", candidate: { startingPoint: "After difficult work days I keep opening betting apps late at night.", desiredChange: "Build more control around the situation described here.", broadContext: "NOT_SPECIFIED", continuationCue: "Continue from the situation described in Mission 01." } }, progress: { xpPreview: 20 } }) }));
+        await page.route("**/api/program/program-ai/turn", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ result: { kind: "STARTING_POINT_CANDIDATE", disposition: "CONTINUE", candidate: { startingPoint: "You described autopilot sessions after work that grow by the weekend. Your first missions focus on catching that moment before it starts — one small boundary at a time.", desiredChange: "Build more control around the situation described here.", broadContext: "NOT_SPECIFIED", continuationCue: "Continue from the situation described in Mission 01." } }, progress: { xpPreview: 20 } }) }));
         await page.getByRole("button", { name: "I'd rather type" }).click();
         await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
         await page.getByRole("button", { name: "Create my Starting Point" }).click();
         await page.locator('[data-programme-phase="registration"]').waitFor();
       }
     }
+    if (await page.locator("[data-handoff-page]").count()) throw new Error(`${name} switched to the alternate HandoffPage renderer`);
+    if (await page.locator('[data-runtime-renderer="programme"]').count() !== 1) throw new Error(`${name} did not render the real Programme runtime`);
     await settle(page);
-    const screenshot = await page.screenshot({ type: "png", animations: "disabled", fullPage: true });
-    await sharp(screenshot).webp({ quality: 74, effort: 5 }).toFile(artifactPath(name, width, "implementation"));
+    const frame = state === "dashboard"
+      ? page.locator('[data-programme-phase="home"] > div').first()
+      : page.locator(`[data-programme-phase="${state === "registration" ? "registration" : "intake"}"] main`).first();
+    await screenshotWebp(frame, artifactPath(name, width, "runtime-implementation"));
   } finally {
     await page.close();
   }
@@ -249,7 +270,7 @@ async function normalize(buffer, width, height, background) {
 
 async function writeDiffAndComparison(name, width) {
   const referencePath = artifactPath(name, width, "reference");
-  const implementationPath = artifactPath(name, width, "implementation");
+  const implementationPath = artifactPath(name, width, "runtime-implementation");
   const [reference, implementation] = await Promise.all([
     readFile(referencePath),
     readFile(implementationPath),
@@ -288,14 +309,15 @@ async function writeDiffAndComparison(name, width) {
 
   if (majorPages.has(name)) {
     const gap = 12;
-    const sideWidth = width * 2 + gap;
+    const paneWidth = canvasWidth;
+    const sideWidth = paneWidth * 2 + gap;
     const maxSideHeight = Math.min(canvasHeight, 5200);
     const [leftSide, rightSide] = await Promise.all([
-      sharp(left).extract({ left: 0, top: 0, width, height: maxSideHeight }).toBuffer(),
-      sharp(right).extract({ left: 0, top: 0, width, height: maxSideHeight }).toBuffer(),
+      sharp(left).extract({ left: 0, top: 0, width: paneWidth, height: maxSideHeight }).toBuffer(),
+      sharp(right).extract({ left: 0, top: 0, width: paneWidth, height: maxSideHeight }).toBuffer(),
     ]);
     await sharp({ create: { width: sideWidth, height: maxSideHeight, channels: 4, background } })
-      .composite([{ input: leftSide, left: 0, top: 0 }, { input: rightSide, left: width + gap, top: 0 }])
+      .composite([{ input: leftSide, left: 0, top: 0 }, { input: rightSide, left: paneWidth + gap, top: 0 }])
       .webp({ quality: 68, effort: 5 })
       .toFile(artifactPath(name, width, "side-by-side"));
   }
@@ -346,14 +368,16 @@ try {
 
 await writeFile(
   join(outputRoot, "capture-manifest.json"),
-  `${JSON.stringify({ phase, referenceBaseUrl, implementationBaseUrl, pages: [...pages.map(([name, file, route]) => ({ name, file: basename(file), route })), ...programmeSurfaces.map(([name, state]) => ({ name, file: "Programme.dc.html", state, route: "/program" })), { name: contextualComparisonSurface[0], file: basename(contextualComparisonSurface[1]), state: "overlay", route: contextualComparisonSurface[2] }], widths: viewports.map(({ width }) => width) }, null, 2)}\n`,
+    `${JSON.stringify({ phase, referenceBaseUrl, implementationBaseUrl, pages: [...pages.map(([name, file, route]) => ({ name, file: basename(file), route, renderer: dynamicRuntimePages.has(name) ? "REAL_RUNTIME" : "REAL_RUNTIME_STATIC" })), ...programmeSurfaces.map(([name, state]) => ({ name, file: "Programme.dc.html", state, route: "/program", renderer: "REAL_RUNTIME" })), { name: contextualComparisonSurface[0], file: basename(contextualComparisonSurface[1]), state: "overlay", route: contextualComparisonSurface[2], renderer: "REAL_RUNTIME" }], widths: visualMetrics.length ? [...new Set(visualMetrics.map(({ width }) => width))] : viewports.map(({ width }) => width) }, null, 2)}\n`,
 );
 
-if ((phase === "all" || phase === "diff") && !only) {
+if ((phase === "all" || phase === "diff") && visualMetrics.length) {
   await writeFile(
     join(outputRoot, "visual-diff-metrics.json"),
     `${JSON.stringify({ thresholdPerChannel: 24, metrics: visualMetrics }, null, 2)}\n`,
   );
 }
+
+if (visualMetrics.length) console.log(JSON.stringify(visualMetrics));
 
 console.log(`True-parity ${phase} assets written to ${outputRoot}`);

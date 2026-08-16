@@ -68,6 +68,14 @@ The acquisition presentation must not insert a required clarification page, mult
 
 This correction changes presentation and orchestration only. The two existing Mission01 server actions remain the only reward events (20 XP each), registration remains worth 0 XP, claim/redeem remains idempotent and server-authoritative, sensitive-input authority remains required, support-first intervention remains allowed, and Missions 02–10 retain their approved titles, ordering, prerequisites, rewards and behaviour.
 
+### Founder correction — parity integrity
+
+The corrective Founder decision received on 2026-08-17 rejects any visual-acceptance method in which `visualFixture=true` selects `HandoffPage`, generated handoff HTML or another presentation renderer while ordinary Preview uses the application UI. Visual fixtures may replace deterministic DTO/service values only. Local QA, Vercel Preview and eventual Production must use the same component, DOM, CSS and interaction tree.
+
+Accordingly, every dynamic product route renders its actual runtime component regardless of fixture state. The parity harness compares the original supplied `.dc.html` reference against the normal React route, fails when `[data-handoff-page]` is present on a dynamic surface, requires an explicit real-runtime marker and records `renderer: REAL_RUNTIME`. Programme comparison uses equivalent reference frames for intake, Starting Point ready/registration and dashboard rather than an unrelated whole-board comparison. The original generated handoff renderer remains permissible only as the actual renderer of genuinely static public pages and as the reference-capture source.
+
+This correction changes no data authority. Current services and DTOs remain authoritative on Preview; the local-only data fixture is denied in every Vercel environment. The correction authorises removal of obsolete alternate-renderer evidence and requires replacement evidence to use the `runtime-implementation` label.
+
 ## Comparison and analytics boundary
 
 Comparison state contains only validated public casino slugs, country and the optional differences preference. It is capped at three entries and may use URL state and `sessionStorage`. It must call the existing public comparison service and fail closed for unavailable or ineligible entries.
@@ -89,3 +97,4 @@ Before handoff, the branch must pass lint, type checking, quality checks, produc
 | Draft claims remain visible only in Preview and audited | Copy fidelity does not establish factual proof | Full-site prompt and claims-audit requirement |
 | No Production action | The authority is bounded to review | Founder instruction and this RFC |
 | Mission01 has no required clarification/editor/reward screens | Founder fixed the acquisition sequence after rejecting the first PR pass | Corrective Founder decision, 2026-08-16 |
+| Visual fixtures are data-only | A metric is invalid when reference markup replaces the actual application UI | Corrective Founder decision, 2026-08-17 |

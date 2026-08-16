@@ -3,14 +3,14 @@ import Link from "next/link";
 import { cache } from "react";
 
 import { BestOffersExperience } from "@/components/best-offers/BestOffersExperience";
-import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
-import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
+import { isLocalHandoffVisualDataFixture, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
 
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
@@ -48,8 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BestOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
-  if (isLocalHandoffVisualFixture(raw.visualFixture)) return <HandoffPage name="bestOffers" />;
-  const result = await loadBestOffersPageData();
+  const result = withHandoffOfferData(await loadBestOffersPageData(), isLocalHandoffVisualDataFixture(raw.visualFixture));
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
@@ -64,9 +63,10 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     })),
   } : null;
 
-  return <div className={styles.page}>
+  return <div className={styles.page} data-runtime-renderer="best-offers">
     <p className="srOnly">Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>
     <CommercialSurfaceView surface="best_offers" />
+    <ContextualComparison />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero}><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>✓ &nbsp; Researched &amp; verified</p>

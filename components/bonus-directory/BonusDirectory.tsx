@@ -141,12 +141,21 @@ export function ActiveBonusFilters({ query, raw }: { query: PublicOfferQuery; ra
 
 export function BonusComparisonList({ offers, startPosition }: { offers: PublicOfferDTO[]; startPosition: number }) {
   return <div className={styles.comparison}>
-    <div aria-hidden="true" className={styles.comparisonHeader}><span>Position / offer</span><span>Headline / material terms</span><span>Licence / payments</span><span>Commercial state</span></div>
     {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <div className={`${styles.rowIdentity} ${styles.desktopComparisonCell}`}><span>{String(startPosition + index).padStart(2, "0")}</span><div><p>{bonusType(offer.bonus.type)}</p><h3>{offer.casino.name}</h3><Link href={`/casino/${offer.casino.slug}`}>Read Review →</Link></div></div>
-      <div className={`${styles.rowTerms} ${styles.desktopComparisonCell}`}><strong>{offer.bonus.title}</strong><DemoFixtureNotice offer={offer} /><dl>{materialTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>{offer.bonus.importantConditions.length > 0 && <small>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</small>}</div>
-      <div className={`${styles.rowContext} ${styles.desktopComparisonCell}`}><span>Licence</span><strong>{offer.casino.licenses[0]?.authority || "Not listed"}</strong><span>Payments</span><p>{offer.casino.payments.slice(0, 3).map((item) => item.name).join(" · ") || "Not listed"}</p><small>Reviewed {date(offer.casino.lastReviewedAt)}</small></div>
-      <div className={`${styles.rowCommercial} ${styles.desktopComparisonCell}`}><span className={offer.commercialAvailability === "AVAILABLE" ? styles.availableBadge : styles.unavailableBadge}>{offer.commercialAvailability === "AVAILABLE" ? "Available" : "Review only"}</span><p>Publication and position do not depend on affiliate availability.</p><OfferAction compact offer={offer} /></div>
+      <span className={styles.compactLogo} aria-hidden="true">{offer.casino.name.slice(0, 1)}</span>
+      <div className={styles.compactIdentity}>
+        <strong>{offer.bonus.title}</strong>
+        <span>{offer.casino.name} · Score {offer.casino.editorScore.toFixed(1)}</span>
+        <small>{offer.casino.licenses[0]?.authority || "Licence not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Payments not listed"}</small>
+        <DemoFixtureNotice offer={offer} />
+      </div>
+      <dl className={styles.compactTerms}>
+        <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}x`}</dd></div>
+        <div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div>
+        <div><dt>Payout</dt><dd>{payoutEvidence(offer)}</dd></div>
+      </dl>
+      <div className={styles.compactActions}><OfferAction compact offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Review</Link></div>
+      <span className={styles.compactPosition} aria-label={`Position ${startPosition + index}`}>{String(startPosition + index).padStart(2, "0")}</span>
       <div className={`${styles.mobileMaterialResult} ${index === 0 ? styles.mobileMaterialResultFeatured : ""}`}>
         <span className={styles.mobileResultRank}>{String(startPosition + index).padStart(2, "0")}</span>
         <h3>{offer.casino.name}</h3>

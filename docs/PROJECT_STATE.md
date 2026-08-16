@@ -1,5 +1,13 @@
 # Project State
 
+## FINAL-DESIGN-HANDOFF-01 branch addendum — 2026-08-17
+
+- **Detected:** RFC-034 is implemented on branch `codex/final-design-handoff-v1` in Draft PR #76. The supplied v1.2 handoff is the public presentation/IA authority while Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data services remain the functional authority.
+- **Detected:** the Founder parity-integrity correction removed every dynamic-route `visualFixture → HandoffPage` presentation bypass. Best Offers, Casinos, Casino Review, Bonuses, Learn Article, contextual comparison and the three requested Programme states now render their actual runtime React components. Deterministic local fixtures transform data only and are denied on Vercel.
+- **Detected:** `/bonus-guide` remains standalone. `/compare` is redirect-only and contextual comparison opens from casino selection; it is absent from public navigation and discovery.
+- **Detected:** the current local quality gate passes 476/476 tests plus lint, type checking, Prisma validation and the production build. The real-runtime 1440px evidence set and honest measurements are recorded under `docs/02_Product_Design/qa/final-design-handoff/true-parity/`. Obsolete alternate-renderer implementation images were removed.
+- **Not merged / Production unchanged:** Draft PR #76 remains the only authorised delivery boundary. Merge, Production configuration and Production deployment are not authorised.
+
 ## PUBLIC-IA-AND-HARDENING-01 branch addendum — 2026-08-14
 
 - **Detected:** Founder-approved RFC-033 is implemented on branch `codex/public-ia-and-hardening-01` from exact main `1d160b94481c7f8915619ef2254c7c2e66ab3209` in open Draft PR #74. Runtime-tested source head `3042650ffe6785aa23d7600e1ec9348e7bf1208a` has a Ready exact Preview at deployment `dpl_HSr19yfu1hmRmrYzMmdPaMqiUJRN`, immutable `https://sevenbet-next-l4ea1zvjf-alexg-7bes-projects.vercel.app`. This documentation-only closure follows that source and therefore receives a later SHA.

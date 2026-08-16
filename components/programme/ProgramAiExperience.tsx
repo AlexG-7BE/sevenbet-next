@@ -495,12 +495,6 @@ function IntakeScreen({
           <span className={styles.srOnly}>What feels hardest to control right now?</span>
           <h1>Tell us what is happening right now.</h1>
           <p>In your own words. A minute is plenty — we&apos;ll build your starting point from it.</p>
-          <div className={styles.jitCard}>
-            <strong>Private by default</strong>
-            <p>Your words are never used for offers or rankings.</p>
-            <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
-          </div>
-          <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
         </section>
         <section className={styles.inputPanel}>
           <Recorder disabled={busy || !authority} state={recorderState} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} />
@@ -514,6 +508,14 @@ function IntakeScreen({
             {busy ? "Preparing your Starting Point…" : "Create my Starting Point"}
           </ActionButton>
           <StatusMessage error={error} />
+        </section>
+        <section className={styles.intakeMeta} aria-label="Programme privacy and support">
+          <div className={styles.jitCard}>
+            <strong>Private by default.</strong>
+            <p>Your words are never used for offers or rankings.</p>
+            <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
+          </div>
+          <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
         </section>
       </main>
     </div>
@@ -570,7 +572,7 @@ function StartingPointReadyScreen({
     </section>
     <section className={styles.readyActions}>
       {authenticated ? <ActionButton disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} size="large">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</ActionButton> : <>
-        {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google — save your plan</ActionButton> : null}
+        {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large"><span aria-hidden="true" className={styles.googleMark}>G</span>Continue with Google — save your plan</ActionButton> : null}
         {!googleLinkRecovery ? <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
         {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
           <label className={styles.field}><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
@@ -1038,6 +1040,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       aria-label={`Programme ${phase} screen`}
       className={styles.phaseBoundary}
       data-programme-phase={phase}
+      data-runtime-renderer="programme"
       ref={phaseFocusRef}
       role="region"
       tabIndex={-1}

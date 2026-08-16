@@ -43,6 +43,22 @@ The implementation retains these distinctive choices: paper and near-black field
 - Curated `Crypto` and `Mobile` casino selections require their authoritative public-card booleans to be explicitly true. The bonus `Crypto` selector requires authoritative crypto payment-method evidence. Missing evidence fails closed rather than matching labels or tags.
 - Casino `Best Bonuses` requires an authoritative complete ranking signal. The current casino-card contract does not supply one, so that curated view fails closed. Offer `Best Overall` uses the existing multi-signal offer ranker; it must not collapse to lowest wagering alone.
 
+## Dynamic presentation integrity
+
+The Founder correction prohibits presentation-level visual fixtures. Deterministic local QA may replace DTO values only; it may not select a page, component, markup, CSS, shell or interaction implementation.
+
+| Dynamic route/state | Real runtime presentation |
+| --- | --- |
+| `/best-offers` | `BestOffersExperience` inside the route's final handoff composition |
+| `/casinos` | `CuratedCasinoShortlist` and `CasinoDiscovery` inside the route's final handoff composition |
+| `/casino/[slug]` | `CasinoProfile` |
+| `/bonuses` | `CuratedBonusShortlist` and `BonusComparisonList`/`BonusDirectory` |
+| `/learn/[category]/[slug]` | `LearningArticleView` |
+| contextual comparison on `/casinos` | `ContextualComparison` dialog/bottom sheet |
+| Programme intake, Starting Point ready/registration and dashboard | `ProgramAiExperience` and its real state components |
+
+**Detected:** the former route-level `visualFixture → HandoffPage` branches were removed from every dynamic route above. The data-only fixture contains no generated markup or presentation import, is disabled on Vercel, and is exercised by a regression test that compares the runtime root/direct composition with and without fixture data. The visual harness additionally rejects `[data-handoff-page]` on dynamic surfaces and requires the matching real-runtime marker.
+
 ## Contextual comparison contract
 
 The shared comparison controller accepts at most three validated public casino slugs. The first selection opens a persistent tray; the second automatically opens a modal/sheet; the third updates that same surface. Users can remove entries, close the comparison while retaining the tray, and reopen it. Desktop uses a centered dialog; small screens use a bottom sheet. The state is limited to public slugs/country/differences and never receives Programme, Help or private data.
@@ -74,14 +90,16 @@ Completion requires the gates in RFC-034. Until they pass, all new implementatio
 - **Detected:** shared public chrome, all mapped handoff surfaces, route consolidation, contextual comparison, analytics and responsive presentation are implemented on `codex/final-design-handoff-v1`.
 - **Detected:** `/bonus-guide` remains standalone; `/compare` is redirect-only and absent from public navigation, canonical discovery and the sitemap.
 - **Detected:** Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data-service boundaries remain in place; Programme progress and reward calculations remain server-owned.
-- **Detected:** functional, responsive, regression, build and screenshot gates passed. Direct reference/implementation/diff evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/true-parity/README.md`](../02_Product_Design/qa/final-design-handoff/true-parity/README.md).
+- **Detected:** source quality, type, schema, structural/domain regression and production-build gates pass. Direct real-runtime reference/implementation/diff evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/true-parity/README.md`](../02_Product_Design/qa/final-design-handoff/true-parity/README.md).
 - **Not authorised:** merge to `main`, Production configuration changes or Production deployment.
 
 ## Recorded deviations
 
-- True-parity commercial captures use the handoff's Solvane/Marlowe/Kestrel sample values through an explicit local-only renderer. The query parameter is inert unless `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true`; Vercel Preview and Production are both denied by the fixture guard. The ordinary Preview continues to use current governed services and DTOs.
+- True-parity commercial captures use the handoff's Solvane/Marlowe/Kestrel sample values through explicit local-only DTO transforms. They never select another page or presentation renderer. The query parameter is inert unless `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true`; every Vercel environment is denied by the data guard. Ordinary Preview uses the identical React/DOM/CSS tree with current governed services and DTOs.
 - Anonymous Mission 01 passes through the existing adult/Terms access gate and just-in-time authority, accepts one voice-or-text situation submission, produces a best-effort Starting Point, then shows the Google-primary/email-secondary ready/account-claim screen. There is no anonymous clarification, candidate editor or reward screen. Successful claim lands on the real server-owned Dashboard; `20 + 20` XP is unchanged.
 - Protected Help retains its account-free, commercial-free and targeting-free architecture. The handoff's static response-time and pause-duration wording is reproduced for the Draft Preview and remains an explicit Production claims gate.
 - Privacy includes the current Google identity boundary, controller identity and 13 August 2026 access-contract date.
 - Bonus Guide retains the supplied Draft copy verbatim. Current primary-source findings are recorded in the copy/claims audit rather than appended to the locked article.
+- Learn Article retains the current published Learning record and real shared article template rather than substituting the handoff's unrelated static Article body. The resulting visual metric is recorded honestly.
+- The Bonuses calculator retains a simplified explanatory runtime composition; it does not yet reproduce every interaction in the illustrative calculator board.
 - Static commercial, methodology, operational and privacy claims remain Draft-only where classified in [`FINAL-DESIGN-COPY-CLAIMS-AUDIT.md`](FINAL-DESIGN-COPY-CLAIMS-AUDIT.md).

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
 
 import styles from "./BestOffers.module.css";
@@ -37,6 +38,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
   inventoryMode: PublicOfferInventoryMode;
 }) {
   const top = shortlist.slice(0, 3);
+  const worthALook = shortlist.slice(3, 6);
   const featured = top[0] ?? null;
   const demonstration = inventoryMode !== "PUBLISHED_ONLY";
 
@@ -55,7 +57,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <p className={styles.reason}>{featured.casino.summary}</p>
             <small className={styles.termLabel}>Welcome offer</small>
             <h4>{featured.bonus.title}</h4>
-            <div className={styles.actions}><OfferAction featured offer={featured} /><Link href={`/casino/${featured.casino.slug}`}>Read Full Review →</Link></div>
+            <div className={styles.actions}><OfferAction featured offer={featured} /><Link href={`/casino/${featured.casino.slug}`}>Read Full Review →</Link><ContextualCompareToggle casinoName={featured.casino.name} casinoSlug={featured.casino.slug} /></div>
           </div>
           <div className={styles.featuredMark} aria-hidden="true">{featured.casino.name.slice(0, 1).toUpperCase()}</div>
           <dl className={styles.featuredTerms}>
@@ -75,11 +77,24 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <small className={styles.termLabel}>Welcome offer</small><h4>{offer.bonus.title}</h4>
               <p className={styles.termSummary}>Wagering {offer.bonus.wageringMultiplier === null ? "not listed" : `${offer.bonus.wageringMultiplier}x`} · Min deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)} · Payout {payout(offer)}</p>
               <p className={styles.reason}>{offer.casino.summary}</p>
-              <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link></div>
+              <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </div>
             <div className={styles.altMark} aria-hidden="true">{offer.casino.name.slice(0, 1).toUpperCase()}</div>
           </article>)}
         </div>
+        {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">
+          <div className={styles.sectionRule}><span id="worth-a-look-title">Worth a look — just outside the top three</span><i /></div>
+          <div className={styles.worthCards}>
+            {worthALook.map((offer, index) => <article key={`${offer.casino.id}-${offer.bonus.id}`}>
+              <div className={styles.worthHead}><OfferIdentity offer={offer} /><b>0{index + 4}</b></div>
+              <div className={styles.worthScore}><small>Editor Score</small><strong>{offer.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
+              <div className={styles.worthOffer}><small>Current offer</small><strong>{offer.bonus.title}</strong></div>
+              <dl><div><dt>Payout</dt><dd>{payout(offer)}</dd></div><div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div></dl>
+              <p>{offer.casino.summary}</p>
+              <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
+            </article>)}
+          </div>
+        </section> : null}
       </div>
     </section>
 

@@ -91,6 +91,7 @@ export function ContextualComparison() {
     for (const slug of slugs) params.append("casino", slug);
     params.set("country", searchParams.get("country") || "GB");
     if (searchParams.get("differences") === "true") params.set("differences", "true");
+    if (searchParams.get("visualFixture") === "true") params.set("visualFixture", "true");
     setLoading(true);
     fetch(`/api/public/comparison?${params}`, { signal: controller.signal, cache: "no-store" })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Comparison unavailable")))
@@ -113,6 +114,11 @@ export function ContextualComparison() {
   if (!slugs.length) return null;
   const names = result?.casinos ?? [];
   const comparisonRows = result?.groups.flatMap((group) => group.rows) ?? [];
+  const presentationRows = ["offer-title", "wagering", "minimum-deposit", "withdrawal-time", "methods", "control-tools"]
+    .flatMap((id) => {
+      const row = comparisonRows.find((candidate) => candidate.id === id);
+      return row ? [row] : [];
+    });
   const highestScore = names.length ? Math.max(...names.map((casino) => casino.editorScore)) : null;
 
   return <>
@@ -123,7 +129,7 @@ export function ContextualComparison() {
         <button onClick={() => commit([], false)} type="button">Clear</button>
       </div>
     </aside>
-    <dialog aria-labelledby="comparison-title" className={styles.dialog} onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
+    <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
       <div className={styles.sheet}>
         <header>
           <div><h2 id="comparison-title">Side by side</h2><span>Same test cycle for every casino</span></div>
@@ -136,18 +142,18 @@ export function ContextualComparison() {
             return <article className={styles.comparisonCard} key={slug}>
               <div className={styles.casinoHead}>
                 <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
-                <div><h3>{displayName}</h3><small>{casino?.dataClassification === "DEMO_FIXTURE" ? "Fictional demo profile" : "Independent review"}</small></div>
+                <div><h3>{displayName}</h3><small>{casino?.summary || (casino?.dataClassification === "DEMO_FIXTURE" ? "Fictional demo profile" : "Independent review")}</small></div>
               </div>
               {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>Top score</strong>}
               <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★</span></div>
               <div className={styles.factList}>
-                {comparisonRows.slice(0, 7).map((row) => <dl key={row.id} title={row.description}>
-                  <dt>{row.label}</dt>
+                {presentationRows.map((row) => <dl key={row.id} title={row.description}>
+                  <dt>{row.id === "withdrawal-time" ? "Payout" : row.id === "methods" ? "Payments" : row.id === "control-tools" ? "Features" : row.label}</dt>
                   <dd>{row.values[slug]?.text ?? "Unavailable"}</dd>
                   <small>{row.values[slug]?.status ?? "Unavailable"}</small>
                 </dl>)}
               </div>
-              {!comparisonRows.length && <p className={styles.noEvidence}>Published comparison evidence is unavailable.</p>}
+              {!presentationRows.length && <p className={styles.noEvidence}>Published comparison evidence is unavailable.</p>}
               <div className={styles.columnActions}>
                 {casino?.action.available && casino.action.href
                   ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} />

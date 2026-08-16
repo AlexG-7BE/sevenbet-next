@@ -27,7 +27,7 @@ export function LearningArticleView({
     .format(new Date(`${article.lastUpdated}T00:00:00Z`));
 
   return (
-    <article className={styles.page} data-learning-article data-figma-authority="633:4341">
+    <article className={styles.page} data-learning-article data-figma-authority="633:4341" data-runtime-renderer="learn-article">
       <header className={styles.hero}>
         <nav className={styles.breadcrumbs} aria-label="Breadcrumb">
           <Link href="/">Home</Link><span aria-hidden="true">/</span>

@@ -2,25 +2,43 @@
 
 ## Scope
 
-- **Detected:** 24 visual surfaces are captured at 1440, 1024, 430 and 390 CSS pixels.
-- **Detected:** each surface/width has `reference`, `implementation` and amplified `diff` WebP evidence: 288 primary files.
-- **Detected:** 48 additional bounded side-by-side WebPs cover the Founder-designated major surfaces; total committed visual evidence is 336 WebPs.
-- **Detected:** `capture-manifest.json` records routes, source boards, states and widths. `visual-diff-metrics.json` records per-artifact mean absolute difference and changed-pixel ratio.
+- **Detected:** the Founder correction set contains 24 1440px surfaces. Every surface has `reference`, `runtime-implementation` and amplified `diff` WebP evidence.
+- **Detected:** the 12 Founder-designated surfaces also have `side-by-side` evidence: Home, three equivalent Programme states, Best Offers, Casinos, contextual comparison, Casino Review, Bonuses, Bonus Guide, Learn and Help.
+- **Detected:** obsolete `implementation.webp` captures from the rejected alternate-renderer method were removed. Only `runtime-implementation.webp` is implementation evidence in this directory.
+- **Detected:** `capture-manifest.json` records `renderer: REAL_RUNTIME` for every dynamic surface and equivalent Programme state. `visual-diff-metrics.json` records the 24 honest 1440px measurements.
 
-## Deterministic data boundary
+## Runtime-integrity boundary
 
-The commercial reference boards use illustrative Solvane, Marlowe and Kestrel values. For comparable local screenshots, `visualFixture=true` activates those samples only when the local process also has `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true`. `lib/final-handoff/visual-fixture.ts` rejects every Vercel environment, and the fixture exposes no commercial action or persistent data mutation. Normal runtime and the Vercel Preview remain connected to current governed DTOs and jurisdiction controls.
+Reference images come from the original supplied `.dc.html` boards. Implementation images come from the normal application routes and their actual React components. The harness fails a dynamic capture if `[data-handoff-page]` is present or if the expected `data-runtime-renderer` marker is absent.
 
-Programme evidence uses intercepted local test DTOs for the three requested states. It does not change Programme persistence, rewards or server authority. The contextual comparison fixture records the handoff popup; ordinary browser tests separately verify the real selection controller, two-selection auto-open behaviour, three-item cap and `/api/public/comparison` projection.
+The optional `visualFixture=true` request changes DTO/service values only when a local process also has `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true`. [`visual-data-fixture.ts`](../../../../../lib/final-handoff/visual-data-fixture.ts) contains no generated markup, `HandoffPage`, or presentation branch; it is denied in every Vercel environment. The same component, DOM and CSS tree therefore renders local QA data, ordinary Preview data and eventual Production data.
 
-## Reading the files
+Programme evidence uses equivalent state-specific crops from `Programme.dc.html` for intake, Starting Point ready/registration and dashboard. Test DTO interception supplies state only; the real `ProgramAiExperience` presentation remains in use and Programme auth, persistence, claim, XP and Mission authority are unchanged.
 
-File names follow `<surface>-<width>-<kind>.webp`. The diff is an amplified pixel difference, not a pass/fail mask. A dark diff image indicates close alignment. Full-page metrics are sensitive to page height, fixed chrome, font rasterisation, runtime state and handoff mobile conditionals.
+## Recorded 1440px metrics
 
-## Review disposition
+| Surface | Mean absolute difference | Changed-pixel ratio |
+| --- | ---: | ---: |
+| Home | 0.036517 | 0.084868 |
+| Programme intake | 0.087821 | 0.133881 |
+| Programme registration | 0.080752 | 0.137496 |
+| Programme dashboard | 0.095699 | 0.191110 |
+| Best Offers | 0.112632 | 0.151852 |
+| Casinos | 0.215611 | 0.263941 |
+| Contextual comparison | 0.158216 | 0.368670 |
+| Casino Review | 0.206991 | 0.245548 |
+| Bonuses | 0.205759 | 0.258461 |
+| Bonus Guide | 0.009411 | 0.012959 |
+| Learn | 0.013952 | 0.017511 |
+| Help | 0.035189 | 0.051811 |
 
-- Static ported boards are exact or near-exact at desktop widths; remaining sub-pixel differences are primarily font/render timing and deliberate functional transforms.
-- Commercial fixture pages closely match at desktop widths and preserve the handoff sample content; mobile differences include handoff-runtime conditionals that were evaluated during original-board capture but are represented by CSS reflow in the generated React port.
-- Login, FAQ, Contact, legal and safety pages preserve live form/auth/link/contract behaviour, so their diffs include semantic and contractual additions.
-- Programme screenshots compare board fragments with full production application states and therefore have intentionally high raw whole-canvas metrics. Functional flow is assessed by Programme browser tests, not by a false pixel threshold.
-- No artifact in this directory is a Founder acceptance declaration or Production approval.
+The remaining measurements are retained in `visual-diff-metrics.json`. These are descriptive pixel measurements, not acceptance thresholds.
+
+## Known visual limitations
+
+- Learn Article intentionally uses the current published Learning model and its real shared article template rather than the handoff's unrelated static Bonus Guide body; its metric is correspondingly high (`0.391085` MAD).
+- Casino Review and Bonuses retain governed evidence, filtering and action contracts. Their dynamic record density differs from the illustrative boards.
+- The current Bonuses calculator is a simplified explanatory calculator rather than the fuller interactive reference composition.
+- Programme retains the approved adult/Terms access gate, just-in-time sensitive-input authority and protected Help affordance.
+- Missing operator media uses the neutral real-runtime fallback; no image is fabricated for a metric.
+- No artifact is a Founder acceptance declaration or Production approval.

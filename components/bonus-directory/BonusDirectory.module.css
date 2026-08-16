@@ -336,3 +336,48 @@
 .loadingPulse { min-height: 84px; background: linear-gradient(90deg, #e5e2d9 25%, var(--sb-field) 50%, #e5e2d9 75%); background-size: 200% 100%; animation: bonus-loading 1.4s linear infinite; }
 @keyframes bonus-loading { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .loadingPulse { animation: none; } }
+
+/* Final handoff directory composition; the form and records remain server-owned. */
+.resultsStatus { margin:18px 0; color:var(--metal); font-size:11px; text-align:right; }
+.compactLogo,.compactIdentity,.compactTerms,.compactActions,.compactPosition { display:none; }
+
+@media (min-width:761px) {
+  .directorySection { padding:86px 0 104px; background:var(--field); }
+  .sectionHeading { grid-template-columns:1fr auto; margin-bottom:38px; }
+  .sectionHeading .display { margin:0; font-size:54px; }
+  .sectionHeading > p { font-size:12px; text-align:right; }
+  .filterForm { padding:14px 16px; border:1px solid rgba(16,15,15,.1); border-top:1px solid rgba(16,15,15,.1); border-radius:18px; background:rgba(255,255,255,.86); box-shadow:0 16px 36px rgba(16,15,15,.07); }
+  .filterGrid { grid-template-columns:repeat(8,minmax(0,1fr)); gap:8px; padding:0; }
+  .filterGrid label { display:block; }
+  .filterGrid label > span { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+  .filterGrid select,.filterGrid input { min-height:42px; padding-inline:11px; overflow:hidden; border-color:rgba(16,15,15,.22); border-radius:999px; background:transparent; font-size:11px; text-overflow:ellipsis; }
+  .marketNote { margin:10px 4px 0; padding:0; border:0; font-size:10px; }
+  .filterActions { min-height:0; margin-top:10px; padding:0; justify-content:flex-end; background:transparent; color:var(--ink); }
+  .filterActions > div { margin-right:auto; display:flex; align-items:baseline; gap:8px; }
+  .filterActions strong { font-size:12px; }
+  .filterActions span { color:var(--metal); font-size:10px; }
+  .filterActions > a,.filterActions > button { min-height:36px; padding:0 16px; border-color:rgba(16,15,15,.25); border-radius:999px; color:var(--ink); font-size:9px; }
+  .filterActions > button { min-width:126px; border-color:#c84e49; background:#c84e49; color:var(--white); }
+  .filterSummary { display:none; }
+  .resultsStatus { margin:22px 0 12px; }
+  .comparison { display:grid; gap:14px; border:0; }
+  .comparisonHeader { display:none; }
+  .comparisonRow { min-height:92px; position:relative; display:grid; grid-template-columns:52px minmax(260px,1.65fr) 1fr auto; align-items:center; gap:22px; padding:14px 20px; border:1px solid rgba(16,15,15,.09) !important; border-radius:16px; background:rgba(255,255,255,.88); box-shadow:0 12px 28px rgba(16,15,15,.035); }
+  .desktopComparisonCell { display:none; }
+  .compactLogo { width:46px; height:46px; display:grid; place-items:center; border-radius:13px; background:var(--night); color:var(--acid); font-size:18px; font-weight:850; }
+  .compactIdentity { min-width:0; display:grid; gap:2px; }
+  .compactIdentity > strong { overflow:hidden; font-size:14px; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+  .compactIdentity > span { color:var(--metal); font-size:10px; }
+  .compactIdentity > small { overflow:hidden; color:#8c8a82; font-size:8px; text-overflow:ellipsis; white-space:nowrap; }
+  .compactIdentity .conditions { margin:1px 0 0; padding:0; border:0; font-size:7px; }
+  .compactTerms { margin:0; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; }
+  .compactTerms div { display:grid; gap:2px; }
+  .compactTerms dt { color:var(--metal); font-size:9px; }
+  .compactTerms dd { margin:0; font-size:11px; font-weight:750; }
+  .compactActions { display:flex; align-items:center; gap:12px; }
+  .compactActions .offerActionCompact,.compactActions .actionUnavailableCompact { min-width:112px; min-height:42px; margin:0; border:0; border-radius:12px; background:#c84e49; color:var(--white); text-transform:none; }
+  .compactActions .actionUnavailableCompact { background:#ebeae4; color:var(--metal); }
+  .compactActions > a { min-height:42px; display:inline-flex; align-items:center; font-size:11px; text-decoration:underline; text-underline-offset:3px; }
+  .compactPosition { position:absolute; right:8px; top:5px; display:block; color:#aaa879; font-size:8px; }
+  .mobileMaterialResult { display:none; }
+}

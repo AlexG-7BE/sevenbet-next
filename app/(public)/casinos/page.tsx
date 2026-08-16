@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
-import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import { CuratedCasinoShortlist } from "@/components/casino-discovery/CuratedCasinoShortlist";
 import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
@@ -12,7 +11,7 @@ import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
-import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
+import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -34,19 +33,18 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
-  if (isLocalHandoffVisualFixture(raw.visualFixture)) {
-    const selected = Array.isArray(raw.casino) ? raw.casino : raw.casino ? [raw.casino] : [];
-    return <HandoffPage name={selected.length >= 2 ? "casinosComparison" : "casinos"} />;
-  }
   const query = parseCasinoDiscoveryQuery(raw);
   const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
-  const result = await publicCasinoDiscoveryService.discover(query, authority);
+  const result = withHandoffCasinoDiscoveryData(
+    await publicCasinoDiscoveryService.discover(query, authority),
+    isLocalHandoffVisualDataFixture(raw.visualFixture),
+  );
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Casino Reviews", item: absoluteUrl("/casinos") }] },
     ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
   ];
 
-  return <div className={styles.page} data-page-theme="dark">
+  return <div className={styles.page} data-page-theme="dark" data-runtime-renderer="casinos">
     <CommercialSurfaceView surface="casinos" />
     <ContextualComparison />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}

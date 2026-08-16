@@ -1,137 +1,158 @@
 {
-  "phase": "diff",
+  "phase": "all",
   "referenceBaseUrl": "http://127.0.0.1:4180",
   "implementationBaseUrl": "http://127.0.0.1:4173",
   "pages": [
     {
       "name": "home",
       "file": "Home.dc.html",
-      "route": "/"
+      "route": "/",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "ten-steps",
       "file": "10 Steps v2.dc.html",
-      "route": "/10-steps"
+      "route": "/10-steps",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "login",
       "file": "Login.dc.html",
-      "route": "/login"
+      "route": "/login",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "best-offers",
       "file": "Best Offers.dc.html",
-      "route": "/best-offers"
+      "route": "/best-offers",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "casinos",
       "file": "Casinos.dc.html",
-      "route": "/casinos"
+      "route": "/casinos",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "casino-review",
       "file": "Casino Review.dc.html",
-      "route": "/casino/demo-northstar"
+      "route": "/casino/demo-northstar",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "bonuses",
       "file": "Bonuses.dc.html",
-      "route": "/bonuses"
+      "route": "/bonuses",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "bonus-guide",
       "file": "Article.dc.html",
-      "route": "/bonus-guide"
+      "route": "/bonus-guide",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "learn",
       "file": "Learn.dc.html",
-      "route": "/learn"
+      "route": "/learn",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "learn-article",
       "file": "Article.dc.html",
-      "route": "/learn/casino-bonuses/welcome-bonus-terms"
+      "route": "/learn/casino-bonuses/welcome-bonus-terms",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "responsible-gambling",
       "file": "Responsible Gambling.dc.html",
-      "route": "/responsible-gambling"
+      "route": "/responsible-gambling",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "help",
       "file": "Help.dc.html",
-      "route": "/help"
+      "route": "/help",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "methodology",
       "file": "Methodology.dc.html",
-      "route": "/methodology"
+      "route": "/methodology",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "about",
       "file": "About.dc.html",
-      "route": "/about"
+      "route": "/about",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "faq",
       "file": "FAQ.dc.html",
-      "route": "/faq"
+      "route": "/faq",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "affiliate-disclosure",
       "file": "Affiliate Disclosure.dc.html",
-      "route": "/affiliate-disclosure"
+      "route": "/affiliate-disclosure",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "contact",
       "file": "Contact.dc.html",
-      "route": "/contact"
+      "route": "/contact",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "privacy",
       "file": "Privacy.dc.html",
-      "route": "/privacy"
+      "route": "/privacy",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "terms",
       "file": "Terms.dc.html",
-      "route": "/terms"
+      "route": "/terms",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "not-found",
       "file": "404.dc.html",
-      "route": "/true-parity-not-found"
+      "route": "/true-parity-not-found",
+      "renderer": "REAL_RUNTIME_STATIC"
     },
     {
       "name": "programme-intake",
       "file": "Programme.dc.html",
       "state": "intake",
-      "route": "/program"
+      "route": "/program",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "programme-registration",
       "file": "Programme.dc.html",
       "state": "registration",
-      "route": "/program"
+      "route": "/program",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "programme-dashboard",
       "file": "Programme.dc.html",
       "state": "dashboard",
-      "route": "/program"
+      "route": "/program",
+      "renderer": "REAL_RUNTIME"
     },
     {
       "name": "contextual-comparison",
       "file": "Casinos.dc.html",
       "state": "overlay",
-      "route": "/casinos"
+      "route": "/casinos",
+      "renderer": "REAL_RUNTIME"
     }
   ],
   "widths": [
-    1440,
-    1024,
-    430,
-    390
+    1440
   ]
 }

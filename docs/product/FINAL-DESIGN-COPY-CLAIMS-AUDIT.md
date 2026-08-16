@@ -74,7 +74,7 @@
 - `VERIFIED`: comparison accepts validated public slugs only, supports up to three selections and displays `Unavailable` rather than fabricating missing differences.
 - `VERIFIED`: dashboard XP, progress, Mission state, active days, streaks, achievements and rewards are server-derived.
 - `DYNAMIC_PLACEHOLDER`: ordinary local and Vercel Preview rendering continues to use current public services, jurisdiction authority and DTO values, including legitimate empty/fail-closed states.
-- `DYNAMIC_PLACEHOLDER`: true-parity screenshots use the handoff's illustrative operator values only behind `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true` plus `visualFixture=true`. The guard rejects all Vercel environments, exposes no commercial action, and does not alter runtime records.
+- `DYNAMIC_PLACEHOLDER`: true-parity screenshots use the handoff's illustrative operator values only as deterministic DTO/service-layer data behind `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true` plus `visualFixture=true`. The guard rejects every Vercel environment, exposes no persistent mutation, and never switches the page, component, markup, CSS or interaction renderer. Preview and local QA therefore use the same real runtime presentation tree.
 
 ## Exact Draft copy deviations for Founder decision
 

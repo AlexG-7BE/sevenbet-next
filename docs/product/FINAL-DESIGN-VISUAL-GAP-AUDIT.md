@@ -1,15 +1,17 @@
 # Final Design Visual Gap Audit
 
-**Status:** corrective implementation complete for Draft Preview
+**Status:** real-runtime corrective implementation recorded for Draft Preview
 
 **Presentation authority:** `design_handoff_b4gamble.zip`
 
 **Runtime/data authority:** current `sevenbet-next` services and approved architecture
-**Audit date:** 16 August 2026
+**Audit date:** 17 August 2026
 
 ## Evidence and method
 
-All 24 handoff HTML files, the README, two SVGs, five supplied photographs and the handoff support scripts were inspected. Each public implementation surface was then captured as a full page at 1440, 1024, 430 and 390 CSS pixels. The resulting 88 implementation PNGs are stored under `docs/02_Product_Design/qa/final-design-handoff/{1440,1024,430,390}/`. The supplied handoff archive and rejected PR #76 baseline were the direct visual references; duplicate binary copies are intentionally not stored in Git.
+All 24 handoff HTML files, the README, two SVGs, five supplied photographs and the handoff support scripts were inspected. The Founder correction then invalidated the earlier dynamic captures because some fixture routes selected generated handoff markup. The replacement acceptance set under `docs/02_Product_Design/qa/final-design-handoff/true-parity/` compares the original boards with the normal real React runtime at 1440 CSS pixels. Dynamic captures fail if `[data-handoff-page]` is present and are labelled `runtime-implementation`; obsolete alternate-renderer implementation images were removed.
+
+Deterministic commercial examples alter DTO/service data only. They do not select a component, markup, CSS, shell or interaction implementation. Programme uses equivalent state-specific reference crops for intake, Starting Point ready/registration and dashboard.
 
 `MATCHED` means the final implementation reproduces the handoff's composition, hierarchy, design language and responsive intent. It does not mean dynamic handoff examples were substituted for real DTO values, nor does it override a documented safety, privacy or access boundary.
 
@@ -25,11 +27,11 @@ All 24 handoff HTML files, the README, two SVGs, five supplied photographs and t
 | `/casinos` | `Casinos.dc.html` | Decision hero, compact filters, curated layer when data exists, compact directory rows, contextual compare controls and FAQ match the supplied page. | Base evidence correctly shows zero current records. Seeded disposable QA verifies populated selection and comparison. | `MATCHED` |
 | `/casino/[slug]` | `CasinoReview.dc.html` | Dark identity/score/offer hero, decision bar, 30-second check, evidence, verdict, FAQ and final offer treatment follow the reference sequence. | Evidence uses explicitly disclosed fictional review fixtures only where no current public operator is available; no live action is invented. | `MATCHED` |
 | `/bonuses` | `Bonuses.dc.html` | Decision hero, selector/shortlist treatment, comparison directory, proof/calculator content and closing sections reproduce the handoff system. | Offer values and availability use the current service or an explicit empty/unavailable state. | `MATCHED` |
-| `/bonus-guide` | `Article.dc.html` | Dark editorial hero, TOC, long-form rhythm, numerical panels, table, callouts, checklist, related reading and Programme bridge match the Article reference. | Supplied copy is verbatim. A current-source record is appended for claims review. | `MATCHED` with additive source record |
+| `/bonus-guide` | `Article.dc.html` | Dark editorial hero, TOC, long-form rhythm, numerical panels, table, callouts, checklist, related reading and Programme bridge match the Article reference. | Supplied copy is verbatim. Current-source findings remain in the claims audit rather than changing the locked article. | `MATCHED` |
 | `/learn` | `Learn.dc.html` | Photo/search hero, Start Here, topics, guide rows and Programme bridge reproduce the reference hierarchy and density. | Published Learn manifest and category query remain authoritative. | `MATCHED` |
 | `/learn/[category]/[slug]` | `Article.dc.html` | Article hero, metadata, progress/TOC, content rail, related cards and closing bridge share the approved Article composition. | Published article content and metadata remain authoritative. | `MATCHED` |
 | `/responsible-gambling` | `ResponsibleGambling.dc.html` | Calm green hero, Programme/Learn/Help paths, control information, evidence and close match the supplied sanctuary direction. | Current verified safety resources override unsupported prototype promises. | `MATCHED` with safety-copy deviation |
-| `/help` | `Help.dc.html` | Protected green shell, urgent actions, four next-step cards, independent resources, emergency boundary and quiet Programme link reproduce the protected Help design. | Existing commercial firewall and verified provider copy are preserved; no unsupported response-time or pause-duration promise is introduced. | `MATCHED` with safety-copy deviation |
+| `/help` | `Help.dc.html` | Protected green shell, urgent actions, four next-step cards, independent resources, emergency boundary and quiet Programme link reproduce the protected Help design. | Existing commercial firewall remains. Founder-locked Draft response-time/pause wording is preserved but explicitly blocks Production in the claims audit. | `MATCHED` with Draft-only claims gate |
 | `/about` | `About.dc.html` | Photo-led hero, three-part product explanation, separation statement and principles match the handoff. | Static copy retained. | `MATCHED` |
 | `/methodology` | `Methodology.dc.html` | Compact utility hero, score/test/evidence process, independence disclosure, corrections and closing action reproduce the supplied structure. | Draft claims remain subject to the claims audit. | `MATCHED` |
 | `/faq` | `FAQ.dc.html` | Compact dark hero, five native disclosure groups and support close match the reference at all viewports. | Static handoff questions and answers retained. | `MATCHED` |
@@ -40,24 +42,25 @@ All 24 handoff HTML files, the README, two SVGs, five supplied photographs and t
 | unmatched route | `404.dc.html` | Full-height dark status composition and concise recovery actions reproduce the handoff. | No public product destination added. | `MATCHED` |
 | contextual comparison | comparison state in `Casinos.dc.html` | Second selection automatically opens a desktop modal or mobile sheet; close, remove, clear, third selection and persistence are implemented. | Validated public slugs only; missing data renders `Unavailable`. `/compare` remains redirect-only. | `MATCHED` |
 
-## Manual review findings
+## Real-runtime review findings
 
-- Desktop: Home, Casinos, Programme access, Help, Bonus Guide and legal surfaces were directly compared at 1440 and 1024.
-- Small screen: Home, Casinos, contextual comparison, Contact, Bonus Guide, Privacy and Help were directly inspected at 430 and 390.
-- No reviewed surface has document-level horizontal overflow, clipped primary content, duplicate H1s or an unexpected browser error.
-- A compact-directory accessibility defect found during review was corrected: desktop filter text is now visually hidden while remaining an accessible native label.
-- A mobile legal-footer collapse found during review was corrected and the complete visual matrix was regenerated afterward.
+- The final Founder-designated 1440px side-by-side set covers Home, the three equivalent Programme states, Best Offers, Casinos, contextual comparison, Casino Review, Bonuses, Bonus Guide, Learn and Help.
+- Runtime-integrity tests compare presentation-root signatures with and without fixture data and reject generated handoff markup on dynamic routes.
+- Contextual comparison is captured only after the real API-backed dialog is populated; a loading-state capture is not accepted as evidence.
+- Honest per-surface values are recorded in `true-parity/visual-diff-metrics.json`; they are descriptive measurements rather than a pass threshold.
 
 ## Known deviations and release limits
 
-1. Dynamic casino/offer names, media, counts, terms, ranks, licences and availability never copy illustrative handoff values. Empty current inventory therefore produces the designed fail-closed state in the base screenshots.
+1. Dynamic casino/offer names, media, counts, terms, ranks, licences and availability come from governed DTOs on Preview. The local evidence process may substitute deterministic examples at the data layer only; no presentation renderer changes.
 2. The anonymous `/program` canonical screenshot shows the existing required adult/Terms access gate. The bounded Founder-acceptance set separately compares post-gate intake, Starting Point ready/account-claim and real Dashboard states. No clarification, candidate-editor or reward screen remains in that sequence.
-3. Protected Help uses verified current resources and neutral safety copy instead of the handoff's unsupported 24-hour/6-week promises.
+3. Protected Help retains its commercial firewall and verified resources. Founder-locked 24-hour/6-week Draft wording is visible only as an audited Production blocker.
 4. Privacy is dated 13 August 2026 and includes Google identity/controller disclosures required by the current signed access contract.
-5. The Bonus Guide appends current primary-source records; its mobile table remains keyboard-scrollable.
+5. Bonus Guide remains verbatim; current primary-source findings are recorded only in the claims audit. Its mobile table remains keyboard-scrollable.
 6. Responsive navigation adds an accessible mobile menu so all retained destinations remain reachable.
-7. Chromium was exercised at four viewport widths. Physical-device, Safari and manual assistive-technology review remain Production release activities.
+7. Learn Article renders current published Learning content through the real shared template rather than substituting the handoff's static Article body; its high raw metric is retained honestly.
+8. The Bonuses calculator is a simplified explanatory runtime composition and does not yet reproduce every interaction in the illustrative calculator board.
+9. Physical-device, Safari and manual assistive-technology review remain Production release activities.
 
-The compact side-by-side evidence set is stored under `docs/02_Product_Design/qa/final-design-handoff/founder-acceptance/`. Those images support Founder review; their presence is evidence, not a declaration that the Founder has accepted each comparison.
+The corrected side-by-side evidence is stored under `docs/02_Product_Design/qa/final-design-handoff/true-parity/`. Those images support Founder review; their presence is evidence, not a declaration that the Founder has accepted each comparison.
 
 No unresolved implementation blocker remains for the Draft PR or Vercel Preview. Founder visual acceptance and Production release gates remain separate. This audit does not authorise Production deployment.

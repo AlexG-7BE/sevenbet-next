@@ -41,18 +41,29 @@ test("casino comparison is contextual, capped and backed by the existing public 
   assert.match(route, /COMPARISON_UNAVAILABLE/);
 });
 
-test("handoff sample data is isolated to an explicit local visual fixture", () => {
-  const guard = read("lib/final-handoff/visual-fixture.ts");
+test("handoff visual fixtures are data-only and dynamic routes cannot switch presentation renderers", () => {
+  const guard = read("lib/final-handoff/visual-data-fixture.ts");
   assert.match(guard, /B4GAMBLE_HANDOFF_VISUAL_FIXTURE/);
   assert.match(guard, /process\.env\.VERCEL !== "1"/);
   assert.match(guard, /process\.env\.VERCEL_ENV !== "production"/);
-  for (const page of [
-    "app/(public)/best-offers/page.tsx",
-    "app/(public)/casinos/page.tsx",
-    "app/(public)/bonuses/page.tsx",
-    "app/(public)/casino/[slug]/page.tsx",
-    "app/(public)/learn/[category]/[slug]/page.tsx",
-  ]) assert.match(read(page), /isLocalHandoffVisualFixture/, page);
+  assert.doesNotMatch(guard, /HandoffPage|generated-pages\.json|dangerouslySetInnerHTML/);
+  const runtimeRoutes = [
+    ["app/(public)/best-offers/page.tsx", /BestOffersExperience/],
+    ["app/(public)/casinos/page.tsx", /CuratedCasinoShortlist/],
+    ["app/(public)/bonuses/page.tsx", /BonusComparisonList/],
+    ["app/(public)/casino/[slug]/page.tsx", /CasinoProfile/],
+    ["app/(public)/learn/[category]/[slug]/page.tsx", /LearningArticleView/],
+  ] as const;
+  for (const [page, runtimeComponent] of runtimeRoutes) {
+    const source = read(page);
+    assert.match(source, runtimeComponent, page);
+    assert.doesNotMatch(source, /import \{ HandoffPage \}|<HandoffPage|isLocalHandoffVisualFixture/, page);
+  }
+  for (const page of runtimeRoutes.slice(0, 4).map(([path]) => path)) {
+    assert.match(read(page), /isLocalHandoffVisualDataFixture/, page);
+  }
+  assert.doesNotMatch(read("components/comparison-context/ContextualComparison.tsx"), /HandoffPage|dangerouslySetInnerHTML/);
+  assert.match(read("components/programme/ProgramAiExperience.tsx"), /data-runtime-renderer="programme"/);
 });
 
 test("locked hero copy is present on every final public surface", () => {
