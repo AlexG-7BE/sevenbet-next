@@ -28,8 +28,8 @@ export default function ContactPage() {
       <header className={styles.hero}>
         <div className={styles.shell}>
           <p className={styles.eyebrow}>Contact B4GAMBLE</p>
-          <h1>Talk to us.</h1>
-          <p className={styles.heroCopy}>Use the form for general questions, technical issues, editorial feedback or business enquiries.</p>
+          <h1>Talk <em>to us.</em></h1>
+          <p className={styles.heroCopy}>A human answers within 24 hours, usually faster. Corrections, questions, disagreements — all welcome.</p>
         </div>
       </header>
 
@@ -37,9 +37,8 @@ export default function ContactPage() {
         <div className={`${styles.shell} ${styles.grid}`}>
           <aside className={styles.context}>
             <section className={styles.contextBlock} aria-labelledby="direct-contact-title">
-              <p className={styles.sectionLabel}>Direct contact</p>
-              <h2 id="direct-contact-title">Email us.</h2>
-              <p>You can use the human support mailbox instead of the form.</p>
+              <p className={styles.sectionLabel}>Other ways to reach us</p>
+              <h2 id="direct-contact-title">Email</h2>
               <a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a>
             </section>
 
@@ -49,6 +48,8 @@ export default function ContactPage() {
               <p>B4GAMBLE&apos;s Help section opens without casino, bonus or affiliate prompts.</p>
               <ActionLink className={styles.helpAction} href="/help" variant="ghost-paper">Open Help</ActionLink>
             </section>
+            <section className={styles.contextBlock}><p className={styles.sectionLabel}>Corrections</p><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; — these go to the editorial desk and ship within 48 hours.</p></section>
+            <section className={styles.contextBlock}><p className={styles.sectionLabel}>Response time</p><p>Within 24 hours, usually faster. Weekends included.</p></section>
           </aside>
 
           <noscript>

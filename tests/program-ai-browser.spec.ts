@@ -410,7 +410,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
     });
   });
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_305))).toBe(4_194_305);
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
@@ -420,7 +420,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
   await page.getByRole("button", { name: "type instead" }).click();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_304))).toBe(4_194_304);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
   await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
@@ -448,9 +448,9 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   expect(transcriptionCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(3);
-  await expect(page.getByText("Type instead")).toBeVisible();
+  await expect(page.getByRole("button", { name: "I'd rather type" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   await page.clock.fastForward(90_000);
   await expect(page.getByText("Transcript ready to review")).toBeVisible();
   expect(transcriptionCalls).toBe(2);
@@ -463,7 +463,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   expect(transcriptionCalls).toBe(2);
   await page.getByRole("button", { name: "type instead" }).click();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
   await page.getByRole("link", { name: "B4GAMBLE" }).click();
   await expect(page).toHaveURL("/");
@@ -516,7 +516,7 @@ test("fresh microphone access uses the browser request before denied recovery", 
   await expect(page.getByText("Prefer to speak?")).toBeVisible();
   await expect(page.getByText("Microphone did not start")).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
   await expect(page.getByText("Microphone did not start")).toBeVisible();
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
@@ -552,7 +552,7 @@ test("persistently denied microphone state explains browser recovery and recheck
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
 
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.getByText("Microphone is blocked for this site")).toBeVisible();
   await expect(page.getByText(/browser will not show another prompt/i)).toBeVisible();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
@@ -575,7 +575,7 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.getByText("Voice recording is not supported here")).toBeVisible();
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
@@ -596,17 +596,14 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await noHorizontalOverflow(page);
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
 
-  await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "In your own words." })).toBeVisible();
   const sensitiveCheckbox = page.getByRole("checkbox");
   await sensitiveCheckbox.focus();
   await page.keyboard.press("Space");
   await expect(sensitiveCheckbox).toBeChecked();
-  const recorder = page.getByRole("button", { name: "Start recording" });
-  await recorder.focus();
+  const typedFallback = page.getByRole("button", { name: "I'd rather type" });
+  await typedFallback.focus();
   await page.keyboard.press("Enter");
-  const recorderState = page.locator("[data-state]").first();
-  await expect(recorderState).not.toHaveAttribute("data-state", "idle");
-  await expect(recorderState).toContainText(/Requesting microphone|Listening locally|Microphone permission was denied|Voice transcription is not connected/);
   const situationField = page.getByLabel("Your situation");
   await situationField.focus();
   await situationField.fill(situation);
@@ -651,7 +648,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(duplicateStartingPoint.status()).toBe(200);
   expect((await duplicateStartingPoint.json()).xpPreview).toBe(40);
   await page.getByRole("button", { name: "Keep this progress" }).click();
-  await expect(page.getByRole("heading", { name: "Keep the Starting Point you confirmed." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A plan built around your situation." })).toBeVisible();
 
   const claimCookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_claim");
   expect(claimCookie, "pending claim cookie before auth").toBeTruthy();
@@ -1049,8 +1046,9 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "In your own words." })).toBeVisible();
   await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
   await page.route("**/api/program/program-ai/turn", async (route) => {
     await route.fulfill({

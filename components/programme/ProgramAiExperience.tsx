@@ -94,7 +94,7 @@ const emptyLocalState: ProgramAiLocalState = {
   clarificationAnswers: [],
   clarificationPrompt: "",
   candidate: null,
-  inputMode: "text",
+  inputMode: "voice",
 };
 
 const contextLabels: Record<ProgramAiBroadContext, string> = {
@@ -442,7 +442,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
     <div className={styles.recorder} data-state={state}>
       <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator>●</span></div>
       <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" && microphonePermission === "denied" ? "Microphone is blocked for this site" : state === "denied" ? "Microphone did not start" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
-      {["idle", "cancelled", "success"].includes(state) ? <button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Start recording"}</button> : null}
+      {["idle", "cancelled", "success"].includes(state) ? <span className={styles.recorderActions}><button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Tap to speak"}</button>{state !== "success" ? <button className={styles.cancelRecording} disabled={disabled} onClick={useTyped} type="button">I&apos;d rather type</button> : null}</span> : null}
       {state === "denied" ? <button disabled={disabled} onClick={microphonePermission === "denied" ? checkPermissionAndRetry : start} type="button">{microphonePermission === "denied" ? "Check microphone access" : "Try microphone again"}</button> : null}
       {state === "recording" ? <span className={styles.recorderActions}><button className={styles.stopRecording} onClick={stop} type="button">Stop recording</button><button className={styles.cancelRecording} onClick={cancel} type="button">Cancel</button></span> : null}
       {state === "requesting" || state === "transcribing" ? <span role="status">{state === "requesting" ? "Requesting microphone…" : "Transcribing…"}</span> : null}
@@ -494,8 +494,9 @@ function IntakeScreen({
       <main className={styles.intakeGrid}>
         <section className={styles.heroCopy}>
           <span>MISSION 01 · YOUR SITUATION</span>
-          <h1>What feels hardest to control right now?</h1>
-          <p>Describe one recent or recurring situation in your own words. You decide what is accurate, what to change and whether to save the result.</p>
+          <span className={styles.srOnly}>What feels hardest to control right now?</span>
+          <h1>In your own words.</h1>
+          <p>A minute is plenty — we&apos;ll build your starting point from it.</p>
           <div className={styles.jitCard}>
             <strong>Before you share</strong>
             <p>Your words may include health or addiction information. B4GAMBLE may process them only to draft this Starting Point. They are not used for advertising, affiliate targeting or diagnosis.</p>
@@ -505,12 +506,12 @@ function IntakeScreen({
         </section>
         <section className={styles.inputPanel}>
           <Recorder disabled={busy || !authority} state={recorderState} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} />
-          <div className={styles.or}><span>Type instead</span></div>
+          {inputMode === "text" || situation ? <><div className={styles.or}><span>{inputMode === "voice" ? "Transcript — editing is optional" : "Text fallback"}</span></div>
           <label className={styles.field}>
             <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
             <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={8} value={situation} />
             <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything before submitting. " : ""}Stored only in this browser session.</small>
-          </label>
+          </label></> : null}
           <ActionButton disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} size="large">
             {busy ? "Preparing your Starting Point…" : "Create my Starting Point"}
           </ActionButton>
@@ -594,8 +595,9 @@ function RewardScreen({ busy, error, onContinue }: { busy: boolean; error: strin
   );
 }
 
-function RegistrationScreen({
+function StartingPointReadyScreen({
   authenticated,
+  candidate,
   googleLinkRecovery,
   googleAvailable,
   busy,
@@ -606,6 +608,7 @@ function RegistrationScreen({
   onLinkGoogle,
 }: {
   authenticated: boolean;
+  candidate: ProgrammeStartingPointValue;
   googleLinkRecovery: boolean;
   googleAvailable: boolean;
   busy: boolean;
@@ -619,25 +622,28 @@ function RegistrationScreen({
   const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  return (
-    <div className={styles.page}><Header xp={40} /><main className={styles.registrationGrid}>
-      <section className={styles.heroCopy}>{googleLinkRecovery ? <><span>EXISTING ACCOUNT · SECURE RECOVERY</span><h1>Confirm your existing account first.</h1><p>A B4GAMBLE account already owns this email. Sign in with its email and password, then Google can be linked to that authenticated account.</p><ul><li>Your confirmed Starting Point stays in this browser</li><li>Email match alone never links an account</li><li>Google linking earns 0 XP</li></ul></> : <><span>SAVE ONLY AFTER ACCOUNT ACCESS</span><h1>Keep the Starting Point you confirmed.</h1><p>Your raw audio and unconfirmed drafts are not saved. Registration earns 0 XP and includes no marketing consent.</p><ul><li>Confirmed Starting Point saved</li><li>Mission 01 marked complete</li><li>Continue to Mission 02</li></ul></>}</section>
-      <section className={styles.registrationCard}>
-        {authenticated ? <ActionButton disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} size="large">{busy ? (googleLinkRecovery ? "Opening Google…" : "Saving…") : (googleLinkRecovery ? "Link Google securely" : "Save to my account")}</ActionButton> : <>
-          {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google</ActionButton> : null}
-          {!googleLinkRecovery ? <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
-          {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
-            <label className={styles.field}><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
-            <label className={styles.field}><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-            <ActionButton disabled={busy} size="large" type="submit">{googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email"}</ActionButton>
-            {!googleLinkRecovery ? <button className={styles.textButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}
-          </form> : null}
-        </>}
-        <StatusMessage error={error} />
-        <small>Google or email provides account identity only. It is not age verification, sensitive-input authority or marketing consent.</small>
-      </section>
-    </main></div>
-  );
+  return <div className={styles.readyPage}><Header xp={40} /><main className={styles.readyShell}>
+    <section className={styles.readyIntro}><span>✓ YOUR STARTING POINT IS READY</span><h1>A plan built around your situation.</h1><p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p></section>
+    <section className={styles.readyCard}>
+      <small>YOUR STARTING POINT</small><h2>{candidate.startingPoint}</h2>
+      <div><span>What changes next</span><p>{candidate.desiredChange}</p></div>
+      <div><span>Mission 02 continues here</span><p>{candidate.continuationCue}</p></div>
+    </section>
+    <section className={styles.readyActions}>
+      {authenticated ? <ActionButton disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} size="large">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</ActionButton> : <>
+        {googleAvailable && !googleLinkRecovery ? <ActionButton className={styles.googleButton} disabled={busy} onClick={() => onGoogle(mode)} size="large">Continue with Google — save your plan</ActionButton> : null}
+        {!googleLinkRecovery ? <button className={styles.emailToggle} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
+        {emailOpen ? <form onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
+          <label className={styles.field}><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
+          <label className={styles.field}><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+          <ActionButton disabled={busy} size="large" type="submit">{googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email"}</ActionButton>
+          {!googleLinkRecovery ? <button className={styles.textButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}
+        </form> : null}
+      </>}
+      <StatusMessage error={error} />
+      <small>Registration adds 0 XP. Your words never feed offers or rankings.</small>
+    </section>
+  </main></div>;
 }
 
 export function ProgramAiExperience({ googleAvailable = false }: { googleAvailable?: boolean }) {
@@ -1117,7 +1123,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   if (phase === "candidate" && local.candidate) return renderPhase(<CandidateScreen busy={busy} candidate={local.candidate} error={error} generation={local.candidateGeneration} onChange={(candidate) => persist({ ...local, candidate })} onConfirm={confirmStartingPoint} onWithdraw={withdrawSensitiveInput} />);
   if (phase === "support") return renderPhase(<SupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />);
   if (phase === "reward") return renderPhase(<RewardScreen busy={busy} error={error} onContinue={openRegistration} />);
-  if (phase === "registration") return renderPhase(<RegistrationScreen authenticated={Boolean(session?.user.id)} busy={busy} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
+  if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />);
   if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />);

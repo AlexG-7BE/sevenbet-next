@@ -1,0 +1,41 @@
+.page {
+  background: #100f0f;
+  color: #fafaf7;
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+
+.page * { box-sizing: border-box; }
+.hero { padding: 110px 5vw 72px; }
+.hero > div { max-width: 1120px; margin: 0 auto; }
+.hero p, .body > section > p { margin: 0; color: var(--sb-acid); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.hero h1 { margin: 32px 0 0; font-size: clamp(52px, 5.42vw, 78px); line-height: .96; letter-spacing: -.05em; text-transform: uppercase; }
+.hero h1 em { color: var(--sb-acid); font-family: var(--font-seven-serif), Georgia, serif; font-weight: 400; text-transform: none; }
+.hero span { max-width: 56ch; margin: 28px 0 0; display: block; color: rgba(250,250,247,.7); font-size: 17px; line-height: 1.6; }
+
+.body { padding: 88px 5vw 110px; background: #fafaf7; color: #100f0f; }
+.body > section, .body > footer { max-width: 820px; margin-left: auto; margin-right: auto; }
+.body > section { margin-bottom: 56px; }
+.body > section:last-of-type { margin-bottom: 0; }
+.body > section > p { color: #777500; }
+.body h2 { margin: 13px 0 18px; font-size: 26px; line-height: 1.15; text-transform: uppercase; }
+.body section > div { color: #262525; font-size: 16px; line-height: 1.75; }
+.body section > div p { margin: 0 0 16px; }
+.body section > div p:last-child { margin-bottom: 0; }
+.body aside { margin-top: 56px; padding: 28px 32px; border: 1px solid rgba(16,15,15,.1); border-radius: 20px; background: #f4f1eb; }
+.body aside strong { display: block; margin-bottom: 10px; color: #777500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
+.body aside p { margin: 0; font-size: 15px; line-height: 1.65; }
+.body a { color: inherit; text-underline-offset: 3px; }
+.body footer { margin-top: 64px; padding-top: 28px; display: flex; gap: 16px 40px; justify-content: space-between; border-top: 3px double #100f0f; color: #8b8a82; font-size: 13px; }
+.body footer > div { display: grid; gap: 7px; }
+.body footer > div > span { display: block; }
+.body footer address { margin: 4px 0 0; font-style: normal; line-height: 1.5; }
+.body footer > a { align-self: start; color: #100f0f; }
+
+@media (max-width: 700px) {
+  .hero { padding: 76px 24px 56px; }
+  .hero h1 { font-size: 54px; }
+  .body { padding: 64px 24px 80px; }
+  .body aside { padding: 24px; }
+  .body footer { display: grid; gap: 22px; }
+  .body footer > a { min-height: 44px; display: inline-flex; align-items: center; }
+}

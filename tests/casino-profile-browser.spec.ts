@@ -12,9 +12,9 @@ test("demo profile renders one disclosed SSR review without governed actions", a
 
   const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino review" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino" })).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("complementary", { name: "Fictional bonus fields with no visit action" })).toBeVisible();
+  await expect(page.getByRole("region", { exact: true, name: "Demo Northstar Casino" })).toBeVisible();
   expect(await page.locator("h1").count()).toBe(1);
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
@@ -46,10 +46,10 @@ test("casino profile has no horizontal overflow across approved and defensive wi
 test("commercially unavailable state keeps editorial review and removes visit actions", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Meadow Casino review" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Demo Meadow Casino" })).toBeVisible();
   await expect(page.getByText("Offer unavailable").first()).toBeVisible();
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
-  await expect(page.getByRole("link", { name: "Open protected Help" })).toBeVisible();
+  await expect(page.getByRole("contentinfo").getByRole("link", { name: /Help — protected support/ })).toBeVisible();
 });
 
 test("demo profile suppresses review, FAQ and commercial structured data", async ({ page }) => {
@@ -63,7 +63,7 @@ test("demo profile suppresses review, FAQ and commercial structured data", async
 test("outbound confirmation is absent while market authority denies referral", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
   await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
-  const hero = page.getByRole("complementary", { name: "Fictional bonus fields with no visit action" });
+  const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
   await expect(hero.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
   await expect(hero.getByText("Offer unavailable")).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
@@ -75,6 +75,7 @@ test("every rendered Best Offers demo detail action resolves to a disclosed revi
   expect(shortlist?.status()).toBe(200);
   const hrefs = [...new Set(await page.locator('a[href^="/casino/"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")).filter((href): href is string => Boolean(href))))];
   const expectedPaths = selectOverallShortlist(temporaryDemoBestOffers(), { country: "GB", limit: 12 })
+    .slice(0, 3)
     .map((offer) => `/casino/${offer.casino.slug}`)
     .sort();
   expect(hrefs.sort()).toEqual(expectedPaths);
@@ -109,7 +110,7 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
   const page = await context.newPage();
   const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino review" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
   await expect(page.getByText("Offer unavailable").first()).toBeVisible();
   await context.close();

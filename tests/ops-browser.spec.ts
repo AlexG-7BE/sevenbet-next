@@ -35,7 +35,7 @@ test("Protected Help remains isolated and non-commercial", async ({ page }) => {
 
 test("Privacy is substantive and remains noindex, follow", async ({ page }) => {
   await open(page, "/privacy");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("PRIVACY BY DEFAULT");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Privacy.*by default\./i);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex.*follow/i,
@@ -52,10 +52,14 @@ test("retired standalone control tools consolidate into Responsible Gambling", a
 
 test("FAQ disclosures remain native and keyboard operable", async ({ page }) => {
   await open(page, "/faq");
-  const summary = page.locator("summary").filter({ hasText: "Is B4GAMBLE an online casino?" });
+  const summary = page.locator("summary").filter({ hasText: "What is B4GAMBLE?" });
+  const answer = page.getByText(/Three things in one product/);
+  await expect(answer).toBeVisible();
   await summary.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();
+  await expect(answer).toBeHidden();
+  await page.keyboard.press("Enter");
+  await expect(answer).toBeVisible();
 });
 
 test("commercial confirmation, no-JS, and invalid managed routes fail closed", async ({ browser, page }) => {
@@ -108,13 +112,13 @@ test("Home renders its representative responsive hierarchy", async ({ page }) =>
     .evaluateAll((sections) => sections.map((section) => section.getAttribute("data-home-section")));
   expect(order).toEqual([
     "hero",
-    "programme-theatre",
     "self-recognition",
+    "programme-theatre",
     "recognise",
     "build",
     "apply",
-    "programme-tools",
     "evidence",
+    "trust-boundary",
     "final-programme-cta",
   ]);
 });

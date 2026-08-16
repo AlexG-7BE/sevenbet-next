@@ -35,13 +35,13 @@ test("Home records every approved canonical and responsive Figma authority", () 
   assert.match(home, /data-home-contract="figma-289-946"/);
 });
 
-test("Home keeps the approved nine body sections in order inside one Public Shell", () => {
+test("Home keeps the final handoff body sections in order inside one Public Shell", () => {
   const expectedBodyOrder = [
     "hero",
-    "programme-theatre",
     "self-recognition",
-    "programme-tools",
+    "programme-theatre",
     "evidence",
+    "trust-boundary",
     "final-programme-cta",
   ];
   let cursor = -1;
@@ -66,7 +66,7 @@ test("Home uses exact bounded local Figma assets and no remote production URL", 
   for (const asset of homeAssets) assert.equal(existsSync(asset), true, `${asset} must exist`);
   assert.match(home, /from "next\/image"/);
   assert.match(home, /priority=\{photo\.priority\}/);
-  assert.match(home, /loading="lazy"/);
+  assert.match(home, /loading="eager"/);
   assert.doesNotMatch(home + carousel + css, /images\.pexels\.com|figma\.com\/api\/mcp\/asset|images\.unsplash|randomuser|placehold/iu);
   assert.match(home, /alt=""[\s\S]*fill/);
 });
@@ -110,7 +110,7 @@ test("Self Recognition remains static language rather than a diagnostic form", (
 test("Programme availability and evidence limitations remain truthful", () => {
   assert.match(home + carousel, /Ten practical Missions form one reviewable path\./);
   assert.match(home + carousel, /Missions 02–10 · unlock in sequence/);
-  assert.match(home + carousel, /One approved path, with Reviews at meaningful checkpoints\./);
+  assert.match(home, /10 missions · 5–15 minutes each/);
   assert.doesNotMatch(home + carousel, /Missions 01–04 are implemented|not yet available|later missions remain planned/);
   assert.match(home, /public NHS and NICE guidance/);
   assert.match(home, /The complete Programme has not yet been clinically evaluated\./);
@@ -127,8 +127,8 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Keep gambling your decision, not a habit\./);
-  assert.match(shellStyles, /\.footerGroups \{ display: grid; grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/);
+  assert.match(footer, /Independent reviews\. Real tests\./);
+  assert.match(shellStyles, /\.footerGroups \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
 
   const changed = [...new Set([
     ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })

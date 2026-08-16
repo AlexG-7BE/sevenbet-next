@@ -63,9 +63,9 @@ export function LearningSearchAndFilter({
   return (
     <section className={styles.section} aria-labelledby="learning-search-title" data-learning-search id="learning-search">
       <div className={styles.headingBlock}>
-        <p className={styles.kicker}>Find the right guide</p>
-        <h2 id="learning-search-title">SEARCH THE WHOLE SHELF.</h2>
-        <p>Search current article titles, summaries, categories and tags. Filters never create content that is not in the library.</p>
+        <p className={styles.kicker}>Guides &amp; insights</p>
+        <h2 id="learning-search-title">All guides</h2>
+        <p>Search the current library or filter it by topic.</p>
       </div>
 
       <div className={styles.controls}>
@@ -75,7 +75,7 @@ export function LearningSearchAndFilter({
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Try ‘payments’ or ‘licensing’"
+            placeholder="Wagering, payouts, RTP…"
           />
         </label>
         <div className={styles.selectGrid}>

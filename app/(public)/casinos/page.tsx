@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ActiveDiscoveryFilters, DirectoryFeaturedTheatre, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
-import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
-import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
-import { JsonLd } from "@/components/seo/JsonLd";
-import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
+import { CuratedCasinoShortlist } from "@/components/casino-discovery/CuratedCasinoShortlist";
+import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
+import { JsonLd } from "@/components/seo/JsonLd";
+import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
@@ -26,7 +26,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   if (!filtered && (query.page ?? 1) > 1) canonicalParams.set("page", String(query.page));
   const canonical = absoluteUrl(`/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`);
   const title = query.page && query.page > 1 ? `Casino Reviews — Page ${query.page} | B4GAMBLE` : containsDemo ? "Casino Review Demonstration | B4GAMBLE" : "Casino Reviews and Comparisons | B4GAMBLE";
-  const description = containsDemo ? "Fictional demonstration casino records showing B4GAMBLE's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by market preference, licence, payments, games, bonus availability and responsible gambling information.";
+  const description = containsDemo ? "Fictional demonstration casino records showing B4GAMBLE's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by use-case, licence, payments, games, bonus availability and responsible gambling information.";
   return { title, description, alternates: { canonical }, robots: filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true }, openGraph: { type: "website", title, description, url: canonical } };
 }
 
@@ -46,52 +46,27 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <section className={styles.hero}>
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
-          <header><p>Editorial casino discovery · Server-classified reviews · 18+</p><h1>Picked for<br /><em>how you play.</em></h1><span>Search review snapshots, select up to three, and compare the facts without leaving the directory.</span></header>
-          <div className={styles.heroSearch}><InstantDiscoveryForm action="/casinos" debouncedFields={["q"]} key={`hero:${result.appliedFilters.search ?? ""}`} pendingLabel="Updating casino results…"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input defaultValue={result.appliedFilters.search ?? ""} id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></InstantDiscoveryForm><p>B4GAMBLE may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
+          <header><p>Curated by use-case</p><h1>Picked for<br /><em>how you play.</em></h1><span>Choose your use-case — we show the three casinos that earned it. The full directory waits below.</span></header>
         </div>
-        <DirectoryFeaturedTheatre casino={result.items[0]} />
+        <div className={styles.heroProof}><span>Tested with real money — our own</span><span>Max 3 per use-case</span><span>Updated from current data</span></div>
       </div>
     </section>
 
-    <section className={styles.directory} id="casino-directory">
-      <div className={styles.shell}>
-        <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
-        {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
-        <div className={styles.disclosure}><strong>Affiliate disclosure</strong><p>B4GAMBLE may receive commission from future eligible governed visit links. Affiliate compensation does not determine Editor Score or natural editorial ranking, and no listing guarantees winnings or income.</p><Link href="/methodology">Read our review method →</Link></div>
-        <DiscoveryControls result={result} />
-        <ActiveDiscoveryFilters result={result} />
-        <DiscoveryResults result={result} />
-      </div>
-    </section>
+    <CuratedCasinoShortlist casinos={result.items} />
 
-    <section className={styles.readingGuide}><div className={styles.shell}><div className={styles.sectionIntro}><p>How to read a review</p><h2>Before you choose</h2></div><div className={styles.guideGrid}>{[
-      ["01", "Qualification first", "Confirm the published licence, market information and age conditions before comparing offers."],
-      ["02", "Facts before promotion", "Read wagering, withdrawals, payments and limits before considering a visit action."],
-      ["03", "Decision stays yours", "An Editor Score is a comparison aid, never a safety, winnings or outcomes guarantee."],
-    ].map(([number, title, copy]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{copy}</p></article>)}</div></div></section>
+    <section className={styles.directory} id="casino-directory"><div className={styles.shell}>
+      <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
+      <DiscoveryControls result={result} />
+      <ActiveDiscoveryFilters result={result} />
+      <DiscoveryResults result={result} />
+    </div></section>
 
-    <section className={styles.anatomy}><div className={styles.shell}><div className={styles.sectionIntro}><p>Review anatomy</p><h2>Compare what<br /><em>actually matters.</em></h2><span>The same published fields stay visible across every review. Missing optional evidence is omitted or shown as unavailable.</span></div><div className={styles.anatomyGrid}>{[
-      ["Identity + licence", "Operator name, published review date and applicable licence evidence appear before promotion."],
-      ["Material facts", "Payments, providers, responsible gambling information, bonus terms and uncertainty use one comparable structure."],
-      ["Action + disclosure", "Affiliate compensation does not determine Editor Score or natural editorial ranking; a governed internal visit action is conditional and disclosed."],
-    ].map(([title, copy]) => <article key={title}><h3>{title}</h3><p>{copy}</p></article>)}</div></div></section>
-
-    <section className={styles.method}><div className={styles.shell}><div className={styles.methodHead}><div><p>Editor Score</p><h2>What the score means—<br /><em>and what it never promises.</em></h2></div><p>A 10-point comparison aid built from observable published review fields. It does not predict safety, financial outcomes, withdrawals, disputes or personal suitability.</p></div><div className={styles.methodGrid}>{[
-      ["01", "Licence & market fit", "Licence source, supported geography and snapshot recency."],
-      ["02", "Bonus clarity", "Material restrictions separated from headline value."],
-      ["03", "Money movement", "Payment methods, withdrawal signals and verification rules."],
-      ["04", "Controls & account rules", "Limits, timeout, self-exclusion and closure information."],
-      ["05", "Usability & support", "Published device, provider and support evidence."],
-      ["06", "Commercial eligibility", "Visit availability changes the action—not whether a review can exist."],
-    ].map(([number, title, copy]) => <article key={number}><span>{number}</span><h3>{title}</h3><p>{copy}</p></article>)}</div><aside><strong>A higher score is not a safety guarantee.</strong><p>Always read the underlying review and current operator terms.</p><span>10 / 10 is the maximum comparison score</span></aside></div></section>
-
-    <section className={styles.compare}><div className={styles.shell}><div><p>Continue comparing</p><h2>Review first.<br /><em>Then compare the deal.</em></h2><span>Terms, eligibility and disclosure stay visible before any outbound action.</span></div><nav aria-label="Related comparison pages"><Link href="/bonuses"><span>01 · Bonuses</span><b>Explore published bonus terms →</b></Link><Link href="/best-offers"><span>02 · Best offers</span><b>See editorial comparisons →</b></Link></nav></div></section>
-
-    <section className={styles.faq}><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Know what<br /><em>you are comparing.</em></h2></div><div>{[
-      ["Can a review stay visible without a visit action?", "Yes. A published editorial review can remain useful when no eligible governed offer or redirect is available."],
-      ["What does Editor Score measure?", "It compares published evidence using a consistent editorial structure. It does not predict safety, winnings or suitability."],
-      ["How are bonuses shown?", result.inventoryMode === "PUBLISHED_ONLY" ? "Published bonus summaries are shown with material terms. Missing information is omitted or marked unavailable." : "Fictional demonstration bonus fields are labelled and cannot open a commercial visit. Missing information is omitted or marked unavailable."],
-      ["Why might a casino be unavailable?", "Publication, market information, offer dates, tracking status or redirect eligibility may prevent a public action."],
+    <section className={styles.faq}><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
+      ["What is the difference between Best Offers and Casinos?", "Best Offers answers “just tell me the one” — a single recommendation. This page ranks by use-case: crypto, mobile, bonuses, new. Same tests, different question."],
+      ["Why does a casino sometimes say Review only?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and test results stay available."],
+      ["Does commission affect the ranking?", "No. Affiliate compensation does not determine Editor Score or natural editorial ranking. It funds testing, and several casinos we earn nothing from outrank ones we do."],
+      ["How does comparison work?", "Choose one casino to hold it in the comparison tray. Choose a second and the side-by-side sheet opens automatically. You can compare up to three."],
     ].map(([question, answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
   </div>;
 }

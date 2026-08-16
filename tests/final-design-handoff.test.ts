@@ -48,14 +48,14 @@ test("locked hero copy is present on every final public surface", () => {
     ["app/(public)/best-offers/page.tsx", /Three picks\.[\s\S]*Not thirty\./],
     ["app/(public)/casinos/page.tsx", /Picked for[\s\S]*how you play\./],
     ["app/(public)/bonuses/page.tsx", /Value, measured[\s\S]*by terms\./i],
-    ["app/(public)/learn/LearningCenterPage.tsx", /LEARN\.[\s\S]*PLAY SMARTER\./],
+    ["app/(public)/learn/LearningCenterPage.tsx", /Learn\.[\s\S]*Play smarter\./i],
     ["app/(public)/responsible-gambling/page.tsx", /Take back control,[\s\S]*at your pace\./],
     ["components/protected-help/ProtectedHelpHub.tsx", /We&apos;re here\.[\s\S]*No strings\./],
-    ["app/(public)/methodology/MethodologyDocument.tsx", /EVIDENCE[\s\S]*BEFORE OPINION\./],
+    ["app/(public)/methodology/MethodologyDocument.tsx", /Evidence before[\s\S]*opinion\./i],
     ["app/(public)/about/AboutDocument.tsx", /Built to be[\s\S]*on your side\./],
-    ["app/(public)/contact/page.tsx", /Talk to us\./],
-    ["app/(public)/privacy/page.tsx", /PRIVACY[\s\S]*BY DEFAULT\./],
-    ["app/(public)/terms/page.tsx", /TERMS[\s\S]*OF USE\./],
+    ["app/(public)/contact/page.tsx", /Talk[\s\S]*to us\./i],
+    ["app/(public)/privacy/page.tsx", /kind="privacy"/],
+    ["app/(public)/terms/page.tsx", /kind="terms"/],
   ];
   for (const [path, expected] of expectations) assert.match(read(path), expected, path);
 });

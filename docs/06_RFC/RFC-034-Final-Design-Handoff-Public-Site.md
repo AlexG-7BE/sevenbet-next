@@ -58,6 +58,16 @@ The handoff authorises a presentation update to the Programme acquisition and da
 
 This RFC supersedes RFC-025 and RFC-033 only where those documents prescribe a conflicting public presentation, acquisition sequence or destination list. It does not supersede their Programme, privacy, data-separation, reward or release-gate controls.
 
+### Founder correction — Mission01 acquisition sequence
+
+The corrective Founder decision received on 2026-08-16 fixes the Mission01 acquisition sequence as:
+
+`Programme start → voice-first situation input → text fallback → submit → AI Starting Point ready → Google account CTA → authenticated claim/redeem → Programme Dashboard`.
+
+The acquisition presentation must not insert a required clarification page, multi-field candidate editor, or separate reward page before registration. A provider clarification result must degrade to a bounded best-effort Starting Point derived only from the submitted situation; it must not manufacture personal facts. The ready screen shows the generated value immediately and the Google CTA is the explicit save/claim transition. Email remains an accessible secondary identity path.
+
+This correction changes presentation and orchestration only. The two existing Mission01 server actions remain the only reward events (20 XP each), registration remains worth 0 XP, claim/redeem remains idempotent and server-authoritative, sensitive-input authority remains required, support-first intervention remains allowed, and Missions 02–10 retain their approved titles, ordering, prerequisites, rewards and behaviour.
+
 ## Comparison and analytics boundary
 
 Comparison state contains only validated public casino slugs, country and the optional differences preference. It is capped at three entries and may use URL state and `sessionStorage`. It must call the existing public comparison service and fail closed for unavailable or ineligible entries.
@@ -78,3 +88,4 @@ Before handoff, the branch must pass lint, type checking, quality checks, produc
 | `/bonus-guide` stays indexable | Explicit retained-route decision is more specific than the generic removal bullet | Final manifest, conflict-resolution rule |
 | Draft claims remain visible only in Preview and audited | Copy fidelity does not establish factual proof | Full-site prompt and claims-audit requirement |
 | No Production action | The authority is bounded to review | Founder instruction and this RFC |
+| Mission01 has no required clarification/editor/reward screens | Founder fixed the acquisition sequence after rejecting the first PR pass | Corrective Founder decision, 2026-08-16 |

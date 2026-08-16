@@ -12,14 +12,12 @@ const styles = readFileSync("app/(public)/10-steps/TenStepsLanding.module.css", 
 const actionStyles = readFileSync("components/design-system/Action.module.css", "utf8");
 const combined = `${page}\n${landing}\n${styles}`;
 
-test("10 Steps keeps the approved Figma hierarchy inside the Public Shell", () => {
+test("10 Steps keeps the final handoff hierarchy inside the Public Shell", () => {
   const approvedOrder = [
     "hero",
     "programme-builds",
-    "editorial-contract",
     "mission-map",
     "account-boundary",
-    "evidence",
     "final-action",
   ];
 
@@ -30,10 +28,9 @@ test("10 Steps keeps the approved Figma hierarchy inside the Public Shell", () =
     cursor = index;
   }
 
-  assert.match(landing, /502:2240[\s\S]*502:2416/);
   assert.match(layout, /<PublicHeader[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<PublicFooter/);
   assert.doesNotMatch(landing, /<header|<footer|Need support now|standalone help/iu);
-  assert.equal((landing.match(/<h1\b/g) ?? []).length, 3, "the mutually exclusive anonymous, confirmed and fallback heroes each own one H1");
+  assert.equal((landing.match(/<h1\b/g) ?? []).length, 3, "anonymous, returning and fallback heroes each own one H1");
   assert.match(landing, /aria-labelledby="ten-steps-title"/);
   assert.match(landing, /<ol className=\{styles\.missionList\}>/);
 });
@@ -53,7 +50,7 @@ test("Mission path is feature-on registry-owned and exposes ten exact MVP titles
     "Make the plan reviewable",
   ]);
   assert.match(landing, /import \{ programmeMissionTitles \}/);
-  assert.match(landing, /MVP PATH · AFTER ACCOUNT/);
+  assert.match(landing, /THE PROGRAMME, STEP BY STEP/);
   assert.doesNotMatch(landing, /PLANNED · NOT YET AVAILABLE/);
   assert.doesNotMatch(landing, /future mission about|fact-check exercise|environmental friction|support option ready/i);
 });
@@ -67,23 +64,20 @@ test("10 Steps uses only the canonical Programme body destination", () => {
   assert.doesNotMatch(landing, /CasinoCard|BonusCard|BestOffers|Affiliate|Outbound/);
 });
 
-test("Mission 01 reward and post-mission account boundary are exact", () => {
-  assert.match(landing, /\+40 XP/);
+test("Mission 01 entry and post-mission account boundary remain truthful", () => {
+  assert.match(landing, /Start Mission 01/);
   assert.doesNotMatch(landing, /\+60 XP/);
-  assert.match(landing, /Its two actions earn 40 XP before registration\./);
-  assert.match(landing, /REGISTRATION EARNS 0 XP\./);
-  assert.match(landing, /Mission 01 does not require an account/);
-  assert.match(landing, /Create an account to save the already-earned 40 XP/);
+  assert.match(landing, /No registration until your starting point is ready\./);
+  assert.match(landing, /No mission ever asks you to deposit, claim or play\./);
   assert.doesNotMatch(combined, /cash value|money value|bonus eligibility|winnings|deposit reward/i);
 });
 
 test("commercial, clinical and outcome claims remain absent from the body", () => {
   assert.doesNotMatch(landing, /href="\/r\/|https?:\/\/(?!images\.pexels\.com)/i);
   assert.doesNotMatch(landing, /guaranteed control|improve your odds|(?:diagnoses|treats) gambling addiction|clinical(?:ly)? effective|treatment programme/i);
-  assert.match(landing, /The Programme does not diagnose or treat gambling addiction or another medical condition\./);
+  assert.match(landing, /The B4GAMBLE Programme does not diagnose or treat gambling addiction\./);
   assert.match(landing, /Completion does not mean gambling is safe or suitable\./);
-  assert.match(landing, /The complete Programme has not yet been clinically evaluated\./);
-  assert.match(landing, /Programme, pause and Help data are not used for affiliate targeting or commercial personalisation\./);
+  assert.match(landing, /Your situation and plan are never used for offers, rankings or ads\./);
 });
 
 test("metadata is canonical, indexable and uses only truthful WebPage schemas", () => {
@@ -113,7 +107,7 @@ test("anonymous and unavailable session states never invent Programme truth", as
     getDashboard: async () => { throw new Error("Programme unavailable"); },
   });
   assert.deepEqual(signedInWithoutDashboard, { kind: "signed-in-fallback" });
-  assert.match(landing, /function SignedInFallbackHero/);
+  assert.match(landing, /const fallback = state\.kind === "signed-in-fallback"/);
   assert.match(landing, /Programme status is unavailable here\./);
   assert.doesNotMatch(landing, /Programme state is unavailable here\. Open My Programme to retry\./);
 });

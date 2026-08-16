@@ -110,6 +110,9 @@ export function PublicNavigation({
 
       <div className={styles.mobileNavigation}>
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
+        <Link className={styles.mobilePrimaryAction} href={account.primaryHref} onClick={() => {
+          if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+        }}>{authenticated ? "My Programme" : account.primaryLabel}</Link>
         <button
           aria-controls="public-mobile-navigation"
           aria-expanded={menuOpen}

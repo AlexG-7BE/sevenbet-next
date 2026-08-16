@@ -15,44 +15,40 @@ test("best offers is server rendered and fails closed before any governed action
     await expect(page.getByRole("heading", { name: "Nothing currently clears every gate." })).toBeVisible();
   } else {
     await expect(page.getByText("Min deposit").first()).toBeVisible();
-    await expect(page.getByRole("link", { name: "View full terms" }).first()).toBeVisible();
+    const reviewLink = page.getByRole("link", { name: /Read (Full )?Review/ }).first();
+    await expect(reviewLink).toBeVisible();
+    await expect(reviewLink).toHaveAttribute("href", /^\/casino\//);
     await expect(page.getByText("DEMONSTRATION DATA", { exact: true }).first()).toBeVisible();
-    const activeCard = page.getByRole("region", { name: "Best offer selectors" }).locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]');
+    const activeCard = page.getByTestId("best-offer-product-card");
     const cardText = await activeCard.innerText();
-    expect(cardText.indexOf("Wagering")).toBeLessThan(cardText.indexOf("View full terms"));
+    expect(cardText).toContain("Wagering");
+    expect(cardText).toContain("Offer currently unavailable");
   }
 });
 
-test("Best Offers exposes all ranked records as an accessible comparison", async ({ page }) => {
+test("Best Offers exposes all three handoff picks without hiding ranking evidence", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
-  const cards = page.getByTestId("ranked-offer-card");
-  test.skip(await cards.count() === 0, "No eligible shortlist records in this isolated environment");
-  const summary = page.locator("details").getByText(/Compare all \d+/, { exact: true });
-  await summary.click();
-  await expect(cards.first()).toBeVisible();
-  await expect(cards.first()).toContainText("Why it is ordered here");
-  await expect(cards.first()).toContainText("Commission is not a ranking input");
-  await expect(cards.first()).toContainText("DEMONSTRATION DATA");
+  const featured = page.getByTestId("best-offer-product-card");
+  test.skip(await featured.count() === 0, "No eligible shortlist records in this isolated environment");
+  const alternatives = page.getByTestId("ranked-offer-card");
+  await expect(featured).toBeVisible();
+  await expect(alternatives).toHaveCount(2);
+  await expect(alternatives.first()).toBeVisible();
+  await expect(featured).toContainText("DEMONSTRATION DATA");
+  await expect(page.getByText("Commission never enters the scoring room.", { exact: false })).toBeVisible();
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
 });
 
-test("Best Offers carousel and fit tabs are keyboard accessible", async ({ page }) => {
+test("Best Offers static handoff picks expose keyboard-accessible review routes", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   test.skip(await page.getByTestId("best-offer-product-card").count() === 0, "No eligible shortlist records in this isolated environment");
-  const carousel = page.getByRole("region", { name: "Best offer selectors" });
-  await carousel.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(carousel.locator('[aria-hidden="false"] [data-testid="best-offer-product-card"]')).toContainText("Lower wagering");
-  const overallTab = page.getByRole("tab", { name: "1 Best overall balance" });
-  const wageringTab = page.getByRole("tab", { name: "2 Lower wagering" });
-  await overallTab.focus();
-  await page.keyboard.press("ArrowRight");
-  await expect(wageringTab).toBeFocused();
-  await expect(wageringTab).toHaveAttribute("aria-selected", "true");
-  await expect(overallTab).toHaveAttribute("tabindex", "-1");
-  await expect(page.getByRole("tabpanel").getByText("A fictional smaller headline with a lighter demonstration play-through field.", { exact: true })).toBeVisible();
-  await page.getByRole("tab", { name: "3 Faster payout signal" }).click();
-  await expect(page.getByRole("tabpanel").getByText("A clearer, faster fictional withdrawal field beside the demonstration terms.", { exact: true })).toBeVisible();
+  const reviewLinks = page.getByRole("link", { name: /Read (Full )?Review/ });
+  await expect(reviewLinks).toHaveCount(3);
+  for (const link of await reviewLinks.all()) {
+    await link.focus();
+    await expect(link).toBeFocused();
+    await expect(link).toHaveAttribute("href", /^\/casino\//);
+  }
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
 });
 
@@ -76,8 +72,6 @@ test("offer pages have no horizontal overflow at desktop and mobile widths", asy
       const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
       expect(response?.status(), `${path} at ${width}px`).toBe(200);
       if (path === "/best-offers" && width <= 390 && await page.getByTestId("ranked-offer-card").count() > 0) {
-        const comparison = page.locator("details").getByText(/Compare all \d+/, { exact: true });
-        await comparison.click();
         await expect(page.getByTestId("ranked-offer-card").first()).toBeVisible();
       }
       expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${path} at ${width}px`).toBe(false);

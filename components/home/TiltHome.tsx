@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 import { ProgrammeStartActionLink } from "@/components/analytics/ProgrammeStartActionLink";
-import { HomeProgrammeCarousel } from "./HomeProgrammeCarousel";
 import styles from "./TiltHome.module.css";
 
 const recognitionSigns = [
@@ -9,27 +8,6 @@ const recognitionSigns = [
   "You return to win back what you lost.",
   "Gambling brings guilt, stress, money or relationship problems.",
 ];
-
-const tools = [
-  {
-    key: "map",
-    number: "01",
-    title: "Spot the pattern.",
-    body: "Capture what happened before the urge.",
-  },
-  {
-    key: "pause",
-    number: "02",
-    title: "Decide before it gets hard.",
-    body: "Set a delay and a different action.",
-  },
-  {
-    key: "review",
-    number: "03",
-    title: "Learn from what happened.",
-    body: "Review the choice without rewriting it.",
-  },
-] as const;
 
 const heroPhotos = [
   {
@@ -87,17 +65,9 @@ export function TiltHome() {
         <a className={styles.scrollCue} href="#programme" aria-label="Scroll to the programme"><span /></a>
       </section>
 
-      <section className={styles.theatre} id="programme" data-home-section="programme-theatre" data-nav-theme="dark" aria-labelledby="programme-title">
-        <div className={styles.sectionIntro}>
-          <span>THE PROGRAMME</span>
-          <h2 id="programme-title">A plan you can actually see.</h2>
-          <p>Ten missions. About two weeks, at your pace. Free now and always.</p>
-        </div>
-        <HomeProgrammeCarousel />
-      </section>
-
       <section className={styles.recognition} data-home-section="self-recognition" data-nav-theme="light" aria-labelledby="recognition-title">
         <div className={styles.recognitionHeading}>
+          <span>01 / 03</span>
           <h2 id="recognition-title"><strong>Is gambling becoming</strong><em>harder to control?</em></h2>
           <p>No need to answer us — just notice what feels familiar.</p>
         </div>
@@ -109,12 +79,23 @@ export function TiltHome() {
             </article>
           ))}
         </div>
-        <p className={styles.recognitionFoot}>One or more of these signs can be a reason to pause and start the Programme.</p>
+      </section>
+
+      <section className={styles.theatre} id="programme" data-home-section="programme-theatre" data-nav-theme="light" aria-labelledby="programme-title">
+        <div className={styles.sectionIntro}>
+          <span>SEE THE PRODUCT</span>
+          <h2 id="programme-title">A plan you can actually see.</h2>
+          <div className={styles.programmeFacts}>
+            <div><strong>10</strong><span>missions</span></div>
+            <div><strong>~2</strong><span>weeks, your pace</span></div>
+            <div><strong>Free</strong><span>now and always</span></div>
+          </div>
+        </div>
       </section>
 
       <HumanChapter
         section="recognise"
-        chapter="MISSION 01–03"
+        chapter="01–03 · UNDERSTAND"
         heavy="SEE"
         serif="the pattern."
         body="Notice the trigger, the moment and the cost before the next decision."
@@ -123,7 +104,7 @@ export function TiltHome() {
       <HumanChapter
         section="build"
         align="right"
-        chapter="MISSION 04–07"
+        chapter="04–07 · BUILD"
         heavy="WRITE"
         serif="the rule."
         body="Choose a pause, an alternative action and a limit while the moment is calm."
@@ -131,30 +112,12 @@ export function TiltHome() {
       />
       <HumanChapter
         section="apply"
-        chapter="MISSION 08–10"
+        chapter="08–10 · APPLY"
         heavy="USE IT."
         serif="Make it yours."
         body="Try the plan in real life, review what happened and strengthen the next action."
         image="/home/chapter-apply.jpg"
       />
-
-      <section className={styles.toolsSection} data-home-section="programme-tools" data-nav-theme="light" aria-labelledby="tools-title">
-        <div className={styles.toolsHeading}>
-          <span>WHAT YOU KEEP</span>
-          <h2 id="tools-title"><strong>Not advice to remember.</strong><em>Tools you can use.</em></h2>
-          <p>Available missions create a concrete map, rule or review. Private narrative stays in this browser session; neutral progress can save to your Programme.</p>
-        </div>
-        <div className={styles.toolGrid}>
-          {tools.map((tool) => (
-            <article className={styles.toolCard} key={tool.key}>
-              <span className={styles.toolNumber}>{tool.number}</span>
-              <ToolVisual type={tool.key} />
-              <strong>{tool.title}</strong>
-              <p>{tool.body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
 
       <section className={styles.evidenceSection} data-home-section="evidence" data-nav-theme="light" aria-labelledby="evidence-title">
         <div className={styles.evidenceHeading}>
@@ -165,20 +128,22 @@ export function TiltHome() {
         <div className={styles.evidenceGrid}>
           <article><span>NHS</span><strong>Recognition and support guidance</strong><p>Used to shape the self-recognition language.</p></article>
           <article><span>NICE NG248</span><strong>Assessment and treatment guidance</strong><p>A source for bounded Programme language and risk controls.</p></article>
-          <article className={styles.missionMetric}><span>10</span><strong>Practical missions</strong><p>One approved path, with Reviews at meaningful checkpoints.</p></article>
           <article className={styles.limitCard}><span>CLEAR LIMIT</span><strong>No clinical claim</strong><p>The complete Programme has not yet been clinically evaluated.</p></article>
         </div>
       </section>
 
-      <section className={styles.trustBoundary} data-nav-theme="cream" aria-labelledby="trust-boundary-title">
-        <div><span>THE WALL</span><h2 id="trust-boundary-title"><strong>Two businesses.</strong><em>One wall between them.</em></h2></div>
-        <div className={styles.trustColumns}><article><span>PROGRAMME</span><h3>Your words are yours.</h3><p>What you say in the Programme is used to build your plan. It never changes which casino or bonus you see.</p></article><article><span>REVIEWS</span><h3>Money stays visible.</h3><p>Some outbound links may compensate B4GAMBLE. Commission does not buy an Editor Score or access to your private work.</p></article></div>
+      <section className={styles.trustBoundary} data-home-section="trust-boundary" data-nav-theme="cream" aria-labelledby="trust-boundary-title">
+        <div><span>WHY TRUST B4GAMBLE</span><h2 id="trust-boundary-title"><strong>Two businesses.</strong><em>One wall between them.</em></h2></div>
+        <div className={styles.trustColumns}>
+          <article><span>THE PROGRAMME</span><h3>Private by design.</h3><p>Free — no paywall, no upsell inside missions, ever.<br />Your words never feed offers, rankings or ads.<br />Delete everything, any time, in one action.</p></article>
+          <article><span>THE REVIEWS</span><h3>Independent by design.</h3><p>Tested with real money — our own.<br />Funded by commission, never shaped by it.<br />Every commercial link disclosed.</p></article>
+        </div>
       </section>
 
       <section className={styles.finalCta} data-home-section="final-programme-cta" data-nav-theme="dark" aria-labelledby="final-cta-title">
         <span>READY WHEN YOU ARE</span>
         <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>honest minute.</em></h2>
-        <p>Tell us about one situation. See the Starting Point before you decide whether to keep it.</p>
+        <p>One question at a time. Your starting point builds itself as you answer.</p>
         <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
         <small>Free · private by default · no marketing consent</small>
       </section>
@@ -200,7 +165,7 @@ function HumanChapter({ align = "left", section, chapter, heavy, serif, body, im
       <Image
         alt=""
         fill
-        loading="lazy"
+        loading="eager"
         sizes="100vw"
         src={image}
       />
@@ -213,22 +178,4 @@ function HumanChapter({ align = "left", section, chapter, heavy, serif, body, im
       </div>
     </section>
   );
-}
-
-function ToolVisual({ type }: { type: "map" | "pause" | "review" }) {
-  if (type === "map" || type === "pause") {
-    return (
-      <span aria-hidden="true" className={styles.toolVisual}>
-        <Image
-          alt=""
-          fill
-          loading="lazy"
-          sizes="(max-width: 760px) calc(100vw - 88px), 344px"
-          src={type === "map" ? "/home/tool-trigger-map.svg" : "/home/tool-pause-rule.svg"}
-        />
-      </span>
-    );
-  }
-  if (type === "review") return <span aria-hidden="true" className={`${styles.toolVisual} ${styles.reviewVisual}`}><i /><i /><i /><i /></span>;
-  return null;
 }

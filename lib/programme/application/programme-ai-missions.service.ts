@@ -2,6 +2,7 @@ import type { ProgrammeMissionStatus } from "@prisma/client";
 
 import { programmeEngagementDayBucket } from "@/lib/analytics/product-analytics-events";
 import { requireControlProgram, requireEnrollment } from "@/lib/programme/application/programme-context";
+import { programmeDashboardService } from "@/lib/programme/application/programme-dashboard.service";
 import {
   MissionLockedError,
   ProgrammeResourceNotFoundError,
@@ -463,11 +464,15 @@ export class ProgrammeAiMissionsService {
   private async projectHome(unitOfWork: ProgrammeUnitOfWork, userId: string) {
     const source = await requireControlProgram(unitOfWork);
     const result = await unitOfWork.programAiMissionOne.home(userId, source.program.id);
+    const dashboard = await programmeDashboardService.project(unitOfWork, userId, source.program.id);
     if (!result.enrollment) {
       const byMission = new Map<number, MissionProgress>();
       const missionOne = missionOneProjection();
       return {
         totalXp: result.totalXp,
+        activeDays: dashboard.activeDays,
+        currentStreak: dashboard.currentStreak,
+        achievements: dashboard.achievements,
         currentMission: 1,
         engagementDayBucket: "unknown" as const,
         currentAction: missionOne.currentAction,
@@ -511,6 +516,9 @@ export class ProgrammeAiMissionsService {
       : null;
     return {
       totalXp: result.totalXp,
+      activeDays: dashboard.activeDays,
+      currentStreak: dashboard.currentStreak,
+      achievements: dashboard.achievements,
       currentMission,
       engagementDayBucket: programmeEngagementDayBucket(enrollment.startedAt),
       currentAction: currentMission === 1

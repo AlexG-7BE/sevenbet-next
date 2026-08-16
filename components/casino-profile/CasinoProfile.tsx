@@ -78,6 +78,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       <section aria-labelledby="casino-profile-title" className={styles.hero}>
         <div className={styles.heroReview}>
+          <p className={styles.heroKicker}>B4GAMBLE REVIEW · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt) || "CURRENT"}</p>
           <div className={styles.identityRow}>
             <div className={styles.logo}>
               {casino.media.logo ? <img alt={casino.media.logo.alt || `${casino.name} logo`} height={casino.media.logo.height || 80} src={casino.media.logo.url} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
@@ -85,37 +86,22 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             <div><strong>{casino.name}</strong>{freshness ? <span>{freshness.label} {freshness.value}</span> : <span>{demo ? "Fictional review demonstration" : "Published review"}</span>}</div>
             <Signal>{demo ? "FICTIONAL 18+ FIELD" : `${age}+ ONLY`}</Signal>
           </div>
-          <h1 id="casino-profile-title">{casino.name} review</h1>
+          <h1 id="casino-profile-title">{casino.name}</h1>
           <div className={styles.scoreVerdict}>
-            <strong aria-label={`${demo ? "Fictional editorial score" : "Editorial score"} ${casino.editorScore} out of 10`}>{casino.editorScore.toFixed(1)}</strong>
-            <p>{editorial?.summary || casino.summary}</p>
+            <div><strong aria-label={`${demo ? "Fictional editorial score" : "Editorial score"} ${casino.editorScore} out of 10`}>{casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span><small>{casino.editorScore >= 9.5 ? "Exceptional" : casino.editorScore >= 9 ? "Excellent" : "Very good"}</small></div>
+            <p><em>Our verdict:</em> {editorial?.summary || casino.summary}</p>
           </div>
           <div aria-label={demo ? "Fictional review fields" : "Published review signals"} className={styles.signals}>
             {licence ? <Signal verified={!demo && licenceChecked}>{demo ? "FICTIONAL LICENCE FIELD" : licenceChecked ? "LICENCE EVIDENCE CHECKED" : "LICENCE NOT VERIFIED"}</Signal> : null}
             {payments.length ? <Signal>{demo ? "FICTIONAL PAYMENT FIELDS" : payments.join(" + ").toUpperCase()}</Signal> : null}
             {withdrawal ? <Signal>{demo ? "FICTIONAL WITHDRAWAL FIELD" : `${withdrawal.toUpperCase()} WITHDRAWALS`}</Signal> : null}
           </div>
-          <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : casino.summary}</p>
+          {bonus ? <div className={styles.heroOfferSummary}><div><span>WELCOME OFFER</span><strong>{profileOfferHeadline(bonus)}</strong><small>{[bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal].filter(Boolean).join(" · ")}</small></div>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</div> : null}
+          <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : "18+ · Terms apply · We may earn commission — rankings stay independent."}</p>
         </div>
 
-        <aside aria-label={demo ? "Fictional bonus fields with no visit action" : "Published bonus and visit action"} className={styles.heroOffer}>
-          {bonus ? <>
-            <span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span>
-            <h2>{profileOfferHeadline(bonus)}</h2>
-            <p>{bonus.title}</p>
-            <ul>
-              {minimumDeposit ? <li>{minimumDeposit} minimum deposit</li> : null}
-              {bonus.wageringText ? <li>{bonus.wageringText}</li> : bonus.wageringMultiplier !== null ? <li>{bonus.wageringMultiplier}× wagering listed</li> : null}
-              {bonus.eligibility ? <li>{bonus.eligibility}</li> : null}
-            </ul>
-            {action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}
-            <small>18+ · {demo ? "Not claimable · Demonstration only" : "Terms apply"} · Gambling involves financial risk</small>
-          </> : <>
-            <span>OFFER INFORMATION</span>
-            <h2>{demo ? "No fictional offer field." : "No published offer."}</h2>
-            <p>The editorial review remains available without a bonus or commercial action.</p>
-            <UnavailableAction />
-          </>}
+        <aside aria-label={casino.media.hero ? `${casino.name} media` : "Operator media unavailable"} className={styles.heroMedia}>
+          {casino.media.hero ? <img alt={casino.media.hero.alt || `${casino.name} media`} src={casino.media.hero.url} /> : <div><span aria-hidden="true">▧</span><small>Operator media</small></div>}
         </aside>
       </section>
 

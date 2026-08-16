@@ -28,12 +28,12 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   await expect(page.locator("[data-responsible-gambling-hub]")).toHaveCount(1);
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(0);
-  for (const name of ["Browse education", "Explore 10 Steps", "Open Help"]) {
+  for (const name of ["Read the guides", "Start Programme", "Open Help"]) {
     await expect(page.getByRole("link", { name: new RegExp(name, "i") }).first()).toBeVisible();
   }
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/responsible-gambling");
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Help" })).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(2);
+  await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(2);
@@ -43,7 +43,7 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/help");
-  await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
+  await expect(page.getByText(/Casino, bonus and affiliate prompts do not appear in this area/)).toBeVisible();
 
   for (const [slug, destination] of Object.entries(formerResponsibleGamblingRoutes)) {
     const legacy = await request.get(`${baseUrl}/responsible-gambling/${slug}`, { maxRedirects: 0 });

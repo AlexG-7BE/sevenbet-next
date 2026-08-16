@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { JsonLd } from "@/components/seo/JsonLd";
-import { BonusGuideDocument, bonusGuideFaq } from "./BonusGuideDocument";
+import { BonusGuideDocument } from "./BonusGuideDocument";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -19,21 +19,10 @@ const breadcrumbSchema = {
   ],
 };
 
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: bonusGuideFaq.map(([question, answer]) => ({
-    "@type": "Question",
-    name: question,
-    acceptedAnswer: { "@type": "Answer", text: answer },
-  })),
-};
-
 export default function BonusGuidePage() {
   return (
     <>
       <JsonLd data={breadcrumbSchema} />
-      <JsonLd data={faqSchema} />
       <BonusGuideDocument />
     </>
   );

@@ -36,12 +36,12 @@ test("FAQ is the server-rendered product and trust surface with native disclosur
   const faq = read("app/(public)/faq/page.tsx");
   assert.doesNotMatch(faq, /["']use client["']/);
   assert.equal((faq.match(/<h1\b/g) ?? []).length, 1);
-  for (const group of ["01 · About the product", "02 · Programme & private tools", "03 · Casinos, offers & money", "04 · Affiliate & editorial", "05 · Privacy & Help"]) assert.match(faq, new RegExp(group, "i"));
-  assert.match(faq, /<details key=\{question\} open=/);
+  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(faq, new RegExp(group, "i"));
+  assert.match(faq, /<details key=\{q\} open=/);
   assert.match(faq, /<summary>/);
   assert.match(faq, /canonical: absoluteUrl\("\/faq"\)/);
   assert.doesNotMatch(faq, /Help center|FAQ schema|Internal guide links|["']@type["']:\s*["']FAQPage["']/iu);
-  assert.ok(faq.lastIndexOf("Open Protected Help") > faq.lastIndexOf("Does B4GAMBLE earn affiliate commission?"));
+  assert.ok(faq.lastIndexOf("Open Protected Help") > faq.lastIndexOf("How do I delete my data?"));
 });
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {
@@ -86,8 +86,8 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   assert.match(site, /["']\/privacy["']/);
   assert.match(site, /["']\/terms["']/);
-  assert.match(footer, /\["Privacy", "\/privacy"\]/);
-  assert.match(footer, /\["Terms", "\/terms"\]/);
+  assert.match(footer, /<Link href="\/privacy">Privacy<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">Terms<\/Link>/);
   assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(sitemap, /"\/best-offers"/);
   assert.doesNotMatch(sitemap, /"\/compare"/);

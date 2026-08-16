@@ -6,7 +6,7 @@ import test from "node:test";
 const read = (path: string) => readFileSync(path, "utf8");
 const privacy = read("app/(public)/privacy/page.tsx");
 const terms = read("app/(public)/terms/page.tsx");
-const legalDocument = read("app/(public)/_legal/LegalDocument.tsx");
+const handoffLegalPage = read("app/(public)/_legal/HandoffLegalPage.tsx");
 const selfPage = read("app/(public)/self-check/page.tsx");
 const selfFlow = read("app/(public)/self-check/SelfCheckFlow.tsx");
 const trackerPage = read("app/(public)/tools/budget-calculator/page.tsx");
@@ -17,46 +17,25 @@ const aboutCss = read("app/(public)/about/AboutPage.module.css");
 
 const placeholders = /\[(?:LEGAL ENTITY|CONTROLLER LEGAL NAME|PRIVACY EMAIL|CONTACT EMAIL|SERVICE ADDRESS)\]|OWNER DECISION REQUIRED|placeholder|coming soon|\bdraft\b/iu;
 
-test("Privacy is substantive, server rendered, noindex/follow, and uses the approved Figma authority", () => {
+test("Privacy is the substantive final handoff document and stays noindex/follow", () => {
   assert.doesNotMatch(privacy, /["']use client["']/);
-  assert.match(privacy, /family="924:2798"/);
-  assert.match(privacy, /desktopNode="924:2799"/);
-  assert.match(privacy, /mobileNode="924:2926"/);
-  assert.match(privacy, /title: "Privacy Policy \| B4GAMBLE"/);
-  assert.match(privacy, /canonical: absoluteUrl\("\/privacy"\)/);
-  assert.match(privacy, /robots: \{ index: false, follow: true \}/);
-  assert.match(privacy, /7BE Inc\., trading as B4GAMBLE/);
-  assert.match(privacy, /447 Broadway, 2nd Floor, 1663/);
-  assert.match(privacy, /New York, NY 10013/);
-  assert.match(privacy, /privacy@7be\.io/);
-  assert.match(privacy, /Self-Check works locally in your browser/);
-  assert.match(privacy, /Personal Gambling Limit Tracker processes the amounts you enter locally/);
-  assert.match(privacy, /Protected Help is separated from B4GAMBLE/);
-  assert.match(privacy, /Private control data does not become commercial targeting/);
+  assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
+  assert.match(privacy, /canonical:\s*absoluteUrl\("\/privacy"\)/);
+  assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
+  for (const content of ["What we collect", "What we never do", "Cookies", "Your rights", "Retention & security", "We do not sell personal data", "no shared identifier", "updated=\"13 August 2026\""]) assert.ok(privacy.includes(content), content);
+  assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
   assert.doesNotMatch(privacy, placeholders);
-  assert.doesNotMatch(privacy + legalDocument, /Accept Privacy Policy|cookie banner|consent checkbox/iu);
+  assert.doesNotMatch(privacy + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);
 });
 
-test("Terms is substantive, server rendered, noindex/follow, and preserves consumer boundaries", () => {
+test("Terms is the substantive final handoff document and preserves consumer boundaries", () => {
   assert.doesNotMatch(terms, /["']use client["']/);
-  assert.match(terms, /family="924:3020"/);
-  assert.match(terms, /desktopNode="924:3021"/);
-  assert.match(terms, /mobileNode="924:3144"/);
-  assert.match(terms, /canonical: absoluteUrl\("\/terms"\)/);
-  assert.match(terms, /robots: \{ index: false, follow: true \}/);
-  assert.match(terms, /7BE Inc\., trading as B4GAMBLE/);
-  assert.match(terms, /447 Broadway, 2nd Floor, 1663/);
-  assert.match(terms, /info@7be\.io/);
-  assert.match(terms, /B4GAMBLE is not a gambling operator/i);
-  assert.match(terms, /Future eligible governed B4GAMBLE links may be affiliate links/);
-  assert.match(terms, /Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial ranking/);
-  assert.match(terms, /Self-Check is a non-clinical reflection tool/);
-  assert.match(terms, /does not use it to determine how much gambling is safe or affordable/);
-  assert.match(terms, /Nothing in these Terms excludes or limits liability where doing so would be unlawful/);
-  assert.match(terms, /mandatory consumer protections/);
-  assert.match(terms, /effective="7 August 2026" updated="9 August 2026"/);
+  assert.match(terms, /canonical:\s*absoluteUrl\("\/terms"\)/);
+  assert.match(terms, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
+  assert.match(terms, /We are not a casino/i);
+  for (const content of ["What this service is", "Eligibility — 18+", "Your account", "Accuracy & liability", "Content & changes", "Nothing here is financial, legal or medical advice", "we are not liable for losses arising from gambling decisions", "compensation never changes a score"]) assert.ok(terms.includes(content), content);
   assert.doesNotMatch(terms, placeholders);
-  assert.doesNotMatch(terms + legalDocument, /accept terms checkbox|I accept|Agree to Terms/iu);
+  assert.doesNotMatch(terms + handoffLegalPage, /accept terms checkbox|I accept|Agree to Terms/iu);
 });
 
 test("Self-Check compatibility route consolidates into Responsible Gambling", () => {
@@ -93,15 +72,12 @@ test("Personal Limit Tracker compatibility route consolidates into Responsible G
   assert.doesNotMatch(tracker + trackerPage, /href=["'{]\/+(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/);
 });
 
-test("About uses the compact desktop amendment while retaining the established content", () => {
-  assert.match(about, /data-figma-compact-hero="923:2694"/);
-  assert.match(about, /data-figma-desktop="923:2694"/);
-  assert.match(about, /data-figma-mobile="835:5436"/);
-  assert.match(aboutCss, /\.hero \{ min-height: 1180px/);
-  assert.match(aboutCss, /\.heroInner \{[^}]*min-height: 1180px/);
-  assert.doesNotMatch(aboutCss, /min-height:\s*1530px/);
-  for (const text of ["Learn", "Reflect", "Understand", "Compare", "Decide", "Review", "The operating model is a sequence", "No financial advice", "Visible affiliate disclosure", "Protected Help"]) assert.ok(about.includes(text));
-  for (const section of ["hero", "operating-model", "clear-boundaries", "editorial-principles", "six-step-flow", "what-sevenbet-builds"]) assert.match(about, new RegExp(`data-about-section="${section}"`));
+test("About uses the final handoff visual family and three-part product model", () => {
+  assert.match(aboutCss, /min-height:88svh/);
+  assert.match(aboutCss, /grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(aboutCss, /hero-outcome\.jpg/);
+  for (const text of ["Built to be", "on your side", "The Programme", "Research & education", "Commercial discovery", "How we make money", "What stays separate", "What B4GAMBLE is not", "Protected Help"]) assert.ok(about.includes(text), text);
+  for (const section of ["hero", "three-parts", "commercial-separation", "clear-lines"]) assert.match(about, new RegExp(`data-about-section="${section}"`));
 });
 
 test("FE-GAP-01 product boundaries survive the authorized legal remediation", () => {

@@ -1,15 +1,16 @@
 .page,
 .supportPage,
-.rewardPage {
+.rewardPage,
+.readyPage {
   min-height: 100vh;
   background: var(--sb-paper);
   color: var(--sb-night);
   font-family: var(--font-seven-sans), Arial, sans-serif;
 }
 
-.page *, .supportPage *, .rewardPage * { box-sizing: border-box; }
-.page button, .page input, .page textarea, .page select, .supportPage button, .rewardPage button { font: inherit; }
-.page :focus-visible, .supportPage :focus-visible, .rewardPage :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
+.page *, .supportPage *, .rewardPage *, .readyPage * { box-sizing: border-box; }
+.page button, .page input, .page textarea, .page select, .supportPage button, .rewardPage button, .readyPage button, .readyPage input { font: inherit; }
+.page :focus-visible, .supportPage :focus-visible, .rewardPage :focus-visible, .readyPage :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
 
 .header {
   min-height: 76px;
@@ -39,6 +40,19 @@
   gap: clamp(40px, 7vw, 96px);
   align-items: center;
 }
+
+.intakeGrid {
+  width: min(920px, 100%);
+  grid-template-columns: 1fr;
+  gap: 28px;
+  align-content: center;
+  text-align: center;
+}
+
+.intakeGrid .heroCopy { justify-items: center; }
+.intakeGrid .heroCopy > p { max-width: 520px; }
+.intakeGrid .jitCard { max-width: 760px; text-align: left; }
+.intakeGrid .inputPanel { width: min(720px, 100%); justify-self: center; text-align: left; }
 
 .heroCopy { display: grid; gap: 18px; align-content: center; }
 .heroCopy > span, .accessCard > span, .singlePanel > span, .rewardCard > span, .supportCard > span, .homeHero span, .homeStartingPoint > span, .sectionHeading > span { color: var(--sb-teal); font-size: 12px; line-height: 16px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
@@ -71,15 +85,15 @@
 
 .jitCard { padding: 22px; display: grid; gap: 10px; border-left: 4px solid var(--sb-teal); background: var(--sb-white); }
 .jitCard p { margin: 0; color: var(--sb-metal); font-size: 14px; line-height: 1.5; }
-.recorder { padding: 18px; display: grid; grid-template-columns: 42px 1fr auto; gap: 12px; align-items: center; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-field); }
+.recorder { padding: 28px; display: grid; grid-template-columns: 84px 1fr; gap: 18px; align-items: center; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-field); }
 .recorder[data-state="recording"] { border-color: var(--sb-danger); }
-.recorder .mic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: var(--sb-night); color: var(--sb-acid); }
+.recorder .mic { width: 84px; height: 84px; display: grid; place-items: center; border-radius: 50%; background: var(--sb-night); color: var(--sb-acid); font-size: 24px; }
 .recordingDot { display: inline-block; }
 .recorder[data-state="recording"] .recordingDot { animation: recording-dot-pulse 1.4s ease-in-out infinite; }
 .recorder div:nth-child(2) { display: grid; gap: 3px; }
 .recorder small { color: var(--sb-metal); line-height: 1.35; }
 .recorder button, .emailToggle, .textButton { padding: 0; border: 0; background: transparent; color: var(--sb-teal); font-weight: 750; text-decoration: underline; cursor: pointer; }
-.recorderActions { display: flex; gap: 12px; }
+.recorderActions { grid-column: 1 / -1; display: flex; justify-content: center; gap: 18px; }
 .recorder .stopRecording { padding: 8px 12px; border-radius: var(--sb-radius-s); background: var(--sb-night); color: var(--sb-white); text-decoration: none; }
 .recorder .cancelRecording { color: var(--sb-metal); }
 .recorder p { grid-column: 1 / -1; margin: 0; color: var(--sb-danger-text); font-size: 13px; }
@@ -127,6 +141,29 @@
 .googleButton { width: 100%; --sb-action-background: var(--sb-night); --sb-action-background-hover: var(--sb-charcoal); --sb-action-color: var(--sb-white); }
 .emailToggle, .textButton { width: fit-content; }
 
+.readyPage { background: var(--sb-paper); }
+.readyShell {
+  width: min(1060px, 100%);
+  min-height: calc(100vh - 76px);
+  margin: 0 auto;
+  padding: clamp(36px, 7vw, 88px) clamp(20px, 5vw, 64px);
+  display: grid;
+  grid-template-columns: minmax(0, .75fr) minmax(420px, 1fr);
+  gap: clamp(36px, 7vw, 90px);
+  align-items: center;
+}
+.readyIntro { display: grid; gap: 16px; }
+.readyIntro > span { color: var(--sb-teal); font-size: 12px; font-weight: 800; letter-spacing: .07em; text-transform: uppercase; }
+.readyIntro h1 { margin: 0; font-size: clamp(46px, 6vw, 76px); line-height: .92; letter-spacing: -2.6px; }
+.readyIntro p { margin: 0; color: var(--sb-metal); font-size: 17px; line-height: 1.55; }
+.readyCard { padding: clamp(26px, 5vw, 52px); display: grid; gap: 18px; border-radius: var(--sb-radius-l); background: var(--sb-night); color: var(--sb-white); }
+.readyCard > span { color: var(--sb-acid); font-size: 11px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.readyCard blockquote { margin: 0; font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(28px, 4vw, 44px); line-height: 1.08; }
+.readyCard p { margin: 0; color: var(--sb-grey-300); font-size: 16px; line-height: 1.5; }
+.readyActions { padding-top: 8px; display: grid; gap: 12px; }
+.readyActions > button:first-child { width: 100%; --sb-action-background: var(--sb-acid); --sb-action-background-hover: var(--sb-white); --sb-action-color: var(--sb-night); }
+.readyActions .emailToggle { color: var(--sb-white); }
+
 .home { width: min(var(--sb-content-shell), 100%); margin: 0 auto; padding: clamp(32px, 6vw, 80px) clamp(20px, 5vw, 64px); display: grid; gap: 64px; }
 .homeHero { padding-bottom: 40px; display: flex; justify-content: space-between; gap: 40px; align-items: flex-end; border-bottom: 1px solid var(--sb-border-subtle); }
 .homeHero > div { display: grid; gap: 14px; }
@@ -169,6 +206,7 @@
   .homeHero { align-items: start; flex-direction: column; }
   .missionPath { grid-template-columns: repeat(2, 1fr); }
   .reviews { grid-template-columns: 1fr; }
+  .readyShell { min-height: 0; grid-template-columns: 1fr; }
 }
 
 @media (max-width: 520px) {
@@ -179,4 +217,6 @@
   .missionPath { grid-template-columns: 1fr; }
   .supportActions > * { width: 100%; }
   .rewardNumber { letter-spacing: -4px; }
+  .readyShell { padding-top: 42px; }
+  .readyCard { padding: 24px; }
 }

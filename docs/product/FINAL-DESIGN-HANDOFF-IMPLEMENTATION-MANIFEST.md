@@ -74,3 +74,12 @@ Completion requires the gates in RFC-034. Until they pass, all new implementatio
 - **Detected:** Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data-service boundaries remain in place; Programme progress and reward calculations remain server-owned.
 - **Detected:** functional, responsive, regression, build and screenshot gates passed. Evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/README.md`](../02_Product_Design/qa/final-design-handoff/README.md).
 - **Not authorised:** merge to `main`, Production configuration changes or Production deployment.
+
+## Recorded deviations
+
+- The base screenshot environment has no current published casino inventory. Casino, bonus and comparison surfaces therefore show their designed fail-closed state; guarded disposable fixtures verify populated comparison behaviour.
+- Anonymous Programme evidence stops at the existing adult/Terms access gate. Post-gate voice, text, Starting Point, claim and dashboard states are covered by Programme/browser tests without bypassing access architecture.
+- Protected Help retains verified current resources and omits unsupported prototype response-time and pause-duration promises.
+- Privacy includes the current Google identity boundary, controller identity and 13 August 2026 access-contract date.
+- Bonus Guide retains the supplied Draft copy verbatim and appends current primary-source records for claims review.
+- Static commercial, methodology, operational and privacy claims remain Draft-only where classified in [`FINAL-DESIGN-COPY-CLAIMS-AUDIT.md`](FINAL-DESIGN-COPY-CLAIMS-AUDIT.md).

@@ -86,9 +86,9 @@ test("FAQ uses five semantic disclosure groups and remains usable at every viewp
     const response = await page.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-    for (const label of ["01 · About the product", "02 · Programme & private tools", "03 · Casinos, offers & money", "04 · Affiliate & editorial", "05 · Privacy & Help"]) await expect(page.getByText(label, { exact: true })).toBeVisible();
+    for (const label of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) await expect(page.getByRole("heading", { exact: true, level: 2, name: label })).toBeVisible();
     await expect(page.getByText(/Help center|FAQ schema|Internal guide links/i)).toHaveCount(0);
-    await expect(page.locator("details")).toHaveCount(14);
+    await expect(page.locator("details")).toHaveCount(12);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/faq$/);
     expect(await noOverflow(page), `${viewport.width}px`).toBe(true);
     expect(errors).toEqual([]);
@@ -98,10 +98,11 @@ test("FAQ uses five semantic disclosure groups and remains usable at every viewp
 
 test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ browser, page }) => {
   await page.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  const summary = page.locator("summary").filter({ hasText: "Is B4GAMBLE an online casino?" });
+  const summary = page.locator("summary").filter({ hasText: "What is B4GAMBLE?" });
+  await expect(summary.locator(".."), "the first handoff disclosure is open by default").toHaveAttribute("open", "");
   await summary.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();
+  await expect(summary.locator(".."), "native keyboard activation closes the disclosure").not.toHaveAttribute("open", "");
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 720 } });
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
@@ -143,8 +144,9 @@ test("Best Offers, Bonuses, sitemap and llms expose corrected semantics", async 
   expect(sitemap).toContain("/terms");
   await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   expect(await page.locator('meta[name="robots"]').getAttribute("content")).toMatch(/noindex.*follow/i);
-  await expect(page.locator('footer a[href="/privacy"]')).toHaveCount(1);
-  await expect(page.locator('footer a[href="/terms"]')).toHaveCount(1);
+  const siteFooter = page.locator('[data-public-shell="footer"]');
+  await expect(siteFooter.locator('a[href="/privacy"]')).toHaveCount(1);
+  await expect(siteFooter.locator('a[href="/terms"]')).toHaveCount(1);
   const llms = await (await page.request.get(`${baseUrl}/llms.txt`)).text();
   expect(llms).toContain("/responsible-gambling");
   expect(llms).not.toContain("/self-check");

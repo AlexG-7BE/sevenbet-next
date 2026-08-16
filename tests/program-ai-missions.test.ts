@@ -137,6 +137,9 @@ function fakeUnitOfWork({ legacy = false, m1Incomplete = false }: { legacy?: boo
       },
       recordActiveDay: async () => ({ count: 1 }),
     },
+    dashboard: {
+      findDashboardData: async () => [],
+    },
     programAiMissionOne: {
       home: async (userId: string) => ({
         enrollment: userId === enrollment.userId ? {

@@ -13,6 +13,11 @@
 .hero p, .missionIntro p, .reviewIntro p { margin: 0; max-width: 680px; color: var(--sb-metal); font-size: 17px; line-height: 1.55; }
 .continueMeta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; }
 .continueMeta span { padding: 6px 9px; border-radius: var(--sb-radius-full); background: var(--sb-field); color: var(--sb-metal); font-size: 12px; font-weight: 700; }
+.progressStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--sb-night); border-bottom: 1px solid var(--sb-night); }
+.progressStats article { min-height: 118px; padding: 20px; display: grid; gap: 8px; align-content: center; border-right: 1px solid var(--sb-night); }
+.progressStats article:last-child { border-right: 0; }
+.progressStats strong { font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(34px, 4vw, 52px); font-weight: 400; line-height: .9; }
+.progressStats span { color: var(--sb-metal); font-size: 12px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
 .startingPoint { padding: clamp(24px, 4vw, 48px); display: grid; gap: 12px; border-radius: var(--sb-radius-l); background: var(--sb-night); color: var(--sb-white); }
 .startingPoint blockquote { margin: 0; max-width: 960px; font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(30px, 4vw, 52px); line-height: 1.07; }
 .startingPoint p { margin: 0; color: var(--sb-grey-300); font-size: 17px; }
@@ -38,6 +43,13 @@
 .distance h3 { margin: 4px 0 0; font-size: 24px; }
 .distance strong { font-size: 30px; }
 .distance small { color: var(--sb-metal); }
+.achievements { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.achievements article { min-height: 96px; padding: 20px; display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center; border: 1px solid var(--sb-border-subtle); border-radius: var(--sb-radius-m); background: var(--sb-white); }
+.achievements article[data-state="earned"] { border-color: var(--sb-teal); background: var(--sb-acid-soft); }
+.achievements article > span { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; background: var(--sb-night); color: var(--sb-acid); font-size: 20px; font-weight: 900; }
+.achievements article > div { display: grid; gap: 5px; }
+.achievements strong { font-size: 20px; }
+.achievements small { color: var(--sb-metal); font-weight: 800; text-transform: uppercase; }
 .explore { padding: clamp(24px, 4vw, 42px); border-radius: var(--sb-radius-l); background: var(--sb-night); color: var(--sb-white); }
 .explore .sectionHead p { color: var(--sb-grey-300); }
 .exploreLinks { display: flex; flex-wrap: wrap; gap: 10px; }
@@ -144,6 +156,9 @@
   .hero { grid-template-columns: 1fr; align-items: start; }
   .path { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .reviews { grid-template-columns: 1fr; }
+  .progressStats { grid-template-columns: repeat(2, 1fr); }
+  .progressStats article:nth-child(2) { border-right: 0; }
+  .progressStats article:nth-child(-n + 2) { border-bottom: 1px solid var(--sb-night); }
   .workspace { grid-template-columns: 1fr; }
   .offerDecoder > div { grid-template-columns: repeat(2, 1fr); }
 }
@@ -156,6 +171,7 @@
   .actionRail { grid-template-columns: repeat(4, 1fr); }
   .sequence { grid-template-columns: 1fr; }
   .distance { grid-template-columns: 1fr; }
+  .achievements { grid-template-columns: 1fr; }
   .sequenceBuilder li, .stackBuilder li { grid-template-columns: 34px 1fr; }
   .sequenceBuilder li div, .stackBuilder li div { grid-column: 1 / -1; }
   .offerDecoder > div { grid-template-columns: 1fr; }

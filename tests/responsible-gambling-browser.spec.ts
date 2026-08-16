@@ -21,7 +21,7 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/We're here\..*No strings\./i);
-  await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
+  await expect(page.getByText(/Casino, bonus and affiliate prompts do not appear in this area/)).toBeVisible();
   await expect(page.getByRole("link", { name: /casinos|bonuses|best offers|visit casino|claim bonus/i })).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
   expect(errors).toEqual([]);
@@ -66,7 +66,7 @@ for (const viewport of [
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
     await expect(page.getByRole("link", { name: /Find external support/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
-    await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
+    await expect(page.getByText(/Casino, bonus and affiliate prompts do not appear in this area/)).toBeVisible();
     expect(errors).toEqual([]);
     await page.close();
   });

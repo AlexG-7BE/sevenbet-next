@@ -1,21 +1,20 @@
 import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const approvedOrder = ["hero", "programme-builds", "editorial-contract", "mission-map", "account-boundary", "evidence", "final-action"];
+const approvedOrder = ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"];
 
 async function assertTenStepsContract(page: import("@playwright/test").Page) {
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "TEN STEPS. One plan." })).toBeVisible();
   await expect(page.locator("[data-ten-steps-section='mission-map'] > ol > li")).toHaveCount(10);
-  await expect(page.getByText("EARNED IN MISSION 01", { exact: true })).toHaveCount(1);
-  await expect(page.getByText("+40 XP", { exact: true })).toHaveCount(1);
-  await expect(page.getByText(/Its two actions earn 40 XP before registration\./)).toHaveCount(1);
-  await expect(page.getByText(/Create an account only if you want to save the already-earned Starting Point, completion and XP\./)).toHaveCount(1);
-  await expect(page.getByText(/20 XP for describing the situation and 20 XP for confirming the Starting Point\./)).toHaveCount(1);
-  await expect(page.getByText(/Registration adds 0 XP\./)).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 2, name: "Three things you'll have at the end." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "What you say here, stays here." })).toBeVisible();
+  await expect(page.getByText("✓ Your situation and plan are never used for offers, rankings or ads.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "Mission 01 takes about one minute." })).toBeVisible();
+  await expect(page.getByText("No registration until your starting point is ready.", { exact: true })).toBeVisible();
   await expect(page.getByText(/UK PREVIEW|UK-ready discovery/i)).toHaveCount(0);
   await expect(page.locator("main a[href^='/casinos'], main a[href^='/bonuses'], main a[href^='/best-offers']")).toHaveCount(0);
   expect(await page.locator("[data-ten-steps-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-ten-steps-section")))).toEqual(approvedOrder);
@@ -86,7 +85,7 @@ test("all signed-out Programme CTAs use the canonical entry", async ({ page }) =
   await page.goto(`${baseUrl}/10-steps`, { waitUntil: "domcontentloaded" });
   const programmeLinks = page.locator("main a[href='/program?entry=start']");
   await expect(programmeLinks).toHaveCount(2);
-  await expect(programmeLinks.first()).toContainText("Start Programme");
+  await expect(programmeLinks.first()).toContainText("Start Mission 01");
   const response = await page.request.get(`${baseUrl}/10-steps`);
   expect(response.headers()["link"] ?? "").not.toContain("mission=");
 });

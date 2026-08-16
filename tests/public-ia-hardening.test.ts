@@ -153,12 +153,12 @@ test("shared navigation and footer expose only the final handoff destinations", 
   assert.doesNotMatch(navigation, /label: "(?:Help|Compare)"/);
   assert.match(navigation, /const protectedHelpPrefixes = \["\/help"\]/);
   assert.match(footer, /aria-label="Control and support"/);
-  for (const pair of [
-    '["Responsible Gambling", "/responsible-gambling"]',
-    '["Learn", "/learn"]',
-    '["Privacy", "/privacy"]',
-    '["Terms", "/terms"]',
-  ]) assert.ok(footer.includes(pair), pair);
+  for (const destination of [
+    '"Responsible Gambling", "/responsible-gambling"',
+    '"Learn", "/learn"',
+    '<Link href="/privacy">Privacy</Link>',
+    '<Link href="/terms">Terms</Link>',
+  ]) assert.ok(footer.includes(destination), destination);
   assert.doesNotMatch(footer, /\/self-check|\/tools\/budget-calculator|\/compare/);
   assert.match(category, /Open Responsible Gambling hub/);
 });

@@ -21,7 +21,8 @@ test("root 404 is static, branded and independent of auth and database", () => {
   assert.match(notFound, /Let&apos;s get you back on course/);
   assert.match(notFound, /href="\/"/);
   assert.doesNotMatch(notFound, /href="\/help"/);
-  assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|programme|cms/iu);
+  assert.match(notFound, /href="\/10-steps"/);
+  assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|cms/iu);
 });
 
 test("public and global error boundaries expose safe recovery with no technical detail", () => {
@@ -66,7 +67,7 @@ test("Contact page has exact public contract and footer navigation", () => {
   const form = source("app/(public)/contact/ContactForm.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
   const site = source("lib/site.ts");
-  assert.match(page, /Talk to us\./);
+  assert.match(page, /<h1>Talk <em>to us\.<\/em><\/h1>/);
   assert.match(page, /absoluteUrl\("\/contact"\)/);
   assert.doesNotMatch(page, /https:\/\/b4gamble\.com\/contact/);
   assert.match(page, /support@b4gamble\.com|SUPPORT_MAILBOX/);
@@ -80,7 +81,7 @@ test("Contact page has exact public contract and footer navigation", () => {
   assert.match(form, /Please do not include passwords, payment details or private Programme answers/);
   assert.match(form, /inFlight\.current/);
   assert.doesNotMatch(form, /localStorage|sessionStorage|productAnalytics|track\(/);
-  assert.match(footer, /\["Contact", "\/contact"\]/);
+  assert.match(footer, /<Link href="\/contact">Contact<\/Link>/);
   assert.match(site, /"\/contact"/);
   assert.doesNotMatch(source("app/sitemap.ts"), /api\/contact/);
 });

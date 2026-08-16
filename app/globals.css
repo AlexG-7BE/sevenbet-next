@@ -60,6 +60,9 @@ body {
     linear-gradient(180deg, #07111F 0%, #050B14 42rem, #07111F 100%);
   color: var(--text);
 }
+.bonusGuideProse { min-width: 0; }
+.bonusGuideTable { width: 100%; max-width: 100%; overflow-x: auto; }
+@media (max-width: 500px) { .bonusGuidePage h1 { font-size: 38px; overflow-wrap: anywhere; } }
 body::before {
   content: "";
   position: fixed;

@@ -8,7 +8,7 @@
 - **Detected:** the base matrix uses the real current disposable-CI application state. Its casino inventory is empty, so commercial directories and the contextual comparison visibly fail closed instead of substituting illustrative claims.
 - **Detected:** functional comparison QA used the repository's explicitly labelled fictional demo records in a guarded local `_ci` database. The harness removed all 25 casino fixtures and five redirect fixtures after the run.
 
-The four viewport folders are `1440/`, `1024/`, `430/` and `390/`. Representative review targets include `home.png`, `casinos.png`, `programme.png`, `article.png` and `contextual-comparison.png` in each folder.
+The canonical evidence folders are `1440/`, `1024/`, `430/` and `390/`. Each contains the same 22 named surfaces, including `home.png`, `casinos.png`, `programme.png`, `article.png` and `contextual-comparison.png`. The supplied handoff archive and rejected PR #76 baseline were used as the direct visual references during review; copies are not duplicated in Git.
 
 ## Final verification
 
@@ -25,7 +25,7 @@ The four viewport folders are `1440/`, `1024/`, `430/` and `390/`. Representativ
 
 ## Manual visual review
 
-Representative desktop and small-screen captures were inspected for the hero composition, responsive navigation, editorial hierarchy, casino empty state, Programme access state and contextual modal/sheet. The final review confirmed the reference-locked near-black/paper/acid-yellow system, Archivo and Instrument Serif hierarchy, usable small-screen reflow and an explicit resolved-empty comparison state.
+Representative desktop and small-screen captures were inspected for the hero composition, responsive navigation, editorial hierarchy, casino empty state, Programme access state, legal close and contextual modal/sheet. The final review confirmed the reference-locked near-black/paper/acid-yellow system, Archivo and Instrument Serif hierarchy, usable small-screen reflow and an explicit resolved-empty comparison state. Review also found and closed two defects before the matrix was frozen: compact desktop casino filters now retain accessible labels, and legal footer metadata no longer collapses on mobile.
 
 ## Known limits
 

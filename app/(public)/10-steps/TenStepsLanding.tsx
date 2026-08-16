@@ -4,212 +4,61 @@ import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-regis
 import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
 import styles from "./TenStepsLanding.module.css";
 
-const heroImage = "/home/hero-plan.jpg";
-const contractImage = "/home/hero-outcome.jpg";
-const accountImage = "/home/hero-confidence.jpg";
-const returningImage = "/home/hero-creator.jpg";
+const missionDescriptions = [
+  "Say what’s happening; get your Starting Point.",
+  "First pass at time and money lines.",
+  "Map the moments that start sessions.",
+  "One limit you can keep this week.",
+  "An honest week-two look at the numbers.",
+  "A simple rule for yes, no and not-tonight.",
+  "Write the plan you’ll actually follow.",
+  "Reduce friction, judge operators, protect your plan.",
+  "See what held. Fix what didn’t.",
+  "Turn ten missions into a habit that lasts.",
+];
 
-const programmeMissions = programmeMissionTitles.map((title, index) => ({
-  number: String(index + 1).padStart(2, "0"),
-  title,
-  status: index === 0 ? "START HERE · NO ACCOUNT REQUIRED" : "MVP PATH · AFTER ACCOUNT",
-  current: index === 0,
-}));
+const missions = programmeMissionTitles.map((title, index) => ({ number:String(index + 1).padStart(2,"0"), title, description:missionDescriptions[index] }));
 
 export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
-  const confirmedProgramme = state.kind === "returning" || state.kind === "available-programme-complete";
-  const signedIn = state.kind !== "anonymous";
-  const actionLabel = confirmedProgramme ? "Open My Programme" : state.kind === "signed-in-fallback" ? "Open the Programme" : "Start Mission 01";
-  const actionHref = confirmedProgramme || state.kind === "signed-in-fallback" ? "/program" : "/program?entry=start";
-  const finalAction = confirmedProgramme
-    ? {
-        eyebrow: "YOUR PROGRAMME",
-        title: "Return to the plan you already started.",
-        copy: "Your saved progress stays inside My Programme.",
-      }
-    : state.kind === "signed-in-fallback"
-      ? {
-          eyebrow: "YOUR ACCOUNT",
-          title: "Programme status is unavailable here.",
-          copy: "Open the Programme to start or retry.",
-        }
-      : {
-          eyebrow: "ONE USEFUL MISSION",
-          title: "Mission 01 takes about one minute.",
-          copy: "No account until Mission 01 is complete.",
-        };
+  const returning = state.kind === "returning" || state.kind === "available-programme-complete";
+  const fallback = state.kind === "signed-in-fallback";
+  return <div className={`tenStepsPage ${styles.page}`} data-account-state={state.kind === "anonymous" ? "anonymous" : "signed-in"}>
+    <section className={styles.hero} aria-labelledby="ten-steps-title" data-ten-steps-section="hero">
+      <p className={styles.srOnly}>The B4GAMBLE Programme does not diagnose or treat gambling addiction. Completion does not mean gambling is safe or suitable.</p>
+      {returning || fallback ? <ReturningHero state={state} /> : <AnonymousHero />}
+    </section>
 
-  return (
-    <div
-      className={`tenStepsPage ${styles.page}`}
-      data-account-state={signedIn ? "signed-in" : "anonymous"}
-      data-figma-contract="502:2238 502:2240 502:2241 502:2412 502:2414 502:2415 502:2416"
-    >
-      <section className={styles.hero} data-ten-steps-section="hero" aria-labelledby="ten-steps-title">
-        {state.kind === "anonymous" ? (
-          <AnonymousHero />
-        ) : state.kind === "signed-in-fallback" ? (
-          <SignedInFallbackHero />
-        ) : (
-          <ReturningHero state={state} />
-        )}
-      </section>
+    <section className={styles.builds} aria-labelledby="programme-builds-title" data-ten-steps-section="programme-builds">
+      <div className={styles.sectionIntro}><span>WHAT YOU WILL BUILD</span><h2 id="programme-builds-title">Three things you&apos;ll have at the end.</h2></div>
+      <div className={styles.buildGrid}>
+        <article><span>I</span><div><h3>A clear picture</h3><p>Your triggers, patterns and the moments decisions actually happen.</p></div></article>
+        <article><span>II</span><div><h3>Working boundaries</h3><p>Limits you design, test in real weeks, and adjust until they hold.</p></div></article>
+        <article><span>III</span><div><h3>A reviewable plan</h3><p>One document that says how you play — yours to revisit any time.</p></div></article>
+      </div>
+    </section>
 
-      <section className={styles.builds} data-ten-steps-section="programme-builds" aria-labelledby="programme-builds-title">
-        <div className={styles.sectionIntro}>
-          <span>WHAT YOU BUILD</span>
-          <h2 id="programme-builds-title">Three things you&apos;ll have at the end.</h2>
-          <p>Start privately. Save completion and rewards after Mission 01 while personal wording stays in this browser session.</p>
-        </div>
-        <div className={styles.buildGrid}>
-          <article>
-            <span>MISSION 01</span>
-            <h3>Map the moment.</h3>
-            <p>Turn one current situation into a personalised Starting Point you control.</p>
-            <div className={styles.miniResult}><small>PRIVATE RESULT</small><b>Starting Point</b><i /></div>
-          </article>
-          <article>
-            <span>YOUR WORK</span>
-            <h3>See what works.</h3>
-            <p>Turn reflection into a local plan you can edit in this tab while your account keeps neutral progress.</p>
-            <div className={styles.miniResult}><small>LOCAL WORDING · SAVED PROGRESS</small><b>My Programme</b><i /></div>
-          </article>
-          <article>
-            <span>10 MISSIONS</span>
-            <h3>A path you can finish.</h3>
-            <p>See the complete approved MVP path from Starting Point to a reviewable plan.</p>
-            <div className={styles.miniResult}><small>VISIBLE PATH</small><b>01 → 10</b><i /></div>
-          </article>
-        </div>
-      </section>
+    <section className={styles.missionMap} aria-labelledby="mission-map-title" data-ten-steps-section="mission-map">
+      <div className={styles.pathIntro}><span>THE PROGRAMME, STEP BY STEP</span><h2 id="mission-map-title">The path</h2></div>
+      <ol className={styles.missionList}>{missions.map((mission,index) => <li className={index === 0 ? styles.currentMission : styles.futureMission} key={mission.number}><span>{mission.number}</span><div><h3>{mission.title}</h3><p>{mission.description}</p></div></li>)}</ol>
+    </section>
 
-      <section className={styles.contract} data-ten-steps-section="editorial-contract" aria-labelledby="editorial-contract-title">
-        <div className={styles.contractImage}><img alt="" height="1200" loading="lazy" src={contractImage} width="1800" /></div>
-        <div className={styles.contractCopy}>
-          <span>THE CONTRACT</span>
-          <h2 id="editorial-contract-title"><strong>Not a checklist.</strong><em>A plan you can return to.</em></h2>
-          <p>Each available Mission produces a concrete result: a map, a boundary, or a decision you can review.</p>
-          <ul>
-            <li>Practical result</li>
-            <li>Your own pace</li>
-            <li>No commercial reward link</li>
-          </ul>
-        </div>
-      </section>
+    <section className={styles.accountBoundary} aria-labelledby="account-boundary-title" data-ten-steps-section="account-boundary">
+      <div className={styles.accountCopy}><span>START PRIVATE</span><h2 id="account-boundary-title"><strong>What you say here,</strong><em>stays here.</em></h2></div>
+      <div className={styles.accountPromises}><p>✓ &nbsp; Your situation and plan are never used for offers, rankings or ads.</p><p>✓ &nbsp; Delete everything, any time, in one action.</p><p>✓ &nbsp; No mission ever asks you to deposit, claim or play.</p></div>
+    </section>
 
-      <section className={styles.missionMap} data-ten-steps-section="mission-map" aria-labelledby="mission-map-title">
-        <div className={styles.pathIntro}>
-          <span>THE FULL PATH</span>
-          <h2 id="mission-map-title">The path</h2>
-          <p>Mission 01 starts without an account. Missions 02–10 continue the MVP after you choose to save the Starting Point.</p>
-        </div>
-        <ol className={styles.missionList}>
-          {programmeMissions.map((mission) => (
-            <li className={mission.current ? styles.currentMission : styles.futureMission} key={mission.number}>
-              <span aria-hidden="true">{mission.number}</span>
-              <div><h3>{mission.title}</h3><p>{mission.status}</p></div>
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className={styles.accountBoundary} data-ten-steps-section="account-boundary" aria-labelledby="account-boundary-title">
-        <div className={styles.accountCopy}>
-          <span>ACCOUNT BOUNDARY</span>
-          <h2 id="account-boundary-title"><strong>What you say here,</strong><em>stays here.</em></h2>
-          <p>Mission 01 does not require an account. Its two actions earn 40 XP before registration. Create an account only if you want to save the already-earned Starting Point, completion and XP. Personal wording stays in this browser session.</p>
-          <ol>
-            <li>Open Mission 01</li>
-            <li>Complete it privately</li>
-            <li>Earn 20 + 20 XP for the two Mission actions</li>
-            <li>Create an account to save the already-earned 40 XP</li>
-          </ol>
-        </div>
-        <div className={styles.accountImage}><img alt="" height="1200" loading="eager" src={accountImage} width="1800" /></div>
-      </section>
-
-      <section className={styles.evidence} data-ten-steps-section="evidence" aria-labelledby="evidence-title">
-        <div className={styles.evidenceIntro}>
-          <span>WHAT IS TRUE NOW</span>
-          <h2 id="evidence-title">Clear claims. Clear limits.</h2>
-        </div>
-        <div className={styles.evidenceGrid}>
-          <article><span>APPROVED PATH</span><strong>10</strong><h3>Mission titles</h3><p>Mission availability comes from the current Programme contract, not this landing page.</p></article>
-          <article className={styles.limitCard}><span>IMPORTANT LIMIT</span><h3>No clinical claim</h3><p>The Programme does not diagnose or treat gambling addiction or another medical condition. Completion does not mean gambling is safe or suitable. The complete Programme has not yet been clinically evaluated.</p></article>
-        </div>
-        <aside className={styles.dataBoundary} aria-label="Programme data boundary">
-          <strong>PROTECTED</strong>
-          <p>Programme, pause and Help data are not used for affiliate targeting or commercial personalisation.</p>
-        </aside>
-      </section>
-
-      <section className={styles.finalAction} data-ten-steps-section="final-action" aria-labelledby="final-action-title">
-        <span>{finalAction.eyebrow}</span>
-        <h2 id="final-action-title">{finalAction.title}</h2>
-        <p>{finalAction.copy}</p>
-        {confirmedProgramme || state.kind === "signed-in-fallback"
-          ? <ActionLink className={styles.primaryButton} href={actionHref} size="large">{actionLabel}</ActionLink>
-          : <ProgrammeStartActionLink className={styles.primaryButton} href={actionHref} size="large" sourceSurface="ten_steps">{actionLabel}</ProgrammeStartActionLink>}
-      </section>
-    </div>
-  );
+    <section className={styles.finalAction} aria-labelledby="final-action-title" data-ten-steps-section="final-action"><span>{returning ? "YOUR PROGRAMME" : fallback ? "YOUR ACCOUNT" : "ONE USEFUL MISSION"}</span><h2 id="final-action-title">{returning ? "Return to the plan you already started." : fallback ? "Programme status is unavailable here." : <>Mission 01 takes about <em>one minute.</em></>}</h2><p>{returning ? "Your saved progress stays inside My Programme." : fallback ? "Open the Programme to start or retry." : "No registration until your starting point is ready."}</p>{returning || fallback ? <ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink> : <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink>}</section>
+  </div>;
 }
 
 function AnonymousHero() {
-  return (
-    <div className={styles.heroInner}>
-      <div className={styles.heroCopy}>
-        <span>A PRIVATE PROGRAMME · TEN SHORT MISSIONS</span>
-        <h1 id="ten-steps-title"><strong>TEN STEPS.</strong><em>One plan.</em></h1>
-        <p>See your patterns, write rules that fit real life, and keep a plan you can return to.</p>
-        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Programme</ProgrammeStartActionLink>
-        <small>MISSION 01 IS PRIVATE. ITS TWO ACTIONS EARN 40 XP. REGISTRATION EARNS 0 XP.</small>
-      </div>
-      <div className={styles.heroVisual}>
-        <img alt="" fetchPriority="high" height="1200" src={heroImage} width="1800" />
-        <div className={styles.rewardCard} aria-label="Mission 01 pending recognition">
-          <span>EARNED IN MISSION 01</span><strong>+40 XP</strong><small>20 XP for describing the situation and 20 XP for confirming the Starting Point. Registration adds 0 XP.</small>
-        </div>
-      </div>
-    </div>
-  );
+  return <div className={styles.heroInner}><div className={styles.heroCopy}><span>THE PROGRAMME, STEP BY STEP</span><h1 id="ten-steps-title"><strong>TEN STEPS.</strong><em>One plan.</em></h1><p>Each mission takes 5–15 minutes and ends with something you keep. Here&apos;s exactly what happens — no surprises, no fine print.</p><ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink><small>01–03 UNDERSTAND &nbsp; · &nbsp; 04–07 BUILD &nbsp; · &nbsp; 08–10 APPLY</small></div><div className={styles.heroVisual}><img alt="" fetchPriority="high" height="1200" src="/home/hero-plan.jpg" width="1800" /></div></div>;
 }
 
-type ConfirmedProgrammeState = Extract<TenStepsLandingState, { kind: "returning" | "available-programme-complete" }>;
-
-function ReturningHero({ state }: { state: ConfirmedProgrammeState }) {
-  const progress = state.kind === "returning"
-    ? `Mission ${String(state.currentMission).padStart(2, "0")} · ${state.completedMissions} of 10 complete · ${state.totalXp} XP`
-    : `${state.completedMissions} of 10 complete · ${state.totalXp} XP`;
-
-  return (
-    <div className={styles.returningInner}>
-      <div className={styles.returningCopy}>
-        <span>WELCOME BACK</span>
-        <h1 id="ten-steps-title">Continue the plan you already started.</h1>
-        <p>Your saved progress, XP and next Mission stay inside My Programme.</p>
-        <ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink>
-        <div className={styles.serverState}>
-          <strong>MY PROGRAMME</strong>
-          <p>{progress}</p>
-          <small>Live values from your server-owned Programme record.</small>
-        </div>
-      </div>
-      <div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src={returningImage} width="1800" /></div>
-    </div>
-  );
-}
-
-function SignedInFallbackHero() {
-  return (
-    <div className={styles.returningInner}>
-      <div className={styles.returningCopy}>
-        <span>YOUR ACCOUNT</span>
-        <h1 id="ten-steps-title">Programme status is unavailable here.</h1>
-        <p>Open the Programme to start or retry.</p>
-        <ActionLink className={styles.primaryButton} href="/program" size="large">Open the Programme</ActionLink>
-      </div>
-      <div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src={returningImage} width="1800" /></div>
-    </div>
-  );
+function ReturningHero({ state }: { state: Exclude<TenStepsLandingState,{kind:"anonymous"}> }) {
+  if (state.kind === "signed-in-fallback") {
+    return <div className={styles.returningInner}><div className={styles.returningCopy}><span>YOUR ACCOUNT</span><h1 id="ten-steps-title">Programme status is unavailable here.</h1><p>Open the Programme to start or retry.</p><ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink></div><div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src="/home/hero-creator.jpg" width="1800" /></div></div>;
+  }
+  const progress = state.kind === "returning" ? `Mission ${String(state.currentMission).padStart(2,"0")} · ${state.completedMissions} of 10 complete · ${state.totalXp} XP` : state.kind === "available-programme-complete" ? `${state.completedMissions} of 10 complete · ${state.totalXp} XP` : "Open the Programme to start or retry.";
+  return <div className={styles.returningInner}><div className={styles.returningCopy}><span>WELCOME BACK</span><h1 id="ten-steps-title">Continue the plan you already started.</h1><p>Your saved progress, XP and next Mission stay inside My Programme.</p><ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink><div className={styles.serverState}><strong>MY PROGRAMME</strong><p>{progress}</p><small>Live values from your server-owned Programme record.</small></div></div><div className={styles.returningImage}><img alt="" fetchPriority="high" height="1200" src="/home/hero-creator.jpg" width="1800" /></div></div>;
 }

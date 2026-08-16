@@ -34,7 +34,7 @@ const surfaces = [
 test("capture the final handoff surface matrix without page-level overflow", async ({ browser }) => {
   test.setTimeout(12 * 60_000);
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 1024, height: 900 }, { width: 430, height: 932 }, { width: 390, height: 844 }]) {
-    const output = join(evidenceRoot, String(viewport.width));
+    const output = join(evidenceRoot, "comparison", String(viewport.width));
     mkdirSync(output, { recursive: true });
     const context = await browser.newContext({ viewport, isMobile: viewport.width <= 430 });
     const page = await context.newPage();
@@ -48,12 +48,19 @@ test("capture the final handoff surface matrix without page-level overflow", asy
       await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => undefined);
       expect(response?.status(), `${name} at ${viewport.width}px`).toBe(name === "not-found" ? 404 : 200);
       if (name === "contextual-comparison") await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${name} overflow at ${viewport.width}px`).toBe(true);
+      const overflowing = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth ? [] : Array.from(document.querySelectorAll<HTMLElement>("body *"))
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          return rect.right > document.documentElement.clientWidth + 1 || rect.left < -1;
+        })
+        .slice(0, 8)
+        .map((element) => ({ className: element.className, tag: element.tagName, text: element.textContent?.trim().slice(0, 80) })));
+      expect(overflowing, `${name} overflow at ${viewport.width}px`).toEqual([]);
       const unexpectedErrors = name === "not-found"
         ? errors.filter((message) => !message.includes("status of 404"))
         : errors;
       expect(unexpectedErrors, `${name} browser errors at ${viewport.width}px`).toEqual([]);
-      await page.screenshot({ path: join(output, `${name}.png`), animations: "disabled" });
+      await page.screenshot({ path: join(output, `${name}-implementation-final.png`), animations: "disabled", fullPage: true });
       page.off("pageerror", onPageError);
       page.off("console", onConsole);
     }

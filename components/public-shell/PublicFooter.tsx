@@ -3,10 +3,9 @@ import Link from "next/link";
 import styles from "./PublicShell.module.css";
 
 const groups = [
-  { title: "Discover", links: [["Best Offers", "/best-offers"], ["Casinos", "/casinos"], ["Bonuses", "/bonuses"]] },
-  { title: "Build control", links: [["The 10 Steps", "/10-steps"], ["Start Programme", "/program"], ["Learn", "/learn"], ["Responsible Gambling", "/responsible-gambling"]] },
-  { title: "About", links: [["Methodology", "/methodology"], ["About B4GAMBLE", "/about"], ["FAQ", "/faq"], ["Contact", "/contact"]] },
-  { title: "Legal", links: [["Affiliate Disclosure", "/affiliate-disclosure"], ["Privacy", "/privacy"], ["Terms", "/terms"]] },
+  { title: "Explore", links: [["Best Offers", "/best-offers"], ["Casinos", "/casinos"], ["Bonuses", "/bonuses"], ["Learn", "/learn"]] },
+  { title: "Programme & Support", links: [["Start Programme", "/program"], ["10 Steps", "/10-steps"], ["Responsible Gambling", "/responsible-gambling"], ["Help — protected support →", "/help"]] },
+  { title: "Trust", links: [["About", "/about"], ["Methodology", "/methodology"], ["FAQ", "/faq"], ["Affiliate Disclosure", "/affiliate-disclosure"]] },
 ] as const;
 
 export function PublicFooter() {
@@ -15,7 +14,7 @@ export function PublicFooter() {
       <div className={styles.footerInner}>
         <div className={styles.footerLead}>
           <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
-          <p>Keep gambling your decision, not a habit.</p>
+          <p>Independent reviews. Real tests.<br />Player first.<br />Keep gambling your decision, not a habit.</p>
         </div>
         <div className={styles.footerGroups}>
           {groups.map((group) => (
@@ -31,12 +30,12 @@ export function PublicFooter() {
           <Link href="/help">Get support</Link>
         </aside>
         <div className={styles.footerDisclosure}>
-          <strong>18+ · PLAY RESPONSIBLY</strong>
-          <p><span className={styles.desktopDisclosure}>B4GAMBLE is an information and comparison service. Some outbound links may compensate us. Rankings remain editorial and availability is never assumed.</span><span className={styles.mobileDisclosure}>Information and comparison service. Some outbound links may compensate us.</span></p>
+          <strong>18+ · GAMBLE RESPONSIBLY</strong>
+          <p><span className={styles.desktopDisclosure}>B4GAMBLE is an information and comparison service. We may earn commission from some outbound links; rankings remain editorial.</span><span className={styles.mobileDisclosure}>Information and comparison service. We may earn commission.</span></p>
         </div>
         <div className={styles.footerBaseline}>
           <span>© {new Date().getFullYear()} B4GAMBLE · Information and comparison service</span>
-          <div><Link href="/responsible-gambling">Play responsibly</Link><Link href="/help">Help</Link></div>
+          <div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link><Link href="/affiliate-disclosure">How we&apos;re funded</Link></div>
         </div>
       </div>
     </footer>

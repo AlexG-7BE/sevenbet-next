@@ -1,177 +1,43 @@
+import Link from "next/link";
+
 import styles from "./AboutPage.module.css";
 
-const operatingSteps = ["Learn", "Reflect", "Understand", "Compare", "Decide", "Review"] as const;
-
-const boundaries = [
-  ["No financial advice", "Decisions remain the reader's."],
-  ["No medical or psychological treatment", "Protected Help stays separate."],
-  ["No guaranteed outcomes", "Scores never predict results."],
-  ["No casino operation", "No deposits or withdrawals."],
-  ["No licensing authority", "Public registers remain external."],
-  ["No dispute resolution", "Evidence and routes can be explained."],
-] as const;
-
-const principles = [
-  "Transparency",
-  "Consistency",
-  "Clear comparisons",
-  "Regular updates",
-  "Responsible communication",
-  "Visible affiliate disclosure",
-  "Educational focus",
-] as const;
-
-const outputs = [
-  ["Editorial reviews", "Dated evidence + limitations"],
-  ["Structured comparisons", "Fields before action"],
-  ["Programme tools", "Private control artefacts"],
-  ["Evidence + context", "Sources and corrections"],
-  ["Protected Help", "No casino, bonus or affiliate prompts"],
+const parts = [
+  ["I", "The Programme", "A free, private 10-step plan for staying in control. No paywall, no upsell, and nothing you say inside it ever touches the commercial side."],
+  ["II", "Research & education", "Reviews built on real-money tests and guides that explain the fine print. Everything dated, everything correctable, nothing sponsored."],
+  ["III", "Commercial discovery", "Best Offers, Casinos and Bonuses — openly commercial pages for people who've decided to play, ranked by evidence, funded by disclosed commission."],
 ] as const;
 
 export function AboutDocument() {
-  return (
-    <article
-      className={styles.page}
-      data-about-document
-      data-figma-family="835:5298"
-      data-figma-desktop="923:2694"
-      data-figma-compact-hero="923:2694"
-      data-figma-mobile="835:5436"
-    >
-      <header className={styles.hero} data-about-section="hero">
-        <div className={styles.heroInner}>
-          <p className={styles.heroEyebrow}>
-            <span className={styles.desktopOnly}>About · Typographic / diagrammatic</span>
-            <span className={styles.mobileOnly}>Operating model</span>
-          </p>
-          <h1 className={styles.heroTitle}><span className={styles.heroWord}>Built to be</span><span className={styles.heroWord}>on your side.</span></h1>
+  return <article className={styles.page} data-about-document>
+    <header className={styles.hero} data-about-section="hero">
+      <div className={styles.heroInner}>
+        <p className={styles.eyebrow}>About B4GAMBLE</p>
+        <h1>Built to be<br /><em>on your side.</em></h1>
+        <p>An industry built on odds deserves one place where the player comes first. We test casinos with our own money, explain every term, and help you stay in control — three jobs, honestly separated.</p>
+      </div>
+    </header>
 
-          <ol className={styles.heroStairs} aria-label="B4GAMBLE operating sequence">
-            {operatingSteps.map((step, index) => (
-              <li key={step} className={index === 3 ? styles.activeStep : undefined}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{step}</strong>
-              </li>
-            ))}
-          </ol>
+    <section className={styles.parts} data-about-section="three-parts">
+      <div className={styles.shell}>
+        <h2>One product. Three parts.</h2>
+        <div className={styles.partGrid}>{parts.map(([number, title, body]) => <article key={number}>
+          <span>{number}</span><h3>{title}</h3><p>{body}</p>
+        </article>)}</div>
+        <p className={styles.partsNote}>There&apos;s no forced path between them. Come for a review and leave; come for the Programme and never see an offer; or use all three. High-intent players go straight to the commercial pages — that&apos;s by design, not a leak.</p>
+      </div>
+    </section>
 
-          <p className={styles.heroNote}>The operating model is a sequence,<br />not six equal cards.</p>
-          <span className={styles.mobileMarker} aria-hidden="true" />
-        </div>
-      </header>
+    <section className={styles.separation} data-about-section="commercial-separation">
+      <div className={styles.separationGrid}>
+        <div><p className={styles.eyebrow}>How we make money</p><p>When you sign up at a casino through our commercial links, we may earn a commission. That&apos;s the whole model — no paid placements, no sponsored scores, no selling data.</p><Link href="/affiliate-disclosure">Full affiliate disclosure →</Link></div>
+        <div><p className={styles.eyebrow}>What stays separate</p><ul><li>Scores are set before commercial terms are discussed.</li><li>Programme and Help data never feeds offers or rankings.</li><li>Protected Help contains no commercial content at all.</li></ul></div>
+      </div>
+    </section>
 
-      <section className={styles.sequenceOverview} data-about-section="operating-model" aria-labelledby="operating-model-title">
-        <div className={styles.contentShell}>
-          <p className={styles.eyebrow}>Expressive section · Operating model</p>
-          <h2 id="operating-model-title">One product. Three parts.</h2>
-          <ol className={styles.sequenceLine} aria-label="Education-first operating sequence">
-            {operatingSteps.map((step, index) => (
-              <li key={step} className={index === operatingSteps.length - 1 ? styles.finalDot : undefined}>
-                <span aria-hidden="true" />
-                <strong>{step}</strong>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <div className={styles.freshInterruption} aria-hidden="true" />
-
-      <section className={styles.boundaries} data-about-section="clear-boundaries" aria-labelledby="boundaries-title">
-        <div className={styles.boundariesInner}>
-          <div className={styles.boundariesIntro}>
-            <p className={styles.eyebrow}>Clear boundaries<span className={styles.desktopOnly}> / Product limits</span></p>
-            <h2 id="boundaries-title">
-              <span className={styles.desktopOnly}>What we build</span>
-              <span className={styles.mobileOnly}>The product</span><br />ends here.
-            </h2>
-            <p className={styles.boundariesLead}>
-              B4GAMBLE explains and organizes information. It does not become the authority, operator,
-              adviser or treatment provider.
-            </p>
-          </div>
-          <div className={styles.boundaryStrip} aria-hidden="true" />
-          <ol className={styles.boundaryList}>
-            {boundaries.map(([title, body], index) => (
-              <li key={title} className={index === 2 ? styles.highlightBoundary : undefined}>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      <section className={styles.principles} data-about-section="editorial-principles" aria-labelledby="principles-title">
-        <div className={styles.principlesInner}>
-          <div className={styles.principlesIntro}>
-            <p className={styles.eyebrow}>Editorial principles<span className={styles.desktopOnly}> / Decision margins</span></p>
-            <h2 id="principles-title">
-              <span className={styles.desktopOnly}>The principles<br />control the work.</span>
-              <span className={styles.mobileOnly}>Principles are<br />not badges.</span>
-            </h2>
-          </div>
-          <ul className={styles.principleList}>
-            {principles.map((principle, index) => (
-              <li key={principle} className={index === 5 ? styles.accentPrinciple : undefined}>{principle}</li>
-            ))}
-          </ul>
-        </div>
-      </section>
-
-      <section className={styles.flow} data-about-section="six-step-flow" aria-labelledby="flow-title">
-        <div className={styles.flowInner}>
-          <p className={styles.flowEyebrow}>
-            <span className={styles.desktopOnly}>How B4GAMBLE works / Non-manipulative path</span>
-            <span className={styles.mobileOnly}>Six step flow</span>
-          </p>
-          <h2 id="flow-title">
-            <span className={styles.desktopOnly}>Learn → Reflect → Understand → Compare → Decide → Review again</span>
-            <span className={styles.mobileOnly}>A path,<br />not a funnel.</span>
-          </h2>
-
-          <div className={styles.flowPanel}>
-            <ol className={styles.flowSteps}>
-              {operatingSteps.map((step, index) => (
-                <li key={step} className={index === 3 ? styles.activeStep : undefined}>
-                  <span>{String(index + 1).padStart(2, "0")}</span>
-                  <strong>{index === operatingSteps.length - 1 ? "Review again" : step}</strong>
-                </li>
-              ))}
-            </ol>
-            <div className={styles.separationPanels}>
-              <article>
-                <p>Optional reflection branch</p>
-                <h3>Programme or self-check</h3>
-                <p>Optional. No Programme reward for casino, bonus, affiliate or commercial action. Reflection data does not personalize offers.</p>
-              </article>
-              <article>
-                <p>Commercial information</p>
-                <h3>Comparison comes after context.</h3>
-                <p>Structured reviews and comparisons remain informational. The path is not a funnel; readers may stop, return to learning or use protected Help.</p>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.outputs} data-about-section="what-sevenbet-builds" aria-labelledby="outputs-title">
-        <div className={styles.outputsInner}>
-          <div className={styles.outputsIntro}>
-            <p className={styles.eyebrow}>What B4GAMBLE builds</p>
-            <h2 id="outputs-title" className={styles.desktopOnly}>Five outputs.<br />One boundary<br />system.</h2>
-          </div>
-          <ul className={styles.outputList}>
-            {outputs.map(([title, body], index) => (
-              <li key={title} className={index === 1 ? styles.activeOutput : index === 4 ? styles.protectedOutput : undefined}>
-                <h3>{title}</h3>
-                <p>{body}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    </article>
-  );
+    <section className={styles.lines} data-about-section="clear-lines">
+      <div><p className={styles.eyebrow}>What B4GAMBLE is not</p><h2>Clear lines, kept.</h2></div>
+      <ul><li>Not a casino. We never take bets or hold your money.</li><li>Not a therapy service. The Programme builds habits; it doesn&apos;t diagnose or treat.</li><li>Not neutral about honesty. Casinos that fail our tests don&apos;t get ranked, whatever they&apos;d pay.</li></ul>
+    </section>
+  </article>;
 }

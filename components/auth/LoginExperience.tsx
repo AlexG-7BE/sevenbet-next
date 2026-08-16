@@ -82,24 +82,10 @@ export function LoginExperience({ authError, authState, googleAvailable, returnT
 
   return (
     <div className={styles.page} data-login-page>
-      <section className={styles.intro}>
-        <p className={styles.kicker}>{linkRecovery ? "EXISTING ACCOUNT · SECURE RECOVERY" : "ACCOUNT ACCESS"}</p>
-        <h1>{linkRecovery ? "Confirm the account that already owns this email." : <>Log in.<br /><em>Pick up your plan.</em></>}</h1>
-        <p>{linkRecovery
-          ? "Sign in with the existing B4GAMBLE email and password first. Only then can Google be explicitly linked to that authenticated account."
-          : "Return to your private Programme with the sign-in method already connected to your account."}</p>
-        <ul>
-          <li>Account identity is separate from Programme content</li>
-          <li>Google is not age verification or marketing consent</li>
-          <li>Protected Help stays available without signing in</li>
-        </ul>
-      </section>
-
-      <section aria-labelledby="login-title" className={styles.card}>
-        <div className={styles.cardHeading}>
-          <p>{linkRecovery ? "STEP 1 OF 2" : "LOG IN"}</p>
-          <h2 id="login-title">{linkRecovery ? (session?.user ? "Link Google" : "Use your existing password") : "Access your account"}</h2>
-        </div>
+      <section aria-labelledby="login-title" className={styles.panel}>
+        <p className={styles.kicker}>{linkRecovery ? "EXISTING ACCOUNT · SECURE RECOVERY" : "MEMBERS"}</p>
+        <h1 id="login-title">{linkRecovery ? "Confirm the account that already owns this email." : <>Log in.<br /><em>Pick up your plan.</em></>}</h1>
+        <p className={styles.lead}>{linkRecovery ? "Sign in with the existing B4GAMBLE email and password first. Only then can Google be explicitly linked to that authenticated account." : "Your Programme progress, saved rules and dashboard."}</p>
 
         {linkRecovery && session?.user ? <button className={styles.primary} disabled={busy} onClick={startGoogleLink} type="button">{busy ? "Opening Google…" : "Link Google securely"}</button> : <>
           {googleAvailable && !linkRecovery ? <button className={styles.google} disabled={busy} onClick={startGoogleSignIn} type="button"><span aria-hidden="true">G</span>{busy ? "Opening Google…" : "Continue with Google"}</button> : null}
@@ -112,8 +98,8 @@ export function LoginExperience({ authError, authState, googleAvailable, returnT
         </>}
 
         {error ? <p className={styles.error} role="alert">{error}</p> : null}
-        {linkRecovery ? <p className={styles.assurance}>An email match alone is not enough. B4GAMBLE links Google only after both sign-in steps succeed.</p> : <p className={styles.secondary}>New to B4GAMBLE? <Link href="/program">Start the 10-Step Programme</Link></p>}
-        <p className={styles.legal}>By continuing, you use your existing account under the <Link href="/terms">Terms</Link> and <Link href="/privacy">Privacy Notice</Link>. No marketing consent is added.</p>
+        {linkRecovery ? <p className={styles.assurance}>An email match alone is not enough. B4GAMBLE links Google only after both sign-in steps succeed.</p> : <aside className={styles.newHere}><strong>New here?</strong><p>There&apos;s no signup form. Your account is created inside the Programme — Mission 01 builds your starting point, then you choose what to save.</p><Link href="/program">Start the 10-Step Programme →</Link></aside>}
+        <p className={styles.legal}>18+ · Private by default — narrative answers stay in your browser. <Link href="/terms">Terms</Link> · <Link href="/privacy">Privacy</Link></p>
       </section>
     </div>
   );

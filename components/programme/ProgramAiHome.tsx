@@ -17,6 +17,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
 }) {
   const current = home.missions.find((mission) => mission.missionNumber === home.currentMission);
   const authenticatedMission = home.currentMission >= 2;
+  const completedCount = home.missions.filter((mission) => mission.status === "completed").length;
   return (
     <div className={styles.shell}>
       <ProgramAiAuthenticatedHeader totalXp={home.totalXp} userId={userId} />
@@ -31,6 +32,13 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
           <ActionButton onClick={() => authenticatedMission ? onMission(home.currentMission) : onStart()} size="large">
             {authenticatedMission ? `${home.currentAction ? "Resume" : "Review"} Mission ${String(home.currentMission).padStart(2, "0")}` : "Start Mission 01"}
           </ActionButton>
+        </section>
+
+        <section aria-label="Programme progress" className={styles.progressStats}>
+          <article><strong>{completedCount}/10</strong><span>Missions completed</span></article>
+          <article><strong>{home.totalXp}</strong><span>Total XP</span></article>
+          <article><strong>{home.currentStreak}</strong><span>Day streak</span></article>
+          <article><strong>{home.activeDays}</strong><span>Active days</span></article>
         </section>
 
         {home.startingPoint ? <article className={styles.startingPoint}>
@@ -55,6 +63,14 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
           <strong>{home.nextReview.xpRemaining} XP</strong>
           <small>{home.nextReview.missionsRemaining} Mission{home.nextReview.missionsRemaining === 1 ? "" : "s"} remaining</small>
         </section> : null}
+
+        <section aria-labelledby="achievements-title">
+          <div className={styles.sectionHead}><span className={styles.eyebrow}>ACHIEVEMENTS</span><h2 id="achievements-title">Proof of the work you have done.</h2><p>Earned and locked states come from your Programme record.</p></div>
+          <div className={styles.achievements}>{home.achievements.map((achievement) => <article data-state={achievement.state} key={achievement.slug}>
+            <span aria-hidden="true">{achievement.state === "earned" ? "✓" : "○"}</span>
+            <div><strong>{achievement.title}</strong><small>{achievement.state === "earned" ? "Earned" : "Locked"}</small></div>
+          </article>)}</div>
+        </section>
 
         <section aria-labelledby="personal-reviews-title">
           <div className={styles.sectionHead}><span className={styles.eyebrow}>PERSONAL REVIEWS</span><h2 id="personal-reviews-title">Pause and see what you built.</h2><p>Each Review becomes available at a meaningful point in the Programme.</p></div>
