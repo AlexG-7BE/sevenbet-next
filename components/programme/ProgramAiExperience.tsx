@@ -269,9 +269,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
           if (active) setMicrophonePermission("unknown");
         });
     }
-    return () => {
-      active = false;
-      observedStatus?.removeEventListener?.("change", onPermissionChange);
+    const releaseAudio = () => {
       clearMaximumTimer();
       clearRecordingTimer(false);
       if (recorder.current) {
@@ -283,6 +281,13 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
       }
       stopTracks();
       releaseRecording();
+    };
+    window.addEventListener("pagehide", releaseAudio);
+    return () => {
+      active = false;
+      observedStatus?.removeEventListener?.("change", onPermissionChange);
+      window.removeEventListener("pagehide", releaseAudio);
+      releaseAudio();
     };
   }, []);
 
@@ -432,7 +437,7 @@ function Recorder({ disabled, state, onState, onTranscript, onTranscribe, onUseT
 
   return (
     <div className={styles.recorder} data-state={state}>
-      <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator>●</span></div>
+      <div aria-hidden="true" className={styles.mic}><span className={styles.recordingDot} data-recording-indicator><svg fill="none" height="38" viewBox="0 0 24 24" width="38"><rect height="11" rx="3" stroke="currentColor" strokeWidth="1.8" width="6" x="9" y="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8"/></svg></span></div>
       <div><strong>{state === "recording" ? <><span aria-hidden="true">Recording · {String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:{String(recordingElapsedSeconds % 60).padStart(2, "0")} / 01:30</span><span className={styles.srOnly} role="status">Microphone is recording now. Stop or cancel when ready.</span></> : state === "transcribing" ? "Transcribing securely" : state === "success" ? "Transcript ready to review" : state === "denied" && microphonePermission === "denied" ? "Microphone is blocked for this site" : state === "denied" ? "Microphone did not start" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording cancelled" : "Prefer to speak?"}</strong><small>Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</small></div>
       {["idle", "cancelled", "success"].includes(state) ? <span className={styles.recorderActions}><button disabled={disabled} onClick={start} type="button">{state === "success" ? "Record again" : "Tap to speak"}</button>{state !== "success" ? <button className={styles.cancelRecording} disabled={disabled} onClick={useTyped} type="button">I&apos;d rather type</button> : null}</span> : null}
       {state === "denied" ? <button disabled={disabled} onClick={microphonePermission === "denied" ? checkPermissionAndRetry : start} type="button">{microphonePermission === "denied" ? "Check microphone access" : "Try microphone again"}</button> : null}
@@ -485,13 +490,14 @@ function IntakeScreen({
       <Header />
       <main className={styles.intakeGrid}>
         <section className={styles.heroCopy}>
-          <span>MISSION 01 · YOUR SITUATION</span>
+          <span>MISSION 01</span>
+          <span className={styles.srOnly}>Before you share.</span>
           <span className={styles.srOnly}>What feels hardest to control right now?</span>
-          <h1>In your own words.</h1>
-          <p>A minute is plenty — we&apos;ll build your starting point from it.</p>
+          <h1>Tell us what is happening right now.</h1>
+          <p>In your own words. A minute is plenty — we&apos;ll build your starting point from it.</p>
           <div className={styles.jitCard}>
-            <strong>Before you share</strong>
-            <p>Your words may include health or addiction information. B4GAMBLE may process them only to draft this Starting Point. They are not used for advertising, affiliate targeting or diagnosis.</p>
+            <strong>Private by default</strong>
+            <p>Your words are never used for offers or rankings.</p>
             <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /> I choose to share this for Programme personalisation and understand I can withdraw before saving.</label>
           </div>
           <Link className={styles.helpLink} href="/help">Protected Help / pause options</Link>
@@ -556,7 +562,7 @@ function StartingPointReadyScreen({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   return <div className={styles.readyPage}><Header xp={20} /><main className={styles.readyShell}>
-    <section className={styles.readyIntro}><span>✓ YOUR STARTING POINT IS READY</span><h1>Your Starting Point is ready.</h1><p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p></section>
+    <section className={styles.readyIntro}><span>✓ YOUR STARTING POINT IS READY</span><span className={styles.srOnly}>Your Starting Point is ready.</span><h1>A plan built around your evenings.</h1><p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p></section>
     <section className={styles.readyCard}>
       <small>YOUR STARTING POINT</small><h2>{candidate.startingPoint}</h2>
       <div><span>What changes next</span><p>{candidate.desiredChange}</p></div>

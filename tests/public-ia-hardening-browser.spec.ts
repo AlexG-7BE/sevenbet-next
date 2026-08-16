@@ -25,7 +25,7 @@ function collectBrowserErrors(page: Page) {
 test("final public Responsible Gambling hub and Protected Help remain separate", async ({ page, request }) => {
   const hubResponse = await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "networkidle" });
   expect(hubResponse?.status()).toBe(200);
-  await expect(page.locator("[data-responsible-gambling-hub]")).toHaveCount(1);
+  await expect(page.locator('[data-handoff-page="responsibleGambling"]')).toHaveCount(1);
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(0);
   for (const name of ["Read the guides", "Start Programme", "Open Help"]) {
@@ -36,14 +36,15 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(2);
+  await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(1);
 
   const helpResponse = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   expect(helpResponse?.status()).toBe(200);
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/help");
-  await expect(page.getByText(/Casino, bonus and affiliate prompts do not appear in this area/)).toBeVisible();
+  await expect(page.getByText(/Your activity here is never used for offers, rankings or ads/)).toBeVisible();
+  await expect(page.locator('a[href^="/casinos"], a[href^="/bonuses"], a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
 
   for (const [slug, destination] of Object.entries(formerResponsibleGamblingRoutes)) {
     const legacy = await request.get(`${baseUrl}/responsible-gambling/${slug}`, { maxRedirects: 0 });
@@ -81,8 +82,8 @@ test("retired destinations are redirects and absent from canonical discovery", a
 
 test("SEO identities remain distinct and public article API matches Learn pages", async ({ page, request }) => {
   const identities = [
-    ["/responsible-gambling", "/responsible-gambling", /Responsible Gambling: Education, Tools & Support/],
-    ["/help", "/help", /Gambling Help & Support/],
+    ["/responsible-gambling", "/responsible-gambling", /Responsible Gambling \| B4GAMBLE/],
+    ["/help", "/help", /Gambling Help & Support \| B4GAMBLE/],
     ["/learn/responsible-gambling", "/learn?category=responsible-gambling", /Learn/],
   ] as const;
   for (const [route, destination, title] of identities) {
@@ -141,7 +142,7 @@ test("no-JS safety paths stay useful and direct Pexels requests stay absent", as
   await page.goto(`${baseUrl}/responsible-gambling`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("link", { name: /Open Help/i }).first()).toHaveAttribute("href", "/help");
   await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
-  await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /GamCare.*opens an external site/i })).toBeVisible();
   await context.close();
 
   const requests: string[] = [];

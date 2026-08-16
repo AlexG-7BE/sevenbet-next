@@ -106,8 +106,8 @@ test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ brows
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 720 } });
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  await expect(noJsPage.locator("details[open]")).toHaveCount(5);
-  await expect(noJsPage.getByRole("link", { name: /Open Protected Help/ })).toHaveAttribute("href", "/help");
+  await expect(noJsPage.locator("details[open]")).toHaveCount(1);
+  await expect(noJsPage.getByRole("link", { name: /Contact us/ })).toHaveAttribute("href", "/contact");
   await context.close();
 });
 

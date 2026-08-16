@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
 import { CuratedCasinoShortlist } from "@/components/casino-discovery/CuratedCasinoShortlist";
 import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
@@ -11,6 +12,7 @@ import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
+import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -31,7 +33,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 }
 
 export default async function CasinosPage({ searchParams }: PageProps) {
-  const query = parseCasinoDiscoveryQuery(await searchParams);
+  const raw = await searchParams;
+  if (isLocalHandoffVisualFixture(raw.visualFixture)) {
+    const selected = Array.isArray(raw.casino) ? raw.casino : raw.casino ? [raw.casino] : [];
+    return <HandoffPage name={selected.length >= 2 ? "casinosComparison" : "casinos"} />;
+  }
+  const query = parseCasinoDiscoveryQuery(raw);
   const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
   const result = await publicCasinoDiscoveryService.discover(query, authority);
   const schemas = [

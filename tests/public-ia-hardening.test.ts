@@ -34,17 +34,20 @@ function filesBelow(root: string): string[] {
 
 test("Responsible Gambling hub and Protected Help have separate canonical shells", () => {
   const hub = read("app/(public)/responsible-gambling/page.tsx");
+  const handoffPages = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
+  const hubDocument = hub + handoffPages.responsibleGambling.html;
   const help = read("app/help/page.tsx");
   const helpLayout = read("app/help/layout.tsx");
   const legacy = read("app/(public)/responsible-gambling/[slug]/page.tsx");
 
   assert.match(hub, /canonical: absoluteUrl\("\/responsible-gambling"\)/);
-  assert.match(hub, /data-responsible-gambling-hub/);
-  for (const path of ["/learn?category=responsible-gambling", "/10-steps", "/help"]) {
-    assert.match(hub, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.match(hub, /transformResponsibleGamblingHandoff/);
+  assert.match(hub, /<HandoffPage name="responsibleGambling" transform=\{transformResponsibleGamblingHandoff\} \/>/);
+  for (const path of ["/learn", "/10-steps", "/help"]) {
+    assert.match(hubDocument, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
-  assert.doesNotMatch(hub, /href:\s*"\/(?:self-check|tools\/budget-calculator)"/);
-  assert.doesNotMatch(hub, /safe for you|affordability score|diagnoses you|treatment plan|guaranteed outcome/iu);
+  assert.doesNotMatch(hubDocument, /href:\s*"\/(?:self-check|tools\/budget-calculator)"/);
+  assert.doesNotMatch(hubDocument, /safe for you|affordability score|diagnoses you|treatment plan|guaranteed outcome/iu);
   assert.match(help, /canonical: absoluteUrl\("\/help"\)/);
   assert.match(helpLayout, /data-protected-help-shell="true"/);
   assert.doesNotMatch(helpLayout, /PublicHeader|PublicFooter/);

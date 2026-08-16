@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LearningArticleView } from "./LearningArticleView";
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { JsonLd } from "@/components/seo/JsonLd";
 import {
   getArticlePath,
@@ -10,6 +11,7 @@ import {
   getRelatedArticles,
 } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
+import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
 
 export const dynamic = "force-dynamic";
 
@@ -118,9 +120,13 @@ function faqSchema(article: NonNullable<ReturnType<typeof getLearningArticle>>) 
 
 export default async function LearningArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string; slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const raw = await searchParams;
+  if (isLocalHandoffVisualFixture(raw.visualFixture)) return <HandoffPage name="article" />;
   const { category, slug } = await params;
   const article = getLearningArticle(category, slug);
 

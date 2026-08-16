@@ -1,0 +1,137 @@
+{
+  "phase": "diff",
+  "referenceBaseUrl": "http://127.0.0.1:4180",
+  "implementationBaseUrl": "http://127.0.0.1:4173",
+  "pages": [
+    {
+      "name": "home",
+      "file": "Home.dc.html",
+      "route": "/"
+    },
+    {
+      "name": "ten-steps",
+      "file": "10 Steps v2.dc.html",
+      "route": "/10-steps"
+    },
+    {
+      "name": "login",
+      "file": "Login.dc.html",
+      "route": "/login"
+    },
+    {
+      "name": "best-offers",
+      "file": "Best Offers.dc.html",
+      "route": "/best-offers"
+    },
+    {
+      "name": "casinos",
+      "file": "Casinos.dc.html",
+      "route": "/casinos"
+    },
+    {
+      "name": "casino-review",
+      "file": "Casino Review.dc.html",
+      "route": "/casino/demo-northstar"
+    },
+    {
+      "name": "bonuses",
+      "file": "Bonuses.dc.html",
+      "route": "/bonuses"
+    },
+    {
+      "name": "bonus-guide",
+      "file": "Article.dc.html",
+      "route": "/bonus-guide"
+    },
+    {
+      "name": "learn",
+      "file": "Learn.dc.html",
+      "route": "/learn"
+    },
+    {
+      "name": "learn-article",
+      "file": "Article.dc.html",
+      "route": "/learn/casino-bonuses/welcome-bonus-terms"
+    },
+    {
+      "name": "responsible-gambling",
+      "file": "Responsible Gambling.dc.html",
+      "route": "/responsible-gambling"
+    },
+    {
+      "name": "help",
+      "file": "Help.dc.html",
+      "route": "/help"
+    },
+    {
+      "name": "methodology",
+      "file": "Methodology.dc.html",
+      "route": "/methodology"
+    },
+    {
+      "name": "about",
+      "file": "About.dc.html",
+      "route": "/about"
+    },
+    {
+      "name": "faq",
+      "file": "FAQ.dc.html",
+      "route": "/faq"
+    },
+    {
+      "name": "affiliate-disclosure",
+      "file": "Affiliate Disclosure.dc.html",
+      "route": "/affiliate-disclosure"
+    },
+    {
+      "name": "contact",
+      "file": "Contact.dc.html",
+      "route": "/contact"
+    },
+    {
+      "name": "privacy",
+      "file": "Privacy.dc.html",
+      "route": "/privacy"
+    },
+    {
+      "name": "terms",
+      "file": "Terms.dc.html",
+      "route": "/terms"
+    },
+    {
+      "name": "not-found",
+      "file": "404.dc.html",
+      "route": "/true-parity-not-found"
+    },
+    {
+      "name": "programme-intake",
+      "file": "Programme.dc.html",
+      "state": "intake",
+      "route": "/program"
+    },
+    {
+      "name": "programme-registration",
+      "file": "Programme.dc.html",
+      "state": "registration",
+      "route": "/program"
+    },
+    {
+      "name": "programme-dashboard",
+      "file": "Programme.dc.html",
+      "state": "dashboard",
+      "route": "/program"
+    },
+    {
+      "name": "contextual-comparison",
+      "file": "Casinos.dc.html",
+      "state": "overlay",
+      "route": "/casinos"
+    }
+  ],
+  "widths": [
+    1440,
+    1024,
+    430,
+    390
+  ]
+}

@@ -1,6 +1,6 @@
 # Final Design Copy and Claims Audit
 
-**Audit date:** 16 August 2026
+**Audit date:** 17 August 2026
 
 **Release scope:** Draft PR and Vercel Preview only
 
@@ -39,7 +39,7 @@
 | --- | --- | --- |
 | Worked 35× examples, expected-cost examples, percentage rules of thumb | `LEGAL_REVIEW_REQUIRED` | Preserved verbatim for Draft as educational arithmetic, not a guarantee. Calculations and assumptions need independent editorial/legal sign-off. |
 | “The best offers … almost always … 10–15× on bonus only” | `LEGAL_REVIEW_REQUIRED` | Preserved because the manifest locks Draft article copy, but it is not suitable for Production as written. From 19 January 2026, Great Britain licensees may not impose wagering requirements over 10× the incentive amount. See the [UK Gambling Commission rule and final wording](https://www.gamblingcommission.gov.uk/standards/bingo-and-casino-technical-requirements/proposal-1-ban-or-limit-the-use-of-wagering-requirements). |
-| Significant eligibility, deposit, wagering, withdrawal and time-limit terms | `DYNAMIC_PLACEHOLDER` | Runtime offer terms come from current eligible DTOs. The Draft guide includes an additive primary-source record because CAP says significant conditions must be clear and prominent and full terms readily accessible; see [ASA/CAP free-bet and bonus guidance](https://www.asa.org.uk/advice-online/gambling-betting-and-gaming-free-bets-and-bonuses.html). |
+| Significant eligibility, deposit, wagering, withdrawal and time-limit terms | `DYNAMIC_PLACEHOLDER` | Runtime offer terms come from current eligible DTOs. The audit records that CAP says significant conditions must be clear and prominent and full terms readily accessible; see [ASA/CAP free-bet and bonus guidance](https://www.asa.org.uk/advice-online/gambling-betting-and-gaming-free-bets-and-bonuses.html). The locked Draft article itself is unchanged. |
 | Illustrative operator names, bonus amounts, wagering multipliers and comparison examples | `DYNAMIC_PLACEHOLDER` | Never used as live inventory. Directory/profile/comparison values use services or display `Unavailable`/published-data empty states. |
 
 ## Programme, Help and responsible-gambling claims
@@ -49,8 +49,8 @@
 | Programme has ten Missions and is free/no upsell | `VERIFIED` | Ten-Mission server-owned Programme and no Programme commercial links/paywall are detected. Reward, completion, next-Mission, streak, active-day and achievement values remain server projections. |
 | Starting Point can be drafted before account claim | `VERIFIED` | After the legal/access gate, anonymous Mission 01 accepts one voice-or-text situation submission and produces a best-effort Starting Point. The next screen is the ready/account-claim screen; no anonymous clarification, candidate editor or reward screen remains. Programme tests cover the complete claim continuation. |
 | “Programme does not diagnose or treat” and completion is not a statement that gambling is safe/suitable | `VERIFIED` | Explicit limitations are present in the Ten Steps/Programme presentation and existing safety architecture. |
-| Help pause length “24 hours to 6 weeks” or a B4GAMBLE human response within 24 hours | `UNVERIFIED` | Not implemented on `/help`. The prototype promises conflict with the approved fail-closed Help contract and were replaced there by verified external support, local emergency guidance and neutral unavailable states. |
-| GamCare, GAMSTOP and NHS support links | `VERIFIED` | Existing protected Help destinations and link/accessibility tests are retained. No regional emergency number is inferred. |
+| Help pause length “24 hours to 6 weeks” or a B4GAMBLE human response within 24 hours | `UNVERIFIED` | Preserved verbatim on the Draft Preview because the Founder lock requires the supplied static copy. No pause service or monitored 24-hour response evidence was detected. These claims block Production until independently substantiated or approved for revision. |
+| GamCare support link and National Gambling Helpline number | `VERIFIED` | The protected page links to GamCare and shows `0808 8020 133`; GamCare currently publishes that number as its free 24/7 helpline. No regional emergency number is inferred. |
 | Help choices/activity are not saved or used commercially | `VERIFIED` | Protected Help remains account-free, commercial-free and outside Programme completion/affiliate targeting. |
 
 ## Privacy, authentication and account claims
@@ -73,17 +73,17 @@
 - `VERIFIED`: casino/offer names, slugs, media, ratings, summaries, badges, terms, rankings, eligibility, countries, licence display, dates and affiliate destinations come from current public services/CMS records.
 - `VERIFIED`: comparison accepts validated public slugs only, supports up to three selections and displays `Unavailable` rather than fabricating missing differences.
 - `VERIFIED`: dashboard XP, progress, Mission state, active days, streaks, achievements and rewards are server-derived.
-- `DYNAMIC_PLACEHOLDER`: the paired base screenshots intentionally show published-data empty states because the local application database contains no public inventory.
-- `DYNAMIC_PLACEHOLDER`: explicitly labelled fictional `demo-*` casino records exist only in guarded disposable `_ci` browser fixtures and are removed after the test.
+- `DYNAMIC_PLACEHOLDER`: ordinary local and Vercel Preview rendering continues to use current public services, jurisdiction authority and DTO values, including legitimate empty/fail-closed states.
+- `DYNAMIC_PLACEHOLDER`: true-parity screenshots use the handoff's illustrative operator values only behind `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true` plus `visualFixture=true`. The guard rejects all Vercel environments, exposes no commercial action, and does not alter runtime records.
 
 ## Exact Draft copy deviations for Founder decision
 
 These are the complete deliberate static/editorial deviations from the supplied handoff in this Draft Preview:
 
-1. **Protected Help:** the handoff promises a pause of “24 hours to 6 weeks” and a B4GAMBLE human response within 24 hours. `/help` omits both. It instead names the verified GamCare and GAMSTOP destinations, links to NHS gambling help and tells a person in immediate danger to contact local emergency services; it does not infer a regional emergency number.
+1. **Protected Help:** no static copy is removed. The Draft Preview preserves the supplied pause and human-response promises verbatim while keeping Help free of offers, ad tracking and commercial targeting. The GamCare row is made into a real, accessible external link; the unsupported B4GAMBLE operational promises remain Production blockers.
 2. **Privacy:** the Preview shows “Updated 13 August 2026” rather than the handoff's 12 August date. It adds the current controller identity and address — 7BE Inc., trading as B4GAMBLE, 447 Broadway, 2nd Floor, 1663, New York, NY 10013, United States — and the paragraph defining the limited Google identity data, transient credential handling, and separation from age verification, Programme participation, reminders and marketing permission.
 3. **Terms:** the Preview shows “Effective 7 August 2026” and “Updated 9 August 2026” rather than the handoff's “Updated 12 Aug 2026”. It adds the same current operator identity and address. Those values replace the handoff's legal-date/controller presentation.
-4. **Bonus Guide:** the handoff article copy is unchanged, but the Preview appends a current primary-source record for the UK Gambling Commission wagering-requirement rule and ASA/CAP significant-conditions guidance.
+4. **Bonus Guide:** the handoff article copy is unchanged. The current UK Gambling Commission wagering-requirement rule and ASA/CAP significant-conditions guidance are recorded in this audit only; nothing is appended to the locked Draft page.
 5. **Dynamic commercial examples:** illustrative casino and offer names, amounts, terms, ranks, licences, dates and destinations from the handoff are replaced by eligible current DTO/CMS values. Missing authoritative data renders an empty or `Unavailable` state. Crypto, mobile and curated-ranking selectors fail closed when their required evidence is absent.
 6. **Responsive navigation:** the small-screen public header adds the control label “Menu” so the retained destinations remain accessible.
 7. **Programme:** the approved legal/adult access gate and just-in-time sensitive-input authority precede the handoff flow. Founder correction RFC-034 fixes the anonymous sequence to one voice-or-text situation submission, a best-effort ready Starting Point, then Google-primary/email-secondary account claim. It therefore omits the older anonymous clarification, candidate-editor and reward-screen presentation while preserving 20 XP for the situation action and 20 XP for Mission 01 completion after claim.

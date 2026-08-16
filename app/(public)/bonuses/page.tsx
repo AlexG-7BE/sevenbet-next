@@ -11,6 +11,7 @@ import {
 } from "@/components/bonus-directory/BonusDirectory";
 import { CuratedBonusShortlist } from "@/components/bonus-directory/CuratedBonusShortlist";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import finalStyles from "./BonusesFinal.module.css";
@@ -19,6 +20,7 @@ import type { PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
+import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -64,6 +66,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function BonusesPage({ searchParams }: PageProps) {
   const raw = await searchParams;
+  if (isLocalHandoffVisualFixture(raw.visualFixture)) return <HandoffPage name="bonuses" />;
   const query = parsePublicOfferQuery(raw, 24);
   const result = await loadBonusDirectory(query);
   const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability].filter((value) => value !== undefined).length;

@@ -15,7 +15,7 @@ test("legacy Compare route permanently consolidates into the casino directory", 
 
   await page.goto(`${baseUrl}/compare?casino=demo-northstar&casino=demo-summit&country=GB`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&casino=demo-summit&country=GB/);
-  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Compare", exact: true })).toHaveCount(0);
 });
 
@@ -23,13 +23,13 @@ test("comparison stays contextual and opens automatically on the second selectio
   await clearComparison(page);
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
   await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
-  await expect(page.getByRole("heading", { name: "See the differences." })).not.toBeVisible();
+  await expect(page.getByRole("heading", { name: "Side by side" })).not.toBeVisible();
 
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
-  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   await expect(page.getByText("2 of 3 selected")).toBeVisible();
   await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
-  await expect(page.getByText("Published evidence, side by side. No fabricated winner.")).toBeVisible();
+  await expect(page.getByText("Same test cycle for every casino")).toBeVisible();
   await expect(page.getByText("Country is a comparison preference, not proof of eligibility.")).toBeVisible();
 });
 
@@ -49,7 +49,7 @@ test("selection is capped at three, removable, clearable and session-persistent"
 
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByText("3 of 3 selected")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   await page.getByRole("button", { name: "Remove", exact: true }).first().click();
   await expect(page.getByText("2 of 3 selected")).toBeVisible();
   await page.getByRole("button", { name: "Close comparison" }).click();
@@ -76,7 +76,7 @@ test("desktop modal and mobile sheet avoid page-level horizontal overflow", asyn
   for (const viewport of [{ width: 1440, height: 1000 }, { width: 1024, height: 900 }, { width: 430, height: 932 }, { width: 390, height: 844 }]) {
     const page = await browser.newPage({ viewport, isMobile: viewport.width <= 430 });
     await page.goto(`${baseUrl}/casinos?casino=demo-northstar&casino=demo-summit&country=GB`, { waitUntil: "networkidle" });
-    await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(true);
     await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
     await page.close();

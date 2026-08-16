@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 import styles from "./ContextualComparison.module.css";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 
 const STORAGE_KEY = "b4gamble:public-comparison:v1";
 const CHANGE_EVENT = "b4gamble:comparison-change";
@@ -23,7 +24,6 @@ function urlSlugs(searchParams: URLSearchParams) {
 
 export function ContextualComparison() {
   const pathname = usePathname();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [slugs, setSlugs] = useState<string[]>([]);
   const [result, setResult] = useState<PublicComparisonResult | null>(null);
@@ -50,10 +50,10 @@ export function ContextualComparison() {
       params.delete("differences");
       if (params.get("country") === "GB") params.delete("country");
     }
-    router.replace(`${pathname}${params.size ? `?${params}` : ""}`, { scroll: false });
+    window.history.replaceState(window.history.state, "", `${pathname}${params.size ? `?${params}` : ""}`);
     if (autoOpen && next.length === 2 && previousCount.current < 2) setOpen(true);
     previousCount.current = next.length;
-  }, [announce, pathname, router, searchParams]);
+  }, [announce, pathname, searchParams]);
 
   useEffect(() => {
     const fromUrl = urlSlugs(new URLSearchParams(searchParams.toString()));
@@ -112,6 +112,8 @@ export function ContextualComparison() {
 
   if (!slugs.length) return null;
   const names = result?.casinos ?? [];
+  const comparisonRows = result?.groups.flatMap((group) => group.rows) ?? [];
+  const highestScore = names.length ? Math.max(...names.map((casino) => casino.editorScore)) : null;
 
   return <>
     <aside aria-label="Casino comparison tray" className={styles.tray}>
@@ -123,17 +125,39 @@ export function ContextualComparison() {
     </aside>
     <dialog aria-labelledby="comparison-title" className={styles.dialog} onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
       <div className={styles.sheet}>
-        <header><div><span>CONTEXTUAL COMPARISON · {slugs.length} / 3</span><h2 id="comparison-title">See the differences.</h2><p>Published evidence, side by side. No fabricated winner.</p></div><button aria-label="Close comparison" onClick={() => setOpen(false)} type="button">Close</button></header>
-        <div className={styles.selected}>
+        <header>
+          <div><h2 id="comparison-title">Side by side</h2><span>Same test cycle for every casino</span></div>
+          <button aria-label="Close comparison" onClick={() => setOpen(false)} type="button"><span aria-hidden="true">×</span></button>
+        </header>
+        {loading ? <p className={styles.state} role="status">Building the comparison…</p> : (result?.status === "available" || result?.status === "no-comparable") && names.length ? <div className={styles.comparisonCards}>
           {slugs.map((slug) => {
             const casino = names.find((entry) => entry.slug === slug);
-            return <article key={slug}><strong>{casino?.name ?? slug.replaceAll("-", " ")}</strong><span>{casino ? `${casino.editorScore.toFixed(1)} / 10` : loading ? "Checking…" : "Unavailable"}</span><button onClick={() => commit(slugs.filter((entry) => entry !== slug), false)} type="button">Remove</button></article>;
+            const displayName = casino?.name ?? slug.replaceAll("-", " ");
+            return <article className={styles.comparisonCard} key={slug}>
+              <div className={styles.casinoHead}>
+                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+                <div><h3>{displayName}</h3><small>{casino?.dataClassification === "DEMO_FIXTURE" ? "Fictional demo profile" : "Independent review"}</small></div>
+              </div>
+              {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>Top score</strong>}
+              <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★</span></div>
+              <div className={styles.factList}>
+                {comparisonRows.slice(0, 7).map((row) => <dl key={row.id} title={row.description}>
+                  <dt>{row.label}</dt>
+                  <dd>{row.values[slug]?.text ?? "Unavailable"}</dd>
+                  <small>{row.values[slug]?.status ?? "Unavailable"}</small>
+                </dl>)}
+              </div>
+              {!comparisonRows.length && <p className={styles.noEvidence}>Published comparison evidence is unavailable.</p>}
+              <div className={styles.columnActions}>
+                {casino?.action.available && casino.action.href
+                  ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} />
+                  : casino ? <Link className={styles.reviewAction} href={casino.reviewHref}>Full review</Link> : null}
+                <button onClick={() => commit(slugs.filter((entry) => entry !== slug), false)} type="button">Remove</button>
+              </div>
+            </article>;
           })}
-        </div>
-        {loading ? <p className={styles.state} role="status">Building the comparison…</p> : (result?.status === "available" || result?.status === "no-comparable") && result.groups.length ? <div className={styles.groups}>
-          {result.groups.map((group) => <section key={group.id}><h3>{group.label}</h3>{group.rows.map((row) => <div className={styles.row} key={row.id}><div><strong>{row.label}</strong><small>{row.description}</small></div>{slugs.map((slug) => <p key={slug}><span>{row.values[slug]?.text ?? "Unavailable"}</span><small>{row.values[slug]?.status ?? "Unavailable"}</small></p>)}</div>)}</section>)}
         </div> : <p className={styles.state} role="status">The selected public comparison is unavailable. No substitute has been inserted.</p>}
-        <footer><span>Country is a comparison preference, not proof of eligibility.</span><div>{names.map((casino) => <Link href={casino.reviewHref} key={casino.slug}>Review {casino.name}</Link>)}</div></footer>
+        <footer><span>18+ · Availability is never assumed · Scores are editorial — <Link href="/methodology">how we test</Link>. Country is a comparison preference, not proof of eligibility.</span></footer>
       </div>
     </dialog>
   </>;

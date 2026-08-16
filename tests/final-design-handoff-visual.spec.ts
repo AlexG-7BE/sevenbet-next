@@ -41,13 +41,19 @@ test("capture the final handoff surface matrix without page-level overflow", asy
     for (const [name, path] of surfaces) {
       const errors: string[] = [];
       const onPageError = (error: Error) => errors.push(error.message);
-      const onConsole = (message: import("@playwright/test").ConsoleMessage) => { if (message.type() === "error") errors.push(message.text()); };
+      const onConsole = (message: import("@playwright/test").ConsoleMessage) => {
+        if (message.type() === "error" && !message.text().startsWith("Failed to load resource:")) errors.push(message.text());
+      };
+      const onResponse = (response: import("@playwright/test").Response) => {
+        if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`);
+      };
       page.on("pageerror", onPageError);
       page.on("console", onConsole);
+      page.on("response", onResponse);
       const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle", { timeout: 8_000 }).catch(() => undefined);
       expect(response?.status(), `${name} at ${viewport.width}px`).toBe(name === "not-found" ? 404 : 200);
-      if (name === "contextual-comparison") await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+      if (name === "contextual-comparison") await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
       const overflowing = await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth ? [] : Array.from(document.querySelectorAll<HTMLElement>("body *"))
         .filter((element) => {
           const rect = element.getBoundingClientRect();
@@ -57,12 +63,13 @@ test("capture the final handoff surface matrix without page-level overflow", asy
         .map((element) => ({ className: element.className, tag: element.tagName, text: element.textContent?.trim().slice(0, 80) })));
       expect(overflowing, `${name} overflow at ${viewport.width}px`).toEqual([]);
       const unexpectedErrors = name === "not-found"
-        ? errors.filter((message) => !message.includes("status of 404"))
+        ? errors.filter((message) => !message.includes("status of 404") && !/^404 .*\/final-handoff-not-found$/.test(message))
         : errors;
       expect(unexpectedErrors, `${name} browser errors at ${viewport.width}px`).toEqual([]);
       await page.screenshot({ path: join(output, `${name}-implementation-final.png`), animations: "disabled", fullPage: true });
       page.off("pageerror", onPageError);
       page.off("console", onConsole);
+      page.off("response", onResponse);
     }
     await context.close();
   }

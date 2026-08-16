@@ -76,7 +76,7 @@ test("contextual comparison selection updates URL state without a document navig
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
   await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
-  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   expect(documents).toBe(0);
 });
 

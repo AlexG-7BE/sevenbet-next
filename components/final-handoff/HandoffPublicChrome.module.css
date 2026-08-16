@@ -1,0 +1,123 @@
+.nav,
+.footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px 48px;
+  padding: 28px clamp(24px, 5vw, 72px);
+  background: var(--sb-surface-night);
+  color: var(--sb-text-on-night);
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+
+.nav {
+  border-bottom: 1px solid color-mix(in srgb, var(--sb-text-on-night) 12%, transparent);
+}
+
+.brand {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--sb-text-on-night);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: .02em;
+  text-decoration: none;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 36px;
+  color: color-mix(in srgb, var(--sb-text-on-night) 72%, transparent);
+  font-size: 14px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+}
+
+.links a,
+.login {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  text-decoration: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-left: auto;
+}
+
+.login {
+  color: color-mix(in srgb, var(--sb-text-on-night) 72%, transparent);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.programme {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 24px;
+  border: 1px solid color-mix(in srgb, var(--sb-text-on-night) 40%, transparent);
+  border-radius: 999px;
+  color: var(--sb-text-on-night);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.footer {
+  gap: 24px;
+  padding-top: 24px;
+  padding-bottom: 24px;
+  border-top: 1px solid color-mix(in srgb, var(--sb-text-on-night) 12%, transparent);
+  color: color-mix(in srgb, var(--sb-text-on-night) 55%, transparent);
+  font-size: 13px;
+}
+
+.age {
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, var(--sb-text-on-night) 35%, transparent);
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.legal {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+}
+
+.legal a {
+  padding-bottom: 1px;
+  border-bottom: 1px solid color-mix(in srgb, var(--sb-text-on-night) 25%, transparent);
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav a:focus-visible,
+.footer a:focus-visible {
+  outline: 3px solid var(--sb-action-primary);
+  outline-offset: 4px;
+}
+
+@media (hover: hover) {
+  .links a:hover,
+  .login:hover { color: var(--sb-text-on-night); }
+  .programme:hover { border-color: var(--sb-action-primary); background: var(--sb-action-primary); color: var(--sb-text-ink); }
+}
+
+@media (max-width: 700px) {
+  .nav { column-gap: 28px; row-gap: 16px; }
+  .brand { min-height: 44px; margin-block: -9px; }
+  .links { order: 3; width: 100%; gap: 18px 24px; }
+  .links a { min-height: 44px; margin-block: -10px; }
+  .actions { gap: 16px; }
+  .programme { padding: 10px 16px; }
+  .legal { width: 100%; margin-left: 0; }
+}

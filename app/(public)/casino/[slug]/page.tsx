@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 
 import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { profileEditorialDocument } from "@/lib/casino-profile/presentation";
@@ -10,6 +11,7 @@ import { casinoProfileMetadata, casinoProfileSchemas } from "@/lib/casino-profil
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
+import { isLocalHandoffVisualFixture } from "@/lib/final-handoff/visual-fixture";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -36,7 +38,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return casinoProfileMetadata(casino, casino ? profileEditorialDocument(editorialResult, casino.id) : null);
 }
 
-export default async function CasinoPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function CasinoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = await searchParams;
+  if (isLocalHandoffVisualFixture(raw.visualFixture)) return <HandoffPage name="casinoReview" />;
   const { slug } = await params;
   const { casino, editorialResult } = await loadCasinoPage(slug);
   if (!casino) notFound();

@@ -5,7 +5,8 @@ const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 test("unknown route is a branded noindex HTTP 404 with safe no-JS recovery", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/launch-polish-deliberately-missing`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(404);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("This route is lost.");
+  await expect(page.getByRole("heading", { level: 1, name: "404" })).toBeVisible();
+  await expect(page.getByText("This route is lost.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to homepage" })).toHaveAttribute("href", "/");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/i);
   await expect(page.locator("body")).not.toContainText(/digest|stack|database|provider/iu);
@@ -20,9 +21,9 @@ test("public error boundary renders safe recovery without exposing the local har
   await expect(page.locator("body")).not.toContainText(/LAUNCH_POLISH_BROWSER_HARNESS|digest|stack|database|provider/iu);
 });
 
-test("footer Contact link reaches the canonical Contact page", async ({ page }) => {
-  await page.goto(`${baseUrl}/about`, { waitUntil: "domcontentloaded" });
-  await page.locator("footer").getByRole("link", { name: "Contact" }).click();
+test("final handoff Contact link reaches the canonical Contact page", async ({ page }) => {
+  await page.goto(`${baseUrl}/terms`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("link", { name: "Contact", exact: true }).first().click();
   await expect(page).toHaveURL(`${baseUrl}/contact`);
   await expect(page.getByRole("heading", { level: 1, name: "Talk to us." })).toBeVisible();
   await expect(page.locator('link[rel="canonical"][href$="/contact"]')).toHaveCount(1);

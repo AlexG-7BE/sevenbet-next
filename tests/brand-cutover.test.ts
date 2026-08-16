@@ -65,7 +65,7 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Keep gambling your decision, not a habit\./);
+  assert.match(footer, /Independent reviews\. Real tests\.[\s\S]*Player first\./);
   assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);

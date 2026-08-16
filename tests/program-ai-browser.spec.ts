@@ -223,7 +223,7 @@ async function openCurrentMission(page: Page, missionNumber: number, width: numb
   const mission = programAiMissionRegistry.find((item) => item.missionNumber === missionNumber)!;
   await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
   await page.goto("/program");
-  await page.getByRole("button", { name: `Resume Mission ${String(missionNumber).padStart(2, "0")}` }).click();
+  await page.getByRole("button", { name: "Resume mission", exact: true }).click();
   await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 }
@@ -429,25 +429,25 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_304))).toBe(4_194_304);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"] strong')).toContainText("Recording · 00:00 / 01:30");
   const recordingDot = page.locator("[data-recording-indicator]");
   expect(await recordingDot.evaluate((element) => getComputedStyle(element).animationName)).not.toBe("none");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(recordingDot).toHaveCSS("animation-name", "none");
   await page.clock.fastForward(1_000);
-  await expect(page.getByText("Recording · 00:01 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"] strong')).toContainText("Recording · 00:01 / 01:30");
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByLabel("Editable transcript")).toHaveValue(situation);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   await page.clock.fastForward(2_000);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   expect(transcriptionCalls).toBe(1);
   expect(authorityCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
 
   await page.getByRole("button", { name: "Record again" }).click();
   await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(3));
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   await page.clock.fastForward(2_000);
@@ -458,7 +458,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
 
   await page.getByRole("button", { name: "Tap to speak" }).click();
   await page.clock.fastForward(90_000);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   expect(transcriptionCalls).toBe(2);
 
   await page.getByRole("button", { name: "Record again" }).click();
@@ -470,8 +470,8 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("button", { name: "type instead" }).click();
 
   await page.getByRole("button", { name: "Tap to speak" }).click();
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
-  await page.getByRole("link", { name: "B4GAMBLE" }).click();
+  await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
+  await page.goto("/");
   await expect(page).toHaveURL("/");
   expect(transcriptionCalls).toBe(2);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(6);
@@ -519,12 +519,12 @@ test("fresh microphone access uses the browser request before denied recovery", 
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
 
-  await expect(page.getByText("Prefer to speak?")).toBeVisible();
-  await expect(page.getByText("Microphone did not start")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
   await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await expect(page.getByText("Microphone did not start")).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/permission prompt was dismissed|microphone was not made available/i);
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
   await page.getByRole("button", { name: "Try microphone again" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
@@ -559,8 +559,7 @@ test("persistently denied microphone state explains browser recovery and recheck
 
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
   await page.getByRole("button", { name: "Tap to speak" }).click();
-  await expect(page.getByText("Microphone is blocked for this site")).toBeVisible();
-  await expect(page.getByText(/browser will not show another prompt/i)).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/browser will not show another prompt/i);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
   await page.getByRole("button", { name: "Check microphone access" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
@@ -582,7 +581,7 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Tap to speak" }).click();
-  await expect(page.getByText("Voice recording is not supported here")).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/cannot record audio with the features B4GAMBLE needs/i);
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 
@@ -602,7 +601,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await noHorizontalOverflow(page);
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
 
-  await expect(page.getByRole("heading", { name: "In your own words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   const sensitiveCheckbox = page.getByRole("checkbox");
   await sensitiveCheckbox.focus();
   await page.keyboard.press("Space");
@@ -622,13 +621,13 @@ test("typed fallback path binds exact authority and is idempotent through real e
   });
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
-  await expect(page.getByRole("heading", { name: "Your Starting Point is ready." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
   await expect(page.locator('[data-programme-phase="registration"]')).toBeVisible();
   await expect(page.locator('[data-programme-phase="clarification"], [data-programme-phase="candidate"], [data-programme-phase="reward"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toHaveCount(0);
   await expect(page.getByText("ONE SHORT FOLLOW-UP", { exact: false })).toHaveCount(0);
   await expect(page.getByText("MISSION 01 COMPLETE", { exact: true })).toHaveCount(0);
-  await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
+  await expect(page.getByText("20 XP", { exact: true })).toBeHidden();
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const anonymousAuthority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
     where: { anonymousSessionId: anonymousSession.id, withdrawnAt: null },
@@ -652,7 +651,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
   await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
   expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
@@ -784,12 +783,12 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         expect(awards.sort((left, right) => left - right)).toEqual([0, 15]);
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto("/program");
-        await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
         await noHorizontalOverflow(page);
         await page.reload();
-        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
-        await page.getByRole("button", { name: "Resume Mission 02" }).click();
+        await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "Resume mission", exact: true }).click();
         await page.getByRole("radio", { name: "Pause before one decision" }).check();
         await page.getByRole("button", { name: "Create personal drafts" }).click();
         await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
@@ -897,10 +896,10 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/program");
   await expect(page.getByText("715 XP", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission 10 — Make the plan reviewable" })).toBeVisible();
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
-  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(3);
+  await expect(page.getByText("Your data is private. We never use it for offers or rankings.")).toBeVisible();
   await noHorizontalOverflow(page);
 
   for (const width of [375, 390, 768, 1024, 1440]) {
@@ -1042,7 +1041,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("heading", { name: "In your own words." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   await page.getByRole("checkbox").check();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);

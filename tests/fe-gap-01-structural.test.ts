@@ -6,6 +6,9 @@ import test from "node:test";
 const read = (path: string) => readFileSync(path, "utf8");
 const privacy = read("app/(public)/privacy/page.tsx");
 const terms = read("app/(public)/terms/page.tsx");
+const generated = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
+const privacyDocument = privacy + generated.privacy.html.replaceAll("&amp;", "&");
+const termsDocument = terms + generated.terms.html.replaceAll("&amp;", "&");
 const handoffLegalPage = read("app/(public)/_legal/HandoffLegalPage.tsx");
 const selfPage = read("app/(public)/self-check/page.tsx");
 const selfFlow = read("app/(public)/self-check/SelfCheckFlow.tsx");
@@ -22,20 +25,20 @@ test("Privacy is the substantive final handoff document and stays noindex/follow
   assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
   assert.match(privacy, /canonical:\s*absoluteUrl\("\/privacy"\)/);
   assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
-  for (const content of ["What we collect", "What we never do", "Cookies", "Your rights", "Retention & security", "We do not sell personal data", "no shared identifier", "updated=\"13 August 2026\""]) assert.ok(privacy.includes(content), content);
+  for (const content of ["What we collect", "What we never do", "Cookies", "Your rights", "Retention & security", "We do not sell personal data", "no shared identifier", "updated=\"13 August 2026\""]) assert.ok(privacyDocument.includes(content), content);
   assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
-  assert.doesNotMatch(privacy, placeholders);
-  assert.doesNotMatch(privacy + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);
+  assert.doesNotMatch(privacyDocument, placeholders);
+  assert.doesNotMatch(privacyDocument + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);
 });
 
 test("Terms is the substantive final handoff document and preserves consumer boundaries", () => {
   assert.doesNotMatch(terms, /["']use client["']/);
   assert.match(terms, /canonical:\s*absoluteUrl\("\/terms"\)/);
   assert.match(terms, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
-  assert.match(terms, /We are not a casino/i);
-  for (const content of ["What this service is", "Eligibility — 18+", "Your account", "Accuracy & liability", "Content & changes", "Nothing here is financial, legal or medical advice", "we are not liable for losses arising from gambling decisions", "compensation never changes a score"]) assert.ok(terms.includes(content), content);
-  assert.doesNotMatch(terms, placeholders);
-  assert.doesNotMatch(terms + handoffLegalPage, /accept terms checkbox|I accept|Agree to Terms/iu);
+  assert.match(termsDocument, /We are not a casino/i);
+  for (const content of ["What this service is", "Eligibility — 18+", "Your account", "Accuracy & liability", "Content & changes", "Nothing here is financial, legal or medical advice", "we are not liable for losses arising from gambling decisions", "compensation never changes a score"]) assert.ok(termsDocument.includes(content), content);
+  assert.doesNotMatch(termsDocument, placeholders);
+  assert.doesNotMatch(termsDocument + handoffLegalPage, /accept terms checkbox|I accept|Agree to Terms/iu);
 });
 
 test("Self-Check compatibility route consolidates into Responsible Gambling", () => {

@@ -22,28 +22,32 @@ function Visit({ casino }: { casino: PublicCasinoCardDto }) {
 export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardDto[] }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
-  const featured = top[0] ?? null;
 
   return <section className={styles.section} aria-labelledby="curated-title">
     <div className={styles.shell}>
       <div className={styles.tabs} aria-label="Casino use-case selectors" role="tablist">
         {selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{label}</button>)}
       </div>
-      <p className={styles.context} id="curated-title"><strong>{selector}</strong><span>Three casinos maximum. Ranked from current editorial evidence for this use-case.</span></p>
-      {!featured ? <div className={styles.empty} role="status"><strong>No verified matches currently</strong><p>{selector === "Best Bonuses" ? "The casino directory does not expose enough authoritative offer-ranking evidence to name a best bonus here." : selector === "Crypto" || selector === "Mobile" ? `No current casino record has verified ${selector.toLowerCase()} support.` : "No eligible current casino records are available for this selector."}</p></div> : <>
-      <article className={styles.featured}>
-        <div className={styles.number}>01</div>
-        <div className={styles.identity}><span aria-hidden="true">{featured.name.slice(0, 1)}</span><div><small>{selector}</small><h2>{featured.name}</h2><b>{featured.rating?.toFixed(1) ?? "—"} / 10</b></div></div>
-        <p>{featured.shortDescription}</p>
-        {featured.featuredBonus ? <div className={styles.offer}><small>Current offer</small><strong>{featured.featuredBonus.title}</strong><span>{featured.featuredBonus.keyTerms.slice(0, 3).join(" · ")}</span></div> : null}
-        <div className={styles.actions}><Visit casino={featured} /><Link href={`/casino/${featured.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={featured.name} casinoSlug={featured.slug} /></div>
-      </article>
-      <div className={styles.alternatives}>{top.slice(1).map((casino, index) => <article key={casino.id}>
-        <div className={styles.altHead}><span>0{index + 2}</span><div><h3>{casino.name}</h3><b>{casino.rating?.toFixed(1) ?? "—"} / 10</b></div></div>
-        <p>{casino.shortDescription}</p>
-        {casino.featuredBonus ? <strong className={styles.altOffer}>{casino.featuredBonus.title}</strong> : null}
-        <div className={styles.actions}><Visit casino={casino} /><Link href={`/casino/${casino.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /></div>
-      </article>)}</div></>}
+      <p className={styles.context} id="curated-title"><strong>{selector}</strong><span>Top 3 for “{selector}” — three equal picks, ranked by results in this use-case.</span></p>
+      {!top.length ? <div className={styles.empty} role="status"><strong>No verified matches currently</strong><p>{selector === "Best Bonuses" ? "The casino directory does not expose enough authoritative offer-ranking evidence to name a best bonus here." : selector === "Crypto" || selector === "Mobile" ? `No current casino record has verified ${selector.toLowerCase()} support.` : "No eligible current casino records are available for this selector."}</p></div> : <div className={styles.cards}>
+        {top.map((casino, index) => <article className={styles.card} key={casino.id}>
+          <div className={styles.cardHead}>
+            <span className={styles.mark} aria-hidden="true">{casino.name.slice(0, 1)}</span>
+            <div className={styles.identity}><h2>{casino.name}</h2><small>{casino.shortDescription || "Independent review"}</small></div>
+            <b className={styles.number}>{String(index + 1).padStart(2, "0")}</b>
+          </div>
+          <div className={styles.score}><small>Editor score</small><strong>{casino.rating?.toFixed(1) ?? "—"}</strong><span aria-hidden="true">★★★★★</span></div>
+          <div className={styles.offer}><small>Current offer</small><strong>{casino.featuredBonus?.title ?? "No active public bonus"}</strong></div>
+          <dl className={styles.terms}>
+            <div><dt>Payout</dt><dd>{casino.featuredBonus?.keyTerms[0] ?? "See review"}</dd></div>
+            <div><dt>Wagering</dt><dd>{casino.featuredBonus?.wageringRequirement === null || casino.featuredBonus?.wageringRequirement === undefined ? "Not listed" : `${casino.featuredBonus.wageringRequirement}x`}</dd></div>
+            <div><dt>Min deposit</dt><dd>{casino.featuredBonus?.minimumDeposit === null || casino.featuredBonus?.minimumDeposit === undefined ? "Not listed" : `${casino.featuredBonus.currency || "GBP"} ${casino.featuredBonus.minimumDeposit}`}</dd></div>
+          </dl>
+          <p className={styles.reason}>{casino.shortDescription || "Read the evidence, material terms and availability before deciding."}</p>
+          <div className={styles.actions}><Visit casino={casino} /><Link href={`/casino/${casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /></div>
+        </article>)}
+      </div>}
+      {top.length ? <div className={styles.why}><strong>Why these three?</strong><span>Same real-money test cycle for every casino</span><span>Ranked by results in this use-case, not headline size</span><Link href="/methodology">Methodology →</Link></div> : null}
     </div>
   </section>;
 }

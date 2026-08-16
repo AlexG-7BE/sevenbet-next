@@ -19,10 +19,12 @@ const homeAssets = [
   "public/home/tool-pause-rule.svg",
 ];
 
-test("Home route renders TiltHome with the approved metadata and canonical", () => {
-  assert.match(page, /import \{ TiltHome \}/);
-  assert.match(page, /<TiltHome \/>/);
-  assert.match(page, /title: "B4GAMBLE \| Know your limits before you play"/);
+test("Home route renders the final handoff with the approved metadata and canonical", () => {
+  assert.match(page, /import \{ HandoffPage \}/);
+  assert.match(page, /<HandoffPage name="home" \/>/);
+  assert.match(page, /const title = "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(page, /openGraph: \{[^}]*title, description/);
+  assert.match(page, /twitter: \{ card: "summary", title, description \}/);
   assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);

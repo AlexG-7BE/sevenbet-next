@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ActionLink } from "@/components/design-system/Action";
+import { HandoffFooterStrip, HandoffPublicNav } from "@/components/final-handoff/HandoffPublicChrome";
 import { NonceStyle } from "@/components/security/NonceStyle";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
 import { absoluteUrl } from "@/lib/site";
@@ -25,31 +25,24 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className={styles.page} data-contact-page>
+      <HandoffPublicNav />
       <header className={styles.hero}>
         <div className={styles.shell}>
-          <p className={styles.eyebrow}>Contact B4GAMBLE</p>
+          <p className={styles.eyebrow}><span aria-hidden="true" />Contact</p>
           <h1>Talk <em>to us.</em></h1>
           <p className={styles.heroCopy}>A human answers within 24 hours, usually faster. Corrections, questions, disagreements — all welcome.</p>
         </div>
       </header>
 
+      <div className={styles.paint} />
       <section className={styles.content} aria-label="Contact options">
         <div className={`${styles.shell} ${styles.grid}`}>
           <aside className={styles.context}>
-            <section className={styles.contextBlock} aria-labelledby="direct-contact-title">
-              <p className={styles.sectionLabel}>Other ways to reach us</p>
-              <h2 id="direct-contact-title">Email</h2>
-              <a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a>
-            </section>
-
-            <section className={styles.helpBlock} aria-labelledby="gambling-help-title">
-              <p className={styles.sectionLabel}>Control &amp; support</p>
-              <h2 id="gambling-help-title">Need help with gambling?</h2>
-              <p>B4GAMBLE&apos;s Help section opens without casino, bonus or affiliate prompts.</p>
-              <ActionLink className={styles.helpAction} href="/help" variant="ghost-paper">Open Help</ActionLink>
-            </section>
-            <section className={styles.contextBlock}><p className={styles.sectionLabel}>Corrections</p><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; — these go to the editorial desk and ship within 48 hours.</p></section>
-            <section className={styles.contextBlock}><p className={styles.sectionLabel}>Response time</p><p>Within 24 hours, usually faster. Weekends included.</p></section>
+            <p className={styles.routesLabel}>Other ways to reach us</p>
+            <section className={styles.contextBlock} aria-labelledby="direct-contact-title"><h2 id="direct-contact-title">Email</h2><a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a></section>
+            <section className={styles.contextBlock}><h2>Corrections</h2><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; — these go to the editorial desk and ship within 48 hours.</p></section>
+            <section className={styles.helpBlock} aria-labelledby="gambling-help-title"><h2 id="gambling-help-title">Need support, not customer service?</h2><p>Protected Help is commercial-free and confidential.</p><Link className={styles.helpAction} href="/help">Open Help →</Link></section>
+            <section className={styles.contextBlock}><h2>Response time</h2><p>Within 24 hours, usually faster. Weekends included.</p></section>
           </aside>
 
           <noscript>
@@ -67,6 +60,7 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
+      <HandoffFooterStrip contact={false} />
     </div>
   );
 }

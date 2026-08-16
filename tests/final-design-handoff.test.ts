@@ -41,21 +41,39 @@ test("casino comparison is contextual, capped and backed by the existing public 
   assert.match(route, /COMPARISON_UNAVAILABLE/);
 });
 
+test("handoff sample data is isolated to an explicit local visual fixture", () => {
+  const guard = read("lib/final-handoff/visual-fixture.ts");
+  assert.match(guard, /B4GAMBLE_HANDOFF_VISUAL_FIXTURE/);
+  assert.match(guard, /process\.env\.VERCEL !== "1"/);
+  assert.match(guard, /process\.env\.VERCEL_ENV !== "production"/);
+  for (const page of [
+    "app/(public)/best-offers/page.tsx",
+    "app/(public)/casinos/page.tsx",
+    "app/(public)/bonuses/page.tsx",
+    "app/(public)/casino/[slug]/page.tsx",
+    "app/(public)/learn/[category]/[slug]/page.tsx",
+  ]) assert.match(read(page), /isLocalHandoffVisualFixture/, page);
+});
+
 test("locked hero copy is present on every final public surface", () => {
+  const generated = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
+  const generatedText = (name: string) => generated[name].html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
   const expectations: Array<[string, RegExp]> = [
-    ["components/home/TiltHome.tsx", /CONTROL[\s\S]*starts here\./],
-    ["app/(public)/10-steps/TenStepsLanding.tsx", /TEN STEPS\.[\s\S]*One plan\./],
     ["app/(public)/best-offers/page.tsx", /Three picks\.[\s\S]*Not thirty\./],
     ["app/(public)/casinos/page.tsx", /Picked for[\s\S]*how you play\./],
     ["app/(public)/bonuses/page.tsx", /Value, measured[\s\S]*by terms\./i],
-    ["app/(public)/learn/LearningCenterPage.tsx", /Learn\.[\s\S]*Play smarter\./i],
-    ["app/(public)/responsible-gambling/page.tsx", /Take back control,[\s\S]*at your pace\./],
-    ["components/protected-help/ProtectedHelpHub.tsx", /We&apos;re here\.[\s\S]*No strings\./],
-    ["app/(public)/methodology/MethodologyDocument.tsx", /Evidence before[\s\S]*opinion\./i],
-    ["app/(public)/about/AboutDocument.tsx", /Built to be[\s\S]*on your side\./],
     ["app/(public)/contact/page.tsx", /Talk[\s\S]*to us\./i],
     ["app/(public)/privacy/page.tsx", /kind="privacy"/],
     ["app/(public)/terms/page.tsx", /kind="terms"/],
   ];
   for (const [path, expected] of expectations) assert.match(read(path), expected, path);
+  for (const [name, expected] of [
+    ["home", /Control starts here\./],
+    ["tenSteps", /Ten steps\. One plan\./],
+    ["learn", /Learn\. Play smarter\./],
+    ["responsibleGambling", /Take back control,[\s\S]*at your pace\./],
+    ["help", /We(?:'|’)re here\. No strings\./i],
+    ["methodology", /Evidence before[\s\S]*opinion\./i],
+    ["about", /Built to be[\s\S]*on your side\./],
+  ] as Array<[string, RegExp]>) assert.match(generatedText(name), expected, name);
 });

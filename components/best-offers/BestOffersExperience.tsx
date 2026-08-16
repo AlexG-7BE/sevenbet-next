@@ -92,6 +92,14 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
       </ol>
     </div></section>
 
+    <section className={styles.faq}><div className={styles.faqGrid}>
+      <h2>Before you click</h2>
+      <details open><summary>What does “wagering 35x” actually mean?</summary><p>You must stake the bonus amount 35 times before withdrawing winnings from it. On a €500 bonus that&apos;s €17,500 in total stakes — read our <Link href="/bonus-guide">bonus guide</Link> before deciding it&apos;s worth it.</p></details>
+      <details><summary>Do you earn money if I sign up?</summary><p>Usually yes — we may earn a commission. Affiliate compensation does not determine Editor Score or natural editorial ranking. Full details in our <Link href="/affiliate-disclosure">affiliate disclosure</Link>.</p></details>
+      <details><summary>Why only three offers?</summary><p>Because a page of twelve is a directory, not a recommendation. If you want the full field, the <Link href="/bonuses">Bonuses</Link> page has every offer with filters.</p></details>
+      <details><summary>What happens when I click View Offer?</summary><p>You&apos;ll see a short confirmation that you&apos;re leaving B4GAMBLE, with the commission disclosure — then you continue to the operator, or stay.</p></details>
+    </div></section>
+
     <section className={styles.finalOffer} aria-labelledby="final-offer-title"><div>
       <p className={styles.darkKicker}>Still here? The answer hasn&apos;t changed.</p>
       <h2 id="final-offer-title">{featured.casino.name}.<em>Our #1, tested.</em></h2>

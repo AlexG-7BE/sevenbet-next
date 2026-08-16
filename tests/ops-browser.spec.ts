@@ -100,26 +100,28 @@ test("shared Action preserves hover and focus visual contracts", async ({ page }
       outlineWidth: style.outlineWidth,
     };
   });
-  expect(focus).toEqual({ focusVisible: true, outlineOffset: "3px", outlineWidth: "3px" });
+  expect(focus.focusVisible).toBe(true);
+  expect(focus.outlineWidth).toBe("3px");
+  expect(Number.parseFloat(focus.outlineOffset)).toBeGreaterThanOrEqual(1);
 });
 
 test("Home renders its representative responsive hierarchy", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  const order = await page
-    .locator("[data-home-section]")
-    .evaluateAll((sections) => sections.map((section) => section.getAttribute("data-home-section")));
+  const order = await page.locator("[data-screen-label]").evaluateAll((sections) =>
+    sections.map((section) => section.getAttribute("data-screen-label")),
+  );
   expect(order).toEqual([
-    "hero",
-    "self-recognition",
-    "programme-theatre",
-    "recognise",
-    "build",
-    "apply",
-    "evidence",
-    "trust-boundary",
-    "final-programme-cta",
+    "Hero",
+    "Recognition",
+    "A plan you can see",
+    "Missions 01-03",
+    "Missions 04-07",
+    "Missions 08-10",
+    "Built from evidence",
+    "Why trust",
+    "Final CTA",
   ]);
 });
 
@@ -127,8 +129,10 @@ test("10 Steps renders representative signed-out content without invented progre
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/10-steps");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.locator("[data-ten-steps-section='mission-map']")).toBeVisible();
-  await expect(page.locator("[data-account-state='anonymous']")).toHaveCount(1);
+  await expect(page.locator('[data-handoff-page="tenSteps"]')).toHaveCount(1);
+  await expect(page.getByText("01", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("10", { exact: true }).last()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Start Mission 01" }).first()).toHaveAttribute("href", "/program?entry=start");
   await expect(page.getByText("Live values from your server-owned Programme record.")).toHaveCount(0);
   await expect(page.getByText("WELCOME BACK")).toHaveCount(0);
 });

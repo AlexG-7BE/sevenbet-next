@@ -267,8 +267,8 @@
 }
 
 .footer {
-  min-height: 500px;
-  padding: 64px 0 32px;
+  min-height: 390px;
+  padding: 66px 0 30px;
   background: var(--shell-night);
   color: var(--shell-white);
 }
@@ -320,6 +320,9 @@
 
 .footerBaseline {
   grid-column: 1 / -1;
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(255,255,255,.15);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -328,9 +331,10 @@
   font-size: 11px;
   line-height: 16px;
 }
-.footerBaseline > div { display: flex; flex-wrap: wrap; gap: 18px; }
+.footerBaseline > div { display: flex; flex-wrap: wrap; align-items:center; gap: 20px; }
 .footerBaseline a { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; }
 .footerBaseline a:hover { color: var(--shell-white); }
+.age { padding:3px 8px; border:1px solid rgba(255,255,255,.35); border-radius:999px; color:var(--shell-white); }
 
 .availabilityNotice {
   width: 100%;

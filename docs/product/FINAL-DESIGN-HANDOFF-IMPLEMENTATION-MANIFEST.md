@@ -74,14 +74,14 @@ Completion requires the gates in RFC-034. Until they pass, all new implementatio
 - **Detected:** shared public chrome, all mapped handoff surfaces, route consolidation, contextual comparison, analytics and responsive presentation are implemented on `codex/final-design-handoff-v1`.
 - **Detected:** `/bonus-guide` remains standalone; `/compare` is redirect-only and absent from public navigation, canonical discovery and the sitemap.
 - **Detected:** Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data-service boundaries remain in place; Programme progress and reward calculations remain server-owned.
-- **Detected:** functional, responsive, regression, build and screenshot gates passed. Evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/README.md`](../02_Product_Design/qa/final-design-handoff/README.md).
+- **Detected:** functional, responsive, regression, build and screenshot gates passed. Direct reference/implementation/diff evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/true-parity/README.md`](../02_Product_Design/qa/final-design-handoff/true-parity/README.md).
 - **Not authorised:** merge to `main`, Production configuration changes or Production deployment.
 
 ## Recorded deviations
 
-- The base screenshot environment has no current published casino inventory. Casino, bonus and comparison surfaces therefore show their designed fail-closed state; guarded disposable fixtures verify populated comparison behaviour.
+- True-parity commercial captures use the handoff's Solvane/Marlowe/Kestrel sample values through an explicit local-only renderer. The query parameter is inert unless `B4GAMBLE_HANDOFF_VISUAL_FIXTURE=true`; Vercel Preview and Production are both denied by the fixture guard. The ordinary Preview continues to use current governed services and DTOs.
 - Anonymous Mission 01 passes through the existing adult/Terms access gate and just-in-time authority, accepts one voice-or-text situation submission, produces a best-effort Starting Point, then shows the Google-primary/email-secondary ready/account-claim screen. There is no anonymous clarification, candidate editor or reward screen. Successful claim lands on the real server-owned Dashboard; `20 + 20` XP is unchanged.
-- Protected Help retains verified current resources and omits unsupported prototype response-time and pause-duration promises.
+- Protected Help retains its account-free, commercial-free and targeting-free architecture. The handoff's static response-time and pause-duration wording is reproduced for the Draft Preview and remains an explicit Production claims gate.
 - Privacy includes the current Google identity boundary, controller identity and 13 August 2026 access-contract date.
-- Bonus Guide retains the supplied Draft copy verbatim and appends current primary-source records for claims review.
+- Bonus Guide retains the supplied Draft copy verbatim. Current primary-source findings are recorded in the copy/claims audit rather than appended to the locked article.
 - Static commercial, methodology, operational and privacy claims remain Draft-only where classified in [`FINAL-DESIGN-COPY-CLAIMS-AUDIT.md`](FINAL-DESIGN-COPY-CLAIMS-AUDIT.md).

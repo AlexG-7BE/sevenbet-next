@@ -41,7 +41,7 @@ test("FAQ is the server-rendered product and trust surface with native disclosur
   assert.match(faq, /<summary>/);
   assert.match(faq, /canonical: absoluteUrl\("\/faq"\)/);
   assert.doesNotMatch(faq, /Help center|FAQ schema|Internal guide links|["']@type["']:\s*["']FAQPage["']/iu);
-  assert.ok(faq.lastIndexOf("Open Protected Help") > faq.lastIndexOf("How do I delete my data?"));
+  assert.ok(faq.lastIndexOf("Contact us") > faq.lastIndexOf("How do I delete my data?"));
 });
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {

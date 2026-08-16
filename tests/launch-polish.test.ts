@@ -16,12 +16,16 @@ function filesBelow(root: string): string[] {
 
 test("root 404 is static, branded and independent of auth and database", () => {
   const notFound = source("app/not-found.tsx");
-  assert.match(notFound, /className=\{styles\.errorCode\}>404/);
-  assert.match(notFound, /This route is lost/);
-  assert.match(notFound, /Let&apos;s get you back on course/);
-  assert.match(notFound, /href="\/"/);
-  assert.doesNotMatch(notFound, /href="\/help"/);
-  assert.match(notFound, /href="\/10-steps"/);
+  const handoff = JSON.parse(source("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
+  const document = notFound + handoff.notFound.html;
+  assert.match(notFound, /transformNotFoundHandoff/);
+  assert.match(notFound, /<HandoffPage name="notFound" transform=\{transformNotFoundHandoff\} \/>/);
+  assert.match(document, />404</);
+  assert.match(document, /This route is lost/);
+  assert.match(document, /Let's get you back on course/);
+  assert.match(document, /href="\/"/);
+  assert.doesNotMatch(document, /href="\/help"/);
+  assert.match(document, /href="\/10-steps"/);
   assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|cms/iu);
 });
 

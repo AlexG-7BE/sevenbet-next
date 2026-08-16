@@ -10,11 +10,11 @@ const groups = [
 
 export function PublicFooter() {
   return (
-    <footer className={styles.footer} data-public-shell="footer">
+    <footer aria-label="Control and support" className={styles.footer} data-public-shell="footer">
       <div className={styles.footerInner}>
         <div className={styles.footerLead}>
           <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
-          <p>Independent reviews. Real tests.<br />Player first.<br />Keep gambling your decision, not a habit.</p>
+          <p>Independent reviews. Real tests.<br />Player first.</p>
         </div>
         <div className={styles.footerGroups}>
           {groups.map((group) => (
@@ -24,18 +24,9 @@ export function PublicFooter() {
             </div>
           ))}
         </div>
-        <aside className={styles.footerHelp} aria-label="Control and support">
-          <span>NEED HELP NOW?</span>
-          <p>Free, confidential support. No casino, bonus or affiliate prompts.</p>
-          <Link href="/help">Get support</Link>
-        </aside>
-        <div className={styles.footerDisclosure}>
-          <strong>18+ · GAMBLE RESPONSIBLY</strong>
-          <p><span className={styles.desktopDisclosure}>B4GAMBLE is an information and comparison service. We may earn commission from some outbound links; rankings remain editorial.</span><span className={styles.mobileDisclosure}>Information and comparison service. We may earn commission.</span></p>
-        </div>
         <div className={styles.footerBaseline}>
-          <span>© {new Date().getFullYear()} B4GAMBLE · Information and comparison service</span>
-          <div><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link><Link href="/affiliate-disclosure">How we&apos;re funded</Link></div>
+          <div><span className={styles.age}>18+</span><a href="https://www.begambleaware.org/" rel="noreferrer" target="_blank">BeGambleAware.org</a><span>Gamble responsibly.</span><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></div>
+          <Link href="/affiliate-disclosure">We may earn commission — how we&apos;re funded</Link>
         </div>
       </div>
     </footer>

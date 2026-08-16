@@ -1,0 +1,677 @@
+{
+  "thresholdPerChannel": 24,
+  "metrics": [
+    {
+      "name": "home",
+      "width": 1440,
+      "canvasHeight": 9000,
+      "meanAbsoluteDifference": 0.036517,
+      "changedPixelRatio": 0.084868
+    },
+    {
+      "name": "ten-steps",
+      "width": 1440,
+      "canvasHeight": 3669,
+      "meanAbsoluteDifference": 0.01729,
+      "changedPixelRatio": 0.025038
+    },
+    {
+      "name": "login",
+      "width": 1440,
+      "canvasHeight": 1095,
+      "meanAbsoluteDifference": 0.00911,
+      "changedPixelRatio": 0.019209
+    },
+    {
+      "name": "best-offers",
+      "width": 1440,
+      "canvasHeight": 5655,
+      "meanAbsoluteDifference": 0.007122,
+      "changedPixelRatio": 0.004095
+    },
+    {
+      "name": "casinos",
+      "width": 1440,
+      "canvasHeight": 4185,
+      "meanAbsoluteDifference": 0.001126,
+      "changedPixelRatio": 0.001882
+    },
+    {
+      "name": "casino-review",
+      "width": 1440,
+      "canvasHeight": 5450,
+      "meanAbsoluteDifference": 0.02825,
+      "changedPixelRatio": 0.04723
+    },
+    {
+      "name": "bonuses",
+      "width": 1440,
+      "canvasHeight": 4572,
+      "meanAbsoluteDifference": 0.002947,
+      "changedPixelRatio": 0.004891
+    },
+    {
+      "name": "bonus-guide",
+      "width": 1440,
+      "canvasHeight": 5025,
+      "meanAbsoluteDifference": 0.009411,
+      "changedPixelRatio": 0.012959
+    },
+    {
+      "name": "learn",
+      "width": 1440,
+      "canvasHeight": 3967,
+      "meanAbsoluteDifference": 0.013952,
+      "changedPixelRatio": 0.017511
+    },
+    {
+      "name": "learn-article",
+      "width": 1440,
+      "canvasHeight": 5025,
+      "meanAbsoluteDifference": 0.009411,
+      "changedPixelRatio": 0.012959
+    },
+    {
+      "name": "responsible-gambling",
+      "width": 1440,
+      "canvasHeight": 2362,
+      "meanAbsoluteDifference": 0.002432,
+      "changedPixelRatio": 0.004767
+    },
+    {
+      "name": "help",
+      "width": 1440,
+      "canvasHeight": 1757,
+      "meanAbsoluteDifference": 0.035189,
+      "changedPixelRatio": 0.051811
+    },
+    {
+      "name": "methodology",
+      "width": 1440,
+      "canvasHeight": 3531,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "about",
+      "width": 1440,
+      "canvasHeight": 2841,
+      "meanAbsoluteDifference": 0.002882,
+      "changedPixelRatio": 0.002668
+    },
+    {
+      "name": "faq",
+      "width": 1440,
+      "canvasHeight": 1992,
+      "meanAbsoluteDifference": 0.022254,
+      "changedPixelRatio": 0.042831
+    },
+    {
+      "name": "affiliate-disclosure",
+      "width": 1440,
+      "canvasHeight": 1785,
+      "meanAbsoluteDifference": 0.00643,
+      "changedPixelRatio": 0.010901
+    },
+    {
+      "name": "contact",
+      "width": 1440,
+      "canvasHeight": 1333,
+      "meanAbsoluteDifference": 0.045554,
+      "changedPixelRatio": 0.095082
+    },
+    {
+      "name": "privacy",
+      "width": 1440,
+      "canvasHeight": 2369,
+      "meanAbsoluteDifference": 0.07938,
+      "changedPixelRatio": 0.096288
+    },
+    {
+      "name": "terms",
+      "width": 1440,
+      "canvasHeight": 2318,
+      "meanAbsoluteDifference": 0.068427,
+      "changedPixelRatio": 0.080317
+    },
+    {
+      "name": "not-found",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "programme-intake",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.591848,
+      "changedPixelRatio": 0.661979
+    },
+    {
+      "name": "programme-registration",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.585556,
+      "changedPixelRatio": 0.671008
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 1440,
+      "canvasHeight": 1001,
+      "meanAbsoluteDifference": 0.167408,
+      "changedPixelRatio": 0.268201
+    },
+    {
+      "name": "contextual-comparison",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.089445,
+      "changedPixelRatio": 0.205783
+    },
+    {
+      "name": "home",
+      "width": 1024,
+      "canvasHeight": 8116,
+      "meanAbsoluteDifference": 0.03798,
+      "changedPixelRatio": 0.081924
+    },
+    {
+      "name": "ten-steps",
+      "width": 1024,
+      "canvasHeight": 3729,
+      "meanAbsoluteDifference": 0.014868,
+      "changedPixelRatio": 0.019353
+    },
+    {
+      "name": "login",
+      "width": 1024,
+      "canvasHeight": 1076,
+      "meanAbsoluteDifference": 0.010938,
+      "changedPixelRatio": 0.024141
+    },
+    {
+      "name": "best-offers",
+      "width": 1024,
+      "canvasHeight": 6457,
+      "meanAbsoluteDifference": 0.080028,
+      "changedPixelRatio": 0.112734
+    },
+    {
+      "name": "casinos",
+      "width": 1024,
+      "canvasHeight": 5540,
+      "meanAbsoluteDifference": 0.000488,
+      "changedPixelRatio": 0.000998
+    },
+    {
+      "name": "casino-review",
+      "width": 1024,
+      "canvasHeight": 5386,
+      "meanAbsoluteDifference": 0.034556,
+      "changedPixelRatio": 0.064741
+    },
+    {
+      "name": "bonuses",
+      "width": 1024,
+      "canvasHeight": 5716,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "bonus-guide",
+      "width": 1024,
+      "canvasHeight": 5330,
+      "meanAbsoluteDifference": 0.009892,
+      "changedPixelRatio": 0.013049
+    },
+    {
+      "name": "learn",
+      "width": 1024,
+      "canvasHeight": 4246,
+      "meanAbsoluteDifference": 0.013195,
+      "changedPixelRatio": 0.016323
+    },
+    {
+      "name": "learn-article",
+      "width": 1024,
+      "canvasHeight": 5330,
+      "meanAbsoluteDifference": 0.009892,
+      "changedPixelRatio": 0.013049
+    },
+    {
+      "name": "responsible-gambling",
+      "width": 1024,
+      "canvasHeight": 2755,
+      "meanAbsoluteDifference": 0.001305,
+      "changedPixelRatio": 0.004022
+    },
+    {
+      "name": "help",
+      "width": 1024,
+      "canvasHeight": 1674,
+      "meanAbsoluteDifference": 0.045275,
+      "changedPixelRatio": 0.0702
+    },
+    {
+      "name": "methodology",
+      "width": 1024,
+      "canvasHeight": 4086,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "about",
+      "width": 1024,
+      "canvasHeight": 3205,
+      "meanAbsoluteDifference": 0.007687,
+      "changedPixelRatio": 0.014172
+    },
+    {
+      "name": "faq",
+      "width": 1024,
+      "canvasHeight": 1973,
+      "meanAbsoluteDifference": 0.028322,
+      "changedPixelRatio": 0.054785
+    },
+    {
+      "name": "affiliate-disclosure",
+      "width": 1024,
+      "canvasHeight": 1766,
+      "meanAbsoluteDifference": 0.008765,
+      "changedPixelRatio": 0.015383
+    },
+    {
+      "name": "contact",
+      "width": 1024,
+      "canvasHeight": 1327,
+      "meanAbsoluteDifference": 0.048626,
+      "changedPixelRatio": 0.101897
+    },
+    {
+      "name": "privacy",
+      "width": 1024,
+      "canvasHeight": 2326,
+      "meanAbsoluteDifference": 0.089835,
+      "changedPixelRatio": 0.11247
+    },
+    {
+      "name": "terms",
+      "width": 1024,
+      "canvasHeight": 2275,
+      "meanAbsoluteDifference": 0.074428,
+      "changedPixelRatio": 0.089354
+    },
+    {
+      "name": "not-found",
+      "width": 1024,
+      "canvasHeight": 900,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "programme-intake",
+      "width": 1024,
+      "canvasHeight": 900,
+      "meanAbsoluteDifference": 0.581043,
+      "changedPixelRatio": 0.658405
+    },
+    {
+      "name": "programme-registration",
+      "width": 1024,
+      "canvasHeight": 900,
+      "meanAbsoluteDifference": 0.587534,
+      "changedPixelRatio": 0.685297
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 1024,
+      "canvasHeight": 1032,
+      "meanAbsoluteDifference": 0.155068,
+      "changedPixelRatio": 0.274189
+    },
+    {
+      "name": "contextual-comparison",
+      "width": 1024,
+      "canvasHeight": 900,
+      "meanAbsoluteDifference": 0.071703,
+      "changedPixelRatio": 0.101019
+    },
+    {
+      "name": "home",
+      "width": 430,
+      "canvasHeight": 8964,
+      "meanAbsoluteDifference": 0.068954,
+      "changedPixelRatio": 0.157981
+    },
+    {
+      "name": "ten-steps",
+      "width": 430,
+      "canvasHeight": 5018,
+      "meanAbsoluteDifference": 0.017537,
+      "changedPixelRatio": 0.02752
+    },
+    {
+      "name": "login",
+      "width": 430,
+      "canvasHeight": 1075,
+      "meanAbsoluteDifference": 0.077459,
+      "changedPixelRatio": 0.135952
+    },
+    {
+      "name": "best-offers",
+      "width": 430,
+      "canvasHeight": 10223,
+      "meanAbsoluteDifference": 0.045143,
+      "changedPixelRatio": 0.073394
+    },
+    {
+      "name": "casinos",
+      "width": 430,
+      "canvasHeight": 7846,
+      "meanAbsoluteDifference": 0.005659,
+      "changedPixelRatio": 0.011778
+    },
+    {
+      "name": "casino-review",
+      "width": 430,
+      "canvasHeight": 9695,
+      "meanAbsoluteDifference": 0.090502,
+      "changedPixelRatio": 0.130588
+    },
+    {
+      "name": "bonuses",
+      "width": 430,
+      "canvasHeight": 8390,
+      "meanAbsoluteDifference": 0.066352,
+      "changedPixelRatio": 0.105662
+    },
+    {
+      "name": "bonus-guide",
+      "width": 430,
+      "canvasHeight": 6569,
+      "meanAbsoluteDifference": 0.012658,
+      "changedPixelRatio": 0.019907
+    },
+    {
+      "name": "learn",
+      "width": 430,
+      "canvasHeight": 6435,
+      "meanAbsoluteDifference": 0.022323,
+      "changedPixelRatio": 0.038345
+    },
+    {
+      "name": "learn-article",
+      "width": 430,
+      "canvasHeight": 6569,
+      "meanAbsoluteDifference": 0.012658,
+      "changedPixelRatio": 0.019907
+    },
+    {
+      "name": "responsible-gambling",
+      "width": 430,
+      "canvasHeight": 3676,
+      "meanAbsoluteDifference": 0.000639,
+      "changedPixelRatio": 0.002992
+    },
+    {
+      "name": "help",
+      "width": 430,
+      "canvasHeight": 2313,
+      "meanAbsoluteDifference": 0.139753,
+      "changedPixelRatio": 0.203561
+    },
+    {
+      "name": "methodology",
+      "width": 430,
+      "canvasHeight": 6517,
+      "meanAbsoluteDifference": 0.093676,
+      "changedPixelRatio": 0.12742
+    },
+    {
+      "name": "about",
+      "width": 430,
+      "canvasHeight": 4535,
+      "meanAbsoluteDifference": 0.010048,
+      "changedPixelRatio": 0.020277
+    },
+    {
+      "name": "faq",
+      "width": 430,
+      "canvasHeight": 2290,
+      "meanAbsoluteDifference": 0.028696,
+      "changedPixelRatio": 0.067517
+    },
+    {
+      "name": "affiliate-disclosure",
+      "width": 430,
+      "canvasHeight": 2387,
+      "meanAbsoluteDifference": 0.023413,
+      "changedPixelRatio": 0.044483
+    },
+    {
+      "name": "contact",
+      "width": 430,
+      "canvasHeight": 1989,
+      "meanAbsoluteDifference": 0.204693,
+      "changedPixelRatio": 0.30063
+    },
+    {
+      "name": "privacy",
+      "width": 430,
+      "canvasHeight": 3062,
+      "meanAbsoluteDifference": 0.140634,
+      "changedPixelRatio": 0.182437
+    },
+    {
+      "name": "terms",
+      "width": 430,
+      "canvasHeight": 2831,
+      "meanAbsoluteDifference": 0.124713,
+      "changedPixelRatio": 0.154219
+    },
+    {
+      "name": "not-found",
+      "width": 430,
+      "canvasHeight": 932,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "programme-intake",
+      "width": 430,
+      "canvasHeight": 932,
+      "meanAbsoluteDifference": 0.432758,
+      "changedPixelRatio": 0.508903
+    },
+    {
+      "name": "programme-registration",
+      "width": 430,
+      "canvasHeight": 932,
+      "meanAbsoluteDifference": 0.466058,
+      "changedPixelRatio": 0.582378
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 430,
+      "canvasHeight": 932,
+      "meanAbsoluteDifference": 0.562777,
+      "changedPixelRatio": 0.67218
+    },
+    {
+      "name": "contextual-comparison",
+      "width": 430,
+      "canvasHeight": 932,
+      "meanAbsoluteDifference": 0.113886,
+      "changedPixelRatio": 0.175639
+    },
+    {
+      "name": "home",
+      "width": 390,
+      "canvasHeight": 8467,
+      "meanAbsoluteDifference": 0.098706,
+      "changedPixelRatio": 0.186354
+    },
+    {
+      "name": "ten-steps",
+      "width": 390,
+      "canvasHeight": 5110,
+      "meanAbsoluteDifference": 0.090818,
+      "changedPixelRatio": 0.128505
+    },
+    {
+      "name": "login",
+      "width": 390,
+      "canvasHeight": 1122,
+      "meanAbsoluteDifference": 0.095785,
+      "changedPixelRatio": 0.15865
+    },
+    {
+      "name": "best-offers",
+      "width": 390,
+      "canvasHeight": 10373,
+      "meanAbsoluteDifference": 0.134391,
+      "changedPixelRatio": 0.187887
+    },
+    {
+      "name": "casinos",
+      "width": 390,
+      "canvasHeight": 7920,
+      "meanAbsoluteDifference": 0.090751,
+      "changedPixelRatio": 0.144376
+    },
+    {
+      "name": "casino-review",
+      "width": 390,
+      "canvasHeight": 11554,
+      "meanAbsoluteDifference": 0.122666,
+      "changedPixelRatio": 0.160353
+    },
+    {
+      "name": "bonuses",
+      "width": 390,
+      "canvasHeight": 9259,
+      "meanAbsoluteDifference": 0.138471,
+      "changedPixelRatio": 0.198727
+    },
+    {
+      "name": "bonus-guide",
+      "width": 390,
+      "canvasHeight": 6842,
+      "meanAbsoluteDifference": 0.012649,
+      "changedPixelRatio": 0.019828
+    },
+    {
+      "name": "learn",
+      "width": 390,
+      "canvasHeight": 6629,
+      "meanAbsoluteDifference": 0.023868,
+      "changedPixelRatio": 0.042789
+    },
+    {
+      "name": "learn-article",
+      "width": 390,
+      "canvasHeight": 6842,
+      "meanAbsoluteDifference": 0.012649,
+      "changedPixelRatio": 0.019828
+    },
+    {
+      "name": "responsible-gambling",
+      "width": 390,
+      "canvasHeight": 3874,
+      "meanAbsoluteDifference": 0.001174,
+      "changedPixelRatio": 0.002857
+    },
+    {
+      "name": "help",
+      "width": 390,
+      "canvasHeight": 2403,
+      "meanAbsoluteDifference": 0.196484,
+      "changedPixelRatio": 0.27791
+    },
+    {
+      "name": "methodology",
+      "width": 390,
+      "canvasHeight": 6851,
+      "meanAbsoluteDifference": 0.291251,
+      "changedPixelRatio": 0.377329
+    },
+    {
+      "name": "about",
+      "width": 390,
+      "canvasHeight": 4619,
+      "meanAbsoluteDifference": 0.111018,
+      "changedPixelRatio": 0.146555
+    },
+    {
+      "name": "faq",
+      "width": 390,
+      "canvasHeight": 2290,
+      "meanAbsoluteDifference": 0.030929,
+      "changedPixelRatio": 0.072396
+    },
+    {
+      "name": "affiliate-disclosure",
+      "width": 390,
+      "canvasHeight": 2521,
+      "meanAbsoluteDifference": 0.029534,
+      "changedPixelRatio": 0.054767
+    },
+    {
+      "name": "contact",
+      "width": 390,
+      "canvasHeight": 1989,
+      "meanAbsoluteDifference": 0.193782,
+      "changedPixelRatio": 0.295841
+    },
+    {
+      "name": "privacy",
+      "width": 390,
+      "canvasHeight": 3170,
+      "meanAbsoluteDifference": 0.142747,
+      "changedPixelRatio": 0.187381
+    },
+    {
+      "name": "terms",
+      "width": 390,
+      "canvasHeight": 2967,
+      "meanAbsoluteDifference": 0.12168,
+      "changedPixelRatio": 0.151748
+    },
+    {
+      "name": "not-found",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0,
+      "changedPixelRatio": 0
+    },
+    {
+      "name": "programme-intake",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.330641,
+      "changedPixelRatio": 0.403293
+    },
+    {
+      "name": "programme-registration",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.35126,
+      "changedPixelRatio": 0.443854
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.527865,
+      "changedPixelRatio": 0.635581
+    },
+    {
+      "name": "contextual-comparison",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.212082,
+      "changedPixelRatio": 0.315363
+    }
+  ]
+}
