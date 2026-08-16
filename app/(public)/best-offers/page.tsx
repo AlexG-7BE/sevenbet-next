@@ -3,6 +3,7 @@ import Link from "next/link";
 import { cache } from "react";
 
 import { BestOffersExperience } from "@/components/best-offers/BestOffersExperience";
+import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/best-offers/BestOffers.module.css";
 import { bestFitWinners } from "@/lib/public-offer/best-offer-ranking";
@@ -68,13 +69,14 @@ export default async function BestOffersPage() {
   } : null;
 
   return <div className={styles.page}>
+    <CommercialSurfaceView surface="best_offers" />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero}><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>{demoOnly ? "Offer ranking demonstration · GB illustrative context" : mixed ? "Published offers + fictional demonstrations · GB comparison" : "Best offers · GB comparison"} · 18+</p>
-      <h1><span>The shortlist</span><em>that survives the small print.</em></h1>
-      <p className={styles.heroCopy}>A terms-first comparison. See the recorded cost, ranking reason, data status and commercial boundary before any action.</p>
+      <h1><span>Three picks.</span><em>Not thirty.</em></h1>
+      <p className={styles.heroCopy}>Three editorial picks, with the reason, evidence status and small print visible before any action.</p>
       <div aria-label="Ranking dimensions" className={styles.mobileHeroSignals}><span>Overall</span><span>Wagering</span><span>Payout</span></div>
-      <div className={styles.heroActions}><Link href="#shortlist">See the shortlist</Link><span>{demoOnly ? "Fictional records expose no commercial action" : "Affiliate compensation does not determine Editor Score or natural editorial ranking"}</span></div>
+      <div className={styles.heroActions}><Link href="#shortlist">See the three picks</Link><span>{demoOnly ? "Fictional records expose no commercial action" : "Affiliate compensation does not determine Editor Score or natural editorial ranking"}</span></div>
     </div></section>
     {containsDemo ? <section className={styles.demoDisclosure} role="note"><div className={styles.shell}><p><strong>DEMONSTRATION DATA.</strong> Every fictional record is a product demonstration, not a current GB promotion, partner offer or claimable bonus. No commercial visit is available.</p></div></section> : null}
     {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} shortlist={result.records} winners={bestFitWinners(result.records)} /> : <section className={styles.statePage} id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible records"}</p><h2>{result.status === "unavailable" ? "The comparison could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current record has both GB availability and every required material term. B4GAMBLE does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}

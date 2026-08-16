@@ -1,15 +1,10 @@
 import type { MetadataRoute } from "next";
 import {
   getArticlePath,
-  getCategoryPath,
   learningArticles as centerArticles,
-  learningCategories as centerCategories,
 } from "@/lib/learning-center";
-import { protectedHelpArticles as helpArticles } from "@/lib/responsible-gambling";
-import { parsePublicComparisonQuery } from "@/lib/public-comparison/query";
 import { absoluteUrl, coreRoutes } from "@/lib/site";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
-import { publicComparisonService } from "@/lib/services/public-comparison.service";
 import { publicOfferService } from "@/lib/services/public-offer.service";
 
 export const dynamic = "force-dynamic";
@@ -33,16 +28,14 @@ async function loadCasinoDiscovery() {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [casinoDiscovery, bestOffers, comparison] = await Promise.all([
+  const [casinoDiscovery, bestOffers] = await Promise.all([
     failClosed(loadCasinoDiscovery),
     failClosed(() => publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, null)),
-    failClosed(() => publicComparisonService.compare(parsePublicComparisonQuery(new URLSearchParams()), null)),
   ]);
   const casinos = casinoDiscovery?.casinos ?? [];
   const publishedOnly = Boolean(casinoDiscovery && casinoDiscovery.discovery.total > 0 && casinoDiscovery.discovery.inventoryMode === "PUBLISHED_ONLY");
   const indexableProductRoutes = [
     ...(bestOffers && bestOffers.status !== "unavailable" && bestOffers.inventoryMode === "PUBLISHED_ONLY" ? ["/best-offers"] : []),
-    ...(comparison && comparison.status === "available" && comparison.inventoryMode === "PUBLISHED_ONLY" ? ["/compare"] : []),
   ];
   const casinoRoutes = casinos.filter((casino) => casino.dataClassification === "PUBLISHED_RECORD").slice(0, 500).map((casino) => ({
     url: absoluteUrl(`/casino/${casino.slug}`),
@@ -51,16 +44,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       : {}),
     changeFrequency: "weekly" as const,
     priority: 0.7,
-  }));
-  const helpGuideRoutes = helpArticles.map((article) => ({
-    url: absoluteUrl(`/help/${article.slug}`),
-    changeFrequency: "monthly" as const,
-    priority: 0.72,
-  }));
-  const learningCategoryRoutes = centerCategories.map((category) => ({
-    url: absoluteUrl(getCategoryPath(category.slug)),
-    changeFrequency: "weekly" as const,
-    priority: 0.74,
   }));
   const learningArticleRoutes = centerArticles.map((article) => ({
     url: absoluteUrl(getArticlePath(article)),
@@ -84,9 +67,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.8,
     })),
-    ...learningCategoryRoutes,
     ...learningArticleRoutes,
-    ...helpGuideRoutes,
     ...casinoRoutes,
   ];
 }

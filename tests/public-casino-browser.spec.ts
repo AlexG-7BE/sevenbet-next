@@ -8,8 +8,8 @@ test("desktop discovery renders the governed empty CMS state without browser err
   page.on("pageerror", (error) => errors.push(error.message));
   const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /A clearer casino choice/ })).toBeVisible();
-  await expect(page.getByText(/Search review snapshots before you compare/)).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Picked for.*how you play/ })).toBeVisible();
+  await expect(page.getByText(/Search review snapshots/)).toBeVisible();
   await expect(page.getByText(/Search verified published profiles/)).toHaveCount(0);
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
   await expect(page.locator('section[aria-label="Published review preview"]')).toHaveCount(0);
@@ -103,7 +103,7 @@ test("mobile directory filters remain usable when JavaScript is disabled", async
   const page = await context.newPage();
   const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /A clearer casino choice/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Picked for.*how you play/ })).toBeVisible();
   const fallback = page.locator("noscript details");
   await expect(fallback).toBeVisible();
   await fallback.locator("summary").click();

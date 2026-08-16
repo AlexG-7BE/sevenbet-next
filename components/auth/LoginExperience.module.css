@@ -5,19 +5,20 @@
   grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
   gap: clamp(48px, 8vw, 120px);
   align-items: center;
-  background: var(--sb-paper);
-  color: var(--sb-night);
+  background: var(--sb-night);
+  color: var(--sb-paper);
   font-family: var(--font-seven-sans), Arial, sans-serif;
 }
 .intro { max-width: 660px; }
-.kicker, .cardHeading p { margin: 0 0 18px; color: var(--sb-teal); font-size: 11px; line-height: 16px; font-weight: 750; letter-spacing: .14em; }
+.kicker, .cardHeading p { margin: 0 0 18px; color: var(--sb-acid); font-size: 11px; line-height: 16px; font-weight: 750; letter-spacing: .14em; }
 .intro h1 { max-width: 640px; margin: 0; font-size: clamp(54px, 7vw, 92px); line-height: .88; letter-spacing: -.065em; }
-.intro > p:not(.kicker) { max-width: 580px; margin: 28px 0 0; color: var(--sb-metal); font-size: 18px; line-height: 1.55; }
+.intro h1 em { color:var(--sb-acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; }
+.intro > p:not(.kicker) { max-width: 580px; margin: 28px 0 0; color: var(--sb-grey-300); font-size: 18px; line-height: 1.55; }
 .intro ul { margin: 30px 0 0; padding: 0; list-style: none; display: grid; gap: 12px; }
-.intro li { display: flex; gap: 10px; color: var(--sb-night); font-size: 14px; line-height: 20px; font-weight: 620; }
-.intro li::before { content: "✓"; color: var(--sb-teal); font-weight: 900; }
+.intro li { display: flex; gap: 10px; color: var(--sb-paper); font-size: 14px; line-height: 20px; font-weight: 620; }
+.intro li::before { content: "✓"; color: var(--sb-acid); font-weight: 900; }
 
-.card { padding: clamp(28px, 4vw, 44px); border: 1px solid rgba(16, 15, 15, .28); border-radius: 28px; background: var(--sb-white); box-shadow: 12px 12px 0 rgba(16, 15, 15, .08); }
+.card { padding: clamp(28px, 4vw, 44px); border: 1px solid rgba(250,250,247,.18); border-radius: 28px; background: var(--sb-paper); color:var(--sb-night); box-shadow: 12px 12px 0 rgba(228,226,78,.12); }
 .cardHeading { margin-bottom: 26px; }
 .cardHeading p { margin-bottom: 7px; }
 .cardHeading h2 { margin: 0; font-size: clamp(28px, 4vw, 40px); line-height: 1; letter-spacing: -.04em; }

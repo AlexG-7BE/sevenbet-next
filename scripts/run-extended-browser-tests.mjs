@@ -9,7 +9,7 @@ const fixtureActor = {
 };
 const baseSpecs = [
   "tests/casino-profile-browser.spec.ts",
-  "tests/design-system-visual.spec.ts",
+  "tests/final-design-handoff-visual.spec.ts",
   "tests/fe-gap-01-browser.spec.ts",
   "tests/fe-gap-02-browser.spec.ts",
   "tests/public-casino-browser.spec.ts",
@@ -103,9 +103,11 @@ async function removeFixtureActor(environment) {
 
 export async function main(extraArgs = process.argv.slice(2)) {
   const environment = fixtureEnvironment();
-  if (extraArgs.includes("--list")) {
-    runPlaywright(baseSpecs, extraArgs, environment);
-    runPlaywright(comparisonSpecs, extraArgs, environment);
+  const comparisonOnly = extraArgs.includes("--comparison-only");
+  const playwrightArgs = extraArgs.filter((argument) => argument !== "--comparison-only");
+  if (playwrightArgs.includes("--list")) {
+    if (!comparisonOnly) runPlaywright(baseSpecs, playwrightArgs, environment);
+    runPlaywright(comparisonSpecs, playwrightArgs, environment);
     return;
   }
 
@@ -113,10 +115,10 @@ export async function main(extraArgs = process.argv.slice(2)) {
   try {
     runDemoCommand("cleanup", environment);
     await removeFixtureActor(environment);
-    runPlaywright(baseSpecs, extraArgs, environment);
+    if (!comparisonOnly) runPlaywright(baseSpecs, playwrightArgs, environment);
     await ensureFixtureActor(environment);
     runDemoCommand("seed", environment);
-    runPlaywright(comparisonSpecs, extraArgs, environment);
+    runPlaywright(comparisonSpecs, playwrightArgs, environment);
   } catch (error) {
     failure = error;
   } finally {

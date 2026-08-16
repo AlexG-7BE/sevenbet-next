@@ -61,14 +61,14 @@ test("complete catalogue and category navigation work without JavaScript", async
 test("category and article routes preserve content, schemas and truthful evidence state", async ({ page }) => {
   const errors = collectRuntimeErrors(page);
   await page.goto(`${baseUrl}/learn/casino-bonuses`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Casino Bonuses");
-  await expect(page.getByRole("link", { name: /How Welcome Bonus Terms Work/ })).toHaveAttribute("href", "/learn/casino-bonuses/welcome-bonus-terms");
-  await expect(page.locator('[data-learning-category] h1')).toHaveCount(1);
+  await expect(page).toHaveURL(/\/learn\?category=casino-bonuses/);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Learn\.\s*Play smarter\./i);
+  await expect(page.locator('[data-learning-search]')).toBeVisible();
 
   await page.goto(`${baseUrl}/learn/casino-bonuses/welcome-bonus-terms`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("How Welcome Bonus Terms Work");
   await expect(page.getByRole("heading", { name: "SOURCE STATUS: UNAVAILABLE." })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open comparison/ })).toHaveAttribute("href", "/compare");
+  await expect(page.getByRole("link", { name: /Compare casinos/ })).toHaveAttribute("href", "/casinos");
   await expect(page.locator('[data-learning-article] a[href^="/r/"], [data-learning-article] a[href^="/go/"]')).toHaveCount(0);
   const schemas = await page.locator('script[type="application/ld+json"]').evaluateAll((scripts) => scripts.map((script) => JSON.parse(script.textContent ?? "{}")));
   expect(schemas.some((schema) => schema["@type"] === "BreadcrumbList")).toBe(true);

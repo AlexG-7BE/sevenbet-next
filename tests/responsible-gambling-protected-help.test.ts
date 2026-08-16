@@ -22,7 +22,7 @@ test("Protected Help is a server-rendered route-scoped shell with one Hub h1", (
 });
 
 test("critical Help content and links are available as ordinary server HTML", () => {
-  assert.match(hub, /Get support[\s\S]*without offers\./i);
+  assert.match(hub, /We&apos;re here\.[\s\S]*No strings\./i);
   assert.match(hub, /href="#next-actions"/);
   assert.match(hub, /href="#external-support"/);
   assert.match(hub, /protectedHelpResources\.map/);

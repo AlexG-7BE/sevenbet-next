@@ -40,9 +40,10 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
 
   assert.match(hub, /canonical: absoluteUrl\("\/responsible-gambling"\)/);
   assert.match(hub, /data-responsible-gambling-hub/);
-  for (const path of ["/learn/responsible-gambling", "/self-check", "/tools/budget-calculator", "/10-steps", "/help"]) {
+  for (const path of ["/learn?category=responsible-gambling", "/10-steps", "/help"]) {
     assert.match(hub, new RegExp(path.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
   }
+  assert.doesNotMatch(hub, /href:\s*"\/(?:self-check|tools\/budget-calculator)"/);
   assert.doesNotMatch(hub, /safe for you|affordability score|diagnoses you|treatment plan|guaranteed outcome/iu);
   assert.match(help, /canonical: absoluteUrl\("\/help"\)/);
   assert.match(helpLayout, /data-protected-help-shell="true"/);
@@ -51,8 +52,6 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   assert.match(legacy, /withPreservedLegacyQuery\(route\.destination, await searchParams\)/);
   assert.doesNotMatch(legacy, /`\/help\/\$\{slug\}`|`\/learn\/\$\{slug\}`/);
   for (const requestTimeRoute of [
-    "app/help/[slug]/page.tsx",
-    "app/(public)/learn/[category]/page.tsx",
     "app/(public)/learn/[category]/[slug]/page.tsx",
     "app/(public)/responsible-gambling/[slug]/page.tsx",
   ]) {
@@ -60,6 +59,9 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
     assert.match(source, /export const dynamic = "force-dynamic"/);
     assert.doesNotMatch(source, /generateStaticParams/);
   }
+  assert.match(read("components/protected-help/ProtectedHelpHub.tsx"), /We&apos;re here\.<br \/>No strings\./i);
+  assert.match(read("app/help/[slug]/page.tsx"), /permanentRedirect\(article \? `\/help#/);
+  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(`\/learn\?category=/);
 });
 
 test("every former mixed Responsible Gambling article has one explicit canonical authority", () => {
@@ -143,19 +145,21 @@ test("every former mixed Responsible Gambling article has one explicit canonical
   assert.throws(() => withPreservedLegacyQuery("//example.com/help", {}), /Invalid legacy Responsible Gambling destination/);
 });
 
-test("shared navigation exposes the closed Control & Support destinations", () => {
+test("shared navigation and footer expose only the final handoff destinations", () => {
   const navigation = read("lib/public-shell.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
   const category = read("app/(public)/learn/[category]/LearningCategoryView.tsx");
-  assert.match(navigation, /\{ label: "Help", href: "\/help", safety: true \}/);
+  for (const destination of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(navigation, new RegExp(`label: "${destination}"`));
+  assert.doesNotMatch(navigation, /label: "(?:Help|Compare)"/);
   assert.match(navigation, /const protectedHelpPrefixes = \["\/help"\]/);
-  assert.match(footer, /title: "Control & Support"/);
+  assert.match(footer, /aria-label="Control and support"/);
   for (const pair of [
-    '["Responsible gambling", "/responsible-gambling"]',
-    '["Self-Check", "/self-check"]',
-    '["Personal Limit Tracker", "/tools/budget-calculator"]',
-    '["Help", "/help"]',
+    '["Responsible Gambling", "/responsible-gambling"]',
+    '["Learn", "/learn"]',
+    '["Privacy", "/privacy"]',
+    '["Terms", "/terms"]',
   ]) assert.ok(footer.includes(pair), pair);
+  assert.doesNotMatch(footer, /\/self-check|\/tools\/budget-calculator|\/compare/);
   assert.match(category, /Open Responsible Gambling hub/);
 });
 

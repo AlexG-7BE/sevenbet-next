@@ -69,20 +69,14 @@ test("bonus numeric and select controls auto-apply without a document reload", a
   expect(rsc).toBeGreaterThanOrEqual(2);
 });
 
-test("comparison selection auto-applies while retaining the server-owned repeated query", async ({ page }) => {
-  await page.goto("/compare", { waitUntil: "networkidle" });
-  const selects = page.locator('select[name="casino"]');
-  const first = selects.nth(0);
-  const current = await first.inputValue();
-  const replacement = await first.locator("option").evaluateAll((options, selected) => options
-    .map((option) => (option as HTMLOptionElement).value)
-    .find((value) => value && value !== selected), current);
-  expect(replacement).toBeTruthy();
+test("contextual comparison selection updates URL state without a document navigation", async ({ page }) => {
+  await page.goto("/casinos", { waitUntil: "networkidle" });
   let documents = 0;
   page.on("request", (request) => { if (request.resourceType() === "document") documents += 1; });
-  await first.selectOption(replacement!);
-  await expect(page).toHaveURL(new RegExp(`casino=${replacement}`));
-  await expect(page.getByText("3 of 3 selected · maximum")).toBeVisible();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
+  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
   expect(documents).toBe(0);
 });
 
@@ -104,10 +98,9 @@ test("native GET fallbacks work without JavaScript on all enhanced routes", asyn
   await bonusForm.getByRole("button", { name: "Show Results" }).click();
   await expect(page).toHaveURL(/sort=lowest-deposit/);
 
-  await page.goto("/compare", { waitUntil: "networkidle" });
-  await expect(page.getByRole("button", { name: "Update comparison" })).toBeVisible();
-  await page.getByRole("button", { name: "Update comparison" }).click();
-  await expect(page).toHaveURL(/country=GB/);
+  await page.goto("/compare?casino=demo-northstar&country=GB", { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&country=GB/);
+  await expect(page.getByRole("heading", { name: /Picked for/ })).toBeVisible();
   await context.close();
 });
 

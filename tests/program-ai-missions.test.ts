@@ -442,7 +442,7 @@ test("Reviews fall back safely, stay completion-derived and never call a reward 
 });
 
 test("provider output is locally strict and commercial navigation is immutable", () => {
-  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/compare", "/bonuses", "/best-offers"]);
+  assert.deepEqual(commercialDiscoveryLinks.map((link) => link.href), ["/casinos", "/bonuses", "/best-offers"]);
   const valid = parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Rehearse once", summary: "Choose the response that makes a clear decision point.", options: [{ id: "pause_and_check", text: "Pause and run the checks." }] });
   assert.equal(valid.generation, "provider");
   assert.throws(() => parseGeneratedResult("M9_REHEARSAL", { kind: "guidance", operation: "M9_REHEARSAL", title: "Play safely", summary: "We recommend a casino bonus for you.", options: [{ id: "cashout", text: "Continue" }] }), /Personalisation|valid/i);

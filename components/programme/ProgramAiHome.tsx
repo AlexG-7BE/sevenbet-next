@@ -80,7 +80,6 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
 function discoveryDestination(href: string) {
   switch (href) {
     case "/casinos": return "casinos" as const;
-    case "/compare": return "compare" as const;
     case "/bonuses": return "bonuses" as const;
     case "/best-offers": return "best_offers" as const;
     case "/bonus-guide": return "bonus_guide" as const;

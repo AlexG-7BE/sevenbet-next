@@ -34,6 +34,10 @@ const validEvents = {
   programme_discovery_clicked: { sourceSurface: "programme_home", destinationRoute: "casinos" },
   programme_ai_outcome: { operation: "programme_ai", result: "provider" },
   programme_voice_outcome: { result: "recording_started" },
+  commercial_surface_viewed: { surface: "casinos" },
+  casino_review_opened: { sourceSurface: "casinos" },
+  comparison_opened: { selectionCount: "two" },
+  outbound_intent: { outcome: "confirmation_opened" },
 } as const;
 
 test("the closed event taxonomy accepts every approved event and rejects unknown fields", () => {
@@ -86,6 +90,10 @@ test("disabled client analytics emits nothing and never touches marker storage",
   client.reviewOpened("first");
   client.discoveryClicked({ sourceSurface: "programme_home", destinationRoute: "casinos" });
   client.voiceOutcome("cancelled");
+  client.commercialSurfaceViewed("casinos");
+  client.casinoReviewOpened("casinos");
+  client.comparisonOpened("two");
+  client.outboundIntent("continued");
   assert.deepEqual({ reads, writes, events: events.length }, { reads: 0, writes: 0, events: 0 });
 });
 

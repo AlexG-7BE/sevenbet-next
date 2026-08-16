@@ -20,7 +20,7 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Get support.*without offers\./i);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/We're here\..*No strings\./i);
   await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
   await expect(page.getByRole("link", { name: /casinos|bonuses|best offers|visit casino|claim bonus/i })).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);

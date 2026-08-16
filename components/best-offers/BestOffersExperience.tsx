@@ -168,7 +168,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
     <section className={styles.shortlistSection} id="shortlist" aria-labelledby="shortlist-title">
       <div className={styles.shell}>
         <div className={styles.shortlistIntro}>
-          <h2 id="shortlist-title">One headline. The full decision.</h2>
+          <h2 id="shortlist-title">Three months of deposits, withdrawals and fine print.</h2>
           <p>Swipe the shortlist by what matters to you — then see the material fields before any governed commercial action.</p>
         </div>
         {slides.length ? <div
@@ -219,7 +219,7 @@ export function BestOffersExperience({ shortlist, winners, inventoryMode }: {
     <section className={styles.methodSection} aria-labelledby="method-title">
       <div className={styles.shell}>
         <p className={styles.kicker}>{methodKicker}</p>
-        <h2 id="method-title">Every record follows the same method.</h2>
+        <h2 id="method-title">Before you click</h2>
         <p className={styles.methodSupport}>{methodSupport}</p>
         <Link className={styles.lightCta} href="#shortlist">View best offers</Link>
         <ol className={styles.methodCards}>

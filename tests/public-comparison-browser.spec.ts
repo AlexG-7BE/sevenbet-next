@@ -2,201 +2,83 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-async function defaultSlugs(page: import("@playwright/test").Page) {
-  await page.goto(`${baseUrl}/compare`, { waitUntil: "networkidle" });
-  const values = await page.locator('select[name="casino"]').evaluateAll((selects) => selects
-    .map((select) => (select as HTMLSelectElement).value)
-    .filter(Boolean));
-  expect(values).toHaveLength(3);
-  return values;
+async function clearComparison(page: import("@playwright/test").Page) {
+  await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
+  await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
+  await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
 }
 
-function explicitPath(slugs: string[], suffix = "") {
-  const params = new URLSearchParams();
-  for (const slug of slugs) params.append("casino", slug);
-  params.set("country", "GB");
-  return `/compare?${params}${suffix}`;
-}
+test("legacy Compare route permanently consolidates into the casino directory", async ({ page, request }) => {
+  const response = await request.get(`${baseUrl}/compare?casino=demo-northstar&casino=demo-summit&country=GB`, { maxRedirects: 0 });
+  expect(response.status()).toBe(308);
+  expect(response.headers().location).toBe("/casinos?casino=demo-northstar&casino=demo-summit&country=GB");
 
-test("desktop comparison renders source-classified evidence without browser errors", async ({ page }) => {
-  const errors: string[] = [];
-  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-  page.on("pageerror", (error) => errors.push(error.message));
-  const response = await page.goto(`${baseUrl}/compare`, { waitUntil: "networkidle" });
-  expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /Compare what matters/ })).toBeVisible();
-  await expect(page.getByRole("table", { name: /Comparison of/ })).toBeVisible();
-  await expect(page.getByText("Illustrative pre-launch product demonstration.")).toBeVisible();
-  await expect(page.getByText("Preference, not detected location.")).toBeVisible();
-  await page.getByLabel(/01 · Selected/).focus();
-  expect(await page.getByLabel(/01 · Selected/).evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
-  await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
-  expect(errors).toEqual([]);
-  await page.evaluate(() => scrollTo(0, 0));
-  await page.screenshot({ path: "/tmp/sevenbet-compare-desktop.png", fullPage: true });
+  await page.goto(`${baseUrl}/compare?casino=demo-northstar&casino=demo-summit&country=GB`, { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&casino=demo-summit&country=GB/);
+  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Compare", exact: true })).toHaveCount(0);
 });
 
-test("two and three profile URLs preserve order, support replacement, removal and clear", async ({ page }) => {
-  const slugs = await defaultSlugs(page);
-  await page.goto(`${baseUrl}${explicitPath([slugs[1], slugs[0]])}`, { waitUntil: "networkidle" });
-  const selected = page.locator('select[name="casino"]');
-  await expect(selected.nth(0)).toHaveValue(slugs[1]);
-  await expect(selected.nth(1)).toHaveValue(slugs[0]);
-  await expect(page.getByRole("table")).toBeVisible();
+test("comparison stays contextual and opens automatically on the second selection", async ({ page }) => {
+  await clearComparison(page);
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
+  await expect(page.getByRole("heading", { name: "See the differences." })).not.toBeVisible();
 
-  await selected.nth(2).selectOption(slugs[2]);
-  await page.getByRole("button", { name: "Update comparison" }).click();
-  await expect(page).toHaveURL(new RegExp(`casino=${slugs[1]}.*casino=${slugs[0]}.*casino=${slugs[2]}`));
-  await expect(page.getByText("3 of 3 selected · maximum")).toBeVisible();
-  await page.waitForLoadState("networkidle");
-
-  const removeHref = await page.getByRole("link", { name: "Remove", exact: true }).first().getAttribute("href");
-  expect(removeHref).toContain(`casino=${slugs[0]}`);
-  expect(removeHref).not.toContain(`casino=${slugs[1]}`);
-  const clearHref = await page.getByRole("link", { name: "Clear selection" }).getAttribute("href");
-  expect(clearHref).toMatch(/empty=true/);
-  await page.goto(`${baseUrl}${clearHref}`, { waitUntil: "networkidle" });
-  await expect(page).toHaveURL(/empty=true/);
-  await expect(page.getByRole("heading", { name: "Start with two profiles" })).toBeVisible();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await expect(page.getByText("2 of 3 selected")).toBeVisible();
+  await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
+  await expect(page.getByText("Published evidence, side by side. No fabricated winner.")).toBeVisible();
+  await expect(page.getByText("Country is a comparison preference, not proof of eligibility.")).toBeVisible();
 });
 
-test("show-only-differences and malformed or unavailable selections fail closed", async ({ page, request }) => {
-  const slugs = await defaultSlugs(page);
-  await page.goto(`${baseUrl}${explicitPath(slugs.slice(0, 2), "&differences=true")}`, { waitUntil: "networkidle" });
-  await expect(page.getByText(/Showing differences/)).toBeVisible();
-  await expect(page.getByRole("link", { name: "Show all criteria" })).toBeVisible();
+test("selection is capped at three, removable, clearable and session-persistent", async ({ page }) => {
+  await clearComparison(page);
+  for (let index = 0; index < 2; index += 1) await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await page.getByRole("button", { name: "Close comparison" }).click();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page.getByText("3 of 3 selected")).toBeVisible();
 
-  await page.goto(`${baseUrl}/compare?casino=definitely-unpublished-profile&casino=also-unpublished&country=GB`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "These profiles do not align" })).toBeVisible();
-  await expect(page.getByText(/unknown, archived, unavailable or absent from the public projection/).first()).toBeVisible();
-  await expect(page.locator('a[href^="http"]')).toHaveCount(0);
+  const selectedBefore = await page.evaluate(() => JSON.parse(sessionStorage.getItem("b4gamble:public-comparison:v1") || "[]"));
+  expect(selectedBefore).toHaveLength(3);
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  const selectedAfter = await page.evaluate(() => JSON.parse(sessionStorage.getItem("b4gamble:public-comparison:v1") || "[]"));
+  expect(selectedAfter).toEqual(selectedBefore);
+  expect(Object.keys(await page.evaluate(() => Object.fromEntries(Object.entries(sessionStorage))))).toEqual(["b4gamble:public-comparison:v1"]);
 
-  const malformed = await request.get(`${baseUrl}/compare?casino=..%2Funsafe&casino=${slugs[0]}&casino=${slugs[1]}&casino=${slugs[2]}&casino=extra&country=GBR&differences=maybe`);
+  await page.reload({ waitUntil: "networkidle" });
+  await expect(page.getByText("3 of 3 selected")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+  await page.getByRole("button", { name: "Remove", exact: true }).first().click();
+  await expect(page.getByText("2 of 3 selected")).toBeVisible();
+  await page.getByRole("button", { name: "Close comparison" }).click();
+  await page.getByRole("button", { name: "Clear" }).click();
+  await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toHaveCount(0);
+  await expect(page).not.toHaveURL(/casino=/);
+});
+
+test("comparison projection is private, no-store, noindex and validates slugs", async ({ request }) => {
+  const available = await request.get(`${baseUrl}/api/public/comparison?casino=demo-northstar&casino=demo-summit&country=GB`);
+  expect(available.status()).toBe(200);
+  expect(available.headers()["cache-control"]).toContain("private, no-store");
+  expect(available.headers()["x-robots-tag"]).toBe("noindex, nofollow");
+  const body = await available.json();
+  expect(body.selectedSlugs).toEqual(["demo-northstar", "demo-summit"]);
+  expect(JSON.stringify(body)).not.toMatch(/destinationUrl|trackingUrl|email|programme/i);
+
+  const malformed = await request.get(`${baseUrl}/api/public/comparison?casino=..%2Funsafe&casino=demo-northstar&country=GBR`);
   expect(malformed.status()).toBe(200);
-  const html = await malformed.text();
-  expect(html).toContain("Some URL values were safely ignored");
-  await page.goto(`${baseUrl}/compare?casino=..%2Funsafe&casino=${slugs[0]}&casino=${slugs[1]}&casino=${slugs[2]}&casino=extra&country=GBR&differences=maybe`, { waitUntil: "networkidle" });
-  await expect(page.getByText("../unsafe", { exact: true })).toHaveCount(0);
-  await expect(page.locator('option[value="../unsafe"]')).toHaveCount(0);
+  expect((await malformed.json()).selectedSlugs).toEqual(["demo-northstar"]);
 });
 
-test("mobile uses criterion cards and all approved widths avoid horizontal overflow", async ({ browser }) => {
-  test.setTimeout(120_000);
-  for (const width of [1440, 1280, 900, 768, 390, 375, 320]) {
-    const errors: string[] = [];
-    const page = await browser.newPage({ viewport: { width, height: width <= 390 ? 844 : 900 }, isMobile: width <= 390 });
-    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
-    page.on("pageerror", (error) => errors.push(error.message));
-    const response = await page.goto(`${baseUrl}/compare`, { waitUntil: "networkidle" });
-    expect(response?.status(), `${width}px status`).toBe(200);
-    if (width <= 760) {
-      await expect(page.getByRole("table")).toBeHidden();
-      await expect(page.locator('article').filter({ hasText: "Editorial score" }).first()).toBeVisible();
-    } else {
-      await expect(page.getByRole("table")).toBeVisible();
-    }
-    const overflow = await page.evaluate(() => ({
-      present: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-      width: document.documentElement.scrollWidth,
-      offenders: Array.from(document.querySelectorAll("body *")).flatMap((element) => {
-        const box = element.getBoundingClientRect();
-        return box.right > document.documentElement.clientWidth + 0.5 ? [`${element.tagName}.${typeof element.className === "string" ? element.className : ""}:${Math.round(box.right)}`] : [];
-      }).slice(0, 8),
-    }));
-    expect(overflow.present, `horizontal overflow at ${width}px (${overflow.width}px): ${overflow.offenders.join(", ")}`).toBe(false);
-    expect(errors, `runtime errors at ${width}px`).toEqual([]);
-    if (width === 390) {
-      await page.evaluate(() => scrollTo(0, 0));
-      await page.screenshot({ path: "/tmp/sevenbet-compare-mobile.png", fullPage: true });
-    }
+test("desktop modal and mobile sheet avoid page-level horizontal overflow", async ({ browser }) => {
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 1024, height: 900 }, { width: 430, height: 932 }, { width: 390, height: 844 }]) {
+    const page = await browser.newPage({ viewport, isMobile: viewport.width <= 430 });
+    await page.goto(`${baseUrl}/casinos?casino=demo-northstar&casino=demo-summit&country=GB`, { waitUntil: "networkidle" });
+    await expect(page.getByRole("heading", { name: "See the differences." })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), `${viewport.width}px overflow`).toBe(true);
+    await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
     await page.close();
   }
-});
-
-test("soft navigation preserves comparison evidence while pending without mobile overflow", async ({ browser }) => {
-  for (const width of [390, 375]) {
-    const page = await browser.newPage({ viewport: { width, height: 844 }, isMobile: true });
-    await page.goto(`${baseUrl}/compare`, { waitUntil: "networkidle" });
-    const heading = page.getByRole("heading", { level: 1, name: /Compare what matters/ });
-    await expect(heading).toBeVisible();
-    await page.route("**/*_rsc=*", async (route) => { await new Promise((resolve) => setTimeout(resolve, 300)); await route.continue(); });
-    const first = page.locator('select[name="casino"]').first();
-    const replacement = await first.locator("option").nth(2).getAttribute("value");
-    await first.selectOption(replacement!);
-    await expect(page.locator('form[data-pending="true"]')).toBeVisible();
-    await expect(heading).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px pending overflow`).toBe(false);
-    await page.close();
-  }
-});
-
-test("comparison evidence remains available without JavaScript", async ({ browser }) => {
-  const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 }, isMobile: true });
-  const page = await context.newPage();
-  const response = await page.goto(`${baseUrl}/compare`, { waitUntil: "domcontentloaded" });
-  expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /Compare what matters/ })).toBeVisible();
-  await expect(page.getByRole("combobox")).toHaveCount(3);
-  await expect(page.locator('article').filter({ hasText: "Editorial score" }).first()).toBeVisible();
-  const overflow = await page.evaluate(() => ({
-    present: document.documentElement.scrollWidth > document.documentElement.clientWidth,
-    width: document.documentElement.scrollWidth,
-    offenders: Array.from(document.querySelectorAll("body *")).flatMap((element) => {
-      const box = element.getBoundingClientRect();
-      return box.right > document.documentElement.clientWidth + 0.5 ? [`${element.tagName}.${typeof element.className === "string" ? element.className : ""}:${Math.round(box.right)}`] : [];
-    }).slice(0, 8),
-  }));
-  expect(overflow.present, `no-JavaScript horizontal overflow (${overflow.width}px): ${overflow.offenders.join(", ")}`).toBe(false);
-  await context.close();
-});
-
-test("demo metadata uses a clean canonical while suppressing index and commercial schema", async ({ request }) => {
-  const defaultResponse = await request.get(`${baseUrl}/compare`);
-  const defaultHtml = await defaultResponse.text();
-  const semanticHtml = defaultHtml.replace(/<!--[\s\S]*?-->/g, "");
-  expect(defaultResponse.status()).toBe(200);
-  expect(defaultHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/compare"');
-  expect(defaultHtml).toContain('"@type":"BreadcrumbList"');
-  expect(defaultHtml).not.toContain('"@type":"ItemList"');
-  expect(defaultHtml).not.toContain('"@type":"Offer"');
-  expect(defaultHtml).not.toContain('"@type":"AggregateRating"');
-  expect(semanticHtml).toContain("DEMONSTRATION DATA");
-  expect(semanticHtml).toContain("Fictional profile · GB illustrative context");
-  expect(semanticHtml).not.toContain("Published profile · GB declared available");
-  expect(semanticHtml).toContain("Compare Fictional Casino Demonstrations");
-  expect(semanticHtml).toContain("Choose up to three fictional demonstration profiles");
-  expect(semanticHtml).toContain("Illustrative fields");
-  expect(semanticHtml).not.toContain("Choose up to three published casino profiles");
-  expect(semanticHtml).not.toContain("Published database profiles only");
-  expect(semanticHtml).not.toContain("Published facts · same source order");
-  expect(defaultHtml).not.toMatch(/destinationUrl|trackingUrl/);
-  expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
-
-  const queryResponse = await request.get(`${baseUrl}/compare?empty=true&country=GB`);
-  const queryHtml = await queryResponse.text();
-  expect(queryResponse.status()).toBe(200);
-  expect(queryHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(queryHtml).toContain('<link rel="canonical" href="https://b4gamble.com/compare"');
-});
-
-test("commercial actions stay inert while market authority denies referral", async ({ page, request }) => {
-  const slugs = await defaultSlugs(page);
-  await expect(page.locator('a[aria-haspopup="dialog"]')).toHaveCount(0);
-  await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
-
-  const candidateSlugs = await page.locator('select[name="casino"]').first().locator('option[value]:not([value=""])').evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value));
-  let unavailableHtml = "";
-  for (const candidate of candidateSlugs) {
-    if (candidate === slugs[0]) continue;
-    const response = await request.get(`${baseUrl}${explicitPath([slugs[0], candidate])}`);
-    const html = await response.text();
-    if (html.includes("Commercial action unavailable")) { unavailableHtml = html; break; }
-  }
-  expect(unavailableHtml, "expected at least one current comparable profile without a governed action").toContain("Commercial action unavailable");
-  expect(unavailableHtml).not.toMatch(/<a[^>]+href="https?:\/\//);
-
-  const missingRedirect = await request.get(`${baseUrl}/r/definitely-missing-comparison-route`, { maxRedirects: 0 });
-  expect(missingRedirect.status()).toBe(303);
-  expect(missingRedirect.headers().location ?? "").toMatch(/\/outbound\/unavailable$/);
 });

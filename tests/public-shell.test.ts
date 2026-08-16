@@ -10,12 +10,10 @@ import {
 
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
-    { label: "10 Steps", href: "/10-steps" },
+    { label: "Best Offers", href: "/best-offers", commercial: true },
     { label: "Casinos", href: "/casinos", commercial: true },
     { label: "Bonuses", href: "/bonuses", commercial: true },
-    { label: "Best offers", href: "/best-offers", commercial: true },
     { label: "Learn", href: "/learn" },
-    { label: "Help", href: "/help", safety: true },
   ]);
 });
 
@@ -53,7 +51,7 @@ test("account navigation is server-state-derived and never invents XP", () => {
   assert.deepEqual(accountNavigationFor({ authenticated: false }), {
     accountLabel: "Log in",
     accountHref: "/login",
-    primaryLabel: "Start 10 Steps",
+    primaryLabel: "Start Programme",
     primaryHref: "/program",
     xpLabel: null,
   });

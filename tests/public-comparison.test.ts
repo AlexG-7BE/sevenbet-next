@@ -312,17 +312,15 @@ test("repository failures fail closed without legacy or fabricated records", asy
 
 test("comparison architecture remains database-driven, server-owned and raw-destination free", () => {
   const page = readFileSync("app/(public)/compare/page.tsx", "utf8");
+  const api = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const service = readFileSync("lib/services/public-comparison.service.ts", "utf8");
-  const component = readFileSync("components/comparison/ComparisonExperience.tsx", "utf8");
-  assert.match(page, /publicComparisonService/);
-  assert.match(component, /InstantDiscoveryForm/);
-  assert.match(component, /name="casino"/);
-  assert.match(component, /mobileMatrix/);
-  assert.match(component, /CasinoOutboundAction/);
-  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY"/);
-  assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.casinos\.length/);
-  assert.match(component, /result\.inventoryMode === "DEMO_ONLY" \|\| result\.inventoryMode === "MIXED"/);
-  for (const source of [page, service, component]) {
+  const component = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
+  assert.match(page, /permanentRedirect\(`\/casinos/);
+  assert.match(api, /publicComparisonService\.compare\(query, authority\)/);
+  assert.match(component, /sessionStorage/);
+  assert.match(component, /showModal\(\)/);
+  assert.match(component, /slice\(0, 3\)/);
+  for (const source of [page, api, service, component]) {
     assert.doesNotMatch(source, /@prisma\/client|prisma\.|destinationUrl|trackingUrl|localStorage/);
     assert.doesNotMatch(source, /demo-(?:northstar|harbour|atlas)/);
   }

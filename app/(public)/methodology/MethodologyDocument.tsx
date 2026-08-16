@@ -138,7 +138,7 @@ export function MethodologyDocument() {
       <header className={styles.hero}>
         <div className={styles.shell}>
           <p className={styles.eyebrow}>Ranking methodology</p>
-          <h1>THE SCORE<br />{" "}SHOWS ITS WORK.</h1>
+          <h1>EVIDENCE<br />BEFORE OPINION.</h1>
           <div className={styles.highlight} aria-hidden="true" />
           <p className={styles.heroLead}>
             B4GAMBLE evaluates casino operators, welcome offers, responsible gambling tools, and editorial limitations through a structured comparison framework.
@@ -305,7 +305,7 @@ export function MethodologyDocument() {
                 ["Casino bonuses", "/bonuses"],
                 ["Responsible gambling hub", "/responsible-gambling"],
                 ["10-Step Program", "/program"],
-                ["Self-Check", "/self-check"],
+                ["Bonus guide", "/bonus-guide"],
                 ["About B4GAMBLE", "/about"],
               ].map(([label, href], index) => (
                 <Link href={href} key={href}><span>{String(index + 1).padStart(2, "0")}</span><strong>{label}</strong><small>Open resource</small></Link>

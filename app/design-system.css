@@ -93,7 +93,7 @@
   --sb-focus-offset: 3px;
   --sb-motion-fast: 160ms;
   --sb-motion-standard: 240ms;
-  --sb-ease-standard: ease;
+  --sb-ease-standard: cubic-bezier(.2, .8, .2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

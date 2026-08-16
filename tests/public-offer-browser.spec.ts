@@ -5,7 +5,7 @@ const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 test("best offers is server rendered and fails closed before any governed action", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /The shortlist/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Three picks.*Not thirty/ })).toBeVisible();
   expect(await page.locator('a[href^="http"]').count()).toBe(0);
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
   const products = page.getByTestId("best-offer-product-card");
@@ -99,7 +99,7 @@ test("Best Offers HTML remains useful without JavaScript and keeps empty/demo sc
   const response = await request.get(`${baseUrl}/best-offers`);
   expect(response.status()).toBe(200);
   const html = await response.text();
-  expect(html).toContain("<span>The shortlist</span><em>that survives the small print.</em>");
+  expect(html).toContain("<span>Three picks.</span><em>Not thirty.</em>");
   expect(html).toMatch(/No eligible records|DEMONSTRATION DATA/);
   expect(html).not.toContain('"@type":"Offer"');
   if (html.includes("DEMONSTRATION DATA")) {

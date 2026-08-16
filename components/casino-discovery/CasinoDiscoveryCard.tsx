@@ -4,6 +4,8 @@ import React from "react";
 import type { ReactNode } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
+import { TrackedReviewLink } from "@/components/analytics/TrackedReviewLink";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { visitActionUnavailableCopy } from "@/lib/public-casino-discovery/visit-action-presentation";
@@ -54,7 +56,7 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     </div>
     <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate B4GAMBLE."}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
-    <div className={classNames.cardActions}><Link href={`/casino/${casino.slug}`}>{demo ? "View demonstration" : "Read review"}</Link>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
+    <div className={classNames.cardActions}><TrackedReviewLink href={`/casino/${casino.slug}`} sourceSurface="casinos">{demo ? "View demonstration" : "Read review"}</TrackedReviewLink><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} />{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
   </>;
 }
 

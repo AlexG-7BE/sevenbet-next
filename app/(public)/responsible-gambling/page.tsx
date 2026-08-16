@@ -7,7 +7,7 @@ import styles from "./ResponsibleGamblingHub.module.css";
 
 const title = "Responsible Gambling: Education, Tools & Support | B4GAMBLE";
 const description =
-  "Explore responsible gambling education, a private Self-Check, your own limit tracker, the 10-step control plan and noncommercial Help.";
+  "Find practical ways to pause, set limits, build a personal control plan and reach independent, noncommercial gambling support.";
 
 export const metadata: Metadata = {
   title,
@@ -29,27 +29,11 @@ const paths = [
     eyebrow: "Understand",
     title: "Learn how control tools work",
     description: "Read plain-language guides about limits, breaks, self-exclusion and common gambling patterns.",
-    href: "/learn/responsible-gambling",
+    href: "/learn?category=responsible-gambling",
     action: "Browse education",
   },
   {
     number: "02",
-    eyebrow: "Reflect",
-    title: "Take a private Self-Check",
-    description: "Review recent situations without an account. Answers stay in the current browser session.",
-    href: "/self-check",
-    action: "Open Self-Check",
-  },
-  {
-    number: "03",
-    eyebrow: "Track",
-    title: "Check your own limit",
-    description: "Compare amounts with a gambling limit you choose. B4GAMBLE does not calculate a safe or affordable amount.",
-    href: "/tools/budget-calculator",
-    action: "Open limit tracker",
-  },
-  {
-    number: "04",
     eyebrow: "Plan",
     title: "Build a 10-step control plan",
     description: "Work through practical decisions and personal boundaries at your own pace.",
@@ -57,7 +41,7 @@ const paths = [
     action: "Explore 10 Steps",
   },
   {
-    number: "05",
+    number: "03",
     eyebrow: "Support",
     title: "Pause and open Help",
     description: "Find pause, blocking and independent-support options without casino, bonus or affiliate prompts.",
@@ -98,12 +82,12 @@ export default function ResponsibleGamblingHubPage() {
         <div className={styles.heroGrid}>
           <div>
             <p className={styles.kicker}>Control &amp; support</p>
-            <h1>Know your options before you decide.</h1>
+            <h1>Take back control,<br />at your pace.</h1>
           </div>
           <div className={styles.heroCopy}>
-            <p>Choose the next step that fits what you need now. Reading, reflecting, tracking, planning and asking for help are separate options—not a score or a prescribed journey.</p>
+            <p>If gambling is taking more time, money or attention than you want, start with the next useful action. No judgement. No prescribed journey.</p>
             <ul aria-label="Responsible Gambling boundaries">
-              <li>Private tools stay browser-local</li>
+              <li>Practical actions, not a diagnosis</li>
               <li>No diagnosis or affordability decision</li>
               <li>Help stays free of commercial prompts</li>
             </ul>
@@ -114,8 +98,8 @@ export default function ResponsibleGamblingHubPage() {
       <section className={styles.paths} aria-labelledby="responsible-paths-title">
         <header className={styles.sectionHeader}>
           <p className={styles.kicker}>Choose by need</p>
-          <h2 id="responsible-paths-title">Five clear paths.</h2>
-          <p>Each path stands on its own. You can leave, return or choose another without completing the others.</p>
+          <h2 id="responsible-paths-title">Choose what helps now.</h2>
+          <p>Learn, make a plan, or go straight to support. Each path stands on its own.</p>
         </header>
         <ol className={styles.pathGrid}>
           {paths.map((path) => (
@@ -132,9 +116,9 @@ export default function ResponsibleGamblingHubPage() {
       </section>
 
       <aside className={styles.boundary} aria-labelledby="responsible-boundary-title">
-        <p className={styles.kicker}>A boundary worth keeping</p>
-        <h2 id="responsible-boundary-title">You choose the limit. B4GAMBLE does not label an amount safe.</h2>
-        <p>Tools and education can help you organise information and reflect on your own decisions. They do not diagnose a condition, assess what you can afford or guarantee that gambling is safe.</p>
+        <p className={styles.kicker}>EVIDENCE &amp; LIMITS</p>
+        <h2 id="responsible-boundary-title">Built from evidence.<br />Honest about its limits.</h2>
+        <p>Education and practical controls can help you organise information and reflect on your decisions. They do not diagnose a condition, assess what you can afford or guarantee that gambling is safe.</p>
       </aside>
     </article>
   );

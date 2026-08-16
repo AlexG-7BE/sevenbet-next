@@ -35,35 +35,19 @@ test("Protected Help remains isolated and non-commercial", async ({ page }) => {
 
 test("Privacy is substantive and remains noindex, follow", async ({ page }) => {
   await open(page, "/privacy");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("PRIVACY POLICY");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("PRIVACY BY DEFAULT");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex.*follow/i,
   );
 });
 
-test("Self-Check stays local and exposes a protected result path", async ({ page }) => {
-  await open(page, "/self-check");
-  await page.getByRole("button", { name: "Start private reflection" }).click();
-  for (let index = 0; index < 8; index += 1) {
-    await page.getByRole("radio", { name: "No", exact: true }).check();
-    await page
-      .getByRole("button", { name: index === 7 ? "View reflection" : "Next", exact: true })
-      .click();
+test("retired standalone control tools consolidate into Responsible Gambling", async ({ request }) => {
+  for (const route of ["/self-check", "/tools/budget-calculator"]) {
+    const response = await request.get(`${baseUrl}${route}`, { maxRedirects: 0 });
+    expect(response.status(), route).toBe(308);
+    expect(response.headers().location, route).toBe("/responsible-gambling");
   }
-  await expect(page.locator("[data-self-check-state^='result-']")).toBeVisible();
-  await expect(page.getByRole("link", { name: "Open Protected Help" })).toBeVisible();
-  await expect(page.locator('main a[href^="/r/"], main a[href^="/go/"]')).toHaveCount(0);
-});
-
-test("Personal Limit Tracker calculates only from user-entered values", async ({ page }) => {
-  await open(page, "/tools/budget-calculator");
-  await page.getByLabel("Your gambling limit for this period (£)").fill("100");
-  await page.getByLabel("Amount already used (£)").fill("85");
-  await page.getByLabel(/Amount you are considering next/).fill("25");
-  await page.getByRole("button", { name: "Check my limit" }).click();
-  await expect(page.locator("[data-limit-tracker-state='planned-over']")).toBeVisible();
-  await expect(page.locator('main a[href^="/r/"], main a[href^="/go/"]')).toHaveCount(0);
 });
 
 test("FAQ disclosures remain native and keyboard operable", async ({ page }) => {
@@ -98,7 +82,7 @@ test("commercial confirmation, no-JS, and invalid managed routes fail closed", a
 
 test("shared Action preserves hover and focus visual contracts", async ({ page }) => {
   await open(page, "/");
-  const action = page.getByRole("link", { name: "Start the 10-Step Program" }).first();
+  const action = page.getByRole("link", { name: "Start Programme" }).first();
   await action.hover();
   await expect
     .poll(() => action.evaluate((element) => getComputedStyle(element).transform))

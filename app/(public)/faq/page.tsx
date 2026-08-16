@@ -35,8 +35,8 @@ const groups = [
     title: "Control tools stay separate.",
     items: [
       ["What is the 10-Step Programme?", "It is an educational and control-oriented sequence for reflection, learning and a personal plan. It is not treatment, and it does not reward gambling, deposits or commercial clicks."],
-      ["Does Self-Check diagnose gambling addiction?", "No. Self-Check is a private, non-clinical reflection. Its answers stay local to the browser session and do not drive casino or bonus recommendations."],
-      ["Does the Personal Gambling Limit Tracker tell me what is safe to spend?", "No. It uses a limit chosen by you. B4GAMBLE does not calculate a safe or affordable gambling amount and does not generate a stop-loss recommendation."],
+      ["Does the Programme diagnose gambling addiction?", "No. The Programme is educational and control-oriented. It does not diagnose or treat a medical condition, and its private wording does not drive casino or bonus recommendations."],
+      ["Does B4GAMBLE tell me what is safe to spend?", "No. B4GAMBLE does not calculate a safe or affordable gambling amount and does not generate a stop-loss recommendation."],
     ],
   },
   {
@@ -61,7 +61,7 @@ const groups = [
     eyebrow: "05 · Privacy & Help",
     title: "Private means non-commercial.",
     items: [
-      ["How are Self-Check and Limit Tracker entries stored?", "The current Self-Check and Personal Gambling Limit Tracker process entries locally in the browser. Individual answers and entered amounts are not stored in B4GAMBLE’s application database."],
+      ["How is private Programme wording handled?", "Private narrative stays in the current browser session. Neutral account progress is stored separately and is not used for commercial targeting."],
       ["Where can I get help with gambling?", "Protected Help provides independent support routes and safer-gambling information. It remains separate from casino, bonus and affiliate actions."],
     ],
   },
@@ -69,7 +69,7 @@ const groups = [
 
 const initiallyOpen = new Set([
   "What is B4GAMBLE?",
-  "Does Self-Check diagnose gambling addiction?",
+  "Does the Programme diagnose gambling addiction?",
   "Can bonus or operator terms change?",
   "Does B4GAMBLE earn affiliate commission?",
   "Where can I get help with gambling?",

@@ -130,8 +130,9 @@
 .commission { margin: 12px 0 0; color: var(--muted); font-size: .56rem; line-height: 1.35; }
 .unavailable { margin: 9px 0 0; padding: 8px 10px; border-left: 3px solid #8e8d1b; background: #f5f4cf; color: #4b4a32; font-size: .58rem; line-height: 1.35; }
 .cardActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; padding-top: 14px; }
-.cardActions a { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 10px; border: 1px solid var(--ink); border-radius: var(--sb-radius-full); font-size: .68rem; font-weight: 750; text-align: center; }
+.cardActions a, .cardActions button { min-height: 46px; display: inline-flex; align-items: center; justify-content: center; padding: 8px 10px; border: 1px solid var(--ink); border-radius: var(--sb-radius-full); background:transparent; color:var(--ink); font:750 .68rem/1 var(--font-seven-sans),Arial,sans-serif; text-align: center; cursor:pointer; }
 .cardActions a:last-child:not(:first-child) { background: var(--night); color: var(--white); }
+.cardActions button[aria-pressed="true"] { background:var(--acid); }
 .cardActions a:only-child { grid-column: 1 / -1; }
 .featureCard .description { min-height: 3em; }
 .featureCard .commission { display: none; }

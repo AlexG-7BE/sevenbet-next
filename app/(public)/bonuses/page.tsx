@@ -13,6 +13,7 @@ import {
   BonusRelatedNavigation,
   FeaturedBonusCard,
 } from "@/components/bonus-directory/BonusDirectory";
+import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
@@ -84,13 +85,14 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   } : null;
 
   return <div className={`${styles.page} ${instrumentSerif.variable}`}>
+    <CommercialSurfaceView surface="bonuses" />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero}>
       <Image alt="" aria-hidden="true" className={styles.heroMedia} height={980} priority sizes="(max-width: 760px) 39vw, 53vw" src="/bonus-directory/material-field.png" width={1600} />
       <div className={styles.heroCopy}>
         <p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Bonuses · Material Editorial Theatre · 18+</p>
         <p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Bonus Terms</p>
-        <h1>Terms<br />Before<br />The Number.</h1>
+        <h1>Value, measured<br />by terms.</h1>
         <em className={styles.desktopOnly}>A bonus is a contract-shaped object.</em>
         <p className={styles.desktopOnly}>Compare each record without hiding wagering, deposit, eligibility, expiry, licence context or commercial availability behind the headline.</p>
         <p className={`${styles.mobileHeroMicrocopy} ${styles.mobileOnly}`}>Read the conditions before you compare.</p>
@@ -104,12 +106,12 @@ export default async function BonusesPage({ searchParams }: PageProps) {
 
     <section className={styles.directorySection}>
       <div className={styles.shell}>
-        <header className={styles.sectionHeading}><div><p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Server-classified comparison records</p><h2 className={`${styles.display} ${styles.desktopOnly}`}>Bonus Terms<br />As Product Objects.</h2><p className={`${styles.eyebrow} ${styles.mobileOnly}`}>Bonus terms as product objects</p><h2 className={`${styles.mobileSectionTitle} ${styles.mobileOnly}`}>Read the contract before the headline.</h2></div><p><span className={styles.desktopOnly}>The first 3 results use the same server-owned order as the full directory. No sponsored override changes their natural editorial position.</span><span className={styles.mobileOnly}>The same material fields remain visible on every record.</span></p></header>
+        <header className={styles.sectionHeading}><div><p className={`${styles.eyebrow} ${styles.desktopOnly}`}>Server-classified comparison records</p><h2 className={`${styles.display} ${styles.desktopOnly}`}>All bonuses</h2><p className={`${styles.eyebrow} ${styles.mobileOnly}`}>All bonuses</p><h2 className={`${styles.mobileSectionTitle} ${styles.mobileOnly}`}>Read the contract before the headline.</h2></div><p><span className={styles.desktopOnly}>The first 3 results use the same server-owned order as the full directory. No sponsored override changes their natural editorial position.</span><span className={styles.mobileOnly}>The same material fields remain visible on every record.</span></p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.reviewSeparationNote} role="note"><strong>DEMONSTRATION DATA</strong><p>These fictional records show the comparison experience. They are not current GB promotions, partner offers or claimable bonuses. No commercial visit is available.</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><p className={styles.eyebrow}>Listings unavailable · fail closed</p><h2>The Published Directory Could Not Be Loaded.</h2><p>No cached, legacy, demonstration or invented offer is substituted. Casino reviews, methodology, education and protected Help remain available.</p><Link href="/methodology">Review Methodology</Link></section> : <>
           {featured.length > 0 && <div className={styles.featuredGrid}>{featured.map((offer, index) => <FeaturedBonusCard key={`${offer.casino.id}:${offer.bonus.id}`} offer={offer} position={startPosition + index} primary={index === 0} />)}</div>}
 
-          <div className={styles.controlsIntro}><div><p className={styles.eyebrow}><span className={styles.desktopOnly}>Server-owned filters · URL owned</span><span className={styles.mobileOnly}>Full material ledger</span></p><h2>Compare Every Material Term.</h2></div><p><span className={styles.desktopOnly}>{result.total} matching comparison record{result.total === 1 ? "" : "s"}. Every filter, sort, classification and result count is resolved on the server.</span><span className={styles.mobileOnly}>{result.records.length} results stay scannable on this page. Open a review only when you need the full evidence.</span></p></div>
+          <div className={styles.controlsIntro}><div><p className={styles.eyebrow}><span className={styles.desktopOnly}>Server-owned filters · URL owned</span><span className={styles.mobileOnly}>Full material ledger</span></p><h2>Run the numbers<br />before you claim.</h2></div><p><span className={styles.desktopOnly}>{result.total} matching comparison record{result.total === 1 ? "" : "s"}. Every filter, sort, classification and result count is resolved on the server.</span><span className={styles.mobileOnly}>{result.records.length} results stay scannable on this page. Open a review only when you need the full evidence.</span></p></div>
           <BonusFilters activeCount={activeCount} facets={result.facets} query={result.query} total={result.total} />
           <ActiveBonusFilters query={result.query} raw={raw} />
 

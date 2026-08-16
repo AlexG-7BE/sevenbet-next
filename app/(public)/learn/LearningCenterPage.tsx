@@ -5,7 +5,6 @@ import { LearningSearchAndFilter } from "@/components/learning/LearningSearchAnd
 import {
   getArticleBySlug,
   getArticlePath,
-  getCategoryPath,
   getLearningCategory,
   type LearningArticle,
   type LearningCategory,
@@ -20,11 +19,13 @@ export function LearningCenterPage({
   categories,
   tags,
   paths,
+  initialCategory,
 }: {
   articles: LearningArticle[];
   categories: LearningCategory[];
   tags: string[];
   paths: LearningPath[];
+  initialCategory?: string;
 }) {
   const feature = articles.find((article) => article.slug === "welcome-bonus-terms") ?? articles[0];
   const shelfArticles = articles.filter((article) => article.slug !== feature.slug).slice(0, 5);
@@ -44,7 +45,7 @@ export function LearningCenterPage({
         <div className={styles.heroShade} />
         <div className={styles.heroCopy}>
           <p>B4GAMBLE Learning Center · Current editorial library</p>
-          <h1 id="learn-title">THE MAGAZINE SHELF.</h1>
+          <h1 id="learn-title">LEARN.<br />PLAY SMARTER.</h1>
           <span>Clear guides for reading casino terms, reviews and risks before comparing.</span>
         </div>
         <div className={styles.collage} aria-hidden="true">
@@ -60,7 +61,7 @@ export function LearningCenterPage({
       <section className={styles.manifesto} aria-labelledby="weight-title">
         <div>
           <p className={styles.kicker}>Editorial order</p>
-          <h2 id="weight-title">NOT EVERY GUIDE HAS THE SAME WEIGHT.</h2>
+          <h2 id="weight-title">START HERE</h2>
         </div>
         <div className={styles.coverWrap}>
           <Image src="/learn/welcome-bonus-feature-cover.png" alt="Editorial cover for the welcome bonus terms guide" fill sizes="(max-width: 700px) 88vw, 520px" />
@@ -84,7 +85,7 @@ export function LearningCenterPage({
         <ol>
           {categories.map((category, index) => (
             <li key={category.slug}>
-              <Link href={getCategoryPath(category.slug)}>
+              <Link href={`/learn?category=${encodeURIComponent(category.slug)}#learning-search`}>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <strong>{category.title}</strong>
                 <span aria-hidden="true">↗</span>
@@ -97,7 +98,7 @@ export function LearningCenterPage({
       <section className={styles.catalogue} aria-labelledby="catalogue-title">
         <header>
           <p className={styles.kicker}>Current catalogue</p>
-          <h2 id="catalogue-title">START WHERE THE QUESTION IS.</h2>
+          <h2 id="catalogue-title">ALL GUIDES</h2>
           <p>The complete catalogue remains available in search below. This opening edit gives the largest visual weight only to current feature and popularity flags.</p>
         </header>
         <Link className={styles.dominantStory} href={getArticlePath(feature)}>
@@ -130,6 +131,7 @@ export function LearningCenterPage({
         categories={categories.map(({ slug, title }) => ({ slug, title }))}
         tags={tags}
         difficulties={difficulties}
+        initialCategory={initialCategory}
       />
 
       <section className={styles.paths} aria-labelledby="paths-title">

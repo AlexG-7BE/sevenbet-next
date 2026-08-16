@@ -31,7 +31,7 @@ export function ProtectedHelpHub() {
     <article className={styles.hub} data-protected-help-page="help">
       <section className={styles.hero} aria-labelledby="protected-help-title" data-help-section="hero">
         <p className={styles.heroBadge}>Protected Help · No account needed</p>
-        <h1 id="protected-help-title">Get support<br />without offers.</h1>
+        <h1 id="protected-help-title">We&apos;re here.<br />No strings.</h1>
         <p className={styles.heroCopy}>
           Pause, block access, or open independent support. Casino, bonus and affiliate prompts do not appear in this area.
         </p>
@@ -46,7 +46,7 @@ export function ProtectedHelpHub() {
         <h2 id="next-actions-title">One clear next step.</h2>
         <ol className={styles.actionGrid}>
           {nextActions.map((action) => (
-            <li className={styles.actionCard} key={action.number}>
+            <li className={styles.actionCard} id={action.number === "01" ? "cooling-off" : action.number === "02" ? "self-exclusion" : action.number === "03" ? "deposit-limits" : "reality-checks"} key={action.number}>
               <span>{action.number}</span>
               <h3>{action.title}</h3>
               <p>{action.description}</p>

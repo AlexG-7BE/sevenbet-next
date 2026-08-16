@@ -14,6 +14,10 @@ export const productAnalyticsEventNames = [
   "programme_discovery_clicked",
   "programme_ai_outcome",
   "programme_voice_outcome",
+  "commercial_surface_viewed",
+  "casino_review_opened",
+  "comparison_opened",
+  "outbound_intent",
 ] as const;
 
 export type ProductAnalyticsEventName = (typeof productAnalyticsEventNames)[number];
@@ -68,6 +72,10 @@ export type ProductAnalyticsEventMap = {
   programme_voice_outcome: {
     result: "recording_started" | "transcription_success" | "permission_denied" | "transcription_error" | "cancelled";
   };
+  commercial_surface_viewed: { surface: "best_offers" | "casinos" | "bonuses" | "casino_review" };
+  casino_review_opened: { sourceSurface: "best_offers" | "casinos" | "bonuses" | "comparison" };
+  comparison_opened: { selectionCount: "two" | "three" };
+  outbound_intent: { outcome: "confirmation_opened" | "continued" };
 };
 
 export type ProductAnalyticsEvent<N extends ProductAnalyticsEventName = ProductAnalyticsEventName> = {
@@ -114,6 +122,10 @@ const aiOperations = [
 ] as const;
 const aiResults = ["provider", "fallback", "rate_limited", "timeout", "invalid_output", "provider_error"] as const;
 const voiceResults = ["recording_started", "transcription_success", "permission_denied", "transcription_error", "cancelled"] as const;
+const commercialSurfaces = ["best_offers", "casinos", "bonuses", "casino_review"] as const;
+const reviewSources = ["best_offers", "casinos", "bonuses", "comparison"] as const;
+const comparisonCounts = ["two", "three"] as const;
+const outboundOutcomes = ["confirmation_opened", "continued"] as const;
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -226,6 +238,18 @@ export function parseProductAnalyticsEvent<N extends ProductAnalyticsEventName>(
     case "programme_voice_outcome":
       exactKeys(value, ["result"]);
       return { name, properties: { result: closedString(value.result, voiceResults) } } as ProductAnalyticsEvent<N>;
+    case "commercial_surface_viewed":
+      exactKeys(value, ["surface"]);
+      return { name, properties: { surface: closedString(value.surface, commercialSurfaces) } } as ProductAnalyticsEvent<N>;
+    case "casino_review_opened":
+      exactKeys(value, ["sourceSurface"]);
+      return { name, properties: { sourceSurface: closedString(value.sourceSurface, reviewSources) } } as ProductAnalyticsEvent<N>;
+    case "comparison_opened":
+      exactKeys(value, ["selectionCount"]);
+      return { name, properties: { selectionCount: closedString(value.selectionCount, comparisonCounts) } } as ProductAnalyticsEvent<N>;
+    case "outbound_intent":
+      exactKeys(value, ["outcome"]);
+      return { name, properties: { outcome: closedString(value.outcome, outboundOutcomes) } } as ProductAnalyticsEvent<N>;
   }
   throw new Error("Unknown product analytics event");
 }

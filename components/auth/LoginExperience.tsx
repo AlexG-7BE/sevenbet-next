@@ -84,7 +84,7 @@ export function LoginExperience({ authError, authState, googleAvailable, returnT
     <div className={styles.page} data-login-page>
       <section className={styles.intro}>
         <p className={styles.kicker}>{linkRecovery ? "EXISTING ACCOUNT · SECURE RECOVERY" : "ACCOUNT ACCESS"}</p>
-        <h1>{linkRecovery ? "Confirm the account that already owns this email." : "Welcome back."}</h1>
+        <h1>{linkRecovery ? "Confirm the account that already owns this email." : <>Log in.<br /><em>Pick up your plan.</em></>}</h1>
         <p>{linkRecovery
           ? "Sign in with the existing B4GAMBLE email and password first. Only then can Google be explicitly linked to that authenticated account."
           : "Return to your private Programme with the sign-in method already connected to your account."}</p>

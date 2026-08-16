@@ -35,7 +35,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
         }
       : {
           eyebrow: "ONE USEFUL MISSION",
-          title: "Start with the moment in front of you.",
+          title: "Mission 01 takes about one minute.",
           copy: "No account until Mission 01 is complete.",
         };
 
@@ -58,7 +58,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       <section className={styles.builds} data-ten-steps-section="programme-builds" aria-labelledby="programme-builds-title">
         <div className={styles.sectionIntro}>
           <span>WHAT YOU BUILD</span>
-          <h2 id="programme-builds-title">A programme that leaves you with something useful.</h2>
+          <h2 id="programme-builds-title">Three things you&apos;ll have at the end.</h2>
           <p>Start privately. Save completion and rewards after Mission 01 while personal wording stays in this browser session.</p>
         </div>
         <div className={styles.buildGrid}>
@@ -100,7 +100,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       <section className={styles.missionMap} data-ten-steps-section="mission-map" aria-labelledby="mission-map-title">
         <div className={styles.pathIntro}>
           <span>THE FULL PATH</span>
-          <h2 id="mission-map-title">Ten missions. One decision you can review.</h2>
+          <h2 id="mission-map-title">The path</h2>
           <p>Mission 01 starts without an account. Missions 02–10 continue the MVP after you choose to save the Starting Point.</p>
         </div>
         <ol className={styles.missionList}>
@@ -116,7 +116,7 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       <section className={styles.accountBoundary} data-ten-steps-section="account-boundary" aria-labelledby="account-boundary-title">
         <div className={styles.accountCopy}>
           <span>ACCOUNT BOUNDARY</span>
-          <h2 id="account-boundary-title"><strong>Start private.</strong><em>Save progress if you choose.</em></h2>
+          <h2 id="account-boundary-title"><strong>What you say here,</strong><em>stays here.</em></h2>
           <p>Mission 01 does not require an account. Its two actions earn 40 XP before registration. Create an account only if you want to save the already-earned Starting Point, completion and XP. Personal wording stays in this browser session.</p>
           <ol>
             <li>Open Mission 01</li>
@@ -159,10 +159,10 @@ function AnonymousHero() {
   return (
     <div className={styles.heroInner}>
       <div className={styles.heroCopy}>
-        <span>PUBLIC PROGRAMME · START WITHOUT AN ACCOUNT</span>
-        <h1 id="ten-steps-title"><strong>10 STEPS</strong><em>before you choose.</em></h1>
-        <p>Compare casinos, understand offers, build your own rules.</p>
-        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink>
+        <span>A PRIVATE PROGRAMME · TEN SHORT MISSIONS</span>
+        <h1 id="ten-steps-title"><strong>TEN STEPS.</strong><em>One plan.</em></h1>
+        <p>See your patterns, write rules that fit real life, and keep a plan you can return to.</p>
+        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Programme</ProgrammeStartActionLink>
         <small>MISSION 01 IS PRIVATE. ITS TWO ACTIONS EARN 40 XP. REGISTRATION EARNS 0 XP.</small>
       </div>
       <div className={styles.heroVisual}>

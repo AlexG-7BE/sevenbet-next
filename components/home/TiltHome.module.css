@@ -3,6 +3,7 @@
   --deep: var(--sb-deep);
   --card: var(--sb-charcoal);
   --paper: var(--sb-paper);
+  --field: var(--sb-field);
   --white: var(--sb-white);
   --ink: var(--sb-night);
   --muted: var(--sb-metal);
@@ -47,6 +48,7 @@
   justify-items: center;
   text-align: center;
 }
+.heroKicker { margin-bottom:28px; color:var(--acid); font-size:13px; line-height:1; letter-spacing:.22em; }
 .heroCopy h1 { width: 100%; margin: 0; display: grid; justify-items: center; }
 .heroCopy h1 strong {
   font-size: min(158px, 10.9722vw);
@@ -94,7 +96,7 @@
 .heroPhotoThree img { object-position: 50% 50%; }
 .heroPhotoFour img { object-position: 50% 50%; }
 
-.scrollCue { position: absolute; left: 50%; bottom: min(39px, 2.7083vw); z-index: 6; width: min(72px, 5vw); height: 44px; transform: translateX(-50%); display: grid; place-items: center; }
+.scrollCue { position: absolute; left: 50%; bottom: 0; z-index: 6; width: min(72px, 5vw); height: 44px; transform: translateX(-50%); display: grid; place-items: center; }
 .scrollCue span { width: min(72px, 5vw); height: min(5px, .3472vw); border-radius: var(--sb-radius-full); background: var(--acid); animation: cue 1.8s ease-in-out infinite; }
 
 .theatre { position: relative; height: 860px; overflow: hidden; background: var(--deep); }
@@ -206,6 +208,20 @@
 .limitCard span { color: var(--acid); }
 .limitCard p { color: var(--night-muted); }
 
+.trustBoundary { min-height:720px; padding:92px max(64px,calc((100vw - 1312px)/2)); display:grid; grid-template-columns:.86fr 1.14fr; gap:80px; background:var(--field); color:var(--ink); }
+.trustBoundary > div:first-child > span, .trustColumns article > span { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.12em; }
+.trustBoundary h2 { margin:28px 0 0; display:grid; }
+.trustBoundary h2 strong { font-size:clamp(48px,5vw,72px); line-height:.98; letter-spacing:-.06em; }
+.trustBoundary h2 em { margin-top:8px; font:italic clamp(54px,5.6vw,82px)/.9 var(--font-seven-serif),Georgia,serif; }
+.trustColumns { display:grid; grid-template-columns:1fr 1fr; align-content:center; }
+.trustColumns article { min-height:410px; padding:36px; display:flex; flex-direction:column; border:1px solid rgba(16,15,15,.28); }
+.trustColumns article+article { border-left:0; }
+.trustColumns article:first-child { background:var(--night); color:var(--white); }
+.trustColumns article:first-child > span { color:var(--acid); }
+.trustColumns h3 { margin:auto 0 18px; font-size:34px; line-height:1; letter-spacing:-.04em; }
+.trustColumns p { margin:0; color:var(--muted); font-size:15px; line-height:1.55; }
+.trustColumns article:first-child p { color:var(--night-muted); }
+
 .finalCta { height: 560px; padding: 76px 32px 64px; display: grid; justify-items: center; align-content: start; text-align: center; background: var(--night); }
 .finalCta > span { margin-bottom: 36px; }
 .finalCta h2 strong { font-size: 82px; line-height: 1.1; letter-spacing: -.065em; }
@@ -238,6 +254,7 @@
 
   .hero { height: min(920px, 235.8974vw); }
   .heroCopy { inset: min(276px, 70.7692vw) 16px auto; }
+  .heroKicker { margin-bottom:18px; font-size:9px; letter-spacing:.16em; }
   .heroCopy h1 strong { font-size: min(54px, 13.8462vw); line-height: min(50px, 12.8205vw); letter-spacing: -.06em; }
   .heroCopy h1 em { font-size: min(56px, 14.359vw); line-height: min(52px, 13.3333vw); }
   .heroCopy > p { width: min(318px, calc(100vw - 56px)); margin: min(36px, 9.2308vw) 0 min(58px, 14.8718vw); font-size: min(16px, 4.1026vw); line-height: min(24px, 6.1538vw); }
@@ -301,6 +318,13 @@
   .evidenceGrid strong { font-size: 24px; line-height: 28px; }
   .evidenceGrid p { font-size: 14px; line-height: 21px; }
   .missionMetric span { font-size: 52px; line-height: 54px; }
+
+  .trustBoundary { min-height:980px; padding:64px 24px; grid-template-columns:1fr; gap:44px; }
+  .trustBoundary h2 strong { font-size:38px; }
+  .trustBoundary h2 em { font-size:46px; }
+  .trustColumns { grid-template-columns:1fr; }
+  .trustColumns article { min-height:300px; padding:26px; }
+  .trustColumns article+article { border-left:1px solid rgba(16,15,15,.28); border-top:0; }
 
   .finalCta { height: 600px; padding: 70px 24px 0; align-content: start; }
   .finalCta > span { margin-bottom: 34px; }

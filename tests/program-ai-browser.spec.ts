@@ -330,7 +330,7 @@ test("distributed session creation limiting returns a safe 429 while Help stays 
   });
 
   await page.goto("/help");
-  await expect(page.getByRole("heading", { name: /Get support without offers/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /We're here\..*No strings\./i })).toBeVisible();
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
 
@@ -907,7 +907,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
-  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
+  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(3);
   await noHorizontalOverflow(page);
 
   for (const width of [375, 390, 768, 1024, 1440]) {

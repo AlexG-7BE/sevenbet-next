@@ -79,7 +79,7 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.match(frontend, /authClient\.signIn\.email/);
   assert.match(frontend, /authClient\.linkSocial/);
   assert.match(frontend, /GOOGLE_LINK_CALLBACK/);
-  assert.match(frontend, /Your confirmed Starting Point stays in this browser/);
+  assert.match(frontend, /Your Starting Point stays in this browser/);
   const explicitLink = frontend.slice(frontend.indexOf("async function startGoogleLink"), frontend.indexOf("async function openMission"));
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });

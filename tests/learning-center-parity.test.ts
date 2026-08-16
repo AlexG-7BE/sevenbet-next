@@ -59,7 +59,8 @@ test("category pages publish current article records and fail closed when empty"
   assert.match(categoryView, /articles\.length > 0/);
   assert.match(categoryView, /NO PUBLISHED GUIDES YET/);
   assert.doesNotMatch(categoryView, /plannedTopics|Browse Casinos|Browse Bonuses|Claim|Play now/iu);
-  assert.match(categoryRoute, /if \(!category\) notFound\(\)/);
+  assert.match(categoryRoute, /if \(!getLearningCategory\(category\)\) notFound\(\)/);
+  assert.match(categoryRoute, /permanentRedirect\(`\/learn\?category=/);
 });
 
 test("article template is truthful about missing evidence and preserves the protected boundary", () => {
@@ -67,7 +68,8 @@ test("article template is truthful about missing evidence and preserves the prot
   assert.match(articleView, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
   assert.doesNotMatch(articleView, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
   assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
-  assert.match(articleView, /href="\/compare"/);
+  assert.match(articleView, /href="\/casinos"/);
+  assert.doesNotMatch(articleView, /href="\/compare"/);
   assert.match(articleView, /href="\/responsible-gambling"/);
   assert.match(articleView, /href="\/help"/);
   assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);
@@ -76,8 +78,8 @@ test("article template is truthful about missing evidence and preserves the prot
 
 test("metadata and structured data remain aligned with visible content", () => {
   assert.match(hubRoute, /canonical: absoluteUrl\("\/learn"\)/);
-  assert.match(categoryRoute, /BreadcrumbList/);
-  assert.match(categoryRoute, /FAQPage/);
+  assert.match(categoryRoute, /permanentRedirect\(`\/learn\?category=/);
+  assert.doesNotMatch(categoryRoute, /BreadcrumbList|FAQPage/);
   assert.match(articleRoute, /BreadcrumbList/);
   assert.match(articleRoute, /"@type": "Article"/);
   assert.match(articleRoute, /FAQPage/);

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Archivo } from "next/font/google";
+import { Archivo, Instrument_Serif } from "next/font/google";
 import { connection } from "next/server";
 import { ProductAnalytics } from "@/components/analytics/ProductAnalytics";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -12,6 +12,14 @@ export const dynamic = "force-dynamic";
 const archivo = Archivo({
   subsets: ["latin"],
   variable: "--font-seven-sans",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  weight: "400",
+  variable: "--font-seven-serif",
   display: "swap",
 });
 
@@ -32,7 +40,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   await connection();
   return (
     <html lang="en">
-      <body className={archivo.variable}>
+      <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
         {children}
         <ProductAnalytics />

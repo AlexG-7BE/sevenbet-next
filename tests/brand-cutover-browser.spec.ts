@@ -8,7 +8,7 @@ test("desktop and mobile Public Shell expose B4GAMBLE without wordmark overflow"
   const desktopBrand = page.getByRole("link", { name: "B4GAMBLE home" });
   await expect(desktopBrand).toHaveText("B4GAMBLE");
   await expect(page.locator("footer[data-public-shell]")).toContainText("B4GAMBLE");
-  await expect(page.locator("footer[data-public-shell]")).toContainText("Know your limits before you play.");
+  await expect(page.locator("footer[data-public-shell]")).toContainText("Keep gambling your decision, not a habit.");
   await expect(page.locator('meta[name="description"]')).toHaveAttribute(
     "content",
     "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.",

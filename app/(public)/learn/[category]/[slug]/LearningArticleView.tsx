@@ -146,7 +146,7 @@ export function LearningArticleView({
           </div>
           <div>
             <p>Compare current B4GAMBLE records only when the educational context is clear. This is an internal navigation link, not a personalised recommendation.</p>
-            <Link href="/compare">Open comparison <span aria-hidden="true">↗</span></Link>
+            <Link href="/casinos">Compare casinos <span aria-hidden="true">↗</span></Link>
             <small>Commercial disclosure: B4GAMBLE may receive compensation from some outbound links reached later. Rankings remain editorial.</small>
           </div>
         </aside>

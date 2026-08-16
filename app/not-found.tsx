@@ -12,12 +12,11 @@ export default function NotFound() {
       <main id="main-content">
         <section className={styles.page}>
           <div className={styles.panel}>
-            <p className={styles.eyebrow}>404 · Page not found</p>
-            <h1>This page isn&apos;t here.</h1>
+            <p className={styles.errorCode}>404</p>
+            <h1>This route is lost.<br /><em>Let&apos;s get you back on course.</em></h1>
             <p className={styles.copy}>The link may be outdated, moved or no longer published.</p>
             <div className={styles.actions}>
-              <ActionLink href="/">Go home</ActionLink>
-              <ActionLink href="/help" variant="ghost-paper">Open Help</ActionLink>
+              <ActionLink href="/">Go to homepage</ActionLink>
             </div>
           </div>
         </section>

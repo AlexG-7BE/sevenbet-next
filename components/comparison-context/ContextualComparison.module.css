@@ -1,0 +1,37 @@
+.tray, .dialog { --night:#100f0f; --paper:#fafaf7; --acid:#e4e24e; --muted:#b7b5ad; font-family:var(--font-seven-sans),Arial,sans-serif; }
+.tray { position:fixed; z-index:55; right:24px; bottom:24px; width:min(470px,calc(100vw - 48px)); min-height:78px; padding:14px 16px 14px 20px; border:1px solid rgba(250,250,247,.2); border-radius:22px; display:flex; align-items:center; justify-content:space-between; gap:18px; box-shadow:0 24px 70px rgba(0,0,0,.38); background:var(--night); color:var(--paper); }
+.tray > div:first-child { display:grid; gap:3px; }
+.tray strong { font-size:14px; }
+.tray span { color:var(--muted); font-size:11px; }
+.trayActions { display:flex; gap:7px; }
+.tray button, .dialog button, .dialog a { min-height:42px; padding:0 15px; border:1px solid rgba(250,250,247,.34); border-radius:999px; background:transparent; color:inherit; font:650 11px/1 var(--font-seven-sans),Arial,sans-serif; cursor:pointer; }
+.trayActions button:first-child { border-color:var(--acid); background:var(--acid); color:var(--night); }
+.dialog { width:min(1240px,calc(100vw - 48px)); max-width:none; height:min(820px,calc(100dvh - 48px)); max-height:none; padding:0; border:0; border-radius:28px; overflow:hidden; background:var(--paper); color:var(--night); }
+.dialog::backdrop { background:rgba(16,15,15,.76); backdrop-filter:blur(5px); }
+.sheet { height:100%; display:flex; flex-direction:column; overflow:hidden; }
+.sheet > header { padding:28px 32px 24px; display:flex; justify-content:space-between; gap:30px; background:var(--night); color:var(--paper); }
+.sheet > header span { color:var(--acid); font-size:11px; letter-spacing:.12em; }
+.sheet h2 { margin:8px 0 3px; font:italic 50px/.95 var(--font-seven-serif),Georgia,serif; }
+.sheet header p { margin:0; color:var(--muted); font-size:13px; }
+.selected { display:grid; grid-template-columns:repeat(3,1fr); border-bottom:1px solid rgba(16,15,15,.2); }
+.selected article { min-height:88px; padding:18px 24px; display:grid; grid-template-columns:1fr auto; gap:4px 12px; border-right:1px solid rgba(16,15,15,.16); }
+.selected strong { text-transform:capitalize; }
+.selected span { color:#64635c; font-size:12px; }
+.selected button { grid-column:2; grid-row:1 / 3; min-height:36px; align-self:center; border-color:rgba(16,15,15,.3); color:var(--night); }
+.groups { flex:1; overflow:auto; overscroll-behavior:contain; }
+.groups section > h3 { position:sticky; top:0; z-index:2; margin:0; padding:12px 24px; border-block:1px solid rgba(16,15,15,.16); background:#f4f1eb; font-size:12px; letter-spacing:.08em; text-transform:uppercase; }
+.row { display:grid; grid-template-columns:minmax(190px,1.15fr) repeat(3,minmax(0,1fr)); border-bottom:1px solid rgba(16,15,15,.12); }
+.row > * { margin:0; padding:16px 20px; border-right:1px solid rgba(16,15,15,.1); }
+.row div { display:grid; gap:5px; }
+.row strong { font-size:12px; }
+.row small { color:#64635c; font-size:10px; line-height:1.35; }
+.row p { display:grid; align-content:start; gap:7px; font-size:12px; line-height:1.4; }
+.row p small { width:fit-content; padding:3px 7px; border-radius:999px; background:#eeece4; }
+.state { margin:auto; padding:48px; text-align:center; color:#64635c; }
+.sheet > footer { min-height:72px; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; gap:18px; border-top:1px solid rgba(16,15,15,.18); background:var(--paper); }
+.sheet > footer > span { color:#64635c; font-size:10px; }
+.sheet > footer div { display:flex; flex-wrap:wrap; gap:8px; }
+.dialog a { display:inline-flex; align-items:center; border-color:var(--night); color:var(--night); }
+.dialog :focus-visible, .tray :focus-visible { outline:3px solid var(--acid); outline-offset:3px; }
+@media(max-width:760px){.tray{right:12px;bottom:12px;width:calc(100vw - 24px);border-radius:18px}.dialog{position:fixed;inset:auto 0 0;width:100vw;height:min(88dvh,820px);margin:0;border-radius:26px 26px 0 0}.sheet>header{padding:22px 20px}.sheet h2{font-size:38px}.selected{grid-template-columns:1fr}.selected article{min-height:68px;padding:12px 18px;border-right:0;border-bottom:1px solid rgba(16,15,15,.12)}.row{grid-template-columns:126px repeat(3,minmax(150px,1fr));width:max-content;min-width:100%}.row>*{padding:14px}.groups{overflow:auto}.sheet>footer{align-items:flex-start;flex-direction:column}.sheet>footer div{display:none}.tray span{display:none}}
+@media(prefers-reduced-motion:reduce){.dialog::backdrop{backdrop-filter:none}}

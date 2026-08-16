@@ -49,7 +49,7 @@ test("Programme client uses tab-scoped storage and sends bounded server payloads
   assert.match(active, /signalChoice: urgeLearning\.notNow \? "not_now" : "local"/);
   assert.match(active, /sourceMomentMapId: goal\.sourceMomentMapId/);
   assert.match(active, /Personal wording stays only in this browser session/);
-  assert.match(active, /<Link href="\/compare">Compare<\/Link>/);
+  assert.match(active, /<Link href="\/casinos">Compare casinos<\/Link>/);
 });
 
 test("the consolidated access screen is unchecked and account creation enforces current signed access authority", () => {

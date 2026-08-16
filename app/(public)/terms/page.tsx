@@ -95,5 +95,5 @@ const sections: readonly LegalSection[] = [
 ] as const;
 
 export default function TermsPage() {
-  return <LegalDocument kind="terms" family="924:3020" desktopNode="924:3021" mobileNode="924:3144" eyebrow="Terms of Use" desktopTitle={<>TERMS THAT SAY WHAT<br />B4GAMBLE IS — AND IS NOT.</>} mobileTitle="TERMS OF USE" lead="A plain-language operating boundary for an editorial, educational and affiliate service." effective="7 August 2026" updated="9 August 2026" sections={sections} boundary={<><p>Service boundary</p><h3>B4GAMBLE informs. It does not operate gambling.</h3><p>B4GAMBLE does not accept wagers or deposits, hold gambling balances, determine outcomes or pay winnings. A gambling transaction is always separate.</p></>} />;
+  return <LegalDocument kind="terms" family="924:3020" desktopNode="924:3021" mobileNode="924:3144" eyebrow="Terms of Use" desktopTitle={<>TERMS<br />OF USE.</>} mobileTitle="TERMS OF USE" lead="A plain-language operating boundary for an editorial, educational and affiliate service." effective="7 August 2026" updated="9 August 2026" sections={sections} boundary={<><p>Service boundary</p><h3>B4GAMBLE informs. It does not operate gambling.</h3><p>B4GAMBLE does not accept wagers or deposits, hold gambling balances, determine outcomes or pay winnings. A gambling transaction is always separate.</p></>} />;
 }

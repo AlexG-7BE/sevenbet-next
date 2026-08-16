@@ -62,7 +62,7 @@ export function TiltHome() {
       data-home-canonical-node="289:946"
       data-home-responsive-authority="661:7551 661:7554 661:7607 657:2545 657:2548 661:2635 661:2686 661:2711"
     >
-      <section className={styles.hero} data-home-section="hero" aria-labelledby="home-title">
+      <section className={styles.hero} data-home-section="hero" data-nav-theme="dark" aria-labelledby="home-title">
         {heroPhotos.map((photo) => (
           <figure
             className={`${styles.heroPhoto} ${photo.className}`}
@@ -78,27 +78,28 @@ export function TiltHome() {
           </figure>
         ))}
         <div className={styles.heroCopy}>
+          <span className={styles.heroKicker}>A PRIVATE 10-STEP PROGRAMME</span>
           <h1 id="home-title"><strong>CONTROL</strong><em>starts here.</em></h1>
-          <p>Ten practical missions turn difficult moments into a plan you wrote yourself.</p>
-          <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start the 10-Step Program</ProgrammeStartActionLink>
-          <span className={styles.heroProof}>10 missions · practical rules · progress you can see</span>
+          <p>Keep gambling your decision, not a habit: ten short missions help you see your patterns and set limits that actually hold. Free and private.</p>
+          <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
+          <span className={styles.heroProof}>10 missions · 5–15 minutes each · Free — no paywall inside, ever · Your words never price anything</span>
         </div>
         <a className={styles.scrollCue} href="#programme" aria-label="Scroll to the programme"><span /></a>
       </section>
 
-      <section className={styles.theatre} id="programme" data-home-section="programme-theatre" aria-labelledby="programme-title">
+      <section className={styles.theatre} id="programme" data-home-section="programme-theatre" data-nav-theme="dark" aria-labelledby="programme-title">
         <div className={styles.sectionIntro}>
           <span>THE PROGRAMME</span>
-          <h2 id="programme-title">It turns into something useful.</h2>
-          <p>A rule. A plan. A next action.</p>
+          <h2 id="programme-title">A plan you can actually see.</h2>
+          <p>Ten missions. About two weeks, at your pace. Free now and always.</p>
         </div>
         <HomeProgrammeCarousel />
       </section>
 
-      <section className={styles.recognition} data-home-section="self-recognition" aria-labelledby="recognition-title">
+      <section className={styles.recognition} data-home-section="self-recognition" data-nav-theme="light" aria-labelledby="recognition-title">
         <div className={styles.recognitionHeading}>
           <h2 id="recognition-title"><strong>Is gambling becoming</strong><em>harder to control?</em></h2>
-          <p>You do not need to answer us. Notice whether any of these feel familiar.</p>
+          <p>No need to answer us — just notice what feels familiar.</p>
         </div>
         <div className={styles.signGrid}>
           {recognitionSigns.map((sign, index) => (
@@ -108,7 +109,7 @@ export function TiltHome() {
             </article>
           ))}
         </div>
-        <p className={styles.recognitionFoot}>One or more of these signs can be a reason to pause and start the 10-Step Program.</p>
+        <p className={styles.recognitionFoot}>One or more of these signs can be a reason to pause and start the Programme.</p>
       </section>
 
       <HumanChapter
@@ -137,7 +138,7 @@ export function TiltHome() {
         image="/home/chapter-apply.jpg"
       />
 
-      <section className={styles.toolsSection} data-home-section="programme-tools" aria-labelledby="tools-title">
+      <section className={styles.toolsSection} data-home-section="programme-tools" data-nav-theme="light" aria-labelledby="tools-title">
         <div className={styles.toolsHeading}>
           <span>WHAT YOU KEEP</span>
           <h2 id="tools-title"><strong>Not advice to remember.</strong><em>Tools you can use.</em></h2>
@@ -155,7 +156,7 @@ export function TiltHome() {
         </div>
       </section>
 
-      <section className={styles.evidenceSection} data-home-section="evidence" aria-labelledby="evidence-title">
+      <section className={styles.evidenceSection} data-home-section="evidence" data-nav-theme="light" aria-labelledby="evidence-title">
         <div className={styles.evidenceHeading}>
           <span>WHY THIS EXISTS</span>
           <h2 id="evidence-title"><strong>Built from evidence.</strong><em>Honest about its limits.</em></h2>
@@ -169,12 +170,17 @@ export function TiltHome() {
         </div>
       </section>
 
-      <section className={styles.finalCta} data-home-section="final-programme-cta" aria-labelledby="final-cta-title">
+      <section className={styles.trustBoundary} data-nav-theme="cream" aria-labelledby="trust-boundary-title">
+        <div><span>THE WALL</span><h2 id="trust-boundary-title"><strong>Two businesses.</strong><em>One wall between them.</em></h2></div>
+        <div className={styles.trustColumns}><article><span>PROGRAMME</span><h3>Your words are yours.</h3><p>What you say in the Programme is used to build your plan. It never changes which casino or bonus you see.</p></article><article><span>REVIEWS</span><h3>Money stays visible.</h3><p>Some outbound links may compensate B4GAMBLE. Commission does not buy an Editor Score or access to your private work.</p></article></div>
+      </section>
+
+      <section className={styles.finalCta} data-home-section="final-programme-cta" data-nav-theme="dark" aria-labelledby="final-cta-title">
         <span>READY WHEN YOU ARE</span>
-        <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>useful mission.</em></h2>
-        <p>No promise of a perfect outcome. Just a practical first step you can finish.</p>
-        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start the 10-Step Program</ProgrammeStartActionLink>
-        <small>Next: Mission 01 · private narrative stays in this browser session</small>
+        <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>honest minute.</em></h2>
+        <p>Tell us about one situation. See the Starting Point before you decide whether to keep it.</p>
+        <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
+        <small>Free · private by default · no marketing consent</small>
       </section>
     </div>
   );
@@ -190,7 +196,7 @@ function HumanChapter({ align = "left", section, chapter, heavy, serif, body, im
   image: string;
 }) {
   return (
-    <section className={`${styles.humanChapter} ${align === "right" ? styles.humanChapterRight : ""}`} data-home-section={section} aria-label={`${heavy} ${serif}`}>
+    <section className={`${styles.humanChapter} ${align === "right" ? styles.humanChapterRight : ""}`} data-home-section={section} data-nav-theme="photo" aria-label={`${heavy} ${serif}`}>
       <Image
         alt=""
         fill

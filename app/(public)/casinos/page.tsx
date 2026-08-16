@@ -5,6 +5,8 @@ import { ActiveDiscoveryFilters, DirectoryFeaturedTheatre, DiscoveryControls, Di
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { ContextualComparison } from "@/components/comparison-context/ContextualComparison";
+import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
@@ -37,12 +39,14 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
   ];
 
-  return <div className={styles.page}>
+  return <div className={styles.page} data-page-theme="dark">
+    <CommercialSurfaceView surface="casinos" />
+    <ContextualComparison />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <section className={styles.hero}>
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
-          <header><p>Editorial casino discovery · Server-classified reviews · 18+</p><h1>A clearer casino<br /><em>choice.</em></h1><span>Search review snapshots before you compare a bonus or consider a governed visit action.</span></header>
+          <header><p>Editorial casino discovery · Server-classified reviews · 18+</p><h1>Picked for<br /><em>how you play.</em></h1><span>Search review snapshots, select up to three, and compare the facts without leaving the directory.</span></header>
           <div className={styles.heroSearch}><InstantDiscoveryForm action="/casinos" debouncedFields={["q"]} key={`hero:${result.appliedFilters.search ?? ""}`} pendingLabel="Updating casino results…"><label className={styles.srOnly} htmlFor="hero-casino-search">Search casinos, payments or providers</label><input defaultValue={result.appliedFilters.search ?? ""} id="hero-casino-search" maxLength={100} name="q" placeholder="Search casinos, payments or providers" type="search" /><button aria-label="Search directory" type="submit">→</button></InstantDiscoveryForm><p>B4GAMBLE may earn a commission from qualifying visits. Review access does not depend on whether a public visit action is available.</p></div>
         </div>
         <DirectoryFeaturedTheatre casino={result.items[0]} />
@@ -51,7 +55,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
     <section className={styles.directory} id="casino-directory">
       <div className={styles.shell}>
-        <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Find the facts that fit<br /><em>your priorities.</em></h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
+        <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
         {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
         <div className={styles.disclosure}><strong>Affiliate disclosure</strong><p>B4GAMBLE may receive commission from future eligible governed visit links. Affiliate compensation does not determine Editor Score or natural editorial ranking, and no listing guarantees winnings or income.</p><Link href="/methodology">Read our review method →</Link></div>
         <DiscoveryControls result={result} />
@@ -60,7 +64,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       </div>
     </section>
 
-    <section className={styles.readingGuide}><div className={styles.shell}><div className={styles.sectionIntro}><p>How to read a review</p><h2>Three checks before<br /><em>you follow an offer.</em></h2></div><div className={styles.guideGrid}>{[
+    <section className={styles.readingGuide}><div className={styles.shell}><div className={styles.sectionIntro}><p>How to read a review</p><h2>Before you choose</h2></div><div className={styles.guideGrid}>{[
       ["01", "Qualification first", "Confirm the published licence, market information and age conditions before comparing offers."],
       ["02", "Facts before promotion", "Read wagering, withdrawals, payments and limits before considering a visit action."],
       ["03", "Decision stays yours", "An Editor Score is a comparison aid, never a safety, winnings or outcomes guarantee."],

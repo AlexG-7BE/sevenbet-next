@@ -86,7 +86,7 @@ test("all signed-out Programme CTAs use the canonical entry", async ({ page }) =
   await page.goto(`${baseUrl}/10-steps`, { waitUntil: "domcontentloaded" });
   const programmeLinks = page.locator("main a[href='/program?entry=start']");
   await expect(programmeLinks).toHaveCount(2);
-  await expect(programmeLinks.first()).toContainText("Start Mission 01");
+  await expect(programmeLinks.first()).toContainText("Start Programme");
   const response = await page.request.get(`${baseUrl}/10-steps`);
   expect(response.headers()["link"] ?? "").not.toContain("mission=");
 });

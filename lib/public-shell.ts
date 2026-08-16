@@ -1,12 +1,10 @@
 export type ShellRouteKind = "public" | "programme" | "protected-help" | "internal";
 
 export const PUBLIC_NAVIGATION = [
-  { label: "10 Steps", href: "/10-steps" },
+  { label: "Best Offers", href: "/best-offers", commercial: true },
   { label: "Casinos", href: "/casinos", commercial: true },
   { label: "Bonuses", href: "/bonuses", commercial: true },
-  { label: "Best offers", href: "/best-offers", commercial: true },
   { label: "Learn", href: "/learn" },
-  { label: "Help", href: "/help", safety: true },
 ] as const;
 
 const protectedHelpPrefixes = ["/help"];
@@ -48,7 +46,7 @@ export function accountNavigationFor({
     : {
         accountLabel: "Log in",
         accountHref: "/login",
-        primaryLabel: "Start 10 Steps",
+        primaryLabel: "Start Programme",
         primaryHref: "/program",
         xpLabel: null,
       };

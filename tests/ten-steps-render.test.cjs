@@ -54,7 +54,7 @@ test("available Programme complete renders only supplied final totals", () => {
 test("anonymous hero preserves Mission 01 entry and pending reward boundary", () => {
   const { hero } = renderState({ kind: "anonymous" });
 
-  assert.match(hero, /Start Mission 01/);
+  assert.match(hero, /Start Programme/);
   assert.match(hero, /\+40 XP/);
   assert.match(hero, /20 XP for describing the situation and 20 XP for confirming the Starting Point\./);
   assert.match(hero, /Registration adds 0 XP\./);

@@ -382,7 +382,7 @@ function Header({ xp }: { xp?: number }) {
         <Link href="/bonuses">Bonuses</Link>
         <Link href="/best-offers">Best offers</Link>
         <Link href="/casinos">Reviews</Link>
-        <Link href="/compare">Compare</Link>
+        <Link href="/casinos">Compare casinos</Link>
       </nav>
       <div className={styles.accountNav}>
         <Link href="/help">Help</Link>

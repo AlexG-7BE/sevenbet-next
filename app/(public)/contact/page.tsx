@@ -28,7 +28,7 @@ export default function ContactPage() {
       <header className={styles.hero}>
         <div className={styles.shell}>
           <p className={styles.eyebrow}>Contact B4GAMBLE</p>
-          <h1>How can we help?</h1>
+          <h1>Talk to us.</h1>
           <p className={styles.heroCopy}>Use the form for general questions, technical issues, editorial feedback or business enquiries.</p>
         </div>
       </header>

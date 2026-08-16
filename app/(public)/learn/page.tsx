@@ -44,12 +44,15 @@ function breadcrumbSchema() {
   };
 }
 
-export default function LearnPage() {
+export default async function LearnPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const raw = (await searchParams).category;
+  const requestedCategory = Array.isArray(raw) ? raw[0] : raw;
+  const initialCategory = learningCategories.some((category) => category.slug === requestedCategory) ? requestedCategory : undefined;
   return (
     <>
       <JsonLd data={organizationSchema()} />
       <JsonLd data={breadcrumbSchema()} />
-      <LearningCenterPage articles={learningArticles} categories={learningCategories} tags={learningTags} paths={learningPaths} />
+      <LearningCenterPage articles={learningArticles} categories={learningCategories} tags={learningTags} paths={learningPaths} initialCategory={initialCategory} />
     </>
   );
 }

@@ -45,15 +45,7 @@ export function AboutDocument() {
             <span className={styles.desktopOnly}>About · Typographic / diagrammatic</span>
             <span className={styles.mobileOnly}>Operating model</span>
           </p>
-          <h1 className={styles.heroTitle}>
-            {operatingSteps.map((step, index) => (
-              <span className={styles.heroWord} key={step}>
-                {step}{index === operatingSteps.length - 1 && <span className={styles.desktopOnly}> again</span>}
-                <span className={styles.desktopOnly}>.</span>
-                {index < operatingSteps.length - 1 && <span className={styles.mobileArrow} aria-hidden="true">↓</span>}
-              </span>
-            ))}
-          </h1>
+          <h1 className={styles.heroTitle}><span className={styles.heroWord}>Built to be</span><span className={styles.heroWord}>on your side.</span></h1>
 
           <ol className={styles.heroStairs} aria-label="B4GAMBLE operating sequence">
             {operatingSteps.map((step, index) => (
@@ -72,7 +64,7 @@ export function AboutDocument() {
       <section className={styles.sequenceOverview} data-about-section="operating-model" aria-labelledby="operating-model-title">
         <div className={styles.contentShell}>
           <p className={styles.eyebrow}>Expressive section · Operating model</p>
-          <h2 id="operating-model-title">Education enters first.<br />Commercial action enters last.</h2>
+          <h2 id="operating-model-title">One product. Three parts.</h2>
           <ol className={styles.sequenceLine} aria-label="Education-first operating sequence">
             {operatingSteps.map((step, index) => (
               <li key={step} className={index === operatingSteps.length - 1 ? styles.finalDot : undefined}>

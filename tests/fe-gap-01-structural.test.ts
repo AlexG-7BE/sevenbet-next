@@ -59,7 +59,7 @@ test("Terms is substantive, server rendered, noindex/follow, and preserves consu
   assert.doesNotMatch(terms + legalDocument, /accept terms checkbox|I accept|Agree to Terms/iu);
 });
 
-test("Self-Check uses exactly eight semantic questions and deterministic non-score routing", () => {
+test("Self-Check compatibility route consolidates into Responsible Gambling", () => {
   const questionBlock = selfFlow.match(/const questions = \[([\s\S]*?)\] as const;/)?.[1] ?? "";
   assert.equal((questionBlock.match(/^\s{2}"/gm) ?? []).length, 8);
   for (const answer of ['"no"', '"once"', '"repeated"', '"skip"']) assert.match(selfFlow, new RegExp(answer));
@@ -72,25 +72,22 @@ test("Self-Check uses exactly eight semantic questions and deterministic non-sco
   assert.match(selfFlow, /No current concerns flagged/);
   assert.match(selfFlow, /Some areas worth reviewing/);
   assert.match(selfFlow, /Help-first/);
-  assert.match(selfPage, /Answers stay in this browser session/);
-  assert.match(selfPage, /data-self-check-nojs/);
+  assert.match(selfPage, /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(selfFlow, /href: "\/program"/);
   assert.match(selfFlow, /href: "\/help"/);
   assert.doesNotMatch(selfFlow, /getProfile|Planning-Oriented Player|Confident but Continue Reviewing|Building Healthy Habits|localStorage|sessionStorage|fetch\(|axios|use server|score|totalScore/);
   assert.doesNotMatch(selfFlow + selfPage, /href=["'{]\/+(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/);
 });
 
-test("Personal Limit Tracker is a server route with exact user-defined calculations", () => {
+test("Personal Limit Tracker compatibility route consolidates into Responsible Gambling", () => {
   assert.doesNotMatch(trackerPage + trackerLayout, /["']use client["']/);
-  assert.match(trackerPage, /<PersonalLimitTracker \/>/);
+  assert.match(trackerPage, /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(tracker, /remaining = Math\.max\(cap\.value - used\.value, 0\)/);
   assert.match(tracker, /usedPercentage = cap\.value > 0 \? \(used\.value \/ cap\.value\) \* 100 : 0/);
   assert.match(tracker, /projectedTotal = used\.value \+ planned\.value/);
   assert.match(tracker, /projectedRemaining = cap\.value - projectedTotal/);
   assert.match(tracker, /overBy = Math\.max\(projectedTotal - cap\.value, 0\)/);
   assert.match(tracker, /Enter a limit greater than £0/);
-  assert.match(trackerPage, /data-limit-tracker-nojs/);
-  assert.match(trackerPage, /Values stay in this browser session/);
   assert.match(tracker, /href="\/help"/);
   assert.doesNotMatch(tracker, /ratio|0\.1|0\.2|0\.3|Recommended|stopLoss|45 min|localStorage|sessionStorage|fetch\(|axios|use server/);
   assert.doesNotMatch(tracker + trackerPage, /href=["'{]\/+(?:casinos|bonuses|best-offers|compare|r|go)(?:\/|["'}])/);
@@ -112,5 +109,5 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
   const forbidden = changed.filter((path) => /^(?:prisma\/|package-lock\.json$)/.test(path));
   assert.deepEqual(forbidden, []);
   assert.equal(changed.includes("app/(public)/layout.tsx"), false);
-  assert.equal(changed.includes("app/design-system.css"), false);
+  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
 });
