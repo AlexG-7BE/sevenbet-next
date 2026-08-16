@@ -31,10 +31,6 @@
   --sb-action-color: var(--ink);
 }
 .home .primaryButton { color: var(--ink); }
-.home .primaryButton:focus-visible {
-  outline: var(--sb-focus-width) solid var(--sb-focus-color);
-  outline-offset: 3px;
-}
 
 .hero {
   position: relative;

@@ -126,6 +126,7 @@ body:has([data-handoff-page]) > [data-public-shell="footer"] {
 [data-handoff-page] :focus-visible {
   outline: 3px solid var(--sb-focus-color) !important;
   outline-offset: 3px !important;
+  transition-property: background-color, border-color, color, filter, transform !important;
 }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
