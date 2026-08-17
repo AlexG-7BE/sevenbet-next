@@ -241,11 +241,14 @@ test("Google Programme, login and recovery controls fit every Founder mobile wid
   for (const width of [360, 375, 390, 412, 430]) {
     await page.setViewportSize({ width, height: 844 });
     const recovery = page.getByRole("button", { name: "Sign in, then link Google" });
+    const legal = page.getByText(/18\+ · Private by default/);
     await expect(recovery).toBeVisible();
+    await expect(legal).toBeVisible();
     expect(await recovery.evaluate((element) => {
       const rect = element.getBoundingClientRect();
       return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth && element.scrollWidth <= element.clientWidth;
     })).toBe(true);
+    expect(await legal.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(14);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
 });

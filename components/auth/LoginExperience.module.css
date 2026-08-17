@@ -35,7 +35,7 @@
 .newHere a { color: var(--sb-action-primary); font-size: 14px; font-weight: 600; text-decoration: none; }
 .error,.assurance { margin-top: 18px; padding: 13px 15px; border-left: 4px solid var(--sb-status-danger); background: color-mix(in srgb, var(--sb-status-danger) 12%, transparent); font-size: 13px; line-height: 1.5; }
 .assurance { border-color: var(--sb-safety-verified); }
-.legal { margin: 28px 0 0; color: color-mix(in srgb, var(--sb-text-on-night) 40%, transparent); font-size: 12px; line-height: 1.6; text-align: center; }
+.legal { margin: 28px 0 0; color: color-mix(in srgb, var(--sb-text-on-night) 40%, transparent); font-size: 14px; line-height: 1.6; text-align: center; }
 .footer { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; padding: 20px clamp(24px, 5vw, 72px); border-top: 1px solid color-mix(in srgb, var(--sb-text-on-night) 12%, transparent); color: color-mix(in srgb, var(--sb-text-on-night) 55%, transparent); font-size: 13px; }
 .footer>span:first-child { padding: 3px 10px; border: 1px solid color-mix(in srgb, var(--sb-text-on-night) 35%, transparent); border-radius: 999px; font-weight: 600; }
 .footer a { margin-left: auto; color: var(--sb-action-primary); font-weight: 600; text-decoration: none; }
