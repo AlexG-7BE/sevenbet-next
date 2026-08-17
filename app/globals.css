@@ -112,6 +112,18 @@ html:has(body > [data-public-shell="header"]),
 body:has(> [data-public-shell="header"]) {
   height: 100%;
 }
+html:has(body > [data-public-shell="header"]),
+html:has([data-protected-help-shell]) {
+  scrollbar-width: none;
+}
+html:has(body > [data-public-shell="header"])::-webkit-scrollbar,
+body:has(> [data-public-shell="header"])::-webkit-scrollbar,
+html:has([data-protected-help-shell])::-webkit-scrollbar,
+body:has([data-protected-help-shell])::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
 [data-handoff-page],
 [data-handoff-page] > div,
 [data-handoff-page] .sc-host {

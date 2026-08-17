@@ -61,6 +61,9 @@ test("the measured Home and Learn grid owns the public geometry tokens", () => {
 
   const globals = read("app/globals.css");
   assert.match(globals, /html:has\(body > \[data-public-shell="header"\]\)[\s\S]*height:\s*100%/);
+  assert.match(globals, /html:has\(body > \[data-public-shell="header"\]\),\s*html:has\(\[data-protected-help-shell\]\)\s*\{\s*scrollbar-width:\s*none/);
+  assert.match(globals, /html:has\(body > \[data-public-shell="header"\]\)::\-webkit-scrollbar/);
+  assert.match(globals, /body:has\(\[data-protected-help-shell\]\)::\-webkit-scrollbar/);
 });
 
 test("Programme-specific UI is contextual content rather than a second global nav", () => {
