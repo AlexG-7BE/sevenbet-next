@@ -1,5 +1,5 @@
-import { readFile } from "node:fs/promises";
-import { execFileSync } from "node:child_process";
+import { readdir, readFile } from "node:fs/promises";
+import path from "node:path";
 
 import postcss from "postcss";
 
@@ -30,9 +30,17 @@ const finalPublicPrefixes = [
   "components/protected-help/",
   "components/public-shell/",
 ];
-const files = execFileSync("rg", ["--files", "app", "components"], { encoding: "utf8" })
-  .trim()
-  .split("\n")
+async function sourceFiles(root) {
+  const entries = await readdir(root, { withFileTypes: true });
+  const nested = await Promise.all(entries.map((entry) => {
+    const location = path.posix.join(root, entry.name);
+    return entry.isDirectory() ? sourceFiles(location) : [location];
+  }));
+  return nested.flat();
+}
+
+const files = (await Promise.all([sourceFiles("app"), sourceFiles("components")]))
+  .flat()
   .filter((file) => file.endsWith(".css") && (finalPublicPrefixes.some((prefix) => file.startsWith(prefix)) || file === "app/globals.css"));
 const violations = [];
 const observedExceptions = new Set();
