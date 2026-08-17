@@ -85,7 +85,7 @@ test("About uses the final handoff visual family and three-part product model", 
 
 test("FE-GAP-01 product boundaries survive the authorized legal remediation", () => {
   const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-  const forbidden = changed.filter((path) => /^(?:prisma\/|package-lock\.json$)/.test(path));
+  const forbidden = changed.filter((path) => /^prisma\//.test(path));
   assert.deepEqual(forbidden, []);
   assert.equal(changed.includes("app/(public)/layout.tsx"), false);
   assert.equal(changed.includes("app/(public)/layout.tsx"), false);

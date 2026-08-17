@@ -73,3 +73,18 @@ test("real dynamic release surfaces keep runtime renderers and fail-closed demo 
   assert.match(bestOffers, /No commercial visit is available|Offer currently unavailable/);
   assert.doesNotMatch(bestOffersPage + bestOffers + casinos + programme, /<HandoffPage/);
 });
+
+test("Prisma tooling resolves the patched deepmerge implementation", () => {
+  const packageManifest = JSON.parse(readFileSync("package.json", "utf8")) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    overrides?: Record<string, string>;
+  };
+  const packageLock = JSON.parse(readFileSync("package-lock.json", "utf8")) as {
+    packages: Record<string, { version?: string }>;
+  };
+  assert.equal(packageManifest.dependencies?.prisma, undefined);
+  assert.equal(packageManifest.devDependencies?.prisma, "^6.19.3");
+  assert.equal(packageManifest.overrides?.["deepmerge-ts"], "8.0.0");
+  assert.equal(packageLock.packages["node_modules/deepmerge-ts"]?.version, "8.0.0");
+});

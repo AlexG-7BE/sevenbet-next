@@ -66,6 +66,7 @@ Google initiation reaches the real Google authorisation origin. Google consent, 
 | PRD-010 | Casino profile at 1024 | P2 | Detected by screenshot: the absolutely positioned `FICTIONAL 18+ FIELD` badge intersected the demo disclosure in the hybrid tablet layout. | **FIXED.** Badge returns to normal flow only from 761–1050px; geometry regression prevents recurrence. |
 | PRD-011 | Functional typography/touch targets | P2 | Detected several 12–13px customer actions/labels and mobile source/TOC links below the active contract. | **FIXED.** Bounded component-level floors and 44px targets applied; expressive display type is unchanged. |
 | PRD-012 | Starting Point screen-reader sentence | P2 | Detected duplicated terminal punctuation when candidate strings already ended in punctuation. | **FIXED.** Terminal punctuation is normalised before composing the hidden continuation sentence. |
+| PRD-013 | Dependency/runtime supply chain | P1 security | Detected after push: GitHub/npm reported the high-severity `deepmerge-ts` recursive-object stack-exhaustion advisory through the Prisma CLI/config-loader tree. Source and built-server scans found no application-route import/reachability, but the vulnerable package remained installed. | **FIXED in audited branch.** Prisma CLI is correctly classified as a development dependency and the lockfile explicitly resolves the patched `deepmerge-ts` 8.0.0. Prisma schema validation, generation/build compatibility and `npm audit` pass with zero findings. The default-branch alert cannot close until an authorised merge. |
 | PRD-GATE-002 | Programme runtime operations | P1 release gate | Detected in approved project state: migration `0019`, shared rate limit, purge CLI/Cron source exist. Exact deployed migration, Cron schedule/execution, multi-instance/load/monitoring, durable age and approved legacy cleanup evidence is partial or not detected. | **OPEN.** Release/operations owner must complete the governed deployment evidence. |
 | PRD-GATE-003 | Legal/privacy launch | P1 external release gate | Not detected: complete UK representative/ICO determination, processor/transfer assessment, DPIA approval and outside-counsel release approval. | **OPEN.** Legal/privacy owner action required. |
 | PRD-GATE-004 | Commercial release | P1 external release gate | Detected: public demo inventory fails closed. Not detected: approved real partner, licence/domain/agreement/offer/link/redirect evidence or commercial activation decision. | **OPEN.** Keep referral actions off until a separately authorised bounded beta. |
@@ -76,7 +77,7 @@ Google initiation reaches the real Google authorisation origin. Google consent, 
 | Severity | Found | Fixed | Remaining | Deferred |
 | --- | ---: | ---: | ---: | ---: |
 | P0 | 1 | 0 | 1 external | 0 |
-| P1 | 12 | 8 | 4 release/external | 0 |
+| P1 | 13 | 9 | 4 release/external | 0 |
 | P2 | 3 | 3 | 0 | 0 |
 
 ## Product/system result
@@ -146,6 +147,7 @@ Detected during the pass:
 
 - `npm run ci:quality`: PASS, including lint, typecheck, Prisma validation, structural, typography structural, editorial/public IA/auth/recovery/contact and release-focused tests.
 - `npm run build`: PASS; pooled runtime warning remains explicit.
+- `npm audit`: PASS with 0 vulnerabilities after the bounded Prisma config-loader override; `npx prisma validate` also passes.
 - `npm run typography:browser`: 3/3 PASS.
 - `npm run ci:build-secrets`: PASS across 721 browser files.
 - `npm run launch-polish:links`: PASS; 47 routes, 46 links, 0 broken.
