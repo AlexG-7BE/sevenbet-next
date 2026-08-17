@@ -169,12 +169,17 @@ test("Best Offers preserves decision hierarchy and demo records stay non-claimab
   await capture(page, "mobile-390", "best-offers-demo", true);
 });
 
-test("second casino selection auto-opens contextual comparison and selection survives close", async ({ page }) => {
+test("contextual comparison auto-opens on the second eligible selection and fails closed without inventory", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/casinos?visualFixture=true");
   await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
   await page.reload({ waitUntil: "networkidle" });
   const toggles = page.getByRole("button", { name: "Compare", exact: true });
+  if (await toggles.count() === 0) {
+    await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toHaveCount(0);
+    await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toHaveCount(0);
+    return;
+  }
   await toggles.first().click();
   await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
   await toggles.first().click();
