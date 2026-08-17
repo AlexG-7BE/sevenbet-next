@@ -179,14 +179,27 @@
   white-space: nowrap;
 }
 .menuButton {
+  width: 44px;
+  height: 44px;
   min-width: 44px;
-  min-height: 41px;
-  padding: 0 5px;
+  min-height: 44px;
+  flex: 0 0 44px;
+  padding: 0;
   border: 1px solid currentColor;
   background: transparent;
   color: inherit;
   cursor: pointer;
   touch-action: manipulation;
+}
+.navigationIcon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
 }
 
 .mobileDialog {
@@ -434,7 +447,6 @@
 
 @media (max-width: 420px) {
   .mobilePrimaryAction { padding-inline: 10px; font-size:13px; }
-  .menuButton { padding-inline: 4px; }
   .availabilityActions .primaryAction { min-width: 0; }
 }
 

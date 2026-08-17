@@ -221,9 +221,7 @@ for (const viewport of [
 
     if (captureEvidence && viewport.width === 1440) {
       await instantScroll(page, Math.max(0, closing.scrollY - 48));
-      await saveWebp(page, resolve(evidenceRoot, "founder-home-mobile-polish/home-final-composition-1440.webp"));
-      await instantScroll(page, await page.evaluate(() => document.documentElement.scrollHeight));
-      await saveWebp(page, resolve(evidenceRoot, "founder-home-mobile-polish/home-final-bottom-1440.webp"));
+      await saveWebp(page, resolve(evidenceRoot, "founder-header-home-responsive-review/home-final-desktop-1440.webp"));
     }
 
     await page.mouse.wheel(0, -920);
@@ -246,26 +244,55 @@ for (const viewport of [
     await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
     const finalCta = page.locator('[data-home-final-composition]');
     await finalCta.evaluate((element) => element.scrollIntoView({ block: "start" }));
-    await page.waitForTimeout(300);
+    await page.waitForTimeout(650);
 
-    let entryState: { ctaVisible: number; footerVisible: number } | null = null;
+    let entryState: {
+      ctaHeight: number;
+      ctaTop: number;
+      ctaVisible: number;
+      footerVisible: number;
+      horizontalOverflow: number;
+      viewportHeight: number;
+    } | null = null;
     for (let index = 0; index < 8; index += 1) {
-      await touchScroll(context, page, "down");
       entryState = await page.evaluate(() => {
-        const visible = (selector: string) => {
-          const rect = document.querySelector<HTMLElement>(selector)!.getBoundingClientRect();
-          return Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top));
+        const cta = document.querySelector<HTMLElement>("[data-home-final-composition]")!.getBoundingClientRect();
+        const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!.getBoundingClientRect();
+        const visible = (rect: DOMRect) => Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top));
+        return {
+          ctaHeight: cta.height,
+          ctaTop: cta.top,
+          ctaVisible: visible(cta),
+          footerVisible: visible(footer),
+          horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          viewportHeight: innerHeight,
         };
-        return { ctaVisible: visible("[data-home-final-composition]"), footerVisible: visible('[data-public-shell="footer"]') };
       });
-      if (entryState.footerVisible > 0) break;
+      if (Math.abs(entryState.ctaTop) <= 1 && entryState.ctaVisible >= entryState.viewportHeight - 1) break;
+      await touchScroll(context, page, "down");
     }
-    expect(entryState?.footerVisible ?? 0).toBeGreaterThan(0);
-    expect(entryState?.ctaVisible ?? 0).toBeGreaterThan(0);
+    expect(entryState).not.toBeNull();
+    expect(Math.abs(entryState!.ctaTop)).toBeLessThanOrEqual(1);
+    expect(entryState!.ctaHeight).toBeGreaterThanOrEqual(entryState!.viewportHeight - 1);
+    expect(entryState!.ctaVisible).toBeGreaterThanOrEqual(entryState!.viewportHeight - 1);
+    expect(entryState!.footerVisible).toBeLessThanOrEqual(1);
+    expect(entryState!.horizontalOverflow).toBe(0);
 
     if (captureEvidence && viewport.width === 390) {
-      await saveWebp(page, resolve(evidenceRoot, "founder-home-mobile-polish/home-final-composition-390.webp"));
+      await saveWebp(page, resolve(evidenceRoot, "founder-header-home-responsive-review/home-final-mobile-390.webp"));
     }
+
+    let footerVisible = 0;
+    for (let index = 0; index < 8; index += 1) {
+      await touchScroll(context, page, "down");
+      footerVisible = await page.locator('[data-public-shell="footer"]').evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return Math.max(0, Math.min(innerHeight, rect.bottom) - Math.max(0, rect.top));
+      });
+      if (footerVisible > 0) break;
+    }
+    expect(footerVisible).toBeGreaterThan(0);
+
     for (let index = 0; index < 8; index += 1) {
       if (await page.evaluate(() => Math.abs(scrollY + innerHeight - document.documentElement.scrollHeight) <= 2)) break;
       await touchScroll(context, page, "down");
@@ -275,17 +302,23 @@ for (const viewport of [
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!.getBoundingClientRect();
       return {
         atBottom: Math.abs(scrollY + innerHeight - document.documentElement.scrollHeight) <= 2,
+        footerBottom: footer.bottom,
         gap: footer.top - cta.bottom,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        lastFooterItemBottom: document.querySelector<HTMLElement>("[data-public-footer-bottom]")!.getBoundingClientRect().bottom,
         scrollY,
+        viewportHeight: innerHeight,
       };
     });
     expect(bottom.atBottom).toBe(true);
     expect(Math.abs(bottom.gap)).toBeLessThanOrEqual(1);
     expect(bottom.horizontalOverflow).toBe(0);
+    expect(bottom.footerBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
+    expect(bottom.lastFooterItemBottom).toBeLessThanOrEqual(bottom.viewportHeight + 1);
+    expect(bottom.lastFooterItemBottom).toBeGreaterThanOrEqual(0);
     expect(await page.locator('[data-public-shell="footer"]').count()).toBe(1);
     if (captureEvidence && viewport.width === 390) {
-      await saveWebp(page, resolve(evidenceRoot, "founder-home-mobile-polish/home-final-bottom-390.webp"));
+      await saveWebp(page, resolve(evidenceRoot, "founder-header-home-responsive-review/home-mobile-footer-390.webp"));
     }
     await touchScroll(context, page, "up");
     expect(await page.evaluate((bottomY) => scrollY < bottomY - 20, bottom.scrollY)).toBe(true);

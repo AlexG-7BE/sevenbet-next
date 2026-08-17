@@ -230,6 +230,13 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 /* Founder Home mobile polish. The generated handoff remains the content and visual
    authority; these overrides only tune its mobile composition and scroll rhythm. */
 @media (max-width: 760px) {
+  /* On mobile the final CTA returns to the handoff's standalone narrative
+     section. It no longer consumes a footer-derived height; the one real
+     PublicFooter follows in ordinary document flow. */
+  [data-handoff-page="home"] [data-home-final-composition] {
+    min-height: 100svh !important;
+  }
+
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child {
     align-items: flex-start !important;
     padding: clamp(280px, 31.5svh, 304px) 24px 40px !important;
@@ -361,12 +368,13 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 }
 
 /* The generated Home capture enables mandatory document snap for coarse pointers.
-   PublicFooter lives outside that capture, so it needs explicit terminal targets or
-   the browser resolves the final gesture back to the last in-capture CTA. */
+   Keep the standalone CTA as a normal (skippable) stop and the real footer bottom
+   as the later endpoint, so continued scrolling cannot be pulled back to the CTA. */
 @media (max-width: 760px) and (pointer: coarse) {
   [data-handoff-page="home"] [data-home-final-composition] {
-    scroll-margin-block-end: clamp(96px, 15svh, 144px);
-    scroll-snap-align: end !important;
+    scroll-margin-block: 0;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
   }
   body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
     scroll-snap-align: end;

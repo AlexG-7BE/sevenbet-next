@@ -94,8 +94,9 @@ test("Home coarse-pointer snap sequence escapes the final CTA into the complete 
 
   await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-interactions", "ready");
   await expect(finalCta).toBeAttached();
-  expect(await finalCta.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
-  expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).scrollMarginBottom))).toBeGreaterThanOrEqual(96);
+  expect(await finalCta.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("start");
+  expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).minHeight))).toBeGreaterThanOrEqual(843);
+  expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).scrollMarginBottom))).toBe(0);
   expect(await footer.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("none");
   expect(await footerBottom.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
 
