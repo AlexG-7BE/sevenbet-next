@@ -105,6 +105,13 @@ body:has([data-handoff-page]) {
 body:has([data-handoff-page])::before {
   display: none;
 }
+/* The captured Home reference fixes both root boxes at viewport height. Keep the
+   production public shell on that same scroll-root geometry so classic browser
+   scrollbars cannot shift only dynamic routes inward by their reserved width. */
+html:has(body > [data-public-shell="header"]),
+body:has(> [data-public-shell="header"]) {
+  height: 100%;
+}
 [data-handoff-page],
 [data-handoff-page] > div,
 [data-handoff-page] .sc-host {
