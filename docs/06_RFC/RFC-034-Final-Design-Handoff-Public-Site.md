@@ -76,6 +76,20 @@ Accordingly, every dynamic product route renders its actual runtime component re
 
 This correction changes no data authority. Current services and DTOs remain authoritative on Preview; the local-only data fixture is denied in every Vercel environment. The correction authorises removal of obsolete alternate-renderer evidence and requires replacement evidence to use the `runtime-implementation` label.
 
+### Founder correction — canonical Programme entry and shared outer grid
+
+The corrective Founder decision received on 2026-08-17 makes `ProgramAiExperience` and its final `ProgramAiFinalPresentation` the only public renderer for `/program`, including `/program?entry=start` and entry from Home or 10 Steps. `PROGRAM_AI_V1_ENABLED` may continue to protect backend and provider capability, but it must not select a public UI version. If the backend or a provider capability is unavailable, the canonical Programme presentation must remain mounted and show a truthful unavailable or text-fallback state. `ActiveControlProgramme` remains legacy implementation code only and has no public route reachability.
+
+The same correction establishes one site-wide outer-frame contract:
+
+- `--site-gutter: clamp(24px, 5vw, 72px)`;
+- `--site-content-max: 1312px`;
+- `--site-wide-max: 1440px`;
+- `--site-reading-max: 760px`; and
+- `--site-content-width` as the standard centred outer page width.
+
+Standard page and section frames, including Programme entry and dashboard, align to that outer grid. Reading, focused, full-bleed, wide/photographic and overlay surfaces may keep narrower or wider inner measures where their classification requires it; a 400–520px Programme interaction column is therefore an inner focused measure, not a competing page shell. Site navigation and footers use the same standard anchors. This correction changes no Mission ordering, prerequisite, reward, progression, persistence, authentication, privacy, provider or commercial-data rule.
+
 ## Comparison and analytics boundary
 
 Comparison state contains only validated public casino slugs, country and the optional differences preference. It is capped at three entries and may use URL state and `sessionStorage`. It must call the existing public comparison service and fail closed for unavailable or ineligible entries.
@@ -98,3 +112,5 @@ Before handoff, the branch must pass lint, type checking, quality checks, produc
 | No Production action | The authority is bounded to review | Founder instruction and this RFC |
 | Mission01 has no required clarification/editor/reward screens | Founder fixed the acquisition sequence after rejecting the first PR pass | Corrective Founder decision, 2026-08-16 |
 | Visual fixtures are data-only | A metric is invalid when reference markup replaces the actual application UI | Corrective Founder decision, 2026-08-17 |
+| `/program` has one canonical public renderer | Backend capability flags must fail closed inside the approved experience, not expose a legacy product | Corrective Founder decision, 2026-08-17 |
+| Standard outer frames use the shared site tokens | Programme and public pages need one measurable grid while preserving intentional inner reading and focused measures | Corrective Founder decision, 2026-08-17 |

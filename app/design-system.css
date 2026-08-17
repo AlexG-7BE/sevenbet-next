@@ -90,8 +90,8 @@
   --sb-radius-l: 24px;
   --sb-radius-full: 999px;
   --sb-content-compact: 1050px;
-  --sb-content-default: 1248px;
-  --sb-content-wide: 1280px;
+  --sb-content-default: var(--site-content-max);
+  --sb-content-wide: var(--site-wide-max);
   --sb-content-shell: var(--site-content-max);
 
   /* Interaction */

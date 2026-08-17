@@ -51,14 +51,22 @@ test("raw Programme input cannot enter either new durable model", () => {
   assert.match(service, /confirmedContentStorage: "browser_session"/);
 });
 
-test("the production path fails closed and the legacy Programme remains the default", () => {
-  assert.match(page, /isProgramAiV1Enabled\(\)/);
-  assert.match(page, /\? <div id="main-content" tabIndex=\{-1\}><ProgramAiExperience/);
-  assert.match(page, /: <main id="main-content"><ActiveControlProgramme/);
+test("the public Programme has one canonical renderer and never swaps to the legacy UI", () => {
+  assert.match(page, /data-public-programme-renderer="program-ai"/);
+  assert.match(page, /<ProgramAiExperience googleAvailable=\{isGoogleAuthAvailable\(\)\} \/>/);
+  assert.doesNotMatch(page, /ActiveControlProgramme/);
+  assert.doesNotMatch(page, /isProgramAiV1Enabled|PROGRAM_AI_V1_ENABLED/);
   assert.match(page, /Skip to main content/);
   assert.match(page, /10-Step Control Programme \| Personal Control Plan/);
   assert.doesNotMatch(page, /Build a private Moment Map/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_PROGRAM_AI/);
+});
+
+test("the canonical Programme presentation exposes the shared standard outer frame", () => {
+  assert.match(finalPresentation, /data-site-frame="standard"/);
+  assert.match(finalPresentation, /data-site-classification="STANDARD"/);
+  assert.match(read("components\/programme\/ProgramAiFinalPresentation.module.css"), /\.standardFrame\s*\{[\s\S]*width:\s*var\(--site-content-width\)/);
+  assert.match(authenticatedHome, /data-site-frame="standard"/);
 });
 
 test("client keeps private draft content in sessionStorage and never localStorage", () => {

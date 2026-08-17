@@ -1,7 +1,7 @@
 .shell { min-height: 100vh; background: var(--sb-paper); color: var(--sb-night); font-family: var(--font-seven-sans), Arial, sans-serif; }
 .shell * { box-sizing: border-box; }
 .shell :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
-.header { min-height: 76px; padding: 14px clamp(20px, 5vw, 64px); display: grid; grid-template-columns: auto 1fr auto auto; gap: 18px; align-items: center; border-bottom: 1px solid var(--sb-border-subtle); background: var(--sb-white); }
+.header { width: var(--site-content-width); min-height: 76px; margin: 0 auto; padding: 14px 0; display: grid; grid-template-columns: auto 1fr auto auto; gap: 18px; align-items: center; border-bottom: 1px solid var(--sb-border-subtle); background: var(--sb-white); }
 .wordmark { color: var(--sb-night); font-size: 28px; font-weight: 800; letter-spacing: -.8px; text-decoration: none; }
 .programmeLabel { justify-self: center; color: var(--sb-metal); font-size: 12px; font-weight: 750; letter-spacing: .06em; }
 .xp { padding: 8px 14px; border-radius: var(--sb-radius-full); background: var(--sb-acid-soft); font-size: 12px; font-weight: 800; }
@@ -94,11 +94,11 @@
 @media(max-width:900px){.dashboardShell{width:100%;margin:0}.dashboardShell .dashboardNav{display:none}.dashboard{padding:24px 0}.dashboardGrid{grid-template-columns:1fr}.dashboardRight{grid-template-columns:1fr 1fr}.compactStats,.compactStartingPoint{grid-column:1/-1}}
 @media(max-width:600px){
   .dashboardShell{width:100%;margin:0;border-radius:0;background:#171616}
-  .dashboardShell .header[data-dashboard-header]{width:calc(100% - 32px);min-height:56px;padding:12px 0;border:0;background:#171616;grid-template-columns:auto 1fr}
+  .dashboardShell .header[data-dashboard-header]{width:var(--site-content-width);min-height:56px;padding:12px 0;border:0;background:#171616;grid-template-columns:auto 1fr}
   .dashboardShell .header[data-dashboard-header] .wordmark{font-size:17px}
   .dashboardShell .header[data-dashboard-header] .logout{display:none}
   .dashboardShell .myProgramme{width:fit-content;justify-self:end;padding:8px 14px;font-size:12px}
-  .dashboard{width:calc(100% - 32px);padding:14px 0 16px;background:#171616}
+  .dashboard{width:var(--site-content-width);padding:14px 0 16px;background:#171616}
   .dashboardGrid{display:flex;flex-direction:column;gap:14px}
   .dashboardLeft,.dashboardRight{display:contents}
   .currentCard{position:relative;order:1;min-height:0;padding:16px 22px 20px;display:block;border:0;border-radius:14px;box-shadow:none}

@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
 
-test("feature-off preserves the approved legacy Programme", async ({ page }) => {
+test("feature-off preserves the canonical Programme presentation and exposes no legacy UI", async ({ page }) => {
   await page.goto("/program");
 
-  await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toBeVisible();
-  await expect(page.getByText("Three checks before you begin")).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "Start with what is happening now." })).toHaveCount(0);
-  await expect(page.getByText("PROGRAMME-AI", { exact: false })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Compare casinos", exact: true })).toHaveAttribute("href", "/casinos");
+  await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toBeVisible();
+  await expect(page.locator('[data-runtime-renderer="programme"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Confirm before you continue." })).toHaveCount(0);
+  await expect(page.locator('[data-handoff-page]')).toHaveCount(0);
 });

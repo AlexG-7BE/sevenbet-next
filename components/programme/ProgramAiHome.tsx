@@ -19,7 +19,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
   return (
     <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard totalXp={home.totalXp} userId={userId} />
-      <main className={styles.dashboard}>
+      <main className={styles.dashboard} data-site-classification="STANDARD" data-site-frame="standard">
         <p className="srOnly">Completion, current position and locks come from your server record. Each Review becomes available at a meaningful point.</p>
         <div className={styles.dashboardGrid}>
           <div className={styles.dashboardLeft}>

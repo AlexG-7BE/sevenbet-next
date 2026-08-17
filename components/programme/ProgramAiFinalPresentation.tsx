@@ -43,10 +43,12 @@ export function ProgrammeLoadingScreen() {
   return (
     <div className={styles.canvas} data-programme-presentation="loading">
       <ProgrammeChrome />
-      <main className={styles.focusedState}>
-        <p className={styles.eyebrow}>Private Programme</p>
-        <h1>Loading your private Programme session…</h1>
-        <Link className={styles.inlineLink} href="/help">Protected Help remains available.</Link>
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.focusedState}>
+          <p className={styles.eyebrow}>Private Programme</p>
+          <h1>Loading your private Programme session…</h1>
+          <Link className={styles.inlineLink} href="/help">Protected Help remains available.</Link>
+        </div>
       </main>
       <ProgrammeFootnote />
     </div>
@@ -57,10 +59,12 @@ export function ProgrammeUnavailableScreen({ error }: { error: string }) {
   return (
     <div className={styles.canvas} data-programme-presentation="unavailable">
       <ProgrammeChrome />
-      <main className={styles.focusedState}>
-        <p className={styles.eyebrow}>Programme</p>
-        <h1>We could not open your Programme.</h1>
-        <StatusMessage error={error || "Programme Home is unavailable. Refresh to retry."} />
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.focusedState}>
+          <p className={styles.eyebrow}>Programme</p>
+          <h1>We could not open your Programme.</h1>
+          <StatusMessage error={error || "Programme Home is unavailable. Refresh to retry."} />
+        </div>
       </main>
       <ProgrammeFootnote />
     </div>
@@ -76,25 +80,27 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
   const [legal, setLegal] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
-      <main className={styles.accessState}>
-        <p className={styles.eyebrow}>Programme access</p>
-        <h1 id="programme-access-title">Two checks before you begin.</h1>
-        <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
-          <label className={styles.checkRow}>
-            <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
-            <span>I confirm I am 18 or over <small>Required</small></span>
-          </label>
-          <div className={styles.checkRow}>
-            <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
-            <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice</label><small>Required</small></span>
-          </div>
-          <p className={styles.legalLinks}><Link href="/terms">Read Terms</Link><Link href="/privacy">Read Privacy Notice</Link></p>
-          <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
-            {busy ? "Verifying access…" : "Enter Mission 01"}
-          </button>
-          <StatusMessage error={error} />
-          <Link className={styles.helpLink} href="/help">Protected Help / pause options →</Link>
-        </section>
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.accessState}>
+          <p className={styles.eyebrow}>Programme access</p>
+          <h1 id="programme-access-title">Two checks before you begin.</h1>
+          <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
+            <label className={styles.checkRow}>
+              <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
+              <span>I confirm I am 18 or over <small>Required</small></span>
+            </label>
+            <div className={styles.checkRow}>
+              <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
+              <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice</label><small>Required</small></span>
+            </div>
+            <p className={styles.legalLinks}><Link href="/terms">Read Terms</Link><Link href="/privacy">Read Privacy Notice</Link></p>
+            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
+              {busy ? "Verifying access…" : "Enter Mission 01"}
+            </button>
+            <StatusMessage error={error} />
+            <Link className={styles.helpLink} href="/help">Protected Help / pause options →</Link>
+          </section>
+        </div>
       </main>
     </div>
   );
@@ -381,8 +387,9 @@ export function Mission01IntakeScreen({
   const recording = recorderState === "recording";
   return (
     <div className={styles.canvas} data-programme-presentation="mission-01-intake" data-programme-presentation-state={recording ? "recording" : textVisible ? inputMode === "voice" ? "transcript" : "text-fallback" : "idle"}>
-      <main className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
-        {!recording && !textVisible ? <section className={styles.intakeIntro}>
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
+          {!recording && !textVisible ? <section className={styles.intakeIntro}>
           <p className={styles.eyebrow}>Mission 01</p>
           <span className={styles.srOnly}>Before you share.</span>
           <span className={styles.srOnly}>What feels hardest to control right now?</span>
@@ -402,7 +409,8 @@ export function Mission01IntakeScreen({
         {!recording ? <aside className={styles.privacyBoundary}>
           <div><strong>Private by default.</strong><span>Your words are never used for offers or rankings. Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</span></div>
           <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I choose to share this for Programme personalisation and understand I can withdraw before saving.</span></label>
-        </aside> : null}
+          </aside> : null}
+        </div>
       </main>
     </div>
   );
@@ -412,13 +420,15 @@ export function ProgrammeSupportScreen({ busy, error, onContinue }: { busy: bool
   return (
     <div className={styles.canvas} data-programme-presentation="support-first">
       <ProgrammeChrome xp={20} />
-      <main className={styles.focusedState}>
-        <p className={styles.eyebrow}>Support first</p>
-        <h1>Pause the Programme. Keep support close.</h1>
-        <p>Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.</p>
-        <div className={styles.focusedActions}><Link className={styles.primaryAction} href="/help">Open protected Help</Link><button className={styles.secondaryAction} disabled={busy} onClick={onContinue} type="button">Continue when I&apos;m ready</button></div>
-        <StatusMessage error={error} />
-        <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.focusedState}>
+          <p className={styles.eyebrow}>Support first</p>
+          <h1>Pause the Programme. Keep support close.</h1>
+          <p>Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.</p>
+          <div className={styles.focusedActions}><Link className={styles.primaryAction} href="/help">Open protected Help</Link><button className={styles.secondaryAction} disabled={busy} onClick={onContinue} type="button">Continue when I&apos;m ready</button></div>
+          <StatusMessage error={error} />
+          <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
+        </div>
       </main>
       <ProgrammeFootnote />
     </div>
@@ -456,8 +466,9 @@ export function StartingPointReadyScreen({
   const [password, setPassword] = useState("");
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
-      <main className={styles.readyState}>
-        <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
+      <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
+        <div className={styles.readyState}>
+          <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
         <h1>A plan built around your evenings.</h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
@@ -478,7 +489,8 @@ export function StartingPointReadyScreen({
           <StatusMessage error={error} />
           <small>Registration adds 0 XP. Your words never feed offers or rankings.</small>
           {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">Withdraw sensitive-input authority and clear this draft</button> : null}
-        </section>
+          </section>
+        </div>
       </main>
     </div>
   );

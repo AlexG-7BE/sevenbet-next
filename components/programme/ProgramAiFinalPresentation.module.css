@@ -58,6 +58,13 @@
 .readyEyebrow { color: var(--programme-teal); }
 .inlineLink, .helpLink { color: var(--programme-acid) !important; text-underline-offset: 4px; }
 
+.standardFrame {
+  width: var(--site-content-width);
+  min-height: 100svh;
+  margin: 0 auto;
+  display: grid;
+}
+
 .focusedState {
   width: min(520px, calc(100% - 48px));
   margin: auto;

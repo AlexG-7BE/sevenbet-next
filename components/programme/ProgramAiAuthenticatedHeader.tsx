@@ -38,7 +38,7 @@ export function ProgramAiAuthenticatedHeader({ userId, totalXp, label = "10-STEP
     }
   }
   return (
-    <header className={styles.header} data-dashboard-header={dashboard || undefined}>
+    <header className={styles.header} data-dashboard-header={dashboard || undefined} data-site-classification="STANDARD" data-site-frame="standard">
       <Link className={styles.wordmark} href="/">B4GAMBLE</Link>
       {dashboard ? <nav aria-label="Programme navigation" className={styles.dashboardNav}><Link href="/best-offers">Best Offers</Link><Link href="/casinos">Casinos</Link><Link href="/bonuses">Bonuses</Link><Link href="/learn">Learn</Link><Link href="/help">Help</Link></nav> : <span className={styles.programmeLabel}>{label}</span>}
       {dashboard ? <span className={styles.myProgramme}>My Programme</span> : <span className={styles.xp}>{totalXp} XP</span>}
