@@ -31,9 +31,36 @@ html { scroll-behavior: smooth; }
   html { scroll-behavior: auto; }
 }
 
+@media (max-width: 900px) {
+  [data-handoff-page="learn"] button { min-height: 44px; }
+  [data-handoff-page="article"] a[href="/learn"],
+  [data-handoff-page="article"] a[href="/methodology"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-handoff-page="home"] a[href="/affiliate-disclosure"],
+  [data-handoff-page="terms"] a[href="/affiliate-disclosure"],
+  [data-handoff-page="responsibleGambling"] a,
+  [data-handoff-page="help"] a,
+  [data-handoff-page="methodology"] a[href="#"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-handoff-page="methodology"] a[href="#"] { white-space: nowrap; }
+}
+
 @media (max-width: 520px) {
   [data-handoff-page] [style*="minmax(420px"] {
     grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-affiliate-disclosure-document] > header,
+  [data-methodology-document] > header {
+    padding-top: calc(132px + env(safe-area-inset-top));
   }
 }
 
@@ -51,6 +78,15 @@ html { scroll-behavior: smooth; }
   [data-handoff-page] [style*="minmax(280px"] {
     grid-template-columns: minmax(0, 1fr) !important;
   }
+}
+
+@media (max-width: 340px) {
+  [data-handoff-page="article"] [data-mob="grid"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  [data-handoff-page="article"] [data-mob="grid"] > * { min-width: 0 !important; }
 }
 
 body:has(.tiltHomePage) {

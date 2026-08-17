@@ -40,17 +40,24 @@
 .sheet > footer a { min-height:0; padding:0; border:0; border-radius:0; color:var(--night); font-size:inherit; text-decoration:underline; }
 .dialog :focus-visible, .tray :focus-visible { outline:3px solid var(--acid); outline-offset:3px; }
 @media(max-width:760px) {
-  .tray { bottom:12px; width:calc(100vw - 24px); min-height:70px; padding:12px 14px 12px 18px; border-radius:18px; gap:12px; }
+  .tray { z-index:70; bottom:calc(12px + env(safe-area-inset-bottom)); width:calc(100vw - 24px); min-height:72px; padding:12px 14px 12px 18px; border-radius:18px; gap:12px; }
   .trayActions { gap:5px; }
-  .tray button { min-height:40px; padding-inline:12px; }
+  .tray button { min-height:44px; padding-inline:12px; }
   .tray span { display:none; }
-  .dialog { position:fixed; inset:auto 0 0; width:100vw; height:calc(100dvh - 12px); max-height:none; margin:0; border-radius:24px 24px 0 0; }
-  .sheet > header { padding:24px 20px 0; }
-  .sheet > header h2 { font-size:34px; }
-  .sheet > header > button { width:40px; min-height:40px; }
-  .comparisonCards { padding:24px 20px 20px; display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x mandatory; }
-  .comparisonCard { min-width:min(78vw,310px); padding:22px; scroll-snap-align:center; }
-  .sheet > footer { padding:0 20px 24px; }
+  :global(body:has([data-runtime-renderer="casino-review"])) .tray { bottom:calc(88px + env(safe-area-inset-bottom)); }
+  .dialog { position:fixed; inset:auto 0 0; width:100vw; height:calc(100dvh - 8px); max-height:none; margin:0; border-radius:24px 24px 0 0; }
+  .sheet > header { position:sticky; top:0; z-index:2; padding:calc(22px + env(safe-area-inset-top)) 20px 16px; border-bottom:1px solid rgba(16,15,15,.1); }
+  .sheet > header h2 { font-size:clamp(28px,9vw,34px); overflow-wrap:anywhere; }
+  .sheet > header > button { width:44px; min-height:44px; flex:0 0 44px; }
+  .comparisonCards { padding:20px; display:grid; grid-template-columns:minmax(0,1fr); gap:12px; overflow:visible; }
+  .comparisonCard { min-width:0; padding:22px; }
+  .casinoHead { align-items:flex-start; }
+  .casinoHead h3,.casinoHead small { overflow-wrap:anywhere; }
+  .factList dl { grid-template-columns:minmax(82px,.75fr) minmax(0,1.25fr); }
+  .columnActions { grid-template-columns:1fr; }
+  .columnActions > a,.columnActions > button { width:100%; min-height:46px; }
+  .sheet > footer { padding:0 20px calc(20px + env(safe-area-inset-bottom)); }
+  .sheet > footer a { min-height:44px; display:inline-flex; align-items:center; }
 }
 @keyframes comparisonTrayIn { from { opacity:0; transform:translate(-50%,18px); } to { opacity:1; transform:translate(-50%,0); } }
 @keyframes comparisonSheetIn { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }

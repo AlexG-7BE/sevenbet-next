@@ -65,12 +65,18 @@
 }
 @media(max-width:520px) {
   .hero { min-height:0; padding:108px 24px 64px; }
+  .breadcrumbs { flex-wrap:wrap; overflow-wrap:anywhere; }
+  .breadcrumbs a { min-width:44px; min-height:44px; display:inline-flex; align-items:center; }
   .heroGrid h1 { font-size:30px; }
   .heroSummary > p { font-size:16px; }
   .heroSummary dl div { min-width:0; }
   .heroSummary dd { text-align:left; }
-  .articleTable > div { min-width:0; padding:16px 10px; grid-template-columns:1.6fr .7fr .8fr .8fr; gap:6px; font-size:13px; }
+  .articleTable { overscroll-behavior-inline:contain; -webkit-overflow-scrolling:touch; }
+  .articleTable > div { min-width:600px; padding:16px 18px; grid-template-columns:1.6fr .7fr .8fr .8fr; gap:10px; font-size:13px; }
   .articleTable > div:first-child { font-size:13px; line-height:18px; }
+  .conversion > div { display:grid; grid-template-columns:1fr; gap:6px; }
+  .conversion dd { overflow-wrap:anywhere; }
+  .articleReview { align-items:flex-start; flex-direction:column; }
   .checklist { padding:28px 22px; }
   .commercial { padding:90px 24px; }
 }

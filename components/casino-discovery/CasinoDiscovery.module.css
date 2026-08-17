@@ -265,76 +265,6 @@
   .method aside { grid-template-columns: 1fr; }
 }
 
-@media (max-width: 760px) {
-  .shell { width: var(--site-content-width); }
-  .hero { min-height:465px; padding: 132px 0 32px; }
-  .hero .shell { width: 100%; }
-  .heroIntro { margin: 0; padding: 0 24px 12px; }
-  .heroProof { margin:38px 24px 0; padding-top:18px; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; }
-  .heroProof span:last-child { grid-column:1/-1; }
-  .hero header > p { margin-bottom: 18px; }
-  .hero h1 { font-size: clamp(2.45rem, 10.5vw, 3rem); line-height: .92; }
-  .hero header > span { max-width:360px; margin-top: 18px; font-size: 14px; line-height: 1.45; }
-  .heroSearch { display: none; }
-  .featureTheatre { min-height: 0; overflow: visible; border-radius: 0; background: transparent; }
-  .featureMedia, .featureOverlay, .featureCopy { display: none; }
-  .featureCard { position: relative; inset: auto; width: calc(100% - 2px); min-height: 0; margin: 0 1px; padding: 24px; border-radius: 24px; }
-  .featureCard .commission { display: block; }
-  .directory { padding: 68px 0 72px; }
-  .directoryHeading { display: block; }
-  .directoryHeading h2, .sectionIntro h2, .methodHead h2, .compare h2 { font-size: clamp(2.6rem, 12vw, 3.55rem); }
-  .directoryHeading > span { display: block; margin-top: 18px; }
-  .disclosure { grid-template-columns: 1fr; gap: 7px; padding: 18px; }
-  .disclosure a { min-height: 38px; }
-  .controls { border: 0; border-top: 0; background: transparent; }
-  .commandHeader { display: grid; grid-template-columns: 1fr; gap: 12px; padding: 0; border: 0; }
-  .searchForm { min-height: 48px; }
-  .sortForm { order: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .sortForm label { min-width: 0; min-height: 48px; padding: 5px 12px; border-color: var(--line); }
-  .sortForm button { grid-column: 1 / -1; min-height: 44px; }
-  .activeCount, .desktopFilters { display: none; }
-  .mobileControls { order: 2; display: block; }
-  .noScriptFilters { display: block; margin-top: 10px; }
-  .noScriptFilters summary { min-height: 48px; display: flex; align-items: center; padding: 0 16px; border: 1px solid var(--line); border-radius: var(--sb-radius-full); background: var(--acid-soft); font-size: 14px; font-weight: 750; }
-  .activeFilters { margin-top: 12px; }
-  .results { margin-top: 28px; }
-  .resultsHeader { align-items: flex-start; flex-direction: column; gap: 8px; }
-  .reviewOnlyNotice { grid-template-columns: 1fr; gap: 6px; }
-  .cards { grid-template-columns: 1fr; gap: 8px; margin-inline: -23px; }
-  .casinoCard { min-height:430px; border-radius:22px; grid-template-columns:1fr; grid-template-areas:"header" "description" "signals" "offer" "commission" "unavailable" "actions"; }
-  .description { min-height: 0; }
-  .commission { font-size: 12px; }
-  .emptyState { padding: 30px 24px; }
-  .readingGuide, .anatomy, .method, .compare, .faq { padding: 68px 0; }
-  .sectionIntro { margin-bottom: 34px; }
-  .guideGrid { gap: 10px; }
-  .guideGrid article { min-height: 102px; padding: 20px 22px; }
-  .guideGrid h3 { margin: 18px 0 8px; }
-  .anatomyGrid { gap: 10px; }
-  .anatomyGrid article { min-height: 118px; padding: 22px; }
-  .anatomyGrid h3 { margin: 0 0 10px; }
-  .methodHead { gap: 26px; }
-  .methodGrid { grid-template-columns: 1fr 1fr; margin-top: 34px; }
-  .methodGrid article { min-height: 132px; padding: 16px 14px; }
-  .methodGrid h3 { margin: 22px 0 8px; font-size: .95rem; }
-  .method aside { padding: 22px; }
-  .compare .shell, .faq .shell { gap: 34px; }
-  .faq summary { min-height: 84px; }
-  .skeletonControls { height: 300px; }
-  .skeletonCards { grid-template-columns: 1fr; }
-  .skeletonCards div:not(:first-child) { display: none; }
-}
-
-@media (max-width: 390px) {
-  .cardHeader { grid-template-columns: 48px minmax(0,1fr) auto; gap: 9px; }
-  .logo { width: 48px; height: 48px; }
-  .score { width: 58px; }
-  .identity h2 { font-size: 1rem; }
-  .cardActions { grid-template-columns: 1fr; }
-  .cardActions a:only-child { grid-column: auto; }
-  .methodGrid { grid-template-columns: 1fr; }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .page *, .page *::before, .page *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
@@ -395,48 +325,98 @@
   .casinoCard {
     padding:18px;
     grid-template-columns:1fr;
-    grid-template-areas:"header" "offer" "actions";
+    grid-template-areas:"header" "description" "signals" "offer" "commission" "unavailable" "actions";
     gap:16px;
   }
-  .casinoCard .description,.casinoCard .signals,.casinoCard .commission,.casinoCard .unavailable { display:none; }
-  .casinoCard .offerBlock { min-height:0; padding:0; background:transparent; }
-  .offerBlock > span,.offerBlock > p,.offerBlock > small { display:none; }
+  .casinoCard .description,.casinoCard .signals,.casinoCard .commission,.casinoCard .unavailable { display:flex; }
+  .casinoCard .description,.casinoCard .commission,.casinoCard .unavailable { display:block; }
+  .casinoCard .description,.casinoCard .offerBlock > p { overflow:visible; -webkit-line-clamp:unset; }
+  .casinoCard .offerBlock { min-height:0; margin:0; padding:16px; background:var(--acid-soft); }
+  .offerBlock > span,.offerBlock > p,.offerBlock > small { display:block; }
   .casinoCard .cardActions { display:flex; flex-wrap:wrap; justify-content:flex-start; }
   .cardActions a,.cardActions button { min-width:110px; }
 }
 
 @media (max-width: 760px) {
-  .hero { min-height:513px; }
-  .hero h1 { font-size:27px; letter-spacing:-.015em; }
-  .directoryHeading { display:flex; align-items:baseline; flex-wrap:wrap; margin-bottom:36px; }
-  .directoryHeading > div > p { display:none; }
-  .directoryHeading h2 { font-size:30px; font-weight:800; letter-spacing:-.01em; text-transform:uppercase; }
-  .directoryHeading > span { margin:0 0 0 auto; font-size:13px; }
-  .controls { padding:24px 28px; border:1px solid rgba(16,15,15,.14); border-radius:20px; background:var(--white); box-shadow:0 16px 48px rgba(16,15,15,.1); }
-  .commandHeader { display:block; }
-  .searchForm { grid-template-columns:1fr; border-color:rgba(16,15,15,.25); border-radius:14px; background:#f4f1eb; }
-  .searchForm button,.sortForm,.activeCount,.mobileControls,.noScriptFilters { display:none; }
-  .desktopFilters { display:block; }
-  .filterForm { padding:0; }
-  .filterPrompt,.preferenceNote,.filterActions { display:none; }
-  .filterGrid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding-top:18px; }
-  .filterSelect:nth-child(n+7) { display:none; }
-  .filterSelect > span { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-  .filterSelect select { min-height:42px; padding-inline:14px 28px; border-color:rgba(16,15,15,.22); border-radius:999px; }
-  .results { margin-top:32px; }
-  .resultsHeader { display:none; }
-  .cards { gap:12px; margin-inline:0; }
-  .casinoCard { min-height:259px; padding:22px 28px; gap:14px; border-color:rgba(16,15,15,.1); border-radius:14px; }
-  .casinoCard .cardHeader { grid-template-columns:52px minmax(0,1fr); gap:14px; }
+  .shell { width:var(--site-content-width); }
+  .hero { min-height:500px; padding:132px 0 38px; }
+  .hero .shell { width:100%; }
+  .heroIntro { margin:0; padding:0 var(--site-gutter) 12px; }
+  .hero h1 { font-size:clamp(38px,12vw,50px); line-height:.94; letter-spacing:-.025em; overflow-wrap:anywhere; }
+  .hero header > span { max-width:36ch; margin-top:18px; line-height:1.5; }
+  .heroSearch { display:none; }
+  .heroProof { margin:32px var(--site-gutter) 0; padding-top:18px; grid-template-columns:1fr 1fr; gap:10px; font-size:13px; }
+  .heroProof span:last-child { grid-column:1/-1; }
+  .featureTheatre { min-height:0; overflow:visible; border-radius:0; background:transparent; }
+  .featureMedia,.featureOverlay,.featureCopy { display:none; }
+  .featureCard { position:relative; inset:auto; width:100%; min-height:0; margin:0; padding:24px; border-radius:20px; }
+  .featureCard .commission { display:block; }
+  .directory { padding:64px 0 72px; }
+  .directoryHeading { display:block; margin-bottom:28px; }
+  .directoryHeading > div > p { display:block; margin-bottom:14px; }
+  .directoryHeading h2,.sectionIntro h2,.methodHead h2,.compare h2 { font-size:clamp(36px,11vw,48px); line-height:.95; overflow-wrap:anywhere; }
+  .directoryHeading > span { display:block; margin:14px 0 0; }
+  .disclosure { grid-template-columns:1fr; gap:8px; padding:18px; }
+  .disclosure a { min-height:44px; }
+  .controls { padding:18px; border:1px solid rgba(16,15,15,.14); border-radius:18px; background:var(--white); box-shadow:0 16px 48px rgba(16,15,15,.08); }
+  .commandHeader { display:grid; grid-template-columns:1fr; gap:12px; padding:0; border:0; }
+  .searchForm { min-height:48px; border-color:rgba(16,15,15,.25); border-radius:14px; background:#f4f1eb; }
+  .searchForm input { font-size:16px; }
+  .sortForm { order:3; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
+  .sortForm label { min-width:0; min-height:48px; padding:6px 12px; border-color:var(--line); }
+  .sortForm button { grid-column:1/-1; min-height:44px; }
+  .activeCount,.desktopFilters { display:none; }
+  .mobileControls { order:2; display:block; }
+  .noScriptFilters { display:block; margin-top:10px; }
+  .noScriptFilters summary { min-height:48px; display:flex; align-items:center; padding:0 16px; border:1px solid var(--line); border-radius:999px; background:var(--acid-soft); font-size:14px; font-weight:750; }
+  .activeFilters { margin-top:12px; }
+  .results { margin-top:28px; }
+  .resultsHeader { display:flex; align-items:flex-start; flex-direction:column; gap:8px; }
+  .reviewOnlyNotice { grid-template-columns:1fr; gap:6px; }
+  .cards { gap:14px; margin:18px 0 0; }
+  .casinoCard { min-height:0; padding:20px; gap:16px; border-radius:18px; }
+  .casinoCard .cardHeader { grid-template-columns:52px minmax(0,1fr) auto; gap:12px; }
   .casinoCard .logo { width:52px; height:52px; border-radius:14px; }
-  .casinoCard .score { width:auto; height:40px; grid-column:1 / -1; flex-direction:row; justify-content:flex-start; gap:8px; border-radius:0; background:transparent; }
-  .casinoCard .score strong { font-size:1.5rem; }
-  .casinoCard .score span { color:var(--acid); font-size:0; }
-  .casinoCard .score span::after { content:"★★★★★"; font-size:12px; letter-spacing:.04em; }
-  .casinoCard .offerBlock > strong { font-size:14px; }
-  .casinoCard .cardActions { flex-wrap:nowrap; gap:14px; }
-  .casinoCard .cardActions a,.casinoCard .cardActions button { min-width:0; min-height:40px; padding:0; border:0; border-radius:0; background:transparent; color:var(--ink); font-weight:500; border-bottom:1px solid rgba(16,15,15,.3); }
-  .casinoCard .cardActions > :global(.commercialOutboundPrimary) { min-width:112px; padding-inline:14px; border:0; border-radius:14px; background:#b94b47; color:var(--white); font-weight:600; }
+  .casinoCard .score { width:58px; height:52px; }
+  .casinoCard .identity small { overflow-wrap:anywhere; }
+  .casinoCard .identity h2 a { min-height:44px; display:inline-flex; align-items:center; }
+  .casinoCard .description { min-height:0; margin:0; }
+  .casinoCard .offerBlock > strong { font-size:16px; }
+  .casinoCard .offerBlock > p,.casinoCard .offerBlock > small { overflow-wrap:anywhere; }
+  .casinoCard .commission { margin:0; font-size:12px; }
+  .casinoCard .unavailable { margin:0; }
+  .casinoCard .cardActions { display:grid; grid-template-columns:1fr; gap:8px; }
+  .casinoCard .cardActions a,.casinoCard .cardActions button { width:100%; min-width:0; min-height:44px; padding:10px 14px; border:1px solid var(--ink); border-radius:999px; text-align:center; }
+  .casinoCard .cardActions > :global(.commercialOutboundPrimary) { min-width:0; border:0; border-radius:14px; background:#b94b47; color:var(--white); font-weight:600; }
+  .emptyState { padding:30px 22px; }
+  .readingGuide,.anatomy,.method,.compare,.faq { padding:68px 0; }
+  .sectionIntro { margin-bottom:34px; }
+  .guideGrid,.anatomyGrid { gap:10px; }
+  .guideGrid article,.anatomyGrid article { min-height:0; padding:22px; }
+  .guideGrid h3,.anatomyGrid h3 { margin:18px 0 8px; }
+  .methodHead { gap:26px; }
+  .methodGrid { grid-template-columns:1fr; margin-top:34px; }
+  .methodGrid article { min-height:0; padding:20px; }
+  .methodGrid h3 { margin:22px 0 8px; }
+  .method aside { padding:22px; }
+  .compare .shell,.faq .shell { gap:34px; }
+  .faq summary { min-height:64px; font-size:18px; line-height:1.2; }
+  .filterDialog { width:100vw; }
+  .dialogHeader { min-height:calc(76px + env(safe-area-inset-top)); padding:calc(12px + env(safe-area-inset-top)) 20px 12px; }
+  .mobileFilterForm { padding-bottom:calc(110px + env(safe-area-inset-bottom)); }
+  .mobileFilterForm .filterSelect { grid-template-columns:1fr; gap:6px; }
+  .mobileFilterForm .filterSelect > span { overflow:visible; text-overflow:clip; white-space:normal; }
+  .mobileFilterForm .filterSelect select { min-height:52px; font-size:16px; }
+  .mobileFilterForm .filterActions { min-height:calc(82px + env(safe-area-inset-bottom)); padding-bottom:calc(14px + env(safe-area-inset-bottom)); }
+  .skeletonControls { height:300px; }
+  .skeletonCards { grid-template-columns:1fr; }
+  .skeletonCards div:not(:first-child) { display:none; }
+}
+
+@media (max-width:390px) {
+  .casinoCard .cardHeader { grid-template-columns:48px minmax(0,1fr); }
+  .casinoCard .logo { width:48px; height:48px; }
+  .casinoCard .score { width:auto; height:44px; grid-column:1/-1; flex-direction:row; gap:8px; }
 }
 
 @media (min-width: 901px) and (max-width: 1180px) {

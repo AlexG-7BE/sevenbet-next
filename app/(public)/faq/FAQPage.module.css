@@ -25,7 +25,9 @@
 .contactRail a:focus-visible { outline: 3px solid var(--sb-action-primary); outline-offset: 4px; }
 
 @media(max-width: 700px) {
-  .page > header { padding: 96px var(--site-gutter) 95px; }
+  .page > header { padding:132px var(--site-gutter) 80px; }
+  .page h1 { overflow-wrap:anywhere; }
   .page main { padding-top: 80px; }
   .contactRail a:nth-last-child(2) { margin-left: 0; }
+  .contactRail a { min-height:44px; display:inline-flex; align-items:center; white-space:normal; }
 }

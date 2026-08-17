@@ -148,8 +148,12 @@ test("Bonuses decision UI uses the functional scale at every Founder viewport", 
     } else {
       await expectMinimum(page.locator('form[action="/bonuses"]').first().locator("select,input"), 15, `desktop bonus fields at ${viewport.width}px`);
     }
-    await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dt'), 13, `bonus comparison labels at ${viewport.width}px`);
-    await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dd'), 14, `bonus comparison values at ${viewport.width}px`);
+    if (viewport.width <= 430) {
+      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="mobileResultTerms"] span'), 14, `mobile bonus comparison terms at ${viewport.width}px`);
+    } else {
+      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dt'), 13, `bonus comparison labels at ${viewport.width}px`);
+      await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dd'), 14, `bonus comparison values at ${viewport.width}px`);
+    }
     await expectNoOverflow(page, `Bonuses overflow at ${viewport.width}px`);
     await context.close();
   }

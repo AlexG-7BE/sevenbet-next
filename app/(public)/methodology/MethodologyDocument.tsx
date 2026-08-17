@@ -6,7 +6,7 @@ export const methodologyFaqItems = [
   ["Are test results guarantees?","No. They are dated observations from particular methods and jurisdictions."],
 ] as const;
 
-export function MethodologyDocument(){return <article className={styles.page}>
+export function MethodologyDocument(){return <article className={styles.page} data-methodology-document>
   <header className={styles.hero}><div><p className={styles.eyebrow}>Methodology</p><h1>Evidence before <em>opinion.</em></h1><span>Every score on this site traces back to a test we ran with our own money. This page shows the whole machine — including its limits.</span></div></header>
   <section className={styles.band}><div className={styles.split}>
     <article><p>01 · How we evaluate casinos</p><h2>One cycle. Every casino. No exceptions.</h2><p>Every operator on this site went through the same evaluation cycle: an ordinary player account, our own money, and at least four weeks of observation before a single word is published. No press accounts, no operator assistance, no shortcuts for anyone.</p><p>The cycle produces raw records — deposit and withdrawal timestamps, transcribed terms, support transcripts — which we keep for at least 24 months after publication. Every claim in a review traces back to one of them.</p></article>

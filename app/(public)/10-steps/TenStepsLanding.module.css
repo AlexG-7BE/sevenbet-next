@@ -9,7 +9,6 @@
   --night-muted: var(--sb-grey-300);
   --acid: var(--sb-acid);
   --acid-hover: var(--sb-acid-hover);
-  overflow: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-seven-sans), Arial, sans-serif;
@@ -176,7 +175,8 @@
 }
 
 @media (max-width: 900px) {
-  .heroInner, .returningInner { width: 100%; min-height: 0; padding: 56px 20px 72px; grid-template-columns: 1fr; gap: 36px; }
+  .heroInner, .returningInner { width:100%; min-height:0; padding:132px 20px 72px; grid-template-columns:1fr; gap:36px; }
+  .heroCopy h1,.returningCopy h1 { max-width:100%; overflow-wrap:anywhere; }
   .heroCopy h1 strong { font-size: clamp(58px, 15vw, 82px); }
   .heroCopy h1 em { font-size: clamp(50px, 13vw, 72px); }
   .heroVisual { width: min(100%, 560px); height: 390px; }
@@ -199,19 +199,19 @@
 }
 
 @media (max-width: 420px) {
-  .heroInner { padding-top: 34px; padding-bottom: 64px; gap: 22px; }
+  .heroInner { padding-top:112px; padding-bottom:64px; gap:22px; }
   .heroCopy > span { font-size: 12px; }
   .heroCopy h1 { margin-top: 14px; }
   .heroCopy h1 strong { font-size: clamp(50px, 14.2vw, 60px); line-height: .86; }
   .heroCopy h1 em { margin-top: 10px; font-size: clamp(38px, 11vw, 46px); line-height: .96; }
   .heroCopy > p { margin-top: 18px; font-size: 15px; }
-  .heroCopy .primaryButton { width: min(100%, 234px); margin-top: 14px; }
+  .heroCopy .primaryButton { width:100%; min-width:0; margin-top:14px; }
   .heroCopy > small { margin-top: 12px; font-size: 13px; line-height: 18px; }
   .heroVisual { height: 240px; }
-  .returningInner { min-height: 772px; padding: 44px 20px 28px; gap: 16px; align-content: start; }
+  .returningInner { min-height:772px; padding:112px 20px 40px; gap:20px; align-content:start; }
   .returningCopy h1 { margin-top: 16px; font-size: 42px; line-height: 1.08; }
   .returningCopy > p { margin-top: 18px; font-size: 16px; }
-  .returningCopy .primaryButton { width: 234px; margin-top: 16px; }
+  .returningCopy .primaryButton { width:100%; min-width:0; margin-top:16px; }
   .serverState { margin-top: 16px; }
   .returningImage { height: 210px; }
   .sectionIntro h2, .pathIntro h2 { font-size: 36px; }

@@ -44,8 +44,12 @@
 
 @media(max-width:520px){
   .nav { padding-top: 22px; padding-bottom: 22px; }
+  .nav a { min-height:44px; display:inline-flex; align-items:center; }
   .main { padding-top: 54px; padding-bottom: 54px; }
-  .panel h1 { font-size: 44px; }
+  .panel h1 { font-size:clamp(36px,12vw,44px); overflow-wrap:anywhere; }
+  .kicker { white-space:normal; }
+  .panel input { min-height:48px; font-size:16px; }
+  .forgot,.newHere a { min-height:44px; display:inline-flex; align-items:center; }
   .newHere { padding: 22px; }
-  .footer a { width: 100%; margin-left: 0; }
+  .footer a { width:100%; min-height:44px; margin-left:0; display:inline-flex; align-items:center; }
 }

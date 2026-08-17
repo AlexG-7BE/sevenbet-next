@@ -1,4 +1,4 @@
-.shell { min-height: 100vh; padding-top: 81px; background: var(--sb-paper); color: var(--sb-night); font-family: var(--font-seven-sans), Arial, sans-serif; }
+.shell { min-height:100dvh; padding-top:calc(81px + env(safe-area-inset-top)); background:var(--sb-paper); color:var(--sb-night); font-family:var(--font-seven-sans),Arial,sans-serif; }
 .shell * { box-sizing: border-box; }
 .shell :focus-visible { outline: var(--sb-focus-width) solid var(--sb-focus-color); outline-offset: var(--sb-focus-offset); }
 .header { width: var(--site-content-width); min-height: 68px; margin: 0 auto; padding: 12px 0; display: grid; grid-template-columns: 1fr auto auto; gap: 18px; align-items: center; border-bottom: 1px solid var(--sb-border-subtle); background: var(--sb-white); }
@@ -37,7 +37,7 @@
 .reviewCard[data-state="available"] { border-color: var(--sb-teal); }
 .reviewCard h3 { margin: 0; font-size: 24px; line-height: 1.05; }
 .reviewCard p { margin: 0; color: var(--sb-metal); line-height: 1.5; }
-.reviewButton { width: fit-content; min-height: 42px; padding: 9px 12px; border: 1px solid var(--sb-night); border-radius: var(--sb-radius-s); background: var(--sb-night); color: var(--sb-white); font-weight: 750; cursor: pointer; }
+.reviewButton { width:fit-content; min-height:44px; padding:9px 12px; border:1px solid var(--sb-night); border-radius:var(--sb-radius-s); background:var(--sb-night); color:var(--sb-white); font-weight:750; cursor:pointer; }
 .reviewButton:disabled { border-color: var(--sb-border-subtle); background: var(--sb-field); color: var(--sb-metal); cursor: not-allowed; }
 .distance { padding: 24px; display: grid; grid-template-columns: 1fr auto auto; gap: 24px; align-items: center; border-left: 5px solid var(--sb-teal); background: var(--sb-white); }
 .distance h3 { margin: 4px 0 0; font-size: 24px; }
@@ -62,7 +62,6 @@
   width: 100%;
   min-height: 100svh;
   margin: 0;
-  overflow: hidden;
   border-radius: 0;
 }
 .dashboardShell .header[data-dashboard-header] { width: var(--site-content-width); margin: 0 auto; padding: 14px 0; grid-template-columns: 1fr auto auto; gap: 24px; }
@@ -115,13 +114,21 @@
   .compactStats span{font-size:13px;line-height:18px}
   .desktopStatLabel{display:none}
   .mobileStatLabel{display:block}
-  .mobileNextCard{order:3;padding:16px 20px;border:0;border-radius:14px;display:grid;gap:8px;background:#1d1c1c}
+  .mobileNextCard{display:none}
   .mobileNextCard>span{color:rgba(250,250,247,.66);font-size:13px;line-height:18px;font-weight:650;letter-spacing:.12em;text-transform:uppercase}
   .mobileNextCard>div{display:flex;align-items:center;gap:12px}
   .mobileNextCard b{color:rgba(250,250,247,.5);font-size:12px}
   .mobileNextCard strong{font-size:14px;font-weight:550}
-  .journeyCard,.compactStartingPoint,.compactAchievements,.compactReviews,.compactResearch{display:none}
-  .dashboardFooter{order:4;padding-top:2px;align-items:flex-start;flex-direction:column;gap:8px}
+  .compactStartingPoint{order:3;display:block;padding:20px}
+  .journeyCard{order:4;display:block;padding:20px}
+  .journeyCard li{min-height:48px;grid-template-columns:30px minmax(0,1fr) auto;gap:8px}
+  .compactAchievements{order:5;display:block;padding:20px}
+  .compactAchievements b{min-height:44px;display:inline-flex;align-items:center}
+  .compactReviews{order:6;display:grid;padding:20px}
+  .compactReviews button{min-height:44px;align-items:center}
+  .compactResearch{order:7;display:block;padding:20px}
+  .compactResearch a{min-height:44px;display:inline-flex;align-items:center}
+  .dashboardFooter{order:8;padding:8px 0 calc(8px + env(safe-area-inset-bottom));align-items:flex-start;flex-direction:column;gap:8px}
 }
 .missionMain, .reviewMain { width: min(1120px, 100%); margin: 0 auto; padding: clamp(30px, 5vw, 64px) clamp(20px, 5vw, 54px) 80px; display: grid; gap: 34px; }
 .missionTopline { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; }
@@ -244,6 +251,9 @@
   .sequenceBuilder li div, .stackBuilder li div { grid-column: 1 / -1; }
   .offerDecoder > div { grid-template-columns: 1fr; }
   .programmeTimeline dl > div { grid-template-columns: 1fr; gap: 2px; }
+  .back { min-height:44px; display:inline-flex; align-items:center; }
+  .localField textarea { font-size:16px; }
+  .submitRow > button,.sequenceBuilder button,.stackBuilder button { min-height:44px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .shell *, .shell *::before, .shell *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
