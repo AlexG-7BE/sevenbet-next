@@ -32,7 +32,7 @@ function payout(offer: PublicOfferDTO) {
 export function CuratedBonusShortlist({ offers }: { offers: PublicOfferDTO[] }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedBonuses(offers, selector), [offers, selector]);
-  return <section className={styles.section} aria-labelledby="bonus-shortlist-title"><div className={styles.shell}>
+  return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
     <div className={styles.tabs} aria-label="Bonus selectors" role="tablist">{selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{label}</button>)}</div>
     <p className={styles.label} id="bonus-shortlist-title">Top 3 for “{selector}” — ranked by realistic net value after terms.</p>
     {!top.length ? <div className={styles.empty} role="status"><strong>No verified matches currently</strong><p>No current offer record has authoritative evidence for this selector.</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>

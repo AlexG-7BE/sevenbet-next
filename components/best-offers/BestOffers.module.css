@@ -198,3 +198,17 @@
   .whyPicked h2 { font-style:italic; }
 
 }
+
+.heroInner { animation:bestOffersHeroIn 600ms cubic-bezier(.2,.8,.2,1) both; }
+.featuredCard,.alternativeCard,.worthCards > article { transition:transform 250ms cubic-bezier(.2,.8,.2,1),box-shadow 250ms ease; }
+.faq details::details-content { block-size:0; overflow:hidden; opacity:0; transition:block-size 400ms cubic-bezier(.2,.8,.2,1),content-visibility 400ms allow-discrete,opacity 350ms ease; }
+.faq details[open]::details-content { block-size:auto; opacity:1; }
+@keyframes bestOffersHeroIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (hover:hover) and (pointer:fine) {
+  .featuredCard:hover,.alternativeCard:hover,.worthCards > article:hover { transform:translateY(-6px); box-shadow:0 28px 72px rgba(16,15,15,.16); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .heroInner { animation:none; }
+  .featuredCard,.alternativeCard,.worthCards > article,.faq details::details-content { transition:none; }
+  .featuredCard:hover,.alternativeCard:hover,.worthCards > article:hover { transform:none; }
+}

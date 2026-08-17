@@ -42,7 +42,7 @@ export function LearningArticleView({
 
   return (
     <article className={`${styles.page} ${visual ? handoffStyles.page : ""}`} data-learning-article data-handoff-article={visual ? "true" : undefined} data-figma-authority="633:4341" data-runtime-renderer="learn-article">
-      <header className={`${styles.hero} ${visual ? handoffStyles.hero : ""}`}>
+      <header className={`${styles.hero} ${visual ? handoffStyles.hero : ""}`} data-nav-theme="dark">
         <nav className={`${styles.breadcrumbs} ${visual ? handoffStyles.breadcrumbs : ""}`} aria-label="Breadcrumb">
           {visual ? <><Link href="/learn">Learn</Link><span aria-hidden="true">→</span><Link href={`/learn/${category.slug}`}>{visual.heroLabel}</Link></> : <><Link href="/">Home</Link><span aria-hidden="true">/</span><Link href="/learn">Learning Center</Link><span aria-hidden="true">/</span><Link href={`/learn/${category.slug}`}>{category.title}</Link></>}
         </nav>
@@ -60,7 +60,7 @@ export function LearningArticleView({
         </div>
       </header>
 
-      {article.takeaways.length ? <section className={styles.answer} aria-labelledby="direct-answer-title">
+      {article.takeaways.length ? <section className={styles.answer} aria-labelledby="direct-answer-title" data-motion-reveal data-nav-theme="light">
         <p className={styles.kicker}>Direct answer</p>
         <h2 id="direct-answer-title">{article.takeaways[0]}</h2>
         <ol>
@@ -68,7 +68,7 @@ export function LearningArticleView({
         </ol>
       </section> : null}
 
-      <div className={`${styles.readingLayout} ${visual ? handoffStyles.readingLayout : ""}`}>
+      <div className={`${styles.readingLayout} ${visual ? handoffStyles.readingLayout : ""}`} data-motion-reveal data-nav-theme="light">
         <aside className={`${styles.toc} ${visual ? handoffStyles.toc : ""}`} aria-label="On this page">
           <p className={styles.kicker}>On this page</p>
           <ol>
@@ -118,7 +118,7 @@ export function LearningArticleView({
         </div>
       </div>
 
-      {article.faq.length ? <section className={styles.faq} aria-labelledby="article-faq-title">
+      {article.faq.length ? <section className={styles.faq} aria-labelledby="article-faq-title" data-motion-reveal data-nav-theme="light">
         <header>
           <p className={styles.kicker}>Questions</p>
           <h2 id="article-faq-title">READ THE LIMITS TOO.</h2>
@@ -133,7 +133,7 @@ export function LearningArticleView({
         </div>
       </section> : null}
 
-      <section className={`${styles.related} ${visual ? handoffStyles.related : ""}`} aria-labelledby="related-reading-title">
+      <section className={`${styles.related} ${visual ? handoffStyles.related : ""}`} aria-labelledby="related-reading-title" data-motion-reveal data-nav-theme="cream">
         <header>
           <p className={styles.kicker}>{visual ? "" : "Related reading"}</p>
           <h2 id="related-reading-title">{visual ? "READ NEXT" : "CONTINUE WITH CONTEXT."}</h2>
@@ -154,7 +154,7 @@ export function LearningArticleView({
       </section>
 
       {commercialEligible ? (
-        <aside className={`${styles.commercial} ${visual ? handoffStyles.commercial : ""}`} aria-label="Optional comparison transition">
+        <aside className={`${styles.commercial} ${visual ? handoffStyles.commercial : ""}`} aria-label="Optional comparison transition" data-motion-reveal data-nav-theme="dark">
           <div>
             <p className={styles.kicker}>{visual?.bridgeKicker || "After the educational answer"}</p>
             <h2>{visual ? <>{visual.bridgeTitle}<em>{visual.bridgeAccent}</em></> : "READY TO APPLY THE CHECKLIST?"}</h2>
@@ -168,7 +168,7 @@ export function LearningArticleView({
           </div>
         </aside>
       ) : (
-        <aside className={styles.protectedBridge} aria-label="Control and support">
+        <aside className={styles.protectedBridge} aria-label="Control and support" data-motion-reveal data-nav-theme="dark">
           <div>
             <p className={styles.kicker}>Control and support</p>
             <h2>KEEP THE NEXT STEP NEUTRAL.</h2>

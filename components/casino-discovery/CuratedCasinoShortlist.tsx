@@ -30,7 +30,7 @@ export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardD
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
 
-  return <section className={styles.section} aria-labelledby="curated-title">
+  return <section className={styles.section} aria-labelledby="curated-title" data-motion-reveal data-nav-theme="light">
     <div className={styles.shell}>
       <div className={styles.tabs} aria-label="Casino use-case selectors" role="tablist">
         {selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{label}</button>)}

@@ -49,7 +49,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <p className="srOnly">Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>
     <ContextualComparison />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <section className={styles.hero}>
+    <section className={styles.hero} data-nav-theme="dark">
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
           <header><p>Curated by use-case</p><h1>Picked for<br /><em>how you play.</em></h1><span>Choose your use-case — we show the three casinos that earned it. The full directory waits below.</span></header>
@@ -60,7 +60,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
     <CuratedCasinoShortlist casinos={result.items} />
 
-    <section className={styles.directory} id="casino-directory"><div className={styles.shell}>
+    <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
       {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
       <DiscoveryControls result={result} />
@@ -68,7 +68,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       <DiscoveryResults result={result} />
     </div></section>
 
-    <section className={styles.faq}><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
+    <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
       ["How is this different from Best Offers?", "Best Offers answers “just tell me the one” — a single recommendation. This page ranks by use-case: crypto, mobile, bonuses, new. Same tests, different question."],
       ["What does “Review only” mean?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and test results stay available."],
       ["Does commission affect the ranking?", "No. It funds the testing and never sets a score — several casinos we earn nothing from outrank ones we do. Details are available in our affiliate disclosure."],

@@ -29,11 +29,27 @@
   background: rgba(16, 15, 15, .96);
   color: var(--shell-white);
   backdrop-filter: blur(14px);
+  transition:
+    background 400ms cubic-bezier(.2,.8,.2,1),
+    border-color 250ms cubic-bezier(.2,.8,.2,1),
+    color 250ms cubic-bezier(.2,.8,.2,1),
+    backdrop-filter 400ms cubic-bezier(.2,.8,.2,1);
 }
 .header[data-shell-theme="light"], .header[data-shell-theme="cream"] { border-bottom-color:rgba(16,15,15,.14); background:rgba(250,250,247,.96); color:var(--shell-ink); }
 .header[data-shell-theme="cream"] { background:rgba(244,241,235,.96); }
-.header[data-shell-theme="light"] .primaryAction, .header[data-shell-theme="cream"] .primaryAction { border-color:rgba(16,15,15,.4); color:var(--shell-ink); }
+.header[data-shell-theme="light"] .primaryAction,
+.header[data-shell-theme="cream"] .primaryAction,
+.header[data-shell-theme="light"] .mobilePrimaryAction,
+.header[data-shell-theme="cream"] .mobilePrimaryAction { border-color:rgba(16,15,15,.4); color:var(--shell-ink); }
 .header[data-shell-theme="photo"] { background:linear-gradient(to bottom,rgba(16,15,15,.72),rgba(16,15,15,0)); backdrop-filter:none; }
+
+.header :is(.brand, .primaryNavigation a, .accountLink, .mobilePrimaryAction, .menuButton, .primaryAction) {
+  transition:
+    background-color 150ms cubic-bezier(.2,.8,.2,1),
+    border-color 250ms cubic-bezier(.2,.8,.2,1),
+    color 250ms cubic-bezier(.2,.8,.2,1),
+    transform 160ms cubic-bezier(.2,.8,.2,1);
+}
 
 .headerInner {
   width: var(--public-frame-width);

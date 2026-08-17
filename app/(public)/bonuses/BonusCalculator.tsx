@@ -27,7 +27,7 @@ export function BonusCalculator() {
     return { turnover, effectiveTurnover, expectedCost, netValue: amount - expectedCost };
   }, [amount, wagering, appliesTo, weight]);
 
-  return <section aria-labelledby="bonus-calculator-title" className={styles.calculator}>
+  return <section aria-labelledby="bonus-calculator-title" className={styles.calculator} data-motion-reveal data-nav-theme="dark">
     <div>
       <div className={styles.calculatorControls}>
         <small>What a bonus really costs</small>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
 import type { CasinoEditorialDocument, EditorialBlock } from "@/lib/editorial-review/types";
 import {
   formatProfileDate,
@@ -38,7 +39,7 @@ function EditorialBlockView({ block }: { block: EditorialBlock }) {
 }
 
 function EditorialEvidence({ document, demonstration }: { document: CasinoEditorialDocument; demonstration: boolean }) {
-  return <section aria-labelledby="editorial-review-heading" className={styles.editorialSection}>
+  return <section aria-labelledby="editorial-review-heading" className={styles.editorialSection} data-motion-reveal data-nav-theme="light" id="editorial-review">
     <div className={styles.sectionHeading}>
       <p>{demonstration ? "FICTIONAL EDITORIAL DEMONSTRATION" : "PUBLISHED EDITORIAL REVIEW"}</p>
       <h2 id="editorial-review-heading">{document.title}</h2>
@@ -80,12 +81,13 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
     : null;
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
+    <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />
+    <CasinoProfileInteractions />
     <div className={styles.shell}>
-      <nav aria-label="Breadcrumb" className={styles.breadcrumb}><Link href="/casinos">Casinos</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} review</span></nav>
-      {demo ? <p className={styles.profileDisclosure} role="note"><strong>DEMONSTRATION DATA.</strong> This fictional operator profile shows the review experience. It is not a current GB operator, licence claim, partner offer or live promotion. No commercial visit is available.</p> : null}
-
-      <section aria-labelledby="casino-profile-title" className={styles.hero}>
+      <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme={casino.media.hero ? "photo" : "dark"}>
         <div className={styles.heroReview}>
+          <nav aria-label="Breadcrumb" className={styles.breadcrumb}><Link href="/casinos">Casinos</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} review</span></nav>
+          {demo ? <p className={styles.demoDisclosure} role="note"><strong>DEMONSTRATION DATA.</strong> Fictional review fields · no current operator, licence, partner offer or commercial visit.</p> : null}
           <p className={styles.heroKicker}>B4GAMBLE REVIEW · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt) || "CURRENT"}</p>
           <div className={styles.identityRow}>
             <div className={styles.logo}>
@@ -113,13 +115,13 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         </aside>
       </section>
 
-      <nav aria-label="Casino review sections" className={styles.decisionBar}>
+      <nav aria-label="Casino review sections" className={styles.decisionBar} data-casino-decision-bar>
         <span className={styles.decisionIdentity}><b>{casino.name} · {casino.editorScore.toFixed(1)}</b><small>{bonus ? profileOfferHeadline(bonus) : "Published review"}</small></span>
         <div><a href="#overview">Overview</a><a href="#offer-evidence">Offer &amp; evidence</a><a href="#verdict">Verdict</a><a href="#faq">FAQ</a></div>
         {action ? <CasinoOutboundAction action={action} className={styles.compactAction} /> : <UnavailableAction />}
       </nav>
 
-      <section aria-labelledby="overview-heading" className={`${styles.section} ${styles.overviewSection}`} id="overview">
+      <section aria-labelledby="overview-heading" className={`${styles.section} ${styles.overviewSection}`} data-motion-reveal data-nav-theme="light" id="overview">
         <div className={`${styles.sectionHeading} ${styles.overviewHeading}`}>
           <p>THE 30-SECOND CHECK</p>
           <h2 id="overview-heading">The 30-second check</h2>
@@ -138,7 +140,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         </div>
       </section>
 
-      <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="offer-evidence">
+      <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} data-motion-reveal data-nav-theme="cream" id="offer-evidence">
         <div className={styles.sectionHeading}>
           <p>OFFER, PAYMENTS &amp; EVIDENCE</p>
           <h2 id="offer-heading">Offer &amp; terms</h2>
@@ -177,7 +179,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       {editorial ? <EditorialEvidence demonstration={demo} document={editorial} /> : null}
 
-      <section aria-labelledby="verdict-heading" className={`${styles.verdict} ${scoreCategories.length ? styles.verdictWithBreakdown : ""}`} id="verdict">
+      <section aria-labelledby="verdict-heading" className={`${styles.verdict} ${scoreCategories.length ? styles.verdictWithBreakdown : ""}`} data-motion-reveal data-nav-theme="cream" id="verdict">
         <div>
           <p>B4GAMBLE VERDICT</p>
           <h2 id="verdict-heading">Why {casino.editorScore.toFixed(1)}</h2>
@@ -185,7 +187,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
           {!scoreCategories.length && casino.cons.length ? <div className={styles.verdictLimit}><strong>Keep in view</strong><span>{casino.cons[0]}</span></div> : null}
         </div>
         {scoreCategories.length ? <div className={styles.scoreBreakdown}>
-          {scoreCategories.map((category) => <div className={styles.scoreRow} key={category.key} style={{ "--score-width": `${Math.min(10, Math.max(0, category.score)) * 10}%` } as React.CSSProperties}>
+          {scoreCategories.map((category, index) => <div className={styles.scoreRow} data-score-row key={category.key} style={{ "--score-delay": `${index * 90}ms`, "--score-width": `${Math.min(10, Math.max(0, category.score)) * 10}%` } as React.CSSProperties}>
             <div><strong>{category.key.replaceAll("-", " ")}</strong><span>{category.score.toFixed(1)}</span></div>
             <i aria-hidden="true"><b /></i>
           </div>)}
@@ -201,11 +203,11 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         </div>}
       </section>
 
-      <section aria-labelledby="faq-heading" className={styles.faqSection} id="faq">
+      <section aria-labelledby="faq-heading" className={styles.faqSection} data-motion-reveal data-nav-theme="cream" id="faq">
         <div className={styles.sectionHeading}><p>FAQ</p><h2 id="faq-heading">Questions we get about {casino.name.replace(/\s+casino$/i, "")}</h2></div>
         <div className={styles.faqGrid}>
           <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
-          <aside className={styles.finalOffer}>
+          <aside className={styles.finalOffer} data-motion-reveal data-nav-theme="dark">
             {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "THE VERDICT STANDS"}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[profileOfferHeadline(bonus), bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal ? `Payout ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
           </aside>
         </div>

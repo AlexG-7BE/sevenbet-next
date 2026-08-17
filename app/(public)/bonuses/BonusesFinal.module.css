@@ -1,5 +1,5 @@
 .hero { min-height:650px; padding:150px var(--site-gutter) 92px; display:flex; align-items:center; overflow:hidden; background:radial-gradient(circle at 88% 10%,rgba(228,226,78,.08),transparent 38rem),#100f0f; color:#fafaf7; font-family:var(--font-seven-sans),Arial,sans-serif; }
-.hero > .heroCopy { width:min(var(--site-content-max),100%); margin:0 auto; }
+.hero > .heroCopy { width:min(var(--site-content-max),100%); margin:0 auto; animation:bonus-hero-enter 600ms cubic-bezier(.2,.8,.2,1) both; }
 .mobileKicker,.heroMeta { display:none; }
 .hero small { color:#e4e24e; font-size:13px; letter-spacing:.24em; text-transform:uppercase; }
 .hero h1 { margin:26px 0 0; font-size:clamp(58px,7.4vw,116px); line-height:.97; letter-spacing:-.045em; text-transform:uppercase; }
@@ -21,7 +21,7 @@
 .segmented { grid-template-columns:1fr 1fr; }
 .gameWeights { grid-template-columns:repeat(3,1fr); }
 .gameWeights label:last-child { grid-column:1/-1; }
-.segmented label,.gameWeights label { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#e0ded7; font-size:var(--sb-type-control-size); line-height:var(--sb-type-control-line); font-weight:700; cursor:pointer; }
+.segmented label,.gameWeights label { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#e0ded7; font-size:var(--sb-type-control-size); line-height:var(--sb-type-control-line); font-weight:700; cursor:pointer; transition:background-color 150ms cubic-bezier(.2,.8,.2,1),border-color 150ms cubic-bezier(.2,.8,.2,1),color 150ms cubic-bezier(.2,.8,.2,1); }
 .segmented input,.gameWeights input { position:absolute; opacity:0; pointer-events:none; }
 .segmented .selected,.gameWeights .selected { border-color:#e4e24e; background:#e4e24e; color:#100f0f; }
 .calculatorOutput { min-height:520px; display:flex; flex-direction:column; padding:46px; border:1px solid rgba(250,250,247,.08); border-radius:20px; background:#111; color:#fafaf7; }
@@ -29,7 +29,7 @@
 .calculatorOutput dl > div { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; border-bottom:1px solid rgba(250,250,247,.12); }
 .calculatorOutput dt { color:#c3c0b7; font-size:14px; line-height:20px; }
 .calculatorOutput dt span { display:block; font-size:13px; line-height:18px; }
-.calculatorOutput dd { margin:0; font-size:26px; font-weight:850; white-space:nowrap; }
+.calculatorOutput dd { margin:0; font-size:26px; font-weight:850; white-space:nowrap; transition:color 150ms cubic-bezier(.2,.8,.2,1); }
 .calculatorOutput .cost { color:#e4e24e; }
 .calculatorOutput .negative { color:#cf5b55; }
 .calculatorOutput .positive { color:#7bc7ad; }
@@ -46,6 +46,7 @@
 .method h2 em { color:#777500; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .method li p { margin:5px 0 0; color:#64635c; font-size:14px; line-height:1.6; }
 .guideAction { min-height:48px; width:fit-content; margin-top:24px; padding:12px 28px; border:1px solid rgba(16,15,15,.3); border-radius:999px; display:inline-flex; align-items:center; color:#100f0f; font-size:14px; text-decoration:none; }
+@keyframes bonus-hero-enter { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
 @media(max-width:760px){
   .hero{height:586px;min-height:586px;padding:0;position:relative;display:block}
   .hero::after{content:"";position:absolute;right:0;bottom:0;left:0;height:10px;background:linear-gradient(90deg,#100f0f,#171616 48%,#100f0f)}
@@ -77,4 +78,9 @@
 @media(max-width:360px){
   .calculator>div,.method>div{grid-template-columns:minmax(0,1fr)}
   .calculatorOutput{padding-inline:22px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .hero>.heroCopy{animation:none}
+  .segmented label,.gameWeights label,.calculatorOutput dd{transition:none}
 }

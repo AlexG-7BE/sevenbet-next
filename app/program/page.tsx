@@ -41,7 +41,7 @@ export default function ProgramPage() {
   return (
     <>
       <JsonLd data={breadcrumbSchema()} />
-      <div data-public-programme-renderer="program-ai" tabIndex={-1}>
+      <div data-nav-theme="dark" data-public-programme-renderer="program-ai" tabIndex={-1}>
         <ProgramAiExperience googleAvailable={isGoogleAuthAvailable()} />
       </div>
     </>

@@ -42,11 +42,11 @@ async function standardEdges(page: Page, selector: string) {
   });
 }
 
-async function publicFrameSelector(page: Page, route: string) {
-  if (await page.locator("[data-handoff-page]").count()) return '[data-handoff-page] .sc-host > div > div:has(> a[href="/"])';
+function publicFrameSelector(route: string) {
+  if (route === "/help") return '[data-protected-help="header"]';
   if (route === "/login") return "[data-login-page] > header";
-  if (route === "/faq") return "article > div:first-child";
-  if (route === "/contact") return "[data-contact-page] > div:first-child";
+  if (route === "/faq") return "article > header > div";
+  if (route === "/contact") return "[data-contact-page] > header > div";
   return '[data-public-shell="header"] > div';
 }
 
@@ -79,7 +79,7 @@ for (const viewport of viewports) {
     for (const route of publicRoutes) {
       const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), route).toBe(200);
-      const frameSelector = await publicFrameSelector(page, route);
+      const frameSelector = publicFrameSelector(route);
       const headerFrame = page.locator(frameSelector).first();
       await expect(headerFrame, `${route} shared header frame`).toBeVisible();
       const edges = await standardEdges(page, frameSelector);

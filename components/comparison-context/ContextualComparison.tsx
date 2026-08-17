@@ -122,7 +122,7 @@ export function ContextualComparison() {
   const highestScore = names.length ? Math.max(...names.map((casino) => casino.editorScore)) : null;
 
   return <>
-    <aside aria-label="Casino comparison tray" className={styles.tray}>
+    <aside aria-label="Casino comparison tray" className={styles.tray} data-comparison-count={slugs.length} data-comparison-tray>
       <div><strong>{slugs.length} of 3 selected</strong><span>{slugs.length === 1 ? "Choose one more to compare" : "Your comparison is ready"}</span></div>
       <div className={styles.trayActions}>
         {slugs.length >= 2 && <button onClick={() => setOpen(true)} type="button">Open comparison</button>}

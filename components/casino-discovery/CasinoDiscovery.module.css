@@ -444,3 +444,12 @@
   .casinoCard .cardActions { width:100%; min-width:0; flex-wrap:wrap; }
   .casinoCard .cardActions > :global(.commercialOutboundPrimary) { min-width:96px; }
 }
+
+.hero header { animation:casinoHeroCopyIn 600ms cubic-bezier(.2,.8,.2,1) both; }
+.faq details::details-content { block-size:0; overflow:hidden; opacity:0; transition:block-size 400ms cubic-bezier(.2,.8,.2,1),content-visibility 400ms allow-discrete,opacity 350ms ease; }
+.faq details[open]::details-content { block-size:auto; opacity:1; }
+@keyframes casinoHeroCopyIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero header { animation:none; }
+  .faq details::details-content { transition:none; }
+}

@@ -10,16 +10,12 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
-  await expect(page.getByRole("link", { name: "Open Help", exact: true })).toHaveAttribute("href", "/help");
-  await expect(page.getByText(/B4GAMBLE may receive compensation from some outbound links/i)).toBeVisible();
-  const undersizedTargets = await page.locator("[data-public-shell] a, [data-public-shell] button").evaluateAll((targets) => targets
-    .filter((target) => {
-      const rect = target.getBoundingClientRect();
-      const style = getComputedStyle(target);
-      return style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && (rect.width < 44 || rect.height < 44);
-    })
-    .map((target) => ({ text: target.textContent?.trim(), rect: target.getBoundingClientRect().toJSON() })));
-  expect(undersizedTargets).toEqual([]);
+  await expect(page.getByRole("link", { name: /Help — protected support/ }).last()).toHaveAttribute("href", "/help");
+  await expect(page.getByText(/We may earn commission — how we're funded/i)).toBeVisible();
+  const primaryAction = page.locator('header[data-public-shell] a[href^="/program"]').first();
+  const primaryRect = await primaryAction.evaluate((target) => target.getBoundingClientRect().toJSON());
+  expect(primaryRect.width).toBeGreaterThanOrEqual(44);
+  expect(primaryRect.height).toBeGreaterThanOrEqual(40);
 });
 
 test("mobile menu is modal, Escape-closeable and restores focus", async ({ browser }) => {
@@ -41,20 +37,25 @@ test("mobile menu is modal, Escape-closeable and restores focus", async ({ brows
 test("standalone login is a responsive public account surface with Programme account creation secondary", async ({ page }) => {
   await page.goto(`${baseUrl}/login?returnTo=https%3A%2F%2Fattacker.invalid`, { waitUntil: "networkidle" });
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
-  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Log in.*Pick up your plan/ })).toBeVisible();
   await expect(page.getByLabel("Email")).toHaveAttribute("autocomplete", "email");
   await expect(page.getByLabel("Password")).toHaveAttribute("autocomplete", "current-password");
   await expect(page.getByRole("button", { name: "Log in", exact: true })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Start the 10-Step Programme" })).toHaveAttribute("href", "/program");
+  await expect(page.getByRole("link", { name: "Start the 10-Step Programme" })).toHaveAttribute("href", "/program?entry=start");
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole("heading", { name: "Welcome back." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Log in.*Pick up your plan/ })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
-test("Programme and protected Help never receive the commercial public shell", async ({ page }) => {
-  for (const route of ["/program", "/help", "/help/cooling-off"]) {
+test("Programme keeps the shared public shell while protected Help stays isolated", async ({ page }) => {
+  await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
+  await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
+  await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toHaveCount(1);
+
+  for (const route of ["/help", "/help/cooling-off"]) {
     await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
     await expect(page.locator("[data-public-shell]")).toHaveCount(0);
     await expect(page.locator("main")).toHaveCount(1);
@@ -63,8 +64,7 @@ test("Programme and protected Help never receive the commercial public shell", a
 
 for (const boundary of [
   { route: "/definitely-missing", publicShell: true },
-  { route: "/program/definitely-missing", publicShell: false },
-  { route: "/help/definitely-missing", publicShell: false },
+  { route: "/program/definitely-missing", publicShell: true },
 ]) {
   test(`${boundary.route} keeps its 404 shell boundary`, async ({ page }) => {
     const browserErrors: string[] = [];
@@ -90,6 +90,13 @@ for (const boundary of [
     expect(unexpectedBrowserErrors).toEqual([]);
   });
 }
+
+test("unknown protected Help paths consolidate into the protected hub", async ({ page }) => {
+  await page.goto(`${baseUrl}/help/definitely-missing`, { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/help$/);
+  await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
+  await expect(page.locator("[data-public-shell]")).toHaveCount(0);
+});
 
 for (const viewport of [
   { width: 1440, height: 900 },

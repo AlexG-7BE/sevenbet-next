@@ -360,8 +360,24 @@ export function withHandoffBonusDirectoryData(result: PublicOfferSearchResult, e
 }
 
 export function withHandoffComparisonData(result: PublicComparisonResult, enabled: boolean): PublicComparisonResult {
-  if (!enabled || !result.casinos.length) return result;
-  const casinos = result.casinos.map((casino, index) => {
+  if (!enabled) return result;
+  const casinos = (result.casinos.length ? result.casinos : result.selectedSlugs.map((slug, index) => {
+    const candidate = result.candidates[index % Math.max(1, result.candidates.length)];
+    return {
+      id: `visual-comparison-${index}`,
+      dataClassification: "PUBLISHED_RECORD" as const,
+      slug,
+      name: offerSamples[index % offerSamples.length].name,
+      summary: offerSamples[index % offerSamples.length].summary,
+      logo: null,
+      editorScore: offerSamples[index % offerSamples.length].score,
+      publishedAt: null,
+      lastReviewedAt: null,
+      reviewHref: candidate ? `/casino/${candidate.slug}` : "/casinos",
+      marketState: "AVAILABLE" as const,
+      action: { available: true, href: "/r/visual-fixture", label: `Visit ${offerSamples[index % offerSamples.length].name}`, reason: "Local deterministic visual data" },
+    };
+  })).map((casino, index) => {
     const sample = offerSamples[index % offerSamples.length];
     return {
       ...casino,
@@ -382,6 +398,30 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     methods: (index) => index === 0 ? "Visa / Mastercard · Skrill · Bank transfer" : "Visa / Mastercard · Bank transfer",
     "control-tools": () => "Live casino · VIP programme",
   };
+  const fallbackGroups = [
+    {
+      id: "offer",
+      label: "Offer terms",
+      rows: [
+        { id: "offer-title", label: "Offer", description: "Deterministic local visual data." },
+        { id: "wagering", label: "Wagering", description: "Deterministic local visual data." },
+        { id: "minimum-deposit", label: "Minimum deposit", description: "Deterministic local visual data." },
+      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }])) })),
+    },
+    {
+      id: "payments",
+      label: "Payments",
+      rows: [
+        { id: "withdrawal-time", label: "Payout", description: "Deterministic local visual data." },
+        { id: "methods", label: "Payments", description: "Deterministic local visual data." },
+      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }])) })),
+    },
+    {
+      id: "safety-commercial",
+      label: "Control tools",
+      rows: [{ id: "control-tools", label: "Features", description: "Deterministic local visual data.", values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues["control-tools"](index), status: "Published" as const }])) }],
+    },
+  ];
   return {
     ...result,
     status: "available",
@@ -393,7 +433,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,
     })),
-    groups: result.groups.map((group) => ({
+    groups: (result.groups.length ? result.groups : fallbackGroups).map((group) => ({
       ...group,
       rows: group.rows.map((row) => ({
         ...row,
@@ -402,6 +442,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
           : row.values,
       })),
     })),
+    reasons: [],
     inventoryMode: "PUBLISHED_ONLY",
   };
 }

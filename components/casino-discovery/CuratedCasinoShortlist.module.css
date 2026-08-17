@@ -4,3 +4,6 @@
 @media(max-width:600px){.shell{width:var(--site-content-width)}.section{padding-bottom:72px}.tabs{margin-inline:-16px;padding:18px 16px}.tabs button{min-width:132px;min-height:42px}.context{line-height:1.5}.context strong{display:block;margin:0 0 7px}.cards{gap:14px}.cardHead{grid-template-columns:52px minmax(0,1fr) auto;padding:20px}.mark{width:52px;height:52px;border-radius:14px}.identity h2{font-size:20px}.score,.offer,.terms,.reason,.actions{padding-left:20px;padding-right:20px}.actions{flex-wrap:wrap}.visit,.reviewOnly{width:100%}.why{margin-top:14px;padding:18px 20px}}
 @media(min-width:901px){.section{padding-bottom:40px}}
 @media(max-width:600px){.shell{width:var(--site-content-width)}.tabs{margin-inline:0;padding:0}.tabs button{min-width:0}.cardHead{grid-template-columns:76px minmax(0,1fr) auto;padding:28px 24px 28px 32px}.mark{width:76px;height:76px;border-radius:20px}.why span{display:inline}}
+.tabs button{transition:background-color 150ms ease,color 150ms ease,border-color 150ms ease}.card{transition:transform 250ms cubic-bezier(.2,.8,.2,1),box-shadow 250ms ease}
+@media(hover:hover) and (pointer:fine){.card:hover{transform:translateY(-6px);box-shadow:0 24px 64px rgba(16,15,15,.14)}}
+@media(prefers-reduced-motion:reduce){.tabs button,.card{transition:none}.card:hover{transform:none}}

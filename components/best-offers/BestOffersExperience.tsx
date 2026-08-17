@@ -42,10 +42,10 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
   const featured = top[0] ?? null;
   const demonstration = inventoryMode !== "PUBLISHED_ONLY";
 
-  if (!featured) return <section className={styles.statePage} id="shortlist"><div className={styles.shell}><div className={styles.statePanel}><h2>No eligible offers are available.</h2><p>B4GAMBLE does not relax the method to fill the page.</p><Link href="/casinos">Browse casino reviews</Link></div></div></section>;
+  if (!featured) return <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel}><h2>No eligible offers are available.</h2><p>B4GAMBLE does not relax the method to fill the page.</p><Link href="/casinos">Browse casino reviews</Link></div></div></section>;
 
   return <>
-    <section className={styles.topThree} id="shortlist" aria-labelledby="top-three-title">
+    <section className={styles.topThree} id="shortlist" aria-labelledby="top-three-title" data-motion-reveal data-nav-theme="light">
       <div className={styles.shell}>
         <div className={styles.sectionRule}><span id="top-three-title">The top three — tested with real money</span><i /></div>
         <article className={styles.featuredCard} data-testid="best-offer-product-card">
@@ -105,7 +105,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
       </div>
     </section>
 
-    <section className={styles.whyPicked} aria-labelledby="why-picked-title"><div className={styles.shell}>
+    <section className={styles.whyPicked} aria-labelledby="why-picked-title" data-motion-reveal data-nav-theme="cream"><div className={styles.shell}>
       <div><p className={styles.lightKicker}>Why we picked these</p><h2 id="why-picked-title">Three months of deposits, withdrawals and fine print.</h2><p>Every pick passed the same test cycle with our own money. Commission never enters the scoring room. <Link href="/methodology">Full methodology →</Link></p></div>
       <ol>
         <li><span>01</span><div><strong>Payouts, verified by hand</strong><p>Three withdrawal methods per casino; the slowest defines the published range.</p></div></li>
@@ -114,7 +114,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
       </ol>
     </div></section>
 
-    <section className={styles.faq}><div className={styles.faqGrid}>
+    <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.faqGrid}>
       <h2>Before you click</h2>
       <details open><summary>What does “wagering 35x” actually mean?</summary><p>You must stake the bonus amount 35 times before withdrawing winnings from it. On a €500 bonus that&apos;s €17,500 in total stakes — read our <Link href="/bonus-guide">bonus guide</Link> before deciding it&apos;s worth it.</p></details>
       <details><summary>Do you earn money if I sign up?</summary><p>Usually yes — we may earn a commission. Affiliate compensation does not determine Editor Score or natural editorial ranking. Full details in our <Link href="/affiliate-disclosure">affiliate disclosure</Link>.</p></details>
@@ -122,7 +122,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
       <details><summary>What happens when I click View Offer?</summary><p>You&apos;ll see a short confirmation that you&apos;re leaving B4GAMBLE, with the commission disclosure — then you continue to the operator, or stay.</p></details>
     </div></section>
 
-    <section className={styles.finalOffer} aria-labelledby="final-offer-title"><div>
+    <section className={styles.finalOffer} aria-labelledby="final-offer-title" data-motion-reveal data-nav-theme="dark"><div>
       <p className={styles.darkKicker}>Still here? The answer hasn&apos;t changed.</p>
       <h2 id="final-offer-title">{featured.casino.name}.<em>Our #1, tested.</em></h2>
       <p>{featured.bonus.title} · Wagering {featured.bonus.wageringMultiplier === null ? "not listed" : `${featured.bonus.wageringMultiplier}x`} · Min {money(featured.bonus.minimumDeposit, featured.bonus.currency)} · Payout {payout(featured)}</p>

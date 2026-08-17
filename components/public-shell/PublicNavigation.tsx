@@ -58,32 +58,6 @@ export function PublicNavigation({
     return () => { document.documentElement.style.overflow = previousOverflow; };
   }, [menuOpen]);
 
-  useEffect(() => {
-    const header = document.querySelector<HTMLElement>("[data-public-shell='header']");
-    const themed = Array.from(document.querySelectorAll<HTMLElement>("[data-nav-theme]"));
-    if (!header || !themed.length) return;
-    let frame = 0;
-    const sync = () => {
-      frame = 0;
-      const marker = Math.min(86, window.innerHeight * .18);
-      const active = themed.find((section) => {
-        const rect = section.getBoundingClientRect();
-        return rect.top <= marker && rect.bottom > marker;
-      }) ?? themed[0];
-      header.dataset.shellTheme = active.dataset.navTheme || "dark";
-    };
-    const queue = () => { if (!frame) frame = window.requestAnimationFrame(sync); };
-    sync();
-    window.addEventListener("scroll", queue, { passive: true });
-    window.addEventListener("resize", queue);
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", queue);
-      window.removeEventListener("resize", queue);
-      delete header.dataset.shellTheme;
-    };
-  }, [pathname]);
-
   return (
     <>
       <div className={styles.desktopNavigation}>

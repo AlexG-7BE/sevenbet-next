@@ -89,7 +89,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     {schema ? <JsonLd data={schema} /> : null}
-    <section className={finalStyles.hero}>
+    <section className={finalStyles.hero} data-nav-theme="dark">
       <div className={finalStyles.heroCopy}>
         <small><span className={finalStyles.desktopKicker}>Bonuses · Terms first · 18+</span><span className={finalStyles.mobileKicker}>Ranked by what you keep</span></small>
         <h1>Value, measured<em>by terms.</em></h1>
@@ -100,7 +100,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
 
     {result.inventoryMode !== "UNAVAILABLE" ? <CuratedBonusShortlist offers={result.records} /> : null}
 
-    <section className={styles.directorySection}>
+    <section className={styles.directorySection} data-motion-reveal data-nav-theme="cream">
       <div className={styles.shell}>
         <header className={styles.sectionHeading}><h2 className={styles.display}>All bonuses</h2><p>{result.total} offers · sorted by net value</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.reviewSeparationNote} role="note"><strong>DEMONSTRATION DATA</strong><p>These fictional records show the comparison experience. They are not current GB promotions, partner offers or claimable bonuses. No commercial visit is available.</p></aside> : null}
@@ -118,7 +118,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
     </section>
 
     <BonusCalculator />
-    <section className={finalStyles.method}><div><div><small>How we evaluate bonus terms</small><h2>The fine print is <em>the product.</em></h2><p>Wagering, weighting, deposit floors and expiry decide what a bonus is really worth. Learn to read them in ten minutes.</p><Link className={finalStyles.guideAction} href="/bonus-guide">Read the Bonus Guide →</Link></div><ol><li><span>01</span><div><strong>Wagering, recalculated</strong><p>35x on €500 means €17,500 in stakes — we show the number, not the marketing.</p></div></li><li><span>02</span><div><strong>Restrictions, surfaced</strong><p>Game weighting, max bets and win caps move a bonus up or down the ranking.</p></div></li><li><span>03</span><div><strong>Casino quality counts</strong><p>A generous offer at a casino that fails our payout tests doesn&apos;t rank at all.</p></div></li></ol></div></section>
-    <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>B4GAMBLE may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
+    <section className={finalStyles.method} data-motion-reveal data-nav-theme="cream"><div><div><small>How we evaluate bonus terms</small><h2>The fine print is <em>the product.</em></h2><p>Wagering, weighting, deposit floors and expiry decide what a bonus is really worth. Learn to read them in ten minutes.</p><Link className={finalStyles.guideAction} href="/bonus-guide">Read the Bonus Guide →</Link></div><ol><li><span>01</span><div><strong>Wagering, recalculated</strong><p>35x on €500 means €17,500 in stakes — we show the number, not the marketing.</p></div></li><li><span>02</span><div><strong>Restrictions, surfaced</strong><p>Game weighting, max bets and win caps move a bonus up or down the ranking.</p></div></li><li><span>03</span><div><strong>Casino quality counts</strong><p>A generous offer at a casino that fails our payout tests doesn&apos;t rank at all.</p></div></li></ol></div></section>
+    <section className={styles.disclosure} data-nav-theme="dark"><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>B4GAMBLE may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
   </div>;
 }

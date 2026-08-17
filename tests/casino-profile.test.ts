@@ -57,7 +57,7 @@ test("profile presentation uses only published values and a governed internal ac
   const record = casino();
   const bonus = selectProfileBonus(record);
   assert.ok(bonus);
-  assert.equal(profileOfferHeadline(bonus), "100% up to £150");
+  assert.equal(profileOfferHeadline(bonus), "100% up to £150 + 20 free spins");
   assert.deepEqual(profileAction(record, bonus), { href: "/r/published-bonus", label: "Visit Published Casino" });
   assert.deepEqual(profileReviewFreshness(record), { label: "Reviewed", value: "3 Feb 2030" });
   assert.ok(profileFacts(record).some((fact) => fact.label === "Licence" && fact.verified));
