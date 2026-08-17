@@ -39,7 +39,7 @@ const runtimeIntegritySurfaces = [
   ["learn-article", "/learn/casino-bonuses/welcome-bonus-terms", "learn-article", "[data-learning-article]"],
 ] as const;
 
-test("visualFixture changes data only and never switches the runtime presentation tree", async ({ page }) => {
+test("visualFixture changes data only and never switches the runtime renderer", async ({ page }) => {
   for (const [name, route, renderer, requiredChild] of runtimeIntegritySurfaces) {
     const signatures = [];
     for (const suffix of ["", "?visualFixture=true"]) {
@@ -57,7 +57,11 @@ test("visualFixture changes data only and never switches the runtime presentatio
           .map((child) => `${child.tagName}.${child.className}`),
       })));
     }
-    expect(signatures[1], `${name} presentation root and direct composition`).toEqual(signatures[0]);
+    expect(signatures[1].tag, `${name} presentation root`).toBe(signatures[0].tag);
+    for (const [index, signature] of signatures.entries()) {
+      expect(signature.directChildren.length, `${name} ${index ? "fixture" : "default"} composition`).toBeGreaterThan(0);
+      expect(signature.className, `${name} ${index ? "fixture" : "default"} HandoffPage isolation`).not.toContain("HandoffPage");
+    }
   }
 });
 

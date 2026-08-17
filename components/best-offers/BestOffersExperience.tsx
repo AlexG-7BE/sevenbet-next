@@ -59,7 +59,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <h4>{featured.bonus.title}</h4>
             <div className={styles.actions}><OfferAction featured offer={featured} /><Link href={`/casino/${featured.casino.slug}`}>Read Full Review →</Link><ContextualCompareToggle casinoName={featured.casino.name} casinoSlug={featured.casino.slug} /></div>
           </div>
-          <div className={styles.featuredMark} aria-hidden="true">{featured.casino.name.slice(0, 1).toUpperCase()}</div>
+          <div className={styles.featuredMark} aria-hidden="true"><span>▧</span><small>{featured.casino.name.replace(/\s+casino$/i, "")} media</small></div>
           <dl className={styles.featuredTerms}>
             <div><dt>Fast payouts</dt><dd>{payout(featured)}</dd></div>
             <div><dt>Wagering</dt><dd>{featured.bonus.wageringMultiplier === null ? "Not listed" : `${featured.bonus.wageringMultiplier}x`}</dd></div>
@@ -79,7 +79,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <p className={styles.reason}>{offer.casino.summary}</p>
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </div>
-            <div className={styles.altMark} aria-hidden="true">{offer.casino.name.slice(0, 1).toUpperCase()}</div>
+            <div className={styles.altMark} aria-hidden="true"><span>▧</span><small>{offer.casino.name.replace(/\s+casino$/i, "")} media</small></div>
           </article>)}
         </div>
         {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">

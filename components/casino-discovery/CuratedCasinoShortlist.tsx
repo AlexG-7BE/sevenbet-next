@@ -19,6 +19,13 @@ function Visit({ casino }: { casino: PublicCasinoCardDto }) {
   return <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: `Visit ${casino.name}` }} className={styles.visit} />;
 }
 
+function minimumDeposit(casino: PublicCasinoCardDto) {
+  const offer = casino.featuredBonus;
+  if (offer?.minimumDeposit === null || offer?.minimumDeposit === undefined) return "Not listed";
+  const currency = offer.currency === "EUR" ? "€" : offer.currency === "GBP" ? "£" : `${offer.currency || "GBP"} `;
+  return `${currency}${offer.minimumDeposit}`;
+}
+
 export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardDto[] }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
@@ -33,7 +40,7 @@ export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardD
         {top.map((casino, index) => <article className={styles.card} key={casino.id}>
           <div className={styles.cardHead}>
             <span className={styles.mark} aria-hidden="true">{casino.name.slice(0, 1)}</span>
-            <div className={styles.identity}><h2>{casino.name}</h2><small>{casino.shortDescription || "Independent review"}</small></div>
+            <div className={styles.identity}><h2>{casino.name}</h2><small>{casino.highlights.length ? casino.highlights.slice(0, 2).join(" · ") : casino.shortDescription || "Independent review"}</small></div>
             <b className={styles.number}>{String(index + 1).padStart(2, "0")}</b>
           </div>
           <div className={styles.score}><small>Editor score</small><strong>{casino.rating?.toFixed(1) ?? "—"}</strong><span aria-hidden="true">★★★★★</span></div>
@@ -41,7 +48,7 @@ export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardD
           <dl className={styles.terms}>
             <div><dt>Payout</dt><dd>{casino.featuredBonus?.keyTerms[0] ?? "See review"}</dd></div>
             <div><dt>Wagering</dt><dd>{casino.featuredBonus?.wageringRequirement === null || casino.featuredBonus?.wageringRequirement === undefined ? "Not listed" : `${casino.featuredBonus.wageringRequirement}x`}</dd></div>
-            <div><dt>Min deposit</dt><dd>{casino.featuredBonus?.minimumDeposit === null || casino.featuredBonus?.minimumDeposit === undefined ? "Not listed" : `${casino.featuredBonus.currency || "GBP"} ${casino.featuredBonus.minimumDeposit}`}</dd></div>
+            <div><dt>Min deposit</dt><dd>{minimumDeposit(casino)}</dd></div>
           </dl>
           <p className={styles.reason}>{casino.shortDescription || "Read the evidence, material terms and availability before deciding."}</p>
           <div className={styles.actions}><Visit casino={casino} /><Link href={`/casino/${casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /></div>

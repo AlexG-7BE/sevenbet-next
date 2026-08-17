@@ -46,7 +46,7 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     {position !== undefined && <span aria-label={`Directory result position ${position}`} className={classNames.position}>{String(position).padStart(2, "0")}</span>}
     <div className={classNames.cardHeader}>
       <div className={classNames.logo}>{casino.logo ? <img alt={casino.logo.alt} height={casino.logo.height ?? 72} loading="lazy" src={casino.logo.url} width={casino.logo.width ?? 144} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}</div>
-      <div className={classNames.identity}><h2><Link href={`/casino/${casino.slug}`}>{casino.name}</Link></h2>{demo ? <small>DEMONSTRATION DATA · FICTIONAL OPERATOR</small> : freshness && <small>Reviewed {freshness}</small>}</div>
+      <div className={classNames.identity}><h2><Link href={`/casino/${casino.slug}`}>{casino.name}</Link></h2>{demo ? <small>DEMONSTRATION DATA · FICTIONAL OPERATOR</small> : casino.highlights.length ? <small>{casino.highlights.slice(0, 2).join(" · ")}</small> : freshness && <small>Reviewed {freshness}</small>}</div>
       {casino.rating !== null && <div aria-label={`Editorial score ${casino.rating.toFixed(1)} out of 10`} className={classNames.score}><strong>{casino.rating.toFixed(1)}</strong><span>/10</span></div>}
     </div>
     {casino.shortDescription && <p className={classNames.description}>{casino.shortDescription}</p>}
@@ -56,7 +56,7 @@ function ReviewCardContents({ casino, position, classNames }: { casino: PublicCa
     </div>
     <p className={classNames.commission}>{demo ? "Demonstration only: not a current operator, licence claim, partner offer or live promotion." : "Review access is editorial. A visit action is conditional and may compensate B4GAMBLE."}</p>
     {unavailable && <p className={classNames.unavailable} role="note">{unavailable} The published review remains available.</p>}
-    <div className={classNames.cardActions}><TrackedReviewLink href={`/casino/${casino.slug}`} sourceSurface="casinos">{demo ? "View demonstration" : "Read review"}</TrackedReviewLink><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} />{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}</div>
+    <div className={classNames.cardActions}>{canVisit && <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: casino.visitAction.label }} />}<TrackedReviewLink href={`/casino/${casino.slug}`} sourceSurface="casinos">{demo ? "View demonstration" : "Review"}</TrackedReviewLink><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /></div>
   </>;
 }
 

@@ -9,6 +9,7 @@ import type {
 } from "@/lib/public-offer/public-offer.types";
 import type { PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
+import type { LearningArticle } from "@/lib/learning-center";
 
 /**
  * Enables deterministic data for local reference comparison. This flag may only
@@ -20,6 +21,73 @@ export function isLocalHandoffVisualDataFixture(value: string | string[] | undef
     && process.env.B4GAMBLE_HANDOFF_VISUAL_FIXTURE === "true"
     && process.env.VERCEL !== "1"
     && process.env.VERCEL_ENV !== "production";
+}
+
+export function withHandoffLearningArticleData(article: LearningArticle, enabled: boolean): LearningArticle {
+  if (!enabled) return article;
+  return {
+    ...article,
+    title: "Wagering requirements,",
+    summary: "What 35x actually costs you, when a smaller bonus is the better deal, and the three terms that quietly decide everything.",
+    readingTime: "9 min read",
+    lastUpdated: "2026-08-12",
+    takeaways: [],
+    sections: [
+      {
+        title: "What 35x really means",
+        body: "«35x» applies to the bonus amount — sometimes to bonus plus deposit, which doubles the real cost. Take the €200 bonus at 35x on bonus only:",
+        blocks: [
+          { type: "conversion", rows: [["Bonus received", "€200"], ["Required turnover — 200 × 35", "€7 000"], ["Expected loss at 96% RTP slots", "≈ €280"], ["Expected value of the «free» €200", "−€80"]] },
+          { type: "quote", text: "«A bonus is a loan you repay in turnover. Read the interest rate first.»" },
+        ],
+        after: "Statistically, clearing this bonus on standard slots costs more than the bonus is worth. That is not an accident of one operator — it is how 35x is designed to work at typical RTP.",
+      },
+      {
+        title: "The maths on a real offer",
+        body: "Three offers from our current test set, converted to the same currency — expected cost of clearing:",
+        blocks: [{ type: "comparison-table", columns: ["Offer", "Wagering", "Turnover", "Exp. cost"], rows: [["«€200 + 100 spins»", "35x B", "€7 000", "−€80"], ["«€50 low-wager»", "10x B", "€500", "+€30"], ["«€500 mega match»", "40x D+B", "€40 000", "−€1 100"]] }],
+        after: "The €50 offer beats the €500 one by four figures. Headline size and player value are close to uncorrelated — which is why our rankings ignore the headline entirely.",
+      },
+      {
+        title: "Game weighting — the quiet tax",
+        body: "Slots usually count 100% towards wagering. Blackjack often counts 10%, roulette 20%, some games 0%. Clear a 35x requirement on blackjack at 10% weighting and your effective requirement is 350x.",
+        blocks: [{ type: "trap", title: "Trap term", text: "«Max bet while wagering: €5.» Exceed it once — even accidentally — and most operators may void the bonus and winnings. Check this line before your first spin, not after." }],
+      },
+      {
+        title: "When smaller wins",
+        body: "A useful rule of thumb: divide the bonus by the turnover it demands. Anything below 3% is expensive; above 8% is genuinely competitive. The best offers in our directory are almost always the modest ones with 10–15x on bonus only.",
+      },
+      {
+        title: "The checklist",
+        body: "If an offer fails two or more of these, skip it. The deposit you keep is worth more than the bonus you clear.",
+        blocks: [{ type: "checklist", title: "Before you accept any bonus", items: ["Wagering applies to bonus only — not deposit + bonus", "Turnover ÷ bonus ratio is 12.5x or better", "Your games count at 100% weighting", "Max bet rule found and noted", "Expiry gives you at least 14 days"] }],
+      },
+    ],
+    examples: [],
+    faq: [],
+    relatedArticles: ["online-casino-basics", "responsible-gambling-tools", "how-casino-reviews-work"],
+    visualPresentation: {
+      accentTitle: "explained with real numbers.",
+      heroLabel: "Bonuses",
+      heroStatus: "Not sponsored · real-money tested",
+      intro: [
+        "A casino advertises «100% up to €200». The number everyone reads is 200. The number that decides what you keep is printed two clicks deeper: 35x wagering.",
+        "Wagering requirements are the total amount you must bet before bonus money becomes withdrawable. They are not a scam — they are the price of the bonus. The problem is that the price is quoted in a currency most players never convert.",
+      ],
+      supportTitle: "Control & support",
+      supportText: "Reading this because bonuses stopped feeling optional?",
+      supportLink: "Open Help — no offers there →",
+      bridgeKicker: "Beyond reading",
+      bridgeTitle: "Knowledge is half of it.",
+      bridgeAccent: "The plan is the other half.",
+      bridgeText: "Ten missions that turn what you've read into boundaries that hold. Free and private.",
+      relatedCards: [
+        { label: "Bonuses", title: "Free spins: value, weighting and the fine print", meta: "6 min read", href: "/learn/casino-bonuses/free-spins" },
+        { label: "Banking", title: "How casino payouts really work — and why they stall", meta: "7 min read", href: "/learn/payments/casino-payouts" },
+        { label: "Responsible play", title: "Session limits that actually hold", meta: "6 min read", href: "/learn/responsible-gambling/session-limits" },
+      ],
+    },
+  };
 }
 
 const offerSamples = [
@@ -40,6 +108,19 @@ const bonusDirectorySamples = [
   { name: "Halcyon Casino", score: 8.3, title: "€200 + 50 free spins", wagering: 30, deposit: 25, payout: "48h+", summary: "Lower wagering offset by a higher deposit floor and slower payout range.", percentage: 100, maximumBonus: 200, freeSpins: 50 },
   { name: "Bruma Casino", score: 8.1, title: "150% up to €150", wagering: 45, deposit: 20, payout: "24–48h", summary: "A larger percentage headline with the highest wagering in this comparison.", percentage: 150, maximumBonus: 150, freeSpins: 0 },
   { name: "Novara Casino", score: 7.7, title: "10% weekly cashback up to €200", wagering: 1, deposit: 20, payout: "24–48h", summary: "A cashback format shown separately from welcome packages.", percentage: 10, maximumBonus: 200, freeSpins: 0 },
+] as const;
+
+const casinoDirectorySamples = [
+  { ...offerSamples[0], signals: "Live casino · Fast verification" },
+  { ...offerSamples[1], payout: "24–48h", signals: "VIP programme · 24/7 support" },
+  { ...offerSamples[2], signals: "Mobile-first · Low deposit" },
+  { name: "Orlan Casino", score: 8.6, title: "125% up to €400 + 125 free spins", wagering: 40, deposit: 20, payout: "0–24h", summary: "Crypto payout speed with the higher wagering requirement shown clearly.", signals: "Crypto accepted" },
+  { name: "Vespera Casino", score: 8.4, title: "100% up to €250 + 75 free spins", wagering: 35, deposit: 10, payout: "24–48h", summary: "A lower entry offer with mid-range payout timing.", signals: "New 2026 · Crypto" },
+  { name: "Halcyon Casino", score: 8.3, title: "€200 + 50 free spins", wagering: 30, deposit: 25, payout: "48h+", summary: "Lower wagering offset by a higher deposit floor and slower payout range.", signals: "Live-dealer focus" },
+  { name: "Bruma Casino", score: 8.1, title: "150% up to €150", wagering: 45, deposit: 20, payout: "24–48h", summary: "A larger percentage headline with the highest wagering in this comparison.", signals: "High-roller tables" },
+  { name: "Aldwyn Casino", score: 7.9, title: "€100 + 50 free spins", wagering: 35, deposit: 10, payout: "48h+", summary: "A classic slots catalogue with a lower deposit floor.", signals: "Classic slots · Est. 2019" },
+  { name: "Novara Casino", score: 7.7, title: "100% up to €200", wagering: 40, deposit: 20, payout: "24–48h", summary: "A newer mobile-first option with crypto payments.", signals: "New 2026 · Crypto" },
+  { name: "Perla Casino", score: 7.5, title: "€150 + 30 free spins", wagering: 45, deposit: 25, payout: "48h+", summary: "Boutique live rooms with a higher deposit floor.", signals: "Boutique live rooms" },
 ] as const;
 
 function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { name: string; score: number; title: string; wagering: number; deposit: number; payout: string; summary: string; percentage?: number; maximumBonus?: number; freeSpins?: number }[] = offerSamples): PublicOfferDTO {
@@ -108,8 +189,9 @@ export function withHandoffOfferData<T extends { readonly records: readonly Publ
 }
 
 function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCardDto {
-  const sample = offerSamples[index];
+  const sample = casinoDirectorySamples[index];
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
+  const visitAvailable = ![3, 5, 8].includes(index);
   return {
     ...seed,
     id: `visual-${key}`,
@@ -122,7 +204,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
     licenses: [{ key: "ukgc", label: "UKGC" }],
     countries: [{ key: "gb", label: "Great Britain" }],
     paymentMethods: [{ key: "visa", label: "Visa" }, { key: "mastercard", label: "Mastercard" }],
-    highlights: ["Terms checked", "Payout tested"],
+    highlights: sample.signals.split(" · "),
     featuredBonus: {
       title: sample.title,
       summary: `${sample.wagering}x wagering · minimum deposit €${sample.deposit}.`,
@@ -134,14 +216,16 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
       validUntil: null,
       termsApply: true,
     },
-    visitAction: { available: true, redirectSlug: "visual-fixture", label: `Visit ${sample.name}`, reasonCode: null },
+    visitAction: visitAvailable
+      ? { available: true, redirectSlug: "visual-fixture", label: `Visit ${sample.name}`, reasonCode: null }
+      : { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
     responsibleGamblingLabel: "Control tools listed",
   };
 }
 
 export function withHandoffCasinoDiscoveryData(result: CasinoDiscoveryResult, enabled: boolean): CasinoDiscoveryResult {
   if (!enabled || !result.items.length) return result;
-  const items = offerSamples.map((_, index) => handoffCasino(result.items[index % result.items.length], index));
+  const items = casinoDirectorySamples.map((_, index) => handoffCasino(result.items[index % result.items.length], index));
   return {
     ...result,
     items,
@@ -231,7 +315,31 @@ export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument
     summary: "Solvane delivers on every promise that matters — payouts landed in under 24 hours across all three methods, and the bonus terms read the same on day 30 as on day 1.",
     author: "B4GAMBLE Editorial",
     factCheckedAt: "2026-08-12T00:00:00.000Z",
-    sections: sections.map(([kind, title, text], index) => ({ id: `visual-section-${index}`, kind, title, order: index, blocks: [{ id: `visual-block-${index}`, type: "paragraph" as const, text }] })),
+    trustScore: {
+      overall: 9.6,
+      confidence: "high",
+      evidence: ["Three completed withdrawal cycles", "Twelve provider RTP spot checks", "Support tested across multiple dayparts"],
+      categories: [
+        { key: "Payouts", score: 9.8 },
+        { key: "Bonus terms", score: 9.4 },
+        { key: "Games & live floor", score: 9.5 },
+        { key: "Support", score: 9.2 },
+      ],
+    },
+    sections: sections.map(([kind, title, text], index) => ({
+      id: `visual-section-${index}`,
+      kind,
+      title,
+      order: index,
+      blocks: [
+        { id: `visual-block-${index}`, type: "paragraph" as const, text },
+        ...(index === 0 ? [
+          { id: "visual-faq-availability", type: "faq" as const, question: "Is Solvane available in my country?", answer: "Availability depends on your jurisdiction — the operator's site checks this at signup. We never claim availability we can't verify." },
+          { id: "visual-faq-freshness", type: "faq" as const, question: "How fresh is this review?", answer: "Terms were re-checked 12 Aug 2026; the payout tests ran across the four weeks before that. If the operator changes a material term, the review is updated and the change is noted." },
+          { id: "visual-faq-score", type: "faq" as const, question: "Did Solvane pay for this score?", answer: "No. We may earn commission if you sign up, and that funds the testing — but scores are set before commercial terms are discussed." },
+        ] : []),
+      ],
+    })),
     relatedCasinoIds: [],
     seo: { title: "Solvane Casino review", description: offerSamples[0].summary },
   };
@@ -266,6 +374,14 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       action: { available: true, href: "/r/visual-fixture", label: `Visit ${sample.name}`, reason: "Local deterministic visual data" },
     };
   });
+  const visualComparisonValues: Record<string, (index: number) => string> = {
+    "offer-title": (index) => offerSamples[index % offerSamples.length].title,
+    wagering: (index) => `${offerSamples[index % offerSamples.length].wagering}x`,
+    "minimum-deposit": (index) => `€${offerSamples[index % offerSamples.length].deposit}`,
+    "withdrawal-time": (index) => offerSamples[index % offerSamples.length].payout,
+    methods: (index) => index === 0 ? "Visa / Mastercard · Skrill · Bank transfer" : "Visa / Mastercard · Bank transfer",
+    "control-tools": () => "Live casino · VIP programme",
+  };
   return {
     ...result,
     status: "available",
@@ -276,6 +392,15 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       name: offerSamples[index % offerSamples.length].name,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,
+    })),
+    groups: result.groups.map((group) => ({
+      ...group,
+      rows: group.rows.map((row) => ({
+        ...row,
+        values: visualComparisonValues[row.id]
+          ? Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }]))
+          : row.values,
+      })),
     })),
     inventoryMode: "PUBLISHED_ONLY",
   };

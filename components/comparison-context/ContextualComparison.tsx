@@ -145,7 +145,7 @@ export function ContextualComparison() {
                 <div><h3>{displayName}</h3><small>{casino?.summary || (casino?.dataClassification === "DEMO_FIXTURE" ? "Fictional demo profile" : "Independent review")}</small></div>
               </div>
               {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>Top score</strong>}
-              <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★</span></div>
+              <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
               <div className={styles.factList}>
                 {presentationRows.map((row) => <dl key={row.id} title={row.description}>
                   <dt>{row.id === "withdrawal-time" ? "Payout" : row.id === "methods" ? "Payments" : row.id === "control-tools" ? "Features" : row.label}</dt>

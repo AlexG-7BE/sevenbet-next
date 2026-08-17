@@ -68,10 +68,9 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     </div></section>
 
     <section className={styles.faq}><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
-      ["What is the difference between Best Offers and Casinos?", "Best Offers answers “just tell me the one” — a single recommendation. This page ranks by use-case: crypto, mobile, bonuses, new. Same tests, different question."],
-      ["Why does a casino sometimes say Review only?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and test results stay available."],
-      ["Does commission affect the ranking?", "No. Affiliate compensation does not determine Editor Score or natural editorial ranking. It funds testing, and several casinos we earn nothing from outrank ones we do."],
-      ["How does comparison work?", "Choose one casino to hold it in the comparison tray. Choose a second and the side-by-side sheet opens automatically. You can compare up to three."],
-    ].map(([question, answer]) => <details key={question}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
+      ["How is this different from Best Offers?", "Best Offers answers “just tell me the one” — a single recommendation. This page ranks by use-case: crypto, mobile, bonuses, new. Same tests, different question."],
+      ["What does “Review only” mean?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and test results stay available."],
+      ["Does commission affect the ranking?", "No. It funds the testing and never sets a score — several casinos we earn nothing from outrank ones we do. Details are available in our affiliate disclosure."],
+    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
   </div>;
 }

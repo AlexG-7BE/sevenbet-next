@@ -70,6 +70,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
   const maximumBet = bonus ? formatProfileMoney(bonus.maximumBet, bonus.currency) : null;
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
   const age = Math.max(18, ...casino.countries.flatMap((country) => country.minimumAge ? [country.minimumAge] : []));
+  const scoreCategories = editorial?.trustScore?.categories ?? [];
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div className={styles.shell}>
@@ -111,8 +112,8 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         {action ? <CasinoOutboundAction action={action} className={styles.compactAction} /> : <UnavailableAction />}
       </nav>
 
-      <section aria-labelledby="overview-heading" className={styles.section} id="overview">
-        <div className={styles.sectionHeading}>
+      <section aria-labelledby="overview-heading" className={`${styles.section} ${styles.overviewSection}`} id="overview">
+        <div className={`${styles.sectionHeading} ${styles.overviewHeading}`}>
           <p>THE 30-SECOND CHECK</p>
           <h2 id="overview-heading">The 30-second check</h2>
           <span>Everything material, before the details</span>
@@ -130,7 +131,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         </div>
       </section>
 
-      <section aria-labelledby="offer-heading" className={styles.section} id="offer-evidence">
+      <section aria-labelledby="offer-heading" className={`${styles.section} ${styles.offerSection}`} id="offer-evidence">
         <div className={styles.sectionHeading}>
           <p>OFFER, PAYMENTS &amp; EVIDENCE</p>
           <h2 id="offer-heading">Offer &amp; terms</h2>
@@ -169,14 +170,20 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
 
       {editorial ? <EditorialEvidence demonstration={demo} document={editorial} /> : null}
 
-      <section aria-labelledby="verdict-heading" className={styles.verdict} id="verdict">
+      <section aria-labelledby="verdict-heading" className={`${styles.verdict} ${scoreCategories.length ? styles.verdictWithBreakdown : ""}`} id="verdict">
         <div>
           <p>B4GAMBLE VERDICT</p>
           <h2 id="verdict-heading">Why {casino.editorScore.toFixed(1)}</h2>
-          <span>{editorial?.summary || casino.reviewContent}</span>
-          {casino.cons.length ? <div className={styles.verdictLimit}><strong>Keep in view</strong><span>{casino.cons[0]}</span></div> : null}
+          <span>{scoreCategories.length ? "Editorial judgement, not a weighted formula" : editorial?.summary || casino.reviewContent}</span>
+          {!scoreCategories.length && casino.cons.length ? <div className={styles.verdictLimit}><strong>Keep in view</strong><span>{casino.cons[0]}</span></div> : null}
         </div>
-        <div className={styles.scorePanel}>
+        {scoreCategories.length ? <div className={styles.scoreBreakdown}>
+          {scoreCategories.map((category) => <div className={styles.scoreRow} key={category.key} style={{ "--score-width": `${Math.min(10, Math.max(0, category.score)) * 10}%` } as React.CSSProperties}>
+            <div><strong>{category.key.replaceAll("-", " ")}</strong><span>{category.score.toFixed(1)}</span></div>
+            <i aria-hidden="true"><b /></i>
+          </div>)}
+          <p>Scores reflect our published <Link href="/methodology">methodology</Link> and <Link href="/affiliate-disclosure">affiliate disclosure</Link>.</p>
+        </div> : <div className={styles.scorePanel}>
           <strong>{casino.editorScore.toFixed(1)}</strong><span>Editorial score / 10</span>
           <dl>
             <div><dt>Licence evidence</dt><dd>{demo ? "fictional field" : licenceChecked ? "dated" : licence ? "undated" : "not listed"}</dd></div>
@@ -184,15 +191,15 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             <div><dt>Payment records</dt><dd>{demo && casino.payments.length ? `${casino.payments.length} fictional` : casino.payments.length || "not listed"}</dd></div>
             <div><dt>Control tools</dt><dd>{demo && casino.responsibleGamblingTools.length ? `${casino.responsibleGamblingTools.length} fictional` : casino.responsibleGamblingTools.length || "not listed"}</dd></div>
           </dl>
-        </div>
+        </div>}
       </section>
 
       <section aria-labelledby="faq-heading" className={styles.faqSection} id="faq">
         <div className={styles.sectionHeading}><p>FAQ</p><h2 id="faq-heading">Questions we get about {casino.name.replace(/\s+casino$/i, "")}</h2></div>
         <div className={styles.faqGrid}>
-          <div>{faq.slice(0, 3).map((item) => <details key={item.question}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
+          <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
           <aside className={styles.finalOffer}>
-            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "PUBLISHED OFFER INFORMATION"}</span><h3>{profileOfferHeadline(bonus)}</h3><p>{bonus.title}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
+            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "THE VERDICT STANDS"}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[profileOfferHeadline(bonus), bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal ? `Payout ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
           </aside>
         </div>
       </section>

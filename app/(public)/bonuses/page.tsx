@@ -14,6 +14,7 @@ import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceV
 import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import finalStyles from "./BonusesFinal.module.css";
+import { BonusCalculator } from "./BonusCalculator";
 import { hasPublicOfferFilters, parsePublicOfferQuery, type PublicOfferSearchParams } from "@/lib/public-offer/query";
 import type { PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import { publicOfferService } from "@/lib/services/public-offer.service";
@@ -109,7 +110,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
       </div>
     </section>
 
-    <section className={finalStyles.calculator}><div><div><small>Bonus calculator</small><h2>Run the numbers before you claim.</h2><p>Enter the offer as advertised. We convert it into required turnover and the statistically expected cost of clearing it.</p></div><div className={finalStyles.calcCard}><div><span>Example bonus</span><strong>€200</strong></div><div><span>Wagering</span><strong>35x</strong></div><div><span>Required turnover</span><strong>€7,000</strong></div><div><span>At 96% RTP, expected cost</span><strong>€280</strong></div></div></div></section>
+    <BonusCalculator />
     <section className={finalStyles.method}><div><div><small>Why the terms matter</small><h2>The fine print is the product.</h2><p>Wagering, weighting, deposit floors and expiry decide what a bonus is really worth. <Link href="/bonus-guide">Learn to read them in ten minutes.</Link></p></div><ol><li><span>01</span><strong>Wagering before headline</strong></li><li><span>02</span><strong>Deposit cost made visible</strong></li><li><span>03</span><strong>Expiry and eligibility checked</strong></li><li><span>04</span><strong>Missing terms stay missing</strong></li></ol></div></section>
     <section className={styles.disclosure}><div className={styles.shell}><strong>18+ · Commercial Disclosure</strong><p>B4GAMBLE may receive compensation from future eligible governed outbound links. Affiliate compensation does not determine Editor Score or natural editorial ranking. Verify current operator terms and local law before acting.</p><Link href="/affiliate-disclosure">Read Disclosure →</Link></div></section>
   </div>;

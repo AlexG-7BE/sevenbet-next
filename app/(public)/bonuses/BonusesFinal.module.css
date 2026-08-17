@@ -5,14 +5,35 @@
 .hero h1 em { display:block; color:#e4e24e; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .hero p { max-width:48ch; margin:28px 0 0; color:rgba(250,250,247,.68); font-size:18px; line-height:1.6; }
 .calculator { padding:110px 5vw; background:#171616; color:#fafaf7; font-family:var(--font-seven-sans),Arial,sans-serif; }
-.calculator > div { width:min(1312px,100%); margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:72px; align-items:center; }
+.calculator > div { width:min(1312px,100%); margin:0 auto; display:grid; grid-template-columns:1fr 1.1fr; gap:72px; align-items:center; }
 .calculator small,.method small { color:#e4e24e; font-size:12px; letter-spacing:.2em; text-transform:uppercase; }
 .calculator h2,.method h2 { margin:20px 0; font-size:clamp(42px,4.8vw,72px); line-height:1; text-transform:uppercase; }
+.calculator h2 em { display:block; color:#e4e24e; font-family:var(--font-seven-serif),Georgia,serif; font-size:.78em; font-weight:400; text-transform:none; }
 .calculator p,.method p { color:rgba(250,250,247,.64); line-height:1.65; }
-.calcCard { padding:34px; border-radius:20px; background:#fafaf7; color:#100f0f; }
-.calcCard div { min-height:72px; border-bottom:1px solid rgba(16,15,15,.12); display:flex; align-items:center; justify-content:space-between; gap:20px; }
-.calcCard span { color:#64635c; }
-.calcCard strong { font-size:24px; }
+.calculatorControls > p { max-width:540px; margin-bottom:34px; }
+.calculatorControls label,.calculatorControls fieldset { margin:0; }
+.calculatorControls fieldset { padding:0; border:0; }
+.calculatorControls legend,.amountField > span,.wageringField > span { display:block; margin:22px 0 10px; color:rgba(250,250,247,.48); font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
+.amountField input { width:100%; height:48px; padding:0 18px; border:1px solid rgba(250,250,247,.28); border-radius:10px; background:#242323; color:#fafaf7; font:inherit; font-weight:700; }
+.wageringField input { width:100%; accent-color:#e4e24e; }
+.segmented,.gameWeights { display:grid; gap:8px; }
+.segmented { grid-template-columns:1fr 1fr; }
+.gameWeights { grid-template-columns:repeat(3,1fr); }
+.gameWeights label:last-child { grid-column:1/-1; }
+.segmented label,.gameWeights label { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#d0cec7; font-size:11px; font-weight:700; cursor:pointer; }
+.segmented input,.gameWeights input { position:absolute; opacity:0; pointer-events:none; }
+.segmented .selected,.gameWeights .selected { border-color:#e4e24e; background:#e4e24e; color:#100f0f; }
+.calculatorOutput { min-height:520px; display:flex; flex-direction:column; padding:46px; border:1px solid rgba(250,250,247,.08); border-radius:20px; background:#111; color:#fafaf7; }
+.calculatorOutput dl { margin:20px 0 0; }
+.calculatorOutput dl > div { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; border-bottom:1px solid rgba(250,250,247,.12); }
+.calculatorOutput dt { color:#aaa79e; font-size:13px; }
+.calculatorOutput dt span { display:block; font-size:9px; }
+.calculatorOutput dd { margin:0; font-size:26px; font-weight:850; white-space:nowrap; }
+.calculatorOutput .cost { color:#e4e24e; }
+.calculatorOutput .negative { color:#cf5b55; }
+.calculatorOutput .positive { color:#7bc7ad; }
+.calculatorOutput > p { margin:24px 0 14px; padding:18px; border-radius:10px; background:#242323; font-size:12px; }
+.calculatorOutput > span { margin-top:auto; color:#716f69; font-size:9px; }
 .method { padding:110px 5vw; background:#f4f1eb; color:#100f0f; font-family:var(--font-seven-sans),Arial,sans-serif; }
 .method > div { width:min(1312px,100%); margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:72px; }
 .method small { color:#777500; }
@@ -21,4 +42,4 @@
 .method li { padding:24px 0; border-bottom:1px solid rgba(16,15,15,.14); display:grid; grid-template-columns:48px 1fr; }
 .method li span { color:#777500; font-family:var(--font-seven-serif); }
 .method li strong { text-transform:uppercase; }
-@media(max-width:760px){.hero{min-height:560px;padding:130px 24px 72px}.hero h1{font-size:50px}.calculator,.method{padding:72px 24px}.calculator>div,.method>div{grid-template-columns:1fr;gap:38px}}
+@media(max-width:760px){.hero{min-height:560px;padding:130px 24px 72px}.hero h1{font-size:50px}.calculator,.method{padding:72px 24px}.calculator>div,.method>div{grid-template-columns:1fr;gap:38px}.calculatorOutput{min-height:480px;padding:28px 22px}.gameWeights{grid-template-columns:1fr 1fr}.gameWeights label:last-child{grid-column:auto}.calculatorOutput dd{font-size:21px}}

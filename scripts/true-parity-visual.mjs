@@ -7,7 +7,10 @@ import sharp from "sharp";
 const referenceBaseUrl = process.env.TRUE_PARITY_REFERENCE_URL ?? "http://127.0.0.1:4180";
 const implementationBaseUrl = process.env.TRUE_PARITY_IMPLEMENTATION_URL ?? "http://127.0.0.1:4173";
 const phase = process.env.TRUE_PARITY_PHASE ?? "all";
-const only = process.env.TRUE_PARITY_ONLY ?? "";
+const only = (process.env.TRUE_PARITY_ONLY ?? "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
 const outputRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/true-parity");
 
 const viewports = [
@@ -60,6 +63,7 @@ const majorPages = new Set([
   "bonuses",
   "bonus-guide",
   "learn",
+  "learn-article",
   "help",
 ]);
 
@@ -73,6 +77,10 @@ const dynamicRuntimePages = new Map([
 
 function artifactPath(name, width, kind) {
   return join(outputRoot, `${name}-${width}-${kind}.webp`);
+}
+
+function selected(name, width) {
+  return !only.length || only.some((value) => `${name}-${width}`.includes(value));
 }
 
 async function settle(page) {
@@ -338,7 +346,7 @@ try {
   for (const viewport of viewports) {
     const context = await browser.newContext({ viewport });
     for (const [name, handoffFile, route] of pages) {
-      if (only && !`${name}-${viewport.width}`.includes(only)) continue;
+      if (!selected(name, viewport.width)) continue;
       if (phase === "all" || phase === "reference") {
         await captureReference(context, name, handoffFile, viewport.width);
       }
@@ -350,12 +358,12 @@ try {
       }
     }
     for (const [name, state] of programmeSurfaces) {
-      if (only && !`${name}-${viewport.width}`.includes(only)) continue;
+      if (!selected(name, viewport.width)) continue;
       if (phase === "all" || phase === "reference") await captureProgrammeReference(context, name, state, viewport.width);
       if (phase === "all" || phase === "implementation") await captureProgrammeImplementation(context, name, state, viewport.width);
       if (phase === "all" || phase === "diff") visualMetrics.push(await writeDiffAndComparison(name, viewport.width));
     }
-    if (!only || `${contextualComparisonSurface[0]}-${viewport.width}`.includes(only)) {
+    if (selected(contextualComparisonSurface[0], viewport.width)) {
       if (phase === "all" || phase === "reference") await captureComparisonReference(context, viewport.width);
       if (phase === "all" || phase === "implementation") await captureComparisonImplementation(context, viewport.width);
       if (phase === "all" || phase === "diff") visualMetrics.push(await writeDiffAndComparison(contextualComparisonSurface[0], viewport.width));
