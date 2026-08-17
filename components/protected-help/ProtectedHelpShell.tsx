@@ -18,7 +18,7 @@ export function ProtectedHelpHeader() {
           </Link>
           <Link className={styles.desktopHelpLink} href="/program">My Programme</Link>
           <Link className={styles.exitLink} href="/">
-            <span className={styles.desktopExit}>Leave Help</span>
+            <span className={styles.desktopExit}>Back to site</span>
             <span className={styles.mobileExit}>Exit</span>
           </Link>
         </nav>
@@ -37,6 +37,7 @@ export function ProtectedHelpFooter() {
           <p className={styles.footerCopy}>
             B4GAMBLE provides information, not emergency or clinical care. External support opens on another site and should be checked for your location.
           </p>
+          <p className={styles.footerCopy}>Your activity here is never used for offers, rankings or ads.</p>
         </div>
         <div className={styles.footerUtility}>
           <p className={styles.separationBadge}>No casino · No bonus · No affiliate</p>
