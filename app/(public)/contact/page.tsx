@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { HandoffFooterStrip, HandoffPublicNav } from "@/components/final-handoff/HandoffPublicChrome";
 import { NonceStyle } from "@/components/security/NonceStyle";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
 import { absoluteUrl } from "@/lib/site";
@@ -25,7 +24,6 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className={styles.page} data-contact-page>
-      <HandoffPublicNav />
       <header className={styles.hero}>
         <div className={styles.shell}>
           <p className={styles.eyebrow}><span aria-hidden="true" />Contact</p>
@@ -60,7 +58,6 @@ export default function ContactPage() {
           </div>
         </div>
       </section>
-      <HandoffFooterStrip contact={false} />
     </div>
   );
 }

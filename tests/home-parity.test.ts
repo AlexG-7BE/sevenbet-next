@@ -130,7 +130,7 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
   assert.match(footer, /Independent reviews\. Real tests\./);
-  assert.match(shellStyles, /\.footerGroups \{ display: grid; grid-template-columns: repeat\(3, minmax\(0, 1fr\)\)/);
+  assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([
     ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })

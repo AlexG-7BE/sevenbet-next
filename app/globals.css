@@ -102,9 +102,7 @@ body:has([data-handoff-page]) {
   background: #100f0f;
   color: #fafaf7;
 }
-body:has([data-handoff-page])::before,
-body:has([data-handoff-page]) > [data-public-shell="header"],
-body:has([data-handoff-page]) > [data-public-shell="footer"] {
+body:has([data-handoff-page])::before {
   display: none;
 }
 [data-handoff-page],
@@ -116,9 +114,8 @@ body:has([data-handoff-page]) > [data-public-shell="footer"] {
 [data-handoff-page] img {
   max-width: none;
 }
-[data-protected-help-shell]:has([data-handoff-page]) > div:has([data-protected-help="header"]),
-[data-protected-help-shell]:has([data-handoff-page]) > div:has([data-protected-help="footer"]) {
-  display: none;
+[data-protected-help-shell]:has([data-handoff-page]) > main {
+  background: var(--sb-surface-night);
 }
 [data-handoff-page] a[href^="/program"]:hover {
   transform: translateY(-2px);

@@ -20,6 +20,7 @@ const missionPrimitives = read("components/programme/ProgramAiMissionPrimitives.
 const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
 const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
+const layout = read("app/program/layout.tsx");
 
 test("the schema change is limited to the two approved Program AI concepts", () => {
   assert.equal((schema.match(/model ProgrammeSensitiveInputAuthority\s*\{/g) || []).length, 1);
@@ -56,7 +57,9 @@ test("the public Programme has one canonical renderer and never swaps to the leg
   assert.match(page, /<ProgramAiExperience googleAvailable=\{isGoogleAuthAvailable\(\)\} \/>/);
   assert.doesNotMatch(page, /ActiveControlProgramme/);
   assert.doesNotMatch(page, /isProgramAiV1Enabled|PROGRAM_AI_V1_ENABLED/);
-  assert.match(page, /Skip to main content/);
+  assert.match(layout, /Skip to main content/);
+  assert.match(layout, /<PublicHeader/);
+  assert.match(layout, /<PublicFooter/);
   assert.match(page, /10-Step Control Programme \| Personal Control Plan/);
   assert.doesNotMatch(page, /Build a private Moment Map/);
   assert.doesNotMatch(page, /NEXT_PUBLIC_PROGRAM_AI/);

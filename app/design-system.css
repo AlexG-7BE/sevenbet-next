@@ -95,13 +95,22 @@
   --sb-space-32: 128px;
 
   /* Geometry */
-  --site-gutter: clamp(24px, 5vw, 72px);
-  --site-content-max: 1312px;
-  --site-wide-max: 1440px;
-  --site-reading-max: 760px;
-  --site-content-width: min(var(--site-content-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
-  --site-wide-width: min(var(--site-wide-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
-  --site-reading-width: min(var(--site-reading-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
+  --public-outer-gutter: clamp(24px, 5vw, 72px);
+  --public-content-max: 1440px;
+  --public-wide-max: 1440px;
+  --public-reading-max: 760px;
+  --public-frame-width: calc(100% - var(--public-outer-gutter) - var(--public-outer-gutter));
+  --public-content-width: min(var(--public-content-max), var(--public-frame-width));
+  --public-wide-width: min(var(--public-wide-max), var(--public-frame-width));
+  --public-reading-width: min(var(--public-reading-max), var(--public-frame-width));
+  /* Compatibility aliases: all public surfaces resolve through the measured handoff grid. */
+  --site-gutter: var(--public-outer-gutter);
+  --site-content-max: var(--public-content-max);
+  --site-wide-max: var(--public-wide-max);
+  --site-reading-max: var(--public-reading-max);
+  --site-content-width: var(--public-content-width);
+  --site-wide-width: var(--public-wide-width);
+  --site-reading-width: var(--public-reading-width);
   --sb-radius-none: 0;
   --sb-radius-s: 12px;
   --sb-radius-m: 20px;

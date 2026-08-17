@@ -1,6 +1,5 @@
 .page { background: #fafaf7; color: #100f0f; font-family: var(--font-seven-sans), Arial, sans-serif; }
 .page * { box-sizing: border-box; }
-:global(body):has(.page) [data-public-shell] { display: none; }
 .page > header { padding: 100px var(--site-gutter) 80px; background: #171616; color: #fafaf7; }
 .page > header > div { max-width: var(--site-content-max); margin: 0 auto; }
 .page > header p { display: flex; align-items: center; gap: 16px; margin: 0 0 24px; color: var(--sb-acid); font-size: 13px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; }
@@ -18,15 +17,15 @@
 .page summary span { color: #777500; font-size: 22px; transition: transform 150ms; }
 .page details[open] summary span { transform: rotate(45deg); }
 .page details p { max-width: 64ch; margin: 0; padding: 0 0 22px; color: #64635c; font-size: 15px; line-height: 1.7; }
-.page footer { padding-top: 24px; display: flex; gap: 16px 40px; flex-wrap: wrap; border-top: 3px double #100f0f; color: #64635c; font-size: 14px; }
-.page footer a { color: inherit; text-decoration: none; white-space: nowrap; }
-.page footer a:first-of-type { color: #b94b47; font-weight: 600; }
-.page footer a:nth-last-child(2) { margin-left: auto; }
+.contactRail { padding-top: 24px; display: flex; gap: 16px 40px; flex-wrap: wrap; border-top: 3px double #100f0f; color: #64635c; font-size: 14px; }
+.contactRail a { color: inherit; text-decoration: none; white-space: nowrap; }
+.contactRail a:first-of-type { color: #b94b47; font-weight: 600; }
+.contactRail a:nth-last-child(2) { margin-left: auto; }
 .page summary:focus-visible,
-.page footer a:focus-visible { outline: 3px solid var(--sb-action-primary); outline-offset: 4px; }
+.contactRail a:focus-visible { outline: 3px solid var(--sb-action-primary); outline-offset: 4px; }
 
 @media(max-width: 700px) {
   .page > header { padding: 96px var(--site-gutter) 95px; }
   .page main { padding-top: 80px; }
-  .page footer a:nth-last-child(2) { margin-left: 0; }
+  .contactRail a:nth-last-child(2) { margin-left: 0; }
 }

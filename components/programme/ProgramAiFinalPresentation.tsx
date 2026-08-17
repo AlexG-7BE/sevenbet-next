@@ -14,26 +14,6 @@ import styles from "./ProgramAiFinalPresentation.module.css";
 export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "unsupported" | "transcribing" | "success" | "error";
 type MicrophonePermissionState = PermissionState | "unknown";
 
-function ProgrammeChrome({ xp }: { xp?: number }) {
-  return (
-    <header className={styles.chrome}>
-      <Link className={styles.wordmark} href="/">B4GAMBLE</Link>
-      <span className={styles.missionLabel}>10-STEP CONTROL PROGRAMME · MISSION 01</span>
-      {xp === undefined ? null : <span className={styles.xpPill}>{xp} XP</span>}
-    </header>
-  );
-}
-
-function ProgrammeFootnote() {
-  return (
-    <footer className={styles.footnote}>
-      <span>Your data is private. We never use it for offers or rankings.</span>
-      <Link href="/help">Protected Help</Link>
-      <span>18+</span>
-    </footer>
-  );
-}
-
 function StatusMessage({ error, message }: { error?: string; message?: string }) {
   if (error) return <p className={styles.error} role="alert">{error}</p>;
   return message ? <p className={styles.status} role="status">{message}</p> : null;
@@ -42,7 +22,6 @@ function StatusMessage({ error, message }: { error?: string; message?: string })
 export function ProgrammeLoadingScreen() {
   return (
     <div className={styles.canvas} data-programme-presentation="loading">
-      <ProgrammeChrome />
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
           <p className={styles.eyebrow}>Private Programme</p>
@@ -50,7 +29,6 @@ export function ProgrammeLoadingScreen() {
           <Link className={styles.inlineLink} href="/help">Protected Help remains available.</Link>
         </div>
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }
@@ -58,7 +36,6 @@ export function ProgrammeLoadingScreen() {
 export function ProgrammeUnavailableScreen({ error }: { error: string }) {
   return (
     <div className={styles.canvas} data-programme-presentation="unavailable">
-      <ProgrammeChrome />
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
           <p className={styles.eyebrow}>Programme</p>
@@ -66,7 +43,6 @@ export function ProgrammeUnavailableScreen({ error }: { error: string }) {
           <StatusMessage error={error || "Programme Home is unavailable. Refresh to retry."} />
         </div>
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }
@@ -419,7 +395,6 @@ export function Mission01IntakeScreen({
 export function ProgrammeSupportScreen({ busy, error, onContinue }: { busy: boolean; error: string; onContinue: () => void }) {
   return (
     <div className={styles.canvas} data-programme-presentation="support-first">
-      <ProgrammeChrome xp={20} />
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
           <p className={styles.eyebrow}>Support first</p>
@@ -430,7 +405,6 @@ export function ProgrammeSupportScreen({ busy, error, onContinue }: { busy: bool
           <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
         </div>
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }

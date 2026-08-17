@@ -72,27 +72,9 @@
   .method>div{gap:56px}
   .method li{grid-template-columns:32px 1fr;gap:8px}
 
-  :global(body):has(.hero) :global([data-public-shell="header"]){min-height:81px;border-bottom:0;background:#100f0f;backdrop-filter:none}
-  :global(body):has(.hero) :global([data-public-shell="header"])>div{min-height:81px;padding:20px 24px}
-  :global(body):has(.hero) :global([data-public-shell="header"])>div>a{font-size:22px;letter-spacing:.02em}
-  :global(body):has(.hero) :global([data-public-shell="header"]) button{display:none!important}
-  :global(body):has(.hero) :global([data-public-shell="header"]) a[href^="/program"]{min-height:42px;padding:0 24px;font-size:14px}
-  :global(body):has(.hero) :global([data-public-shell="footer"]){padding:88px 24px 0}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div{width:100%;display:block}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:first-child{margin-bottom:48px}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:first-child>a{min-height:0}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:nth-child(2){display:grid;grid-template-columns:1fr;gap:42px}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:nth-child(2)>div{gap:12px}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:nth-child(2) h2{margin-bottom:6px}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:nth-child(2) a{min-height:0}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:last-child{margin-top:48px;padding:24px 0}
-  :global(body):has(.hero) :global([data-public-shell="footer"])>div>div:last-child a{min-height:0}
 }
 
 @media(max-width:360px){
   .calculator>div,.method>div{grid-template-columns:minmax(0,1fr)}
   .calculatorOutput{padding-inline:22px}
-  :global(body):has(.hero) :global([data-public-shell="header"]){max-width:100vw;overflow:hidden}
-  :global(body):has(.hero) :global([data-public-shell="header"])>div{max-width:100vw;padding-inline:16px}
-  :global(body):has(.hero) :global([data-public-shell="header"]) a[href^="/program"]{min-width:0;padding-inline:14px;font-size:14px}
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { HandoffFooterStrip, HandoffPublicNav } from "@/components/final-handoff/HandoffPublicChrome";
 import { absoluteUrl } from "@/lib/site";
 import styles from "./FAQPage.module.css";
 
@@ -12,4 +11,4 @@ const groups=[
   ["Commercial model",[["How does B4GAMBLE make money?","We may earn a commission when you sign up at a casino through our links. That’s the whole model — no paid placements, no sponsored scores, no selling data."],["Does commission affect rankings?","No. Scores are locked before commercial terms are discussed, and several casinos we earn nothing from outrank ones we do. See the Affiliate Disclosure."]]],
   ["Help & Privacy",[["What is protected Help?","A commercial-free space with immediate actions — pause, self-exclusion, access controls — and human support. Nothing you do there is used commercially."],["How do I delete my data?","One action in your Programme settings removes your situation, plan and history. Legal record-keeping obligations aside, gone means gone."]]],
 ] as const;
-export default function FAQPage(){return <article className={styles.page}><HandoffPublicNav /><header><div><p><span aria-hidden="true" />FAQ</p><h1>Clear <em>answers.</em></h1></div></header><div className={styles.paint} /><main>{groups.map(([name,items],groupIndex)=><section key={name}><h2>{name}</h2><div>{items.map(([q,a],index)=><details key={q} open={groupIndex===0&&index===0}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>)}<footer><span>Didn&apos;t find it?</span><Link href="/contact">Contact us →</Link><Link href="/methodology">Methodology</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link></footer></main><HandoffFooterStrip /></article>}
+export default function FAQPage(){return <article className={styles.page}><header><div><p><span aria-hidden="true" />FAQ</p><h1>Clear <em>answers.</em></h1></div></header><div className={styles.paint} /><main>{groups.map(([name,items],groupIndex)=><section key={name}><h2>{name}</h2><div>{items.map(([q,a],index)=><details key={q} open={groupIndex===0&&index===0}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>)}<aside className={styles.contactRail}><span>Didn&apos;t find it?</span><Link href="/contact">Contact us →</Link><Link href="/methodology">Methodology</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link></aside></main></article>}

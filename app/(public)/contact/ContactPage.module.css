@@ -5,7 +5,6 @@
 }
 
 .page * { box-sizing: border-box; }
-:global(body):has(.page) [data-public-shell] { display: none; }
 .shell { width: 100%; max-width: var(--site-content-max); margin: 0 auto; }
 
 .hero {

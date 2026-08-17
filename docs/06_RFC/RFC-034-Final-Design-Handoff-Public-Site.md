@@ -80,15 +80,21 @@ This correction changes no data authority. Current services and DTOs remain auth
 
 The corrective Founder decision received on 2026-08-17 makes `ProgramAiExperience` and its final `ProgramAiFinalPresentation` the only public renderer for `/program`, including `/program?entry=start` and entry from Home or 10 Steps. `PROGRAM_AI_V1_ENABLED` may continue to protect backend and provider capability, but it must not select a public UI version. If the backend or a provider capability is unavailable, the canonical Programme presentation must remain mounted and show a truthful unavailable or text-fallback state. `ActiveControlProgramme` remains legacy implementation code only and has no public route reachability.
 
-The same correction establishes one site-wide outer-frame contract:
+The later unified-shell Founder correction replaces the provisional `1312px` inference and establishes the measured Home/Learn outer-frame contract:
 
-- `--site-gutter: clamp(24px, 5vw, 72px)`;
-- `--site-content-max: 1312px`;
-- `--site-wide-max: 1440px`;
-- `--site-reading-max: 760px`; and
-- `--site-content-width` as the standard centred outer page width.
+- `--public-outer-gutter: clamp(24px, 5vw, 72px)`;
+- `--public-content-max: 1440px`;
+- `--public-wide-max: 1440px`;
+- `--public-reading-max: 760px`; and
+- compatibility `--site-*` aliases resolved from those measured public tokens.
 
 Standard page and section frames, including Programme entry and dashboard, align to that outer grid. Reading, focused, full-bleed, wide/photographic and overlay surfaces may keep narrower or wider inner measures where their classification requires it; a 400–520px Programme interaction column is therefore an inner focused measure, not a competing page shell. Site navigation and footers use the same standard anchors. This correction changes no Mission ordering, prerequisite, reward, progression, persistence, authentication, privacy, provider or commercial-data rule.
+
+### Founder correction — one production public chrome
+
+The corrective Founder decision received on 2026-08-17 revokes the earlier width-only acceptance because matching selected wrapper values did not prove a common visual product shell. Original `Home.dc.html` and `Learn.dc.html` measurements are the primary global-chrome reference: their outer gutter is `clamp(24px, 5vw, 72px)`, their content/footer inner cap is `1440px`, and the fixed navigation is 81px high. At the required widths, the canonical left/right axes are `72 / 1368`, `51.2 / 972.8`, `24 / 406` and `24 / 366`.
+
+Normal public routes and `/program` must mount the same production `PublicHeader` and `PublicFooter`. Generated handoff HTML remains an approved static/editorial content source but its captured header and footer elements must be removed before rendering; hiding duplicate chrome with CSS or z-index is not compliant. `HandoffInteractions` may preserve read progress and Home motion but must not own or query a prototype `[data-nav]`. Protected Help retains its separate non-commercial shell. Programme may retain contextual progress/account controls inside its content, but not a second B4GAMBLE wordmark or public navigation system.
 
 ## Comparison and analytics boundary
 
@@ -114,5 +120,6 @@ Before handoff, the branch must pass lint, type checking, quality checks, produc
 | Visual fixtures are data-only | A metric is invalid when reference markup replaces the actual application UI | Corrective Founder decision, 2026-08-17 |
 | `/program` has one canonical public renderer | Backend capability flags must fail closed inside the approved experience, not expose a legacy product | Corrective Founder decision, 2026-08-17 |
 | Standard outer frames use the shared site tokens | Programme and public pages need one measurable grid while preserving intentional inner reading and focused measures | Corrective Founder decision, 2026-08-17 |
+| One React public chrome owns all normal public routes | Width parity was false-positive while Home/Learn mounted prototype chrome and runtime routes mounted Public Shell | Unified-shell corrective Founder decision, 2026-08-17 |
 | Expressive display type and functional type use separate contracts | The handoff's route-specific display composition must remain intact while labels, controls, material terms, decision values and body copy meet explicit readable floors | Corrective Founder decision, 2026-08-17; `docs/product/FINAL-DESIGN-TYPOGRAPHY-CONTRACT.md` |
 | Sub-12px type requires an exact decorative classification | Tiny functional copy cannot be accepted as visual fidelity; the static audit fails new or stale exceptions and the browser audit verifies computed runtime type at all Founder viewports | Typography contract and Founder typography QA evidence |

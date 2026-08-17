@@ -37,7 +37,7 @@ test("Home restores the handoff interaction contracts and reveals every designed
     const screen = screens.nth(index);
     await screen.evaluate((element) => element.scrollIntoView({ block: "center" }));
     await page.waitForTimeout(1_050);
-    const navTheme = await home.locator("[data-nav]").getAttribute("data-theme");
+    const navTheme = await page.locator('[data-public-shell="header"]').getAttribute("data-shell-theme");
     if (navTheme) themes.add(navTheme);
     const rise = screen.locator("[data-rise]");
     if (await rise.count()) {

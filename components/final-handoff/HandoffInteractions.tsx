@@ -18,44 +18,14 @@ type HomeSpring = {
   y: number;
 };
 
-function opaqueBackground(start: Element | null) {
-  let element = start;
-  while (element && element !== document.documentElement) {
-    const color = getComputedStyle(element).backgroundColor;
-    const match = color.match(/rgba?\(([\d.]+)[, ]+([\d.]+)[, ]+([\d.]+)(?:[, /]+([\d.]+))?\)/);
-    if (match && (match[4] === undefined || Number.parseFloat(match[4]) >= .9)) return {
-      color,
-      dark: .2126 * Number(match[1]) + .7152 * Number(match[2]) + .0722 * Number(match[3]) < 140,
-    };
-    element = element.parentElement;
-  }
-  return { color: "#100f0f", dark: true };
-}
-
-function setupSharedHandoffInteractions(root: HTMLElement, home: boolean) {
-  const navigation = root.querySelector<HTMLElement>("[data-nav]");
+function setupSharedHandoffInteractions(root: HTMLElement) {
   const progress = root.querySelector<HTMLElement>("[data-readbar]");
-  if (!navigation && !progress) return undefined;
+  if (!progress) return undefined;
   let frame = 0;
   const sync = () => {
     frame = 0;
-    if (progress) {
-      const maximum = document.documentElement.scrollHeight - window.innerHeight;
-      progress.style.width = `${maximum > 0 ? Math.min(100, Math.max(0, window.scrollY / maximum * 100)) : 0}%`;
-    }
-    if (!home && navigation) {
-      const probeY = navigation.getBoundingClientRect().height + 14;
-      const hit = document.elementFromPoint(window.innerWidth / 2, probeY);
-      const themed = hit?.closest<HTMLElement>("[data-navtheme]");
-      if (themed) {
-        navigation.dataset.theme = themed.dataset.navtheme || "dark";
-        navigation.style.removeProperty("background");
-      } else {
-        const background = opaqueBackground(hit);
-        navigation.dataset.theme = background.dark ? "dark" : "light";
-        navigation.style.background = background.color;
-      }
-    }
+    const maximum = document.documentElement.scrollHeight - window.innerHeight;
+    progress.style.width = `${maximum > 0 ? Math.min(100, Math.max(0, window.scrollY / maximum * 100)) : 0}%`;
   };
   const schedule = () => {
     if (!frame) frame = window.requestAnimationFrame(sync);
@@ -91,7 +61,6 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
-  const navigation = root.querySelector<HTMLElement>("[data-nav]");
   const snapElements = Array.from(root.querySelectorAll<HTMLElement>("[data-snap]"));
   let chapterTops: number[] = [];
   let animationFrame = 0;
@@ -154,14 +123,6 @@ function setupHomeInteractions(root: HTMLElement) {
       spring.targetX = normalizedX * spring.depth * 1.55;
       spring.targetY = normalizedY * spring.depth * 1.1;
     }
-  };
-
-  const syncNavigation = () => {
-    if (!navigation) return;
-    const probeY = navigation.getBoundingClientRect().height + 14;
-    const hit = document.elementFromPoint(window.innerWidth / 2, probeY);
-    const section = hit?.closest<HTMLElement>("[data-navtheme]");
-    navigation.dataset.theme = section?.dataset.navtheme || "dark";
   };
 
   const syncStack = () => {
@@ -229,7 +190,6 @@ function setupHomeInteractions(root: HTMLElement) {
       spring.y += spring.velocityY;
       spring.element.style.transform = `translate(${spring.x.toFixed(2)}px, ${spring.y.toFixed(2)}px) rotate(${spring.rotation})`;
     }
-    syncNavigation();
     syncStack();
     animationFrame = window.requestAnimationFrame(tick);
   };
@@ -292,7 +252,7 @@ export function HandoffInteractions({ name }: { name: string }) {
     const root = document.querySelector<HTMLElement>(`[data-handoff-page="${name}"]`);
     if (!root) return;
 
-    const cleanUpShared = setupSharedHandoffInteractions(root, name === "home");
+    const cleanUpShared = setupSharedHandoffInteractions(root);
     const cleanUpHome = name === "home" ? setupHomeInteractions(root) : undefined;
 
     const onClick = (event: MouseEvent) => {

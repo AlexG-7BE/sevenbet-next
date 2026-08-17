@@ -12,11 +12,11 @@ export function PublicFooter() {
   return (
     <footer aria-label="Control and support" className={styles.footer} data-public-shell="footer">
       <div className={styles.footerInner}>
-        <div className={styles.footerLead}>
-          <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
-          <p>Independent reviews. Real tests.<br />Player first.</p>
-        </div>
-        <div className={styles.footerGroups}>
+        <div className={styles.footerColumns}>
+          <div className={styles.footerLead}>
+            <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
+            <p>Independent reviews. Real tests.<br />Player first.</p>
+          </div>
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>
               <h2>{group.title}</h2>

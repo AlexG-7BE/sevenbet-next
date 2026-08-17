@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 
 import { authClient } from "@/lib/auth/client";
@@ -38,13 +37,12 @@ export function ProgramAiAuthenticatedHeader({ userId, totalXp, label = "10-STEP
     }
   }
   return (
-    <header className={styles.header} data-dashboard-header={dashboard || undefined} data-site-classification="STANDARD" data-site-frame="standard">
-      <Link className={styles.wordmark} href="/">B4GAMBLE</Link>
-      {dashboard ? <nav aria-label="Programme navigation" className={styles.dashboardNav}><Link href="/best-offers">Best Offers</Link><Link href="/casinos">Casinos</Link><Link href="/bonuses">Bonuses</Link><Link href="/learn">Learn</Link><Link href="/help">Help</Link></nav> : <span className={styles.programmeLabel}>{label}</span>}
-      {dashboard ? <span className={styles.myProgramme}>My Programme</span> : <span className={styles.xp}>{totalXp} XP</span>}
+    <div className={styles.header} data-dashboard-header={dashboard || undefined} data-programme-context-header data-site-classification="STANDARD" data-site-frame="standard">
+      <span className={dashboard ? styles.myProgramme : styles.programmeLabel}>{dashboard ? "My Programme" : label}</span>
+      <span className={styles.xp}>{totalXp} XP</span>
       <button aria-label="Log out of B4GAMBLE" className={styles.logout} disabled={state === "busy"} onClick={signOut} type="button">
         {dashboard ? state === "busy" ? "…" : state === "failed" ? "!" : "A" : state === "busy" ? "Logging out…" : state === "failed" ? "Try log out" : "Log out"}
       </button>
-    </header>
+    </div>
   );
 }

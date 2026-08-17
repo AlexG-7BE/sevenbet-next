@@ -2,9 +2,7 @@ import Link from "next/link";
 
 export default function ProgrammeNotFound() {
   return (
-    <>
-      <a className="skipLink" href="#main-content">Skip to main content</a>
-      <main id="main-content">
+      <main>
         <section className="pageShell">
           <div className="container">
             <div className="card discoveryEmpty">
@@ -19,6 +17,5 @@ export default function ProgrammeNotFound() {
           </div>
         </section>
       </main>
-    </>
   );
 }

@@ -653,7 +653,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
   await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
-  await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
   await noHorizontalOverflow(page);
   expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
 
@@ -896,7 +896,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   expect(await prisma.userXpEvent.count({ where: { userId: user.id } })).toBe(38);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/program");
-  await expect(page.getByText("715 XP", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-programme-context-header]").getByText("715 XP", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Mission 10 — Make the plan reviewable" })).toBeVisible();
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
@@ -1065,7 +1065,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
   await expect(page.getByRole("heading", { name: "Pause the Programme. Keep support close." })).toBeVisible();
-  await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Your 20 XP for describing the situation is preserved/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Open protected Help" })).toHaveAttribute("href", "/help");
   await expect(page.getByRole("button", { name: /register|account|keep this progress/i })).toHaveCount(0);
   await expect(page.getByText("Registration and celebration are paused on this screen.")).toBeVisible();
