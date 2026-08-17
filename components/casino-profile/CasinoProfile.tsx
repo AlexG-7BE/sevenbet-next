@@ -71,6 +71,13 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
   const age = Math.max(18, ...casino.countries.flatMap((country) => country.minimumAge ? [country.minimumAge] : []));
   const scoreCategories = editorial?.trustScore?.categories ?? [];
+  const reviewEvidence = editorial?.trustScore?.evidence?.slice(0, 3) ?? casino.pros.slice(0, 3);
+  const structuredOfferHeading = bonus && bonus.percentage !== null && bonus.maximumBonus !== null
+    ? {
+        primary: `${bonus.percentage}% up to ${formatProfileMoney(bonus.maximumBonus, bonus.currency)}`,
+        secondary: bonus.freeSpins ? `+ ${bonus.freeSpins} Free Spins` : null,
+      }
+    : null;
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div className={styles.shell}>
@@ -120,7 +127,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         </div>
         <div className={styles.overviewGrid}>
           <section className={styles.checkCard}><h3>Best for</h3><ul>{casino.pros.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
-          <section className={styles.checkCard}><h3>Why we like it</h3><ul>{casino.pros.slice(0, 3).map((item) => <li key={item}>✓ {item}</li>)}</ul></section>
+          <section className={styles.checkCard}><h3>Why we like it</h3><ul>{reviewEvidence.map((item) => <li key={item}>✓ {item}</li>)}</ul></section>
           <section className={styles.checkCard}><h3>Things to know</h3><ul>{casino.cons.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
           <dl className={`${styles.facts} ${styles.checkCard}`}>
             <div><dt>Founded</dt><dd>{casino.foundedYear ?? "Not listed"}</dd></div>
@@ -140,7 +147,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
           <div className={styles.offerCopy}>
             <span>{demo ? "FICTIONAL DEMONSTRATION TERMS" : "OFFER & TERMS"}</span>
             {bonus ? <>
-              <h3>{profileOfferHeadline(bonus)}</h3>
+              <h3>{structuredOfferHeading ? <><span>{structuredOfferHeading.primary}</span>{structuredOfferHeading.secondary ? <em>{structuredOfferHeading.secondary}</em> : null}</> : profileOfferHeadline(bonus)}</h3>
               <p>{bonus.summary}</p>
               {action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}
               <small>18+ · Full terms on the operator&apos;s site</small>

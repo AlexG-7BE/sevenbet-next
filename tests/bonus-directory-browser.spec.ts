@@ -78,8 +78,8 @@ test("canonical, filtered robots and ItemList positions are server rendered", as
 });
 
 test("responsive pages have visible focus, no overflow and no console or hydration errors", async ({ browser }) => {
-  for (const width of [1440, 1280, 390, 375, 320]) {
-    const page = await browser.newPage({ viewport: { width, height: width <= 390 ? 844 : 920 }, isMobile: width <= 390 });
+  for (const width of [1440, 1280, 430, 390, 375, 320]) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 920 }, isMobile: width <= 430 });
     const errors: string[] = [];
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     page.on("pageerror", (error) => errors.push(error.message));
@@ -115,7 +115,7 @@ test("mobile presentation follows the final 390px handoff composition", async ({
   const hero = page.locator('main section[class*="hero"]').first();
   const feature = page.locator('section[aria-labelledby="bonus-shortlist-title"] article').first();
   const result = page.locator('article[class*="comparisonRow"]').first();
-  expect(Math.round((await hero.boundingBox())!.height)).toBe(560);
-  expect(Math.round((await feature.boundingBox())!.width)).toBe(342);
+  expect(Math.round((await hero.boundingBox())!.height)).toBe(586);
+  expect(Math.round((await feature.boundingBox())!.width)).toBe(360);
   expect(Math.round((await result.boundingBox())!.height)).toBeGreaterThanOrEqual(220);
 });

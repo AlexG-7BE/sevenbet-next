@@ -22,7 +22,7 @@ test("best offers is server rendered and fails closed before any governed action
     await expect(page.getByText("DEMONSTRATION DATA", { exact: true }).first()).toBeVisible();
     const activeCard = page.getByTestId("best-offer-product-card");
     const cardText = await activeCard.innerText();
-    expect(cardText).toContain("Wagering");
+    expect(cardText).toMatch(/wagering/i);
     expect(cardText).toContain("Offer currently unavailable");
   }
 });
@@ -67,8 +67,8 @@ test("bonus filters remain URL-authoritative and server rendered", async ({ page
 });
 
 test("offer pages have no horizontal overflow at desktop and mobile widths", async ({ browser }) => {
-  for (const width of [1440, 390, 375, 320]) {
-    const page = await browser.newPage({ viewport: { width, height: width <= 390 ? 844 : 900 }, isMobile: width <= 390 });
+  for (const width of [1440, 430, 390, 375, 320]) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 }, isMobile: width <= 430 });
     for (const path of ["/best-offers", "/bonuses?country=GB&sort=lowest-deposit"]) {
       const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
       expect(response?.status(), `${path} at ${width}px`).toBe(200);

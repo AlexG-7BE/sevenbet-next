@@ -31,8 +31,8 @@ test("demo profile renders one disclosed SSR review without governed actions", a
 });
 
 test("casino profile has no horizontal overflow across approved and defensive widths", async ({ browser }) => {
-  for (const width of [1440, 1280, 900, 768, 390, 375, 320]) {
-    const page = await browser.newPage({ viewport: { width, height: width <= 390 ? 844 : 900 }, isMobile: width <= 390 });
+  for (const width of [1440, 1280, 900, 768, 430, 390, 375, 320]) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 }, isMobile: width <= 430 });
     const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
     expect(response?.status(), `${width}px`).toBe(200);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px`).toBe(false);

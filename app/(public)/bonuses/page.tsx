@@ -89,7 +89,14 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   return <div className={`${styles.page} ${instrumentSerif.variable}`} data-runtime-renderer="bonuses">
     <CommercialSurfaceView surface="bonuses" />
     {schema ? <JsonLd data={schema} /> : null}
-    <section className={finalStyles.hero}><div><small>Bonuses · Terms first · 18+</small><h1>Value, measured<em>by terms.</em></h1><p>A big headline means nothing after wagering. We rank bonuses by realistic net value — deposits, playthrough and expiry included.</p></div></section>
+    <section className={finalStyles.hero}>
+      <div className={finalStyles.heroCopy}>
+        <small><span className={finalStyles.desktopKicker}>Bonuses · Terms first · 18+</span><span className={finalStyles.mobileKicker}>Ranked by what you keep</span></small>
+        <h1>Value, measured<em>by terms.</em></h1>
+        <p>A big headline means nothing after wagering. We rank bonuses by realistic net value — deposits, playthrough and expiry included.</p>
+      </div>
+      <div className={finalStyles.heroMeta}><span>Terms read line by line</span><span>No guaranteed-money claims, ever</span><span>Updated 12 Aug 2026</span></div>
+    </section>
 
     {result.inventoryMode !== "UNAVAILABLE" ? <CuratedBonusShortlist offers={result.records} /> : null}
 

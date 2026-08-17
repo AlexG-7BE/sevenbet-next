@@ -1,4 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
@@ -14,9 +15,11 @@ if (!handoffRoot) throw new Error("B4GAMBLE_HANDOFF_DIR must point to the extrac
 
 const stateRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/programme-state-parity");
 const finalRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/founder-final-review");
+const temporaryRoot = resolve(tmpdir(), "b4gamble-founder-final-review");
 const profiles = [
   { width: 1440, height: 1000 },
   { width: 390, height: 844 },
+  { width: 430, height: 932 },
 ];
 
 const programmeStates = ["access", "intake", "recording", "text", "registration", "dashboard"];
@@ -25,13 +28,15 @@ const commercialSurfaces = [
   { name: "casino-review", file: "Casino Review.dc.html", route: "/casino/demo-northstar", renderer: "casino-review" },
   { name: "bonuses", file: "Bonuses.dc.html", route: "/bonuses", renderer: "bonuses" },
 ];
+const commercialNames = new Set(commercialSurfaces.map((surface) => surface.name));
+const commercialOnly = only.size > 0 && [...only].every((value) => commercialNames.has(value.replace(/-(390|430)$/, "")));
 
 function selected(name, width) {
   return !only.size || only.has(`${name}-${width}`) || only.has(name);
 }
 
 function artifactPath(name, width, kind) {
-  return join(stateRoot, `${name}-${width}-${kind}.webp`);
+  return join(commercialNames.has(name) ? temporaryRoot : stateRoot, `${name}-${width}-${kind}.webp`);
 }
 
 async function handoffPage(context, file) {
@@ -275,28 +280,31 @@ async function compare(name, profile, reference, implementation, finalName = nul
 
 await mkdir(stateRoot, { recursive: true });
 await mkdir(finalRoot, { recursive: true });
+await mkdir(temporaryRoot, { recursive: true });
 const browser = await chromium.launch({ headless: true });
 const metrics = [];
 try {
   for (const profile of profiles) {
     const context = await browser.newContext({ viewport: profile });
-    for (const state of programmeStates) {
-      const name = `programme-${state}`;
-      if (!selected(name, profile.width)) continue;
-      if (phase === "reference" || phase === "all") await saveWebp(await captureProgrammeReference(context, state, profile), artifactPath(name, profile.width, "reference"));
-      if (phase === "implementation" || phase === "all") await saveWebp(await captureProgrammeImplementation(context, state), artifactPath(name, profile.width, "runtime-implementation"));
-      if (phase === "diff" || phase === "all") {
-        const finalStates = new Set(["access", "intake", "recording", "registration", "dashboard"]);
-        const finalName = finalStates.has(state) ? `${name}-${profile.width}-side-by-side.webp` : null;
-        metrics.push(await compare(name, profile, await readFile(artifactPath(name, profile.width, "reference")), await readFile(artifactPath(name, profile.width, "runtime-implementation")), finalName));
+    if (profile.width !== 430) {
+      for (const state of programmeStates) {
+        const name = `programme-${state}`;
+        if (!selected(name, profile.width)) continue;
+        if (phase === "reference" || phase === "all") await saveWebp(await captureProgrammeReference(context, state, profile), artifactPath(name, profile.width, "reference"));
+        if (phase === "implementation" || phase === "all") await saveWebp(await captureProgrammeImplementation(context, state), artifactPath(name, profile.width, "runtime-implementation"));
+        if (phase === "diff" || phase === "all") {
+          const finalStates = new Set(["access", "intake", "recording", "registration", "dashboard"]);
+          const finalName = finalStates.has(state) ? `${name}-${profile.width}-side-by-side.webp` : null;
+          metrics.push(await compare(name, profile, await readFile(artifactPath(name, profile.width, "reference")), await readFile(artifactPath(name, profile.width, "runtime-implementation")), finalName));
+        }
       }
     }
-    if (profile.width === 390) {
+    if (profile.width === 390 || profile.width === 430) {
       for (const surface of commercialSurfaces) {
         if (!selected(surface.name, profile.width)) continue;
         if (phase === "reference" || phase === "all") await saveWebp(await captureCommercialReference(context, surface), artifactPath(surface.name, profile.width, "reference"));
         if (phase === "implementation" || phase === "all") await saveWebp(await captureCommercialImplementation(context, surface), artifactPath(surface.name, profile.width, "runtime-implementation"));
-        if (phase === "diff" || phase === "all") metrics.push(await compare(surface.name, profile, await readFile(artifactPath(surface.name, profile.width, "reference")), await readFile(artifactPath(surface.name, profile.width, "runtime-implementation")), `${surface.name}-390-side-by-side.webp`));
+        if (phase === "diff" || phase === "all") metrics.push(await compare(surface.name, profile, await readFile(artifactPath(surface.name, profile.width, "reference")), await readFile(artifactPath(surface.name, profile.width, "runtime-implementation")), `${surface.name}-${profile.width}-side-by-side.webp`));
       }
     }
     await context.close();
@@ -305,21 +313,22 @@ try {
   await browser.close();
 }
 
-if (metrics.length) await writeFile(join(stateRoot, "metrics.json"), `${JSON.stringify({ renderer: "REAL_RUNTIME", thresholdPerChannel: 24, metrics }, null, 2)}\n`);
+if (metrics.length && !commercialOnly) await writeFile(join(stateRoot, "metrics.json"), `${JSON.stringify({ renderer: "REAL_RUNTIME", thresholdPerChannel: 24, metrics }, null, 2)}\n`);
 
 const finalImages = [
   ...[1440, 390].flatMap((width) => ["access", "intake", "recording", "registration", "dashboard"].map((state) => `programme-${state}-${width}-side-by-side.webp`)),
-  "best-offers-390-side-by-side.webp",
-  "casino-review-390-side-by-side.webp",
-  "bonuses-390-side-by-side.webp",
+  ...[390, 430].flatMap((width) => commercialSurfaces.map((surface) => `${surface.name}-${width}-side-by-side.webp`)),
 ];
-await writeFile(join(finalRoot, "README.md"), [
-  "# Founder final review",
-  "",
-  "Every image uses the same rule: LEFT = exact relevant original handoff product frame; RIGHT = REAL_RUNTIME implementation.",
-  "",
-  ...finalImages.map((name) => `- \`${name}\` — LEFT = exact relevant original handoff frame; RIGHT = REAL_RUNTIME implementation.`),
-  "",
-].join("\n"));
+if (!commercialOnly) {
+  await writeFile(join(finalRoot, "README.md"), [
+    "# Founder final review",
+    "",
+    "Every image uses the same rule: LEFT = exact relevant original handoff product frame; RIGHT = REAL_RUNTIME implementation.",
+    "",
+    ...finalImages.map((name) => `- \`${name}\` — LEFT = exact relevant original handoff frame; RIGHT = REAL_RUNTIME implementation.`),
+    "",
+  ].join("\n"));
+}
 
+if (metrics.length) console.log(JSON.stringify({ renderer: "REAL_RUNTIME", thresholdPerChannel: 24, metrics }, null, 2));
 console.log(`Founder final review ${phase} assets written to ${stateRoot} and ${finalRoot}`);

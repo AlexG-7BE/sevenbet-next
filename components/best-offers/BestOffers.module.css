@@ -47,6 +47,7 @@
 .featuredTerms { grid-column:1/-1; margin:0; padding:0 24px; border-top:1px solid rgba(16,15,15,.1); display:grid; grid-template-columns:repeat(4,1fr); }
 .featuredTerms div { min-height:86px; padding:20px 24px; border-left:1px solid rgba(16,15,15,.08); display:grid; align-content:center; gap:6px; }
 .featuredTerms div:first-child { border-left:0; }
+.featuredTerms div:nth-child(5) { display:none; }
 .featuredTerms dt { font-size:14px; font-weight:650; }
 .featuredTerms dd { margin:0; color:#8b8a82; font-size:12px; overflow-wrap:anywhere; }
 .alternatives { margin-top:24px; display:grid; gap:24px; }
@@ -64,6 +65,7 @@
 .actions > button { min-height:44px; padding:8px 4px; border:0; border-radius:0; background:transparent; color:inherit; font:inherit; font-size:14px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
 .dataNotice { margin:12px 0; color:var(--muted); font-size:11px; line-height:1.5; }
 .altCopy .dataNotice { color:rgba(250,250,247,.55); }
+.proofList { display:none; }
 .worthALook { margin-top:72px; }
 .worthCards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; }
 .worthCards > article { min-width:0; overflow:hidden; border:1px solid rgba(16,15,15,.11); border-radius:18px; display:flex; flex-direction:column; background:var(--field); box-shadow:0 18px 42px rgba(16,15,15,.06); }
@@ -85,6 +87,7 @@
 .worthCards article > p { min-height:92px; margin:0; padding:20px 24px; color:var(--muted); font-size:12px; line-height:1.5; }
 .worthCards .actions { margin-top:auto; padding:18px 24px; border-top:1px solid rgba(16,15,15,.09); gap:12px; }
 .worthCards .commercialCta { min-height:44px; padding:10px 18px; }
+.viewAll { width:fit-content; margin:28px auto 0; display:block; border-bottom:1px solid rgba(16,15,15,.3); color:var(--ink); font-size:13px; }
 .whyPicked { padding:120px 0; background:var(--field); color:var(--ink); }
 .whyPicked > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:64px; }
 .lightKicker { color:#8b8a82; }
@@ -130,28 +133,83 @@
   .whyPicked > div { grid-template-columns:1fr; }
 }
 @media (max-width:600px) {
-  .hero { min-height:0; }
-  .heroInner { min-height:0; padding:70px 0 44px; }
-  .hero h1 { font-size:clamp(54px,13vw,60px); }
+  .hero { min-height:72vh; padding-top:0; }
+  .heroInner { min-height:72vh; padding:130px 0 0; justify-content:flex-start; }
+  .hero h1 { margin-top:26px; font-size:clamp(28px,7.4vw,118px); letter-spacing:-.015em; }
   .heroCopy { font-size:16px; }
-  .heroStats { display:grid; grid-template-columns:1fr; gap:18px; }
-  .heroTicker span:nth-child(2),.heroTicker span:nth-child(3) { display:none; }
-  .topThree { padding:64px 0; }
-  .sectionRule { font-size:10px; letter-spacing:.16em; }
-  .featuredCopy,.altCopy { padding:26px 22px; }
-  .featuredMark,.altMark { min-height:260px; grid-row:auto; font-size:100px; }
-  .rankLine > span,.altCopy .rankLine > span { font-size:44px; }
-  .identity h3,.identity[data-size="large"] h3,.altCopy .identity h3 { font-size:23px; }
-  .featuredCopy h4,.altCopy h4 { font-size:27px; }
-  .actions { align-items:stretch; flex-direction:column; }
-  .commercialCta,.unavailableAction,.actions > a { width:100%; justify-content:center; text-align:center; }
-  .actions > button { width:100%; text-align:center; }
-  .featuredTerms { grid-template-columns:1fr; padding:0 20px; }
-  .featuredTerms div,.featuredTerms div:nth-child(3) { border-left:0; border-top:1px solid rgba(16,15,15,.08); }
+  .heroStats { align-items:flex-start; flex-direction:column; gap:16px; }
+  .heroStats div { white-space:nowrap; }
+  .heroTicker { margin-top:80px; padding:26px 0; align-items:flex-start; flex-direction:column; gap:24px; }
+  .heroTicker a { margin-left:auto; }
+  .topThree { padding:100px 0 120px; }
+  .sectionRule { font-size:13px; letter-spacing:.24em; white-space:nowrap; }
+  .featuredCard { grid-template-columns:420px; }
+  .featuredCopy { padding:56px 60px; }
+  .featuredMark { min-height:420px; grid-row:auto; }
+  .rankLine > span { font-size:64px; }
+  .identity h3,.altCopy .identity h3 { font-size:28px; }
+  .identity[data-size="large"] h3 { font-size:32px; white-space:nowrap; }
+  .featuredCopy h4 { font-size:28px; }
+  .actions { align-items:center; flex-direction:row; }
+  .commercialCta,.unavailableAction,.actions > a { width:auto; text-align:left; }
+  .actions > button { width:auto; text-align:left; }
+  .featuredTerms { grid-template-columns:420px; padding:0 24px; }
+  .featuredTerms div,.featuredTerms div:nth-child(3) { min-height:86px; padding:20px 24px; border-left:0; border-top:1px solid rgba(16,15,15,.08); }
   .featuredTerms div:first-child { border-top:0; }
-  .whyPicked,.faq { padding:72px 0; }
+  .featuredTerms div:nth-child(5) { display:grid; }
+  .alternativeCard { grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr); }
+  .altCopy { position:relative; z-index:1; padding:44px 48px; }
+  .altCopy .rankLine { margin-bottom:22px; }
+  .altCopy .rankLine > span { font-size:56px; }
+  .altCopy .identity h3 { white-space:nowrap; }
+  .altCopy h4 { font-size:26px; }
+  .altMark { min-height:320px; grid-row:auto; }
+  .altReason { display:none; }
+  .proofList { margin:22px 0 28px; padding:0; display:grid; gap:8px; color:rgba(250,250,247,.75); font-size:14px; line-height:1.35; list-style:none; }
+  .proofList li { position:relative; padding-left:20px; }
+  .proofList li::before { content:"✓"; position:absolute; left:0; color:#6fbeb7; }
+  .altCopy .commercialCta,.altCopy .unavailableAction,.altCopy .actions > a,.altCopy .actions > button { white-space:nowrap; }
+  .worthALook { margin-top:64px; }
+  .worthCards { gap:24px; }
+  .worthHead { min-height:0; padding:26px 84px 26px 30px; gap:18px; }
+  .worthHead .identity > span { width:64px; height:64px; border-radius:18px; font-size:28px; }
+  .worthHead .identity h3 { font-size:21px; }
+  .worthHead > b { position:absolute; top:16px; right:22px; font-size:30px; }
+  .worthCards > article { position:relative; border-radius:20px; }
+  .worthScore { min-height:0; padding:16px 30px; justify-content:space-between; }
+  .worthOffer { min-height:0; padding:20px 30px; }
+  .worthCards dl { padding:8px 30px 12px; }
+  .worthCards dl div { padding:9px 0; }
+  .worthCards article > p { min-height:0; padding:18px 30px; font-size:14px; line-height:1.6; }
+  .worthCards .actions { padding:20px 30px; gap:14px; flex-wrap:wrap; }
+  .worthCards .commercialCta { min-width:140px; min-height:44px; flex:1; border-radius:14px; }
+  .worthCards .actions > a,.worthCards .actions > button { font-size:13px; }
+  .viewAll { margin-top:28px; margin-bottom:52px; }
+  .whyPicked,.faq { padding:120px 0; }
+  .whyPicked { padding-bottom:88px; }
+  .whyPicked > div { gap:64px; }
+  .whyPicked h2 { font-size:30px; }
   .faqGrid { width:var(--site-content-width); }
-  .faq summary { min-height:86px; font-size:16px; }
-  .finalOffer { padding:110px 24px 90px; }
+  .faq { padding-bottom:113px; }
+  .faq h2 { margin-bottom:48px; font-size:30px; }
+  .faq summary { min-height:0; padding:24px 0; font-size:20px; }
+  .finalOffer { padding:180px 24px 103px; }
+  .finalOffer h2 { font-size:42px; }
   .whyPicked h2 { font-style:italic; }
+
+  :global(body):has(.page) :global([data-public-shell="header"]) { min-height:64px; border-bottom:0; background:#100f0f; backdrop-filter:none; }
+  :global(body):has(.page) :global([data-public-shell="header"]) > div { min-height:64px; padding:10px 24px; }
+  :global(body):has(.page) :global([data-public-shell="header"]) > div > a { font-size:22px; letter-spacing:.02em; }
+  :global(body):has(.page) :global([data-public-shell="header"]) button { display:none !important; }
+  :global(body):has(.page) :global([data-public-shell="header"]) a[href^="/program"] { min-height:40px; padding:0 24px; font-size:14px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) { padding:48px 24px 0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div { width:100%; display:block; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:first-child { margin-bottom:48px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:first-child > a { min-height:0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) { display:grid; grid-template-columns:1fr; gap:48px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) > div { gap:12px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) h2 { margin-bottom:6px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) a { min-height:0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:last-child { margin-top:48px; padding:24px 0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:last-child a { min-height:0; }
 }

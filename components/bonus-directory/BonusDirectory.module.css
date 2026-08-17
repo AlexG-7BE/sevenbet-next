@@ -383,16 +383,17 @@
 }
 
 @media (max-width:760px) {
-  .directorySection { padding:72px 0 90px; background:var(--field); }
+  .directorySection { padding:105px 0 90px; background:var(--field); }
   .directorySection .shell { width:calc(100% - 48px); }
-  .sectionHeading { margin-bottom:28px; padding-top:0; }
+  .sectionHeading { margin-bottom:40px; padding-top:0; }
   .sectionHeading .display { font-size:38px; }
   .sectionHeading > p { margin-top:14px; }
 
   .mobileFilterTrigger {
-    min-height:176px;
-    margin:0 0 26px;
-    padding:18px;
+    height:247px;
+    min-height:247px;
+    margin:0 0 32px;
+    padding:24px 28px;
     border-color:rgba(16,15,15,.14);
     border-radius:18px;
     display:flex;
@@ -404,25 +405,26 @@
     box-shadow:0 16px 38px rgba(16,15,15,.08);
     text-transform:none;
   }
-  .mobileFilterSearch { width:100%; min-height:42px; padding:0 14px; border:1px solid rgba(16,15,15,.22); border-radius:12px; display:flex; align-items:center; color:var(--metal); font-size:12px; font-weight:400; }
-  .mobileFilterChips { width:100%; display:flex; flex-wrap:wrap; gap:8px; }
-  .mobileFilterChips > span { min-height:34px; padding:0 12px; border:1px solid rgba(16,15,15,.14); border-radius:999px; display:inline-flex; align-items:center; color:var(--ink); font-size:10px; font-weight:650; }
+  .mobileFilterSearch { width:100%; min-height:41px; padding:0 14px; border:1px solid rgba(16,15,15,.22); border-radius:12px; display:flex; align-items:center; color:var(--metal); font-size:12px; font-weight:400; }
+  .mobileFilterChips { width:100%; display:flex; flex-wrap:wrap; gap:12px; }
+  .mobileFilterChips > span { min-height:40px; padding:0 14px; border:1px solid rgba(16,15,15,.14); border-radius:999px; display:inline-flex; align-items:center; color:var(--ink); font-size:10px; font-weight:650; }
   .mobileFilterOpen { margin-left:auto; align-self:flex-end; color:#a9413d; font-size:10px; font-weight:750; text-transform:uppercase; }
   .filterSummary { display:none; }
-  .resultsStatus { margin:0 0 12px; }
+  .resultsStatus { display:none; }
 
   .comparison { gap:12px; }
   .comparisonRow {
     position:relative;
-    min-height:222px;
-    padding:20px;
+    height:196px;
+    min-height:196px;
+    padding:18px 20px;
     border:1px solid rgba(16,15,15,.1) !important;
     border-radius:14px;
     display:grid;
     grid-template-columns:46px minmax(0,1fr);
     grid-template-areas:"logo identity" "terms terms" "actions actions";
     align-items:center;
-    gap:14px 16px;
+    gap:8px 16px;
     background:var(--white);
     box-shadow:0 12px 28px rgba(16,15,15,.035);
   }
@@ -431,15 +433,31 @@
   .compactIdentity > strong { font-size:13px; line-height:1.25; }
   .compactIdentity > span { color:var(--metal); font-size:10px; }
   .compactIdentity > small { overflow:hidden; color:#8c8a82; font-size:8px; line-height:1.35; text-overflow:ellipsis; white-space:nowrap; }
-  .compactTerms { grid-area:terms; margin:0; padding-top:14px; border-top:1px solid rgba(16,15,15,.09); display:grid; grid-template-columns:1fr 1fr; gap:12px 20px; }
+  .compactTerms { grid-area:terms; margin:0; padding-top:8px; border-top:1px solid rgba(16,15,15,.09); display:grid; grid-template-columns:1fr 1fr; gap:6px 20px; }
   .compactTerms div { display:grid; gap:3px; }
   .compactTerms div:last-child { grid-column:1/-1; }
   .compactTerms dt { color:var(--metal); font-size:9px; }
   .compactTerms dd { margin:0; font-size:11px; font-weight:750; }
-  .compactActions { grid-area:actions; padding-top:14px; border-top:1px solid rgba(16,15,15,.09); display:flex; align-items:center; gap:12px; }
+  .compactActions { grid-area:actions; padding-top:8px; border-top:1px solid rgba(16,15,15,.09); display:flex; align-items:center; gap:12px; }
   .compactActions .offerActionCompact,.compactActions .actionUnavailableCompact { min-width:112px; min-height:42px; margin:0; padding:8px 16px; border:0; border-radius:12px; background:#c84e49; color:var(--white); text-transform:none; }
   .compactActions .actionUnavailableCompact { background:#ebeae4; color:var(--metal); }
   .compactActions > a { min-height:42px; display:inline-flex; align-items:center; font-size:11px; text-decoration:underline; text-underline-offset:3px; }
   .compactPosition { display:none; }
   .mobileMaterialResult,.reviewSeparationNote { display:none; }
+  .disclosure { display:none; }
+}
+
+@media (max-width:404px) {
+  .comparisonRow {
+    height:294px;
+    min-height:294px;
+    padding:22px 28px;
+    grid-template-columns:1fr;
+    grid-template-areas:"logo" "identity" "terms" "actions";
+    align-content:space-between;
+    gap:8px;
+  }
+  .compactIdentity{width:100%}
+  .compactTerms{width:100%;grid-template-columns:1fr 1fr}
+  .compactActions{width:100%}
 }

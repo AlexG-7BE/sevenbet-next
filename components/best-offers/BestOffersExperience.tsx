@@ -62,9 +62,10 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
           <div className={styles.featuredMark} aria-hidden="true"><span>▧</span><small>{featured.casino.name.replace(/\s+casino$/i, "")} media</small></div>
           <dl className={styles.featuredTerms}>
             <div><dt>Fast payouts</dt><dd>{payout(featured)}</dd></div>
-            <div><dt>Wagering</dt><dd>{featured.bonus.wageringMultiplier === null ? "Not listed" : `${featured.bonus.wageringMultiplier}x`}</dd></div>
+            <div><dt>Honest wagering</dt><dd>{featured.bonus.wageringMultiplier === null ? "Not listed" : `${featured.bonus.wageringMultiplier}x · terms shown`}</dd></div>
             <div><dt>Low entry</dt><dd>{money(featured.bonus.minimumDeposit, featured.bonus.currency)}</dd></div>
             <div><dt>Material term</dt><dd>{featured.bonus.importantConditions[0] || "Check full terms"}</dd></div>
+            <div><dt>Full review</dt><dd>Evidence and scoring</dd></div>
           </dl>
         </article>
 
@@ -76,7 +77,12 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record.</p> : null}
               <small className={styles.termLabel}>Welcome offer</small><h4>{offer.bonus.title}</h4>
               <p className={styles.termSummary}>Wagering {offer.bonus.wageringMultiplier === null ? "not listed" : `${offer.bonus.wageringMultiplier}x`} · Min deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)} · Payout {payout(offer)}</p>
-              <p className={styles.reason}>{offer.casino.summary}</p>
+              <p className={`${styles.reason} ${styles.altReason}`}>{offer.casino.summary}</p>
+              <ul className={styles.proofList}>
+                <li>{offer.bonus.wageringMultiplier === null ? "Wagering shown in full terms" : `${offer.bonus.wageringMultiplier}x wagering`}</li>
+                <li>Minimum deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)}</li>
+                <li>Payout {payout(offer)}</li>
+              </ul>
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </div>
             <div className={styles.altMark} aria-hidden="true"><span>▧</span><small>{offer.casino.name.replace(/\s+casino$/i, "")} media</small></div>
@@ -94,6 +100,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </article>)}
           </div>
+          <Link className={styles.viewAll} href="/casinos">View all casinos →</Link>
         </section> : null}
       </div>
     </section>

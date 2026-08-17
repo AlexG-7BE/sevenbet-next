@@ -430,38 +430,85 @@
 }
 
 @media (max-width:760px) {
-  .shell > .profileDisclosure { padding-inline:8px; }
-  .hero { display:flex; min-height:0; flex-direction:column; color:var(--white); background:var(--night); }
-  .heroReview { padding:48px 8px 32px; background:transparent; }
+  .page { padding-bottom:76px; }
+  .shell > .profileDisclosure { padding-inline:24px; }
+  .breadcrumb { min-height:44px; margin-top:64px; padding-inline:0; font-size:11px; }
+  .hero { width:100vw; margin-inline:calc(50% - 50vw); display:flex; min-height:0; flex-direction:column; color:var(--white); background:var(--night); }
+  .heroReview { padding:24px 24px 32px; background:transparent; }
   .heroKicker { margin-bottom:20px; font-size:10px; }
-  .identityRow { top:48px; right:8px; }
-  .identityRow > .signal { grid-column:1/-1; }
-  .hero h1 { font-size:40px; }
-  .titleLogo { width:48px; height:48px; font-size:20px; }
-  .scoreVerdict { grid-template-columns:1fr; gap:18px; }
-  .scoreVerdict > div > strong { font-size:64px; }
-  .heroOfferSummary { align-items:stretch; flex-direction:column; }
-  .heroOfferSummary .primaryAction,.heroOfferSummary .unavailableAction { width:100%; }
-  .heroMedia { order:initial; min-height:330px; margin:16px 0 0; border-radius:20px; }
-  .decisionBar { top:72px; margin:0 -16px; border-radius:0; }
-  .decisionIdentity { display:none; }
-  .section,.editorialSection { padding:68px 0; }
-  .sectionHeading h2 { font-size:38px; }
-  .overviewGrid { grid-template-columns:1fr; }
+  .identityRow { display:none; }
+  .hero h1 { margin:20px 0; gap:18px; overflow:hidden; font-size:27px; white-space:nowrap; }
+  .titleLogo { width:60px; height:60px; border-radius:20px; font-size:26px; }
+  .scoreVerdict { grid-template-columns:1fr; gap:0; }
+  .scoreVerdict > div > strong { font-size:56px; }
+  .scoreVerdict p { margin-top:18px; font-size:17px; line-height:1.6; }
+  .signals { margin-top:22px; gap:12px 28px; }
+  .hero .signal,.hero .verifiedSignal { min-height:0; padding:0; border:0; border-radius:0; color:rgba(250,250,247,.7); font-size:12px; font-weight:500; }
+  .hero .signal::before,.hero .verifiedSignal::before { content:"✓"; margin-right:4px; color:#6fbeb7; }
+  .heroOfferSummary { margin-top:30px; padding:20px 24px; align-items:center; flex-direction:row; flex-wrap:wrap; gap:18px; }
+  .heroOfferSummary > div { min-width:0; }
+  .heroOfferSummary strong { font-size:22px; white-space:nowrap; }
+  .heroOfferSummary :global(.commercialOutboundPrimary),.heroOfferSummary .unavailableAction { width:auto; min-width:148px; }
+  .heroMedia { order:initial; min-height:300px; margin:0; border-radius:0; }
+  .hero .profileDisclosure { padding-top:14px; font-size:11px; }
+  .decisionBar { position:fixed; top:auto; right:0; bottom:0; left:0; z-index:60; min-height:76px; margin:0; padding:14px 24px; border-top:1px solid rgba(250,250,247,.15); background:rgba(6,7,8,.92); backdrop-filter:blur(16px); }
+  .decisionIdentity { display:grid; }
+  .decisionBar > :global(.commercialOutboundPrimary),.decisionBar > .unavailableAction { min-width:148px; }
+  .section,.editorialSection { padding:100px 0; }
+  .sectionHeading { margin-bottom:48px; }
+  .sectionHeading h2 { font-size:30px; line-height:1.05; letter-spacing:-.01em; }
   .overviewHeading { display:block; }
-  .overviewHeading > span { margin-top:14px; }
-  .verdict { margin-inline:-16px; padding:68px 24px; }
-  .verdictWithBreakdown > div:first-child { display:block; }
-  .verdictWithBreakdown > div:first-child > span { margin-top:14px; white-space:normal; }
-  .scoreBreakdown { margin-top:32px; }
-  .offerSection { margin-inline:-16px; padding:68px 24px; }
-  .offerComposition { min-height:0; grid-template-columns:1fr; gap:36px; }
-  .offerCopy h3 { font-size:42px; }
-  .offerTermsCard { padding:14px 20px 22px; }
-  .editorialSection { margin-inline:-16px; padding-inline:24px; }
+  .overviewHeading > p { display:none; }
+  .overviewHeading > span { margin-top:14px; font-size:14px; }
+  .overviewGrid { grid-template-columns:420px; gap:24px; }
+  .checkCard { min-height:0; padding:30px 34px; }
+  .facts.checkCard { grid-template-columns:1fr; padding:30px 34px; }
+  .facts.checkCard > div { grid-template-columns:110px 1fr; }
+  .offerSection { margin-inline:calc(50% - 50vw); padding:100px 24px; }
+  .offerComposition { min-height:0; grid-template-columns:380px; gap:56px; }
+  .offerCopy h3 { margin:18px 0; font-size:30px; line-height:1.06; letter-spacing:-.01em; }
+  .offerCopy h3 > span,.offerCopy h3 > em { display:block; }
+  .offerCopy h3 > em { color:#777500; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
+  .offerCopy > p { margin-bottom:28px; }
+  .offerTermsCard { padding:12px 32px; }
+  .offerTermsCard .termRows > div { min-height:0; padding:16px 0; }
+  .editorialSection { margin-inline:calc(50% - 50vw); padding:100px 24px; }
   .editorialLayout { grid-template-columns:1fr; gap:34px; }
   .editorialLayout > nav { position:static; grid-auto-flow:column; grid-auto-columns:max-content; overflow-x:auto; }
-  .faqGrid { gap:64px; }
-  .finalOffer { min-height:400px; margin-inline:-16px; padding:64px 24px; }
-  .finalOffer h3 { font-size:42px; }
+  .editorialGrid h3 { font-size:26px; text-transform:uppercase; }
+  .editorialGrid p,.editorialGrid li { font-size:16px; line-height:1.7; }
+  .verdict { min-height:0; margin-inline:calc(50% - 50vw); padding:110px 24px; display:block; }
+  .verdictWithBreakdown > div:first-child { display:block; }
+  .verdictWithBreakdown > div:first-child > span { margin-top:14px; white-space:normal; }
+  .verdict h2 { margin:0 0 18px; font-size:30px; line-height:1.05; }
+  .scoreBreakdown { margin-top:48px; gap:24px; }
+  .scoreBreakdown > p { max-width:60ch; margin:36px 0 0; font-size:14px; line-height:1.6; text-align:left; }
+  .faqSection { margin-inline:calc(50% - 50vw); padding:0 24px; background:var(--field); }
+  .faqSection > .sectionHeading { margin:0 0 40px; padding-top:72px; border-top:1px solid var(--line); }
+  .faqSection > .sectionHeading > p { display:none; }
+  .faqSection > .sectionHeading h2 { font-size:30px; }
+  .faqGrid { gap:0; }
+  .faqGrid > div { padding-bottom:110px; }
+  .faqGrid summary { min-height:0; padding:22px 0; font-size:19px; line-height:1.15; text-transform:uppercase; }
+  .faqGrid details p { padding-bottom:22px; font-size:15px; line-height:1.65; }
+  .finalOffer { min-height:0; margin-inline:-24px; padding:130px 24px; }
+  .finalOffer h3 { margin:22px 0 16px; font-size:28px; line-height:1.02; white-space:nowrap; }
+  .finalOffer p { margin-bottom:36px; font-size:14px; }
+  .finalOffer :global(.commercialOutboundPrimary) { min-width:0; padding:19px 46px; border-radius:14px; }
+
+  :global(body):has(.page) :global([data-public-shell="header"]) { min-height:64px; border-bottom:0; background:#100f0f; backdrop-filter:none; }
+  :global(body):has(.page) :global([data-public-shell="header"]) > div { min-height:64px; padding:10px 24px; }
+  :global(body):has(.page) :global([data-public-shell="header"]) > div > a { font-size:22px; letter-spacing:.02em; }
+  :global(body):has(.page) :global([data-public-shell="header"]) button { display:none !important; }
+  :global(body):has(.page) :global([data-public-shell="header"]) a[href^="/program"] { min-height:40px; padding:0 24px; font-size:14px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) { padding:88px 24px 0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div { width:100%; display:block; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:first-child { margin-bottom:48px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:first-child > a { min-height:0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) { display:grid; grid-template-columns:1fr; gap:48px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) > div { gap:12px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) h2 { margin-bottom:6px; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:nth-child(2) a { min-height:0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:last-child { margin-top:72px; padding:24px 0; }
+  :global(body):has(.page) :global([data-public-shell="footer"]) > div > div:last-child a { min-height:0; }
 }
