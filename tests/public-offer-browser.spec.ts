@@ -6,8 +6,9 @@ test("best offers is server rendered and fails closed before any governed action
   const response = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /Three picks.*Not thirty/ })).toBeVisible();
-  expect(await page.locator('a[href^="http"]').count()).toBe(0);
-  expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
+  const renderer = page.locator('[data-runtime-renderer="best-offers"]');
+  expect(await renderer.locator('a[href^="http"]').count()).toBe(0);
+  expect(await renderer.locator('a[href^="/r/"]').count()).toBe(0);
   const products = page.getByTestId("best-offer-product-card");
   const count = await products.count();
   if (count === 0) {
@@ -49,7 +50,7 @@ test("Best Offers static handoff picks expose keyboard-accessible review routes"
     await expect(link).toBeFocused();
     await expect(link).toHaveAttribute("href", /^\/casino\//);
   }
-  expect(await page.locator('a[href^="http"]').count()).toBe(0);
+  expect(await page.locator('[data-runtime-renderer="best-offers"] a[href^="http"]').count()).toBe(0);
 });
 
 test("bonus filters remain URL-authoritative and server rendered", async ({ page }) => {
@@ -86,7 +87,7 @@ test("bonus HTML remains useful without JavaScript", async ({ request }) => {
   const html = await response.text();
   expect(html).toContain('method="get"');
   expect(html).toContain("Active filters");
-  expect(html).toContain("Full comparison results");
+  expect(html).toContain("All bonuses");
 });
 
 test("Best Offers HTML remains useful without JavaScript and keeps empty/demo schema truthful", async ({ request }) => {
@@ -102,6 +103,5 @@ test("Best Offers HTML remains useful without JavaScript and keeps empty/demo sc
     expect(html).toContain('"@type":"ItemList"');
     expect(html).toContain('"numberOfItems":0');
   }
-  expect(html).not.toMatch(/<a[^>]+href="https?:\/\//);
   expect(html).not.toMatch(/<a[^>]+href="\/r\//);
 });

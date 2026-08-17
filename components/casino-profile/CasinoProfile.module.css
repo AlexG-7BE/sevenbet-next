@@ -442,7 +442,7 @@
   .scoreVerdict > div > strong { font-size:64px; }
   .heroOfferSummary { align-items:stretch; flex-direction:column; }
   .heroOfferSummary .primaryAction,.heroOfferSummary .unavailableAction { width:100%; }
-  .heroMedia { order:-1; min-height:260px; margin:16px 0 0; border-radius:20px; }
+  .heroMedia { order:initial; min-height:330px; margin:16px 0 0; border-radius:20px; }
   .decisionBar { top:72px; margin:0 -16px; border-radius:0; }
   .decisionIdentity { display:none; }
   .section,.editorialSection { padding:68px 0; }

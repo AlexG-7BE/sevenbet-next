@@ -46,6 +46,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
   return <div className={styles.page} data-page-theme="dark" data-runtime-renderer="casinos">
     <CommercialSurfaceView surface="casinos" />
+    <p className="srOnly">Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>
     <ContextualComparison />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <section className={styles.hero}>

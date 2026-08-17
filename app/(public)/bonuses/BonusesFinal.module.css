@@ -42,4 +42,19 @@
 .method li { padding:24px 0; border-bottom:1px solid rgba(16,15,15,.14); display:grid; grid-template-columns:48px 1fr; }
 .method li span { color:#777500; font-family:var(--font-seven-serif); }
 .method li strong { text-transform:uppercase; }
-@media(max-width:760px){.hero{min-height:560px;padding:130px 24px 72px}.hero h1{font-size:50px}.calculator,.method{padding:72px 24px}.calculator>div,.method>div{grid-template-columns:1fr;gap:38px}.calculatorOutput{min-height:480px;padding:28px 22px}.gameWeights{grid-template-columns:1fr 1fr}.gameWeights label:last-child{grid-column:auto}.calculatorOutput dd{font-size:21px}}
+.method h2 em { color:#777500; font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
+.method li p { margin:5px 0 0; color:#64635c; font-size:14px; line-height:1.6; }
+.guideAction { min-height:48px; width:fit-content; margin-top:24px; padding:12px 28px; border:1px solid rgba(16,15,15,.3); border-radius:999px; display:inline-flex; align-items:center; color:#100f0f; font-size:14px; text-decoration:none; }
+@media(max-width:760px){
+  .hero{min-height:560px;padding:130px 24px 72px}
+  .hero h1{font-size:50px}
+  .calculator,.method{padding:72px 24px}
+  .calculator>div,.method>div{grid-template-columns:1fr;gap:38px}
+  .amountField input{border-radius:14px}
+  .gameWeights{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
+  .gameWeights label{flex:0 0 calc((100% - 16px)/3)}
+  .gameWeights label:last-child{grid-column:auto}
+  .calculatorOutput{min-height:480px;padding:28px 22px;border-radius:24px}
+  .calculatorOutput dd{font-size:21px}
+  .method li{grid-template-columns:32px 1fr;gap:8px}
+}

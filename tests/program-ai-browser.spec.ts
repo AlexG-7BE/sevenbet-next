@@ -648,6 +648,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await noHorizontalOverflow(page);
   const email = `program-ai-happy-${randomUUID()}@example.test`;
   const wrongUserEmail = `program-ai-wrong-${randomUUID()}@example.test`;
+  await page.getByRole("button", { name: "Use email instead" }).click();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();

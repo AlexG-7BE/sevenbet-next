@@ -85,7 +85,6 @@ const geometryRoutes = [
   { route: "/bonuses", selector: "[data-runtime-renderer='bonuses'] > section:first-of-type > div" },
   { route: "/faq", selector: "article > header > div" },
   { route: "/contact", selector: "[data-contact-page] > header > div" },
-  { route: "/program", selector: "[data-programme-presentation] > header" },
 ] as const;
 
 for (const viewport of [

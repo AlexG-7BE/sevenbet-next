@@ -132,15 +132,14 @@
 @media (max-width:600px) {
   .hero { min-height:0; }
   .heroInner { min-height:0; padding:70px 0 44px; }
-  .hero h1 { font-size:clamp(47px,13vw,60px); }
+  .hero h1 { font-size:clamp(54px,13vw,60px); }
   .heroCopy { font-size:16px; }
-  .heroStats { display:grid; grid-template-columns:1fr 1fr; }
-  .heroStats div:last-child { grid-column:1/-1; }
+  .heroStats { display:grid; grid-template-columns:1fr; gap:18px; }
   .heroTicker span:nth-child(2),.heroTicker span:nth-child(3) { display:none; }
   .topThree { padding:64px 0; }
   .sectionRule { font-size:10px; letter-spacing:.16em; }
   .featuredCopy,.altCopy { padding:26px 22px; }
-  .featuredMark,.altMark { min-height:190px; font-size:100px; }
+  .featuredMark,.altMark { min-height:260px; grid-row:auto; font-size:100px; }
   .rankLine > span,.altCopy .rankLine > span { font-size:44px; }
   .identity h3,.identity[data-size="large"] h3,.altCopy .identity h3 { font-size:23px; }
   .featuredCopy h4,.altCopy h4 { font-size:27px; }
@@ -154,4 +153,5 @@
   .faqGrid { width:var(--site-content-width); }
   .faq summary { min-height:86px; font-size:16px; }
   .finalOffer { padding:110px 24px 90px; }
+  .whyPicked h2 { font-style:italic; }
 }

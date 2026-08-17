@@ -76,21 +76,10 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
   const [legal, setLegal] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
-      <ProgrammeChrome />
-      <main className={styles.accessLayout}>
-        <section className={styles.accessIntro}>
-          <p className={styles.eyebrow}>Private · evidence-informed · user-controlled</p>
-          <h1>Start with what is happening <em>right now.</em></h1>
-          <p>Mission 01 turns one situation into a Starting Point before registration. No questionnaires and no commercial personalisation.</p>
-          <ul>
-            <li>Your words stay inside the Programme boundary.</li>
-            <li>Protected Help remains available throughout.</li>
-            <li>Nothing here labels or diagnoses you.</li>
-          </ul>
-        </section>
+      <main className={styles.accessState}>
+        <p className={styles.eyebrow}>Programme access</p>
+        <h1 id="programme-access-title">Two checks before you begin.</h1>
         <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
-          <p className={styles.eyebrow}>Programme access</p>
-          <h2 id="programme-access-title">Two checks before you begin.</h2>
           <label className={styles.checkRow}>
             <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
             <span>I confirm I am 18 or over <small>Required</small></span>
@@ -107,7 +96,6 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
           <Link className={styles.helpLink} href="/help">Protected Help / pause options →</Link>
         </section>
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }
@@ -118,6 +106,10 @@ function VoiceWave() {
 
 function MicrophoneIcon() {
   return <svg aria-hidden="true" fill="none" height="36" viewBox="0 0 24 24" width="36"><rect height="11" rx="3" stroke="currentColor" strokeWidth="1.8" width="6" x="9" y="3" /><path d="M5 11a7 7 0 0 0 14 0M12 18v3" stroke="currentColor" strokeLinecap="round" strokeWidth="1.8" /></svg>;
+}
+
+function GoogleIcon() {
+  return <svg aria-hidden="true" height="18" viewBox="0 0 24 24" width="18"><path d="M21.35 11.1H12v2.9h5.35c-.5 2.4-2.55 3.8-5.35 3.8a5.8 5.8 0 1 1 0-11.6c1.45 0 2.75.5 3.8 1.45l2.15-2.15A8.9 8.9 0 0 0 12 3a9 9 0 1 0 0 18c5.2 0 8.65-3.65 8.65-8.8 0-.35-.1-.75-.3-1.1z" fill="currentColor" /></svg>;
 }
 
 function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTranscribe, onUseTyped }: {
@@ -340,14 +332,17 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         <p className={styles.eyebrow}>Listening…</p>
         <VoiceWave />
         <p className={styles.recordingTime}>{elapsed} / 01:30</p>
+        <p className={styles.recordingTranscript}>Your editable transcript will appear here when you tap Done.</p>
         <strong className={styles.srOnly} role="status">Recording · {elapsed} / 01:30. Microphone is recording now.</strong>
         <div className={styles.voiceActions}><button aria-label="Stop recording" className={styles.lightAction} onClick={stop} type="button">Done</button><button aria-label="Cancel" className={styles.secondaryAction} onClick={cancel} type="button">Start over</button></div>
+      </> : state === "success" ? <>
+        <button aria-label="Record again" className={styles.typingAction} disabled={disabled} onClick={start} type="button">Record again</button>
+        <p className={styles.voiceMessage} role="status">Check the editable transcript below, then create your Starting Point.</p>
       </> : <>
-        <button aria-label={state === "success" ? "Record again" : blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak"} className={styles.microphoneAction} disabled={disabled || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
-        <strong className={styles.voiceLabel}>{state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : state === "success" ? "Transcript ready" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak"}</strong>
-        {state !== "success" ? <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">I&apos;d rather type</button> : null}
+        <button aria-label={blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak"} className={styles.microphoneAction} disabled={disabled || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
+        <strong className={styles.voiceLabel}>{state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak"}</strong>
+        <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">I&apos;d rather type</button>
       </>}
-      {state === "success" ? <p className={styles.voiceMessage} role="status">Check the editable transcript below, then create your Starting Point.</p> : null}
       {state === "error" ? <p className={styles.error} role="alert">{recordingError || "Voice transcription could not be completed."} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">Retry this recording</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
       {state === "unsupported" ? <p className={styles.error} role="alert">This browser cannot record audio with the features B4GAMBLE needs. <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
       {state === "denied" ? <p className={styles.error} role="alert">{blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available."} Nothing was recorded. <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
@@ -383,19 +378,19 @@ export function Mission01IntakeScreen({
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
   useEffect(() => setAuthority(authorityActive), [authorityActive]);
   const textVisible = inputMode === "text" || Boolean(situation);
+  const recording = recorderState === "recording";
   return (
-    <div className={styles.canvas} data-programme-presentation="mission-01-intake">
-      <ProgrammeChrome />
-      <main className={styles.intakeState}>
-        <section className={styles.intakeIntro}>
+    <div className={styles.canvas} data-programme-presentation="mission-01-intake" data-programme-presentation-state={recording ? "recording" : textVisible ? inputMode === "voice" ? "transcript" : "text-fallback" : "idle"}>
+      <main className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
+        {!recording && !textVisible ? <section className={styles.intakeIntro}>
           <p className={styles.eyebrow}>Mission 01</p>
           <span className={styles.srOnly}>Before you share.</span>
           <span className={styles.srOnly}>What feels hardest to control right now?</span>
           <h1>Tell us what is happening right now.</h1>
           <p>In your own words. A minute is plenty — we&apos;ll build your Starting Point from it.</p>
-        </section>
+        </section> : null}
         <Mission01VoiceControl disabled={busy || !authority} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
-        {textVisible ? <section className={styles.transcriptState} data-programme-presentation-state={inputMode === "voice" ? "transcript" : "text-fallback"}>
+        {textVisible ? <section className={styles.transcriptState} data-transcript-mode={inputMode === "voice" ? "transcript" : "text-fallback"}>
           <label>
             <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
             <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={6} value={situation} />
@@ -404,12 +399,11 @@ export function Mission01IntakeScreen({
           <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{busy ? "Preparing your Starting Point…" : "Create my Starting Point"}</button>
         </section> : null}
         <StatusMessage error={error} />
-        <aside className={styles.privacyBoundary}>
+        {!recording ? <aside className={styles.privacyBoundary}>
           <div><strong>Private by default.</strong><span>Your words are never used for offers or rankings. Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</span></div>
           <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I choose to share this for Programme personalisation and understand I can withdraw before saving.</span></label>
-        </aside>
+        </aside> : null}
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }
@@ -456,27 +450,23 @@ export function StartingPointReadyScreen({
   onLinkGoogle: () => void;
   onWithdraw: () => void;
 }) {
-  const [emailOpen, setEmailOpen] = useState(!googleAvailable || googleLinkRecovery);
+  const [emailOpen, setEmailOpen] = useState(googleLinkRecovery);
   const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   return (
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
-      <ProgrammeChrome />
       <main className={styles.readyState}>
-        <section className={styles.readyIntro}>
-          <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
-          <h1>A plan built around <em>your evenings.</em></h1>
-          <p>{googleLinkRecovery ? "Your confirmed Starting Point stays in this browser while you securely link the existing account." : "We made something useful before asking you to register. Save it only if you want to continue."}</p>
-        </section>
+        <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
+        <h1>A plan built around your evenings.</h1>
         <section className={styles.startingPointCard}>
-          <p>Your Starting Point</p>
-          <h2>{candidate.startingPoint}</h2>
-          <dl><div><dt>What changes next</dt><dd>{candidate.desiredChange}</dd></div><div><dt>Mission 02 continues here</dt><dd>{candidate.continuationCue}</dd></div></dl>
+          <p>{candidate.startingPoint}</p>
+          <span className={styles.srOnly}>What changes next: {candidate.desiredChange}. Mission 02 continues here: {candidate.continuationCue}</span>
         </section>
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
+          {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}
           {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle(mode)} type="button"><span aria-hidden="true">G</span>Continue with Google — save your plan</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle(mode)} type="button"><GoogleIcon />Continue with Google — save your plan</button> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
               <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
@@ -490,7 +480,6 @@ export function StartingPointReadyScreen({
           {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">Withdraw sensitive-input authority and clear this draft</button> : null}
         </section>
       </main>
-      <ProgrammeFootnote />
     </div>
   );
 }

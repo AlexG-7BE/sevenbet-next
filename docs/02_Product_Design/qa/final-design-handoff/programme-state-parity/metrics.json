@@ -1,0 +1,111 @@
+{
+  "renderer": "REAL_RUNTIME",
+  "thresholdPerChannel": 24,
+  "metrics": [
+    {
+      "name": "programme-access",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.017736,
+      "changedPixelRatio": 0.034116
+    },
+    {
+      "name": "programme-intake",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.01803,
+      "changedPixelRatio": 0.027906
+    },
+    {
+      "name": "programme-recording",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.005529,
+      "changedPixelRatio": 0.009292
+    },
+    {
+      "name": "programme-text",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.01769,
+      "changedPixelRatio": 0.03227
+    },
+    {
+      "name": "programme-registration",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.025351,
+      "changedPixelRatio": 0.042246
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 1440,
+      "canvasHeight": 1000,
+      "meanAbsoluteDifference": 0.053131,
+      "changedPixelRatio": 0.134735
+    },
+    {
+      "name": "programme-access",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.066332,
+      "changedPixelRatio": 0.121883
+    },
+    {
+      "name": "programme-intake",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.049429,
+      "changedPixelRatio": 0.072785
+    },
+    {
+      "name": "programme-recording",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.020388,
+      "changedPixelRatio": 0.037429
+    },
+    {
+      "name": "programme-text",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.07838,
+      "changedPixelRatio": 0.126063
+    },
+    {
+      "name": "programme-registration",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.110985,
+      "changedPixelRatio": 0.186244
+    },
+    {
+      "name": "programme-dashboard",
+      "width": 390,
+      "canvasHeight": 844,
+      "meanAbsoluteDifference": 0.028772,
+      "changedPixelRatio": 0.059801
+    },
+    {
+      "name": "best-offers",
+      "width": 390,
+      "canvasHeight": 10256,
+      "meanAbsoluteDifference": 0.223484,
+      "changedPixelRatio": 0.297209
+    },
+    {
+      "name": "casino-review",
+      "width": 390,
+      "canvasHeight": 11218,
+      "meanAbsoluteDifference": 0.320248,
+      "changedPixelRatio": 0.37666
+    },
+    {
+      "name": "bonuses",
+      "width": 390,
+      "canvasHeight": 9117,
+      "meanAbsoluteDifference": 0.232513,
+      "changedPixelRatio": 0.30771
+    }
+  ]
+}

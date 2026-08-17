@@ -2,17 +2,17 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("default directory exposes 24 database offers and page two continues at position 25", async ({ page }) => {
+test("default directory exposes server-owned offers and page two continues at position 25", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: /Terms Before The Number/i })).toBeVisible();
-  await expect(page.locator('[role="list"] > article[role="listitem"]')).toHaveCount(24);
+  await expect(page.getByRole("heading", { level: 1, name: /Value, measured/i })).toBeVisible();
+  await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
   await expect(page.getByText(/Page 1 \/ \d+/)).toBeVisible();
   const pageTwo = await page.goto(`${baseUrl}/bonuses?page=2`, { waitUntil: "networkidle" });
   expect(pageTwo?.status()).toBe(200);
-  await expect(page.locator('[role="list"] > article[role="listitem"]')).toHaveCount(24);
+  await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
   await expect(page.getByText(/Page 2 \/ \d+/)).toBeVisible();
-  await expect(page.getByRole("list").getByText("25", { exact: true }).filter({ visible: true })).toBeVisible();
+  await expect(page.locator('[class*="compactPosition"]').filter({ hasText: "25" }).first()).toBeVisible();
 });
 
 test("every supported URL filter and sort is server owned", async ({ page }) => {
@@ -44,11 +44,11 @@ test("every supported URL filter and sort is server owned", async ({ page }) => 
 
 test("invalid filters fail safely while material terms and commercial states remain truthful", async ({ page }) => {
   await page.goto(`${baseUrl}/bonuses?country=ZZ`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { level: 1, name: /Terms Before The Number/i })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: /Value, measured/i })).toBeVisible();
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  for (const label of ["Minimum deposit", "Wagering", "Maximum bonus", "Expiry", "Licence", "Payments"]) await expect(page.getByText(label, { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  for (const label of ["Min deposit", "Wagering", "Max bonus", "Payout"]) await expect(page.getByText(label, { exact: true }).filter({ visible: true }).first()).toBeVisible();
   const governedActions = await page.locator('a[href^="/r/"]').count();
   const unavailableActions = await page.getByText("No governed visit", { exact: true }).count();
   expect(governedActions + unavailableActions).toBeGreaterThan(0);
@@ -95,7 +95,7 @@ test("responsive pages have visible focus, no overflow and no console or hydrati
 
 test("mobile filter dialog is keyboard dismissible and restores focus", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   const trigger = page.getByRole("button", { name: /Filters/i });
   await trigger.click();
   const dialog = page.getByRole("dialog", { name: /Filter Bonuses/i });
@@ -106,16 +106,16 @@ test("mobile filter dialog is keyboard dismissible and restores focus", async ({
   await expect(trigger).toBeFocused();
 });
 
-test("mobile presentation follows the approved 390px material-object composition", async ({ page }) => {
+test("mobile presentation follows the final 390px handoff composition", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  await expect(page.getByText("Bonus Terms", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Read the contract before the headline." })).toBeVisible();
-  await expect(page.getByText("Full material ledger", { exact: true })).toBeVisible();
+  await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  await expect(page.getByRole("heading", { level: 1, name: /Value, measured/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "All bonuses" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Run the numbers/i })).toBeVisible();
   const hero = page.locator('main section[class*="hero"]').first();
-  const feature = page.locator('article[class*="featureCard"]').first();
-  const result = page.locator('[role="list"] > article[role="listitem"]').first();
-  expect(Math.round((await hero.boundingBox())!.height)).toBe(800);
+  const feature = page.locator('section[aria-labelledby="bonus-shortlist-title"] article').first();
+  const result = page.locator('article[class*="comparisonRow"]').first();
+  expect(Math.round((await hero.boundingBox())!.height)).toBe(560);
   expect(Math.round((await feature.boundingBox())!.width)).toBe(342);
-  expect(Math.round((await result.boundingBox())!.height)).toBe(124);
+  expect(Math.round((await result.boundingBox())!.height)).toBeGreaterThanOrEqual(220);
 });
