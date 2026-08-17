@@ -132,7 +132,7 @@ export function ContextualComparison() {
     <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
       <div className={styles.sheet}>
         <header>
-          <div><h2 id="comparison-title">Side by side</h2><span>Same test cycle for every casino</span></div>
+          <div><h2 id="comparison-title">Side by side</h2><span>Same evidence fields for every casino</span></div>
           <button aria-label="Close comparison" onClick={() => setOpen(false)} type="button"><span aria-hidden="true">×</span></button>
         </header>
         {loading ? <p className={styles.state} role="status">Building the comparison…</p> : (result?.status === "available" || result?.status === "no-comparable") && names.length ? <div className={styles.comparisonCards}>

@@ -446,7 +446,7 @@ export function StartingPointReadyScreen({
         <h1>A plan built around your evenings.</h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
-          <span className={styles.srOnly}>What changes next: {candidate.desiredChange}. Mission 02 continues here: {candidate.continuationCue}</span>
+          <span className={styles.srOnly}>What changes next: {candidate.desiredChange.replace(/[.!?]+$/, "")}. Mission 02 continues here: {candidate.continuationCue.replace(/[.!?]+$/, "")}.</span>
         </section>
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}

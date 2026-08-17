@@ -28,7 +28,7 @@ export default function ContactPage() {
         <div className={styles.shell}>
           <p className={styles.eyebrow}><span aria-hidden="true" />Contact</p>
           <h1>Talk <em>to us.</em></h1>
-          <p className={styles.heroCopy}>A human answers within 24 hours, usually faster. Corrections, questions, disagreements — all welcome.</p>
+          <p className={styles.heroCopy}>Corrections, questions and disagreements are welcome. We&apos;ll reply when the team has reviewed your message.</p>
         </div>
       </header>
 
@@ -38,9 +38,9 @@ export default function ContactPage() {
           <aside className={styles.context}>
             <p className={styles.routesLabel}>Other ways to reach us</p>
             <section className={styles.contextBlock} aria-labelledby="direct-contact-title"><h2 id="direct-contact-title">Email</h2><a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a></section>
-            <section className={styles.contextBlock}><h2>Corrections</h2><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; — these go to the editorial desk and ship within 48 hours.</p></section>
+            <section className={styles.contextBlock}><h2>Corrections</h2><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; so the editorial team can review and date any published change.</p></section>
             <section className={styles.helpBlock} aria-labelledby="gambling-help-title"><h2 id="gambling-help-title">Need support, not customer service?</h2><p>Protected Help is commercial-free and confidential.</p><Link className={styles.helpAction} href="/help">Open Help →</Link></section>
-            <section className={styles.contextBlock}><h2>Response time</h2><p>Within 24 hours, usually faster. Weekends included.</p></section>
+            <section className={styles.contextBlock}><h2>Response time</h2><p>Response times vary. If you need immediate gambling support, use Protected Help and its independent support routes.</p></section>
           </aside>
 
           <noscript>

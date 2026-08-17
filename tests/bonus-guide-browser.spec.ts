@@ -17,10 +17,11 @@ test("Bonus Guide renders the approved editorial contract with truthful evidence
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Wagering requirements,\s*explained with real numbers\./i);
   await expect(page.locator('[data-handoff-page="article"]')).toHaveCount(1);
-  await expect(page.getByText("Not sponsored · real-money tested")).toBeVisible();
+  await expect(page.getByText("Educational examples · not current offers")).toBeVisible();
+  await expect(page.getByRole("note")).toContainText("Current GB rule");
   await expect(page.getByText("Bonus received")).toBeVisible();
   await expect(page.getByText("€200", { exact: true })).toBeVisible();
-  await expect(page.getByText("Reviewed by two editors · sources on request")).toBeVisible();
+  await expect(page.getByText("Educational examples · current primary sources linked")).toBeVisible();
   expect(errors).toEqual([]);
 });
 
@@ -29,7 +30,7 @@ test("the supplied guide links and Programme transition are mapped exactly", asy
   await expect(page.getByRole("link", { name: "All guides →" })).toHaveAttribute("href", "/learn");
   await expect(page.getByRole("link", { name: "Start Programme" }).last()).toHaveAttribute("href", "/program");
   await expect(page.getByRole("link", { name: "Open Help — no offers there →" })).toHaveAttribute("href", "/help");
-  await expect(page.getByRole("link", { name: "How we test →" })).toHaveAttribute("href", "/methodology");
+  await expect(page.getByRole("link", { name: "How ranking works →" })).toHaveAttribute("href", "/methodology");
   await expect(page.locator('[data-handoff-page="article"] a[href^="/r/"], [data-handoff-page="article"] a[href^="/go/"]')).toHaveCount(0);
   await expect(page.locator('[data-handoff-page="article"] a[href="/tools/budget-calculator"]')).toHaveCount(0);
 });
@@ -37,7 +38,7 @@ test("the supplied guide links and Programme transition are mapped exactly", asy
 test("the supplied visual guide index is complete and its Help action is keyboard reachable", async ({ page }) => {
   await page.goto(`${baseUrl}/bonus-guide`, { waitUntil: "networkidle" });
   const toc = page.locator('[data-handoff-page="article"] [data-mob="toc"]');
-  for (const label of ["What 35x really means", "The maths on a real offer", "Game weighting — the quiet tax", "When smaller wins", "The checklist"]) {
+  for (const label of ["The hypothetical 35x example", "Comparing fictional examples", "Game weighting", "Comparing turnover", "The checklist"]) {
     await expect(toc).toContainText(label);
   }
   const help = toc.locator('a[href="/help"]');
@@ -51,7 +52,7 @@ test("the complete article and transition remain usable without JavaScript", asy
   const response = await page.goto(`${baseUrl}/bonus-guide`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "What 35x really means" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "The hypothetical 35x example" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Start Programme" }).last()).toHaveAttribute("href", "/program");
   await expect(page.locator('[data-handoff-page="article"] a[href="/help"]').filter({ hasText: "Open Help" })).toHaveCount(1);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);

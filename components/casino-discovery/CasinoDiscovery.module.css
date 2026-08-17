@@ -94,6 +94,15 @@
 .filterActions > a, .filterActions > button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 26px; border: 1px solid var(--white); border-radius: 4px; font-size: 14px; font-weight: 750; text-transform: uppercase; }
 .filterActions > button { min-width: 190px; border-color: var(--acid); background: var(--acid); color: var(--ink); cursor: pointer; }
 .mobileControls, .noScriptFilters { display: none; }
+.noScriptFilters { margin-top: 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--white); }
+.noScriptFilters > summary { min-height: 48px; display: flex; align-items: center; padding: 0 18px; cursor: pointer; font-size: 14px; font-weight: 750; }
+.noScriptFilters .mobileFilterForm { padding: 0 18px 18px; }
+.noScriptFilters .mobileFilterForm .filterActions { position: static; width: auto; min-height: 82px; margin: 18px -18px -18px; }
+
+@media (scripting: none) {
+  .noScriptFilters { display: block; }
+  .noScriptFilters .mobileFilterForm .filterActions { display: flex; }
+}
 
 .activeFilters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 18px; }
 .activeFilters > a:not(.clearAll) { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; padding: 7px 12px; border: 1px solid var(--line); border-radius: var(--sb-radius-full); background: var(--acid); font-size: 14px; font-weight: 750; }
@@ -364,10 +373,11 @@
   .searchForm input { font-size:16px; }
   .sortForm { order:3; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:8px; }
   .sortForm label { min-width:0; min-height:48px; padding:6px 12px; border-color:var(--line); }
+  .sortForm select { min-height:44px; font-size:16px; }
   .sortForm button { grid-column:1/-1; min-height:44px; }
   .activeCount,.desktopFilters { display:none; }
   .mobileControls { order:2; display:block; }
-  .noScriptFilters { display:block; margin-top:10px; }
+  .noScriptFilters { margin-top:10px; }
   .noScriptFilters summary { min-height:48px; display:flex; align-items:center; padding:0 16px; border:1px solid var(--line); border-radius:999px; background:var(--acid-soft); font-size:14px; font-weight:750; }
   .activeFilters { margin-top:12px; }
   .results { margin-top:28px; }
@@ -383,7 +393,7 @@
   .casinoCard .description { min-height:0; margin:0; }
   .casinoCard .offerBlock > strong { font-size:16px; }
   .casinoCard .offerBlock > p,.casinoCard .offerBlock > small { overflow-wrap:anywhere; }
-  .casinoCard .commission { margin:0; font-size:12px; }
+  .casinoCard .commission { margin:0; font-size:14px; }
   .casinoCard .unavailable { margin:0; }
   .casinoCard .cardActions { display:grid; grid-template-columns:1fr; gap:8px; }
   .casinoCard .cardActions a,.casinoCard .cardActions button { width:100%; min-width:0; min-height:44px; padding:10px 14px; border:1px solid var(--ink); border-radius:999px; text-align:center; }

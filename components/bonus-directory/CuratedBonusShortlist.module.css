@@ -24,7 +24,7 @@
 .cards dl div { padding:7px 0; display:flex; justify-content:space-between; gap:16px; font-size:14px; line-height:20px; }
 .cards dd { margin:0; font-weight:650; }
 .cards article > p { margin:0; padding:16px 32px; color:var(--muted); font-size:14px; line-height:21px; border-top:1px solid rgba(16,15,15,.1); }
-.demo { padding:0 32px; color:var(--muted); font-size:12px; line-height:18px; }
+.demo { padding:0 32px; color:var(--muted); font-size:14px; line-height:20px; }
 .actions { margin-top:auto; padding:18px 24px; display:flex; align-items:center; flex-wrap:wrap; gap:12px; border-top:1px solid rgba(16,15,15,.1); }
 .action,.unavailable,.actions a { min-height:44px; padding:11px 18px; border:0; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:inherit; font:650 14px/20px inherit; }
 .actions :global(.commercialOutboundPrimary).action { border-color:var(--red); background:var(--red); color:var(--paper); cursor:pointer; text-decoration:none; }

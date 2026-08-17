@@ -446,7 +446,7 @@
 }
 
 @media (max-width: 420px) {
-  .mobilePrimaryAction { padding-inline: 10px; font-size:13px; }
+  .mobilePrimaryAction { padding-inline: 10px; font-size:14px; }
   .availabilityActions .primaryAction { min-width: 0; }
 }
 
@@ -459,8 +459,8 @@
 @media (max-width:340px) {
   .headerInner { width:calc(100% - 24px); }
   .brand { font-size:18px; line-height:20px; }
-  .mobilePrimaryAction { padding-inline:6px; font-size:12px; }
-  .menuButton { font-size:13px; }
+  .mobilePrimaryAction { padding-inline:6px; font-size:14px; }
+  .menuButton { font-size:14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

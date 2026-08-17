@@ -44,6 +44,6 @@ export function CuratedBonusShortlist({ offers }: { offers: PublicOfferDTO[] }) 
       {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>DEMONSTRATION DATA · FICTIONAL RECORD</b> : null}
       <div className={styles.actions}><Action offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link></div>
     </article>)}</div>}
-    {top.length ? <aside className={styles.method}><strong>How we rank bonuses</strong><span>Net value after wagering, not headline size</span><span>Only casinos that passed our real-money tests</span><Link href="/bonus-guide">Bonus guide →</Link></aside> : null}
+    {top.length ? <aside className={styles.method}><strong>How we rank bonuses</strong><span>Net value after wagering, not headline size</span><span>Current evidence, terms and source status disclosed</span><Link href="/bonus-guide">Bonus guide →</Link></aside> : null}
   </div></section>;
 }

@@ -56,7 +56,7 @@
   outline: none;
   background: var(--sb-surface-paper);
   color: var(--sb-text-ink);
-  font: 400 14px var(--font-seven-sans), Arial, sans-serif;
+  font: 400 15px var(--font-seven-sans), Arial, sans-serif;
 }
 .field textarea { resize: vertical; }
 .field input:focus-visible,

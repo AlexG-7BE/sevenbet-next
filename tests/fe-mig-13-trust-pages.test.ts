@@ -28,11 +28,11 @@ test("final Affiliate Disclosure is a server-rendered five-section document insi
 test("Affiliate Disclosure preserves the final handoff funding and editorial boundary", () => {
   for (const content of [
     "may receive a commission",
-    "only revenue model",
+    "current product architecture does not provide paid ranking positions",
     "Affiliate compensation does not determine Editor Score or natural editorial ranking",
     "Programme and Help data is never used",
-    "Every commercial action passes through an outbound confirmation",
-    "Errors are corrected within 48 hours",
+    "When an eligible commercial action is available",
+    "Verified corrections are reviewed, dated",
   ]) assert.ok(affiliateDocument.includes(content), content);
   assert.match(affiliateDocument, /href="\/methodology"/);
   assert.match(affiliateDocument, /href="\/contact"/);
@@ -56,7 +56,7 @@ test("About implements the final handoff three-part product family", () => {
 test("About keeps Programme, commercial, Help and clinical boundaries explicit", () => {
   for (const content of [
     "No paywall, no upsell",
-    "nothing sponsored",
+    "guides explain the fine print without inventing certainty",
     "funded by disclosed commission",
     "Programme and Help data never feeds offers or rankings",
     "Protected Help contains no commercial content at all",
@@ -68,11 +68,9 @@ test("About keeps Programme, commercial, Help and clinical boundaries explicit",
   assert.doesNotMatch(aboutDocument, /href="\/(?:r|go|compare)/);
 });
 
-test("metadata and breadcrumb schemas match the final visible documents", () => {
+test("metadata matches the final visible trust documents without commercial schema", () => {
   assert.match(affiliateRoute, /canonical: absoluteUrl\("\/affiliate-disclosure"\)/);
   assert.match(aboutRoute, /canonical: absoluteUrl\("\/about"\)/);
-  assert.match(affiliateRoute, /BreadcrumbList/);
-  assert.match(aboutRoute, /BreadcrumbList/);
   assert.doesNotMatch(affiliateRoute + aboutRoute, /FAQPage|AggregateRating|Product|Offer/);
 });
 

@@ -1,5 +1,13 @@
 # Project State
 
+## FINAL PRE-PRODUCTION READINESS audit addendum — 2026-08-18
+
+- **Detected:** Draft PR #76 received a full route/state/responsive/product audit on `codex/final-design-handoff-v1`. The pass remediates all product/code P0/P1 defects it found: unsupported public claims, stale/dead Learn content and search state, outdated Bonus Guide GB framing/mobile table, demo Compare/action affordances, OAuth automatic double-redeem, casino no-JavaScript filter submission, bonus functional readability and unsupported Contact SLAs. A fresh screenshot review additionally found and fixed the 1024px casino-profile badge/disclosure collision.
+- **Detected:** current real dynamic routes retain their actual runtime renderers. Best Offers, Casinos, Casino Review, Bonuses, comparison and Programme do not use `HandoffPage` as a dynamic bypass. The release-focused real-runtime browser suite passes 10/10; quality, build, typography, build-secret, link, visual-accessibility, geometry and focused UX/no-JavaScript gates pass. Evidence is under `docs/02_Product_Design/qa/production-readiness/final-rc/` and the full ledger is in `FINAL-PRODUCTION-READINESS-AUDIT.md`.
+- **Detected:** Google is visible as the primary Starting Point continuation and returning-user Login action. Real initiation reaches Google, but the existing Preview OAuth client returns `redirect_uri_mismatch`. End-to-end callback, exact-once claim, real Dashboard and Mission 02 continuation are therefore **not verified** on this Preview.
+- **Detected:** Production remained unchanged. No merge, ready-for-review transition, Production deploy/configuration, database, DNS, OAuth-client or secret mutation is part of this pass.
+- **Not RC ready:** one external P0 and four P1 release gates remain: Preview Google redirect registration; exact deployed Programme migration/Cron/load/multi-instance/monitoring/durable-age evidence; approved pooled Prisma runtime evidence; external legal/privacy launch evidence; and real commercial partner authority. Final exact-commit SHA, remote CI and immutable Preview are recorded after the scoped push. Founder decisions are still required for every external mutation, merge and Production release.
+
 ## FINAL-DESIGN-HANDOFF-01 branch addendum — 2026-08-17
 
 - **Detected:** RFC-034 is implemented on branch `codex/final-design-handoff-v1` in Draft PR #76. The supplied v1.2 handoff is the public presentation/IA authority while Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data services remain the functional authority.

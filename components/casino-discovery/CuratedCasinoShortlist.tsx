@@ -51,10 +51,10 @@ export function CuratedCasinoShortlist({ casinos }: { casinos: PublicCasinoCardD
             <div><dt>Min deposit</dt><dd>{minimumDeposit(casino)}</dd></div>
           </dl>
           <p className={styles.reason}>{casino.shortDescription || "Read the evidence, material terms and availability before deciding."}</p>
-          <div className={styles.actions}><Visit casino={casino} /><Link href={`/casino/${casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /></div>
+          <div className={styles.actions}><Visit casino={casino} /><Link href={`/casino/${casino.slug}`}>Review</Link>{casino.dataClassification !== "DEMO_FIXTURE" ? <ContextualCompareToggle casinoName={casino.name} casinoSlug={casino.slug} /> : null}</div>
         </article>)}
       </div>}
-      {top.length ? <div className={styles.why}><strong>Why these three?</strong><span>Same real-money test cycle for every casino</span><span>Ranked by results in this use-case, not headline size</span><Link href="/methodology">Methodology →</Link></div> : null}
+      {top.length ? <div className={styles.why}><strong>Why these three?</strong><span>Current evidence and limitations remain visible</span><span>Ranked under this use-case, not by headline size</span><Link href="/methodology">Methodology →</Link></div> : null}
     </div>
   </section>;
 }

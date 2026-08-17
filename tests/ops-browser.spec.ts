@@ -53,7 +53,7 @@ test("retired standalone control tools consolidate into Responsible Gambling", a
 test("FAQ disclosures remain native and keyboard operable", async ({ page }) => {
   await open(page, "/faq");
   const summary = page.locator("summary").filter({ hasText: "What is B4GAMBLE?" });
-  const answer = page.getByText(/Three things in one product/);
+  const answer = page.getByText(/Three connected areas/);
   await expect(answer).toBeVisible();
   await summary.focus();
   await page.keyboard.press("Enter");

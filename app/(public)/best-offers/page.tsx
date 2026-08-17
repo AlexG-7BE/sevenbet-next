@@ -50,6 +50,23 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const raw = await searchParams;
   const result = withHandoffOfferData(await loadBestOffersPageData(), isLocalHandoffVisualDataFixture(raw.visualFixture));
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
+  const demoOnly = result.inventoryMode === "DEMO_ONLY";
+  const hero = demoOnly ? {
+    copy: "Fictional records demonstrate ranking and material-term presentation. No current promotion, partner relationship, real-money test or claim action is represented.",
+    kicker: "Fictional product demonstration",
+    stats: [[String(result.records.length), "fictional records"], ["0", "live offers"], ["0", "claim actions"]],
+    ticker: ["Fictional records only", "Material terms shown before action", "Availability fails closed"],
+  } : containsDemo ? {
+    copy: "Published records and explicitly labelled fictional demonstrations remain separate. Only governed, eligible records can expose a commercial action.",
+    kicker: "Mixed inventory · source labelled",
+    stats: [[String(result.records.length), "labelled records"], ["GB", "current scope"], ["0", "inferred actions"]],
+    ticker: ["Source status shown", "Material terms shown before action", "Availability fails closed"],
+  } : {
+    copy: "A current eligible shortlist ranked from published records, with material terms and commercial availability shown before action.",
+    kicker: "Current eligible shortlist",
+    stats: [[String(result.records.length), "eligible records"], ["GB", "current scope"], ["0", "inferred actions"]],
+    ticker: ["Published records only", "Material terms shown before action", "Availability fails closed"],
+  };
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -69,11 +86,11 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
     <ContextualComparison />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero} data-nav-theme="dark"><div className={`${styles.shell} ${styles.heroInner}`}>
-      <p className={styles.kicker}>✓ &nbsp; Researched &amp; verified</p>
+      <p className={styles.kicker}>✓ &nbsp; {hero.kicker}</p>
       <h1><span>Three picks.</span><em>Not thirty.</em></h1>
-      <p className={styles.heroCopy}>Independent reviews and real-money testing — ranked by what you actually keep, not by headline size.</p>
-      <div className={styles.heroStats}><div><strong>50+</strong><span>casinos researched</span></div><div><strong>200+</strong><span>hours of testing</span></div><div><strong>100%</strong><span>independent &amp; transparent</span></div></div>
-      <div className={styles.heroTicker}><span>Tested with real money — our own</span><span>Terms shown before every CTA</span><span>Updated from current data</span><Link href="/methodology">How we test →</Link></div>
+      <p className={styles.heroCopy}>{hero.copy}</p>
+      <div className={styles.heroStats}>{hero.stats.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
+      <div className={styles.heroTicker}>{hero.ticker.map((item) => <span key={item}>{item}</span>)}<Link href="/methodology">How ranking works →</Link></div>
     </div></section>
     {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>DEMONSTRATION DATA.</strong> Every fictional record is a product demonstration, not a current GB promotion, partner offer or claimable bonus. No commercial visit is available.</p></div></section> : null}
     {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} shortlist={result.records} /> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible records"}</p><h2>{result.status === "unavailable" ? "The comparison could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current record has both GB availability and every required material term. B4GAMBLE does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}

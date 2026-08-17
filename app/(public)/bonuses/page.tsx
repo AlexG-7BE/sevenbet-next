@@ -95,7 +95,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <h1>Value, measured<em>by terms.</em></h1>
         <p>A big headline means nothing after wagering. We rank bonuses by realistic net value — deposits, playthrough and expiry included.</p>
       </div>
-      <div className={finalStyles.heroMeta}><span>Terms read line by line</span><span>No guaranteed-money claims, ever</span><span>Updated 12 Aug 2026</span></div>
+      <div className={finalStyles.heroMeta}><span>Material terms shown first</span><span>No guaranteed-money claims</span><span>Source status kept visible</span></div>
     </section>
 
     {result.inventoryMode !== "UNAVAILABLE" ? <CuratedBonusShortlist offers={result.records} /> : null}

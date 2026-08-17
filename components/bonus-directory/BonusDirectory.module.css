@@ -113,7 +113,7 @@
 .page .offerActionCompact { color: var(--white); }
 .actionUnavailableCompact { border-color: var(--line); background: #e6e4da; color: var(--metal); }
 .pagination { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 18px; margin-top: 28px; }
-.pagination > a, .pagination > span { min-height: 48px; display: inline-flex; align-items: center; padding: 0 18px; border: 1px solid var(--ink); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.pagination > a, .pagination > span { min-height: 48px; display: inline-flex; align-items: center; padding: 0 18px; border: 1px solid var(--ink); font-size: 14px; font-weight: 800; text-transform: uppercase; }
 .pagination > :last-child { justify-self: end; }
 .pagination > span { color: var(--metal); border-color: var(--line); }
 .pagination div { display: grid; gap: 4px; text-align: center; }
@@ -121,7 +121,7 @@
 .empty { padding: 56px; border: 1px solid var(--ink); background: var(--field); }
 .empty h2 { max-width: 780px; margin: 14px 0; font-size: clamp(38px, 5vw, 70px); line-height: .92; letter-spacing: -.05em; text-transform: uppercase; }
 .empty p { max-width: 680px; color: var(--metal); line-height: 1.55; }
-.empty a { min-height: 48px; display: inline-flex; align-items: center; margin-top: 12px; padding: 0 22px; background: var(--night); color: var(--white); font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.empty a { min-height: 48px; display: inline-flex; align-items: center; margin-top: 12px; padding: 0 22px; background: var(--night); color: var(--white); font-size: 14px; font-weight: 800; text-transform: uppercase; }
 
 .contractSection { padding: 52px 0 54px; background: var(--acid); }
 .contractHeading { width: min(1296px, calc(100% - 96px)); margin: auto; }
@@ -176,7 +176,7 @@
 .disclosure .shell { display: grid; grid-template-columns: 220px 1fr auto; align-items: center; gap: 30px; }
 .disclosure strong { color: var(--acid); font-size: 12px; text-transform: uppercase; }
 .disclosure p { margin: 0; color: #c5c3bb; font-size: 12px; line-height: 1.5; }
-.disclosure a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; font-size: 12px; font-weight: 750; }
+.disclosure a { min-height: 44px; display: inline-flex; align-items: center; text-decoration: underline; font-size: 14px; font-weight: 750; }
 
 .page :is(a, button, input, select, summary):focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
 .hero :is(a, button):focus-visible, .disclosure :is(a, button):focus-visible { outline-color: var(--acid); }
@@ -236,7 +236,7 @@
   .featureActions { grid-template-columns:1fr; gap:8px; padding-top:20px; }
   .featureActions a, .featureActions .offerAction, .featureActions .actionUnavailable { width:100%; min-height:44px; justify-content:center; padding:10px 14px; border:1px solid currentColor; background:transparent; color:var(--teal); font-size:14px; line-height:19px; text-align:center; }
   .featureCardPrimary .featureActions a { color: var(--acid); }
-  .featureCardPrimary .featureActions .offerAction, .featureCardPrimary .featureActions .actionUnavailable { color: var(--paper); font-size: 12px; }
+  .featureCardPrimary .featureActions .offerAction, .featureCardPrimary .featureActions .actionUnavailable { color: var(--paper); font-size: 14px; }
 
   .controlsIntro { display: block; margin: 0 0 18px; }
   .controlsIntro .eyebrow { font-size: 10px; line-height: 12px; }
@@ -281,7 +281,7 @@
   .mobileResultTerms span { min-width: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 800; line-height: 18px; }
   .mobileResultEvidence { grid-area: evidence; min-width: 0; margin: 0; align-self: center; overflow-wrap: anywhere; color: var(--metal); font-size: 12px; line-height: 16px; }
   .mobileMaterialResultFeatured .mobileResultEvidence { color: var(--white); }
-  .mobileReviewAction { grid-area: action; min-width: 88px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; align-self: end; padding: 8px 12px; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 12px; font-weight: 800; line-height: 16px; text-transform: uppercase; }
+  .mobileReviewAction { grid-area: action; min-width: 88px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; align-self: end; padding: 8px 12px; border-radius: 22px; background: var(--night); color: var(--white) !important; font-size: 14px; font-weight: 800; line-height: 18px; text-transform: uppercase; }
   .mobileMaterialResultFeatured .mobileReviewAction { background: var(--acid); color: var(--ink) !important; }
   .reviewSeparationNote { min-height: 96px; display: block; margin-top: 10px; padding: 16px; border-radius: 10px; background: var(--night); color: var(--white); }
   .reviewSeparationNote strong { color: var(--acid); font-size: 13px; line-height: 18px; text-transform: uppercase; }

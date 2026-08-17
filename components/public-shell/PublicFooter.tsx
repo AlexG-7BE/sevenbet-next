@@ -15,7 +15,7 @@ export function PublicFooter() {
         <div className={styles.footerColumns}>
           <div className={styles.footerLead}>
             <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
-            <p>Independent reviews. Real tests.<br />Player first.</p>
+            <p>Evidence-led reviews. Material terms shown.<br />Player first.</p>
           </div>
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>

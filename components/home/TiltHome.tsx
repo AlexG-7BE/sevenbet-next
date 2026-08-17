@@ -60,7 +60,7 @@ export function TiltHome() {
           <h1 id="home-title"><strong>CONTROL</strong><em>starts here.</em></h1>
           <p>Keep gambling your decision, not a habit: ten short missions help you see your patterns and set limits that actually hold. Free and private.</p>
           <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
-          <span className={styles.heroProof}>10 missions · 5–15 minutes each · Free — no paywall inside, ever · Your words never price anything</span>
+          <span className={styles.heroProof}>10 missions · 5–15 minutes each · Current Programme has no paywall · Your words do not feed offers or rankings</span>
         </div>
         <a className={styles.scrollCue} href="#programme" aria-label="Scroll to the programme"><span /></a>
       </section>
@@ -88,7 +88,7 @@ export function TiltHome() {
           <div className={styles.programmeFacts}>
             <div><strong>10</strong><span>missions</span></div>
             <div><strong>~2</strong><span>weeks, your pace</span></div>
-            <div><strong>Free</strong><span>now and always</span></div>
+            <div><strong>Free</strong><span>in the current Programme</span></div>
           </div>
         </div>
       </section>
@@ -135,8 +135,8 @@ export function TiltHome() {
       <section className={styles.trustBoundary} data-home-section="trust-boundary" data-nav-theme="cream" aria-labelledby="trust-boundary-title">
         <div><span>WHY TRUST B4GAMBLE</span><h2 id="trust-boundary-title"><strong>Two businesses.</strong><em>One wall between them.</em></h2></div>
         <div className={styles.trustColumns}>
-          <article><span>THE PROGRAMME</span><h3>Private by design.</h3><p>Free — no paywall, no upsell inside missions, ever.<br />Your words never feed offers, rankings or ads.<br />Delete everything, any time, in one action.</p></article>
-          <article><span>THE REVIEWS</span><h3>Independent by design.</h3><p>Tested with real money — our own.<br />Funded by commission, never shaped by it.<br />Every commercial link disclosed.</p></article>
+          <article><span>THE PROGRAMME</span><h3>Private by design.</h3><p>The current Programme has no paywall or commercial upsell inside missions.<br />Your words never feed offers, rankings or ads.<br />Export and deletion requests are handled under the Privacy policy.</p></article>
+          <article><span>THE REVIEWS</span><h3>Independent by design.</h3><p>Evidence, dates and limitations disclosed.<br />Affiliate compensation does not determine Editor Score or natural editorial ranking.<br />Commercial actions stay clearly identified.</p></article>
         </div>
       </section>
 

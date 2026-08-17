@@ -183,7 +183,7 @@ export function ContactForm() {
         <button className={styles.submit} disabled={submissionState === "submitting"} type="submit">
           {submissionState === "submitting" ? "Sending…" : "Send message"}
         </button>
-        <p className={styles.note}>We never share your details, and contact messages never feed offers or rankings.</p>
+        <p className={styles.note}>Contact details are used to handle your enquiry and protect the form from abuse. Messages do not feed offers or rankings.</p>
       </form>
     </div>
   );

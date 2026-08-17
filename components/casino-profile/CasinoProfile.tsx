@@ -107,7 +107,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             {withdrawal ? <Signal>{demo ? "FICTIONAL WITHDRAWAL FIELD" : `${withdrawal.toUpperCase()} WITHDRAWALS`}</Signal> : null}
           </div>
           {bonus ? <div className={styles.heroOfferSummary}><div><span>WELCOME OFFER</span><strong>{profileOfferHeadline(bonus)}</strong><small>{[bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal].filter(Boolean).join(" · ")}</small></div>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</div> : null}
-          <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : "18+ · Terms apply · We may earn commission — rankings stay independent."}</p>
+          <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : "18+ · Terms apply · We may earn commission. Affiliate compensation does not determine Editor Score or natural editorial ranking."}</p>
         </div>
 
         <aside aria-label={casino.media.hero ? `${casino.name} media` : "Operator media unavailable"} className={styles.heroMedia}>
@@ -125,7 +125,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         <div className={`${styles.sectionHeading} ${styles.overviewHeading}`}>
           <p>THE 30-SECOND CHECK</p>
           <h2 id="overview-heading">The 30-second check</h2>
-          <span>Everything material, before the details</span>
+          <span>Key published fields, before the details</span>
         </div>
         <div className={styles.overviewGrid}>
           <section className={styles.checkCard}><h3>Best for</h3><ul>{casino.pros.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
@@ -135,7 +135,7 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             <div><dt>Founded</dt><dd>{casino.foundedYear ?? "Not listed"}</dd></div>
             <div><dt>Licence</dt><dd>{licence?.authority ?? "Not listed"}</dd></div>
             <div><dt>Games</dt><dd>{publishedGameCount ? `${new Intl.NumberFormat("en-GB").format(publishedGameCount)}+` : "Not listed"}</dd></div>
-            <div><dt>Payout tested</dt><dd>{withdrawal ?? "Not listed"}</dd></div>
+            <div><dt>Payout information</dt><dd>{withdrawal ?? "Not listed"}</dd></div>
           </dl>
         </div>
       </section>

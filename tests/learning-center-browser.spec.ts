@@ -15,12 +15,12 @@ test("Learning Center renders the current editorial catalogue in the Public Shel
   expect(response?.status()).toBe(200);
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("THE MAGAZINE SHELF.");
-  await expect(page.locator("[data-learning-center]")).toHaveAttribute("data-figma-authority", "835:6356");
-  await expect(page.locator("#learning-categories li")).toHaveCount(13);
-  await expect(page.locator("[data-learning-search] .LearningSearchAndFilter_results__placeholder")).toHaveCount(0);
-  await expect(page.locator("[data-learning-search] ol li")).toHaveCount(13);
-  await expect(page.getByRole("heading", { name: "SIX WAYS THROUGH THE SHELF." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Learn\.\s*Play smarter\./i);
+  await expect(page.locator('[data-handoff-page="learn"]')).toHaveCount(1);
+  const guides = page.locator('[data-handoff-page="learn"] a[data-learn-category]');
+  await expect(guides).toHaveCount(17);
+  const allGuidePaths = await page.locator('[data-handoff-page="learn"] .scp3').evaluateAll((links) => links.map((link) => link.getAttribute("href")));
+  expect(new Set(allGuidePaths).size).toBe(13);
   expect(errors).toEqual([]);
 });
 
@@ -29,20 +29,19 @@ test("search, facets, result count and no-results recovery use only current data
   await page.goto(`${baseUrl}/learn`, { waitUntil: "networkidle" });
   const search = page.getByRole("searchbox", { name: "Search guides" });
   await search.fill("licensing");
-  await expect(page.locator("[data-learning-search] ol li")).not.toHaveCount(13);
-  await expect(page.getByText(/guides? on this shelf/)).toBeVisible();
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(2);
+  await expect(page.locator("[data-learn-results-status]")).toContainText("2 guides shown");
 
-  await page.getByRole("button", { name: "Clear filters" }).click();
-  await page.getByLabel("Category").selectOption("casino-bonuses");
-  await expect(page.locator("[data-learning-search] ol li")).toHaveCount(1);
-  await expect(page.locator("[data-learning-search]").getByRole("link", { name: /How Welcome Bonus Terms Work/ })).toBeVisible();
+  await search.fill("");
+  await page.getByRole("button", { name: "Bonuses", exact: true }).click();
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(1);
+  await expect(page.getByRole("link", { name: /How Welcome Bonus Terms Work/ }).last()).toBeVisible();
 
-  await page.getByRole("button", { name: "Clear filters" }).click();
+  await page.getByRole("button", { name: "All topics", exact: true }).click();
   await search.fill("no-current-guide-can-match-this-query");
-  await expect(page.getByRole("heading", { name: "THE SHELF IS QUIET." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Browse categories" })).toHaveAttribute("href", "#learning-categories");
-  await page.getByRole("button", { name: "Clear filters" }).click();
-  await expect(page.locator("[data-learning-search] ol li")).toHaveCount(13);
+  await expect(page.locator("[data-learn-results-status]")).toContainText("No guides match");
+  await search.fill("");
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(13);
   expect(errors).toEqual([]);
 });
 
@@ -52,8 +51,7 @@ test("complete catalogue and category navigation work without JavaScript", async
   const response = await page.goto(`${baseUrl}/learn`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.locator("[data-learning-search] ol li")).toHaveCount(13);
-  await expect(page.locator("#learning-categories li")).toHaveCount(13);
+  await expect(page.locator("a[data-learn-category].scp3")).toHaveCount(13);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await context.close();
 });
@@ -63,7 +61,8 @@ test("category and article routes preserve content, schemas and truthful evidenc
   await page.goto(`${baseUrl}/learn/casino-bonuses`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/\/learn\?category=casino-bonuses/);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Learn\.\s*Play smarter\./i);
-  await expect(page.locator('[data-learning-search]')).toBeVisible();
+  await expect(page.getByRole("button", { name: "Bonuses", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(1);
 
   await page.goto(`${baseUrl}/learn/casino-bonuses/welcome-bonus-terms`, { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("How Welcome Bonus Terms Work");
@@ -107,7 +106,7 @@ for (const viewport of [
     await page.goto(`${baseUrl}/learn`, { waitUntil: "networkidle" });
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-    const outOfBounds = await page.locator("[data-learning-center] h1, [data-learning-center] h2, [data-learning-center] h3, [data-learning-center] a").evaluateAll((elements) => elements
+    const outOfBounds = await page.locator('[data-handoff-page="learn"] h1, [data-handoff-page="learn"] h2, [data-handoff-page="learn"] h3, [data-handoff-page="learn"] a').evaluateAll((elements) => elements
       .filter((element) => {
         const rect = element.getBoundingClientRect();
         return rect.width > 0 && (rect.left < -1 || rect.right > window.innerWidth + 1);

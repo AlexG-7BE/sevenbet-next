@@ -228,7 +228,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         setBusy(true);
         redeem(session.user.id, oauthJourney, restored)
           .catch((cause) => setError(cause instanceof Error ? cause.message : "Your progress could not be saved yet"))
-          .finally(() => { setBusy(false); oauthRedeemStarted.current = false; });
+          .finally(() => setBusy(false));
       }
       return;
     }

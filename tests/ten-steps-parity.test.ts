@@ -68,7 +68,8 @@ test("Mission 01 entry and post-mission account boundary remain truthful", () =>
   assert.match(landing, /Start Mission 01/);
   assert.doesNotMatch(landing, /\+60 XP/);
   assert.match(landing, /No registration until your starting point is ready\./);
-  assert.match(landing, /No mission ever asks you to deposit, claim or play\./);
+  assert.match(landing, /No mission asks you to deposit, claim or play\./);
+  assert.match(landing, /Export and deletion requests are handled under the Privacy policy\./);
   assert.doesNotMatch(combined, /cash value|money value|bonus eligibility|winnings|deposit reward/i);
 });
 

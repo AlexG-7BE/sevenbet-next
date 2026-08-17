@@ -54,7 +54,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
         <div className={styles.heroIntro}>
           <header><p>Curated by use-case</p><h1>Picked for<br /><em>how you play.</em></h1><span>Choose your use-case — we show the three casinos that earned it. The full directory waits below.</span></header>
         </div>
-        <div className={styles.heroProof}><span>Tested with real money — our own</span><span>Max 3 per use-case</span><span>Updated from current data</span></div>
+        <div className={styles.heroProof}><span>Evidence and limitations disclosed</span><span>Max 3 per use-case</span><span>Current published data only</span></div>
       </div>
     </section>
 
@@ -69,9 +69,9 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     </div></section>
 
     <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
-      ["How is this different from Best Offers?", "Best Offers answers “just tell me the one” — a single recommendation. This page ranks by use-case: crypto, mobile, bonuses, new. Same tests, different question."],
-      ["What does “Review only” mean?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and test results stay available."],
-      ["Does commission affect the ranking?", "No. It funds the testing and never sets a score — several casinos we earn nothing from outrank ones we do. Details are available in our affiliate disclosure."],
+      ["How is this different from Best Offers?", "Best Offers presents a bounded overall shortlist. This page groups eligible published records by use-case while preserving the same data and availability boundaries."],
+      ["What does “Review only” mean?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and available published information stay visible."],
+      ["Does commission affect the ranking?", "Affiliate compensation does not determine Editor Score or natural editorial ranking. Details are available in our affiliate disclosure."],
     ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
   </div>;
 }

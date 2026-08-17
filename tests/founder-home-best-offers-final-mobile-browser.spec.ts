@@ -164,7 +164,7 @@ for (const viewport of mobileViewports) {
     const hero = page.locator('[data-runtime-renderer="best-offers"] > section').first();
     await expect(hero.getByRole("heading", { level: 1 })).toContainText("Three picks.Not thirty.");
     expect(await hero.getByText("50+", { exact: true }).isVisible()).toBe(false);
-    await expect(hero.getByRole("link", { name: "How we test →" })).toBeVisible();
+    await expect(hero.getByRole("link", { name: "How ranking works →" })).toBeVisible();
     expect(await hero.evaluate((element) => element.getBoundingClientRect().height)).toBeLessThan(viewport.height * .72);
 
     const topThree = page.locator("#shortlist");
@@ -217,7 +217,7 @@ for (const viewport of mobileViewports) {
 
     const sequence = await page.evaluate(() => {
       const top = document.querySelector<HTMLElement>("#shortlist")!;
-      const why = [...document.querySelectorAll<HTMLElement>("section")].find((section) => section.textContent?.includes("Why we picked these"))!;
+      const why = [...document.querySelectorAll<HTMLElement>("section")].find((section) => section.textContent?.includes("Why these records are shown"))!;
       const faq = [...document.querySelectorAll<HTMLElement>("section")].find((section) => section.textContent?.includes("Before you click"))!;
       const visibleDemoNotices = [...top.querySelectorAll<HTMLElement>("p")].filter((item) => item.textContent?.includes("DEMONSTRATION DATA") && item.getClientRects().length).length;
       return {
@@ -239,7 +239,7 @@ for (const viewport of mobileViewports) {
       await captureLocatorWithoutChrome(page, alternatives.nth(0), resolve(offersEvidenceRoot, "03-top2-390.webp"));
       await captureLocatorWithoutChrome(page, alternatives.nth(1), resolve(offersEvidenceRoot, "04-top3-390.webp"));
       await captureViewportAtWithoutChrome(page, page.locator("#shortlist section").last(), resolve(offersEvidenceRoot, "05-worth-a-look-390.webp"));
-      const methodology = page.locator("section").filter({ hasText: "Why we picked these" }).first();
+      const methodology = page.locator("section").filter({ hasText: "Why these records are shown" }).first();
       await captureLocatorWithoutChrome(page, methodology, resolve(offersEvidenceRoot, "06-methodology-390.webp"));
     }
     if (captureEvidence && (viewport.width === 360 || viewport.width === 430)) {
@@ -259,9 +259,13 @@ for (const viewport of [
     await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);
     await expect(page.locator(".does-not-exist")).toHaveCount(0);
-    await expect(page.getByText("50+", { exact: true })).toBeVisible();
-    await expect(page.getByText("Tested with real money — our own", { exact: true })).toBeVisible();
-    await expect(page.locator("#shortlist").getByText("Fast payouts", { exact: true })).toBeVisible();
+    const recordLabel = page.getByText("fictional records", { exact: true });
+    await expect(recordLabel).toBeVisible();
+    expect(Number(await recordLabel.locator("..").locator("strong").textContent())).toBeGreaterThan(0);
+    await expect(page.getByText("live offers", { exact: true }).locator("..").locator("strong")).toHaveText("0");
+    await expect(page.getByText("claim actions", { exact: true }).locator("..").locator("strong")).toHaveText("0");
+    await expect(page.getByText("Fictional records only", { exact: true })).toBeVisible();
+    await expect(page.locator("#shortlist")).toContainText(/material terms shown first/i);
     await expect(page.locator("section").filter({ hasText: "Still here? The answer hasn't changed." })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
   });

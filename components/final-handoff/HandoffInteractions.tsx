@@ -275,6 +275,80 @@ export function HandoffInteractions({ name }: { name: string }) {
     const cleanUpShared = setupSharedHandoffInteractions(root);
     const cleanUpHome = name === "home" ? setupHomeInteractions(root) : undefined;
 
+    const learnTopics = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
+    const learnInput = name === "learn" ? root.querySelector<HTMLInputElement>('input[placeholder^="Search guides"]') : null;
+    const allGuides = name === "learn"
+      ? [...root.querySelectorAll("h2")].find((heading) => normalized(heading.textContent) === "all guides")
+      : undefined;
+    const learnSection = allGuides?.parentElement?.parentElement ?? null;
+    const learnCards = learnSection ? [...learnSection.querySelectorAll<HTMLAnchorElement>("a[data-learn-category]")] : [];
+    const learnButtons = learnSection
+      ? [...learnSection.querySelectorAll<HTMLButtonElement>("button")].filter((button) => learnTopics.includes(normalized(button.textContent)))
+      : [];
+    const learnCount = allGuides?.parentElement?.querySelector<HTMLElement>(".sc-interp") ?? null;
+    const learnGrid = learnCards[0]?.parentElement ?? null;
+    const learnStatus = name === "learn" ? document.createElement("p") : null;
+    const categoryTopic = new Map([
+      ["casino-bonuses", "bonuses"],
+      ["payments", "banking"],
+      ["crypto-casinos", "banking"],
+      ["game-guides", "games"],
+      ["sports-betting-basics", "games"],
+      ["responsible-gambling", "responsible play"],
+      ["industry-news", "industry"],
+    ]);
+    const requestedCategory = name === "learn" ? new URLSearchParams(window.location.search).get("category") : null;
+    let learnTopic = requestedCategory ? categoryTopic.get(requestedCategory) || "casinos" : "all topics";
+    let learnQuery = "";
+
+    if (learnInput) {
+      learnInput.type = "search";
+      learnInput.setAttribute("aria-label", "Search guides");
+    }
+    for (const button of learnButtons) {
+      button.type = "button";
+      button.setAttribute("aria-pressed", String(normalized(button.textContent) === learnTopic));
+    }
+    if (learnStatus && learnGrid) {
+      learnStatus.dataset.learnResultsStatus = "";
+      learnStatus.setAttribute("aria-live", "polite");
+      learnStatus.setAttribute("role", "status");
+      learnStatus.style.cssText = "min-height:22px;margin:-18px 0 22px;color:rgb(100,99,92);font:500 14px/1.5 Archivo,sans-serif";
+      learnGrid.before(learnStatus);
+    }
+
+    const updateLearnButtonState = () => {
+      for (const item of learnButtons) {
+        const active = normalized(item.textContent) === learnTopic;
+        item.setAttribute("aria-pressed", String(active));
+        item.style.background = active ? "rgb(16, 15, 15)" : "transparent";
+        item.style.color = active ? "rgb(250, 250, 247)" : "rgb(16, 15, 15)";
+      }
+    };
+
+    const applyLearnFilters = () => {
+      let visible = 0;
+      for (const card of learnCards) {
+        const topicMatch = learnTopic === "all topics" || card.dataset.learnCategory === learnTopic;
+        const queryMatch = !learnQuery || normalized(card.textContent).includes(learnQuery);
+        const matches = topicMatch && queryMatch;
+        card.hidden = !matches;
+        // Captured cards carry inline display:flex. That author style outranks the
+        // user-agent [hidden] rule, so apply the visibility state at the same level.
+        card.style.display = matches ? "flex" : "none";
+        if (!card.hidden) visible += 1;
+      }
+      if (learnCount) learnCount.textContent = String(visible);
+      if (learnStatus) {
+        learnStatus.textContent = visible
+          ? `${visible} ${visible === 1 ? "guide" : "guides"} shown.`
+          : "No guides match. Clear the search or choose All topics.";
+      }
+      updateLearnButtonState();
+    };
+
+    if (name === "learn") applyLearnFilters();
+
     const onClick = (event: MouseEvent) => {
       const button = (event.target as Element | null)?.closest<HTMLButtonElement>("button");
       if (!button) return;
@@ -284,28 +358,15 @@ export function HandoffInteractions({ name }: { name: string }) {
         return;
       }
       if (name !== "learn") return;
-      const topics = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
-      if (!topics.includes(label)) return;
-      const allGuides = [...root.querySelectorAll("h2")].find((heading) => normalized(heading.textContent) === "all guides");
-      const section = allGuides?.parentElement?.parentElement;
-      if (!section) return;
-      const cards = [...section.querySelectorAll<HTMLAnchorElement>("a[href]")];
-      for (const card of cards) card.hidden = label !== "all topics" && !normalized(card.textContent).includes(label);
-      const siblings = button.parentElement?.querySelectorAll<HTMLButtonElement>("button") ?? [];
-      for (const item of siblings) {
-        const active = item === button;
-        item.style.background = active ? "rgb(16, 15, 15)" : "transparent";
-        item.style.color = active ? "rgb(250, 250, 247)" : "rgb(16, 15, 15)";
-      }
+      if (!learnTopics.includes(label)) return;
+      learnTopic = label;
+      applyLearnFilters();
     };
 
     const onInput = (event: Event) => {
-      if (name !== "learn" || !(event.target instanceof HTMLInputElement) || event.target.type !== "search") return;
-      const query = normalized(event.target.value);
-      const allGuides = [...root.querySelectorAll("h2")].find((heading) => normalized(heading.textContent) === "all guides");
-      const section = allGuides?.parentElement?.parentElement;
-      if (!section) return;
-      for (const card of section.querySelectorAll<HTMLAnchorElement>("a[href]")) card.hidden = Boolean(query) && !normalized(card.textContent).includes(query);
+      if (name !== "learn" || !learnInput || event.target !== learnInput) return;
+      learnQuery = normalized(learnInput.value);
+      applyLearnFilters();
     };
 
     root.addEventListener("click", onClick);
@@ -313,6 +374,7 @@ export function HandoffInteractions({ name }: { name: string }) {
     return () => {
       root.removeEventListener("click", onClick);
       root.removeEventListener("input", onInput);
+      learnStatus?.remove();
       cleanUpHome?.();
       cleanUpShared?.();
     };

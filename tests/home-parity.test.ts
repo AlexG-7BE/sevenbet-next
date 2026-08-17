@@ -129,7 +129,7 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Independent reviews\. Real tests\./);
+  assert.match(footer, /Evidence-led reviews\. Material terms shown\./);
   assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([
