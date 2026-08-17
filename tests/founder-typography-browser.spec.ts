@@ -68,6 +68,10 @@ async function expectMinimum(locator: Locator, minimum: number, description: str
 }
 
 async function expectNoOverflow(page: Page, description: string) {
+  await page.evaluate(() => {
+    document.documentElement.style.scrollbarGutter = "stable";
+  });
+  await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => resolve(undefined))));
   const overflowing = await page.evaluate(() => {
     if (document.documentElement.scrollWidth <= document.documentElement.clientWidth) return [];
     return Array.from(document.querySelectorAll<HTMLElement>("body *"))
