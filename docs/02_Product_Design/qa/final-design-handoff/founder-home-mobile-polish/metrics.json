@@ -238,5 +238,33 @@
         "visibleHeight": 0
       }
     ]
+  },
+  "finalComposition": {
+    "1440": {
+      "viewportHeight": 900,
+      "ctaHeight": 573,
+      "footerHeight": 327,
+      "ctaVisibleAtBottom": 573,
+      "headingVisibleAtBottom": 147.375,
+      "actionVisibleAtBottom": 55.5,
+      "ctaFooterGap": 0,
+      "publicFooterCount": 1,
+      "horizontalOverflow": 0
+    },
+    "1024": {
+      "viewportHeight": 768,
+      "ctaHeight": 442.453125,
+      "footerHeight": 345,
+      "ctaVisibleAtBottom": 423.453125,
+      "headingVisibleAtBottom": 104.453125,
+      "actionVisibleAtBottom": 55.5,
+      "ctaFooterGap": 0,
+      "publicFooterCount": 1,
+      "horizontalOverflow": 0
+    },
+    "mobileWidthsVerified": [360, 375, 390, 412, 430],
+    "finalCtaPrototypeSnapAttribute": false,
+    "absoluteBottomReachable": true,
+    "upwardScrollRestored": true
   }
 }

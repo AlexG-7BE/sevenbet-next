@@ -39,7 +39,7 @@ test("hub renders the locked handoff catalogue while current taxonomy remains au
   assert.equal(learningCategories.length, 13);
   assert.equal(learningArticles.length, 13);
   assert.equal(learningPaths.length, 6);
-  assert.match(hubRoute, /<HandoffPage name="learn" \/>/);
+  assert.match(hubRoute, /<HandoffPage name="learn" transform=\{transformLearnHandoff\} \/>/);
   for (const title of ["Wagering requirements, explained with real numbers", "How casino payouts really work — and why they stall", "How to judge a casino in ten minutes", "Session limits that actually hold"]) {
     assert.ok(handoffPages.learn.html.includes(title), title);
   }

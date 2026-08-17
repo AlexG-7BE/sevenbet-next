@@ -1,0 +1,27 @@
+{
+  "LEARN_HERO_CONTENT_LEFT": {
+    "1024": 51.1953125,
+    "1440": 72,
+    "390": 24
+  },
+  "LEARN_HERO_META_LEFT": {
+    "1024": 51.1953125,
+    "1440": 72,
+    "390": 24
+  },
+  "START_HERE_LEFT": {
+    "1024": 51.1953125,
+    "1440": 72,
+    "390": 24
+  },
+  "LEARN_META_RIGHT": {
+    "1024": 972.8046875,
+    "1440": 1368
+  },
+  "START_HERE_SECTION_RIGHT": {
+    "1024": 972.8046875,
+    "1440": 1368
+  },
+  "rendered_tolerance_px": 1,
+  "horizontal_overflow_px": 0
+}

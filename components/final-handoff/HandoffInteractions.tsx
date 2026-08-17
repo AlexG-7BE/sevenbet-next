@@ -62,6 +62,7 @@ function setupHomeInteractions(root: HTMLElement) {
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
   const snapElements = Array.from(root.querySelectorAll<HTMLElement>("[data-snap]"));
+  const publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
   let chapterTops: number[] = [];
   let animationFrame = 0;
   let scrollTweenFrame = 0;
@@ -69,6 +70,19 @@ function setupHomeInteractions(root: HTMLElement) {
   let wheelAccumulator = 0;
   let snapLockedUntil = 0;
   let destroyed = false;
+  let footerObserver: ResizeObserver | null = null;
+
+  const syncClosingComposition = () => {
+    if (!publicFooter) return;
+    root.style.setProperty("--home-public-footer-height", `${Math.ceil(publicFooter.getBoundingClientRect().height)}px`);
+  };
+
+  syncClosingComposition();
+  window.addEventListener("resize", syncClosingComposition, { passive: true });
+  if (publicFooter && typeof window.ResizeObserver === "function") {
+    footerObserver = new window.ResizeObserver(syncClosingComposition);
+    footerObserver.observe(publicFooter);
+  }
 
   const reveal = (element: HTMLElement, index = 0) => {
     element.dataset.riseState = "visible";
@@ -241,11 +255,14 @@ function setupHomeInteractions(root: HTMLElement) {
   return () => {
     destroyed = true;
     observer?.disconnect();
+    footerObserver?.disconnect();
+    window.removeEventListener("resize", syncClosingComposition);
     window.removeEventListener("pointermove", onPointerMove);
     window.removeEventListener("wheel", onWheel);
     window.cancelAnimationFrame(animationFrame);
     window.cancelAnimationFrame(scrollTweenFrame);
     document.documentElement.style.removeProperty("scroll-snap-type");
+    root.style.removeProperty("--home-public-footer-height");
     delete root.dataset.homeInteractions;
   };
 }

@@ -61,7 +61,7 @@ test("shared casino profile composition joins the final offer to the footer and 
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 
     const geometry = await page.evaluate(() => {
-      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-nav-theme="dark"]:has(> h3)')!;
+      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
       const limit = document.querySelector<HTMLElement>('#verdict [class*="verdictLimit"]');
       const score = document.querySelector<HTMLElement>('#verdict [class*="scorePanel"]');
@@ -98,7 +98,7 @@ test("shared casino profile composition joins the final offer to the footer and 
     const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
     expect(response?.status(), `shared profile ${viewport.width}px status`).toBe(200);
     const gap = await page.evaluate(() => {
-      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-nav-theme="dark"]:has(> h3)')!;
+      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
       return footer.getBoundingClientRect().top - finalOffer.getBoundingClientRect().bottom;
     });

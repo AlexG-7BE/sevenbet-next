@@ -358,6 +358,18 @@
 .age { padding:3px 10px; border:1px solid rgba(255,255,255,.35); border-radius:999px; color:var(--shell-white); font-weight:600; }
 .footerEnd { display:block; width:100%; height:1px; }
 
+/* Home's approved closing screen used a compact four-column footer inside the
+   same viewport as its CTA. Keep the one shared PublicFooter, but let that route
+   reproduce the tighter desktop footer geometry of the handoff. */
+@media (min-width: 901px) {
+  :global(body:has([data-handoff-page="home"])) .footer { padding-top:48px; }
+  :global(body:has([data-handoff-page="home"])) .footerColumns {
+    padding-bottom:48px;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:48px;
+  }
+}
+
 .availabilityNotice {
   width: 100%;
   min-height: 136px;

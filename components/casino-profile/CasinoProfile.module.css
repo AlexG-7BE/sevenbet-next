@@ -56,8 +56,8 @@
 .profileDisclosure { max-width: 760px; margin: auto 0 0; padding-top: 24px; color: var(--muted); font-size: 12px; line-height: 18px; }
 
 .heroOffer { min-width: 0; padding: 36px 30px; display: flex; flex-direction: column; background: var(--night); color: var(--white); }
-.heroOffer > span, .finalOffer > span, .detailLabel, .verdict > div > p, .relatedLinks > div > span { font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
-.heroOffer > span, .finalOffer > span, .verdict > div > p, .relatedLinks > div > span { color: var(--acid); }
+.heroOffer > span, .finalOfferInner > span, .detailLabel, .verdict > div > p, .relatedLinks > div > span { font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.heroOffer > span, .finalOfferInner > span, .verdict > div > p, .relatedLinks > div > span { color: var(--acid); }
 .detailLabel { color: var(--teal); }
 .heroOffer h2 { margin: 42px 0 10px; overflow-wrap: anywhere; font-size: clamp(34px, 3.7vw, 52px); line-height: .96; letter-spacing: -.045em; text-wrap: balance; }
 .heroOffer > p { margin: 0; color: #d4d2ca; font-size: 14px; line-height: 20px; }
@@ -169,9 +169,10 @@
 .faqGrid details[open] summary span { transform: rotate(45deg); }
 .faqGrid details p { max-width: 720px; margin: 0 0 22px; color: var(--muted); font-size: 13px; line-height: 20px; }
 .finalOffer { min-width: 0; padding: 28px; display: flex; flex-direction: column; border-radius: 22px; background: var(--night); color: var(--white); }
+.finalOfferInner { width: min(960px, 100%); margin: auto; display: grid; justify-items: center; text-align: center; }
 .finalOffer h3 { margin: 32px 0 10px; overflow-wrap: anywhere; font-size: clamp(32px, 4vw, 48px); line-height: .95; letter-spacing: -.045em; }
-.finalOffer p { margin: 0 0 28px; color: #c5c3bb; font-size: 13px; line-height: 20px; }
-.finalOffer .primaryAction, .finalOffer .unavailableAction { margin-top: auto; }
+.finalOffer p { max-width: 880px; margin: 0 0 28px; color: #c5c3bb; font-size: 13px; line-height: 20px; }
+.finalOffer .primaryAction, .finalOffer .unavailableAction { margin-top: 0; }
 
 .relatedLinks { margin: 0 0 104px; padding: 54px; display: grid; grid-template-columns: .9fr 1.1fr; align-items: end; gap: 70px; background: var(--acid); }
 .relatedLinks > div > span { color: #5d5c00; }

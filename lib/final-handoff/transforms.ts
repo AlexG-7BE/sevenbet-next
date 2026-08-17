@@ -162,6 +162,36 @@ export function transformCommonHandoff(html: string) {
   return buttonToLink(stripHandoffGlobalChrome(html), "Start Programme", "/program?entry=start");
 }
 
+/**
+ * Keep the Learn hero and its metadata on the same bounded editorial axis as
+ * the first real content section. The data hooks let application CSS own that
+ * relationship without rewriting any captured copy or visual treatment.
+ */
+export function transformLearnHandoff(html: string) {
+  return html
+    .replace('data-mob="pad"', 'data-mob="pad" data-learn-hero-axis=""')
+    .replace(
+      '<div style="position: relative; display: flex; gap: 24px 56px; flex-wrap: wrap; align-items: center; padding: 26px clamp(24px, 5vw, 72px);',
+      '<div data-learn-meta-axis="" style="position: relative; display: flex; gap: 24px 56px; flex-wrap: wrap; align-items: center; padding: 26px clamp(24px, 5vw, 72px);',
+    )
+    .replace(
+      '<div style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
+      '<div data-learn-start-section="" style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-learn-start-axis="" data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
+    );
+}
+
+/**
+ * The approved Home capture grouped its footer inside the last 100svh screen.
+ * Production strips that captured chrome in favour of PublicFooter, so the
+ * remaining CTA must no longer retain the prototype's independent snap stop.
+ */
+export function transformHomeHandoff(html: string) {
+  return html.replace(
+    '<div data-screen-label="Final CTA" data-snap=""',
+    '<div data-screen-label="Final CTA" data-home-final-composition=""',
+  );
+}
+
 export function transformTenStepsHandoff(html: string) {
   return buttonToLink(html, "Start Mission 01", "/program?entry=start");
 }

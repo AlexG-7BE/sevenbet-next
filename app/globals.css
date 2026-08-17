@@ -206,6 +206,27 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   transform: none !important;
 }
 
+/* The approved Home ending was one 100svh CTA + footer composition. The
+   captured footer is intentionally stripped, so size the remaining CTA around
+   the one real PublicFooter and reserve only the combined bottom snap target. */
+[data-handoff-page="home"] [data-home-final-composition] {
+  min-height: max(0px, calc(100svh - var(--home-public-footer-height, 391px))) !important;
+  scroll-snap-align: none !important;
+  scroll-snap-stop: normal !important;
+}
+
+/* Learn's first editorial section has a 1440px bounded inner frame. Reuse its
+   computed axis for hero copy and metadata instead of maintaining two unrelated
+   outer paddings that drift apart on wide canvases. */
+[data-handoff-page="learn"] {
+  --learn-content-gutter: clamp(24px, 5vw, 72px);
+  --learn-content-axis: max(var(--learn-content-gutter), calc((100vw - 1440px) / 2));
+}
+[data-handoff-page="learn"] [data-learn-hero-axis],
+[data-handoff-page="learn"] [data-learn-meta-axis] {
+  padding-inline: var(--learn-content-axis) !important;
+}
+
 /* Founder Home mobile polish. The generated handoff remains the content and visual
    authority; these overrides only tune its mobile composition and scroll rhythm. */
 @media (max-width: 760px) {
@@ -343,9 +364,9 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
    PublicFooter lives outside that capture, so it needs explicit terminal targets or
    the browser resolves the final gesture back to the last in-capture CTA. */
 @media (max-width: 760px) and (pointer: coarse) {
-  body:has([data-handoff-page="home"]) [data-public-shell="footer"] {
-    scroll-snap-align: start;
-    scroll-snap-stop: normal;
+  [data-handoff-page="home"] [data-home-final-composition] {
+    scroll-margin-block-end: clamp(96px, 15svh, 144px);
+    scroll-snap-align: end !important;
   }
   body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
     scroll-snap-align: end;

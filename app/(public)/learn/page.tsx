@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { transformLearnHandoff } from "@/lib/final-handoff/transforms";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -14,6 +15,6 @@ export default function LearnPage() {
   return <>
     <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
     <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Learn", item: absoluteUrl("/learn") }] }} />
-    <HandoffPage name="learn" />
+    <HandoffPage name="learn" transform={transformLearnHandoff} />
   </>;
 }

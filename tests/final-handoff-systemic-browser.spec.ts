@@ -22,7 +22,8 @@ test("Home restores the handoff interaction contracts and reveals every designed
   await expect(home.locator("[data-rise]")).toHaveCount(11);
   await expect(home.locator("[data-tphoto]")).toHaveCount(4);
   await expect(home.locator("[data-stackpanel]")).toHaveCount(3);
-  await expect(home.locator("[data-snap]")).toHaveCount(9);
+  await expect(home.locator("[data-snap]")).toHaveCount(8);
+  await expect(home.locator('[data-screen-label="Final CTA"]')).toHaveAttribute("data-home-final-composition", "");
 
   const firstPhoto = home.locator("[data-tphoto]").first();
   const before = await firstPhoto.evaluate((element) => getComputedStyle(element).transform);

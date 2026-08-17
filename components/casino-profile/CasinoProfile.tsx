@@ -207,8 +207,10 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         <div className={styles.sectionHeading}><p>FAQ</p><h2 id="faq-heading">Questions we get about {casino.name.replace(/\s+casino$/i, "")}</h2></div>
         <div className={styles.faqGrid}>
           <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
-          <aside className={styles.finalOffer} data-motion-reveal data-nav-theme="dark">
-            {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "THE VERDICT STANDS"}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[profileOfferHeadline(bonus), bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal ? `Payout ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
+          <aside className={styles.finalOffer} data-demo-state={demo ? "fictional" : undefined} data-motion-reveal data-nav-theme="dark">
+            <div className={styles.finalOfferInner}>
+              {bonus ? <><span>{demo ? "FICTIONAL DEMONSTRATION FIELDS" : "THE VERDICT STANDS"}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[profileOfferHeadline(bonus), bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal ? `Payout ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</> : <><span>REVIEW AVAILABLE</span><h3>{demo ? "No fictional offer field." : "No published offer."}</h3><p>Continue comparing the evidence without a commercial action.</p><UnavailableAction /></>}
+            </div>
           </aside>
         </div>
       </section>

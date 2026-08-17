@@ -11,20 +11,31 @@ The captures exercise the real `/` route at 390px and 430px. `metrics.json` addi
 - `04-photo-focus`: the first photo owns the viewport at 25% chapter progress; only a narrow preview of the next scene is visible.
 - `05-evidence`: compact heading hierarchy and evidence-card density.
 - `06-two-businesses`: two sequential panels with a horizontal separator and shared left-aligned reading rhythm.
-- `home-final-cta-390.webp`: the final CTA remains a complete, readable snap moment.
-- `home-footer-reachable-390.webp`: the next downward touch sequence resolves to the real `PublicFooter`.
-- `home-footer-bottom-390.webp`: the absolute document bottom and final affiliate-disclosure link remain reachable.
+- `home-final-composition-1440.webp` and `home-final-composition-390.webp`: the CTA and real footer enter as one closing scene.
+- `home-final-bottom-1440.webp` and `home-final-bottom-390.webp`: absolute document-bottom evidence.
+- The earlier `home-final-cta-390.webp`, `home-footer-reachable-390.webp` and `home-footer-bottom-390.webp` remain as historical regression evidence from the prior footer-reachability correction.
 
 ## Final CTA to footer correction
 
-The generated Home capture applies `scroll-snap-type: y mandatory` to the root document for coarse pointers. Its final CTA was the last descendant with `scroll-snap-align`, while `PublicFooter` is intentionally rendered outside the handoff subtree. The browser therefore resolved continued downward touch scrolling back to the final CTA.
+The approved capture made its final CTA and captured footer one `100svh` block. Production correctly strips that duplicate captured footer, but the orphaned CTA retained `min-height: 100svh` and `data-snap`, so fine-pointer scrolling stopped on it as a separate screen before reaching the real `PublicFooter`.
 
-The shared footer now exposes inert start/end markers, activated as snap targets only when a coarse-pointer mobile document contains the Home handoff. The existing photo panels retain `scroll-snap-align: start` and `scroll-snap-stop: always`; no Home section, interaction controller, footer content or desktop snap behaviour changed.
+The Home transform removes only that prototype final snap attribute. Runtime interaction measures the single real footer and gives the CTA the remaining closing-stage height. On desktop, the same real footer adopts the approved compact four-column Home geometry. On coarse pointers, the final integrated stop reveals part of the footer with the CTA before the existing bottom marker allows the absolute document bottom. The photo-panel snap contract is unchanged.
+
+## Closing interaction sequence
+
+1. `Why trust` remains the last narrative/photo stop.
+2. The next wheel or touch progression brings in the final CTA without a standalone CTA snap screen.
+3. `PublicFooter` enters while the CTA remains visible and usable.
+4. Absolute bottom is reachable; at 1440 the full 573px CTA and 327px footer occupy the 900px viewport together.
+5. A reverse wheel/touch gesture reduces `scrollY`; upward scrolling is not trapped.
+
+There is exactly one `[data-public-shell="footer"]`, owned by the shared public layout.
 
 ## QA contract
 
 - Mobile widths: 360, 375, 390, 412 and 430 for the final footer-escape regression; the earlier composition metrics retain their 393px sample.
 - Regression widths: 768, 1024, 1280 and 1440.
-- A Chromium touch-source gesture traverses the snap sequence, reaches the CTA, footer and real bottom, then verifies upward scrolling.
+- Fine-pointer wheel progression is verified at 1440, 1280 and 1024.
+- Chromium touch-source progression is verified at 360, 375, 390, 412 and 430, including the integrated CTA/footer entry state, real bottom and upward scrolling.
 - Reduced-motion and no-JavaScript states remain fail-visible.
 - Production is not exercised or changed by this evidence pass.
