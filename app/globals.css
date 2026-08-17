@@ -206,6 +206,139 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   transform: none !important;
 }
 
+/* Founder Home mobile polish. The generated handoff remains the content and visual
+   authority; these overrides only tune its mobile composition and scroll rhythm. */
+@media (max-width: 760px) {
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child {
+    align-items: flex-start !important;
+    padding: clamp(280px, 31.5svh, 304px) 24px 40px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) {
+    z-index: 2 !important;
+    width: 100% !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] h1 + p {
+    text-wrap: balance;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child {
+    gap: 8px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:first-child,
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:last-child {
+    width: 18px !important;
+    flex: 0 0 18px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:nth-child(2) {
+    font-size: 11px !important;
+    letter-spacing: .24em !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"],
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {
+    top: clamp(98px, 12svh, 112px) !important;
+    width: clamp(116px, 30vw, 128px) !important;
+    height: clamp(142px, 36vw, 154px) !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"] { left: 12px !important; }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] { right: 12px !important; }
+
+  [data-handoff-page="home"] [data-screen-label="Recognition"] {
+    min-height: auto !important;
+    align-items: flex-start !important;
+    padding: 112px 24px 56px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Recognition"] > div > div {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 40px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="A plan you can see"] {
+    justify-content: flex-start !important;
+    padding: 144px 24px 72px !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always;
+  }
+
+  [data-handoff-page="home"] div:has(> [data-screen-label="A plan you can see"]) > [data-snap] {
+    scroll-snap-align: none !important;
+  }
+  [data-handoff-page="home"] [data-stackpanel] {
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always;
+  }
+  [data-handoff-page="home"] [data-stackpanel] + [data-stackpanel] {
+    margin-top: clamp(144px, 22svh, 204px) !important;
+  }
+
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] {
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    padding: 72px 24px 76px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:first-child {
+    margin: 0 auto 34px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:first-child > p {
+    margin-top: 18px !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div {
+    padding: 24px 22px !important;
+    border-radius: 18px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div:not(:last-child) > div:first-child {
+    margin-bottom: 12px !important;
+    font-size: 27px !important;
+    line-height: 1 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div > div:nth-child(2) {
+    margin-bottom: 8px !important;
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div > p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  [data-handoff-page="home"] [data-screen-label="Why trust"] {
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    padding: 72px 24px 80px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Why trust"] > div > div:first-child {
+    margin: 0 auto 44px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Why trust"] > div > div:last-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustL"] {
+    padding: 0 0 30px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(16, 15, 15, .24) !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] {
+    padding: 30px 0 0 !important;
+    text-align: left !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustL"] > div:last-child,
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child {
+    gap: 14px !important;
+    line-height: 1.55 !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child > div {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child > div > span:last-child {
+    order: -1;
+    flex: 0 0 auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-handoff-page] *,
   [data-handoff-page] *::before,

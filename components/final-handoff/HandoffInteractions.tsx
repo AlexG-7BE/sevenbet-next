@@ -136,8 +136,11 @@ function setupHomeInteractions(root: HTMLElement) {
 
     for (const child of Array.from(stack.children) as HTMLElement[]) {
       if (child.hasAttribute("data-snap")) continue;
+      const childStyle = window.getComputedStyle(child);
+      const marginTop = Number.parseFloat(childStyle.marginTop) || 0;
+      const marginBottom = Number.parseFloat(childStyle.marginBottom) || 0;
       if (child.hasAttribute("data-stackpanel")) {
-        const open = stackTop + flow;
+        const open = stackTop + flow + marginTop;
         const raw = open - scrollY;
         opens.push(open);
         if (panelIndex === 0 && !reducedMotion) {
@@ -171,7 +174,7 @@ function setupHomeInteractions(root: HTMLElement) {
         }
         panelIndex += 1;
       }
-      flow += child.offsetHeight;
+      flow += marginTop + child.offsetHeight + marginBottom;
     }
 
     chapterTops = [stackTop, ...opens];

@@ -55,6 +55,8 @@
     "public-ia:browser": "playwright test --config=playwright.ci.config.ts tests/public-ia-hardening-browser.spec.ts tests/fe-gap-01-browser.spec.ts tests/responsible-gambling-browser.spec.ts",
     "public-ia:browser:webkit": "playwright test --config=playwright.public-ia.config.ts --project=webkit tests/public-ia-hardening-browser.spec.ts tests/fe-gap-01-browser.spec.ts tests/responsible-gambling-browser.spec.ts",
     "home:test": "node --import tsx --test tests/home-parity.test.ts",
+    "home:mobile:qa": "playwright test --config=playwright.ci.config.ts tests/founder-home-mobile-polish-browser.spec.ts",
+    "home:mobile:evidence": "node scripts/founder-home-mobile-polish-review.mjs",
     "programme:test": "node --import tsx --test tests/programme-domain.test.ts tests/programme-flow.test.ts tests/programme-http-boundary.test.ts tests/programme-legacy-mode-boundary.test.ts tests/program-ai.test.ts tests/program-ai-missions.test.ts tests/program-ai-missions-ai.test.ts tests/program-ai-openai-adapters.test.ts tests/program-ai-transcription-request.test.ts tests/program-ai-structural.test.ts",
     "program-ai:test": "node --import tsx --test tests/program-ai.test.ts tests/program-ai-missions.test.ts tests/program-ai-missions-ai.test.ts tests/program-ai-openai-adapters.test.ts tests/program-ai-transcription-request.test.ts tests/program-ai-structural.test.ts",
     "program-ai:openai-eval": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/program-ai-openai-eval.ts",

@@ -1,0 +1,242 @@
+{
+  "360": {
+    "cta": {
+      "height": 55,
+      "width": 221.84375
+    },
+    "evidenceCardHeights": [
+      159,
+      179,
+      146
+    ],
+    "evidenceHeight": 951.8125,
+    "heroCtaOverlapAreas": [
+      0,
+      0
+    ],
+    "heroDescriptionOverlapAreas": [
+      0,
+      0
+    ],
+    "heroPhotoKickerGap": 34.3262939453125,
+    "horizontalOverflow": 0,
+    "recognitionToProductContentGap": 198.119384765625,
+    "trust": {
+      "leftBorderBottom": "1px",
+      "leftBorderRight": "0px",
+      "rightTextAlign": "left"
+    },
+    "progression": [
+      {
+        "marginTop": 0,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 800
+      },
+      {
+        "marginTop": 176,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 24.4375
+      },
+      {
+        "marginTop": 176,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 0
+      }
+    ]
+  },
+  "390": {
+    "cta": {
+      "height": 55,
+      "width": 221.84375
+    },
+    "evidenceCardHeights": [
+      138,
+      159,
+      146
+    ],
+    "evidenceHeight": 887.5625,
+    "heroCtaOverlapAreas": [
+      0,
+      0
+    ],
+    "heroDescriptionOverlapAreas": [
+      0,
+      0
+    ],
+    "heroPhotoKickerGap": 31.008407592773438,
+    "horizontalOverflow": 0,
+    "recognitionToProductContentGap": 198.11767578125,
+    "trust": {
+      "leftBorderBottom": "1px",
+      "leftBorderRight": "0px",
+      "rightTextAlign": "left"
+    },
+    "progression": [
+      {
+        "marginTop": 0,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 844
+      },
+      {
+        "marginTop": 185.68,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 25.765625
+      },
+      {
+        "marginTop": 185.68,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 0
+      }
+    ]
+  },
+  "393": {
+    "cta": {
+      "height": 55,
+      "width": 221.84375
+    },
+    "evidenceCardHeights": [
+      138,
+      159,
+      146
+    ],
+    "evidenceHeight": 887.5625,
+    "heroCtaOverlapAreas": [
+      0,
+      0
+    ],
+    "heroDescriptionOverlapAreas": [
+      0,
+      0
+    ],
+    "heroPhotoKickerGap": 29.99309539794922,
+    "horizontalOverflow": 0,
+    "recognitionToProductContentGap": 198.11767578125,
+    "trust": {
+      "leftBorderBottom": "1px",
+      "leftBorderRight": "0px",
+      "rightTextAlign": "left"
+    },
+    "progression": [
+      {
+        "marginTop": 0,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 852
+      },
+      {
+        "marginTop": 187.44,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 26
+      },
+      {
+        "marginTop": 187.44,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 0
+      }
+    ]
+  },
+  "412": {
+    "cta": {
+      "height": 55,
+      "width": 221.84375
+    },
+    "evidenceCardHeights": [
+      138,
+      159,
+      146
+    ],
+    "evidenceHeight": 856.375,
+    "heroCtaOverlapAreas": [
+      0,
+      0
+    ],
+    "heroDescriptionOverlapAreas": [
+      0,
+      0
+    ],
+    "heroPhotoKickerGap": 24.05609130859375,
+    "horizontalOverflow": 0,
+    "recognitionToProductContentGap": 198.119384765625,
+    "trust": {
+      "leftBorderBottom": "1px",
+      "leftBorderRight": "0px",
+      "rightTextAlign": "left"
+    },
+    "progression": [
+      {
+        "marginTop": 0,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 915
+      },
+      {
+        "marginTop": 201.3,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 27.140625
+      },
+      {
+        "marginTop": 201.3,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 0
+      }
+    ]
+  },
+  "430": {
+    "cta": {
+      "height": 55,
+      "width": 221.84375
+    },
+    "evidenceCardHeights": [
+      138,
+      159,
+      146
+    ],
+    "evidenceHeight": 856.375,
+    "heroCtaOverlapAreas": [
+      0,
+      0
+    ],
+    "heroDescriptionOverlapAreas": [
+      0,
+      0
+    ],
+    "heroPhotoKickerGap": 21.48199462890625,
+    "horizontalOverflow": 0,
+    "recognitionToProductContentGap": 198.11767578125,
+    "trust": {
+      "leftBorderBottom": "1px",
+      "leftBorderRight": "0px",
+      "rightTextAlign": "left"
+    },
+    "progression": [
+      {
+        "marginTop": 0,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 932
+      },
+      {
+        "marginTop": 204,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 29.4375
+      },
+      {
+        "marginTop": 204,
+        "snapAlign": "start",
+        "snapStop": "always",
+        "visibleHeight": 0
+      }
+    ]
+  }
+}
