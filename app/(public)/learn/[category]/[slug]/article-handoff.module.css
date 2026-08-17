@@ -70,7 +70,7 @@
   .heroSummary dl div { min-width:0; }
   .heroSummary dd { text-align:left; }
   .articleTable > div { min-width:0; padding:16px 10px; grid-template-columns:1.6fr .7fr .8fr .8fr; gap:6px; font-size:13px; }
-  .articleTable > div:first-child { font-size:10px; }
+  .articleTable > div:first-child { font-size:13px; line-height:18px; }
   .checklist { padding:28px 22px; }
   .commercial { padding:90px 24px; }
 }

@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-08-17T06:31:30.515Z",
+  "renderer": "REAL_RUNTIME",
+  "baselineHead": "bd9b47f5a4489759981ee3b2b2a40bf69ea0a8d9",
+  "metrics": [
+    {
+      "viewport": 1440,
+      "renderer": "REAL_RUNTIME",
+      "handoffPage": false,
+      "overflow": false,
+      "hero": 106.56,
+      "filterValue": 15,
+      "calculatorLabel": 14,
+      "calculatorOption": 14,
+      "calculatorExplanation": 14,
+      "topThreeTerm": 14,
+      "directoryLabel": 13,
+      "directoryValue": 14
+    },
+    {
+      "viewport": 390,
+      "renderer": "REAL_RUNTIME",
+      "handoffPage": false,
+      "overflow": false,
+      "hero": 27.3,
+      "filterValue": 16,
+      "calculatorLabel": 14,
+      "calculatorOption": 14,
+      "calculatorExplanation": 14,
+      "topThreeTerm": 14,
+      "directoryLabel": 13,
+      "directoryValue": 14
+    }
+  ]
+}

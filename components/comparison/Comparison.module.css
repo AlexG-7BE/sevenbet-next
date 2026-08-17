@@ -40,7 +40,7 @@
 .selectedIdentity { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 15px; align-items: center; }
 .selectedIdentity > img, .selectedIdentity > span { width: 58px; height: 58px; object-fit: contain; display: grid; place-items: center; border-radius: 14px; background: var(--white); color: var(--ink); font-size: 26px; font-weight: 800; }
 .selectedCard p, .selectedCard h3, .selectedCard small, .addCard span, .addCard strong, .addCard small { margin: 0; overflow-wrap: anywhere; }
-.selectedCard p, .addCard span { color: var(--acid); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .08em; }
+.selectedCard p, .addCard span { color: var(--acid); font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; }
 .selectedCard h3, .addCard strong { font-size: 24px; line-height: 29px; letter-spacing: -.03em; }
 .selectedCard small, .addCard small { color: var(--night-muted); font-size: 12px; line-height: 18px; }
 .selectedLinks { margin-top: auto; display: flex; flex-wrap: wrap; gap: 18px; }
@@ -57,7 +57,7 @@
 .selectionForm fieldset > p { margin: 6px 0 16px; color: var(--night-muted); font-size: 12px; line-height: 18px; }
 .slotGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .slotControl { min-width: 0; display: grid; gap: 7px; }
-.slotControl > span { color: var(--acid); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.slotControl > span { color: var(--acid); font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
 .slotControl select { width: 100%; min-height: 48px; padding: 0 38px 0 13px; border: 1px solid #67655e; border-radius: 10px; background: var(--card); color: var(--white); font-size: 13px; }
 .selectionActions { margin-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .selectionActions button, .selectionActions a, .matrixHeading > a, .stateSection a { min-height: 48px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: var(--sb-radius-full); font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
@@ -70,7 +70,7 @@
 .legendSection h2, .decisionSection h2, .commercialSection h2, .methodSection h2, .faqSection h2, .relatedSection h2, .stateSection h2 { max-width: 1040px; margin: 14px 0 30px; font-size: clamp(42px, 5vw, 64px); line-height: .96; letter-spacing: -.05em; text-wrap: balance; }
 .legendGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .legendGrid > div { min-height: 108px; padding: 16px; display: grid; align-content: start; gap: 7px; border: 1px solid var(--line); border-radius: 12px; background: var(--white); }
-.legendGrid strong { color: var(--muted); font-size: 10px; line-height: 14px; letter-spacing: .06em; text-transform: uppercase; }
+.legendGrid strong { color: var(--muted); font-size: 13px; line-height: 18px; letter-spacing: .05em; text-transform: uppercase; }
 .legendGrid [data-status="Published"] strong, .legendGrid [data-status="Editorial"] strong { color: var(--teal); }
 .legendGrid [data-status="Unknown"] strong { color: var(--danger); }
 .legendGrid span { color: var(--muted); font-size: 12px; line-height: 18px; }
@@ -88,15 +88,15 @@
 .desktopMatrix[data-columns="3"] .operatorHeader, .desktopMatrix[data-columns="3"] .matrixRow { grid-template-columns: minmax(220px, .76fr) repeat(3, minmax(0, 1fr)); }
 .operatorHeader { min-height: 92px; background: var(--night); color: var(--white); }
 .operatorHeader > div { min-width: 0; padding: 18px; display: grid; align-content: center; gap: 5px; border-right: 1px solid #4b4944; }
-.operatorHeader > div:first-child { color: var(--acid); font-size: 11px; font-weight: 750; text-transform: uppercase; }
+.operatorHeader > div:first-child { color: var(--acid); font-size: 13px; line-height: 18px; font-weight: 750; text-transform: uppercase; }
 .operatorHeader strong { overflow-wrap: anywhere; font-size: 18px; }
-.operatorHeader span { color: var(--night-muted); font-size: 11px; }
+.operatorHeader span { color: var(--night-muted); font-size: 13px; line-height: 18px; }
 .desktopGroup > h3 { margin: 0; padding: 18px; background: var(--sb-acid); color: var(--ink); font-size: 16px; line-height: 22px; }
 .matrixRow { border-bottom: 1px solid var(--line); }
 .matrixRow > div { min-width: 0; min-height: 112px; padding: 16px 18px; display: grid; align-content: start; gap: 8px; border-right: 1px solid var(--line); background: var(--white); }
 .matrixRow > div:first-child { background: #f3f2eb; }
 .matrixRow > div strong { overflow-wrap: anywhere; font-size: 13px; line-height: 19px; }
-.matrixRow > div span { color: var(--muted); font-size: 10px; line-height: 15px; }
+.matrixRow > div span { color: var(--muted); font-size: 13px; line-height: 19px; }
 .matrixRow > div:not(:first-child) span { width: fit-content; padding: 4px 7px; border-radius: var(--sb-radius-full); background: #efeee8; font-weight: 750; text-transform: uppercase; }
 .matrixRow > div[data-status="Published"] span, .matrixRow > div[data-status="Editorial"] span { background: #dff0ec; color: var(--teal); }
 .matrixRow > div[data-status="Unknown"] span { background: #f4dfdc; color: var(--danger); }
@@ -104,7 +104,7 @@
 
 .decisionCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .decisionCards article { min-height: 250px; padding: 22px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 20px; background: var(--white); }
-.decisionCards span, .commercialCards article > span { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .07em; text-transform: uppercase; }
+.decisionCards span, .commercialCards article > span { color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
 .decisionCards h3 { margin: 32px 0 10px; font-size: 25px; line-height: 29px; letter-spacing: -.03em; }
 .decisionCards p { margin: 0; color: var(--muted); font-size: 13px; line-height: 20px; }
 .decisionCards a { min-height: 44px; margin-top: auto; display: inline-flex; align-items: center; font-size: 12px; font-weight: 750; text-decoration: underline; text-underline-offset: 4px; }
@@ -114,7 +114,7 @@
 .sectionCopy { max-width: 900px; margin: -12px 0 28px; color: var(--night-muted); font-size: 16px; line-height: 25px; }
 .boundaryList { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #514f49; }
 .boundaryList div { min-height: 104px; padding: 20px; display: grid; align-content: center; gap: 6px; background: var(--card); }
-.boundaryList strong { color: var(--acid); font-size: 11px; text-transform: uppercase; }
+.boundaryList strong { color: var(--acid); font-size: 13px; line-height: 18px; text-transform: uppercase; }
 .boundaryList span { color: var(--night-muted); font-size: 13px; line-height: 19px; }
 .commercialCards { margin-top: 18px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .commercialCards article { min-height: 220px; padding: 20px; display: flex; flex-direction: column; gap: 13px; border: 1px solid #54524c; border-radius: 18px; background: var(--deep); }
@@ -131,7 +131,7 @@
 .methodSection li p { margin: 0; color: var(--muted); font-size: 13px; line-height: 20px; }
 .methodSection aside { margin-top: 18px; padding: 24px; display: flex; align-items: center; justify-content: space-between; gap: 24px; border-radius: 18px; background: var(--acid); }
 .methodSection aside div { display: grid; gap: 8px; }
-.methodSection aside span { font-size: 10px; font-weight: 800; letter-spacing: .07em; }
+.methodSection aside span { font-size: 13px; line-height: 18px; font-weight: 800; letter-spacing: .05em; }
 .methodSection aside strong { font-size: 25px; line-height: 29px; }
 .methodSection aside p { margin: 0; font-size: 13px; }
 .methodSection aside a { min-height: 48px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--sb-radius-full); background: var(--night); color: var(--white); font-size: 12px; font-weight: 750; }
@@ -147,7 +147,7 @@
 
 .relatedSection nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
 .relatedSection nav a { min-height: 170px; padding: 22px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid var(--line); border-radius: 18px; background: var(--white); }
-.relatedSection nav span { color: var(--teal); font-size: 10px; font-weight: 750; text-transform: uppercase; }
+.relatedSection nav span { color: var(--teal); font-size: 13px; line-height: 18px; font-weight: 750; text-transform: uppercase; }
 .relatedSection nav strong { font-size: 21px; line-height: 26px; }
 .demoDisclosure { padding: 28px 0; background: var(--sb-acid); color: var(--ink); }
 .demoDisclosure .shell { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 30px; }
@@ -163,8 +163,8 @@
 
 .loadingHero { padding: 48px 0 64px; background: var(--night); color: var(--white); }
 .loadingStateLabel { display: flex; align-items: center; gap: 12px; }
-.loadingStateLabel span { padding: 6px 9px; border-radius: var(--sb-radius-full); background: var(--acid); color: var(--ink); font-size: 10px; line-height: 12px; font-weight: 800; letter-spacing: .08em; }
-.loadingStateLabel small { color: var(--night-muted); font-size: 10px; line-height: 14px; font-weight: 750; letter-spacing: .08em; }
+.loadingStateLabel span { padding: 6px 9px; border-radius: var(--sb-radius-full); background: var(--acid); color: var(--ink); font-size: 13px; line-height: 18px; font-weight: 800; letter-spacing: .05em; }
+.loadingStateLabel small { color: var(--night-muted); font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; }
 .loadingHero h1 { max-width: 980px; margin: 22px 0 16px; font-size: clamp(52px, 6vw, 76px); line-height: .94; letter-spacing: -.055em; text-wrap: balance; }
 .loadingCopy { max-width: 720px; margin: 0; color: var(--night-muted); font-size: 17px; line-height: 26px; }
 .loadingSlots { margin-top: 30px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -236,12 +236,12 @@
   .mobileGroup > h3 { margin: 0; padding: 14px; border-radius: 10px; background: var(--acid); color: var(--ink); font-size: 16px; line-height: 21px; }
   .criterionCard { padding: 14px; border-radius: 14px; background: var(--paper); color: var(--ink); }
   .criterionCard > p { margin: 0; font-size: 17px; line-height: 21px; font-weight: 750; }
-  .criterionCard > small { margin-top: 5px; display: block; color: var(--muted); font-size: 11px; line-height: 16px; }
+  .criterionCard > small { margin-top: 5px; display: block; color: var(--muted); font-size: 13px; line-height: 19px; }
   .criterionCard > div { margin-top: 14px; display: grid; gap: 8px; }
   .criterionCard > div > div { min-width: 0; padding: 12px; display: grid; gap: 7px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
-  .criterionCard h4 { margin: 0; color: var(--muted); font-size: 10px; line-height: 14px; letter-spacing: .06em; text-transform: uppercase; }
+  .criterionCard h4 { margin: 0; color: var(--muted); font-size: 13px; line-height: 18px; letter-spacing: .05em; text-transform: uppercase; }
   .criterionCard strong { overflow-wrap: anywhere; font-size: 14px; line-height: 20px; }
-  .criterionCard > div > div > span { width: fit-content; padding: 4px 7px; border-radius: var(--sb-radius-full); background: #efeee8; color: var(--muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+  .criterionCard > div > div > span { width: fit-content; padding: 4px 7px; border-radius: var(--sb-radius-full); background: #efeee8; color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 750; text-transform: uppercase; }
   .criterionCard > div > div[data-status="Published"] > span, .criterionCard > div > div[data-status="Editorial"] > span { background: #dff0ec; color: var(--teal); }
   .criterionCard > div > div[data-status="Unknown"] > span { background: #f4dfdc; color: var(--danger); }
   .decisionCards article, .commercialCards article { min-height: 220px; }

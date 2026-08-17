@@ -70,7 +70,7 @@
   line-height: 1.4;
   text-wrap: balance;
 }
-.heroProof { position:absolute; top:min(662px,45.9722vw); width:calc(100% - 96px); color: var(--night-muted); font-size: 11px; line-height: 1.4; font-weight: 500; }
+.heroProof { position:absolute; top:min(662px,45.9722vw); width:calc(100% - 96px); color: var(--night-muted); font-size: 13px; line-height: 19px; font-weight: 500; }
 
 .hero .primaryButton {
   min-width: min(220px, 15.2778vw);
@@ -217,7 +217,7 @@
 
 .trustBoundary { min-height:100svh; padding:100px max(64px,calc((100vw - 1312px)/2)); display:flex; flex-direction:column; justify-content:center; gap:72px; background:var(--field); color:var(--ink); }
 .trustBoundary > div:first-child { text-align:center; }
-.trustBoundary > div:first-child > span, .trustColumns article > span { color:var(--muted); font-size:11px; font-weight:700; letter-spacing:.12em; }
+.trustBoundary > div:first-child > span, .trustColumns article > span { color:var(--muted); font-size:13px; line-height:18px; font-weight:700; letter-spacing:.08em; }
 .trustBoundary h2 { margin:28px 0 0; display:grid; }
 .trustBoundary h2 strong { font-size:clamp(48px,5vw,72px); line-height:.98; letter-spacing:-.06em; }
 .trustBoundary h2 em { margin-top:8px; font:italic clamp(54px,5.6vw,82px)/.9 var(--font-seven-serif),Georgia,serif; }
@@ -256,7 +256,7 @@
 }
 
 @media (max-width: 760px) {
-  .primaryButton { min-width: min(270px, calc(100vw - 48px)); min-height: 64px; padding-inline: 16px; font-size: 13px; }
+  .primaryButton { min-width: min(270px, calc(100vw - 48px)); min-height: 64px; padding-inline: 16px; font-size: 14px; }
 
   .hero { height: 100svh; min-height:700px; }
   .heroCopy { inset: min(276px, 70.7692vw) 16px auto; }
@@ -264,8 +264,8 @@
   .heroCopy h1 strong { font-size: min(54px, 13.8462vw); line-height: min(50px, 12.8205vw); letter-spacing: -.06em; }
   .heroCopy h1 em { font-size: min(56px, 14.359vw); line-height: min(52px, 13.3333vw); }
   .heroCopy > p { width: min(318px, calc(100vw - 56px)); margin: min(36px, 9.2308vw) 0 min(58px, 14.8718vw); font-size: min(16px, 4.1026vw); line-height: min(24px, 6.1538vw); }
-  .hero .primaryButton { min-width: min(270px, 69.2308vw); min-height: min(64px, 16.4103vw); padding-inline: 16px; font-size: min(13px, 3.3333vw); }
-  .heroProof { position:static; width: calc(100vw - 48px); margin-top: min(26px, 6.6667vw); font-size: min(10px, 2.5641vw); line-height: min(14px, 3.5897vw); }
+  .hero .primaryButton { min-width: min(270px, 69.2308vw); min-height: min(64px, 16.4103vw); padding-inline: 16px; font-size: 14px; }
+  .heroProof { position:static; width: calc(100vw - 48px); margin-top: min(26px, 6.6667vw); font-size: 13px; line-height: 19px; }
   .heroPhoto { border-radius: min(14px, 3.5897vw); }
   .heroPhotoOne { width: min(104px, 26.6667vw); height: min(138px, 35.3846vw); left: min(8.507px, 2.1813vw); top: min(117.057px, 30.0146vw); transform: rotate(6deg); }
   .heroPhotoTwo { width: min(104px, 26.6667vw); height: min(138px, 35.3846vw); right: min(9.073px, 2.3264vw); top: min(116.188px, 29.7918vw); transform: rotate(-6deg); }

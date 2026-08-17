@@ -119,3 +119,20 @@ test("mobile presentation follows the final 390px handoff composition", async ({
   expect(Math.round((await feature.boundingBox())!.width)).toBe(360);
   expect(Math.round((await result.boundingBox())!.height)).toBeGreaterThanOrEqual(220);
 });
+
+test("bonus calculator recomputes turnover, weighting cost and net value", async ({ page }) => {
+  await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  const calculator = page.locator('section[aria-labelledby="bonus-calculator-title"]');
+  const valueFor = (label: string) => calculator.getByText(label, { exact: true }).locator("..").locator("dd");
+
+  await expect(valueFor("Required turnover")).toHaveText("€7,000");
+  await expect(valueFor("Effective at your weighting")).toHaveText("€7,000");
+  await expect(valueFor("Expected net value")).toHaveText("−€80");
+
+  await calculator.getByLabel("Deposit + bonus").check({ force: true });
+  await calculator.getByLabel("Table · 50%").check({ force: true });
+
+  await expect(valueFor("Required turnover")).toHaveText("€14,000");
+  await expect(valueFor("Effective at your weighting")).toHaveText("€28,000");
+  await expect(valueFor("Expected net value")).toHaveText("−€920");
+});

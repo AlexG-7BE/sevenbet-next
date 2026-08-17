@@ -111,6 +111,7 @@ jobs:
       - run: npm run ci:build-secrets
       - run: npx playwright install --with-deps chromium
       - run: npm run ci:browser
+      - run: npm run typography:browser
 
   database-migrations:
     name: Database / Migration Verification

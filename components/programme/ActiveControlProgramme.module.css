@@ -207,7 +207,7 @@
   border-radius: 14px;
   cursor: pointer;
 }
-.choice > span { grid-row: 1 / span 2; width: 20px; height: 20px; display: grid; place-items: center; border: 1px solid var(--muted); border-radius: 50%; font-size: 11px; }
+.choice > span { grid-row: 1 / span 2; width: 24px; height: 24px; display: grid; place-items: center; border: 1px solid var(--muted); border-radius: 50%; font-size: 14px; line-height: 20px; }
 .choice strong { font-size: 15px; line-height: 20px; }
 .choice small { color: var(--muted); font-size: 12px; line-height: 16px; }
 .choiceActive { background: var(--acid-soft); border-color: var(--ink); }
@@ -270,7 +270,7 @@
 .waveMoments button { min-height: 94px; padding: 12px; display: grid; grid-template-columns: 28px 1fr; gap: 3px 10px; text-align: left; color: var(--white); background: rgba(255,255,255,.05); border: 1px solid #56544f; border-radius: 16px; cursor: pointer; backdrop-filter: blur(10px); }
 .waveMoments button > span { grid-row: 1 / span 2; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: var(--white); color: var(--ink); font-size: 12px; font-weight: 700; }
 .waveMoments button > b { font-size: 14px; line-height: 18px; }
-.waveMoments button > small { color: var(--night-muted); font-size: 11px; line-height: 15px; }
+.waveMoments button > small { color: var(--night-muted); font-size: 13px; line-height: 18px; }
 .waveMoments button[data-active="true"] { border-color: var(--acid); background: rgba(228,226,78,.12); }
 .waveMoments button[data-active="true"] > span { background: var(--acid); }
 
@@ -340,7 +340,7 @@
 .googleButton:hover:not(:disabled) { border-color: var(--ink); background: #fff; }
 .googleButton:disabled { cursor: not-allowed; opacity: .45; }
 .googleBoundary { margin: -8px 0 0; color: var(--muted); font-size: 12px; line-height: 17px; }
-.authDivider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: 11px; line-height: 16px; font-weight: 650; letter-spacing: .3px; text-transform: uppercase; }
+.authDivider { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px; color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 650; letter-spacing: .3px; text-transform: uppercase; }
 .authDivider::before, .authDivider::after { content: ""; height: 1px; background: var(--muted); }
 .textButton { width: max-content; padding: 4px 0; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); font-size: 13px; cursor: pointer; }
 .authNotice { margin: 0 64px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--ink); background: var(--acid-soft); border-left: 4px solid var(--teal); font-size: 13px; line-height: 19px; }
@@ -356,7 +356,7 @@
 .currentPhoto { position: relative; min-height: 220px; display: grid; place-items: center end; padding-right: 32px; overflow: hidden; }
 .currentPhoto::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--deep), rgba(16,15,15,.2) 45%, rgba(16,15,15,.28)); }
 .currentPhoto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.currentPhoto > span { position: absolute; z-index: 2; top: 24px; left: 26px; color: var(--acid); font-size: 11px; line-height: 16px; font-weight: 700; letter-spacing: .8px; }
+.currentPhoto > span { position: absolute; z-index: 2; top: 24px; left: 26px; color: var(--acid); font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .6px; }
 .currentPhoto .primaryButton { position: relative; z-index: 2; }
 .pathHeading { display: flex; justify-content: space-between; color: var(--muted); }
 .pathHeading b { color: var(--ink); }

@@ -14,27 +14,27 @@
 .calculatorControls > p { max-width:540px; margin-bottom:34px; }
 .calculatorControls label,.calculatorControls fieldset { margin:0; }
 .calculatorControls fieldset { padding:0; border:0; }
-.calculatorControls legend,.amountField > span,.wageringField > span { display:block; margin:22px 0 10px; color:rgba(250,250,247,.48); font-size:10px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; }
-.amountField input { width:100%; height:48px; padding:0 18px; border:1px solid rgba(250,250,247,.28); border-radius:10px; background:#242323; color:#fafaf7; font:inherit; font-weight:700; }
+.calculatorControls legend,.amountField > span,.wageringField > span { display:block; margin:22px 0 10px; color:rgba(250,250,247,.72); font-size:var(--sb-type-label-size); line-height:var(--sb-type-label-line); font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+.amountField input { width:100%; height:48px; padding:0 18px; border:1px solid rgba(250,250,247,.28); border-radius:10px; background:#242323; color:#fafaf7; font:inherit; font-size:16px; font-weight:700; }
 .wageringField input { width:100%; accent-color:#e4e24e; }
 .segmented,.gameWeights { display:grid; gap:8px; }
 .segmented { grid-template-columns:1fr 1fr; }
 .gameWeights { grid-template-columns:repeat(3,1fr); }
 .gameWeights label:last-child { grid-column:1/-1; }
-.segmented label,.gameWeights label { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#d0cec7; font-size:11px; font-weight:700; cursor:pointer; }
+.segmented label,.gameWeights label { min-height:44px; display:flex; align-items:center; justify-content:center; padding:8px 12px; border:1px solid rgba(250,250,247,.28); border-radius:999px; color:#e0ded7; font-size:var(--sb-type-control-size); line-height:var(--sb-type-control-line); font-weight:700; cursor:pointer; }
 .segmented input,.gameWeights input { position:absolute; opacity:0; pointer-events:none; }
 .segmented .selected,.gameWeights .selected { border-color:#e4e24e; background:#e4e24e; color:#100f0f; }
 .calculatorOutput { min-height:520px; display:flex; flex-direction:column; padding:46px; border:1px solid rgba(250,250,247,.08); border-radius:20px; background:#111; color:#fafaf7; }
 .calculatorOutput dl { margin:20px 0 0; }
 .calculatorOutput dl > div { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; border-bottom:1px solid rgba(250,250,247,.12); }
-.calculatorOutput dt { color:#aaa79e; font-size:13px; }
-.calculatorOutput dt span { display:block; font-size:9px; }
+.calculatorOutput dt { color:#c3c0b7; font-size:14px; line-height:20px; }
+.calculatorOutput dt span { display:block; font-size:13px; line-height:18px; }
 .calculatorOutput dd { margin:0; font-size:26px; font-weight:850; white-space:nowrap; }
 .calculatorOutput .cost { color:#e4e24e; }
 .calculatorOutput .negative { color:#cf5b55; }
 .calculatorOutput .positive { color:#7bc7ad; }
-.calculatorOutput > p { margin:24px 0 14px; padding:18px; border-radius:10px; background:#242323; font-size:12px; }
-.calculatorOutput > span { margin-top:auto; color:#716f69; font-size:9px; }
+.calculatorOutput > p { margin:24px 0 14px; padding:18px; border-radius:10px; background:#242323; font-size:14px; line-height:21px; }
+.calculatorOutput > span { margin-top:auto; color:#aaa79e; font-size:13px; line-height:19px; }
 .method { padding:110px var(--site-gutter); background:#f4f1eb; color:#100f0f; font-family:var(--font-seven-sans),Arial,sans-serif; }
 .method > div { width:min(var(--site-content-max),100%); margin:0 auto; display:grid; grid-template-columns:.8fr 1.2fr; gap:72px; }
 .method small { color:#777500; }
@@ -61,7 +61,7 @@
   .heroMeta span:last-child{margin-left:auto}
   .calculator{padding:110px 24px 125px;overflow:hidden}
   .method{padding:110px 24px 92px;overflow:hidden}
-  .calculator>div,.method>div{width:calc(100% - 48px);grid-template-columns:minmax(380px,1fr);gap:64px}
+  .calculator>div,.method>div{width:100%;grid-template-columns:minmax(0,1fr);gap:64px}
   .calculator h2,.method h2{font-size:30px;line-height:1.06;letter-spacing:-.01em}
   .amountField input{border-radius:14px}
   .gameWeights{display:flex;justify-content:center;flex-wrap:wrap;gap:8px}
@@ -94,5 +94,5 @@
   .calculatorOutput{padding-inline:22px}
   :global(body):has(.hero) :global([data-public-shell="header"]){max-width:100vw;overflow:hidden}
   :global(body):has(.hero) :global([data-public-shell="header"])>div{max-width:100vw;padding-inline:16px}
-  :global(body):has(.hero) :global([data-public-shell="header"]) a[href^="/program"]{min-width:0;padding-inline:14px;font-size:12px}
+  :global(body):has(.hero) :global([data-public-shell="header"]) a[href^="/program"]{min-width:0;padding-inline:14px;font-size:14px}
 }

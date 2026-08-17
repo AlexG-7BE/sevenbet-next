@@ -31,7 +31,7 @@
 .identity[data-size="large"] > span { width:52px; height:52px; font-size:22px; }
 .identity[data-size="large"] h3 { font-size:32px; }
 .score { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
-.score small,.termLabel { color:#8b8a82; font-size:12px; letter-spacing:.14em; text-transform:uppercase; }
+.score small,.termLabel { color:#6f6d66; font-size:13px; line-height:18px; letter-spacing:.09em; text-transform:uppercase; }
 .score strong { font-size:36px; }
 .score span { color:#777500; font-size:13px; letter-spacing:.08em; }
 .reason { max-width:52ch; margin:20px 0 28px; color:var(--muted); font-size:15px; line-height:1.65; }
@@ -39,17 +39,17 @@
 .actions { margin-top:32px; display:flex; align-items:center; flex-wrap:wrap; gap:18px; }
 .commercialCta { min-height:50px; padding:14px 30px; border:0; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:var(--paper); font-weight:650; cursor:pointer; }
 .actions > a { padding-bottom:2px; border-bottom:1px solid currentColor; font-size:14px; }
-.unavailableAction { min-height:48px; padding:13px 20px; border-radius:999px; display:inline-flex; align-items:center; background:rgba(139,138,130,.18); color:#6b6a64; font-size:13px; }
+.unavailableAction { min-height:48px; padding:13px 20px; border-radius:999px; display:inline-flex; align-items:center; background:rgba(139,138,130,.18); color:#5f5e58; font-size:14px; line-height:20px; }
 .featuredMark,.altMark { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:var(--deep); color:#8b8a82; }
 .featuredMark { border-left:1px dashed rgba(16,15,15,.18); background:#e6e4df; color:#77756e; }
 .featuredMark span,.altMark span { font-size:27px; line-height:1; }
-.featuredMark small,.altMark small { font-size:11px; }
+.featuredMark small,.altMark small { font-size:13px; line-height:18px; }
 .featuredTerms { grid-column:1/-1; margin:0; padding:0 24px; border-top:1px solid rgba(16,15,15,.1); display:grid; grid-template-columns:repeat(4,1fr); }
 .featuredTerms div { min-height:86px; padding:20px 24px; border-left:1px solid rgba(16,15,15,.08); display:grid; align-content:center; gap:6px; }
 .featuredTerms div:first-child { border-left:0; }
 .featuredTerms div:nth-child(5) { display:none; }
 .featuredTerms dt { font-size:14px; font-weight:650; }
-.featuredTerms dd { margin:0; color:#8b8a82; font-size:12px; overflow-wrap:anywhere; }
+.featuredTerms dd { margin:0; color:#64635c; font-size:14px; line-height:20px; overflow-wrap:anywhere; }
 .alternatives { margin-top:24px; display:grid; gap:24px; }
 .alternativeCard { overflow:hidden; display:grid; grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr); border:1px solid rgba(250,250,247,.08); border-radius:20px; background:var(--deep); color:var(--paper); }
 .altCopy { padding:44px 48px; }
@@ -63,7 +63,7 @@
 .termSummary { font-size:14px; line-height:1.55; }
 .altCopy .actions > a { color:rgba(250,250,247,.78); }
 .actions > button { min-height:44px; padding:8px 4px; border:0; border-radius:0; background:transparent; color:inherit; font:inherit; font-size:14px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
-.dataNotice { margin:12px 0; color:var(--muted); font-size:11px; line-height:1.5; }
+.dataNotice { margin:12px 0; color:var(--muted); font-size:13px; line-height:19px; }
 .altCopy .dataNotice { color:rgba(250,250,247,.55); }
 .proofList { display:none; }
 .worthALook { margin-top:72px; }
@@ -75,19 +75,19 @@
 .worthHead .identity h3 { font-size:22px; }
 .worthHead > b { margin-left:auto; color:#a7a55e; font-size:27px; }
 .worthScore { min-height:72px; padding:18px 24px; border-bottom:1px solid rgba(16,15,15,.09); display:flex; align-items:baseline; gap:10px; }
-.worthScore small,.worthOffer small { margin-right:auto; color:var(--muted); font-size:10px; letter-spacing:.14em; text-transform:uppercase; }
+.worthScore small,.worthOffer small { margin-right:auto; color:var(--muted); font-size:13px; line-height:18px; letter-spacing:.08em; text-transform:uppercase; }
 .worthScore strong { font-size:28px; }
 .worthScore span { color:#777500; font-size:12px; }
 .worthOffer { min-height:116px; padding:20px 24px; border-bottom:1px solid rgba(16,15,15,.09); display:grid; align-content:start; gap:11px; }
 .worthOffer strong { font-size:20px; line-height:1.08; text-transform:uppercase; }
 .worthCards dl { margin:0; padding:15px 24px; border-bottom:1px solid rgba(16,15,15,.09); }
-.worthCards dl div { padding:5px 0; display:flex; justify-content:space-between; gap:14px; color:var(--muted); font-size:11px; }
+.worthCards dl div { padding:5px 0; display:flex; justify-content:space-between; gap:14px; color:var(--muted); font-size:14px; line-height:20px; }
 .worthCards dt,.worthCards dd { margin:0; }
 .worthCards dd { color:var(--ink); font-weight:700; text-align:right; }
-.worthCards article > p { min-height:92px; margin:0; padding:20px 24px; color:var(--muted); font-size:12px; line-height:1.5; }
+.worthCards article > p { min-height:92px; margin:0; padding:20px 24px; color:var(--muted); font-size:14px; line-height:21px; }
 .worthCards .actions { margin-top:auto; padding:18px 24px; border-top:1px solid rgba(16,15,15,.09); gap:12px; }
 .worthCards .commercialCta { min-height:44px; padding:10px 18px; }
-.viewAll { width:fit-content; margin:28px auto 0; display:block; border-bottom:1px solid rgba(16,15,15,.3); color:var(--ink); font-size:13px; }
+.viewAll { width:fit-content; min-height:44px; margin:28px auto 0; display:flex; align-items:center; border-bottom:1px solid rgba(16,15,15,.3); color:var(--ink); font-size:14px; line-height:20px; }
 .whyPicked { padding:120px 0; background:var(--field); color:var(--ink); }
 .whyPicked > div { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:64px; }
 .lightKicker { color:#8b8a82; }
@@ -183,7 +183,7 @@
   .worthCards article > p { min-height:0; padding:18px 30px; font-size:14px; line-height:1.6; }
   .worthCards .actions { padding:20px 30px; gap:14px; flex-wrap:wrap; }
   .worthCards .commercialCta { min-width:140px; min-height:44px; flex:1; border-radius:14px; }
-  .worthCards .actions > a,.worthCards .actions > button { font-size:13px; }
+  .worthCards .actions > a,.worthCards .actions > button { font-size:14px; line-height:20px; }
   .viewAll { margin-top:28px; margin-bottom:52px; }
   .whyPicked,.faq { padding:120px 0; }
   .whyPicked { padding-bottom:88px; }

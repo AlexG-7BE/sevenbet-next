@@ -35,7 +35,7 @@
 }
 
 .wordmark { font-size: 20px; font-weight: 800; letter-spacing: -.035em; text-decoration: none; }
-.missionLabel { justify-self: center; color: rgba(250, 250, 247, .5); font-size: 11px; font-weight: 650; letter-spacing: .18em; text-transform: uppercase; }
+.missionLabel { justify-self: center; color: rgba(250, 250, 247, .66); font-size: 13px; line-height: 18px; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; }
 .xpPill { min-width: 62px; padding: 8px 13px; border-radius: 999px; background: var(--programme-acid); color: #100f0f; font-size: 12px; font-weight: 800; text-align: center; }
 
 .footnote {
@@ -50,7 +50,7 @@
   gap: 14px 30px;
   border-top: 1px solid var(--programme-line);
   color: rgba(250, 250, 247, .45);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .footnote a { margin-left: auto; color: var(--programme-acid); text-decoration: none; }
@@ -97,7 +97,7 @@
 .checkRow input { width: 20px; height: 20px; margin: 0; accent-color: var(--programme-acid); }
 .checkRow span { display: grid; gap: 4px; color: rgba(250, 250, 247, .82); font-size: 14px; line-height: 1.4; }
 .checkRow label { cursor: pointer; }
-.checkRow small { color: rgba(250, 250, 247, .45); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; }
+.checkRow small { color: rgba(250, 250, 247, .66); font-size: 13px; line-height: 18px; letter-spacing: .09em; text-transform: uppercase; }
 .legalLinks { margin: 8px 0 18px; display: flex; justify-content: center; gap: 20px; color: var(--programme-muted); font-size: 12px; }
 .legalLinks a { text-underline-offset: 4px; }
 
@@ -155,7 +155,7 @@
 .typingAction, .inlineButton, .withdrawAction { padding: 2px 0; border: 0; border-bottom: 1px solid rgba(250, 250, 247, .3); background: transparent; color: rgba(250, 250, 247, .8); cursor: pointer; }
 .typingAction { min-height: 28px; font-size: 14px; }
 .inlineButton { color: var(--programme-acid); }
-.withdrawAction { border-bottom-color: rgba(250, 250, 247, .18); color: rgba(250, 250, 247, .45); font-size: 10px; line-height: 1.4; }
+.withdrawAction { border-bottom-color: rgba(250, 250, 247, .28); color: rgba(250, 250, 247, .66); font-size: 14px; line-height: 20px; }
 .voiceWave { height: 64px; display: flex; align-items: center; gap: 5px; }
 .voiceWave i { width: 4px; height: var(--bar-height); border-radius: 2px; display: block; background: var(--programme-acid); animation: voice-pulse 800ms ease-in-out var(--bar-delay) infinite alternate; }
 .recordingTime { margin: 0; color: var(--programme-muted); font-size: 15px; font-variant-numeric: tabular-nums; }
@@ -165,13 +165,13 @@
 
 .transcriptState { width: 100%; display: grid; justify-items: stretch; gap: 14px; text-align: left; }
 .transcriptState label, .emailForm label { display: grid; gap: 8px; }
-.transcriptState label > span, .emailForm label > span { color: rgba(250, 250, 247, .5); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+.transcriptState label > span, .emailForm label > span { color: rgba(250, 250, 247, .68); font-size: 14px; line-height: 20px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; }
 .transcriptState textarea, .emailForm input { width: 100%; border: 1px solid var(--programme-line); border-radius: 14px; background: var(--programme-panel); color: var(--programme-paper); }
 .transcriptState textarea { min-height: 150px; padding: 16px 20px; resize: vertical; font-size: 14px; line-height: 1.6; }
-.transcriptState small { color: rgba(250, 250, 247, .45); font-size: 10px; }
+.transcriptState small { color: rgba(250, 250, 247, .66); font-size: 13px; line-height: 18px; }
 .transcriptState .primaryAction { width: 100%; }
 
-.privacyBoundary { width: 100%; max-width: 340px; margin-top: 4px; display: grid; gap: 12px; color: rgba(250, 250, 247, .45); font-size: 11px; line-height: 1.5; text-align: left; }
+.privacyBoundary { width: 100%; max-width: 380px; margin-top: 4px; display: grid; gap: 12px; color: rgba(250, 250, 247, .66); font-size: 13px; line-height: 19px; text-align: left; }
 .privacyBoundary > div { display: grid; gap: 3px; text-align: center; }
 .privacyBoundary strong { color: rgba(250, 250, 247, .62); font-size: 12px; }
 .privacyBoundary label { padding-top: 12px; border-top: 1px solid rgba(250, 250, 247, .1); display: grid; grid-template-columns: 18px 1fr; gap: 10px; cursor: pointer; }
@@ -194,7 +194,7 @@
 .startingPointCard { width: 100%; max-width: 340px; padding: 18px 22px; border: 1px solid var(--programme-line); border-radius: 14px; background: rgba(250, 250, 247, .08); text-align: left; }
 .startingPointCard > p { margin: 0; color: rgba(250, 250, 247, .8); font-size: 14px; line-height: 1.6; }
 .registrationActions { width: 100%; max-width: 360px; display: grid; justify-items: stretch; gap: 12px; }
-.registrationActions > small { color: rgba(250, 250, 247, .45); font-size: 10px; line-height: 1.45; text-align: center; }
+.registrationActions > small { color: rgba(250, 250, 247, .66); font-size: 13px; line-height: 19px; text-align: center; }
 .googleAction { width: 100%; margin-top: 6px; }
 .emailForm { padding-top: 6px; display: grid; gap: 12px; text-align: left; }
 .emailForm input { min-height: 46px; padding: 10px 13px; }

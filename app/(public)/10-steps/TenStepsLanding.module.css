@@ -52,7 +52,7 @@
 .heroCopy h1 em { margin-top: 8px; font-size: clamp(62px, 6vw, 88px); line-height: .9; }
 .heroCopy > p { margin-top: 28px; color: var(--night-muted); font-size: 17px; line-height: 1.45; }
 .heroCopy .primaryButton { margin-top: 28px; }
-.heroCopy > small { max-width: 580px; margin-top: 18px; color: var(--night-muted); font-size: 10px; line-height: 15px; letter-spacing: .04em; }
+.heroCopy > small { max-width: 580px; margin-top: 18px; color: var(--night-muted); font-size: 14px; line-height: 21px; letter-spacing: .02em; }
 .heroVisual { height: 442px; position: relative; align-self: center; }
 .heroVisual > img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 48%; }
 .rewardCard {
@@ -67,9 +67,9 @@
   background: var(--white);
   color: var(--ink);
 }
-.rewardCard span { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.rewardCard span { font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .05em; }
 .rewardCard strong { margin-top: 9px; font-size: 27px; line-height: 1; font-variant-numeric: tabular-nums; }
-.rewardCard small { margin-top: 9px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+.rewardCard small { margin-top: 9px; color: var(--muted); font-size: 13px; line-height: 18px; }
 
 .returningInner {
   width: min(1312px, calc(100% - 128px));
@@ -86,9 +86,9 @@
 .returningCopy > p { max-width: 600px; margin-top: 28px; color: var(--night-muted); font-size: 18px; line-height: 1.45; }
 .returningCopy .primaryButton { margin-top: 30px; }
 .serverState { width: min(100%, 560px); margin-top: 22px; padding: 18px; border: 1px solid var(--muted); display: grid; gap: 8px; background: var(--deep); }
-.serverState strong { color: var(--acid); font-size: 11px; letter-spacing: .08em; }
+.serverState strong { color: var(--acid); font-size: 13px; line-height: 18px; letter-spacing: .05em; }
 .serverState p { color: var(--night-muted); font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums; }
-.serverState small { color: var(--night-muted); font-size: 11px; }
+.serverState small { color: var(--night-muted); font-size: 13px; line-height: 18px; }
 .returningImage { height: 460px; overflow: hidden; }
 .returningImage img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 44%; }
 
@@ -102,7 +102,7 @@
 .buildGrid h3 { margin:0; font-size:22px; line-height:1.1; letter-spacing:-.02em; text-transform:uppercase; }
 .buildGrid article p { margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
 .miniResult { min-height: 118px; margin-top: auto; padding: 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 14px; display: grid; background: var(--deep); }
-.miniResult small { color: var(--night-muted); font-size: 9px; letter-spacing: .08em; }
+.miniResult small { color: var(--night-muted); font-size: 13px; line-height: 18px; letter-spacing: .05em; }
 .miniResult b { margin-top: 10px; font-size: 14px; }
 .miniResult i { width: 58%; height: 4px; margin-top: 18px; display: block; background: var(--acid); }
 
@@ -128,7 +128,7 @@
 .missionList li { min-height: 88px; padding: 16px; border: 1px solid rgba(16,15,15,.34); border-radius: 20px; display: flex; align-items: center; gap: 16px; }
 .missionList li > span { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; display: grid; place-items: center; background: var(--white); color: var(--ink); font-size: 12px; font-weight: 700; }
 .missionList h3 { font-size: 16px; line-height: 1.25; font-weight: 500; }
-.missionList p { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .06em; }
+.missionList p { margin-top: 4px; color: var(--muted); font-size: 14px; line-height: 21px; font-weight: 700; letter-spacing: .03em; }
 .missionList .currentMission { border-color: var(--night); background: var(--night); color: var(--white); }
 .missionList .currentMission > span { background: var(--acid); }
 .missionList .currentMission p { color: var(--acid); }
@@ -150,7 +150,7 @@
 .evidenceIntro h2 { margin-top: 20px; font-size: clamp(44px, 4.4vw, 62px); line-height: 1.02; letter-spacing: -.052em; }
 .evidenceGrid { margin-top: 46px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
 .evidenceGrid article { min-height: 256px; padding: 24px; border: 1px solid var(--muted); border-radius: 24px; display: flex; flex-direction: column; background: var(--white); }
-.evidenceGrid article > span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+.evidenceGrid article > span { color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .05em; }
 .evidenceGrid article > strong { margin-top: 34px; font-size: 64px; line-height: .8; }
 .evidenceGrid h3 { margin-top: 16px; font-size: 26px; line-height: 1.05; letter-spacing: -.035em; }
 .evidenceGrid article > p { margin-top: auto; padding-top: 24px; color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -200,13 +200,13 @@
 
 @media (max-width: 420px) {
   .heroInner { padding-top: 34px; padding-bottom: 64px; gap: 22px; }
-  .heroCopy > span { font-size: 10px; }
+  .heroCopy > span { font-size: 12px; }
   .heroCopy h1 { margin-top: 14px; }
   .heroCopy h1 strong { font-size: clamp(50px, 14.2vw, 60px); line-height: .86; }
   .heroCopy h1 em { margin-top: 10px; font-size: clamp(38px, 11vw, 46px); line-height: .96; }
   .heroCopy > p { margin-top: 18px; font-size: 15px; }
   .heroCopy .primaryButton { width: min(100%, 234px); margin-top: 14px; }
-  .heroCopy > small { margin-top: 12px; font-size: 9px; }
+  .heroCopy > small { margin-top: 12px; font-size: 13px; line-height: 18px; }
   .heroVisual { height: 240px; }
   .returningInner { min-height: 772px; padding: 44px 20px 28px; gap: 16px; align-content: start; }
   .returningCopy h1 { margin-top: 16px; font-size: 42px; line-height: 1.08; }
