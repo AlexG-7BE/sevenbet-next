@@ -53,15 +53,27 @@ async function captureViewportAtWithoutChrome(page: Page, locator: Locator, path
 async function touchScroll(context: BrowserContext, page: Page, direction: "down" | "up") {
   const viewport = page.viewportSize()!;
   const session = await context.newCDPSession(page);
-  await session.send("Input.synthesizeScrollGesture", {
-    x: Math.round(viewport.width / 2),
-    y: direction === "down" ? viewport.height - 110 : 110,
-    yDistance: direction === "down" ? -Math.round(viewport.height * .72) : Math.round(viewport.height * .72),
-    speed: 900,
-    gestureSourceType: "touch",
-  });
-  await session.detach();
-  await page.waitForTimeout(450);
+  const x = Math.round(viewport.width / 2);
+  const startY = Math.round(viewport.height * (direction === "down" ? .8 : .2));
+  const endY = Math.round(viewport.height * (direction === "down" ? .2 : .8));
+
+  try {
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y: startY }],
+    });
+    for (let step = 1; step <= 8; step += 1) {
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y: Math.round(startY + ((endY - startY) * step) / 8) }],
+      });
+      await page.waitForTimeout(16);
+    }
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
+  await page.waitForTimeout(650);
 }
 
 async function isInViewport(locator: Locator) {
