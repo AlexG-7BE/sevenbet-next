@@ -55,7 +55,7 @@ The Founder correction prohibits presentation-level visual fixtures. Determinist
 | `/bonuses` | `CuratedBonusShortlist` and `BonusComparisonList`/`BonusDirectory` |
 | `/learn/[category]/[slug]` | `LearningArticleView` |
 | contextual comparison on `/casinos` | `ContextualComparison` dialog/bottom sheet |
-| Programme intake, Starting Point ready/registration and dashboard | `ProgramAiExperience` and its real state components |
+| Programme intake, Starting Point ready/registration and dashboard | `ProgramAiExperience` orchestration with `ProgramAiFinalPresentation` visible states, plus the real `ProgramAiHomeScreen` Dashboard |
 
 **Detected:** the former route-level `visualFixture → HandoffPage` branches were removed from every dynamic route above. The data-only fixture contains no generated markup or presentation import, is disabled on Vercel, and is exercised by a regression test that compares the runtime root/direct composition with and without fixture data. The visual harness additionally rejects `[data-handoff-page]` on dynamic surfaces and requires the matching real-runtime marker.
 
@@ -88,9 +88,12 @@ Completion requires the gates in RFC-034. Until they pass, all new implementatio
 ## Final implementation disposition
 
 - **Detected:** shared public chrome, all mapped handoff surfaces, route consolidation, contextual comparison, analytics and responsive presentation are implemented on `codex/final-design-handoff-v1`.
+- **Detected:** Home now runs the handoff reveal, floating-photo depth, sticky story stack, chameleon navigation, read-progress and bounded desktop wheel-snap behaviours. No-JavaScript, missing-IntersectionObserver and reduced-motion paths remain fail-visible.
+- **Detected:** the shared width contract is `1440px` wide, `1312px` content and `760px` reading, with `clamp(24px, 5vw, 72px)` gutters. Final public runtime shells use the common variables; full-bleed and narrow-reading exceptions remain intentional.
+- **Detected:** the rejected Mission 01 presentation composition was removed from `ProgramAiExperience`. Its runtime orchestration now renders explicit access, intake/voice, typed transcript, support-first, Starting Point ready/registration, loading and unavailable presentation components.
 - **Detected:** `/bonus-guide` remains standalone; `/compare` is redirect-only and absent from public navigation, canonical discovery and the sitemap.
 - **Detected:** Programme, auth, CMS, affiliate, jurisdiction, privacy, security, rewards and data-service boundaries remain in place; Programme progress and reward calculations remain server-owned.
-- **Detected:** source quality, type, schema, structural/domain regression and production-build gates pass. Direct real-runtime reference/implementation/diff evidence is recorded in [`../02_Product_Design/qa/final-design-handoff/true-parity/README.md`](../02_Product_Design/qa/final-design-handoff/true-parity/README.md).
+- **Detected:** source quality, type, schema, structural/domain regression, Programme browser and production-build gates pass. Direct real-runtime reference/implementation/diff evidence contains 96 measurements across 24 surfaces and four widths in [`../02_Product_Design/qa/final-design-handoff/true-parity/README.md`](../02_Product_Design/qa/final-design-handoff/true-parity/README.md).
 - **Not authorised:** merge to `main`, Production configuration changes or Production deployment.
 
 ## Recorded deviations

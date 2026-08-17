@@ -77,6 +77,13 @@
   --sb-space-32: 128px;
 
   /* Geometry */
+  --site-gutter: clamp(24px, 5vw, 72px);
+  --site-content-max: 1312px;
+  --site-wide-max: 1440px;
+  --site-reading-max: 760px;
+  --site-content-width: min(var(--site-content-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
+  --site-wide-width: min(var(--site-wide-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
+  --site-reading-width: min(var(--site-reading-max), calc(100% - var(--site-gutter) - var(--site-gutter)));
   --sb-radius-none: 0;
   --sb-radius-s: 12px;
   --sb-radius-m: 20px;
@@ -85,7 +92,7 @@
   --sb-content-compact: 1050px;
   --sb-content-default: 1248px;
   --sb-content-wide: 1280px;
-  --sb-content-shell: 1312px;
+  --sb-content-shell: var(--site-content-max);
 
   /* Interaction */
   --sb-focus-color: var(--sb-safety-verified);

@@ -1,5 +1,5 @@
 .page blockquote { max-width:24ch; margin:56px 0; font-family:var(--font-seven-serif),Georgia,serif; font-size:clamp(28px,3vw,44px); font-style:italic; line-height:1.05; }
-.hero { min-height:545px; padding:156px 5vw 64px; }
+.hero { min-height:545px; padding:156px var(--site-gutter) 64px; }
 .breadcrumbs { margin-bottom:30px; }
 .breadcrumbs a:last-child { color:var(--sb-acid); font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
 .heroGrid { display:grid; grid-template-columns:1fr; gap:0; }
@@ -41,11 +41,11 @@
 .checklist li::before { content:"✓"; margin-right:16px; color:#2a4c48; font-weight:900; }
 .articleReview { margin-top:64px; padding-top:28px; border-top:3px double #100f0f; display:flex; justify-content:space-between; gap:30px; color:#8b8a82; font-size:13px; }
 .articleReview a { color:#100f0f; }
-.related { padding:96px 5vw; }
+.related { padding:96px var(--site-gutter); }
 .related ol { margin-top:44px; }
 .related a { min-height:220px; }
 .related li a > span:nth-child(2) { color:#777500; font-size:12px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
-.commercial { padding:120px 5vw; display:block; text-align:center; background:#171616; }
+.commercial { padding:120px var(--site-gutter); display:block; text-align:center; background:#171616; }
 .commercial h2 { font-size:clamp(40px,4vw,62px); }
 .commercial h2 em { display:block; color:var(--sb-acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .commercial > div:last-child p { max-width:700px; margin:28px auto 0; }

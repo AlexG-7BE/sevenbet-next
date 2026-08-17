@@ -152,6 +152,11 @@ async function screenshotViewportWebp(page, output) {
   await sharp(buffer).webp({ quality: 74, effort: 5 }).toFile(output);
 }
 
+async function screenshotFullPageWebp(page, output) {
+  const buffer = await page.screenshot({ type: "png", animations: "disabled", fullPage: true });
+  await sharp(buffer).webp({ quality: 74, effort: 5 }).toFile(output);
+}
+
 async function captureComparisonReference(context, width) {
   const page = await context.newPage();
   try {
@@ -253,10 +258,7 @@ async function captureProgrammeImplementation(context, name, state, width) {
     if (await page.locator("[data-handoff-page]").count()) throw new Error(`${name} switched to the alternate HandoffPage renderer`);
     if (await page.locator('[data-runtime-renderer="programme"]').count() !== 1) throw new Error(`${name} did not render the real Programme runtime`);
     await settle(page);
-    const frame = state === "dashboard"
-      ? page.locator('[data-programme-phase="home"] > div').first()
-      : page.locator(`[data-programme-phase="${state === "registration" ? "registration" : "intake"}"] main`).first();
-    await screenshotWebp(frame, artifactPath(name, width, "runtime-implementation"));
+    await screenshotFullPageWebp(page, artifactPath(name, width, "runtime-implementation"));
   } finally {
     await page.close();
   }
@@ -374,15 +376,33 @@ try {
   await browser.close();
 }
 
+let persistedVisualMetrics = visualMetrics;
+if (only.length && (phase === "all" || phase === "diff") && visualMetrics.length) {
+  try {
+    const existing = JSON.parse(
+      await readFile(join(outputRoot, "visual-diff-metrics.json"), "utf8"),
+    );
+    const merged = new Map(
+      (existing.metrics ?? []).map((metric) => [`${metric.name}-${metric.width}`, metric]),
+    );
+    for (const metric of visualMetrics) merged.set(`${metric.name}-${metric.width}`, metric);
+    persistedVisualMetrics = [...merged.values()].sort(
+      (left, right) => left.width - right.width || left.name.localeCompare(right.name),
+    );
+  } catch {
+    // A selective first run has no earlier metrics to preserve.
+  }
+}
+
 await writeFile(
   join(outputRoot, "capture-manifest.json"),
-    `${JSON.stringify({ phase, referenceBaseUrl, implementationBaseUrl, pages: [...pages.map(([name, file, route]) => ({ name, file: basename(file), route, renderer: dynamicRuntimePages.has(name) ? "REAL_RUNTIME" : "REAL_RUNTIME_STATIC" })), ...programmeSurfaces.map(([name, state]) => ({ name, file: "Programme.dc.html", state, route: "/program", renderer: "REAL_RUNTIME" })), { name: contextualComparisonSurface[0], file: basename(contextualComparisonSurface[1]), state: "overlay", route: contextualComparisonSurface[2], renderer: "REAL_RUNTIME" }], widths: visualMetrics.length ? [...new Set(visualMetrics.map(({ width }) => width))] : viewports.map(({ width }) => width) }, null, 2)}\n`,
+    `${JSON.stringify({ phase, referenceBaseUrl, implementationBaseUrl, pages: [...pages.map(([name, file, route]) => ({ name, file: basename(file), route, renderer: dynamicRuntimePages.has(name) ? "REAL_RUNTIME" : "REAL_RUNTIME_STATIC" })), ...programmeSurfaces.map(([name, state]) => ({ name, file: "Programme.dc.html", state, route: "/program", renderer: "REAL_RUNTIME" })), { name: contextualComparisonSurface[0], file: basename(contextualComparisonSurface[1]), state: "overlay", route: contextualComparisonSurface[2], renderer: "REAL_RUNTIME" }], widths: persistedVisualMetrics.length ? [...new Set(persistedVisualMetrics.map(({ width }) => width))] : viewports.map(({ width }) => width) }, null, 2)}\n`,
 );
 
-if ((phase === "all" || phase === "diff") && visualMetrics.length) {
+if ((phase === "all" || phase === "diff") && persistedVisualMetrics.length) {
   await writeFile(
     join(outputRoot, "visual-diff-metrics.json"),
-    `${JSON.stringify({ thresholdPerChannel: 24, metrics: visualMetrics }, null, 2)}\n`,
+    `${JSON.stringify({ thresholdPerChannel: 24, metrics: persistedVisualMetrics }, null, 2)}\n`,
   );
 }
 

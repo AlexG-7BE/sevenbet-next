@@ -19,7 +19,7 @@
 .page a { color: inherit; }
 .page button, .page input, .page select { font: inherit; }
 .page :focus-visible { outline: 3px solid #8f8d16; outline-offset: 3px; }
-.shell { width: min(1280px, calc(100% - 128px)); margin: 0 auto; }
+.shell { width: var(--site-content-width); margin: 0 auto; }
 .srOnly, .position { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .hero { min-height:620px; padding: 150px 0 92px; overflow: hidden; background:radial-gradient(circle at 88% 0,rgba(228,226,78,.07),transparent 38rem),var(--night); color: var(--white); }
@@ -190,7 +190,7 @@
 .compare nav span { color: #5d5c32; font-size: .66rem; font-weight: 750; text-transform: uppercase; }
 .compare nav b { font-size: 1.08rem; }
 .faq { padding: 110px 0; border-top:1px solid rgba(16,15,15,.08); background: #f4f1eb; }
-.faq .shell { width:min(900px,calc(100% - 48px)); display:block; }
+.faq .shell { width:min(900px,calc(100% - var(--site-gutter) - var(--site-gutter))); display:block; }
 .faq .sectionIntro { max-width:none; margin-bottom:44px; }
 .faq .sectionIntro > p { display:none; }
 .faq .sectionIntro h2 { font-size:clamp(30px,3.8vw,60px); font-weight:800; letter-spacing:-.01em; text-transform:uppercase; }
@@ -241,7 +241,6 @@
 @keyframes pulse { 50% { opacity: .48; } }
 
 @media (max-width: 1180px) {
-  .shell { width: min(1138px, calc(100% - 80px)); }
   .heroIntro { grid-template-columns: 1fr 470px; gap: 46px; }
   .featureCard { right: 28px; }
   .featureCopy { left: 32px; }
@@ -267,7 +266,7 @@
 }
 
 @media (max-width: 760px) {
-  .shell { width: min(100% - 48px, 640px); }
+  .shell { width: var(--site-content-width); }
   .hero { min-height:465px; padding: 132px 0 32px; }
   .hero .shell { width: 100%; }
   .heroIntro { margin: 0; padding: 0 24px 12px; }

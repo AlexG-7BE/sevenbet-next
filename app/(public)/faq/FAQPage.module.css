@@ -1,8 +1,8 @@
 .page { background: #fafaf7; color: #100f0f; font-family: var(--font-seven-sans), Arial, sans-serif; }
 .page * { box-sizing: border-box; }
 :global(body):has(.page) [data-public-shell] { display: none; }
-.page > header { padding: 100px clamp(24px, 5vw, 72px) 80px; background: #171616; color: #fafaf7; }
-.page > header > div { max-width: 1440px; margin: 0 auto; }
+.page > header { padding: 100px var(--site-gutter) 80px; background: #171616; color: #fafaf7; }
+.page > header > div { max-width: var(--site-content-max); margin: 0 auto; }
 .page > header p { display: flex; align-items: center; gap: 16px; margin: 0 0 24px; color: var(--sb-acid); font-size: 13px; font-weight: 600; letter-spacing: .28em; text-transform: uppercase; }
 .page > header p span { width: 44px; height: 1px; background: var(--sb-acid); }
 .page h1 { margin: 0; font-size: clamp(30px, 4.6vw, 72px); line-height: 1; letter-spacing: -.015em; text-transform: uppercase; }
@@ -26,7 +26,7 @@
 .page footer a:focus-visible { outline: 3px solid var(--sb-action-primary); outline-offset: 4px; }
 
 @media(max-width: 700px) {
-  .page > header { padding: 96px 24px 95px; }
+  .page > header { padding: 96px var(--site-gutter) 95px; }
   .page main { padding-top: 80px; }
   .page footer a:nth-last-child(2) { margin-left: 0; }
 }

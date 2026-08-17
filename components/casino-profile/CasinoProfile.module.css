@@ -23,7 +23,7 @@
 .page img { display: block; max-width: 100%; }
 .page a, .page button, .page summary { -webkit-tap-highlight-color: rgba(228, 226, 78, .28); }
 .page :focus-visible { outline: 3px solid var(--sb-acid-contrast); outline-offset: 3px; }
-.shell { width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
+.shell { width: var(--site-content-width); margin: 0 auto; }
 .breadcrumb { min-height: 64px; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 650; letter-spacing: .02em; text-transform: uppercase; }
 .breadcrumb a { min-height: 44px; display: inline-flex; align-items: center; color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
 
@@ -195,7 +195,7 @@
 .unavailableShell > .helpLink { margin-top: 22px; }
 
 @media (max-width: 1050px) {
-  .shell { width: calc(100% - 48px); }
+  .shell { width: var(--site-content-width); }
   .hero { grid-template-columns: minmax(0, 1.55fr) minmax(320px, .85fr); }
   .heroReview { padding-inline: 26px; }
   .overviewGrid { grid-template-columns: 1fr; }
@@ -204,7 +204,7 @@
 }
 
 @media (max-width: 760px) {
-  .shell { width: min(100% - 32px, 560px); }
+  .shell { width: var(--site-content-width); }
   .breadcrumb { min-height: 56px; padding-inline: 8px; font-size: 10px; }
   .hero { display: block; min-height: 0; overflow: visible; border: 0; border-radius: 0; background: transparent; }
   .heroReview { padding: 8px 8px 28px; background: var(--white); }

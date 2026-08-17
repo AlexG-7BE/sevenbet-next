@@ -17,7 +17,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onReview, onStart
   const authenticatedMission = home.currentMission >= 2;
   const completedCount = home.missions.filter((mission) => mission.status === "completed").length;
   return (
-    <div className={`${styles.shell} ${styles.dashboardShell}`}>
+    <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard totalXp={home.totalXp} userId={userId} />
       <main className={styles.dashboard}>
         <p className="srOnly">Completion, current position and locks come from your server record. Each Review becomes available at a meaningful point.</p>

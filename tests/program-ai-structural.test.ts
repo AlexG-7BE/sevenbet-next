@@ -12,6 +12,8 @@ const preflight = read("prisma/preflight/0018_program_ai_m1_foundation.sql");
 const service = read("lib/programme/application/programme-ai-mission-one.service.ts");
 const repository = read("lib/programme/infrastructure/repositories/programme-ai-mission-one.repository.ts");
 const frontend = read("components/programme/ProgramAiExperience.tsx");
+const finalPresentation = read("components/programme/ProgramAiFinalPresentation.tsx");
+const frontendRuntime = `${frontend}\n${finalPresentation}`;
 const authenticatedHome = read("components/programme/ProgramAiHome.tsx");
 const missionExperience = read("components/programme/ProgramAiMissionExperience.tsx");
 const missionPrimitives = read("components/programme/ProgramAiMissionPrimitives.tsx");
@@ -63,14 +65,14 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /window\.sessionStorage/);
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
-  assert.match(frontend, /Audio stays in short-lived memory/);
-  assert.match(frontend, /Editable transcript/);
+  assert.match(frontendRuntime, /Audio stays in short-lived memory/);
+  assert.match(frontendRuntime, /Editable transcript/);
   assert.match(frontend, /new FormData\(\)/);
-  assert.match(frontend, /90_000/);
-  assert.match(frontend, /navigator\.permissions\?\.query/);
-  assert.match(frontend, /name: "microphone"/);
-  assert.match(frontend, /Microphone is blocked for this site/);
-  assert.match(frontend, /Voice recording is not supported here/);
+  assert.match(frontendRuntime, /90_000/);
+  assert.match(frontendRuntime, /navigator\.permissions\?\.query/);
+  assert.match(frontendRuntime, /name: "microphone"/);
+  assert.match(frontendRuntime, /Microphone is blocked for this site/);
+  assert.match(frontendRuntime, /Voice recording is not supported here/);
 });
 
 test("account-not-linked recovery preserves the claim and requires authenticated explicit linking", () => {
@@ -79,37 +81,37 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.match(frontend, /authClient\.signIn\.email/);
   assert.match(frontend, /authClient\.linkSocial/);
   assert.match(frontend, /GOOGLE_LINK_CALLBACK/);
-  assert.match(frontend, /Your confirmed Starting Point stays in this browser/);
+  assert.match(frontendRuntime, /Your confirmed Starting Point stays in this browser/);
   const explicitLink = frontend.slice(frontend.indexOf("async function startGoogleLink"), frontend.indexOf("async function openMission"));
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
 test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {
-  assert.match(frontend, /Before you share/);
-  assert.match(frontend, /I choose to share this for Programme personalisation/);
-  assert.match(frontend, /What feels hardest to control right now/);
+  assert.match(frontendRuntime, /Before you share/);
+  assert.match(frontendRuntime, /I choose to share this for Programme personalisation/);
+  assert.match(frontendRuntime, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
 
 test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
-  assert.match(frontend, /Two checks before you begin/);
-  assert.match(frontend, /htmlFor="programme-legal-acknowledgement"/);
-  assert.match(frontend, /<Link href="\/terms">Read Terms<\/Link>/);
-  assert.match(frontend, /<Link href="\/privacy">Read Privacy Notice<\/Link>/);
-  assert.doesNotMatch(frontend, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
-  assert.equal((frontend.match(/type="checkbox"/g) || []).length >= 3, true);
-  assert.doesNotMatch(frontend, /Three checks before you begin|I accept the current|I have read the current/);
-  assert.match(frontend, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
+  assert.match(frontendRuntime, /Two checks before you begin/);
+  assert.match(frontendRuntime, /htmlFor="programme-legal-acknowledgement"/);
+  assert.match(frontendRuntime, /<Link href="\/terms">Read Terms<\/Link>/);
+  assert.match(frontendRuntime, /<Link href="\/privacy">Read Privacy Notice<\/Link>/);
+  assert.doesNotMatch(frontendRuntime, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
+  assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length >= 3, true);
+  assert.doesNotMatch(frontendRuntime, /Three checks before you begin|I accept the current|I have read the current/);
+  assert.match(frontendRuntime, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
-  assert.match(frontend, /Your Starting Point is ready\./);
-  assert.match(frontend, /Continue with Google — save your plan/);
-  assert.match(frontend, /Use email instead/);
-  assert.doesNotMatch(frontend, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
-  assert.doesNotMatch(frontend, /phase === "(?:clarification|candidate|reward)"/);
-  assert.doesNotMatch(frontend, /What would you like to change\?|What should Mission 02 continue from\?|Confirm my Starting Point|Keep this progress/);
+  assert.match(frontendRuntime, /Your Starting Point is ready/);
+  assert.match(frontendRuntime, /Continue with Google — save your plan/);
+  assert.match(frontendRuntime, /Use email instead/);
+  assert.doesNotMatch(frontendRuntime, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
+  assert.doesNotMatch(frontendRuntime, /phase === "(?:clarification|candidate|reward)"/);
+  assert.doesNotMatch(frontendRuntime, /What would you like to change\?|What should Mission 02 continue from\?|Confirm my Starting Point|Keep this progress/);
   assert.match(frontend, /emailRedeemStarted\.current = true/);
   assert.match(frontend, /session\?\.user\.id && emailRedeemStarted\.current/);
   assert.match(repository, /if \(current && !current\.withdrawnAt\) return current/);
@@ -120,8 +122,8 @@ test("Programme phase changes and legacy controls preserve keyboard and assistiv
   const legacy = read("components/programme/ActiveControlProgramme.tsx");
   assert.match(frontend, /data-programme-phase=\{phase\}/);
   assert.match(frontend, /phaseFocusRef\.current/);
-  assert.match(frontend, /name="email"/);
-  assert.match(frontend, /name="password"/);
+  assert.match(frontendRuntime, /name="email"/);
+  assert.match(frontendRuntime, /name="password"/);
   assert.match(legacy, /aria-pressed=\{active\}/);
   assert.match(legacy, /focusableSelector/);
   assert.match(legacy, /event\.key === "Escape"/);
