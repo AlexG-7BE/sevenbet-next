@@ -28,6 +28,7 @@ export function PublicFooter() {
           <div><span className={styles.age}>18+</span><a href="https://www.begambleaware.org/" rel="noreferrer" target="_blank">BeGambleAware.org</a><span>Gamble responsibly.</span><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></div>
           <Link href="/affiliate-disclosure">We may earn commission — how we&apos;re funded</Link>
         </div>
+        <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
       </div>
     </footer>
   );

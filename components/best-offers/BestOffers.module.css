@@ -21,7 +21,7 @@
 .sectionRule { margin-bottom:28px; display:flex; align-items:center; gap:20px; color:#8b8a82; font-size:13px; letter-spacing:.24em; text-transform:uppercase; }
 .sectionRule i { height:1px; flex:1; background:rgba(16,15,15,.14); }
 .featuredCard { overflow:hidden; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid rgba(16,15,15,.1); border-radius:20px; background:var(--field); box-shadow:0 32px 88px rgba(16,15,15,.12); }
-.featuredCopy { padding:56px 60px; }
+.featuredCopy { padding:56px 60px 154px; grid-column:1; grid-row:1; }
 .rankLine { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
 .rankLine > span { color:#777500; font-size:64px; line-height:1; font-weight:800; }
 .rankLine > b { padding:7px 16px; border:1px solid rgba(119,117,0,.55); border-radius:999px; color:#777500; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
@@ -35,8 +35,10 @@
 .score strong { font-size:36px; }
 .score span { color:#777500; font-size:13px; letter-spacing:.08em; }
 .reason { max-width:52ch; margin:20px 0 28px; color:var(--muted); font-size:15px; line-height:1.65; }
+.mobileReason,.mobileMaterialTerms,.mobileAffiliateDisclosure { display:none; }
 .featuredCopy h4,.altCopy h4 { margin:8px 0 0; font-size:clamp(27px,2.2vw,38px); line-height:1.1; text-transform:uppercase; }
 .actions { margin-top:32px; display:flex; align-items:center; flex-wrap:wrap; gap:18px; }
+.featuredActions { z-index:1; grid-column:1; grid-row:1; align-self:end; margin:0; padding:0 60px 56px; }
 .commercialCta { min-height:50px; padding:14px 30px; border:0; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:var(--paper); font-weight:650; cursor:pointer; }
 .actions > a { padding-bottom:2px; border-bottom:1px solid currentColor; font-size:14px; }
 .unavailableAction { min-height:48px; padding:13px 20px; border-radius:999px; display:inline-flex; align-items:center; background:rgba(139,138,130,.18); color:#5f5e58; font-size:14px; line-height:20px; }
@@ -127,74 +129,104 @@
   .featuredCard,.alternativeCard { grid-template-columns:1fr; }
   .worthCards { grid-template-columns:1fr; }
   .featuredMark,.altMark { min-height:260px; grid-row:1; }
-  .featuredCopy,.altCopy { padding:40px; }
+  .featuredCopy { grid-row:2; padding:40px 40px 138px; }
+  .featuredActions { grid-row:2; padding:0 40px 40px; }
+  .altCopy { padding:40px; }
   .featuredTerms { grid-template-columns:repeat(2,1fr); }
   .featuredTerms div:nth-child(3) { border-left:0; border-top:1px solid rgba(16,15,15,.08); }
   .whyPicked > div { grid-template-columns:1fr; }
 }
 @media (max-width:600px) {
-  .hero { min-height:max(640px,100svh); padding-top:0; }
-  .heroInner { min-height:max(640px,100svh); padding:132px 0 34px; justify-content:flex-start; }
+  .hero { min-height:0; padding-top:0; }
+  .heroInner { min-height:0; padding:126px 0 46px; justify-content:flex-start; }
   .hero h1 { margin-top:22px; font-size:clamp(38px,12vw,54px); line-height:.96; letter-spacing:-.025em; overflow-wrap:anywhere; }
-  .heroCopy { margin-top:22px; font-size:16px; line-height:1.55; }
-  .heroStats { margin-top:28px; align-items:flex-start; flex-direction:column; gap:14px; }
-  .heroStats div { min-width:0; flex-wrap:wrap; }
-  .heroTicker { margin-top:auto; padding:24px 0 0; align-items:flex-start; flex-direction:column; gap:14px; }
+  .heroCopy { max-width:34ch; margin-top:20px; font-size:15px; line-height:1.5; }
+  .kicker,.darkKicker,.lightKicker,.heroTicker a,.score small,.termLabel,.dataNotice { font-size:14px; }
+  .heroStats { display:none; }
+  .heroTicker { margin-top:22px; padding:0; border-top:0; display:block; }
+  .heroTicker span { display:none; }
   .heroTicker a { min-height:44px; margin-left:0; display:inline-flex; align-items:center; }
-  .topThree { padding:72px 0 84px; }
-  .sectionRule { min-width:0; font-size:12px; line-height:16px; letter-spacing:.17em; white-space:normal; }
+  .demoDisclosure { padding:16px 0; border-top:1px solid rgba(250,250,247,.1); }
+  .demoDisclosure p { font-size:14px; line-height:1.55; }
+  .topThree { padding:46px 0 64px; }
+  .sectionRule { min-width:0; margin-bottom:18px; font-size:14px; line-height:19px; letter-spacing:.12em; white-space:normal; }
+  .mobileAffiliateDisclosure { margin:0 0 18px; padding:13px 14px; border:1px solid rgba(16,15,15,.12); border-radius:12px; display:block; color:var(--muted); font-size:14px; line-height:1.5; }
+  .mobileAffiliateDisclosure a { min-height:44px; display:inline-flex; align-items:center; color:var(--red); font-weight:700; }
   .featuredCard,.alternativeCard { width:100%; grid-template-columns:minmax(0,1fr); }
-  .featuredCopy,.altCopy { min-width:0; padding:28px 24px 30px; }
-  .featuredMark { min-height:160px; grid-row:auto; border-top:1px dashed rgba(16,15,15,.18); border-left:0; }
+  .featuredCopy { min-width:0; grid-row:auto; padding:24px 20px 18px; }
+  .altCopy { min-width:0; padding:22px 20px 24px; }
+  .featuredMark,.altMark { display:none; }
   .rankLine { gap:14px; }
-  .rankLine > span,.altCopy .rankLine > span { font-size:48px; }
-  .identity,.altCopy .identity { min-width:0; margin:24px 0 16px; align-items:flex-start; }
-  .identity h3,.altCopy .identity h3,.identity[data-size="large"] h3 { min-width:0; font-size:clamp(24px,8vw,30px); white-space:normal; overflow-wrap:anywhere; }
-  .featuredCopy h4,.altCopy h4 { font-size:26px; overflow-wrap:anywhere; }
-  .actions { margin-top:26px; align-items:stretch; flex-direction:column; gap:10px; }
+  .rankLine > span { font-size:42px; }
+  .altCopy .rankLine > span { font-size:32px; }
+  .identity { min-width:0; margin:20px 0 14px; align-items:flex-start; }
+  .altCopy .rankLine { margin-bottom:14px; align-items:center; }
+  .altCopy .rankLine .identity { margin:0; align-items:center; }
+  .identity h3,.altCopy .identity h3,.identity[data-size="large"] h3 { min-width:0; font-size:clamp(22px,7.4vw,28px); white-space:normal; overflow-wrap:anywhere; }
+  .altCopy .identity h3 { font-size:22px; }
+  .score strong { font-size:30px; }
+  .altCopy .score { margin:12px 0 14px; }
+  .featuredCopy h4,.altCopy h4 { font-size:23px; overflow-wrap:anywhere; }
+  .desktopReason,.altReason,.termSummary { display:none; }
+  .mobileReason { margin:14px 0 18px; display:block; color:var(--muted); font-size:14px; line-height:1.5; }
+  .altCopy .mobileReason { color:rgba(250,250,247,.67); }
+  .mobileMaterialTerms { margin:18px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid rgba(16,15,15,.1); }
+  .mobileMaterialTerms div { min-width:0; padding:13px 0; border-bottom:1px solid rgba(16,15,15,.1); display:grid; align-content:start; gap:4px; }
+  .mobileMaterialTerms div:nth-child(odd) { padding-right:12px; }
+  .mobileMaterialTerms div:nth-child(even) { padding-left:12px; border-left:1px solid rgba(16,15,15,.1); }
+  .mobileMaterialTerms dt { color:#6f6d66; font-size:14px; line-height:19px; letter-spacing:.04em; text-transform:uppercase; }
+  .mobileMaterialTerms dd { margin:0; color:var(--ink); font-size:14px; line-height:1.45; font-weight:700; overflow-wrap:anywhere; }
+  .actions { margin-top:20px; align-items:stretch; flex-direction:column; gap:8px; }
   .commercialCta,.unavailableAction,.actions > a,.actions > button { width:100%; min-height:44px; text-align:center; white-space:normal; }
-  .featuredTerms { grid-template-columns:minmax(0,1fr); padding:0 24px; }
-  .featuredTerms div,.featuredTerms div:nth-child(3) { min-height:0; padding:18px 0; border-left:0; border-top:1px solid rgba(16,15,15,.08); }
-  .featuredTerms div:first-child { border-top:0; }
-  .featuredTerms div:nth-child(5) { display:grid; }
+  .featuredTerms { display:none; }
+  .featuredCard > .mobileMaterialTerms { margin:0 20px; }
+  .featuredActions { grid-row:auto; padding:0 20px 22px; }
   .altCopy { position:relative; z-index:1; }
-  .altCopy .rankLine { margin-bottom:22px; }
-  .altMark { min-height:150px; grid-row:auto; }
-  .altReason { display:none; }
-  .proofList { margin:22px 0 28px; padding:0; display:grid; gap:8px; color:rgba(250,250,247,.75); font-size:14px; line-height:1.35; list-style:none; }
-  .proofList li { position:relative; padding-left:20px; }
-  .proofList li::before { content:"✓"; position:absolute; left:0; color:#6fbeb7; }
+  .altCopy .mobileMaterialTerms { border-top-color:rgba(250,250,247,.12); }
+  .altCopy .mobileMaterialTerms div { border-bottom-color:rgba(250,250,247,.12); }
+  .altCopy .mobileMaterialTerms div:nth-child(even) { border-left-color:rgba(250,250,247,.12); }
+  .altCopy .mobileMaterialTerms dt { color:rgba(250,250,247,.48); }
+  .altCopy .mobileMaterialTerms dd { color:var(--paper); }
+  .topThree[data-inventory-mode="DEMO_ONLY"] .dataNotice { display:none; }
   .altCopy .commercialCta,.altCopy .unavailableAction,.altCopy .actions > a,.altCopy .actions > button { white-space:normal; }
-  .worthALook { margin-top:52px; }
-  .worthCards { gap:18px; }
-  .worthHead { min-height:0; padding:22px 62px 22px 22px; gap:14px; }
+  .worthALook { margin-top:42px; }
+  .worthCards { gap:12px; }
+  .worthHead { min-height:0; padding:18px 54px 14px 18px; gap:12px; }
   .worthHead .identity { margin:0; }
-  .worthHead .identity > span { width:54px; height:54px; border-radius:16px; font-size:24px; }
-  .worthHead .identity h3 { font-size:21px; }
-  .worthHead > b { position:absolute; top:16px; right:22px; font-size:30px; }
-  .worthCards > article { position:relative; border-radius:20px; }
-  .worthScore { min-height:0; padding:16px 22px; justify-content:space-between; flex-wrap:wrap; }
-  .worthOffer { min-height:0; padding:20px 22px; }
-  .worthCards dl { padding:8px 22px 12px; }
-  .worthCards dl div { padding:9px 0; }
-  .worthCards dl div { align-items:flex-start; }
-  .worthCards dd { max-width:62%; overflow-wrap:anywhere; }
-  .worthCards article > p { min-height:0; padding:18px 22px; font-size:14px; line-height:1.6; }
-  .worthCards .actions { padding:18px 22px; gap:10px; }
+  .worthHead .identity > span { width:44px; height:44px; border-radius:12px; font-size:20px; }
+  .worthHead .identity h3 { font-size:19px; }
+  .worthHead > b { position:absolute; top:16px; right:18px; font-size:25px; }
+  .worthCards > article { position:relative; border-radius:14px; box-shadow:none; }
+  .worthScore { min-height:0; padding:10px 18px; justify-content:flex-start; flex-wrap:wrap; }
+  .worthScore small { margin-right:auto; }
+  .worthScore strong { font-size:23px; }
+  .worthScore small,.worthOffer small { font-size:14px; }
+  .worthOffer { min-height:0; padding:14px 18px; }
+  .worthOffer strong { font-size:18px; }
+  .worthCards > article > dl:not(.mobileMaterialTerms),.worthDesktopReason { display:none; }
+  .worthCards .mobileReason { margin:0; padding:14px 18px 0; }
+  .worthCards .mobileMaterialTerms { margin:12px 18px 0; padding:0; display:grid; }
+  .worthCards .mobileMaterialTerms div { padding-block:11px; display:grid; }
+  .worthCards .mobileMaterialTerms dd { max-width:none; text-align:left; }
+  .worthCards .actions { padding:14px 18px 18px; gap:8px; }
   .worthCards .commercialCta { min-width:140px; min-height:44px; flex:1; border-radius:14px; }
   .worthCards .actions > a,.worthCards .actions > button { font-size:14px; line-height:20px; }
-  .viewAll { margin-top:28px; margin-bottom:52px; }
-  .whyPicked,.faq { padding:84px 0; }
-  .whyPicked { padding-bottom:72px; }
-  .whyPicked > div { gap:46px; }
-  .whyPicked h2 { font-size:30px; }
+  .viewAll { margin-top:22px; margin-bottom:40px; }
+  .whyPicked,.faq { padding:58px 0; }
+  .whyPicked { padding-bottom:52px; }
+  .whyPicked > div { gap:28px; }
+  .whyPicked h2 { margin-top:14px; font-size:27px; }
+  .whyPicked > div > div > p:last-child { margin-top:16px; font-size:14px; line-height:1.55; }
+  .whyPicked li { padding:16px 0; grid-template-columns:34px 1fr; }
+  .whyPicked li strong { font-size:16px; }
+  .whyPicked li p { display:none; }
   .faqGrid { width:var(--site-content-width); }
-  .faq { padding-bottom:84px; }
-  .faq h2 { margin-bottom:36px; font-size:30px; }
-  .faq summary { min-height:56px; padding:14px 0; font-size:18px; line-height:1.2; }
+  .faq { padding-bottom:58px; }
+  .faq h2 { margin-bottom:24px; font-size:27px; }
+  .faq summary { min-height:52px; padding:12px 0; font-size:16px; line-height:1.25; }
+  .faq details p { margin-bottom:18px; font-size:14px; line-height:1.55; }
   .faq details a { min-height:44px; display:inline-flex; align-items:center; }
-  .finalOffer { padding:104px 24px calc(84px + env(safe-area-inset-bottom)); }
-  .finalOffer h2 { font-size:clamp(36px,11vw,44px); overflow-wrap:anywhere; }
+  .finalOffer { display:none; }
   .whyPicked h2 { font-style:italic; }
 
 }

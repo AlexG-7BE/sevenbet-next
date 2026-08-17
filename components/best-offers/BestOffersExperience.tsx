@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
+import { shortlistReason } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
 
 import styles from "./BestOffers.module.css";
@@ -33,6 +34,15 @@ function OfferIdentity({ offer, size = "small" }: { offer: PublicOfferDTO; size?
   </div>;
 }
 
+function MobileMaterialTerms({ offer }: { offer: PublicOfferDTO }) {
+  return <dl className={styles.mobileMaterialTerms} aria-label={`${offer.casino.name} material offer terms`}>
+    <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}x`}</dd></div>
+    <div><dt>Minimum deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div>
+    <div><dt>Eligibility</dt><dd>{offer.bonus.eligibility || "Not listed"}</dd></div>
+    <div><dt>Key restriction</dt><dd>{offer.bonus.importantConditions.join(" · ") || "Not listed"}</dd></div>
+  </dl>;
+}
+
 export function BestOffersExperience({ shortlist, inventoryMode }: {
   shortlist: PublicOfferDTO[];
   inventoryMode: PublicOfferInventoryMode;
@@ -40,24 +50,24 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
   const top = shortlist.slice(0, 3);
   const worthALook = shortlist.slice(3, 6);
   const featured = top[0] ?? null;
-  const demonstration = inventoryMode !== "PUBLISHED_ONLY";
 
   if (!featured) return <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel}><h2>No eligible offers are available.</h2><p>B4GAMBLE does not relax the method to fill the page.</p><Link href="/casinos">Browse casino reviews</Link></div></div></section>;
 
   return <>
-    <section className={styles.topThree} id="shortlist" aria-labelledby="top-three-title" data-motion-reveal data-nav-theme="light">
+    <section className={styles.topThree} id="shortlist" aria-labelledby="top-three-title" data-inventory-mode={inventoryMode} data-motion-reveal data-nav-theme="light">
       <div className={styles.shell}>
         <div className={styles.sectionRule}><span id="top-three-title">The top three — tested with real money</span><i /></div>
+        <p className={styles.mobileAffiliateDisclosure}>We may earn a commission. Affiliate compensation does not determine Editor Score or natural editorial ranking. <Link href="/affiliate-disclosure">How we&apos;re funded →</Link></p>
         <article className={styles.featuredCard} data-testid="best-offer-product-card">
           <div className={styles.featuredCopy}>
             <div className={styles.rankLine}><span>01</span><b>Best overall</b></div>
             <OfferIdentity offer={featured} size="large" />
             <div className={styles.score}><small>Editor Score</small><strong>{featured.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
-            {demonstration ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current promotion or claimable offer.</p> : null}
-            <p className={styles.reason}>{featured.casino.summary}</p>
+            {featured.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current promotion or claimable offer.</p> : null}
+            <p className={`${styles.reason} ${styles.desktopReason}`}>{featured.casino.summary}</p>
+            <p className={styles.mobileReason}>{shortlistReason(featured)}</p>
             <small className={styles.termLabel}>Welcome offer</small>
             <h4>{featured.bonus.title}</h4>
-            <div className={styles.actions}><OfferAction featured offer={featured} /><Link href={`/casino/${featured.casino.slug}`}>Read Full Review →</Link><ContextualCompareToggle casinoName={featured.casino.name} casinoSlug={featured.casino.slug} /></div>
           </div>
           <div className={styles.featuredMark} aria-hidden="true"><span>▧</span><small>{featured.casino.name.replace(/\s+casino$/i, "")} media</small></div>
           <dl className={styles.featuredTerms}>
@@ -67,6 +77,8 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <div><dt>Material term</dt><dd>{featured.bonus.importantConditions[0] || "Check full terms"}</dd></div>
             <div><dt>Full review</dt><dd>Evidence and scoring</dd></div>
           </dl>
+          <MobileMaterialTerms offer={featured} />
+          <div className={`${styles.actions} ${styles.featuredActions}`}><OfferAction featured offer={featured} /><Link href={`/casino/${featured.casino.slug}`}>Read Full Review →</Link><ContextualCompareToggle casinoName={featured.casino.name} casinoSlug={featured.casino.slug} /></div>
         </article>
 
         <div className={styles.alternatives}>
@@ -75,14 +87,11 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <div className={styles.rankLine}><span>0{index + 2}</span><OfferIdentity offer={offer} /></div>
               <div className={styles.score}><small>Editor Score</small><strong>{offer.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
               {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record.</p> : null}
+              <p className={styles.mobileReason}>{shortlistReason(offer)}</p>
               <small className={styles.termLabel}>Welcome offer</small><h4>{offer.bonus.title}</h4>
               <p className={styles.termSummary}>Wagering {offer.bonus.wageringMultiplier === null ? "not listed" : `${offer.bonus.wageringMultiplier}x`} · Min deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)} · Payout {payout(offer)}</p>
               <p className={`${styles.reason} ${styles.altReason}`}>{offer.casino.summary}</p>
-              <ul className={styles.proofList}>
-                <li>{offer.bonus.wageringMultiplier === null ? "Wagering shown in full terms" : `${offer.bonus.wageringMultiplier}x wagering`}</li>
-                <li>Minimum deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)}</li>
-                <li>Payout {payout(offer)}</li>
-              </ul>
+              <MobileMaterialTerms offer={offer} />
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </div>
             <div className={styles.altMark} aria-hidden="true"><span>▧</span><small>{offer.casino.name.replace(/\s+casino$/i, "")} media</small></div>
@@ -96,7 +105,9 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <div className={styles.worthScore}><small>Editor Score</small><strong>{offer.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
               <div className={styles.worthOffer}><small>Current offer</small><strong>{offer.bonus.title}</strong></div>
               <dl><div><dt>Payout</dt><dd>{payout(offer)}</dd></div><div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? "Not listed" : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div></dl>
-              <p>{offer.casino.summary}</p>
+              <p className={styles.worthDesktopReason}>{offer.casino.summary}</p>
+              <p className={styles.mobileReason}>{shortlistReason(offer)}</p>
+              <MobileMaterialTerms offer={offer} />
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Review</Link><ContextualCompareToggle casinoName={offer.casino.name} casinoSlug={offer.casino.slug} /></div>
             </article>)}
           </div>
@@ -116,7 +127,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
 
     <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.faqGrid}>
       <h2>Before you click</h2>
-      <details open><summary>What does “wagering 35x” actually mean?</summary><p>You must stake the bonus amount 35 times before withdrawing winnings from it. On a €500 bonus that&apos;s €17,500 in total stakes — read our <Link href="/bonus-guide">bonus guide</Link> before deciding it&apos;s worth it.</p></details>
+      <details><summary>What does “wagering 35x” actually mean?</summary><p>You must stake the bonus amount 35 times before withdrawing winnings from it. On a €500 bonus that&apos;s €17,500 in total stakes — read our <Link href="/bonus-guide">bonus guide</Link> before deciding it&apos;s worth it.</p></details>
       <details><summary>Do you earn money if I sign up?</summary><p>Usually yes — we may earn a commission. Affiliate compensation does not determine Editor Score or natural editorial ranking. Full details in our <Link href="/affiliate-disclosure">affiliate disclosure</Link>.</p></details>
       <details><summary>Why only three offers?</summary><p>Because a page of twelve is a directory, not a recommendation. If you want the full field, the <Link href="/bonuses">Bonuses</Link> page has every offer with filters.</p></details>
       <details><summary>What happens when I click View Offer?</summary><p>You&apos;ll see a short confirmation that you&apos;re leaving B4GAMBLE, with the commission disclosure — then you continue to the operator, or stay.</p></details>

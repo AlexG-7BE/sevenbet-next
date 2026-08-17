@@ -339,6 +339,20 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   }
 }
 
+/* The generated Home capture enables mandatory document snap for coarse pointers.
+   PublicFooter lives outside that capture, so it needs explicit terminal targets or
+   the browser resolves the final gesture back to the last in-capture CTA. */
+@media (max-width: 760px) and (pointer: coarse) {
+  body:has([data-handoff-page="home"]) [data-public-shell="footer"] {
+    scroll-snap-align: start;
+    scroll-snap-stop: normal;
+  }
+  body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
+    scroll-snap-align: end;
+    scroll-snap-stop: normal;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   [data-handoff-page] *,
   [data-handoff-page] *::before,
