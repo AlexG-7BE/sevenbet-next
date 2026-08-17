@@ -22,7 +22,7 @@ export function LoginExperience({ authError, authState, googleAvailable, returnT
   const [error, setError] = useState(() => {
     if (authState === "google-error" && authError === "account_not_linked") return "";
     if (authState === "google-link-error") return "Google linking was not completed. Your account is unchanged; you can retry safely.";
-    if (authState === "google-error" && authError) return "Google sign-in was not completed. You can retry or use email instead.";
+    if (authState === "google-error") return "Google sign-in was not completed. You can retry or use email instead.";
     return "";
   });
   const linkRecovery = (authState === "google-error" && authError === "account_not_linked")

@@ -206,7 +206,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } else if (linkFailed) {
       setGoogleLinkRecovery(true);
       setError("Google linking was not completed. Your Starting Point is still here; retry when you are ready.");
-    } else if (authState === "google-error" && authError) {
+    } else if (authState === "google-error") {
       setError("Google account access was not completed. You can retry or use email instead.");
     }
     const oauthJourney = readProgrammeOAuthClaimMarker(window.sessionStorage);
@@ -475,7 +475,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     finally { emailRedeemStarted.current = false; setBusy(false); }
   }
 
-  async function handleGoogle(mode: "sign-up" | "sign-in") {
+  async function handleGoogle() {
     if (!subject || subject.kind !== "journey") return;
     setBusy(true); setError("");
     try {
@@ -485,7 +485,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         provider: "google",
         callbackURL: GOOGLE_AUTH_CALLBACK,
         errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK,
-        requestSignUp: mode === "sign-up",
+        requestSignUp: true,
         fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) },
       });
       if (result.error) throw new Error("Google account access could not be started");

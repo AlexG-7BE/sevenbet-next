@@ -120,6 +120,7 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   assert.match(frontendRuntime, /Your Starting Point is ready/);
   assert.match(frontendRuntime, /Continue with Google — save your plan/);
   assert.match(frontendRuntime, /Use email instead/);
+  assert.match(frontend, /async function handleGoogle\(\)[\s\S]*requestSignUp: true/);
   assert.doesNotMatch(frontendRuntime, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
   assert.doesNotMatch(frontendRuntime, /phase === "(?:clarification|candidate|reward)"/);
   assert.doesNotMatch(frontendRuntime, /What would you like to change\?|What should Mission 02 continue from\?|Confirm my Starting Point|Keep this progress/);

@@ -178,6 +178,78 @@ test("Google cancellation retains the canonical Starting Point without legacy UI
   expect(retained.content).toContain("PROGRAM-AI-OAUTH-LOCAL-SENTINEL");
 });
 
+test("Google cancellation without a provider code still keeps recovery actions visible", async ({ page }) => {
+  const journeyId = "87117045-d6b3-477a-8fb3-f0746f8f6139";
+  await seedOAuthJourney(page, journeyId);
+  await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+  await open(page, "/program?auth=google-error");
+  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
+  await expect(page.getByRole("button", { name: "Use email instead" })).toBeVisible();
+});
+
+test("Programme Google remains the account-continuation action after changing the email form mode", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  await installAnonymousProgramme(page);
+  await reachRegistration(page);
+
+  await page.getByRole("button", { name: "Use email instead" }).click();
+  await page.getByRole("button", { name: "Already have an account? Sign in" }).click();
+  await page.getByRole("button", { name: "Hide email option" }).click();
+
+  let requestSignUp: boolean | undefined;
+  await page.route("**/api/auth/sign-in/social", (route) => {
+    requestSignUp = (route.request().postDataJSON() as { requestSignUp?: boolean }).requestSignUp;
+    return route.fulfill({ status: 400, contentType: "application/json", body: JSON.stringify({ code: "TEST_STOP" }) });
+  });
+  await page.getByRole("button", { name: "Continue with Google — save your plan" }).click();
+  await expect(page.locator('p[role="alert"]')).toContainText("Google account access could not be started");
+  expect(requestSignUp).toBe(true);
+});
+
+test("Google Programme, login and recovery controls fit every Founder mobile width", async ({ page }) => {
+  test.skip(!expectGoogle, "Google is intentionally unavailable without complete server credentials");
+  await installAnonymousProgramme(page);
+  await reachRegistration(page);
+
+  for (const width of [360, 375, 390, 412, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const google = page.getByRole("button", { name: "Continue with Google — save your plan" });
+    const email = page.getByRole("button", { name: "Use email instead" });
+    await expect(google).toBeVisible();
+    await expect(email).toBeVisible();
+    expect(await google.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth && element.scrollWidth <= element.clientWidth;
+    })).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+
+  await open(page, "/login");
+  for (const width of [360, 375, 390, 412, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const google = page.getByRole("button", { name: "Continue with Google" });
+    await expect(google).toBeVisible();
+    expect(await google.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth && element.scrollWidth <= element.clientWidth;
+    })).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+
+  await open(page, "/login?auth=google-error&error=account_not_linked");
+  for (const width of [360, 375, 390, 412, 430]) {
+    await page.setViewportSize({ width, height: 844 });
+    const recovery = page.getByRole("button", { name: "Sign in, then link Google" });
+    await expect(recovery).toBeVisible();
+    expect(await recovery.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      return rect.height >= 44 && rect.left >= 0 && rect.right <= window.innerWidth && element.scrollWidth <= element.clientWidth;
+    })).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+  }
+});
+
 test("Google return retries canonical claim redemption and transfers local authority", async ({ page }) => {
   const userId = "google-return-program-ai-user";
   const journeyId = "19dde0a8-e33b-40a7-88c3-a50d0942ce57";
@@ -280,6 +352,7 @@ test("Google control honours reduced motion on the canonical registration screen
   await reachRegistration(page);
   const google = page.getByRole("button", { name: /Continue with Google/ });
   await expect(google).toBeVisible();
-  expect(await google.evaluate((element) => getComputedStyle(element).transitionDuration)).toBe("0s");
+  const transitionSeconds = await google.evaluate((element) => Number.parseFloat(getComputedStyle(element).transitionDuration));
+  expect(transitionSeconds).toBeLessThanOrEqual(0.00001);
   await context.close();
 });

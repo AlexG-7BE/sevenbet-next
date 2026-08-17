@@ -430,7 +430,7 @@ export function StartingPointReadyScreen({
   error: string;
   onSave: () => void;
   onEmail: (input: { email: string; password: string; mode: "sign-up" | "sign-in" }) => void;
-  onGoogle: (mode: "sign-up" | "sign-in") => void;
+  onGoogle: () => void;
   onLinkGoogle: () => void;
   onWithdraw: () => void;
 }) {
@@ -451,7 +451,7 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}
           {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={() => onGoogle(mode)} type="button"><GoogleIcon />Continue with Google — save your plan</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save your plan</button> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
               <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
