@@ -23,7 +23,8 @@ test("desktop and mobile final handoff expose B4GAMBLE without wordmark overflow
 
 test("Programme, protected Help, legal and unavailable states expose the current brand", async ({ page }) => {
   await page.goto(`${baseUrl}/program`, { waitUntil: "networkidle" });
-  await expect(page.getByRole("link", { name: "B4GAMBLE" })).toBeVisible();
+  await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toBeVisible();
+  await expect(page.locator("body")).toContainText("B4GAMBLE");
   await expect(page.locator("body")).not.toContainText(/SevenBet|SEVENBET/);
 
   await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });

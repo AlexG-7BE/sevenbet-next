@@ -301,8 +301,8 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       voiceTiming.current = null;
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Current access could not be verified");
+    } catch {
+      setError("Current access could not be verified. Try again.");
     } finally { setBusy(false); }
   }
 
