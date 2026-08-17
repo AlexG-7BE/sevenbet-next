@@ -41,6 +41,72 @@ test("casino profile has no horizontal overflow across approved and defensive wi
   }
 });
 
+test("shared casino profile composition joins the final offer to the footer and separates the mobile score", async ({ browser }) => {
+  const viewports = [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 768 },
+    { width: 430, height: 932 },
+    { width: 390, height: 844 },
+    { width: 375, height: 812 },
+    { width: 360, height: 800 },
+  ] as const;
+
+  for (const viewport of viewports) {
+    const mobile = viewport.width <= 430;
+    const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
+    const page = await context.newPage();
+    const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    expect(response?.status(), `${viewport.width}px status`).toBe(200);
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
+    await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
+
+    const geometry = await page.evaluate(() => {
+      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-nav-theme="dark"]:has(> h3)')!;
+      const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
+      const limit = document.querySelector<HTMLElement>('#verdict [class*="verdictLimit"]');
+      const score = document.querySelector<HTMLElement>('#verdict [class*="scorePanel"]');
+      const decisionBar = document.querySelector<HTMLElement>("[data-casino-decision-bar]")!;
+      const finalRect = finalOffer.getBoundingClientRect();
+      const footerRect = footer.getBoundingClientRect();
+      const limitRect = limit?.getBoundingClientRect() ?? null;
+      const scoreRect = score?.getBoundingClientRect() ?? null;
+      const decisionRect = decisionBar.getBoundingClientRect();
+      return {
+        finalToFooterGap: footerRect.top - finalRect.bottom,
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        scoreGap: limitRect && scoreRect ? scoreRect.top - limitRect.bottom : null,
+        decisionBottomGap: innerHeight - decisionRect.bottom,
+        decisionPosition: getComputedStyle(decisionBar).position,
+      };
+    });
+
+    expect(Math.abs(geometry.finalToFooterGap), `${viewport.width}px final offer/footer join`).toBeLessThanOrEqual(1);
+    expect(geometry.horizontalOverflow, `${viewport.width}px horizontal overflow`).toBe(0);
+    if (mobile) {
+      expect(geometry.scoreGap, `${viewport.width}px Keep in view/score gap`).not.toBeNull();
+      expect(geometry.scoreGap!, `${viewport.width}px Keep in view/score gap`).toBeGreaterThanOrEqual(40);
+      expect(geometry.decisionPosition, `${viewport.width}px decision bar position`).toBe("fixed");
+      expect(Math.abs(geometry.decisionBottomGap), `${viewport.width}px decision bar bottom`).toBeLessThanOrEqual(1.5);
+    }
+    await context.close();
+  }
+
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }] as const) {
+    const mobile = viewport.width <= 430;
+    const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
+    const page = await context.newPage();
+    const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
+    expect(response?.status(), `shared profile ${viewport.width}px status`).toBe(200);
+    const gap = await page.evaluate(() => {
+      const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-nav-theme="dark"]:has(> h3)')!;
+      const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
+      return footer.getBoundingClientRect().top - finalOffer.getBoundingClientRect().bottom;
+    });
+    expect(Math.abs(gap), `shared profile ${viewport.width}px final offer/footer join`).toBeLessThanOrEqual(1);
+    await context.close();
+  }
+});
+
 test("commercially unavailable state keeps editorial review and removes visit actions", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
