@@ -2,14 +2,14 @@
   "360": {
     "cta": {
       "height": 55,
-      "width": 221.84375
+      "width": 221.84
     },
     "evidenceCardHeights": [
       159,
       179,
       146
     ],
-    "evidenceHeight": 951.8125,
+    "evidenceHeight": 951.81,
     "heroCtaOverlapAreas": [
       0,
       0
@@ -18,9 +18,9 @@
       0,
       0
     ],
-    "heroPhotoKickerGap": 34.3262939453125,
+    "heroPhotoKickerGap": 34.33,
     "horizontalOverflow": 0,
-    "recognitionToProductContentGap": 198.119384765625,
+    "recognitionToProductContentGap": 198.12,
     "trust": {
       "leftBorderBottom": "1px",
       "leftBorderRight": "0px",
@@ -37,7 +37,7 @@
         "marginTop": 176,
         "snapAlign": "start",
         "snapStop": "always",
-        "visibleHeight": 24.4375
+        "visibleHeight": 24.44
       },
       {
         "marginTop": 176,
@@ -50,14 +50,14 @@
   "390": {
     "cta": {
       "height": 55,
-      "width": 221.84375
+      "width": 221.84
     },
     "evidenceCardHeights": [
       138,
       159,
       146
     ],
-    "evidenceHeight": 887.5625,
+    "evidenceHeight": 887.56,
     "heroCtaOverlapAreas": [
       0,
       0
@@ -66,9 +66,9 @@
       0,
       0
     ],
-    "heroPhotoKickerGap": 31.008407592773438,
+    "heroPhotoKickerGap": 31.01,
     "horizontalOverflow": 0,
-    "recognitionToProductContentGap": 198.11767578125,
+    "recognitionToProductContentGap": 198.12,
     "trust": {
       "leftBorderBottom": "1px",
       "leftBorderRight": "0px",
@@ -85,7 +85,7 @@
         "marginTop": 185.68,
         "snapAlign": "start",
         "snapStop": "always",
-        "visibleHeight": 25.765625
+        "visibleHeight": 25.77
       },
       {
         "marginTop": 185.68,
@@ -98,14 +98,14 @@
   "393": {
     "cta": {
       "height": 55,
-      "width": 221.84375
+      "width": 221.84
     },
     "evidenceCardHeights": [
       138,
       159,
       146
     ],
-    "evidenceHeight": 887.5625,
+    "evidenceHeight": 887.56,
     "heroCtaOverlapAreas": [
       0,
       0
@@ -114,9 +114,9 @@
       0,
       0
     ],
-    "heroPhotoKickerGap": 29.99309539794922,
+    "heroPhotoKickerGap": 29.99,
     "horizontalOverflow": 0,
-    "recognitionToProductContentGap": 198.11767578125,
+    "recognitionToProductContentGap": 198.12,
     "trust": {
       "leftBorderBottom": "1px",
       "leftBorderRight": "0px",
@@ -146,14 +146,14 @@
   "412": {
     "cta": {
       "height": 55,
-      "width": 221.84375
+      "width": 221.84
     },
     "evidenceCardHeights": [
       138,
       159,
       146
     ],
-    "evidenceHeight": 856.375,
+    "evidenceHeight": 856.38,
     "heroCtaOverlapAreas": [
       0,
       0
@@ -162,9 +162,9 @@
       0,
       0
     ],
-    "heroPhotoKickerGap": 24.05609130859375,
+    "heroPhotoKickerGap": 24.06,
     "horizontalOverflow": 0,
-    "recognitionToProductContentGap": 198.119384765625,
+    "recognitionToProductContentGap": 198.12,
     "trust": {
       "leftBorderBottom": "1px",
       "leftBorderRight": "0px",
@@ -181,7 +181,7 @@
         "marginTop": 201.3,
         "snapAlign": "start",
         "snapStop": "always",
-        "visibleHeight": 27.140625
+        "visibleHeight": 27.14
       },
       {
         "marginTop": 201.3,
@@ -194,14 +194,14 @@
   "430": {
     "cta": {
       "height": 55,
-      "width": 221.84375
+      "width": 221.84
     },
     "evidenceCardHeights": [
       138,
       159,
       146
     ],
-    "evidenceHeight": 856.375,
+    "evidenceHeight": 856.38,
     "heroCtaOverlapAreas": [
       0,
       0
@@ -210,9 +210,9 @@
       0,
       0
     ],
-    "heroPhotoKickerGap": 21.48199462890625,
+    "heroPhotoKickerGap": 21.48,
     "horizontalOverflow": 0,
-    "recognitionToProductContentGap": 198.11767578125,
+    "recognitionToProductContentGap": 198.12,
     "trust": {
       "leftBorderBottom": "1px",
       "leftBorderRight": "0px",
@@ -229,7 +229,7 @@
         "marginTop": 204,
         "snapAlign": "start",
         "snapStop": "always",
-        "visibleHeight": 29.4375
+        "visibleHeight": 29.44
       },
       {
         "marginTop": 204,

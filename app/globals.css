@@ -229,8 +229,8 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
     flex: 0 0 18px !important;
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:nth-child(2) {
-    font-size: 11px !important;
-    letter-spacing: .24em !important;
+    font-size: 12px !important;
+    letter-spacing: .2em !important;
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"],
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {

@@ -19,7 +19,8 @@ const browser = await chromium.launch();
 const metrics = {};
 
 async function settle(page) {
-  await page.evaluate(() => {
+  await page.evaluate(async () => {
+    await document.fonts.ready;
     document.documentElement.style.setProperty("scroll-behavior", "auto", "important");
     document.body.style.setProperty("scroll-behavior", "auto", "important");
   });
@@ -127,5 +128,7 @@ try {
   await browser.close();
 }
 
-await writeFile(resolve(outputRoot, "metrics.json"), `${JSON.stringify(metrics, null, 2)}\n`);
+await writeFile(resolve(outputRoot, "metrics.json"), `${JSON.stringify(metrics, (_key, value) => (
+  typeof value === "number" ? Math.round(value * 100) / 100 : value
+), 2)}\n`);
 console.log(`Founder Home mobile polish evidence written to ${outputRoot}`);
