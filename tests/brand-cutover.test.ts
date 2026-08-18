@@ -65,7 +65,7 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Know your limits before you play\./);
+  assert.match(footer, /Evidence-led reviews\. Material terms shown\.[\s\S]*Player first\./);
   assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
@@ -177,17 +177,13 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   }
 });
 
-test("sitemap keeps static, learning and protected Help routes when casino discovery throws", async () => {
+test("sitemap keeps final static and learning routes when casino discovery throws", async () => {
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
-  const originalCompare = publicComparisonService.compare;
   publicCasinoDiscoveryService.discover = async () => { throw new Error("discovery unavailable"); };
   publicOfferService.getBestOffersPageData = async () => ({
     status: "available", records: [], inventoryMode: "PUBLISHED_ONLY",
   }) as Awaited<ReturnType<typeof originalBestOffers>>;
-  publicComparisonService.compare = async () => ({
-    status: "available", inventoryMode: "PUBLISHED_ONLY",
-  }) as unknown as Awaited<ReturnType<typeof originalCompare>>;
 
   let entries: Awaited<ReturnType<typeof sitemap>>;
   try {
@@ -195,7 +191,6 @@ test("sitemap keeps static, learning and protected Help routes when casino disco
   } finally {
     publicCasinoDiscoveryService.discover = originalDiscover;
     publicOfferService.getBestOffersPageData = originalBestOffers;
-    publicComparisonService.compare = originalCompare;
   }
 
   const urls = entries.map((entry) => entry.url);
@@ -204,7 +199,7 @@ test("sitemap keeps static, learning and protected Help routes when casino disco
   assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/learn/") && url !== "https://b4gamble.com/learn/"));
   assert.ok(urls.includes("https://b4gamble.com/responsible-gambling"));
   assert.ok(urls.includes("https://b4gamble.com/help"));
-  assert.ok(urls.includes("https://b4gamble.com/help/deposit-limits"));
+  assert.ok(!urls.some((url) => url.startsWith("https://b4gamble.com/help/")));
   for (const educationalHelpPath of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
     assert.ok(!urls.includes(`https://b4gamble.com/help/${educationalHelpPath}`));
   }
@@ -213,7 +208,7 @@ test("sitemap keeps static, learning and protected Help routes when casino disco
   assert.ok(urls.includes("https://b4gamble.com/learn/licensing/casino-licenses-explained"));
   assert.ok(urls.includes("https://b4gamble.com/learn/payments/casino-payment-methods"));
   assert.ok(urls.includes("https://b4gamble.com/best-offers"));
-  assert.ok(urls.includes("https://b4gamble.com/compare"));
+  assert.ok(!urls.includes("https://b4gamble.com/compare"));
   assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/casino/")));
   assert.ok(urls.every((url) => !["https://b4gamble.com/casinos", "https://b4gamble.com/bonuses"].includes(url)));
 });

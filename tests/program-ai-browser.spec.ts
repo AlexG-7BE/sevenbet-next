@@ -45,6 +45,12 @@ const startingPoint: ProgrammeStartingPointValue = {
 };
 
 const situation = "After difficult work days I keep opening betting apps late at night.";
+const bestEffortStartingPoint: ProgrammeStartingPointValue = {
+  startingPoint: situation,
+  desiredChange: "Build more control around the situation described here.",
+  broadContext: "NOT_SPECIFIED",
+  continuationCue: "Continue from the situation described in Mission 01.",
+};
 const missionActionArtifacts: Record<string, Record<string, unknown>> = {
   choose_direction: { direction: "pause" }, build_7_day_goal: { goalStyle: "pause_first", reviewWindowDays: 7 }, reality_check: { realityCheck: "restart_next_day" },
   map_urge_sequence: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, name_early_signal: { earlySignalCategory: "thought" }, choose_pause_move: { pauseMove: "wait_ten_minutes" },
@@ -217,7 +223,7 @@ async function openCurrentMission(page: Page, missionNumber: number, width: numb
   const mission = programAiMissionRegistry.find((item) => item.missionNumber === missionNumber)!;
   await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
   await page.goto("/program");
-  await page.getByRole("button", { name: `Resume Mission ${String(missionNumber).padStart(2, "0")}` }).click();
+  await page.getByRole("button", { name: "Resume mission", exact: true }).click();
   await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 }
@@ -330,7 +336,7 @@ test("distributed session creation limiting returns a safe 429 while Help stays 
   });
 
   await page.goto("/help");
-  await expect(page.getByRole("heading", { name: /Get support without offers/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /We're here\..*No strings\./i })).toBeVisible();
   await prisma.anonymousProgrammeSession.deleteMany({ where: { tokenHash: { in: tokenHashes } } });
 });
 
@@ -410,7 +416,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
     });
   });
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_305))).toBe(4_194_305);
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
@@ -420,39 +426,39 @@ test("voice recording produces an editable transcript, releases tracks and can b
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
   await page.getByRole("button", { name: "type instead" }).click();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(4_194_304))).toBe(4_194_304);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "recording");
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"] strong')).toContainText("Recording · 00:00 / 01:30");
   const recordingDot = page.locator("[data-recording-indicator]");
   expect(await recordingDot.evaluate((element) => getComputedStyle(element).animationName)).not.toBe("none");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await expect(recordingDot).toHaveCSS("animation-name", "none");
   await page.clock.fastForward(1_000);
-  await expect(page.getByText("Recording · 00:01 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"] strong')).toContainText("Recording · 00:01 / 01:30");
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByLabel("Editable transcript")).toHaveValue(situation);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   await page.clock.fastForward(2_000);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   expect(transcriptionCalls).toBe(1);
   expect(authorityCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(2);
 
   await page.getByRole("button", { name: "Record again" }).click();
   await page.evaluate(() => (window as unknown as { __programAiNextRecordingBytes: (bytes: number) => number }).__programAiNextRecordingBytes(3));
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
+  await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   await page.clock.fastForward(2_000);
   await expect(page.locator("[data-state]").first()).toHaveAttribute("data-state", "cancelled");
   expect(transcriptionCalls).toBe(1);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(3);
-  await expect(page.getByText("Type instead")).toBeVisible();
+  await expect(page.getByRole("button", { name: "I'd rather type" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   await page.clock.fastForward(90_000);
-  await expect(page.getByText("Transcript ready to review")).toBeVisible();
+  await expect(page.locator('[data-state="success"]')).toHaveCount(1);
   expect(transcriptionCalls).toBe(2);
 
   await page.getByRole("button", { name: "Record again" }).click();
@@ -463,9 +469,9 @@ test("voice recording produces an editable transcript, releases tracks and can b
   expect(transcriptionCalls).toBe(2);
   await page.getByRole("button", { name: "type instead" }).click();
 
-  await page.getByRole("button", { name: "Start recording" }).click();
-  await expect(page.getByText("Recording · 00:00 / 01:30")).toBeVisible();
-  await page.getByRole("link", { name: "B4GAMBLE" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
+  await page.goto("/");
   await expect(page).toHaveURL("/");
   expect(transcriptionCalls).toBe(2);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(6);
@@ -513,12 +519,12 @@ test("fresh microphone access uses the browser request before denied recovery", 
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
 
-  await expect(page.getByText("Prefer to speak?")).toBeVisible();
-  await expect(page.getByText("Microphone did not start")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toHaveCount(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start recording" }).click();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
-  await expect(page.getByText("Microphone did not start")).toBeVisible();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/permission prompt was dismissed|microphone was not made available/i);
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
   await page.getByRole("button", { name: "Try microphone again" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
@@ -552,9 +558,8 @@ test("persistently denied microphone state explains browser recovery and recheck
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
 
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
-  await page.getByRole("button", { name: "Start recording" }).click();
-  await expect(page.getByText("Microphone is blocked for this site")).toBeVisible();
-  await expect(page.getByText(/browser will not show another prompt/i)).toBeVisible();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/browser will not show another prompt/i);
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
   await page.getByRole("button", { name: "Check microphone access" }).click();
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(1);
@@ -575,8 +580,8 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
-  await page.getByRole("button", { name: "Start recording" }).click();
-  await expect(page.getByText("Voice recording is not supported here")).toBeVisible();
+  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/cannot record audio with the features B4GAMBLE needs/i);
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
 });
 
@@ -596,25 +601,33 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await noHorizontalOverflow(page);
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
 
-  await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   const sensitiveCheckbox = page.getByRole("checkbox");
   await sensitiveCheckbox.focus();
   await page.keyboard.press("Space");
   await expect(sensitiveCheckbox).toBeChecked();
-  const recorder = page.getByRole("button", { name: "Start recording" });
-  await recorder.focus();
+  const typedFallback = page.getByRole("button", { name: "I'd rather type" });
+  await typedFallback.focus();
   await page.keyboard.press("Enter");
-  const recorderState = page.locator("[data-state]").first();
-  await expect(recorderState).not.toHaveAttribute("data-state", "idle");
-  await expect(recorderState).toContainText(/Requesting microphone|Listening locally|Microphone permission was denied|Voice transcription is not connected/);
   const situationField = page.getByLabel("Your situation");
   await situationField.focus();
   await situationField.fill(situation);
+  let capturedClaimCookie: { name: string; value: string; domain: string; path: string; expires: number; httpOnly: boolean; secure: boolean; sameSite: "Lax" } | null = null;
+  page.on("response", async (response) => {
+    if (!response.url().endsWith("/api/program/program-ai/claim")) return;
+    const setCookie = (await response.allHeaders())["set-cookie"];
+    const value = setCookie?.match(/sevenbet_programme_claim=([^;]+)/)?.[1];
+    if (value) capturedClaimCookie = { name: "sevenbet_programme_claim", value, domain: "127.0.0.1", path: "/", expires: -1, httpOnly: true, secure: false, sameSite: "Lax" };
+  });
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
-  await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toBeVisible();
-  await expect(page.getByText("Personalisation did not produce this draft.")).toBeVisible();
-  await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.locator('[data-programme-phase="registration"]')).toBeVisible();
+  await expect(page.locator('[data-programme-phase="clarification"], [data-programme-phase="candidate"], [data-programme-phase="reward"]')).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toHaveCount(0);
+  await expect(page.getByText("ONE SHORT FOLLOW-UP", { exact: false })).toHaveCount(0);
+  await expect(page.getByText("MISSION 01 COMPLETE", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("20 XP", { exact: true })).toBeHidden();
   const anonymousSession = await anonymousSessionFromContext(page.context());
   const anonymousAuthority = await prisma.programmeSensitiveInputAuthority.findFirstOrThrow({
     where: { anonymousSessionId: anonymousSession.id, withdrawnAt: null },
@@ -633,36 +646,16 @@ test("typed fallback path binds exact authority and is idempotent through real e
 
   await page.setViewportSize({ width: 320, height: 760 });
   await noHorizontalOverflow(page);
-  await page.getByLabel("What is happening now?").fill(startingPoint.startingPoint);
-  await page.getByLabel("What would you like to change?").fill(startingPoint.desiredChange);
-  await page.getByLabel("Broad context").selectOption(startingPoint.broadContext);
-  await page.getByLabel("What should Mission 02 continue from?").fill(startingPoint.continuationCue);
-  await page.getByLabel("Optional boundary action").fill(startingPoint.chosenBoundaryAction!);
-  await page.getByRole("button", { name: "Confirm my Starting Point" }).click();
-  await expect(page.getByRole("heading", { name: "Your Starting Point is ready." })).toBeVisible();
-
-  const duplicateStartingPoint = await page.request.post("/api/program/program-ai/starting-point", {
-    headers: {
-      ...programmeAgeHeader,
-      cookie: `sevenbet_programme_session=${(await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_session")!.value}`,
-    },
-    data: startingPoint,
-  });
-  expect(duplicateStartingPoint.status()).toBe(200);
-  expect((await duplicateStartingPoint.json()).xpPreview).toBe(40);
-  await page.getByRole("button", { name: "Keep this progress" }).click();
-  await expect(page.getByRole("heading", { name: "Keep the Starting Point you confirmed." })).toBeVisible();
-
-  const claimCookie = (await page.context().cookies()).find((item) => item.name === "sevenbet_programme_claim");
-  expect(claimCookie, "pending claim cookie before auth").toBeTruthy();
   const email = `program-ai-happy-${randomUUID()}@example.test`;
   const wrongUserEmail = `program-ai-wrong-${randomUUID()}@example.test`;
+  await page.getByRole("button", { name: "Use email instead" }).click();
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password").fill("Programme-test-password-42!");
   await page.getByRole("button", { name: "Create account with email" }).click();
-  await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
-  await expect(page.getByText("40 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Programme progress" })).toContainText("40 XP");
   await noHorizontalOverflow(page);
+  expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
   const [durableStartingPoints, programmeAiXp, boundAuthority, claim] = await Promise.all([
@@ -679,7 +672,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
     prisma.pendingProgrammeClaim.findUniqueOrThrow({ where: { anonymousSessionId: anonymousSession.id } }),
   ]);
   expect(durableStartingPoints).toHaveLength(1);
-  expect(durableStartingPoints[0].startingPoint).toBe(startingPoint.startingPoint);
+  expect(durableStartingPoints[0].startingPoint).toBe(bestEffortStartingPoint.startingPoint);
   expect(programmeAiXp).toHaveLength(2);
   expect(programmeAiXp.reduce((total, event) => total + event.xp, 0)).toBe(40);
   expect(boundAuthority.anonymousSessionId).toBeNull();
@@ -687,13 +680,13 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(claim.consumedByUserId).toBe(user.id);
   expect(claim.consumedAt).not.toBeNull();
 
-  await page.context().addCookies([claimCookie!]);
+  await page.context().addCookies([capturedClaimCookie!]);
   const duplicateClaim = await page.request.post("/api/program/program-ai/claims/redeem", {
     headers: {
       ...programmeAgeHeader,
       cookie: storedCookieHeader(await page.context().cookies()),
     },
-    data: { timeZone: "UTC", startingPoint },
+    data: { timeZone: "UTC", startingPoint: bestEffortStartingPoint },
   });
   expect(duplicateClaim.status()).toBe(200);
   expect((await duplicateClaim.json()).home.totalXp).toBe(40);
@@ -708,16 +701,16 @@ test("typed fallback path binds exact authority and is idempotent through real e
   const wrongClaimClient = await playwrightRequest.newContext({
     baseURL,
     storageState: {
-      cookies: [...wrongState.cookies, claimCookie!],
+      cookies: [...wrongState.cookies, capturedClaimCookie!],
       origins: [],
     },
   });
   const wrongClaim = await wrongClaimClient.post("/api/program/program-ai/claims/redeem", {
     headers: {
       ...programmeAgeHeader,
-      cookie: storedCookieHeader([...wrongState.cookies, claimCookie!]),
+      cookie: storedCookieHeader([...wrongState.cookies, capturedClaimCookie!]),
     },
-    data: { timeZone: "UTC", startingPoint },
+    data: { timeZone: "UTC", startingPoint: bestEffortStartingPoint },
   });
   expect(wrongClaim.status()).toBe(409);
   expect((await wrongClaim.json()).code).toBe("CONFLICT");
@@ -791,12 +784,12 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         expect(awards.sort((left, right) => left - right)).toEqual([0, 15]);
         await page.setViewportSize({ width: 375, height: 812 });
         await page.goto("/program");
-        await expect(page.getByRole("heading", { name: "02 · Set a 7-day goal" })).toBeVisible();
-        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "Mission 02 — Set a 7-day goal" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
         await noHorizontalOverflow(page);
         await page.reload();
-        await expect(page.getByRole("button", { name: "Resume Mission 02" })).toBeVisible();
-        await page.getByRole("button", { name: "Resume Mission 02" }).click();
+        await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
+        await page.getByRole("button", { name: "Resume mission", exact: true }).click();
         await page.getByRole("radio", { name: "Pause before one decision" }).check();
         await page.getByRole("button", { name: "Create personal drafts" }).click();
         await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
@@ -903,11 +896,11 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   expect(await prisma.userXpEvent.count({ where: { userId: user.id } })).toBe(38);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/program");
-  await expect(page.getByText("715 XP", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "10 · Make the plan reviewable" })).toBeVisible();
+  await expect(page.locator("[data-programme-context-header]").getByText("715 XP", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mission 10 — Make the plan reviewable" })).toBeVisible();
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
-  await expect(page.getByRole("navigation", { name: "Explore B4GAMBLE" }).getByRole("link")).toHaveCount(4);
+  await expect(page.getByText("Your data is private. We never use it for offers or rankings.")).toBeVisible();
   await noHorizontalOverflow(page);
 
   for (const width of [375, 390, 768, 1024, 1440]) {
@@ -1049,8 +1042,9 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
-  await expect(page.getByRole("heading", { name: "What feels hardest to control right now?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   await page.getByRole("checkbox").check();
+  await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
   await page.route("**/api/program/program-ai/turn", async (route) => {
     await route.fulfill({
@@ -1071,7 +1065,7 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
   await expect(page.getByRole("heading", { name: "Pause the Programme. Keep support close." })).toBeVisible();
-  await expect(page.getByText("20 XP", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Your 20 XP for describing the situation is preserved/)).toBeVisible();
   await expect(page.getByRole("link", { name: "Open protected Help" })).toHaveAttribute("href", "/help");
   await expect(page.getByRole("button", { name: /register|account|keep this progress/i })).toHaveCount(0);
   await expect(page.getByText("Registration and celebration are paused on this screen.")).toBeVisible();

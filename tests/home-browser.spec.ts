@@ -123,7 +123,6 @@ for (const route of [
   "/casinos",
   "/bonuses",
   "/best-offers",
-  "/compare",
   "/methodology",
   "/affiliate-disclosure",
   "/about",
@@ -136,6 +135,11 @@ for (const route of [
     expect(await page.locator("main").count()).toBeGreaterThan(0);
   });
 }
+
+test("the retired Compare destination consolidates into Casinos", async ({ page }) => {
+  await page.goto(`${baseUrl}/compare?casino=demo-northstar&country=GB`, { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&country=GB/);
+});
 
 for (const viewport of [
   { width: 1440, height: 900 },

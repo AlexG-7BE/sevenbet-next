@@ -25,7 +25,11 @@ export function MobileBonusFilters({ children, activeCount }: { children: ReactN
   }, [open]);
 
   return <div className={styles.mobileFilterRoot}>
-    <button aria-controls="bonus-filter-dialog" aria-expanded={open} className={styles.mobileFilterTrigger} onClick={show} ref={triggerRef} type="button"><span>Filters{activeCount ? ` (${activeCount})` : ""}</span><span>Refine Results ↗</span></button>
+    <button aria-controls="bonus-filter-dialog" aria-expanded={open} aria-label={`Open bonus filters${activeCount ? `, ${activeCount} active` : ""}`} className={styles.mobileFilterTrigger} onClick={show} ref={triggerRef} type="button">
+      <span className={styles.mobileFilterSearch}>Search casinos…</span>
+      <span aria-hidden="true" className={styles.mobileFilterChips}><span>Wagering⌄</span><span>Min deposit⌄</span><span>Bonus type⌄</span><span>Crypto⌄</span><span>Availability⌄</span></span>
+      <span className={styles.mobileFilterOpen}>Refine results ↗</span>
+    </button>
     <dialog aria-labelledby="bonus-filter-title" className={styles.filterDialog} id="bonus-filter-dialog" onCancel={(event) => { event.preventDefault(); close(); }} onClose={() => { setOpen(false); triggerRef.current?.focus(); }} ref={dialogRef}>
       <div className={styles.dialogHeader}><div><span>Directory controls</span><h2 id="bonus-filter-title">Filter Bonuses</h2></div><button aria-label="Close filters" autoFocus onClick={close} type="button">×</button></div>
       {children}

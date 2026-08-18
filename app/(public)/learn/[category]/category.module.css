@@ -1,18 +1,18 @@
-.page { --paper: var(--sb-field); --ink: var(--sb-night); --acid: var(--sb-acid); background: var(--paper); color: var(--ink); color-scheme: light; overflow: clip; }
+.page { --paper: var(--sb-field); --ink: var(--sb-night); --acid: var(--sb-acid); background: var(--paper); color: var(--ink); color-scheme: light; }
 .page :focus-visible { outline-color: var(--sb-teal); border-radius: 0; }
-.kicker { margin: 0 0 18px; font-size: .7rem; line-height: 1; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
+.kicker { margin: 0 0 18px; font-size: 13px; line-height: 1; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
 .hero { padding: 38px max(32px, calc((100vw - 1240px) / 2)) clamp(88px, 13vw, 190px); background: var(--acid); }
 .breadcrumbs { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: clamp(80px, 11vw, 150px); font-size: .78rem; font-weight: 800; }
 .breadcrumbs a { text-decoration: underline; text-underline-offset: 4px; }
 .hero h1 { max-width: 10ch; margin: 0; font-size: clamp(4.5rem, 10vw, 10.5rem); line-height: .8; letter-spacing: -.085em; text-transform: uppercase; overflow-wrap: anywhere; }
 .lead { max-width: 680px; margin: 38px 0 0 auto; font-size: clamp(1.05rem, 2vw, 1.45rem); line-height: 1.55; }
 .categoryMeta { display: flex; flex-wrap: wrap; gap: 8px; margin: 42px 0 0 auto; max-width: 680px; }
-.categoryMeta span { border: 1px solid var(--ink); padding: 10px 12px; font-size: .7rem; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+.categoryMeta span { border: 1px solid var(--ink); padding: 10px 12px; font-size: 13px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
 .hubBridge { max-width: 680px; margin: 28px 0 0 auto; padding-top: 24px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; border-top: 1px solid var(--ink); }
 .hubBridge > div { display: grid; gap: 8px; }
 .hubBridge strong { font-size: 1rem; }
 .hubBridge span { line-height: 1.5; }
-.hubBridge a { flex: 0 0 auto; min-height: 44px; padding: 10px 14px; display: inline-flex; align-items: center; gap: 12px; background: var(--ink); color: white; font-size: .74rem; font-weight: 900; text-decoration: none; text-transform: uppercase; }
+.hubBridge a { flex: 0 0 auto; min-height: 44px; padding: 10px 14px; display: inline-flex; align-items: center; gap: 12px; background: var(--ink); color: white; font-size: 14px; font-weight: 900; text-decoration: none; text-transform: uppercase; }
 @media (hover: hover) { .hubBridge a:hover { background: var(--sb-teal); } }
 
 .library, .faq, .related { padding: clamp(86px, 11vw, 160px) max(32px, calc((100vw - 1240px) / 2)); }
@@ -22,7 +22,7 @@
 .articleList { margin: 0; padding: 0; list-style: none; border-top: 5px solid var(--ink); }
 .articleList li { border-bottom: 1px solid rgba(16,15,15,.38); }
 .articleList a { display: grid; grid-template-columns: 42px minmax(0,1fr) 24px; gap: 20px; align-items: start; padding: 30px 0; }
-.number, .articleCopy > span:first-child { font-size: .69rem; line-height: 1.3; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+.number, .articleCopy > span:first-child { font-size: 12px; line-height: 1.3; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
 .articleCopy { display: grid; gap: 10px; }
 .articleCopy strong { font-size: clamp(1.65rem, 3vw, 2.8rem); line-height: .95; letter-spacing: -.05em; }
 .articleCopy > span:last-child { color: #55514b; line-height: 1.55; }
@@ -49,14 +49,15 @@
 @media (max-width: 760px) {
   .hero { padding: 28px 20px 92px; }
   .breadcrumbs { margin-bottom: 72px; }
-  .hero h1 { font-size: clamp(4.2rem, 21vw, 6.2rem); }
+  .hero h1 { max-width:100%; font-size:clamp(3.25rem,17vw,4.75rem); line-height:.88; letter-spacing:-.065em; }
   .lead, .categoryMeta, .hubBridge { margin-left: 0; }
   .hubBridge { align-items: flex-start; flex-direction: column; }
   .library, .faq, .related { padding: 78px 20px; }
   .library, .faq { grid-template-columns: 1fr; }
   .library header, .faq header { margin-bottom: 34px; }
   .empty { grid-column: 1; }
-  .articleList a { grid-template-columns: 32px minmax(0,1fr) 20px; gap: 10px; }
+  .articleList a { grid-template-columns:28px minmax(0,1fr); gap:10px; }
+  .articleList .arrow { display:none; }
   .related > div { grid-template-columns: 1fr; }
   .related a { min-height: 110px; }
 }

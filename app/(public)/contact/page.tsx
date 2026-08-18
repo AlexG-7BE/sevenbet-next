@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { ActionLink } from "@/components/design-system/Action";
 import { NonceStyle } from "@/components/security/NonceStyle";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
 import { absoluteUrl } from "@/lib/site";
@@ -27,28 +26,21 @@ export default function ContactPage() {
     <div className={styles.page} data-contact-page>
       <header className={styles.hero}>
         <div className={styles.shell}>
-          <p className={styles.eyebrow}>Contact B4GAMBLE</p>
-          <h1>How can we help?</h1>
-          <p className={styles.heroCopy}>Use the form for general questions, technical issues, editorial feedback or business enquiries.</p>
+          <p className={styles.eyebrow}><span aria-hidden="true" />Contact</p>
+          <h1>Talk <em>to us.</em></h1>
+          <p className={styles.heroCopy}>Corrections, questions and disagreements are welcome. We&apos;ll reply when the team has reviewed your message.</p>
         </div>
       </header>
 
+      <div className={styles.paint} />
       <section className={styles.content} aria-label="Contact options">
         <div className={`${styles.shell} ${styles.grid}`}>
           <aside className={styles.context}>
-            <section className={styles.contextBlock} aria-labelledby="direct-contact-title">
-              <p className={styles.sectionLabel}>Direct contact</p>
-              <h2 id="direct-contact-title">Email us.</h2>
-              <p>You can use the human support mailbox instead of the form.</p>
-              <a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a>
-            </section>
-
-            <section className={styles.helpBlock} aria-labelledby="gambling-help-title">
-              <p className={styles.sectionLabel}>Control &amp; support</p>
-              <h2 id="gambling-help-title">Need help with gambling?</h2>
-              <p>B4GAMBLE&apos;s Help section opens without casino, bonus or affiliate prompts.</p>
-              <ActionLink className={styles.helpAction} href="/help" variant="ghost-paper">Open Help</ActionLink>
-            </section>
+            <p className={styles.routesLabel}>Other ways to reach us</p>
+            <section className={styles.contextBlock} aria-labelledby="direct-contact-title"><h2 id="direct-contact-title">Email</h2><a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a></section>
+            <section className={styles.contextBlock}><h2>Corrections</h2><p>Spotted an error in a review? Mark the subject &quot;Correction&quot; so the editorial team can review and date any published change.</p></section>
+            <section className={styles.helpBlock} aria-labelledby="gambling-help-title"><h2 id="gambling-help-title">Need support, not customer service?</h2><p>Protected Help is commercial-free and confidential.</p><Link className={styles.helpAction} href="/help">Open Help →</Link></section>
+            <section className={styles.contextBlock}><h2>Response time</h2><p>Response times vary. If you need immediate gambling support, use Protected Help and its independent support routes.</p></section>
           </aside>
 
           <noscript>

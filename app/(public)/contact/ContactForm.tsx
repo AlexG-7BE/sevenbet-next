@@ -1,9 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useRef, useState } from "react";
 
-import { ActionButton } from "@/components/design-system/Action";
 import { SUPPORT_MAILBOX, type ContactFieldErrors } from "@/lib/contact/contracts";
 import { validateContactPayload } from "@/lib/contact/validation";
 import styles from "./ContactPage.module.css";
@@ -77,14 +75,11 @@ export function ContactForm() {
 
   return (
     <div className={styles.formPanel}>
-      <p className={styles.sectionLabel}>General contact</p>
-      <h2>Send a message.</h2>
-      <p className={styles.formIntro}>All fields are required except your name.</p>
-
       <form className={styles.form} data-contact-form noValidate onSubmit={submit}>
         <div className={styles.field}>
-          <label htmlFor="contact-name">Name <span className={styles.optional}>(optional)</span></label>
+          <label htmlFor="contact-name">Your name</label>
           <input
+            aria-label="Name (optional)"
             aria-describedby={describedBy("contact-name-hint", "contact-name-error", Boolean(fieldErrors.name))}
             aria-invalid={Boolean(fieldErrors.name)}
             autoComplete="name"
@@ -92,10 +87,11 @@ export function ContactForm() {
             maxLength={100}
             name="name"
             onChange={(event) => update("name", event.target.value)}
+            placeholder="How should we address you?"
             type="text"
             value={values.name}
           />
-          <p className={styles.hint} id="contact-name-hint">Up to 100 characters.</p>
+          <p className={styles.srOnly} id="contact-name-hint">Name is optional; up to 100 characters.</p>
           {fieldErrors.name ? <p className={styles.error} id="contact-name-error">{fieldErrors.name}</p> : null}
         </div>
 
@@ -109,11 +105,12 @@ export function ContactForm() {
             maxLength={254}
             name="email"
             onChange={(event) => update("email", event.target.value)}
+            placeholder="Where we reply"
             required
             type="email"
             value={values.email}
           />
-          <p className={styles.hint} id="contact-email-hint">Used only to handle your enquiry.</p>
+          <p className={styles.srOnly} id="contact-email-hint">Used only to handle your enquiry.</p>
           {fieldErrors.email ? <p className={styles.error} id="contact-email-error">{fieldErrors.email}</p> : null}
         </div>
 
@@ -126,11 +123,12 @@ export function ContactForm() {
             maxLength={160}
             name="subject"
             onChange={(event) => update("subject", event.target.value)}
+            placeholder="A few words"
             required
             type="text"
             value={values.subject}
           />
-          <p className={styles.hint} id="contact-subject-hint">Up to 160 characters.</p>
+          <p className={styles.srOnly} id="contact-subject-hint">Up to 160 characters.</p>
           {fieldErrors.subject ? <p className={styles.error} id="contact-subject-error">{fieldErrors.subject}</p> : null}
         </div>
 
@@ -144,11 +142,12 @@ export function ContactForm() {
             minLength={10}
             name="message"
             onChange={(event) => update("message", event.target.value)}
+            placeholder="What's on your mind?"
             required
-            rows={7}
+            rows={6}
             value={values.message}
           />
-          <p className={styles.hint} id="contact-message-hint">10–4,000 characters.</p>
+          <p className={styles.srOnly} id="contact-message-hint">10–4,000 characters.</p>
           {fieldErrors.message ? <p className={styles.error} id="contact-message-error">{fieldErrors.message}</p> : null}
         </div>
 
@@ -165,8 +164,8 @@ export function ContactForm() {
           />
         </div>
 
-        <p className={styles.sensitiveNote}>Please do not include passwords, payment details or private Programme answers in this form.</p>
-        <p className={styles.privacyNote}>We use the information you submit only to handle your enquiry and protect the form from abuse. See our <Link href="/privacy">Privacy Notice</Link>.</p>
+        <p className={styles.srOnly}>Please do not include passwords, payment details or private Programme answers in this form.</p>
+        <p className={styles.srOnly}>Privacy Notice: we use the information you submit only to handle your enquiry and protect the form from abuse.</p>
 
         {submissionState === "success" ? (
           <div className={styles.status} data-state="success" ref={statusRef} role="status" tabIndex={-1}>
@@ -181,9 +180,10 @@ export function ContactForm() {
           </div>
         ) : null}
 
-        <ActionButton className={styles.submit} disabled={submissionState === "submitting"} type="submit">
+        <button className={styles.submit} disabled={submissionState === "submitting"} type="submit">
           {submissionState === "submitting" ? "Sending…" : "Send message"}
-        </ActionButton>
+        </button>
+        <p className={styles.note}>Contact details are used to handle your enquiry and protect the form from abuse. Messages do not feed offers or rankings.</p>
       </form>
     </div>
   );

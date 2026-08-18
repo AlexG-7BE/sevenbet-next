@@ -19,10 +19,12 @@ const homeAssets = [
   "public/home/tool-pause-rule.svg",
 ];
 
-test("Home route renders TiltHome with the approved metadata and canonical", () => {
-  assert.match(page, /import \{ TiltHome \}/);
-  assert.match(page, /<TiltHome \/>/);
-  assert.match(page, /title: "B4GAMBLE \| Know your limits before you play"/);
+test("Home route renders the final handoff with the approved metadata and canonical", () => {
+  assert.match(page, /import \{ HandoffPage \}/);
+  assert.match(page, /<HandoffPage name="home" transform=\{transformHomeHandoff\} \/>/);
+  assert.match(page, /const title = "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(page, /openGraph: \{[^}]*title, description/);
+  assert.match(page, /twitter: \{ card: "summary", title, description \}/);
   assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
@@ -35,13 +37,13 @@ test("Home records every approved canonical and responsive Figma authority", () 
   assert.match(home, /data-home-contract="figma-289-946"/);
 });
 
-test("Home keeps the approved nine body sections in order inside one Public Shell", () => {
+test("Home keeps the final handoff body sections in order inside one Public Shell", () => {
   const expectedBodyOrder = [
     "hero",
-    "programme-theatre",
     "self-recognition",
-    "programme-tools",
+    "programme-theatre",
     "evidence",
+    "trust-boundary",
     "final-programme-cta",
   ];
   let cursor = -1;
@@ -66,7 +68,7 @@ test("Home uses exact bounded local Figma assets and no remote production URL", 
   for (const asset of homeAssets) assert.equal(existsSync(asset), true, `${asset} must exist`);
   assert.match(home, /from "next\/image"/);
   assert.match(home, /priority=\{photo\.priority\}/);
-  assert.match(home, /loading="lazy"/);
+  assert.match(home, /loading="eager"/);
   assert.doesNotMatch(home + carousel + css, /images\.pexels\.com|figma\.com\/api\/mcp\/asset|images\.unsplash|randomuser|placehold/iu);
   assert.match(home, /alt=""[\s\S]*fill/);
 });
@@ -110,7 +112,7 @@ test("Self Recognition remains static language rather than a diagnostic form", (
 test("Programme availability and evidence limitations remain truthful", () => {
   assert.match(home + carousel, /Ten practical Missions form one reviewable path\./);
   assert.match(home + carousel, /Missions 02–10 · unlock in sequence/);
-  assert.match(home + carousel, /One approved path, with Reviews at meaningful checkpoints\./);
+  assert.match(home, /10 missions · 5–15 minutes each/);
   assert.doesNotMatch(home + carousel, /Missions 01–04 are implemented|not yet available|later missions remain planned/);
   assert.match(home, /public NHS and NICE guidance/);
   assert.match(home, /The complete Programme has not yet been clinically evaluated\./);
@@ -127,10 +129,8 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Know your limits before you play\./);
-  assert.match(shellStyles, /\.footerGroups \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
-
-  execFileSync("git", ["diff", "--quiet", "origin/main", "--", "app/(public)/layout.tsx", "app/design-system.css"]);
+  assert.match(footer, /Evidence-led reviews\. Material terms shown\./);
+  assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([
     ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" })

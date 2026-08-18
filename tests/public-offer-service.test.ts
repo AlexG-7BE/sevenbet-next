@@ -307,11 +307,13 @@ test("public offer pages use the service boundary and expose no raw destination 
   assert.match(bestOffersPage, /result\.status === "unavailable"/);
   assert.match(bestOffersPage, /Casino Offer Comparison Unavailable/);
   const experience = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
-  assert.match(experience, /tabIndex=\{criterion === key \? 0 : -1\}/);
-  for (const key of ["ArrowRight", "ArrowLeft", "Home", "End"]) assert.match(experience, new RegExp(`event\\.key === "${key}"`));
+  assert.match(experience, /const top = shortlist\.slice\(0, 3\)/);
+  assert.match(experience, /const featured = top\[0\] \?\? null/);
+  assert.match(experience, /data-testid="best-offer-product-card"/);
+  assert.match(experience, /top\.slice\(1\)\.map/);
   const styles = readFileSync("components/best-offers/BestOffers.module.css", "utf8");
-  assert.match(styles, /@media \(max-width: 1100px\)[\s\S]*\.rankedGrid \{ grid-template-columns: repeat\(2/);
-  assert.doesNotMatch(styles, /\.rankedConditions p \{[^}]*white-space: nowrap/s);
+  assert.match(styles, /@media \(max-width:900px\)[\s\S]*\.featuredCard,\.alternativeCard \{ grid-template-columns:1fr/);
+  assert.doesNotMatch(styles, /\.termSummary \{[^}]*white-space:\s*nowrap/s);
   const serializedTypes = readFileSync("lib/public-offer/public-offer.types.ts", "utf8");
   assert.doesNotMatch(serializedTypes, /destinationUrl|trackingUrl|credential|internalNotes/);
   for (const file of ["app/(public)/best-offers/page.tsx", "components/best-offers/BestOffersExperience.tsx", "lib/public-offer/best-offer-ranking.ts"]) {

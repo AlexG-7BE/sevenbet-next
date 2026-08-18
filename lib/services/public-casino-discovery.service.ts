@@ -191,6 +191,8 @@ export class PublicCasinoDiscoveryService {
         gameProviders: casino.providers.map((provider) => ({ key: provider.key.toLowerCase(), label: provider.name })),
         categories: casino.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
         highlights: casino.pros.slice(0, 3),
+        supportsCrypto: casino.payments.some((payment) => payment.crypto),
+        supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
         featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
         visitAction: demo ? { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" } : visit,
         responsibleGamblingLabel: casino.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,

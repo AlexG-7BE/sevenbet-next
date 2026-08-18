@@ -1,55 +1,20 @@
 import type { Metadata } from "next";
+
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { LearningCenterPage } from "./LearningCenterPage";
-import { learningArticles, learningCategories, learningPaths, learningTags } from "@/lib/learning-center";
+import { transformLearnHandoff } from "@/lib/final-handoff/transforms";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "B4GAMBLE Learning Center | Casino Education, Bonuses and Risk Guides",
-  description:
-    "Explore B4GAMBLE's scalable Learning Center for casino basics, bonuses, responsible gambling, reviews, payments, licensing, crypto casinos, game guides and glossary terms.",
-  alternates: {
-    canonical: absoluteUrl("/learn"),
-  },
+  title: "Learn | B4GAMBLE",
+  description: "Plain-language guides to casino bonuses, banking, games, reviews and responsible play.",
+  alternates: { canonical: absoluteUrl("/learn") },
 };
 
-function organizationSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "B4GAMBLE",
-    url: absoluteUrl("/"),
-    sameAs: [],
-  };
-}
-
-function breadcrumbSchema() {
-  return {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: [
-      {
-        "@type": "ListItem",
-        position: 1,
-        name: "Home",
-        item: absoluteUrl("/"),
-      },
-      {
-        "@type": "ListItem",
-        position: 2,
-        name: "Learning Center",
-        item: absoluteUrl("/learn"),
-      },
-    ],
-  };
-}
-
 export default function LearnPage() {
-  return (
-    <>
-      <JsonLd data={organizationSchema()} />
-      <JsonLd data={breadcrumbSchema()} />
-      <LearningCenterPage articles={learningArticles} categories={learningCategories} tags={learningTags} paths={learningPaths} />
-    </>
-  );
+  return <>
+    <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
+    <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Learn", item: absoluteUrl("/learn") }] }} />
+    <HandoffPage name="learn" transform={transformLearnHandoff} />
+  </>;
 }

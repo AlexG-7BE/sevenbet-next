@@ -18,6 +18,13 @@ export type LearningAuthor = {
   bio: string;
 };
 
+export type LearningArticleBlock =
+  | { type: "conversion"; rows: Array<[string, string]> }
+  | { type: "comparison-table"; columns: string[]; rows: string[][] }
+  | { type: "quote"; text: string }
+  | { type: "trap"; title: string; text: string }
+  | { type: "checklist"; title: string; items: string[] };
+
 export type LearningArticle = {
   slug: string;
   categorySlug: string;
@@ -34,12 +41,31 @@ export type LearningArticle = {
   featured?: boolean;
   popular?: boolean;
   takeaways: string[];
-  sections: Array<{ title: string; body: string }>;
+  sections: Array<{ title: string; body: string; after?: string; blocks?: LearningArticleBlock[] }>;
   examples: string[];
   callout: { title: string; text: string };
   faq: Array<[string, string]>;
   relatedArticles: string[];
   nextReading?: string;
+  visualPresentation?: {
+    accentTitle: string;
+    heroLabel: string;
+    heroStatus: string;
+    intro: string[];
+    supportTitle: string;
+    supportText: string;
+    supportLink: string;
+    bridgeKicker: string;
+    bridgeTitle: string;
+    bridgeAccent: string;
+    bridgeText: string;
+    relatedCards: Array<{
+      label: string;
+      title: string;
+      meta: string;
+      href: string;
+    }>;
+  };
 };
 
 export type LearningPath = {

@@ -28,7 +28,6 @@ export const coreRoutes = [
   "",
   "/10-steps",
   "/program",
-  "/self-check",
   "/learn",
   "/responsible-gambling",
   "/help",
@@ -38,7 +37,8 @@ export const coreRoutes = [
   "/contact",
   "/faq",
   "/bonus-guide",
-  "/tools/budget-calculator",
+  "/privacy",
+  "/terms",
 ];
 
 export function absoluteUrl(path: string) {

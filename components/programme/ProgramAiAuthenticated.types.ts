@@ -3,6 +3,14 @@ import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/con
 
 export type ProgramAiHome = {
   totalXp: number;
+  activeDays: number;
+  currentStreak: number;
+  achievements: Array<{
+    slug: string;
+    title: string;
+    state: "earned" | "locked";
+    awardedAt: string | null;
+  }>;
   currentMission: number;
   engagementDayBucket: ProductAnalyticsEventMap["programme_home_viewed"]["engagementDayBucket"];
   currentAction: string | null;

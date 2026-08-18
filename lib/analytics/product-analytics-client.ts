@@ -115,6 +115,18 @@ export function createProductAnalyticsClient({
     voiceOutcome(result: ProductAnalyticsEventMap["programme_voice_outcome"]["result"]) {
       emit("programme_voice_outcome", { result });
     },
+    commercialSurfaceViewed(surface: ProductAnalyticsEventMap["commercial_surface_viewed"]["surface"]) {
+      once(`commercial-surface:${surface}`, "commercial_surface_viewed", { surface });
+    },
+    casinoReviewOpened(sourceSurface: ProductAnalyticsEventMap["casino_review_opened"]["sourceSurface"]) {
+      emit("casino_review_opened", { sourceSurface });
+    },
+    comparisonOpened(selectionCount: ProductAnalyticsEventMap["comparison_opened"]["selectionCount"]) {
+      emit("comparison_opened", { selectionCount });
+    },
+    outboundIntent(outcome: ProductAnalyticsEventMap["outbound_intent"]["outcome"]) {
+      emit("outbound_intent", { outcome });
+    },
   };
 }
 

@@ -10,6 +10,7 @@ import {
   getRelatedArticles,
 } from "@/lib/learning-center";
 import { absoluteUrl } from "@/lib/site";
+import { isLocalHandoffVisualDataFixture, withHandoffLearningArticleData } from "@/lib/final-handoff/visual-data-fixture";
 
 export const dynamic = "force-dynamic";
 
@@ -118,25 +119,29 @@ function faqSchema(article: NonNullable<ReturnType<typeof getLearningArticle>>) 
 
 export default async function LearningArticlePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ category: string; slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const raw = await searchParams;
   const { category, slug } = await params;
   const article = getLearningArticle(category, slug);
 
   if (!article) notFound();
+  const presentedArticle = withHandoffLearningArticleData(article, isLocalHandoffVisualDataFixture(raw.visualFixture));
 
   return (
     <>
-      <JsonLd data={breadcrumbSchema(article)} />
-      <JsonLd data={articleSchema(article)} />
-      <JsonLd data={faqSchema(article)} />
+      <JsonLd data={breadcrumbSchema(presentedArticle)} />
+      <JsonLd data={articleSchema(presentedArticle)} />
+      <JsonLd data={faqSchema(presentedArticle)} />
       <LearningArticleView
-        article={article}
-        category={getLearningCategory(article.categorySlug)!}
-        author={getAuthor(article.authorId)}
-        editor={getAuthor(article.editorId)}
-        relatedArticles={getRelatedArticles(article)}
+        article={presentedArticle}
+        category={getLearningCategory(presentedArticle.categorySlug)!}
+        author={getAuthor(presentedArticle.authorId)}
+        editor={getAuthor(presentedArticle.editorId)}
+        relatedArticles={getRelatedArticles(presentedArticle)}
       />
     </>
   );

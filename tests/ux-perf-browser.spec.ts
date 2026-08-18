@@ -17,22 +17,23 @@ test("casino controls use RSC navigation, preserve results while pending, and su
     await new Promise((resolve) => setTimeout(resolve, 400));
     await route.continue();
   });
-  const resultHeading = page.locator("#casino-results h2").first();
-  await expect(resultHeading).toBeVisible();
-  await page.getByLabel("Sort by").selectOption("NAME_ASC");
+  const firstResult = page.locator("#casino-results article").first();
+  const marketPreference = page.locator('select[name="country"]:visible').first();
+  await expect(firstResult).toBeVisible();
+  await marketPreference.selectOption("GB");
   await expect(page.locator('form[data-instant-discovery-form="true"][data-pending="true"]')).toBeVisible();
-  await expect(resultHeading).toBeVisible();
-  await expect(page).toHaveURL(/sort=NAME_ASC/);
-  await expect(page.getByLabel("Sort by")).toHaveValue("NAME_ASC");
+  await expect(firstResult).toBeVisible();
+  await expect(page).toHaveURL(/country=GB/);
+  await expect(marketPreference).toHaveValue("GB");
   expect(initialDocuments).toHaveLength(0);
   expect(rscRequests.length).toBeGreaterThan(0);
 
-  await page.getByLabel("Sort by").selectOption("NAME_DESC");
-  await expect(page).toHaveURL(/sort=NAME_DESC/);
+  await marketPreference.selectOption("");
+  await expect(page).not.toHaveURL(/country=GB/);
   await page.goBack();
-  await expect(page.getByLabel("Sort by")).toHaveValue("NAME_ASC");
+  await expect(marketPreference).toHaveValue("GB");
   await page.goForward();
-  await expect(page.getByLabel("Sort by")).toHaveValue("NAME_DESC");
+  await expect(marketPreference).toHaveValue("");
 });
 
 test("casino text search debounces to one replace navigation and Enter applies immediately", async ({ page }) => {
@@ -69,20 +70,14 @@ test("bonus numeric and select controls auto-apply without a document reload", a
   expect(rsc).toBeGreaterThanOrEqual(2);
 });
 
-test("comparison selection auto-applies while retaining the server-owned repeated query", async ({ page }) => {
-  await page.goto("/compare", { waitUntil: "networkidle" });
-  const selects = page.locator('select[name="casino"]');
-  const first = selects.nth(0);
-  const current = await first.inputValue();
-  const replacement = await first.locator("option").evaluateAll((options, selected) => options
-    .map((option) => (option as HTMLOptionElement).value)
-    .find((value) => value && value !== selected), current);
-  expect(replacement).toBeTruthy();
+test("contextual comparison selection updates URL state without a document navigation", async ({ page }) => {
+  await page.goto("/casinos", { waitUntil: "networkidle" });
   let documents = 0;
   page.on("request", (request) => { if (request.resourceType() === "document") documents += 1; });
-  await first.selectOption(replacement!);
-  await expect(page).toHaveURL(new RegExp(`casino=${replacement}`));
-  await expect(page.getByText("3 of 3 selected · maximum")).toBeVisible();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
+  await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   expect(documents).toBe(0);
 });
 
@@ -92,10 +87,11 @@ test("native GET fallbacks work without JavaScript on all enhanced routes", asyn
   const page = await context.newPage();
 
   await page.goto("/casinos", { waitUntil: "networkidle" });
-  await expect(page.getByLabel("Sort by")).toBeVisible();
-  await page.getByLabel("Sort by").selectOption("NAME_ASC");
-  await page.getByRole("button", { name: "Update" }).click();
-  await expect(page).toHaveURL(/sort=NAME_ASC/);
+  const fallback = page.locator("details").filter({ has: page.getByText("Filters", { exact: true }) }).first();
+  await fallback.getByText("Filters", { exact: true }).click();
+  await fallback.getByLabel("Market preference").selectOption("GB");
+  await fallback.getByRole("button", { name: /Show .* results/ }).click();
+  await expect(page).toHaveURL(/country=GB/);
 
   await page.goto("/bonuses", { waitUntil: "networkidle" });
   const bonusForm = page.locator('form[action="/bonuses"]:visible').first();
@@ -104,10 +100,9 @@ test("native GET fallbacks work without JavaScript on all enhanced routes", asyn
   await bonusForm.getByRole("button", { name: "Show Results" }).click();
   await expect(page).toHaveURL(/sort=lowest-deposit/);
 
-  await page.goto("/compare", { waitUntil: "networkidle" });
-  await expect(page.getByRole("button", { name: "Update comparison" })).toBeVisible();
-  await page.getByRole("button", { name: "Update comparison" }).click();
-  await expect(page).toHaveURL(/country=GB/);
+  await page.goto("/compare?casino=demo-northstar&country=GB", { waitUntil: "networkidle" });
+  await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&country=GB/);
+  await expect(page.getByRole("heading", { name: /Picked for/ })).toBeVisible();
   await context.close();
 });
 

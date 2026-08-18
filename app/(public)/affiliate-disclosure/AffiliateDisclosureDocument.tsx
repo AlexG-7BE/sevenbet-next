@@ -1,122 +1,14 @@
 import Link from "next/link";
-
 import styles from "./AffiliateDisclosurePage.module.css";
 
-const sections = [
-  {
-    number: "01",
-    id: "commercial-relationship",
-    indexLabel: "Commercial relationship",
-    title: "THE COMMERCIAL RELATIONSHIP",
-    body: (
-      <>
-        Future eligible governed links on B4GAMBLE may be affiliate links. If a reader follows one and
-        completes a qualifying action, B4GAMBLE may receive a commission from the operator. Not every operator
-        listed or reviewed has to be an affiliate partner, and readers should still review the
-        operator&apos;s current terms, fees, and conditions.
-      </>
-    ),
-  },
-  {
-    number: "02",
-    id: "editorial-boundary",
-    indexLabel: "Editorial boundary",
-    title: "COMPENSATION DOES NOT SET THE SCORE.",
-    body: (
-      <>
-        Affiliate compensation does not determine B4GAMBLE&apos;s Editor Score or natural editorial
-        ranking. Commercial relationships do not remove negative findings, hide material
-        limitations, or replace the criteria described in the published methodology. Any future
-        sponsored or paid placement must be identified separately.
-      </>
-    ),
-  },
-  {
-    number: "03",
-    id: "reader-verification",
-    indexLabel: "Reader verification",
-    title: "WHAT READERS CAN VERIFY",
-    body: (
-      <>
-        Check the disclosure around a commercial link, read the ranking methodology, confirm the
-        operator&apos;s current licensing and availability context, and review the full operator terms
-        before registering or depositing.
-      </>
-    ),
-  },
-  {
-    number: "04",
-    id: "corrections",
-    indexLabel: "Corrections",
-    title: "CORRECTIONS",
-    body: (
-      <>
-        B4GAMBLE reviews material errors against relevant sources and corrects them when appropriate.
-        A commercial relationship does not suppress a correction, warning, or material limitation.
-      </>
-    ),
-  },
-] as const;
-
-function DocumentSection({ section }: { section: (typeof sections)[number] }) {
-  return (
-    <section className={styles.documentSection} id={section.id} aria-labelledby={`${section.id}-title`}>
-      <p className={styles.sectionNumber}>{section.number}</p>
-      <h2 id={`${section.id}-title`}>{section.title}</h2>
-      <p className={styles.sectionBody}>{section.body}</p>
-    </section>
-  );
-}
-
-export function AffiliateDisclosureDocument() {
-  return (
-    <article className={styles.page} data-affiliate-disclosure-document>
-      <header className={styles.hero}>
-        <div className={styles.shell}>
-          <p className={styles.eyebrow}>Affiliate disclosure</p>
-          <h1>HOW B4GAMBLE<br />IS FUNDED.</h1>
-          <div className={styles.highlight} aria-hidden="true" />
-          <p className={styles.heroLead}>
-            Some future governed links may generate affiliate commissions. Affiliate compensation
-            does not determine B4GAMBLE&apos;s Editor Score or natural editorial ranking.
-          </p>
-          <Link className={styles.primaryAction} href="/methodology">Read methodology</Link>
-        </div>
-      </header>
-
-      <div className={`${styles.shell} ${styles.documentGrid}`}>
-        <nav className={styles.toc} aria-label="On this page">
-          <p>On this page</p>
-          <ol>
-            {sections.map((section) => (
-              <li key={section.id}>
-                <a href={`#${section.id}`}><span>{section.number}</span>{section.indexLabel}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
-
-        <div className={styles.documentColumn}>
-          <DocumentSection section={sections[0]} />
-          <DocumentSection section={sections[1]} />
-
-          <aside className={styles.principlePanel} aria-labelledby="affiliate-principle-title">
-            <p>Control &amp; transparency</p>
-            <h2 id="affiliate-principle-title">A paid link is not proof.</h2>
-            <p>
-              Affiliate status is not a substitute for evidence. Missing information should stay
-              visible as uncertainty rather than being replaced with promotional claims.
-            </p>
-          </aside>
-
-          <DocumentSection section={sections[2]} />
-          <DocumentSection section={sections[3]} />
-
-          <p className={styles.documentNote}>
-            FRONTEND DISCLOSURE · SUBSTANTIVE WORDING REMAINS SUBJECT TO PRODUCT AND COMPLIANCE REVIEW.
-          </p>
-        </div>
-      </div>
-    </article>
-  );
-}
+export function AffiliateDisclosureDocument(){return <article className={styles.page} data-affiliate-disclosure-document>
+  <header className={styles.hero} data-affiliate-section="hero"><div><p className={styles.eyebrow}>Affiliate Disclosure</p><h1>How we&apos;re <em>funded.</em></h1><span>Commission may fund us. It never sets a score. Here is exactly where the line runs.</span></div></header>
+  <main className={styles.document}>
+    <section><h2>1. How B4GAMBLE is funded</h2><p>When you follow an eligible commercial link on this site — View Offer, Visit Casino, Claim Offer — and subsequently register or deposit at the operator, we may receive a commission from that operator. The current product architecture does not provide paid ranking positions, sponsored scores, advertising slots or user-data sales.</p><p>The Programme, protected Help, Learn and trust pages do not expose operator outbound actions.</p></section>
+    <section><h2>2. What commission can influence</h2><p>Whether an eligible operator has an active outbound route. If no commercial agreement or governed link exists, the page shows &quot;Review only&quot; or &quot;Offer unavailable&quot; instead of a working button.</p></section>
+    <section><h2>3. What commission cannot influence</h2><p>Affiliate compensation does not determine Editor Score or natural editorial ranking. That boundary covers review text, use-case shortlists and the Best Offers selection; commercial availability is evaluated through separate publication, jurisdiction and affiliate gates.</p><p>Programme and Help data is never used to target offers or personalise rankings, in either direction.</p></section>
+    <section><h2>4. How commercial links are identified</h2><p>When an eligible commercial action is available, it passes through an outbound confirmation that states you are leaving B4GAMBLE and repeats this disclosure. Buttons labelled View Offer, Visit Casino or Claim Offer identify commercial actions; Read Review, guide and methodology links remain editorial. Unavailable or incomplete commercial routes fail closed.</p></section>
+    <section><h2>5. Corrections and further reading</h2><p>How we evaluate and score is documented in the <Link href="/methodology">Methodology</Link>. Verified corrections are reviewed, dated and noted in the affected text when published. If you believe a commercial relationship has influenced our editorial output, <Link href="/contact">tell us</Link>.</p></section>
+    <footer className={styles.effective}><span>Effective 12 August 2026</span><span>18+ · BeGambleAware.org</span></footer>
+  </main>
+</article>}

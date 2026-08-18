@@ -12,6 +12,22 @@ import {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import styles from "./PublicShell.module.css";
 
+function MenuIcon() {
+  return (
+    <svg aria-hidden="true" className={styles.navigationIcon} focusable="false" viewBox="0 0 24 24">
+      <path d="M3 6h18M3 12h18M3 18h18" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg aria-hidden="true" className={styles.navigationIcon} focusable="false" viewBox="0 0 24 24">
+      <path d="M5 5l14 14M19 5L5 19" />
+    </svg>
+  );
+}
+
 export function PublicNavigation({
   account,
   authenticated,
@@ -84,6 +100,9 @@ export function PublicNavigation({
 
       <div className={styles.mobileNavigation}>
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
+        <Link className={styles.mobilePrimaryAction} href={account.primaryHref} onClick={() => {
+          if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+        }}>{account.primaryLabel}</Link>
         <button
           aria-controls="public-mobile-navigation"
           aria-expanded={menuOpen}
@@ -93,7 +112,7 @@ export function PublicNavigation({
           ref={triggerRef}
           type="button"
         >
-          Menu
+          <MenuIcon />
         </button>
         <dialog
           aria-label="Site navigation"
@@ -108,7 +127,7 @@ export function PublicNavigation({
         >
           <div className={styles.dialogTopbar}>
             <Link className={styles.dialogBrand} href="/" onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
-            <button aria-label="Close navigation" className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button">Close</button>
+            <button aria-label="Close navigation" className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
           </div>
           <nav className={styles.mobileRouteList} aria-label="Mobile primary navigation">
             {PUBLIC_NAVIGATION.filter((item) => !("safety" in item && item.safety)).map((item) => (

@@ -81,10 +81,10 @@ test("mobile material results preserve readable text and flexible content height
   const termsRule = styles.match(/\.mobileResultTerms span \{[^}]*\}/s)?.[0] ?? "";
   const evidenceRule = styles.match(/\.mobileResultEvidence \{[^}]*\}/s)?.[0] ?? "";
   assert.match(styles, /\.mobileMaterialResult \{[^}]*min-height: 178px;[^}]*display: grid;/s);
-  assert.match(termsRule, /font-size: 12px;/);
+  assert.match(termsRule, /font-size: 14px;/);
   assert.match(termsRule, /overflow-wrap: anywhere;/);
   assert.match(evidenceRule, /font-size: 12px;/);
   assert.match(evidenceRule, /overflow-wrap: anywhere;/);
-  assert.match(styles, /\.mobileReviewAction \{[^}]*min-height: 44px;[^}]*font-size: 12px;/s);
+  assert.match(styles, /\.mobileReviewAction \{[^}]*min-height: 44px;[^}]*font-size: 14px;/s);
   assert.doesNotMatch(styles, /\.mobileMaterialResult \{[^}]*height: 124px/s);
 });

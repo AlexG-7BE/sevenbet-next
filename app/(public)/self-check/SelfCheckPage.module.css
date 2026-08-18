@@ -25,7 +25,7 @@
 .answers label.selected { background:var(--acid); }
 .answers input { position:absolute; inset:0; width:100%; height:100%; margin:0; opacity:0; cursor:pointer; }
 .answers label:has(input:focus-visible) { outline:3px solid var(--teal); outline-offset:3px; }
-.answers label.selected::after { content:"Selected"; margin-left:auto; font-size:11px; text-transform:uppercase; }
+.answers label.selected::after { content:"Selected"; margin-left:auto; font-size:14px; line-height:20px; text-transform:uppercase; }
 .navigation { max-width:720px; margin-top:30px; display:flex; justify-content:space-between; gap:12px; }
 .navigation button { min-width:120px; }
 .navigation button:disabled { cursor:not-allowed; opacity:.42; }

@@ -50,3 +50,7 @@ Create or update an RFC before and during any substantial decision that changes 
 ## Current public information-architecture and trust-hardening decision
 
 - [RFC-033 — Public Responsible Gambling IA and Trust Hardening](RFC-033-Public-Responsible-Gambling-IA-and-Trust-Hardening.md) authorises the bounded public Responsible Gambling hub, canonical `/help` separation, related navigation/SEO discovery, one durable public Learn manifest, nonce-based CSP and first-party replacement of four Pexels hotlinks for `PUBLIC-IA-AND-HARDENING-01`. It authorises only one Draft-PR Preview and no merge, Production deployment or platform/data/provider mutation.
+
+## Current final-design handoff decision
+
+- [RFC-034 — Final Design Handoff Public Site](RFC-034-Final-Design-Handoff-Public-Site.md) authorises the supplied v1.2 handoff as the bounded public presentation and destination authority, a contextual client-only comparison experience, privacy-safe public UI measurement and one Draft-PR Preview. Existing Programme, Help, authentication, CMS, affiliate, jurisdiction, rewards, privacy, security and data boundaries remain authoritative; merge and Production deployment are not authorised.

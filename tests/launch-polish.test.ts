@@ -16,11 +16,17 @@ function filesBelow(root: string): string[] {
 
 test("root 404 is static, branded and independent of auth and database", () => {
   const notFound = source("app/not-found.tsx");
-  assert.match(notFound, /404 · Page not found/);
-  assert.match(notFound, /This page isn&apos;t here/);
-  assert.match(notFound, /href="\/"/);
-  assert.match(notFound, /href="\/help"/);
-  assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|programme|cms/iu);
+  const handoff = JSON.parse(source("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
+  const document = notFound + handoff.notFound.html;
+  assert.match(notFound, /transformNotFoundHandoff/);
+  assert.match(notFound, /<HandoffPage name="notFound" transform=\{transformNotFoundHandoff\} \/>/);
+  assert.match(document, />404</);
+  assert.match(document, /This route is lost/);
+  assert.match(document, /Let's get you back on course/);
+  assert.match(document, /href="\/"/);
+  assert.doesNotMatch(document, /href="\/help"/);
+  assert.match(document, /href="\/10-steps"/);
+  assert.doesNotMatch(notFound, /getServerSession|Prisma|auth\/|cms/iu);
 });
 
 test("public and global error boundaries expose safe recovery with no technical detail", () => {
@@ -65,7 +71,7 @@ test("Contact page has exact public contract and footer navigation", () => {
   const form = source("app/(public)/contact/ContactForm.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
   const site = source("lib/site.ts");
-  assert.match(page, /How can we help\?/);
+  assert.match(page, /<h1>Talk <em>to us\.<\/em><\/h1>/);
   assert.match(page, /absoluteUrl\("\/contact"\)/);
   assert.doesNotMatch(page, /https:\/\/b4gamble\.com\/contact/);
   assert.match(page, /support@b4gamble\.com|SUPPORT_MAILBOX/);

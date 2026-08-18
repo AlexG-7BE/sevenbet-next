@@ -11,7 +11,7 @@ function cssRule(source: string, selector: string) {
   return match[1];
 }
 
-test("home and contact keep text contrast without fading whole cards", () => {
+test("home and contact keep text contrast, focus, and touch contracts", () => {
   const home = read("components/home/TiltHome.module.css");
   const contact = read("app/(public)/contact/ContactPage.module.css");
 
@@ -23,24 +23,24 @@ test("home and contact keep text contrast without fading whole cards", () => {
     assert.match(rule, /scale\(\.94\)/);
     assert.match(rule, /color: var\(--night-muted\)/);
   }
-  assert.match(contact, /\.sectionLabel\s*\{\s*color: var\(--sb-focus-acid-contrast\);\s*\}/);
+  assert.match(contact, /\.eyebrow\s*\{[^}]*color: var\(--sb-action-primary\);/);
+  assert.match(contact, /\.field input,[\s\S]*?min-height: 44px;/);
+  assert.match(contact, /\.field input:focus-visible,[\s\S]*?outline: 3px solid var\(--sb-action-primary\);/);
+  assert.match(contact, /\.emailLink\s*\{[^}]*min-height: 44px;/);
 });
 
-test("Best Offers exposes reachable controls and announces carousel changes", () => {
+test("Best Offers keeps native cards, material terms, and reachable controls", () => {
   const styles = read("components/best-offers/BestOffers.module.css");
   const experience = read("components/best-offers/BestOffersExperience.tsx");
 
-  const dotRule = cssRule(styles, ".stageDots button");
-  assert.match(dotRule, /width: 44px/);
-  assert.match(dotRule, /height: 44px/);
-  assert.match(styles, /\.stageDots button::before\s*\{/);
-  assert.match(styles, /\.decisionStrip:focus-visible\s*\{/);
-  assert.match(styles, /\.editorialDesk \.kicker\s*\{\s*color: var\(--ink\);\s*\}/);
-  assert.match(styles, /\.editorialDesk > div > p:last-child\s*\{[^}]*color: #4f4e48;/);
-
-  assert.match(experience, /aria-atomic="true" aria-live="polite"/);
-  assert.match(experience, /Shortlist slide \{activeSlide \+ 1\} of \{slides\.length\}/);
-  assert.match(experience, /aria-label="Best fit explanation cards"[^>]*role="region"[^>]*tabIndex=\{0\}/);
+  assert.match(experience, /<article className=\{styles\.featuredCard\} data-testid="best-offer-product-card">/);
+  assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} material offer terms`\}>/);
+  assert.match(experience, /<details><summary>What does “wagering 35x” actually mean\?<\/summary>/);
+  assert.match(experience, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null;/);
+  assert.match(cssRule(styles, ".commercialCta"), /min-height:50px/);
+  assert.match(cssRule(styles, ".actions > button"), /min-height:44px/);
+  assert.match(styles, /\.commercialCta,\.unavailableAction,\.actions > a,\.actions > button\s*\{[^}]*min-height:44px;/);
+  assert.match(styles, /@media \(prefers-reduced-motion:reduce\)[\s\S]*?animation:none;/);
 });
 
 test("bonus comparison uses native article semantics and readable state labels", () => {
@@ -51,7 +51,7 @@ test("bonus comparison uses native article semantics and readable state labels",
   assert.doesNotMatch(directory, /role="list"/);
   assert.match(directory, /offers\.map\(\(offer, index\) => <article className=\{styles\.comparisonRow\}/);
   assert.match(styles, /\.unavailableBadge\s*\{\s*background: #dedcd2; color: #4f4e49;\s*\}/);
-  assert.match(styles, /\.reviewSeparationNote strong\s*\{\s*color: var\(--acid\); font-size: 11px; line-height: 14px;/);
+  assert.match(styles, /\.reviewSeparationNote strong\s*\{\s*color: var\(--acid\); font-size: 13px; line-height: 18px;/);
 });
 
 test("casino discovery and profile preserve touch, scroll, and document semantics", () => {
@@ -67,11 +67,13 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(filterDialog, /overscroll-behavior: contain/);
   assert.match(discovery, /\.readingGuide \.sectionIntro > p, \.compare p\s*\{\s*color: #4f4e48;\s*\}/);
 
-  assert.match(profile, /<dd className=\{`\$\{styles\.supportingText\} \$\{fact\.verified \? styles\.verifiedText : ""\}`\}>\{fact\.supportingText\}<\/dd>/);
-  assert.match(profile, /<div className=\{styles\.detailTabs\}><strong>Published detail coverage<\/strong><ul aria-label="Published detail groups">/);
-  assert.doesNotMatch(profile, /className=\{styles\.detailTabs\}[^\n]*aria-current/);
-  assert.match(profileStyles, /\.detailLabel\s*\{\s*color: var\(--teal\);/);
-  assert.match(profileStyles, /\.facts \.supportingText\s*\{/);
+  assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
+  assert.match(profile, /<nav aria-label="Casino review sections"/);
+  assert.match(profile, /<strong aria-label=\{`\$\{demo \? "Fictional editorial score" : "Editorial score"\} \$\{casino\.editorScore\} out of 10`\}>/);
+  assert.match(profile, /<details className=\{styles\.evidenceDisclosure\}>\s*<summary>Evidence, payments &amp; control tools<\/summary>/);
+  assert.match(profile, /<dl className=\{`\$\{styles\.facts\} \$\{styles\.checkCard\}`\}>/);
+  assert.match(profileStyles, /\.decisionBar > div a\s*\{[^}]*min-height: 44px;/);
+  assert.match(profileStyles, /\.faqGrid summary\s*\{[^}]*min-height: 66px;/);
 });
 
 test("static mission cards, global motion, denial landmarks, and login fields keep their contracts", () => {

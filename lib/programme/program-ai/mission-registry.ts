@@ -113,7 +113,6 @@ export const programmeMissionTitles = [
 
 export const commercialDiscoveryLinks = [
   { href: "/casinos", label: "Compare casinos" },
-  { href: "/compare", label: "Comparison guide" },
   { href: "/bonuses", label: "Bonuses" },
   { href: "/best-offers", label: "Best offers" },
 ] as const;

@@ -40,7 +40,7 @@
 .toc > p, .sectionNumber { color: var(--teal); }
 .toc ol { margin: 22px 0 0; padding: 0; display: grid; list-style: none; }
 .toc a { min-height: 44px; display: flex; align-items: center; gap: 10px; color: var(--ink); font-size: 12px; line-height: 16px; font-weight: 650; }
-.toc a span { flex: 0 0 22px; color: var(--teal); font-size: 10px; }
+.toc a span { flex: 0 0 22px; color: var(--teal); font-size: 12px; }
 .toc a:hover { text-decoration: underline; text-underline-offset: 4px; }
 
 .documentColumn { min-width: 0; }
@@ -83,8 +83,8 @@
   .mobileToc summary::-webkit-details-marker { display: none; }
   .mobileToc nav { padding: 12px 0 4px; }
   .mobileToc ol { margin: 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; list-style: none; }
-  .mobileToc a { min-height: 44px; display: flex; align-items: center; gap: 10px; color: var(--sb-white); font-size: 11px; line-height: 16px; font-weight: 650; }
-  .mobileToc a span { flex: 0 0 22px; color: var(--acid); font-size: 10px; }
+  .mobileToc a { min-height: 44px; display: flex; align-items: center; gap: 10px; color: var(--sb-white); font-size: 14px; line-height: 20px; font-weight: 650; }
+  .mobileToc a span { flex: 0 0 22px; color: var(--acid); font-size: 12px; }
   .documentGrid { display: block; padding: 58px 0 80px; }
   .toc { display: none; }
   .documentSection { scroll-margin-top: 88px; padding-bottom: 44px; margin-bottom: 44px; }

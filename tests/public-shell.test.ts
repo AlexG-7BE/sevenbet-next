@@ -10,12 +10,10 @@ import {
 
 test("public navigation follows the approved Figma information architecture", () => {
   assert.deepEqual(PUBLIC_NAVIGATION, [
-    { label: "10 Steps", href: "/10-steps" },
+    { label: "Best Offers", href: "/best-offers", commercial: true },
     { label: "Casinos", href: "/casinos", commercial: true },
     { label: "Bonuses", href: "/bonuses", commercial: true },
-    { label: "Best offers", href: "/best-offers", commercial: true },
     { label: "Learn", href: "/learn" },
-    { label: "Help", href: "/help", safety: true },
   ]);
 });
 
@@ -53,7 +51,7 @@ test("account navigation is server-state-derived and never invents XP", () => {
   assert.deepEqual(accountNavigationFor({ authenticated: false }), {
     accountLabel: "Log in",
     accountHref: "/login",
-    primaryLabel: "Start 10 Steps",
+    primaryLabel: "Start Programme",
     primaryHref: "/program",
     xpLabel: null,
   });
@@ -65,6 +63,19 @@ test("account navigation is server-state-derived and never invents XP", () => {
     xpLabel: null,
   });
   assert.equal(accountNavigationFor({ authenticated: true, authoritativeXp: 330 }).xpLabel, "330 XP");
+});
+
+test("desktop and mobile header actions render the shared account label with icon-only navigation controls", () => {
+  const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
+
+  assert.doesNotMatch(navigation, /authenticated\s*\?\s*["']My Programme["']\s*:\s*account\.primaryLabel/);
+  assert.equal(navigation.match(/\{account\.primaryLabel\}/g)?.length, 2);
+  assert.doesNotMatch(navigation, />\s*Menu\s*</);
+  assert.doesNotMatch(navigation, />\s*Close\s*</);
+  assert.match(navigation, /aria-label="Open navigation"/);
+  assert.match(navigation, /aria-label="Close navigation"/);
+  assert.match(navigation, /<MenuIcon \/>/);
+  assert.match(navigation, /<CloseIcon \/>/);
 });
 
 test("the public layout owns one landmark and reads auth on the server", () => {

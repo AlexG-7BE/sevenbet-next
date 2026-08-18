@@ -1,40 +1,11 @@
 import type { Metadata } from "next";
-
+import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { BonusGuideDocument, bonusGuideFaq } from "./BonusGuideDocument";
+import { transformBonusGuideHandoff } from "@/lib/final-handoff/transforms";
 import { absoluteUrl } from "@/lib/site";
 
-export const metadata: Metadata = {
-  title: "Casino Bonus Terms Guide | B4GAMBLE",
-  description: "Learn how to read wagering, max-bet, expiry, deposit, and withdrawal terms before considering an offer.",
-  alternates: { canonical: absoluteUrl("/bonus-guide") },
-};
-
-const breadcrumbSchema = {
-  "@context": "https://schema.org",
-  "@type": "BreadcrumbList",
-  itemListElement: [
-    { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-    { "@type": "ListItem", position: 2, name: "Bonus Guide", item: absoluteUrl("/bonus-guide") },
-  ],
-};
-
-const faqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  mainEntity: bonusGuideFaq.map(([question, answer]) => ({
-    "@type": "Question",
-    name: question,
-    acceptedAnswer: { "@type": "Answer", text: answer },
-  })),
-};
-
-export default function BonusGuidePage() {
-  return (
-    <>
-      <JsonLd data={breadcrumbSchema} />
-      <JsonLd data={faqSchema} />
-      <BonusGuideDocument />
-    </>
-  );
-}
+export const metadata: Metadata = { title: "Casino Bonus Terms Guide | B4GAMBLE", description: "Understand wagering turnover, game weighting and material bonus terms through explicitly fictional examples and current GB regulatory context.", alternates: { canonical: absoluteUrl("/bonus-guide") } };
+export default function BonusGuidePage() { return <>
+  <JsonLd data={{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Learn", item: absoluteUrl("/learn") }, { "@type": "ListItem", position: 2, name: "Bonus Guide", item: absoluteUrl("/bonus-guide") }] }} />
+  <HandoffPage name="article" transform={transformBonusGuideHandoff} />
+</>; }

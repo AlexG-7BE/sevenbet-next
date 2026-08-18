@@ -49,11 +49,15 @@ function memoryPurgeDatabase(now: Date) {
     async count({ where }: { where: unknown }) { return eligible(where).length; },
     async findMany({ where, take }: { where: unknown; take: number }) { return eligible(where).slice(0, take); },
     async deleteMany({ where }: { where: unknown }) {
-      const keys = new Set(((where as Record<string, { in: string[] }>)[field]).in);
+      const clauses = (where as { AND?: [unknown, Record<string, { in: string[] }>] }).AND;
+      const eligibilityWhere = clauses?.[0] ?? where;
+      const keyWhere = clauses?.[1] ?? where as Record<string, { in: string[] }>;
+      const keys = new Set(keyWhere[field].in);
+      const currentlyEligible = new Set(eligible(eligibilityWhere));
       const before = all.length;
       for (let index = all.length - 1; index >= 0; index -= 1) {
         const key = all[index][field];
-        if (typeof key === "string" && keys.has(key)) all.splice(index, 1);
+        if (typeof key === "string" && keys.has(key) && currentlyEligible.has(all[index])) all.splice(index, 1);
       }
       return { count: before - all.length };
     },
@@ -91,6 +95,45 @@ test("dry run is count-only and the bounded purge preserves grace and consumed-c
   assert.deepEqual(
     await purgeExpiredProgrammeRuntime({ database: fixture.database, now, dryRun: false }),
     { expiredAnonymousSessions: 0, expiredPendingClaims: 0, expiredRateLimitBuckets: 0, dryRun: false, limited: false },
+  );
+});
+
+test("purge rechecks expiry eligibility before deleting a selected row", async () => {
+  const now = new Date("2026-08-11T12:00:00.000Z");
+  const selectedBucket = { bucketKey: "c".repeat(64), expiresAt: new Date(now.getTime() - 1) };
+  const emptyCollection = {
+    async count() { return 0; },
+    async findMany() { return []; },
+    async deleteMany() { return { count: 0 }; },
+  };
+  const database = {
+    pendingProgrammeClaim: emptyCollection,
+    anonymousProgrammeSession: emptyCollection,
+    programmeRuntimeRateLimitBucket: {
+      async count() { return 1; },
+      async findMany() {
+        selectedBucket.expiresAt = new Date(now.getTime() + 60_000);
+        return [{ bucketKey: selectedBucket.bucketKey }];
+      },
+      async deleteMany({ where }: { where: unknown }) {
+        const clauses = (where as { AND?: [unknown, { bucketKey: { in: string[] } }] }).AND;
+        assert.ok(clauses, "deleteMany must retain the expiry predicate");
+        assert.deepEqual(clauses[1], { bucketKey: { in: [selectedBucket.bucketKey] } });
+        const cutoff = (clauses[0] as { expiresAt: { lt: Date } }).expiresAt.lt;
+        return { count: selectedBucket.expiresAt < cutoff ? 1 : 0 };
+      },
+    },
+  } as ProgrammeExpiryPurgeDatabase;
+
+  assert.deepEqual(
+    await purgeExpiredProgrammeRuntime({ database, now, dryRun: false }),
+    {
+      expiredAnonymousSessions: 0,
+      expiredPendingClaims: 0,
+      expiredRateLimitBuckets: 0,
+      dryRun: false,
+      limited: false,
+    },
   );
 });
 

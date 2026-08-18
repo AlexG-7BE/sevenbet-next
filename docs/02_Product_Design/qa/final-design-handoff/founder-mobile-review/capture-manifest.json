@@ -1,0 +1,30 @@
+{
+  "generatedAt": "2026-08-17T12:19:36.998Z",
+  "baseUrl": "http://127.0.0.1:4173",
+  "renderer": "REAL_RUNTIME",
+  "handoffPageForDynamicRoutes": false,
+  "fixtureBoundary": "Local data-only fixture; renderer, component tree, CSS and interactions unchanged",
+  "files": [
+    "01-home-390.webp",
+    "02-best-offers-390.webp",
+    "03-casinos-390.webp",
+    "04-casino-review-top-390.webp",
+    "05-casino-review-editorial-390.webp",
+    "06-bonuses-top-390.webp",
+    "07-bonuses-filters-390.webp",
+    "08-bonuses-calculator-390.webp",
+    "09-learn-390.webp",
+    "10-programme-voice-390.webp",
+    "11-programme-dashboard-390.webp",
+    "12-ten-steps-390.webp",
+    "best-offers-360.webp",
+    "casinos-360.webp",
+    "casino-review-360.webp",
+    "bonuses-360.webp",
+    "programme-360.webp",
+    "best-offers-430.webp",
+    "casinos-430.webp",
+    "casino-review-430.webp",
+    "bonuses-430.webp"
+  ]
+}

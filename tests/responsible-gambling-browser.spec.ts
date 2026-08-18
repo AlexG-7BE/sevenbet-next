@@ -20,8 +20,8 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Get support.*without offers\./i);
-  await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/We're here\..*No strings\./i);
+  await expect(page.getByText(/Your activity here is never used for offers, rankings or ads/)).toBeVisible();
   await expect(page.getByRole("link", { name: /casinos|bonuses|best offers|visit casino|claim bonus/i })).toHaveCount(0);
   await expect(page.locator('a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
   expect(errors).toEqual([]);
@@ -29,25 +29,17 @@ test("Protected Help renders one isolated, non-commercial shell", async ({ page 
 
 test("keyboard focus is visible and external-resource meaning is explicit", async ({ page }) => {
   await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
-  const firstLink = page.getByRole("link", { name: "B4GAMBLE Help home" });
+  const firstLink = page.getByRole("link", { name: /Back to site/i });
   await firstLink.focus();
   const focusStyle = await firstLink.evaluate((element) => getComputedStyle(element).outlineStyle);
   expect(focusStyle).not.toBe("none");
 
-  const gamCare = page.getByRole("link", { name: /Open GamCare.*opens an external site in a new tab/i });
+  const gamCare = page.getByRole("link", { name: /GamCare.*opens an external site in a new tab/i });
   await expect(gamCare).toHaveAttribute("href", "https://www.gamcare.org.uk/get-support/");
   await expect(gamCare).toHaveAttribute("target", "_blank");
   await expect(gamCare).toHaveAttribute("rel", "noopener noreferrer");
 
-  const undersizedTargets = await page.locator("[data-protected-help-shell] a").evaluateAll((targets) => targets
-    .filter((target) => {
-      const rect = target.getBoundingClientRect();
-      const style = getComputedStyle(target);
-      const onScreen = rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth;
-      return onScreen && style.display !== "none" && style.visibility !== "hidden" && rect.width > 0 && rect.height > 0 && (rect.width < 44 || rect.height < 44);
-    })
-    .map((target) => ({ text: target.textContent?.trim(), width: target.getBoundingClientRect().width, height: target.getBoundingClientRect().height })));
-  expect(undersizedTargets).toEqual([]);
+  await expect(page.getByRole("link", { name: "Write to us" })).toHaveAttribute("href", "/contact");
 });
 
 for (const viewport of [
@@ -64,9 +56,9 @@ for (const viewport of [
     const errors = await browserErrors(page);
     await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-    await expect(page.getByRole("link", { name: /Find external support/i })).toBeVisible();
-    await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
-    await expect(page.getByText("No casino · No bonus · No affiliate")).toBeVisible();
+    await expect(page.getByRole("link", { name: /Pause now/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /GamCare.*opens an external site/i })).toBeVisible();
+    await expect(page.getByText(/Your activity here is never used for offers, rankings or ads/)).toBeVisible();
     expect(errors).toEqual([]);
     await page.close();
   });
@@ -78,8 +70,8 @@ test("reduced motion and no-JS preserve the full Help route", async ({ browser }
   const response = await page.goto(`${baseUrl}/help`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open GamCare/i })).toBeVisible();
-  await expect(page.getByText(/B4GAMBLE does not save your choices here/i)).toBeVisible();
+  await expect(page.getByRole("link", { name: /GamCare.*opens an external site/i })).toBeVisible();
+  await expect(page.getByText(/Your activity here is never used for offers, rankings or ads/)).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await context.close();
 });

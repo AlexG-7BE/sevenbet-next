@@ -55,10 +55,28 @@
 
   /* Typography */
   --sb-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  --sb-type-label-size: 12px;
-  --sb-type-label-line: 16px;
-  --sb-type-body-small-size: 13px;
-  --sb-type-body-small-line: 19px;
+  --sb-type-display-xxl: clamp(58px, 7.4vw, 116px);
+  --sb-type-display-xl: clamp(52px, 6vw, 96px);
+  --sb-type-display-lg: clamp(40px, 4.8vw, 72px);
+  --sb-type-display-serif-xl: clamp(44px, 5.4vw, 88px);
+  --sb-type-display-serif-lg: clamp(32px, 3vw, 52px);
+  --sb-type-heading-lg: clamp(34px, 4vw, 60px);
+  --sb-type-heading-md: clamp(28px, 3vw, 44px);
+  --sb-type-heading-sm: clamp(22px, 2vw, 30px);
+  --sb-type-lead-size: 19px;
+  --sb-type-lead-line: 29px;
+  --sb-type-label-size: 14px;
+  --sb-type-label-line: 20px;
+  --sb-type-control-size: 14px;
+  --sb-type-control-line: 20px;
+  --sb-type-input-size: 15px;
+  --sb-type-input-mobile-size: 16px;
+  --sb-type-meta-size: 13px;
+  --sb-type-meta-line: 18px;
+  --sb-type-legal-size: 12px;
+  --sb-type-legal-line: 18px;
+  --sb-type-body-small-size: 14px;
+  --sb-type-body-small-line: 21px;
   --sb-type-body-size: 16px;
   --sb-type-body-line: 24px;
   --sb-type-body-large-size: 18px;
@@ -77,15 +95,31 @@
   --sb-space-32: 128px;
 
   /* Geometry */
+  --public-outer-gutter: clamp(24px, 5vw, 72px);
+  --public-content-max: 1440px;
+  --public-wide-max: 1440px;
+  --public-reading-max: 760px;
+  --public-frame-width: calc(100% - var(--public-outer-gutter) - var(--public-outer-gutter));
+  --public-content-width: min(var(--public-content-max), var(--public-frame-width));
+  --public-wide-width: min(var(--public-wide-max), var(--public-frame-width));
+  --public-reading-width: min(var(--public-reading-max), var(--public-frame-width));
+  /* Compatibility aliases: all public surfaces resolve through the measured handoff grid. */
+  --site-gutter: var(--public-outer-gutter);
+  --site-content-max: var(--public-content-max);
+  --site-wide-max: var(--public-wide-max);
+  --site-reading-max: var(--public-reading-max);
+  --site-content-width: var(--public-content-width);
+  --site-wide-width: var(--public-wide-width);
+  --site-reading-width: var(--public-reading-width);
   --sb-radius-none: 0;
   --sb-radius-s: 12px;
   --sb-radius-m: 20px;
   --sb-radius-l: 24px;
   --sb-radius-full: 999px;
   --sb-content-compact: 1050px;
-  --sb-content-default: 1248px;
-  --sb-content-wide: 1280px;
-  --sb-content-shell: 1312px;
+  --sb-content-default: var(--site-content-max);
+  --sb-content-wide: var(--site-wide-max);
+  --sb-content-shell: var(--site-content-max);
 
   /* Interaction */
   --sb-focus-color: var(--sb-safety-verified);
@@ -93,7 +127,7 @@
   --sb-focus-offset: 3px;
   --sb-motion-fast: 160ms;
   --sb-motion-standard: 240ms;
-  --sb-ease-standard: ease;
+  --sb-ease-standard: cubic-bezier(.2, .8, .2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {

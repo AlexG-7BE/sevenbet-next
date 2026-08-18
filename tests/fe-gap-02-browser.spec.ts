@@ -49,17 +49,20 @@ test("representative Protected Help articles fit every required viewport with re
   }
 });
 
-test("Cooling-off and unknown Help routes fail closed without unsupported or commercial guidance", async ({ page }) => {
+test("Help child routes consolidate into the protected Help hub without commercial guidance", async ({ page, request }) => {
+  const coolingOff = await request.get(`${baseUrl}/help/cooling-off`, { maxRedirects: 0 });
+  expect(coolingOff.status()).toBe(308);
+  expect(coolingOff.headers().location).toBe("/help#cooling-off");
   await page.goto(`${baseUrl}/help/cooling-off`, { waitUntil: "domcontentloaded" });
-  await expect(page.getByText("Content review required", { exact: true })).toBeVisible();
-  await expect(page.getByText("Terms unavailable", { exact: true })).toBeVisible();
-  await expect(page.getByText("Content blocked", { exact: true })).toBeVisible();
-  await expect(page.locator("[data-protected-help-article='cooling-off']")).not.toContainText(/24-hour|48-hour|cancel early|available everywhere/i);
-  const response = await page.goto(`${baseUrl}/help/not-a-known-help-article`, { waitUntil: "domcontentloaded" });
-  expect(response?.status()).toBe(404);
+  await expect(page).toHaveURL(/\/help#cooling-off$/);
+  await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
+  await expect(page.locator('main a[href^="/casinos"],main a[href^="/bonuses"],main a[href^="/r/"]')).toHaveCount(0);
+  const unknown = await request.get(`${baseUrl}/help/not-a-known-help-article`, { maxRedirects: 0 });
+  expect(unknown.status()).toBe(308);
+  expect(unknown.headers().location).toBe("/help");
+  await page.goto(`${baseUrl}/help/not-a-known-help-article`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("link", { name: "Return to Help home" })).toHaveAttribute("href", "/help");
-  await expect(page.locator('[data-protected-help-recovery] a[href^="/casinos"], [data-protected-help-recovery] a[href^="/bonuses"], [data-protected-help-recovery] a[href^="/r/"]')).toHaveCount(0);
+  await expect(page.locator('main a[href^="/casinos"],main a[href^="/bonuses"],main a[href^="/r/"]')).toHaveCount(0);
 });
 
 test("Protected Help articles remain fully readable without JavaScript", async ({ browser }) => {
@@ -69,7 +72,8 @@ test("Protected Help articles remain fully readable without JavaScript", async (
     const response = await page.goto(`${baseUrl}/help/${slug}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByText("Direct answer", { exact: true })).toBeVisible();
+    await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
+    await expect(page.locator('main a[href^="/casinos"],main a[href^="/bonuses"],main a[href^="/r/"]')).toHaveCount(0);
   }
   await context.close();
 });
@@ -82,9 +86,9 @@ test("FAQ uses five semantic disclosure groups and remains usable at every viewp
     const response = await page.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-    for (const label of ["01 · About the product", "02 · Programme & private tools", "03 · Casinos, offers & money", "04 · Affiliate & editorial", "05 · Privacy & Help"]) await expect(page.getByText(label, { exact: true })).toBeVisible();
+    for (const label of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) await expect(page.getByRole("heading", { exact: true, level: 2, name: label })).toBeVisible();
     await expect(page.getByText(/Help center|FAQ schema|Internal guide links/i)).toHaveCount(0);
-    await expect(page.locator("details")).toHaveCount(14);
+    await expect(page.locator("details")).toHaveCount(12);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/faq$/);
     expect(await noOverflow(page), `${viewport.width}px`).toBe(true);
     expect(errors).toEqual([]);
@@ -94,15 +98,16 @@ test("FAQ uses five semantic disclosure groups and remains usable at every viewp
 
 test("FAQ disclosure keyboard and no-JS contracts remain native", async ({ browser, page }) => {
   await page.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  const summary = page.locator("summary").filter({ hasText: "Is B4GAMBLE an online casino?" });
+  const summary = page.locator("summary").filter({ hasText: "What is B4GAMBLE?" });
+  await expect(summary.locator(".."), "the first handoff disclosure is open by default").toHaveAttribute("open", "");
   await summary.focus();
   await page.keyboard.press("Enter");
-  await expect(page.getByText(/does not accept wagers or deposits/)).toBeVisible();
+  await expect(summary.locator(".."), "native keyboard activation closes the disclosure").not.toHaveAttribute("open", "");
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 320, height: 720 } });
   const noJsPage = await context.newPage();
   await noJsPage.goto(`${baseUrl}/faq`, { waitUntil: "domcontentloaded" });
-  await expect(noJsPage.locator("details[open]")).toHaveCount(5);
-  await expect(noJsPage.getByRole("link", { name: /Open Protected Help/ })).toHaveAttribute("href", "/help");
+  await expect(noJsPage.locator("details[open]")).toHaveCount(1);
+  await expect(noJsPage.getByRole("link", { name: /Contact us/ })).toHaveAttribute("href", "/contact");
   await context.close();
 });
 
@@ -135,14 +140,15 @@ test("Best Offers, Bonuses, sitemap and llms expose corrected semantics", async 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("main")).toHaveCount(1);
   const sitemap = await (await page.request.get(`${baseUrl}/sitemap.xml`)).text();
-  expect(sitemap).not.toContain("/privacy");
-  expect(sitemap).not.toContain("/terms");
+  expect(sitemap).toContain("/privacy");
+  expect(sitemap).toContain("/terms");
   await page.goto(`${baseUrl}/privacy`, { waitUntil: "domcontentloaded" });
   expect(await page.locator('meta[name="robots"]').getAttribute("content")).toMatch(/noindex.*follow/i);
-  await expect(page.locator('footer a[href="/privacy"]')).toHaveCount(1);
-  await expect(page.locator('footer a[href="/terms"]')).toHaveCount(1);
+  const siteFooter = page.locator('[data-public-shell="footer"]');
+  await expect(siteFooter.locator('a[href="/privacy"]')).toHaveCount(1);
+  await expect(siteFooter.locator('a[href="/terms"]')).toHaveCount(1);
   const llms = await (await page.request.get(`${baseUrl}/llms.txt`)).text();
-  expect(llms).toContain("limit chosen by the user");
-  expect(llms).toContain("does not generate a stop-loss recommendation");
-  expect(llms).not.toMatch(/session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
+  expect(llms).toContain("/responsible-gambling");
+  expect(llms).not.toContain("/self-check");
+  expect(llms).not.toContain("/tools/budget-calculator");
 });

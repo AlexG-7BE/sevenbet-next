@@ -41,7 +41,7 @@ test("commercial surfaces state the enforced compensation boundary without aspir
     "app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx",
     "app/(public)/methodology/MethodologyDocument.tsx",
     "app/(public)/casinos/page.tsx",
-    "app/(public)/best-offers/page.tsx",
+    "components/best-offers/BestOffersExperience.tsx",
     "app/(public)/bonuses/page.tsx",
   ];
   for (const file of files) {

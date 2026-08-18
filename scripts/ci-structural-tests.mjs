@@ -7,6 +7,8 @@ const requiredTests = [
   "tests/design-system-contract.test.ts",
   "tests/extended-browser-harness.test.mjs",
   "tests/fe-gap-02-structural.test.ts",
+  "tests/final-design-handoff.test.ts",
+  "tests/founder-unified-shell.test.ts",
   "tests/home-parity.test.ts",
   "tests/jurisdiction-resolver.test.ts",
   "tests/legal-programme-privacy.test.ts",

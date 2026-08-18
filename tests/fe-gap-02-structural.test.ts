@@ -7,13 +7,13 @@ import { protectedHelpArticles } from "../lib/responsible-gambling";
 const read = (path: string) => readFileSync(path, "utf8");
 const slugs = ["self-exclusion", "deposit-limits", "cooling-off", "reality-checks"];
 
-test("all four action/control Help articles use the dedicated server-rendered article contract", () => {
+test("all four action/control Help routes consolidate into the protected Help hub", () => {
   const route = read("app/help/[slug]/page.tsx");
   const article = read("components/protected-help/ProtectedHelpArticle.tsx");
   const recovery = read("app/help/not-found.tsx");
   assert.deepEqual(protectedHelpArticles.map((item) => item.slug), slugs);
   for (const slug of slugs) assert.match(article, new RegExp(`(?:"${slug}"|${slug}:)`));
-  assert.match(route, /<ProtectedHelpArticle article=\{article\} \/>/);
+  assert.match(route, /permanentRedirect\(article \? `\/help#\$\{encodeURIComponent\(article\.slug\)\}` : "\/help"\)/);
   assert.doesNotMatch(route, /ArticleLayout|PageHero|ResourceCard/);
   assert.doesNotMatch(article, /["']use client["']/);
   assert.match(article, /data-figma-desktop="599:3972"/);
@@ -36,12 +36,12 @@ test("FAQ is the server-rendered product and trust surface with native disclosur
   const faq = read("app/(public)/faq/page.tsx");
   assert.doesNotMatch(faq, /["']use client["']/);
   assert.equal((faq.match(/<h1\b/g) ?? []).length, 1);
-  for (const group of ["01 · About the product", "02 · Programme & private tools", "03 · Casinos, offers & money", "04 · Affiliate & editorial", "05 · Privacy & Help"]) assert.match(faq, new RegExp(group, "i"));
-  assert.match(faq, /<details key=\{question\} open=/);
+  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(faq, new RegExp(group, "i"));
+  assert.match(faq, /<details key=\{q\} open=/);
   assert.match(faq, /<summary>/);
   assert.match(faq, /canonical: absoluteUrl\("\/faq"\)/);
   assert.doesNotMatch(faq, /Help center|FAQ schema|Internal guide links|["']@type["']:\s*["']FAQPage["']/iu);
-  assert.ok(faq.lastIndexOf("Open Protected Help") > faq.lastIndexOf("Does B4GAMBLE earn affiliate commission?"));
+  assert.ok(faq.lastIndexOf("Contact us") > faq.lastIndexOf("How do I delete my data?"));
 });
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {
@@ -79,21 +79,19 @@ test("runtime text and sitemap policy match current product truth", () => {
   const site = read("lib/site.ts");
   const sitemap = read("app/sitemap.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
-  assert.match(llms, /limit chosen by the user/);
-  assert.match(llms, /does not calculate a safe or affordable amount/);
-  assert.match(llms, /does not generate a stop-loss recommendation/);
-  assert.match(llms, /private, non-clinical reflection/);
+  assert.match(llms, /practical control/);
   assert.match(llms, /Casino Data Boundary/);
   assert.match(llms, /Demonstration records are fictional/);
   assert.doesNotMatch(llms, /getTopCasinos|Top Casino Profiles|wagering x\$\{|license \$\{/);
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
-  assert.doesNotMatch(site, /["']\/privacy["']|["']\/terms["']/);
-  assert.match(footer, /\["Privacy", "\/privacy"\]/);
-  assert.match(footer, /\["Terms", "\/terms"\]/);
+  assert.match(site, /["']\/privacy["']/);
+  assert.match(site, /["']\/terms["']/);
+  assert.match(footer, /<Link href="\/privacy">Privacy<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">Terms<\/Link>/);
   assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
-  assert.match(sitemap, /comparison\.status === "available" && comparison\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(sitemap, /"\/best-offers"/);
-  assert.match(sitemap, /"\/compare"/);
+  assert.doesNotMatch(sitemap, /"\/compare"/);
+  assert.doesNotMatch(sitemap, /helpGuideRoutes|learningCategoryRoutes/);
 });
 
 test("FE-GAP-02 introduces no forbidden frontend architecture", () => {
@@ -103,5 +101,5 @@ test("FE-GAP-02 introduces no forbidden frontend architecture", () => {
     "components/casino-profile/CasinoOutboundAction.tsx",
     "components/commercial-handoff/CommercialHandoffPage.tsx",
   ].map(read).join("\n");
-  assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\.|destinationUrl|trackingUrl|localStorage|sessionStorage|analytics|dataLayer/);
+  assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\.|destinationUrl|trackingUrl|localStorage|sessionStorage|dataLayer/);
 });

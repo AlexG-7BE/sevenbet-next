@@ -4,6 +4,7 @@ import Link from "next/link";
 import React, { useId, useRef } from "react";
 
 import type { CasinoProfileAction } from "@/lib/casino-profile/presentation";
+import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 
 export function CasinoOutboundAction({ action, className = "" }: { action: CasinoProfileAction; className?: string }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -18,6 +19,7 @@ export function CasinoOutboundAction({ action, className = "" }: { action: Casin
     const dialog = dialogRef.current;
     if (!dialog?.showModal) return;
     event.preventDefault();
+    productAnalyticsClient.outboundIntent("confirmation_opened");
     dialog.showModal();
     requestAnimationFrame(() => stayRef.current?.focus());
   }
@@ -37,7 +39,7 @@ export function CasinoOutboundAction({ action, className = "" }: { action: Casin
             <strong>No raw destination URL · no browser-supplied authority.</strong>
             <small>A neutral cancel path remains available · 18+ · Terms apply</small>
           </div>
-          <a className="commercialOutboundPrimary" href={action.href} onClick={() => dialogRef.current?.close()} rel="nofollow sponsored noopener" target="_blank">Continue to eligible partner <span aria-hidden="true">→</span></a>
+          <a className="commercialOutboundPrimary" href={action.href} onClick={() => { productAnalyticsClient.outboundIntent("continued"); dialogRef.current?.close(); }} rel="nofollow sponsored noopener" target="_blank">Continue to eligible partner <span aria-hidden="true">→</span></a>
           <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">Cancel and stay on B4GAMBLE</button>
           <Link className="commercialOutboundHelp" href="/affiliate-disclosure">Review affiliate disclosure</Link>
         </div>

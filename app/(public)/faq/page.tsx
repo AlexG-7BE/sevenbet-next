@@ -1,129 +1,14 @@
 import type { Metadata } from "next";
-import { Instrument_Serif } from "next/font/google";
 import Link from "next/link";
-
 import { absoluteUrl } from "@/lib/site";
-
 import styles from "./FAQPage.module.css";
 
-const instrumentSerif = Instrument_Serif({
-  subsets: ["latin"],
-  weight: "400",
-  style: ["italic"],
-  variable: "--font-seven-serif",
-});
-
-export const metadata: Metadata = {
-  title: "B4GAMBLE FAQ | Product, Programme, Privacy and Commercial Boundaries",
-  description: "Clear answers about what B4GAMBLE is, how its Programme and private tools work, and how editorial, affiliate, privacy and Protected Help boundaries are kept visible.",
-  alternates: { canonical: absoluteUrl("/faq") },
-  robots: { index: true, follow: true },
-};
-
-const groups = [
-  {
-    eyebrow: "01 · About the product",
-    title: "What B4GAMBLE is — and is not.",
-    items: [
-      ["What is B4GAMBLE?", "B4GAMBLE is an editorial, educational, comparison and affiliate information service. It is not a gambling operator."],
-      ["Is B4GAMBLE an online casino?", "No. B4GAMBLE does not accept wagers or deposits, hold gambling balances, determine outcomes or pay winnings."],
-      ["Who are B4GAMBLE’s commercial features for?", "Commercial casino, offer and affiliate features are for adults aged 18 or over, and only where lawful. A visible action is not proof of personal eligibility."],
-    ],
-  },
-  {
-    eyebrow: "02 · Programme & private tools",
-    title: "Control tools stay separate.",
-    items: [
-      ["What is the 10-Step Programme?", "It is an educational and control-oriented sequence for reflection, learning and a personal plan. It is not treatment, and it does not reward gambling, deposits or commercial clicks."],
-      ["Does Self-Check diagnose gambling addiction?", "No. Self-Check is a private, non-clinical reflection. Its answers stay local to the browser session and do not drive casino or bonus recommendations."],
-      ["Does the Personal Gambling Limit Tracker tell me what is safe to spend?", "No. It uses a limit chosen by you. B4GAMBLE does not calculate a safe or affordable gambling amount and does not generate a stop-loss recommendation."],
-    ],
-  },
-  {
-    eyebrow: "03 · Casinos, offers & money",
-    title: "Commercial without the spin.",
-    items: [
-      ["How does B4GAMBLE decide which casinos appear?", "B4GAMBLE uses the latest published evidence available to the public service and keeps missing or unverified facts visible. Commercial availability and editorial review remain separate."],
-      ["Are the biggest bonuses automatically ranked first?", "No. Headline size does not override eligibility, material terms, evidence quality or the published editorial method."],
-      ["Can bonus or operator terms change?", "Yes. Current operator terms control the gambling transaction or promotion. B4GAMBLE should show uncertainty or remove an action when material facts cannot be verified."],
-    ],
-  },
-  {
-    eyebrow: "04 · Affiliate & editorial",
-    title: "Paid relationships. Visible boundaries.",
-    items: [
-      ["Does B4GAMBLE earn affiliate commission?", "It may. When an affiliate link leads to a qualifying action, B4GAMBLE may receive commission. Commercial relationships must not alter factual licensing status, material terms, Protected Help or private control data."],
-      ["Can commission personalise my ranking after Self-Check?", "No. Self-Check, Programme, pause and Protected Help information must not be used to personalise casino rankings, offers or affiliate targeting."],
-      ["What happens when an operator or outbound action is unavailable?", "The action fails closed. B4GAMBLE does not invent a destination, claim a redirect succeeded or substitute another operator, bonus or sponsored offer."],
-    ],
-  },
-  {
-    eyebrow: "05 · Privacy & Help",
-    title: "Private means non-commercial.",
-    items: [
-      ["How are Self-Check and Limit Tracker entries stored?", "The current Self-Check and Personal Gambling Limit Tracker process entries locally in the browser. Individual answers and entered amounts are not stored in B4GAMBLE’s application database."],
-      ["Where can I get help with gambling?", "Protected Help provides independent support routes and safer-gambling information. It remains separate from casino, bonus and affiliate actions."],
-    ],
-  },
+export const metadata:Metadata={title:"B4GAMBLE FAQ",description:"Clear answers about B4GAMBLE.",alternates:{ canonical: absoluteUrl("/faq") }};
+const groups=[
+  ["About B4GAMBLE",[["What is B4GAMBLE?","Three connected areas: a private control Programme, educational and editorial casino information, and openly commercial discovery pages for adults who have decided to compare published records."],["Who writes the reviews?","The editorial team maintains review content. Commercial availability is handled separately, and every material source limitation should remain visible."]]],
+  ["Programme",[["Is the Programme really free?","The current Programme is free and has no paywall or commercial upsell inside Missions."],["Who can see what I say in the Programme?","Your situation is used only to generate the Programme output you request. Programme and Help data is excluded from offers, rankings, ads and commercial personalisation; the Privacy page explains saved data and rights requests."],["Do I need an account to start?","No. You speak or type your situation first; registration with Google or email comes only after your Starting Point is ready, so you can save it."]]],
+  ["Casinos & Offers",[["How do you evaluate casinos?","B4GAMBLE applies the disclosed editorial framework to the evidence available for each published record. Source status, dates, missing fields and limitations remain part of the review."],["Why do some casinos say “Review only”?","It means we can’t offer a governed signup route right now, so we don’t fake one. The review and available published information stay visible."],["What happens when I click View Offer?","A confirmation explains that you’re leaving B4GAMBLE and repeats the commission disclosure. You can continue to the operator or stay."]]],
+  ["Commercial model",[["How does B4GAMBLE make money?","B4GAMBLE may earn a commission after a governed commercial link. Commercial actions are labelled and explained before you leave the site."],["Does commission affect rankings?","Affiliate compensation does not determine Editor Score or natural editorial ranking. See the Affiliate Disclosure for the product boundary."]]],
+  ["Help & Privacy",[["What is protected Help?","A commercial-free space linking to immediate independent support, blocking and self-exclusion options. Protected Help activity is not used for offers, rankings or commercial personalisation."],["How do I request my data or deletion?","Contact the controller using the Privacy page. Legal, fraud-prevention and backup retention may continue where applicable."]]],
 ] as const;
-
-const initiallyOpen = new Set([
-  "What is B4GAMBLE?",
-  "Does Self-Check diagnose gambling addiction?",
-  "Can bonus or operator terms change?",
-  "Does B4GAMBLE earn affiliate commission?",
-  "Where can I get help with gambling?",
-]);
-
-export default function FAQPage() {
-  return (
-    <div
-      className={`${styles.page} ${instrumentSerif.variable}`}
-      data-faq-page
-      data-figma-desktop="929:3021"
-      data-figma-mobile="929:3148"
-    >
-      <section className={styles.hero} aria-labelledby="faq-title">
-        <div className={styles.heroCopy}>
-          <p className={styles.heroEyebrow}>B4GAMBLE FAQ · Product / Trust</p>
-          <h1 id="faq-title">Questions?</h1>
-          <p className={styles.heroSerif}>Clear answers.</p>
-          <p className={styles.heroLead}>How B4GAMBLE works, what it does not do, how commercial relationships are handled, and where private control tools stay separate.</p>
-        </div>
-        <aside className={styles.heroBoundary} aria-label="B4GAMBLE service boundary">
-          <p>Start with the boundary</p>
-          <strong>B4GAMBLE informs.<br />Operators provide gambling.</strong>
-          <span>B4GAMBLE does not accept wagers, deposits or gambling balances.</span>
-        </aside>
-      </section>
-
-      <div className={styles.questions}>
-        {groups.map((group) => (
-          <section className={styles.group} key={group.eyebrow}>
-            <header>
-              <p>{group.eyebrow}</p>
-              <h2>{group.title}</h2>
-            </header>
-            <div className={styles.disclosures}>
-              {group.items.map(([question, answer]) => (
-                <details key={question} open={initiallyOpen.has(question)}>
-                  <summary><span>{question}</span><span aria-hidden="true" className={styles.toggle}>+</span></summary>
-                  <p>{answer}</p>
-                </details>
-              ))}
-            </div>
-          </section>
-        ))}
-      </div>
-
-      <aside className={styles.helpBoundary} aria-label="Protected Help">
-        <div>
-          <p>Protected Help</p>
-          <h2>Need support, not an offer?</h2>
-          <span>Open Protected Help for independent support routes and control information. No casino or bonus recovery belongs in this path.</span>
-        </div>
-        <Link href="/help">Open Protected Help <span aria-hidden="true">→</span></Link>
-      </aside>
-    </div>
-  );
-}
+export default function FAQPage(){return <article className={styles.page}><header><div><p><span aria-hidden="true" />FAQ</p><h1>Clear <em>answers.</em></h1></div></header><div className={styles.paint} /><main>{groups.map(([name,items],groupIndex)=><section key={name}><h2>{name}</h2><div>{items.map(([q,a],index)=><details key={q} open={groupIndex===0&&index===0}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>)}<aside className={styles.contactRail}><span>Didn&apos;t find it?</span><Link href="/contact">Contact us →</Link><Link href="/methodology">Methodology</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link></aside></main></article>}

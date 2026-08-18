@@ -31,6 +31,64 @@ html { scroll-behavior: smooth; }
   html { scroll-behavior: auto; }
 }
 
+@media (max-width: 900px) {
+  [data-handoff-page="learn"] button { min-height: 44px; }
+  [data-handoff-page="article"] a[href="/learn"],
+  [data-handoff-page="article"] a[href="/methodology"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-handoff-page="home"] a[href="/affiliate-disclosure"],
+  [data-handoff-page="terms"] a[href="/affiliate-disclosure"],
+  [data-handoff-page="responsibleGambling"] a,
+  [data-handoff-page="help"] a,
+  [data-handoff-page="methodology"] a[href="/contact"] {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  [data-handoff-page="methodology"] a[href="/contact"] { white-space: nowrap; }
+}
+
+@media (max-width: 520px) {
+  [data-handoff-page] [style*="minmax(420px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-affiliate-disclosure-document] > header,
+  [data-methodology-document] > header {
+    padding-top: calc(132px + env(safe-area-inset-top));
+  }
+}
+
+@media (max-width: 420px) {
+  [data-handoff-page] [style*="minmax(380px"],
+  [data-handoff-page] [style*="minmax(360px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 370px) {
+  [data-handoff-page] [style*="minmax(340px"],
+  [data-handoff-page] [style*="minmax(320px"],
+  [data-handoff-page] [style*="minmax(300px"],
+  [data-handoff-page] [style*="minmax(280px"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 340px) {
+  [data-handoff-page="article"] [data-mob="grid"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  [data-handoff-page="article"] [data-mob="grid"] > * { min-width: 0 !important; }
+}
+
 body:has(.tiltHomePage) {
   background: var(--sb-surface-night);
 }
@@ -60,6 +118,20 @@ body {
     linear-gradient(180deg, #07111F 0%, #050B14 42rem, #07111F 100%);
   color: var(--text);
 }
+.bonusGuideProse { min-width: 0; }
+.bonusGuideTable,
+[data-bonus-guide-table] { width: 100%; max-width: 100%; overflow-x: auto !important; }
+@media (max-width: 500px) {
+  [data-bonus-guide-table] > div {
+    min-width: 0 !important;
+    padding: 14px 10px !important;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, .75fr) minmax(0, .9fr) minmax(0, 1.1fr) !important;
+    gap: 6px !important;
+    font-size: 14px !important;
+  }
+  [data-bonus-guide-table] > div > * { min-width: 0; overflow-wrap: anywhere; }
+}
+@media (max-width: 500px) { .bonusGuidePage h1 { font-size: 38px; overflow-wrap: anywhere; } }
 body::before {
   content: "";
   position: fixed;
@@ -71,6 +143,307 @@ body::before {
     linear-gradient(90deg, rgba(255, 255, 255, .028) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: linear-gradient(180deg, rgba(0, 0, 0, .72), transparent 72%);
+}
+
+body:has([data-handoff-page]) {
+  background: #100f0f;
+  color: #fafaf7;
+}
+body:has([data-handoff-page])::before {
+  display: none;
+}
+/* The captured Home reference fixes both root boxes at viewport height. Keep the
+   production public shell on that same scroll-root geometry so classic browser
+   scrollbars cannot shift only dynamic routes inward by their reserved width. */
+html:has(body > [data-public-shell="header"]),
+body:has(> [data-public-shell="header"]) {
+  height: 100%;
+}
+html:has(body > [data-public-shell="header"]),
+html:has([data-protected-help-shell]) {
+  scrollbar-width: none;
+}
+html:has(body > [data-public-shell="header"])::-webkit-scrollbar,
+body:has(> [data-public-shell="header"])::-webkit-scrollbar,
+html:has([data-protected-help-shell])::-webkit-scrollbar,
+body:has([data-protected-help-shell])::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+[data-handoff-page],
+[data-handoff-page] > div,
+[data-handoff-page] .sc-host {
+  width: 100%;
+  min-height: 100%;
+}
+[data-handoff-page] img {
+  max-width: none;
+}
+[data-protected-help-shell]:has([data-handoff-page]) > main {
+  background: var(--sb-surface-night);
+}
+[data-handoff-page] a[href^="/program"]:hover {
+  transform: translateY(-2px);
+}
+[data-handoff-page] :focus-visible {
+  outline: 3px solid var(--sb-focus-color) !important;
+  outline-offset: 3px !important;
+  transition-property: background-color, border-color, color, filter, transform !important;
+}
+
+/* Home handoff interaction safety contract. The source capture contains prototype-time
+   opacity values; the server-rendered page must remain readable until the client layer
+   deliberately opts individual elements into a guaranteed reveal. */
+[data-handoff-page="home"] [data-rise] {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+[data-handoff-page="home"][data-home-interactions="ready"] [data-rise][data-rise-state="pending"] {
+  opacity: 0 !important;
+  transform: translateY(44px) !important;
+}
+[data-handoff-page="home"][data-home-interactions="ready"] [data-rise][data-rise-state="visible"] {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  transition: opacity 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
+}
+[data-handoff-page="home"] [data-stackpanel],
+[data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"],
+[data-handoff-page="home"] [data-stackind] {
+  opacity: 1 !important;
+}
+[data-handoff-page="home"] [data-stackpanel] {
+  transform: none !important;
+}
+
+/* The approved Home ending was one 100svh CTA + footer composition. The
+   captured footer is intentionally stripped, so size the remaining CTA around
+   the one real PublicFooter and reserve only the combined bottom snap target. */
+[data-handoff-page="home"] [data-home-final-composition] {
+  min-height: max(0px, calc(100svh - var(--home-public-footer-height, 391px))) !important;
+  scroll-snap-align: none !important;
+  scroll-snap-stop: normal !important;
+}
+
+/* Learn's first editorial section has a 1440px bounded inner frame. Reuse its
+   computed axis for hero copy and metadata instead of maintaining two unrelated
+   outer paddings that drift apart on wide canvases. */
+[data-handoff-page="learn"] {
+  --learn-content-gutter: clamp(24px, 5vw, 72px);
+  --learn-content-axis: max(var(--learn-content-gutter), calc((100vw - 1440px) / 2));
+}
+[data-handoff-page="learn"] [data-learn-hero-axis],
+[data-handoff-page="learn"] [data-learn-meta-axis] {
+  padding-inline: var(--learn-content-axis) !important;
+}
+
+@media (max-width: 760px) {
+  [data-handoff-page="learn"] input[type="search"] {
+    min-height: 48px;
+    font-size: 16px !important;
+  }
+
+  [data-handoff-page="article"] [data-mob="grid"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-handoff-page="article"] [data-mob="grid"] > * {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 340px) {
+  [data-handoff-page="learn"] [data-learn-meta-axis] span {
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+  }
+
+  [data-handoff-page="learn"] a.scp3 {
+    width: 100%;
+    min-width: 0;
+    padding-inline: 20px !important;
+  }
+
+  [data-handoff-page="learn"] a.scp3 > div:first-child {
+    min-width: 0 !important;
+  }
+}
+
+.bonusGuidePage aside nav a { min-height: 44px; display: flex; align-items: center; }
+[aria-label="On this page"] a { min-height: 44px; display: flex; align-items: center; font-size: 14px !important; line-height: 1.4; }
+
+/* Founder Home mobile polish. The generated handoff remains the content and visual
+   authority; these overrides only tune its mobile composition and scroll rhythm. */
+@media (max-width: 760px) {
+  /* On mobile the final CTA returns to the handoff's standalone narrative
+     section. It no longer consumes a footer-derived height; the one real
+     PublicFooter follows in ordinary document flow. */
+  [data-handoff-page="home"] [data-home-final-composition] {
+    min-height: 100svh !important;
+  }
+
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child {
+    align-items: flex-start !important;
+    padding: clamp(280px, 31.5svh, 304px) 24px 40px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) {
+    z-index: 2 !important;
+    width: 100% !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] h1 + p {
+    text-wrap: balance;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child {
+    gap: 8px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:first-child,
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:last-child {
+    width: 18px !important;
+    flex: 0 0 18px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child > div:nth-child(2) {
+    font-size: 12px !important;
+    letter-spacing: .2em !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"],
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {
+    top: clamp(98px, 12svh, 112px) !important;
+    width: clamp(116px, 30vw, 128px) !important;
+    height: clamp(142px, 36vw, 154px) !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"] { left: 12px !important; }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] { right: 12px !important; }
+
+  [data-handoff-page="home"] [data-screen-label="Recognition"] {
+    min-height: auto !important;
+    align-items: flex-start !important;
+    padding: 112px 24px 56px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Recognition"] > div > div {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 40px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="A plan you can see"] {
+    justify-content: flex-start !important;
+    padding: 144px 24px 72px !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always;
+  }
+
+  [data-handoff-page="home"] div:has(> [data-screen-label="A plan you can see"]) > [data-snap] {
+    scroll-snap-align: none !important;
+  }
+  [data-handoff-page="home"] [data-stackpanel] {
+    scroll-snap-align: start !important;
+    scroll-snap-stop: always;
+  }
+  [data-handoff-page="home"] [data-stackpanel] + [data-stackpanel] {
+    margin-top: clamp(144px, 22svh, 204px) !important;
+  }
+
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] {
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    padding: 72px 24px 76px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:first-child {
+    margin: 0 auto 34px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:first-child > p {
+    margin-top: 18px !important;
+    font-size: 15px !important;
+    line-height: 1.55 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 12px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div {
+    padding: 24px 22px !important;
+    border-radius: 18px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div:not(:last-child) > div:first-child {
+    margin-bottom: 12px !important;
+    font-size: 27px !important;
+    line-height: 1 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div > div:nth-child(2) {
+    margin-bottom: 8px !important;
+    font-size: 16px !important;
+    line-height: 1.25 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Built from evidence"] > div > div:last-child > div > p {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  [data-handoff-page="home"] [data-screen-label="Why trust"] {
+    min-height: 0 !important;
+    align-items: flex-start !important;
+    padding: 72px 24px 80px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Why trust"] > div > div:first-child {
+    margin: 0 auto 44px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Why trust"] > div > div:last-child {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustL"] {
+    padding: 0 0 30px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(16, 15, 15, .24) !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] {
+    padding: 30px 0 0 !important;
+    text-align: left !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustL"] > div:last-child,
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child {
+    gap: 14px !important;
+    line-height: 1.55 !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child > div {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+  [data-handoff-page="home"] [data-mob="trustR"] > div:last-child > div > span:last-child {
+    order: -1;
+    flex: 0 0 auto;
+  }
+}
+
+/* The generated Home capture enables mandatory document snap for coarse pointers.
+   Keep the standalone CTA as a normal (skippable) stop and the real footer bottom
+   as the later endpoint, so continued scrolling cannot be pulled back to the CTA. */
+@media (max-width: 760px) and (pointer: coarse) {
+  [data-handoff-page="home"] [data-home-final-composition] {
+    scroll-margin-block: 0;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
+  }
+  body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
+    scroll-snap-align: end;
+    scroll-snap-stop: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-handoff-page] *,
+  [data-handoff-page] *::before,
+  [data-handoff-page] *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+  [data-handoff-page="home"] [data-rise],
+  [data-handoff-page="home"] [data-stackpanel],
+  [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"],
+  [data-handoff-page="home"] [data-stackind] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 a { color: inherit; text-decoration: none; }
 button, input, select { font: inherit; }
@@ -1468,9 +1841,9 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   background: var(--acid, var(--sb-action-primary));
   color: var(--ink, var(--sb-action-on-primary));
   font: inherit;
-  font-size: 12px;
+  font-size: var(--sb-type-control-size);
   font-weight: 750;
-  line-height: 16px;
+  line-height: var(--sb-type-control-line);
   text-align: center;
   text-decoration: none;
   touch-action: manipulation;
@@ -1529,7 +1902,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .commercialOutboundLabel {
   margin: 0;
   color: var(--sb-safety-verified);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 750;
   letter-spacing: .06em;
   line-height: 16px;
@@ -1562,7 +1935,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
 .commercialOutboundContract span {
   color: var(--sb-text-muted);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 750;
   letter-spacing: .06em;
 }
@@ -1574,8 +1947,8 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
 .commercialOutboundContract small {
   color: var(--sb-text-muted);
-  font-size: 11px;
-  line-height: 16px;
+  font-size: 13px;
+  line-height: 19px;
 }
 
 .commercialOutboundSheet > .commercialOutboundPrimary {
@@ -2914,5 +3287,33 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 
   .affiliateRedirectCreate {
     grid-template-columns: 1fr;
+  }
+}
+/* Handoff-derived motion is visible by default. The client may mark only
+   eligible off-screen groups pending after a capable observer is available. */
+[data-motion-reveal] {
+  opacity: 1;
+  transform: none;
+}
+
+[data-motion-reveal][data-motion-state="pending"] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+[data-motion-reveal][data-motion-state="visible"] {
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 700ms cubic-bezier(.2,.8,.2,1),
+    transform 700ms cubic-bezier(.2,.8,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-motion-reveal],
+  [data-motion-reveal][data-motion-state] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
   }
 }

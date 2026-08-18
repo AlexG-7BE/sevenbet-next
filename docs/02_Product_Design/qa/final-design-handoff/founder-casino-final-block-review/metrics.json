@@ -1,0 +1,21 @@
+{
+  "1440": {
+    "final_section_center": 720,
+    "inner_width": 960,
+    "child_centers": [720, 720, 719.99609375, 720],
+    "footer_gap": 0,
+    "horizontal_overflow": 0,
+    "runtime_renderer": "casino-review",
+    "handoff_page_count": 0
+  },
+  "390": {
+    "final_section_center": 195,
+    "inner_width": 342,
+    "child_centers": [195, 195, 195, 195],
+    "footer_gap": 0,
+    "mobile_score_gap": 48,
+    "horizontal_overflow": 0,
+    "runtime_renderer": "casino-review",
+    "handoff_page_count": 0
+  }
+}

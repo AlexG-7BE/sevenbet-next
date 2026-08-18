@@ -9,7 +9,6 @@
   --night-muted: var(--sb-grey-300);
   --acid: var(--sb-acid);
   --acid-hover: var(--sb-acid-hover);
-  overflow: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-seven-sans), Arial, sans-serif;
@@ -30,9 +29,9 @@
 .hero { background: var(--night); color: var(--white); }
 .heroInner {
   width: min(1312px, calc(100% - 128px));
-  min-height: 610px;
+  min-height: 92vh;
   margin: 0 auto;
-  padding: 80px 0 70px;
+  padding: 130px 0 84px;
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(380px, .75fr);
   gap: 72px;
@@ -52,7 +51,7 @@
 .heroCopy h1 em { margin-top: 8px; font-size: clamp(62px, 6vw, 88px); line-height: .9; }
 .heroCopy > p { margin-top: 28px; color: var(--night-muted); font-size: 17px; line-height: 1.45; }
 .heroCopy .primaryButton { margin-top: 28px; }
-.heroCopy > small { max-width: 580px; margin-top: 18px; color: var(--night-muted); font-size: 10px; line-height: 15px; letter-spacing: .04em; }
+.heroCopy > small { max-width: 580px; margin-top: 18px; color: var(--night-muted); font-size: 14px; line-height: 21px; letter-spacing: .02em; }
 .heroVisual { height: 442px; position: relative; align-self: center; }
 .heroVisual > img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: 50% 48%; }
 .rewardCard {
@@ -67,9 +66,9 @@
   background: var(--white);
   color: var(--ink);
 }
-.rewardCard span { font-size: 10px; font-weight: 700; letter-spacing: .08em; }
+.rewardCard span { font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .05em; }
 .rewardCard strong { margin-top: 9px; font-size: 27px; line-height: 1; font-variant-numeric: tabular-nums; }
-.rewardCard small { margin-top: 9px; color: var(--muted); font-size: 9px; line-height: 1.3; }
+.rewardCard small { margin-top: 9px; color: var(--muted); font-size: 13px; line-height: 18px; }
 
 .returningInner {
   width: min(1312px, calc(100% - 128px));
@@ -86,23 +85,23 @@
 .returningCopy > p { max-width: 600px; margin-top: 28px; color: var(--night-muted); font-size: 18px; line-height: 1.45; }
 .returningCopy .primaryButton { margin-top: 30px; }
 .serverState { width: min(100%, 560px); margin-top: 22px; padding: 18px; border: 1px solid var(--muted); display: grid; gap: 8px; background: var(--deep); }
-.serverState strong { color: var(--acid); font-size: 11px; letter-spacing: .08em; }
+.serverState strong { color: var(--acid); font-size: 13px; line-height: 18px; letter-spacing: .05em; }
 .serverState p { color: var(--night-muted); font-size: 14px; line-height: 1.4; font-variant-numeric: tabular-nums; }
-.serverState small { color: var(--night-muted); font-size: 11px; }
+.serverState small { color: var(--night-muted); font-size: 13px; line-height: 18px; }
 .returningImage { height: 460px; overflow: hidden; }
 .returningImage img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 44%; }
 
-.builds { padding: 96px max(64px, calc((100vw - 1312px) / 2)) 104px; background: var(--deep); color: var(--white); }
+.builds { min-height:650px; padding: 130px max(64px, calc((100vw - 1312px) / 2)); display:grid; grid-template-columns:1fr 1fr; gap:64px; background: var(--paper); color: var(--ink); }
 .sectionIntro { max-width: 880px; }
 .sectionIntro h2 { max-width: 760px; margin-top: 22px; font-size: clamp(42px, 4.6vw, 62px); line-height: 1.02; letter-spacing: -.055em; text-wrap: balance; }
 .sectionIntro > p { max-width: 720px; margin-top: 22px; color: var(--night-muted); font-size: 17px; line-height: 1.45; }
-.buildGrid { margin-top: 64px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
-.buildGrid article { min-height: 380px; padding: 24px; border-radius: 24px; display: flex; flex-direction: column; background: var(--card); }
-.buildGrid article > span { color: var(--acid); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
-.buildGrid h3 { margin-top: 42px; font-size: 32px; line-height: 1.05; letter-spacing: -.04em; }
-.buildGrid article > p { margin-top: 18px; color: var(--night-muted); font-size: 14px; line-height: 1.4; }
+.buildGrid { display:grid; align-content:start; gap:0; }
+.buildGrid article { min-height:110px; padding:26px 0; border-bottom:1px solid rgba(16,15,15,.14); display:grid; grid-template-columns:50px 1fr; gap:12px; align-items:baseline; }
+.buildGrid article > span { color:#777500; font-family:var(--font-seven-serif),serif; font-size:15px; }
+.buildGrid h3 { margin:0; font-size:22px; line-height:1.1; letter-spacing:-.02em; text-transform:uppercase; }
+.buildGrid article p { margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.6; }
 .miniResult { min-height: 118px; margin-top: auto; padding: 16px; border: 1px solid rgba(255,255,255,.18); border-radius: 14px; display: grid; background: var(--deep); }
-.miniResult small { color: var(--night-muted); font-size: 9px; letter-spacing: .08em; }
+.miniResult small { color: var(--night-muted); font-size: 13px; line-height: 18px; letter-spacing: .05em; }
 .miniResult b { margin-top: 10px; font-size: 14px; }
 .miniResult i { width: 58%; height: 4px; margin-top: 18px; display: block; background: var(--acid); }
 
@@ -128,20 +127,21 @@
 .missionList li { min-height: 88px; padding: 16px; border: 1px solid rgba(16,15,15,.34); border-radius: 20px; display: flex; align-items: center; gap: 16px; }
 .missionList li > span { width: 40px; height: 40px; flex: 0 0 40px; border-radius: 50%; display: grid; place-items: center; background: var(--white); color: var(--ink); font-size: 12px; font-weight: 700; }
 .missionList h3 { font-size: 16px; line-height: 1.25; font-weight: 500; }
-.missionList p { margin-top: 4px; color: var(--muted); font-size: 10px; line-height: 14px; font-weight: 700; letter-spacing: .06em; }
+.missionList p { margin-top: 4px; color: var(--muted); font-size: 14px; line-height: 21px; font-weight: 700; letter-spacing: .03em; }
 .missionList .currentMission { border-color: var(--night); background: var(--night); color: var(--white); }
 .missionList .currentMission > span { background: var(--acid); }
 .missionList .currentMission p { color: var(--acid); }
 .missionList .futureMission { border-color: rgba(16,15,15,.22); background: var(--paper); }
 .missionList .futureMission > span { color: var(--muted); }
 
-.accountBoundary { min-height: 720px; padding: 96px max(64px, calc((100vw - 1312px) / 2)); display: grid; grid-template-columns: 1.15fr .85fr; gap: 72px; align-items: center; background: var(--night); color: var(--white); }
+.accountBoundary { min-height:520px; padding:130px max(64px,calc((100vw - 1312px)/2)); display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; background:var(--field); color:var(--ink); }
 .accountCopy { display: grid; justify-items: start; }
 .accountCopy h2 { margin-top: 24px; display: grid; }
 .accountCopy h2 strong { font-size: clamp(48px, 5vw, 70px); line-height: 1; letter-spacing: -.055em; }
 .accountCopy h2 em { margin-top: 5px; font-size: clamp(50px, 5.2vw, 74px); line-height: .95; }
-.accountCopy > p { max-width: 700px; margin-top: 30px; color: var(--night-muted); font-size: 17px; line-height: 1.5; }
-.accountCopy ol { margin: 30px 0 0; padding: 0; list-style-position: inside; display: grid; gap: 14px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.accountPromises { display:grid; gap:18px; }
+.accountPromises p { margin:0; color:var(--muted); font-size:15px; line-height:1.6; }
+.accountPromises p::first-letter { color:var(--sb-teal); }
 .accountImage { height: 560px; overflow: hidden; }
 .accountImage img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: center 30%; }
 
@@ -149,7 +149,7 @@
 .evidenceIntro h2 { margin-top: 20px; font-size: clamp(44px, 4.4vw, 62px); line-height: 1.02; letter-spacing: -.052em; }
 .evidenceGrid { margin-top: 46px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 32px; }
 .evidenceGrid article { min-height: 256px; padding: 24px; border: 1px solid var(--muted); border-radius: 24px; display: flex; flex-direction: column; background: var(--white); }
-.evidenceGrid article > span { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+.evidenceGrid article > span { color: var(--muted); font-size: 13px; line-height: 18px; font-weight: 700; letter-spacing: .05em; }
 .evidenceGrid article > strong { margin-top: 34px; font-size: 64px; line-height: .8; }
 .evidenceGrid h3 { margin-top: 16px; font-size: 26px; line-height: 1.05; letter-spacing: -.035em; }
 .evidenceGrid article > p { margin-top: auto; padding-top: 24px; color: var(--muted); font-size: 14px; line-height: 1.4; }
@@ -161,8 +161,9 @@
 .dataBoundary strong { font-size: 12px; }
 .dataBoundary p { color: var(--muted); font-size: 14px; line-height: 1.45; }
 
-.finalAction { min-height: 430px; padding: 88px max(64px, calc((100vw - 1312px) / 2)); display: flex; flex-direction: column; align-items: flex-start; background: var(--night); color: var(--white); }
+.finalAction { min-height:560px; padding:120px max(64px,calc((100vw - 1312px)/2)); display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; background:var(--night); color:var(--white); }
 .finalAction h2 { max-width: 1050px; margin-top: 22px; font-size: clamp(50px, 5.4vw, 76px); line-height: 1; letter-spacing: -.055em; text-wrap: balance; }
+.finalAction h2 em { display:block; color:var(--acid); font-family:var(--font-seven-serif),serif; font-weight:400; }
 .finalAction > p { margin-top: 18px; color: var(--night-muted); font-family: var(--font-seven-serif), Georgia, serif; font-size: clamp(26px, 3vw, 40px); font-style: italic; line-height: 1.1; }
 .finalAction .primaryButton { margin-top: 32px; }
 
@@ -174,7 +175,8 @@
 }
 
 @media (max-width: 900px) {
-  .heroInner, .returningInner { width: 100%; min-height: 0; padding: 56px 20px 72px; grid-template-columns: 1fr; gap: 36px; }
+  .heroInner, .returningInner { width:100%; min-height:0; padding:132px 20px 72px; grid-template-columns:1fr; gap:36px; }
+  .heroCopy h1,.returningCopy h1 { max-width:100%; overflow-wrap:anywhere; }
   .heroCopy h1 strong { font-size: clamp(58px, 15vw, 82px); }
   .heroCopy h1 em { font-size: clamp(50px, 13vw, 72px); }
   .heroVisual { width: min(100%, 560px); height: 390px; }
@@ -182,8 +184,9 @@
   .returningCopy h1 { font-size: clamp(42px, 11.5vw, 64px); }
   .returningImage { width: min(100%, 560px); height: 360px; }
   .builds, .contract, .missionMap, .accountBoundary, .evidence, .finalAction { padding: 72px 20px 80px; }
-  .buildGrid { margin-top: 44px; grid-template-columns: 1fr; gap: 12px; }
-  .buildGrid article { min-height: 310px; }
+  .builds { grid-template-columns:1fr; gap:42px; }
+  .buildGrid { grid-template-columns: 1fr; }
+  .buildGrid article { min-height:100px; }
   .contract { grid-template-columns: 1fr; gap: 44px; }
   .contractImage { height: 460px; }
   .contractCopy { grid-row: 2; }
@@ -196,19 +199,19 @@
 }
 
 @media (max-width: 420px) {
-  .heroInner { padding-top: 34px; padding-bottom: 64px; gap: 22px; }
-  .heroCopy > span { font-size: 10px; }
+  .heroInner { padding-top:112px; padding-bottom:64px; gap:22px; }
+  .heroCopy > span { font-size: 12px; }
   .heroCopy h1 { margin-top: 14px; }
   .heroCopy h1 strong { font-size: clamp(50px, 14.2vw, 60px); line-height: .86; }
   .heroCopy h1 em { margin-top: 10px; font-size: clamp(38px, 11vw, 46px); line-height: .96; }
   .heroCopy > p { margin-top: 18px; font-size: 15px; }
-  .heroCopy .primaryButton { width: min(100%, 234px); margin-top: 14px; }
-  .heroCopy > small { margin-top: 12px; font-size: 9px; }
+  .heroCopy .primaryButton { width:100%; min-width:0; margin-top:14px; }
+  .heroCopy > small { margin-top: 12px; font-size: 13px; line-height: 18px; }
   .heroVisual { height: 240px; }
-  .returningInner { min-height: 772px; padding: 44px 20px 28px; gap: 16px; align-content: start; }
+  .returningInner { min-height:772px; padding:112px 20px 40px; gap:20px; align-content:start; }
   .returningCopy h1 { margin-top: 16px; font-size: 42px; line-height: 1.08; }
   .returningCopy > p { margin-top: 18px; font-size: 16px; }
-  .returningCopy .primaryButton { width: 234px; margin-top: 16px; }
+  .returningCopy .primaryButton { width:100%; min-width:0; margin-top:16px; }
   .serverState { margin-top: 16px; }
   .returningImage { height: 210px; }
   .sectionIntro h2, .pathIntro h2 { font-size: 36px; }
@@ -234,4 +237,15 @@
 @media (prefers-reduced-motion: reduce) {
   .primaryButton { transition: none; }
   .primaryButton:hover { transform: none; }
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

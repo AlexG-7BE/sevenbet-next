@@ -18,18 +18,21 @@ export type ProgrammeAiProviderOutcome =
   | "invalid_output"
   | "provider_error";
 
-function userControlledFallback(input: ProgrammeAiTurn): ProgrammeAiTurnResult {
+function userControlledFallback(
+  input: ProgrammeAiTurn,
+  disposition: ProgrammeAiTurnResult["disposition"] = "CONTINUE",
+): ProgrammeAiTurnResult {
   const concise = input.situation.replace(/\s+/g, " ").trim().slice(0, 320);
   return {
     kind: "STARTING_POINT_CANDIDATE",
     candidate: parseFallbackCandidate({
       startingPoint: concise,
-      desiredChange: "",
+      desiredChange: "Build more control around the situation described here.",
       broadContext: "NOT_SPECIFIED",
-      continuationCue: "",
+      continuationCue: "Continue from the situation described in Mission 01.",
     }),
     generation: "USER_CONTROLLED_FALLBACK",
-    disposition: "CONTINUE",
+    disposition,
   };
 }
 
@@ -47,8 +50,11 @@ export class ProgrammeAiOrchestrator {
     try {
       const port = this.port === undefined ? programmeAiPortFromEnvironment() : this.port;
       if (!port) return { result: userControlledFallback(input), providerOutcome: "fallback" };
+      const result = parseProgrammeAiPortResult(await port.createTurn(input));
       return {
-        result: parseProgrammeAiPortResult(await port.createTurn(input)),
+        result: result.kind === "CLARIFICATION_REQUIRED"
+          ? userControlledFallback(input, result.disposition)
+          : result,
         providerOutcome: "provider",
       };
     } catch (error) {
