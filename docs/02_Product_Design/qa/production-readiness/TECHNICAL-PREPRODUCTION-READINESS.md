@@ -4,8 +4,8 @@ Date: 2026-08-18
 Repository: `AlexG-7BE/sevenbet-next`  
 Branch: `codex/final-design-handoff-v1`  
 Draft PR: `#76`  
-Starting SHA: `a645fa18bf83fd933f09df865975e722d92efd21`  
-Audited runtime/source SHA: `9a6507add82d74bf6290add45daa0d70d9d06c02`
+Starting SHA: `c0f2550893b1052b92103a17078a5bd8502f0f7f`
+Audited runtime/source SHA: `c0f2550893b1052b92103a17078a5bd8502f0f7f`
 
 This is the authoritative evidence ledger for the final technical pre-production configuration pass. The documentation closure follows the runtime/source SHA above and contains no runtime change. Production remained unchanged throughout the pass.
 
@@ -19,26 +19,24 @@ This is the authoritative evidence ledger for the final technical pre-production
 
 ## Executive verdict
 
-**NOT TECHNICALLY READY.**
+**NOT PRE-DEPLOY READY.**
 
-The branch code and Preview are technically ready, but three Production closure checks cannot be truthfully called ready under the evidence contract:
+The branch code is ready and the Contact delivery receipt is verified. The current Production Cron `308` is a known old-deployment result whose source defect is fixed and tested in the branch; it is a mandatory post-deploy smoke gate, not an unresolved branch or pre-deploy code blocker.
 
-1. the platform-masked Production `DATABASE_URL` / `DIRECT_URL` pair has not passed the new sanitised deployment preflight;
-2. the current Production deployment has returned `308` for its scheduled purge since canonical-host enforcement landed; the branch fixes that source defect, but Production has not been deployed and the first post-deploy `200` is not yet evidence;
-3. one current Production Contact request reached provider `2xx`, but destination-mailbox receipt has not been independently confirmed.
+One pre-deploy technical blocker remains: the platform-masked Production `DATABASE_URL` / `DIRECT_URL` pair has not been directly classified as pooled/direct with matching database identity. Vercel's read-only UI proved both Sensitive Production entries are present, but did not expose their values; an isolated `vercel env run --environment production` check did not make either Sensitive value available to the local readiness process. That safe failure is a tooling/authority limitation, not evidence that the deployed values are missing or mismatched.
 
 No blind Production mutation is recommended. The minimal closure actions are recorded at the end.
 
 ## Repository and deployment baseline
 
-- **Detected:** local, origin and PR started at `a645fa18bf83fd933f09df865975e722d92efd21`; the worktree was clean; PR #76 was Open/Draft and mergeable; Production had not been deployed from this branch.
+- **Detected:** local, origin and PR started at `c0f2550893b1052b92103a17078a5bd8502f0f7f`; the worktree was clean; PR #76 was Open/Draft and mergeable; Production had not been deployed from this branch.
 - **Detected:** runtime remediation was committed as `9a6507add82d74bf6290add45daa0d70d9d06c02` and pushed to the same branch/PR.
 - **Detected:** exact-source Preview deployment `dpl_AnwQQ3KBXf5YAmTDKDvmKHH7m2TA` is Ready at `https://sevenbet-next-k2afxxgr7-alexg-7bes-projects.vercel.app`; the branch alias is `https://sevenbet-next-git-codex-final-design-9fca2f-alexg-7bes-projects.vercel.app`.
 - **Detected:** the unchanged Production deployment is `dpl_BVu6YTMWUqTtGja6z2jxDg4nUVMk` at main SHA `0c956d0d99c9ac703234e82a0bca3c1d5b3a9167`.
 
 ## 1. Programme operations
 
-Workstream status: **READY** in the audited branch. Current Production purge execution remains a separately recorded mismatch until the branch is authorised, deployed and observed once.
+Workstream status: **READY** in the audited branch. Current Production purge execution remains a known old-deployment `308`; validation of the first deployed execution is a mandatory post-deploy acceptance gate.
 
 ### Migrations
 
@@ -58,8 +56,8 @@ Prisma governs migration idempotency. No Production migration or data mutation w
 | Purge implementation | **READY** | **Detected:** bounded batches delete only expired pending claims, eligible expired anonymous sessions and expired runtime limiter buckets. A 24-hour anonymous-session grace and consumed-claim rules are retained. |
 | Purge authentication | **READY** | **Detected:** exact Bearer `CRON_SECRET` verification uses constant-time comparison; unauthenticated live Production access returned `401`; manual Production execution requires two explicit confirmations. |
 | Purge schedule | **READY** | **Detected:** source and the Vercel Cron configuration both declare `/api/internal/cron/programme-expiry-purge` at `17 4 * * *`; Cron is enabled and the Production secret is present. |
-| Production purge configuration | **MISMATCH** on the unchanged deployment | **Detected:** one earlier Production execution returned `200`, followed by daily `308` responses on 2026-08-14 through 2026-08-18. The canonical-host middleware redirected Vercel's generated deployment-host Cron request before handler authentication. |
-| Branch remediation | **READY** | **Detected:** the exact internal Cron path now bypasses public-host canonicalisation while adjacent paths still redirect; focused regression tests pass. |
+| Current Production execution | **KNOWN OLD-DEPLOYMENT FAILURE (`308`)** | **Detected:** one earlier Production execution returned `200`, followed by daily `308` responses on 2026-08-14 through 2026-08-18; a fresh read-only request to the unchanged Production alias still returned `308`. The deployed canonical-host middleware redirects the generated deployment-host Cron request before handler authentication. |
+| Branch remediation | **READY; NOT A BRANCH BLOCKER** | **Detected:** the exact internal Cron path now bypasses public-host canonicalisation while adjacent paths still redirect; focused regression tests pass. After a separately authorised deployment, the exact acceptance contract below must pass. |
 
 The purge implementation was also hardened against a serverless race: `deleteMany` now repeats the expiry/eligibility predicate together with the selected identifiers, so a limiter bucket refreshed between selection and deletion is preserved.
 
@@ -94,7 +92,7 @@ Workstream status: **UNKNOWN** for final Production readiness; **READY** for the
 
 | Variable | Preview | Production | Classification | Correctness |
 | --- | --- | --- | --- | --- |
-| `DATABASE_URL` | **Detected:** present, Sensitive, Preview-scoped; deployed preflight reports pooled | **Detected:** present, Sensitive, Production-scoped; **Inferred** pooled from the linked Prisma resource and absence of the production runtime warning | Preview **POOLED**; Production **INFERRED POOLED** | Preview **VERIFIED**; Production **UNKNOWN** because the current sensitive value cannot be read safely |
+| `DATABASE_URL` | **Detected:** present, Sensitive, Preview-scoped; deployed preflight reports pooled | **Detected:** present, Sensitive, Production-scoped; direct value unavailable to the authorised read-only check | Preview **POOLED**; Production **UNKNOWN** | Preview **VERIFIED**; Production **UNKNOWN** because the current Sensitive value could not be safely supplied to the readiness process |
 | `DIRECT_URL` | **Detected:** present, Sensitive, Preview-scoped; deployed preflight reports direct | **Detected:** present, Sensitive, Production-scoped | Preview **DIRECT**; Production **UNKNOWN** | Preview **VERIFIED**; Production **UNKNOWN** |
 
 The exact Preview Vercel build emitted only safe classifications:
@@ -110,11 +108,13 @@ No URL, host credential, username or password was printed. The successful Previe
 - **Detected:** Prisma `6.19.3` generation and schema validation pass.
 - **Detected:** Programme transaction/concurrency suites pass, including Serializable retry and exact-once paths.
 - **Inferred:** current Production runtime is pooled because the runtime warning executes when the Prisma module loads in `NODE_ENV=production`, and no warning appeared in the inspected live traffic window. This is strong evidence, but not a substitute for direct classification of the masked `DIRECT_URL`.
-- **Database pooling:** **UNKNOWN** for the Production pair. The branch will fail a future Vercel Preview or Production build unless both roles, SSL settings and redacted database identity satisfy the contract.
+- **Detected:** Vercel's Production environment UI shows both required entries as present, Sensitive and Production-scoped. Copying secret values is disabled, and the edit form exposes only a blank replacement field; no save was attempted.
+- **Unknown:** the isolated Vercel CLI Production-environment execution omitted the Sensitive pair from the local readiness process. The sanitiser failed closed without printing a secret, no database connection/read probe was possible, the temporary CLI session was logged out, and all temporary Vercel state was deleted and verified absent.
+- **Database pooling:** **UNKNOWN** for the Production pair. No Production database, environment value or row was changed. The branch will fail a future Vercel Preview or Production build unless both roles, SSL settings and redacted database identity satisfy the contract.
 
 ## 3. Contact delivery
 
-Workstream status: **UNKNOWN** only at the final mailbox-receipt boundary; application/provider configuration is ready.
+Workstream status: **VERIFIED** for the existing Production event; no new message was sent.
 
 ### Flow and provider
 
@@ -128,17 +128,17 @@ Workstream status: **UNKNOWN** only at the final mailbox-receipt boundary; appli
 
 | Variable | Preview | Production | Correctness |
 | --- | --- | --- | --- |
-| `CONTACT_EMAIL_DELIVERY_ENABLED` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by a current Production provider-accepted event |
-| `RESEND_API_KEY` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by provider acceptance; value not exposed |
-| `CONTACT_EMAIL_FROM` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by provider acceptance; value not exposed |
-| `CONTACT_EMAIL_TO` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | Provider accepted; mailbox receipt remains **UNKNOWN** |
+| `CONTACT_EMAIL_DELIVERY_ENABLED` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by a current Production provider-delivered event and mailbox receipt |
+| `RESEND_API_KEY` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by provider delivery; value not exposed |
+| `CONTACT_EMAIL_FROM` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by provider delivery; value not exposed |
+| `CONTACT_EMAIL_TO` | **ABSENT** for this branch; old unrelated branch-scoped entry does not apply | **PRESENT**, Sensitive, Production-scoped | **VERIFIED** by provider delivery plus correlated receipt in the actual configured support mailbox |
 
 ### Delivery evidence
 
-- **Detected:** the recent Vercel log window contains one Production Contact request with provider `2xx`, application `200` and `delivered`; Preview history contains two provider-accepted tests and one honeypot/validation rejection with no provider call.
-- **Detected:** historical Founder-controlled Preview evidence included actual receipt in the intended support inbox.
-- **Unknown:** no independent mailbox or provider-console receipt confirmation was available for the current Production event, and this pass did not send a real message.
-- **Contact delivery:** **CONFIGURED BUT LIVE DELIVERY NOT VERIFIED**.
+- **Detected:** existing Production provider event `55880e83-cad4-434b-89ea-8ebdda7cd09e`, generic technical subject `[B4GAMBLE Contact] B4GAMBLE Contact Production verification`, was sent and marked `delivered` by Resend on 2026-08-13 at 17:41 local time.
+- **Detected:** a bounded read-only search in the actual configured support mailbox found the exact correlated subject and timestamp in Inbox.
+- **Detected:** no customer content or personal sender data was needed for correlation, no password or secret was exposed, and no new Contact message was sent.
+- **Contact delivery:** **VERIFIED**.
 
 ## 4. Production configuration readiness
 
@@ -166,11 +166,11 @@ Workstream status: **UNKNOWN** until the Production database pair passes the san
 | `PROGRAM_AI_OPENAI_MODEL` | **ABSENT**; source default applies | **PRESENT / SCOPED** | **VERIFIED:** approved model/default | None |
 | `PROGRAM_AI_TRANSCRIPTION_MODEL` | **ABSENT**; source default applies | **PRESENT / SCOPED** | **VERIFIED:** approved model/default | None |
 | `CRON_SECRET` | **ABSENT** intentionally | **PRESENT / SCOPED / Sensitive** | **VERIFIED:** unauthorised request fails `401`; an earlier scheduled invocation reached `200` | Deploy branch only with Founder authority, then require first scheduled `200` |
-| Vercel Programme purge Cron | Not scheduled for Preview | **PRESENT / Production** | Source/schedule **VERIFIED**; current deployment execution **MISMATCH** (`308`) | Branch source fix must be deployed before readiness |
-| `CONTACT_EMAIL_DELIVERY_ENABLED` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | **VERIFIED** by provider acceptance | Confirm destination receipt |
+| Vercel Programme purge Cron | Not scheduled for Preview | **PRESENT / Production** | Branch source/schedule **READY**; current old deployment returns `308` | Mandatory post-deploy smoke after separately authorised deployment; not a branch blocker |
+| `CONTACT_EMAIL_DELIVERY_ENABLED` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | **VERIFIED** by delivered provider event and mailbox receipt | None |
 | `RESEND_API_KEY` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | **VERIFIED** by provider acceptance | None |
 | `CONTACT_EMAIL_FROM` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | **VERIFIED** by provider acceptance | None |
-| `CONTACT_EMAIL_TO` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | Application/provider **VERIFIED**; mailbox receipt **UNKNOWN** | Confirm destination receipt |
+| `CONTACT_EMAIL_TO` | **ABSENT** for this branch | **PRESENT / SCOPED / Sensitive** | Application/provider/mailbox receipt **VERIFIED** | None |
 | `NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED` | **ABSENT**; default disabled | **PRESENT / SCOPED** | **VERIFIED:** enabled; Vercel Analytics is active on the Pro project | None |
 | `AFFILIATE_REDIRECT_ENGINE_ENABLED` | **PRESENT / SCOPED**, disabled | **ABSENT**; fail-closed default disabled | **VERIFIED** disabled | None |
 | `ALLOW_TEMPORARY_PRODUCTION_DEMO_CASINOS` | **ABSENT** | **ABSENT** | **VERIFIED** fail-closed | None |
@@ -212,6 +212,7 @@ Workstream status: **UNKNOWN** until the Production database pair passes the san
 - `npm run build` — **PASS**.
 - `npm run ci:build-secrets` — **PASS**, 721 browser-deliverable files inspected.
 - `npm run typecheck` — **PASS**.
+- Focused Cron/database/Contact regressions — **PASS**, 49/49.
 - `npm run programme:test` — **PASS**, 120/120.
 - Programme runtime/analytics — **PASS**, 43/43 plus 3/3.
 - Auth/security — **PASS**, 49/49.
@@ -222,26 +223,37 @@ Workstream status: **UNKNOWN** until the Production database pair passes the san
 
 The local `.env` uses a direct runtime URL and therefore deliberately does not establish hosted readiness. The Vercel-only preflight skips outside Vercel; local inspection truthfully reports that local mismatch.
 
-### Remote at audited runtime/source SHA
+### Remote at starting runtime/source SHA
 
 - Agent Core — **PASS**.
 - Quality — **PASS**.
 - Database / Migration Verification — **PASS**.
 - Vercel — **PASS**, exact-source Preview Ready.
 - Vercel Preview Comments — **PASS**.
-- Build / Browser — recorded from the final GitHub check on the closure head.
+- Build / Browser — **PASS**.
 
-## Required Production closure actions
+### Post-deploy Cron acceptance contract
 
-1. **Production database pair — secure verification.** Run the repository's sanitised database-readiness check in the actual Vercel Production build context and require `runtimeMode=pooled`, `directMode=direct`, `sameDatabaseIdentity=true`, `ready=true`. If it fails, set `DATABASE_URL` to the existing provider's pooled runtime connection with `sslmode=require` and `connection_limit=1`, and set `DIRECT_URL` to the same database's direct connection with `sslmode=require`. Do not invent or expose URLs. **Production mutation performed: NO.**
-2. **Programme purge — deployed execution.** After a separately authorised merge/Production deployment, confirm the first `/api/internal/cron/programme-expiry-purge` invocation reaches the handler and records `200`/`cron_result=success`, not `308`. Do not change the Cron path, schedule or secret unless that exact observation fails for a new reason. **Production mutation performed: NO.**
-3. **Contact destination — mailbox receipt.** Ask the Founder/support-mailbox owner to confirm the already observed 2026-08-13 Production Contact event arrived in the intended inbox. If it cannot be identified, separately authorise one clearly labelled internal technical submission after deployment and verify both provider delivery and mailbox receipt. **Message sent in this pass: NO.**
+After a separately authorised Production deployment:
+
+1. verify `/api/internal/cron/programme-expiry-purge` is not canonical-redirected;
+2. verify an unauthenticated request returns `401`;
+3. verify an authorised scheduled invocation reaches the handler;
+4. verify HTTP `200`;
+5. verify structured `cron_result=success`;
+6. verify no Programme/purge errors in runtime logs;
+7. verify adjacent non-Cron deployment-host routes still follow the canonical redirect policy.
+
+## Required pre-deploy closure action
+
+1. **Production database pair — secure verification only.** In a Founder/platform-owner-controlled execution context that actually receives both Sensitive Production values, run the repository's sanitised readiness check and require only the safe result `runtimeMode=pooled`, `directMode=direct`, `sameDatabaseIdentity=true`, `ready=true`. Do not reveal or deliberately materialise either URL. If the check reports a mismatch, stop and separately authorise the exact correction; do not infer or mutate blindly. **Production mutation performed: NO.**
+
+The Contact closure is complete. Programme Cron execution is a post-deploy acceptance gate and not a remaining pre-deploy branch blocker.
 
 ## Founder authority required
 
 - Approve or reject merge/Production deployment of Draft PR #76; neither occurred here.
-- Provide secure Production database verification authority and approve any correction only if the sanitised check fails.
-- Confirm the existing Production Contact event in the Founder-controlled support mailbox, or authorise one internal test if confirmation is unavailable.
+- Provide a secure execution context with access to both Sensitive Production database values, or have the platform owner run the sanitised check and return only its classifications. Approve any correction only if that check directly proves a mismatch.
 
 ## Production status
 
