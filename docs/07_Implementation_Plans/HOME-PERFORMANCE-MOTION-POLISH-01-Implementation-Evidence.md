@@ -45,10 +45,14 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 | Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation and interaction cleanup passed |
 | Idle instrumentation | 0 RAF, 0 rect, 0 style and 0 height reads after settling |
 | `git diff --check` | Passed |
+| Draft PR CI | Agent Core, Quality, Database / Migration Verification and Build / Browser passed |
+| Vercel | Preview deployment Ready; Production untouched |
 
 ## Visual regression status
 
 **Detected:** local production-build review at 1440×900, 1024×768 and 390×844 preserved the current merged Home composition, crop positions, typography, copy, section order, sticky chapter treatment and public shell. Opening and chapter states remained recognisable with no overflow or broken media. The only intentional perceptual differences are native scroll control and the tighter reveal timing. RFC-034 and its merged QA evidence remain the reference lock; Refero review introduced no new visual direction.
+
+**Detected:** authenticated side-by-side deployment inspection found the same title, Home content and 6,575px document composition height on Production and Preview. Production selected seven eager raw JPEGs without intrinsic dimensions. Preview selected four responsive opening AVIFs with intrinsic dimensions and left all three lazy chapter images unloaded at the top of the page.
 
 ## Architectural follow-up, not implemented
 
@@ -56,4 +60,4 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 
 ## Release state
 
-**Local implementation and verification are complete.** Exact-head checks, Vercel Preview evidence and Draft PR details remain required before Founder review.
+**Ready for Founder review as Draft PR #77.** Vercel Preview and all required PR checks are green. The PR remains unmerged and Production is untouched; the exact final head and deployment URLs are reported from the live PR/deployment records rather than embedded here, so a documentation-only commit cannot make them stale.
