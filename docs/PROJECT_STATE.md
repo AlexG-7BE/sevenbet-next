@@ -1,5 +1,12 @@
 # Project State
 
+## HOME-PERFORMANCE-MOTION-POLISH-01 branch addendum — 2026-08-18
+
+- **Detected:** RFC-035 is approved for bounded Draft-PR and Preview implementation on branch `codex/home-performance-motion-polish-01`, created from current main `381624c410222b7bb56f65b755d562b284ff08fa`.
+- **Detected baseline:** Home cancels fine-pointer wheel input for a 600ms section tween, performs continuous layout-heavy RAF work and fetches 7,453,085 bytes of unique Home JPEGs before scroll. The exact reproducible baseline is recorded in `docs/07_Implementation_Plans/HOME-PERFORMANCE-MOTION-POLISH-01-Implementation-Evidence.md`.
+- **Planned:** native user-controlled scrolling, cached layout geometry, event-driven animation frames, responsive Home media and Home-only reveal timing polish. RFC-034 remains the visual authority.
+- **Production unchanged:** merge, Production deployment/configuration/data changes, security/dynamic-rendering changes and Programme/commercial changes are not authorised.
+
 ## FINAL PRE-DEPLOY TECHNICAL CLOSURE — 2026-08-18
 
 - **Detected:** Draft PR #76 started this closure at exact local/origin/PR SHA `c0f2550893b1052b92103a17078a5bd8502f0f7f`, Open/Draft/cleanly mergeable, with a clean worktree and all six remote contexts green. The exact authenticated Vercel Programme purge path bypasses public-host canonicalisation on generated Production deployment hosts, while adjacent paths retain `308`; bounded purge deletion repeats expiry eligibility so a concurrently refreshed limiter bucket is not deleted. Focused Cron/database/Contact regressions pass 49/49, and typecheck, production build, build-secret scan and full quality pass.

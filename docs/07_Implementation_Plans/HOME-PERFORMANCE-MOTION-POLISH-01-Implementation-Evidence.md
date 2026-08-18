@@ -1,0 +1,59 @@
+# HOME-PERFORMANCE-MOTION-POLISH-01 — Implementation Evidence
+
+## Boundary
+
+RFC-035 governs this Preview-only workstream. RFC-034 remains the presentation authority. Production, Programme, commercial, data, auth and nonce-CSP architecture are unchanged.
+
+## Baseline — 2026-08-18
+
+| Measure | Detected before change |
+| --- | ---: |
+| Exact main/base SHA | `381624c410222b7bb56f65b755d562b284ff08fa` |
+| Unique Home JPEG requests before scroll | 5 |
+| Home JPEG bytes before scroll | 7,453,085 |
+| Visible opening-source bytes | 4,551,142 |
+| Idle RAF callbacks / second | 60 |
+| Idle geometry reads / second | 60 |
+| Idle computed-style reads / second | 240 |
+| Idle height reads / second | 240 |
+| Desktop wheel policy | cancelled; accumulated; 600ms locked section tween |
+| Coarse-pointer snap policy | mandatory |
+| Home rise timing | 700ms transition; 130ms/item stagger |
+
+The localhost browser baseline used a fresh 1440×900 Chromium context after hydration and network idle. Layout instrumentation was reset before a settled one-second sample. Network byte counts are response-body bytes for `/home/*` image requests.
+
+## Implemented evidence
+
+- **Detected:** the Home interaction module no longer registers a wheel listener, calls `preventDefault()`, accumulates wheel input, locks input or runs a programmatic scroll tween. Wheel, repeated wheel and keyboard scrolling are browser-controlled.
+- **Detected:** chapter geometry is cached. It is measured at initialisation and invalidated by window resize or `ResizeObserver`; steady-state scroll frames reuse the cached values.
+- **Detected:** the Home RAF scheduler is event-driven. It runs for pending scroll work or unsettled pointer springs and stops when settled.
+- **Detected:** a settled one-second localhost sample recorded zero Home RAF callbacks, geometry reads, computed-style reads and height reads.
+- **Detected:** 40 static AVIF/WebP candidates cover five source images at 320, 640, 1280 and 1920 pixels. The renderer supplies `srcset`, `sizes`, intrinsic dimensions and JPEG fallback.
+- **Detected:** the four opening-photo cards are eager because they are visible in the desktop opening composition; only `Creator at work` has high fetch priority. All three chapter images are `loading="lazy"` with low fetch priority.
+- **Detected:** a fresh 1440×900 Chromium run transferred 41,469 bytes for the four visible opening AVIFs. The same run transferred 254,921 Home-image bytes across six AVIF requests after Chromium also natively prefetched two lazy chapter candidates; `chapter-apply` and all JPEG fallbacks remained unfetched.
+- **Detected:** observed initial Home image transfer fell 96.6% from 7,453,085 bytes to 254,921 bytes. The visible opening-source comparison fell 99.1% from 4,551,142 bytes to 41,469 bytes.
+- **Detected:** Home rise timing is 460ms with a 60ms stagger. Coarse-pointer CSS snapping is `proximity`, not `mandatory`.
+
+## Verification — local production build
+
+| Gate | Result |
+| --- | --- |
+| `npm run ci:quality` | Passed |
+| `npm run build` | Passed; existing local direct-Prisma endpoint warning only |
+| Focused structural performance tests | 4 passed |
+| Chromium + WebKit Home/systemic/performance browser matrix | 86 passed |
+| Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation and interaction cleanup passed |
+| Idle instrumentation | 0 RAF, 0 rect, 0 style and 0 height reads after settling |
+| `git diff --check` | Passed |
+
+## Visual regression status
+
+**Detected:** local production-build review at 1440×900, 1024×768 and 390×844 preserved the current merged Home composition, crop positions, typography, copy, section order, sticky chapter treatment and public shell. Opening and chapter states remained recognisable with no overflow or broken media. The only intentional perceptual differences are native scroll control and the tighter reveal timing. RFC-034 and its merged QA evidence remain the reference lock; Refero review introduced no new visual direction.
+
+## Architectural follow-up, not implemented
+
+**Inferred:** public-shell TTFB and cacheability may merit a separate RFC that evaluates auth/session isolation around nonce CSP and dynamic rendering. This PR intentionally leaves `force-dynamic`, `connection()`, the nonce and security headers unchanged; no caching conclusion is asserted here.
+
+## Release state
+
+**Local implementation and verification are complete.** Exact-head checks, Vercel Preview evidence and Draft PR details remain required before Founder review.

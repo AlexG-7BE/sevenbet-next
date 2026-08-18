@@ -206,7 +206,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 [data-handoff-page="home"][data-home-interactions="ready"] [data-rise][data-rise-state="visible"] {
   opacity: 1 !important;
   transform: translateY(0) !important;
-  transition: opacity 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
+  transition: opacity 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
 }
 [data-handoff-page="home"] [data-stackpanel],
 [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"],

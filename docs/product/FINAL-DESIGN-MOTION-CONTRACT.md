@@ -4,6 +4,8 @@
 
 This contract records motion detected in `Home.dc.html`, `Hero System.dc.html`, `Best Offers.dc.html`, `Casinos.dc.html`, `Casino Review.dc.html`, `Bonuses.dc.html`, `Learn.dc.html`, `Programme.dc.html` and `support.js` from the supplied final handoff. It is not a motion wish-list.
 
+RFC-035 supersedes the original Home wheel-tween and Home rise-timing rows only. It preserves the handoff composition and easing while returning scroll ownership to the browser and tightening the Home-only reveal.
+
 - **Detected:** page-level handoff files share a `cubic-bezier(0.2, 0.8, 0.2, 1)` reveal language, short 150–250ms control feedback and restrained long image scale.
 - **Detected:** `support.js` implements design-canvas helpers, conditional rendering and `style-hover`/`style-active` preview behaviour. Its editor shine/skeleton effects are not public product motion.
 - **Detected:** Home has a unique pointer spring, full-screen wheel transition, sticky chapter stack and staggered rise system. Those behaviours remain owned by `HandoffInteractions` and are not duplicated by the shared reveal primitive.
@@ -19,9 +21,9 @@ This contract records motion detected in `Home.dc.html`, `Hero System.dc.html`, 
 | Shared native surfaces | Eligible off-screen reveal group | Intersection after capable client initialisation | Visible SSR; then off-screen `opacity: 0`, `translateY(24px)` | Visible, `translateY(0)` | 700ms; optional 130ms item stagger | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both; smaller mobile distance allowed | Always visible, no transform | `SiteMotionController` + page CSS |
 | Home | Opening copy | First render | `opacity: 0`, `translateY(8px)` | Visible | 600ms | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Visible immediately | Existing handoff CSS/runtime |
 | Home | Editorial photo cards | Fine-pointer movement | Current spring position | Depth-relative target position | Continuous spring; `k=.06`, damping `.8` | Underdamped spring | Desktop fine pointer only | Disabled | `HandoffInteractions` |
-| Home | Full-screen chapters | Deliberate vertical wheel gesture | Current chapter stop | Next/previous chapter stop | 600ms | Ease-out quartic | Desktop fine pointer only | Native scroll; no forced tween | `HandoffInteractions` |
+| Home | Full-screen chapters | Native wheel, trackpad, keyboard or touch scroll | User-selected scroll position | User-selected scroll position | Browser-native | Browser-native | Both; coarse pointer uses proximity alignment only | Native scroll | `HandoffInteractions` |
 | Home | Chapter stack | Scroll through programme story | First sheet grows from .24 scale; later sheets stacked | Full sheet and visible chapter copy | Scroll-linked; copy 450ms | Smoothstep / standard opacity | Desktop; simplified mobile layout | Static full panels | `HandoffInteractions` |
-| Home | Rise copy | Section reaches observer threshold | Visible SSR; capable client marks pending at `44px` | Visible, per-item 130ms stagger | 700ms | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Always visible | `HandoffInteractions` |
+| Home | Rise copy | Section reaches observer threshold | Visible SSR; capable client marks pending at `44px` | Visible, per-item 60ms stagger | 460ms | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Always visible | `HandoffInteractions` |
 | Home photo chapters | Background photography | While chapter is present | Scale 1 | Scale 1.06, alternating | 18s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Static scale 1 | Existing handoff page CSS |
 | Casino Review | Opening decision copy | First render | `opacity: 0`, `translateY(8px)` | Visible | 600ms | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Visible immediately | `CasinoProfile.module.css` |
 | Casino Review | Hero media | Page present | Scale 1 | Scale 1.06, alternating | 16s | `cubic-bezier(0.2, 0.8, 0.2, 1)` | Both | Static scale 1 | `CasinoProfile.module.css` |
@@ -46,7 +48,7 @@ This contract records motion detected in `Home.dc.html`, `Hero System.dc.html`, 
 
 ## Performance and accessibility gates
 
-- Continuous work is limited to the already approved Home spring/stack and one animation-frame-coalesced header/profile scroll sync.
+- Home stack work is animation-frame-coalesced only while scroll work is pending. The Home photo spring continues frames only until settled; no Home frame runs while idle. Header/profile scroll sync remains animation-frame-coalesced.
 - Decorative movement uses opacity and transform; header geometry and document flow do not animate.
 - Dialog semantics, focus management, native details keyboard behaviour and visible focus remain intact.
 - Motion never changes runtime scores, calculator arithmetic, Programme state, availability or commercial truth.

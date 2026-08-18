@@ -61,16 +61,15 @@ function setupHomeInteractions(root: HTMLElement) {
   const panels = Array.from(root.querySelectorAll<HTMLElement>("[data-stackpanel]"));
   const stack = panels[0]?.parentElement ?? null;
   const dots = Array.from(root.querySelectorAll<HTMLElement>("[data-stackdot]"));
-  const snapElements = Array.from(root.querySelectorAll<HTMLElement>("[data-snap]"));
   const publicFooter = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
-  let chapterTops: number[] = [];
   let animationFrame = 0;
-  let scrollTweenFrame = 0;
   let observer: IntersectionObserver | null = null;
-  let wheelAccumulator = 0;
-  let snapLockedUntil = 0;
   let destroyed = false;
   let footerObserver: ResizeObserver | null = null;
+  let stackObserver: ResizeObserver | null = null;
+  let geometryDirty = Boolean(stack) && !reducedMotion;
+  let stackDirty = Boolean(stack) && !reducedMotion;
+  let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number }> = [];
 
   const syncClosingComposition = () => {
     if (!publicFooter) return;
@@ -86,7 +85,7 @@ function setupHomeInteractions(root: HTMLElement) {
 
   const reveal = (element: HTMLElement, index = 0) => {
     element.dataset.riseState = "visible";
-    element.style.setProperty("--handoff-rise-delay", `${index * 130}ms`);
+    element.style.setProperty("--handoff-rise-delay", `${index * 60}ms`);
   };
 
   // The server-rendered handoff must be readable before this effect runs. Only opt into
@@ -105,7 +104,7 @@ function setupHomeInteractions(root: HTMLElement) {
     root.dataset.homeInteractions = "ready";
     observer = new window.IntersectionObserver((entries) => {
       for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
+        if (!entry.isIntersecting) continue;
         const section = entry.target as HTMLElement;
         riseElements.filter((element) => section.contains(element)).forEach(reveal);
         observer?.unobserve(section);
@@ -130,6 +129,13 @@ function setupHomeInteractions(root: HTMLElement) {
       y: 0,
     }));
 
+  const springsAreMoving = () => springs.some((spring) => (
+    Math.abs(spring.targetX - spring.x) > 0.01
+    || Math.abs(spring.targetY - spring.y) > 0.01
+    || Math.abs(spring.velocityX) > 0.01
+    || Math.abs(spring.velocityY) > 0.01
+  ));
+
   const onPointerMove = (event: PointerEvent) => {
     const normalizedX = event.clientX / window.innerWidth - 0.5;
     const normalizedY = event.clientY / window.innerHeight - 0.5;
@@ -137,16 +143,24 @@ function setupHomeInteractions(root: HTMLElement) {
       spring.targetX = normalizedX * spring.depth * 1.55;
       spring.targetY = normalizedY * spring.depth * 1.1;
     }
+    scheduleFrame();
   };
 
-  const syncStack = () => {
+  const onPointerLeave = () => {
+    for (const spring of springs) {
+      spring.targetX = 0;
+      spring.targetY = 0;
+    }
+    scheduleFrame();
+  };
+
+  const measureStack = () => {
     if (!stack) return;
     const viewportHeight = window.innerHeight;
     const scrollY = window.scrollY;
     const stackTop = stack.getBoundingClientRect().top + scrollY;
     let flow = 0;
-    let panelIndex = 0;
-    const opens: number[] = [];
+    const nextLayouts: typeof panelLayouts = [];
 
     for (const child of Array.from(stack.children) as HTMLElement[]) {
       if (child.hasAttribute("data-snap")) continue;
@@ -154,11 +168,27 @@ function setupHomeInteractions(root: HTMLElement) {
       const marginTop = Number.parseFloat(childStyle.marginTop) || 0;
       const marginBottom = Number.parseFloat(childStyle.marginBottom) || 0;
       if (child.hasAttribute("data-stackpanel")) {
-        const open = stackTop + flow + marginTop;
-        const raw = open - scrollY;
-        opens.push(open);
-        if (panelIndex === 0 && !reducedMotion) {
-          const distance = Math.max(viewportHeight, flow);
+        nextLayouts.push({
+          element: child,
+          entranceDistance: Math.max(viewportHeight, flow),
+          open: stackTop + flow + marginTop,
+        });
+      }
+      flow += marginTop + child.offsetHeight + marginBottom;
+    }
+
+    panelLayouts = nextLayouts;
+  };
+
+  const syncStack = () => {
+    if (!stack || reducedMotion || !panelLayouts.length) return;
+    const scrollY = window.scrollY;
+    const opens = panelLayouts.map(({ open }) => open);
+
+    panelLayouts.forEach(({ element: child, entranceDistance, open }, panelIndex) => {
+      const raw = open - scrollY;
+      if (panelIndex === 0) {
+          const distance = entranceDistance;
           if (raw >= distance) {
             child.style.setProperty("transform", "none", "important");
             child.style.setProperty("opacity", "0", "important");
@@ -178,90 +208,97 @@ function setupHomeInteractions(root: HTMLElement) {
             if (!element) continue;
             element.style.setProperty("opacity", contentVisible ? "1" : "0", "important");
           }
-        } else {
-          child.style.setProperty("transform", "none", "important");
-          child.style.setProperty("opacity", "1", "important");
-          child.style.borderRadius = reducedMotion || raw <= 2 ? "0" : "28px 28px 0 0";
-          for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
-            element?.style.setProperty("opacity", "1", "important");
-          }
+      } else {
+        child.style.setProperty("transform", "none", "important");
+        child.style.setProperty("opacity", "1", "important");
+        child.style.borderRadius = raw <= 2 ? "0" : "28px 28px 0 0";
+        for (const element of [child.querySelector<HTMLElement>("[data-mob='chapter']"), child.querySelector<HTMLElement>("[data-stackind]")]) {
+          element?.style.setProperty("opacity", "1", "important");
         }
-        panelIndex += 1;
       }
-      flow += marginTop + child.offsetHeight + marginBottom;
-    }
+    });
 
-    chapterTops = [stackTop, ...opens];
     if (dots.length && opens.length >= 3) {
       const progress = Math.min(1, Math.max(0, (scrollY - opens[0]) / Math.max(1, opens[2] - opens[0])));
       dots.forEach((dot) => { dot.style.left = `calc(${(progress * 100).toFixed(2)}% - 4.5px)`; });
     }
   };
 
-  const tick = () => {
-    if (destroyed) return;
+  const syncSprings = () => {
     for (const spring of springs) {
       spring.velocityX = (spring.velocityX + (spring.targetX - spring.x) * 0.06) * 0.8;
       spring.velocityY = (spring.velocityY + (spring.targetY - spring.y) * 0.06) * 0.8;
       spring.x += spring.velocityX;
       spring.y += spring.velocityY;
+      if (Math.abs(spring.targetX - spring.x) <= 0.01 && Math.abs(spring.velocityX) <= 0.01) {
+        spring.x = spring.targetX;
+        spring.velocityX = 0;
+      }
+      if (Math.abs(spring.targetY - spring.y) <= 0.01 && Math.abs(spring.velocityY) <= 0.01) {
+        spring.y = spring.targetY;
+        spring.velocityY = 0;
+      }
       spring.element.style.transform = `translate(${spring.x.toFixed(2)}px, ${spring.y.toFixed(2)}px) rotate(${spring.rotation})`;
     }
-    syncStack();
-    animationFrame = window.requestAnimationFrame(tick);
   };
 
-  const onWheel = (event: WheelEvent) => {
-    if (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-    event.preventDefault();
-    const now = performance.now();
-    if (now < snapLockedUntil) {
-      wheelAccumulator = 0;
-      return;
+  const runFrame = () => {
+    animationFrame = 0;
+    if (destroyed) return;
+    if (geometryDirty) {
+      geometryDirty = false;
+      measureStack();
+      stackDirty = true;
     }
-    wheelAccumulator += event.deltaY;
-    if (Math.abs(wheelAccumulator) < 24) return;
-    const direction = wheelAccumulator > 0 ? 1 : -1;
-    wheelAccumulator = 0;
-    const from = window.scrollY;
-    const maximum = document.documentElement.scrollHeight - window.innerHeight;
-    const stops = [...snapElements.map((element) => element.getBoundingClientRect().top + from), ...chapterTops]
-      .filter((value, index, values) => values.findIndex((candidate) => Math.abs(candidate - value) < 2) === index)
-      .sort((left, right) => left - right);
-    let target = direction > 0 ? maximum : 0;
-    if (direction > 0) target = stops.find((stop) => stop > from + 4) ?? maximum;
-    else for (const stop of stops) if (stop < from - 4) target = stop;
-    target = Math.max(0, Math.min(maximum, target));
-    if (Math.abs(target - from) < 2) return;
-    const duration = 600;
-    snapLockedUntil = now + duration;
-    const distance = target - from;
-    const html = document.documentElement;
-    const previousSnap = html.style.scrollSnapType;
-    html.style.scrollSnapType = "none";
-    const step = () => {
-      const progress = Math.min(1, (performance.now() - now) / duration);
-      window.scrollTo(0, from + distance * (1 - Math.pow(1 - progress, 4)));
-      if (progress < 1) scrollTweenFrame = window.requestAnimationFrame(step);
-      else html.style.scrollSnapType = previousSnap;
-    };
-    scrollTweenFrame = window.requestAnimationFrame(step);
+    if (stackDirty) {
+      stackDirty = false;
+      syncStack();
+    }
+    syncSprings();
+    if (springsAreMoving()) scheduleFrame();
   };
 
-  if (springs.length) window.addEventListener("pointermove", onPointerMove, { passive: true });
-  if (!reducedMotion && finePointer) window.addEventListener("wheel", onWheel, { passive: false });
-  tick();
+  function scheduleFrame() {
+    if (!animationFrame && !destroyed) animationFrame = window.requestAnimationFrame(runFrame);
+  }
+
+  const onScroll = () => {
+    stackDirty = true;
+    scheduleFrame();
+  };
+
+  const onResize = () => {
+    geometryDirty = true;
+    stackDirty = true;
+    scheduleFrame();
+  };
+
+  if (springs.length) {
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onPointerLeave, { passive: true });
+  }
+  if (stack && !reducedMotion) {
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
+    if (typeof window.ResizeObserver === "function") {
+      stackObserver = new window.ResizeObserver(onResize);
+      stackObserver.observe(stack);
+      for (const child of Array.from(stack.children)) stackObserver.observe(child);
+    }
+    scheduleFrame();
+  }
 
   return () => {
     destroyed = true;
     observer?.disconnect();
     footerObserver?.disconnect();
+    stackObserver?.disconnect();
     window.removeEventListener("resize", syncClosingComposition);
+    window.removeEventListener("resize", onResize);
+    window.removeEventListener("scroll", onScroll);
     window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("wheel", onWheel);
+    document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
-    window.cancelAnimationFrame(scrollTweenFrame);
-    document.documentElement.style.removeProperty("scroll-snap-type");
     root.style.removeProperty("--home-public-footer-height");
     delete root.dataset.homeInteractions;
   };

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
-import { transformHomeHandoff } from "@/lib/final-handoff/transforms";
+import { transformHomeHandoff, transformHomeHandoffCss } from "@/lib/final-handoff/transforms";
 import { absoluteUrl } from "@/lib/site";
 
 const title = "B4GAMBLE | Know your limits before you play";
@@ -13,4 +13,6 @@ export const metadata: Metadata = {
   openGraph: { type: "website", siteName: "B4GAMBLE", title, description, url: absoluteUrl("/") },
   twitter: { card: "summary", title, description },
 };
-export default function HomePage() { return <HandoffPage name="home" transform={transformHomeHandoff} />; }
+export default function HomePage() {
+  return <HandoffPage cssTransform={transformHomeHandoffCss} name="home" transform={transformHomeHandoff} />;
+}

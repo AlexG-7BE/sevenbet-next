@@ -370,11 +370,47 @@ export function transformBonusGuideHandoff(html: string) {
  * Production strips that captured chrome in favour of PublicFooter, so the
  * remaining CTA must no longer retain the prototype's independent snap stop.
  */
+const HOME_MEDIA: Record<string, { height: number; width: number }> = {
+  "chapter-apply.jpg": { height: 4000, width: 6000 },
+  "hero-confidence.jpg": { height: 6720, width: 4480 },
+  "hero-creator.jpg": { height: 3844, width: 2563 },
+  "hero-outcome.jpg": { height: 5301, width: 3648 },
+  "hero-plan.jpg": { height: 2336, width: 3500 },
+};
+
+const HOME_MEDIA_WIDTHS = [320, 640, 1280, 1920] as const;
+const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "Applying the plan"]);
+
+function homeResponsiveImage(imageTag: string) {
+  const source = /src="\/home\/([^"/]+\.jpg)"/.exec(imageTag)?.[1];
+  const alt = /alt="([^"]*)"/.exec(imageTag)?.[1] ?? "";
+  const media = source ? HOME_MEDIA[source] : undefined;
+  if (!source || !media) return imageTag;
+
+  const chapter = HOME_CHAPTER_ALTS.has(alt);
+  const loading = chapter ? "lazy" : "eager";
+  const sizes = chapter ? "100vw" : "(max-width: 1000px) 130px, 300px";
+  const candidates = (format: "avif" | "webp") => HOME_MEDIA_WIDTHS
+    .map((width) => `/home/responsive/${source.replace(/\.jpg$/, `-${width}.${format}`)} ${width}w`)
+    .join(", ");
+  const responsiveTag = imageTag
+    .replace(/loading="[^"]+"/, `loading="${loading}"`)
+    .replace("decoding=\"async\"", `decoding="async" fetchpriority="${chapter ? "low" : alt === "Creator at work" ? "high" : "auto"}" height="${media.height}" sizes="${sizes}" width="${media.width}"`);
+
+  return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
+}
+
 export function transformHomeHandoff(html: string) {
-  return html.replace(
-    '<div data-screen-label="Final CTA" data-snap=""',
-    '<div data-screen-label="Final CTA" data-home-final-composition=""',
-  );
+  return html
+    .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
+    .replace(
+      '<div data-screen-label="Final CTA" data-snap=""',
+      '<div data-screen-label="Final CTA" data-home-final-composition=""',
+    );
+}
+
+export function transformHomeHandoffCss(css: string) {
+  return css.replace("scroll-snap-type:y mandatory", "scroll-snap-type:y proximity");
 }
 
 export function transformTenStepsHandoff(html: string) {
