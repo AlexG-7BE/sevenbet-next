@@ -70,7 +70,11 @@ async function deleteBatches({
       .filter((value): value is string => typeof value === "string");
     if (!keys.length) break;
     const result = await collection.deleteMany({
-      where: { [idField]: { in: keys } },
+      // Re-apply the expiry predicate at delete time. A serverless request can
+      // refresh a selected rate-limit bucket (or otherwise change eligibility)
+      // between findMany and deleteMany; deleting by identifier alone would
+      // then remove newly-active state.
+      where: { AND: [where, { [idField]: { in: keys } }] },
     });
     deleted += result.count;
     if (rows.length < take || result.count === 0) break;
