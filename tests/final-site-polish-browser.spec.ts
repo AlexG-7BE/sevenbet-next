@@ -70,18 +70,20 @@ async function installProgramme(page: Page, calls: string[]) {
 test("Casinos filters are semantic, instant, reversible, URL-owned and reload-free", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/casinos", { waitUntil: "networkidle" });
-  await expect(page.getByLabel("Published bonus").first().locator("option").first()).toHaveText("Any bonus availability");
-  await expect(page.getByLabel("Visit availability").first().locator("option").first()).toHaveText("Any visit availability");
-  await expect(page.getByLabel("Responsible gambling").first().locator("option").first()).toHaveText("Any safer-gambling information");
-  await expect(page.getByLabel("Cryptocurrency").first().locator("option").first()).toHaveText("Any crypto support");
-  await expect(page.getByLabel("Mobile support").first().locator("option").first()).toHaveText("Any mobile support");
+  await expect(page.getByLabel("Bonus availability").first().locator("option").first()).toHaveText("Bonus availability");
+  await expect(page.getByLabel("Visit availability").first().locator("option").first()).toHaveText("Visit availability");
+  await expect(page.getByLabel("Safer-gambling information").first().locator("option").first()).toHaveText("Safer-gambling information");
+  await expect(page.getByLabel("Crypto support").first().locator("option").first()).toHaveText("Crypto support");
+  await expect(page.getByLabel("Mobile support").first().locator("option").first()).toHaveText("Mobile support");
+  await expect(page.getByLabel("Bonus availability").first().locator('option[value="true"]')).toHaveText("Available");
+  await expect(page.getByLabel("Crypto support").first().locator('option[value="true"]')).toHaveText("Supported");
   await expect(page.getByRole("button", { name: /Apply|Show|Submit/i })).toHaveCount(0);
 
   let documents = 0;
   page.on("request", (request) => { if (request.resourceType() === "document") documents += 1; });
   await page.getByLabel("Mobile support").first().selectOption("true");
   await expect(page).toHaveURL(/supportsMobile=true/);
-  await page.getByLabel("Published bonus").first().selectOption("true");
+  await page.getByLabel("Bonus availability").first().selectOption("true");
   await expect(page).toHaveURL(/supportsMobile=true.*hasBonus=true|hasBonus=true.*supportsMobile=true/);
   await expect(page.getByLabel("Active filters").getByRole("link", { name: /Remove availability filter Mobile support/ })).toBeVisible();
   await page.getByLabel("Active filters").getByRole("link", { name: /Remove availability filter Mobile support/ }).click();
@@ -93,7 +95,7 @@ test("Casinos filters are semantic, instant, reversible, URL-owned and reload-fr
   await expect(page).not.toHaveURL(/supportsMobile/);
   await page.getByLabel("Active filters").getByRole("link", { name: "Clear all" }).click();
   await expect(page).toHaveURL(/\/casinos$/);
-  await expect(page.getByRole("heading", { name: "No published reviews match these controls." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No published reviews yet." })).toBeVisible();
   expect(documents).toBe(0);
   await noOverflow(page);
 });

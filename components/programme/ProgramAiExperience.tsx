@@ -277,8 +277,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
+    let journey: ProgrammeLocalSubject;
     try {
-      const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
+      journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
         credentials: "same-origin",
@@ -296,6 +297,12 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
       if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+    } catch {
+      setError("Current access could not be verified. Try again.");
+      setBusy(false);
+      return;
+    }
+    try {
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
@@ -317,7 +324,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch {
-      setError("Current access could not be verified. Try again.");
+      setError("Mission 01 is temporarily unavailable. Try again shortly.");
     } finally { setBusy(false); }
   }
 

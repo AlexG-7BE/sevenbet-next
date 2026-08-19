@@ -29,24 +29,24 @@ function FilterSelect({ emptyLabel, label, name, values, selected }: { emptyLabe
   return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">{emptyLabel}</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
 }
 
-function BooleanSelect({ active, emptyLabel, label, name }: { active: boolean; emptyLabel: string; label: string; name: string }) {
-  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">{emptyLabel}</option><option value="true">Required</option></select></label>;
+function BooleanSelect({ active, activeLabel, emptyLabel, label, name }: { active: boolean; activeLabel: string; emptyLabel: string; label: string; name: string }) {
+  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">{emptyLabel}</option><option value="true">{activeLabel}</option></select></label>;
 }
 
 function FilterFields({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
   return <div className={styles.filterGrid}>
-    <FilterSelect emptyLabel="Any market preference" label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
-    <FilterSelect emptyLabel="Any licence or regulator" label="Licence" name="license" selected={query.license ?? []} values={result.facets.licenses} />
-    <FilterSelect emptyLabel="Any payment method" label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
-    <FilterSelect emptyLabel="Any game provider" label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
-    <FilterSelect emptyLabel="Any game category" label="Category" name="category" selected={query.category ?? []} values={result.facets.categories} />
-    <FilterSelect emptyLabel="Any bonus type" label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
-    <BooleanSelect active={Boolean(query.hasBonus)} emptyLabel="Any bonus availability" label="Published bonus" name="hasBonus" />
-    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} emptyLabel="Any visit availability" label="Visit availability" name="hasAvailableVisitAction" />
-    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} emptyLabel="Any safer-gambling information" label="Responsible gambling" name="hasResponsibleGambling" />
-    <BooleanSelect active={Boolean(query.supportsCrypto)} emptyLabel="Any crypto support" label="Cryptocurrency" name="supportsCrypto" />
-    <BooleanSelect active={Boolean(query.supportsMobile)} emptyLabel="Any mobile support" label="Mobile support" name="supportsMobile" />
+    <FilterSelect emptyLabel="Market preference" label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
+    <FilterSelect emptyLabel="Licence / regulator" label="Licence / regulator" name="license" selected={query.license ?? []} values={result.facets.licenses} />
+    <FilterSelect emptyLabel="Payment method" label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
+    <FilterSelect emptyLabel="Game provider" label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
+    <FilterSelect emptyLabel="Game category" label="Game category" name="category" selected={query.category ?? []} values={result.facets.categories} />
+    <FilterSelect emptyLabel="Bonus type" label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
+    <BooleanSelect active={Boolean(query.hasBonus)} activeLabel="Available" emptyLabel="Bonus availability" label="Bonus availability" name="hasBonus" />
+    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} activeLabel="Available" emptyLabel="Visit availability" label="Visit availability" name="hasAvailableVisitAction" />
+    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} activeLabel="Available" emptyLabel="Safer-gambling information" label="Safer-gambling information" name="hasResponsibleGambling" />
+    <BooleanSelect active={Boolean(query.supportsCrypto)} activeLabel="Supported" emptyLabel="Crypto support" label="Crypto support" name="supportsCrypto" />
+    <BooleanSelect active={Boolean(query.supportsMobile)} activeLabel="Supported" emptyLabel="Mobile support" label="Mobile support" name="supportsMobile" />
   </div>;
 }
 
@@ -117,10 +117,11 @@ export function DirectoryFeaturedTheatre({ casino }: { casino: PublicCasinoCardD
 export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) {
   const firstPosition = (result.page - 1) * result.pageSize + 1;
   const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
+  const hasActiveFilters = activeFilterCount(result.appliedFilters) > 0;
   return <div className={styles.results} id="casino-results">
     <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "review record" : "review records"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : hasActiveFilters ? <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div> : <div className={styles.emptyState}><span>Casino directory</span><h2>No published reviews yet.</h2></div>}
     {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
   </div>;
 }

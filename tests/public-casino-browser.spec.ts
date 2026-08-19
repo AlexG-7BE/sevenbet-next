@@ -12,10 +12,10 @@ test("desktop discovery renders the governed empty CMS state without browser err
   await expect(page.getByLabel("Search published reviews")).toBeVisible();
   await expect(page.locator('section[aria-label="Published review preview"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 2, name: "Full directory" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "No published reviews match these controls." })).toBeVisible();
-  await expect(page.getByText("Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.")).toBeVisible();
-  await expect(page.getByLabel("Published bonus").first()).toBeVisible();
-  await expect(page.getByLabel("Responsible gambling").first()).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: "No published reviews yet." })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Clear filters" })).toHaveCount(0);
+  await expect(page.getByLabel("Bonus availability").first()).toBeVisible();
+  await expect(page.getByLabel("Safer-gambling information").first()).toBeVisible();
   await expect(page.locator("#casino-results [role=status]")).toHaveText("0 results · Page 1 of 1");
   await page.getByLabel("Search published reviews").focus();
   expect(await page.getByLabel("Search published reviews").evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
@@ -123,15 +123,15 @@ test("empty directory metadata, canonical rules and fail-closed action state rem
   expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/casinos"');
   expect(defaultHtml).not.toContain('"@type":"ItemList"');
   expect(defaultHtml).not.toContain("DEMONSTRATION DATA");
-  expect(defaultHtml).toContain("No published reviews match these controls.");
-  expect(defaultHtml).toContain("B4GAMBLE will not fill the gap with ineligible operators.");
+  expect(defaultHtml).toContain("No published reviews yet.");
+  expect(defaultHtml).not.toContain("Clear filters");
   expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
 
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();
   expect(pageTwoResponse.status()).toBe(200);
   expect(pageTwoHtml).toContain('rel="canonical" href="https://b4gamble.com/casinos?page=2"');
-  expect(pageTwoHtml).toContain("No published reviews match these controls.");
+  expect(pageTwoHtml).toContain("No published reviews yet.");
 
   const filteredResponse = await request.get(`${baseUrl}/casinos?hasResponsibleGambling=true`);
   const filteredHtml = await filteredResponse.text();
