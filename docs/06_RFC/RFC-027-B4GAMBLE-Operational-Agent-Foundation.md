@@ -1,9 +1,9 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** Approved for bounded implementation
-- **Decision authority:** Founder Office `AGENT-CORE-01`
+- **Status:** Approved for bounded implementation; Partner Operations application-adapter amendment approved
+- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01` instruction
 - **Approved:** 2026-08-13
-- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight Wave 1 specialist definitions, shared policy and result contracts, explicit cost-aware routing, bounded manual runner and no-key structural evaluation
+- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, and one narrow application-side Partner Operations CRM executor
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
@@ -151,7 +151,7 @@ The registry contains exactly these specialists:
 | `programme-ai-eval` | Programme AI Eval Agent | `high_consequence` | `PASS`, `REVIEW`, `BLOCK` |
 | `growth-opportunity-radar` | Growth Opportunity Radar | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `serp-competitor-intelligence` | SERP & Competitor Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
-| `partner-intelligence` | Partner Intelligence Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
+| `partner-operations` | Partner Operations Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 | `digital-pr-data-story` | Digital PR & Data Story Agent | `standard` | `DRAFT`, `REVIEW`, `BLOCK` |
 
 Each definition contains its requested domain checks and exclusions. The Production Sentinel receives deterministic check evidence and interprets it; it does not perform uptime, crawl, HTTP, sitemap, robots, browser, performance or pixel-diff work. Partner Intelligence cannot mark an operator approved or infer an active partnership. Organisation, brands, jurisdiction or market relevance may be described only to the extent directly supported by supplied evidence; a generic register entry, organisation/brand name, source URL or affiliate page cannot establish jurisdiction, Great Britain relevance, regulator or licence scope, eligibility, availability or commercial approval. Supplied public-web sources are described neutrally unless authority, provenance, ownership or official status is explicitly supported; kind, title, URL, excerpt, timestamp, organisation or brand name do not establish source authority. Its fixed eight-case corpus passed a human-reviewed live evaluation at exact head `eb14b33e110451f9b3855fedfa938ef1802936d7`: `8 PASS / 0 REVIEW / 0 FAIL`. This is bounded corpus evidence, not automatic source verification or universal real-world validation. A public-web tool is not authorised. Digital PR cannot contact journalists. Growth specialists cannot optimise harmful gambling activity.
@@ -191,7 +191,7 @@ Wave 1 input must be public, synthetic non-Production fixture content or explici
 
 The package includes no GitHub write, CMS write, email, deployment, database, affiliate, analytics, search-provider, Slack, Gmail, Calendar, GA4, Search Console, Everflow, Income Access, MyAffiliates, Ahrefs or Semrush integration. Public-web evidence may be gathered separately through an approved process and supplied as evidence; the agent itself has no web tool.
 
-Any future tool must pass a separate RFC covering authority, authentication, data minimisation, approval/human review, provider contracts, logging, retention, error behaviour and kill switch. External write tools remain outside the Wave 1 ceiling.
+Any future external tool must pass a separate RFC covering authority, authentication, data minimisation, approval/human review, provider contracts, logging, retention, error behaviour and kill switch. The internal Partner Operations CRM adapter approved below is not an external tool and does not broaden the package to arbitrary writes.
 
 ## 13. Structural verification and live evaluation
 
@@ -233,3 +233,19 @@ Adding a specialist requires a registry entry, purpose and prohibited actions, c
 This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / PARTNER-INTEL-EVAL-01 FIXED EIGHT-CASE CORPUS PASSED AT EXACT HEAD / 8 PASS / 0 REVIEW / 0 FAIL / HUMAN-REVIEWED QUALITY EVIDENCE COMPLETE / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks, one authorised neutral connectivity smoke and bounded Partner Intelligence corpus campaign are recorded above. The isolated package has no public-web tool, partner contact or commercial activation authority, and full eight-specialist quality is not established.
 
 PR #69 merged the isolated package to `main`. It remains undeployed, unscheduled and inactive in Production; merge did not authorise agent quality claims, tools, external integrations or Production use. Any later activation review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.
+
+## 16. `COMMERCIAL-OPS-01` Partner Operations amendment
+
+Founder instruction on 2026-08-19 authorises one bounded expansion while preserving package isolation:
+
+1. `partner-operations` replaces `partner-intelligence` as the canonical registry key and name. `partner-intelligence` remains an explicit input compatibility alias resolved to the same definition; there is no duplicate specialist logic.
+2. The true Partner Operations contract is `shared/commercial/partner-operations-contract.ts`. The isolated package re-exports it and still has no Prisma, Next.js or consumer-runtime dependency.
+3. The protected Next.js application creates a strictly bounded CRM/evidence snapshot. The input schema contains no Programme narrative/input/audio/transcript, Starting Point, Mission answer, Help usage, pause, self-check, vulnerability, self-exclusion or user-behaviour field. A deterministic content firewall rejects protected-data attempts before provider invocation.
+4. The server-only provider adapter uses the existing standard model route, no tools, no handoffs, `store: false`, one request, a 90-second timeout and strict JSON Schema output. Absence or failure of the provider leaves the CRM usable and writes nothing.
+5. Model output is parsed again with Zod and all evidence references are checked against the supplied snapshot before execution. Raw text never mutates Prisma.
+6. The application-side executor applies a closed operation union inside one transaction with idempotency and audit records. It may maintain profile facts, evidence, B2B contacts, research notes, tasks, next actions, drafts, supplied responses, evidenced received terms, stage proposals and preparation-only activation packets.
+7. The union contains no send, submit, approval, activation, term-acceptance, tracking, affiliate-record, jurisdiction, deployment or Production operation. Stage recommendations exclude `APPROVED` and `ACTIVE`; proposals create timeline entries rather than changing the CRM stage.
+
+This is a narrow internal write adapter, not autonomous sales or a general agent tool framework. No Gmail/OAuth, web tool, schedule, queue, memory, recursion, external communication or Production operator is added. Human approval and RFC-015 runtime readiness remain separate authorities.
+
+One non-personal Partner Operations connectivity smoke was executed under this amendment using the explicit bulk route. It completed `REVIEW` in one `gpt-5.6-luna` request with 1,461 input tokens, 331 output tokens, 1,792 total tokens and a `$0.003447` conservative upper bound. The empty relationship remained `UNKNOWN` and no external or database action was proposed or available. This is connectivity/evidence-discipline evidence only, not real-partner validation or authority.

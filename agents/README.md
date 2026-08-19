@@ -8,7 +8,7 @@ runtime.
 
 ## Trust boundary
 
-Wave 1 agents have no tools, handoffs, sessions, persistent memory, database,
+The isolated agent package has no tools, handoffs, sessions, persistent memory, database,
 Prisma, consumer-runtime import, GitHub/CMS write, email, affiliate activation,
 deployment, Production mutation, external OAuth, paid SEO integration, or
 automatic schedule. OpenAI SDK tracing is disabled, provider storage is set to
@@ -44,7 +44,7 @@ interpretation is required.
 | `programme-ai-eval` | Evaluate supplied Programme AI output/eval evidence | `high_consequence` | PASS / REVIEW / BLOCK |
 | `growth-opportunity-radar` | Rank safe evidence-backed growth opportunities | `standard` | DRAFT / REVIEW / BLOCK |
 | `serp-competitor-intelligence` | Analyse supplied public search/competitor evidence | `standard` | DRAFT / REVIEW / BLOCK |
-| `partner-intelligence` | Analyse supplied public potential-partner evidence | `standard` | DRAFT / REVIEW / BLOCK |
+| `partner-operations` | Qualify supplied partner evidence and prepare bounded CRM operations | `standard` | DRAFT / REVIEW / BLOCK |
 | `digital-pr-data-story` | Draft credible PR/data-story opportunities | `standard` | DRAFT / REVIEW / BLOCK |
 
 List the runtime registry without an API key:
@@ -74,8 +74,15 @@ provider was invoked, selected tier/model, selection source, reasoning effort,
 limits, token usage, conservative upper-bound text-token cost, pricing date,
 and pricing source.
 
-`VERIFIED` is intentionally not a classification. The only classifications are
-`DETECTED`, `INFERRED`, `PROPOSED`, and `UNKNOWN`.
+`VERIFIED` is intentionally not a classification. The classifications are
+`DETECTED`, `INFERRED`, `PROPOSED`, `UNKNOWN`, and `CONTRADICTION`.
+
+Partner Operations also exports the strict shared CRM contract from
+`src/partner-operations-contract.ts`. `partner-intelligence` remains an input
+compatibility alias that resolves to the canonical `partner-operations`
+definition. The Next.js application—not this package—owns the authenticated,
+transactional executor for the closed safe-operation union described in
+`docs/commercial/PARTNER-OPS-CRM-HANDOFF.md`.
 
 ## Cost-aware routing
 
@@ -140,7 +147,7 @@ activation, or autonomous operation. Founder review observed one broader-than-
 excerpt `DETECTED` finding. That connectivity smoke does not establish
 specialist quality.
 
-Partner Intelligence separately passed its committed fixed eight-case,
+The predecessor Partner Intelligence implementation separately passed its committed fixed eight-case,
 human-reviewed live quality corpus at exact head
 `eb14b33e110451f9b3855fedfa938ef1802936d7` after two measured prompt-precision
 remediations: `8 PASS / 0 REVIEW / 0 FAIL`, seven provider requests, one
