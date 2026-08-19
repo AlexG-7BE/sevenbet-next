@@ -81,6 +81,6 @@ test("Home-only motion uses native mandatory desktop and proximity coarse-pointe
   ]);
   assert.equal((html.match(/data-home-snap=""/g) ?? []).length, 9);
   assert.equal((html.match(/data-home-snap-anchor=""/g) ?? []).length, 4);
-  assert.match(globals, /html:has\(body > \[data-public-shell="header"\]\):not\(:has\(\[data-handoff-page="home"\]\)\)/);
+  assert.doesNotMatch(globals, /scrollbar-width:\s*none|::-webkit-scrollbar[^{}]*\{[^}]*display:\s*none/);
   assert.match(source("playwright.public-ia.config.ts"), /name: "webkit"[\s\S]*browserName: "webkit"/);
 });
