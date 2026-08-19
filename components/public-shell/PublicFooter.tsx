@@ -15,7 +15,7 @@ export function PublicFooter() {
         <div className={styles.footerColumns}>
           <div className={styles.footerLead}>
             <Link className={styles.footerBrand} href="/" translate="no">B4GAMBLE</Link>
-            <p>Evidence-led reviews. Material terms shown.<br />Player first.</p>
+            <p>Information, comparison and education.<br />Not a gambling operator.</p>
           </div>
           {groups.map((group) => (
             <div className={styles.footerGroup} key={group.title}>
@@ -25,8 +25,8 @@ export function PublicFooter() {
           ))}
         </div>
         <div className={styles.footerBaseline}>
-          <div><span className={styles.age}>18+</span><a href="https://www.begambleaware.org/" rel="noreferrer" target="_blank">BeGambleAware.org</a><span>Gamble responsibly.</span><Link href="/privacy">Privacy</Link><Link href="/terms">Terms</Link><Link href="/contact">Contact</Link></div>
-          <Link href="/affiliate-disclosure">We may earn commission — how we&apos;re funded</Link>
+          <div><span className={styles.age}>18+</span><span>Gambling involves financial risk.</span><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link><Link href="/responsible-gambling">Responsible Gambling</Link><Link href="/help">Protected Help</Link><Link href="/contact">Contact</Link></div>
+          <Link href="/affiliate-disclosure">We may earn commission from clearly labelled affiliate links.</Link>
         </div>
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
       </div>

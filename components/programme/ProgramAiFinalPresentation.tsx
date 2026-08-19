@@ -67,7 +67,7 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
             </label>
             <div className={styles.checkRow}>
               <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
-              <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice</label><small>Required</small></span>
+              <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and confirm I have read the Privacy Notice</label><small>Required</small></span>
             </div>
             <p className={styles.legalLinks}><Link href="/terms">Read Terms</Link><Link href="/privacy">Read Privacy Notice</Link></p>
             <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
@@ -377,14 +377,15 @@ export function Mission01IntakeScreen({
           <label>
             <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
             <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={6} value={situation} />
-            <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything you want. " : ""}Stored only in this browser session.</small>
+            <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything you want. " : ""}This draft stays in this browser session; only the Starting Point you confirm is saved.</small>
           </label>
           <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{busy ? "Preparing your Starting Point…" : "Create my Starting Point"}</button>
         </section> : null}
         <StatusMessage error={error} />
         {!recording ? <aside className={styles.privacyBoundary}>
-          <div><strong>Private by default.</strong><span>Your words are never used for offers or rankings. Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</span></div>
-          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I choose to share this for Programme personalisation and understand I can withdraw before saving.</span></label>
+          <div><strong>Before you share.</strong><span>Your words may reveal health or other sensitive information. Typed input, or audio for transcription, is sent to our AI provider to create a suggested Starting Point. B4GAMBLE does not save the audio or use your words for offers or rankings. <Link href="/privacy#ai">Privacy details</Link>.</span></div>
+          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.</span></label>
+          <small>Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.</small>
           </aside> : null}
         </div>
       </main>
@@ -451,7 +452,7 @@ export function StartingPointReadyScreen({
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}
           {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save your plan</button> : null}
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save my plan</button> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
               <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
@@ -461,8 +462,8 @@ export function StartingPointReadyScreen({
             </form> : null}
           </>}
           <StatusMessage error={error} />
-          <small>Registration adds 0 XP. Your words never feed offers or rankings.</small>
-          {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">Withdraw sensitive-input authority and clear this draft</button> : null}
+          <small>Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.</small>
+          {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">Withdraw consent and clear this draft</button> : null}
           </section>
         </div>
       </main>

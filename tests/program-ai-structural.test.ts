@@ -76,7 +76,7 @@ test("client keeps private draft content in sessionStorage and never localStorag
   assert.match(frontend, /window\.sessionStorage/);
   assert.doesNotMatch(frontend, /localStorage/);
   assert.doesNotMatch(frontend, /@prisma\/client|\bprisma\./);
-  assert.match(frontendRuntime, /Audio stays in short-lived memory/);
+  assert.match(frontendRuntime, /B4GAMBLE does not save the audio/);
   assert.match(frontendRuntime, /Editable transcript/);
   assert.match(frontend, /new FormData\(\)/);
   assert.match(frontendRuntime, /90_000/);
@@ -99,7 +99,8 @@ test("account-not-linked recovery preserves the claim and requires authenticated
 
 test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {
   assert.match(frontendRuntime, /Before you share/);
-  assert.match(frontendRuntime, /I choose to share this for Programme personalisation/);
+  assert.match(frontendRuntime, /I explicitly consent to B4GAMBLE processing what I type or say/);
+  assert.match(frontendRuntime, /Withdrawal stops future processing/);
   assert.match(frontendRuntime, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
@@ -118,7 +119,7 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
   assert.match(frontendRuntime, /Your Starting Point is ready/);
-  assert.match(frontendRuntime, /Continue with Google — save your plan/);
+  assert.match(frontendRuntime, /Continue with Google — save my plan/);
   assert.match(frontendRuntime, /Use email instead/);
   assert.match(frontend, /async function handleGoogle\(\)[\s\S]*requestSignUp: true/);
   assert.doesNotMatch(frontendRuntime, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);

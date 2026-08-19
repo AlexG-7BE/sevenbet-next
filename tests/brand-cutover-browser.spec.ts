@@ -38,7 +38,7 @@ test("Programme, protected Help, legal and unavailable states expose the current
     await expect(page.locator("body")).not.toContainText(/SevenBet|SEVENBET/);
     if (route === "/terms") {
       await expect(page.locator('[data-legal-document="terms"]')).toContainText("Effective 7 August 2026");
-      await expect(page.locator('[data-legal-document="terms"]')).toContainText("Legal · Updated 9 August 2026");
+      await expect(page.locator('[data-legal-document="terms"]')).toContainText("Legal · Updated 19 August 2026");
     }
   }
 

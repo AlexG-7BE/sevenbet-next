@@ -65,7 +65,9 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Evidence-led reviews\. Material terms shown\.[\s\S]*Player first\./);
+  assert.match(footer, /Information, comparison and education\.[\s\S]*Not a gambling operator\./);
+  assert.match(footer, /Gambling involves financial risk\./);
+  assert.match(footer, /clearly labelled affiliate links/);
   assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
@@ -115,7 +117,8 @@ test("root identity, legal trading name and approved contacts are exact", () => 
   assert.match(source("app/(public)/privacy/page.tsx"), /privacy@7be\.io/);
   const terms = source("app/(public)/terms/page.tsx");
   assert.match(terms, /info@7be\.io/);
-  assert.match(terms, /effective="7 August 2026" updated="9 August 2026"/);
+  assert.match(terms, /effective="19 August 2026"/);
+  assert.match(terms, /updated="19 August 2026"/);
   assert.match(terms, /id: "about-b4gamble"/);
   assert.doesNotMatch(terms, /id: "about-sevenbet"/);
 });

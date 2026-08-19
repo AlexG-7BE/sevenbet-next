@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("Affiliate Disclosure renders the approved four-section trust document", async ({ page }) => {
+test("Affiliate Disclosure renders the approved seven-section trust document", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
@@ -11,14 +11,16 @@ test("Affiliate Disclosure renders the approved four-section trust document", as
   expect(response?.status()).toBe(200);
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/HOW B4GAMBLE\s*IS FUNDED\./);
-  await expect(page.getByRole("navigation", { name: "On this page" }).getByRole("link")).toHaveCount(4);
-  await expect(page.getByRole("link", { name: "Read methodology", exact: true })).toHaveAttribute("href", "/methodology");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(/HOW WE'RE\s*FUNDED\./i);
+  await expect(page.getByRole("link", { name: "Methodology", exact: true })).toHaveAttribute("href", "/methodology");
   for (const heading of [
-    "THE COMMERCIAL RELATIONSHIP",
-    "COMPENSATION DOES NOT SET THE SCORE.",
-    "WHAT READERS CAN VERIFY",
-    "CORRECTIONS",
+    "1. THE COMMERCIAL RELATIONSHIP",
+    "2. HOW WE LABEL COMMERCIAL CONTENT",
+    "3. WHAT COMPENSATION CAN INFLUENCE",
+    "4. WHAT COMPENSATION DOES NOT DETERMINE",
+    "5. OFFERS AND SIGNIFICANT CONDITIONS",
+    "6. SPONSORED AND DEMONSTRATION CONTENT",
+    "7. METHOD AND CORRECTIONS",
   ]) await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });

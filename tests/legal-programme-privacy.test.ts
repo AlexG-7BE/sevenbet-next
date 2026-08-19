@@ -75,8 +75,10 @@ test("the consolidated access screen is unchecked and account creation enforces 
   assert.match(accessContract, /x-sevenbet-programme-access-proof/);
   assert.match(accessContract, /x-sevenbet-terms-acceptance/);
   assert.match(accessContract, /x-sevenbet-privacy-acknowledgement/);
-  assert.match(accessContract, /privacy:effective-2026-08-09:updated-2026-08-13/);
-  assert.match(source("app/(public)/privacy/page.tsx"), /updated="13 August 2026"/);
+  assert.match(accessContract, /privacy:effective-2026-08-19:updated-2026-08-19/);
+  assert.match(accessContract, /terms:effective-2026-08-19:updated-2026-08-19/);
+  assert.match(source("app/(public)/privacy/page.tsx"), /updated="19 August 2026"/);
+  assert.match(source("app/(public)/terms/page.tsx"), /updated="19 August 2026"/);
 });
 
 test("legacy reflection creation is retired before request body parsing", () => {

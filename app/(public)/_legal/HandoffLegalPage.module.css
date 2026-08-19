@@ -21,6 +21,15 @@
 .body section > div { color: #262525; font-size: 16px; line-height: 1.75; }
 .body section > div p { margin: 0 0 16px; }
 .body section > div p:last-child { margin-bottom: 0; }
+.body section > div ul { margin: 0; padding-left: 24px; }
+.body section > div li { margin: 0 0 10px; }
+.body section > div li:last-child { margin-bottom: 0; }
+.body section > div dl { margin: 0; display: grid; gap: 18px; }
+.body section > div dl > div { padding-bottom: 18px; border-bottom: 1px solid rgba(16,15,15,.1); }
+.body section > div dl > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.body section > div dt { margin-bottom: 4px; font-weight: 750; }
+.body section > div dd { margin: 0; }
+.body address { font-style: normal; line-height: 1.65; }
 .body aside { margin-top: 56px; padding: 28px 32px; border: 1px solid rgba(16,15,15,.1); border-radius: 20px; background: #f4f1eb; }
 .body aside strong { display: block; margin-bottom: 10px; color: #777500; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 .body aside p { margin: 0; font-size: 15px; line-height: 1.65; }

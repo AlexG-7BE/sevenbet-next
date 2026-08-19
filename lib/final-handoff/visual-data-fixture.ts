@@ -10,6 +10,7 @@ import type {
 import type { PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import type { LearningArticle } from "@/lib/learning-center";
+import { temporaryDemoCasinoIds } from "@/lib/demo-data/temporary-demo-authority";
 
 /**
  * Enables deterministic data for local reference comparison. This flag may only
@@ -43,8 +44,8 @@ export function withHandoffLearningArticleData(article: LearningArticle, enabled
         after: "Statistically, clearing this bonus on standard slots costs more than the bonus is worth. That is not an accident of one operator — it is how 35x is designed to work at typical RTP.",
       },
       {
-        title: "The maths on a real offer",
-        body: "Three offers from our current test set, converted to the same currency — expected cost of clearing:",
+        title: "The maths on an illustrative offer",
+        body: "Three fictional offer examples, converted to the same currency — expected cost of clearing:",
         blocks: [{ type: "comparison-table", columns: ["Offer", "Wagering", "Turnover", "Exp. cost"], rows: [["«€200 + 100 spins»", "35x B", "€7 000", "−€80"], ["«€50 low-wager»", "10x B", "€500", "+€30"], ["«€500 mega match»", "40x D+B", "€40 000", "−€1 100"]] }],
         after: "The €50 offer beats the €500 one by four figures. Headline size and player value are close to uncorrelated — which is why our rankings ignore the headline entirely.",
       },
@@ -55,7 +56,7 @@ export function withHandoffLearningArticleData(article: LearningArticle, enabled
       },
       {
         title: "When smaller wins",
-        body: "A useful rule of thumb: divide the bonus by the turnover it demands. Anything below 3% is expensive; above 8% is genuinely competitive. The best offers in our directory are almost always the modest ones with 10–15x on bonus only.",
+        body: "A useful comparison method is to divide the bonus by the turnover it demands. Lower wagering can reduce the expected cost, but no bonus guarantees value or a positive return.",
       },
       {
         title: "The checklist",
@@ -69,7 +70,7 @@ export function withHandoffLearningArticleData(article: LearningArticle, enabled
     visualPresentation: {
       accentTitle: "explained with real numbers.",
       heroLabel: "Bonuses",
-      heroStatus: "Not sponsored · real-money tested",
+      heroStatus: "Educational example · not a live offer",
       intro: [
         "A casino advertises «100% up to €200». The number everyone reads is 200. The number that decides what you keep is printed two clicks deeper: 35x wagering.",
         "Wagering requirements are the total amount you must bet before bonus money becomes withdrawable. They are not a scam — they are the price of the bonus. The problem is that the price is quoted in a currency most players never convert.",
@@ -91,12 +92,12 @@ export function withHandoffLearningArticleData(article: LearningArticle, enabled
 }
 
 const offerSamples = [
-  { name: "Solvane Casino", score: 9.6, title: "100% up to €500 + 200 free spins", wagering: 35, deposit: 20, payout: "0–24h", summary: "Fastest verified payouts we’ve tested this year, with bonus terms that hold up to the fine print." },
-  { name: "Marlowe Casino", score: 9.2, title: "100% up to €400 + 150 free spins", wagering: 30, deposit: 20, payout: "0–48h", summary: "Lowest wagering of the three, strong live games and reliable support." },
-  { name: "Kestrel Casino", score: 8.8, title: "100% up to €300 + 100 free spins", wagering: 35, deposit: 10, payout: "0–24h", summary: "Low entry, quick withdrawals and a broad game library." },
-  { name: "Aldwyn Casino", score: 8.5, title: "100% up to €250 + 100 free spins", wagering: 35, deposit: 20, payout: "0–48h", summary: "Solid all-rounder with dependable support and a broad library." },
-  { name: "Verano Casino", score: 8.3, title: "50% up to €200 + 50 free spins", wagering: 30, deposit: 10, payout: "24–72h", summary: "Low wagering outside the top three and a €10 entry." },
-  { name: "Nordhem Casino", score: 8.1, title: "100% up to €150", wagering: 40, deposit: 25, payout: "0–24h", summary: "Top-three payout speed, with the wagering trade-off shown clearly." },
+  { name: "Solvane Casino", score: 9.6, title: "100% up to €500 + 200 free spins", wagering: 35, deposit: 20, payout: "0–24h", summary: "Fictional payout and bonus fields for interface testing; not evidence of operator performance or a current offer." },
+  { name: "Marlowe Casino", score: 9.2, title: "100% up to €400 + 150 free spins", wagering: 30, deposit: 20, payout: "0–48h", summary: "Fictional wagering, games and support fields for interface testing." },
+  { name: "Kestrel Casino", score: 8.8, title: "100% up to €300 + 100 free spins", wagering: 35, deposit: 10, payout: "0–24h", summary: "Fictional deposit, withdrawal and game-library fields for interface testing." },
+  { name: "Aldwyn Casino", score: 8.5, title: "100% up to €250 + 100 free spins", wagering: 35, deposit: 20, payout: "0–48h", summary: "Fictional support and game-library fields for interface testing." },
+  { name: "Verano Casino", score: 8.3, title: "50% up to €200 + 50 free spins", wagering: 30, deposit: 10, payout: "24–72h", summary: "Fictional wagering and deposit fields for interface testing." },
+  { name: "Nordhem Casino", score: 8.1, title: "100% up to €150", wagering: 40, deposit: 25, payout: "0–24h", summary: "Fictional payout and wagering fields for interface testing." },
 ] as const;
 
 const bonusDirectorySamples = [
@@ -131,7 +132,7 @@ function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { n
     ...seed,
     casino: {
       ...seed.casino,
-      id: `visual-${key}`,
+      id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
       slug: key,
       name: sample.name,
       summary: sample.summary,
@@ -140,7 +141,7 @@ function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { n
       featured: index === 0,
       recommended: index < 3,
       countries: [{ countryCode: "GB", availability: "AVAILABLE" }],
-      licenses: [{ authority: "UK Gambling Commission", jurisdiction: "GB", status: "ACTIVE" }],
+      licenses: [],
       payments: [{
         ...(payment ?? {
           key: "visa",
@@ -176,32 +177,31 @@ function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { n
       eligibility: "18+ · New customers · Terms apply",
       importantConditions: ["Terms shown before action"],
     },
-    action: { available: true, href: "/r/visual-fixture" },
-    commercialAvailability: "AVAILABLE",
-    dataClassification: "PUBLISHED_RECORD",
+    action: { available: false, href: null },
+    commercialAvailability: "UNAVAILABLE",
+    dataClassification: "DEMO_FIXTURE",
   };
 }
 
 export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean): T {
   if (!enabled || !result.records.length) return result;
   const records = offerSamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index));
-  return { ...result, records, inventoryMode: "PUBLISHED_ONLY" } as unknown as T;
+  return { ...result, records, inventoryMode: "DEMO_ONLY" } as unknown as T;
 }
 
 function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCardDto {
   const sample = casinoDirectorySamples[index];
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
-  const visitAvailable = ![3, 5, 8].includes(index);
   return {
     ...seed,
-    id: `visual-${key}`,
-    dataClassification: "PUBLISHED_RECORD",
+    id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+    dataClassification: "DEMO_FIXTURE",
     slug: key,
     name: sample.name,
     logo: null,
     shortDescription: sample.summary,
     rating: sample.score,
-    licenses: [{ key: "ukgc", label: "UKGC" }],
+    licenses: [],
     countries: [{ key: "gb", label: "Great Britain" }],
     paymentMethods: [{ key: "visa", label: "Visa" }, { key: "mastercard", label: "Mastercard" }],
     highlights: sample.signals.split(" · "),
@@ -216,9 +216,7 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
       validUntil: null,
       termsApply: true,
     },
-    visitAction: visitAvailable
-      ? { available: true, redirectSlug: "visual-fixture", label: `Visit ${sample.name}`, reasonCode: null }
-      : { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
+    visitAction: { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
     responsibleGamblingLabel: "Control tools listed",
   };
 }
@@ -229,7 +227,7 @@ export function withHandoffCasinoDiscoveryData(result: CasinoDiscoveryResult, en
   return {
     ...result,
     items,
-    inventoryMode: "PUBLISHED_ONLY",
+    inventoryMode: "DEMO_ONLY",
     total: items.length,
     page: 1,
     pageSize: Math.max(result.pageSize, items.length),
@@ -244,11 +242,11 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   const payment = casino.payments[0];
   return {
     ...casino,
-    id: "visual-solvane-casino",
+    id: temporaryDemoCasinoIds[0],
     name: sample.name,
     title: `${sample.name} review`,
-    summary: "Solvane delivers on every promise that matters — payouts landed in under 24 hours across all three methods, and the bonus terms read the same on day 30 as on day 1.",
-    reviewContent: "Solvane delivers on every promise that matters — payouts landed in under 24 hours across all three methods, and the bonus terms read the same on day 30 as on day 1.",
+    summary: "Fictional review fields for interface testing; not evidence of operator performance or a current offer.",
+    reviewContent: "This fictional review demonstrates the interface only. It is not based on a real operator, licence, offer or performance test.",
     foundedYear: 2021,
     editorScore: sample.score,
     pros: ["Players who cash out often", "Live-dealer regulars", "Anyone tired of payout excuses"],
@@ -293,32 +291,32 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
       wageringText: `${sample.wagering}x wagering`,
       eligibility: "18+ · New customers · Terms apply",
       importantConditions: ["Terms shown before action", "Maximum bet applies"],
-      affiliate: { available: true, href: "/r/visual-fixture" },
+      affiliate: { available: false, href: null },
     }] : [],
     media: { ...casino.media, logo: null, hero: null },
-    affiliate: { available: true, href: "/r/visual-fixture" },
+    affiliate: { available: false, href: null },
   };
 }
 
 export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument | null, enabled: boolean): CasinoEditorialDocument | null {
   if (!enabled) return document;
   const sections = [
-    ["payments", "Payouts", "We ran three withdrawal cycles — Visa, Skrill and bank transfer — across four weeks. The slowest verified at 22 hours; Skrill cleared twice in under 4. No documents were re-requested after initial verification, which is rarer than it should be."],
-    ["games", "Games", "2,400+ titles with an unusually deep live floor: 40+ live tables at peak, including three exclusive rooms. Slots skew toward high-RTP configurations — we spot-checked twelve titles against provider defaults and found no reduced-RTP variants."],
-    ["bonuses", "Bonuses", "The welcome package is the headline, but the terms are the story: 35x on bonus only (not deposit + bonus), no max-win cap, and live-game weighting disclosed upfront. Reload offers follow the same pattern."],
-    ["trust", "Support", "Live chat answered in under two minutes at all hours we tested, including 3 a.m. on a Sunday. Agents answered term questions accurately — we cross-checked their wagering explanations against the written T&Cs."],
-    ["payments", "Banking", "Visa, Mastercard, Skrill, Neteller and SEPA transfers. Deposits are instant and fee-free; withdrawals carry no operator fee. No crypto — if that matters, see our crypto shortlist."],
+    ["payments", "Payouts", "Illustrative withdrawal-method and timing fields for a fictional operator. No payout test was performed."],
+    ["games", "Games", "Illustrative game-count, live-table and RTP fields for a fictional operator. No provider catalogue was checked."],
+    ["bonuses", "Bonuses", "Illustrative wagering, maximum-win and game-weighting fields. This is not a current or claimable bonus."],
+    ["trust", "Support", "Illustrative response-time and support-quality fields for a fictional operator. No support interaction was tested."],
+    ["payments", "Banking", "Illustrative payment-method, fee and withdrawal fields for a fictional operator."],
   ] as const;
   return {
     version: 1,
     title: "Full review",
-    summary: "Solvane delivers on every promise that matters — payouts landed in under 24 hours across all three methods, and the bonus terms read the same on day 30 as on day 1.",
+    summary: "Fictional editorial fields for interface testing; not evidence of operator performance.",
     author: "B4GAMBLE Editorial",
     factCheckedAt: "2026-08-12T00:00:00.000Z",
     trustScore: {
       overall: 9.6,
       confidence: "high",
-      evidence: ["Three completed withdrawal cycles", "Twelve provider RTP spot checks", "Support tested across multiple dayparts"],
+      evidence: ["Fictional payout evidence field", "Fictional RTP evidence field", "Fictional support evidence field"],
       categories: [
         { key: "Payouts", score: 9.8 },
         { key: "Bonus terms", score: 9.4 },
@@ -334,9 +332,9 @@ export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument
       blocks: [
         { id: `visual-block-${index}`, type: "paragraph" as const, text },
         ...(index === 0 ? [
-          { id: "visual-faq-availability", type: "faq" as const, question: "Is Solvane available in my country?", answer: "Availability depends on your jurisdiction — the operator's site checks this at signup. We never claim availability we can't verify." },
-          { id: "visual-faq-freshness", type: "faq" as const, question: "How fresh is this review?", answer: "Terms were re-checked 12 Aug 2026; the payout tests ran across the four weeks before that. If the operator changes a material term, the review is updated and the change is noted." },
-          { id: "visual-faq-score", type: "faq" as const, question: "Did Solvane pay for this score?", answer: "No. We may earn commission if you sign up, and that funds the testing — but scores are set before commercial terms are discussed." },
+          { id: "visual-faq-availability", type: "faq" as const, question: "Is Solvane available in my country?", answer: "No. Solvane is a fictional interface example and has no commercial availability." },
+          { id: "visual-faq-freshness", type: "faq" as const, question: "How fresh is this review?", answer: "This is a deterministic interface fixture, not a current operator review." },
+          { id: "visual-faq-score", type: "faq" as const, question: "Did Solvane pay for this score?", answer: "No. Solvane is fictional, the score is illustrative and no commercial relationship exists." },
         ] : []),
       ],
     })),
@@ -365,7 +363,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     const candidate = result.candidates[index % Math.max(1, result.candidates.length)];
     return {
       id: `visual-comparison-${index}`,
-      dataClassification: "PUBLISHED_RECORD" as const,
+      dataClassification: "DEMO_FIXTURE" as const,
       slug,
       name: offerSamples[index % offerSamples.length].name,
       summary: offerSamples[index % offerSamples.length].summary,
@@ -375,19 +373,19 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       lastReviewedAt: null,
       reviewHref: candidate ? `/casino/${candidate.slug}` : "/casinos",
       marketState: "AVAILABLE" as const,
-      action: { available: true, href: "/r/visual-fixture", label: `Visit ${offerSamples[index % offerSamples.length].name}`, reason: "Local deterministic visual data" },
+      action: { available: false, href: null, label: `Visit ${offerSamples[index % offerSamples.length].name}`, reason: "Fictional demonstration records never expose a commercial action." },
     };
   })).map((casino, index) => {
     const sample = offerSamples[index % offerSamples.length];
     return {
       ...casino,
       id: `visual-comparison-${index}`,
-      dataClassification: "PUBLISHED_RECORD" as const,
+      dataClassification: "DEMO_FIXTURE" as const,
       name: sample.name,
       summary: index === 0 ? "Live casino · Fast verification" : index === 1 ? "VIP programme · 24/7 support" : sample.summary,
       logo: null,
       editorScore: sample.score,
-      action: { available: true, href: "/r/visual-fixture", label: `Visit ${sample.name}`, reason: "Local deterministic visual data" },
+      action: { available: false, href: null, label: `Visit ${sample.name}`, reason: "Fictional demonstration records never expose a commercial action." },
     };
   });
   const visualComparisonValues: Record<string, (index: number) => string> = {
@@ -428,7 +426,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     casinos,
     candidates: result.candidates.map((candidate, index) => ({
       ...candidate,
-      dataClassification: "PUBLISHED_RECORD",
+      dataClassification: "DEMO_FIXTURE",
       name: offerSamples[index % offerSamples.length].name,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,
@@ -443,6 +441,6 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       })),
     })),
     reasons: [],
-    inventoryMode: "PUBLISHED_ONLY",
+    inventoryMode: "DEMO_ONLY",
   };
 }
