@@ -97,7 +97,7 @@ test("Home coarse-pointer snap sequence escapes the final CTA into the complete 
   expect(await finalCta.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("start");
   expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).minHeight))).toBeGreaterThanOrEqual(843);
   expect(await finalCta.evaluate((element) => Number.parseFloat(getComputedStyle(element).scrollMarginBottom))).toBe(0);
-  expect(await footer.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("none");
+  expect(await footer.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
   expect(await footerBottom.evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
 
   for (let index = 0; index < 28 && !(await isInViewport(finalCta)); index += 1) await touchScroll(context, page, "down");

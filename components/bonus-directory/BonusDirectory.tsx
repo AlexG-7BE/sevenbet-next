@@ -102,11 +102,11 @@ function FilterFields({ facets, query }: { facets: PublicOfferFacets; query: Pub
   </div>;
 }
 
-function BonusFilterForm({ facets, query, total, compact = false }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; compact?: boolean }) {
+function BonusFilterForm({ facets, query, total, compact = false, noScript = false }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; compact?: boolean; noScript?: boolean }) {
   return <InstantDiscoveryForm action="/bonuses" className={compact ? styles.filterFormCompact : styles.filterForm} debouncedFields={["maxDeposit", "maxWagering"]} key={`bonus-filters:${compact}:${JSON.stringify(query)}`} pendingLabel="Updating bonus results…">
     <FilterFields facets={facets} query={query} />
     <p className={styles.marketNote}>Country is a comparison preference, not detected location, legal advice or proof that an offer is available to you.</p>
-    <div className={styles.filterActions}><div><strong>{total} matching record{total === 1 ? "" : "s"}</strong><span>Server-classified comparison records</span></div><Link href="/bonuses">Reset</Link><button type="submit">Show Results</button></div>
+    <div className={styles.filterActions}><div><strong>{total} matching record{total === 1 ? "" : "s"}</strong><span>{noScript ? "Submit to update these server-classified records" : "Updates immediately when a filter changes"}</span></div>{noScript ? <button type="submit">Apply filters</button> : null}</div>
   </InstantDiscoveryForm>;
 }
 
@@ -114,7 +114,7 @@ export function BonusFilters({ facets, query, total, activeCount }: { facets: Pu
   return <>
     <div className={styles.desktopFilters}><BonusFilterForm facets={facets} query={query} total={total} /></div>
     <MobileBonusFilters activeCount={activeCount}><BonusFilterForm compact facets={facets} query={query} total={total} /></MobileBonusFilters>
-    <noscript><div className={styles.noScriptFilters} style={{ display: "block" }}><BonusFilterForm compact facets={facets} query={query} total={total} /></div></noscript>
+    <noscript><div className={styles.noScriptFilters} style={{ display: "block" }}><BonusFilterForm compact facets={facets} noScript query={query} total={total} /></div></noscript>
   </>;
 }
 

@@ -159,18 +159,6 @@ html:has(body > [data-public-shell="header"]),
 body:has(> [data-public-shell="header"]) {
   height: 100%;
 }
-html:has(body > [data-public-shell="header"]),
-html:has([data-protected-help-shell]) {
-  scrollbar-width: none;
-}
-html:has(body > [data-public-shell="header"])::-webkit-scrollbar,
-body:has(> [data-public-shell="header"])::-webkit-scrollbar,
-html:has([data-protected-help-shell])::-webkit-scrollbar,
-body:has([data-protected-help-shell])::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
 [data-handoff-page],
 [data-handoff-page] > div,
 [data-handoff-page] .sc-host {
@@ -206,7 +194,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 [data-handoff-page="home"][data-home-interactions="ready"] [data-rise][data-rise-state="visible"] {
   opacity: 1 !important;
   transform: translateY(0) !important;
-  transition: opacity 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 700ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
+  transition: opacity 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms), transform 460ms cubic-bezier(.2,.8,.2,1) var(--handoff-rise-delay, 0ms) !important;
 }
 [data-handoff-page="home"] [data-stackpanel],
 [data-handoff-page="home"] [data-stackpanel] [data-mob="chapter"],
@@ -217,12 +205,12 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   transform: none !important;
 }
 
-/* The approved Home ending was one 100svh CTA + footer composition. The
-   captured footer is intentionally stripped, so size the remaining CTA around
-   the one real PublicFooter and reserve only the combined bottom snap target. */
+/* The approved Home ending is one CTA + PublicFooter composition. The captured
+   footer is stripped, so size the CTA around the one real PublicFooter and keep
+   the CTA as the composition's deliberate start target. */
 [data-handoff-page="home"] [data-home-final-composition] {
   min-height: max(0px, calc(100svh - var(--home-public-footer-height, 391px))) !important;
-  scroll-snap-align: none !important;
+  scroll-snap-align: start !important;
   scroll-snap-stop: normal !important;
 }
 
@@ -237,8 +225,41 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 [data-handoff-page="learn"] [data-learn-meta-axis] {
   padding-inline: var(--learn-content-axis) !important;
 }
+[data-handoff-page="learn"] [data-learn-discovery-search] {
+  flex: 1 1 320px;
+  max-width: 440px;
+  margin-left: auto;
+}
+[data-handoff-page="learn"] [data-learn-discovery-search] > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+[data-handoff-page="learn"] [data-learn-discovery-search] input {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 13px 18px;
+  border: 1px solid rgba(16, 15, 15, .24);
+  border-radius: 14px;
+  background: rgb(250, 250, 247);
+  color: rgb(16, 15, 15);
+  font: 400 15px/1.4 Archivo, sans-serif;
+}
 
 @media (max-width: 760px) {
+  [data-handoff-page="learn"] [data-learn-discovery-search] {
+    flex-basis: 100%;
+    max-width: none;
+    order: 3;
+    margin-left: 0;
+  }
+
   [data-handoff-page="learn"] input[type="search"] {
     min-height: 48px;
     font-size: 16px !important;
@@ -328,7 +349,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
     justify-content: flex-start !important;
     padding: 144px 24px 72px !important;
     scroll-snap-align: start !important;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
   }
 
   [data-handoff-page="home"] div:has(> [data-screen-label="A plan you can see"]) > [data-snap] {
@@ -336,7 +357,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   }
   [data-handoff-page="home"] [data-stackpanel] {
     scroll-snap-align: start !important;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
   }
   [data-handoff-page="home"] [data-stackpanel] + [data-stackpanel] {
     margin-top: clamp(144px, 22svh, 204px) !important;
@@ -413,18 +434,12 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   }
 }
 
-/* The generated Home capture enables mandatory document snap for coarse pointers.
-   Keep the standalone CTA as a normal (skippable) stop and the real footer bottom
-   as the later endpoint, so continued scrolling cannot be pulled back to the CTA. */
+/* Keep the mobile CTA as a normal (skippable) proximity start stop. */
 @media (max-width: 760px) and (pointer: coarse) {
   [data-handoff-page="home"] [data-home-final-composition] {
     scroll-margin-block: 0;
     scroll-snap-align: start !important;
     scroll-snap-stop: normal !important;
-  }
-  body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
-    scroll-snap-align: end;
-    scroll-snap-stop: normal;
   }
 }
 

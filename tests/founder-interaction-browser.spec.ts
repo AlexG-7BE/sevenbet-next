@@ -157,8 +157,8 @@ test("Programme preserves the canonical voice-first recording waveform and reduc
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.locator('[data-voice-state="recording"]')).toBeVisible();
   await expect(page.locator("[data-recording-indicator]")).toBeVisible();

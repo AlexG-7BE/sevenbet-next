@@ -169,10 +169,10 @@ test("Mission 01 uses the final responsive presentation from access through regi
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.locator("[data-programme-presentation='mission-01-intake']")).toBeVisible();
   await expect(page.locator("[data-voice-state='idle']")).toBeVisible();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await expect(page.locator("[data-programme-presentation-state='text-fallback']")).toBeVisible();
   await page.getByLabel("Your situation").fill("After difficult work days I keep opening betting apps late at night.");
