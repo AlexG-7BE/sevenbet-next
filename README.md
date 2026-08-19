@@ -43,9 +43,12 @@ npm run programme:test
 
 ## Documentation
 
+- [Current State](docs/CURRENT_STATE.md) — normal entry point for verified present state and current Founder-approved posture.
+- [Decision & Documentation Governance](docs/GOVERNANCE.md) — Founder authority, evidence hierarchy and RFC model.
 - [Product Vision & Principles](docs/Product-Vision-and-Principles.md) — constitutional product authority.
-- [Project State](docs/PROJECT_STATE.md) — concise current-state ledger.
-- [Roadmap](docs/ROADMAP.md) — delivery sequence and remaining gates.
+- [RFC Registry](docs/06_RFC/README.md) — lifecycle index; read only relevant `ACTIVE` RFCs.
+- [Project State](docs/PROJECT_STATE.md) — historical delivery and evidence ledger.
+- [Roadmap](docs/ROADMAP.md) — historical delivery sequence and remaining-gate context.
 - [Figma inventory](docs/02_Product_Design/Figma-Screen-Inventory-and-Delivery-Plan.md) — current visual authorities and implementation classification.
 - [Technical baseline](docs/05_Engineering/Technical_Baseline/README.md) — evidence-backed implementation baseline.
 - [Operations](docs/06_Operations/README.md) — release, environment, migration, recovery and incident runbooks.

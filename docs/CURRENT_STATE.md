@@ -9,6 +9,25 @@
 
 This checkpoint supersedes older candidate/draft status language in project-state notes where those notes conflict with the verified state below.
 
+## Governance and read order
+
+For internal decision authority, read in this order:
+
+1. the current explicit Founder instruction, when present;
+2. this current Founder-approved checkpoint;
+3. only the relevant `ACTIVE` RFCs in the [RFC Registry](06_RFC/README.md);
+4. live implementation and repository evidence; and
+5. historical documents only when their context is needed.
+
+The [Decision & Documentation Governance](GOVERNANCE.md) defines the complete
+authority, evidence, override and RFC rules. A newer explicit Founder decision
+may supersede an older internal boundary for its approved scope. For factual
+claims, live authoritative system, Production, repository and provider evidence
+still outranks this document when newer evidence conflicts with it.
+
+Use the RFC Registry and read only the `ACTIVE` RFCs relevant to the current
+domain. Do not load the historical RFC set as a routine execution gate.
+
 ## Executive state
 
 | Area | Current state | Meaning |

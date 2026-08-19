@@ -404,6 +404,12 @@ or Business decision conflicts with this document,
 
 this document takes precedence.
 
+This is the durable default for product decisions, not a permanent veto over a
+newer explicit Founder decision. The Founder may revise or supersede an older
+internal product decision; the resulting change must be verified and reflected
+in current-state and durable decision documentation under
+[`docs/GOVERNANCE.md`](GOVERNANCE.md).
+
 ## Revision Policy
 
 Version 1.0 is considered stable.

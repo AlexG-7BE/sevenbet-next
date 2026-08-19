@@ -4,11 +4,16 @@
 
 This directory is SevenBet's architectural constitution. It defines durable boundaries and decision rules for future implementation of the approved Product Vision. It does not prescribe a framework, database schema, route shape, vendor, or migration plan.
 
-The approved [Product Vision & Principles](../Product-Vision-and-Principles.md) remains the product authority. The [Product Master Plan](../01_Product_Master_Plan/Product-Master-Plan.md) defines product scope; its current draft status does not make unapproved capabilities implementation commitments. The verified [Technical Baseline](../05_Engineering/Technical_Baseline/README.md) is evidence about the present repository, not approval of its architecture.
+The approved [Product Vision & Principles](../Product-Vision-and-Principles.md) remains the durable product authority. [Decision & Documentation Governance](../GOVERNANCE.md) defines the higher-priority current Founder authority and the separate evidence hierarchy. The [Product Master Plan](../01_Product_Master_Plan/Product-Master-Plan.md) defines product scope; its current draft status does not make unapproved capabilities implementation commitments. The verified [Technical Baseline](../05_Engineering/Technical_Baseline/README.md) is evidence about the present repository, not approval of its architecture.
 
 ## Status and use
 
-These principles govern architecture work from Phase 2.1 onward. A substantial change to a boundary, a new cross-domain capability, a material exception, or a decision that operationalises an unresolved question requires an RFC before implementation, in accordance with `AGENTS.md`.
+These principles govern architecture work from Phase 2.1 onward. A substantial
+durable change to a boundary, a new cross-domain capability, a material
+exception or a decision that operationalises an unresolved question normally
+requires an RFC. A newer explicit Founder decision may supersede an older
+internal boundary; execution then updates the durable record after
+verification, as defined by `docs/GOVERNANCE.md`.
 
 Architecture documents use these terms:
 
@@ -16,7 +21,8 @@ Architecture documents use these terms:
 - **Detected** — implementation evidence recorded by the Technical Baseline.
 - **Target** — an architectural direction; it is not evidence of present implementation.
 - **Open question** — an unresolved decision that must not be silently settled in code.
-- **Open Decision** — a review-identified decision that blocks the stated governed scope until an RFC approves it. Open Decisions are deliberately not ADRs and do not authorise implementation.
+- **Open Decision** — a review-identified unresolved material choice. It remains
+  undecided until an RFC or a current explicit Founder decision resolves it.
 
 ## Documents
 
@@ -31,7 +37,12 @@ Architecture documents use these terms:
 
 ## Phase 2.1 review disposition
 
-The Phase 2.1 Architecture Review found no Critical findings. Its High findings are addressed either by clarified architectural constraints or by the following blocking Open Decisions: `ARCH-OD-02` through `ARCH-OD-08`, and `ARCH-OD-11` through `ARCH-OD-14`. They must be approved through RFCs before governed MVP implementation; they are not implementation work items or implicit technical choices.
+The Phase 2.1 Architecture Review found no Critical findings. Its High findings
+are addressed either by clarified architectural constraints or by the listed
+Open Decisions: `ARCH-OD-02` through `ARCH-OD-08`, and `ARCH-OD-11` through
+`ARCH-OD-14`. They are unresolved-decision identifiers, not permanent RFC
+vetoes; current resolution follows `docs/GOVERNANCE.md` and must not be inferred
+silently from code.
 
 ## Non-goal
 
