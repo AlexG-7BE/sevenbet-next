@@ -25,10 +25,8 @@ may supersede an older internal boundary for its approved scope. For factual
 claims, live authoritative system, Production, repository and provider evidence
 still outranks this document when newer evidence conflicts with it.
 
-The current `ACTIVE` RFC set is: RFC-002, RFC-003, RFC-008, RFC-012 through
-RFC-015, RFC-017 through RFC-034 and RFC-036. Select only the RFCs relevant to
-the domain being changed; do not load the historical RFC set as a routine
-execution gate.
+Use the RFC Registry and read only the `ACTIVE` RFCs relevant to the current
+domain. Do not load the historical RFC set as a routine execution gate.
 
 ## Executive state
 
