@@ -95,7 +95,7 @@ async function installAnonymousProgramme(page: Page) {
     return route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-07:updated-2026-08-09", privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-13", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.typography.audit" } }),
+      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-19:updated-2026-08-19", privacyVersion: "privacy:effective-2026-08-19:updated-2026-08-19", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.typography.audit" } }),
     });
   });
   await page.route("**/api/program/program-ai/session", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
@@ -168,8 +168,8 @@ test("Programme Mission 01 and Dashboard retain readable functional text", async
     await missionPage.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
     await missionPage.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
     await missionPage.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-    await missionPage.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
     await missionPage.getByRole("button", { name: "Enter Mission 01" }).click();
+    await missionPage.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
     await expect(missionPage.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
     expect(await visibleTextBelowTwelve(missionPage), `Mission 01 sub-12px at ${viewport.width}px`).toEqual([]);
     await expectMinimum(missionPage.locator('[data-programme-presentation="mission-01-intake"] button'), 14, `Mission 01 controls at ${viewport.width}px`);

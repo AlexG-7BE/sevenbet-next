@@ -1,5 +1,16 @@
 # Project State
 
+## GB-PUBLIC-LEGAL-PACK-01 Founder closeout candidate — 2026-08-19
+
+- **Detected — PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** Draft PR #78 on `codex/public-legal-pack-gb-01` remains governed by RFC-036. Public Privacy, Terms, Affiliate Disclosure, non-duplicative footer, Programme consent/withdrawal, Google identity-only disclosure, commercial labels, necessary-only technology and fail-closed evidence rules are mapped and focused-testable.
+- **Detected — PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE where verified:** current official OpenAI, Vercel, Resend and Google Workspace/Cloud Identity public frameworks are recorded. Prisma ORM is only code; the managed database is identified as Prisma Postgres through the Vercel integration, and no current public Prisma Article 28 DPA was located.
+- **Detected — ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER:** live plan/entity/acceptance, exact locations, retention, transfer routes and provider settings remain unverified. OpenAI server-side `store:false`, bounded in-memory audio and no intentional narrative logging are application controls, not ZDR/MAM/region proof.
+- **Inferred — UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER:** the Article 27 assessment still concludes appointment is required. No public particulars or appointment are claimed.
+- **Inferred — ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER:** the fee assessment still concludes payment is required. Tier, registration, payment and reference are not detected.
+- **Detected — DPIA FINAL / READY FOR INTERNAL CONTROLLER APPROVAL:** current residual risk scores are preserved; the Founder timing decision does not reduce them. Internal signers are Founder/Controller, Security reviewer, Product owner and Internal Legal/Compliance.
+- **Detected — COMMERCIAL PARTNER: NOT YET ACTIVE:** GB jurisdiction commercial/referral policy remains denied, the redirect engine defaults off, exact-domain activation evidence remains empty and the first-partner checklist requires a separate Founder activation change.
+- **Not detected / unchanged:** no evidence supports claiming any deferred action complete, no real GB partner/offer authority exists, and this candidate makes no merge, Production configuration/data/schema/migration/reward/Mission/Help or provider-account change.
+
 ## HOME-PERFORMANCE-MOTION-POLISH-01 branch addendum — 2026-08-18
 
 - **Detected:** RFC-035 is approved for bounded Draft-PR and Preview implementation on branch `codex/home-performance-motion-polish-01`, created from current main `381624c410222b7bb56f65b755d562b284ff08fa`.

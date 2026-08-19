@@ -58,7 +58,7 @@ async function installAnonymousProgramme(page: Page) {
     return route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-07:updated-2026-08-09", privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-13", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.founder.width" } }),
+      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-19:updated-2026-08-19", privacyVersion: "privacy:effective-2026-08-19:updated-2026-08-19", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.founder.width" } }),
     });
   });
   await page.route("**/api/program/program-ai/session", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
@@ -68,8 +68,8 @@ async function installAnonymousProgramme(page: Page) {
 async function completeAccess(page: Page) {
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await expect(page.locator('[data-programme-presentation="mission-01-intake"]')).toBeVisible();
 }
 
@@ -116,7 +116,7 @@ for (const entry of ["/program", "/program?entry=start", "home", "ten-steps"] as
     }
     await expect(page.locator('[data-public-programme-renderer="program-ai"]')).toBeVisible();
     await expect(page.locator('[data-runtime-renderer="programme"]')).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
     await completeAccess(page);
     await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
     await expect(page.getByRole("button", { name: "I'd rather type" })).toBeVisible();

@@ -1869,6 +1869,26 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   transition: transform 160ms ease, background-color 160ms ease;
 }
 
+.commercialOutboundPrimary > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.commercialOutboundDisclosure {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.25;
+  opacity: .88;
+}
+
+.commercialOutboundPrimary:has(.commercialOutboundDisclosure) {
+  flex-direction: column;
+  gap: 3px;
+}
+
 .commercialOutboundPrimary:hover {
   transform: translateY(-1px);
   background: var(--sb-action-primary-hover);

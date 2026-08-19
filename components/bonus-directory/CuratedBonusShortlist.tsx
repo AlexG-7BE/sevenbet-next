@@ -35,13 +35,13 @@ export function CuratedBonusShortlist({ offers }: { offers: PublicOfferDTO[] }) 
   return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
     <div className={styles.tabs} aria-label="Bonus selectors" role="tablist">{selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{label}</button>)}</div>
     <p className={styles.label} id="bonus-shortlist-title">Top 3 for “{selector}” — ranked by realistic net value after terms.</p>
-    {!top.length ? <div className={styles.empty} role="status"><strong>No verified matches currently</strong><p>No current offer record has authoritative evidence for this selector.</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    {!top.length ? <div className={styles.empty} role="status"><strong>No eligible matches available</strong><p>No published offer record has sufficient authoritative evidence for this selector.</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>Welcome package</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
       <div className={styles.identity}><span aria-hidden="true">{offer.casino.name.slice(0, 1)}</span><div><h2>{offer.casino.name}</h2><small>Editor Score {offer.casino.editorScore.toFixed(1)} <span aria-hidden="true">★★★★★</span></small></div></div>
       <dl><div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "Not listed" : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div><div><dt>Max bonus</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency)}</dd></div><div><dt>Payout</dt><dd>{payout(offer)}</dd></div></dl>
       <p>{offer.bonus.importantConditions.slice(0, 2).join(" · ") || offer.bonus.summary}</p>
-      {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>DEMONSTRATION DATA · FICTIONAL RECORD</b> : null}
+      {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>DEMONSTRATION DATA — Fictional example for interface testing. Not a real casino, current offer or B4GAMBLE partner. No gambling or affiliate link is available.</b> : null}
       <div className={styles.actions}><Action offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link></div>
     </article>)}</div>}
     {top.length ? <aside className={styles.method}><strong>How we rank bonuses</strong><span>Net value after wagering, not headline size</span><span>Current evidence, terms and source status disclosed</span><Link href="/bonus-guide">Bonus guide →</Link></aside> : null}

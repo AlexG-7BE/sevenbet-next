@@ -27,17 +27,18 @@ export function CasinoOutboundAction({ action, className = "" }: { action: Casin
   return (
     <>
       <a aria-haspopup="dialog" className={`commercialOutboundPrimary ${className}`.trim()} href={confirmationHref} onClick={openConfirmation}>
-        {action.label}<span aria-hidden="true">→</span>
+        <span>{action.label}<span aria-hidden="true">→</span></span>
+        <small className="commercialOutboundDisclosure">Affiliate link · We may earn commission.</small>
       </a>
       <dialog aria-describedby={descriptionId} aria-labelledby={titleId} className="commercialOutboundDialog" ref={dialogRef}>
         <div className="commercialOutboundSheet">
           <p className="commercialOutboundLabel">02 / Outbound confirmation</p>
           <h2 id={titleId}>You are leaving B4GAMBLE.</h2>
-          <p id={descriptionId}>B4GAMBLE may receive a commission. Eligibility and destination are checked again before the internal redirect continues.</p>
+          <p id={descriptionId}>You are about to visit a third-party gambling operator. B4GAMBLE may earn commission if you complete a qualifying action. This does not change Editor Score or natural editorial ranking.</p>
           <div className="commercialOutboundContract">
             <span>Handoff contract</span>
             <strong>No raw destination URL · no browser-supplied authority.</strong>
-            <small>A neutral cancel path remains available · 18+ · Terms apply</small>
+            <small>18+ · Eligibility and operator terms apply · Gambling involves financial risk</small>
           </div>
           <a className="commercialOutboundPrimary" href={action.href} onClick={() => { productAnalyticsClient.outboundIntent("continued"); dialogRef.current?.close(); }} rel="nofollow sponsored noopener" target="_blank">Continue to eligible partner <span aria-hidden="true">→</span></a>
           <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">Cancel and stay on B4GAMBLE</button>

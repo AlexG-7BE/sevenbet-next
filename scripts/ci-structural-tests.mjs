@@ -9,6 +9,7 @@ const requiredTests = [
   "tests/fe-gap-02-structural.test.ts",
   "tests/final-design-handoff.test.ts",
   "tests/founder-unified-shell.test.ts",
+  "tests/gb-legal-p0-closure.test.ts",
   "tests/home-parity.test.ts",
   "tests/jurisdiction-resolver.test.ts",
   "tests/legal-programme-privacy.test.ts",

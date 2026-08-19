@@ -24,7 +24,7 @@ function terms(offer: PublicOfferDTO) {
 
 function OfferAction({ offer }: { offer: PublicOfferDTO }) {
   if (!offer.action.available || !offer.action.href) return <span aria-disabled="true" className={styles.unavailable}>Offer unavailable</span>;
-  return <CasinoOutboundAction action={{ href: offer.action.href, label: "View demo action" }} className={styles.primaryAction} />;
+  return <CasinoOutboundAction action={{ href: offer.action.href, label: "View offer" }} className={styles.primaryAction} />;
 }
 
 export function FeaturedOfferCard({ offer, rank }: { offer: PublicOfferDTO; rank: number }) {
@@ -33,7 +33,7 @@ export function FeaturedOfferCard({ offer, rank }: { offer: PublicOfferDTO; rank
     <div className={styles.cardTop}>
       <span className={styles.rank}>0{rank}</span>
       <span className={offer.commercialAvailability === "AVAILABLE" ? styles.available : styles.reviewOnly}>
-        {offer.commercialAvailability === "AVAILABLE" ? "Demo action" : "Review only"}
+        {offer.commercialAvailability === "AVAILABLE" ? "Affiliate action" : "Review only"}
       </span>
     </div>
     <div className={styles.identity}>

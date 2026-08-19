@@ -8,7 +8,7 @@ const publicationStatus: Record<EditorialStatus, CasinoPublicationStatus> = { DR
 const offerStatus: Record<OfferStatus, CasinoDomain["bonuses"][number]["offerStatus"]> = { DRAFT: "DRAFT", ACTIVE: "ACTIVE", PAUSED: "PAUSED", EXPIRED: "EXPIRED", ARCHIVED: "ARCHIVED" };
 function decimal(value: Prisma.Decimal | null) { return value === null ? null : Number(value); }
 function legacyLicenceStatus(value: string): LicenceStatus { return ["ACTIVE", "EXPIRED", "SUSPENDED", "REVOKED"].includes(value.toUpperCase()) ? value.toUpperCase() as LicenceStatus : "UNKNOWN"; }
-function legacyEvidenceStatus(licence: CasinoAggregate["licenses"][number]): LicenceEvidenceStatus { return licence.lastVerifiedAt ? "VERIFIED" : "UNKNOWN"; }
+function legacyEvidenceStatus(_licence: CasinoAggregate["licenses"][number]): LicenceEvidenceStatus { return "UNKNOWN"; }
 function lifecycle(value: CasinoLifecycleStatus | null | undefined, fallback: CasinoLifecycleStatus = "ACTIVE") { return value ?? fallback; }
 
 /** Infrastructure boundary: maps Prisma aggregate values into immutable domain data. */

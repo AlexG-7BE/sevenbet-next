@@ -365,7 +365,7 @@
   line-height: 20px;
 }
 .footerBaseline > div { display: flex; flex-wrap: wrap; align-items:center; gap: 24px; }
-.footerBaseline > a { margin-left: auto; }
+.footerCommission { margin: 0 0 0 auto; }
 .footerBaseline a { display: inline-flex; align-items: center; }
 .footerBaseline a:hover { color: var(--shell-white); }
 .age { padding:3px 10px; border:1px solid rgba(255,255,255,.35); border-radius:999px; color:var(--shell-white); font-weight:600; }
@@ -436,7 +436,7 @@
   .footerBaseline > div { width:100%; gap:4px 18px; }
   .footerBaseline a { min-height:44px; }
   .footerBaseline a { min-width:44px; }
-  .footerBaseline > a { margin-left:0; }
+  .footerCommission { margin-left:0; }
   .desktopDisclosure { display: none; }
   .mobileDisclosure { display: inline; }
 

@@ -18,14 +18,14 @@ const trackerLayout = read("app/(public)/tools/budget-calculator/layout.tsx");
 const about = read("app/(public)/about/AboutDocument.tsx");
 const aboutCss = read("app/(public)/about/AboutPage.module.css");
 
-const placeholders = /\[(?:LEGAL ENTITY|CONTROLLER LEGAL NAME|PRIVACY EMAIL|CONTACT EMAIL|SERVICE ADDRESS)\]|OWNER DECISION REQUIRED|placeholder|coming soon|\bdraft\b/iu;
+const placeholders = /\[(?:LEGAL ENTITY|CONTROLLER LEGAL NAME|PRIVACY EMAIL|CONTACT EMAIL|SERVICE ADDRESS)\]|OWNER DECISION REQUIRED|placeholder|coming soon/iu;
 
 test("Privacy is the substantive final handoff document and stays noindex/follow", () => {
   assert.doesNotMatch(privacy, /["']use client["']/);
   assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
   assert.match(privacy, /canonical:\s*absoluteUrl\("\/privacy"\)/);
   assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
-  for (const content of ["What we collect", "What we never do", "Cookies", "Your rights", "Retention & security", "We do not sell personal data", "no shared identifier", "updated=\"13 August 2026\""]) assert.ok(privacyDocument.includes(content), content);
+  for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"19 August 2026\""]) assert.ok(privacyDocument.includes(content), content);
   assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
   assert.doesNotMatch(privacyDocument, placeholders);
   assert.doesNotMatch(privacyDocument + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);

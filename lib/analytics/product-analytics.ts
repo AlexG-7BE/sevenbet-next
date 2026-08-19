@@ -7,16 +7,11 @@ import { parseProductAnalyticsEvent } from "@/lib/analytics/product-analytics-ev
 
 export type ProductAnalyticsSink = (event: ProductAnalyticsEvent) => void | Promise<void>;
 
-export function parseProductAnalyticsEnabled(value: string | undefined) {
-  return value === "true";
-}
+export const NON_ESSENTIAL_ANALYTICS_POLICY = "DISABLED_GB_LAUNCH" as const;
 
-export function isProductAnalyticsEnabled(environment?: { NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED?: string }) {
-  return parseProductAnalyticsEnabled(
-    environment
-      ? environment.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED
-      : process.env.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED,
-  );
+/** RFC-036: public product analytics has no runtime activation path. */
+export function isProductAnalyticsEnabled(_environment?: Record<string, string | undefined>) {
+  return false;
 }
 
 export function productAnalyticsEvent<N extends ProductAnalyticsEventName>(

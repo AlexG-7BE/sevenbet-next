@@ -118,6 +118,11 @@ function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
   const serialized = JSON.parse(JSON.stringify(casino)) as Omit<CasinoBuilderCasino, "generalMetadata"> & {
     reviewBlocks?: Prisma.JsonValue;
   };
+  const explicitlyVerifiedLicenceIds = new Set(
+    casino.licenses
+      .filter((record) => record.evidence.some((evidence) => evidence.status === "VERIFIED"))
+      .map((record) => record.id),
+  );
   const metadata = readCasinoEditorMetadata(casino.reviewBlocks);
   delete serialized.reviewBlocks;
 
@@ -126,7 +131,7 @@ function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
     issuedAt: record.issuedAt ?? null,
     expiresAt: record.expiresAt ?? null,
     notes: record.notes ?? null,
-    verified: Boolean(record.lastVerifiedAt),
+    verified: explicitlyVerifiedLicenceIds.has(record.id),
     archived: metadata.licenses[record.id]?.archived ?? record.status === "ARCHIVED",
   }));
   serialized.countries = serialized.countries
@@ -611,9 +616,7 @@ export class CasinoService {
               verificationUrl: record.verificationUrl,
               issuedAt: record.issuedAt ? new Date(record.issuedAt) : null,
               expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
-              lastVerifiedAt: record.verified
-                ? currentLicenses.get(record.id)?.lastVerifiedAt ?? new Date()
-                : null,
+              lastVerifiedAt: currentLicenses.get(record.id)?.lastVerifiedAt ?? null,
               notes: record.notes,
             })),
           },

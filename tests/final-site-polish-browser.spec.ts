@@ -34,6 +34,7 @@ async function noOverflow(page: Page) {
 }
 
 async function installProgramme(page: Page, calls: string[]) {
+  let sensitiveAuthorityActive = false;
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/programme-access/authority", (route) => {
     const body = route.request().postDataJSON() as { journeyId: string };
@@ -53,8 +54,11 @@ async function installProgramme(page: Page, calls: string[]) {
     return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) });
   });
   await page.route("**/api/program/program-ai/authority", (route) => {
-    calls.push(`authority:${route.request().method()}`);
-    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: route.request().method() !== "DELETE" } }) });
+    const method = route.request().method();
+    calls.push(`authority:${method}`);
+    if (method === "POST") sensitiveAuthorityActive = true;
+    if (method === "DELETE") sensitiveAuthorityActive = false;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: sensitiveAuthorityActive } }) });
   });
   await page.route("**/api/program/program-ai/turn", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({
     ok: true,
@@ -151,32 +155,34 @@ test("Learn has one discovery-adjacent search with combined live filtering and r
   await noOverflow(page);
 });
 
-test("Programme requires all three access checks once, binds authority before M1 and returns withdrawal to the gate", async ({ page }) => {
+test("Programme requires two access checks plus just-in-time consent and returns withdrawal to the gate", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
   const calls: string[] = [];
   await installProgramme(page, calls);
   await page.goto("/program", { waitUntil: "networkidle" });
   const checks = page.getByRole("checkbox");
   const enter = page.getByRole("button", { name: "Enter Mission 01" });
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
-  await expect(checks).toHaveCount(3);
-  for (let mask = 0; mask < 8; mask += 1) {
-    for (let index = 0; index < 3; index += 1) await checks.nth(index).setChecked(Boolean(mask & (1 << index)));
-    if (mask === 7) await expect(enter).toBeEnabled();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(checks).toHaveCount(2);
+  for (let mask = 0; mask < 4; mask += 1) {
+    for (let index = 0; index < 2; index += 1) await checks.nth(index).setChecked(Boolean(mask & (1 << index)));
+    if (mask === 3) await expect(enter).toBeEnabled();
     else await expect(enter).toBeDisabled();
   }
   await enter.click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  expect(calls.slice(0, 3)).toEqual(["access-proof", "session", "authority:POST"]);
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  expect(calls.slice(0, 3)).toEqual(["access-proof", "session", "authority:GET"]);
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  expect(calls).toContain("authority:POST");
   await page.getByRole("button", { name: /Withdraw sensitive-input authority/ }).click();
-  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
   expect(calls).toContain("authority:DELETE");
   await noOverflow(page);
 });

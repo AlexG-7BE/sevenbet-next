@@ -68,7 +68,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <div className={styles.rankLine}><span>01</span><b>{featured.dataClassification === "DEMO_FIXTURE" ? "Fictional demonstration" : "Best overall"}</b></div>
             <OfferIdentity offer={featured} size="large" />
             <div className={styles.score}><small>Editor Score</small><strong>{featured.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
-            {featured.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record, not a current promotion or claimable offer.</p> : null}
+            {featured.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> — Fictional example for interface testing. Not a real casino, current offer or B4GAMBLE partner. No gambling or affiliate link is available.</p> : null}
             <p className={`${styles.reason} ${styles.desktopReason}`}>{featured.casino.summary}</p>
             <p className={styles.mobileReason}>{shortlistReason(featured)}</p>
             <small className={styles.termLabel}>Welcome offer</small>
@@ -91,7 +91,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <div className={styles.altCopy}>
               <div className={styles.rankLine}><span>0{index + 2}</span><OfferIdentity offer={offer} /></div>
               <div className={styles.score}><small>Editor Score</small><strong>{offer.casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span></div>
-              {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> · Fictional record.</p> : null}
+              {offer.dataClassification === "DEMO_FIXTURE" ? <p className={styles.dataNotice}><strong>DEMONSTRATION DATA</strong> — Fictional example for interface testing. No gambling or affiliate link is available.</p> : null}
               <p className={styles.mobileReason}>{shortlistReason(offer)}</p>
               <small className={styles.termLabel}>Welcome offer</small><h4>{offer.bonus.title}</h4>
               <p className={styles.termSummary}>Wagering {offer.bonus.wageringMultiplier === null ? "not listed" : `${offer.bonus.wageringMultiplier}x`} · Min deposit {money(offer.bonus.minimumDeposit, offer.bonus.currency)} · Payout {payout(offer)}</p>
@@ -140,7 +140,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
 
     <section className={styles.finalOffer} aria-labelledby="final-offer-title" data-motion-reveal data-nav-theme="dark"><div>
       <p className={styles.darkKicker}>Still here? The answer hasn&apos;t changed.</p>
-      <h2 id="final-offer-title">{featured.casino.name}.<em>{featured.dataClassification === "DEMO_FIXTURE" ? "Fictional rank 01." : "Current rank 01."}</em></h2>
+      <h2 id="final-offer-title">{featured.casino.name}.<em>{featured.dataClassification === "DEMO_FIXTURE" ? "Fictional rank 01." : "Rank 01 under the published method."}</em></h2>
       <p>{featured.bonus.title} · Wagering {featured.bonus.wageringMultiplier === null ? "not listed" : `${featured.bonus.wageringMultiplier}x`} · Min {money(featured.bonus.minimumDeposit, featured.bonus.currency)} · Payout {payout(featured)}</p>
       <OfferAction featured offer={featured} />
       <small>18+ · Terms apply · Gamble responsibly</small>

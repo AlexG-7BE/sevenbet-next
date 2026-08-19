@@ -129,7 +129,10 @@ test("Public Shell keeps its approved architecture while exposing the current br
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Evidence-led reviews\. Material terms shown\./);
+  assert.match(footer, /Information, comparison and education\./);
+  assert.match(footer, /Not a gambling operator\./);
+  assert.match(footer, /Gambling involves financial risk\./);
+  assert.match(footer, /We may earn commission from clearly labelled affiliate links\./);
   assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([
@@ -155,6 +158,6 @@ test("Public Shell keeps its approved architecture while exposing the current br
   }
   if (changed.includes("package-lock.json")) {
     const packageLock = readFileSync("package-lock.json", "utf8");
-    assert.match(packageLock, /"@vercel\/analytics": "2\.0\.1"/);
+    assert.doesNotMatch(packageLock, /"@vercel\/analytics"/);
   }
 });

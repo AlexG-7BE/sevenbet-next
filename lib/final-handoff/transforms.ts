@@ -46,11 +46,24 @@ function qualifyUnsupportedHandoffClaims(html: string) {
     ["A 24-hour to 6-week break from all gambling content on B4GAMBLE, effective immediately.", "Open independent blocking and self-exclusion options, or step away from gambling content now."],
     ["A human from our team, within 24 hours. Your message never touches the commercial side.", "Contact the B4GAMBLE team. Protected Help activity is not used for offers, rankings or commercial personalisation."],
     ["we collect the minimum needed to run the service, and we never sell personal data.", "the service limits collection to the purposes described below. Contact the controller for data-rights questions."],
-    ["Basic analytics: pages visited, approximate region, device type.", "Product analytics, when enabled under the stated consent controls, may include pages visited, approximate region and device type."],
-    ["Optional analytics cookies are off until you accept them.", "Optional analytics requires the applicable consent state; strictly necessary cookies support authentication and security."],
+    ["Basic analytics: pages visited, approximate region, device type.", "Non-essential product analytics is disabled for the GB launch. Necessary operational records support security and requested features."],
+    ["Optional analytics cookies are off until you accept them.", "Non-essential analytics and advertising trackers are off; necessary storage supports requested features, authentication and security."],
     ["Export or delete your account and all saved Programme data at any time, in one action, from your dashboard. Deletion is immediate and irreversible.", "Contact us to request an export or deletion of account and saved Programme data. Legal, fraud-prevention and backup retention may continue where applicable."],
-    ["Account data is kept while the account exists; analytics are aggregated after 14 months. Data is encrypted in transit and at rest. If a breach ever affects you, we notify you directly and without delay.", "Account, analytics and security records are retained only for the applicable service, legal and security purposes. Security and incident handling follow the controls and notification duties that apply to the service and its processors."],
+    ["Account data is kept while the account exists; analytics are aggregated after 14 months. Data is encrypted in transit and at rest. If a breach ever affects you, we notify you directly and without delay.", "Account and security records are retained only for the applicable service, legal and security purposes. Non-essential product analytics is disabled. Security and incident handling follow the controls and notification duties that apply to the service and its processors."],
     ["We test with real money and update reviews continuously, but casino terms change without notice.", "Reviews disclose their current source status and date where available, but casino terms can change without notice."],
+    ["A private 10-step programme", "A self-directed 10-step programme"],
+    ["Free and private.", "Free to use. Privacy explained."],
+    ["When you're ready — not before — a private 10-step plan is here.", "When you're ready — not before — a self-directed 10-step plan is here."],
+    ["Independent reviews. Real tests.", "Editorial reviews. Evidence and limitations disclosed."],
+    ["A free, private 10-step plan for staying in control. No paywall, no upsell, and nothing you say inside it ever touches the commercial side.", "A free-to-use, self-directed 10-step Programme. Programme data is not used for commercial targeting, offers or rankings."],
+    ["Three things in one product: a free private control Programme, independent casino research funded by real-money testing, and openly commercial discovery pages (Best Offers, Casinos, Bonuses) whose affiliate links pay us commission.", "Three parts with clear boundaries: a free-to-use self-directed Programme, editorial casino information with disclosed evidence and limitations, and commercial discovery pages whose clearly labelled affiliate links may pay us commission."],
+    ["Last-verified date visible next to every score.", "Evidence dates and limitations shown where the published record supports them."],
+    ["The same wall protects you in the other direction: Programme and Help activity is never used to target offers, personalise rankings or feed advertising — it stays on its side of the product, permanently.", "Programme and Help activity is not used to target offers, personalise rankings or feed advertising. Current product controls keep those purposes separate."],
+    ["A review is only as good as its date. Every published review carries the day its material facts were last verified, and re-verification runs on a rolling basis — immediately when credible information suggests an operator changed behaviour or terms.", "A review is only as useful as its source status and date. Published records show evidence dates where available, and credible corrections are assessed against authoritative sources."],
+    ["Material term changes trigger a re-review and a noted correction in the affected text.", "Material term changes should be reviewed and the affected text dated when corrected."],
+    ["Spotted an error? Tell us — reports are logged, triaged and answered.", "Spotted an error? Contact us with the page and supporting source so it can be assessed."],
+    ["Our findings are observations of operator behaviour at particular moments, from particular jurisdictions, with particular payment instruments and amounts — snapshots, not guarantees.", "Findings reflect the disclosed sources or dated observations available for a particular jurisdiction and context — snapshots, not guarantees."],
+    ["Some findings act as caps, not weights: an unresolved verified non-payment, a withdrawal we couldn't complete during the observation window, or marketing that misrepresents the operator's own terms means no recommendation — regardless of how good everything else looks.", "Some substantiated findings can cap an assessment rather than add weight, including unresolved non-payment evidence, material withdrawal failure or marketing that misrepresents operator terms."],
   ];
   return replacements.reduce((output, [claim, replacement]) => output.replaceAll(claim, replacement), html);
 }
@@ -472,11 +485,17 @@ export function transformTenStepsHandoff(html: string) {
 }
 
 export function transformResponsibleGamblingHandoff(html: string) {
-  return [
+  let output = [
     ["Get support", "/help"],
     ["Read the guides", "/learn/responsible-gambling"],
     ["Open Help", "/help"],
   ].reduce((output, [label, href]) => buttonToLink(output, label, href), html);
+  output = output
+    .replace("No tests to pass, no labels, no judgement. Three ways forward — pick the one that fits today.", "Information and self-directed tools, without diagnosis or judgement. Choose support, practical controls or the Programme—at your pace.")
+    .replace("Ten private missions: understand your patterns, set boundaries that fit your life, keep a plan you can review.", "Ten self-directed missions to notice patterns, set personal boundaries and keep a plan you can review. This is education, not treatment or a safety guarantee.")
+    .replace("A boundary worth stating: B4GAMBLE does not diagnose, does not calculate a \"safe\" gambling amount, and does not determine what you can afford. Those judgements stay yours — our job is to give you the tools and the quiet to make them.", "B4GAMBLE does not diagnose, provide treatment, calculate a ‘safe’ gambling amount or decide what you can afford. Gambling involves financial risk. If you are worried about harm, independent support and self-exclusion may be more appropriate than continuing the Programme.")
+    .replace("B4GAMBLE uses public NHS and NICE guidance to shape recognition language and Programme risk boundaries. The complete Programme has not yet been clinically evaluated.", "Public NHS and NICE guidance informs recognition language and Programme boundaries. The complete Programme has not been clinically evaluated and is not medical care, treatment or crisis support.");
+  return output;
 }
 
 export function transformHelpHandoff(html: string) {
@@ -491,6 +510,16 @@ export function transformHelpHandoff(html: string) {
     ["Write to us", "/contact"],
   ].reduce((result, [label, href]) => buttonToLink(result, label, href), output);
   output = output
+    .replace("Independent support — free, confidential, not affiliated with us", "External support and controls — review each provider’s service and privacy terms")
+    .replace("This space has no offers, no tracking for ads, and nothing to sell. Take what you need.", "No casino, bonus or affiliate actions appear here. Help activity is not used for offers, rankings or commercial personalisation. Take what you need.")
+    .replace("Gamblers Anonymous", "GAMSTOP")
+    .replace("Local meetings", "Online self-exclusion")
+    .replace("BeGambleAware", "NHS gambling support")
+    .replace("begambleaware.org", "NHS.uk")
+    .replace("Gambling Therapy", "GamCare live support")
+    .replace("Online, worldwide", "Free · 24/7")
+    .replace("If you're in immediate danger or crisis, contact your local emergency services now. This page is support, not emergency care.", "If someone’s life is at risk, or you cannot keep yourself or someone else safe, call 999 or go to A&amp;E now. For urgent mental-health help, use NHS 111 online or call 111 and select the mental-health option. B4GAMBLE is not an emergency or clinical service.")
+    .replace("Your activity here is never used for offers, rankings or ads.", "Help activity is not used for offers, rankings, advertising or commercial personalisation. Ordinary security and bounded page analytics may still apply as described in Privacy.")
     .replace(
       /<span style="font-size: 15px; color: rgb\(250, 250, 247\); border-bottom: 1px solid rgba\(250, 250, 247, 0\.4\); padding-bottom: 3px; white-space: nowrap; cursor: pointer;">About the Programme →<\/span>/,
       '<a href="/10-steps" style="font-size: 15px; color: rgb(250, 250, 247); border-bottom: 1px solid rgba(250, 250, 247, 0.4); padding-bottom: 3px; white-space: nowrap; cursor: pointer;">About the Programme →</a>',
@@ -507,6 +536,12 @@ export function transformHelpHandoff(html: string) {
       /<div style="display: flex; justify-content: space-between; gap: 16px; padding: 18px 0px; border-bottom: 1px solid rgba\(250, 250, 247, 0\.12\); font-size: 15px;"><span style="font-weight: 600;">GamCare<\/span><span style="color: rgba\(250, 250, 247, 0\.7\); white-space: nowrap;">0808 8020 133<\/span><\/div>/,
       '<a aria-label="GamCare — independent support (opens an external site in a new tab)" href="https://www.gamcare.org.uk/get-support/" rel="noopener noreferrer" target="_blank" style="display: flex; justify-content: space-between; gap: 16px; padding: 18px 0px; border-bottom: 1px solid rgba(250, 250, 247, 0.12); font-size: 15px; color: inherit; text-decoration: none;"><span style="font-weight: 600;">GamCare</span><span style="color: rgba(250, 250, 247, 0.7); white-space: nowrap;">0808 8020 133</span></a>',
     );
+  const urgentMarker = '<p style="font-size: 14px; line-height: 1.6; color: rgba(250, 250, 247, 0.65); margin: 32px 0px 0px; max-width: 66ch;">';
+  const urgentIndex = output.indexOf(urgentMarker);
+  if (urgentIndex >= 0) {
+    const links = `<div role="navigation" aria-label="Official independent support" style="display:flex;gap:12px 24px;flex-wrap:wrap;margin-top:28px;font-size:14px;"><a href="https://www.gamstop.co.uk/" rel="noopener noreferrer" target="_blank" style="color:rgb(250,250,247);">GAMSTOP self-exclusion ↗</a><a href="https://www.nhs.uk/live-well/addiction-support/gambling-addiction/" rel="noopener noreferrer" target="_blank" style="color:rgb(250,250,247);">NHS gambling support ↗</a><a href="https://www.nhs.uk/nhs-services/mental-health-services/where-to-get-urgent-help-for-mental-health/" rel="noopener noreferrer" target="_blank" style="color:rgb(250,250,247);">NHS urgent mental-health help ↗</a></div>`;
+    output = output.slice(0, urgentIndex) + links + output.slice(urgentIndex);
+  }
   return output;
 }
 
