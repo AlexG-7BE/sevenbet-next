@@ -79,12 +79,12 @@ async function installAnonymousProgramme(page: Page) {
 
 async function reachRegistration(page: Page) {
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(candidate.startingPoint);
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
@@ -155,6 +155,7 @@ test("canonical access screen reports invalid authority safely", async ({ page }
   await open(page, "/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   const alert = page.locator('p[role="alert"]');
   await expect(alert).toHaveText("Current access could not be verified. Try again.");
@@ -298,8 +299,8 @@ test("expired access continuation returns to the canonical access screen", async
   }, { journey: journeyId, access: expired });
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await open(page, "/program");
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(3);
 });
 
 test("authenticated canonical dashboard logs out into a fresh anonymous access boundary", async ({ page }) => {
@@ -330,7 +331,7 @@ test("authenticated canonical dashboard logs out into a fresh anonymous access b
   const logout = page.getByRole("button", { name: "Log out of B4GAMBLE" });
   await expect(logout).toBeVisible();
   await logout.click();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Three checks before you begin." })).toBeVisible();
   expect(signOutRequests).toBe(1);
   expect(transitionRequests).toBe(1);
   const storage = await page.evaluate((user) => ({

@@ -112,7 +112,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
             <p className={styles.resultsStatus} aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p>
             <BonusComparisonList offers={result.records} startPosition={startPosition} />
             <BonusPagination page={result.page} pageCount={result.pageCount} raw={raw} />
-          </> : <section className={styles.empty}><p className={styles.eyebrow}>No matches / no substitute</p><h2>No Comparison Records Match These Filters.</h2><p>Reset the comparison instead of substituting an ineligible or commercial record. Casino reviews, methodology, education and protected Help remain available.</p><Link href="/bonuses">Reset Filters</Link></section>}
+          </> : <section className={styles.empty}><p className={styles.eyebrow}>No matches / no substitute</p><h2>No Comparison Records Match These Filters.</h2><p>Use Clear All above or remove one filter. B4GAMBLE will not substitute an ineligible or commercial record.</p></section>}
         </>}
       </div>
     </section>

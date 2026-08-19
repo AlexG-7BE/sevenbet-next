@@ -90,14 +90,14 @@ test("native GET fallbacks work without JavaScript on all enhanced routes", asyn
   const fallback = page.locator("details").filter({ has: page.getByText("Filters", { exact: true }) }).first();
   await fallback.getByText("Filters", { exact: true }).click();
   await fallback.getByLabel("Market preference").selectOption("GB");
-  await fallback.getByRole("button", { name: /Show .* results/ }).click();
+  await fallback.getByRole("button", { name: "Apply filters" }).click();
   await expect(page).toHaveURL(/country=GB/);
 
   await page.goto("/bonuses", { waitUntil: "networkidle" });
   const bonusForm = page.locator('form[action="/bonuses"]:visible').first();
   await expect(bonusForm.getByLabel("Sort results")).toBeVisible();
   await bonusForm.getByLabel("Sort results").selectOption("lowest-deposit");
-  await bonusForm.getByRole("button", { name: "Show Results" }).click();
+  await bonusForm.getByRole("button", { name: "Apply filters" }).click();
   await expect(page).toHaveURL(/sort=lowest-deposit/);
 
   await page.goto("/compare?casino=demo-northstar&country=GB", { waitUntil: "networkidle" });

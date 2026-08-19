@@ -97,9 +97,8 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
 });
 
-test("combined intake includes JIT authority and does not introduce a separate legal phase", () => {
-  assert.match(frontendRuntime, /Before you share/);
-  assert.match(frontendRuntime, /I choose to share this for Programme personalisation/);
+test("the access gate includes JIT authority without duplicating it in Mission 01 or adding a legal phase", () => {
+  assert.equal((frontendRuntime.match(/I choose to share this for Programme personalisation/g) || []).length, 1);
   assert.match(frontendRuntime, /What feels hardest to control right now/);
   assert.doesNotMatch(frontend, /type Phase[\s\S]*"legal"/);
 });
@@ -107,14 +106,17 @@ test("combined intake includes JIT authority and does not introduce a separate l
 test("Program AI reuses the signed access contract and exposes no anonymous clarification, editor or reward phase", () => {
   const sessionRoute = read("app/api/program/program-ai/session/route.ts");
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
-  assert.match(frontendRuntime, /Two checks before you begin/);
+  assert.match(frontendRuntime, /Three checks before you begin/);
   assert.match(frontendRuntime, /htmlFor="programme-legal-acknowledgement"/);
   assert.match(frontendRuntime, /<Link href="\/terms">Read Terms<\/Link>/);
   assert.match(frontendRuntime, /<Link href="\/privacy">Read Privacy Notice<\/Link>/);
   assert.doesNotMatch(frontendRuntime, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
-  assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length >= 3, true);
-  assert.doesNotMatch(frontendRuntime, /Three checks before you begin|I accept the current|I have read the current/);
-  assert.match(frontendRuntime, /onSubmit=\{\(\) => submitTurn\(true\)\}/);
+  assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length, 3);
+  assert.doesNotMatch(frontendRuntime, /I accept the current|I have read the current/);
+  assert.match(frontendRuntime, /onSubmit=\{submitTurn\}/);
+  const accessGrant = frontend.slice(frontend.indexOf("async function grantAccess"), frontend.indexOf("async function withdrawAuthority"));
+  assert.match(accessGrant, /program-ai\/session[\s\S]*program-ai\/authority/);
+  assert.doesNotMatch(frontend, /ensureSensitiveAuthority/);
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
   assert.match(frontendRuntime, /Your Starting Point is ready/);

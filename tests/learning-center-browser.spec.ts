@@ -17,6 +17,10 @@ test("Learning Center renders the current editorial catalogue in the Public Shel
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Learn\.\s*Play smarter\./i);
   await expect(page.locator('[data-handoff-page="learn"]')).toHaveCount(1);
+  const search = page.getByRole("searchbox", { name: "Search guides" });
+  await expect(search).toHaveCount(1);
+  await expect(page.locator('[data-learn-discovery-search]').filter({ has: search })).toHaveCount(1);
+  await expect(page.locator('[data-screen-label="Hero"] input[type="search"], [data-learn-hero-axis] input[type="search"]')).toHaveCount(0);
   const guides = page.locator('[data-handoff-page="learn"] a[data-learn-category]');
   await expect(guides).toHaveCount(17);
   const allGuidePaths = await page.locator('[data-handoff-page="learn"] .scp3').evaluateAll((links) => links.map((link) => link.getAttribute("href")));
@@ -28,6 +32,8 @@ test("search, facets, result count and no-results recovery use only current data
   const errors = collectRuntimeErrors(page);
   await page.goto(`${baseUrl}/learn`, { waitUntil: "networkidle" });
   const search = page.getByRole("searchbox", { name: "Search guides" });
+  const liveStatus = page.locator("[data-learn-results-status]");
+  await expect(liveStatus).toHaveAttribute("aria-live", "polite");
   await search.fill("licensing");
   await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(2);
   await expect(page.locator("[data-learn-results-status]")).toContainText("2 guides shown");
@@ -36,6 +42,8 @@ test("search, facets, result count and no-results recovery use only current data
   await page.getByRole("button", { name: "Bonuses", exact: true }).click();
   await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(1);
   await expect(page.getByRole("link", { name: /How Welcome Bonus Terms Work/ }).last()).toBeVisible();
+  await search.fill("welcome");
+  await expect(page.locator('a[data-learn-category].scp3:visible')).toHaveCount(1);
 
   await page.getByRole("button", { name: "All topics", exact: true }).click();
   await search.fill("no-current-guide-can-match-this-query");

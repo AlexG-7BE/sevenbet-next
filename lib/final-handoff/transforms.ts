@@ -262,7 +262,11 @@ export function transformLearnHandoff(html: string) {
             <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">Read →</span>
           </a>`;
   let output = html
-    .replace('<input placeholder="Search guides — wagering, payouts, RTP…"', '<input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…"')
+    .replace(/<input placeholder="Search guides — wagering, payouts, RTP…"[^>]*>/, "")
+    .replace(
+      /(<h2[^>]*>All guides<\/h2>)/,
+      '$1<label data-learn-discovery-search=""><span>Search guides</span><input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…" value=""></label>',
+    )
     .replace('data-mob="pad"', 'data-mob="pad" data-learn-hero-axis=""')
     .replace(
       '<div style="position: relative; display: flex; gap: 24px 56px; flex-wrap: wrap; align-items: center; padding: 26px clamp(24px, 5vw, 72px);',

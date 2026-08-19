@@ -24,29 +24,29 @@ function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; exce
   </>;
 }
 
-function FilterSelect({ label, name, values, selected }: { label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
+function FilterSelect({ emptyLabel, label, name, values, selected }: { emptyLabel: string; label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
   if (!values.length) return null;
-  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">Any</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
+  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">{emptyLabel}</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
 }
 
-function BooleanSelect({ active, label, name }: { active: boolean; label: string; name: string }) {
-  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">Any</option><option value="true">Required</option></select></label>;
+function BooleanSelect({ active, emptyLabel, label, name }: { active: boolean; emptyLabel: string; label: string; name: string }) {
+  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">{emptyLabel}</option><option value="true">Required</option></select></label>;
 }
 
 function FilterFields({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
   return <div className={styles.filterGrid}>
-    <FilterSelect label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
-    <FilterSelect label="Licence" name="license" selected={query.license ?? []} values={result.facets.licenses} />
-    <FilterSelect label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
-    <FilterSelect label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
-    <FilterSelect label="Category" name="category" selected={query.category ?? []} values={result.facets.categories} />
-    <FilterSelect label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
-    <BooleanSelect active={Boolean(query.hasBonus)} label="Published bonus" name="hasBonus" />
-    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} label="Visit availability" name="hasAvailableVisitAction" />
-    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} label="Responsible gambling" name="hasResponsibleGambling" />
-    <BooleanSelect active={Boolean(query.supportsCrypto)} label="Cryptocurrency" name="supportsCrypto" />
-    <BooleanSelect active={Boolean(query.supportsMobile)} label="Mobile support" name="supportsMobile" />
+    <FilterSelect emptyLabel="Any market preference" label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
+    <FilterSelect emptyLabel="Any licence or regulator" label="Licence" name="license" selected={query.license ?? []} values={result.facets.licenses} />
+    <FilterSelect emptyLabel="Any payment method" label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
+    <FilterSelect emptyLabel="Any game provider" label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
+    <FilterSelect emptyLabel="Any game category" label="Category" name="category" selected={query.category ?? []} values={result.facets.categories} />
+    <FilterSelect emptyLabel="Any bonus type" label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
+    <BooleanSelect active={Boolean(query.hasBonus)} emptyLabel="Any bonus availability" label="Published bonus" name="hasBonus" />
+    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} emptyLabel="Any visit availability" label="Visit availability" name="hasAvailableVisitAction" />
+    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} emptyLabel="Any safer-gambling information" label="Responsible gambling" name="hasResponsibleGambling" />
+    <BooleanSelect active={Boolean(query.supportsCrypto)} emptyLabel="Any crypto support" label="Cryptocurrency" name="supportsCrypto" />
+    <BooleanSelect active={Boolean(query.supportsMobile)} emptyLabel="Any mobile support" label="Mobile support" name="supportsMobile" />
   </div>;
 }
 
@@ -54,14 +54,14 @@ function activeFilterCount(query: CasinoDiscoveryQuery) {
   return (query.search ? 1 : 0) + arrayFields.reduce((count, [field]) => count + (query[field]?.length ?? 0), 0) + booleanFields.filter(([field]) => query[field]).length;
 }
 
-function FilterForm({ result, mobile = false }: { result: CasinoDiscoveryResult; mobile?: boolean }) {
+function FilterForm({ result, mobile = false, noScript = false }: { result: CasinoDiscoveryResult; mobile?: boolean; noScript?: boolean }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action="/casinos" className={mobile ? styles.mobileFilterForm : styles.filterForm} key={`filters:${mobile}:${JSON.stringify(query)}`} pendingLabel="Updating casino results…">
     <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
     <div className={styles.filterPrompt}><span>Filters and sort</span><strong>Select the facts you want to compare.</strong></div>
     <FilterFields result={result} />
     <p className={styles.preferenceNote}><strong>Market preference, not location.</strong> Filters published market information; it does not confirm eligibility.</p>
-    <div className={styles.filterActions}><div><strong>{result.total} {result.total === 1 ? "classified match" : "classified matches"}</strong><span>Server-classified review snapshots</span></div><Link href="/casinos">Reset all</Link><button type="submit">{mobile ? `Show ${result.total} results` : "Apply filters →"}</button></div>
+    <div className={styles.filterActions}><div><strong>{result.total} {result.total === 1 ? "classified match" : "classified matches"}</strong><span>{noScript ? "Submit to update these server-classified records" : "Updates immediately when a filter changes"}</span></div>{noScript ? <button type="submit">Apply filters</button> : null}</div>
   </InstantDiscoveryForm>;
 }
 
@@ -80,7 +80,7 @@ export function DiscoveryControls({ result }: { result: CasinoDiscoveryResult })
     <div className={styles.commandHeader}><SearchForm result={result} /><SortForm result={result} /><div className={styles.activeCount}><strong>{count} active</strong><span>{count ? "Filters applied" : "All published reviews"}</span></div></div>
     <div className={styles.desktopFilters}><FilterForm result={result} /></div>
     <div className={styles.mobileControls}><MobileCasinoFilters activeCount={count}><FilterForm mobile result={result} /></MobileCasinoFilters></div>
-    <noscript><details className={styles.noScriptFilters}><summary>Filters{count ? ` (${count})` : ""}</summary><FilterForm mobile result={result} /></details></noscript>
+    <noscript><details className={styles.noScriptFilters}><summary>Filters{count ? ` (${count})` : ""}</summary><FilterForm mobile noScript result={result} /></details></noscript>
   </div>;
 }
 

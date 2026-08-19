@@ -237,8 +237,41 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 [data-handoff-page="learn"] [data-learn-meta-axis] {
   padding-inline: var(--learn-content-axis) !important;
 }
+[data-handoff-page="learn"] [data-learn-discovery-search] {
+  flex: 1 1 320px;
+  max-width: 440px;
+  margin-left: auto;
+}
+[data-handoff-page="learn"] [data-learn-discovery-search] > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+[data-handoff-page="learn"] [data-learn-discovery-search] input {
+  width: 100%;
+  min-height: 48px;
+  box-sizing: border-box;
+  padding: 13px 18px;
+  border: 1px solid rgba(16, 15, 15, .24);
+  border-radius: 14px;
+  background: rgb(250, 250, 247);
+  color: rgb(16, 15, 15);
+  font: 400 15px/1.4 Archivo, sans-serif;
+}
 
 @media (max-width: 760px) {
+  [data-handoff-page="learn"] [data-learn-discovery-search] {
+    flex-basis: 100%;
+    max-width: none;
+    order: 3;
+    margin-left: 0;
+  }
+
   [data-handoff-page="learn"] input[type="search"] {
     min-height: 48px;
     font-size: 16px !important;

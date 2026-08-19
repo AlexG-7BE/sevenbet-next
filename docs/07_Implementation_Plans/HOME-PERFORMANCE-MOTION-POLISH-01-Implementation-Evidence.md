@@ -2,7 +2,7 @@
 
 ## Boundary
 
-RFC-035 governs this Preview-only workstream. RFC-034 remains the presentation authority. Production, Programme, commercial, data, auth and nonce-CSP architecture are unchanged.
+RFC-035 governs this Preview-only workstream. RFC-034 remains the presentation authority. The final-site addendum changes only the four approved public interaction surfaces; Programme authority semantics, commercial/data/auth boundaries and nonce-CSP architecture remain unchanged. Production remains untouched.
 
 ## Baseline — 2026-08-18
 
@@ -113,6 +113,31 @@ All final positions were compared with engine-measured destinations rather than 
 
 ## Verification — local production build
 
+### Final public-site polish addendum — 2026-08-19
+
+- **Detected:** implementation began from exact accepted Home head `74625daa2c51b582e0df0c55d314711cbb845fa1`; no Home source, asset, copy, layout or motion file is changed by this addendum.
+- **Detected:** Casinos field defaults name their actual meaning, discrete filter changes use the existing `InstantDiscoveryForm` soft router, JavaScript-only Apply/Show controls are absent, and the native GET fallback retains one `Apply filters` submit.
+- **Detected:** Bonuses use the same instant router for selects and debounced numeric fields. JavaScript-only Show Results/Reset controls are absent, the active-filter region renders exactly one `Clear All`, deep links and browser history restore filter state, and the empty state points to that one recovery action.
+- **Detected:** the generated Learn Hero search input is removed before render, one accessible search input is inserted beside `All guides`, the existing client interaction owns combined category/text filtering and a polite live status, and narrow widths stack the input without overflow.
+- **Detected:** Programme access presents exactly three unchecked required confirmations. The exact existing personalisation statement appears once. The client obtains the signed access proof, creates the anonymous session and then confirms the existing sensitive-input authority before entering Mission 01. Reload revalidates active authority; withdrawal returns to the access phase; Mission 01, transcription and turn submission do not create or refresh authority implicitly.
+- **Detected:** `playwright.final-site-polish.config.ts` is a scoped local cross-engine lane. It runs Chromium and WebKit against the development server because the unchanged Production CSP deliberately upgrades HTTP subresources and WebKit cannot hydrate against a plain-HTTP production server. This is a local harness boundary, not a security/configuration change; final Vercel Preview evidence must use normal HTTPS.
+
+| Final-polish gate | Result |
+| --- | --- |
+| `npm run typecheck` | Passed |
+| `npm run program-ai:test` | 60/60 passed |
+| `npm run public-ia:test` | 33/33 passed |
+| `npm run fe-mig-07:test` | 26/26 passed |
+| Disposable CI database migration smoke | 19/19 migrations applied; representative read/write smoke passed |
+| `npm run build` | Passed; existing local direct/non-pooled Prisma warning only |
+| `npm run ci:quality` | Passed in full |
+| Scoped Chromium + WebKit interaction matrix | 14/14 passed at 1440×900, 1024×768 and 390×844 |
+| Existing database-backed Program AI browser suite | 11/11 passed after the approved Programme fixture was published only in the disposable local CI database |
+| Locked production-build Home checks | Chromium 1440×900 and 1024×768 adjacent-wheel contracts passed; responsive media, idle work, coarse pointer and reduced motion passed |
+| `git diff --check` | Passed before documentation closure; rerun required on final tree |
+
+**Not detected yet:** final hosted Preview and remote PR checks for the addendum. No Founder acceptance or product-freeze declaration is made from local evidence.
+
 | Gate | Result |
 | --- | --- |
 | `npm run ci:quality` | Passed |
@@ -139,4 +164,4 @@ All final positions were compared with engine-measured destinations rather than 
 
 ## Release state
 
-**Ready for Founder review as Draft PR #77.** Vercel Preview and all required PR checks are green. The PR remains unmerged and Production is untouched; the exact final head and deployment URLs are reported from the live PR/deployment records rather than embedded here, so a documentation-only commit cannot make them stale.
+**Draft PR #77 remains in Founder review.** Earlier Home Preview evidence remains historical. The final public-site addendum requires a refreshed Ready Preview and green remote checks after its final commit. The PR remains unmerged and Production is untouched; no product-freeze acceptance is claimed before Founder approval.

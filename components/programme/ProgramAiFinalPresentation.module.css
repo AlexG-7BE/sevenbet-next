@@ -176,7 +176,7 @@
   .intakeIntro h1 { font-size: 28px; line-height: 1.12; }
   .intakeIntro > p:last-child { display: none; }
   .microphoneAction { width: 84px; height: 84px; margin-top: 8px; }
-  .privacyBoundary > div { display: none; }
+  .privacyBoundary > div { display: grid; }
   .privacyBoundary { margin-top: 0; }
   .readyState > h1 { font-size: 28px; }
   .startingPointCard { padding: 18px 22px; }

@@ -109,7 +109,7 @@ test("mobile directory filters remain usable when JavaScript is disabled", async
   await fallback.locator("summary").click();
   const responsibleGambling = fallback.locator('select[name="hasResponsibleGambling"]');
   await responsibleGambling.selectOption("true");
-  await fallback.getByRole("button", { name: /Show .* results/ }).click();
+  await fallback.getByRole("button", { name: "Apply filters" }).click();
   await expect(page).toHaveURL(/hasResponsibleGambling=true/);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   await context.close();

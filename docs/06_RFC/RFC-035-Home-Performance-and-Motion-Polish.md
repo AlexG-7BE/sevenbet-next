@@ -2,7 +2,7 @@
 
 ## Status
 
-**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements and sequential-input correction approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuations for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
+**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements, sequential-input correction and final public-site polish addendum approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` and `B4GAMBLE — FINAL SITE POLISH / PRODUCT FREEZE` Founder workstream instructions for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
 ## Decision
 
@@ -18,6 +18,17 @@ The bounded implementation will:
 - deliver responsive AVIF/WebP candidates with intrinsic dimensions while keeping original JPEGs as fallbacks;
 - eagerly load only the four visible opening-photo cards and lazily load all three below-fold chapter images; and
 - change Home rise timing from 700ms/130ms to 460ms/60ms.
+
+### Founder addendum — final public-site polish / product-freeze candidate
+
+The accepted Home implementation at `74625daa2c51b582e0df0c55d314711cbb845fa1` is the locked baseline and must not regress. The same Draft PR may apply exactly four additional presentation/interaction corrections without redesigning the public system:
+
+- `/casinos` keeps the existing server-owned query/facet model, but each empty filter option names its real field and JavaScript-enabled select changes navigate through the existing client router immediately; no visible Apply/Show Results control is required;
+- `/bonuses` keeps the existing server-owned query/deep-link model, but JavaScript-enabled select/number changes update immediately, the visible Show Results/Reset pair is removed and the active-filter area owns the one `Clear All` action;
+- `/learn` removes the search-like Hero affordance and places the existing live client-side search beside the `All guides` discovery heading, preserving category/tag/difficulty composition, live result state and narrow-width stacking; and
+- `/program` presents the existing Programme personalisation statement as the third unchecked required confirmation on the access screen. After the existing RFC-021 signed access proof creates the exact anonymous Programme session, the client confirms the existing RFC-022 `ProgrammeSensitiveInputAuthority` for that session and enters Mission 01 only when both server operations succeed. Mission 01 removes its duplicate checkbox. Transcription and Programme-personalisation services retain their current server-side active-authority checks. Withdrawal invalidates that same authority and returns to the three-confirmation access screen; a new explicit access action is required to reconfirm.
+
+The three Programme concepts remain separate: adult self-attestation, Terms agreement/Privacy Notice acknowledgement and narrow Programme-personalisation authority. The personalisation wording, purpose/statement versions, database model, anonymous-to-user claim transition, expiry/session behaviour, provider boundary and commercial firewall remain unchanged. The RFC-021 proof is not repurposed as sensitive-input evidence, Google is not age verification, and no new consent model, migration or durable raw-content storage is authorised. This addendum supersedes RFC-022 only where it placed the narrow authority checkbox on the Mission 01 intake surface; all RFC-022 server authority, withdrawal and privacy requirements remain in force.
 
 Native coarse-pointer snapping is reduced from `mandatory` to `proximity`. This keeps the optional chapter alignment cue without forcing a user away from an intermediate scroll position.
 
@@ -83,13 +94,15 @@ Four stable one-pixel, negative-margin anchors identify the true open coordinate
 | Static responsive AVIF/WebP candidates plus JPEG fallback | Existing first-party source assets and handoff renderer boundary | Avoids a renderer rewrite while reducing transfer cost and mobile overfetch |
 | 460ms reveal with 60ms stagger | Founder requested 400–500ms / 50–70ms range; existing easing retained | Keeps the approved premium reveal language with faster response |
 | Keep nonce CSP and dynamic root unchanged | Security boundary and RFC-033/RFC-034 | Rendering/security changes are outside scope |
+| Keep public polish inside existing router/query components | Founder final-site polish instruction; detected `InstantDiscoveryForm` and Learn client filter | Preserves deep links and server classification without a new routing or state framework |
+| Confirm existing sensitive authority immediately after signed access-session creation | Founder consent-flow instruction; RFC-021 purpose separation; RFC-022 `ProgrammeSensitiveInputAuthority` | Moves one existing affirmative action without weakening server evidence, withdrawal or claim semantics and requires no schema change |
 
 ## Boundaries
 
-This RFC does not authorise:
+Except for the exact four-item Founder addendum above, this RFC does not authorise:
 
 - a Home redesign, copy change, route or navigation change;
-- a Programme, reward, commercial, casino, offer, comparison or protected Help change;
+- a Programme content/reward/progression change, casino/offer data-model change, commercial change, comparison change or protected Help change;
 - a schema, migration, database, provider, environment, auth or analytics change;
 - removal of `force-dynamic`, `connection()`, nonce CSP or security headers;
 - a new smooth-scroll dependency; or
@@ -100,3 +113,10 @@ This RFC does not authorise:
 The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium and WebKit at 1440×900 and 1024×768, mobile, reduced motion, visible native scrollbar structure/manual presence, sequential small/large/repeated trackpad-like wheel input, immediate direction reversal, PageDown/PageUp, Home/End, direct multi-screen scrollbar-thumb dragging, exact full-open Mission state, resize, footer reachability and navigation cleanup. It must assert fine-pointer `y mandatory`, coarse-pointer `y proximity`, exactly the approved canonical sequence, no generic scroll interception or long input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
 
 Delivery remains a Draft PR with an isolated Vercel Preview. Founder approval is required for any merge or Production action.
+
+### Final public-site polish verification disposition
+
+- **Detected:** focused Program AI, public-IA and Bonus directory suites pass `60/60`, `33/33` and `26/26`; typecheck and the production build pass.
+- **Detected:** the scoped cross-engine matrix passes `14/14` in actual Chromium and WebKit. It covers enhanced/no-submit filtering, URL/history/deep-link state, single-action recovery, Learn combined live filtering, all eight three-check combinations, access-proof → session → sensitive-authority ordering, reload, withdrawal, no horizontal overflow and the locked Home composition at 1440×900, 1024×768 and 390×844.
+- **Detected:** no Prisma schema or migration changed; an isolated local database successfully replayed all 19 existing migrations.
+- **Not detected:** final hosted Preview and remote PR checks for this addendum. Local evidence does not authorise a product-freeze, merge or Production declaration; Founder acceptance remains mandatory.

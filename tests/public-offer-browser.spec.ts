@@ -59,10 +59,11 @@ test("bonus filters remain URL-authoritative and server rendered", async ({ page
   await form.getByLabel("Country preference").selectOption("GB");
   await form.getByLabel("Bonus type").selectOption("WELCOME");
   await form.getByLabel("Sort results").selectOption("lowest-wagering");
-  await form.getByRole("button", { name: "Show Results" }).click();
   await expect(page).toHaveURL(/country=GB/);
   await expect(page).toHaveURL(/type=WELCOME/);
   await expect(page).toHaveURL(/sort=lowest-wagering/);
+  await expect(page.getByRole("button", { name: "Show Results" })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Clear All" })).toHaveCount(1);
   await expect(page.getByText("Active filters")).toBeVisible();
 });
 

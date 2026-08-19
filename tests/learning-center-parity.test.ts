@@ -15,6 +15,8 @@ const hubRoute = readFileSync("app/(public)/learn/page.tsx", "utf8");
 const handoffPages = JSON.parse(readFileSync("lib/final-handoff/generated-pages.json", "utf8")) as Record<string, { html: string }>;
 const hubView = readFileSync("app/(public)/learn/LearningCenterPage.tsx", "utf8");
 const searchView = readFileSync("components/learning/LearningSearchAndFilter.tsx", "utf8");
+const handoffTransforms = readFileSync("lib/final-handoff/transforms.ts", "utf8");
+const handoffInteractions = readFileSync("components/final-handoff/HandoffInteractions.tsx", "utf8");
 const categoryRoute = readFileSync("app/(public)/learn/[category]/page.tsx", "utf8");
 const categoryView = readFileSync("app/(public)/learn/[category]/LearningCategoryView.tsx", "utf8");
 const articleRoute = readFileSync("app/(public)/learn/[category]/[slug]/page.tsx", "utf8");
@@ -89,12 +91,12 @@ test("metadata and structured data remain aligned with visible content", () => {
   assert.match(articleView, /editor\.name/);
 });
 
-test("search is the only client island and supports accessible recovery", () => {
-  assert.match(searchView, /^"use client";/);
-  assert.match(searchView, /aria-live="polite"/);
-  assert.match(searchView, /type="search"/);
-  assert.match(searchView, /<select/);
-  assert.match(searchView, /Clear filters/);
-  assert.match(searchView, /Browse categories/);
-  assert.match(searchView, /filteredArticles\.length > 0/);
+test("the live handoff has one accessible search beside All guides with dynamic category recovery", () => {
+  assert.match(handoffTransforms, /replace\(\/<input placeholder="Search guides[^\n]+, ""\)/);
+  assert.match(handoffTransforms, /data-learn-discovery-search/);
+  assert.match(handoffTransforms, /type="search" aria-label="Search guides"/);
+  assert.match(handoffInteractions, /dataset\.learnResultsStatus/);
+  assert.match(handoffInteractions, /aria-live/);
+  assert.match(handoffInteractions, /data-learn-category/);
+  assert.match(handoffInteractions, /requestedCategory/);
 });

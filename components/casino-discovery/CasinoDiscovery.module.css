@@ -225,7 +225,7 @@
 .mobileFilterForm .filterSelect { grid-template-columns: 108px 1fr; align-items: center; gap: 8px; }
 .mobileFilterForm .filterSelect select { min-height: 50px; border-radius: 14px; }
 .mobileFilterForm .filterActions { position: fixed; right: 0; bottom: 0; z-index: 4; width: min(100%,520px); min-height: 82px; margin: 0; padding: 14px 20px; }
-.mobileFilterForm .filterActions > div { display: none; }
+.mobileFilterForm .filterActions > div { display: grid; margin: 0; }
 .mobileFilterForm .filterActions > a { padding-inline: 14px; }
 .mobileFilterForm .filterActions > button { flex: 1; min-width: 0; }
 

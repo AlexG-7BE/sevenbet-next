@@ -91,6 +91,39 @@ test("filters use OR within a facet and AND between facets", async () => {
   assert.equal(responsible.items[0]?.responsibleGamblingLabel, "Responsible gambling tools available");
 });
 
+test("every directory filter returns the expected classified identities and count", async () => {
+  const alpha = record("alpha-id", "alpha", "Alpha", { mobileApp: true });
+  const beta = record("beta-id", "beta", "Beta", { casinoBonuses: [], responsibleGamblingTools: [] });
+  const offer = activeOffer("alpha-id");
+  const service = new PublicCasinoDiscoveryService(store([alpha, beta], {
+    offers: [offer],
+    redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }],
+  }), () => now, allowOperatorAuthority, () => true);
+  const cases = [
+    [{ country: ["GB"] }, ["alpha"]],
+    [{ license: ["ukgc"] }, ["alpha"]],
+    [{ payment: ["visa"] }, ["alpha"]],
+    [{ gameProvider: ["evolution"] }, ["alpha", "beta"]],
+    [{ category: ["slots"] }, ["alpha"]],
+    [{ bonusType: ["WELCOME"] }, ["alpha"]],
+    [{ hasBonus: true }, ["alpha"]],
+    [{ hasAvailableVisitAction: true }, ["alpha"]],
+    [{ hasResponsibleGambling: true }, ["alpha"]],
+    [{ supportsCrypto: true }, ["beta"]],
+    [{ supportsMobile: true }, ["alpha"]],
+    [{ country: ["GB"], supportsMobile: true }, ["alpha"]],
+  ] as const;
+
+  const initial = await service.discover({}, allowJurisdictionAuthority);
+  assert.equal(initial.total, 2);
+  assert.deepEqual(initial.items.map((item) => item.slug), ["alpha", "beta"]);
+  for (const [query, expectedSlugs] of cases) {
+    const result = await service.discover(query, allowJurisdictionAuthority);
+    assert.equal(result.total, expectedSlugs.length, JSON.stringify(query));
+    assert.deepEqual(result.items.map((item) => item.slug), [...expectedSlugs], JSON.stringify(query));
+  }
+});
+
 test("visit action requires active local program, offer, link, and safe redirect slug", async () => {
   const casino = record("alpha-id", "alpha", "Alpha");
   const offer = activeOffer("alpha-id");
