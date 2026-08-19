@@ -70,6 +70,19 @@ function setupHomeInteractions(root: HTMLElement) {
   let geometryDirty = Boolean(stack) && !reducedMotion;
   let stackDirty = Boolean(stack) && !reducedMotion;
   let panelLayouts: Array<{ element: HTMLElement; entranceDistance: number; open: number }> = [];
+  let canonicalDestinations: number[] = [];
+  let wheelTargetIndex: number | null = null;
+  let lastWheelAt = Number.NEGATIVE_INFINITY;
+  let lastWheelDirection = 0;
+
+  const measureCanonicalDestinations = () => {
+    const maximum = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    const positions = Array.from(root.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => (
+      Math.min(maximum, Math.max(0, Math.round(element.getBoundingClientRect().top + window.scrollY)))
+    ));
+    if (!positions.some((position) => Math.abs(position - maximum) <= 3)) positions.push(maximum);
+    canonicalDestinations = [...new Set(positions)].sort((left, right) => left - right);
+  };
 
   const syncClosingComposition = () => {
     if (!publicFooter) return;
@@ -178,6 +191,48 @@ function setupHomeInteractions(root: HTMLElement) {
     }
 
     panelLayouts = nextLayouts;
+    measureCanonicalDestinations();
+  };
+
+  const nearestDestinationIndex = () => canonicalDestinations.reduce((nearest, destination, index) => (
+    Math.abs(destination - window.scrollY) < Math.abs(canonicalDestinations[nearest] - window.scrollY) ? index : nearest
+  ), 0);
+
+  const onWheel = (event: WheelEvent) => {
+    if (reducedMotion || !finePointer || event.ctrlKey || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    if (canonicalDestinations.length < 2 || event.deltaY === 0) return;
+
+    const now = window.performance.now();
+    const quietFor = now - lastWheelAt;
+    const direction = event.deltaY > 0 ? 1 : -1;
+    const activeDestination = wheelTargetIndex === null ? null : canonicalDestinations[wheelTargetIndex];
+    const currentDestinationIndex = nearestDestinationIndex();
+    const currentAtAnotherDestination = wheelTargetIndex !== null
+      && currentDestinationIndex !== wheelTargetIndex
+      && Math.abs(window.scrollY - canonicalDestinations[currentDestinationIndex]) <= 4;
+    const movedByAnotherInput = activeDestination !== null && (
+      currentAtAnotherDestination
+      || Math.abs(window.scrollY - activeDestination) > window.innerHeight * 1.25
+    );
+    const reversing = wheelTargetIndex !== null && direction !== lastWheelDirection;
+    const activeReached = activeDestination === null || Math.abs(window.scrollY - activeDestination) <= 4;
+    lastWheelAt = now;
+
+    // Momentum events from one wheel/trackpad gesture are consumed by the same adjacent
+    // landing. A new gesture is accepted after the stream goes quiet and the landing is
+    // complete; the opposite direction can retarget immediately.
+    if (!reversing && !movedByAnotherInput && (quietFor < 140 || !activeReached)) return;
+
+    const baseIndex = movedByAnotherInput || wheelTargetIndex === null
+      ? currentDestinationIndex
+      : wheelTargetIndex;
+    const nextIndex = Math.min(canonicalDestinations.length - 1, Math.max(0, baseIndex + direction));
+    wheelTargetIndex = nextIndex;
+    lastWheelDirection = direction;
+    if (nextIndex === baseIndex) return;
+    if (reversing) window.scrollTo({ behavior: "auto", top: window.scrollY });
+    window.scrollTo({ behavior: "smooth", top: canonicalDestinations[nextIndex] });
   };
 
   const syncStack = () => {
@@ -287,6 +342,10 @@ function setupHomeInteractions(root: HTMLElement) {
     }
     scheduleFrame();
   }
+  if (finePointer && !reducedMotion) {
+    root.dataset.homeWheelController = "adjacent";
+    window.addEventListener("wheel", onWheel, { passive: false });
+  }
 
   return () => {
     destroyed = true;
@@ -296,10 +355,12 @@ function setupHomeInteractions(root: HTMLElement) {
     window.removeEventListener("resize", syncClosingComposition);
     window.removeEventListener("resize", onResize);
     window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("wheel", onWheel);
     window.removeEventListener("pointermove", onPointerMove);
     document.documentElement.removeEventListener("pointerleave", onPointerLeave);
     window.cancelAnimationFrame(animationFrame);
     root.style.removeProperty("--home-public-footer-height");
+    delete root.dataset.homeWheelController;
     delete root.dataset.homeInteractions;
   };
 }

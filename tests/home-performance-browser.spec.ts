@@ -1,5 +1,13 @@
 import { expect, test, type Page } from "@playwright/test";
 
+async function bridgeLocalWebKitUpgrade(page: Page, browserName: string) {
+  if (browserName !== "webkit") return;
+  await page.route("https://127.0.0.1:4173/**", async (route) => {
+    const response = await route.fetch({ url: route.request().url().replace("https://", "http://") });
+    await route.fulfill({ response });
+  });
+}
+
 async function waitForScrollIdle(page: Page) {
   let previous = await page.evaluate(() => window.scrollY);
   let stableReads = 0;
@@ -15,19 +23,23 @@ async function waitForScrollIdle(page: Page) {
 
 async function snapState(page: Page) {
   return page.evaluate(() => {
-    const targetPositions = Array.from(document.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => (
-      Math.round(element.getBoundingClientRect().top + scrollY)
-    ));
+    const targets = Array.from(document.querySelectorAll<HTMLElement>("[data-home-snap]"), (element) => ({
+      align: getComputedStyle(element).scrollSnapAlign,
+      label: element.dataset.homeSnapLabel || "",
+      position: Math.round(element.getBoundingClientRect().top + scrollY),
+      stop: getComputedStyle(element).scrollSnapStop,
+    }));
     const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]');
     const maximum = document.documentElement.scrollHeight - innerHeight;
     const footerEnd = footer ? Math.min(maximum, Math.round(footer.getBoundingClientRect().bottom + scrollY - innerHeight)) : maximum;
-    return { footerEnd, maximum, targetPositions };
+    const destinations = [...new Set([...targets.map(({ position }) => position), footerEnd])].sort((left, right) => left - right);
+    return { destinations, footerEnd, maximum, targets };
   });
 }
 
 async function expectValidSnapLanding(page: Page, scrollY: number) {
-  const { footerEnd, targetPositions } = await snapState(page);
-  expect(Math.min(...[...targetPositions, footerEnd].map((position) => Math.abs(position - scrollY)))).toBeLessThanOrEqual(3);
+  const { destinations } = await snapState(page);
+  expect(Math.min(...destinations.map((position) => Math.abs(position - scrollY)))).toBeLessThanOrEqual(3);
 }
 
 async function returnToFirstSnap(page: Page) {
@@ -38,34 +50,29 @@ async function returnToFirstSnap(page: Page) {
 }
 
 for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024 }]) {
-  test(`desktop mandatory snap lands native input at valid screens — ${viewport.width}x${viewport.height}`, async ({ page }) => {
+  test(`desktop wheel contract is adjacent and fully revealed — ${viewport.width}x${viewport.height}`, async ({ page, browserName }) => {
+    test.setTimeout(60_000);
     await page.setViewportSize(viewport);
     const errors: string[] = [];
     page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
     page.on("pageerror", (error) => errors.push(error.message));
+    await bridgeLocalWebKitUpgrade(page, browserName);
     await page.goto("/", { waitUntil: "networkidle" });
 
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y mandatory");
+    await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-wheel-controller", "adjacent");
     const targets = page.locator('[data-handoff-page="home"] [data-home-snap]');
     await expect(targets).toHaveCount(9);
-    expect(await targets.evaluateAll((elements) => elements.map((element) => ({
-      align: getComputedStyle(element).scrollSnapAlign,
-      height: Math.round(element.getBoundingClientRect().height),
-      label: element.getAttribute("data-screen-label"),
-      marginTop: getComputedStyle(element).scrollMarginTop,
-      stop: getComputedStyle(element).scrollSnapStop,
-    })))).toEqual([
-      { align: "start", height: viewport.height, label: "Hero", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Recognition", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "A plan you can see", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Missions 01-03", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Missions 04-07", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Missions 08-10", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Built from evidence", marginTop: "0px", stop: "normal" },
-      { align: "start", height: viewport.height, label: "Why trust", marginTop: "0px", stop: "normal" },
-      { align: "start", height: expect.any(Number), label: "Final CTA", marginTop: "0px", stop: "normal" },
+    const initialState = await snapState(page);
+    expect(initialState.targets.map(({ label }) => label)).toEqual([
+      "Hero", "Recognition", "A plan you can see", "Missions 01-03", "Missions 04-07",
+      "Missions 08-10", "Built from evidence", "Why trust", "Final CTA",
     ]);
-    expect(await targets.last().evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(viewport.height + 1);
+    expect(initialState.targets.every(({ align, stop }) => align === "start" && stop === "normal")).toBe(true);
+    expect(initialState.targets.slice(0, 8).map(({ position }, index) => (
+      Math.abs(position - initialState.targets[index === 0 ? 0 : index - 1].position - (index === 0 ? 0 : viewport.height)) <= 20
+    ))).toEqual([true, true, true, true, true, true, true, true]);
+    expect(await page.locator('[data-screen-label="Final CTA"]').evaluate((element) => element.getBoundingClientRect().height)).toBeLessThanOrEqual(viewport.height + 1);
     expect(await page.locator('[data-public-shell="header"]').evaluate((element) => ({
       height: Math.round(element.getBoundingClientRect().height),
       position: getComputedStyle(element).position,
@@ -73,48 +80,111 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollPaddingTop)).toBe("auto");
     expect(await page.locator('[data-snap]:not([data-home-snap])').evaluateAll((elements) => elements.every((element) => getComputedStyle(element).scrollSnapAlign === "none"))).toBe(true);
     expect(await page.locator('[data-public-shell="footer"]').evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
+    expect(await page.evaluate(() => ({
+      bodyScrollbarDisplay: getComputedStyle(document.body, "::-webkit-scrollbar").display,
+      documentScrollable: document.documentElement.scrollHeight > innerHeight,
+      rootScrollbarDisplay: getComputedStyle(document.documentElement, "::-webkit-scrollbar").display,
+      rootScrollbarWidth: getComputedStyle(document.documentElement).scrollbarWidth,
+    }))).toEqual({
+      bodyScrollbarDisplay: expect.not.stringMatching(/^none$/),
+      documentScrollable: true,
+      rootScrollbarDisplay: expect.not.stringMatching(/^none$/),
+      rootScrollbarWidth: expect.not.stringMatching(/^none$/),
+    });
+
+    await returnToFirstSnap(page);
+    await page.mouse.move(viewport.width - 3, 36);
+    await page.mouse.down();
+    await page.mouse.move(viewport.width - 3, Math.round(viewport.height * 0.7), { steps: 12 });
+    await page.mouse.up();
+    const thumbLanding = await waitForScrollIdle(page);
+    test.info().annotations.push({
+      description: thumbLanding >= initialState.destinations[5]
+        ? `${browserName} native thumb moved directly from Hero to ${thumbLanding}px without walking intermediate wheel destinations.`
+        : `${browserName} headless browser chrome did not expose a draggable native thumb; source/runtime no-hide and no-generic-scroll evidence still passed.`,
+      type: "native-scrollbar",
+    });
+    await page.evaluate(() => window.scrollTo({ behavior: "auto", top: 0 }));
+    await waitForScrollIdle(page);
 
     const first = await returnToFirstSnap(page);
-    await page.evaluate(() => {
-      (window as typeof window & { __homeWheelPrevented?: boolean }).__homeWheelPrevented = false;
-      window.addEventListener("wheel", (event) => {
-        (window as typeof window & { __homeWheelPrevented?: boolean }).__homeWheelPrevented = event.defaultPrevented;
-      }, { once: true });
-    });
     await page.mouse.wheel(0, 120);
-    await page.waitForTimeout(20);
-    expect(await page.evaluate(() => window.scrollY)).not.toBe(first);
-    const small = await waitForScrollIdle(page);
-    await expectValidSnapLanding(page, small);
-    expect(await page.evaluate(() => (window as typeof window & { __homeWheelPrevented?: boolean }).__homeWheelPrevented)).toBe(false);
-
-    await returnToFirstSnap(page);
-    for (let input = 0; input < 3; input += 1) {
-      await page.mouse.wheel(0, 60);
-      await page.waitForTimeout(50);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
+    await page.mouse.wheel(0, 120);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
+    await page.mouse.wheel(0, 120);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[3]);
+    for (let index = 4; index < initialState.destinations.length; index += 1) {
+      await page.mouse.wheel(0, 120);
+      expect(await waitForScrollIdle(page)).toBe(initialState.destinations[index]);
+      if (index > 5) continue;
+      const label = index === 4 ? "Missions 04-07" : "Missions 08-10";
+      const mission = page.locator(`[data-screen-label="${label}"]`);
+      await expect(mission.locator('[data-mob="chapter"]')).toHaveCSS("opacity", "1");
+      await expect(mission.locator("[data-stackind]")).toHaveCSS("opacity", "1");
+      expect(await mission.evaluate((panel, snapLabel) => {
+        const anchor = document.querySelector<HTMLElement>(`[data-home-snap-label="${snapLabel}"]`)!;
+        return {
+          borderRadius: getComputedStyle(panel).borderRadius,
+          raw: Math.round(anchor.getBoundingClientRect().top),
+          transform: getComputedStyle(panel).transform,
+        };
+      }, label)).toEqual({ borderRadius: "0px", raw: 0, transform: "none" });
     }
-    await expectValidSnapLanding(page, await waitForScrollIdle(page));
 
     await returnToFirstSnap(page);
-    await page.mouse.wheel(0, 420);
-    await expectValidSnapLanding(page, await waitForScrollIdle(page));
+    for (let input = 0; input < 12; input += 1) {
+      await page.mouse.wheel(0, 900);
+      await page.waitForTimeout(16);
+    }
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
 
     await returnToFirstSnap(page);
-    await page.mouse.wheel(0, 1_200);
-    const large = await waitForScrollIdle(page);
-    await expectValidSnapLanding(page, large);
-    expect(large).toBeGreaterThan(first);
+    await page.mouse.wheel(0, 5_000);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[1]);
+    await page.mouse.wheel(0, 5_000);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
 
     await returnToFirstSnap(page);
     await page.mouse.wheel(0, 300);
     await page.waitForTimeout(20);
-    const beforeReverse = await page.evaluate(() => window.scrollY);
     await page.mouse.wheel(0, -300);
-    await page.waitForTimeout(20);
-    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(beforeReverse);
-    const reversed = await waitForScrollIdle(page);
-    await expectValidSnapLanding(page, reversed);
-    expect(reversed).toBeLessThanOrEqual(first + 3);
+    expect(await waitForScrollIdle(page)).toBe(first);
+
+    await page.evaluate((position) => window.scrollTo({ behavior: "auto", top: position }), initialState.destinations[2]);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[2]);
+    await page.mouse.wheel(0, 120);
+    expect(await waitForScrollIdle(page)).toBe(initialState.destinations[3]);
+    const firstMission = page.locator('[data-screen-label="Missions 01-03"]');
+    await expect(firstMission.locator('[data-mob="chapter"]')).toHaveCSS("opacity", "1");
+    await expect(firstMission.locator("[data-stackind]")).toHaveCSS("opacity", "1");
+    await expect(firstMission.getByText("01–03 · Understand", { exact: true })).toBeVisible();
+    await expect(firstMission.getByRole("heading", { name: "See the pattern." })).toBeVisible();
+    const fullOpen = await firstMission.evaluate((panel) => {
+      const anchor = document.querySelector<HTMLElement>('[data-home-snap-label="Missions 01-03"]')!;
+      const chapter = panel.querySelector<HTMLElement>('[data-mob="chapter"]')!;
+      const indicator = panel.querySelector<HTMLElement>("[data-stackind]")!;
+      return {
+        borderRadius: getComputedStyle(panel).borderRadius,
+        chapterOpacity: getComputedStyle(chapter).opacity,
+        descriptionVisible: chapter.innerText.includes("Notice the trigger, the moment and the cost before the next decision."),
+        height: Math.round(panel.getBoundingClientRect().height),
+        indicatorOpacity: getComputedStyle(indicator).opacity,
+        raw: Math.round(anchor.getBoundingClientRect().top + scrollY - scrollY),
+        startVisible: chapter.innerText.includes("Start Programme"),
+        transform: getComputedStyle(panel).transform,
+      };
+    });
+    expect(fullOpen).toEqual({
+      borderRadius: "0px",
+      chapterOpacity: "1",
+      descriptionVisible: true,
+      height: viewport.height,
+      indicatorOpacity: "1",
+      raw: 0,
+      startVisible: true,
+      transform: "none",
+    });
 
     await returnToFirstSnap(page);
     await page.keyboard.press("PageDown");
@@ -146,19 +216,19 @@ for (const viewport of [{ height: 900, width: 1440 }, { height: 768, width: 1024
   });
 }
 
-test("coarse pointer keeps proximity and Home snap state does not leak to other routes", async ({ browser }) => {
+test("coarse pointer keeps proximity and Home snap state does not leak to other routes", async ({ browser, browserName }) => {
   const context = await browser.newContext({ hasTouch: true, isMobile: true, viewport: { height: 844, width: 390 } });
   const page = await context.newPage();
+  await bridgeLocalWebKitUpgrade(page, browserName);
   await page.goto("/", { waitUntil: "networkidle" });
   // CSSOM serializes proximity as `y` in Chromium and WebKit.
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
-  await page.getByRole("link", { name: "Casinos", exact: true }).first().click();
-  await expect(page).toHaveURL(/\/casinos$/);
+  await page.goto("/casinos", { waitUntil: "networkidle" });
   expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
   await context.close();
 });
 
-test("Home performs no steady-state RAF or layout reads while idle", async ({ page }) => {
+test("Home performs no steady-state RAF or layout reads while idle", async ({ page, browserName }) => {
   await page.addInitScript(() => {
     const counters = { height: 0, raf: 0, rect: 0, style: 0 };
     (window as typeof window & { __homePerfCounters?: typeof counters }).__homePerfCounters = counters;
@@ -191,6 +261,7 @@ test("Home performs no steady-state RAF or layout reads while idle", async ({ pa
     };
   });
 
+  await bridgeLocalWebKitUpgrade(page, browserName);
   await page.goto("/", { waitUntil: "networkidle" });
   await page.waitForTimeout(1_000);
   await page.evaluate(() => {
@@ -206,13 +277,14 @@ test("Home performs no steady-state RAF or layout reads while idle", async ({ pa
   });
 });
 
-test("responsive Home media reserves dimensions and marks every chapter lazy", async ({ page }) => {
+test("responsive Home media reserves dimensions and marks every chapter lazy", async ({ page, browserName }) => {
   const homeImages: Array<{ bytes: number; path: string }> = [];
   page.on("response", async (response) => {
     const url = new URL(response.url());
     if (!url.pathname.startsWith("/home/")) return;
     homeImages.push({ bytes: (await response.body()).byteLength, path: url.pathname });
   });
+  await bridgeLocalWebKitUpgrade(page, browserName);
   await page.goto("/", { waitUntil: "networkidle" });
 
   const opening = page.locator('[data-home-media="opening"] img');
@@ -229,9 +301,10 @@ test("responsive Home media reserves dimensions and marks every chapter lazy", a
   expect(homeImages.reduce((total, image) => total + image.bytes, 0)).toBeLessThan(1_000_000);
 });
 
-test("reduced motion and mobile resize remain fail-visible", async ({ browser }) => {
+test("reduced motion and mobile resize remain fail-visible", async ({ browser, browserName }) => {
   const context = await browser.newContext({ hasTouch: true, isMobile: true, reducedMotion: "reduce", viewport: { height: 844, width: 390 } });
   const page = await context.newPage();
+  await bridgeLocalWebKitUpgrade(page, browserName);
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));

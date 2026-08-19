@@ -383,14 +383,17 @@ const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "A
 const HOME_SNAP_LABELS = new Set([
   "Hero",
   "Recognition",
-  "A plan you can see",
-  "Missions 01-03",
-  "Missions 04-07",
-  "Missions 08-10",
   "Built from evidence",
   "Why trust",
   "Final CTA",
 ]);
+
+const HOME_STICKY_SNAP_LABELS = [
+  "A plan you can see",
+  "Missions 01-03",
+  "Missions 04-07",
+  "Missions 08-10",
+] as const;
 
 function homeResponsiveImage(imageTag: string) {
   const source = /src="\/home\/([^"/]+\.jpg)"/.exec(imageTag)?.[1];
@@ -412,23 +415,33 @@ function homeResponsiveImage(imageTag: string) {
 }
 
 export function transformHomeHandoff(html: string) {
-  return html
+  const transformed = html
     .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
     .replace(
       '<div data-screen-label="Final CTA" data-snap=""',
       '<div data-screen-label="Final CTA" data-home-final-composition=""',
     )
     .replace(/<div data-screen-label="([^"]+)"/g, (tag, label: string) => (
-      HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap=""` : tag
+      HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap="" data-home-snap-label="${label}"` : tag
     ));
+
+  return HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
+    `<div data-screen-label="${label}"`,
+    `<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="${label}" style="height:1px;margin-bottom:-1px;pointer-events:none;width:1px;"></div><div data-screen-label="${label}"`,
+  ), transformed);
 }
 
 export function transformHomeHandoffCss(css: string) {
-  const withoutCapturedSnap = css.replace(
-    /@media \(pointer: coarse\) \{\s*html \{ scroll-snap-type:y mandatory; \}\s*\[data-snap\] \{ scroll-snap-align:start; \}\s*\}/,
-    "",
-  );
-  return `${withoutCapturedSnap}
+  const withoutCapturedHomeControls = css
+    .replace(
+      /@media \(pointer: coarse\) \{\s*html \{ scroll-snap-type:y mandatory; \}\s*\[data-snap\] \{ scroll-snap-align:start; \}\s*\}/,
+      "",
+    )
+    .replace(
+      /\s*html \{ scrollbar-width:none; \}\s*html::\-webkit-scrollbar, body::\-webkit-scrollbar \{ width:0; height:0; display:none; \}/,
+      "",
+    );
+  return `${withoutCapturedHomeControls}
     [data-home-snap] {
       scroll-snap-align: start;
       scroll-snap-stop: normal !important;

@@ -2,7 +2,7 @@
 
 ## Status
 
-**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuations for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
+**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements and sequential-input correction approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuations for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
 ## Decision
 
@@ -11,7 +11,7 @@ Preserve the RFC-034 final Home composition while replacing its input-intercepti
 The bounded implementation will:
 
 - remove the fine-pointer `wheel` cancellation, accumulator, input lock and 600ms programmatic section tween;
-- retain the sticky chapter composition while allowing the browser to own wheel, trackpad, keyboard and touch scrolling;
+- retain the sticky chapter composition while keeping keyboard, touch, scrollbar and non-Home scrolling browser-native, with only the correction-authorised adjacent Home wheel fallback on fine pointers;
 - measure chapter geometry at initialisation and after resize/content-size changes, then reuse cached values during scroll updates;
 - request animation frames only for pending scroll work or an unsettled pointer spring;
 - preserve fail-visible and reduced-motion behaviour;
@@ -23,15 +23,39 @@ Native coarse-pointer snapping is reduced from `mandatory` to `proximity`. This 
 
 ### Founder refinement — native soft section fixation
 
+This intermediate disposition is retained for audit history and is superseded by the sequential-wheel correction below.
+
 The first PR #77 Preview proved the performance architecture but left desktop fine-pointer scrolling without active snap fixation. The continuation keeps browser-owned physical scrolling and applies Home-only native `scroll-snap-type: y proximity` to fine and coarse pointers when reduced motion is not requested.
 
 Only these major compositions are snap targets: Hero, Recognition, A plan you can see, Missions 01–03, Missions 04–07, Missions 08–10, Built from evidence, Why trust and the final CTA/PublicFooter composition. Prototype-only percentage markers are not snap targets. Every target uses `scroll-snap-stop: normal`, so stronger input may pass more than one target and direction reversal remains browser-controlled. Reduced-motion disables page snapping. No JavaScript scroll-settle controller, timer, wheel/touch cancellation or new animation loop is authorised.
 
 ### Founder correction — perceptible desktop fixation
 
+This intermediate disposition is retained for audit history and is superseded by the sequential-wheel correction below.
+
 Measured browser evidence shows that `proximity` remains discretionary: at 1440×900, a 120px fine-pointer wheel input settled at 120px and three small inputs settled at 269px rather than an intended composition. Fine-pointer Home therefore uses browser-native `scroll-snap-type: y mandatory`; coarse pointer retains `y proximity`; reduced motion retains `none`. `scroll-snap-stop` remains `normal` and no input interception, lock, timer, accumulator, custom tween or smooth-scroll dependency is authorised.
 
 At both required desktop viewports, Hero through Why trust are exactly one scrollport tall (900px at 1440×900; 768px at 1024×768). Final CTA is shorter (573px and 442px). None is taller than the scrollport, so all nine remain eligible. The actual `PublicHeader` is a fixed 81px overlay and the compositions already reserve unobscured visual space beneath it. Adding an 81px snap padding/margin would shrink the snapport and make the eight full-screen targets effectively oversized, so Home uses no snap offset.
+
+### Founder correction — native scrollbar, sequential wheel and fully-open chapters
+
+Home must expose the browser-native desktop scrollbar. The scrollbar thumb is the intentional non-sequential escape hatch: direct thumb dragging may cross several canonical compositions and is not intercepted, animated or forced through intermediate screens.
+
+Fine-pointer wheel and trackpad navigation have a different contract. The exact runtime order is Hero, Recognition, A plan you can see, Missions 01–03, Missions 04–07, Missions 08–10, Built from evidence, Why trust, Final CTA and the real footer/end. A wheel or trackpad gesture may advance or reverse by at most one adjacent canonical destination; stronger deltas may not skip an intermediate composition. Direction reversal must remain responsive and must not inherit the removed 600ms lock.
+
+The first implementation to verify is CSS-only: retain fine-pointer `y mandatory` and set `scroll-snap-stop: always` only on the canonical major Home sequence. The four prototype percentage markers and any internal reveal coordinates remain non-targets. CSS-only is retained only if Chromium and WebKit prove both sequential wheel/trackpad landing and unrestricted multi-screen native scrollbar-thumb dragging.
+
+If either engine cannot satisfy both behaviours natively, the authorised fallback is limited to a fine-pointer vertical `wheel` controller. It may resolve one completed wheel intent to only the adjacent measured canonical destination. It must not attach to generic `scroll`, pointer or scrollbar events; must not prevent native thumb dragging; must not use a continuous frame loop, accumulator-driven multi-step consumption, 600ms lock, long suppression interval or smooth-scroll dependency; and must permit immediate reversal. Geometry is measured and cached outside steady-state wheel handling. Keyboard navigation stays browser-native.
+
+Each Mission destination represents the panel's true fully-open coordinate, not its entrance-preview position. At rest the panel is a full viewport with final transform and border-radius state, and its chapter copy and stack indicator are visible under the existing runtime threshold (`raw <= 4px`). A non-visible stable snap anchor at the measured open coordinate is permitted; visible composition and entrance reveal are not changed. Equivalent landing correctness applies to all three Mission panels.
+
+### Correction implementation disposition
+
+The CSS-only candidate was tested first and rejected on measured behaviour. With canonical targets set to `scroll-snap-stop: always`, a single 5,000px wheel delta skipped from Hero to Built from evidence at 1440×900 and from Hero to Why trust at 1024×768. A 120px wheel delta also remained on Hero in both viewports. CSS alone therefore did not provide the required one-intent/one-adjacent-destination contract.
+
+The authorised fine-pointer wheel-only fallback is selected. It caches the canonical destinations during existing geometry measurement, groups a momentum stream for 140ms, and sends one stream only to the adjacent destination using the browser's native smooth scroll. It has no accumulator, timer, long lock, continuous frame loop or generic `scroll`/pointer interception. Opposite-direction input immediately aborts an in-flight native smooth scroll and retargets the adjacent destination. Scrollbar dragging, keyboard, touch, coarse pointer and reduced-motion scrolling remain native.
+
+Four stable one-pixel, negative-margin anchors identify the true open coordinates of the plan and Mission panels without changing visible layout. All three Mission destinations were measured in Chromium and WebKit at both required desktop viewports with `raw = 0`, chapter and indicator opacity `1`, transform `none`, border radius `0px` and full-viewport panel height.
 
 ## Evidence baseline
 
@@ -51,7 +75,9 @@ At both required desktop viewports, Hero through Why trust are exactly one scrol
 | --- | --- | --- |
 | Preserve composition, crops, typography, copy and section order | RFC-034, final handoff evidence, current Production | This is a performance workstream, not a redesign |
 | Native scroll owns user input | Founder workstream instruction | Direct control removes input delay and section pagination |
-| Native Home `y mandatory` for fine pointer, `y proximity` for coarse pointer, nine major targets and normal stop behaviour | 2026-08-19 Founder correction; measured Chromium baseline; Refero motion restraint/interruptibility guidance | Produces perceptible desktop fixation while retaining direct, reversible browser-owned input and the less aggressive mobile policy |
+| Native Home `y mandatory` plus the bounded adjacent fine-pointer wheel fallback; `y proximity` for coarse pointer; normal stops on canonical targets | 2026-08-19 Founder sequential-input correction; failed CSS-only `always` measurement; Chromium/WebKit evidence; Refero motion restraint/interruptibility guidance | Guarantees adjacent wheel/trackpad landings while preserving unrestricted native scrollbar-thumb travel and the less aggressive mobile policy |
+| Mission destinations use the true cached panel-open coordinates | Founder full-open correction; existing `raw <= 4px` runtime authority | Preserves the approved photo entrance while guaranteeing complete copy and indicator visibility at rest |
+| Native Home scrollbar remains visible | Founder correction; browser-native input model | Keeps direct multi-screen navigation available without a custom scrollbar or generic scroll interception |
 | Cache geometry outside steady-state scroll frames | Browser performance evidence | Eliminates repeated layout reads and read/write thrashing |
 | Event-driven RAF with spring-settle continuation only | Browser performance evidence | Stops idle animation work while preserving the photo depth effect |
 | Static responsive AVIF/WebP candidates plus JPEG fallback | Existing first-party source assets and handoff renderer boundary | Avoids a renderer rewrite while reducing transfer cost and mobile overfetch |
@@ -71,6 +97,6 @@ This RFC does not authorise:
 
 ## Verification and release gates
 
-The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium desktop, WebKit desktop, mobile, reduced motion, small, repeated small, medium and large wheel input, immediate direction reversal, PageDown/PageUp, Home/End, resize, footer reachability and navigation cleanup. It must assert final landing near a valid intended target, fine-pointer `y mandatory`, coarse-pointer `y proximity`, exactly the approved major targets, normal stop behaviour, no wheel cancellation/input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
+The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium and WebKit at 1440×900 and 1024×768, mobile, reduced motion, visible native scrollbar structure/manual presence, sequential small/large/repeated trackpad-like wheel input, immediate direction reversal, PageDown/PageUp, Home/End, direct multi-screen scrollbar-thumb dragging, exact full-open Mission state, resize, footer reachability and navigation cleanup. It must assert fine-pointer `y mandatory`, coarse-pointer `y proximity`, exactly the approved canonical sequence, no generic scroll interception or long input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
 
 Delivery remains a Draft PR with an isolated Vercel Preview. Founder approval is required for any merge or Production action.

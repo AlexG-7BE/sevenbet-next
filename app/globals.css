@@ -159,12 +159,12 @@ html:has(body > [data-public-shell="header"]),
 body:has(> [data-public-shell="header"]) {
   height: 100%;
 }
-html:has(body > [data-public-shell="header"]),
+html:has(body > [data-public-shell="header"]):not(:has([data-handoff-page="home"])),
 html:has([data-protected-help-shell]) {
   scrollbar-width: none;
 }
-html:has(body > [data-public-shell="header"])::-webkit-scrollbar,
-body:has(> [data-public-shell="header"])::-webkit-scrollbar,
+html:has(body > [data-public-shell="header"]):not(:has([data-handoff-page="home"]))::-webkit-scrollbar,
+body:has(> [data-public-shell="header"]):not(:has([data-handoff-page="home"]))::-webkit-scrollbar,
 html:has([data-protected-help-shell])::-webkit-scrollbar,
 body:has([data-protected-help-shell])::-webkit-scrollbar {
   width: 0;

@@ -24,7 +24,7 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 
 ## Implemented evidence
 
-- **Detected:** the Home interaction module no longer registers a wheel listener, calls `preventDefault()`, accumulates wheel input, locks input or runs a programmatic scroll tween. Wheel, repeated wheel and keyboard scrolling are browser-controlled.
+- **Detected:** the original accumulator, 600ms input lock and custom wheel tween were removed. The final Founder correction adds only the authorised fine-pointer adjacent-destination wheel handler; keyboard, touch, scrollbar, coarse pointer and reduced-motion scrolling remain browser-controlled.
 - **Detected:** chapter geometry is cached. It is measured at initialisation and invalidated by window resize or `ResizeObserver`; steady-state scroll frames reuse the cached values.
 - **Detected:** the Home RAF scheduler is event-driven. It runs for pending scroll work or unsettled pointer springs and stops when settled.
 - **Detected:** a settled one-second localhost sample recorded zero Home RAF callbacks, geometry reads, computed-style reads and height reads.
@@ -35,6 +35,8 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 - **Detected:** Home rise timing is 460ms with a 60ms stagger. Coarse-pointer CSS snapping is `proximity`, not `mandatory`.
 
 ## Founder soft-snap refinement baseline — 2026-08-19
+
+This section records the intermediate Preview and is superseded by the final sequential-wheel correction below.
 
 - **Detected:** existing Draft PR #77 head before refinement is `e14e2ac61a9f480e4a7a01a0f0e9ececd41f799d`; the PR is Open, Draft, cleanly mergeable and all hosted checks are green.
 - **Detected:** the generated Home snap rule remains inside `@media (pointer: coarse)`. The first Preview therefore reports computed root snap type `none` at a 1280px fine-pointer viewport even though the source transform changed the captured coarse-pointer value to `proximity`.
@@ -47,6 +49,8 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 - **Detected:** Chromium and WebKit accepted small, repeated, large, reverse and keyboard input. Both reached the document bottom and visible PublicFooter at 1440×900, 1024×768 and 390×844 without a viewport trap or console error.
 
 ## Founder mandatory desktop correction baseline — 2026-08-19
+
+This section records the intermediate mandatory-snap Preview and is superseded by the final sequential-wheel correction below.
 
 - **Detected:** existing Draft PR #77 head before this correction is `4e3f45a6d43cca2f3da39a54bba4a3482316cae1`; local and origin branch heads match and the worktree is clean.
 - **Detected:** at 1440×900 under current `y proximity`, a 120px fine-pointer wheel input settled at 120px and three 60px inputs settled at 269px. Medium 420px and large 1200px inputs happened to settle at valid 900px and 1800px boundaries. Proximity therefore does not guarantee the requested small-gesture fixation.
@@ -83,15 +87,39 @@ The values below are final `window.scrollY` positions after settling. All are ex
 - **Detected:** `End` reaches the complete PublicFooter and exact document bottom in both engines. The redundant footer-bottom marker remains end-aligned.
 - **Detected:** manual 120px comparison showed Production progress gradually from 0→18→56→416→716px over 900ms, the previous proximity Preview stop at an arbitrary 120px, and the new mandatory build move immediately then settle 0→99→755→899→900px. The current Tilt homepage exposed a constrained full-screen carousel and no root scroll-snap declaration in this review; its implementation is not inferred and is not an authority.
 
+## Founder sequential-wheel, native-scrollbar and fully-open Mission correction — 2026-08-19
+
+- **Detected:** existing Draft PR #77 head before this correction is `e664401f0fbaebffc00634dabcff9cbc43496d45`; local and origin branch heads matched and the worktree was clean.
+- **Detected:** the captured Home CSS and shared public-shell CSS both suppressed the desktop scrollbar. The Home transform now removes the captured rule and the shared selector explicitly excludes Home. Computed Home root `scrollbar-width` is not `none`, both WebKit scrollbar pseudo-elements are not `display:none`, the document is scrollable, and an in-app Chromium inspection measured a 15px native scrollbar gutter with a visible thumb.
+- **Detected:** CSS-only was tested first with `y mandatory` plus canonical `scroll-snap-stop: always`. A 120px delta stayed at `0`; a 600px delta reached the adjacent target; a 5,000px delta skipped to `5,400` (`Built from evidence`) at 1440×900 and `5,376` (`Why trust`) at 1024×768. CSS-only therefore failed the sequential contract and was reverted to normal stops.
+- **Detected:** the selected correction-authorised controller listens only for vertical fine-pointer `wheel` events. Canonical destinations are cached during existing geometry measurement. One momentum stream is grouped by a 140ms quiet threshold and can resolve only to the adjacent destination. Same-direction events are ignored until that target is reached; opposite direction aborts the in-flight native smooth scroll and retargets immediately. There is no wheel accumulator, timer, long lock, custom tween, continuous frame loop, dependency or generic scrollbar/pointer/scroll ownership.
+- **Detected:** the runtime canonical order is Hero, Recognition, A plan you can see, Missions 01–03, Missions 04–07, Missions 08–10, Built from evidence, Why trust, Final CTA and real footer/end. The four prototype percentage markers remain non-targets.
+- **Detected:** four invisible one-pixel, negative-margin anchors mark the plan and three Mission open coordinates without changing visible geometry. Each Mission landed with anchor `raw = 0`, chapter opacity `1`, stack-indicator opacity `1`, transform `none`, border radius `0px` and panel height equal to the viewport in Chromium and actual WebKit at 1440×900 and 1024×768.
+- **Detected:** Playwright's previous project labels did not explicitly set `browserName`, so both projects inherited the CI Chromium default. The public-IA config now explicitly runs Chromium and WebKit. Local production HTTP is bridged to WebKit only inside the test harness because the unchanged production CSP upgrades local subresources to HTTPS; hosted Preview uses normal HTTPS and requires no bridge.
+
+### Strict adjacent-landing evidence
+
+All final positions were compared with engine-measured destinations rather than hard-coded document offsets.
+
+| Engine / viewport | Full forward sequence | 12×900px / 16ms burst | 5,000px input | Immediate reverse | Mission 01–03 / 04–07 / 08–10 |
+| --- | --- | --- | --- | --- | --- |
+| Chromium 1440×900 | Every adjacent destination through footer | Hero → Recognition only | One adjacent target per input | Returned to Hero | Fully open at `raw = 0` |
+| Chromium 1024×768 | Every adjacent destination through footer | Hero → Recognition only | One adjacent target per input | Returned to Hero | Fully open at `raw = 0` |
+| WebKit 1440×900 | Every adjacent destination through footer | Hero → Recognition only | One adjacent target per input | Returned to Hero | Fully open at `raw = 0` |
+| WebKit 1024×768 | Every adjacent destination through footer | Hero → Recognition only | One adjacent target per input | Returned to Hero | Fully open at `raw = 0` |
+
+- **Detected:** the 12-test strict production-build matrix passed in 1.7 minutes across actual Chromium and WebKit. It also covered native PageDown/PageUp/Home/End, footer visibility, coarse-pointer proximity, reduced-motion fail-visible behaviour, route cleanup, responsive media and zero settled idle work.
+- **Detected:** headless browser chrome does not expose a draggable native thumb. A headed Chromium probe did move directly across multiple screens. Headed WebKit and DOM automation could not target browser chrome, so direct WebKit thumb-drag automation is **Not detected**. The engine-independent structural/runtime evidence proves the bar is not hidden and the correction owns no generic scroll/pointer event, but a physical WebKit thumb drag remains a manual release check rather than an automated claim.
+
 ## Verification — local production build
 
 | Gate | Result |
 | --- | --- |
 | `npm run ci:quality` | Passed |
 | `npm run build` | Passed; existing local direct-Prisma endpoint warning only |
-| Focused structural performance tests | 4 passed |
-| Founder correction Chromium + WebKit matrix | 12 passed: 1440×900 and 1024×768 target audit; small/repeated/medium/large/immediate-reverse/PageDown/PageUp/Home/End landings; coarse proximity; reduced motion; footer; images and idle work |
-| Existing Chromium + WebKit Home/systemic regressions | 66 passed: visibility, hydration, history, layout, accessibility and interaction contracts |
+| Focused structural performance tests | 8 passed, including shared-shell scrollbar ownership |
+| Founder correction Chromium + actual WebKit matrix | 12 passed in 1.7 minutes: 1440×900 and 1024×768 full adjacent sequence; small/5,000px/burst/immediate-reverse/PageDown/PageUp/Home/End; all Mission open states; coarse proximity; reduced motion; footer; images and idle work |
+| Existing affected Chromium Home/systemic regressions | 82 passed: visibility, hydration, history, responsive layout, accessibility, final CTA/footer and interaction contracts; the local authenticated-header fixture was excluded because its unrelated origin configuration returns `403 INVALID_ORIGIN` |
 | Locked Home ending/footer regressions | 8 passed at 1440, 1280, 1024, 430, 412, 390, 375 and 360px |
 | Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation, footer reachability and interaction cleanup passed |
 | Idle instrumentation | 0 RAF, 0 rect, 0 style and 0 height reads after settling |
