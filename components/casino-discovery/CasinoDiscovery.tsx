@@ -25,7 +25,6 @@ function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; exce
 }
 
 function FilterSelect({ emptyLabel, label, name, values, selected }: { emptyLabel: string; label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
-  if (!values.length) return null;
   return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">{emptyLabel}</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
 }
 
