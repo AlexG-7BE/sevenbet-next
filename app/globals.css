@@ -328,7 +328,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
     justify-content: flex-start !important;
     padding: 144px 24px 72px !important;
     scroll-snap-align: start !important;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
   }
 
   [data-handoff-page="home"] div:has(> [data-screen-label="A plan you can see"]) > [data-snap] {
@@ -336,7 +336,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
   }
   [data-handoff-page="home"] [data-stackpanel] {
     scroll-snap-align: start !important;
-    scroll-snap-stop: always;
+    scroll-snap-stop: normal;
   }
   [data-handoff-page="home"] [data-stackpanel] + [data-stackpanel] {
     margin-top: clamp(144px, 22svh, 204px) !important;

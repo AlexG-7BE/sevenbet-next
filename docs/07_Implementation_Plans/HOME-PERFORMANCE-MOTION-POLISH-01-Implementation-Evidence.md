@@ -34,6 +34,17 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 - **Detected:** observed initial Home image transfer fell 96.6% from 7,453,085 bytes to 254,921 bytes. The visible opening-source comparison fell 99.1% from 4,551,142 bytes to 41,469 bytes.
 - **Detected:** Home rise timing is 460ms with a 60ms stagger. Coarse-pointer CSS snapping is `proximity`, not `mandatory`.
 
+## Founder soft-snap refinement baseline — 2026-08-19
+
+- **Detected:** existing Draft PR #77 head before refinement is `e14e2ac61a9f480e4a7a01a0f0e9ececd41f799d`; the PR is Open, Draft, cleanly mergeable and all hosted checks are green.
+- **Detected:** the generated Home snap rule remains inside `@media (pointer: coarse)`. The first Preview therefore reports computed root snap type `none` at a 1280px fine-pointer viewport even though the source transform changed the captured coarse-pointer value to `proximity`.
+- **Detected:** the handoff contains nine major labelled compositions plus four prototype percentage markers inside the sticky story wrapper. Applying the captured `[data-snap]` selector on desktop would make those internal markers unintended snap targets and would omit the labelled plan and three chapter sheets.
+- **Detected:** the current Tilt homepage reports no native root scroll-snap declaration and uses a constrained presentation surface. Its exact library/algorithm is not established and is not an implementation authority.
+- **Inferred:** the Founder-described characteristic and Refero motion guidance support the smallest standards-based change: CSS-only proximity settling that remains interruptible, stops frames while idle and adds no high-frequency input controller.
+- **Detected:** Home now applies CSS-only native `y proximity` when reduced motion is not requested. Exactly Hero, Recognition, A plan you can see, the three Mission sheets, Built from evidence, Why trust and the final CTA/PublicFooter composition are marked as targets; each uses `scroll-snap-stop: normal`.
+- **Detected:** the four internal percentage markers remain non-targets, reduced motion computes to `scroll-snap-type: none`, and no JavaScript input listener, accumulator, tween, timer, lock or settling controller was added.
+- **Detected:** Chromium and WebKit accepted small, repeated, large, reverse and keyboard input. Both reached the document bottom and visible PublicFooter at 1440×900, 1024×768 and 390×844 without a viewport trap or console error.
+
 ## Verification — local production build
 
 | Gate | Result |
@@ -41,8 +52,10 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 | `npm run ci:quality` | Passed |
 | `npm run build` | Passed; existing local direct-Prisma endpoint warning only |
 | Focused structural performance tests | 4 passed |
-| Chromium + WebKit Home/systemic/performance browser matrix | 86 passed |
-| Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation and interaction cleanup passed |
+| Founder refinement Chromium + WebKit matrix | 10 passed: target policy, small/repeated/large/reverse/keyboard input, exact viewports, footer, reduced motion, images and idle work |
+| Existing Chromium + WebKit Home/systemic regressions | 66 passed: visibility, hydration, history, layout, accessibility and interaction contracts |
+| Locked Home ending/footer regressions | 8 passed at 1440, 1280, 1024, 430, 412, 390, 375 and 360px |
+| Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation, footer reachability and interaction cleanup passed |
 | Idle instrumentation | 0 RAF, 0 rect, 0 style and 0 height reads after settling |
 | `git diff --check` | Passed |
 | Draft PR CI | Agent Core, Quality, Database / Migration Verification and Build / Browser passed |

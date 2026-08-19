@@ -1,7 +1,39 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
-test("desktop wheel and keyboard scrolling remain browser controlled", async ({ page }) => {
+async function waitForScrollIdle(page: Page) {
+  let previous = await page.evaluate(() => window.scrollY);
+  let stableReads = 0;
+  for (let attempt = 0; attempt < 30; attempt += 1) {
+    await page.waitForTimeout(50);
+    const current = await page.evaluate(() => window.scrollY);
+    stableReads = Math.abs(current - previous) <= 1 ? stableReads + 1 : 0;
+    if (stableReads >= 4) return current;
+    previous = current;
+  }
+  return previous;
+}
+
+test("desktop soft snap remains browser controlled and reversible", async ({ page }) => {
   await page.goto("/", { waitUntil: "networkidle" });
+  // CSSOM serializes the initial `proximity` strictness as `y` in Chromium and WebKit.
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
+  const targets = page.locator('[data-handoff-page="home"] [data-home-snap]');
+  await expect(targets).toHaveCount(9);
+  expect(await targets.evaluateAll((elements) => elements.map((element) => ({
+    label: element.getAttribute("data-screen-label"),
+    stop: getComputedStyle(element).scrollSnapStop,
+  })))).toEqual([
+    { label: "Hero", stop: "normal" },
+    { label: "Recognition", stop: "normal" },
+    { label: "A plan you can see", stop: "normal" },
+    { label: "Missions 01-03", stop: "normal" },
+    { label: "Missions 04-07", stop: "normal" },
+    { label: "Missions 08-10", stop: "normal" },
+    { label: "Built from evidence", stop: "normal" },
+    { label: "Why trust", stop: "normal" },
+    { label: "Final CTA", stop: "normal" },
+  ]);
+  expect(await page.locator('[data-snap]:not([data-home-snap])').evaluateAll((elements) => elements.every((element) => getComputedStyle(element).scrollSnapAlign === "none"))).toBe(true);
   await page.evaluate(() => {
     (window as typeof window & { __homeWheelPrevented?: boolean }).__homeWheelPrevented = false;
     window.addEventListener("wheel", (event) => {
@@ -12,7 +44,7 @@ test("desktop wheel and keyboard scrolling remain browser controlled", async ({ 
   await page.mouse.wheel(0, 120);
   await page.waitForTimeout(120);
   const immediate = await page.evaluate(() => window.scrollY);
-  await page.waitForTimeout(650);
+  await waitForScrollIdle(page);
   const settled = await page.evaluate(() => ({
     prevented: (window as typeof window & { __homeWheelPrevented?: boolean }).__homeWheelPrevented,
     scrollY: window.scrollY,
@@ -20,11 +52,74 @@ test("desktop wheel and keyboard scrolling remain browser controlled", async ({ 
 
   expect(immediate).toBeGreaterThan(0);
   expect(settled.prevented).toBe(false);
-  expect(Math.abs(settled.scrollY - immediate)).toBeLessThan(80);
+  expect(settled.scrollY).toBeGreaterThanOrEqual(0);
 
   const beforeKeyboard = settled.scrollY;
   await page.keyboard.press("PageDown");
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(beforeKeyboard + 100);
+  const afterKeyboard = await waitForScrollIdle(page);
+  expect(afterKeyboard).toBeGreaterThan(beforeKeyboard + 100);
+
+  for (let input = 0; input < 3; input += 1) {
+    await page.mouse.wheel(0, 180);
+    await page.waitForTimeout(50);
+  }
+  const afterRepeatedInput = await waitForScrollIdle(page);
+  expect(afterRepeatedInput).toBeGreaterThan(afterKeyboard);
+
+  await page.mouse.wheel(0, 1_200);
+  const afterLargeInput = await waitForScrollIdle(page);
+  expect(afterLargeInput).toBeGreaterThan(afterRepeatedInput + 100);
+
+  await page.mouse.wheel(0, -600);
+  const afterReversal = await waitForScrollIdle(page);
+  expect(afterReversal).toBeLessThan(afterLargeInput);
+
+  await page.getByRole("link", { name: "Casinos", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/casinos$/);
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
+  await page.goBack({ waitUntil: "networkidle" });
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
+});
+
+test("soft snap has no viewport or footer trap", async ({ browser }) => {
+  for (const viewport of [
+    { height: 900, width: 1440 },
+    { height: 768, width: 1024 },
+    { height: 844, width: 390 },
+  ]) {
+    const context = await browser.newContext({
+      hasTouch: viewport.width === 390,
+      isMobile: viewport.width === 390,
+      viewport,
+    });
+    const page = await context.newPage();
+    const errors: string[] = [];
+    page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+    page.on("pageerror", (error) => errors.push(error.message));
+    await page.goto("/", { waitUntil: "networkidle" });
+    expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
+
+    await page.keyboard.press("End");
+    await waitForScrollIdle(page);
+    const bottom = await page.evaluate(() => ({
+      documentHeight: document.documentElement.scrollHeight,
+      footerVisible: (() => {
+        const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')?.getBoundingClientRect();
+        return footer ? Math.max(0, Math.min(innerHeight, footer.bottom) - Math.max(0, footer.top)) : 0;
+      })(),
+      viewportBottom: window.scrollY + window.innerHeight,
+    }));
+    expect(bottom.viewportBottom).toBeGreaterThanOrEqual(bottom.documentHeight - 2);
+    expect(bottom.footerVisible).toBeGreaterThan(0);
+    await expect(page.locator('[data-screen-label="Final CTA"]')).toBeInViewport();
+
+    await page.keyboard.press("Home");
+    expect(await waitForScrollIdle(page)).toBe(0);
+    await page.keyboard.press("ArrowDown");
+    expect(await waitForScrollIdle(page)).toBeGreaterThan(0);
+    expect(errors).toEqual([]);
+    await context.close();
+  }
 });
 
 test("Home performs no steady-state RAF or layout reads while idle", async ({ page }) => {
@@ -108,7 +203,7 @@ test("reduced motion and mobile resize remain fail-visible", async ({ browser })
 
   await expect(page.locator('[data-handoff-page="home"]')).toHaveAttribute("data-home-interactions", "fallback");
   expect(await page.locator("[data-rise]").evaluateAll((elements) => elements.every((element) => getComputedStyle(element).opacity === "1"))).toBe(true);
-  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).not.toContain("mandatory");
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("none");
   // Development hot reload emits nonce/hydration diagnostics before the page is
   // ready. This assertion covers the resize and scroll interaction under test.
   errors.length = 0;

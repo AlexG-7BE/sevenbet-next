@@ -4,7 +4,7 @@
 
 | Sequence | Workstream | Status | Evidence / boundary |
 | --- | --- | --- | --- |
-| 39 | HOME-PERFORMANCE-MOTION-POLISH-01 | **RFC-035 APPROVED / IMPLEMENTATION IN PROGRESS / DRAFT PR + PREVIEW ONLY** | Branch `codex/home-performance-motion-polish-01` starts from current main `381624c410222b7bb56f65b755d562b284ff08fa`. The bounded work removes Home wheel interception and idle layout-heavy RAF work, adds responsive Home-only media delivery and tightens Home reveal timing while preserving RFC-034 composition, Programme/commercial/data/security boundaries and nonce-based dynamic rendering. Merge and Production deployment remain unauthorised. |
+| 39 | HOME-PERFORMANCE-MOTION-POLISH-01 | **FOUNDER SOFT-SNAP REFINEMENT IN PROGRESS IN EXISTING DRAFT PR #77 / PREVIEW ONLY** | Branch `codex/home-performance-motion-polish-01` starts from current main `381624c410222b7bb56f65b755d562b284ff08fa`. The accepted work removes Home wheel interception and idle layout-heavy RAF work, adds responsive Home-only media delivery and tightens Home reveal timing. The 2026-08-19 continuation restores native `y proximity` fixation for nine major compositions with normal stop behaviour, no input lock and reduced-motion opt-out while preserving RFC-034 composition, Programme/commercial/data/security boundaries and nonce-based dynamic rendering. Merge and Production deployment remain unauthorised. |
 
 ## RFC-031 focused branch addendum — 2026-08-14
 

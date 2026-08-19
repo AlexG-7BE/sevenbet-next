@@ -2,7 +2,7 @@
 
 ## Status
 
-**Approved for bounded Draft-PR and Preview implementation on 2026-08-18.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction. This RFC authorises no merge, Production deployment, Production configuration or data change.
+**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder soft-snap refinement approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuation for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
 ## Decision
 
@@ -20,6 +20,12 @@ The bounded implementation will:
 - change Home rise timing from 700ms/130ms to 460ms/60ms.
 
 Native coarse-pointer snapping is reduced from `mandatory` to `proximity`. This keeps the optional chapter alignment cue without forcing a user away from an intermediate scroll position.
+
+### Founder refinement — native soft section fixation
+
+The first PR #77 Preview proved the performance architecture but left desktop fine-pointer scrolling without active snap fixation. The continuation keeps browser-owned physical scrolling and applies Home-only native `scroll-snap-type: y proximity` to fine and coarse pointers when reduced motion is not requested.
+
+Only these major compositions are snap targets: Hero, Recognition, A plan you can see, Missions 01–03, Missions 04–07, Missions 08–10, Built from evidence, Why trust and the final CTA/PublicFooter composition. Prototype-only percentage markers are not snap targets. Every target uses `scroll-snap-stop: normal`, so stronger input may pass more than one target and direction reversal remains browser-controlled. Reduced-motion disables page snapping. No JavaScript scroll-settle controller, timer, wheel/touch cancellation or new animation loop is authorised.
 
 ## Evidence baseline
 
@@ -39,6 +45,7 @@ Native coarse-pointer snapping is reduced from `mandatory` to `proximity`. This 
 | --- | --- | --- |
 | Preserve composition, crops, typography, copy and section order | RFC-034, final handoff evidence, current Production | This is a performance workstream, not a redesign |
 | Native scroll owns user input | Founder workstream instruction | Direct control removes input delay and section pagination |
+| Native Home `y proximity` with nine major targets and normal stop behaviour | 2026-08-19 Founder continuation; Refero motion restraint/interruptibility guidance | Restores narrative fixation without input interception or a snap trap |
 | Cache geometry outside steady-state scroll frames | Browser performance evidence | Eliminates repeated layout reads and read/write thrashing |
 | Event-driven RAF with spring-settle continuation only | Browser performance evidence | Stops idle animation work while preserving the photo depth effect |
 | Static responsive AVIF/WebP candidates plus JPEG fallback | Existing first-party source assets and handoff renderer boundary | Avoids a renderer rewrite while reducing transfer cost and mobile overfetch |
@@ -58,6 +65,6 @@ This RFC does not authorise:
 
 ## Verification and release gates
 
-The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium desktop, WebKit desktop, mobile, reduced motion, repeated wheel input, keyboard scroll, resize and navigation cleanup. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
+The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium desktop, WebKit desktop, mobile, reduced motion, very small and large/repeated wheel input, direction reversal, keyboard scroll, resize, footer reachability and navigation cleanup. It must prove fine-pointer `y proximity`, exactly the approved major targets, normal stop behaviour, no wheel cancellation/input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
 
 Delivery remains a Draft PR with an isolated Vercel Preview. Founder approval is required for any merge or Production action.

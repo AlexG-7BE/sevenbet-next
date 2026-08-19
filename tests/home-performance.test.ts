@@ -49,9 +49,27 @@ test("responsive image outputs exist and keep the opening AVIF payload below one
 test("Home-only motion uses the approved responsive timing and native proximity snap", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const globals = source("app/globals.css");
+  const html = transformHomeHandoff(generatedPages.home.html);
   const css = transformHomeHandoffCss(generatedPages.home.css);
   assert.match(interactions, /index \* 60/);
   assert.match(globals, /data-home-interactions="ready"[\s\S]*460ms cubic-bezier/);
-  assert.match(css, /scroll-snap-type:y proximity/);
+  assert.match(css, /scroll-snap-type: y proximity/);
+  assert.match(css, /scroll-snap-stop: normal !important/);
   assert.doesNotMatch(css, /scroll-snap-type:y mandatory/);
+  assert.doesNotMatch(css, /\[data-snap\] \{ scroll-snap-align:start/);
+  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*scroll-snap-type: none !important/);
+
+  const targets = Array.from(html.matchAll(/data-screen-label="([^"]+)"[^>]*data-home-snap=""/g), (match) => match[1]);
+  assert.deepEqual(targets, [
+    "Hero",
+    "Recognition",
+    "A plan you can see",
+    "Missions 01-03",
+    "Missions 04-07",
+    "Missions 08-10",
+    "Built from evidence",
+    "Why trust",
+    "Final CTA",
+  ]);
+  assert.equal((html.match(/data-home-snap=""/g) ?? []).length, 9);
 });

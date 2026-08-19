@@ -380,6 +380,17 @@ const HOME_MEDIA: Record<string, { height: number; width: number }> = {
 
 const HOME_MEDIA_WIDTHS = [320, 640, 1280, 1920] as const;
 const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "Applying the plan"]);
+const HOME_SNAP_LABELS = new Set([
+  "Hero",
+  "Recognition",
+  "A plan you can see",
+  "Missions 01-03",
+  "Missions 04-07",
+  "Missions 08-10",
+  "Built from evidence",
+  "Why trust",
+  "Final CTA",
+]);
 
 function homeResponsiveImage(imageTag: string) {
   const source = /src="\/home\/([^"/]+\.jpg)"/.exec(imageTag)?.[1];
@@ -406,11 +417,29 @@ export function transformHomeHandoff(html: string) {
     .replace(
       '<div data-screen-label="Final CTA" data-snap=""',
       '<div data-screen-label="Final CTA" data-home-final-composition=""',
-    );
+    )
+    .replace(/<div data-screen-label="([^"]+)"/g, (tag, label: string) => (
+      HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap=""` : tag
+    ));
 }
 
 export function transformHomeHandoffCss(css: string) {
-  return css.replace("scroll-snap-type:y mandatory", "scroll-snap-type:y proximity");
+  const withoutCapturedSnap = css.replace(
+    /@media \(pointer: coarse\) \{\s*html \{ scroll-snap-type:y mandatory; \}\s*\[data-snap\] \{ scroll-snap-align:start; \}\s*\}/,
+    "",
+  );
+  return `${withoutCapturedSnap}
+    [data-home-snap] {
+      scroll-snap-align: start;
+      scroll-snap-stop: normal !important;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-snap-type: y proximity; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-snap-type: none !important; }
+    }
+  `;
 }
 
 export function transformTenStepsHandoff(html: string) {
