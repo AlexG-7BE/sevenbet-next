@@ -314,8 +314,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
     .sort();
   if (schemaChanges.length > 0) {
     assert.deepEqual(schemaChanges, [
-      "prisma/migrations/0019_programme_runtime_hardening/migration.sql",
-      "prisma/preflight/0019_programme_runtime_hardening.sql",
+      "prisma/migrations/0020_commercial_ops_01/migration.sql",
       "prisma/schema.prisma",
     ]);
   }
