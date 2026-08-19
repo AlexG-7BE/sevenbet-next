@@ -1,7 +1,7 @@
 # GB Commercial Activation Gate
 
 - **Decision date:** 19 August 2026
-- **Status:** CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF
+- **Status:** COMMERCIAL PARTNER: NOT YET ACTIVE
 - **Owner:** Commercial / Legal / Editorial / Engineering
 
 ## Decision
@@ -35,24 +35,21 @@ No real GB commercial or referral action is authorised. Public affiliate copy ca
 
 - Real GB partner agreement, approved operator/brand, exact active UKGC domain evidence, live offer authority, approved tracking destination, complete significant conditions or a legal activation approval.
 
-## Cumulative activation checklist
+## First-partner activation checklist
 
-Every item must pass at request time:
+Every item must pass cumulatively; missing, unknown, stale or inconsistent evidence denies the action:
 
-1. **Separate release authority:** approved activation RFC/change, named approvers, exact SHA and rollback owner.
-2. **Jurisdiction:** exact GB request decision permits both `commercialAllowed` and `referralAllowed`.
-3. **Global kill switch:** exact `AFFILIATE_REDIRECT_ENGINE_ENABLED=true` only in the authorised environment.
-4. **Partner agreement:** active/effective/current written agreement, GB market, direct-link channel, correct legal identity, commercial model, evidence reference, reviewer and termination/compliance clauses. Network authority does not prove operator authority.
-5. **Programme authority:** active/published/manual or securely connected; exact casino link; GB supported; no trusted auto-activation.
-6. **Operator/brand:** structured IDs and legal identities match partner, casino and licence relationships.
-7. **Licence/domain:** explicit evidence status, active/current licence, exact account reference, exact domain in the official Gambling Commission register, source URL, observed date and revalidation date. `UNKNOWN` never becomes `VERIFIED` from a date.
-8. **Offer:** active/effective, exact casino/bonus, explicit GB allow; no inferred global eligibility.
-9. **Tracking:** server-owned safe HTTPS destination, active/current link, explicit GB allow, recent check, no credential/unsafe URL and approved slug.
-10. **Bonus/significant conditions:** complete eligibility, deposit, wagering basis, game/market exclusions, stake/odds, deadlines, payment/withdrawal and full-terms link; current source evidence.
-11. **Public copy:** adjacent affiliate/advertisement label, commission boundary, 18+/financial-risk/eligibility wording, full terms and outbound confirmation.
-12. **Privacy:** no Programme/Help commercial use; provider/affiliate transfer assessment updated if personal data or tracking is introduced.
-13. **Testing:** unit/structural/browser tests prove all deny paths, exact-domain matching, no open redirect, no demo action and protected-data firewall.
-14. **Operational readiness:** monitoring, incident/correction route, evidence expiry job, manual kill procedure and post-deploy read-only smoke.
+1. **Real affiliate/operator approval or agreement:** current written authority for the actual legal counterparty, GB channel and commercial model; network access alone is insufficient.
+2. **GB permission:** server-owned jurisdiction policy explicitly permits both commercial and referral use for the request.
+3. **Operator identity:** legal operator, brand, partner and internal structured IDs reconcile exactly.
+4. **Current UKGC licence/domain evidence:** active licence/account and the exact destination domain are checked against the current Gambling Commission register with source, observed date and revalidation date; `UNKNOWN` never becomes `VERIFIED` from a timestamp.
+5. **Real current offer:** active/effective offer for the exact operator and GB audience; no fictional, expired or inferred-global eligibility.
+6. **Exact tracking destination:** server-owned safe HTTPS destination, approved slug, current check, no credential or open-redirect path.
+7. **Significant offer terms:** eligibility, deposit, wagering basis, exclusions, stake/odds, deadlines, payment/withdrawal restrictions and direct full-terms link are complete and current.
+8. **Affiliate disclosure:** adjacent commercial label, commission statement, 18+/financial-risk/eligibility wording and outbound confirmation appear before the action; Programme/Help data remains excluded.
+9. **Preview validation:** exact-SHA focused unit/structural/browser checks prove allow and deny paths, exact-domain matching, no demo action, protected-data firewall and destination behaviour.
+10. **Founder activation approval:** a separate reviewed activation RFC/change names the approvers, environment and exact SHA. This legal-copy PR provides no such approval.
+11. **Kill switch and rollback:** the global switch, independent policy/evidence denials, monitoring, manual kill procedure, rollback owner and post-deploy read-only smoke are ready.
 
 ## Release and rollback
 

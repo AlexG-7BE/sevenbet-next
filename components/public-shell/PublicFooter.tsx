@@ -25,8 +25,8 @@ export function PublicFooter() {
           ))}
         </div>
         <div className={styles.footerBaseline}>
-          <div><span className={styles.age}>18+</span><span>Gambling involves financial risk.</span><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link><Link href="/responsible-gambling">Responsible Gambling</Link><Link href="/help">Protected Help</Link><Link href="/contact">Contact</Link></div>
-          <Link href="/affiliate-disclosure">We may earn commission from clearly labelled affiliate links.</Link>
+          <div><span className={styles.age}>18+</span><span>Gambling involves financial risk.</span><Link href="/terms">Terms</Link><Link href="/privacy">Privacy</Link><Link href="/contact">Contact</Link></div>
+          <p className={styles.footerCommission}>We may earn commission from clearly labelled affiliate links.</p>
         </div>
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />
       </div>

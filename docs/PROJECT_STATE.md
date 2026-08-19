@@ -1,15 +1,15 @@
 # Project State
 
-## GB-PUBLIC-LEGAL-PACK-01 P0 closure candidate — 2026-08-19
+## GB-PUBLIC-LEGAL-PACK-01 Founder closeout candidate — 2026-08-19
 
-- **Detected:** Draft PR #78 on `codex/public-legal-pack-gb-01` is reconciled with current `main`, including merged PR #77. RFC-036 governs the bounded legal closure implementation. Production, merge and external provider/controller actions remain outside this workstream.
-- **Detected:** public Privacy, Terms, Affiliate Disclosure, footer, Programme just-in-time sensitive/AI/transcription consent, withdrawal, Google identity-only disclosure, commercial labels/outbound copy, significant-condition template, demonstration disclosure and correction rules are mapped to implementation source in `docs/legal/GB-LEGAL-SITE-PLACEMENT-MAP.md`.
-- **Detected:** non-essential public product analytics has no runtime dependency, root mount, SDK call or environment activation switch. Only purpose-limited requested-feature/authentication/security/Programme-continuity storage remains. A separate RFC and current PECR assessment are required before analytics can return.
-- **Detected:** legacy licence timestamps no longer infer `VERIFIED`; absent explicit evidence status maps to `UNKNOWN`. GB jurisdiction commercial/referral policy remains denied, the redirect engine defaults off and exact-domain activation evidence remains empty.
-- **Detected:** the final legal pack contains the Article 27, ICO fee, processor/transfer, OpenAI account-control, DPIA, PECR and commercial decisions plus closure and approval registers. Repository-controlled work is complete or ready for controller approval.
-- **Inferred:** Article 27 appointment and the ICO fee are required. The DPIA is required because AI combines with highly personal/potentially special-category input and systematic Programme tracking.
-- **Planned / external:** appoint and publish a UK representative; register/pay the ICO fee; capture provider-account DPA/location/subprocessor/retention/transfer settings; capture OpenAI training/ZDR-or-MAM/residency controls; complete rights/incident rehearsal; obtain Controller/Legal/Security/Product signatures.
-- **Not detected:** no evidence supports claiming those external actions complete, no real GB partner/offer authority exists, and no Production configuration/data/schema/migration/reward/Mission/Help change is part of this candidate.
+- **Detected — PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** Draft PR #78 on `codex/public-legal-pack-gb-01` remains governed by RFC-036. Public Privacy, Terms, Affiliate Disclosure, non-duplicative footer, Programme consent/withdrawal, Google identity-only disclosure, commercial labels, necessary-only technology and fail-closed evidence rules are mapped and focused-testable.
+- **Detected — PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE where verified:** current official OpenAI, Vercel, Resend and Google Workspace/Cloud Identity public frameworks are recorded. Prisma ORM is only code; the managed database is identified as Prisma Postgres through the Vercel integration, and no current public Prisma Article 28 DPA was located.
+- **Detected — ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER:** live plan/entity/acceptance, exact locations, retention, transfer routes and provider settings remain unverified. OpenAI server-side `store:false`, bounded in-memory audio and no intentional narrative logging are application controls, not ZDR/MAM/region proof.
+- **Inferred — UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER:** the Article 27 assessment still concludes appointment is required. No public particulars or appointment are claimed.
+- **Inferred — ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER:** the fee assessment still concludes payment is required. Tier, registration, payment and reference are not detected.
+- **Detected — DPIA FINAL / READY FOR INTERNAL CONTROLLER APPROVAL:** current residual risk scores are preserved; the Founder timing decision does not reduce them. Internal signers are Founder/Controller, Security reviewer, Product owner and Internal Legal/Compliance.
+- **Detected — COMMERCIAL PARTNER: NOT YET ACTIVE:** GB jurisdiction commercial/referral policy remains denied, the redirect engine defaults off, exact-domain activation evidence remains empty and the first-partner checklist requires a separate Founder activation change.
+- **Not detected / unchanged:** no evidence supports claiming any deferred action complete, no real GB partner/offer authority exists, and this candidate makes no merge, Production configuration/data/schema/migration/reward/Mission/Help or provider-account change.
 
 ## HOME-PERFORMANCE-MOTION-POLISH-01 branch addendum — 2026-08-18
 

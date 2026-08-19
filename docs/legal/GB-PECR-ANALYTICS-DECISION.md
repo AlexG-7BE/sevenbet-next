@@ -1,7 +1,7 @@
 # GB PECR and Analytics Decision
 
 - **Decision date:** 19 August 2026
-- **Status:** COMPLETE
+- **Status:** PUBLIC LEGAL IMPLEMENTATION: COMPLETE
 - **Owner:** Privacy / Engineering
 
 ## Decision

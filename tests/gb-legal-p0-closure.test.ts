@@ -29,10 +29,13 @@ const legalDocuments = [
 ] as const;
 
 const allowedStatuses = new Set([
-  "COMPLETE",
-  "FINAL — READY FOR CONTROLLER APPROVAL",
-  "CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF",
-  "BLOCKED — EXTERNAL ACTION REQUIRED",
+  "PUBLIC LEGAL IMPLEMENTATION: COMPLETE",
+  "PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE",
+  "ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER",
+  "UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER",
+  "ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER",
+  "FINAL — READY FOR INTERNAL CONTROLLER APPROVAL",
+  "COMMERCIAL PARTNER: NOT YET ACTIVE",
 ]);
 
 test("the P0 legal pack is exact, non-duplicative and uses only the closure vocabulary", () => {
@@ -42,9 +45,38 @@ test("the P0 legal pack is exact, non-duplicative and uses only the closure voca
     const match = /\*\*Status:\*\*\s+([^\n]+)/.exec(text);
     assert.ok(match, `${document} requires one Status field`);
     assert.ok(allowedStatuses.has(match[1].trim()), `${document} has unsupported status ${match[1]}`);
-    assert.match(text, /Detected|Evidence classification|placement|Pack contents|P0 stream/);
+    assert.match(text, /Detected|Evidence classification|placement|Pack contents|follow-up register/);
   }
   assert.equal(existsSync("docs/legal/GB-POST-LAUNCH-LEGAL-FOLLOW-UP.md"), false);
+});
+
+test("Founder risk acceptance keeps deferred actions open in one follow-up register", () => {
+  const approval = source("docs/legal/GB-LEGAL-APPROVAL-PACK.md");
+  const register = source("docs/legal/GB-P0-CLOSURE-REGISTER.md");
+  for (const text of [approval, register]) {
+    assert.match(text, /FOUNDER LAUNCH RISK ACCEPTANCE — 19 AUGUST 2026/);
+    assert.match(text, /UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER/);
+    assert.match(text, /ICO REGISTRATION\/FEE: OPEN — DEFERRED BY FOUNDER/);
+    assert.match(text, /ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER/);
+    assert.match(text, /COMMERCIAL PARTNER: NOT YET ACTIVE/);
+  }
+  assert.match(register, /Single internal follow-up register/);
+  assert.match(register, /Periodic DPIA review/);
+  assert.match(register, /OpenAI project controls/);
+});
+
+test("provider review separates public frameworks, application controls and account evidence", () => {
+  const register = source("docs/legal/GB-PROCESSOR-AND-TRANSFER-REGISTER.md");
+  const openai = source("docs/legal/GB-OPENAI-DATA-CONTROLS.md");
+  assert.match(register, /Level A — PROVIDER PUBLIC FRAMEWORK VERIFIED/);
+  assert.match(register, /Level B — ACCOUNT APPLICABILITY \/ ACCEPTANCE NOT YET CAPTURED/);
+  assert.match(register, /Level C — ACCOUNT EVIDENCE VERIFIED/);
+  assert.match(register, /Prisma Postgres through the existing Vercel integration/);
+  assert.match(register, /no current public Prisma Article 28 DPA/);
+  assert.match(openai, /PUBLIC PROVIDER FRAMEWORK: VERIFIED/);
+  assert.match(openai, /APPLICATION DATA-MINIMISATION CONTROL: VERIFIED/);
+  assert.match(openai, /ACCOUNT-SPECIFIC ZDR\/MAM\/REGION EVIDENCE: DEFERRED BY FOUNDER/);
+  assert.match(openai, /does not prove Zero Data Retention/);
 });
 
 test("GB launch runtime has no non-essential analytics provider or activation path", () => {
@@ -128,6 +160,13 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.match(transforms, /call 999 or go to A&amp;E now/);
   assert.match(affiliate, /Affiliate link · We may earn commission/);
   assert.match(footer, /Gambling involves financial risk/);
+  assert.match(footer, /<p className=\{styles\.footerCommission\}>We may earn commission from clearly labelled affiliate links\.<\/p>/);
+  assert.equal(footer.match(/"\/affiliate-disclosure"/g)?.length, 1);
+  assert.equal(footer.match(/"\/responsible-gambling"/g)?.length, 1);
+  assert.equal(footer.match(/"\/help"/g)?.length, 1);
+  assert.equal(footer.match(/"\/terms"/g)?.length, 1);
+  assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
+  assert.equal(footer.match(/"\/contact"/g)?.length, 1);
   assert.match(demo, /DEMONSTRATION DATA/);
   assert.match(outbound, /You are about to visit a third-party gambling operator/);
 });

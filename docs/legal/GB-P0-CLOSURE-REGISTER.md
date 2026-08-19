@@ -1,26 +1,34 @@
-# GB P0 Closure Register
+# GB P0 Closure and Internal Follow-up Register
 
-- **Work package:** `GB-PUBLIC-LEGAL-PACK-01`
+- **Work package:** \`GB-PUBLIC-LEGAL-PACK-01\`
 - **Evidence date:** 19 August 2026
-- **Status:** BLOCKED — EXTERNAL ACTION REQUIRED
-- **Owner:** Founder Office / Chief Legal & Compliance Officer
+- **Status:** PUBLIC LEGAL IMPLEMENTATION: COMPLETE
+- **Owner:** Founder Office / Internal Legal & Compliance
 
-All repository-controlled P0 work is closed or ready for controller approval. The remaining blockers require legal authority, corporate facts, account access or contract execution and cannot be completed truthfully from source code.
+Repository-controlled public legal work is complete for this Draft PR. Open external or account actions remain truthful Founder deferrals; none is upgraded to complete by this register.
 
-| P0 stream | Decision/evidence | Status | Only remaining closure evidence | Owner |
+## FOUNDER LAUNCH RISK ACCEPTANCE — 19 AUGUST 2026
+
+Founder Office records that initial GB operations will not be delayed solely for the Article 27 appointment, ICO registration/fee or account-specific DPA/CDPA/transfer evidence. These matters remain open and assigned below. The decision does not appoint a representative, register or pay the ICO fee, accept a contract, prove a transfer route, establish OpenAI ZDR/MAM/region controls, reduce DPIA risk, establish regulatory/operator approval or activate commercial traffic.
+
+## Single internal follow-up register
+
+| Item | Status | Owner | Exact next action | Completion evidence |
 |---|---|---|---|---|
-| A. UK Article 27 representative | Assessment concludes appointment is required; conditional Privacy field and non-placeholder public record implemented | BLOCKED — EXTERNAL ACTION REQUIRED | Signed mandate; UK establishment proof; approved legal name/address/email/route; counsel approval; Preview field check | Founder / Legal |
-| B. ICO fee | Assessment concludes fee required; current tiers and execution checklist recorded | BLOCKED — EXTERNAL ACTION REQUIRED | Current worldwide staff/turnover; registration/payment; reference/certificate; renewal owner/date | Founder / Finance / Legal |
-| C. Processor/transfer register | Actual code-backed flows, roles, data, purposes and evidence gaps mapped | BLOCKED — EXTERNAL ACTION REQUIRED | Account-specific DPA/CDPA, entity/plan, subprocessors, regions, retention, transfer route and TRA/data-protection test | Legal / Security / provider owners |
-| D. OpenAI data controls | `store:false`, bounded provider path and no-content logs detected; exact account checklist final | BLOCKED — EXTERNAL ACTION REQUIRED | Training/sharing off; ZDR or MAM scope; region; DPA/subprocessors/transfer; access/key review; signed evidence packet | OpenAI org owner / Privacy / Security |
-| E. DPIA | Full processing map, lawful-basis candidate, necessity, risks, controls, consultation trigger and sign-off fields complete | FINAL — READY FOR CONTROLLER APPROVAL | External conditions 1–6 in DPIA, then Controller/Legal/Security/Product signatures; ICO consultation if high residual risk remains | Controller / Legal / Security / Product |
-| F. Analytics/PECR | Provider package/root/SDK/flag removed; necessary-only inventory and reopening gate documented/tested | COMPLETE | None for this posture; any future analytics requires a new RFC and current PECR assessment | Privacy / Engineering |
-| G. GB commercial activation | Server authorities, copy, demo boundary, empty exact-domain evidence and `UNKNOWN` evidence rule complete | CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF | No activation in this work package; future real partner must pass every gate and separate release approval | Commercial / Legal / Editorial / Engineering |
+| UK representative | **UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER** | Founder / Internal Legal & Compliance | Appoint a qualifying UK representative under a written mandate, approve the public particulars and update the conditional record. | Signed mandate; UK establishment evidence; approved name/address/email/contact route; internal review; Preview field check. |
+| ICO registration/fee | **ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER** | Founder / Finance / Internal Legal & Compliance | Supply current worldwide staff/turnover, select the applicable tier, register/pay and assign renewal ownership. | ICO reference/public record; tier; paid date; receipt; renewal date and owner. |
+| Account vendor evidence — Vercel, Resend, Google, Prisma Postgres | **ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER** | Provider account owners / Security / Internal Legal & Compliance | Capture each live plan/entity, accepted terms/DPA/CDPA, subprocessors, region, retention/deletion, transfer route and any required data-protection test. | Dated non-secret evidence packet per provider with reviewer and next review date. |
+| OpenAI project controls | **ACCOUNT-SPECIFIC ZDR/MAM/REGION EVIDENCE: DEFERRED BY FOUNDER** | OpenAI organisation owner / Security / Internal Legal & Compliance | Capture exact organisation/project, sharing/training controls, retention/ZDR/MAM, region, applicable agreement/DPA, transfer route, admin/key and deletion posture. | Redacted dated settings/contract packet; model/endpoint scope; reviewer; expiry/review date. |
+| Periodic DPIA review | **OPEN — INTERNAL FOLLOW-UP** | Internal Legal & Compliance / Security / Product owner | Review on provider/model/purpose/data/retention/scale/law change and at least annually; preserve residual-risk scores unless evidence supports change. | Dated DPIA review decision, changes, residual scores, owners and any Article 36 conclusion. |
+| First commercial partner record | **COMMERCIAL PARTNER: NOT YET ACTIVE** | Founder / Commercial / Internal Legal & Compliance / Editorial / Engineering | Create a partner record only after the complete first-partner checklist and a separate Founder activation change pass. | Agreement/approval; GB permission; operator identity; current UKGC licence/domain; real offer/destination/terms/disclosure; Preview evidence; Founder approval; kill/rollback record. |
 
-## P1/P2 disposition
+## Closed repository controls
 
-The P0 pack does not conceal lower-priority work. Durable age evidence, operational rights/incident rehearsals, fixed mailbox/inactive-account retention, public support-link cadence, claims evidence maintenance, external consumer-law/ADR review and provider/media capability review remain governed by existing project records. None authorises a P0 status upgrade without its stated evidence.
+- **PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** copy pack, placement, conditional representative field, necessary-only technology and focused tests.
+- **PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE where verified:** OpenAI, Vercel, Resend and Google Workspace/Cloud Identity; Prisma Postgres public DPA not located.
+- **DPIA:** \`FINAL — READY FOR INTERNAL CONTROLLER APPROVAL\`; recorded high residual scores remain unchanged.
+- **COMMERCIAL:** fail-closed controls remain on, GB referral policy remains denied, redirect engine remains off and exact-domain authority remains empty.
 
 ## Closure rule
 
-Change this register to `COMPLETE` only when every P0 row is either `COMPLETE` or, for commercial, `CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF`, with durable evidence linked and named approvals dated. A meeting note, source-code control or public provider page does not prove an appointment, payment, accepted contract or live account setting.
+An item changes from open/deferred only after the completion evidence above is reviewed. A public provider page, code control, meeting note or Founder deferral does not prove an appointment, payment, accepted contract, account setting, transfer route or commercial authority.

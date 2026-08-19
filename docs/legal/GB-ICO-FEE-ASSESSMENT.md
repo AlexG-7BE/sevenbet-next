@@ -2,12 +2,12 @@
 
 - **Controller:** 7BE Inc., trading as B4GAMBLE
 - **Assessment date:** 19 August 2026
-- **Status:** BLOCKED — EXTERNAL ACTION REQUIRED
+- **Status:** ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER
 - **Owner:** Founder / Finance, reviewed by Legal
 
 ## Decision
 
-The fee is required. 7BE Inc. is an electronic-data controller within the territorial scope of UK GDPR and uses personal data for account, Programme, support, security and service-delivery purposes that are not confined to the listed core-purpose exemptions. The external action is registration/payment and selection of the correct tier using current corporate facts.
+The fee is required. 7BE Inc. is an electronic-data controller within the territorial scope of UK GDPR and uses personal data for account, Programme, support, security and service-delivery purposes that are not confined to the listed core-purpose exemptions. Founder Office has decided not to delay initial GB operations solely for registration/payment. The action remains open and the correct tier still depends on current corporate facts.
 
 ## Evidence classification
 
@@ -28,6 +28,12 @@ The fee is required. 7BE Inc. is an electronic-data controller within the territ
 - Complete the ICO registration with exact legal entity/address, current average worldwide staff count and annual turnover.
 - Pay the applicable fee, retain the receipt/certificate/reference outside the public repository and assign an annual renewal owner and reminder.
 - Add the registration fact to the legal evidence register only after the ICO record is visible and reconciled.
+
+### Founder deferral
+
+- **Recorded classification:** `ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER`.
+- **Effect:** operational timing decision only; it is not registration, payment, tier selection or proof of regulatory standing.
+- **Next action:** Founder / Finance supplies the current corporate facts, completes registration/payment and retains the public reference and renewal evidence.
 
 ### Not detected
 

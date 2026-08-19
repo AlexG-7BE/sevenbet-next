@@ -2,12 +2,12 @@
 
 - **Work package:** `GB-PUBLIC-LEGAL-PACK-01`
 - **Evidence date:** 19 August 2026
-- **Status:** FINAL — READY FOR CONTROLLER APPROVAL
+- **Status:** FINAL — READY FOR INTERNAL CONTROLLER APPROVAL
 - **Decision owner:** Founder / Controller
 
 ## Decision requested
 
-Approve the repository-controlled legal copy, placement map, DPIA methodology, processor/transfer register, Article 27 and ICO conclusions, OpenAI account checklist, strictly-necessary-only analytics posture and fail-closed commercial framework. This approval does not merge PR #78, deploy Production, accept a vendor contract, change a provider account, appoint a representative, pay the ICO or activate commercial traffic.
+Approve the repository-controlled public legal implementation, placement map, DPIA, provider-framework review, Founder deferral record, strictly-necessary-only analytics posture and fail-closed commercial framework. This approval does not merge PR #78, deploy Production, accept a vendor contract, change a provider account, appoint a representative, pay/register with the ICO or activate commercial traffic.
 
 ## Pack contents
 
@@ -27,20 +27,25 @@ Governing decision: `docs/06_RFC/RFC-036-GB-Public-Legal-P0-Closure.md`.
 
 ## Controller findings
 
-- Article 27 appointment is required; no exception or placeholder is claimed.
-- The ICO fee is required; tier awaits current corporate facts.
-- Active processors/recipients are mapped; live contract/account/transfer evidence awaits owners.
-- OpenAI repository controls are strong but do not prove organisation/project settings; ZDR/MAM, training, residency and terms must be captured.
-- The DPIA is final for review; current high residual vendor/transfer/representative/rights risks block release until external conditions close.
+- **PUBLIC LEGAL IMPLEMENTATION: COMPLETE.** Public copy, placement, necessary-only technology and fail-closed commercial disclosure are repository-controlled and reviewable.
+- **PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE where verified.** Current OpenAI, Vercel, Resend and Google Workspace/Cloud Identity public frameworks were reviewed; no public Prisma Postgres Article 28 DPA was located.
+- **ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER.** Live plan/entity/acceptance, locations, retention, transfer routes and OpenAI ZDR/MAM/region remain unverified.
+- **UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER.** Article 27 assessment still concludes appointment is required; no exception or placeholder is claimed.
+- **ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER.** The fee remains required; tier, registration, payment and reference remain open.
+- The DPIA is final for internal approval. Its current high residual scores remain unchanged and are not reduced by the Founder timing decision.
 - Non-essential analytics is removed. Necessary technology cannot be reused for tracking or commercial purposes.
-- GB commercial/referral activation remains off behind independent cumulative authorities. Unknown evidence remains unknown.
+- **COMMERCIAL PARTNER: NOT YET ACTIVE.** GB commercial/referral activation remains off behind independent cumulative authorities. Unknown evidence remains unknown.
 - Programme just-in-time consent, withdrawal, protected Help and Google identity-only disclosures match the implemented flow.
+
+## FOUNDER LAUNCH RISK ACCEPTANCE — 19 AUGUST 2026
+
+Founder Office records that initial GB operations will not be delayed solely for the Article 27 appointment, ICO registration/fee or account-specific DPA/CDPA/transfer evidence. These items remain `OPEN` or `DEFERRED BY FOUNDER` and are assigned to internal post-launch follow-up. This acceptance does not create a representative, register or pay the ICO fee, accept a contract, prove a transfer route, establish OpenAI ZDR/MAM/region controls, reduce a DPIA score, establish regulatory/operator approval or activate a commercial partner.
 
 ## Approval choices
 
 ### APPROVE
 
-Approve the pack and bounded Draft-PR implementation. Keep merge, Production and every external action separate. External P0 evidence must still close before release approval.
+Approve the pack and bounded Draft-PR public implementation, including the explicit Founder deferrals. Keep merge, Production and every external action separate. No deferred item may be represented as complete.
 
 ### APPROVE WITH CONDITIONS
 
@@ -55,10 +60,10 @@ Do not approve the pack. Record the specific legal, factual or control issue. An
 | Role | Name | Choice / conditions | Date |
 |---|---|---|---|
 | Founder / Controller |  |  |  |
-| Chief Legal & Compliance Officer / counsel |  |  |  |
 | Security reviewer |  |  |  |
 | Product owner |  |  |  |
+| Internal Legal / Compliance |  |  |  |
 
 ## Handoff after approval
 
-Founder Office assigns the external actions in `GB-P0-CLOSURE-REGISTER.md`, stores evidence outside the public repository, and supplies only approved non-secret particulars/references for final reconciliation. Engineering then updates the conditional representative record and evidence references, reruns exact-SHA Preview/CI, and returns for the separate merge/release decision. Commercial activation requires its own future work package.
+Founder Office uses the single follow-up register in `GB-P0-CLOSURE-REGISTER.md`, stores evidence outside the public repository, and supplies only approved non-secret particulars/references for reconciliation. Engineering updates public particulars only after approval and evidence. Commercial activation requires its own future work package and Founder activation decision.

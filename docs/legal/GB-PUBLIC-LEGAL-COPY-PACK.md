@@ -3,7 +3,7 @@
 **Owner:** 7BE Inc. / B4GAMBLE
 **Market:** Great Britain
 **Effective:** 19 August 2026
-**Status:** FINAL — READY FOR CONTROLLER APPROVAL
+**Status:** PUBLIC LEGAL IMPLEMENTATION: COMPLETE
 
 This pack records the final public wording and placement rules implemented by this change. The complete Privacy Notice, Terms of Use and Affiliate Disclosure are maintained in their page source files:
 
@@ -94,7 +94,14 @@ Demonstration data must remain noindex, excluded from structured offer data and 
 
 > 18+ · Gambling involves financial risk. B4GAMBLE is an information and education service, not a gambling operator. We may earn commission from clearly labelled affiliate links.
 
-Required adjacent links: Terms · Privacy · Affiliate Disclosure · Responsible Gambling · Protected Help · Contact.
+Footer placement is intentionally non-duplicative:
+
+- **Programme & Support:** Start Programme · 10 Steps · Responsible Gambling · Help — protected support →
+- **Trust:** About · Methodology · FAQ · Affiliate Disclosure
+- **Bottom legal:** 18+ · Gambling involves financial risk. · Terms · Privacy · Contact
+- **Plain-text disclosure:** `We may earn commission from clearly labelled affiliate links.`
+
+The commission statement is visible text, not another Affiliate Disclosure link. Affiliate Disclosure, Responsible Gambling and protected Help appear once in their governed groups and are not repeated in the bottom legal row.
 
 ## 6. Responsible-gambling and Help boundaries
 

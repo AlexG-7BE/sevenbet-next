@@ -2,12 +2,12 @@
 
 - **Controller:** 7BE Inc., trading as B4GAMBLE
 - **Assessment date:** 19 August 2026
-- **Status:** BLOCKED — EXTERNAL ACTION REQUIRED
+- **Status:** UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER
 - **Owner:** Founder / Chief Legal & Compliance Officer
 
 ## Decision
 
-7BE Inc. must appoint a UK representative in writing before this GB release is approved. The Article 27 exception is not safely available.
+The assessment remains that 7BE Inc. must appoint a UK representative in writing and that the Article 27 exception is not safely available. Founder Office has decided not to delay initial GB operations solely for this appointment. The obligation remains open, no representative is stated or implied, and the deferral requires internal post-launch follow-up.
 
 ## Evidence classification
 
@@ -30,11 +30,17 @@
 - Appoint a person or organisation established in the UK under a signed written mandate.
 - Give the representative authority to act regarding UK GDPR compliance and liaise with people and the ICO.
 - Agree records-of-processing access, rights-request routing, regulator correspondence, incident escalation, availability, confidentiality, termination and evidence-retention terms.
-- Retain the signed mandate and counsel approval, then populate `lib/legal/gb-uk-representative.ts` with approved public particulars.
+- Retain the signed mandate and Internal Legal/Compliance approval, then populate `lib/legal/gb-uk-representative.ts` with approved public particulars.
+
+### Founder deferral
+
+- **Recorded classification:** `UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER`.
+- **Effect:** operational timing decision only; it does not create an appointment, Article 27 compliance, a UK address or a public contact route.
+- **Next action:** Founder / Internal Legal & Compliance appoints a qualifying representative and records the signed mandate before any completion claim.
 
 ### Not detected
 
-- Representative legal name, UK postal address, email, contact route, signed mandate, effective date and counsel approval.
+- Representative legal name, UK postal address, email, contact route, signed mandate, effective date and Internal Legal/Compliance approval.
 
 ## Public Privacy field
 
@@ -50,7 +56,7 @@ The repository record remains deliberately `null`; brackets and appointment-pend
 2. Evidence that the representative is established in the UK.
 3. Approved legal name, postal address, email and stable contact route.
 4. Rights/ICO/incident escalation runbook and responsible contacts.
-5. Counsel review of the appointment and updated Privacy Notice.
+5. Internal Legal/Compliance review of the appointment and updated Privacy Notice; external counsel only if the internal reviewer escalates the matter.
 6. Deterministic Preview test showing the exact public field and working contact route.
 
 ## Primary sources

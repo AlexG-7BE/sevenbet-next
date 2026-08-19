@@ -2,76 +2,87 @@
 
 - **Controller:** 7BE Inc., trading as B4GAMBLE
 - **Evidence date:** 19 August 2026
-- **Status:** BLOCKED — EXTERNAL ACTION REQUIRED
-- **Owner:** Chief Legal & Compliance Officer with Security and account owners
+- **Status:** PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE
+- **Owner:** Internal Legal/Compliance with Security and account owners
 
 ## Register decision
 
-Repository data flows are mapped. Contract execution, account plan, subprocessors, exact processing locations and transfer-mechanism applicability cannot be proved from source code and must be captured from each live account before controller approval. A provider's public terms are not evidence that 7BE Inc. accepted the applicable version or configured the described control.
+Repository data flows and the active managed services are mapped. Current official public frameworks were reviewed where available. A public DPA/CDPA proves only the provider's published framework; it does not prove B4GAMBLE's plan, contracting entity, acceptance, live configuration, location or transfer route. Founder Office has deferred that account-specific evidence without marking it complete.
 
-## Evidence classification
+## Evidence levels
+
+- **Level A — PROVIDER PUBLIC FRAMEWORK VERIFIED:** a current official public DPA/CDPA and its processor, subprocessor and transfer provisions were reviewed. Level A is not account evidence.
+- **Level B — ACCOUNT APPLICABILITY / ACCEPTANCE NOT YET CAPTURED:** the B4GAMBLE plan/entity/accepted version/applicability is absent. Every Level B item below is `DEFERRED BY FOUNDER`.
+- **Level C — ACCOUNT EVIDENCE VERIFIED:** durable account, contract and configuration evidence has been reviewed. No provider in this register is classified Level C as at the evidence date.
+
+## Repository evidence
 
 ### Detected
 
 - Vercel hosts the Next.js application and receives request, network, security, session and application traffic.
-- Prisma ORM is a code library; the live application uses Prisma's managed Postgres service for durable application data.
+- Prisma ORM is a code library, not a recipient. The active managed database is **Prisma Postgres through the existing Vercel integration**, evidenced by the approved pooled/direct hosts, the Vercel-billed Prisma workspace and isolated Preview/Production database resources recorded in the technical baseline.
 - Google sign-in is identity-only. B4GAMBLE requests basic identity, strips OAuth token fields before account persistence and does not send Programme words to Google.
-- Resend delivers Contact messages to a support mailbox; Google Workspace is the documented mailbox service. Contact message content is not stored in an application Contact table.
-- OpenAI receives optional typed input or audio/transcript only after active Programme authority. B4GAMBLE uses Responses with `store: false` and in-memory audio transcription.
-- Better Auth is a self-hosted application library, not a separate data recipient. `@vercel/analytics` is removed by RFC-036. Stripe, a live affiliate network and a live operator recipient are not detected.
+- Resend delivers Contact messages to the documented Google Workspace support mailbox. Contact content is not stored in an application Contact table.
+- OpenAI receives optional typed input or audio/transcript only after active Programme authority. Requests are server-side; Responses use `store: false`; audio is handled in memory; application logs intentionally exclude narrative content.
+- Better Auth is self-hosted application code, not a hosted processor. Vercel Analytics is removed. Stripe, a live affiliate network and a live operator recipient are not detected.
 
 ### Inferred
 
-- Vercel, managed Postgres, Resend, Google Workspace (if the business account is confirmed) and OpenAI act as processors for the bounded customer-data services, subject to their actual agreements. Some service/account telemetry may be processed by them as separate controllers.
-- Google's role for Google Account authentication is likely a separate-controller relationship for the identity interaction; any Google Cloud processor terms applicable to the OAuth project require counsel/account confirmation.
-- US and other non-UK processing is possible. A UK Extension adequacy route is usable only where the exact US recipient and data are covered by current DPF certification; otherwise an applicable UK Addendum/IDTA and data-protection test/TRA is required.
-
-### Planned
-
-- Capture executed/accepted terms, exact plan/entity, DPA/CDPA, subprocessor list, locations, retention/deletion settings, security evidence, incident terms, rights assistance and transfer mechanism for each active account.
-- Complete one data-protection test/TRA per non-adequate transfer mechanism, using the current ICO/DSIT analysis where appropriate.
-- Subscribe to subprocessor change notices and record an owner/review cadence.
+- Vercel, Prisma Postgres, Resend, Google Workspace and OpenAI perform processor functions for bounded customer-data services only to the extent their applicable agreements establish that role. Defined service/account data may have separate-controller treatment.
+- Google Account authentication remains a working separate-controller assessment for the identity interaction; Google Cloud/CDPA applicability to the actual OAuth project is not inferred from the Workspace mailbox framework.
+- International processing is possible. The applicable UK adequacy, UK Extension to an eligible DPF certification, UK Addendum/IDTA and any data-protection test must be determined against the exact recipient, agreement and transfer.
 
 ### Not detected
 
-- Executed agreements, account acceptance timestamps, exact contracting entities, DPF coverage, IDTA/Addendum execution, completed TRA, live database region, mailbox plan, provider deletion settings or subprocessor-notice subscriptions.
+- Accepted agreements, acceptance timestamps, exact contracting entities/plans, live regions, applicable DPF coverage, signed IDTA/Addendum, completed data-protection test, provider retention/deletion settings or subprocessor-notice subscriptions.
 
 ## Active service register
 
-| Service | Data and purpose | Role assessment | Location / transfer position | Contract and retention evidence | Status |
-|---|---|---|---|---|---|
-| Vercel | Hosting; HTTP requests; IP/user agent; cookies/headers; rendered and API payloads; security/operational logs | Processor for customer data; separate controller for defined account/service-generated data under its terms | Public DPA says primary processing is US and may use global subprocessors; exact account and DPF/UK mechanism coverage not evidenced | Public DPA has Article 28, subprocessors and UK transfer clauses for stated plans; account plan/acceptance and actual settings must be captured | BLOCKED — EXTERNAL ACTION REQUIRED |
-| Prisma managed Postgres | Account/profile, sessions, Programme authority/progress/confirmed structured output, casino/editorial/affiliate administration and security state | Managed database processor; Prisma ORM itself is only a library | Region is configurable, but the live region and onward locations are not in source | Obtain applicable Prisma Data Platform terms/DPA, region proof, subprocessors, backup/deletion periods and transfer mechanism from the account | BLOCKED — EXTERNAL ACTION REQUIRED |
-| Google identity | Google subject identifier, name, email, profile image and transient OAuth tokens for sign-in; tokens stripped before B4GAMBLE account persistence | Separate controller for Google Account authentication is the working assessment; confirm any processor/CDPA scope for the Cloud project | Google infrastructure may be global; exact project/entity and applicable transfer terms not evidenced | Capture production project, scopes, consent-screen links, owners, applicable terms/CDPA and token configuration | BLOCKED — EXTERNAL ACTION REQUIRED |
-| Resend | Contact name, reply email, subject, message and support destination for delivery | Processor for message delivery; separate-controller account data may exist | US/global subprocessors possible; verify exact route and UK transfer mechanism | Public DPA and subprocessors exist; capture account acceptance, retention/log settings and transfer applicability | BLOCKED — EXTERNAL ACTION REQUIRED |
-| Google Workspace support mailbox | Delivered Contact message and correspondence, sender/recipient metadata and mailbox records | Processor only if a qualifying Workspace business service and CDPA apply; consumer Gmail would be a separate controller and is not an acceptable unverified assumption | Account region/routing and subprocessors not evidenced | Confirm Workspace edition/entity; retain CDPA acceptance, admin retention/deletion, access review and transfer evidence | BLOCKED — EXTERNAL ACTION REQUIRED |
-| OpenAI API | Optional typed situation, bounded prompts, audio/transcript and generated Starting Point/guidance; operational token/size/timing metadata | Processor for API customer content under the applicable business terms; defined account data may be separate-controller data | US/selected project region and subprocessors depend on contracted account controls | Capture DPA, subprocessors, transfer route, project region, training opt-in, retention/ZDR/MAM and deletion evidence | BLOCKED — EXTERNAL ACTION REQUIRED |
+| Service | Data and role assessment | Level A — public framework | Level B — account applicability / acceptance | Level C — account evidence |
+|---|---|---|---|---|
+| Vercel | Hosting/customer data processor; defined service-generated/account data may be separate-controller data | **VERIFIED.** Current DPA (updated 17 March 2026; effective 31 March 2026) contains processor instructions, Article 28-type subprocessor duties and UK transfer mechanisms. It states applicability to Pro and Enterprise plans. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Exact B4GAMBLE plan, agreement, contracting entity and DPA applicability/acceptance are not evidenced. | **NOT VERIFIED.** Region, retention, subprocessor notice and transfer-route packet absent. |
+| Prisma Postgres through the Vercel integration | Managed database for accounts, sessions, Programme authority/progress/confirmed structured output, editorial/affiliate administration and security state. Prisma ORM itself is only a library. | **NOT VERIFIED.** Current official Prisma Terms and Privacy pages were reviewed, but no current public Prisma Article 28 DPA for Prisma Postgres was located. Public privacy/compliance statements are not substituted for a DPA. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Applicable Prisma/Vercel order, plan, terms and processor contract are absent. | **NOT VERIFIED.** Live region, DPA, subprocessors, backup/deletion periods and transfer mechanism absent. |
+| Google identity | Google subject identifier, name, email and image for optional identity-only sign-in; transient OAuth tokens are stripped before account persistence | **PUBLIC TERMS REVIEWED.** OAuth and current Google Cloud terms are public, but the identity interaction's separate-controller/processor boundary is account- and use-specific. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Exact project, entity, agreement and any CDPA applicability are absent. | **NOT VERIFIED.** Project/scopes/consent-screen/owner and transfer evidence packet absent. |
+| Resend | Processor for Contact email delivery; account data may be separate-controller data | **VERIFIED.** Current public DPA covers processor instructions, subprocessors and international transfers, and states it becomes binding through acceptance of the agreement or execution. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** B4GAMBLE agreement acceptance/execution and exact account entity are absent. | **NOT VERIFIED.** Account retention/tracking settings, subprocessor notice and applicable UK transfer evidence absent. |
+| Google Workspace support mailbox / Cloud Identity | Processor framework for message content and mailbox records if the qualifying business service and CDPA apply | **VERIFIED.** Google publishes a Cloud Data Processing Addendum with processor, subprocessor and EU/UK/Swiss transfer terms; Admin documentation explains incorporation or review/acceptance. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Workspace edition, contracting entity and CDPA incorporation/acceptance are absent. | **NOT VERIFIED.** Admin retention/deletion, access review, routing and transfer packet absent. |
+| OpenAI API | Processor framework for optional Programme customer content; defined account/service data may be separate-controller data | **VERIFIED.** Current DPA supplements/is incorporated into the Services Agreement and includes processor, subprocessor and UK transfer terms. Official API policy says API inputs/outputs are not used for training by default unless the organisation opts in. | **NOT YET CAPTURED — DEFERRED BY FOUNDER.** Applicable Services Agreement/DPA acceptance and exact organisation/project are absent. | **NOT VERIFIED — DEFERRED BY FOUNDER.** ZDR/MAM, region, sharing/training controls, retention and transfer evidence absent. `store: false` is not ZDR. |
+
+## Application data-minimisation controls
+
+| Control | Finding | Classification |
+|---|---|---|
+| OpenAI server boundary | Server-only credentials and provider calls; no browser-to-OpenAI route | VERIFIED |
+| OpenAI Responses | `store: false`, `background: false`, bounded schemas/time/size, no tools or conversation state | VERIFIED; does not prove zero provider retention |
+| OpenAI audio | One bounded in-memory transcription file; B4GAMBLE does not persist audio | VERIFIED |
+| Application logs | Technical counts/durations/results only; no intentional typed words, transcript, audio or generated narrative logging | VERIFIED |
+| Google identity | Identity only; Programme words not sent to Google; token fields stripped before account persistence | VERIFIED |
+| Contact | Delivered through Resend to Workspace; no application Contact table or marketing permission | VERIFIED |
 
 ## Non-recipient and inactive register
 
 | Component | Finding | Status |
 |---|---|---|
-| Better Auth | Detected as self-hosted code using the application's Prisma database; not a hosted processor | COMPLETE |
-| Vercel Analytics | Runtime package, root mount, SDK calls and enable flag removed by RFC-036 | COMPLETE |
-| Stripe/payment processor | No package, adapter, route or payment-data flow detected | COMPLETE |
-| Affiliate network/operator | Models and fail-closed routing exist, but no real partner authority or active GB outbound flow is present | CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF |
-| Optional S3 media | Provider capability exists for staff-managed public media; a live provider/account is not evidenced and no consumer Programme upload uses it | BLOCKED — EXTERNAL ACTION REQUIRED |
-| YouTube/Vimeo embeds | Renderer capability and CSP allow privacy-enhanced YouTube/Vimeo frames for editorial blocks; current published-record use is not established by repository evidence | BLOCKED — EXTERNAL ACTION REQUIRED |
+| Better Auth | Self-hosted code using the application's Prisma database; not a hosted processor | COMPLETE |
+| Vercel Analytics | Runtime package, root mount, SDK calls and enable flag removed | COMPLETE |
+| Stripe/payment processor | No package, adapter, route or payment-data flow detected | NOT DETECTED |
+| Affiliate network/operator | Fail-closed models/routing exist; no real partner authority or active GB outbound flow | COMMERCIAL PARTNER: NOT YET ACTIVE |
+| Optional S3 media | Capability exists for staff-managed public media; no live provider/account evidenced | INACTIVE / ACCOUNT NOT EVIDENCED |
+| YouTube/Vimeo embeds | Privacy-enhanced renderer capability exists; current published use is not established | INACTIVE / USE NOT DETECTED |
 
-## Required provider evidence packet
+## Account follow-up evidence
 
-For each active processor retain: account/project ID without secrets; contracting entity/plan; applicable terms and acceptance date; Article 28 terms; approved subprocessors and notice route; data categories/subjects/purpose; exact regions; retention/deletion/backups; security and breach notice; rights/DPIA/audit assistance; transfer mechanism; DPF verification if relied upon; IDTA/Addendum and TRA/data-protection test if required; owner; review date; and offboarding/deletion procedure.
+For each active provider, retain the non-secret account/project identifier; contracting entity and plan; applicable terms/version/acceptance date; Article 28 terms; subprocessors and notice route; exact regions; retention/deletion/backups; security/breach and rights assistance; exact transfer mechanism; any required data-protection test; owner; review date; and offboarding/deletion procedure. This is internal post-launch follow-up, not a completion claim.
 
-## Primary sources
+## Official sources reviewed
 
-- [ICO — controller/processor contracts](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/accountability-and-governance/contracts-and-liabilities-between-controllers-and-processors-multi/when-is-a-contract-needed-and-why-is-it-important/)
-- [ICO — international transfers](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/)
-- [ICO — completing a transfer risk assessment / data-protection test](https://ico.org.uk/for-organisations/uk-gdpr-guidance-and-resources/international-transfers/completing-a-transfer-risk-assessment/)
 - [Vercel Data Processing Addendum](https://vercel.com/legal/dpa)
+- [Prisma Terms of Service](https://www.prisma.io/terms)
+- [Prisma Privacy Policy](https://www.prisma.io/privacy)
 - [Prisma Postgres regions](https://www.prisma.io/docs/postgres/database/regions)
 - [Google OAuth 2.0 policies](https://developers.google.com/identity/protocols/oauth2/policies)
-- [Google Cloud privacy compliance and CDPA](https://support.google.com/cloud/answer/6329727)
-- [Google Workspace privacy compliance and CDPA](https://knowledge.workspace.google.com/admin/compliance/privacy-compliance-and-records-for-google-workspace-and-cloud-identity)
+- [Google Cloud Data Processing Addendum](https://cloud.google.com/terms/data-processing-addendum)
+- [Google Workspace and Cloud Identity CDPA acceptance guidance](https://knowledge.workspace.google.com/admin/compliance/privacy-compliance-and-records-for-google-workspace-and-cloud-identity)
 - [Resend Data Processing Addendum](https://resend.com/legal/dpa)
 - [Resend subprocessors](https://resend.com/legal/subprocessors)
+- [OpenAI Data Processing Addendum](https://openai.com/en-GB/policies/data-processing-addendum/)
 - [OpenAI API data controls](https://developers.openai.com/api/docs/guides/your-data)

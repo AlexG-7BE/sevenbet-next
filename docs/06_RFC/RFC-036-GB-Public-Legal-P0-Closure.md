@@ -11,6 +11,8 @@
 
 B4GAMBLE will close the repository-controlled parts of the GB public legal pack without activating commercial traffic, changing Production or claiming that an external contract, appointment, registration or account setting has been completed when no durable evidence exists.
 
+Founder Office has separately accepted that initial GB operations will not be delayed solely because the Article 27 appointment, ICO registration/fee or account-specific vendor DPA/CDPA/transfer evidence is not yet captured. Those matters remain open and must be recorded as `DEFERRED BY FOUNDER`; this decision does not complete them, prove a transfer route or reduce any DPIA risk score. Internal post-launch follow-up is mandatory.
+
 The launch-candidate runtime will use only storage and access technology needed for a service the user requests, authentication, security, access authority and same-tab Programme continuity. Vercel Web Analytics and custom-event delivery will be removed from the public runtime, their public environment switch will be removed, and the provider package will be removed. The existing closed event taxonomy may remain only as dormant, provider-free testable code so that Programme call sites need no product change. A later analytics activation requires a separate RFC, a current PECR assessment, a documented user-information/objection or consent design as applicable, provider-role and transfer evidence, and deterministic verification.
 
 GB commercial and referral traffic remains off. A timestamp is not evidence status. Legacy casino-licence data with no explicit `CasinoLicenseEvidence.status` must map to `UNKNOWN`, even if `lastVerifiedAt` is populated. Only an explicit evidence record may map as `VERIFIED`. Existing jurisdiction, partner, operator, exact-domain, licence, offer, tracking, significant-condition, redirect and global-kill-switch authorities remain cumulative and server-owned.
@@ -40,7 +42,7 @@ GB commercial and referral traffic remains off. A timestamp is not evidence stat
 - Founder/Legal will appoint a qualifying UK representative in writing, publish the representative particulars and retain the mandate.
 - Founder/Finance will complete the ICO registration using current staff and turnover facts, pay the applicable fee and retain renewal evidence.
 - Account owners will capture and approve the applicable vendor terms, DPAs, subprocessors, locations, transfer mechanisms, transfer assessments and account-side privacy settings.
-- The controller will sign the DPIA and legal pack. External counsel will review Article 27, UK consumer terms and the transfer/processor evidence before release.
+- The Controller/Founder, Internal Legal/Compliance, Security reviewer and Product owner will sign the DPIA and legal pack. External counsel may be used where internal review escalates a question, but is not a mandatory signer for this bounded approval.
 - Any future real commercial activation will occur through a separate reviewed activation change after all existing authorities pass.
 
 ### Not detected
@@ -78,13 +80,27 @@ The Programme has exactly two entry confirmations: 18-or-over and agreement to T
 
 Google remains identity-only. Public copy must say it does not verify age and B4GAMBLE does not supply Programme words to Google. OAuth tokens remain transient and stripped from the stored application account relationship. Account creation grants no marketing permission and no XP.
 
-## 6. OpenAI boundary
+## 6. Provider evidence levels
+
+The processor and transfer register must separate three evidence levels:
+
+- **Level A — PROVIDER PUBLIC FRAMEWORK VERIFIED:** current official public DPA/CDPA, processor, subprocessor and transfer terms were reviewed. This does not prove that the live B4GAMBLE account is covered.
+- **Level B — ACCOUNT APPLICABILITY / ACCEPTANCE NOT YET CAPTURED:** plan, contracting entity, accepted version and applicability are absent from the evidence packet.
+- **Level C — ACCOUNT EVIDENCE VERIFIED:** only durable account/contract/configuration evidence may use this classification.
+
+As at 19 August 2026, the OpenAI, Vercel, Resend and Google Workspace/Cloud Identity public frameworks are Level A where described in the register. Their B4GAMBLE account applicability/acceptance remains Level B and no Level C conclusion is claimed. Prisma ORM is only a code library; repository evidence identifies the managed database as Prisma Postgres through the Vercel integration, but a current public Prisma Article 28 DPA was not located, so neither public-framework nor account-contract completion is claimed for that service.
+
+## 7. OpenAI boundary
 
 Repository controls remain: server-only credentials; exact provider/model flags; `store: false` and `background: false` on Responses; no tools; strict output schemas; bounded time/size; one in-memory transcription file; no saved audio; no content logging; and no AI authority over XP, completion, eligibility, safety or commerce.
 
-The controller must not infer account controls from code. Before approval it must capture organisation/project training opt-in state, data-retention configuration, ZDR/MAM eligibility and status, region/project identity, DPA/transfer terms, subprocessors and retention evidence. If the captured controls conflict with the Privacy Notice or DPIA, release stops until documents and/or configuration are corrected.
+The current OpenAI public DPA is incorporated into/supplements the Services Agreement, and official API documentation says API inputs/outputs are not used for training by default unless the organisation opts in. Those public facts do not prove B4GAMBLE's account state. `store: false` prevents stored Responses application state but does not establish Zero Data Retention or eliminate default abuse-monitoring retention. The controller must not infer organisation/project training, ZDR/MAM, region, retention or transfer settings from code. Those account-specific items are `DEFERRED BY FOUNDER` and stay open for the follow-up register.
 
-## 7. Verification and release boundary
+## 8. FOUNDER LAUNCH RISK ACCEPTANCE — 19 AUGUST 2026
+
+Founder Office accepts proceeding with the repository-controlled public legal implementation without delaying it solely for the open Article 27 appointment, ICO registration/fee and account-specific vendor DPA/CDPA/transfer evidence. This acceptance does not appoint a representative, pay or register with the ICO, accept a vendor contract, prove a transfer mechanism, approve ZDR/MAM/region settings, reduce recorded DPIA risk or authorise a commercial partner. Each item remains open with an owner, exact next action and evidence requirement in the single follow-up register.
+
+## 9. Verification and release boundary
 
 Deterministic tests must prove:
 

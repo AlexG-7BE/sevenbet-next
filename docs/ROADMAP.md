@@ -2,10 +2,13 @@
 
 ## GB-PUBLIC-LEGAL-PACK-01 — P0 closure and controller approval
 
-- **COMPLETE:** governing RFC-036; final public copy pack and placement map; strictly-necessary-only runtime analytics removal; explicit-evidence-only licence mapping; fail-closed commercial framework documentation.
-- **FINAL — READY FOR CONTROLLER APPROVAL:** DPIA and legal approval pack.
-- **BLOCKED — EXTERNAL ACTION REQUIRED:** Article 27 appointment/public particulars; ICO registration/payment/tier evidence; active provider DPA/location/subprocessor/retention/transfer packet; OpenAI organisation/project controls; controller/counsel/security/product signatures.
-- **CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF:** real GB commercial/referral traffic. A future partner must pass a separate RFC/release decision and every cumulative authority.
+- **PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** governing RFC-036; public copy/placement; non-duplicative footer; strictly-necessary-only runtime; explicit-evidence-only licence mapping; fail-closed commercial documentation.
+- **PROVIDER PUBLIC LEGAL FRAMEWORK REVIEW: COMPLETE where verified:** OpenAI, Vercel, Resend and Google Workspace/Cloud Identity. Prisma Postgres is the identified managed database; no current public Prisma Article 28 DPA was located.
+- **ACCOUNT-SPECIFIC PROVIDER EVIDENCE: DEFERRED BY FOUNDER:** plan/entity/acceptance, location, retention, transfer and OpenAI ZDR/MAM/region evidence remain open internal follow-up.
+- **UK REPRESENTATIVE: OPEN — DEFERRED BY FOUNDER.** No appointment or public particulars are claimed.
+- **ICO REGISTRATION/FEE: OPEN — DEFERRED BY FOUNDER.** No tier, registration, payment or reference is claimed.
+- **FINAL — READY FOR INTERNAL CONTROLLER APPROVAL:** DPIA and legal approval pack; Founder/Controller, Security, Product and Internal Legal/Compliance are the internal signers. Residual risk scores remain unchanged.
+- **COMMERCIAL PARTNER: NOT YET ACTIVE:** future first-partner activation requires every simplified evidence criterion, Preview validation, separate Founder activation approval and kill/rollback readiness.
 - Draft PR #78 remains the delivery boundary. Do not merge or change Production through this workstream.
 
 ## HOME-PERFORMANCE-MOTION-POLISH-01 — 2026-08-18

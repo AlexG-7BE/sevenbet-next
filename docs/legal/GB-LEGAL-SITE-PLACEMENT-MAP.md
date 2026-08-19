@@ -1,7 +1,7 @@
 # GB Legal Site Placement Map
 
 - **Effective date:** 19 August 2026
-- **Status:** FINAL — READY FOR CONTROLLER APPROVAL
+- **Status:** PUBLIC LEGAL IMPLEMENTATION: COMPLETE
 - **Owner:** Legal / Product / Engineering
 
 This is the placement authority for public legal and trust copy. `Detected` means present in route/component source; `Planned` is limited to the conditional Article 27 field that cannot be published until external particulars exist.
@@ -15,7 +15,7 @@ This is the placement authority for public legal and trust copy. `Detected` mean
 | `/responsible-gambling` | `B4GAMBLE does not diagnose, provide treatment, calculate a ‘safe’ gambling amount or decide what you can afford...` adjacent to the control/support content | Detected in canonical rendered transform | `lib/final-handoff/transforms.ts` (`transformResponsibleGamblingHandoff`) |
 | `/help` | `No casino, bonus or affiliate actions appear here. Help activity is not used for offers, rankings or commercial personalisation. Take what you need.` | Detected in protected rendered transform | `lib/final-handoff/transforms.ts` (`transformHelpHandoff`) |
 | `/help` urgent boundary | `If someone’s life is at risk... call 999 or go to A&E... NHS 111... B4GAMBLE is not an emergency or clinical service.` | Detected in protected rendered transform | `lib/final-handoff/transforms.ts` |
-| Global footer | `Information, comparison and education. Not a gambling operator.`; `18+`; financial-risk warning; Terms/Privacy/Affiliate/RG/Help/Contact; commission disclosure | Detected | `components/public-shell/PublicFooter.tsx` |
+| Global footer | Existing Explore, Programme & Support and Trust groups; bottom legal row contains only `18+`, financial-risk warning, Terms, Privacy and Contact; commission disclosure remains visible plain text, not a link; Affiliate Disclosure, Responsible Gambling and protected Help are not duplicated | Detected | `components/public-shell/PublicFooter.tsx` |
 | Programme entry | Exactly two unchecked required checks: `I confirm I am 18 or over`; `I agree to the Terms and confirm I have read the Privacy Notice` with links | Detected | `components/programme/ProgramAiFinalPresentation.tsx` |
 | Programme intake | `Before you share` disclosure; separate unchecked explicit sensitive-data/AI/transcription consent; optionality and withdrawal consequence before typed/voice processing | Detected | `components/programme/ProgramAiFinalPresentation.tsx` |
 | Programme withdrawal | `Withdraw consent and clear this draft`; server authority invalidation and local-draft clearance | Detected | `components/programme/ProgramAiFinalPresentation.tsx`; `ProgramAiExperience.tsx` |
