@@ -141,6 +141,7 @@
 .privacyBoundary strong { color: rgba(250, 250, 247, .62); font-size: 12px; }
 .privacyBoundary label { padding-top: 12px; border-top: 1px solid rgba(250, 250, 247, .1); display: grid; grid-template-columns: 18px 1fr; gap: 10px; cursor: pointer; }
 .privacyBoundary input { width: 18px; height: 18px; margin: 0; accent-color: var(--programme-acid); }
+.privacyBoundary small { font-size: 13px; line-height: 19px; }
 
 .readyState {
   width: min(420px, calc(100% - 48px));

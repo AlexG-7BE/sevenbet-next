@@ -46,5 +46,5 @@
   .body { padding: 64px 24px 80px; }
   .body aside { padding: 24px; }
   .body footer { display: grid; gap: 22px; }
-  .body footer > a { min-height: 44px; display: inline-flex; align-items: center; }
+  .body footer a { min-height: 44px; width: fit-content; display: inline-flex; align-items: center; }
 }

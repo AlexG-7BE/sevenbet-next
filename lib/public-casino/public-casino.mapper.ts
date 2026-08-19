@@ -356,7 +356,7 @@ export function publicCasinoToLegacy(casino: PublicCasinoDTO): Casino {
     crypto: casino.payments.some((payment) => payment.crypto),
     liveChat: false,
     mobileApp: false,
-    isVerified: Boolean(license && license.status === "ACTIVE" && license.lastVerifiedAt),
+    isVerified: false,
     reviewNeeded: !license || !casino.lastReviewedAt,
     pros: casino.pros,
     cons: casino.cons,

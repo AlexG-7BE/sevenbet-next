@@ -3,7 +3,7 @@
 **Owner:** 7BE Inc. / B4GAMBLE
 **Market:** Great Britain
 **Effective:** 19 August 2026
-**Status:** Public-copy baseline
+**Status:** FINAL — READY FOR CONTROLLER APPROVAL
 
 This pack records the final public wording and placement rules implemented by this change. The complete Privacy Notice, Terms of Use and Affiliate Disclosure are maintained in their page source files:
 
@@ -39,6 +39,14 @@ Withdrawal action:
 ### Identity disclosure
 
 > Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.
+
+### UK representative field — conditional
+
+Placement: immediately after `Who controls your information` on `/privacy`. The public record at `lib/legal/gb-uk-representative.ts` remains `null` until Founder/Legal has retained and approved the signed mandate and every public field. Do not render brackets or an unappointed placeholder.
+
+When and only when those particulars are approved, render:
+
+> Our UK representative is [LEGAL NAME], [POSTAL ADDRESS]. You may contact them at [EMAIL] or [CONTACT ROUTE] about UK data-protection matters.
 
 ## 2. Commercial and affiliate labelling
 
@@ -120,3 +128,5 @@ Urgent boundary:
 ## 8. Release rule
 
 Do not activate GB commercial or referral traffic through this copy change. Public wording does not replace partner, licence, offer, agreement, destination, privacy, vendor or regulatory evidence. Every unavailable authority continues to fail closed.
+
+The GB launch uses only storage needed for requested features, authentication, security, access confirmation, same-tab comparison selection and temporary Programme continuity. It does not run non-essential product analytics, advertising trackers, tracking pixels or session replay. Reassess public information and user-choice requirements before introducing any non-essential technology.

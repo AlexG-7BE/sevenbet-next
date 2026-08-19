@@ -33,10 +33,10 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   }
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/responsible-gambling");
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Help" })).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(1);
+  await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(2);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(1);
+  await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(2);
 
   const helpResponse = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   expect(helpResponse?.status()).toBe(200);

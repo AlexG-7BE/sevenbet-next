@@ -1,4 +1,3 @@
-import { track } from "@vercel/analytics/server";
 import { after } from "next/server";
 
 import {
@@ -14,7 +13,7 @@ import type {
 type Schedule = (work: () => void | Promise<void>) => void;
 
 function defaultSink(event: Parameters<ProductAnalyticsSink>[0]) {
-  return track(event.name, event.properties);
+  void event;
 }
 
 function metadataOnlyFailure(eventName: string) {

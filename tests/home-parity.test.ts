@@ -158,6 +158,6 @@ test("Public Shell keeps its approved architecture while exposing the current br
   }
   if (changed.includes("package-lock.json")) {
     const packageLock = readFileSync("package-lock.json", "utf8");
-    assert.match(packageLock, /"@vercel\/analytics": "2\.0\.1"/);
+    assert.doesNotMatch(packageLock, /"@vercel\/analytics"/);
   }
 });

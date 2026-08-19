@@ -398,8 +398,8 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.goto("/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   let transcriptionCalls = 0;
   await page.route("**/api/program/program-ai/transcription", async (route) => {
     transcriptionCalls += 1;
@@ -421,7 +421,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("button", { name: "Stop recording" }).click();
   await expect(page.getByText(/recording is too large to upload/i)).toBeVisible();
   await expect(page.getByRole("button", { name: "Retry this recording" })).toHaveCount(0);
-  expect(authorityCalls).toBe(1);
+  expect(authorityCalls).toBe(0);
   expect(transcriptionCalls).toBe(0);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(1);
   await page.getByRole("button", { name: "type instead" }).click();
@@ -516,8 +516,8 @@ test("fresh microphone access uses the browser request before denied recovery", 
   await page.goto("/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
 
   await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
   await expect(page.locator('[data-state] p[role="alert"]')).toHaveCount(0);
@@ -554,8 +554,8 @@ test("persistently denied microphone state explains browser recovery and recheck
   await page.goto("/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
 
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
   await page.getByRole("button", { name: "Tap to speak" }).click();
@@ -578,8 +578,8 @@ test("unsupported microphone recording keeps the typed path available", async ({
   await page.goto("/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.locator('[data-state] p[role="alert"]')).toContainText(/cannot record audio with the features B4GAMBLE needs/i);
   await expect(page.getByRole("button", { name: "type instead" })).toBeVisible();
@@ -591,8 +591,8 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/program");
 
-  await expect(page.getByRole("heading", { name: "Three checks before you begin" })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(3);
+  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(2);
   for (const checkbox of await page.getByRole("checkbox").all()) {
     await checkbox.focus();
     await page.keyboard.press("Space");
@@ -602,7 +602,8 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
 
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   const typedFallback = page.getByRole("button", { name: "I'd rather type" });
   await typedFallback.focus();
   await page.keyboard.press("Enter");
@@ -1037,11 +1038,11 @@ test("support-first keeps 20 XP, protected Help, and no registration CTA", async
   await page.goto("/program");
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await expect(page.getByRole("button", { name: "Enter Mission 01" })).toBeEnabled();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
   await page.route("**/api/program/program-ai/turn", async (route) => {

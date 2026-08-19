@@ -1,7 +1,5 @@
 "use client";
 
-import { track } from "@vercel/analytics";
-
 import {
   createProductAnalyticsEmitter,
   isProductAnalyticsEnabled,
@@ -26,7 +24,7 @@ function browserStorage(): StorageLike | undefined {
 }
 
 function defaultSink(event: Parameters<ProductAnalyticsSink>[0]) {
-  track(event.name, event.properties);
+  void event;
 }
 
 function operationalError(eventName: string) {

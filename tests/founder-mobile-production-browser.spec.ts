@@ -361,8 +361,8 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });
   await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
-  await page.getByRole("checkbox", { name: /I choose to share this for Programme personalisation/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await expect(page.getByRole("button", { name: "Tap to speak" })).toBeVisible();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   const textarea = page.getByLabel("Your situation");

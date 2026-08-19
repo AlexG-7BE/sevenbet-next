@@ -43,7 +43,7 @@
     "recovery:canary": "node --import tsx scripts/recovery-canary.mjs",
     "recovery:verify": "node --import tsx scripts/recovery-verify.mjs",
     "recovery:test": "node --import tsx --test tests/recovery-guard.test.mjs tests/recovery-verification.test.mjs",
-    "legal-impl:test": "node --import tsx --test tests/legal-programme-privacy.test.ts tests/legal-public-claims.test.ts tests/privacy-data-subject.test.ts tests/programme-local-subject.test.ts",
+    "legal-impl:test": "node --import tsx --test tests/gb-legal-p0-closure.test.ts tests/legal-programme-privacy.test.ts tests/legal-public-claims.test.ts tests/privacy-data-subject.test.ts tests/programme-local-subject.test.ts",
     "launch-polish:test": "node --import tsx --test tests/contact-api.test.ts tests/contact-transport.test.ts tests/launch-polish.test.ts",
     "launch-polish:browser": "playwright test --config=playwright.ci.config.ts tests/launch-polish-browser.spec.ts",
     "launch-polish:links": "node scripts/launch-polish-link-audit.mjs",
@@ -113,7 +113,6 @@
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
-    "@vercel/analytics": "2.0.1",
     "better-auth": "1.6.23",
     "next": "15.5.21",
     "react": "^19.0.0",

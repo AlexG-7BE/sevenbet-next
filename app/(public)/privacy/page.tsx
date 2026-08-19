@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
+import { currentGbUkRepresentative } from "@/lib/legal/gb-uk-representative";
 import { absoluteUrl } from "@/lib/site";
 
 export const metadata: Metadata = {
@@ -19,12 +20,24 @@ const controller = <address>
   <a href="mailto:privacy@7be.io">privacy@7be.io</a>
 </address>;
 
+const representativeSection = currentGbUkRepresentative ? [{
+  id: "uk-representative",
+  title: "Our UK representative",
+  content: <><p>You may contact our UK representative about UK data-protection matters:</p><address>
+    {currentGbUkRepresentative.legalName}<br />
+    {currentGbUkRepresentative.postalAddress.map((line) => <span key={line}>{line}<br /></span>)}
+    <a href={`mailto:${currentGbUkRepresentative.email}`}>{currentGbUkRepresentative.email}</a><br />
+    <a href={currentGbUkRepresentative.contactRoute}>Contact our UK representative</a>
+  </address></>,
+}] : [];
+
 const sections = [
   {
     id: "controller",
     title: "Who controls your information",
     content: <><p>7BE Inc., trading as B4GAMBLE, is the controller of personal data described in this notice. B4GAMBLE is an information, comparison and educational service. It is not a gambling operator.</p>{controller}</>,
   },
+  ...representativeSection,
   {
     id: "data-we-use",
     title: "Information we use",
@@ -34,7 +47,6 @@ const sections = [
       <li><strong>Transient Programme input:</strong> text, clarifications, audio and transcripts used to create a suggested Starting Point. Audio is held in short-lived memory for transcription and is not saved by B4GAMBLE. Draft text remains in the browser session unless and until you choose to save the confirmed output.</li>
       <li><strong>Technical and security data:</strong> session token, expiry, IP address, user agent, request and security records.</li>
       <li><strong>Contact data:</strong> the name, email, subject and message you send through Contact.</li>
-      <li><strong>Limited product analytics:</strong> page-view and closed, categorical interaction events when analytics is enabled. Programme words, audio, transcripts, saved plan content, email addresses and account identifiers are excluded from the product-analytics event contract.</li>
     </ul></>,
   },
   {
@@ -46,7 +58,6 @@ const sections = [
       <div><dt>Security and service integrity</dt><dd>To prevent abuse, diagnose failures, protect accounts, keep bounded operational records and establish or defend legal claims. Legal basis: our legitimate interests in operating a secure and reliable service.</dd></div>
       <div><dt>Respond to you</dt><dd>To receive and answer a Contact message or privacy request. Legal basis: steps at your request and our legitimate interests in communicating and keeping an appropriate record.</dd></div>
       <div><dt>Comply with law</dt><dd>To meet legal, regulatory and lawful disclosure duties. Legal basis: legal obligation.</dd></div>
-      <div><dt>Understand product use</dt><dd>To measure aggregate page and feature performance using limited events, where enabled. Legal basis: consent where storage or access technology requires it; otherwise our legitimate interests, subject to your rights.</dd></div>
     </dl><p>Our legitimate interests do not override your rights. We do not use Programme, Help, pause, self-check or vulnerability information to select, rank or personalise casinos, bonuses, affiliate links or advertising.</p></>,
   },
   {
@@ -62,7 +73,7 @@ const sections = [
   {
     id: "sharing",
     title: "Who receives information",
-    content: <><p>We use service providers only for defined operational purposes. Current categories include hosting and application infrastructure, managed database services, Google identity, email delivery, AI and transcription, and limited product analytics. Authorised B4GAMBLE personnel may access information where needed to operate, secure or support the service.</p><p>A Contact message is delivered to the B4GAMBLE support mailbox through our email provider. We do not create a marketing permission from your message. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
+    content: <><p>We use service providers only for defined operational purposes: Vercel for hosting and application infrastructure; Prisma&apos;s managed Postgres service for application data; Google for identity-only sign-in; Resend for Contact email delivery; Google Workspace for the support mailbox; and OpenAI for optional AI and transcription after your explicit consent. Authorised B4GAMBLE personnel may access information where needed to operate, secure or support the service.</p><p>A Contact message is delivered to the B4GAMBLE support mailbox through Resend. We do not create a marketing permission from your message. We do not sell personal data.</p><p>We may disclose information if law requires it, to protect legal rights or safety, or in connection with a corporate transaction subject to appropriate protections.</p></>,
   },
   {
     id: "transfers",
@@ -79,14 +90,14 @@ const sections = [
       <li>pending account-claim records: about 30 minutes;</li>
       <li>account, saved Programme and progress data: while the account is active, then until deletion can be completed subject to legal, security and backup requirements;</li>
       <li>Contact messages: under the retention settings of the B4GAMBLE mailbox and email provider;</li>
-      <li>security, provider and analytics records: for the period reasonably required by the applicable service, security and legal purpose.</li>
+      <li>security and provider records: for the period reasonably required by the applicable service, security and legal purpose.</li>
       <li>OpenAI Responses API content: under OpenAI&apos;s current default controls, up to 30 days in abuse-monitoring logs; OpenAI currently lists no retention for the audio-transcription endpoint.</li>
     </ul><p>Managed backups may persist for a limited backup cycle after live deletion. We do not promise immediate selective deletion from backups; deleted data is not restored to ordinary use and expires through the backup lifecycle unless it must be retained by law.</p></>,
   },
   {
     id: "cookies",
     title: "Cookies and similar technology",
-    content: <><p>Strictly necessary cookies or browser storage support authentication, security, access confirmation and temporary Programme continuity. Product analytics may be enabled to measure pages and bounded feature outcomes. B4GAMBLE does not use Programme or Help content for advertising profiles, and the current service does not operate behavioural advertising or session replay.</p><p>Where consent is legally required for a non-essential technology, it must not be used before the required consent is obtained. Browser controls can remove stored data, but disabling necessary storage may prevent account or Programme features from working.</p></>,
+    content: <><p>This GB launch uses only cookies or browser storage needed for a service you request, authentication, security, access confirmation, same-tab comparison selection and temporary Programme continuity. We do not run non-essential product analytics, advertising trackers, tracking pixels or session replay, so there is no optional cookie choice to present.</p><p>Necessary storage is not reused for advertising, affiliate measurement or commercial personalisation. Browser controls can remove stored data, but disabling necessary storage may prevent account or Programme features from working. We will reassess this notice and the required choice controls before introducing any non-essential storage or access technology.</p></>,
   },
   {
     id: "affiliate",

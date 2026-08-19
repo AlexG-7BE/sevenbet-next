@@ -1,5 +1,16 @@
 # Project State
 
+## GB-PUBLIC-LEGAL-PACK-01 P0 closure candidate — 2026-08-19
+
+- **Detected:** Draft PR #78 on `codex/public-legal-pack-gb-01` is reconciled with current `main`, including merged PR #77. RFC-036 governs the bounded legal closure implementation. Production, merge and external provider/controller actions remain outside this workstream.
+- **Detected:** public Privacy, Terms, Affiliate Disclosure, footer, Programme just-in-time sensitive/AI/transcription consent, withdrawal, Google identity-only disclosure, commercial labels/outbound copy, significant-condition template, demonstration disclosure and correction rules are mapped to implementation source in `docs/legal/GB-LEGAL-SITE-PLACEMENT-MAP.md`.
+- **Detected:** non-essential public product analytics has no runtime dependency, root mount, SDK call or environment activation switch. Only purpose-limited requested-feature/authentication/security/Programme-continuity storage remains. A separate RFC and current PECR assessment are required before analytics can return.
+- **Detected:** legacy licence timestamps no longer infer `VERIFIED`; absent explicit evidence status maps to `UNKNOWN`. GB jurisdiction commercial/referral policy remains denied, the redirect engine defaults off and exact-domain activation evidence remains empty.
+- **Detected:** the final legal pack contains the Article 27, ICO fee, processor/transfer, OpenAI account-control, DPIA, PECR and commercial decisions plus closure and approval registers. Repository-controlled work is complete or ready for controller approval.
+- **Inferred:** Article 27 appointment and the ICO fee are required. The DPIA is required because AI combines with highly personal/potentially special-category input and systematic Programme tracking.
+- **Planned / external:** appoint and publish a UK representative; register/pay the ICO fee; capture provider-account DPA/location/subprocessor/retention/transfer settings; capture OpenAI training/ZDR-or-MAM/residency controls; complete rights/incident rehearsal; obtain Controller/Legal/Security/Product signatures.
+- **Not detected:** no evidence supports claiming those external actions complete, no real GB partner/offer authority exists, and no Production configuration/data/schema/migration/reward/Mission/Help change is part of this candidate.
+
 ## HOME-PERFORMANCE-MOTION-POLISH-01 branch addendum — 2026-08-18
 
 - **Detected:** RFC-035 is approved for bounded Draft-PR and Preview implementation on branch `codex/home-performance-motion-polish-01`, created from current main `381624c410222b7bb56f65b755d562b284ff08fa`.

@@ -15,9 +15,11 @@ const rateLimit = read("lib/programme/rate-limit.ts");
 const purge = read("lib/programme/runtime-expiry-purge.ts");
 const packageJson = JSON.parse(read("package.json")) as { dependencies: Record<string, string> };
 
-test("runtime hardening adds exactly one provider dependency at an exact version", () => {
-  assert.equal(packageJson.dependencies["@vercel/analytics"], "2.0.1");
-  assert.doesNotMatch(packageJson.dependencies["@vercel/analytics"], /^[~^><=*]/);
+test("RFC-036 removes the non-essential analytics provider from the public runtime", () => {
+  assert.equal(packageJson.dependencies["@vercel/analytics"], undefined);
+  assert.doesNotMatch(analyticsClient + analyticsServer, /@vercel\/analytics|\btrack\(/);
+  assert.match(read("lib/analytics/product-analytics.ts"), /DISABLED_GB_LAUNCH/);
+  assert.doesNotMatch(read("app/layout.tsx") + read(".env.example"), /ProductAnalytics|NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
 });
 
 test("analytics has a closed 15-event contract with no identity, narrative, reward, or arbitrary metadata fields", () => {

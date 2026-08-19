@@ -320,6 +320,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
     ]);
   }
   if (changed.includes("package-lock.json")) {
-    assert.equal(JSON.parse(source("package.json")).dependencies["@vercel/analytics"], "2.0.1");
+    assert.equal(JSON.parse(source("package.json")).dependencies["@vercel/analytics"], undefined);
+    assert.doesNotMatch(source("package-lock.json"), /node_modules\/@vercel\/analytics/);
   }
 });

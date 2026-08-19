@@ -1,5 +1,13 @@
 # Roadmap
 
+## GB-PUBLIC-LEGAL-PACK-01 — P0 closure and controller approval
+
+- **COMPLETE:** governing RFC-036; final public copy pack and placement map; strictly-necessary-only runtime analytics removal; explicit-evidence-only licence mapping; fail-closed commercial framework documentation.
+- **FINAL — READY FOR CONTROLLER APPROVAL:** DPIA and legal approval pack.
+- **BLOCKED — EXTERNAL ACTION REQUIRED:** Article 27 appointment/public particulars; ICO registration/payment/tier evidence; active provider DPA/location/subprocessor/retention/transfer packet; OpenAI organisation/project controls; controller/counsel/security/product signatures.
+- **CONTROL FRAMEWORK COMPLETE — ACTIVATION OFF:** real GB commercial/referral traffic. A future partner must pass a separate RFC/release decision and every cumulative authority.
+- Draft PR #78 remains the delivery boundary. Do not merge or change Production through this workstream.
+
 ## HOME-PERFORMANCE-MOTION-POLISH-01 — 2026-08-18
 
 | Sequence | Workstream | Status | Evidence / boundary |

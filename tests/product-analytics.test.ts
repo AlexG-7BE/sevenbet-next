@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { redactProductAnalyticsPageview } from "../components/analytics/ProductAnalytics";
 import {
   createProductAnalyticsClient,
   personalisedValueElapsedBucket,
@@ -61,12 +60,12 @@ test("every approved custom event uses at most two Vercel Pro properties", () =>
   }
 });
 
-test("analytics is default-off and requires the exact public flag value", () => {
+test("RFC-036 locks public product analytics off with no environment activation path", () => {
   assert.equal(isProductAnalyticsEnabled({}), false);
   assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "TRUE" }), false);
   assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "1" }), false);
-  assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "true" }), true);
-  assert.match(readFileSync("lib/analytics/product-analytics.ts", "utf8"), /process\.env\.NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
+  assert.equal(isProductAnalyticsEnabled({ NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED: "true" }), false);
+  assert.doesNotMatch(readFileSync("lib/analytics/product-analytics.ts", "utf8"), /process\.env|NEXT_PUBLIC_PRODUCT_ANALYTICS_ENABLED/);
 });
 
 test("disabled client analytics emits nothing and never touches marker storage", () => {
@@ -95,19 +94,6 @@ test("disabled client analytics emits nothing and never touches marker storage",
   client.comparisonOpened("two");
   client.outboundIntent("continued");
   assert.deepEqual({ reads, writes, events: events.length }, { reads: 0, writes: 0, events: 0 });
-});
-
-test("pageview redaction excludes admin/API and strips Programme query and fragment data", () => {
-  const event = (url: string) => ({ type: "pageview", url } as Parameters<typeof redactProductAnalyticsPageview>[0]);
-  assert.equal(redactProductAnalyticsPageview(event("https://b4gamble.com/admin/users?x=1")), null);
-  assert.equal(redactProductAnalyticsPageview(event("https://b4gamble.com/api/program?x=1")), null);
-  assert.equal(redactProductAnalyticsPageview(event("http://[")), null);
-  assert.equal(
-    redactProductAnalyticsPageview(event("https://b4gamble.com/program?entry=start#private"))?.url,
-    "https://b4gamble.com/program",
-  );
-  const publicEvent = event("https://b4gamble.com/casinos?utm_source=founder#list");
-  assert.equal(redactProductAnalyticsPageview(publicEvent), publicEvent);
 });
 
 test("elapsed-time buckets have exact boundaries and missing timestamps stay unknown", () => {
