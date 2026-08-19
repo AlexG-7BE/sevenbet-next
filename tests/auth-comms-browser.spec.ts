@@ -166,6 +166,7 @@ test("Google cancellation retains the canonical Starting Point without legacy UI
   const journeyId = "5de1b8bb-4da6-4a2b-9f6f-6d4890baad0d";
   await seedOAuthJourney(page, journeyId);
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+  await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error&error=provider-payload-must-not-render");
   await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access was not completed");
@@ -183,6 +184,7 @@ test("Google cancellation without a provider code still keeps recovery actions v
   const journeyId = "87117045-d6b3-477a-8fb3-f0746f8f6139";
   await seedOAuthJourney(page, journeyId);
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+  await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error");
   await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
