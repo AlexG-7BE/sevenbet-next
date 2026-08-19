@@ -2,7 +2,7 @@
 
 ## Status
 
-**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder soft-snap refinement approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuation for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
+**Approved for bounded Draft-PR and Preview implementation on 2026-08-18; Founder native-snap refinements approved on 2026-08-19.** Authority is the supplied `HOME-PERFORMANCE-MOTION-POLISH-01` Founder workstream instruction and its continuations for existing Draft PR #77. This RFC authorises no merge, Production deployment, Production configuration or data change.
 
 ## Decision
 
@@ -27,6 +27,12 @@ The first PR #77 Preview proved the performance architecture but left desktop fi
 
 Only these major compositions are snap targets: Hero, Recognition, A plan you can see, Missions 01–03, Missions 04–07, Missions 08–10, Built from evidence, Why trust and the final CTA/PublicFooter composition. Prototype-only percentage markers are not snap targets. Every target uses `scroll-snap-stop: normal`, so stronger input may pass more than one target and direction reversal remains browser-controlled. Reduced-motion disables page snapping. No JavaScript scroll-settle controller, timer, wheel/touch cancellation or new animation loop is authorised.
 
+### Founder correction — perceptible desktop fixation
+
+Measured browser evidence shows that `proximity` remains discretionary: at 1440×900, a 120px fine-pointer wheel input settled at 120px and three small inputs settled at 269px rather than an intended composition. Fine-pointer Home therefore uses browser-native `scroll-snap-type: y mandatory`; coarse pointer retains `y proximity`; reduced motion retains `none`. `scroll-snap-stop` remains `normal` and no input interception, lock, timer, accumulator, custom tween or smooth-scroll dependency is authorised.
+
+At both required desktop viewports, Hero through Why trust are exactly one scrollport tall (900px at 1440×900; 768px at 1024×768). Final CTA is shorter (573px and 442px). None is taller than the scrollport, so all nine remain eligible. The actual `PublicHeader` is a fixed 81px overlay and the compositions already reserve unobscured visual space beneath it. Adding an 81px snap padding/margin would shrink the snapport and make the eight full-screen targets effectively oversized, so Home uses no snap offset.
+
 ## Evidence baseline
 
 - **Detected:** active repository root is `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`; 1,773 active paths were scanned excluding dependencies, generated build output, caches, reports and `tsconfig.tsbuildinfo`.
@@ -45,7 +51,7 @@ Only these major compositions are snap targets: Hero, Recognition, A plan you ca
 | --- | --- | --- |
 | Preserve composition, crops, typography, copy and section order | RFC-034, final handoff evidence, current Production | This is a performance workstream, not a redesign |
 | Native scroll owns user input | Founder workstream instruction | Direct control removes input delay and section pagination |
-| Native Home `y proximity` with nine major targets and normal stop behaviour | 2026-08-19 Founder continuation; Refero motion restraint/interruptibility guidance | Restores narrative fixation without input interception or a snap trap |
+| Native Home `y mandatory` for fine pointer, `y proximity` for coarse pointer, nine major targets and normal stop behaviour | 2026-08-19 Founder correction; measured Chromium baseline; Refero motion restraint/interruptibility guidance | Produces perceptible desktop fixation while retaining direct, reversible browser-owned input and the less aggressive mobile policy |
 | Cache geometry outside steady-state scroll frames | Browser performance evidence | Eliminates repeated layout reads and read/write thrashing |
 | Event-driven RAF with spring-settle continuation only | Browser performance evidence | Stops idle animation work while preserving the photo depth effect |
 | Static responsive AVIF/WebP candidates plus JPEG fallback | Existing first-party source assets and handoff renderer boundary | Avoids a renderer rewrite while reducing transfer cost and mobile overfetch |
@@ -65,6 +71,6 @@ This RFC does not authorise:
 
 ## Verification and release gates
 
-The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium desktop, WebKit desktop, mobile, reduced motion, very small and large/repeated wheel input, direction reversal, keyboard scroll, resize, footer reachability and navigation cleanup. It must prove fine-pointer `y proximity`, exactly the approved major targets, normal stop behaviour, no wheel cancellation/input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
+The branch must pass focused structural/browser regressions, lint, typecheck, production build, existing Home/public browser coverage, affected CI suites and `git diff --check`. Browser verification must cover Chromium desktop, WebKit desktop, mobile, reduced motion, small, repeated small, medium and large wheel input, immediate direction reversal, PageDown/PageUp, Home/End, resize, footer reachability and navigation cleanup. It must assert final landing near a valid intended target, fine-pointer `y mandatory`, coarse-pointer `y proximity`, exactly the approved major targets, normal stop behaviour, no wheel cancellation/input lock and zero settled idle RAF/layout work. Visual comparison uses the merged RFC-034 Home evidence and Production as the locked references.
 
 Delivery remains a Draft PR with an isolated Vercel Preview. Founder approval is required for any merge or Production action.

@@ -10,6 +10,7 @@ const source = (path: string) => readFileSync(path, "utf8");
 test("Home no longer intercepts wheel input or runs a perpetual layout loop", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   assert.doesNotMatch(interactions, /addEventListener\("wheel"|preventDefault\(\)|wheelAccumulator|snapLockedUntil|scrollTweenFrame|window\.scrollTo/);
+  assert.doesNotMatch(interactions, /setTimeout[\s\S]{0,200}(?:snap|wheel|scroll)|scroll-snap-stop:\s*always/);
   assert.doesNotMatch(interactions, /requestAnimationFrame\(tick\)|requestAnimationFrame\(runFrame\)[\s\S]*requestAnimationFrame\(runFrame\)/);
   assert.match(interactions, /addEventListener\("scroll", onScroll, \{ passive: true \}\)/);
   assert.match(interactions, /new window\.ResizeObserver\(onResize\)/);
@@ -46,7 +47,7 @@ test("responsive image outputs exist and keep the opening AVIF payload below one
   assert.ok(opening640Bytes < 1_000_000, `opening 640px AVIF payload was ${opening640Bytes} bytes`);
 });
 
-test("Home-only motion uses the approved responsive timing and native proximity snap", () => {
+test("Home-only motion uses native mandatory desktop and proximity coarse-pointer snap", () => {
   const interactions = source("components/final-handoff/HandoffInteractions.tsx");
   const globals = source("app/globals.css");
   const html = transformHomeHandoff(generatedPages.home.html);
@@ -54,8 +55,10 @@ test("Home-only motion uses the approved responsive timing and native proximity 
   assert.match(interactions, /index \* 60/);
   assert.match(globals, /data-home-interactions="ready"[\s\S]*460ms cubic-bezier/);
   assert.match(css, /scroll-snap-type: y proximity/);
+  assert.match(css, /\(pointer: fine\)[\s\S]*scroll-snap-type: y mandatory/);
   assert.match(css, /scroll-snap-stop: normal !important/);
-  assert.doesNotMatch(css, /scroll-snap-type:y mandatory/);
+  assert.match(css, /data-public-shell="footer"[\s\S]*scroll-snap-align: end/);
+  assert.doesNotMatch(css, /scroll-snap-stop: always/);
   assert.doesNotMatch(css, /\[data-snap\] \{ scroll-snap-align:start/);
   assert.match(css, /prefers-reduced-motion: reduce[\s\S]*scroll-snap-type: none !important/);
 

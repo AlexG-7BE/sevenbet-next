@@ -46,6 +46,43 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 - **Detected:** the four internal percentage markers remain non-targets, reduced motion computes to `scroll-snap-type: none`, and no JavaScript input listener, accumulator, tween, timer, lock or settling controller was added.
 - **Detected:** Chromium and WebKit accepted small, repeated, large, reverse and keyboard input. Both reached the document bottom and visible PublicFooter at 1440×900, 1024×768 and 390×844 without a viewport trap or console error.
 
+## Founder mandatory desktop correction baseline — 2026-08-19
+
+- **Detected:** existing Draft PR #77 head before this correction is `4e3f45a6d43cca2f3da39a54bba4a3482316cae1`; local and origin branch heads match and the worktree is clean.
+- **Detected:** at 1440×900 under current `y proximity`, a 120px fine-pointer wheel input settled at 120px and three 60px inputs settled at 269px. Medium 420px and large 1200px inputs happened to settle at valid 900px and 1800px boundaries. Proximity therefore does not guarantee the requested small-gesture fixation.
+- **Detected:** `PublicHeader` is `position: fixed`, measures 81px at both required desktop viewports and overlays deliberately clear composition space. Root scroll padding is `auto` and target scroll margin is `0px`; no visible target content is obscured at start alignment.
+- **Detected:** Hero through Why trust each measure 900px at 1440×900 and 768px at 1024×768. Final CTA measures 573px and 442px. No target exceeds its scrollport; all nine remain eligible for mandatory snapping.
+- **Inferred:** applying an 81px snap offset would reduce the effective snapport below the eight full-screen target heights and create the oversized-target condition the audit is intended to prevent. The correct existing shell dimension is therefore inspected but not applied as snap padding/margin.
+- **Detected:** fine-pointer Home uses `y mandatory`; coarse pointer remains `y proximity`; reduced motion remains `none`. Every composition and the real PublicFooter use `scroll-snap-stop: normal`. The footer is an end-aligned snap area in the Home-injected stylesheet, which makes the true document bottom reachable in WebKit as well as Chromium.
+
+| Target | 1440×900 height | 1024×768 height | Mandatory | Reason |
+| --- | ---: | ---: | --- | --- |
+| Hero | 900px | 768px | Enabled | Exactly one scrollport; designed clear of the fixed overlay header |
+| Recognition | 900px | 768px | Enabled | Exactly one scrollport |
+| A plan you can see | 900px | 768px | Enabled | Exactly one scrollport |
+| Missions 01–03 | 900px | 768px | Enabled | Exactly one scrollport |
+| Missions 04–07 | 900px | 768px | Enabled | Exactly one scrollport |
+| Missions 08–10 | 900px | 768px | Enabled | Exactly one scrollport |
+| Built from evidence | 900px | 768px | Enabled | Exactly one scrollport |
+| Why trust | 900px | 768px | Enabled | Exactly one scrollport |
+| Final CTA | 573px | 442px | Enabled | Shorter than one scrollport; real footer supplies the end safety target |
+
+### Mandatory landing evidence
+
+The values below are final `window.scrollY` positions after settling. All are exact runtime target positions; engine-specific document offsets are compared against positions measured in that engine rather than hard-coded to zero.
+
+| Engine / viewport | Small | Repeated small | Medium | Large | Immediate reverse | PageDown / PageUp | End / Home |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Chromium 1440×900 | 0 | 0 | 0 | 900 | 0 | 900 / 0 | 7200 / 0 |
+| Chromium 1024×768 | 0 | 0 | 768 | 1536 | 0 | 768 / 0 | 6163 / 0 |
+| WebKit 1440×900 | 991 | 991 | 991 | 1891 | 91 | 991 / 91 | 7655 / 91 |
+| WebKit 1024×768 | 859 | 859 | 859 | 1627 | 91 | 859 / 91 | 6599 / 91 |
+
+- **Detected:** a 300px downward input followed 20ms later by a 300px upward input decreased the active position immediately in both engines and returned to the previous valid target. No input was cancelled.
+- **Detected:** Chromium may retain the current screen for a small input while WebKit advances one screen; both visibly settle to valid targets. Large input may skip because stop behaviour remains `normal`.
+- **Detected:** `End` reaches the complete PublicFooter and exact document bottom in both engines. The redundant footer-bottom marker remains end-aligned.
+- **Detected:** manual 120px comparison showed Production progress gradually from 0→18→56→416→716px over 900ms, the previous proximity Preview stop at an arbitrary 120px, and the new mandatory build move immediately then settle 0→99→755→899→900px. The current Tilt homepage exposed a constrained full-screen carousel and no root scroll-snap declaration in this review; its implementation is not inferred and is not an authority.
+
 ## Verification — local production build
 
 | Gate | Result |
@@ -53,7 +90,7 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 | `npm run ci:quality` | Passed |
 | `npm run build` | Passed; existing local direct-Prisma endpoint warning only |
 | Focused structural performance tests | 4 passed |
-| Founder refinement Chromium + WebKit matrix | 10 passed: target policy, small/repeated/large/reverse/keyboard input, exact viewports, footer, reduced motion, images and idle work |
+| Founder correction Chromium + WebKit matrix | 12 passed: 1440×900 and 1024×768 target audit; small/repeated/medium/large/immediate-reverse/PageDown/PageUp/Home/End landings; coarse proximity; reduced motion; footer; images and idle work |
 | Existing Chromium + WebKit Home/systemic regressions | 66 passed: visibility, hydration, history, layout, accessibility and interaction contracts |
 | Locked Home ending/footer regressions | 8 passed at 1440, 1280, 1024, 430, 412, 390, 375 and 360px |
 | Browser states | no JavaScript, reduced motion, wheel, keyboard, resize, history, mobile navigation, footer reachability and interaction cleanup passed |

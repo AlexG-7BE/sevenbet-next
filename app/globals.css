@@ -219,7 +219,7 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
 
 /* The approved Home ending is one CTA + PublicFooter composition. The captured
    footer is stripped, so size the CTA around the one real PublicFooter and keep
-   the CTA as the composition's deliberate proximity start target. */
+   the CTA as the composition's deliberate start target. */
 [data-handoff-page="home"] [data-home-final-composition] {
   min-height: max(0px, calc(100svh - var(--home-public-footer-height, 391px))) !important;
   scroll-snap-align: start !important;
@@ -411,13 +411,6 @@ body:has([data-protected-help-shell])::-webkit-scrollbar {
     order: -1;
     flex: 0 0 auto;
   }
-}
-
-/* Keep the real footer bottom as the final composition's safety endpoint at
-   every viewport, so proximity alignment cannot make the last pixels a trap. */
-body:has([data-handoff-page="home"]) [data-public-footer-bottom] {
-  scroll-snap-align: end;
-  scroll-snap-stop: normal;
 }
 
 /* Keep the mobile CTA as a normal (skippable) proximity start stop. */

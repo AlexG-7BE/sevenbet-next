@@ -3,9 +3,9 @@
 ## HOME-PERFORMANCE-MOTION-POLISH-01 branch addendum — 2026-08-18
 
 - **Detected:** RFC-035 is approved for bounded Draft-PR and Preview implementation on branch `codex/home-performance-motion-polish-01`, created from current main `381624c410222b7bb56f65b755d562b284ff08fa`.
-- **Detected — Founder continuation 2026-08-19:** Draft PR #77 remains the only workstream. Its performance/media work is accepted and must remain. The requested refinement is native Home-only `y proximity` for fine and coarse pointers, limited to nine major narrative compositions with normal stop behaviour and no JavaScript input interception or settling controller. Reduced-motion snapping is disabled.
+- **Detected — Founder correction 2026-08-19:** Draft PR #77 remains the only workstream. Its performance/media work is accepted and remains intact. Fine-pointer Home uses browser-native `y mandatory`; coarse pointer retains `y proximity`; reduced-motion snapping remains disabled. The policy is limited to nine measured narrative compositions with normal stop behaviour and no JavaScript input interception or settling controller.
 - **Detected baseline:** Home cancels fine-pointer wheel input for a 600ms section tween, performs continuous layout-heavy RAF work and fetches 7,453,085 bytes of unique Home JPEGs before scroll. The exact reproducible baseline is recorded in `docs/07_Implementation_Plans/HOME-PERFORMANCE-MOTION-POLISH-01-Implementation-Evidence.md`.
-- **Planned continuation:** preserve native user control, cached layout geometry, event-driven animation frames, responsive Home media and 460ms/60ms reveal timing while restoring standards-based soft narrative fixation. RFC-034 remains the visual authority.
+- **Detected implementation:** native user control, cached layout geometry, event-driven animation frames, responsive Home media and 460ms/60ms reveal timing remain intact while fine-pointer mandatory snapping supplies perceptible desktop fixation. Chromium and WebKit landing assertions cover both required desktop viewports, immediate reverse direction, keyboard navigation and footer reachability. RFC-034 remains the visual authority.
 - **Production unchanged:** merge, Production deployment/configuration/data changes, security/dynamic-rendering changes and Programme/commercial changes are not authorised.
 
 ## FINAL PRE-DEPLOY TECHNICAL CLOSURE — 2026-08-18

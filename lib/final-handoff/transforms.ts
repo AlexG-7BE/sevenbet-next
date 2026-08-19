@@ -433,8 +433,16 @@ export function transformHomeHandoffCss(css: string) {
       scroll-snap-align: start;
       scroll-snap-stop: normal !important;
     }
+    [data-public-shell="footer"],
+    [data-public-footer-bottom] {
+      scroll-snap-align: end;
+      scroll-snap-stop: normal;
+    }
     @media (prefers-reduced-motion: no-preference) {
       html { scroll-snap-type: y proximity; }
+    }
+    @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+      html { scroll-snap-type: y mandatory; }
     }
     @media (prefers-reduced-motion: reduce) {
       html { scroll-snap-type: none !important; }
