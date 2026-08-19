@@ -20,18 +20,19 @@ test("desktop soft snap remains browser controlled and reversible", async ({ pag
   const targets = page.locator('[data-handoff-page="home"] [data-home-snap]');
   await expect(targets).toHaveCount(9);
   expect(await targets.evaluateAll((elements) => elements.map((element) => ({
+    align: getComputedStyle(element).scrollSnapAlign,
     label: element.getAttribute("data-screen-label"),
     stop: getComputedStyle(element).scrollSnapStop,
   })))).toEqual([
-    { label: "Hero", stop: "normal" },
-    { label: "Recognition", stop: "normal" },
-    { label: "A plan you can see", stop: "normal" },
-    { label: "Missions 01-03", stop: "normal" },
-    { label: "Missions 04-07", stop: "normal" },
-    { label: "Missions 08-10", stop: "normal" },
-    { label: "Built from evidence", stop: "normal" },
-    { label: "Why trust", stop: "normal" },
-    { label: "Final CTA", stop: "normal" },
+    { align: "start", label: "Hero", stop: "normal" },
+    { align: "start", label: "Recognition", stop: "normal" },
+    { align: "start", label: "A plan you can see", stop: "normal" },
+    { align: "start", label: "Missions 01-03", stop: "normal" },
+    { align: "start", label: "Missions 04-07", stop: "normal" },
+    { align: "start", label: "Missions 08-10", stop: "normal" },
+    { align: "start", label: "Built from evidence", stop: "normal" },
+    { align: "start", label: "Why trust", stop: "normal" },
+    { align: "start", label: "Final CTA", stop: "normal" },
   ]);
   expect(await page.locator('[data-snap]:not([data-home-snap])').evaluateAll((elements) => elements.every((element) => getComputedStyle(element).scrollSnapAlign === "none"))).toBe(true);
   await page.evaluate(() => {
@@ -98,6 +99,7 @@ test("soft snap has no viewport or footer trap", async ({ browser }) => {
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto("/", { waitUntil: "networkidle" });
     expect(await page.evaluate(() => getComputedStyle(document.documentElement).scrollSnapType)).toBe("y");
+    expect(await page.locator('[data-public-footer-bottom]').evaluate((element) => getComputedStyle(element).scrollSnapAlign)).toBe("end");
 
     await page.keyboard.press("End");
     await waitForScrollIdle(page);

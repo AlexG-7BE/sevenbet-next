@@ -42,6 +42,7 @@ The localhost browser baseline used a fresh 1440×900 Chromium context after hyd
 - **Detected:** the current Tilt homepage reports no native root scroll-snap declaration and uses a constrained presentation surface. Its exact library/algorithm is not established and is not an implementation authority.
 - **Inferred:** the Founder-described characteristic and Refero motion guidance support the smallest standards-based change: CSS-only proximity settling that remains interruptible, stops frames while idle and adds no high-frequency input controller.
 - **Detected:** Home now applies CSS-only native `y proximity` when reduced motion is not requested. Exactly Hero, Recognition, A plan you can see, the three Mission sheets, Built from evidence, Why trust and the final CTA/PublicFooter composition are marked as targets; each uses `scroll-snap-stop: normal`.
+- **Detected:** every marked composition computes to start alignment. The PublicFooter bottom anchor is the final composition's end safety point at every viewport, so the CTA cannot trap access to the last pixels of the footer.
 - **Detected:** the four internal percentage markers remain non-targets, reduced motion computes to `scroll-snap-type: none`, and no JavaScript input listener, accumulator, tween, timer, lock or settling controller was added.
 - **Detected:** Chromium and WebKit accepted small, repeated, large, reverse and keyboard input. Both reached the document bottom and visible PublicFooter at 1440×900, 1024×768 and 390×844 without a viewport trap or console error.
 
