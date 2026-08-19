@@ -4,7 +4,7 @@ import test from "node:test";
 
 import { discoveryHref, parseCasinoDiscoveryQuery, serializeCasinoDiscoveryQuery } from "../lib/public-casino-discovery/query";
 import { visitActionUnavailableCopy } from "../lib/public-casino-discovery/visit-action-presentation";
-import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
+import type { CasinoDiscoveryQuery, DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
@@ -99,7 +99,7 @@ test("every directory filter returns the expected classified identities and coun
     offers: [offer],
     redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-visit" }],
   }), () => now, allowOperatorAuthority, () => true);
-  const cases = [
+  const cases: Array<[CasinoDiscoveryQuery, string[]]> = [
     [{ country: ["GB"] }, ["alpha"]],
     [{ license: ["ukgc"] }, ["alpha"]],
     [{ payment: ["visa"] }, ["alpha"]],
@@ -112,7 +112,7 @@ test("every directory filter returns the expected classified identities and coun
     [{ supportsCrypto: true }, ["beta"]],
     [{ supportsMobile: true }, ["alpha"]],
     [{ country: ["GB"], supportsMobile: true }, ["alpha"]],
-  ] as const;
+  ];
 
   const initial = await service.discover({}, allowJurisdictionAuthority);
   assert.equal(initial.total, 2);
