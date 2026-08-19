@@ -82,10 +82,10 @@
 .filterForm { padding: 20px 22px 0; }
 .filterPrompt { display: grid; gap: 5px; margin-bottom: 20px; }
 .filterPrompt strong { font-size: .9rem; }
-.filterGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 14px; }
+.filterGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 14px; }
 .filterSelect { min-width: 0; display: grid; gap: 8px; }
-.filterSelect > span { overflow: hidden; color: var(--muted); font-size: 14px; font-weight: 750; letter-spacing: .05em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
-.filterSelect select { width: 100%; min-height: 52px; padding: 0 38px 0 14px; border: 1px solid var(--ink); border-radius: 20px; background: var(--white); color: var(--ink); font-size: 15px; font-weight: 650; text-overflow: ellipsis; }
+.filterSelect > span { color: var(--muted); font-size: 14px; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.filterSelect select { width: 100%; min-height: 52px; padding: 0 38px 0 14px; border: 1px solid var(--ink); border-radius: 20px; background: var(--white); color: var(--ink); font-size: 15px; font-weight: 650; }
 .preferenceNote { margin: 20px 0; padding: 16px; border: 1px solid rgba(16,15,15,.35); border-radius: 20px; background: var(--white); color: #4d4c45; font-size: 13px; line-height: 1.5; }
 .filterActions { min-height: 130px; display: flex; align-items: center; justify-content: flex-end; gap: 16px; margin: 0 -22px; padding: 24px; background: var(--night); color: var(--white); }
 .filterActions > div { margin-right: auto; display: grid; gap: 6px; }
@@ -225,7 +225,7 @@
 .mobileFilterForm .filterSelect { grid-template-columns: 108px 1fr; align-items: center; gap: 8px; }
 .mobileFilterForm .filterSelect select { min-height: 50px; border-radius: 14px; }
 .mobileFilterForm .filterActions { position: fixed; right: 0; bottom: 0; z-index: 4; width: min(100%,520px); min-height: 82px; margin: 0; padding: 14px 20px; }
-.mobileFilterForm .filterActions > div { display: none; }
+.mobileFilterForm .filterActions > div { display: grid; margin: 0; }
 .mobileFilterForm .filterActions > a { padding-inline: 14px; }
 .mobileFilterForm .filterActions > button { flex: 1; min-width: 0; }
 
@@ -253,7 +253,7 @@
   .heroIntro { grid-template-columns: 1fr 470px; gap: 46px; }
   .featureCard { right: 28px; }
   .featureCopy { left: 32px; }
-  .filterGrid { grid-template-columns: repeat(3,minmax(0,1fr)); }
+  .filterGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .cards { gap: 18px; }
 }
 
@@ -289,8 +289,7 @@
   .desktopFilters { min-width:0; }
   .filterForm { padding:0; border:0; }
   .filterPrompt,.preferenceNote { display:none; }
-  .filterGrid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; padding:0; }
-  .filterSelect:nth-child(n+7) { display:none; }
+  .filterGrid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; padding:0; }
   .filterSelect > span {
     position:absolute;
     width:1px;
@@ -328,6 +327,10 @@
   .casinoCard .cardActions { display:flex; justify-content:flex-end; gap:14px; }
   .casinoCard .cardActions a,.casinoCard .cardActions button { min-width:0; min-height:40px; padding-inline:0; border:0; border-radius:0; background:transparent; color:var(--ink); font-weight:500; text-decoration:none; border-bottom:1px solid rgba(16,15,15,.3); }
   .casinoCard .cardActions > :global(.commercialOutboundPrimary) { min-width:116px; padding-inline:18px; border:0; border-radius:14px; background:#b94b47; color:var(--white); font-weight:600; }
+}
+
+@media (min-width: 901px) and (max-width: 1180px) {
+  .filterGrid { grid-template-columns: repeat(2,minmax(0,1fr)); }
 }
 
 @media (max-width: 900px) {

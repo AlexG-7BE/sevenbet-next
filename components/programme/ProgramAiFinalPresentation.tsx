@@ -54,12 +54,13 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
 }) {
   const [adult, setAdult] = useState(false);
   const [legal, setLegal] = useState(false);
+  const [personalisation, setPersonalisation] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.accessState}>
           <p className={styles.eyebrow}>Programme access</p>
-          <h1 id="programme-access-title">Two checks before you begin.</h1>
+          <h1 id="programme-access-title">Three checks before you begin.</h1>
           <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
             <label className={styles.checkRow}>
               <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
@@ -69,8 +70,12 @@ export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
               <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
               <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and acknowledge the Privacy Notice</label><small>Required</small></span>
             </div>
+            <label className={styles.checkRow}>
+              <input checked={personalisation} onChange={(event) => setPersonalisation(event.target.checked)} type="checkbox" />
+              <span>I choose to share this for Programme personalisation and understand I can withdraw before saving. <small>Required</small></span>
+            </label>
             <p className={styles.legalLinks}><Link href="/terms">Read Terms</Link><Link href="/privacy">Read Privacy Notice</Link></p>
-            <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
+            <button className={styles.primaryAction} disabled={busy || !adult || !legal || !personalisation} onClick={onConfirm} type="button">
               {busy ? "Verifying access…" : "Enter Mission 01"}
             </button>
             <StatusMessage error={error} />
@@ -356,9 +361,7 @@ export function Mission01IntakeScreen({
   onUseTyped: () => void;
   inputMode: "text" | "voice";
 }) {
-  const [authority, setAuthority] = useState(authorityActive);
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
-  useEffect(() => setAuthority(authorityActive), [authorityActive]);
   const textVisible = inputMode === "text" || Boolean(situation);
   const recording = recorderState === "recording";
   return (
@@ -372,19 +375,18 @@ export function Mission01IntakeScreen({
           <h1>Tell us what is happening right now.</h1>
           <p>In your own words. A minute is plenty — we&apos;ll build your Starting Point from it.</p>
         </section> : null}
-        <Mission01VoiceControl disabled={busy || !authority} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
+        <Mission01VoiceControl disabled={busy || !authorityActive} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
         {textVisible ? <section className={styles.transcriptState} data-transcript-mode={inputMode === "voice" ? "transcript" : "text-fallback"}>
           <label>
             <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
             <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={6} value={situation} />
             <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything you want. " : ""}Stored only in this browser session.</small>
           </label>
-          <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{busy ? "Preparing your Starting Point…" : "Create my Starting Point"}</button>
+          <button className={styles.primaryAction} disabled={busy || !authorityActive || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{busy ? "Preparing your Starting Point…" : "Create my Starting Point"}</button>
         </section> : null}
         <StatusMessage error={error} />
         {!recording ? <aside className={styles.privacyBoundary}>
           <div><strong>Private by default.</strong><span>Your words are never used for offers or rankings. Audio stays in short-lived memory, is sent for transcription only, and is never saved by B4GAMBLE.</span></div>
-          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I choose to share this for Programme personalisation and understand I can withdraw before saving.</span></label>
           </aside> : null}
         </div>
       </main>

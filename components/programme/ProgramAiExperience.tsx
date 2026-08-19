@@ -258,8 +258,15 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setPhase(restoredWithAccess.phase);
     if (accessActive) {
       programAiRequest<{ authority: { active: boolean } }>("/api/program/program-ai/authority", journey)
-        .then((payload) => setSensitiveAuthorityActive(Boolean(payload.authority?.active)))
-        .catch(() => setSensitiveAuthorityActive(false));
+        .then((payload) => {
+          const active = Boolean(payload.authority?.active);
+          setSensitiveAuthorityActive(active);
+          if (!active) setPhase("access");
+        })
+        .catch(() => {
+          setSensitiveAuthorityActive(false);
+          setPhase("access");
+        });
     } else {
       setSensitiveAuthorityActive(false);
     }
@@ -270,8 +277,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
+    let journey: ProgrammeLocalSubject;
     try {
-      const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
+      journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
         credentials: "same-origin",
@@ -289,29 +297,42 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
       if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+    } catch {
+      setError("Current access could not be verified. Try again.");
+      setBusy(false);
+      return;
+    }
+    try {
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
       });
+      await programAiRequest("/api/program/program-ai/authority", journey, {
+        method: "POST",
+        body: JSON.stringify({
+          confirmed: true,
+          purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
+          statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
+        }),
+      });
       productAnalyticsClient.accessGranted(entryMode);
       productAnalyticsClient.missionOpened(1, entryMode);
-      setSensitiveAuthorityActive(false);
+      setSensitiveAuthorityActive(true);
       personalisationStartedAt.current = null;
       accumulatedAiLatencyMs.current = 0;
       voiceTiming.current = null;
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
     } catch {
-      setError("Current access could not be verified. Try again.");
+      setError("Mission 01 is temporarily unavailable. Try again shortly.");
     } finally { setBusy(false); }
   }
 
-  async function submitTurn(confirmSensitiveAuthority = false) {
+  async function submitTurn() {
     if (!subject) return;
     if (personalisationStartedAt.current === null) personalisationStartedAt.current = performance.now();
     setBusy(true); setError("");
     try {
-      if (confirmSensitiveAuthority) await ensureSensitiveAuthority();
       const payload = await programAiRequest<{
         result: {
           kind: "CLARIFICATION_REQUIRED" | "STARTING_POINT_CANDIDATE";
@@ -352,7 +373,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const requestError = cause as Error & { code?: string };
       if (requestError.code === "SENSITIVE_INPUT_AUTHORITY_REQUIRED") {
         setSensitiveAuthorityActive(false);
-        persist({ ...local, candidate: null, phase: "intake" });
+        persist({ ...emptyLocalState, phase: "access" });
       }
       setError(cause instanceof Error ? cause.message : "Your Starting Point could not be prepared");
     }
@@ -364,7 +385,6 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
       throw new Error(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);
     }
-    await ensureSensitiveAuthority();
     const form = new FormData();
     form.set("audio", audio, "programme-m1-recording");
     form.set("durationMs", String(durationMs));
@@ -379,19 +399,6 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       transcript: payload.transcript,
       transcriptionRequestMs: payload.timing?.transcriptionRequestMs ?? 0,
     };
-  }
-
-  async function ensureSensitiveAuthority() {
-    if (!subject || sensitiveAuthorityActive) return;
-    await programAiRequest("/api/program/program-ai/authority", subject, {
-      method: "POST",
-      body: JSON.stringify({
-        confirmed: true,
-        purposeVersion: PROGRAM_AI_SENSITIVE_PURPOSE_VERSION,
-        statementVersion: PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
-      }),
-    });
-    setSensitiveAuthorityActive(true);
   }
 
   function acceptTranscript(transcript: string, timing: {
@@ -431,7 +438,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     try {
       await programAiRequest("/api/program/program-ai/authority", subject, { method: "DELETE" });
       setSensitiveAuthorityActive(false);
-      persist({ ...emptyLocalState, phase: "intake" });
+      persist({ ...emptyLocalState, phase: "access" });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Authority could not be withdrawn"); }
     finally { setBusy(false); }
   }
@@ -595,7 +602,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen />);
   if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
-  if (phase === "intake") return renderPhase(<Mission01IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
+  if (phase === "intake") return renderPhase(<Mission01IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={submitTurn} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
   if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />);
   if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);

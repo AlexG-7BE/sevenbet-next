@@ -1,5 +1,11 @@
 # Roadmap
 
+## HOME-PERFORMANCE-MOTION-POLISH-01 — 2026-08-18
+
+| Sequence | Workstream | Status | Evidence / boundary |
+| --- | --- | --- | --- |
+| 39 | HOME-PERFORMANCE-MOTION-POLISH-01 | **FINAL PUBLIC-SITE POLISH IMPLEMENTED IN EXISTING DRAFT PR #77 / LOCAL GATES PASS / HOSTED PREVIEW REFRESH PENDING** | Branch `codex/home-performance-motion-polish-01` starts from main `381624c410222b7bb56f65b755d562b284ff08fa`; accepted Home head `74625daa2c51b582e0df0c55d314711cbb845fa1` remains the locked baseline. The authorised addendum makes Casinos and Bonuses filters immediate and URL-owned, gives Casinos semantic empty labels and Bonuses exactly one `Clear All`, moves the existing Learn search beside `All guides`, and moves the unchanged Programme-personalisation statement to the three-check access gate while retaining the existing server authority/withdrawal model. The scoped Chromium/WebKit matrix passes 14/14 at 1440×900, 1024×768 and 390×844; production build and focused structural suites pass. No schema/migration/reward/commercial/security change is present. This is not a product-freeze acceptance: final hosted Preview/remote checks and Founder approval remain required; merge and Production remain unauthorised. |
+
 ## RFC-031 focused branch addendum — 2026-08-14
 
 | Sequence | Workstream | Status | Evidence / boundary |

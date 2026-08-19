@@ -21,7 +21,7 @@ const homeAssets = [
 
 test("Home route renders the final handoff with the approved metadata and canonical", () => {
   assert.match(page, /import \{ HandoffPage \}/);
-  assert.match(page, /<HandoffPage name="home" transform=\{transformHomeHandoff\} \/>/);
+  assert.match(page, /<HandoffPage cssTransform=\{transformHomeHandoffCss\} name="home" transform=\{transformHomeHandoff\} \/>/);
   assert.match(page, /const title = "B4GAMBLE \| Know your limits before you play"/);
   assert.match(page, /openGraph: \{[^}]*title, description/);
   assert.match(page, /twitter: \{ card: "summary", title, description \}/);

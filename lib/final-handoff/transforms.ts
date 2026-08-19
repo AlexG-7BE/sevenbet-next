@@ -262,7 +262,11 @@ export function transformLearnHandoff(html: string) {
             <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">Read →</span>
           </a>`;
   let output = html
-    .replace('<input placeholder="Search guides — wagering, payouts, RTP…"', '<input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…"')
+    .replace(/<input placeholder="Search guides — wagering, payouts, RTP…"[^>]*>/, "")
+    .replace(
+      /(<h2[^>]*>All guides<\/h2>)/,
+      '$1<label data-learn-discovery-search=""><span>Search guides</span><input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…" value=""></label>',
+    )
     .replace('data-mob="pad"', 'data-mob="pad" data-learn-hero-axis=""')
     .replace(
       '<div style="position: relative; display: flex; gap: 24px 56px; flex-wrap: wrap; align-items: center; padding: 26px clamp(24px, 5vw, 72px);',
@@ -370,11 +374,97 @@ export function transformBonusGuideHandoff(html: string) {
  * Production strips that captured chrome in favour of PublicFooter, so the
  * remaining CTA must no longer retain the prototype's independent snap stop.
  */
+const HOME_MEDIA: Record<string, { height: number; width: number }> = {
+  "chapter-apply.jpg": { height: 4000, width: 6000 },
+  "hero-confidence.jpg": { height: 6720, width: 4480 },
+  "hero-creator.jpg": { height: 3844, width: 2563 },
+  "hero-outcome.jpg": { height: 5301, width: 3648 },
+  "hero-plan.jpg": { height: 2336, width: 3500 },
+};
+
+const HOME_MEDIA_WIDTHS = [320, 640, 1280, 1920] as const;
+const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "Applying the plan"]);
+const HOME_SNAP_LABELS = new Set([
+  "Hero",
+  "Recognition",
+  "Built from evidence",
+  "Why trust",
+  "Final CTA",
+]);
+
+const HOME_STICKY_SNAP_LABELS = [
+  "A plan you can see",
+  "Missions 01-03",
+  "Missions 04-07",
+  "Missions 08-10",
+] as const;
+
+function homeResponsiveImage(imageTag: string) {
+  const source = /src="\/home\/([^"/]+\.jpg)"/.exec(imageTag)?.[1];
+  const alt = /alt="([^"]*)"/.exec(imageTag)?.[1] ?? "";
+  const media = source ? HOME_MEDIA[source] : undefined;
+  if (!source || !media) return imageTag;
+
+  const chapter = HOME_CHAPTER_ALTS.has(alt);
+  const loading = chapter ? "lazy" : "eager";
+  const sizes = chapter ? "100vw" : "(max-width: 1000px) 130px, 300px";
+  const candidates = (format: "avif" | "webp") => HOME_MEDIA_WIDTHS
+    .map((width) => `/home/responsive/${source.replace(/\.jpg$/, `-${width}.${format}`)} ${width}w`)
+    .join(", ");
+  const responsiveTag = imageTag
+    .replace(/loading="[^"]+"/, `loading="${loading}"`)
+    .replace("decoding=\"async\"", `decoding="async" fetchpriority="${chapter ? "low" : alt === "Creator at work" ? "high" : "auto"}" height="${media.height}" sizes="${sizes}" width="${media.width}"`);
+
+  return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
+}
+
 export function transformHomeHandoff(html: string) {
-  return html.replace(
-    '<div data-screen-label="Final CTA" data-snap=""',
-    '<div data-screen-label="Final CTA" data-home-final-composition=""',
-  );
+  const transformed = html
+    .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
+    .replace(
+      '<div data-screen-label="Final CTA" data-snap=""',
+      '<div data-screen-label="Final CTA" data-home-final-composition=""',
+    )
+    .replace(/<div data-screen-label="([^"]+)"/g, (tag, label: string) => (
+      HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap="" data-home-snap-label="${label}"` : tag
+    ));
+
+  return HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
+    `<div data-screen-label="${label}"`,
+    `<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="${label}" style="height:1px;margin-bottom:-1px;pointer-events:none;width:1px;"></div><div data-screen-label="${label}"`,
+  ), transformed);
+}
+
+export function transformHomeHandoffCss(css: string) {
+  const withoutCapturedHomeControls = css
+    .replace(
+      /@media \(pointer: coarse\) \{\s*html \{ scroll-snap-type:y mandatory; \}\s*\[data-snap\] \{ scroll-snap-align:start; \}\s*\}/,
+      "",
+    )
+    .replace(
+      /\s*html \{ scrollbar-width:none; \}\s*html::\-webkit-scrollbar, body::\-webkit-scrollbar \{ width:0; height:0; display:none; \}/,
+      "",
+    );
+  return `${withoutCapturedHomeControls}
+    [data-home-snap] {
+      scroll-snap-align: start;
+      scroll-snap-stop: normal !important;
+    }
+    [data-public-shell="footer"],
+    [data-public-footer-bottom] {
+      scroll-snap-align: end;
+      scroll-snap-stop: normal;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-snap-type: y proximity; }
+    }
+    @media (prefers-reduced-motion: no-preference) and (pointer: fine) {
+      html { scroll-snap-type: y mandatory; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-snap-type: none !important; }
+    }
+  `;
 }
 
 export function transformTenStepsHandoff(html: string) {

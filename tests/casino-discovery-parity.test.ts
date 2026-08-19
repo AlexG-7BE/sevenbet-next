@@ -38,6 +38,7 @@ test("FE-MIG-06 exposes the approved responsive and state contract", () => {
   assert.match(components, /Market preference, not location/);
   assert.match(components, /Reviews remain available/);
   assert.match(components, /No published reviews match these controls/);
+  assert.match(components, /No published reviews yet/);
   assert.match(instantForm, /aria-busy=\{pending\}/);
   assert.match(instantForm, /aria-live="polite"/);
   assert.match(instantForm, /method="get"/);

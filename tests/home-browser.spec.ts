@@ -7,8 +7,9 @@ async function assertHomeStructure(page: import("@playwright/test").Page) {
   await expect(page.locator("body > footer[data-public-shell]")).toHaveCount(1);
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("CONTROL");
-  await expect(page.locator("[data-home-section]")).toHaveCount(9);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(/control\s*starts here/i);
+  await expect(page.locator('[data-handoff-page="home"]')).toHaveCount(1);
+  await expect(page.locator('[data-handoff-page="home"] [data-screen-label]')).toHaveCount(9);
   await expect(page.getByText("Need support now?", { exact: true })).toHaveCount(0);
 }
 
@@ -19,7 +20,7 @@ test("Home critical content is visible before hydration and without Intersection
   expect(response?.status()).toBe(200);
   await assertHomeStructure(page);
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("Built from evidence.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Built from evidence/i })).toBeVisible();
   const opacity = await page.getByRole("heading", { level: 1 }).evaluate((element) => getComputedStyle(element).opacity);
   expect(opacity).toBe("1");
   await context.close();
@@ -29,7 +30,7 @@ test("Home remains visible with reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("START WITH ONE", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Built from evidence/i })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
 });
 
@@ -57,28 +58,22 @@ test("Home hero remains visible through client navigation and browser history", 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 });
 
-test("Home carousel is keyboard operable with an announced active state", async ({ page }) => {
+test("Home chapter actions remain keyboard operable", async ({ page }) => {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-  const region = page.getByRole("region", { name: "Programme preview" });
-  const counter = region.locator("[aria-live='polite']");
-  await expect(counter).toHaveText("01 / 03");
-  const next = region.getByRole("button", { name: "Next programme preview" });
-  await next.focus();
+  const chapters = page.locator("[data-stackpanel]");
+  await expect(chapters).toHaveCount(3);
+  const firstAction = chapters.first().getByRole("link", { name: "Start Programme" });
+  await firstAction.focus();
+  await expect(firstAction).toBeFocused();
   await page.keyboard.press("Enter");
-  await expect(counter).toHaveText("02 / 03");
-  await next.click();
-  await expect(counter).toHaveText("03 / 03");
-  await page.waitForTimeout(750);
-  await expect(counter).toHaveText("03 / 03");
-  await page.keyboard.press("ArrowLeft");
-  await expect(counter).toHaveText("02 / 03");
+  await expect(page).toHaveURL(/\/program$/);
 });
 
 test("Home renders all four canonical hero crops and the primary CTA works", async ({ page }) => {
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
-  const hero = page.locator("[data-home-section='hero']");
-  await expect(hero.locator("figure")).toHaveCount(4);
-  expect(await hero.locator("figure img").evaluateAll((images) => images.map((image) => ({
+  const hero = page.locator('[data-screen-label="Hero"]');
+  await expect(hero.locator('[data-home-media="opening"]')).toHaveCount(4);
+  expect(await hero.locator('[data-home-media="opening"] img').evaluateAll((images) => images.map((image) => ({
     complete: (image as HTMLImageElement).complete,
     naturalWidth: (image as HTMLImageElement).naturalWidth,
   })))).toEqual([
@@ -87,12 +82,12 @@ test("Home renders all four canonical hero crops and the primary CTA works", asy
     expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
     expect.objectContaining({ complete: true, naturalWidth: expect.any(Number) }),
   ]);
-  expect(await hero.locator("figure img").evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
+  expect(await hero.locator('[data-home-media="opening"] img').evaluateAll((images) => images.every((image) => (image as HTMLImageElement).naturalWidth > 0))).toBe(true);
 
-  const cta = hero.getByRole("link", { name: "Start the 10-Step Program" });
+  const cta = hero.getByRole("link", { name: "Start Programme" });
   await expect(cta).toBeVisible();
   await cta.click();
-  await expect(page).toHaveURL(/\/program\?entry=start$/);
+  await expect(page).toHaveURL(/\/program$/);
 });
 
 test("Home hydrates without browser errors and keeps accessible action targets", async ({ page }) => {
@@ -104,7 +99,7 @@ test("Home hydrates without browser errors and keeps accessible action targets",
 
   await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
-  const undersizedTargets = await page.locator("main a, main button").evaluateAll((targets) => targets
+  const undersizedTargets = await page.locator('main a[style*="padding"], main button').evaluateAll((targets) => targets
     .filter((target) => {
       const rect = target.getBoundingClientRect();
       const style = getComputedStyle(target);
@@ -159,10 +154,10 @@ for (const viewport of [
     await page.goto(`${baseUrl}/`, { waitUntil: "domcontentloaded" });
     await assertHomeStructure(page);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
-    const order = await page.locator("[data-home-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-home-section")));
-    expect(order).toEqual(["hero", "programme-theatre", "self-recognition", "recognise", "build", "apply", "programme-tools", "evidence", "final-programme-cta"]);
+    const order = await page.locator('[data-handoff-page="home"] [data-screen-label]').evaluateAll((sections) => sections.map((section) => section.getAttribute("data-screen-label")));
+    expect(order).toEqual(["Hero", "Recognition", "A plan you can see", "Missions 01-03", "Missions 04-07", "Missions 08-10", "Built from evidence", "Why trust", "Final CTA"]);
     if (viewport.width === 375) {
-      await expect(page.locator("[data-home-section='hero']").getByRole("link", { name: "Start the 10-Step Program" })).toBeVisible();
+      await expect(page.locator('[data-screen-label="Hero"]').getByRole("link", { name: "Start Programme" })).toBeVisible();
     }
     await page.close();
   });
