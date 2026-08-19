@@ -12,7 +12,8 @@ test("recovery verification derives the exact repository migration set", () => {
   const names = repositoryMigrationNames(process.cwd());
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
-  assert.equal(names.at(-1), "0019_programme_runtime_hardening");
+  assert.ok(names.includes("0019_programme_runtime_hardening"));
+  assert.equal(names.at(-1), "0020_commercial_ops_01");
   assert.equal(new Set(names).size, names.length);
 });
 
