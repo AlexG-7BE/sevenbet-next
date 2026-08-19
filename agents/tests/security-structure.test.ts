@@ -24,9 +24,25 @@ test("package dependencies contain no database, framework, or external integrati
   ) as { dependencies?: Record<string, string> };
 
   assert.deepEqual(Object.keys(manifest.dependencies ?? {}).sort(), [
+    "@b4gamble/partner-operations-contract",
     "@openai/agents",
     "zod",
   ]);
+  assert.equal(
+    manifest.dependencies?.["@b4gamble/partner-operations-contract"],
+    "file:../shared",
+  );
+
+  const sharedManifest = JSON.parse(
+    await readFile(join(packageRoot, "..", "shared", "package.json"), "utf8"),
+  ) as {
+    name?: string;
+    dependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  };
+  assert.equal(sharedManifest.name, "@b4gamble/partner-operations-contract");
+  assert.deepEqual(sharedManifest.dependencies ?? {}, {});
+  assert.deepEqual(Object.keys(sharedManifest.peerDependencies ?? {}), ["zod"]);
 });
 
 test("agent source has no forbidden consumer, Prisma, write-tool, or schedule imports", async () => {

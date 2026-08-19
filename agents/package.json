@@ -15,6 +15,7 @@
     "check": "npm run test && npm run typecheck && npm run lint"
   },
   "dependencies": {
+    "@b4gamble/partner-operations-contract": "file:../shared",
     "@openai/agents": "0.15.0",
     "zod": "4.4.3"
   },

@@ -8,4 +8,4 @@ export {
   type PartnerOperationsInput,
   type PartnerOperationsResult,
   type PartnerSafeCrmOperation,
-} from "../../shared/commercial/partner-operations-contract.js";
+} from "@b4gamble/partner-operations-contract";
