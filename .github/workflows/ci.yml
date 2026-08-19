@@ -77,6 +77,9 @@ jobs:
     name: Build / Browser
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-noble
+      options: --ipc=host
     services:
       postgres:
         image: postgres:16-alpine
@@ -84,14 +87,14 @@ jobs:
           POSTGRES_USER: sevenbet
           POSTGRES_PASSWORD: sevenbet
           POSTGRES_DB: sevenbet_ci
-        ports:
-          - 54329:5432
         options: >-
           --health-cmd="pg_isready -U sevenbet -d sevenbet_ci"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
     env:
+      DATABASE_URL: postgresql://sevenbet:sevenbet@postgres:5432/sevenbet_ci
+      DIRECT_URL: postgresql://sevenbet:sevenbet@postgres:5432/sevenbet_ci
       CI: "true"
     steps:
       - name: Check out repository
@@ -109,7 +112,6 @@ jobs:
       - run: npm run programme:seed
       - run: npm run build
       - run: npm run ci:build-secrets
-      - run: npx playwright install --with-deps chromium
       - run: npm run ci:browser
       - run: npm run typography:browser
 
