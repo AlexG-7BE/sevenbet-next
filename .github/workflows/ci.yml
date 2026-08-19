@@ -106,9 +106,42 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - name: Bridge disposable loopback database URLs to PostgreSQL service
+        run: |
+          nohup node -e '
+            const net = require("node:net");
+            for (const port of [5432, 54329]) {
+              net.createServer((client) => {
+                const upstream = net.createConnection({ host: "postgres", port: 5432 });
+                client.on("error", () => upstream.destroy());
+                upstream.on("error", () => client.destroy());
+                client.pipe(upstream);
+                upstream.pipe(client);
+              }).listen(port, "127.0.0.1");
+            }
+          ' >/tmp/postgres-loopback-bridge.log 2>&1 &
+          for port in 5432 54329; do
+            attempt=0
+            until node -e "const net = require('node:net'); const socket = net.createConnection({ host: '127.0.0.1', port: ${port} }, () => socket.end()); socket.on('error', () => process.exit(1));"; do
+              attempt=$((attempt + 1))
+              if [ "$attempt" -ge 50 ]; then
+                echo "PostgreSQL loopback bridge failed on port ${port}" >&2
+                exit 1
+              fi
+              sleep 0.1
+            done
+          done
       - run: npm ci
-      - run: npm run ci:migrations
-      - run: npm run mvp-runtime:postgres-test
+      - name: Run npm run ci:migrations
+        env:
+          DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+          DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+        run: npm run ci:migrations
+      - name: Run npm run mvp-runtime:postgres-test
+        env:
+          DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+          DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+        run: npm run mvp-runtime:postgres-test
       - run: npm run programme:seed
       - run: npm run build
       - run: npm run ci:build-secrets
