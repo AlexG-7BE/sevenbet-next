@@ -118,7 +118,7 @@ export function assessPreflight(
       ruleId: "AGENT_ARCHITECTURE_SCOPE_CREEP",
       disposition: "STOP",
       description:
-        "The Wave 1 agent package cannot import Prisma, mutate Production, change schema, or join the consumer runtime.",
+        "The isolated agent package cannot import Prisma, mutate Production, change schema, or bypass the bounded application-side CRM executor.",
     });
   }
 

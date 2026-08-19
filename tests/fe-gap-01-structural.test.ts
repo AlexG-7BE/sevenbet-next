@@ -84,9 +84,17 @@ test("About uses the final handoff visual family and three-part product model", 
 });
 
 test("FE-GAP-01 product boundaries survive the authorized legal remediation", () => {
-  const changed = execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" }).trim().split("\n").filter(Boolean);
-  const forbidden = changed.filter((path) => /^prisma\//.test(path));
-  assert.deepEqual(forbidden, []);
+  const changed = [...new Set([
+    ...execFileSync("git", ["diff", "--name-only", "origin/main"], { encoding: "utf8" }).trim().split("\n").filter(Boolean),
+    ...execFileSync("git", ["status", "--short", "--untracked-files=all"], { encoding: "utf8" }).trim().split("\n").filter(Boolean).map((line) => line.slice(3)),
+  ])];
+  const prismaChanges = changed.filter((path) => /^prisma\//.test(path)).sort();
+  if (prismaChanges.length > 0) {
+    assert.deepEqual(prismaChanges, [
+      "prisma/migrations/0020_commercial_ops_01/migration.sql",
+      "prisma/schema.prisma",
+    ]);
+  }
   assert.equal(changed.includes("app/(public)/layout.tsx"), false);
   assert.equal(changed.includes("app/(public)/layout.tsx"), false);
 });

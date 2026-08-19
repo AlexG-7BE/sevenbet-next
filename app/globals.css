@@ -2127,6 +2127,60 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   color: var(--muted);
 }
 
+.commercialSubnav { display: flex; gap: 4px; padding: 4px; width: fit-content; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.025); }
+.commercialSubnav a { padding: 8px 13px; border-radius: 9px; color: var(--muted); font-size: .86rem; font-weight: 800; }
+.commercialSubnav a:hover { color: var(--text); background: rgba(255,255,255,.06); }
+.commercialTable { display: grid; overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; }
+.commercialTableRow { display: grid; grid-template-columns: minmax(170px,1.2fr) 140px 90px minmax(180px,1.2fr) 70px 100px; gap: 12px; align-items: center; min-width: 850px; padding: 12px 14px; border-top: 1px solid var(--border); color: var(--muted); font-size: .85rem; }
+.commercialTableRow:first-child { border-top: 0; }
+.commercialTableRow:not(.commercialTableHead):hover { background: rgba(255,255,255,.035); }
+.commercialTableRow strong { color: var(--text); }
+.commercialTableRow span { display: grid; gap: 3px; }
+.commercialTableRow small, .commercialDirectory small, .commercialLine small, .commercialTimeline small { color: var(--subtle); }
+.commercialTableHead { color: var(--subtle); background: rgba(255,255,255,.035); font-weight: 850; }
+.commercialEmpty { display: grid; place-items: start; gap: 10px; min-height: 190px; align-content: center; padding: 28px; border: 1px dashed var(--border); border-radius: 14px; background: rgba(255,255,255,.015); }
+.commercialEmpty h2, .commercialEmpty h3, .commercialEmpty p { margin: 0; }
+.commercialInlineForm { display: grid; gap: 12px; align-content: start; }
+.commercialInlineForm label { display: grid; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 750; }
+.commercialInlineForm input, .commercialInlineForm select, .commercialInlineForm textarea { width: 100%; min-height: 42px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--text); background: rgba(255,255,255,.045); font: inherit; }
+.commercialInlineForm textarea { resize: vertical; }
+.commercialInlineForm .button { width: fit-content; }
+.commercialDirectory { display: grid; }
+.commercialDirectory > a { display: grid; grid-template-columns: minmax(180px,1fr) 150px 180px 160px; gap: 16px; align-items: center; padding: 14px 4px; border-top: 1px solid var(--border); color: var(--muted); }
+.commercialDirectory > a:first-child { border-top: 0; }
+.commercialDirectory > a > span:first-child { display: grid; gap: 3px; }
+.commercialDirectory strong { color: var(--text); }
+.commercialDetailGrid, .commercialActionGrid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
+.commercialSectionHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.commercialSectionHead h2, .commercialSectionHead p { margin: 0; }
+.commercialFacts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--border); border-radius: 12px; background: var(--border); }
+.commercialFacts div { display: grid; gap: 4px; min-height: 70px; padding: 12px; background: rgba(13,27,46,.96); }
+.commercialFacts dt { color: var(--subtle); font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.commercialFacts dd { margin: 0; color: var(--text); font-weight: 700; overflow-wrap: anywhere; }
+.commercialBoundary { padding: 13px 14px; border-left: 3px solid #f2b84b; border-radius: 8px; background: rgba(242,184,75,.07); }
+.commercialBoundary p { margin: 5px 0 0; color: var(--muted); font-size: .86rem; }
+.commercialEvidenceList { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.commercialEvidenceList article, .commercialDocument { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,.02); }
+.commercialEvidenceList article > div, .commercialDocument > div { display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.commercialEvidenceList h3, .commercialEvidenceList p { margin: 0; }
+.commercialEvidenceList small, .commercialDocument small { color: var(--subtle); }
+.commercialLine { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 0; border-top: 1px solid var(--border); color: var(--muted); }
+.commercialLine:first-of-type { border-top: 0; }
+.commercialLine > span:first-child { display: grid; gap: 3px; }
+.commercialLine strong { color: var(--text); }
+.commercialDocument pre { max-height: 240px; overflow: auto; margin: 0; padding: 12px; border-radius: 8px; white-space: pre-wrap; color: var(--muted); background: rgba(0,0,0,.18); }
+.commercialTimeline { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.commercialTimeline li { display: grid; grid-template-columns: 150px 1fr; gap: 18px; padding: 13px 0; border-top: 1px solid var(--border); }
+.commercialTimeline li:first-child { border-top: 0; }
+.commercialTimeline li > span { color: var(--subtle); font-size: .78rem; }
+.commercialTimeline li > div { display: grid; gap: 3px; }
+
+@media (max-width: 760px) {
+  .commercialDetailGrid, .commercialActionGrid, .commercialEvidenceList, .commercialFacts { grid-template-columns: 1fr; }
+  .commercialDirectory > a { grid-template-columns: 1fr 1fr; }
+  .commercialTimeline li { grid-template-columns: 1fr; gap: 5px; }
+}
+
 .adminPanel {
   display: grid;
   gap: 18px;

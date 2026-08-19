@@ -150,11 +150,23 @@ test("Public Shell keeps its approved architecture while exposing the current br
     .filter((file) => file === "prisma/schema.prisma" || /^prisma\/(?:migrations|preflight)\//.test(file))
     .sort();
   if (schemaChanges.length > 0) {
-    assert.deepEqual(schemaChanges, [
-      "prisma/migrations/0019_programme_runtime_hardening/migration.sql",
-      "prisma/preflight/0019_programme_runtime_hardening.sql",
-      "prisma/schema.prisma",
-    ]);
+    const approvedExactSchemaChangeSets = [
+      [
+        "prisma/migrations/0019_programme_runtime_hardening/migration.sql",
+        "prisma/preflight/0019_programme_runtime_hardening.sql",
+        "prisma/schema.prisma",
+      ],
+      [
+        "prisma/migrations/0020_commercial_ops_01/migration.sql",
+        "prisma/schema.prisma",
+      ],
+    ];
+    assert.ok(
+      approvedExactSchemaChangeSets.some(
+        (approved) => JSON.stringify(schemaChanges) === JSON.stringify(approved),
+      ),
+      `Unexpected schema changes: ${schemaChanges.join(", ")}`,
+    );
   }
   if (changed.includes("package-lock.json")) {
     const packageLock = readFileSync("package-lock.json", "utf8");

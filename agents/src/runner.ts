@@ -157,7 +157,8 @@ export async function runOperationalAgent(
   inputValue: unknown,
   options: OperationalRunOptions = {},
 ): Promise<OperationalRunResult> {
-  const agentKey = AgentKeySchema.parse(agentValue);
+  const parsedAgentKey = AgentKeySchema.parse(agentValue);
+  const agentKey: AgentKey = parsedAgentKey === "partner-intelligence" ? "partner-operations" : parsedAgentKey;
   const input = OperationalAgentInputSchema.parse(inputValue);
   const definition = getSpecialist(agentKey);
   const limits = RunLimitsSchema.parse({

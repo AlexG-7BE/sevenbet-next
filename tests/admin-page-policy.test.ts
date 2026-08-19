@@ -31,6 +31,7 @@ test("every direct-data admin page checks its area before reading records", () =
     assert.match(text, /getAdminPageAccess\(await headers\(\),/i, path);
   }
   assert.match(source("app/admin/(protected)/affiliate/layout.tsx"), /getAdminPageAccess\(await headers\(\), "affiliate"\)/);
+  assert.match(source("app/admin/(protected)/commercial/layout.tsx"), /getAdminPageAccess\(await headers\(\), "commercial"\)/);
 });
 
 test("admin navigation is role-filtered and the dashboard filters record and audit reads", () => {

@@ -144,16 +144,17 @@ const specialists = [
       "Draft a differentiated response only when supported; otherwise recommend REVIEW or BLOCK and state the evidence gap.",
   },
   {
-    key: "partner-intelligence",
-    name: "Partner Intelligence Agent",
+    key: "partner-operations",
+    name: "Partner Operations Agent",
     purpose:
-      "Research potential regulated commercial partners from supplied public evidence.",
+      "Structure supplied commercial evidence, qualify prospects, prepare drafts and activation evidence, and propose bounded CRM operations.",
     defaultTier: "standard",
     allowedRecommendations: ["DRAFT", "REVIEW", "BLOCK"],
     checks: [
       "Organisation and brands only to the extent directly supported by supplied evidence",
       "Jurisdiction or market relevance only where directly supported by supplied evidence; otherwise UNKNOWN with an evidence gap",
       "Public affiliate or partnership evidence",
+      "Application preparation, response interpretation, evidenced terms, follow-up, and activation-packet gaps",
       "Supplied public-web sources described neutrally unless source authority, provenance, ownership, or official status is explicitly supported",
       "Potential fit, risks, verification gaps, and next step",
       "Applicable licence, exact-domain, offer, availability, and relationship uncertainty",
@@ -162,6 +163,7 @@ const specialists = [
       "Never infer an active partnership.",
       "Never mark an operator approved without complete evidence and human authority.",
       "Do not contact a partner or activate a commercial relationship.",
+      "Do not send, submit, accept terms, set APPROVED or ACTIVE, or mutate affiliate runtime authority.",
       "Do not infer jurisdiction, Great Britain relevance, regulator scope, licence scope, market eligibility, market availability, or commercial approval from a generic register entry, organisation or brand name, source URL, or affiliate page.",
       "Do not describe a supplied public-web source as authoritative, official, primary, verified, regulator-issued, controlling, or independently validated unless that property is explicitly supported by supplied evidence; its kind, title, URL, excerpt, timestamp, organisation name, or brand name do not establish authority or official status.",
     ],
@@ -195,12 +197,14 @@ export const SPECIALIST_REGISTRY: ReadonlyMap<
   SpecialistDefinition
 > = new Map(specialists.map((definition) => [definition.key, definition]));
 
+export const PARTNER_INTELLIGENCE_COMPATIBILITY_ALIAS = "partner-intelligence" as const;
+
 export function listSpecialists(): readonly SpecialistDefinition[] {
   return specialists;
 }
 
 export function getSpecialist(key: AgentKey): SpecialistDefinition {
-  const definition = SPECIALIST_REGISTRY.get(key);
+  const definition = SPECIALIST_REGISTRY.get(key === PARTNER_INTELLIGENCE_COMPATIBILITY_ALIAS ? "partner-operations" : key);
 
   if (!definition) {
     throw new Error(`Unknown specialist: ${key}`);

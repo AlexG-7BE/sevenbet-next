@@ -76,6 +76,7 @@
     "affiliate-redirect:test": "node --import tsx --test tests/affiliate-redirect-engine.test.ts",
     "gb-market:test": "node --import tsx --test tests/gb-market-authority.test.ts tests/jurisdiction-resolver.test.ts tests/affiliate-redirect-engine.test.ts tests/public-casino-discovery.test.ts tests/public-casino-rendering.test.ts tests/public-casino-service.test.ts tests/public-offer-service.test.ts tests/public-comparison.test.ts tests/public-comparison-render.test.tsx",
     "comm-01:test": "node --import tsx --test tests/gb-commercial-readiness.test.ts tests/gb-market-authority.test.ts tests/affiliate-integration-framework.test.ts tests/affiliate-redirect-engine.test.ts",
+    "commercial-ops:test": "node --import tsx --test tests/commercial-ops.test.ts",
     "affiliate-integration:test": "node --import tsx --test tests/affiliate-integration-framework.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
@@ -116,7 +117,8 @@
     "better-auth": "1.6.23",
     "next": "15.5.21",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "zod": "^4.4.3"
   },
   "overrides": {
     "deepmerge-ts": "8.0.0",
