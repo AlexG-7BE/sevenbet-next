@@ -167,8 +167,11 @@ commit or print it, paste a key into chat, or pass a key as an argument.
 6. Update this README and governing documentation.
 
 Adding a tool, persistent memory, autonomous orchestration, external
-integration, schedule, consumer-runtime import, or Production use requires a
-new approved RFC. A registry edit cannot authorise those capabilities.
+integration, schedule, consumer-runtime import or Production use materially
+changes the durable agent boundary and normally requires an RFC. A current
+explicit Founder decision may authorise a bounded change and supersede an older
+internal boundary; verification and durable documentation must follow. A
+registry edit alone is not decision authority.
 
 ## Future integration boundary
 

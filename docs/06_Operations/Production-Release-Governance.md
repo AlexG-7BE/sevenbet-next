@@ -1,5 +1,11 @@
 # Production Release Governance
 
+This is the default operational path. [Decision & Documentation
+Governance](../GOVERNANCE.md) controls internal authority: a current explicit
+Founder instruction may approve merge, deployment or another bounded action
+without a redundant second decision. Repository/platform permissions and
+external technical, legal and evidence constraints still apply.
+
 ## Approved flow
 
 `branch → pull request → required GitHub checks → Vercel Preview → Founder review → merge to main → Vercel Production → production smoke`
@@ -9,7 +15,11 @@
 - **Detected during OPS-01:** `main` branch protection is enabled and currently requires pull-request delivery; strict, up-to-date `Quality`, `Build / Browser`, `Database / Migration Verification`, and `Vercel` contexts; resolved review conversations; administrator enforcement; zero required approvals for the current single-maintainer model; and no force push or branch deletion.
 - **Detected:** [PR #45](https://github.com/AlexG-7BE/sevenbet-next/pull/45) is merged at `e140f4d`; required branch protection and successful Production Smoke evidence are active.
 - **Detected:** ENV-ISO-01 [PR #52](https://github.com/AlexG-7BE/sevenbet-next/pull/52) merged under explicit Founder Office authority as `a954243`; exact-merge main CI, Production deployment, Production Smoke and real staff auth E2E passed. The environment-isolation/configuration incident is closed.
-- **Not authorised:** direct Production mutation, automatic PR merge, force push, branch deletion, production credentials in PR CI, or deployment from an arbitrary local branch.
+- **Default prohibited:** direct Production mutation, automatic PR merge, force
+  push, branch deletion, Production credentials in PR CI, or deployment from
+  an arbitrary local branch. A Founder instruction may change an internal
+  execution boundary for an explicit scope, but it does not bypass branch
+  protection, platform permissions or external constraints.
 
 The Git commit SHA is the release identifier. Record the pull request and Vercel deployment URL in the release/incident record; do not create a parallel ID.
 
@@ -19,18 +29,21 @@ The Git commit SHA is the release identifier. Record the pull request and Vercel
 | --- | --- | --- |
 | Low | Documentation, non-runtime test, reversible copy/style change | Required checks, Preview inspection, normal smoke |
 | Medium | Runtime logic, dependency patch, authentication-adjacent or CMS behaviour | Required checks, focused regression evidence, explicit rollback trigger, Founder review |
-| High | Schema/data migration, auth/secret model, affiliate destination, jurisdiction, Protected Help, Programme, privacy/compliance | Approved governing RFC, named technical and decision owners, staged/non-production proof, explicit rollback/recovery plan; stop if any release gate is unknown |
+| High | Schema/data migration, auth/secret model, affiliate destination, jurisdiction, Protected Help, Programme, privacy/compliance | Relevant current durable decision record, named technical and decision owners, staged/non-production proof, explicit rollback/recovery plan; use an RFC when the change materially alters durable architecture; stop for unresolved external or factual blockers |
 
 ## Pre-merge checklist
 
-1. Confirm the change is aligned with Product Vision, Project State, Roadmap and its governing RFC.
+1. Confirm the change is aligned with the current Founder instruction, Current State, Product Vision and the relevant `ACTIVE` RFCs, if any.
 2. Confirm the pull request head SHA is the reviewed SHA.
 3. Confirm all four required contexts are green on that exact SHA.
 4. Inspect Vercel Preview without creating or modifying Production data.
 5. Confirm no CI job received a hosted Production or Preview secret.
 6. For schema work, complete [Database Migrations](Database-Migrations.md) and [Backup and Restore](Backup-and-Restore.md) gates.
 7. Record risk, rollback trigger and post-release owner in the PR.
-8. Founder Office makes the merge decision. The implementing agent does not merge its delivery PR.
+8. Confirm current Founder/project execution authority covers the merge. Do not
+   require a second Founder decision when an explicit current instruction
+   already covers it. The implementing agent does not merge unless that current
+   instruction explicitly authorises the agent to do so.
 9. For BRAND-CUTOVER-01, Founder/Operations sets and verifies `NEXT_PUBLIC_SITE_URL`, `BETTER_AUTH_URL` and `BETTER_AUTH_TRUSTED_ORIGINS` as `https://b4gamble.com` in Production only before merge, without triggering a deployment or mutating the current Production application.
 
 ## Post-merge verification

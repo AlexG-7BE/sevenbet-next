@@ -1,5 +1,12 @@
 # Roadmap
 
+> **Governance notice:** this roadmap preserves delivery sequencing and
+> historical workstream boundaries. Read [Current State](CURRENT_STATE.md) and
+> [Decision & Documentation Governance](GOVERNANCE.md) for present authority.
+> Older `no merge`, `Preview only`, `no Production` and separate-review language
+> is contextual to the decision at that time, not a permanent veto over a newer
+> explicit Founder instruction.
+
 ## GB-PUBLIC-LEGAL-PACK-01 — P0 closure and controller approval
 
 - **PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** governing RFC-036; public copy/placement; non-duplicative footer; strictly-necessary-only runtime; explicit-evidence-only licence mapping; fail-closed commercial documentation.

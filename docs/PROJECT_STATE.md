@@ -1,5 +1,11 @@
 # Project State
 
+> **Governance notice:** this is a chronological delivery and evidence ledger,
+> not the normal present-state entry point. Read [Current State](CURRENT_STATE.md)
+> and [Decision & Documentation Governance](GOVERNANCE.md) first. Historical
+> merge, Preview, Production and RFC scope statements retain their original
+> meaning but do not override a newer explicit Founder decision.
+
 ## GB-PUBLIC-LEGAL-PACK-01 Founder closeout candidate — 2026-08-19
 
 - **Detected — PUBLIC LEGAL IMPLEMENTATION: COMPLETE:** Draft PR #78 on `codex/public-legal-pack-gb-01` remains governed by RFC-036. Public Privacy, Terms, Affiliate Disclosure, non-duplicative footer, Programme consent/withdrawal, Google identity-only disclosure, commercial labels, necessary-only technology and fail-closed evidence rules are mapped and focused-testable.
