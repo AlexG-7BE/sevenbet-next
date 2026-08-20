@@ -10,9 +10,21 @@ const HOME_STACK_COMPOSITOR_FIX = `
   isolation: isolate;
 }
 
-[data-handoff-page="home"] [data-stackpanel] > div[style*="linear-gradient"] {
+/*
+ * The captured chapter cards animate a full-viewport photo continuously with a
+ * Ken Burns transform. In Chromium that layer can be partially discarded while
+ * the tab is backgrounded, then exposed as the panel's dark background for one
+ * or two frames on resume. The same layer stack can also show a horizontal tile
+ * seam while scrolling. Keep the chapter composition static; the sticky card
+ * transition remains intact and the visual crop is unchanged.
+ */
+[data-handoff-page="home"] [data-stackpanel] > div:first-child {
+  animation: none !important;
+}
+
+[data-handoff-page="home"] [data-stackpanel] [data-home-media="chapter"],
+[data-handoff-page="home"] [data-stackpanel] [data-home-media="chapter"] img {
   backface-visibility: hidden;
-  transform: translate3d(0, 0, 0);
 }
 `;
 
@@ -35,10 +47,6 @@ export function HandoffPage({
   const commonHtml = transformCommonHandoff(page.html);
   const html = transform ? transform(commonHtml) : commonHtml;
   const sourceCss = cssTransform ? cssTransform(page.css) : page.css;
-  // Chrome can expose a raster-tile seam for one frame when the static gradient
-  // sits above the continuously transformed photo inside a sticky clipped panel.
-  // Keep that overlay in a stable isolated compositor layer without changing the
-  // captured handoff markup or the visual treatment.
   const css = name === "home" ? `${sourceCss}\n${HOME_STACK_COMPOSITOR_FIX}` : sourceCss;
 
   return (
