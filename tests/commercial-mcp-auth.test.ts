@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { normalizeCommercialMcpAuthorizationRequest } from "../lib/mcp/commercial/authorization-request";
 import {
   commercialMcpAuthorizationServerMetadata,
   commercialMcpProtectedResourceMetadata,
@@ -92,6 +93,25 @@ test("DCR accepts only current ChatGPT callback shapes", () => {
   assert.equal(isAllowedChatGptRedirect("https://chatgpt.com/connector/oauth/abcdefgh"), true);
   assert.equal(isAllowedChatGptRedirect("https://evil.example/connector/oauth/abcdefgh"), false);
   assert.equal(isAllowedChatGptRedirect("https://chatgpt.com/connector/oauth/abcdefgh?next=evil"), false);
+});
+
+test("ChatGPT authorize presentation extensions are ignored without changing authority bindings", () => {
+  const codeChallenge = "A".repeat(43);
+  const request = new Request(
+    `https://b4gamble.com/api/mcp/oauth/authorize?response_type=code&client_id=chatgpt-client&redirect_uri=${encodeURIComponent("https://chatgpt.com/connector/oauth/abcdefgh")}&scope=${encodeURIComponent("commercial:read commercial:safe_write offline_access")}&state=oauth_s_fixture&code_challenge=${codeChallenge}&code_challenge_method=S256&resource=${encodeURIComponent(config.resource)}&ui_locales=ru-RU&response_mode=query&audience=${encodeURIComponent("https://attacker.invalid")}`,
+  );
+  const normalized = new URL(normalizeCommercialMcpAuthorizationRequest(request).url);
+
+  assert.equal(normalized.searchParams.get("response_type"), "code");
+  assert.equal(normalized.searchParams.get("client_id"), "chatgpt-client");
+  assert.equal(normalized.searchParams.get("redirect_uri"), "https://chatgpt.com/connector/oauth/abcdefgh");
+  assert.equal(normalized.searchParams.get("resource"), config.resource);
+  assert.equal(normalized.searchParams.get("state"), "oauth_s_fixture");
+  assert.equal(normalized.searchParams.get("code_challenge"), codeChallenge);
+  assert.equal(normalized.searchParams.get("code_challenge_method"), "S256");
+  assert.equal(normalized.searchParams.has("ui_locales"), false);
+  assert.equal(normalized.searchParams.has("response_mode"), false);
+  assert.equal(normalized.searchParams.has("audience"), false);
 });
 
 test("valid commercial staff token is accepted for read and safe write", () => {
