@@ -5,12 +5,21 @@ export function createCspNonce() {
   return crypto.randomUUID();
 }
 
+function normalizeFormActionOrigin(value: string) {
+  const url = new URL(value);
+  if (url.protocol !== "https:" || url.origin !== value) {
+    throw new Error("Invalid CSP form-action origin");
+  }
+  return url.origin;
+}
+
 export function buildContentSecurityPolicy(
   nonce: string,
-  options: { development?: boolean } = {},
+  options: { development?: boolean; formActionOrigins?: readonly string[] } = {},
 ) {
   if (!nonce || /[<>&'";\s]/.test(nonce)) throw new Error("Invalid CSP nonce");
   const development = options.development ?? false;
+  const formActionOrigins = (options.formActionOrigins ?? []).map(normalizeFormActionOrigin);
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}`,
@@ -26,7 +35,7 @@ export function buildContentSecurityPolicy(
     "manifest-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'",
+    `form-action 'self'${formActionOrigins.length ? ` ${formActionOrigins.join(" ")}` : ""}`,
     "frame-ancestors 'none'",
     ...(development ? [] : ["upgrade-insecure-requests"]),
   ];

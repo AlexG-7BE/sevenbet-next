@@ -7,7 +7,11 @@ import { AdminAccessDenied } from "@/components/admin/AdminAccessDenied";
 import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied";
 import { Badge, Card, Container } from "@/components/ui";
 import { getServerSession } from "@/lib/auth/session";
-import { getCurrentStaff } from "@/lib/auth/staff";
+import { getCurrentStaffFromSession } from "@/lib/auth/staff";
+import {
+  areAllowedCommercialMcpConsentHeaders,
+  commercialMcpInternalAuthHeaders,
+} from "@/lib/mcp/commercial/consent-browser";
 import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { getCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
 
@@ -25,28 +29,34 @@ export default async function CommercialMcpConsentPage({
 }) {
   const params = await searchParams;
   const requestHeaders = await headers();
-  const session = await getServerSession(requestHeaders);
-  const staff = await getCurrentStaff(requestHeaders);
   const oauthQuery = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (Array.isArray(value)) value.forEach((item) => oauthQuery.append(key, item));
     else if (value) oauthQuery.set(key, value);
   }
   const returnTo = `/admin/integrations/chatgpt-work/consent?${oauthQuery}`;
-
-  if (!session) redirect(`/admin/integrations/chatgpt-work/login?returnTo=${encodeURIComponent(returnTo)}`);
-  if (!staff) return <AdminAccessDenied />;
-  if (!staff.permissions.includes("affiliate.manage")) return <AdminPermissionDenied />;
-
   const requestUrl = `${requestHeaders.get("x-forwarded-proto") ?? "https"}://${requestHeaders.get("host") ?? "b4gamble.com"}${returnTo}`;
   const config = resolveCommercialMcpConfig(requestUrl);
   if (!config) {
     const response = commercialMcpDisabledResponse();
     return <CommercialMcpConsentError message={(await response.json()).error_description} />;
   }
+
+  if (!areAllowedCommercialMcpConsentHeaders(requestHeaders, config.issuer)) {
+    return <CommercialMcpConsentError message="This authorization request came from an untrusted browser origin." />;
+  }
+
+  const authHeaders = commercialMcpInternalAuthHeaders(requestHeaders, config.issuer);
+  const session = await getServerSession(authHeaders);
+  const staff = await getCurrentStaffFromSession(session);
+
+  if (!session) redirect(`/admin/integrations/chatgpt-work/login?returnTo=${encodeURIComponent(returnTo)}`);
+  if (!staff) return <AdminAccessDenied />;
+  if (!staff.permissions.includes("affiliate.manage")) return <AdminPermissionDenied />;
+
   let consent;
   try {
-    consent = await getCommercialMcpConsent(oauthQuery.toString(), session.user.id, config, requestHeaders);
+    consent = await getCommercialMcpConsent(oauthQuery.toString(), session.user.id, config, authHeaders);
   } catch {
     return <CommercialMcpConsentError message="This authorization request is invalid, expired, or does not belong to this staff account." />;
   }

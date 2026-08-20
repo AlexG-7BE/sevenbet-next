@@ -3,6 +3,12 @@ import test from "node:test";
 
 import { normalizeCommercialMcpAuthorizationRequest } from "../lib/mcp/commercial/authorization-request";
 import {
+  areAllowedCommercialMcpConsentHeaders,
+  CHATGPT_WORK_BROWSER_ORIGIN,
+  commercialMcpInternalAuthHeaders,
+  isAllowedCommercialMcpConsentOrigin,
+} from "../lib/mcp/commercial/consent-browser";
+import {
   commercialMcpAuthorizationServerMetadata,
   commercialMcpProtectedResourceMetadata,
   resolveCommercialMcpConfig,
@@ -13,6 +19,7 @@ import {
   validateCommercialMcpTokenRecord,
 } from "../lib/mcp/commercial/oauth-policy";
 import { resolveCommercialMcpProviderResource } from "../lib/mcp/commercial/provider";
+import { buildContentSecurityPolicy } from "../lib/security/content-security-policy";
 
 const config = resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
   COMMERCIAL_MCP_ENABLED: "true",
@@ -112,6 +119,56 @@ test("ChatGPT authorize presentation extensions are ignored without changing aut
   assert.equal(normalized.searchParams.has("ui_locales"), false);
   assert.equal(normalized.searchParams.has("response_mode"), false);
   assert.equal(normalized.searchParams.has("audience"), false);
+});
+
+test("Commercial MCP consent accepts only issuer or exact ChatGPT browser origin and sanitizes Better Auth reads", () => {
+  assert.equal(isAllowedCommercialMcpConsentOrigin(null, config.issuer), true);
+  assert.equal(isAllowedCommercialMcpConsentOrigin("https://b4gamble.com", config.issuer), true);
+  assert.equal(isAllowedCommercialMcpConsentOrigin("https://chatgpt.com/", config.issuer), true);
+  assert.equal(isAllowedCommercialMcpConsentOrigin("https://chatgpt.com.evil.example", config.issuer), false);
+  assert.equal(isAllowedCommercialMcpConsentOrigin("https://evil.example", config.issuer), false);
+  assert.equal(isAllowedCommercialMcpConsentOrigin("not-a-url", config.issuer), false);
+
+  const headers = new Headers({
+    origin: "https://chatgpt.com/",
+    referer: "https://chatgpt.com/plugins",
+    cookie: "session=fixture",
+  });
+  assert.equal(areAllowedCommercialMcpConsentHeaders(headers, config.issuer), true);
+  const internal = commercialMcpInternalAuthHeaders(headers, config.issuer);
+  assert.equal(internal.get("origin"), config.issuer);
+  assert.equal(internal.get("referer"), `${config.issuer}/`);
+  assert.equal(internal.get("cookie"), "session=fixture");
+  assert.equal(headers.get("origin"), "https://chatgpt.com/");
+  assert.equal(headers.get("referer"), "https://chatgpt.com/plugins");
+  assert.equal(CHATGPT_WORK_BROWSER_ORIGIN, "https://chatgpt.com");
+
+  const navigationHeaders = new Headers({ referer: "https://chatgpt.com/" });
+  assert.equal(areAllowedCommercialMcpConsentHeaders(navigationHeaders, config.issuer), true);
+  assert.equal(commercialMcpInternalAuthHeaders(navigationHeaders, config.issuer).get("referer"), `${config.issuer}/`);
+
+  assert.equal(
+    areAllowedCommercialMcpConsentHeaders(new Headers({ referer: "https://chatgpt.com.evil.example/" }), config.issuer),
+    false,
+  );
+  assert.throws(
+    () => commercialMcpInternalAuthHeaders(new Headers({ origin: "https://attacker.invalid" }), config.issuer),
+    /Untrusted Commercial MCP consent origin/,
+  );
+});
+
+test("Commercial MCP consent CSP allows the exact ChatGPT return only when explicitly requested", () => {
+  const defaultPolicy = buildContentSecurityPolicy("nonce-fixture");
+  const consentPolicy = buildContentSecurityPolicy("nonce-fixture", {
+    formActionOrigins: [CHATGPT_WORK_BROWSER_ORIGIN],
+  });
+  assert.match(defaultPolicy, /form-action 'self'(?:;|$)/);
+  assert.equal(defaultPolicy.includes(CHATGPT_WORK_BROWSER_ORIGIN), false);
+  assert.match(consentPolicy, /form-action 'self' https:\/\/chatgpt\.com(?:;|$)/);
+  assert.throws(
+    () => buildContentSecurityPolicy("nonce-fixture", { formActionOrigins: ["https://chatgpt.com/path"] }),
+    /Invalid CSP form-action origin/,
+  );
 });
 
 test("valid commercial staff token is accepted for read and safe write", () => {
