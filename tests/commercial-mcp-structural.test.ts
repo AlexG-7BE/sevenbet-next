@@ -88,6 +88,12 @@ test("OAuth migration preserves 0021 and adds the bounded 1.7 protected-resource
   assert.match(migration0022, /CREATE TABLE "oauthResource"/);
   assert.match(migration0022, /CREATE TABLE "oauthClientResource"/);
   assert.match(migration0022, /"clientCredentialsScopes" TEXT\[\] NOT NULL DEFAULT ARRAY\[\]::TEXT\[\]/);
+  assert.match(migration0022, /CREATE FUNCTION "prepare_better_auth_oauth_client_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthClient_prepare_compat"/);
+  assert.match(migration0022, /CREATE FUNCTION "sync_better_auth_oauth_client_resource_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthClient_resource_compat"/);
+  assert.match(migration0022, /clientCredentialsScopes/);
+  assert.match(migration0022, /b4gambleMcpResource/);
   assert.match(migration0022, /CREATE FUNCTION "set_better_auth_oauth_resource_compat"/);
   assert.match(migration0022, /client must have exactly one enabled resource/);
   assert.match(migration0022, /resource does not match client authority/);
