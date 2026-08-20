@@ -295,6 +295,13 @@ DECLARE
   resource_identifier TEXT;
   conflicting_relations INTEGER;
 BEGIN
+  -- Only legacy 1.6 public clients need database-side relation materialisation.
+  -- Better Auth 1.7 clients leave the legacy public column NULL and the
+  -- provider owns their oauthClientResource write itself.
+  IF NEW."public" IS DISTINCT FROM true THEN
+    RETURN NEW;
+  END IF;
+
   resource_identifier := NEW."metadata" ->> 'b4gambleMcpResource';
 
   SELECT COUNT(*)
