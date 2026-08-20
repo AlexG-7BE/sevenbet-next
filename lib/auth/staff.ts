@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 
 import prisma from "@/lib/db/prisma";
 import type { CmsPermission } from "@/lib/cms/types";
-import { getServerSession } from "@/lib/auth/session";
+import { getServerSession, type ServerSession } from "@/lib/auth/session";
 import {
   AdminAuthError,
   getAdminAccessStatus,
@@ -21,9 +21,7 @@ type RequireStaffOptions = {
   callbackUrl?: string;
 };
 
-async function resolveStaff(requestHeaders?: Headers) {
-  const session = await getServerSession(requestHeaders);
-
+async function resolveStaffFromSession(session: ServerSession | null) {
   if (!session) {
     return { session: null, staff: null };
   }
@@ -46,10 +44,21 @@ async function resolveStaff(requestHeaders?: Headers) {
   };
 }
 
+async function resolveStaff(requestHeaders?: Headers) {
+  return resolveStaffFromSession(await getServerSession(requestHeaders));
+}
+
 export async function getCurrentStaff(
   requestHeaders?: Headers,
 ): Promise<StaffContext | null> {
   const { staff } = await resolveStaff(requestHeaders);
+  return staff;
+}
+
+export async function getCurrentStaffFromSession(
+  session: ServerSession | null,
+): Promise<StaffContext | null> {
+  const { staff } = await resolveStaffFromSession(session);
   return staff;
 }
 
