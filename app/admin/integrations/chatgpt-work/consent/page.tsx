@@ -9,8 +9,8 @@ import { Badge, Card, Container } from "@/components/ui";
 import { getServerSession } from "@/lib/auth/session";
 import { getCurrentStaffFromSession } from "@/lib/auth/staff";
 import {
+  areAllowedCommercialMcpConsentHeaders,
   commercialMcpInternalAuthHeaders,
-  isAllowedCommercialMcpConsentOrigin,
 } from "@/lib/mcp/commercial/consent-browser";
 import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { getCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
@@ -42,7 +42,7 @@ export default async function CommercialMcpConsentPage({
     return <CommercialMcpConsentError message={(await response.json()).error_description} />;
   }
 
-  if (!isAllowedCommercialMcpConsentOrigin(requestHeaders.get("origin"), config.issuer)) {
+  if (!areAllowedCommercialMcpConsentHeaders(requestHeaders, config.issuer)) {
     return <CommercialMcpConsentError message="This authorization request came from an untrusted browser origin." />;
   }
 
