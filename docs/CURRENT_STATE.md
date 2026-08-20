@@ -31,6 +31,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
+| ChatGPT Work MCP / Better Auth 1.7 | **CONTROLLED UPGRADE CANDIDATE — NOT PRODUCTION-APPLIED OR ENABLED** | The coordinated 1.7.1 code/schema candidate adds pending migration 0022 after the already-pending 0021. Production remains through 0020 and the MCP feature remains off. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
 
 ## Detected release evidence
@@ -105,6 +106,14 @@ Execution sequence on 20 August 2026:
 7. Final cleanup application/runtime baseline SHA is `f6f520340d67e4f2aac44142437962b287794a66` and verified post-cleanup deployment `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY.
 
 The normal Vercel preflight is readiness-only again. This event does not establish a permanent automatic Production migration policy.
+
+## Pending Better Auth 1.7 coordinated upgrade
+
+**DETECTED — CANDIDATE ONLY:** `PARTNER-OPS-WORK-BRIDGE-02` aligns `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` at stable `1.7.1`, replaces the old `validAudiences` configuration with one provider-owned protected Commercial resource, adds deterministic credential/Google account issuer migration, and keeps the existing four-tool DCR bridge authority unchanged. Migration `0021_partner_ops_work_bridge_01` remains immutable and not Production-applied; new migration `0022_better_auth_17_schema_upgrade` is also not Production-applied.
+
+The candidate requires migration-before-code release sequencing because the 1.7 application requires schema 0022. Production remains on the current application/schema through 0020, `COMMERCIAL_MCP_ENABLED` remains false, and this current-state note is not merge, migration, deploy or enablement authority.
+
+**DETECTED — PUBLIC READ-ONLY CHECK, 2026-08-20:** both Production OAuth metadata routes returned fail-closed HTTP 503 `Commercial MCP is not configured`. This confirms the public bridge remains disabled; it does not independently inspect the private Vercel environment value or database migration table. The last authorised direct migration evidence remains the verified 0020 execution above; no authorised direct Production database read path was used in this consolidation task.
 
 ## Production acceptance after Commercial Ops migration
 

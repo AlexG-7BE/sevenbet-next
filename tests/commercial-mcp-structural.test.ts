@@ -35,15 +35,22 @@ test("stable OAuth Provider owns protocol issuance, rotation, and revocation", a
   const packageJson = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8")) as { dependencies: Record<string, string> };
   const authConfig = await readFile(new URL("../lib/auth/config.ts", import.meta.url), "utf8");
   const oauth = await readFile(new URL("../lib/mcp/commercial/oauth.ts", import.meta.url), "utf8");
-  assert.equal(packageJson.dependencies["better-auth"], "1.6.30");
-  assert.equal(packageJson.dependencies["@better-auth/oauth-provider"], "1.6.30");
+  assert.equal(packageJson.dependencies["better-auth"], "1.7.1");
+  assert.equal(packageJson.dependencies["@better-auth/core"], "1.7.1");
+  assert.equal(packageJson.dependencies["@better-auth/oauth-provider"], "1.7.1");
   assert.match(authConfig, /oauthProvider\(\{/);
   assert.match(authConfig, /disableJwtPlugin: true/);
   assert.match(authConfig, /storeTokens: commercialMcpProviderTokenStorage/);
-  assert.match(authConfig, /validAudiences: \[commercialMcpResource\]/);
+  assert.match(authConfig, /resources: \[/);
+  assert.match(authConfig, /clientRegistrationDefaultResources: \[commercialMcpResource\]/);
+  assert.match(authConfig, /clientRegistrationAllowedResources: \[commercialMcpResource\]/);
+  assert.match(authConfig, /enforcePerClientResources: true/);
+  assert.match(authConfig, /refreshTokenReuseInterval: 0/);
+  assert.doesNotMatch(authConfig, /validAudiences/);
   assert.doesNotMatch(authConfig, /from ["']better-auth\/plugins["']/);
   assert.match(oauth, /"\/oauth2\/token"/);
   assert.match(oauth, /"\/oauth2\/revoke"/);
+  assert.match(oauth, /value\.resource\[0\] !== config\.resource/);
 });
 
 test("no reusable token is stored or queried through a plaintext field", async () => {
@@ -65,16 +72,38 @@ test("CRM repository records delegated Agent truth and never mutates affiliate r
   assert.doesNotMatch(repository, /affiliateProgram\.(update|create)|affiliateOffer\.(update|create)|affiliateTrackingLink\.(update|create)/);
 });
 
-test("OAuth migration is one additive provider migration", async () => {
-  const migration = await readFile(new URL("../prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql", import.meta.url), "utf8");
+test("OAuth migration preserves 0021 and adds the bounded 1.7 protected-resource upgrade in 0022", async () => {
+  const migration0021 = await readFile(new URL("../prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql", import.meta.url), "utf8");
+  const migration0022 = await readFile(new URL("../prisma/migrations/0022_better_auth_17_schema_upgrade/migration.sql", import.meta.url), "utf8");
   const schema = await readFile(new URL("../prisma/schema.prisma", import.meta.url), "utf8");
-  assert.match(migration, /CREATE TABLE "oauthClient"/);
-  assert.match(migration, /CREATE TABLE "oauthRefreshToken"/);
-  assert.match(migration, /CREATE TABLE "oauthAccessToken"/);
-  assert.match(migration, /CREATE TABLE "oauthConsent"/);
-  assert.match(migration, /CREATE TABLE "CommercialMcpRateLimitBucket"/);
-  assert.doesNotMatch(migration, /DROP|TRUNCATE|DELETE FROM|ALTER COLUMN/i);
+  assert.match(migration0021, /CREATE TABLE "oauthClient"/);
+  assert.match(migration0021, /CREATE TABLE "oauthRefreshToken"/);
+  assert.match(migration0021, /CREATE TABLE "oauthAccessToken"/);
+  assert.match(migration0021, /CREATE TABLE "oauthConsent"/);
+  assert.match(migration0021, /CREATE TABLE "CommercialMcpRateLimitBucket"/);
+  assert.doesNotMatch(migration0021, /DROP|TRUNCATE|DELETE FROM|ALTER COLUMN/i);
+  assert.match(migration0022, /ADD COLUMN "issuer" TEXT/);
+  assert.match(migration0022, /local:credential/);
+  assert.match(migration0022, /https:\/\/accounts\.google\.com/);
+  assert.match(migration0022, /CREATE TABLE "oauthResource"/);
+  assert.match(migration0022, /CREATE TABLE "oauthClientResource"/);
+  assert.match(migration0022, /"clientCredentialsScopes" TEXT\[\] NOT NULL DEFAULT ARRAY\[\]::TEXT\[\]/);
+  assert.match(migration0022, /CREATE FUNCTION "prepare_better_auth_oauth_client_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthClient_prepare_compat"/);
+  assert.match(migration0022, /CREATE FUNCTION "sync_better_auth_oauth_client_resource_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthClient_resource_compat"/);
+  assert.match(migration0022, /clientCredentialsScopes/);
+  assert.match(migration0022, /b4gambleMcpResource/);
+  assert.match(migration0022, /CREATE FUNCTION "set_better_auth_oauth_resource_compat"/);
+  assert.match(migration0022, /client must have exactly one enabled resource/);
+  assert.match(migration0022, /resource does not match client authority/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthRefreshToken_resource_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthAccessToken_resource_compat"/);
+  assert.match(migration0022, /CREATE TRIGGER "oauthConsent_resource_compat"/);
+  assert.doesNotMatch(migration0022, /DROP TABLE|TRUNCATE|DELETE FROM/i);
   assert.match(schema, /model OauthClient[\s\S]*@@map\("oauthClient"\)/);
+  assert.match(schema, /model OauthResource[\s\S]*@@map\("oauthResource"\)/);
+  assert.match(schema, /model OauthClientResource[\s\S]*@@map\("oauthClientResource"\)/);
   assert.match(schema, /model OauthRefreshToken[\s\S]*@@map\("oauthRefreshToken"\)/);
   assert.match(schema, /model OauthAccessToken[\s\S]*@@map\("oauthAccessToken"\)/);
   assert.match(schema, /model OauthConsent[\s\S]*@@map\("oauthConsent"\)/);

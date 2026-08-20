@@ -316,6 +316,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
     const approvedExactSchemaChangeSets = [
       ["prisma/migrations/0020_commercial_ops_01/migration.sql", "prisma/schema.prisma"],
       ["prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql", "prisma/schema.prisma"],
+      ["prisma/migrations/0022_better_auth_17_schema_upgrade/migration.sql", "prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(
       (approved) => JSON.stringify(schemaChanges) === JSON.stringify(approved),

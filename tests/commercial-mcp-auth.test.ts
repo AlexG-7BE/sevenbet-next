@@ -25,12 +25,14 @@ const token = {
   userId: "staff-user-id",
   sessionId: "staff-session-id",
   scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
+  resources: [config.resource],
   expiresAt: new Date("2026-08-20T12:00:00.000Z"),
+  revoked: null,
   session: { expiresAt: new Date("2026-08-20T14:00:00.000Z") },
   client: {
     disabled: false,
-    public: true,
     tokenEndpointAuthMethod: "none",
+    applicationType: "web",
     metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource },
   },
 };
@@ -40,6 +42,7 @@ test("OAuth discovery advertises PKCE, DCR, refresh, revocation, resource, and e
   const server = commercialMcpAuthorizationServerMetadata(config);
   const resource = commercialMcpProtectedResourceMetadata(config);
   assert.deepEqual(server.code_challenge_methods_supported, ["S256"]);
+  assert.equal(server.authorization_response_iss_parameter_supported, true);
   assert.deepEqual(server.grant_types_supported, ["authorization_code", "refresh_token"]);
   assert.equal(server.token_endpoint_auth_methods_supported.includes("none"), true);
   assert.equal(server.scopes_supported.includes("commercial:admin"), false);
@@ -81,6 +84,11 @@ test("staff without affiliate.manage is denied", () => {
 
 test("expired and revoked access tokens are denied", () => {
   assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, config, undefined, new Date("2026-08-20T13:00:00.000Z")), /expired/);
+  assert.throws(() => validateCommercialMcpTokenRecord({
+    ...token,
+    session: { expiresAt: new Date("2026-08-20T09:00:00.000Z") },
+  }, commercialStaff, config, undefined, new Date("2026-08-20T10:00:00.000Z")), /invalid or expired/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, revoked: new Date("2026-08-20T11:00:00.000Z") }, commercialStaff, config), /invalid or expired/);
   assert.throws(() => validateCommercialMcpTokenRecord(null, commercialStaff, config), /invalid or expired/);
 });
 
@@ -91,6 +99,7 @@ test("wrong issuer audience or resource binding is denied", () => {
   });
   assert.ok(wrongIssuerConfig);
   assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, wrongIssuerConfig), /wrong resource/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, resources: ["https://b4gamble.com/api/mcp/other"] }, commercialStaff, config), /wrong resource/);
   assert.throws(() => validateCommercialMcpTokenRecord({ ...token, client: { ...token.client, metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: "https://b4gamble.com/api/mcp/other" } } }, commercialStaff, config), /wrong resource/);
 });
 

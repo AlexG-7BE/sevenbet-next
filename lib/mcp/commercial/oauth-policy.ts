@@ -87,12 +87,14 @@ export function validateCommercialMcpTokenRecord(
     userId: string | null;
     sessionId: string | null;
     scopes: string[];
+    resources: string[];
     expiresAt: Date;
+    revoked: Date | null;
     session: { expiresAt: Date } | null;
     client: {
       disabled: boolean | null;
-      public: boolean | null;
       tokenEndpointAuthMethod: string | null;
+      applicationType: string | null;
       metadata: unknown;
     };
   } | null,
@@ -101,10 +103,24 @@ export function validateCommercialMcpTokenRecord(
   requiredScope?: (typeof COMMERCIAL_MCP_SCOPES)[number],
   now = new Date(),
 ): CommercialMcpTokenContext {
-  if (!token || token.expiresAt <= now || !token.sessionId || !token.session || token.session.expiresAt <= now) {
+  if (
+    !token
+    || token.expiresAt <= now
+    || token.revoked !== null
+    || !token.sessionId
+    || !token.session
+    || token.session.expiresAt <= now
+  ) {
     throw new CommercialMcpAuthError("Bearer token is invalid or expired", 401, "invalid_token", requiredScope);
   }
-  if (token.client.disabled || token.client.public !== true || token.client.tokenEndpointAuthMethod !== "none") {
+  if (token.resources.length !== 1 || token.resources[0] !== config.resource) {
+    throw new CommercialMcpAuthError("Bearer token has the wrong resource", 401, "invalid_token", requiredScope);
+  }
+  if (
+    token.client.disabled
+    || token.client.tokenEndpointAuthMethod !== "none"
+    || token.client.applicationType !== "web"
+  ) {
     throw new CommercialMcpAuthError("OAuth client is disabled", 401, "invalid_token", requiredScope);
   }
   const metadata = parseCommercialMcpClientMetadata(token.client.metadata);

@@ -116,12 +116,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/core": "1.6.30",
-    "@better-auth/oauth-provider": "1.6.30",
+    "@better-auth/core": "1.7.1",
+    "@better-auth/oauth-provider": "1.7.1",
     "@better-auth/utils": "0.4.2",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@prisma/client": "^6.19.3",
-    "better-auth": "1.6.30",
+    "better-auth": "1.7.1",
     "next": "15.5.21",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

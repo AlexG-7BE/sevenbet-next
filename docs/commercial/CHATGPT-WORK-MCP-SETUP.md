@@ -1,6 +1,6 @@
 # B4GAMBLE Commercial Ops — ChatGPT Work MCP setup
 
-This runbook connects the Production Commercial CRM custom MCP app after the bridge PR is merged, migration `0021_partner_ops_work_bridge_01` is explicitly authorised/applied, and the feature flag is enabled.
+This runbook connects the Production Commercial CRM custom MCP app only after the coordinated Better Auth 1.7 release is merged, migrations `0021_partner_ops_work_bridge_01` and `0022_better_auth_17_schema_upgrade` are explicitly authorised and applied in that order, the 1.7 application is verified, and the feature flag is enabled.
 
 ## Exact connection values
 
@@ -12,19 +12,53 @@ This runbook connects the Production Commercial CRM custom MCP app after the bri
 | Authentication | OAuth 2.1 authorization code with PKCE S256 |
 | Scopes | `commercial:read commercial:safe_write offline_access` |
 | Client registration | ChatGPT public-client Dynamic Client Registration (DCR) |
-| OAuth provider | Better Auth `1.6.30` + `@better-auth/oauth-provider` `1.6.30` |
+| OAuth provider | `better-auth` `1.7.1` + `@better-auth/core` `1.7.1` + `@better-auth/oauth-provider` `1.7.1` |
 
-ChatGPT supports both Client ID Metadata Documents (CIMD) and DCR. This implementation currently uses DCR, with callback allowlisting and a public client that has no client secret. Do not enter or paste an API key, shared secret, OAuth credential, legacy Preview token or manually invented OAuth endpoint into ChatGPT. Discovery supplies the authorization, registration, token and revocation endpoints from the MCP URL.
+ChatGPT supports both Client ID Metadata Documents (CIMD) and DCR. OpenAI now prefers CIMD where the authorization server supports it, but continues to support DCR. This coordinated upgrade retains the existing bounded DCR route because it is already constrained and tested, while a CIMD change would introduce a second client-identification architecture beyond this dependency/schema upgrade. DCR remains explicitly enabled, callback-allowlisted and public, with no client secret or client-credentials grant. Any later CIMD adoption needs a separate review. Do not enter or paste an API key, shared secret, OAuth credential, legacy Preview token or manually invented OAuth endpoint into ChatGPT. Discovery supplies the authorization, registration, token and revocation endpoints from the MCP URL.
 
 DCR creates only a zero-authority public-client record. Commercial access exists only after PKCE S256 authorization, an authenticated `User` linked to `AdminUser`, live `affiliate.manage`, explicit consent and a granted Commercial scope.
 
-## Release prerequisites
+## Controlled Production release procedure
 
-1. Review and merge the implementation PR.
-2. Obtain a separate Founder GO for the additive Production migration.
-3. Apply `0021_partner_ops_work_bridge_01` through the normal migration process. Do not use `prisma migrate reset`.
-4. Configure `COMMERCIAL_MCP_ENABLED=true` in Production through the normal controlled environment process, then deploy. `COMMERCIAL_MCP_PUBLIC_ORIGIN` is optional in Production because the canonical origin is fixed to `https://b4gamble.com`; if set, it must be exactly that HTTPS origin.
-5. Confirm `GET https://b4gamble.com/.well-known/oauth-authorization-server` and `GET https://b4gamble.com/.well-known/oauth-protected-resource/api/mcp/commercial` return metadata. A disabled/unconfigured bridge returns `503` by design.
+**PROPOSED — REQUIRES `GO BRIDGE RELEASE`:** this is the complete migration-before-code procedure. It is not authority to merge, migrate, deploy, enable the MCP or write Production CRM data.
+
+### Phase 0 — precheck
+
+Record the exact reviewed PR head, current main SHA and current Production deployment SHA. Confirm `COMMERCIAL_MCP_ENABLED` remains false through fail-closed public metadata, verify existing auth smoke, and use the authorised migration runner to confirm Production is applied through exactly `0020_commercial_ops_01`. Stop before mutation if `_prisma_migrations` has any failed/unresolved row, an unexpected pending migration, a checksum mismatch, or contradictory schema/account evidence.
+
+### Phase 1 — database
+
+Keep the current Better Auth 1.6.30 application serving and MCP disabled. Through the existing controlled Production migration pattern, apply exactly `0021_partner_ops_work_bridge_01` then `0022_better_auth_17_schema_upgrade`. Do not use `prisma migrate reset` or `db push`. Verify both finished migration rows, checksums, Account issuer backfill invariants, OAuth/Commercial tables and representative row counts before continuing.
+
+### Phase 2 — auth pre-promotion verification
+
+While 1.6.30 still serves the expanded schema, verify an existing consumer credential account, Google account, Admin account and Programme access. Stop promotion on any identity, linking, session or permission regression.
+
+### Phase 3 — promote final 1.7 code
+
+Merge and promote only the exact reviewed SHA. Confirm the resulting Production deployment is READY and corresponds to that SHA.
+
+### Phase 4 — MCP still off
+
+With `COMMERCIAL_MCP_ENABLED=false`, reverify consumer email/password, Google identity-only semantics, Admin login/session, `affiliate.manage`, Programme auth/access and ordinary public routes. Do not proceed if any smoke fails.
+
+### Phase 5 — enable MCP
+
+Only after schema and Better Auth 1.7 runtime health are proven, set `COMMERCIAL_MCP_ENABLED=true` through the controlled Production environment process and deploy that configuration. `COMMERCIAL_MCP_PUBLIC_ORIGIN` is optional because Production is fixed to `https://b4gamble.com`; if set, it must be exactly that HTTPS origin.
+
+### Phase 6 — MCP protocol smoke
+
+Verify authorization-server discovery, protected-resource metadata, allowlisted DCR, PKCE S256, explicit consent, staff/`affiliate.manage`, `tools/list`, and exactly the four authorised tools. Confirm wrong-resource, consumer, unprivileged-staff and read-scope write attempts fail.
+
+### Phase 7 — one real CRM smoke
+
+Through ChatGPT Work and the MCP, create one harmless, clearly identifiable real Commercial prospect with bounded public evidence and stable idempotency keys. Verify the complete Work → OAuth → MCP → Commercial Service → Commercial Repository → CRM path and an idempotent replay. Use only a normal supported CRM archive/delete operation if one actually exists and is safe; otherwise retain and label the record honestly. Do not invent deletion capability.
+
+### Phase 8 — Partner Operations
+
+Only after the real smoke passes, begin `PARTNER-OPS-01` first-20 prospect sourcing under its existing evidence and authority boundaries.
+
+The order is intentional: Better Auth 1.7 requires `Account.issuer` and the 1.7 OAuth resource/token schema, so the new application is not safe against a database through only 0020 or 0021. Conversely, 0022 retains the 1.6 OAuth compatibility columns and adds a narrow credential/Google issuer trigger, so the existing 1.6 application remains safe during the migration-before-code window while the MCP feature is off.
 
 ## Create the ChatGPT custom app
 
@@ -89,7 +123,7 @@ In a new Work conversation where the app is enabled:
 
 The provider issues opaque tokens. It stores access tokens and refresh tokens only through its supported SHA-256/base64url protected-storage hook; the reusable values returned to ChatGPT are never stored in database fields or audit/log metadata. Authorization codes use the same protected provider storage. Every MCP request resolves the protected token record, expiry, live session, exact client/resource metadata, granted scope and current staff permission. Refresh rotation/replay handling and revocation are provider-owned.
 
-The current authorised dependency line is the latest stable Better Auth 1.6 release, `1.6.30`; 1.7 beta, RC and stable packages are out of scope. GitHub advisory `GHSA-p2fr-6hmx-4528` remains reported against `@better-auth/oauth-provider` 1.6.30 because that line does not fully bind multi-resource authorization requests. This bridge contains that upstream limitation with exactly one configured `validAudiences` value, an exact public `resource` check at authorization/token/revocation, client metadata bound to that same resource, opaque rather than self-contained access tokens, and a resource check on every use. Do not add another audience or reuse a DCR client across Production and Preview. Reassess the advisory before any later Better Auth upgrade or multi-resource design.
+The coordinated stable line is `better-auth` `1.7.1`, `@better-auth/core` `1.7.1` and `@better-auth/oauth-provider` `1.7.1`. Version 1.7 replaces `validAudiences` with provider-owned protected-resource, client-resource, authorization-code, token and consent bindings. `GHSA-p2fr-6hmx-4528` affects versions before `1.7.0-beta.4`; this stable line contains the fix. B4GAMBLE still configures exactly one resource, preserves it through authorization/token/refresh, validates the stored resource on every MCP request and binds each DCR client to the same application-owned resource metadata. Do not add another resource or reuse a DCR client across Production and Preview without a new review.
 
 ## Authority summary
 
