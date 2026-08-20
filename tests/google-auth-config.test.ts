@@ -31,7 +31,7 @@ test("Google authentication fails closed unless both credentials are complete", 
 
 test("Google uses Better Auth's bounded identity provider and safe linking options", () => {
   const config = readFileSync("lib/auth/config.ts", "utf8");
-  const provider = config.slice(config.indexOf("socialProviders"), config.indexOf("trustedOrigins"));
+  const provider = config.slice(config.indexOf("socialProviders"), config.indexOf("databaseHooks"));
   const route = readFileSync("app/api/auth/[...all]/route.ts", "utf8");
   const accessContract = readFileSync("lib/programme/access-contract.ts", "utf8");
   const accessPolicy = readFileSync("lib/auth/programme-access-policy.ts", "utf8");

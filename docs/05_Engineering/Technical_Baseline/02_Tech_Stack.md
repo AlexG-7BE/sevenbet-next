@@ -11,7 +11,7 @@
 | TypeScript | Detected `tsconfig.json`, `.ts/.tsx` source, `tsc --noEmit`. | Application, services and tests. |
 | CSS | Detected `app/globals.css` and component class names. | Global/class-based styling and responsive rules where authored. |
 | Prisma 6 + PostgreSQL | Detected package imports, `prisma/schema.prisma`, migrations and `lib/db/prisma.ts`. | ORM/client and persistence. |
-| Better Auth 1.6.23 | Detected imports/configuration and `/api/auth/[...all]`. | Email/password session authentication and admin staff resolution. |
+| Better Auth 1.6.30 + OAuth Provider 1.6.30 | Detected exact dependencies, imports/configuration, `/api/auth/[...all]` and the feature-gated Commercial MCP OAuth wrappers. | Email/password session authentication, admin staff resolution, and provider-owned OAuth code/opaque-token/refresh/revocation lifecycle for the bounded Commercial MCP resource. |
 | Vercel Analytics 2.0.1 | Detected exact dependency, root `Analytics` component, client/server imports and closed product-event contract. | Default-off page-view and bounded custom-event delivery when the exact public analytics flag is enabled. |
 | Playwright 1.61.1 resolved | Detected dev dependency, lockfile and browser suites. | Chromium browser testing; required OPS manifest uses an isolated local production build. |
 | ESLint 9.39.5 + eslint-config-next 15.5.21 | Detected exact dev dependencies and flat config. | Required static analysis with zero warnings. |

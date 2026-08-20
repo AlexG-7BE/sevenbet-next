@@ -1,9 +1,9 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** Approved for bounded implementation; Partner Operations application-adapter amendment approved
-- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01` instruction
+- **Status:** Approved for bounded implementation; Partner Operations application adapter and ChatGPT Work MCP bridge amendments approved
+- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01` and `PARTNER-OPS-WORK-BRIDGE-01` instructions
 - **Approved:** 2026-08-13
-- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, and one narrow application-side Partner Operations CRM executor
+- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, one narrow application-side Partner Operations CRM executor, and one separately authenticated Commercial CRM remote MCP adapter
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
@@ -23,7 +23,7 @@ B4GAMBLE will add a separate top-level `agents/` Node/TypeScript package for bou
 
 The system reads supplied evidence, analyses it and drafts a recommendation. It has no authority to publish, mutate repositories, change CMS content, send communications, activate affiliates, deploy, alter Production or act on a recommendation.
 
-This RFC does not authorise consumer product changes, page-structure changes, Programme progression or XP changes, authentication changes, database/schema/migration changes, commercial availability, affiliate activation, Production configuration, scheduled execution, external OAuth, a queue, a service, a dashboard, a vector database, memory persistence or autonomous recursion.
+At original approval this RFC did not authorise consumer product changes, page-structure changes, Programme progression or XP changes, authentication changes, database/schema/migration changes, commercial availability, affiliate activation, Production configuration, scheduled execution, external OAuth, a queue, a service, a dashboard, a vector database, memory persistence or autonomous recursion. Section 17 records the newer explicit Founder decision that supersedes only the bounded external-OAuth/MCP and additive-provider-storage parts of that ceiling.
 
 ## 2. Runtime isolation
 
@@ -191,7 +191,7 @@ Wave 1 input must be public, synthetic non-Production fixture content or explici
 
 The package includes no GitHub write, CMS write, email, deployment, database, affiliate, analytics, search-provider, Slack, Gmail, Calendar, GA4, Search Console, Everflow, Income Access, MyAffiliates, Ahrefs or Semrush integration. Public-web evidence may be gathered separately through an approved process and supplied as evidence; the agent itself has no web tool.
 
-Any future external tool must pass a separate RFC covering authority, authentication, data minimisation, approval/human review, provider contracts, logging, retention, error behaviour and kill switch. The internal Partner Operations CRM adapter approved below is not an external tool and does not broaden the package to arbitrary writes.
+Any future external tool requires explicit Founder authority and durable documentation covering authority, authentication, data minimisation, approval/human review, provider contracts, logging, retention, error behaviour and containment. The internal Partner Operations CRM adapter approved below is not an external tool. Section 17 documents the separately authorised, purpose-built external MCP adapter and does not broaden the package to arbitrary writes.
 
 ## 13. Structural verification and live evaluation
 
@@ -226,11 +226,11 @@ Across the three fixed-corpus runs, the bounded campaign executed 24 cases throu
 
 The package README documents architecture, trust boundaries, registry, model routing, result schema, a manual run, adding a specialist, structural tests, the later live smoke, security/privacy and future integrations.
 
-Adding a specialist requires a registry entry, purpose and prohibited actions, closed recommendation values, explicit default tier, shared-policy inheritance, structural tests and documentation. Adding a tool, persistent memory, autonomous orchestration, external integration, schedule or Production use requires a new approved RFC rather than a registry-only change.
+Adding a specialist requires a registry entry, purpose and prohibited actions, closed recommendation values, explicit default tier, shared-policy inheritance, structural tests and documentation. Adding a tool, persistent memory, autonomous orchestration, external integration, schedule or Production use requires a new approved RFC or newer explicit Founder instruction with the required durable amendment; a registry-only change is never sufficient.
 
 ## 15. Release boundary
 
-This package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / PARTNER-INTEL-EVAL-01 FIXED EIGHT-CASE CORPUS PASSED AT EXACT HEAD / 8 PASS / 0 REVIEW / 0 FAIL / HUMAN-REVIEWED QUALITY EVIDENCE COMPLETE / PRODUCTION / SCHEDULED / TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks, one authorised neutral connectivity smoke and bounded Partner Intelligence corpus campaign are recorded above. The isolated package has no public-web tool, partner contact or commercial activation authority, and full eight-specialist quality is not established.
+The isolated `agents/` package is `STRUCTURALLY COMPLETE / NEUTRAL LIVE SMOKE PASSED / PARTNER-INTEL-EVAL-01 FIXED EIGHT-CASE CORPUS PASSED AT EXACT HEAD / 8 PASS / 0 REVIEW / 0 FAIL / HUMAN-REVIEWED QUALITY EVIDENCE COMPLETE / PRODUCTION OR SCHEDULED EXECUTION NOT AUTHORISED / IN-PACKAGE TOOL ENABLEMENT NOT AUTHORISED`. Its structural checks, one authorised neutral connectivity smoke and bounded Partner Intelligence corpus campaign are recorded above. The isolated package has no public-web tool, partner contact or commercial activation authority, and full eight-specialist quality is not established. Section 17 authorises a separate application-side MCP adapter; it does not add tools to this package.
 
 PR #69 merged the isolated package to `main`. It remains undeployed, unscheduled and inactive in Production; merge did not authorise agent quality claims, tools, external integrations or Production use. Any later activation review must state implementation and dependency changes, evidence, architecture/privacy/security/compliance assessment, cost controls, unresolved issues, deviations and a `GO`/`STOP` recommendation.
 
@@ -246,6 +246,25 @@ Founder instruction on 2026-08-19 authorises one bounded expansion while preserv
 6. The application-side executor applies a closed operation union inside one transaction with idempotency and audit records. It may maintain profile facts, evidence, B2B contacts, research notes, tasks, next actions, drafts, supplied responses, evidenced received terms, stage proposals and preparation-only activation packets.
 7. The union contains no send, submit, approval, activation, term-acceptance, tracking, affiliate-record, jurisdiction, deployment or Production operation. Stage recommendations exclude `APPROVED` and `ACTIVE`; proposals create timeline entries rather than changing the CRM stage.
 
-This is a narrow internal write adapter, not autonomous sales or a general agent tool framework. No Gmail/OAuth, web tool, schedule, queue, memory, recursion, external communication or Production operator is added. Human approval and RFC-015 runtime readiness remain separate authorities.
+This is a narrow internal write adapter, not autonomous sales or a general agent tool framework. The `COMMERCIAL-OPS-01` amendment itself added no Gmail/OAuth, web tool, schedule, queue, memory, recursion, external communication or Production operator. Section 17 records the later bounded OAuth/MCP decision. Human approval and RFC-015 runtime readiness remain separate authorities.
 
 One non-personal Partner Operations connectivity smoke was executed under this amendment using the explicit bulk route. It completed `REVIEW` in one `gpt-5.6-luna` request with 1,461 input tokens, 331 output tokens, 1,792 total tokens and a `$0.003447` conservative upper bound. The empty relationship remained `UNKNOWN` and no external or database action was proposed or available. This is connectivity/evidence-discipline evidence only, not real-partner validation or authority.
+
+## 17. `PARTNER-OPS-WORK-BRIDGE-01` ChatGPT Work amendment
+
+Founder instruction on 2026-08-20 authorises one remote MCP application inside the existing B4GAMBLE application so an authorised ChatGPT Work Agent can read and perform strictly bounded safe writes to the Commercial CRM.
+
+1. The resource is `/api/mcp/commercial`, using official MCP stateless Streamable HTTP and exactly four purpose-built tools: list, get, possible-duplicate lookup, and one transactional research-bundle upsert. It is not a generic Admin, HTTP, SQL or Prisma surface.
+2. OAuth uses Better Auth `1.6.30` plus `@better-auth/oauth-provider` `1.6.30` with the existing staff identity. The provider owns authorization codes, PKCE S256, explicit consent, short-lived opaque access tokens, protected token storage, rotating refresh-token families and revocation. The application owns current ChatGPT public-client/callback policy, the exact resource, Commercial scopes and tool authorization. A valid consumer identity is insufficient; `AdminUser` and `affiliate.manage` are checked at authorization, token/refresh and resource use. DCR alone has zero Commercial authority.
+3. The existing consumer, Google identity-only, Admin session and Programme authentication semantics remain unchanged. The additive provider tables are `oauthClient`, `oauthRefreshToken`, `oauthAccessToken` and `oauthConsent`; reusable token/code values are never stored in plaintext. The MCP feature is explicitly gated and fails closed without affecting ordinary application startup or CRM use.
+4. The remote adapter is an external evidence-provider boundary. It accepts bounded claims and provenance, requires `observedAt` for public web, never stores page/mailbox archives, exposes no `sourceAuthority` input, and persists Work evidence authority as `null`.
+5. The write tool calls a strict Commercial service and then the existing Commercial repository. Every bundle/child has deterministic idempotency; a transaction owns the prospect, children, Agent run/operations and audit. Exact display-and-legal identity may update; uncertain identity returns `POSSIBLE_DUPLICATE` without a write unless uncertainty is explicitly linked, never merged.
+6. Safe authority is limited to prospect identity/profile, evidence, evidenced B2B contacts, research notes, tasks, next action, draft/prepared application material, draft outreach, evidenced `PROPOSED`/`RECEIVED` terms, qualification and `QUALIFIED`/`APPLICATION_READY` proposals, and activation preparation capped at `READY_FOR_FOUNDER_REVIEW`.
+7. There is no schema/tool/operation for `APPROVED`, `ACTIVE`, email send, application submit, terms acceptance/confirmation, tracking/programme/offer activation, canonical commercial-runtime mutation, jurisdiction, deployment or Production administration. Proposed pipeline states create review records and do not become stage mutations.
+8. Audit truth records `PARTNER_OPERATIONS_AGENT`, the authenticated staff delegator, OAuth client/integration, MCP channel, timestamps, entity/evidence IDs and idempotency/result metadata. Tokens, refresh tokens, authorization codes and secrets are excluded.
+9. The bridge imports no Programme/private/help/vulnerability domain and cannot perform customer-level targeting. RFC-015 remains the independent activation/readiness authority and RFC-017 remains the commercial firewall.
+10. The isolated `agents/` package remains tool-free. ChatGPT Work performs its separately governed web/Gmail research and supplies bounded evidence to the application MCP adapter; B4GAMBLE does not gain a Gmail connector, autonomous crawler, schedule, queue, recursion or general Agent platform.
+
+11. Stable OAuth Provider 1.6.30 remains subject to `GHSA-p2fr-6hmx-4528` for incomplete multi-resource binding. This amendment authorises one audience only: the exact Commercial MCP resource is the sole `validAudiences` entry, is bound into application-owned client metadata, is checked at public authorization/token/revocation wrappers, and is checked again with the protected opaque token on every resource request. A second audience, multi-resource client or cross-environment client reuse is not authorised without a new review.
+
+This amendment supersedes the original RFC-027 no-external-OAuth ceiling only for this resource and authority set. Any broader tool, external action, commercial-runtime authority or Production operator requires new explicit Founder authority.

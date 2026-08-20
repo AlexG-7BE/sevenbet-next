@@ -16,7 +16,7 @@ function hasOAuthAccountMaterial(account: AccountWrite) {
 }
 
 /**
- * Better Auth 1.6.23 passes only partial data to account.update.before, so an
+ * Better Auth 1.6.x passes only partial data to account.update.before, so an
  * OAuth token update does not always carry providerId. Google is the only
  * configured social provider; credential password writes carry no OAuth
  * fields and are explicitly preserved.

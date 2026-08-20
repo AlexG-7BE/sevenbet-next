@@ -13,7 +13,7 @@ test("recovery verification derives the exact repository migration set", () => {
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
   assert.ok(names.includes("0019_programme_runtime_hardening"));
-  assert.equal(names.at(-1), "0020_commercial_ops_01");
+  assert.equal(names.at(-1), "0021_partner_ops_work_bridge_01");
   assert.equal(new Set(names).size, names.length);
 });
 
@@ -23,6 +23,10 @@ test("recovery verification covers authentication and Programme structure", () =
     "Session",
     "User",
     "Verification",
+    "oauthAccessToken",
+    "oauthClient",
+    "oauthConsent",
+    "oauthRefreshToken",
   ]);
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("AnonymousProgrammeSession"));
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("PendingProgrammeClaim"));

@@ -88,7 +88,11 @@ export function middleware(request: NextRequest) {
 
   // API authorization is always resolved by the server route, never by cookie presence.
   if (isAdminApi) return privateAdminResponse(secureResponse(nextResponse()));
-  if (pathname === "/admin/login") return privateAdminResponse(secureResponse(nextResponse()));
+  const isCommercialMcpAuthPage = pathname === "/admin/integrations/chatgpt-work/login"
+    || pathname === "/admin/integrations/chatgpt-work/consent";
+  if (pathname === "/admin/login" || isCommercialMcpAuthPage) {
+    return privateAdminResponse(secureResponse(nextResponse()));
+  }
 
   const configuredToken = getAdminPreviewToken();
   const legacyEnabled = isLegacyPreviewEnabled();

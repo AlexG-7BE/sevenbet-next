@@ -30,7 +30,16 @@ import {
 } from "./recovery-preflight.mjs";
 
 const SNAPSHOT_VERSION = 1;
-const EXPECTED_AUTH_TABLES = ["Account", "Session", "User", "Verification"];
+const EXPECTED_AUTH_TABLES = [
+  "Account",
+  "Session",
+  "User",
+  "Verification",
+  "oauthAccessToken",
+  "oauthClient",
+  "oauthConsent",
+  "oauthRefreshToken",
+];
 const EXPECTED_PROGRAMME_TABLES = [
   "AnonymousProgrammeSession",
   "PendingProgrammeClaim",
@@ -98,6 +107,10 @@ async function tableCount(database, tableName) {
     "Session",
     "User",
     "Verification",
+    "oauthAccessToken",
+    "oauthClient",
+    "oauthConsent",
+    "oauthRefreshToken",
     "_prisma_migrations",
   ]);
   if (!allowed.has(tableName)) {

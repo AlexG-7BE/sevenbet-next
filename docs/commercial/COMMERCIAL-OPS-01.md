@@ -1,16 +1,16 @@
 # COMMERCIAL-OPS-01
 
-Status: candidate implementation on `codex/commercial-ops-01`; not Production. Public commercial and GB referral activation remain off.
+Status: **READY IN PRODUCTION** for the Commercial CRM delivered by PR #81; Production migration `0020_commercial_ops_01` is applied and verified. The additive ChatGPT Work MCP bridge is a separately feature-gated candidate under `PARTNER-OPS-WORK-BRIDGE-01`. Public commercial and GB referral activation remain off.
 
 ## Evidence baseline
 
-**Detected:** The repository has protected Admin authentication/permissions, Prisma/PostgreSQL, canonical Casino/Operator/Brand and affiliate aggregates, audit records, and a fail-closed GB readiness evaluator. It had no durable prospect-to-partner CRM or verified commercial performance event store before this change.
+**DETECTED:** The repository has protected Admin authentication/permissions, Prisma/PostgreSQL, canonical Casino/Operator/Brand and affiliate aggregates, audit records, a fail-closed GB readiness evaluator, and the deployed Commercial CRM. It still has no verified commercial performance event store.
 
-**Inferred:** Reusing `affiliate.manage`, the existing Admin shell and existing audit table is the smallest permission and operating boundary. An information-dense list is more appropriate than a drag-and-drop board because all stage changes require server validation.
+**INFERRED:** Reusing `affiliate.manage`, the existing Admin shell and existing audit table is the smallest permission and operating boundary. An information-dense list is more appropriate than a drag-and-drop board because all stage changes require server validation.
 
-**Planned:** A later separately authorised activation service may convert a Founder-reviewed packet into an activation attempt by invoking the existing RFC-015 evaluator. A later evidence-backed event source may populate aggregate analytics.
+**PROPOSED:** A later separately authorised activation service may convert a Founder-reviewed packet into an activation attempt by invoking the existing RFC-015 evaluator. A later evidence-backed event source may populate aggregate analytics.
 
-**Not detected:** No real prospect, application, approval, agreement, terms, tracking destination, active partner, GB outbound route, verified clicks, registrations, FTDs, revenue or commission was added by this work.
+**UNKNOWN:** Repository evidence does not establish a real prospect, application, approval, agreement, terms, tracking destination, active partner, GB outbound route, verified clicks, registrations, FTDs, revenue or commission. `PARTNER-OPS-WORK-BRIDGE-01` does not create synthetic records or mutate Production during implementation.
 
 ## Implemented architecture
 
@@ -38,6 +38,18 @@ The safe surface can update descriptive profile data; add evidence, contacts and
 
 There is no operation for approval, activation, term acceptance, email send, application submit, tracking/programme/offer changes, jurisdiction, deployment or Production. CRM/provider failure cannot bypass validation and does not affect normal CRM use.
 
+## ChatGPT Work bridge
+
+**DETECTED:** The feature-gated `/api/mcp/commercial` route uses the official MCP TypeScript SDK and stateless Streamable HTTP. Its OAuth foundation pins the latest stable 1.6 line: Better Auth `1.6.30` and `@better-auth/oauth-provider` `1.6.30`. The provider owns authorization-code issuance/consumption, PKCE S256, consent, protected opaque-token storage, refresh rotation/replay handling and revocation. The application owns ChatGPT callback/client policy, a single exact resource audience, staff/`affiliate.manage`, Commercial scopes and tool authorization. Public DCR is restricted to current ChatGPT callbacks and grants no Commercial authority by itself.
+
+**DETECTED:** Provider storage is `oauthClient`, `oauthRefreshToken`, `oauthAccessToken` and `oauthConsent`. Reusable access tokens, refresh tokens and authorization codes are not persisted or queried in plaintext. Every MCP call requires an unexpired provider token/session, exact client/resource binding, the required scope and current staff permission. The stable-line resource-indicator advisory `GHSA-p2fr-6hmx-4528` is contained by the one configured audience plus wrapper, client-metadata and per-request exact-resource checks; multi-resource use is not authorised.
+
+Only four purpose-built tools are exposed. Read tools use bounded projections. `commercial_upsert_research_bundle` is a non-destructive, idempotent write tool that calls the Commercial service then the existing repository. It transactionally creates or updates one prospect research bundle, uses a transaction-scoped PostgreSQL advisory lock for concurrent same-key replay, returns entity IDs, and leaves uncertain duplicate matches unwritten. External evidence authority is always `null`; public evidence needs an observation time; direct received terms need detected source evidence.
+
+**DETECTED:** The schema has no fields or tool names for `APPROVED`, `ACTIVE`, send, submit, accept terms, tracking activation, AffiliateProgram/AffiliateOffer mutation, jurisdiction, deployment or Production administration. Stage proposals are limited to `QUALIFIED` and `APPLICATION_READY`. Activation preparation is capped at `READY_FOR_FOUNDER_REVIEW`.
+
+**PROPOSED RELEASE CONTROL:** The MCP feature remains disabled until the additive `0021_partner_ops_work_bridge_01` migration is separately authorised/applied and `COMMERCIAL_MCP_ENABLED=true` is configured. Deployment without those steps leaves the endpoint at a fail-closed `503` and does not affect the existing CRM or auth flows.
+
 ## Commercial and analytics boundary
 
 The commercial code does not import the private Programme domain or expose Programme/Help/vulnerability fields in its contract. It does not modify public DTOs. Analytics deliberately renders zero verified performance data because the repository contains no qualifying event source; it adds no tracker or user profile.
@@ -57,8 +69,13 @@ Rollback is a code rollback plus, only before Production adoption and under sepa
 - Canonical identity linking is represented in the data model but not exposed as a general picker in this first Admin screen.
 - Analytics remains empty until real aggregate affiliate events exist.
 - No activation executor exists in this workstream by design.
-- The additive migration exactly matches the Prisma baseline-to-candidate SQL diff and contains no destructive statement, but it was not applied because no disposable localhost PostgreSQL service or Docker runtime was available. Production was not mutated.
+- ChatGPT supports CIMD and DCR. The bridge currently uses DCR because the selected ChatGPT connection flow supports it; DCR registers only an allowlisted public client with no secret or Commercial authority.
+- The bridge does not ingest mailboxes or browse the web itself. ChatGPT Work supplies bounded evidence claims/provenance gathered through separately authorised Work connectors.
+- OAuth client/token revocation is protocol-based; the first bridge does not add a separate Admin client-management screen.
+- Migration `0021_partner_ops_work_bridge_01` is additive and must not be applied to Production without a separate Founder GO after merge.
 
 ## Verification evidence
 
 The no-key Commercial Ops suite passes 20/20 and the complete agents package passes 43/43, including the committed 18-case Partner Operations safety corpus. One authorised non-personal live smoke completed as `partner-operations / COMPLETED / REVIEW` with explicit bulk `gpt-5.6-luna`, one request, 1,461 input tokens, 331 output tokens, 1,792 total tokens and a `$0.003447` conservative upper bound. It kept the empty relationship claim `UNKNOWN`, requested evidence, proposed no external action and had no CRM/database capability.
+
+**DETECTED (PARTNER-OPS-WORK-BRIDGE-01 candidate, 2026-08-20):** the dedicated MCP contract/auth/protocol/structural suite passes 27/27. The disposable-PostgreSQL MCP suite passes all 4 top-level tests and 5 OAuth lifecycle subtests, covering protected access/refresh storage, provider-backed verification, expiry, resource binding, live staff permission, rotation, replay/concurrency and immediate revocation, plus the prior rate-limit and transactional CRM cases. Commercial Ops passes 24/24; auth passes 50/50; auth-comms passes 41/41; and the Commercial MCP/Admin browser/API suite passes 5/5. Prisma validation, a clean 21-migration PostgreSQL replay, lint, TypeScript, build-secret scanning and the Production build pass. These checks do not authorise deployment, Production migration or feature enablement.

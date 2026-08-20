@@ -76,16 +76,39 @@ This creates `CommercialApplication(state=DRAFT)` and `OUTREACH_DRAFTED`; it nev
 
 Parsing fails because `SET_APPROVED` is not a union member. Extra Prisma fields also fail strict payload parsing.
 
-## Future evidence providers
+## ChatGPT Work MCP evidence provider
 
-A future Work, Gmail or web workflow may provide a bounded evidence item through a separately authorised adapter: source type/reference, observed time, claim, classification and opaque source reference. It must not pass credentials, entire mailboxes, private customer content or claim source authority it did not establish. Email ingestion records a response only when the supplied source evidence exists; it never sends. New external integrations require their own authority/security review.
+**DETECTED:** `PARTNER-OPS-WORK-BRIDGE-01` adds one separately authorised remote MCP adapter at `/api/mcp/commercial`. Better Auth `1.6.30` and `@better-auth/oauth-provider` `1.6.30` own OAuth authorization codes, PKCE S256, consent, opaque access-token issuance, protected token storage, rotating refresh-token families and revocation. The application owns ChatGPT callback/client policy, exact single-resource binding, `AdminUser`/`affiliate.manage`, the scopes `commercial:read` and `commercial:safe_write`, and the tool boundary. Tokens last 15 minutes; refresh tokens last up to 30 days when `offline_access` is granted. It is disabled unless `COMMERCIAL_MCP_ENABLED=true`; failure is isolated from Admin, consumer auth, Programme and ordinary CRM operation.
+
+**DETECTED:** ChatGPT supports CIMD and DCR; this bridge currently permits unauthenticated DCR only for allowlisted ChatGPT public callbacks. Registration has zero Commercial authority and produces no secret. The four provider models are `oauthClient`, `oauthRefreshToken`, `oauthAccessToken` and `oauthConsent`. Access/refresh tokens and authorization codes are stored only as provider hashes, never as reusable plaintext. The application revalidates the protected row, expiry, session, client/resource, scopes and current staff permission on every MCP request.
+
+**DETECTED SECURITY CONTAINMENT:** Stable OAuth Provider 1.6.30 remains listed in `GHSA-p2fr-6hmx-4528` for incomplete multi-resource binding. The approved bridge is deliberately single-audience: one exact `validAudiences` resource, the same exact resource in application-owned client metadata and wrappers, opaque tokens, and per-request resource validation. No multi-resource client or cross-environment client reuse is authorised.
+
+The MCP application exposes exactly four tools:
+
+- `commercial_list_opportunities`
+- `commercial_get_opportunity`
+- `commercial_find_possible_duplicates`
+- `commercial_upsert_research_bundle`
+
+The first three return bounded DTOs. The write tool accepts one strict, transactional research bundle. The opportunity identity and each child carry deterministic idempotency data. Supported children are safe profile fields, external evidence, evidenced B2B contacts, research notes, tasks, next action, draft/prepared application material, draft outreach, evidenced `PROPOSED`/`RECEIVED` terms, qualification and `QUALIFIED`/`APPLICATION_READY` proposals, and an activation packet no higher than `READY_FOR_FOUNDER_REVIEW`.
+
+**DETECTED:** Work evidence accepts a source type, URL or bounded reference, supported claim, classification, category, title, optional notes and relevant timestamps. Public-web evidence requires `observedAt`. The schema contains no `sourceAuthority`; the repository always persists Work-supplied authority as `null`. It stores claim/provenance rather than raw page or mailbox bodies. Received term values require direct `DETECTED` email, application-portal, agreement or official-operator evidence. Prompt text inside a claim cannot change scopes, tools, schemas or commercial policy.
+
+**DETECTED:** An exact display-and-legal-name match can update one deterministic record. A weaker identity match returns `POSSIBLE_DUPLICATE` without writing. An explicit `possibleDuplicateOfId` records uncertainty and never performs a merge.
+
+The MCP adapter calls `commercialMcpService`, which validates strict Zod input and calls the existing `commercialRepository`. Only the repository imports Prisma. A bundle and its audit/run/operation records commit in one transaction. A transaction-scoped advisory lock serialises concurrent requests with the same client/run key; stable child keys prevent a later bundle from overwriting an already-applied profile or next action. Audit metadata records the staff delegator, ChatGPT Work client, MCP channel, run, idempotency key and resulting entity/evidence IDs, but never credentials or OAuth codes.
+
+**CONTRADICTION RESOLVED:** The earlier future-provider paragraph and original RFC-027 ceiling said Work/OAuth was not yet authorised. The explicit Founder instruction `PARTNER-OPS-WORK-BRIDGE-01` is newer decision authority and authorises only this bounded adapter. It does not authorise a general external tool platform, Gmail integration, autonomous web research inside B4GAMBLE, or any external action.
 
 ## Safe execution
 
-1. Authenticate to protected Admin with `affiliate.manage`.
+1. Authenticate to protected Admin with `affiliate.manage`, or connect through the documented ChatGPT Work OAuth flow.
 2. Create or open a real evidence-led prospect; do not use synthetic Production records.
 3. Add the current source evidence.
 4. Run Partner Operations from the detail screen. With no server credential, the route fails safely and CRM remains usable.
 5. Review the validated result, operations, drafts and gaps in the timeline/run record.
 6. Perform any external or approval action outside the Agent and record its direct evidence through the human CRM path.
 7. Never treat a packet or CRM stage as RFC-015 route authority.
+
+ChatGPT connection and revocation steps are maintained in `docs/commercial/CHATGPT-WORK-MCP-SETUP.md`.

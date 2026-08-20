@@ -1,7 +1,7 @@
 import "server-only";
 
-import { createSevenBetAuth } from "@/lib/auth/config";
+import { auth } from "@/lib/auth/instance";
 
-export const auth = createSevenBetAuth();
+export { auth };
 
 export type AuthSession = typeof auth.$Infer.Session;

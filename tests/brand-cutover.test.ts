@@ -313,10 +313,13 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
     .filter((path) => path === "prisma/schema.prisma" || /^prisma\/(?:migrations|preflight)\//.test(path))
     .sort();
   if (schemaChanges.length > 0) {
-    assert.deepEqual(schemaChanges, [
-      "prisma/migrations/0020_commercial_ops_01/migration.sql",
-      "prisma/schema.prisma",
-    ]);
+    const approvedExactSchemaChangeSets = [
+      ["prisma/migrations/0020_commercial_ops_01/migration.sql", "prisma/schema.prisma"],
+      ["prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql", "prisma/schema.prisma"],
+    ];
+    assert.ok(approvedExactSchemaChangeSets.some(
+      (approved) => JSON.stringify(schemaChanges) === JSON.stringify(approved),
+    ));
   }
   if (changed.includes("package-lock.json")) {
     assert.equal(JSON.parse(source("package.json")).dependencies["@vercel/analytics"], undefined);
