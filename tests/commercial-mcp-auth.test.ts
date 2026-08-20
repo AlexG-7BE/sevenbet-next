@@ -49,8 +49,34 @@ test("OAuth discovery advertises PKCE, DCR, refresh, revocation, resource, and e
   assert.equal(resource.resource, "https://b4gamble.com/api/mcp/commercial");
 });
 
-test("configuration is explicit and fails closed", () => {
+test("configuration enables Production by default, preserves an explicit kill switch, and keeps non-Production closed", () => {
   assert.equal(resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {}), null);
+
+  const production = resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
+    VERCEL_ENV: "production",
+  });
+  assert.ok(production);
+  assert.equal(production.issuer, "https://b4gamble.com");
+  assert.equal(production.resource, "https://b4gamble.com/api/mcp/commercial");
+
+  assert.equal(resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
+    VERCEL_ENV: "production",
+    COMMERCIAL_MCP_ENABLED: "false",
+  }), null);
+
+  assert.equal(resolveCommercialMcpConfig("https://preview.invalid/api/mcp/commercial", {
+    VERCEL_ENV: "preview",
+    VERCEL_BRANCH_URL: "preview.invalid",
+  }), null);
+
+  const preview = resolveCommercialMcpConfig("https://preview.invalid/api/mcp/commercial", {
+    VERCEL_ENV: "preview",
+    VERCEL_BRANCH_URL: "preview.invalid",
+    COMMERCIAL_MCP_ENABLED: "true",
+  });
+  assert.ok(preview);
+  assert.equal(preview.resource, "https://preview.invalid/api/mcp/commercial");
+
   assert.throws(() => resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
     COMMERCIAL_MCP_ENABLED: "true",
     COMMERCIAL_MCP_PUBLIC_ORIGIN: "http://example.com",
