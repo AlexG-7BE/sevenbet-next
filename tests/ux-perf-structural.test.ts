@@ -47,6 +47,12 @@ test("casino and bonus mobile filters share one shell and interaction contract",
   assert.match(mobileDirectoryFilters, /triggerRef\.current\?\.focus\(\)/);
 });
 
+test("bonus mobile demo disclosure spans the result card instead of collapsing into a narrow grid cell", () => {
+  assert.match(bonuses, /gridColumn: "1 \/ -1"/);
+  assert.match(bonuses, /overflowWrap: "break-word"/);
+  assert.match(bonuses, /wordBreak: "normal"/);
+});
+
 test("measured casino theatre image uses the Next image pipeline and bounded responsive candidates", () => {
   assert.match(casinoCard, /import Image from "next\/image"/);
   assert.match(casinoCard, /sizes="\(max-width: 760px\) 1px, \(max-width: 1280px\) 100vw, 1280px"/);
