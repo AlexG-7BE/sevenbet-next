@@ -15,13 +15,19 @@ export function isAllowedCommercialMcpConsentOrigin(value: string | null, issuer
   return Boolean(origin && issuerOrigin && (origin === issuerOrigin || origin === CHATGPT_WORK_BROWSER_ORIGIN));
 }
 
+export function areAllowedCommercialMcpConsentHeaders(input: Headers, issuer: string) {
+  return isAllowedCommercialMcpConsentOrigin(input.get("origin"), issuer)
+    && isAllowedCommercialMcpConsentOrigin(input.get("referer"), issuer);
+}
+
 export function commercialMcpInternalAuthHeaders(input: Headers, issuer: string) {
-  const headers = new Headers(input);
-  const origin = headers.get("origin");
-  if (!origin) return headers;
-  if (!isAllowedCommercialMcpConsentOrigin(origin, issuer)) {
+  if (!areAllowedCommercialMcpConsentHeaders(input, issuer)) {
     throw new Error("Untrusted Commercial MCP consent origin");
   }
-  headers.set("origin", new URL(issuer).origin);
+
+  const headers = new Headers(input);
+  const issuerOrigin = new URL(issuer).origin;
+  if (headers.has("origin")) headers.set("origin", issuerOrigin);
+  if (headers.has("referer")) headers.set("referer", `${issuerOrigin}/`);
   return headers;
 }
