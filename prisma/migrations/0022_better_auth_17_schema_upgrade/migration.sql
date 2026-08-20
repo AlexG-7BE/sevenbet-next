@@ -292,6 +292,63 @@ BEGIN
   END IF;
 END $$;
 
+-- During the migration-before-code window the old Better Auth 1.6 runtime may
+-- still execute OAuth writes. It does not know the 1.7 resources columns. Fill
+-- only an omitted resource from exactly one enabled client/resource relation;
+-- never guess a resource and never permit an explicit token/consent resource
+-- outside that relation. This keeps the overlap fail-closed and exact-resource
+-- bound until the 1.7 application is promoted.
+CREATE FUNCTION "set_better_auth_oauth_resource_compat"()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  allowed_resource TEXT;
+  allowed_count INTEGER;
+BEGIN
+  SELECT COUNT(*), MIN(client_resource."resourceId")
+  INTO allowed_count, allowed_resource
+  FROM "oauthClientResource" AS client_resource
+  INNER JOIN "oauthResource" AS resource
+    ON resource."identifier" = client_resource."resourceId"
+  WHERE client_resource."clientId" = NEW."clientId"
+    AND resource."disabled" IS DISTINCT FROM true;
+
+  IF allowed_count <> 1 OR allowed_resource IS NULL THEN
+    RAISE EXCEPTION 'OAuth resource compatibility refused: client must have exactly one enabled resource';
+  END IF;
+
+  IF NEW."resources" IS NULL OR cardinality(NEW."resources") = 0 THEN
+    NEW."resources" := ARRAY[allowed_resource]::TEXT[];
+  ELSIF cardinality(NEW."resources") <> 1 OR NEW."resources"[1] IS DISTINCT FROM allowed_resource THEN
+    RAISE EXCEPTION 'OAuth resource compatibility refused: resource does not match client authority';
+  END IF;
+
+  IF NEW."requestedUserInfoClaims" IS NULL THEN
+    NEW."requestedUserInfoClaims" := ARRAY[]::TEXT[];
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER "oauthRefreshToken_resource_compat"
+BEFORE INSERT OR UPDATE OF "clientId", "resources", "requestedUserInfoClaims"
+ON "oauthRefreshToken"
+FOR EACH ROW
+EXECUTE FUNCTION "set_better_auth_oauth_resource_compat"();
+
+CREATE TRIGGER "oauthAccessToken_resource_compat"
+BEFORE INSERT OR UPDATE OF "clientId", "resources", "requestedUserInfoClaims"
+ON "oauthAccessToken"
+FOR EACH ROW
+EXECUTE FUNCTION "set_better_auth_oauth_resource_compat"();
+
+CREATE TRIGGER "oauthConsent_resource_compat"
+BEFORE INSERT OR UPDATE OF "clientId", "resources", "requestedUserInfoClaims"
+ON "oauthConsent"
+FOR EACH ROW
+EXECUTE FUNCTION "set_better_auth_oauth_resource_compat"();
+
 ALTER TABLE "oauthRefreshToken"
   ALTER COLUMN "resources" SET NOT NULL,
   ALTER COLUMN "requestedUserInfoClaims" SET NOT NULL,
