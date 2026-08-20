@@ -163,7 +163,7 @@
     background: var(--sb-white, #fff) !important;
     color: var(--sb-night, #100f0f) !important;
     font: inherit !important;
-    font-size: 14px !important;
+    font-size: 16px !important;
     font-weight: 650 !important;
   }
 
