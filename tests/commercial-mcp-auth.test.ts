@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { normalizeCommercialMcpAuthorizationRequest } from "../lib/mcp/commercial/authorization-request";
 import {
+  areAllowedCommercialMcpConsentHeaders,
   CHATGPT_WORK_BROWSER_ORIGIN,
   commercialMcpInternalAuthHeaders,
   isAllowedCommercialMcpConsentOrigin,
@@ -128,12 +129,28 @@ test("Commercial MCP consent accepts only issuer or exact ChatGPT browser origin
   assert.equal(isAllowedCommercialMcpConsentOrigin("https://evil.example", config.issuer), false);
   assert.equal(isAllowedCommercialMcpConsentOrigin("not-a-url", config.issuer), false);
 
-  const headers = new Headers({ origin: "https://chatgpt.com/", cookie: "session=fixture" });
+  const headers = new Headers({
+    origin: "https://chatgpt.com/",
+    referer: "https://chatgpt.com/plugins",
+    cookie: "session=fixture",
+  });
+  assert.equal(areAllowedCommercialMcpConsentHeaders(headers, config.issuer), true);
   const internal = commercialMcpInternalAuthHeaders(headers, config.issuer);
   assert.equal(internal.get("origin"), config.issuer);
+  assert.equal(internal.get("referer"), `${config.issuer}/`);
   assert.equal(internal.get("cookie"), "session=fixture");
   assert.equal(headers.get("origin"), "https://chatgpt.com/");
+  assert.equal(headers.get("referer"), "https://chatgpt.com/plugins");
   assert.equal(CHATGPT_WORK_BROWSER_ORIGIN, "https://chatgpt.com");
+
+  const navigationHeaders = new Headers({ referer: "https://chatgpt.com/" });
+  assert.equal(areAllowedCommercialMcpConsentHeaders(navigationHeaders, config.issuer), true);
+  assert.equal(commercialMcpInternalAuthHeaders(navigationHeaders, config.issuer).get("referer"), `${config.issuer}/`);
+
+  assert.equal(
+    areAllowedCommercialMcpConsentHeaders(new Headers({ referer: "https://chatgpt.com.evil.example/" }), config.issuer),
+    false,
+  );
   assert.throws(
     () => commercialMcpInternalAuthHeaders(new Headers({ origin: "https://attacker.invalid" }), config.issuer),
     /Untrusted Commercial MCP consent origin/,
