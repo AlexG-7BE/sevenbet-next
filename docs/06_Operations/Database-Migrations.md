@@ -4,11 +4,28 @@
 
 - **Detected:** Prisma 6 targets PostgreSQL through `DATABASE_URL` and `DIRECT_URL`.
 - **Detected:** committed migration history exists and is applied with `prisma migrate deploy`.
-- **Detected:** required PR CI starts a fresh PostgreSQL 16 service, validates/generates Prisma, runs the existing idempotent migration-0015 enum preflight, applies every committed migration and performs representative connected reads.
+- **Detected:** PR CI starts a fresh PostgreSQL 16 service, validates/generates Prisma, runs the existing idempotent migration-0015 enum preflight, applies every committed migration and performs representative connected reads.
 - **Detected:** the CI guard refuses non-loopback hosts, ports other than 5432, database names without the `_ci` suffix, and execution without `CI=true`.
-- **Not detected:** an approved short-lived Production migration credential or provider-native Production migration hook. Production automation remains provider/secret-architecture gated.
+- **Detected:** Vercel Production exposes the normal pooled runtime binding and a direct binding for the same Prisma Postgres database identity; the Production build preflight verifies that relationship without printing credentials.
+- **Not detected:** a permanent approved automatic Production migration hook. Production schema mutation remains an explicit controlled action.
 
 Migration 0015 adds `MISSION_COMPLETION` to a PostgreSQL enum and later uses it. PostgreSQL requires the new enum value to be committed first. On a fresh database, apply unchanged migrations 0001–0014 with Prisma, run the committed `prisma/preflight/0015_active_control_program_flow.sql` in its own transaction, then run normal `prisma migrate deploy` for unchanged migration 0015 onward. The preflight is idempotent; this is a historical replay requirement, not permission to edit migration history.
+
+## Production migration 0020 — completed 20 August 2026
+
+**DETECTED — `0020_commercial_ops_01` was applied to the B4GAMBLE Production Prisma Postgres database and verified as completed.**
+
+Execution evidence:
+
+- Founder explicitly authorised the Production mutation with `GO 0020`.
+- The migration had already passed fresh/disposable PostgreSQL CI as part of COMMERCIAL-OPS-01.
+- A temporary Production-only guard was merged through PR #82. It read `_prisma_migrations`, refused execution if an unresolved migration row existed, and refused execution unless the only pending repository migration was exactly `0020_commercial_ops_01` (or it was already applied).
+- Vercel Production deployment `dpl_BQEqk75EcFxFR7gAYmcFFzRvmhxW` on merge SHA `cc9bb1321352408f8ad2b157a44543f151c8db88` reported database readiness with pooled runtime / direct migration bindings pointing at the same database identity.
+- The same Production build emitted `production_migration_0020` state `applying`, then `applied_and_verified` for `0020_commercial_ops_01`.
+- The temporary runner was immediately removed through PR #83; no schema rollback occurred.
+- Final cleanup merge SHA is `f6f520340d67e4f2aac44142437962b287794a66`. Final Production deployment `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY and uses the normal readiness-only preflight again.
+
+This was a bounded one-time execution path. It does **not** establish a permanent policy of running migrations during every Vercel build. Future Production migrations require a new explicit controlled execution decision appropriate to their risk and migration shape.
 
 ## Expand/contract rule
 
@@ -16,16 +33,16 @@ Every stateful change must remain compatible with both the old and new applicati
 
 1. **Expand:** add nullable columns/tables/indexes or dual-compatible structures. Avoid destructive renames, type narrowing and new immediate constraints on existing data.
 2. **Deploy compatible code:** read old and new safely; dual-write only when an approved migration design requires it.
-3. **Backfill:** use a bounded, observable, restartable job with explicit ownership. Never hide a Production backfill in app startup or a PR check.
+3. **Backfill:** use a bounded, observable, restartable job with explicit ownership. Never hide a Production backfill in app startup or a routine PR check.
 4. **Verify:** record counts/invariants without exporting personal data.
 5. **Contract later:** remove old structures only after all deployed code and rollback candidates no longer need them, through a separate reviewed release.
 
 ## Pull-request checklist
 
-- [ ] Governing RFC approves the schema/data change.
+- [ ] Current Founder/project authority covers the schema/data change; read only the relevant ACTIVE RFCs when their durable domain is affected.
 - [ ] Migration directory is additive, ordered and immutable after merge.
 - [ ] `prisma migrate reset`, destructive migration and improvised reverse SQL are absent.
-- [ ] Fresh PostgreSQL CI passes on the exact PR head SHA.
+- [ ] Fresh PostgreSQL CI passes on the exact candidate head SHA.
 - [ ] Old application/new schema and new application/old-compatible schema boundaries are documented.
 - [ ] Lock duration, table size, index construction and backfill cost are assessed.
 - [ ] Backup/restore evidence and rollback/forward-fix decision are recorded.
@@ -34,4 +51,6 @@ Every stateful change must remain compatible with both the old and new applicati
 
 ## Production procedure gate
 
-Do not run a Production migration until the database provider, secret architecture, backup policy and restore drill are verified. At that point, record the provider-native connection mechanism and least-privilege execution path in this runbook through an approved RFC. Never copy a long-lived Production database URL into generic GitHub PR secrets merely to automate the step.
+Before a Production migration, verify the database provider, secret architecture, backup/restore posture, exact pending migration set, execution identity and rollback/forward-fix strategy. Prefer a least-privilege direct migration binding that targets the same database identity as the runtime connection. Never copy a long-lived Production database URL into generic GitHub PR secrets merely to automate the step.
+
+For high-consequence migrations, use a bounded fail-closed execution path and verify the resulting `_prisma_migrations` state before declaring completion. Remove temporary execution machinery after the migration unless the Founder separately approves a permanent migration architecture.
