@@ -106,3 +106,17 @@ test("anonymous staff authorization entry renders the explicit authority boundar
   await expect(page.getByText("A normal customer account cannot authorize this integration.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 });
+
+test("Commercial MCP consent page alone permits the exact ChatGPT form-return origin", async ({ request }) => {
+  const consent = await request.get(`${baseUrl}/admin/integrations/chatgpt-work/consent?response_type=code`, {
+    maxRedirects: 0,
+    headers: { Origin: "https://chatgpt.com" },
+  });
+  const consentPolicy = consent.headers()["content-security-policy"] ?? "";
+  expect(consentPolicy).toContain("form-action 'self' https://chatgpt.com");
+
+  const login = await request.get(`${baseUrl}/admin/integrations/chatgpt-work/login`, { maxRedirects: 0 });
+  const loginPolicy = login.headers()["content-security-policy"] ?? "";
+  expect(loginPolicy).toContain("form-action 'self'");
+  expect(loginPolicy).not.toContain("form-action 'self' https://chatgpt.com");
+});
