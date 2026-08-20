@@ -4,8 +4,10 @@
 **Evidence date:** 20 August 2026  
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Production main SHA:** `f6f520340d67e4f2aac44142437962b287794a66`  
-**Production deployment:** `dpl_A4a22TFc2bERP74gu5y3PMwfvS43`
+**Verified post-migration runtime baseline SHA:** `f6f520340d67e4f2aac44142437962b287794a66`  
+**Verified post-migration runtime deployment:** `dpl_A4a22TFc2bERP74gu5y3PMwfvS43`
+
+Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
 This checkpoint supersedes older candidate/draft/current-state language where it conflicts with newer verified evidence below.
 
@@ -100,7 +102,7 @@ Execution sequence on 20 August 2026:
 4. It refused mutation unless the only pending repository migration was exactly `0020_commercial_ops_01` and no unresolved migration record existed.
 5. Vercel Production deployment `dpl_BQEqk75EcFxFR7gAYmcFFzRvmhxW` emitted `production_migration_0020: applying`, then `production_migration_0020: applied_and_verified`.
 6. PR #83 immediately removed the temporary migration runner; no schema rollback was performed.
-7. Final cleanup main SHA is `f6f520340d67e4f2aac44142437962b287794a66` and final deployment `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY.
+7. Final cleanup application/runtime baseline SHA is `f6f520340d67e4f2aac44142437962b287794a66` and verified post-cleanup deployment `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY.
 
 The normal Vercel preflight is readiness-only again. This event does not establish a permanent automatic Production migration policy.
 
@@ -108,8 +110,8 @@ The normal Vercel preflight is readiness-only again. This event does not establi
 
 **DETECTED:**
 
-- `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY, targets Production/main and serves the canonical B4GAMBLE aliases.
-- `https://b4gamble.com/` returned HTTP 200 from the final cleanup deployment.
+- `dpl_A4a22TFc2bERP74gu5y3PMwfvS43` is READY, targets Production/main and served the canonical B4GAMBLE aliases at the bounded post-migration acceptance check.
+- `https://b4gamble.com/` returned HTTP 200 from that verified post-cleanup runtime deployment.
 - Anonymous access to `/admin/commercial` remains protected and resolves to the B4GAMBLE CMS Login flow rather than exposing Commercial Admin content.
 - No Vercel runtime errors were detected in the bounded post-migration verification window.
 
