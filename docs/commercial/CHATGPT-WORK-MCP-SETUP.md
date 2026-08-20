@@ -12,8 +12,11 @@ This runbook connects the Production Commercial CRM custom MCP app after the bri
 | Authentication | OAuth 2.1 authorization code with PKCE S256 |
 | Scopes | `commercial:read commercial:safe_write offline_access` |
 | Client registration | ChatGPT public-client Dynamic Client Registration (DCR) |
+| OAuth provider | Better Auth `1.6.30` + `@better-auth/oauth-provider` `1.6.30` |
 
-Do not enter an API key, shared secret, legacy preview token or manually invented OAuth endpoint. ChatGPT discovers the protected resource, authorization server, registration, token and revocation endpoints from the MCP URL.
+ChatGPT supports both Client ID Metadata Documents (CIMD) and DCR. This implementation currently uses DCR, with callback allowlisting and a public client that has no client secret. Do not enter or paste an API key, shared secret, OAuth credential, legacy Preview token or manually invented OAuth endpoint into ChatGPT. Discovery supplies the authorization, registration, token and revocation endpoints from the MCP URL.
+
+DCR creates only a zero-authority public-client record. Commercial access exists only after PKCE S256 authorization, an authenticated `User` linked to `AdminUser`, live `affiliate.manage`, explicit consent and a granted Commercial scope.
 
 ## Release prerequisites
 
@@ -64,8 +67,8 @@ In a new Work conversation where the app is enabled:
 ## Revoke access
 
 1. In ChatGPT **Settings / Workspace Settings → Apps & Connectors**, open `B4GAMBLE Commercial Ops` and choose **Disconnect** for the connection/user.
-2. The authorization-server metadata advertises `https://b4gamble.com/api/mcp/oauth/revoke`; a conforming client can revoke either access or refresh token. Revocation deletes the server token row and returns no token details.
-3. If an integration client must be disabled administratively, a controlled database operator may set the relevant `OAuthApplication.disabled` flag or remove its provider records under a separately authorised operational change. The first bridge intentionally adds no general OAuth-client Admin UI.
+2. The authorization-server metadata advertises `https://b4gamble.com/api/mcp/oauth/revoke`; a conforming client can revoke either access or refresh token. Access-token revocation deletes its protected provider row; refresh-token revocation marks the provider row revoked and removes linked access tokens. No token detail is returned.
+3. If an integration client must be disabled administratively, a controlled database operator may set the relevant `oauthClient.disabled` flag or remove its provider records under a separately authorised operational change. The first bridge intentionally adds no general OAuth-client Admin UI.
 4. Revoking/disabling MCP access does not change the staff password or ordinary B4GAMBLE sessions.
 
 ## Troubleshooting
@@ -81,6 +84,12 @@ In a new Work conversation where the app is enabled:
 | Write returns `POSSIBLE_DUPLICATE` | Review the candidates. Supply the exact existing opportunity ID to update, or an explicit `possibleDuplicateOfId` to preserve uncertainty; never force a silent merge. |
 | Evidence is rejected | Public web needs `observedAt`; every evidence item needs URL/reference and claim; source authority cannot be supplied; received terms need direct DETECTED evidence. |
 | Tool scan shows more/fewer than four tools | Do not enable the app. Refresh once, then verify the deployed SHA and MCP endpoint configuration. |
+
+## Token storage and stable-line security note
+
+The provider issues opaque tokens. It stores access tokens and refresh tokens only through its supported SHA-256/base64url protected-storage hook; the reusable values returned to ChatGPT are never stored in database fields or audit/log metadata. Authorization codes use the same protected provider storage. Every MCP request resolves the protected token record, expiry, live session, exact client/resource metadata, granted scope and current staff permission. Refresh rotation/replay handling and revocation are provider-owned.
+
+The current authorised dependency line is the latest stable Better Auth 1.6 release, `1.6.30`; 1.7 beta, RC and stable packages are out of scope. GitHub advisory `GHSA-p2fr-6hmx-4528` remains reported against `@better-auth/oauth-provider` 1.6.30 because that line does not fully bind multi-resource authorization requests. This bridge contains that upstream limitation with exactly one configured `validAudiences` value, an exact public `resource` check at authorization/token/revocation, client metadata bound to that same resource, opaque rather than self-contained access tokens, and a resource check on every use. Do not add another audience or reuse a DCR client across Production and Preview. Reassess the advisory before any later Better Auth upgrade or multi-resource design.
 
 ## Authority summary
 

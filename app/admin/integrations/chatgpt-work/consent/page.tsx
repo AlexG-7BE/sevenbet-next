@@ -21,15 +21,18 @@ export const metadata: Metadata = {
 export default async function CommercialMcpConsentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ consent_code?: string; client_id?: string; scope?: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
   const requestHeaders = await headers();
   const session = await getServerSession(requestHeaders);
   const staff = await getCurrentStaff(requestHeaders);
-  const returnTo = `/admin/integrations/chatgpt-work/consent?${new URLSearchParams(
-    Object.entries(params).filter((entry): entry is [string, string] => Boolean(entry[1])),
-  )}`;
+  const oauthQuery = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) value.forEach((item) => oauthQuery.append(key, item));
+    else if (value) oauthQuery.set(key, value);
+  }
+  const returnTo = `/admin/integrations/chatgpt-work/consent?${oauthQuery}`;
 
   if (!session) redirect(`/admin/integrations/chatgpt-work/login?returnTo=${encodeURIComponent(returnTo)}`);
   if (!staff) return <AdminAccessDenied />;
@@ -43,7 +46,7 @@ export default async function CommercialMcpConsentPage({
   }
   let consent;
   try {
-    consent = await getCommercialMcpConsent(params.consent_code ?? "", session.user.id, config);
+    consent = await getCommercialMcpConsent(oauthQuery.toString(), session.user.id, config, requestHeaders);
   } catch {
     return <CommercialMcpConsentError message="This authorization request is invalid, expired, or does not belong to this staff account." />;
   }
@@ -54,7 +57,7 @@ export default async function CommercialMcpConsentPage({
         <Card className="adminLogin mcpAuthCard">
           <Badge tone="green">Delegated commercial access</Badge>
           <div>
-            <p className="mcpAuthEyebrow">{consent.client.name}</p>
+            <p className="mcpAuthEyebrow">{consent.client.name ?? "ChatGPT Work"}</p>
             <h1>Allow access to B4GAMBLE Commercial Ops?</h1>
           </div>
           <p className="lead">
@@ -90,7 +93,7 @@ export default async function CommercialMcpConsentPage({
           </aside>
 
           <form className="mcpConsentActions" action="/api/mcp/oauth/consent" method="post">
-            <input name="consent_code" type="hidden" value={params.consent_code} />
+            <input name="oauth_query" type="hidden" value={oauthQuery.toString()} />
             <button className="button ghost" name="decision" type="submit" value="deny">Cancel</button>
             <button className="button gold" name="decision" type="submit" value="authorize">Authorize access</button>
           </form>

@@ -11,6 +11,7 @@ import {
   isAllowedChatGptRedirect,
   validateCommercialMcpTokenRecord,
 } from "../lib/mcp/commercial/oauth-policy";
+import { resolveCommercialMcpProviderResource } from "../lib/mcp/commercial/provider";
 
 const config = resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
   COMMERCIAL_MCP_ENABLED: "true",
@@ -22,12 +23,15 @@ const token = {
   id: "token-row-id",
   clientId: "chatgpt-client",
   userId: "staff-user-id",
-  scopes: "commercial:read commercial:safe_write offline_access",
-  accessTokenExpiresAt: new Date("2026-08-20T12:00:00.000Z"),
+  sessionId: "staff-session-id",
+  scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
+  expiresAt: new Date("2026-08-20T12:00:00.000Z"),
+  session: { expiresAt: new Date("2026-08-20T14:00:00.000Z") },
   client: {
     disabled: false,
-    type: "public",
-    metadata: JSON.stringify({ integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource }),
+    public: true,
+    tokenEndpointAuthMethod: "none",
+    metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource },
   },
 };
 const commercialStaff = { id: "staff-id", userId: "staff-user-id", email: "staff@example.com", name: "Staff", role: "AFFILIATE_MANAGER" as const };
@@ -48,6 +52,10 @@ test("configuration is explicit and fails closed", () => {
     COMMERCIAL_MCP_ENABLED: "true",
     COMMERCIAL_MCP_PUBLIC_ORIGIN: "http://example.com",
   }));
+  assert.throws(() => resolveCommercialMcpProviderResource({
+    BETTER_AUTH_URL: "https://b4gamble.com",
+    COMMERCIAL_MCP_PUBLIC_ORIGIN: "https://preview.invalid",
+  }), /one exact origin/);
 });
 
 test("DCR accepts only current ChatGPT callback shapes", () => {
@@ -63,10 +71,29 @@ test("valid commercial staff token is accepted for read and safe write", () => {
   assert.equal(context.scopes.has("commercial:read"), true);
 });
 
-test("consumer, unprivileged staff, expired token, wrong resource, and insufficient scope are denied", () => {
+test("consumer identity without an AdminUser is denied", () => {
   assert.throws(() => validateCommercialMcpTokenRecord(token, null, config), CommercialMcpAuthError);
+});
+
+test("staff without affiliate.manage is denied", () => {
   assert.throws(() => validateCommercialMcpTokenRecord(token, { ...commercialStaff, role: "AUTHOR" }, config), /affiliate\.manage/);
+});
+
+test("expired and revoked access tokens are denied", () => {
   assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, config, undefined, new Date("2026-08-20T13:00:00.000Z")), /expired/);
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, client: { ...token.client, metadata: JSON.stringify({ integration: "CHATGPT_WORK", b4gambleMcpResource: "https://b4gamble.com/api/mcp/other" }) } }, commercialStaff, config), /wrong resource/);
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, scopes: "commercial:read" }, commercialStaff, config, "commercial:safe_write"), /insufficient scope/);
+  assert.throws(() => validateCommercialMcpTokenRecord(null, commercialStaff, config), /invalid or expired/);
+});
+
+test("wrong issuer audience or resource binding is denied", () => {
+  const wrongIssuerConfig = resolveCommercialMcpConfig("https://preview.invalid/api/mcp/commercial", {
+    COMMERCIAL_MCP_ENABLED: "true",
+    COMMERCIAL_MCP_PUBLIC_ORIGIN: "https://preview.invalid",
+  });
+  assert.ok(wrongIssuerConfig);
+  assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, wrongIssuerConfig), /wrong resource/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, client: { ...token.client, metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: "https://b4gamble.com/api/mcp/other" } } }, commercialStaff, config), /wrong resource/);
+});
+
+test("read-only access token cannot satisfy safe-write scope", () => {
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, scopes: ["commercial:read"] }, commercialStaff, config, "commercial:safe_write"), /insufficient scope/);
 });

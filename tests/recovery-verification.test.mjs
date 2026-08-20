@@ -20,12 +20,13 @@ test("recovery verification derives the exact repository migration set", () => {
 test("recovery verification covers authentication and Programme structure", () => {
   assert.deepEqual(EXPECTED_AUTH_TABLES, [
     "Account",
-    "OAuthAccessToken",
-    "OAuthApplication",
-    "OAuthConsent",
     "Session",
     "User",
     "Verification",
+    "oauthAccessToken",
+    "oauthClient",
+    "oauthConsent",
+    "oauthRefreshToken",
   ]);
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("AnonymousProgrammeSession"));
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("PendingProgrammeClaim"));

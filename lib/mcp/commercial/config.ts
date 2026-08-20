@@ -5,10 +5,12 @@ export const COMMERCIAL_MCP_SCOPES = [
 ] as const;
 export const COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE = "offline_access";
 export const COMMERCIAL_MCP_INTERNAL_AUTH_SUFFIXES = [
-  "/mcp/authorize",
-  "/mcp/token",
-  "/mcp/register",
-  "/mcp/get-session",
+  "/oauth2/authorize",
+  "/oauth2/token",
+  "/oauth2/register",
+  "/oauth2/revoke",
+  "/oauth2/introspect",
+  "/oauth2/public-client-prelogin",
   "/oauth2/consent",
   "/.well-known/oauth-authorization-server",
   "/.well-known/oauth-protected-resource",

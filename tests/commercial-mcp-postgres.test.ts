@@ -1,9 +1,21 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { generateCodeChallenge } from "better-auth/oauth2";
 
 import type { CommercialMcpResearchBundle } from "../lib/commercial/commercial-mcp-contract";
 import { CommercialMcpResearchBundleSchema } from "../lib/commercial/commercial-mcp-contract";
 import prisma from "../lib/db/prisma";
+import {
+  exchangeCommercialMcpToken,
+  revokeCommercialMcpToken,
+  validateCommercialMcpAccessToken,
+} from "../lib/mcp/commercial/oauth";
+import { resolveCommercialMcpConfig } from "../lib/mcp/commercial/config";
+import {
+  hashCommercialMcpPresentedToken,
+  hashCommercialMcpProviderToken,
+  resolveCommercialMcpProviderResource,
+} from "../lib/mcp/commercial/provider";
 import { consumeCommercialMcpRateLimit } from "../lib/mcp/commercial/rate-limit";
 import { commercialRepository } from "../lib/repositories/commercial.repository";
 
@@ -14,6 +26,14 @@ const actor = {
 };
 const displayName = "MCP PostgreSQL Fixture Partner";
 const context = { actorId: actor.id, clientId: "chatgpt-work-postgres-fixture" };
+const oauthResource = resolveCommercialMcpProviderResource();
+const oauthOrigin = new URL(oauthResource).origin;
+const resolvedOauthConfig = resolveCommercialMcpConfig(`${oauthOrigin}/api/mcp/commercial`, {
+  COMMERCIAL_MCP_ENABLED: "true",
+  COMMERCIAL_MCP_PUBLIC_ORIGIN: oauthOrigin,
+});
+if (!resolvedOauthConfig) throw new Error("Commercial MCP OAuth test configuration is unavailable");
+const oauthConfig = resolvedOauthConfig;
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -75,10 +95,115 @@ function bundle(idempotencyKey = "postgres-bundle-0001") {
 }
 
 async function clearFixtures() {
+  await prisma.verification.deleteMany({ where: { id: { startsWith: "mcp-postgres-code-row-" } } });
+  await prisma.oauthAccessToken.deleteMany({ where: { clientId: { startsWith: "mcp-postgres-client-" } } });
+  await prisma.oauthRefreshToken.deleteMany({ where: { clientId: { startsWith: "mcp-postgres-client-" } } });
+  await prisma.oauthConsent.deleteMany({ where: { clientId: { startsWith: "mcp-postgres-client-" } } });
+  await prisma.oauthClient.deleteMany({ where: { clientId: { startsWith: "mcp-postgres-client-" } } });
+  await prisma.session.deleteMany({ where: { userId: { startsWith: "mcp-postgres-user-" } } });
+  await prisma.adminUser.deleteMany({ where: { email: { startsWith: "mcp-oauth-" } } });
+  await prisma.user.deleteMany({ where: { id: { startsWith: "mcp-postgres-user-" } } });
   await prisma.commercialMcpRateLimitBucket.deleteMany();
   await prisma.commercialAgentRun.deleteMany({ where: { triggeredBy: actor.id } });
   await prisma.commercialOpportunity.deleteMany({ where: { displayName: { startsWith: displayName } } });
   await prisma.adminUser.deleteMany({ where: { email: actor.email } });
+}
+
+type IssuedTokenResponse = {
+  access_token: string;
+  refresh_token?: string;
+  token_type: "Bearer";
+  scope: string;
+};
+
+function tokenRequest(body: URLSearchParams) {
+  return new Request(oauthConfig.tokenEndpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/x-www-form-urlencoded",
+      "x-forwarded-for": "127.0.0.1",
+    },
+    body,
+  });
+}
+
+async function exchangeToken(body: URLSearchParams) {
+  return exchangeCommercialMcpToken(tokenRequest(body), oauthConfig);
+}
+
+async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "commercial:safe_write", "offline_access"]) {
+  const userId = `mcp-postgres-user-${suffix}`;
+  const clientId = `mcp-postgres-client-${suffix}`;
+  const sessionId = `mcp-postgres-session-${suffix}`;
+  const adminId = `00000000-0000-4000-8000-${suffix.padStart(12, "0").slice(-12)}`;
+  const redirectUri = "https://chatgpt.com/connector_platform_oauth_redirect";
+  const verifier = `${"v".repeat(48)}${suffix}`;
+  const code = `authorization-code-${suffix}-${"c".repeat(32)}`;
+
+  await prisma.user.create({ data: {
+    id: userId,
+    name: `OAuth Staff ${suffix}`,
+    email: `mcp-oauth-${suffix}@invalid.example`,
+    emailVerified: true,
+  } });
+  await prisma.adminUser.create({ data: {
+    id: adminId,
+    userId,
+    name: `OAuth Staff ${suffix}`,
+    email: `mcp-oauth-${suffix}@invalid.example`,
+    role: "AFFILIATE_MANAGER",
+  } });
+  await prisma.session.create({ data: {
+    id: sessionId,
+    token: `mcp-postgres-session-token-${suffix}`,
+    userId,
+    expiresAt: new Date(Date.now() + 60 * 60 * 1_000),
+  } });
+  await prisma.oauthClient.create({ data: {
+    id: `mcp-postgres-client-row-${suffix}`,
+    clientId,
+    disabled: false,
+    scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
+    contacts: [],
+    redirectUris: [redirectUri],
+    postLogoutRedirectUris: [],
+    tokenEndpointAuthMethod: "none",
+    grantTypes: ["authorization_code", "refresh_token"],
+    responseTypes: ["code"],
+    public: true,
+    requirePKCE: true,
+    metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: oauthConfig.resource },
+  } });
+  await prisma.verification.create({ data: {
+    id: `mcp-postgres-code-row-${suffix}`,
+    identifier: await hashCommercialMcpProviderToken(code, "authorization_code"),
+    value: JSON.stringify({
+      type: "authorization_code",
+      query: {
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        scope: scopes.join(" "),
+        code_challenge: await generateCodeChallenge(verifier),
+        code_challenge_method: "S256",
+      },
+      userId,
+      sessionId,
+    }),
+    expiresAt: new Date(Date.now() + 5 * 60 * 1_000),
+  } });
+
+  const response = await exchangeToken(new URLSearchParams({
+    grant_type: "authorization_code",
+    client_id: clientId,
+    resource: oauthConfig.resource,
+    code,
+    redirect_uri: redirectUri,
+    code_verifier: verifier,
+  }));
+  const responseText = await response.text();
+  assert.equal(response.status, 200, responseText);
+  const issued = JSON.parse(responseText) as IssuedTokenResponse;
+  return { userId, clientId, sessionId, issued };
 }
 
 test("real PostgreSQL atomically enforces hashed fixed-window MCP rate limits", async () => {
@@ -98,6 +223,139 @@ test("real PostgreSQL atomically enforces hashed fixed-window MCP rate limits", 
   assert.equal(rows[0].count, 30);
   assert.match(rows[0].bucketKey, /^[a-f0-9]{64}$/);
   assert.doesNotMatch(JSON.stringify(rows), new RegExp(source.replaceAll(".", "\\.")));
+});
+
+test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async (t) => {
+  assertDisposablePostgres();
+  await clearFixtures();
+
+  await t.test("issued opaque access and refresh tokens are provider-hashed and verifiable", async () => {
+    const fixture = await createOAuthFixture("101");
+    assert.match(fixture.issued.access_token, /^b4mcp_at_/);
+    assert.match(fixture.issued.refresh_token ?? "", /^b4mcp_rt_/);
+
+    const accessHash = await hashCommercialMcpPresentedToken(fixture.issued.access_token, "access_token");
+    const refreshHash = await hashCommercialMcpPresentedToken(fixture.issued.refresh_token!, "refresh_token");
+    const accessRow = await prisma.oauthAccessToken.findUniqueOrThrow({ where: { token: accessHash! } });
+    const refreshRow = await prisma.oauthRefreshToken.findUniqueOrThrow({ where: { token: refreshHash! } });
+    assert.notEqual(accessRow.token, fixture.issued.access_token);
+    assert.notEqual(refreshRow.token, fixture.issued.refresh_token);
+
+    const context = await validateCommercialMcpAccessToken(new Request(oauthConfig.resource, {
+      headers: { Authorization: `Bearer ${fixture.issued.access_token}` },
+    }), oauthConfig, "commercial:safe_write");
+    assert.equal(context.staff.userId, fixture.userId);
+  });
+
+  await t.test("expired, wrong-resource, consumer, and unprivileged staff access fail", async () => {
+    const fixture = await createOAuthFixture("102");
+    const accessHash = await hashCommercialMcpPresentedToken(fixture.issued.access_token, "access_token");
+    const bearerRequest = () => new Request(oauthConfig.resource, {
+      headers: { Authorization: `Bearer ${fixture.issued.access_token}` },
+    });
+
+    await prisma.oauthAccessToken.update({ where: { token: accessHash! }, data: { expiresAt: new Date(Date.now() - 1_000) } });
+    await assert.rejects(validateCommercialMcpAccessToken(bearerRequest(), oauthConfig), /invalid or expired/);
+    await prisma.oauthAccessToken.update({ where: { token: accessHash! }, data: { expiresAt: new Date(Date.now() + 15 * 60 * 1_000) } });
+
+    await prisma.oauthClient.update({
+      where: { clientId: fixture.clientId },
+      data: { metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: `${oauthOrigin}/api/mcp/other` } },
+    });
+    await assert.rejects(validateCommercialMcpAccessToken(bearerRequest(), oauthConfig), /wrong resource/);
+    await prisma.oauthClient.update({
+      where: { clientId: fixture.clientId },
+      data: { metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: oauthConfig.resource } },
+    });
+
+    await prisma.adminUser.update({ where: { userId: fixture.userId }, data: { role: "AUTHOR" } });
+    await assert.rejects(validateCommercialMcpAccessToken(bearerRequest(), oauthConfig), /affiliate\.manage/);
+    await prisma.adminUser.delete({ where: { userId: fixture.userId } });
+    await assert.rejects(validateCommercialMcpAccessToken(bearerRequest(), oauthConfig), /not B4GAMBLE staff/);
+  });
+
+  await t.test("refresh rotation succeeds and replay cannot create a second valid family", async () => {
+    const fixture = await createOAuthFixture("103");
+    const firstRefresh = fixture.issued.refresh_token!;
+    const rotatedResponse = await exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      resource: oauthConfig.resource,
+      refresh_token: firstRefresh,
+    }));
+    const rotatedText = await rotatedResponse.text();
+    assert.equal(rotatedResponse.status, 200, rotatedText);
+    const rotated = JSON.parse(rotatedText) as IssuedTokenResponse;
+    assert.notEqual(rotated.refresh_token, firstRefresh);
+
+    const oldHash = await hashCommercialMcpPresentedToken(firstRefresh, "refresh_token");
+    assert.ok((await prisma.oauthRefreshToken.findUniqueOrThrow({ where: { token: oldHash! } })).revoked);
+
+    const replay = await exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      resource: oauthConfig.resource,
+      refresh_token: firstRefresh,
+    }));
+    assert.notEqual(replay.status, 200);
+    assert.equal(await prisma.oauthRefreshToken.count({ where: { clientId: fixture.clientId, revoked: null } }), 0);
+  });
+
+  await t.test("concurrent refresh cannot leave two independently valid access tokens", async () => {
+    const fixture = await createOAuthFixture("104");
+    const refresh = fixture.issued.refresh_token!;
+    const responses = await Promise.all([1, 2].map(() => exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      resource: oauthConfig.resource,
+      refresh_token: refresh,
+    }))));
+    const successfulBodies: IssuedTokenResponse[] = [];
+    for (const response of responses) {
+      const text = await response.text();
+      if (response.status === 200) successfulBodies.push(JSON.parse(text) as IssuedTokenResponse);
+    }
+    assert.equal(successfulBodies.length, 1);
+
+    let usable = 0;
+    for (const body of successfulBodies) {
+      try {
+        await validateCommercialMcpAccessToken(new Request(oauthConfig.resource, {
+          headers: { Authorization: `Bearer ${body.access_token}` },
+        }), oauthConfig);
+        usable += 1;
+      } catch {
+        // Replay detection may invalidate the whole family; either result is fail-closed.
+      }
+    }
+    assert.ok(usable <= 1);
+  });
+
+  await t.test("revocation is immediate and a read token cannot pass the write boundary", async () => {
+    const fixture = await createOAuthFixture("105", ["commercial:read"]);
+    const bearer = new Request(oauthConfig.resource, {
+      headers: { Authorization: `Bearer ${fixture.issued.access_token}` },
+    });
+    await assert.rejects(validateCommercialMcpAccessToken(bearer, oauthConfig, "commercial:safe_write"), /insufficient scope/);
+
+    const revokeResponse = await revokeCommercialMcpToken(new Request(oauthConfig.revocationEndpoint, {
+      method: "POST",
+      headers: {
+        "content-type": "application/x-www-form-urlencoded",
+        "x-forwarded-for": "127.0.0.1",
+      },
+      body: new URLSearchParams({
+        token: fixture.issued.access_token,
+        token_type_hint: "access_token",
+        client_id: fixture.clientId,
+        resource: oauthConfig.resource,
+      }),
+    }), oauthConfig);
+    assert.equal(revokeResponse.status, 200);
+    await assert.rejects(validateCommercialMcpAccessToken(new Request(oauthConfig.resource, {
+      headers: { Authorization: `Bearer ${fixture.issued.access_token}` },
+    }), oauthConfig), /invalid or expired/);
+  });
 });
 
 test("real PostgreSQL serializes concurrent bundle replay and preserves safe CRM truth", async () => {

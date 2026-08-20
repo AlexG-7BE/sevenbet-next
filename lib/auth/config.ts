@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { mcp } from "better-auth/plugins";
+import { oauthProvider } from "@better-auth/oauth-provider";
 
 import prisma from "@/lib/db/prisma";
 import { resolveGoogleAuthConfig } from "@/lib/auth/google-config";
@@ -9,6 +9,10 @@ import {
   identityOnlyOAuthAccountDatabaseHooks,
 } from "@/lib/auth/identity-only-oauth";
 import { resolveBetterAuthRuntimeConfig } from "@/lib/auth/runtime-config";
+import {
+  commercialMcpProviderTokenStorage,
+  resolveCommercialMcpProviderResource,
+} from "@/lib/mcp/commercial/provider";
 
 type SevenBetAuthOptions = {
   autoSignIn?: boolean;
@@ -19,6 +23,7 @@ export function createSevenBetAuth({
 }: SevenBetAuthOptions = {}) {
   const runtimeConfig = resolveBetterAuthRuntimeConfig();
   const googleConfig = resolveGoogleAuthConfig();
+  const commercialMcpResource = resolveCommercialMcpProviderResource();
 
   return betterAuth({
     appName: "B4GAMBLE",
@@ -56,19 +61,31 @@ export function createSevenBetAuth({
       : {}),
     databaseHooks: identityOnlyOAuthAccountDatabaseHooks,
     plugins: [
-      mcp({
+      oauthProvider({
         loginPage: "/admin/integrations/chatgpt-work/login",
-        resource: "https://b4gamble.com/api/mcp/commercial",
-        oidcConfig: {
-          loginPage: "/admin/integrations/chatgpt-work/login",
-          accessTokenExpiresIn: 15 * 60,
-          refreshTokenExpiresIn: 30 * 24 * 60 * 60,
-          codeExpiresIn: 5 * 60,
-          requirePKCE: true,
-          allowPlainCodeChallengeMethod: false,
-          consentPage: "/admin/integrations/chatgpt-work/consent",
-          defaultScope: "commercial:read",
-          scopes: ["commercial:read", "commercial:safe_write"],
+        consentPage: "/admin/integrations/chatgpt-work/consent",
+        accessTokenExpiresIn: 15 * 60,
+        refreshTokenExpiresIn: 30 * 24 * 60 * 60,
+        codeExpiresIn: 5 * 60,
+        scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
+        grantTypes: ["authorization_code", "refresh_token"],
+        allowDynamicClientRegistration: true,
+        allowUnauthenticatedClientRegistration: true,
+        allowPublicClientPrelogin: true,
+        clientRegistrationDefaultScopes: ["commercial:read"],
+        clientRegistrationAllowedScopes: [
+          "commercial:read",
+          "commercial:safe_write",
+          "offline_access",
+        ],
+        clientPrivileges: () => false,
+        disableJwtPlugin: true,
+        storeTokens: commercialMcpProviderTokenStorage,
+        validAudiences: [commercialMcpResource],
+        prefix: {
+          opaqueAccessToken: "b4mcp_at_",
+          refreshToken: "b4mcp_rt_",
+          clientSecret: "b4mcp_cs_",
         },
       }),
     ],

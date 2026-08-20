@@ -32,12 +32,13 @@ import {
 const SNAPSHOT_VERSION = 1;
 const EXPECTED_AUTH_TABLES = [
   "Account",
-  "OAuthAccessToken",
-  "OAuthApplication",
-  "OAuthConsent",
   "Session",
   "User",
   "Verification",
+  "oauthAccessToken",
+  "oauthClient",
+  "oauthConsent",
+  "oauthRefreshToken",
 ];
 const EXPECTED_PROGRAMME_TABLES = [
   "AnonymousProgrammeSession",
@@ -103,12 +104,13 @@ async function tableCount(database, tableName) {
     "ProgrammeMissionProgress",
     "ProgramStep",
     "ProgramVersion",
-    "OAuthAccessToken",
-    "OAuthApplication",
-    "OAuthConsent",
     "Session",
     "User",
     "Verification",
+    "oauthAccessToken",
+    "oauthClient",
+    "oauthConsent",
+    "oauthRefreshToken",
     "_prisma_migrations",
   ]);
   if (!allowed.has(tableName)) {

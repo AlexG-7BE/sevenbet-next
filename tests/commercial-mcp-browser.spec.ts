@@ -43,7 +43,7 @@ test("Commercial MCP exposes bounded OAuth discovery and fails closed without a 
 });
 
 test("provider internals and untrusted OAuth registration remain unreachable", async ({ request }) => {
-  const internal = await request.post(`${baseUrl}/api/auth/mcp/register`, {
+  const internal = await request.post(`${baseUrl}/api/auth/oauth2/register`, {
     data: { redirect_uris: ["https://chatgpt.com/connector_platform_oauth_redirect"] },
   });
   expect(internal.status()).toBe(404);
@@ -74,6 +74,17 @@ test("provider internals and untrusted OAuth registration remain unreachable", a
   expect(client.client_id).toEqual(expect.any(String));
   expect(client.token_endpoint_auth_method).toBe("none");
   expect(client.client_secret).toBeUndefined();
+
+  const dcrAlone = await request.post(`${baseUrl}/api/mcp/commercial`, {
+    headers: { Authorization: `Bearer ${client.client_id}` },
+    data: {
+      jsonrpc: "2.0",
+      id: 2,
+      method: "initialize",
+      params: { protocolVersion: "2025-11-25", capabilities: {}, clientInfo: { name: "dcr-only", version: "1" } },
+    },
+  });
+  expect(dcrAlone.status()).toBe(401);
 });
 
 test("anonymous staff authorization entry renders the explicit authority boundary", async ({ page }) => {

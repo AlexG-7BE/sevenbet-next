@@ -44,9 +44,9 @@ export function isAllowedChatGptRedirect(value: string) {
   return /^\/connector\/oauth\/[A-Za-z0-9_-]{8,200}$/.test(url.pathname);
 }
 
-export function parseCommercialMcpClientMetadata(metadata: string | null) {
+export function parseCommercialMcpClientMetadata(metadata: unknown) {
   try {
-    const value = JSON.parse(metadata ?? "null") as unknown;
+    const value = typeof metadata === "string" ? JSON.parse(metadata) as unknown : metadata;
     if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("invalid");
     const record = value as Record<string, unknown>;
     if (record.integration !== "CHATGPT_WORK" || typeof record.b4gambleMcpResource !== "string") throw new Error("invalid");
@@ -85,26 +85,33 @@ export function validateCommercialMcpTokenRecord(
     id: string;
     clientId: string;
     userId: string | null;
-    scopes: string;
-    accessTokenExpiresAt: Date;
-    client: { disabled: boolean; type: string; metadata: string | null };
+    sessionId: string | null;
+    scopes: string[];
+    expiresAt: Date;
+    session: { expiresAt: Date } | null;
+    client: {
+      disabled: boolean | null;
+      public: boolean | null;
+      tokenEndpointAuthMethod: string | null;
+      metadata: unknown;
+    };
   } | null,
   adminUser: DelegatedStaff | null,
   config: CommercialMcpConfig,
   requiredScope?: (typeof COMMERCIAL_MCP_SCOPES)[number],
   now = new Date(),
 ): CommercialMcpTokenContext {
-  if (!token || token.accessTokenExpiresAt <= now) {
+  if (!token || token.expiresAt <= now || !token.sessionId || !token.session || token.session.expiresAt <= now) {
     throw new CommercialMcpAuthError("Bearer token is invalid or expired", 401, "invalid_token", requiredScope);
   }
-  if (token.client.disabled || token.client.type !== "public") {
+  if (token.client.disabled || token.client.public !== true || token.client.tokenEndpointAuthMethod !== "none") {
     throw new CommercialMcpAuthError("OAuth client is disabled", 401, "invalid_token", requiredScope);
   }
   const metadata = parseCommercialMcpClientMetadata(token.client.metadata);
   if (metadata.b4gambleMcpResource !== config.resource) {
     throw new CommercialMcpAuthError("Bearer token has the wrong resource", 401, "invalid_token", requiredScope);
   }
-  const scopes = parseCommercialMcpScopes(token.scopes);
+  const scopes = parseCommercialMcpScopes(token.scopes.join(" "));
   if (requiredScope && !scopes.has(requiredScope)) {
     throw new CommercialMcpAuthError("Bearer token has insufficient scope", 403, "insufficient_scope", requiredScope);
   }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { auth } from "@/lib/auth/server";
+import { auth } from "@/lib/auth/instance";
 import prisma from "@/lib/db/prisma";
 import {
   COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE,
@@ -23,6 +23,7 @@ import {
   validateCommercialMcpDelegatedStaff,
   validateCommercialMcpTokenRecord,
 } from "@/lib/mcp/commercial/oauth-policy";
+import { hashCommercialMcpPresentedToken } from "@/lib/mcp/commercial/provider";
 
 export {
   CommercialMcpAuthError,
@@ -80,8 +81,15 @@ const TokenBodySchema = z.object({
 });
 
 async function requireRegisteredClient(clientId: string, config: CommercialMcpConfig) {
-  const client = await prisma.oauthApplication.findUnique({ where: { clientId } });
-  if (!client || client.disabled || client.type !== "public") {
+  const client = await prisma.oauthClient.findUnique({ where: { clientId } });
+  if (
+    !client
+    || client.disabled
+    || client.public !== true
+    || client.tokenEndpointAuthMethod !== "none"
+    || !client.grantTypes.includes("authorization_code")
+    || !client.grantTypes.includes("refresh_token")
+  ) {
     throw new CommercialMcpAuthError("OAuth client is invalid", 401, "invalid_client");
   }
   const metadata = parseCommercialMcpClientMetadata(client.metadata);
@@ -97,15 +105,23 @@ async function requireDelegatedStaff(userId: string | null | undefined): Promise
   return validateCommercialMcpDelegatedStaff(userId, adminUser as DelegatedStaff | null);
 }
 
-function rewriteForInternalAuth(request: Request, path: string, body?: BodyInit, contentType?: string) {
+function rewriteForInternalAuth(
+  request: Request,
+  path: string,
+  body?: BodyInit,
+  contentType?: string,
+  method = request.method,
+  acceptJson = false,
+) {
   const url = new URL(request.url);
   url.pathname = `/api/auth${path}`;
   url.search = "";
   const headers = new Headers(request.headers);
   headers.delete("content-length");
   if (contentType) headers.set("content-type", contentType);
+  if (acceptJson) headers.set("accept", "application/json");
   return new Request(url, {
-    method: request.method,
+    method,
     headers,
     ...(body === undefined ? {} : { body }),
     redirect: "manual",
@@ -132,12 +148,39 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
     scope: [...COMMERCIAL_MCP_SCOPES, COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE].join(" "),
-    metadata: {
-      integration: "CHATGPT_WORK",
-      b4gambleMcpResource: config.resource,
-    },
   });
-  return privateNoStore(await auth.handler(rewriteForInternalAuth(request, "/mcp/register", body, "application/json")));
+  const response = await auth.handler(rewriteForInternalAuth(
+    request,
+    "/oauth2/register",
+    body,
+    "application/json",
+    "POST",
+    true,
+  ));
+  if (!response.ok) return privateNoStore(response);
+
+  const result = z.object({
+    client_id: z.string().min(1),
+    client_secret: z.never().optional(),
+    public: z.literal(true),
+    token_endpoint_auth_method: z.literal("none"),
+  }).passthrough().parse(await response.json());
+  try {
+    await prisma.oauthClient.update({
+      where: { clientId: result.client_id },
+      data: {
+        requirePKCE: true,
+        metadata: {
+          integration: "CHATGPT_WORK",
+          b4gambleMcpResource: config.resource,
+        },
+      },
+    });
+  } catch (error) {
+    await prisma.oauthClient.deleteMany({ where: { clientId: result.client_id } });
+    throw error;
+  }
+  return privateNoStore(Response.json(result, { status: 201 }));
 }
 
 export async function authorizeCommercialMcpRequest(
@@ -151,50 +194,64 @@ export async function authorizeCommercialMcpRequest(
     throw new CommercialMcpAuthError("OAuth resource does not match", 400, "invalid_target");
   }
   const client = await requireRegisteredClient(query.client_id, config);
-  if (!client.redirectUrls.split(",").includes(query.redirect_uri)) {
+  if (!client.redirectUris.includes(query.redirect_uri)) {
     throw new CommercialMcpAuthError("OAuth redirect URI is not registered", 400, "invalid_redirect_uri");
   }
   const scopes = parseCommercialMcpScopes(query.scope);
   await requireDelegatedStaff(delegatedUserId);
 
   const url = new URL(request.url);
-  url.pathname = "/api/auth/mcp/authorize";
+  url.pathname = "/api/auth/oauth2/authorize";
   url.searchParams.set("prompt", "consent");
   url.searchParams.set("scope", [...scopes].join(" "));
   url.searchParams.delete("resource");
   return privateNoStore(await auth.handler(new Request(url, { headers: request.headers, redirect: "manual" })));
 }
 
-type ConsentVerification = {
-  clientId: string;
-  redirectURI: string;
-  scope: string[];
+type AuthorizationCodeVerification = {
+  type: "authorization_code";
+  query: {
+    client_id: string;
+    redirect_uri: string;
+    scope: string;
+  };
   userId: string;
-  requireConsent: boolean;
+  sessionId: string;
 };
 
 export async function getCommercialMcpConsent(
-  consentCode: string,
+  oauthQuery: string,
   expectedUserId: string,
   config: CommercialMcpConfig,
+  requestHeaders: Headers,
 ) {
-  const verification = await prisma.verification.findFirst({ where: { identifier: consentCode } });
-  if (!verification || verification.expiresAt <= new Date()) {
+  const signedQuery = z.object({
+    client_id: z.string().min(1).max(200),
+    redirect_uri: z.string().url(),
+    scope: z.string().min(1).max(200),
+  }).parse(Object.fromEntries(new URLSearchParams(oauthQuery).entries()));
+  const validationRequest = new Request(`${config.issuer}/api/mcp/oauth/consent`, {
+    method: "POST",
+    headers: requestHeaders,
+  });
+  const verificationResponse = await auth.handler(rewriteForInternalAuth(
+    validationRequest,
+    "/oauth2/public-client-prelogin",
+    JSON.stringify({ client_id: signedQuery.client_id, oauth_query: oauthQuery }),
+    "application/json",
+    "POST",
+    true,
+  ));
+  if (!verificationResponse.ok) {
     throw new CommercialMcpAuthError("OAuth consent request is invalid or expired", 400, "invalid_request");
   }
-  let value: ConsentVerification;
-  try {
-    value = JSON.parse(verification.value) as ConsentVerification;
-  } catch {
-    throw new CommercialMcpAuthError("OAuth consent request is invalid", 400, "invalid_request");
+  const client = await requireRegisteredClient(signedQuery.client_id, config);
+  if (!client.redirectUris.includes(signedQuery.redirect_uri)) {
+    throw new CommercialMcpAuthError("OAuth consent redirect is invalid", 400, "invalid_redirect_uri");
   }
-  if (!value.requireConsent || value.userId !== expectedUserId) {
-    throw new CommercialMcpAuthError("OAuth consent request does not belong to this staff user", 403, "access_denied");
-  }
-  const client = await requireRegisteredClient(value.clientId, config);
-  const scopes = parseCommercialMcpScopes(value.scope.join(" "));
+  const scopes = parseCommercialMcpScopes(signedQuery.scope);
   await requireDelegatedStaff(expectedUserId);
-  return { client, scopes: [...scopes], verification: value };
+  return { client, scopes: [...scopes], redirectURI: signedQuery.redirect_uri };
 }
 
 export async function completeCommercialMcpConsent(
@@ -208,16 +265,23 @@ export async function completeCommercialMcpConsent(
   }
   const raw = await readBoundedBody(request, 4 * 1_024);
   const form = new URLSearchParams(raw);
-  const consentCode = z.string().min(1).max(300).parse(form.get("consent_code"));
+  const oauthQuery = z.string().min(1).max(4_000).parse(form.get("oauth_query"));
   const decision = z.enum(["authorize", "deny"]).parse(form.get("decision"));
-  const consent = await getCommercialMcpConsent(consentCode, expectedUserId, config);
-  const body = JSON.stringify({ accept: decision === "authorize", consent_code: consentCode });
-  const response = await auth.handler(rewriteForInternalAuth(request, "/oauth2/consent", body, "application/json"));
+  const consent = await getCommercialMcpConsent(oauthQuery, expectedUserId, config, request.headers);
+  const body = JSON.stringify({ accept: decision === "authorize", oauth_query: oauthQuery });
+  const response = await auth.handler(rewriteForInternalAuth(
+    request,
+    "/oauth2/consent",
+    body,
+    "application/json",
+    "POST",
+    true,
+  ));
   if (!response.ok) return privateNoStore(response);
-  const result = z.object({ redirectURI: z.string().url() }).parse(await response.json());
-  const redirect = new URL(result.redirectURI);
-  const registeredRedirect = new URL(consent.verification.redirectURI);
-  if (redirect.origin !== registeredRedirect.origin || redirect.pathname !== registeredRedirect.pathname) {
+  const result = z.object({ redirect: z.literal(true), url: z.string().url() }).parse(await response.json());
+  const redirect = new URL(result.url);
+  const registeredRedirect = new URL(consent.redirectURI);
+  if (redirect.origin !== registeredRedirect.origin || redirect.pathname !== registeredRedirect.pathname || redirect.hash) {
     throw new CommercialMcpAuthError("OAuth consent produced an invalid redirect", 400, "server_error");
   }
   return privateNoStore(new Response(null, { status: 303, headers: { Location: redirect.toString() } }));
@@ -241,40 +305,57 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
     throw new CommercialMcpAuthError("OAuth resource does not match", 400, "invalid_target");
   }
   await requireRegisteredClient(body.client_id, config);
-  let previousRefreshTokenId: string | null = null;
 
   if (body.grant_type === "authorization_code") {
-    const verification = await prisma.verification.findFirst({ where: { identifier: body.code! } });
-    if (!verification) throw new CommercialMcpAuthError("Authorization code is invalid", 401, "invalid_grant");
-    const value = JSON.parse(verification.value) as ConsentVerification;
-    if (value.clientId !== body.client_id || value.redirectURI !== body.redirect_uri || value.requireConsent) {
+    const identifier = await hashCommercialMcpPresentedToken(body.code!, "authorization_code");
+    const verification = await prisma.verification.findFirst({ where: { identifier: identifier! } });
+    if (!verification || verification.expiresAt <= new Date()) {
+      throw new CommercialMcpAuthError("Authorization code is invalid", 401, "invalid_grant");
+    }
+    const value = z.object({
+      type: z.literal("authorization_code"),
+      query: z.object({
+        client_id: z.string(),
+        redirect_uri: z.string().url(),
+        scope: z.string(),
+      }).passthrough(),
+      userId: z.string(),
+      sessionId: z.string(),
+    }).passthrough().parse(JSON.parse(verification.value)) as AuthorizationCodeVerification;
+    if (value.query.client_id !== body.client_id || value.query.redirect_uri !== body.redirect_uri) {
       throw new CommercialMcpAuthError("Authorization code binding is invalid", 401, "invalid_grant");
     }
-    parseCommercialMcpScopes(value.scope.join(" "));
+    parseCommercialMcpScopes(value.query.scope);
     await requireDelegatedStaff(value.userId);
   } else {
-    const previous = await prisma.oauthAccessToken.findUnique({ where: { refreshToken: body.refresh_token! } });
-    if (!previous || previous.clientId !== body.client_id || previous.refreshTokenExpiresAt <= new Date()) {
+    const token = await hashCommercialMcpPresentedToken(body.refresh_token!, "refresh_token");
+    const previous = token ? await prisma.oauthRefreshToken.findUnique({
+      where: { token },
+      include: { session: true },
+    }) : null;
+    if (
+      !previous
+      || previous.clientId !== body.client_id
+      || previous.expiresAt <= new Date()
+      || !previous.session
+      || previous.session.expiresAt <= new Date()
+    ) {
       throw new CommercialMcpAuthError("Refresh token is invalid", 401, "invalid_grant");
     }
-    parseCommercialMcpScopes(previous.scopes);
+    parseCommercialMcpScopes(previous.scopes.join(" "));
     await requireDelegatedStaff(previous.userId);
-    previousRefreshTokenId = previous.id;
   }
 
   const forwarded = new URLSearchParams();
   for (const [key, value] of Object.entries(body)) if (value) forwarded.set(key, value);
-  forwarded.delete("resource");
-  const response = await auth.handler(rewriteForInternalAuth(
+  return privateNoStore(await auth.handler(rewriteForInternalAuth(
     request,
-    "/mcp/token",
+    "/oauth2/token",
     forwarded.toString(),
     "application/x-www-form-urlencoded",
-  ));
-  if (response.ok && previousRefreshTokenId) {
-    await prisma.oauthAccessToken.deleteMany({ where: { id: previousRefreshTokenId } });
-  }
-  return privateNoStore(response);
+    "POST",
+    true,
+  )));
 }
 
 export async function validateCommercialMcpAccessToken(
@@ -282,12 +363,13 @@ export async function validateCommercialMcpAccessToken(
   config: CommercialMcpConfig,
   requiredScope?: (typeof COMMERCIAL_MCP_SCOPES)[number],
 ): Promise<CommercialMcpTokenContext> {
-  const match = /^Bearer ([A-Za-z0-9]+)$/i.exec(request.headers.get("authorization") ?? "");
+  const match = /^Bearer ([A-Za-z0-9_-]+)$/i.exec(request.headers.get("authorization") ?? "");
   if (!match) throw new CommercialMcpAuthError("Bearer token is required", 401, "invalid_token", requiredScope);
-  const token = await prisma.oauthAccessToken.findUnique({
-    where: { accessToken: match[1] },
-    include: { client: true },
-  });
+  const tokenHash = await hashCommercialMcpPresentedToken(match[1], "access_token");
+  const token = tokenHash ? await prisma.oauthAccessToken.findUnique({
+    where: { token: tokenHash },
+    include: { client: true, session: true },
+  }) : null;
   const adminUser = token?.userId
     ? await prisma.adminUser.findUnique({ where: { userId: token.userId } })
     : null;
@@ -311,13 +393,19 @@ export async function revokeCommercialMcpToken(request: Request, config: Commerc
   }).strict().parse(Object.fromEntries(new URLSearchParams(raw).entries()));
   if (body.resource !== config.resource) throw new CommercialMcpAuthError("OAuth resource does not match", 400, "invalid_target");
   await requireRegisteredClient(body.client_id, config);
-  await prisma.oauthAccessToken.deleteMany({
-    where: {
-      clientId: body.client_id,
-      OR: [{ accessToken: body.token }, { refreshToken: body.token }],
-    },
+  const forwarded = new URLSearchParams({
+    token: body.token,
+    client_id: body.client_id,
   });
-  return privateNoStore(new Response(null, { status: 200 }));
+  if (body.token_type_hint) forwarded.set("token_type_hint", body.token_type_hint);
+  return privateNoStore(await auth.handler(rewriteForInternalAuth(
+    request,
+    "/oauth2/revoke",
+    forwarded.toString(),
+    "application/x-www-form-urlencoded",
+    "POST",
+    true,
+  )));
 }
 
 export function commercialMcpAuthErrorResponse(error: unknown, config: CommercialMcpConfig) {
