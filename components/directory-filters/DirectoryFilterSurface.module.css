@@ -1,0 +1,289 @@
+.surface {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid rgba(16, 15, 15, 0.14);
+  border-radius: 18px;
+  background: var(--sb-white, #fff);
+  box-shadow: 0 16px 42px rgba(16, 15, 15, 0.06);
+  color: var(--sb-night, #100f0f);
+}
+
+.primary,
+.primaryForm {
+  min-width: 0;
+}
+
+.primaryGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.field,
+.drawerField {
+  min-width: 0;
+}
+
+.field {
+  position: relative;
+  display: block;
+}
+
+.field > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.field select,
+.field input,
+.drawerField select,
+.drawerField input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 40px 0 16px;
+  border: 1px solid rgba(16, 15, 15, 0.2);
+  background: var(--sb-white, #fff);
+  color: var(--sb-night, #100f0f);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.field select,
+.field input {
+  border-radius: 999px;
+}
+
+.field input,
+.drawerField input {
+  padding-right: 16px;
+}
+
+.field input::placeholder,
+.drawerField input::placeholder {
+  color: var(--sb-night, #100f0f);
+  opacity: 1;
+}
+
+.allFiltersButton {
+  min-width: 154px;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 1px solid var(--sb-night, #100f0f);
+  border-radius: 999px;
+  background: var(--sb-night, #100f0f);
+  color: var(--sb-white, #fff);
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.allFiltersButton b {
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--sb-acid, #e4e24e);
+  color: var(--sb-night, #100f0f);
+  font-size: 12px;
+}
+
+.slidersIcon {
+  width: 18px;
+  display: grid;
+  gap: 3px;
+}
+
+.slidersIcon i {
+  display: block;
+  height: 1px;
+  background: currentColor;
+}
+
+.slidersIcon i:nth-child(1) { width: 14px; margin-left: 0; }
+.slidersIcon i:nth-child(2) { width: 18px; margin-left: 0; }
+.slidersIcon i:nth-child(3) { width: 11px; margin-left: 4px; }
+
+.meta {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(16, 15, 15, 0.1);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.meta strong {
+  white-space: nowrap;
+}
+
+.meta span {
+  max-width: 760px;
+  color: #66635b;
+  text-align: right;
+}
+
+.drawer {
+  position: fixed;
+  inset: 0 0 0 auto;
+  width: min(470px, 94vw);
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #f4f1eb;
+  color: var(--sb-night, #100f0f);
+  box-shadow: -24px 0 70px rgba(16, 15, 15, 0.22);
+  overflow: auto;
+}
+
+.drawer::backdrop {
+  background: rgba(16, 15, 15, 0.54);
+  backdrop-filter: blur(2px);
+}
+
+.drawer[open] {
+  animation: drawerIn 180ms ease-out both;
+}
+
+@keyframes drawerIn {
+  from { transform: translateX(28px); opacity: 0.92; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.drawerHeader {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 22px 24px;
+  border-bottom: 1px solid rgba(16, 15, 15, 0.14);
+  background: rgba(244, 241, 235, 0.98);
+}
+
+.drawerHeader span {
+  display: block;
+  margin-bottom: 5px;
+  color: #6d6a62;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.drawerHeader h2 {
+  margin: 0;
+  font-size: 28px;
+  letter-spacing: -0.04em;
+}
+
+.drawerClose {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border: 1px solid rgba(16, 15, 15, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  font-size: 26px;
+  line-height: 1;
+}
+
+.drawerBody {
+  padding: 24px 24px 38px;
+}
+
+.drawerForm {
+  display: block;
+}
+
+.drawerGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+}
+
+.drawerField {
+  display: grid;
+  gap: 8px;
+}
+
+.drawerField > span {
+  color: #66635b;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.drawerField select,
+.drawerField input {
+  min-height: 50px;
+  border-radius: 14px;
+}
+
+.drawerFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(16, 15, 15, 0.14);
+  font-size: 13px;
+}
+
+.drawerFooter a {
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.drawerFooter span {
+  color: #66635b;
+  text-align: right;
+}
+
+@media (max-width: 1100px) {
+  .primaryGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .allFiltersButton {
+    align-self: stretch;
+  }
+}
+
+@media (max-width: 760px) {
+  .surface {
+    display: none;
+  }
+}

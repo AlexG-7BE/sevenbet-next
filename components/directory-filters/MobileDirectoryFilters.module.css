@@ -1,0 +1,232 @@
+.root {
+  display: none;
+}
+
+@media (max-width: 760px) {
+  .root {
+    display: block;
+    width: 100%;
+  }
+
+  .trigger {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 14px 0 0;
+    padding: 0 16px;
+    border: 1px solid rgba(16, 15, 15, 0.22);
+    border-radius: 999px;
+    background: var(--sb-white, #fff);
+    color: var(--sb-night, #100f0f);
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 750;
+  }
+
+  .trigger span:last-child {
+    margin-left: auto;
+    color: #66635b;
+    font-size: 12px;
+    font-weight: 650;
+  }
+
+  .drawer {
+    position: fixed;
+    inset: 0 0 0 auto;
+    width: min(100%, 520px);
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    border: 0;
+    background: #f4f1eb;
+    color: var(--sb-night, #100f0f);
+    box-shadow: -24px 0 70px rgba(16, 15, 15, 0.22);
+  }
+
+  .drawer::backdrop {
+    background: rgba(16, 15, 15, 0.58);
+    backdrop-filter: blur(2px);
+  }
+
+  .drawer[open] {
+    animation: mobileDrawerIn 180ms ease-out both;
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    min-height: calc(84px + env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: calc(16px + env(safe-area-inset-top)) 20px 16px;
+    border-bottom: 1px solid rgba(16, 15, 15, 0.14);
+    background: rgba(244, 241, 235, 0.98);
+  }
+
+  .header span {
+    display: block;
+    color: #6d6a62;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header h2 {
+    margin: 4px 0 0;
+    font-size: 26px;
+    line-height: 1;
+    letter-spacing: -0.035em;
+  }
+
+  .close {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border: 1px solid rgba(16, 15, 15, 0.24);
+    border-radius: 50%;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    font-size: 27px;
+    line-height: 1;
+  }
+
+  .body {
+    min-height: calc(100dvh - 84px);
+  }
+
+  .body form {
+    margin: 0 !important;
+    padding: 0 0 calc(96px + env(safe-area-inset-bottom)) !important;
+    border: 0 !important;
+    border-top: 0 !important;
+    background: transparent !important;
+  }
+
+  .body form > div:first-of-type:not(:has(> label)) {
+    display: none !important;
+  }
+
+  .body form > div:has(> label) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 20px !important;
+  }
+
+  .body form > div:has(> label) > label {
+    min-width: 0;
+    display: grid !important;
+    grid-template-columns: 120px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .body form label > span {
+    position: static !important;
+    width: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    clip: auto !important;
+    white-space: normal !important;
+    color: #66635b !important;
+    font-size: 11px !important;
+    line-height: 1.25 !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+  }
+
+  .body form select,
+  .body form input:not([type="hidden"]) {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 50px !important;
+    padding: 0 38px 0 14px !important;
+    border: 1px solid rgba(16, 15, 15, 0.24) !important;
+    border-radius: 14px !important;
+    background: var(--sb-white, #fff) !important;
+    color: var(--sb-night, #100f0f) !important;
+    font: inherit !important;
+    font-size: 14px !important;
+    font-weight: 650 !important;
+  }
+
+  .body form input:not([type="hidden"]) {
+    padding-right: 14px !important;
+  }
+
+  .body form input:not([type="hidden"])::placeholder {
+    color: var(--sb-night, #100f0f) !important;
+    opacity: 1 !important;
+  }
+
+  .body form > p {
+    margin: 0 20px 20px !important;
+    padding: 14px 16px !important;
+    border: 1px solid rgba(16, 15, 15, 0.18) !important;
+    border-radius: 14px !important;
+    background: var(--sb-white, #fff) !important;
+    color: #66635b !important;
+    font-size: 12px !important;
+    line-height: 1.5 !important;
+  }
+
+  .body form > div:last-child:not(:has(> label)) {
+    position: sticky !important;
+    bottom: 0 !important;
+    z-index: 3 !important;
+    min-height: 84px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 14px 20px calc(14px + env(safe-area-inset-bottom)) !important;
+    background: var(--sb-night, #100f0f) !important;
+    color: var(--sb-white, #fff) !important;
+  }
+
+  .body form > div:last-child:not(:has(> label)) > div {
+    margin: 0 !important;
+    display: grid !important;
+    gap: 3px !important;
+  }
+
+  .body form > div:last-child:not(:has(> label)) strong {
+    color: var(--sb-white, #fff) !important;
+    font-size: 15px !important;
+  }
+
+  .body form > div:last-child:not(:has(> label)) span {
+    color: #c8c5bc !important;
+    font-size: 12px !important;
+  }
+}
+
+@keyframes mobileDrawerIn {
+  from { transform: translateX(24px); opacity: 0.94; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer[open] {
+    animation: none;
+  }
+}

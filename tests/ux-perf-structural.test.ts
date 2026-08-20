@@ -5,6 +5,9 @@ import test from "node:test";
 const form = readFileSync("components/discovery/InstantDiscoveryForm.tsx", "utf8");
 const casinos = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
 const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
+const mobileCasinos = readFileSync("components/casino-discovery/MobileCasinoFilters.tsx", "utf8");
+const mobileBonuses = readFileSync("components/bonus-directory/MobileBonusFilters.tsx", "utf8");
+const mobileDirectoryFilters = readFileSync("components/directory-filters/MobileDirectoryFilters.tsx", "utf8");
 const compare = readFileSync("components/comparison/ComparisonExperience.tsx", "utf8");
 const casinoCard = readFileSync("components/casino-discovery/CasinoDiscoveryCard.tsx", "utf8");
 
@@ -22,12 +25,32 @@ test("instant discovery progressively enhances real GET forms with URL-owned RSC
 
 test("governed discovery routes use one narrow enhancer and keep server authority", () => {
   for (const source of [casinos, bonuses, compare]) assert.match(source, /InstantDiscoveryForm/);
-  assert.match(casinos, /debouncedFields=\{\["q"\]\}/);
+  assert.doesNotMatch(casinos, /debouncedFields=\{\["q"\]\}/);
+  assert.doesNotMatch(casinos, /type="search"|SearchForm/);
+  assert.match(casinos, /DirectoryFilterSurface/);
+  assert.match(bonuses, /DirectoryFilterSurface/);
   assert.match(bonuses, /debouncedFields=\{\["maxDeposit", "maxWagering"\]\}/);
   assert.match(compare, /name="casino"/);
   for (const source of [casinos, bonuses, compare]) {
     assert.doesNotMatch(source, /useState|useEffect|fetch\(|@prisma\/client|prisma\./);
   }
+});
+
+test("casino and bonus mobile filters share one shell and interaction contract", () => {
+  for (const source of [mobileCasinos, mobileBonuses]) assert.match(source, /MobileDirectoryFilters/);
+  assert.match(mobileCasinos, /dialogId="casino-filter-dialog"/);
+  assert.match(mobileBonuses, /dialogId="bonus-filter-dialog"/);
+  assert.match(mobileDirectoryFilters, /Filters\{activeCount \? ` \(\$\{activeCount\}\)` : ""\}/);
+  assert.match(mobileDirectoryFilters, /Refine results ↗/);
+  assert.match(mobileDirectoryFilters, /dialog\.showModal\(\)/);
+  assert.match(mobileDirectoryFilters, /document\.body\.style\.overflow = "hidden"/);
+  assert.match(mobileDirectoryFilters, /triggerRef\.current\?\.focus\(\)/);
+});
+
+test("bonus mobile demo disclosure spans the result card instead of collapsing into a narrow grid cell", () => {
+  assert.match(bonuses, /gridColumn: "1 \/ -1"/);
+  assert.match(bonuses, /overflowWrap: "break-word"/);
+  assert.match(bonuses, /wordBreak: "normal"/);
 });
 
 test("measured casino theatre image uses the Next image pipeline and bounded responsive candidates", () => {
