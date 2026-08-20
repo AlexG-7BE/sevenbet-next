@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import test from "node:test";
 
 import { protectedHelpArticles } from "../lib/responsible-gambling";
@@ -46,10 +46,9 @@ test("FAQ is the server-rendered product and trust surface with native disclosur
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {
   const best = read("app/(public)/best-offers/page.tsx");
-  const bestLoading = read("app/(public)/best-offers/loading.tsx");
   const bestError = read("app/(public)/best-offers/error.tsx");
+  assert.equal(existsSync("app/(public)/best-offers/loading.tsx"), false);
   assert.equal((best.match(/<h1\b/g) ?? []).length, 1);
-  assert.equal((bestLoading.match(/<h1\b/g) ?? []).length, 1);
   assert.equal((bestError.match(/<h1\b/g) ?? []).length, 1);
   assert.match(best, /result\.status === "available"/);
   assert.match(best, /<h2>\{result\.status === "unavailable"/);
