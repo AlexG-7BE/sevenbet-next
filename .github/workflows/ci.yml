@@ -142,6 +142,11 @@ jobs:
           DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
           DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
         run: npm run mvp-runtime:postgres-test
+      - name: Run npm run mcp-bridge:postgres-test
+        env:
+          DATABASE_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+          DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+        run: npm run mcp-bridge:postgres-test
       - run: npm run programme:seed
       - run: npm run build
       - run: npm run ci:build-secrets
@@ -183,3 +188,4 @@ jobs:
       - run: npm ci
       - run: npm run ci:migrations
       - run: npm run mvp-runtime:postgres-test
+      - run: npm run mcp-bridge:postgres-test

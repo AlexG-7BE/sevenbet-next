@@ -2230,6 +2230,84 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   gap: 16px;
 }
 
+.mcpAuthShell {
+  min-height: 100svh;
+  align-content: center;
+}
+
+.mcpAuthCard {
+  gap: 20px;
+  max-width: 680px;
+  margin-inline: auto;
+}
+
+.mcpAuthCard h1 {
+  max-width: 14ch;
+  text-wrap: balance;
+}
+
+.mcpAuthEyebrow {
+  margin: 0 0 7px;
+  color: var(--subtle);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.mcpPermissionList {
+  display: grid;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+}
+
+.mcpPermissionList h2 {
+  margin: 0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: .82rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.mcpPermissionList article {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.mcpPermissionList article:first-of-type {
+  border-top: 0;
+}
+
+.mcpPermissionList article span,
+.mcpAuthorityBoundary p {
+  color: var(--muted);
+  font-size: .9rem;
+  line-height: 1.55;
+}
+
+.mcpAuthorityBoundary {
+  padding: 14px 16px;
+  border-left: 3px solid #f2b84b;
+  border-radius: 8px;
+  background: rgba(242, 184, 75, .07);
+}
+
+.mcpAuthorityBoundary p {
+  margin: 5px 0 0;
+}
+
+.mcpConsentActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .adminLoginForm {
   display: grid;
   gap: 16px;

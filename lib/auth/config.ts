@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { mcp } from "better-auth/plugins";
 
 import prisma from "@/lib/db/prisma";
 import { resolveGoogleAuthConfig } from "@/lib/auth/google-config";
@@ -54,6 +55,23 @@ export function createSevenBetAuth({
         }
       : {}),
     databaseHooks: identityOnlyOAuthAccountDatabaseHooks,
+    plugins: [
+      mcp({
+        loginPage: "/admin/integrations/chatgpt-work/login",
+        resource: "https://b4gamble.com/api/mcp/commercial",
+        oidcConfig: {
+          loginPage: "/admin/integrations/chatgpt-work/login",
+          accessTokenExpiresIn: 15 * 60,
+          refreshTokenExpiresIn: 30 * 24 * 60 * 60,
+          codeExpiresIn: 5 * 60,
+          requirePKCE: true,
+          allowPlainCodeChallengeMethod: false,
+          consentPage: "/admin/integrations/chatgpt-work/consent",
+          defaultScope: "commercial:read",
+          scopes: ["commercial:read", "commercial:safe_write"],
+        },
+      }),
+    ],
     disabledPaths: [...IDENTITY_ONLY_DISABLED_AUTH_PATHS],
     trustedOrigins: runtimeConfig.trustedOrigins,
   });

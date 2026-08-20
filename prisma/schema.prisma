@@ -541,6 +541,9 @@ model User {
 
   sessions                           Session[]
   accounts                           Account[]
+  oauthApplications                  OauthApplication[]
+  oauthAccessTokens                  OauthAccessToken[]
+  oauthConsents                      OauthConsent[]
   adminUser                          AdminUser?
   programEnrollments                 ProgramEnrollment[]
   xpEvents                           UserXpEvent[]
@@ -595,6 +598,79 @@ model Verification {
   updatedAt  DateTime @updatedAt
 
   @@index([identifier])
+}
+
+// Additive Better Auth OAuth provider storage used only by the bounded
+// Commercial MCP bridge. Consumer and Programme sessions remain unchanged.
+model OauthApplication {
+  id           String   @id
+  name         String
+  icon         String?
+  metadata     String?
+  clientId     String   @unique
+  clientSecret String?
+  redirectUrls String
+  type         String
+  disabled     Boolean  @default(false)
+  userId       String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User?              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  accessTokens OauthAccessToken[]
+  consents     OauthConsent[]
+
+  @@index([userId])
+  @@map("OAuthApplication")
+}
+
+model OauthAccessToken {
+  id                    String   @id
+  accessToken           String   @unique
+  refreshToken          String   @unique
+  accessTokenExpiresAt  DateTime
+  refreshTokenExpiresAt DateTime
+  clientId              String
+  userId                String?
+  scopes                String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  client OauthApplication @relation(fields: [clientId], references: [clientId], onDelete: Cascade, onUpdate: Cascade)
+  user   User?            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("OAuthAccessToken")
+}
+
+model OauthConsent {
+  id           String   @id
+  clientId     String
+  userId       String
+  scopes       String
+  consentGiven Boolean
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  client OauthApplication @relation(fields: [clientId], references: [clientId], onDelete: Cascade, onUpdate: Cascade)
+  user   User             @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@index([clientId])
+  @@index([userId])
+  @@map("OAuthConsent")
+}
+
+// Hashed fixed-window counters for the public Commercial MCP boundary. Raw IP,
+// staff and OAuth client identifiers are never stored in this table.
+model CommercialMcpRateLimitBucket {
+  bucketKey       String   @id
+  scope           String
+  count           Int
+  windowStartedAt DateTime
+  expiresAt       DateTime
+
+  @@index([expiresAt])
 }
 
 model Program {
