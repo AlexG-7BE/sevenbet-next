@@ -50,6 +50,7 @@ test("stable OAuth Provider owns protocol issuance, rotation, and revocation", a
   assert.doesNotMatch(authConfig, /from ["']better-auth\/plugins["']/);
   assert.match(oauth, /"\/oauth2\/token"/);
   assert.match(oauth, /"\/oauth2\/revoke"/);
+  assert.match(oauth, /value\.resource\[0\] !== config\.resource/);
 });
 
 test("no reusable token is stored or queried through a plaintext field", async () => {

@@ -40,7 +40,7 @@ Migration 0022 is the additive compatibility step for `better-auth`, `@better-au
 - backfills the one Commercial resource only from application-owned 0021 client metadata and rejects unsupported client/account state rather than inventing data; and
 - keeps `clientCredentialsScopes` empty and does not enable the client-credentials grant.
 
-**DETECTED COMPATIBILITY:** the disposable staged test builds exact post-0020 state, inserts credential and Google accounts, applies 0021, inserts a 1.6 DCR/token/consent fixture, then applies 0022. It verifies both accounts and exact issuers, the one resource/client relation, token/consent resource backfills, empty client-credentials scopes, legacy 1.6 credential/Google inserts after 0022, and issuer/account collision rejection.
+**DETECTED COMPATIBILITY:** the disposable staged test builds exact post-0020 state with two Users, credential and Google Accounts, one linked `AdminUser`, one Commercial opportunity and one Commercial evidence row. It applies 0021, inserts a 1.6 DCR/token/consent fixture, then applies 0022. It verifies preservation of every representative row, both exact issuers, the one resource/client relation, token/consent resource backfills, empty client-credentials scopes, legacy 1.6 credential/Google inserts after 0022, and issuer/account collision rejection. A separate disposable replay inserts an unsupported legacy provider, proves that 0022 refuses the migration, and verifies that the existing Account row remains unchanged.
 
 Required future Production order:
 

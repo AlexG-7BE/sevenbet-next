@@ -41,6 +41,17 @@ function run(command, args, environment = {}) {
   }
 }
 
+function runExpectFailure(command, args, environment = {}) {
+  const result = spawnSync(command, args, {
+    stdio: "inherit",
+    env: { ...process.env, ...environment },
+  });
+  if (result.error) throw result.error;
+  if (result.status === 0) {
+    throw new Error(`${command} ${args.join(" ")} unexpectedly succeeded`);
+  }
+}
+
 function databaseUrlForSchema(value, schema) {
   const url = new URL(value);
   url.searchParams.set("schema", schema);
@@ -174,7 +185,20 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
       throw new Error("Better Auth 1.7 account issuer backfill verification failed");
     }
 
-    const [client, resource, clientResource, refreshToken, accessToken, consent] = await Promise.all([
+    const [users, adminUser, commercialOpportunity, client, resource, clientResource, refreshToken, accessToken, consent] = await Promise.all([
+      prisma.user.findMany({
+        where: { id: { in: ["ba17-credential-user", "ba17-google-user"] } },
+        orderBy: { id: "asc" },
+        select: { id: true, email: true },
+      }),
+      prisma.adminUser.findUniqueOrThrow({
+        where: { id: "00000000-0000-4000-8000-000000000222" },
+        select: { userId: true, role: true },
+      }),
+      prisma.commercialOpportunity.findUniqueOrThrow({
+        where: { id: "00000000-0000-4000-8000-000000000223" },
+        include: { evidence: true },
+      }),
       prisma.oauthClient.findUniqueOrThrow({ where: { clientId: "ba17-chatgpt-client" } }),
       prisma.oauthResource.findUniqueOrThrow({
         where: { identifier: "http://localhost:4173/api/mcp/commercial" },
@@ -193,7 +217,13 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
     ]);
     const expectedResources = ["http://localhost:4173/api/mcp/commercial"];
     if (
-      client.applicationType !== "web"
+      users.length !== 2
+      || adminUser.userId !== "ba17-credential-user"
+      || adminUser.role !== "AFFILIATE_MANAGER"
+      || commercialOpportunity.stage !== "PROSPECT"
+      || commercialOpportunity.evidence.length !== 1
+      || commercialOpportunity.evidence[0].claim !== "This isolated fixture verifies Commercial data preservation only."
+      || client.applicationType !== "web"
       || client.clientCredentialsScopes.length !== 0
       || resource.disabled
       || clientResource.clientId !== client.clientId
@@ -295,11 +325,79 @@ async function verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationInd
         "0021_partner_ops_work_bridge_01",
         "0022_better_auth_17_schema_upgrade",
       ],
+      usersPreserved: users.length,
       accountsPreserved: accounts.length,
+      adminUsersPreserved: 1,
+      commercialOpportunitiesPreserved: 1,
+      commercialEvidenceRowsPreserved: commercialOpportunity.evidence.length,
       protectedResources: 1,
       clientCredentialsScopes: client.clientCredentialsScopes.length,
       legacyOverlapIssuers: [overlap.issuer, googleOverlap.issuer],
       duplicateIdentityRejected: duplicateRejected,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex) {
+  const migration0021Index = migrationEntries.indexOf("0021_partner_ops_work_bridge_01");
+  const schema = "better_auth_17_unsupported_account_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma",
+      "db",
+      "execute",
+      "--schema",
+      "prisma/schema.prisma",
+      "--file",
+      "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+
+  const through0021 = await stageMigrations(migrationEntries.slice(0, migration0021Index + 1));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(through0021, "schema.prisma")], environment);
+  } finally {
+    await rm(through0021, { recursive: true, force: true });
+  }
+
+  const unsupportedFixture = await mkdtemp(path.join(tmpdir(), "sevenbet-unsupported-account-"));
+  const unsupportedSql = path.join(unsupportedFixture, "fixture.sql");
+  try {
+    await copyFile("prisma/fixtures/0022_unsupported_account.sql", unsupportedSql);
+    run("npx", ["prisma", "db", "execute", "--schema", "prisma/schema.prisma", "--file", unsupportedSql], environment);
+    runExpectFailure("npx", ["prisma", "migrate", "deploy"], environment);
+  } finally {
+    await rm(unsupportedFixture, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    const rows = await prisma.$queryRawUnsafe(`
+      SELECT "providerId", "accountId", "userId"
+      FROM "${schema}"."Account"
+      WHERE "id" = 'ba17-unsupported-account'
+    `);
+    if (
+      rows.length !== 1
+      || rows[0].providerId !== "unsupported-provider"
+      || rows[0].accountId !== "unsupported-subject"
+      || rows[0].userId !== "ba17-unsupported-user"
+    ) {
+      throw new Error("Unsupported legacy Account row was modified during refused migration");
+    }
+    console.info("Better Auth 1.7 unsupported Account refusal passed", {
+      providerPreserved: rows[0].providerId,
+      migrationRefused: true,
     });
   } finally {
     await prisma.$disconnect();
@@ -373,6 +471,7 @@ async function main() {
   }
 
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
+  await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();

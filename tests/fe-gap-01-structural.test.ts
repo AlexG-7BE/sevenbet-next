@@ -96,6 +96,7 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
       [
         "prisma/fixtures/0022_post_0020_accounts.sql",
         "prisma/fixtures/0022_post_0021_oauth.sql",
+        "prisma/fixtures/0022_unsupported_account.sql",
         "prisma/migrations/0022_better_auth_17_schema_upgrade/migration.sql",
         "prisma/schema.prisma",
       ],

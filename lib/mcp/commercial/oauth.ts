@@ -219,6 +219,7 @@ type AuthorizationCodeVerification = {
   };
   userId: string;
   sessionId: string;
+  resource: string[];
 };
 
 export async function getCommercialMcpConsent(
@@ -327,8 +328,13 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
       }).passthrough(),
       userId: z.string(),
       sessionId: z.string(),
+      resource: z.array(z.string().url()).length(1),
     }).passthrough().parse(JSON.parse(verification.value)) as AuthorizationCodeVerification;
-    if (value.query.client_id !== body.client_id || value.query.redirect_uri !== body.redirect_uri) {
+    if (
+      value.query.client_id !== body.client_id
+      || value.query.redirect_uri !== body.redirect_uri
+      || value.resource[0] !== config.resource
+    ) {
       throw new CommercialMcpAuthError("Authorization code binding is invalid", 401, "invalid_grant");
     }
     parseCommercialMcpScopes(value.query.scope);

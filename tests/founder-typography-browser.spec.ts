@@ -4,8 +4,12 @@ const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const viewports = [
   { width: 1440, height: 1000 },
   { width: 1024, height: 900 },
+  { width: 768, height: 1024 },
   { width: 430, height: 932 },
+  { width: 412, height: 915 },
   { width: 390, height: 844 },
+  { width: 375, height: 812 },
+  { width: 360, height: 800 },
 ] as const;
 const publicRoutes = [
   "/",
@@ -128,11 +132,23 @@ test("final public routes keep sub-12 text decorative-only and remain overflow-f
   }
 });
 
-test("Bonuses decision UI uses the functional scale at every Founder viewport", async ({ browser }) => {
-  test.setTimeout(6 * 60_000);
+test("Casinos and Bonuses filter fields use the functional scale at every Founder viewport", async ({ browser }) => {
+  test.setTimeout(12 * 60_000);
   for (const viewport of viewports) {
     const context = await browser.newContext({ viewport, isMobile: viewport.width <= 430 });
     const page = await context.newPage();
+
+    await page.goto(`${baseUrl}/casinos?visualFixture=true`, { waitUntil: "networkidle" });
+    await expect(page.locator('[data-runtime-renderer="casinos"]')).toHaveCount(1);
+    if (viewport.width <= 430) {
+      await page.getByRole("button", { name: /Filters/i }).click();
+      await expectMinimum(page.getByRole("dialog", { name: /Filter Casinos/i }).locator("select,input"), 16, `mobile casino fields at ${viewport.width}px`);
+      await page.keyboard.press("Escape");
+    } else {
+      await expectMinimum(page.locator('form[action="/casinos"]').first().locator("select,input"), 15, `desktop casino fields at ${viewport.width}px`);
+    }
+    await expectNoOverflow(page, `Casinos overflow at ${viewport.width}px`);
+
     await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="bonuses"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);

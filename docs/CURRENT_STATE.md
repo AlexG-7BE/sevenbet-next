@@ -113,6 +113,8 @@ The normal Vercel preflight is readiness-only again. This event does not establi
 
 The candidate requires migration-before-code release sequencing because the 1.7 application requires schema 0022. Production remains on the current application/schema through 0020, `COMMERCIAL_MCP_ENABLED` remains false, and this current-state note is not merge, migration, deploy or enablement authority.
 
+**DETECTED — PUBLIC READ-ONLY CHECK, 2026-08-20:** both Production OAuth metadata routes returned fail-closed HTTP 503 `Commercial MCP is not configured`. This confirms the public bridge remains disabled; it does not independently inspect the private Vercel environment value or database migration table. The last authorised direct migration evidence remains the verified 0020 execution above; no authorised direct Production database read path was used in this consolidation task.
+
 ## Production acceptance after Commercial Ops migration
 
 **DETECTED:**
