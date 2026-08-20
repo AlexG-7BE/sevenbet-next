@@ -22,7 +22,10 @@ test("instant discovery progressively enhances real GET forms with URL-owned RSC
 
 test("governed discovery routes use one narrow enhancer and keep server authority", () => {
   for (const source of [casinos, bonuses, compare]) assert.match(source, /InstantDiscoveryForm/);
-  assert.match(casinos, /debouncedFields=\{\["q"\]\}/);
+  assert.doesNotMatch(casinos, /debouncedFields=\{\["q"\]\}/);
+  assert.doesNotMatch(casinos, /type="search"|SearchForm/);
+  assert.match(casinos, /DirectoryFilterSurface/);
+  assert.match(bonuses, /DirectoryFilterSurface/);
   assert.match(bonuses, /debouncedFields=\{\["maxDeposit", "maxWagering"\]\}/);
   assert.match(compare, /name="casino"/);
   for (const source of [casinos, bonuses, compare]) {
