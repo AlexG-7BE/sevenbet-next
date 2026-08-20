@@ -1,5 +1,6 @@
 import { getServerSession } from "@/lib/auth/session";
 import { getCurrentStaff } from "@/lib/auth/staff";
+import { normalizeCommercialMcpAuthorizationRequest } from "@/lib/mcp/commercial/authorization-request";
 import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { authorizeCommercialMcpRequest, CommercialMcpAuthError, commercialMcpAuthErrorResponse } from "@/lib/mcp/commercial/oauth";
 
@@ -30,7 +31,8 @@ export async function GET(request: Request) {
     if (!staff || !staff.permissions.includes("affiliate.manage")) {
       throw new CommercialMcpAuthError("B4GAMBLE commercial staff access is required", 403, "access_denied");
     }
-    return await authorizeCommercialMcpRequest(request, config, session.user.id);
+    const normalizedRequest = normalizeCommercialMcpAuthorizationRequest(request);
+    return await authorizeCommercialMcpRequest(normalizedRequest, config, session.user.id);
   } catch (error) {
     return commercialMcpAuthErrorResponse(error, config);
   }
