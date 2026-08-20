@@ -31,7 +31,7 @@ function safeActionHref(offer: PublicOfferDTO) {
 
 function DemoFixtureNotice({ offer }: { offer: PublicOfferDTO }) {
   if (offer.dataClassification !== "DEMO_FIXTURE") return null;
-  return <p className={styles.conditions}><strong>DEMONSTRATION DATA</strong> — Fictional example for interface testing. Not a real casino, current offer or B4GAMBLE partner. No gambling or affiliate link is available.</p>;
+  return <p className={styles.conditions} style={{ gridColumn: "1 / -1", overflowWrap: "break-word", wordBreak: "normal" }}><strong>DEMONSTRATION DATA</strong> — Fictional example for interface testing. Not a real casino, current offer or B4GAMBLE partner. No gambling or affiliate link is available.</p>;
 }
 
 function bonusType(value: string) {
