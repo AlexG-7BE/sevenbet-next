@@ -51,7 +51,10 @@ export function resolveCommercialMcpConfig(
   requestUrl: string,
   environment: CommercialMcpEnvironment = process.env,
 ): CommercialMcpConfig | null {
-  if (environment.COMMERCIAL_MCP_ENABLED !== "true") return null;
+  const explicitEnabled = environment.COMMERCIAL_MCP_ENABLED?.trim();
+  const enabled = explicitEnabled === "true"
+    || (explicitEnabled !== "false" && environment.VERCEL_ENV === "production");
+  if (!enabled) return null;
 
   let origin: string;
   if (environment.COMMERCIAL_MCP_PUBLIC_ORIGIN?.trim()) {
