@@ -13,6 +13,8 @@ import {
 } from "@/lib/security/content-security-policy";
 
 const adminCookieName = "sevenbet_admin_preview";
+const chatGptWorkOrigin = "https://chatgpt.com";
+const commercialMcpConsentPath = "/admin/integrations/chatgpt-work/consent";
 
 function getAdminPreviewToken() {
   return process.env.SEVENBET_ADMIN_PREVIEW_TOKEN?.trim() || null;
@@ -41,9 +43,11 @@ function privateAdminResponse(response: NextResponse) {
 }
 
 export function middleware(request: NextRequest) {
+  const { pathname, searchParams } = request.nextUrl;
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
+    formActionOrigins: pathname === commercialMcpConsentPath ? [chatGptWorkOrigin] : [],
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set(CSP_NONCE_REQUEST_HEADER, nonce);
@@ -73,7 +77,6 @@ export function middleware(request: NextRequest) {
     ));
   }
 
-  const { pathname, searchParams } = request.nextUrl;
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";
   if (programmeMutation && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over") {
     return secureResponse(NextResponse.json(
@@ -89,7 +92,7 @@ export function middleware(request: NextRequest) {
   // API authorization is always resolved by the server route, never by cookie presence.
   if (isAdminApi) return privateAdminResponse(secureResponse(nextResponse()));
   const isCommercialMcpAuthPage = pathname === "/admin/integrations/chatgpt-work/login"
-    || pathname === "/admin/integrations/chatgpt-work/consent";
+    || pathname === commercialMcpConsentPath;
   if (pathname === "/admin/login" || isCommercialMcpAuthPage) {
     return privateAdminResponse(secureResponse(nextResponse()));
   }
