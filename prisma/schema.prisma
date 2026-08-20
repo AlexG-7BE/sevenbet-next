@@ -333,6 +333,185 @@ enum BoundaryStatus {
   RETIRED
 }
 
+enum CommercialOpportunityStage {
+  PROSPECT
+  QUALIFIED
+  APPLICATION_READY
+  APPLIED
+  DUE_DILIGENCE
+  NEGOTIATING
+  APPROVED
+  ACTIVE
+  REJECTED
+  ON_HOLD
+}
+
+enum CommercialPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CommercialOrganizationType {
+  DIRECT_OPERATOR
+  AFFILIATE_NETWORK
+  GROUP
+  PLATFORM
+  OTHER
+}
+
+enum CommercialWaitingOn {
+  NONE
+  INTERNAL_ACTION
+  EXTERNAL_PARTY
+  EVIDENCE
+  FOUNDER_DECISION
+}
+
+enum CommercialEvidenceClassification {
+  DETECTED
+  INFERRED
+  PROPOSED
+  UNKNOWN
+  CONTRADICTION
+}
+
+enum CommercialEvidenceSourceType {
+  PUBLIC_WEB
+  OFFICIAL_OPERATOR_SOURCE
+  REGULATOR_SOURCE
+  EMAIL
+  APPLICATION_PORTAL
+  AGREEMENT
+  INTERNAL_RECORD
+  OTHER
+}
+
+enum CommercialEvidenceSourceAuthority {
+  REGULATOR_OFFICIAL
+  ORGANISATION_OFFICIAL
+  DIRECT_INTERNAL_RECORD
+  OTHER
+}
+
+enum CommercialEvidenceCategory {
+  IDENTITY
+  MARKET_RELEVANCE
+  APPLICATION_PATH
+  QUALIFICATION
+  EXTERNAL_ACTION
+  DUE_DILIGENCE
+  NEGOTIATION
+  APPROVAL
+  REJECTION
+  COMMERCIAL_TERMS
+  CONTACT
+  ACTIVATION
+  FOUNDER_DECISION
+  OTHER
+}
+
+enum CommercialEvidenceStatus {
+  CURRENT
+  STALE
+  SUPERSEDED
+  DISPUTED
+  UNKNOWN
+}
+
+enum CommercialActorKind {
+  HUMAN_ADMIN
+  PARTNER_OPERATIONS_AGENT
+  SYSTEM
+}
+
+enum CommercialActivityType {
+  RESEARCH
+  NOTE
+  APPLICATION_PREPARED
+  APPLICATION_SUBMITTED
+  OUTREACH_DRAFTED
+  OUTREACH_SENT
+  RESPONSE_RECEIVED
+  MEETING
+  DUE_DILIGENCE
+  NEGOTIATION
+  TERMS_RECEIVED
+  STAGE_CHANGE
+  STAGE_PROPOSED
+  FOUNDER_DECISION
+  ACTIVATION_PREPARED
+  ACTIVATION_EVENT
+}
+
+enum CommercialApplicationChannel {
+  EMAIL
+  APPLICATION_PORTAL
+  WEB_FORM
+  MEETING
+  OTHER
+}
+
+enum CommercialApplicationType {
+  APPLICATION
+  OUTREACH
+}
+
+enum CommercialApplicationState {
+  DRAFT
+  PREPARED
+  SUBMITTED
+  SENT
+  RESPONSE_RECEIVED
+  CLOSED
+}
+
+enum CommercialTermModel {
+  CPA
+  REV_SHARE
+  HYBRID
+  OTHER
+}
+
+enum CommercialTermStatus {
+  PROPOSED
+  RECEIVED
+  CONFIRMED
+  SUPERSEDED
+}
+
+enum CommercialTaskType {
+  RESEARCH
+  EVIDENCE_GAP
+  APPLICATION
+  OUTREACH
+  FOLLOW_UP
+  DUE_DILIGENCE
+  NEGOTIATION
+  ACTIVATION
+  OTHER
+}
+
+enum CommercialAgentRunStatus {
+  COMPLETED
+  NEEDS_REVIEW
+  BLOCKED
+  FAILED
+}
+
+enum CommercialAgentOperationStatus {
+  APPLIED
+  REJECTED
+  SKIPPED_IDEMPOTENT
+}
+
+enum CommercialActivationReadinessStatus {
+  NOT_APPLICABLE
+  NOT_READY
+  READY_FOR_FOUNDER_REVIEW
+}
+
 model AdminUser {
   id        String    @id @default(uuid()) @db.Uuid
   userId    String?   @unique
@@ -342,9 +521,13 @@ model AdminUser {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  user                 User?                @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  auditLogs            AuditLog[]
-  activeDayCorrections ProgrammeActiveDay[]
+  user                    User?                   @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  auditLogs               AuditLog[]
+  activeDayCorrections    ProgrammeActiveDay[]
+  commercialOpportunities CommercialOpportunity[] @relation("CommercialOpportunityOwner")
+  commercialApplications  CommercialApplication[] @relation("CommercialApplicationOwner")
+  commercialTasks         CommercialTask[]        @relation("CommercialTaskOwner")
+  commercialActivities    CommercialActivity[]    @relation("CommercialActivityActor")
 }
 
 model User {
@@ -999,27 +1182,28 @@ model Casino {
   createdBy                   String
   updatedBy                   String
 
-  bonuses           Bonus[]
-  affiliateLinks    AffiliateLink[]
-  versions          CasinoVersion[]
-  revisions         CasinoRevision[]
-  images            CasinoImage[]
-  mediaAssets       MediaAsset[]
-  countries         CasinoCountry[]
-  licenses          CasinoLicense[]
-  paymentMethods    CasinoPaymentMethod[]
-  gameProviders     CasinoGameProvider[]
-  gameCategories    CasinoGameCategory[]
-  casinoBonuses     CasinoBonus[]
-  casinoLinks       CasinoAffiliateLink[]
-  affiliateOffers   AffiliateOffer[]
-  affiliatePrograms AffiliateProgram[]
-  redirectSlugs     AffiliateRedirectSlug[]
-  aliases           CasinoAlias[]
-  seo               CasinoSeo?
-  editorialReview   EditorialReview?
-  operatorProfile   CasinoOperator?         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  brandProfile      CasinoBrand?            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  bonuses                 Bonus[]
+  affiliateLinks          AffiliateLink[]
+  versions                CasinoVersion[]
+  revisions               CasinoRevision[]
+  images                  CasinoImage[]
+  mediaAssets             MediaAsset[]
+  countries               CasinoCountry[]
+  licenses                CasinoLicense[]
+  paymentMethods          CasinoPaymentMethod[]
+  gameProviders           CasinoGameProvider[]
+  gameCategories          CasinoGameCategory[]
+  casinoBonuses           CasinoBonus[]
+  casinoLinks             CasinoAffiliateLink[]
+  affiliateOffers         AffiliateOffer[]
+  affiliatePrograms       AffiliateProgram[]
+  redirectSlugs           AffiliateRedirectSlug[]
+  aliases                 CasinoAlias[]
+  seo                     CasinoSeo?
+  editorialReview         EditorialReview?
+  operatorProfile         CasinoOperator?         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brandProfile            CasinoBrand?            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  commercialOpportunities CommercialOpportunity[]
 
   @@index([operatorProfileId])
   @@index([brandProfileId])
@@ -1090,8 +1274,9 @@ model CasinoOperator {
   createdAt  DateTime              @default(now())
   updatedAt  DateTime              @updatedAt
 
-  brands  CasinoBrand[]
-  casinos Casino[]
+  brands                  CasinoBrand[]
+  casinos                 Casino[]
+  commercialOpportunities CommercialOpportunity[]
 
   @@unique([name])
 }
@@ -1105,8 +1290,9 @@ model CasinoBrand {
   createdAt  DateTime              @default(now())
   updatedAt  DateTime              @updatedAt
 
-  operator CasinoOperator? @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  casinos  Casino[]
+  operator                CasinoOperator?         @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casinos                 Casino[]
+  commercialOpportunities CommercialOpportunity[]
 
   @@unique([operatorId, name])
   @@index([operatorId])
@@ -1380,7 +1566,8 @@ model AffiliateNetwork {
   createdBy     String
   updatedBy     String
 
-  programs AffiliateProgram[]
+  programs                AffiliateProgram[]
+  commercialOpportunities CommercialOpportunity[]
 
   @@index([active, name])
 }
@@ -1427,11 +1614,12 @@ model AffiliateProgram {
   createdBy             String
   updatedBy             String
 
-  network          AffiliateNetwork           @relation(fields: [networkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casino           Casino?                    @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  offers           AffiliateOffer[]
-  externalMappings AffiliateExternalMapping[]
-  importJobs       AffiliateImportJob[]
+  network                 AffiliateNetwork           @relation(fields: [networkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino                  Casino?                    @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  offers                  AffiliateOffer[]
+  externalMappings        AffiliateExternalMapping[]
+  importJobs              AffiliateImportJob[]
+  commercialOpportunities CommercialOpportunity[]
 
   @@unique([networkId, externalProgramId])
   @@index([networkId, status])
@@ -1797,6 +1985,320 @@ model ContentRevision {
   createdAt      DateTime @default(now())
 
   @@index([entityType, entityId])
+}
+
+model CommercialOpportunity {
+  id                     String                     @id @default(uuid()) @db.Uuid
+  displayName            String
+  normalizedName         String
+  legalName              String?
+  organizationType       CommercialOrganizationType @default(OTHER)
+  stage                  CommercialOpportunityStage @default(PROSPECT)
+  priority               CommercialPriority         @default(MEDIUM)
+  waitingOn              CommercialWaitingOn        @default(NONE)
+  ownerId                String?                    @db.Uuid
+  strategicFit           String?
+  marketRelevance        String?
+  productFit             String?
+  integrationBurden      String?
+  qualificationRationale String?
+  commercialNotes        String?
+  riskNotes              String?
+  nextActionSummary      String?
+  nextActionDueAt        DateTime?
+  operatorId             String?                    @db.Uuid
+  brandId                String?                    @db.Uuid
+  casinoId               String?                    @db.Uuid
+  affiliateNetworkId     String?                    @db.Uuid
+  affiliateProgramId     String?                    @db.Uuid
+  possibleDuplicateOfId  String?                    @db.Uuid
+  creationIdempotencyKey String?                    @unique
+  createdBy              String
+  updatedBy              String
+  createdAt              DateTime                   @default(now())
+  updatedAt              DateTime                   @updatedAt
+
+  owner               AdminUser?                   @relation("CommercialOpportunityOwner", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  operator            CasinoOperator?              @relation(fields: [operatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brand               CasinoBrand?                 @relation(fields: [brandId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino              Casino?                      @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateNetwork    AffiliateNetwork?            @relation(fields: [affiliateNetworkId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateProgram    AffiliateProgram?            @relation(fields: [affiliateProgramId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  possibleDuplicateOf CommercialOpportunity?       @relation("CommercialOpportunityDuplicates", fields: [possibleDuplicateOfId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  possibleDuplicates  CommercialOpportunity[]      @relation("CommercialOpportunityDuplicates")
+  evidence            CommercialEvidence[]
+  contacts            CommercialContact[]
+  activities          CommercialActivity[]
+  applications        CommercialApplication[]
+  terms               CommercialTerm[]
+  tasks               CommercialTask[]
+  agentRuns           CommercialAgentRun[]
+  agentOperations     CommercialAgentOperation[]
+  activationPackets   CommercialActivationPacket[]
+
+  @@index([stage, priority, updatedAt])
+  @@index([ownerId, stage])
+  @@index([waitingOn, nextActionDueAt])
+  @@index([normalizedName])
+  @@index([operatorId])
+  @@index([brandId])
+  @@index([casinoId])
+  @@index([affiliateNetworkId])
+  @@index([affiliateProgramId])
+  @@index([possibleDuplicateOfId])
+}
+
+model CommercialEvidence {
+  id                 String                             @id @default(uuid()) @db.Uuid
+  opportunityId      String                             @db.Uuid
+  sourceType         CommercialEvidenceSourceType
+  sourceAuthority    CommercialEvidenceSourceAuthority?
+  classification     CommercialEvidenceClassification
+  category           CommercialEvidenceCategory
+  status             CommercialEvidenceStatus           @default(CURRENT)
+  sourceUrl          String?
+  sourceReference    String?
+  title              String
+  claim              String
+  notes              String?
+  observedAt         DateTime?
+  recordedAt         DateTime                           @default(now())
+  expiresAt          DateTime?
+  recheckAt          DateTime?
+  contentFingerprint String
+  idempotencyKey     String
+  recordedBy         String
+
+  opportunity  CommercialOpportunity   @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  contacts     CommercialContact[]
+  activities   CommercialActivity[]
+  applications CommercialApplication[]
+  terms        CommercialTerm[]
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, category, status])
+  @@index([recheckAt])
+  @@index([expiresAt])
+  @@index([contentFingerprint])
+}
+
+model CommercialContact {
+  id               String   @id @default(uuid()) @db.Uuid
+  opportunityId    String   @db.Uuid
+  evidenceId       String?  @db.Uuid
+  name             String
+  roleTitle        String?
+  businessEmail    String?
+  businessPhone    String?
+  organizationName String?
+  operationalNotes String?
+  idempotencyKey   String
+  createdBy        String
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  opportunity CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  evidence    CommercialEvidence?   @relation(fields: [evidenceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, name])
+  @@index([evidenceId])
+}
+
+model CommercialActivity {
+  id             String                      @id @default(uuid()) @db.Uuid
+  opportunityId  String                      @db.Uuid
+  evidenceId     String?                     @db.Uuid
+  agentRunId     String?                     @db.Uuid
+  actorId        String?                     @db.Uuid
+  actorKind      CommercialActorKind
+  type           CommercialActivityType
+  summary        String
+  details        String?
+  reason         String?
+  previousStage  CommercialOpportunityStage?
+  newStage       CommercialOpportunityStage?
+  occurredAt     DateTime                    @default(now())
+  idempotencyKey String
+
+  opportunity CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  evidence    CommercialEvidence?   @relation(fields: [evidenceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  agentRun    CommercialAgentRun?   @relation(fields: [agentRunId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  actor       AdminUser?            @relation("CommercialActivityActor", fields: [actorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, occurredAt])
+  @@index([evidenceId])
+  @@index([agentRunId])
+  @@index([actorId])
+}
+
+model CommercialApplication {
+  id             String                       @id @default(uuid()) @db.Uuid
+  opportunityId  String                       @db.Uuid
+  evidenceId     String?                      @db.Uuid
+  ownerId        String?                      @db.Uuid
+  channel        CommercialApplicationChannel
+  type           CommercialApplicationType
+  state          CommercialApplicationState   @default(DRAFT)
+  title          String
+  draftText      String?
+  sentAt         DateTime?
+  submittedAt    DateTime?
+  followUpAt     DateTime?
+  result         String?
+  idempotencyKey String
+  createdBy      String
+  createdAt      DateTime                     @default(now())
+  updatedAt      DateTime                     @updatedAt
+
+  opportunity CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  evidence    CommercialEvidence?   @relation(fields: [evidenceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  owner       AdminUser?            @relation("CommercialApplicationOwner", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, state, followUpAt])
+  @@index([evidenceId])
+  @@index([ownerId])
+}
+
+model CommercialTerm {
+  id                    String               @id @default(uuid()) @db.Uuid
+  opportunityId         String               @db.Uuid
+  evidenceId            String               @db.Uuid
+  supersedesTermId      String?              @db.Uuid
+  model                 CommercialTermModel
+  status                CommercialTermStatus
+  amount                Decimal?             @db.Decimal(14, 2)
+  percentage            Decimal?             @db.Decimal(5, 2)
+  currency              String?
+  qualifyingEvent       String?
+  paymentCadence        String?
+  negativeCarryover     Boolean?
+  minimumPayment        Decimal?             @db.Decimal(14, 2)
+  territory             String?
+  effectiveAt           DateTime?
+  expiresAt             DateTime?
+  trafficRestrictions   String[]             @default([])
+  terminationConditions String?
+  trackingRequirements  String?
+  entityRequirements    String?
+  specialConditions     String?
+  notes                 String?
+  idempotencyKey        String
+  recordedBy            String
+  createdAt             DateTime             @default(now())
+  updatedAt             DateTime             @updatedAt
+
+  opportunity  CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  evidence     CommercialEvidence    @relation(fields: [evidenceId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  supersedes   CommercialTerm?       @relation("CommercialTermSupersession", fields: [supersedesTermId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  supersededBy CommercialTerm[]      @relation("CommercialTermSupersession")
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, model, status])
+  @@index([evidenceId])
+  @@index([supersedesTermId])
+}
+
+model CommercialTask {
+  id             String             @id @default(uuid()) @db.Uuid
+  opportunityId  String             @db.Uuid
+  ownerId        String?            @db.Uuid
+  type           CommercialTaskType
+  title          String
+  dueAt          DateTime?
+  completedAt    DateTime?
+  idempotencyKey String
+  createdBy      String
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  opportunity CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  owner       AdminUser?            @relation("CommercialTaskOwner", fields: [ownerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, completedAt, dueAt])
+  @@index([ownerId])
+}
+
+model CommercialAgentRun {
+  id                     String                   @id @default(uuid()) @db.Uuid
+  opportunityId          String?                  @db.Uuid
+  specialist             String
+  status                 CommercialAgentRunStatus
+  recommendation         String
+  summary                String
+  modelTier              String?
+  model                  String?
+  result                 Json
+  inputFingerprint       String
+  evidenceIds            String[]                 @default([])
+  providerInvoked        Boolean                  @default(false)
+  requestCount           Int                      @default(0)
+  inputTokens            Int                      @default(0)
+  outputTokens           Int                      @default(0)
+  totalTokens            Int                      @default(0)
+  estimatedUpperBoundUsd Decimal?                 @db.Decimal(12, 6)
+  appliedOperationCount  Int                      @default(0)
+  rejectedOperationCount Int                      @default(0)
+  idempotencyKey         String                   @unique
+  triggeredBy            String
+  startedAt              DateTime                 @default(now())
+  completedAt            DateTime?
+  createdAt              DateTime                 @default(now())
+
+  opportunity       CommercialOpportunity?       @relation(fields: [opportunityId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  operations        CommercialAgentOperation[]
+  activities        CommercialActivity[]
+  activationPackets CommercialActivationPacket[]
+
+  @@index([opportunityId, createdAt])
+  @@index([specialist, status, createdAt])
+}
+
+model CommercialAgentOperation {
+  id             String                         @id @default(uuid()) @db.Uuid
+  opportunityId  String?                        @db.Uuid
+  runId          String                         @db.Uuid
+  operationId    String
+  operationType  String
+  status         CommercialAgentOperationStatus
+  idempotencyKey String
+  payloadHash    String
+  entityType     String?
+  entityId       String?
+  reason         String?
+  createdAt      DateTime                       @default(now())
+
+  opportunity CommercialOpportunity? @relation(fields: [opportunityId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  run         CommercialAgentRun     @relation(fields: [runId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([runId, operationId])
+  @@unique([idempotencyKey])
+  @@index([opportunityId, createdAt])
+  @@index([runId, status])
+}
+
+model CommercialActivationPacket {
+  id                String                              @id @default(uuid()) @db.Uuid
+  opportunityId     String                              @db.Uuid
+  agentRunId        String?                             @db.Uuid
+  status            CommercialActivationReadinessStatus
+  checklist         Json
+  evidenceIds       String[]                            @default([])
+  readinessDecision Json?
+  summary           String
+  idempotencyKey    String
+  preparedBy        String
+  createdAt         DateTime                            @default(now())
+
+  opportunity CommercialOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  agentRun    CommercialAgentRun?   @relation(fields: [agentRunId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([opportunityId, idempotencyKey])
+  @@index([opportunityId, createdAt])
+  @@index([agentRunId])
 }
 
 model AuditLog {

@@ -14,6 +14,7 @@ export type AdminArea =
   | "casinos"
   | "bonuses"
   | "affiliate"
+  | "commercial"
   | "users"
   | "analytics"
   | "settings";
@@ -31,6 +32,7 @@ export const adminAreaPermissions: Record<AdminArea, readonly CmsPermission[]> =
   casinos: ["casino.edit"],
   bonuses: ["bonus.edit"],
   affiliate: ["affiliate.manage"],
+  commercial: ["affiliate.manage"],
   users: ["user.view"],
   analytics: ["analytics.view"],
   settings: ["settings.manage"],

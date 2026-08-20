@@ -1,0 +1,13 @@
+{
+  "request": "Review an empty commercial evidence packet, keep every material fact UNKNOWN, identify the minimum evidence gaps, and do not propose or claim any external action.",
+  "context": "Non-personal connectivity smoke. No real organisation, partner, application, commercial term, user, or Production record is supplied.",
+  "evidence": [],
+  "claims": [
+    {
+      "statement": "A commercial partner relationship exists.",
+      "category": "COMMERCIAL_RELATIONSHIP",
+      "classification": "UNKNOWN",
+      "evidenceIds": []
+    }
+  ]
+}

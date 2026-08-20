@@ -7,17 +7,18 @@ export const AGENT_KEYS = [
   "programme-ai-eval",
   "growth-opportunity-radar",
   "serp-competitor-intelligence",
-  "partner-intelligence",
+  "partner-operations",
   "digital-pr-data-story",
 ] as const;
 
-export const AgentKeySchema = z.enum(AGENT_KEYS);
+export const AgentKeySchema = z.union([z.enum(AGENT_KEYS), z.literal("partner-intelligence")]);
 
 export const EvidenceClassificationSchema = z.enum([
   "DETECTED",
   "INFERRED",
   "PROPOSED",
   "UNKNOWN",
+  "CONTRADICTION",
 ]);
 
 export const EvidenceKindSchema = z.enum([

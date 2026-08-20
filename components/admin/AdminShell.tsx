@@ -19,6 +19,7 @@ export const adminNav: Array<{ href: string; label: string; area: AdminArea }> =
   { href: "/admin/casinos", label: "Casinos", area: "casinos" },
   { href: "/admin/bonuses", label: "Bonuses", area: "bonuses" },
   { href: "/admin/affiliate", label: "Affiliate", area: "affiliate" },
+  { href: "/admin/commercial", label: "Commercial", area: "commercial" },
   { href: "/admin/users", label: "Users", area: "users" },
   { href: "/admin/analytics", label: "Analytics", area: "analytics" },
   { href: "/admin/settings", label: "Settings", area: "settings" },
@@ -29,13 +30,15 @@ export async function AdminPageShell({
   intro,
   children,
   actions,
+  area = "dashboard",
 }: {
   title: string;
   intro: string;
   children: ReactNode;
   actions?: ReactNode;
+  area?: AdminArea;
 }) {
-  const staff = await getAdminPageAccess(await headers(), "dashboard");
+  const staff = await getAdminPageAccess(await headers(), area);
   if (!staff) return <AdminPermissionDenied />;
   const visibleNavigation = adminNav.filter((item) => canAccessAdminArea(staff, item.area));
 

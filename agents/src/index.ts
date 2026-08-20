@@ -5,3 +5,4 @@ export * from "./preflight.js";
 export * from "./registry.js";
 export * from "./run-result.js";
 export * from "./runner.js";
+export * from "./partner-operations-contract.js";

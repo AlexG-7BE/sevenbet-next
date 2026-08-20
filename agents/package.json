@@ -7,14 +7,15 @@
     "node": "24.x"
   },
   "scripts": {
-    "agent:run": "tsx --env-file-if-exists=.env.local src/cli.ts",
-    "smoke:live": "tsx --env-file-if-exists=.env.local src/cli.ts run --agent compliance-gate --input fixtures/live-smoke/compliance-neutral.json --tier bulk --max-turns 2",
-    "test": "node --import tsx --test tests/*.test.ts",
+    "agent:run": "node --preserve-symlinks --import tsx --env-file-if-exists=.env.local src/cli.ts",
+    "smoke:live": "node --preserve-symlinks --import tsx --env-file-if-exists=.env.local src/cli.ts run --agent compliance-gate --input fixtures/live-smoke/compliance-neutral.json --tier bulk --max-turns 2",
+    "test": "node --preserve-symlinks --import tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src tests --max-warnings=0",
     "check": "npm run test && npm run typecheck && npm run lint"
   },
   "dependencies": {
+    "@b4gamble/partner-operations-contract": "file:../shared",
     "@openai/agents": "0.15.0",
     "zod": "4.4.3"
   },

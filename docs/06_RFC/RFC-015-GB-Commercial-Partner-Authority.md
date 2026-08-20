@@ -1,9 +1,9 @@
 # RFC-015: GB Commercial Partner Authority
 
 - **Status:** Approved
-- **Decision authority:** Founder Office COMM-01 authorization
+- **Decision authority:** Founder Office COMM-01 authorization; amended by `COMMERCIAL-OPS-01` instruction
 - **Approved:** 2026-08-08
-- **Scope:** Great Britain commercial partner readiness and activation authority
+- **Scope:** Great Britain commercial partner readiness and activation authority, plus the internal evidence-led commercial operating record that prepares—but never grants—that authority
 - **Depends on:** RFC-003, RFC-004, RFC-014
 
 ## 1. Decision
@@ -43,7 +43,7 @@ Unknown, absent, inconsistent, stale or unmodelled facts deny readiness. Revenue
 
 ### Planned
 
-- A future admin workflow may replace opaque evidence references with a dedicated evidence table after a separate approved RFC.
+- `COMMERCIAL-OPS-01` adds a dedicated internal `CommercialEvidence` model and protected Admin workflow. It supplements agreement and readiness evidence; it does not replace or grant `gbCommercialAuthority`.
 - A future operator may be activated only after real contracting, due diligence and evidence-entry work is complete and the GB jurisdiction policy is separately approved to change.
 
 ### Not detected
@@ -154,6 +154,22 @@ Rollback is the normal code rollback. The affiliate kill switch and GB jurisdict
 The implementation must test every authority independently, composition across all authorities, route-time re-evaluation, stale evidence, exact domain matching, operator/brand conflicts, provider-import fail-closed behavior, kill-switch behavior, public DTO secrecy and payout independence.
 
 No COMM-01 work is complete without lint, type checking, Prisma validation, structural checks, browser checks, GB market regression tests, affiliate regression tests, COMM-specific tests, build, documentation reconciliation, diff checks and secret scanning.
+
+## 14A. `COMMERCIAL-OPS-01` operational authority amendment
+
+Approved on 2026-08-19, the internal Commercial CRM uses one durable `CommercialOpportunity` from `PROSPECT` through relationship maturity. Its canonical stages are `PROSPECT`, `QUALIFIED`, `APPLICATION_READY`, `APPLIED`, `DUE_DILIGENCE`, `NEGOTIATING`, `APPROVED`, `ACTIVE`, `REJECTED` and `ON_HOLD`.
+
+The CRM is evidence and workflow authority only:
+
+- `APPROVED` requires an explicit human transition with direct `APPROVAL` evidence. A public programme page, submission or friendly response cannot satisfy it.
+- `ACTIVE` is absent from the ordinary transition API and Admin control. No Partner Operations operation can propose or set it.
+- an `APPROVED` or prepared record does not change any `AffiliateProgram`, `AffiliateOffer`, `AffiliateTrackingLink`, jurisdiction policy, kill switch or public DTO;
+- any future operational activation must use a separately controlled activation service that invokes the existing central GB readiness evaluator and records explicit Founder evidence; that service is not part of this candidate implementation;
+- `CommercialActivationPacket` has only `NOT_APPLICABLE`, `NOT_READY` and `READY_FOR_FOUNDER_REVIEW`. It is a preparation artifact, never runtime authority.
+
+The additive CRM models are `CommercialOpportunity`, `CommercialEvidence`, `CommercialContact`, `CommercialActivity`, `CommercialApplication`, `CommercialTerm`, `CommercialTask`, `CommercialAgentRun`, `CommercialAgentOperation` and `CommercialActivationPacket`. Optional links reuse the canonical Casino, Operator, Brand, AffiliateNetwork and AffiliateProgram records; uncertain prospects are not forced into a canonical identity and possible duplicates are flagged rather than merged.
+
+This amendment does not change the cumulative evaluator in sections 1–13. With GB policy denied, no real agreement/evidence and no real partner, the public commercial route remains fail-closed.
 
 ## 14. Primary sources
 
