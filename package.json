@@ -117,7 +117,7 @@
   },
   "dependencies": {
     "@better-auth/core": "1.6.30",
-    "@better-auth/oauth-provider": "1.6.30",
+    "@better-auth/oauth-provider": "1.7.0",
     "@better-auth/utils": "0.4.2",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@prisma/client": "^6.19.3",
