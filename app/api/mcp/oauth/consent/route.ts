@@ -1,8 +1,8 @@
 import { getServerSession } from "@/lib/auth/session";
 import { getCurrentStaffFromSession } from "@/lib/auth/staff";
 import {
+  areAllowedCommercialMcpConsentHeaders,
   commercialMcpInternalAuthHeaders,
-  isAllowedCommercialMcpConsentOrigin,
 } from "@/lib/mcp/commercial/consent-browser";
 import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { CommercialMcpAuthError, commercialMcpAuthErrorResponse, completeCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
   if (!config) return commercialMcpDisabledResponse();
   try {
-    if (!isAllowedCommercialMcpConsentOrigin(request.headers.get("origin"), config.issuer)) {
+    if (!areAllowedCommercialMcpConsentHeaders(request.headers, config.issuer)) {
       throw new CommercialMcpAuthError("OAuth consent origin is invalid", 403, "access_denied");
     }
     const authHeaders = commercialMcpInternalAuthHeaders(request.headers, config.issuer);
