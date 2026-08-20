@@ -317,6 +317,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
       ["prisma/migrations/0020_commercial_ops_01/migration.sql", "prisma/schema.prisma"],
       ["prisma/migrations/0021_partner_ops_work_bridge_01/migration.sql", "prisma/schema.prisma"],
       ["prisma/migrations/0022_better_auth_17_schema_upgrade/migration.sql", "prisma/schema.prisma"],
+      ["prisma/migrations/0023_mcp_dcr_runtime_compat_fix/migration.sql"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(
       (approved) => JSON.stringify(schemaChanges) === JSON.stringify(approved),

@@ -13,7 +13,7 @@ test("recovery verification derives the exact repository migration set", () => {
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
   assert.ok(names.includes("0019_programme_runtime_hardening"));
-  assert.equal(names.at(-1), "0022_better_auth_17_schema_upgrade");
+  assert.equal(names.at(-1), "0023_mcp_dcr_runtime_compat_fix");
   assert.equal(new Set(names).size, names.length);
 });
 
