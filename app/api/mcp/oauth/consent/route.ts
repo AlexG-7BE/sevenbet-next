@@ -1,5 +1,9 @@
 import { getServerSession } from "@/lib/auth/session";
-import { getCurrentStaff } from "@/lib/auth/staff";
+import { getCurrentStaffFromSession } from "@/lib/auth/staff";
+import {
+  commercialMcpInternalAuthHeaders,
+  isAllowedCommercialMcpConsentOrigin,
+} from "@/lib/mcp/commercial/consent-browser";
 import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { CommercialMcpAuthError, commercialMcpAuthErrorResponse, completeCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
 
@@ -14,12 +18,17 @@ export async function POST(request: Request) {
   }
   if (!config) return commercialMcpDisabledResponse();
   try {
-    const session = await getServerSession(request.headers);
-    const staff = await getCurrentStaff(request.headers);
+    if (!isAllowedCommercialMcpConsentOrigin(request.headers.get("origin"), config.issuer)) {
+      throw new CommercialMcpAuthError("OAuth consent origin is invalid", 403, "access_denied");
+    }
+    const authHeaders = commercialMcpInternalAuthHeaders(request.headers, config.issuer);
+    const session = await getServerSession(authHeaders);
+    const staff = await getCurrentStaffFromSession(session);
     if (!session || !staff || !staff.permissions.includes("affiliate.manage")) {
       throw new CommercialMcpAuthError("B4GAMBLE commercial staff access is required", 403, "access_denied");
     }
-    return await completeCommercialMcpConsent(request, config, session.user.id);
+    const consentRequest = new Request(request, { headers: authHeaders });
+    return await completeCommercialMcpConsent(consentRequest, config, session.user.id);
   } catch (error) {
     return commercialMcpAuthErrorResponse(error, config);
   }
