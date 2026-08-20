@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { DirectoryFilterSurface } from "@/components/directory-filters/DirectoryFilterSurface";
+import filterStyles from "@/components/directory-filters/DirectoryFilterSurface.module.css";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { discoveryHref } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryFacetValue, CasinoDiscoveryQuery, CasinoDiscoveryResult, PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -24,12 +26,12 @@ function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; exce
   </>;
 }
 
-function FilterSelect({ emptyLabel, label, name, values, selected }: { emptyLabel: string; label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
-  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">{emptyLabel}</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
+function FilterSelect({ className = styles.filterSelect, emptyLabel, label, name, values, selected }: { className?: string; emptyLabel: string; label: string; name: string; values: CasinoDiscoveryFacetValue[]; selected: string[] }) {
+  return <label className={className}><span>{label}</span><select defaultValue={selected[0] ?? ""} name={name}><option value="">{emptyLabel}</option>{values.slice(0, 24).map((value) => <option key={value.key} value={value.key}>{value.label} · {value.count}</option>)}</select></label>;
 }
 
-function BooleanSelect({ active, activeLabel, emptyLabel, label, name }: { active: boolean; activeLabel: string; emptyLabel: string; label: string; name: string }) {
-  return <label className={styles.filterSelect}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">{emptyLabel}</option><option value="true">{activeLabel}</option></select></label>;
+function BooleanSelect({ active, activeLabel, className = styles.filterSelect, emptyLabel, label, name }: { active: boolean; activeLabel: string; className?: string; emptyLabel: string; label: string; name: string }) {
+  return <label className={className}><span>{label}</span><select defaultValue={active ? "true" : ""} name={name}><option value="">{emptyLabel}</option><option value="true">{activeLabel}</option></select></label>;
 }
 
 function FilterFields({ result }: { result: CasinoDiscoveryResult }) {
@@ -49,6 +51,31 @@ function FilterFields({ result }: { result: CasinoDiscoveryResult }) {
   </div>;
 }
 
+function PrimaryFilterFields({ result }: { result: CasinoDiscoveryResult }) {
+  const query = result.appliedFilters;
+  return <div className={filterStyles.primaryGrid}>
+    <FilterSelect className={filterStyles.field} emptyLabel="Market preference" label="Market preference" name="country" selected={query.country ?? []} values={result.facets.countries} />
+    <FilterSelect className={filterStyles.field} emptyLabel="Licence / regulator" label="Licence / regulator" name="license" selected={query.license ?? []} values={result.facets.licenses} />
+    <FilterSelect className={filterStyles.field} emptyLabel="Payment method" label="Payment method" name="payment" selected={query.payment ?? []} values={result.facets.payments} />
+    <FilterSelect className={filterStyles.field} emptyLabel="Bonus type" label="Bonus type" name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
+  </div>;
+}
+
+function SecondaryFilterFields({ result }: { result: CasinoDiscoveryResult }) {
+  const query = result.appliedFilters;
+  return <div className={filterStyles.drawerGrid}>
+    <FilterSelect className={filterStyles.drawerField} emptyLabel="Game provider" label="Game provider" name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
+    <FilterSelect className={filterStyles.drawerField} emptyLabel="Game category" label="Game category" name="category" selected={query.category ?? []} values={result.facets.categories} />
+    <BooleanSelect active={Boolean(query.hasBonus)} activeLabel="Available" className={filterStyles.drawerField} emptyLabel="Bonus availability" label="Bonus availability" name="hasBonus" />
+    <BooleanSelect active={Boolean(query.hasAvailableVisitAction)} activeLabel="Available" className={filterStyles.drawerField} emptyLabel="Visit availability" label="Visit availability" name="hasAvailableVisitAction" />
+    <BooleanSelect active={Boolean(query.hasResponsibleGambling)} activeLabel="Available" className={filterStyles.drawerField} emptyLabel="Safer-gambling information" label="Safer-gambling information" name="hasResponsibleGambling" />
+    <BooleanSelect active={Boolean(query.supportsCrypto)} activeLabel="Supported" className={filterStyles.drawerField} emptyLabel="Crypto support" label="Crypto support" name="supportsCrypto" />
+    <BooleanSelect active={Boolean(query.supportsMobile)} activeLabel="Supported" className={filterStyles.drawerField} emptyLabel="Mobile support" label="Mobile support" name="supportsMobile" />
+    <label className={filterStyles.drawerField}><span>Sort results</span><select defaultValue={query.sort} name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+    <label className={filterStyles.drawerField}><span>Results per page</span><select defaultValue={query.pageSize} name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></label>
+  </div>;
+}
+
 function activeFilterCount(query: CasinoDiscoveryQuery) {
   return (query.search ? 1 : 0) + arrayFields.reduce((count, [field]) => count + (query[field]?.length ?? 0), 0) + booleanFields.filter(([field]) => query[field]).length;
 }
@@ -56,31 +83,48 @@ function activeFilterCount(query: CasinoDiscoveryQuery) {
 function FilterForm({ result, mobile = false, noScript = false }: { result: CasinoDiscoveryResult; mobile?: boolean; noScript?: boolean }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action="/casinos" className={mobile ? styles.mobileFilterForm : styles.filterForm} key={`filters:${mobile}:${JSON.stringify(query)}`} pendingLabel="Updating casino results…">
-    <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
-    <div className={styles.filterPrompt}><span>Filters and sort</span><strong>Select the facts you want to compare.</strong></div>
+    <HiddenQuery except={["q", "country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
+    <div className={styles.filterPrompt}><span>All filters</span><strong>Select the facts you want to compare.</strong></div>
     <FilterFields result={result} />
     <p className={styles.preferenceNote}><strong>Market preference, not location.</strong> Filters published market information; it does not confirm eligibility.</p>
     <div className={styles.filterActions}><div><strong>{result.total} {result.total === 1 ? "classified match" : "classified matches"}</strong><span>{noScript ? "Submit to update these server-classified records" : "Updates immediately when a filter changes"}</span></div>{noScript ? <button type="submit">Apply filters</button> : null}</div>
   </InstantDiscoveryForm>;
 }
 
-function SearchForm({ result }: { result: CasinoDiscoveryResult }) {
-  return <InstantDiscoveryForm action="/casinos" className={styles.searchForm} debouncedFields={["q"]} key={`search:${JSON.stringify(result.appliedFilters)}`} pendingLabel="Updating casino results…"><HiddenQuery except={["q"]} query={result.appliedFilters} /><label className={styles.srOnly} htmlFor="casino-search">Search published reviews</label><input defaultValue={result.appliedFilters.search ?? ""} id="casino-search" maxLength={100} name="q" placeholder="Search casino, licence, payment…" type="search" /><button aria-label="Search" type="submit">→</button></InstantDiscoveryForm>;
+function PrimaryFilterForm({ result }: { result: CasinoDiscoveryResult }) {
+  const query = result.appliedFilters;
+  return <InstantDiscoveryForm action="/casinos" className={filterStyles.primaryForm} key={`casino-primary:${JSON.stringify(query)}`} pendingLabel="Updating casino results…">
+    <HiddenQuery except={["q", "country", "license", "payment", "bonusType"]} query={query} />
+    <PrimaryFilterFields result={result} />
+  </InstantDiscoveryForm>;
 }
 
-function SortForm({ result }: { result: CasinoDiscoveryResult }) {
+function SecondaryFilterForm({ result }: { result: CasinoDiscoveryResult }) {
   const query = result.appliedFilters;
-  return <InstantDiscoveryForm action="/casinos" className={styles.sortForm} key={`sort:${JSON.stringify(query)}`} pendingLabel="Updating casino results…"><HiddenQuery except={["sort", "pageSize"]} query={query} /><label><span>Sort</span><select aria-label="Sort by" defaultValue={query.sort} name="sort">{Object.entries(sortLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label><label><span>Show</span><select aria-label="Show" defaultValue={query.pageSize} name="pageSize">{pageSizes.map((size) => <option key={size} value={size}>{size} per page</option>)}</select></label><button type="submit">Update</button></InstantDiscoveryForm>;
+  return <InstantDiscoveryForm action="/casinos" className={filterStyles.drawerForm} key={`casino-secondary:${JSON.stringify(query)}`} pendingLabel="Updating casino results…">
+    <HiddenQuery except={["q", "gameProvider", "category", ...booleanFields.map(([name]) => name), "sort", "pageSize"]} query={query} />
+    <SecondaryFilterFields result={result} />
+    <div className={filterStyles.drawerFooter}><Link href="/casinos">Clear all</Link><span>Changes update the directory immediately.</span></div>
+  </InstantDiscoveryForm>;
 }
 
 export function DiscoveryControls({ result }: { result: CasinoDiscoveryResult }) {
   const count = activeFilterCount(result.appliedFilters);
-  return <div className={styles.controls}>
-    <div className={styles.commandHeader}><SearchForm result={result} /><SortForm result={result} /><div className={styles.activeCount}><strong>{count} active</strong><span>{count ? "Filters applied" : "All published reviews"}</span></div></div>
-    <div className={styles.desktopFilters}><FilterForm result={result} /></div>
+  return <>
+    <div className={styles.desktopFilters}>
+      <DirectoryFilterSurface
+        activeCount={count}
+        dialogId="casino-all-filters-dialog"
+        note="Market preference is a comparison preference, not detected location or proof of eligibility."
+        primary={<PrimaryFilterForm result={result} />}
+        secondary={<SecondaryFilterForm result={result} />}
+        summary={`${result.total} ${result.total === 1 ? "matching record" : "matching records"}`}
+        title="Filter casinos"
+      />
+    </div>
     <div className={styles.mobileControls}><MobileCasinoFilters activeCount={count}><FilterForm mobile result={result} /></MobileCasinoFilters></div>
     <noscript><details className={styles.noScriptFilters}><summary>Filters{count ? ` (${count})` : ""}</summary><FilterForm mobile noScript result={result} /></details></noscript>
-  </div>;
+  </>;
 }
 
 function removeValue(query: CasinoDiscoveryQuery, field: keyof CasinoDiscoveryQuery, value?: string) {
@@ -120,7 +164,7 @@ export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) 
   return <div className={styles.results} id="casino-results">
     <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "review record" : "review records"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : hasActiveFilters ? <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters or clear the search. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div> : <div className={styles.emptyState}><span>Casino directory</span><h2>No published reviews yet.</h2></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : hasActiveFilters ? <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div> : <div className={styles.emptyState}><span>Casino directory</span><h2>No published reviews yet.</h2></div>}
     {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
   </div>;
 }
