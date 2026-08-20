@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { DirectoryFilterSurface } from "@/components/directory-filters/DirectoryFilterSurface";
+import filterStyles from "@/components/directory-filters/DirectoryFilterSurface.module.css";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
@@ -89,16 +91,47 @@ export function FeaturedBonusCard({ offer, position, primary = false }: { offer:
   </article>;
 }
 
+function BonusHiddenQuery({ query, except = [] }: { query: PublicOfferQuery; except?: string[] }) {
+  return <>
+    {query.country && !except.includes("country") ? <input name="country" type="hidden" value={query.country} /> : null}
+    {query.type && !except.includes("type") ? <input name="type" type="hidden" value={query.type} /> : null}
+    {query.payment && !except.includes("payment") ? <input name="payment" type="hidden" value={query.payment} /> : null}
+    {query.crypto !== undefined && !except.includes("crypto") ? <input name="crypto" type="hidden" value={String(query.crypto)} /> : null}
+    {query.maxDeposit !== undefined && !except.includes("maxDeposit") ? <input name="maxDeposit" type="hidden" value={String(query.maxDeposit)} /> : null}
+    {query.maxWagering !== undefined && !except.includes("maxWagering") ? <input name="maxWagering" type="hidden" value={String(query.maxWagering)} /> : null}
+    {query.availability && !except.includes("availability") ? <input name="availability" type="hidden" value={query.availability} /> : null}
+    {query.sort && !except.includes("sort") ? <input name="sort" type="hidden" value={query.sort} /> : null}
+  </>;
+}
+
 function FilterFields({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
   return <div className={styles.filterGrid}>
-    <label><span>Country preference</span><select defaultValue={query.country || ""} name="country"><option value="">All countries</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
-    <label><span>Bonus type</span><select defaultValue={query.type || ""} name="type"><option value="">All bonus types</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
-    <label><span>Payment method</span><select defaultValue={query.payment || ""} name="payment"><option value="">All payments</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
-    <label><span>Crypto support</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">Any support</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
-    <label><span>Maximum deposit</span><input defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder="e.g. 20" step="1" type="number" /></label>
-    <label><span>Maximum wagering</span><input defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder="e.g. 35" step="1" type="number" /></label>
-    <label><span>Commercial availability</span><select defaultValue={query.availability || ""} name="availability"><option value="">Any state</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label><span>Country preference</span><select defaultValue={query.country || ""} name="country"><option value="">Country preference</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label><span>Bonus type</span><select defaultValue={query.type || ""} name="type"><option value="">Bonus type</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label><span>Payment method</span><select defaultValue={query.payment || ""} name="payment"><option value="">Payment method</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label><span>Crypto support</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">Crypto support</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label><span>Maximum deposit</span><input defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder="Maximum deposit" step="1" type="number" /></label>
+    <label><span>Maximum wagering</span><input defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder="Maximum wagering" step="1" type="number" /></label>
+    <label><span>Commercial availability</span><select defaultValue={query.availability || ""} name="availability"><option value="">Commercial availability</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label><span>Sort results</span><select defaultValue={query.sort} name="sort"><option value="editorial">Editorial order</option><option value="newest">Newest publication</option><option value="highest-bonus">Highest maximum bonus</option><option value="lowest-wagering">Lowest wagering</option><option value="lowest-deposit">Lowest deposit</option></select></label>
+  </div>;
+}
+
+function PrimaryBonusFields({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
+  return <div className={filterStyles.primaryGrid}>
+    <label className={filterStyles.field}><span>Country preference</span><select defaultValue={query.country || ""} name="country"><option value="">Country preference</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.field}><span>Bonus type</span><select defaultValue={query.type || ""} name="type"><option value="">Bonus type</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.field}><span>Payment method</span><select defaultValue={query.payment || ""} name="payment"><option value="">Payment method</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.field}><span>Maximum wagering</span><input defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder="Maximum wagering" step="1" type="number" /></label>
+  </div>;
+}
+
+function SecondaryBonusFields({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
+  return <div className={filterStyles.drawerGrid}>
+    <label className={filterStyles.drawerField}><span>Crypto support</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">Crypto support</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.drawerField}><span>Maximum deposit</span><input defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder="Maximum deposit" step="1" type="number" /></label>
+    <label className={filterStyles.drawerField}><span>Commercial availability</span><select defaultValue={query.availability || ""} name="availability"><option value="">Commercial availability</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
+    <label className={filterStyles.drawerField}><span>Sort results</span><select defaultValue={query.sort} name="sort"><option value="editorial">Editorial order</option><option value="newest">Newest publication</option><option value="highest-bonus">Highest maximum bonus</option><option value="lowest-wagering">Lowest wagering</option><option value="lowest-deposit">Lowest deposit</option></select></label>
   </div>;
 }
 
@@ -110,9 +143,34 @@ function BonusFilterForm({ facets, query, total, compact = false, noScript = fal
   </InstantDiscoveryForm>;
 }
 
+function PrimaryBonusFilterForm({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
+  return <InstantDiscoveryForm action="/bonuses" className={filterStyles.primaryForm} debouncedFields={["maxWagering"]} key={`bonus-primary:${JSON.stringify(query)}`} pendingLabel="Updating bonus results…">
+    <BonusHiddenQuery except={["country", "type", "payment", "maxWagering"]} query={query} />
+    <PrimaryBonusFields facets={facets} query={query} />
+  </InstantDiscoveryForm>;
+}
+
+function SecondaryBonusFilterForm({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
+  return <InstantDiscoveryForm action="/bonuses" className={filterStyles.drawerForm} debouncedFields={["maxDeposit"]} key={`bonus-secondary:${JSON.stringify(query)}`} pendingLabel="Updating bonus results…">
+    <BonusHiddenQuery except={["crypto", "maxDeposit", "availability", "sort"]} query={query} />
+    <SecondaryBonusFields facets={facets} query={query} />
+    <div className={filterStyles.drawerFooter}><Link href="/bonuses">Clear all</Link><span>Changes update the directory immediately.</span></div>
+  </InstantDiscoveryForm>;
+}
+
 export function BonusFilters({ facets, query, total, activeCount }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; activeCount: number }) {
   return <>
-    <div className={styles.desktopFilters}><BonusFilterForm facets={facets} query={query} total={total} /></div>
+    <div className={styles.desktopFilters}>
+      <DirectoryFilterSurface
+        activeCount={activeCount}
+        dialogId="bonus-all-filters-dialog"
+        note="Country preference is a comparison preference, not detected location or proof that an offer is available."
+        primary={<PrimaryBonusFilterForm facets={facets} query={query} />}
+        secondary={<SecondaryBonusFilterForm facets={facets} query={query} />}
+        summary={`${total} ${total === 1 ? "matching record" : "matching records"}`}
+        title="Filter bonuses"
+      />
+    </div>
     <MobileBonusFilters activeCount={activeCount}><BonusFilterForm compact facets={facets} query={query} total={total} /></MobileBonusFilters>
     <noscript><div className={styles.noScriptFilters} style={{ display: "block" }}><BonusFilterForm compact facets={facets} noScript query={query} total={total} /></div></noscript>
   </>;
