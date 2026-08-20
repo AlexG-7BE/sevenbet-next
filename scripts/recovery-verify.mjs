@@ -30,7 +30,15 @@ import {
 } from "./recovery-preflight.mjs";
 
 const SNAPSHOT_VERSION = 1;
-const EXPECTED_AUTH_TABLES = ["Account", "Session", "User", "Verification"];
+const EXPECTED_AUTH_TABLES = [
+  "Account",
+  "OAuthAccessToken",
+  "OAuthApplication",
+  "OAuthConsent",
+  "Session",
+  "User",
+  "Verification",
+];
 const EXPECTED_PROGRAMME_TABLES = [
   "AnonymousProgrammeSession",
   "PendingProgrammeClaim",
@@ -95,6 +103,9 @@ async function tableCount(database, tableName) {
     "ProgrammeMissionProgress",
     "ProgramStep",
     "ProgramVersion",
+    "OAuthAccessToken",
+    "OAuthApplication",
+    "OAuthConsent",
     "Session",
     "User",
     "Verification",
