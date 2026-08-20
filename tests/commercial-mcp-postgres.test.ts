@@ -168,11 +168,28 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
     redirectUris: [redirectUri],
     postLogoutRedirectUris: [],
     tokenEndpointAuthMethod: "none",
+    applicationType: "web",
     grantTypes: ["authorization_code", "refresh_token"],
     responseTypes: ["code"],
-    public: true,
     requirePKCE: true,
     metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: oauthConfig.resource },
+  } });
+  await prisma.oauthResource.upsert({
+    where: { identifier: oauthConfig.resource },
+    create: {
+      id: "mcp-postgres-commercial-resource",
+      identifier: oauthConfig.resource,
+      name: "B4GAMBLE Commercial MCP",
+      accessTokenTtl: 15 * 60,
+      refreshTokenTtl: 30 * 24 * 60 * 60,
+      allowedScopes: ["commercial:read", "commercial:safe_write", "offline_access"],
+    },
+    update: {},
+  });
+  await prisma.oauthClientResource.create({ data: {
+    id: `mcp-postgres-client-resource-${suffix}`,
+    clientId,
+    resourceId: oauthConfig.resource,
   } });
   await prisma.verification.create({ data: {
     id: `mcp-postgres-code-row-${suffix}`,
@@ -188,6 +205,7 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
       },
       userId,
       sessionId,
+      resource: [oauthConfig.resource],
     }),
     expiresAt: new Date(Date.now() + 5 * 60 * 1_000),
   } });

@@ -15,6 +15,7 @@ test("Commercial MCP exposes bounded OAuth discovery and fails closed without a 
     grant_types_supported: ["authorization_code", "refresh_token"],
     token_endpoint_auth_methods_supported: ["none"],
     code_challenge_methods_supported: ["S256"],
+    authorization_response_iss_parameter_supported: true,
   });
 
   const resource = await request.get(`${baseUrl}/.well-known/oauth-protected-resource/api/mcp/commercial`);
@@ -73,6 +74,7 @@ test("provider internals and untrusted OAuth registration remain unreachable", a
   const client = await registration.json();
   expect(client.client_id).toEqual(expect.any(String));
   expect(client.token_endpoint_auth_method).toBe("none");
+  expect(client.application_type).toBe("web");
   expect(client.client_secret).toBeUndefined();
 
   const dcrAlone = await request.post(`${baseUrl}/api/mcp/commercial`, {
@@ -85,6 +87,17 @@ test("provider internals and untrusted OAuth registration remain unreachable", a
     },
   });
   expect(dcrAlone.status()).toBe(401);
+
+  const clientCredentials = await request.post(`${baseUrl}/api/mcp/oauth/token`, {
+    form: {
+      grant_type: "client_credentials",
+      client_id: client.client_id,
+      resource: `${baseUrl}/api/mcp/commercial`,
+      scope: "commercial:read",
+    },
+  });
+  expect(clientCredentials.status()).toBe(400);
+  await expect(clientCredentials.json()).resolves.toMatchObject({ error: "invalid_request" });
 });
 
 test("anonymous staff authorization entry renders the explicit authority boundary", async ({ page }) => {

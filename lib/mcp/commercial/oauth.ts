@@ -35,6 +35,7 @@ export type { CommercialMcpTokenContext } from "@/lib/mcp/commercial/oauth-polic
 const DcrSchema = z.object({
   redirect_uris: z.array(z.string().url()).min(1).max(4),
   token_endpoint_auth_method: z.literal("none").default("none"),
+  application_type: z.literal("web").default("web"),
   grant_types: z.array(z.enum(["authorization_code", "refresh_token"])).min(1).max(2).default(["authorization_code", "refresh_token"]),
   response_types: z.array(z.literal("code")).min(1).max(1).default(["code"]),
   client_name: z.string().min(1).max(120).default("ChatGPT Work"),
@@ -85,8 +86,8 @@ async function requireRegisteredClient(clientId: string, config: CommercialMcpCo
   if (
     !client
     || client.disabled
-    || client.public !== true
     || client.tokenEndpointAuthMethod !== "none"
+    || client.applicationType !== "web"
     || !client.grantTypes.includes("authorization_code")
     || !client.grantTypes.includes("refresh_token")
   ) {
@@ -145,9 +146,11 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
   const body = JSON.stringify({
     ...input,
     token_endpoint_auth_method: "none",
+    application_type: "web",
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
     scope: [...COMMERCIAL_MCP_SCOPES, COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE].join(" "),
+    resources: [config.resource],
   });
   const response = await auth.handler(rewriteForInternalAuth(
     request,
@@ -162,8 +165,8 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
   const result = z.object({
     client_id: z.string().min(1),
     client_secret: z.never().optional(),
-    public: z.literal(true),
     token_endpoint_auth_method: z.literal("none"),
+    application_type: z.literal("web"),
   }).passthrough().parse(await response.json());
   try {
     await prisma.oauthClient.update({
@@ -204,7 +207,6 @@ export async function authorizeCommercialMcpRequest(
   url.pathname = "/api/auth/oauth2/authorize";
   url.searchParams.set("prompt", "consent");
   url.searchParams.set("scope", [...scopes].join(" "));
-  url.searchParams.delete("resource");
   return privateNoStore(await auth.handler(new Request(url, { headers: request.headers, redirect: "manual" })));
 }
 
@@ -229,7 +231,11 @@ export async function getCommercialMcpConsent(
     client_id: z.string().min(1).max(200),
     redirect_uri: z.string().url(),
     scope: z.string().min(1).max(200),
+    resource: z.string().url(),
   }).parse(Object.fromEntries(new URLSearchParams(oauthQuery).entries()));
+  if (signedQuery.resource !== config.resource) {
+    throw new CommercialMcpAuthError("OAuth consent resource is invalid", 400, "invalid_target");
+  }
   const validationRequest = new Request(`${config.issuer}/api/mcp/oauth/consent`, {
     method: "POST",
     headers: requestHeaders,
@@ -337,6 +343,8 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
       !previous
       || previous.clientId !== body.client_id
       || previous.expiresAt <= new Date()
+      || previous.resources.length !== 1
+      || previous.resources[0] !== config.resource
       || !previous.session
       || previous.session.expiresAt <= new Date()
     ) {
