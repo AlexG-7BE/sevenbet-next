@@ -233,6 +233,138 @@ SELECT
   COALESCE("createdAt", CURRENT_TIMESTAMP)
 FROM "oauthClient";
 
+-- A Better Auth 1.6 runtime can still register a public OAuth client while the
+-- expanded schema is serving. Normalise only the already-approved B4GAMBLE
+-- public-client shape, keep client_credentials empty, and materialise exactly
+-- one protected-resource relation from application-owned metadata. This is a
+-- bounded migration-overlap compatibility path, not a generic OAuth client
+-- authority mechanism.
+CREATE FUNCTION "prepare_better_auth_oauth_client_compat"()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  resource_identifier TEXT;
+BEGIN
+  IF NEW."applicationType" IS NULL THEN
+    NEW."applicationType" := CASE
+      WHEN NEW."type" IN ('web', 'native') THEN NEW."type"
+      WHEN NEW."public" = true AND NEW."tokenEndpointAuthMethod" = 'none' THEN 'web'
+      ELSE NULL
+    END;
+  END IF;
+
+  IF NEW."clientCredentialsScopes" IS NULL THEN
+    NEW."clientCredentialsScopes" := ARRAY[]::TEXT[];
+  END IF;
+
+  resource_identifier := NEW."metadata" ->> 'b4gambleMcpResource';
+
+  IF NEW."applicationType" NOT IN ('web', 'native')
+     OR NEW."tokenEndpointAuthMethod" IS DISTINCT FROM 'none'
+     OR cardinality(NEW."clientCredentialsScopes") <> 0
+     OR NOT (NEW."grantTypes" @> ARRAY['authorization_code', 'refresh_token']::TEXT[])
+     OR NEW."grantTypes" @> ARRAY['client_credentials']::TEXT[]
+     OR NOT (NEW."responseTypes" @> ARRAY['code']::TEXT[])
+     OR NEW."metadata" IS NULL
+     OR jsonb_typeof(NEW."metadata") <> 'object'
+     OR NEW."metadata" ->> 'integration' IS DISTINCT FROM 'CHATGPT_WORK'
+     OR resource_identifier IS NULL
+     OR (
+       resource_identifier !~ '^https://[A-Za-z0-9.-]+(:[0-9]+)?/api/mcp/commercial$'
+       AND resource_identifier !~ '^http://(localhost|127[.]0[.]0[.]1)(:[0-9]+)?/api/mcp/commercial$'
+     )
+  THEN
+    RAISE EXCEPTION 'OAuth client compatibility refused: unsupported Commercial MCP client state';
+  END IF;
+
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER "oauthClient_prepare_compat"
+BEFORE INSERT OR UPDATE OF "metadata", "applicationType", "type", "public", "tokenEndpointAuthMethod", "grantTypes", "responseTypes", "clientCredentialsScopes"
+ON "oauthClient"
+FOR EACH ROW
+EXECUTE FUNCTION "prepare_better_auth_oauth_client_compat"();
+
+CREATE FUNCTION "sync_better_auth_oauth_client_resource_compat"()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  resource_identifier TEXT;
+  conflicting_relations INTEGER;
+BEGIN
+  resource_identifier := NEW."metadata" ->> 'b4gambleMcpResource';
+
+  SELECT COUNT(*)
+  INTO conflicting_relations
+  FROM "oauthClientResource"
+  WHERE "clientId" = NEW."clientId"
+    AND "resourceId" IS DISTINCT FROM resource_identifier;
+
+  IF conflicting_relations <> 0 THEN
+    RAISE EXCEPTION 'OAuth client compatibility refused: existing resource relation conflicts with metadata';
+  END IF;
+
+  INSERT INTO "oauthResource" (
+    "id",
+    "identifier",
+    "name",
+    "accessTokenTtl",
+    "refreshTokenTtl",
+    "allowedScopes",
+    "dpopBoundAccessTokensRequired",
+    "disabled",
+    "createdAt",
+    "updatedAt",
+    "policyVersion"
+  ) VALUES (
+    'oauth_resource_' || md5(resource_identifier),
+    resource_identifier,
+    'B4GAMBLE Commercial MCP',
+    900,
+    2592000,
+    ARRAY['commercial:read', 'commercial:safe_write', 'offline_access']::TEXT[],
+    false,
+    false,
+    CURRENT_TIMESTAMP,
+    CURRENT_TIMESTAMP,
+    1
+  )
+  ON CONFLICT ("identifier") DO NOTHING;
+
+  IF EXISTS (
+    SELECT 1
+    FROM "oauthResource"
+    WHERE "identifier" = resource_identifier
+      AND (
+        "disabled" IS TRUE
+        OR NOT ("allowedScopes" @> ARRAY['commercial:read', 'commercial:safe_write', 'offline_access']::TEXT[])
+      )
+  ) THEN
+    RAISE EXCEPTION 'OAuth client compatibility refused: protected resource policy is incompatible';
+  END IF;
+
+  INSERT INTO "oauthClientResource" (
+    "id", "clientId", "resourceId", "createdAt"
+  ) VALUES (
+    'oauth_client_resource_' || md5(NEW."clientId" || ':' || resource_identifier),
+    NEW."clientId",
+    resource_identifier,
+    COALESCE(NEW."createdAt", CURRENT_TIMESTAMP)
+  )
+  ON CONFLICT ("clientId", "resourceId") DO NOTHING;
+
+  RETURN NEW;
+END $$;
+
+CREATE TRIGGER "oauthClient_resource_compat"
+AFTER INSERT OR UPDATE OF "metadata", "clientId"
+ON "oauthClient"
+FOR EACH ROW
+EXECUTE FUNCTION "sync_better_auth_oauth_client_resource_compat"();
+
 -- Resource-bound tokens, replay protection, revocation and requested-claim
 -- fields from the generated 1.7.1 provider schema.
 ALTER TABLE "oauthRefreshToken"
