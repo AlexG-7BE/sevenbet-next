@@ -27,6 +27,30 @@ Execution evidence:
 
 This was a bounded one-time execution path. It does **not** establish a permanent policy of running migrations during every Vercel build. Future Production migrations require a new explicit controlled execution decision appropriate to their risk and migration shape.
 
+## Pending Better Auth 1.7 sequence — not applied to Production
+
+**DETECTED:** Production remains applied through `0020_commercial_ops_01`. Repository migration `0021_partner_ops_work_bridge_01` is merged history but is not Production-applied. `PARTNER-OPS-WORK-BRIDGE-02` adds `0022_better_auth_17_schema_upgrade`; neither migration is applied by that implementation task.
+
+Migration 0022 is the additive compatibility step for `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` `1.7.1`. It:
+
+- adds `Account.issuer`, backfills only documented credential (`local:credential`) and Google (`https://accounts.google.com`) identities, verifies completeness/collisions, then enforces the issuer/account identity key;
+- retains a narrow issuer trigger so the deployed 1.6 application can continue credential and Google account writes during the migration-before-code window;
+- adds the provider-generated protected-resource, client-resource, token/consent resource, refresh replay/revocation and client assertion structures;
+- preserves the old nullable `oauthClient.public` and `oauthClient.type` columns for 1.6 rollback compatibility;
+- backfills the one Commercial resource only from application-owned 0021 client metadata and rejects unsupported client/account state rather than inventing data; and
+- keeps `clientCredentialsScopes` empty and does not enable the client-credentials grant.
+
+**DETECTED COMPATIBILITY:** the disposable staged test builds exact post-0020 state with two Users, credential and Google Accounts, one linked `AdminUser`, one Commercial opportunity and one Commercial evidence row. It applies 0021, inserts a 1.6 DCR/token/consent fixture, then applies 0022. It verifies preservation of every representative row, both exact issuers, the one resource/client relation, token/consent resource backfills, empty client-credentials scopes, legacy 1.6 credential/Google inserts after 0022, and issuer/account collision rejection. A separate disposable replay inserts an unsupported legacy provider, proves that 0022 refuses the migration, and verifies that the existing Account row remains unchanged.
+
+Required future Production order:
+
+1. Keep `COMMERCIAL_MCP_ENABLED=false`; approve the exact candidate head and obtain a separate Founder migration GO.
+2. With the current Better Auth 1.6.30 application still deployed, fail closed unless the only pending migrations are exactly 0021 then 0022; apply them in that order and verify `_prisma_migrations` plus existing auth.
+3. Only after 0022 is verified, merge/promote the Better Auth 1.7.1 application and reverify consumer, Google, Admin and Programme auth while MCP remains disabled.
+4. Enable the Commercial MCP only under a later explicit decision and run the documented connection smoke.
+
+The migration-before-code order is required. The 1.7 application is not compatible with a database through only 0020 or 0021 because `Account.issuer` and the 1.7 OAuth schema are missing. The old 1.6 application is compatible with schema through 0022 for the bounded overlap because ordinary auth issuer writes are filled deterministically and the MCP feature stays off. No standard auto-deploy should promote the 1.7 code before the migration verification.
+
 ## Expand/contract rule
 
 Every stateful change must remain compatible with both the old and new application deployment across the release window:

@@ -78,10 +78,27 @@ export function createSevenBetAuth({
           "commercial:safe_write",
           "offline_access",
         ],
+        resources: [
+          {
+            identifier: commercialMcpResource,
+            name: "B4GAMBLE Commercial MCP",
+            accessTokenTtl: 15 * 60,
+            refreshTokenTtl: 30 * 24 * 60 * 60,
+            allowedScopes: [
+              "commercial:read",
+              "commercial:safe_write",
+              "offline_access",
+            ],
+          },
+        ],
+        resourceSeedMode: "insertOnly",
+        enforcePerClientResources: true,
+        clientRegistrationDefaultResources: [commercialMcpResource],
+        clientRegistrationAllowedResources: [commercialMcpResource],
+        refreshTokenReuseInterval: 0,
         clientPrivileges: () => false,
         disableJwtPlugin: true,
         storeTokens: commercialMcpProviderTokenStorage,
-        validAudiences: [commercialMcpResource],
         prefix: {
           opaqueAccessToken: "b4mcp_at_",
           refreshToken: "b4mcp_rt_",
