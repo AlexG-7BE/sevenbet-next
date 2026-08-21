@@ -1,9 +1,10 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 20 August 2026  
+**Evidence date:** 21 August 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
+**Current Production application SHA (Founder/runtime evidence):** `9d7ba9169df43f914a1fb05f44cfc10af87118e2`
 **Verified post-migration runtime baseline SHA:** `f6f520340d67e4f2aac44142437962b287794a66`  
 **Verified post-migration runtime deployment:** `dpl_A4a22TFc2bERP74gu5y3PMwfvS43`
 
@@ -31,7 +32,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public legal implementation | **READY** | Current GB public legal copy/consent/disclosure implementation is in Production for the approved scope. |
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
-| ChatGPT Work MCP / Better Auth 1.7 | **CONTROLLED UPGRADE CANDIDATE — NOT PRODUCTION-APPLIED OR ENABLED** | The coordinated 1.7.1 code/schema candidate adds pending migration 0022 after the already-pending 0021. Production remains through 0020 and the MCP feature remains off. |
+| ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
 
 ## Detected release evidence
@@ -107,13 +108,17 @@ Execution sequence on 20 August 2026:
 
 The normal Vercel preflight is readiness-only again. This event does not establish a permanent automatic Production migration policy.
 
-## Pending Better Auth 1.7 coordinated upgrade
+## Production Commercial MCP and refresh lifecycle
 
-**DETECTED — CANDIDATE ONLY:** `PARTNER-OPS-WORK-BRIDGE-02` aligns `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` at stable `1.7.1`, replaces the old `validAudiences` configuration with one provider-owned protected Commercial resource, adds deterministic credential/Google account issuer migration, and keeps the existing four-tool DCR bridge authority unchanged. Migration `0021_partner_ops_work_bridge_01` remains immutable and not Production-applied; new migration `0022_better_auth_17_schema_upgrade` is also not Production-applied.
+**DETECTED — PRODUCTION RUNTIME, 2026-08-21:** Production serves the bounded Commercial MCP from application SHA `9d7ba9169df43f914a1fb05f44cfc10af87118e2` with Better Auth/OAuth Provider `1.7.1`. Public read-only checks returned HTTP 200 for both OAuth discovery documents. Authorization-server metadata advertises `authorization_code`, `refresh_token`, PKCE `S256`, the exact Commercial resource and `offline_access`; protected-resource metadata advertises only `commercial:read` and `commercial:safe_write`.
 
-The candidate requires migration-before-code release sequencing because the 1.7 application requires schema 0022. Production remains on the current application/schema through 0020, `COMMERCIAL_MCP_ENABLED` remains false, and this current-state note is not merge, migration, deploy or enablement authority.
+**DETECTED — REPRODUCED FAILURE:** authorization and token exchange succeed, MCP calls initially return 200, and the resource starts returning 401 approximately 15 minutes after issuance. No refresh-token request reaches the token endpoint before the failed resource call. Reauthorization restores access for another equivalent interval.
 
-**DETECTED — PUBLIC READ-ONLY CHECK, 2026-08-20:** both Production OAuth metadata routes returned fail-closed HTTP 503 `Commercial MCP is not configured`. This confirms the public bridge remains disabled; it does not independently inspect the private Vercel environment value or database migration table. The last authorised direct migration evidence remains the verified 0020 execution above; no authorised direct Production database read path was used in this consolidation task.
+**DETECTED — REPOSITORY/PROVIDER CAUSAL MECHANISM:** the wrapper forwards the authorization request scope set unchanged. Better Auth 1.7.1 always returns normal expiry metadata but issues and persists a delegated refresh token only when the authorized grant contains `offline_access`. Its refresh handler can inherit the stored resource when the refresh request omits `resource`, while the application wrapper currently requires that request parameter for both grant types.
+
+**INFERRED — ROOT CAUSE:** ChatGPT's resource-driven authorization did not establish `offline_access` because the protected-resource discovery document omitted it, leaving only a 15-minute access credential. The wrapper's mandatory refresh `resource` is a secondary interoperability defect; it did not cause the observed cycle because Production saw no refresh request.
+
+**PROPOSED — NOT DEPLOYED:** the bounded fix advertises `offline_access` in both discovery documents and permits `resource` to be omitted only for `refresh_token`. A supplied resource must still equal the exact Commercial resource, and an omitted value succeeds only after the stored refresh record, client metadata, live provider session and current staff permission all pass the existing exact-resource checks. Authorization-code exchange still requires the exact resource. No schema, migration, token-TTL, tool, Commercial authority or Production environment change is included.
 
 ## Production acceptance after Commercial Ops migration
 

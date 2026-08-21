@@ -63,23 +63,22 @@ const AuthorizationQuerySchema = z.object({
   login_hint: z.string().max(320).optional(),
 }).strict();
 
-const TokenBodySchema = z.object({
-  grant_type: z.enum(["authorization_code", "refresh_token"]),
-  client_id: z.string().min(1).max(200),
-  resource: z.string().url(),
-  code: z.string().min(1).max(300).optional(),
-  redirect_uri: z.string().url().optional(),
-  code_verifier: z.string().min(43).max(128).optional(),
-  refresh_token: z.string().min(1).max(300).optional(),
-}).strict().superRefine((value, context) => {
-  if (value.grant_type === "authorization_code") {
-    for (const field of ["code", "redirect_uri", "code_verifier"] as const) {
-      if (!value[field]) context.addIssue({ code: "custom", path: [field], message: `${field} is required` });
-    }
-  } else if (!value.refresh_token) {
-    context.addIssue({ code: "custom", path: ["refresh_token"], message: "refresh_token is required" });
-  }
-});
+const TokenBodySchema = z.discriminatedUnion("grant_type", [
+  z.object({
+    grant_type: z.literal("authorization_code"),
+    client_id: z.string().min(1).max(200),
+    resource: z.string().url(),
+    code: z.string().min(1).max(300),
+    redirect_uri: z.string().url(),
+    code_verifier: z.string().min(43).max(128),
+  }).strict(),
+  z.object({
+    grant_type: z.literal("refresh_token"),
+    client_id: z.string().min(1).max(200),
+    resource: z.string().url().optional(),
+    refresh_token: z.string().min(1).max(300),
+  }).strict(),
+]);
 
 async function requireRegisteredClient(clientId: string, config: CommercialMcpConfig) {
   const client = await prisma.oauthClient.findUnique({ where: { clientId } });
@@ -308,13 +307,13 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
   });
   if (!rate.allowed) throw new CommercialMcpAuthError("Token endpoint rate limit exceeded", 429, "rate_limit_exceeded", undefined, 600);
   const body = await parseTokenBody(request);
-  if (body.resource !== config.resource) {
+  if (body.resource !== undefined && body.resource !== config.resource) {
     throw new CommercialMcpAuthError("OAuth resource does not match", 400, "invalid_target");
   }
   await requireRegisteredClient(body.client_id, config);
 
   if (body.grant_type === "authorization_code") {
-    const identifier = await hashCommercialMcpPresentedToken(body.code!, "authorization_code");
+    const identifier = await hashCommercialMcpPresentedToken(body.code, "authorization_code");
     const verification = await prisma.verification.findFirst({ where: { identifier: identifier! } });
     if (!verification || verification.expiresAt <= new Date()) {
       throw new CommercialMcpAuthError("Authorization code is invalid", 401, "invalid_grant");
@@ -340,7 +339,7 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
     parseCommercialMcpScopes(value.query.scope);
     await requireDelegatedStaff(value.userId);
   } else {
-    const token = await hashCommercialMcpPresentedToken(body.refresh_token!, "refresh_token");
+    const token = await hashCommercialMcpPresentedToken(body.refresh_token, "refresh_token");
     const previous = token ? await prisma.oauthRefreshToken.findUnique({
       where: { token },
       include: { session: true },

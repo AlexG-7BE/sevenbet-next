@@ -1,6 +1,6 @@
 # B4GAMBLE Commercial Ops — ChatGPT Work MCP setup
 
-This runbook connects the Production Commercial CRM custom MCP app only after the coordinated Better Auth 1.7 release is merged, migrations `0021_partner_ops_work_bridge_01` and `0022_better_auth_17_schema_upgrade` are explicitly authorised and applied in that order, the 1.7 application is verified, and the feature flag is enabled.
+Production currently runs the bounded Commercial CRM custom MCP app on Better Auth 1.7.1. This runbook records the connection contract, the detected 15-minute refresh regression, and the controlled promotion/acceptance procedure for its repository fix. It does not authorise merge, deployment, database mutation, environment mutation or Commercial CRM writes.
 
 ## Exact connection values
 
@@ -18,51 +18,53 @@ ChatGPT supports both Client ID Metadata Documents (CIMD) and DCR. OpenAI now pr
 
 DCR creates only a zero-authority public-client record. Commercial access exists only after PKCE S256 authorization, an authenticated `User` linked to `AdminUser`, live `affiliate.manage`, explicit consent and a granted Commercial scope.
 
-## Controlled Production release procedure
+## Refresh lifecycle contract
 
-**PROPOSED — REQUIRES `GO BRIDGE RELEASE`:** this is the complete migration-before-code procedure. It is not authority to merge, migrate, deploy, enable the MCP or write Production CRM data.
+**DETECTED:** the Production authorization-server document advertises `offline_access`, but the protected-resource document currently advertises only the two Commercial scopes. The authorization wrapper preserves the client's requested scopes. Better Auth 1.7.1 returns `expires_in` for the 15-minute access token and issues/persists a refresh token only when the authorized scope set contains `offline_access`.
+
+**INFERRED ROOT CAUSE:** ChatGPT's resource-driven grant did not contain `offline_access`, so it received no usable refresh state. Production therefore returned 401 after access-token expiry without first receiving a refresh-token request.
+
+The repair advertises the complete bounded authorization scope set—`commercial:read commercial:safe_write offline_access`—in both discovery documents. Authorization without `offline_access` still does not receive a refresh token; the server does not silently add the scope inside an authorization request.
+
+Authorization-code token exchange continues to require `resource` and exact equality with `https://b4gamble.com/api/mcp/commercial`. Refresh exchange accepts an omitted `resource` only after the stored refresh row is proven to contain exactly that resource and the registered client metadata, live provider session, delegated staff link and current `affiliate.manage` permission all pass. If refresh supplies `resource`, it must match exactly. Production and Preview clients/tokens are never interchangeable.
+
+Refresh tokens rotate with a zero reuse interval. Replay invalidates the token family as before. An expired provider session, removed/unprivileged staff identity or disabled client cannot refresh into Commercial access. No token, refresh token, authorization code, verifier, cookie or session identifier is logged.
+
+## Controlled Production refresh-fix procedure
+
+**PROPOSED — REQUIRES SEPARATE FOUNDER PROMOTION APPROVAL:** this procedure contains no migration or environment change. Do not execute it from this implementation task.
 
 ### Phase 0 — precheck
 
-Record the exact reviewed PR head, current main SHA and current Production deployment SHA. Confirm `COMMERCIAL_MCP_ENABLED` remains false through fail-closed public metadata, verify existing auth smoke, and use the authorised migration runner to confirm Production is applied through exactly `0020_commercial_ops_01`. Stop before mutation if `_prisma_migrations` has any failed/unresolved row, an unexpected pending migration, a checksum mismatch, or contradictory schema/account evidence.
+Record the exact reviewed PR head, current `main` SHA, current Production deployment SHA and rollback deployment. Capture both public discovery documents and confirm the only intended metadata delta is `offline_access` in protected-resource `scopes_supported`. Confirm the diff contains no Prisma schema/migration, dependency, token-TTL, environment, tool, CRM authority, consent-origin, redirect or PKCE change.
 
-### Phase 1 — database
+### Phase 1 — required evidence
 
-Keep the current Better Auth 1.6.30 application serving and MCP disabled. Through the existing controlled Production migration pattern, apply exactly `0021_partner_ops_work_bridge_01` then `0022_better_auth_17_schema_upgrade`. Do not use `prisma migrate reset` or `db push`. Verify both finished migration rows, checksums, Account issuer backfill invariants, OAuth/Commercial tables and representative row counts before continuing.
+Require green exact-head MCP unit/structural, disposable PostgreSQL lifecycle, TypeScript, ESLint, build and browser evidence. The PostgreSQL suite must prove an offline grant returns `refresh_token` plus `expires_in`, a non-offline grant does not, missing-resource refresh succeeds only from exact stored binding, wrong client/resource/environment fails, staff/session/client checks remain live, rotation succeeds and replay fails.
 
-### Phase 2 — auth pre-promotion verification
+### Phase 2 — Preview when safely available
 
-While 1.6.30 still serves the expanded schema, verify an existing consumer credential account, Google account, Admin account and Programme access. Stop promotion on any identity, linking, session or permission regression.
+Use Preview only if its isolated database, Preview-specific OAuth resource/client and branch host are already verified. Never reuse the Production DCR client. Create a temporary ChatGPT app for the Preview MCP URL, authenticate normally, confirm a refresh-token POST and continued MCP 200s beyond expiry, then disconnect it. If safe Preview connectivity is unavailable, record `NOT PERFORMED` and use Phase 5 as the required live acceptance; do not fake interoperability evidence.
 
-### Phase 3 — promote final 1.7 code
+### Phase 3 — promote exact code
 
-Merge and promote only the exact reviewed SHA. Confirm the resulting Production deployment is READY and corresponds to that SHA.
+After explicit Founder approval, merge only through the protected PR path and let Vercel promote that exact merge SHA. Do not change Production environment variables or run a database command. Confirm the deployment is READY, serves the expected SHA, and ordinary consumer/Admin/Programme auth still works.
 
-### Phase 4 — MCP still off
+### Phase 4 — refresh client metadata
 
-With `COMMERCIAL_MCP_ENABLED=false`, reverify consumer email/password, Google identity-only semantics, Admin login/session, `affiliate.manage`, Programme auth/access and ordinary public routes. Do not proceed if any smoke fails.
+The existing `B4GAMBLE Commercial Ops` connection cannot be accepted as-is because its prior grant lacks offline refresh state and protected-resource metadata changed. Disconnect it. For deterministic acceptance, recreate the Custom App with the same name and MCP URL, rescan exactly four tools, then complete one normal Founder authorization. A simple reconnect is acceptable only if ChatGPT demonstrably refetches the updated metadata and requests `offline_access`; otherwise recreate.
 
-### Phase 5 — enable MCP
+### Phase 5 — live >15-minute acceptance
 
-Only after schema and Better Auth 1.7 runtime health are proven, set `COMMERCIAL_MCP_ENABLED=true` through the controlled Production environment process and deploy that configuration. `COMMERCIAL_MCP_PUBLIC_ORIGIN` is optional because Production is fixed to `https://b4gamble.com`; if set, it must be exactly that HTTPS origin.
+Confirm initial authorization/token exchange is 200 and ordinary Commercial MCP calls are 200. Without recording credential values, verify initial issuance reports `offlineAccessRequested=true`, `refreshTokenIssued=true`, the exact requested scope names and normal expiry metadata. Wait beyond 15 minutes. Observe `POST /api/mcp/oauth/token` with `grantType=refresh_token` and HTTP 200, then confirm subsequent `/api/mcp/commercial` requests remain 200 with no reconnect prompt. Continue observation for at least 30 minutes total and verify no unexpected auth/security errors.
 
-### Phase 6 — MCP protocol smoke
+### Phase 6 — rollback
 
-Verify authorization-server discovery, protected-resource metadata, allowlisted DCR, PKCE S256, explicit consent, staff/`affiliate.manage`, `tools/list`, and exactly the four authorised tools. Confirm wrong-resource, consumer, unprivileged-staff and read-scope write attempts fail.
-
-### Phase 7 — one real CRM smoke
-
-Through ChatGPT Work and the MCP, create one harmless, clearly identifiable real Commercial prospect with bounded public evidence and stable idempotency keys. Verify the complete Work → OAuth → MCP → Commercial Service → Commercial Repository → CRM path and an idempotent replay. Use only a normal supported CRM archive/delete operation if one actually exists and is safe; otherwise retain and label the record honestly. Do not invent deletion capability.
-
-### Phase 8 — Partner Operations
-
-Only after the real smoke passes, begin `PARTNER-OPS-01` first-20 prospect sourcing under its existing evidence and authority boundaries.
-
-The order is intentional: Better Auth 1.7 requires `Account.issuer` and the 1.7 OAuth resource/token schema, so the new application is not safe against a database through only 0020 or 0021. Conversely, 0022 retains the 1.6 OAuth compatibility columns and adds a narrow credential/Google issuer trigger, so the existing 1.6 application remains safe during the migration-before-code window while the MCP feature is off.
+If discovery, auth, refresh or resource calls regress, disconnect the test app and redeploy the recorded pre-change Production deployment/SHA through the normal Vercel rollback path. Do not reverse a database migration because this fix has none. Recheck ordinary auth and the four-tool fail-closed boundary after rollback. The previous user-visible state may again require manual reconnect every 15 minutes, so leave the incident open rather than declaring rollback a refresh fix.
 
 ## Create the ChatGPT custom app
 
-Current official OpenAI flow (verified 2026-08-20):
+Current official OpenAI flow (verified 2026-08-21):
 
 1. As a ChatGPT Workspace owner/admin, open **Workspace Settings → Apps & Connectors → Advanced settings** and enable **Developer mode** if the workspace does not already allow custom MCP apps.
 2. Return to **Apps & Connectors** and choose **Create** (or **Create custom app**).

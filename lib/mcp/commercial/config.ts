@@ -4,6 +4,10 @@ export const COMMERCIAL_MCP_SCOPES = [
   "commercial:safe_write",
 ] as const;
 export const COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE = "offline_access";
+export const COMMERCIAL_MCP_AUTHORIZATION_SCOPES = [
+  ...COMMERCIAL_MCP_SCOPES,
+  COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE,
+] as const;
 export const COMMERCIAL_MCP_INTERNAL_AUTH_SUFFIXES = [
   "/oauth2/authorize",
   "/oauth2/token",
@@ -103,7 +107,7 @@ export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpCo
     token_endpoint_auth_methods_supported: ["none"],
     code_challenge_methods_supported: ["S256"],
     authorization_response_iss_parameter_supported: true,
-    scopes_supported: [...COMMERCIAL_MCP_SCOPES, COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE],
+    scopes_supported: [...COMMERCIAL_MCP_AUTHORIZATION_SCOPES],
     resource_parameter_supported: true,
   };
 }
@@ -112,7 +116,7 @@ export function commercialMcpProtectedResourceMetadata(config: CommercialMcpConf
   return {
     resource: config.resource,
     authorization_servers: [config.issuer],
-    scopes_supported: [...COMMERCIAL_MCP_SCOPES],
+    scopes_supported: [...COMMERCIAL_MCP_AUTHORIZATION_SCOPES],
     bearer_methods_supported: ["header"],
   };
 }
