@@ -111,13 +111,15 @@ async function clearFixtures() {
 
 type IssuedTokenResponse = {
   access_token: string;
+  expires_in: number;
+  expires_at: number;
   refresh_token?: string;
   token_type: "Bearer";
   scope: string;
 };
 
-function tokenRequest(body: URLSearchParams) {
-  return new Request(oauthConfig.tokenEndpoint, {
+function tokenRequest(body: URLSearchParams, config = oauthConfig) {
+  return new Request(config.tokenEndpoint, {
     method: "POST",
     headers: {
       "content-type": "application/x-www-form-urlencoded",
@@ -127,11 +129,15 @@ function tokenRequest(body: URLSearchParams) {
   });
 }
 
-async function exchangeToken(body: URLSearchParams) {
-  return exchangeCommercialMcpToken(tokenRequest(body), oauthConfig);
+async function exchangeToken(body: URLSearchParams, config = oauthConfig) {
+  return exchangeCommercialMcpToken(tokenRequest(body, config), config);
 }
 
-async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "commercial:safe_write", "offline_access"]) {
+async function createOAuthFixture(
+  suffix: string,
+  scopes = ["commercial:read", "commercial:safe_write", "offline_access"],
+  config = oauthConfig,
+) {
   const userId = `mcp-postgres-user-${suffix}`;
   const clientId = `mcp-postgres-client-${suffix}`;
   const sessionId = `mcp-postgres-session-${suffix}`;
@@ -172,13 +178,13 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
     grantTypes: ["authorization_code", "refresh_token"],
     responseTypes: ["code"],
     requirePKCE: true,
-    metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: oauthConfig.resource },
+    metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: config.resource },
   } });
   await prisma.oauthResource.upsert({
-    where: { identifier: oauthConfig.resource },
+    where: { identifier: config.resource },
     create: {
-      id: "mcp-postgres-commercial-resource",
-      identifier: oauthConfig.resource,
+      id: `mcp-postgres-commercial-resource-${suffix}`,
+      identifier: config.resource,
       name: "B4GAMBLE Commercial MCP",
       accessTokenTtl: 15 * 60,
       refreshTokenTtl: 30 * 24 * 60 * 60,
@@ -189,7 +195,7 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
   await prisma.oauthClientResource.create({ data: {
     id: `mcp-postgres-client-resource-${suffix}`,
     clientId,
-    resourceId: oauthConfig.resource,
+    resourceId: config.resource,
   } });
   await prisma.verification.create({ data: {
     id: `mcp-postgres-code-row-${suffix}`,
@@ -205,7 +211,7 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
       },
       userId,
       sessionId,
-      resource: [oauthConfig.resource],
+      resource: [config.resource],
     }),
     expiresAt: new Date(Date.now() + 5 * 60 * 1_000),
   } });
@@ -213,11 +219,11 @@ async function createOAuthFixture(suffix: string, scopes = ["commercial:read", "
   const response = await exchangeToken(new URLSearchParams({
     grant_type: "authorization_code",
     client_id: clientId,
-    resource: oauthConfig.resource,
+    resource: config.resource,
     code,
     redirect_uri: redirectUri,
     code_verifier: verifier,
-  }));
+  }), config);
   const responseText = await response.text();
   assert.equal(response.status, 200, responseText);
   const issued = JSON.parse(responseText) as IssuedTokenResponse;
@@ -251,6 +257,9 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
     const fixture = await createOAuthFixture("101");
     assert.match(fixture.issued.access_token, /^b4mcp_at_/);
     assert.match(fixture.issued.refresh_token ?? "", /^b4mcp_rt_/);
+    assert.equal(fixture.issued.expires_in, 15 * 60);
+    assert.equal(fixture.issued.token_type, "Bearer");
+    assert.equal(fixture.issued.scope, "commercial:read commercial:safe_write offline_access");
 
     const accessHash = await hashCommercialMcpPresentedToken(fixture.issued.access_token, "access_token");
     const refreshHash = await hashCommercialMcpPresentedToken(fixture.issued.refresh_token!, "refresh_token");
@@ -263,6 +272,19 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
       headers: { Authorization: `Bearer ${fixture.issued.access_token}` },
     }), oauthConfig, "commercial:safe_write");
     assert.equal(context.staff.userId, fixture.userId);
+  });
+
+  await t.test("authorization without offline_access does not issue or persist a refresh token", async () => {
+    const fixture = await createOAuthFixture("106", ["commercial:read", "commercial:safe_write"]);
+    assert.equal(fixture.issued.refresh_token, undefined);
+    assert.equal(fixture.issued.expires_in, 15 * 60);
+    assert.equal(fixture.issued.scope, "commercial:read commercial:safe_write");
+    assert.equal(await prisma.oauthRefreshToken.count({ where: { clientId: fixture.clientId } }), 0);
+
+    const accessHash = await hashCommercialMcpPresentedToken(fixture.issued.access_token, "access_token");
+    const accessRow = await prisma.oauthAccessToken.findUniqueOrThrow({ where: { token: accessHash! } });
+    assert.equal(accessRow.refreshId, null);
+    assert.deepEqual(accessRow.resources, [oauthConfig.resource]);
   });
 
   await t.test("expired, wrong-resource, consumer, and unprivileged staff access fail", async () => {
@@ -295,28 +317,94 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
   await t.test("refresh rotation succeeds and replay cannot create a second valid family", async () => {
     const fixture = await createOAuthFixture("103");
     const firstRefresh = fixture.issued.refresh_token!;
+    const firstHash = await hashCommercialMcpPresentedToken(firstRefresh, "refresh_token");
+    assert.deepEqual(
+      (await prisma.oauthRefreshToken.findUniqueOrThrow({ where: { token: firstHash! } })).resources,
+      [oauthConfig.resource],
+    );
+    await assert.rejects(exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      resource: `${oauthOrigin}/api/mcp/other`,
+      refresh_token: firstRefresh,
+    })), /resource does not match/);
+
     const rotatedResponse = await exchangeToken(new URLSearchParams({
       grant_type: "refresh_token",
       client_id: fixture.clientId,
-      resource: oauthConfig.resource,
       refresh_token: firstRefresh,
     }));
     const rotatedText = await rotatedResponse.text();
     assert.equal(rotatedResponse.status, 200, rotatedText);
     const rotated = JSON.parse(rotatedText) as IssuedTokenResponse;
     assert.notEqual(rotated.refresh_token, firstRefresh);
+    assert.equal(rotated.expires_in, 15 * 60);
+    assert.equal(rotated.scope, "commercial:read commercial:safe_write offline_access");
 
-    const oldHash = await hashCommercialMcpPresentedToken(firstRefresh, "refresh_token");
-    assert.ok((await prisma.oauthRefreshToken.findUniqueOrThrow({ where: { token: oldHash! } })).revoked);
+    const rotatedAccessHash = await hashCommercialMcpPresentedToken(rotated.access_token, "access_token");
+    const rotatedAccess = await prisma.oauthAccessToken.findUniqueOrThrow({ where: { token: rotatedAccessHash! } });
+    assert.deepEqual(rotatedAccess.resources, [oauthConfig.resource]);
+
+    assert.ok((await prisma.oauthRefreshToken.findUniqueOrThrow({ where: { token: firstHash! } })).revoked);
 
     const replay = await exchangeToken(new URLSearchParams({
       grant_type: "refresh_token",
       client_id: fixture.clientId,
-      resource: oauthConfig.resource,
       refresh_token: firstRefresh,
     }));
     assert.notEqual(replay.status, 200);
     assert.equal(await prisma.oauthRefreshToken.count({ where: { clientId: fixture.clientId, revoked: null } }), 0);
+  });
+
+  await t.test("wrong client and cross-environment refresh attempts are rejected", async () => {
+    const first = await createOAuthFixture("107");
+    const second = await createOAuthFixture("108");
+    await assert.rejects(exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: second.clientId,
+      refresh_token: first.issued.refresh_token!,
+    })), /Refresh token is invalid/);
+
+    const previewConfig = resolveCommercialMcpConfig("https://preview.invalid/api/mcp/commercial", {
+      COMMERCIAL_MCP_ENABLED: "true",
+      COMMERCIAL_MCP_PUBLIC_ORIGIN: "https://preview.invalid",
+    });
+    assert.ok(previewConfig);
+    const preview = await createOAuthFixture("112", undefined, previewConfig);
+    await assert.rejects(exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: preview.clientId,
+      refresh_token: preview.issued.refresh_token!,
+    })), /resource does not match/);
+  });
+
+  await t.test("removed or unprivileged staff cannot refresh", async () => {
+    const fixture = await createOAuthFixture("109");
+    const refresh = () => exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      refresh_token: fixture.issued.refresh_token!,
+    }));
+
+    await prisma.adminUser.update({ where: { userId: fixture.userId }, data: { role: "AUTHOR" } });
+    await assert.rejects(refresh(), /affiliate\.manage/);
+    await prisma.adminUser.delete({ where: { userId: fixture.userId } });
+    await assert.rejects(refresh(), /not B4GAMBLE staff/);
+  });
+
+  await t.test("expired provider sessions and disabled clients cannot refresh", async () => {
+    const fixture = await createOAuthFixture("110");
+    const refresh = () => exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      refresh_token: fixture.issued.refresh_token!,
+    }));
+
+    await prisma.session.update({ where: { id: fixture.sessionId }, data: { expiresAt: new Date(Date.now() - 1_000) } });
+    await assert.rejects(refresh(), /Refresh token is invalid/);
+    await prisma.session.update({ where: { id: fixture.sessionId }, data: { expiresAt: new Date(Date.now() + 60 * 60 * 1_000) } });
+    await prisma.oauthClient.update({ where: { clientId: fixture.clientId }, data: { disabled: true } });
+    await assert.rejects(refresh(), /OAuth client is invalid/);
   });
 
   await t.test("concurrent refresh cannot leave two independently valid access tokens", async () => {

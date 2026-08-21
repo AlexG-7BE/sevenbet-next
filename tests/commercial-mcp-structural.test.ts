@@ -51,6 +51,9 @@ test("stable OAuth Provider owns protocol issuance, rotation, and revocation", a
   assert.match(oauth, /"\/oauth2\/token"/);
   assert.match(oauth, /"\/oauth2\/revoke"/);
   assert.match(oauth, /value\.resource\[0\] !== config\.resource/);
+  assert.match(oauth, /resource: z\.string\(\)\.url\(\)\.optional\(\)/);
+  assert.match(oauth, /previous\.resources\.length !== 1/);
+  assert.match(oauth, /previous\.resources\[0\] !== config\.resource/);
 });
 
 test("no reusable token is stored or queried through a plaintext field", async () => {

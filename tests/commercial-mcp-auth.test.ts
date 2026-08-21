@@ -45,6 +45,7 @@ const token = {
   },
 };
 const commercialStaff = { id: "staff-id", userId: "staff-user-id", email: "staff@example.com", name: "Staff", role: "AFFILIATE_MANAGER" as const };
+const tokenValidAt = new Date("2026-08-20T10:00:00.000Z");
 
 test("OAuth discovery advertises PKCE, DCR, refresh, revocation, resource, and exact scopes", () => {
   const server = commercialMcpAuthorizationServerMetadata(config);
@@ -53,8 +54,9 @@ test("OAuth discovery advertises PKCE, DCR, refresh, revocation, resource, and e
   assert.equal(server.authorization_response_iss_parameter_supported, true);
   assert.deepEqual(server.grant_types_supported, ["authorization_code", "refresh_token"]);
   assert.equal(server.token_endpoint_auth_methods_supported.includes("none"), true);
-  assert.equal(server.scopes_supported.includes("commercial:admin"), false);
+  assert.deepEqual(server.scopes_supported, ["commercial:read", "commercial:safe_write", "offline_access"]);
   assert.equal(resource.resource, "https://b4gamble.com/api/mcp/commercial");
+  assert.deepEqual(resource.scopes_supported, ["commercial:read", "commercial:safe_write", "offline_access"]);
 });
 
 test("configuration enables Production by default, preserves an explicit kill switch, and keeps non-Production closed", () => {
@@ -172,17 +174,17 @@ test("Commercial MCP consent CSP allows the exact ChatGPT return only when expli
 });
 
 test("valid commercial staff token is accepted for read and safe write", () => {
-  const context = validateCommercialMcpTokenRecord(token, commercialStaff, config, "commercial:safe_write", new Date("2026-08-20T10:00:00.000Z"));
+  const context = validateCommercialMcpTokenRecord(token, commercialStaff, config, "commercial:safe_write", tokenValidAt);
   assert.equal(context.staff.id, "staff-id");
   assert.equal(context.scopes.has("commercial:read"), true);
 });
 
 test("consumer identity without an AdminUser is denied", () => {
-  assert.throws(() => validateCommercialMcpTokenRecord(token, null, config), CommercialMcpAuthError);
+  assert.throws(() => validateCommercialMcpTokenRecord(token, null, config, undefined, tokenValidAt), CommercialMcpAuthError);
 });
 
 test("staff without affiliate.manage is denied", () => {
-  assert.throws(() => validateCommercialMcpTokenRecord(token, { ...commercialStaff, role: "AUTHOR" }, config), /affiliate\.manage/);
+  assert.throws(() => validateCommercialMcpTokenRecord(token, { ...commercialStaff, role: "AUTHOR" }, config, undefined, tokenValidAt), /affiliate\.manage/);
 });
 
 test("expired and revoked access tokens are denied", () => {
@@ -191,8 +193,8 @@ test("expired and revoked access tokens are denied", () => {
     ...token,
     session: { expiresAt: new Date("2026-08-20T09:00:00.000Z") },
   }, commercialStaff, config, undefined, new Date("2026-08-20T10:00:00.000Z")), /invalid or expired/);
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, revoked: new Date("2026-08-20T11:00:00.000Z") }, commercialStaff, config), /invalid or expired/);
-  assert.throws(() => validateCommercialMcpTokenRecord(null, commercialStaff, config), /invalid or expired/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, revoked: new Date("2026-08-20T11:00:00.000Z") }, commercialStaff, config, undefined, tokenValidAt), /invalid or expired/);
+  assert.throws(() => validateCommercialMcpTokenRecord(null, commercialStaff, config, undefined, tokenValidAt), /invalid or expired/);
 });
 
 test("wrong issuer audience or resource binding is denied", () => {
@@ -201,11 +203,11 @@ test("wrong issuer audience or resource binding is denied", () => {
     COMMERCIAL_MCP_PUBLIC_ORIGIN: "https://preview.invalid",
   });
   assert.ok(wrongIssuerConfig);
-  assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, wrongIssuerConfig), /wrong resource/);
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, resources: ["https://b4gamble.com/api/mcp/other"] }, commercialStaff, config), /wrong resource/);
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, client: { ...token.client, metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: "https://b4gamble.com/api/mcp/other" } } }, commercialStaff, config), /wrong resource/);
+  assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, wrongIssuerConfig, undefined, tokenValidAt), /wrong resource/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, resources: ["https://b4gamble.com/api/mcp/other"] }, commercialStaff, config, undefined, tokenValidAt), /wrong resource/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, client: { ...token.client, metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: "https://b4gamble.com/api/mcp/other" } } }, commercialStaff, config, undefined, tokenValidAt), /wrong resource/);
 });
 
 test("read-only access token cannot satisfy safe-write scope", () => {
-  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, scopes: ["commercial:read"] }, commercialStaff, config, "commercial:safe_write"), /insufficient scope/);
+  assert.throws(() => validateCommercialMcpTokenRecord({ ...token, scopes: ["commercial:read"] }, commercialStaff, config, "commercial:safe_write", tokenValidAt), /insufficient scope/);
 });

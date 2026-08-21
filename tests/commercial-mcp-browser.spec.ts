@@ -16,6 +16,7 @@ test("Commercial MCP exposes bounded OAuth discovery and fails closed without a 
     token_endpoint_auth_methods_supported: ["none"],
     code_challenge_methods_supported: ["S256"],
     authorization_response_iss_parameter_supported: true,
+    scopes_supported: ["commercial:read", "commercial:safe_write", "offline_access"],
   });
 
   const resource = await request.get(`${baseUrl}/.well-known/oauth-protected-resource/api/mcp/commercial`);
@@ -23,7 +24,7 @@ test("Commercial MCP exposes bounded OAuth discovery and fails closed without a 
   await expect(resource.json()).resolves.toMatchObject({
     resource: `${baseUrl}/api/mcp/commercial`,
     authorization_servers: [baseUrl],
-    scopes_supported: ["commercial:read", "commercial:safe_write"],
+    scopes_supported: ["commercial:read", "commercial:safe_write", "offline_access"],
   });
 
   const anonymous = await request.post(`${baseUrl}/api/mcp/commercial`, {
@@ -75,7 +76,21 @@ test("provider internals and untrusted OAuth registration remain unreachable", a
   expect(client.client_id).toEqual(expect.any(String));
   expect(client.token_endpoint_auth_method).toBe("none");
   expect(client.application_type).toBe("web");
+  expect(client.grant_types).toEqual(["authorization_code", "refresh_token"]);
+  expect(client.scope).toBe("commercial:read commercial:safe_write offline_access");
   expect(client.client_secret).toBeUndefined();
+
+  const missingAuthorizationResource = await request.post(`${baseUrl}/api/mcp/oauth/token`, {
+    form: {
+      grant_type: "authorization_code",
+      client_id: client.client_id,
+      code: "not-a-valid-authorization-code",
+      redirect_uri: "https://chatgpt.com/connector_platform_oauth_redirect",
+      code_verifier: "v".repeat(48),
+    },
+  });
+  expect(missingAuthorizationResource.status()).toBe(400);
+  await expect(missingAuthorizationResource.json()).resolves.toMatchObject({ error: "invalid_request" });
 
   const dcrAlone = await request.post(`${baseUrl}/api/mcp/commercial`, {
     headers: { Authorization: `Bearer ${client.client_id}` },
