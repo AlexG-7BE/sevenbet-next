@@ -278,7 +278,7 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
 
     await prisma.oauthClient.update({
       where: { clientId: fixture.clientId },
-      data: { metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: `${oauthOrigin}/api/mcp/other` } },
+      data: { metadata: { integration: "CHATGPT_WORK", b4gambleMcpResource: "https://preview.invalid/api/mcp/commercial" } },
     });
     await assert.rejects(validateCommercialMcpAccessToken(bearerRequest(), oauthConfig), /wrong resource/);
     await prisma.oauthClient.update({
