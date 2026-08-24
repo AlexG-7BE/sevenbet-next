@@ -36,6 +36,34 @@ test("Protected Help remains isolated and non-commercial", async ({ page }) => {
 test("Privacy is substantive and remains noindex, follow", async ({ page }) => {
   await open(page, "/privacy");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(/Privacy.*by default\./i);
+  const representative = page.locator("#eu-uk-representative");
+  await expect(representative.getByRole("heading", { name: "European Union (EU)" })).toBeVisible();
+  await expect(representative).toContainText("Prighter EU Rep GmbH");
+  await expect(representative).toContainText("Article 27 of the EU GDPR");
+  await expect(representative.getByRole("heading", { name: "United Kingdom (UK)" })).toBeVisible();
+  await expect(representative).toContainText("Prighter Ltd");
+  await expect(representative).toContainText("Article 27 of the UK GDPR");
+  await expect(representative.getByRole("link", { name: "Prighter data-subject portal" })).toHaveAttribute(
+    "href",
+    "https://app.prighter.com/portal/16936473521",
+  );
+
+  const certificates = [
+    page.getByAltText("GDPR Certification: Art 27 representation by Prighter", { exact: true }),
+    page.getByAltText("UK-GDPR Certification: Art 27 representation by Prighter", { exact: true }),
+  ];
+  await expect(certificates[0]).toHaveAttribute("src", /certificate_product=ART27/);
+  await expect(certificates[1]).toHaveAttribute("src", /certificate_product=UKREP/);
+  for (const certificate of certificates) {
+    await certificate.scrollIntoViewIfNeeded();
+    await expect.poll(() => certificate.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+  }
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(await representative.evaluate((section) => section.scrollWidth <= section.clientWidth)).toBe(true);
+  for (const certificate of certificates) {
+    expect((await certificate.boundingBox())?.width).toBeLessThanOrEqual(320);
+  }
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
     "content",
     /noindex.*follow/i,

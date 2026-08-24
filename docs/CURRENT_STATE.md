@@ -1,7 +1,7 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 21 August 2026
+**Evidence date:** 24 August 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
 **Current Production application SHA (Founder/runtime evidence):** `9d7ba9169df43f914a1fb05f44cfc10af87118e2`
@@ -153,17 +153,18 @@ Missing, stale, unknown or contradictory authority remains deny-by-default. A pu
 
 Current public legal implementation includes Privacy, Terms, Affiliate Disclosure, Programme just-in-time sensitive-input disclosure/explicit consent, responsible-gambling/protected-Help boundaries and commercial disclosure wording.
 
+**DETECTED — SIGNED LETTERS OF APPOINTMENT, 22 AUGUST 2026:** 7BE Inc. has appointed Prighter EU Rep GmbH as its representative pursuant to Article 27 of the EU GDPR and Prighter Ltd as its representative pursuant to Article 27 of the UK GDPR. The 24 August 2026 bounded Privacy Policy release publishes the signed-LOA identities and addresses, the official Prighter data-subject portal, and both official live representation certificates. This does not appoint Prighter as a DPO or establish gambling, licensing, general legal or full-GDPR-compliance authority.
+
 Public legal copy does not create or imply operator licensing, affiliate approval, partnership, regulatory approval or jurisdiction eligibility that has not been separately evidenced.
 
 ## Open legal / administrative deferrals
 
-The following remain **OPEN — DEFERRED BY FOUNDER** and must not be described as completed:
+The EU and UK Article 27 appointments and their approved public particulars are no longer part of the deferred list. The following remain **OPEN — DEFERRED BY FOUNDER** and must not be described as completed:
 
-1. **UK Article 27 representative** — appointment/mandate/public particulars are not completed.
-2. **ICO registration / data-protection fee** — execution/evidence is not completed.
-3. **Account-specific provider evidence** — exact plan/entity, accepted DPA/CDPA/terms, processing locations and applicable transfer mechanism evidence remain to be captured where not already evidenced.
-4. **OpenAI project-specific controls evidence** — do not claim ZDR, MAM or a specific region without actual B4GAMBLE account/project evidence.
-5. **DPIA approval record / ongoing review evidence** — do not invent internal signatures/completion.
+1. **ICO registration / data-protection fee** — execution/evidence is not completed.
+2. **Account-specific provider evidence** — exact plan/entity, accepted DPA/CDPA/terms, processing locations and applicable transfer mechanism evidence remain to be captured where not already evidenced.
+3. **OpenAI project-specific controls evidence** — do not claim ZDR, MAM or a specific region without actual B4GAMBLE account/project evidence.
+4. **DPIA approval record / ongoing review evidence** — do not invent internal signatures/completion.
 
 The Founder has chosen not to delay initial market entry solely for these bounded administrative items. That risk decision does not complete the obligations or convert unknown external facts into detected facts.
 

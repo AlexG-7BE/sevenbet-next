@@ -2,8 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HandoffLegalPage } from "@/app/(public)/_legal/HandoffLegalPage";
-import { currentGbUkRepresentative } from "@/lib/legal/gb-uk-representative";
+import { currentArticle27Representation } from "@/lib/legal/article-27-representation";
 import { absoluteUrl } from "@/lib/site";
+
+import styles from "./PrivacyRepresentatives.module.css";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | B4GAMBLE",
@@ -20,16 +22,35 @@ const controller = <address>
   <a href="mailto:privacy@7be.io">privacy@7be.io</a>
 </address>;
 
-const representativeSection = currentGbUkRepresentative ? [{
-  id: "uk-representative",
-  title: "Our UK representative",
-  content: <><p>You may contact our UK representative about UK data-protection matters:</p><address>
-    {currentGbUkRepresentative.legalName}<br />
-    {currentGbUkRepresentative.postalAddress.map((line) => <span key={line}>{line}<br /></span>)}
-    <a href={`mailto:${currentGbUkRepresentative.email}`}>{currentGbUkRepresentative.email}</a><br />
-    <a href={currentGbUkRepresentative.contactRoute}>Contact our UK representative</a>
-  </address></>,
-}] : [];
+const representativeSection = {
+  id: "eu-uk-representative",
+  title: "Our EU and UK privacy representative",
+  content: <>
+    <p>We value your privacy and your rights as a data subject. 7BE Inc. has appointed Prighter Group with its local partners as our privacy representative and your point of contact for Article 27 representation in the European Union and the United Kingdom.</p>
+    <div className={styles.regionGrid}>
+      {currentArticle27Representation.representatives.map((representative) => <div className={styles.region} key={representative.jurisdiction}>
+        <h3>{representative.jurisdictionLabel}</h3>
+        <address><strong>{representative.legalName}</strong><br />
+          {representative.postalAddress.map((line) => <span key={line}>{line}<br /></span>)}
+        </address>
+        <p className={styles.scope}>{representative.legalScope}. Letter of Appointment signed 22 August 2026.</p>
+      </div>)}
+    </div>
+    <p>Prighter provides an easy way to contact our representative or exercise privacy-related rights, including requests to access or erase personal data. Visit the <a className={styles.portalLink} href={currentArticle27Representation.portalUrl} rel="noopener noreferrer" target="_blank">Prighter data-subject portal</a>.</p>
+    <div className={styles.certificates}>
+      <h3>Representation certificates</h3>
+      <div className={styles.certificateGrid}>
+        {currentArticle27Representation.representatives.map((representative) => <div className={styles.certificate} key={representative.certificate.src}>
+          <h4>{representative.jurisdiction === "EU" ? "EU GDPR Representative" : "UK GDPR Representative"}</h4>
+          <a aria-label={`Open the Prighter portal for ${representative.jurisdictionLabel}`} className={styles.certificateLink} href={currentArticle27Representation.portalUrl} rel="noopener noreferrer" target="_blank">
+            {/* The official certificate must load directly from Prighter so its live status remains authoritative. */}
+            <img alt={representative.certificate.alt} className={styles.certificateImage} decoding="async" height={representative.certificate.intrinsicHeight} loading="lazy" src={representative.certificate.src} width={representative.certificate.intrinsicWidth} />
+          </a>
+        </div>)}
+      </div>
+    </div>
+  </>,
+};
 
 const sections = [
   {
@@ -37,7 +58,7 @@ const sections = [
     title: "Who controls your information",
     content: <><p>7BE Inc., trading as B4GAMBLE, is the controller of personal data described in this notice. B4GAMBLE is an information, comparison and educational service. It is not a gambling operator.</p>{controller}</>,
   },
-  ...representativeSection,
+  representativeSection,
   {
     id: "data-we-use",
     title: "Information we use",
@@ -129,6 +150,6 @@ export default function PrivacyPage() {
     lead="This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."
     legalContact={controller}
     sections={sections}
-    updated="19 August 2026"
+    updated="24 August 2026"
   />;
 }

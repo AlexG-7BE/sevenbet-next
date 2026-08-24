@@ -95,14 +95,27 @@ test("GB launch runtime has no non-essential analytics provider or activation pa
   assert.match(source("app/(public)/privacy/page.tsx"), /do not run non-essential product analytics, advertising trackers, tracking pixels or session replay/);
 });
 
-test("Article 27 particulars are fail-closed and never publish a placeholder", () => {
-  const record = source("lib/legal/gb-uk-representative.ts");
+test("Article 27 particulars publish the confirmed EU and UK representation", () => {
+  const record = source("lib/legal/article-27-representation.ts");
   const privacy = source("app/(public)/privacy/page.tsx");
-  assert.match(record, /currentGbUkRepresentative: GbUkRepresentative \| null = null/);
-  assert.match(privacy, /currentGbUkRepresentative \? \[/);
-  assert.match(privacy, /id: "uk-representative"/);
-  assert.doesNotMatch(privacy, /\[LEGAL NAME\]|appointment pending/i);
-  assert.match(source("docs/legal/GB-ARTICLE-27-REPRESENTATIVE-ASSESSMENT.md"), /must appoint a UK representative in writing/);
+  const csp = source("lib/security/content-security-policy.ts");
+  assert.match(record, /currentArticle27Representation: Article27Representation = \{/);
+  assert.match(record, /Prighter EU Rep GmbH/);
+  assert.match(record, /Schellinggasse 3\/10/);
+  assert.match(record, /Prighter Ltd/);
+  assert.match(record, /20 Mortlake Mortlake High Street/);
+  assert.equal(record.match(/jurisdiction: "(?:EU|UK)",/g)?.length, 2);
+  assert.match(record, /letterOfAppointmentSignedOn: "2026-08-22"/);
+  assert.match(record, /https:\/\/app\.prighter\.com\/portal\/16936473521/);
+  assert.match(record, /certificate_product=ART27/);
+  assert.match(record, /certificate_product=UKREP/);
+  assert.doesNotMatch(record, /\| null|null;|Prighter Group GmbH/);
+  assert.match(privacy, /id: "eu-uk-representative"/);
+  assert.match(privacy, /Our EU and UK privacy representative/);
+  assert.match(privacy, /exercise privacy-related rights/);
+  assert.match(privacy, /<img alt=\{representative\.certificate\.alt\}/);
+  assert.doesNotMatch(privacy, /dangerouslySetInnerHTML|\[LEGAL NAME\]|appointment pending/i);
+  assert.match(csp, /img-src 'self' data: blob: https:/);
 });
 
 test("Programme disclosure remains two-step access plus just-in-time explicit consent and withdrawal", () => {
