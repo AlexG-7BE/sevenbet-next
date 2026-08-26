@@ -14,6 +14,7 @@ import {
 } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { classifyMediaRatio, isCasinoHeroMediaCompatible, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
 
 import styles from "./CasinoProfile.module.css";
 
@@ -79,12 +80,18 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
         secondary: bonus.freeSpins ? `+ ${bonus.freeSpins} Free Spins` : null,
       }
     : null;
+  const heroRatio = classifyMediaRatio({ width: casino.media.hero?.width, height: casino.media.hero?.height });
+  const heroMediaAvailable = Boolean(
+    casino.media.hero
+    && isCasinoHeroMediaCompatible(heroRatio)
+    && mayPresentPromotionalMedia({ demonstration: demo, governedActionAvailable: Boolean(action) }),
+  );
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />
     <CasinoProfileInteractions />
     <div className={styles.shell}>
-      <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme={casino.media.hero ? "photo" : "dark"}>
+      <section aria-labelledby="casino-profile-title" className={styles.hero} data-nav-theme={heroMediaAvailable ? "photo" : "dark"}>
         <div className={styles.heroReview}>
           <nav aria-label="Breadcrumb" className={styles.breadcrumb}><Link href="/casinos">Casinos</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} review</span></nav>
           {demo ? <p className={styles.demoDisclosure} role="note"><strong>DEMONSTRATION DATA.</strong> Fictional review fields · no current operator, licence, partner offer or commercial visit.</p> : null}
@@ -93,10 +100,10 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             <div className={styles.logo}>
               {casino.media.logo ? <img alt={casino.media.logo.alt || `${casino.name} logo`} height={casino.media.logo.height || 80} src={casino.media.logo.url} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
             </div>
-            <div><strong>{casino.name}</strong>{freshness ? <span>{freshness.label} {freshness.value}</span> : <span>{demo ? "Fictional review demonstration" : "Published review"}</span>}</div>
+            <div><small>Operator review</small><strong>{casino.name}</strong>{freshness ? <span>{freshness.label} {freshness.value}</span> : <span>{demo ? "Fictional review demonstration" : "Published review"}</span>}</div>
             <Signal>{demo ? "FICTIONAL 18+ FIELD" : `${age}+ ONLY`}</Signal>
           </div>
-          <h1 id="casino-profile-title"><span aria-hidden="true" className={styles.titleLogo}>{casino.name.slice(0, 1).toUpperCase()}</span>{casino.name}</h1>
+          <h1 id="casino-profile-title">{casino.name}</h1>
           <div className={styles.scoreVerdict}>
             <div><strong aria-label={`${demo ? "Fictional editorial score" : "Editorial score"} ${casino.editorScore} out of 10`}>{casino.editorScore.toFixed(1)}</strong><span aria-hidden="true">★★★★★</span><small>{casino.editorScore >= 9.5 ? "Exceptional" : casino.editorScore >= 9 ? "Excellent" : "Very good"}</small></div>
             <p><em>Our verdict:</em> {editorial?.summary || casino.summary}</p>
@@ -106,12 +113,20 @@ export function CasinoProfile({ casino, editorial }: { casino: PublicCasinoDTO; 
             {payments.length ? <Signal>{demo ? "FICTIONAL PAYMENT FIELDS" : payments.join(" + ").toUpperCase()}</Signal> : null}
             {withdrawal ? <Signal>{demo ? "FICTIONAL WITHDRAWAL FIELD" : `${withdrawal.toUpperCase()} WITHDRAWALS`}</Signal> : null}
           </div>
-          {bonus ? <div className={styles.heroOfferSummary}><div><span>WELCOME OFFER</span><strong>{profileOfferHeadline(bonus)}</strong><small>{[bonus.wageringText, minimumDeposit ? `Min ${minimumDeposit}` : null, withdrawal].filter(Boolean).join(" · ")}</small></div>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</div> : null}
+          {bonus ? <div className={styles.heroOfferSummary}>
+            <div className={styles.heroOfferCopy}><span>{demo ? "FICTIONAL OFFER FIELD" : "WELCOME OFFER"}</span><strong>{profileOfferHeadline(bonus)}</strong><dl>
+              <div><dt>Wagering</dt><dd>{bonus.wageringText || (bonus.wageringMultiplier !== null ? `${bonus.wageringMultiplier}×` : "Not listed")}</dd></div>
+              <div><dt>Min deposit</dt><dd>{minimumDeposit ?? "Not listed"}</dd></div>
+              {bonus.eligibility ? <div><dt>Eligibility</dt><dd>{bonus.eligibility}</dd></div> : null}
+              {bonus.expiresAt ? <div><dt>{demo ? "Fixture expiry" : "Expiry"}</dt><dd>{formatProfileDate(bonus.expiresAt)}</dd></div> : null}
+            </dl></div>
+            <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} /> : <UnavailableAction />}</div>
+          </div> : null}
           <p className={styles.profileDisclosure}>{demo ? "All operator, licence, offer and availability fields on this page are fictional product fixtures." : "18+ · Terms apply · We may earn commission. Affiliate compensation does not determine Editor Score or natural editorial ranking."}</p>
         </div>
 
-        <aside aria-label={casino.media.hero ? `${casino.name} media` : "Operator media unavailable"} className={styles.heroMedia}>
-          {casino.media.hero ? <img alt={casino.media.hero.alt || `${casino.name} media`} src={casino.media.hero.url} /> : <div><span aria-hidden="true">▧</span><small>Operator media</small></div>}
+        <aside aria-label={heroMediaAvailable ? `${casino.name} media` : "Operator media unavailable"} className={styles.heroMedia} data-media-ratio={casino.media.hero ? heroRatio : "missing"}>
+          {heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas}><img alt={casino.media.hero.alt || `${casino.name} media`} height={casino.media.hero.height ?? 900} src={casino.media.hero.url} width={casino.media.hero.width ?? 1600} /></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE / OPERATOR MEDIA</span><strong>Suitable creative unavailable.</strong><p>The review remains complete without cropped, invented or commercially unavailable artwork.</p><i aria-hidden="true" /></div>}
         </aside>
       </section>
 

@@ -77,6 +77,7 @@ test("shared casino profile composition joins the final offer to the footer and 
         scoreGap: limitRect && scoreRect ? scoreRect.top - limitRect.bottom : null,
         decisionBottomGap: innerHeight - decisionRect.bottom,
         decisionPosition: getComputedStyle(decisionBar).position,
+        mobileVisible: decisionBar.dataset.mobileVisible,
       };
     });
 
@@ -86,7 +87,11 @@ test("shared casino profile composition joins the final offer to the footer and 
       expect(geometry.scoreGap, `${viewport.width}px Keep in view/score gap`).not.toBeNull();
       expect(geometry.scoreGap!, `${viewport.width}px Keep in view/score gap`).toBeGreaterThanOrEqual(40);
       expect(geometry.decisionPosition, `${viewport.width}px decision bar position`).toBe("fixed");
-      expect(Math.abs(geometry.decisionBottomGap), `${viewport.width}px decision bar bottom`).toBeLessThanOrEqual(1.5);
+      expect(geometry.mobileVisible, `${viewport.width}px action follows hero information`).toBe("false");
+      await page.locator("#overview").scrollIntoViewIfNeeded();
+      await expect(page.locator("[data-casino-decision-bar]"), `${viewport.width}px decision bar reveals after hero`).toHaveAttribute("data-mobile-visible", "true");
+      const revealedBottomGap = await page.locator("[data-casino-decision-bar]").evaluate((element) => innerHeight - element.getBoundingClientRect().bottom);
+      expect(Math.abs(revealedBottomGap), `${viewport.width}px revealed decision bar bottom`).toBeLessThanOrEqual(1.5);
     }
     await context.close();
   }

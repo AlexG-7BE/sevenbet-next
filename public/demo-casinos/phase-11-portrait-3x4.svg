@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Fictional portrait media ratio fixture</title>
+  <desc id="desc">A non-promotional abstract 3 by 4 fixture with visible edge markers.</desc>
+  <defs><linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#321d18"/><stop offset="1" stop-color="#11100f"/></linearGradient></defs>
+  <rect width="900" height="1200" fill="url(#bg)"/><path d="M140 280h620v620H140z" fill="#c84e49" transform="rotate(8 450 590)"/><path d="M225 365h450v450H225z" fill="#11100f" transform="rotate(-7 450 590)"/>
+  <path d="M0 65h135M0 1135h135M765 65h135M765 1135h135" fill="none" stroke="#fff" stroke-width="12"/>
+  <text x="450" y="160" text-anchor="middle" fill="#e4e24e" font-family="Arial,sans-serif" font-size="20" font-weight="700" letter-spacing="5">FICTIONAL MEDIA FIXTURE</text>
+  <text x="450" y="550" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="80" font-weight="900">PORTRAIT</text><text x="450" y="650" text-anchor="middle" fill="#e4e24e" font-family="Arial,sans-serif" font-size="68" font-weight="700">3:4</text>
+  <text x="450" y="1060" text-anchor="middle" fill="#cfc4be" font-family="Arial,sans-serif" font-size="19">Neutral artwork · no offer · edges remain visible</text>
+</svg>
