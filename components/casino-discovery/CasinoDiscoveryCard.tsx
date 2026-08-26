@@ -32,7 +32,7 @@ function Signal({ children, classNames }: { children: ReactNode; classNames: Cas
 }
 
 function ReviewCardContents({ casino, position, classNames }: { casino: PublicCasinoCardDto; position?: number; classNames: CasinoCardClassNames }) {
-  const demo = casino.dataClassification === "DEMO_FIXTURE";
+  const demo = casino.dataClassification !== "PUBLISHED_RECORD";
   const canVisit = casino.visitAction.available && casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug);
   const unavailable = visitActionUnavailableCopy(casino.visitAction);
   const freshness = formatDate(casino.editorialUpdatedAt ?? casino.publishedAt);

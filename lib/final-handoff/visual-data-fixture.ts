@@ -192,13 +192,23 @@ export function withHandoffOfferData<T extends { readonly records: readonly Publ
 function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCardDto {
   const sample = casinoDirectorySamples[index];
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
+  const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
+  const hasLogo = index % 5 !== 3;
+  const ratioFixture = [
+    { url: "/demo-casinos/phase-11-wide-16x9.svg", width: 1600, height: 900, label: "16:9" },
+    { url: "/demo-casinos/phase-11-landscape-4x3.svg", width: 1200, height: 900, label: "4:3" },
+    { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
+    null,
+  ][index % 4];
+  const previewAction = index === 0;
   return {
     ...seed,
-    id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
-    dataClassification: "DEMO_FIXTURE",
+    id: previewAction ? "local-commercial-phase-preview" : temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
+    dataClassification: previewAction ? "LOCAL_PREVIEW_FIXTURE" : "DEMO_FIXTURE",
     slug: key,
     name: sample.name,
-    logo: null,
+    logo: hasLogo ? { url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160 } : null,
+    hero: ratioFixture ? { url: ratioFixture.url, alt: `${sample.name} fictional ${ratioFixture.label} media-ratio preview`, width: ratioFixture.width, height: ratioFixture.height } : null,
     shortDescription: sample.summary,
     rating: sample.score,
     licenses: [],
@@ -216,7 +226,9 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
       validUntil: null,
       termsApply: true,
     },
-    visitAction: { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
+    visitAction: previewAction
+      ? { available: true, redirectSlug: "local-preview-no-destination", label: `Visit ${sample.name}`, reasonCode: null }
+      : { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
     responsibleGamblingLabel: "Control tools listed",
   };
 }
@@ -240,6 +252,14 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   const sample = offerSamples[0];
   const bonus = casino.bonuses[0];
   const payment = casino.payments[0];
+  const mediaKey = casino.slug.includes("aurora") ? "aurora" : casino.slug.includes("beacon") ? "beacon" : casino.slug.includes("canopy") ? "canopy" : casino.slug.includes("cedar") ? "cedar" : "northstar";
+  const profileHasLogo = mediaKey !== "canopy";
+  const profileRatioFixtures = {
+    northstar: { url: "/demo-casinos/phase-11-portrait-3x4.svg", width: 900, height: 1200, label: "3:4" },
+    beacon: { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
+    aurora: { url: "/demo-casinos/phase-11-wide-16x9.svg", width: 1600, height: 900, label: "16:9" },
+  } as const;
+  const profileRatioFixture = mediaKey in profileRatioFixtures ? profileRatioFixtures[mediaKey as keyof typeof profileRatioFixtures] : null;
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
@@ -293,7 +313,11 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
       importantConditions: ["Terms shown before action", "Maximum bet applies"],
       affiliate: { available: false, href: null },
     }] : [],
-    media: { ...casino.media, logo: null, hero: null },
+    media: {
+      ...casino.media,
+      logo: profileHasLogo ? { id: `visual-${mediaKey}-logo`, type: "logo", url: `/demo-casinos/demo-${mediaKey}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160, caption: null } : null,
+      hero: profileRatioFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileRatioFixture.url, alt: `${sample.name} fictional ${profileRatioFixture.label} media-ratio preview`, width: profileRatioFixture.width, height: profileRatioFixture.height, caption: null } : null,
+    },
     affiliate: { available: false, href: null },
   };
 }

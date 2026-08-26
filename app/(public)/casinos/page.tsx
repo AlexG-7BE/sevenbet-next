@@ -39,6 +39,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     await publicCasinoDiscoveryService.discover(query, authority),
     isLocalHandoffVisualDataFixture(raw.visualFixture),
   );
+  const hasLocalPreviewAction = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE" && casino.visitAction.available);
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Casino Reviews", item: absoluteUrl("/casinos") }] },
     ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
@@ -62,7 +63,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
     <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
-      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. No commercial visit action is available.</p><Link href="/methodology">Read our review method →</Link></div> : null}
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. {hasLocalPreviewAction ? "One local-only CTA demonstrates the eligible visual state, but has no external tracking destination and remains fail-closed at redirect time." : "No commercial visit action is available."}</p><Link href="/methodology">Read our review method →</Link></div> : null}
       <DiscoveryControls result={result} />
       <ActiveDiscoveryFilters result={result} />
       <DiscoveryResults result={result} />

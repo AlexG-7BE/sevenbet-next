@@ -184,6 +184,7 @@ export class PublicCasinoDiscoveryService {
       const card: PublicCasinoCardDto = {
         id: casino.id, dataClassification: demo ? "DEMO_FIXTURE" : "PUBLISHED_RECORD", slug: casino.slug, name: casino.name,
         logo: casino.media.logo ? { url: casino.media.logo.url, alt: casino.media.logo.alt || `${casino.name} logo`, width: casino.media.logo.width, height: casino.media.logo.height } : null,
+        hero: casino.media.hero ? { url: casino.media.hero.url, alt: casino.media.hero.alt || `${casino.name} campaign media`, width: casino.media.hero.width, height: casino.media.hero.height } : null,
         shortDescription: casino.summary || null, rating: casino.editorScore || null, reviewCount: null,
         licenses: casino.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
         countries: availableCountries,

@@ -9,7 +9,8 @@ export function CasinoProfileInteractions() {
     const root = document.querySelector<HTMLElement>("[data-runtime-renderer='casino-review']");
     const progress = root?.querySelector<HTMLElement>("[data-casino-read-progress]");
     const decisionBar = root?.querySelector<HTMLElement>("[data-casino-decision-bar]");
-    if (!root || !progress || !decisionBar) return;
+    const hero = root?.querySelector<HTMLElement>("[aria-labelledby='casino-profile-title']");
+    if (!root || !progress || !decisionBar || !hero) return;
 
     const sections = SECTION_IDS.map((id) => document.getElementById(id)).filter(Boolean) as HTMLElement[];
     const links = Array.from(decisionBar.querySelectorAll<HTMLAnchorElement>("a[href^='#']"));
@@ -32,6 +33,9 @@ export function CasinoProfileInteractions() {
       progress.style.width = `${Math.min(100, travelled / maximum * 100)}%`;
       const headerHeight = document.querySelector<HTMLElement>("[data-public-shell='header']")?.getBoundingClientRect().height ?? 81;
       decisionBar.dataset.stuck = decisionBar.getBoundingClientRect().top <= headerHeight + 2 ? "true" : "false";
+      decisionBar.dataset.mobileVisible = window.matchMedia("(max-width: 760px)").matches
+        ? String(hero.getBoundingClientRect().bottom <= window.innerHeight)
+        : "true";
       const probe = headerHeight + decisionBar.getBoundingClientRect().height + 26;
       let current: HTMLElement | undefined;
       for (let index = sections.length - 1; index >= 0; index -= 1) {
