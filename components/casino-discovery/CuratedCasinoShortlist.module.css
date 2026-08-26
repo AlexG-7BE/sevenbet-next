@@ -20,7 +20,7 @@
 .cards { display: grid; gap: 22px; }
 .card { min-width: 0; min-height: 570px; display: grid; grid-template-columns: minmax(0,58%) minmax(320px,42%); overflow: hidden; border: 1px solid rgba(16,15,15,.3); border-radius: 8px; background: #fff; }
 .cardBody { min-width: 0; padding: 28px 32px 24px; display: flex; flex-direction: column; }
-.recommendationContext { padding-bottom: 14px; border-bottom: 1px solid rgba(16,15,15,.18); display: flex; justify-content: space-between; gap: 20px; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.recommendationContext { padding-bottom: 14px; border-bottom: 1px solid rgba(16,15,15,.18); display: flex; justify-content: space-between; gap: 20px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .recommendationContext span { color: #777500; }
 .recommendationContext b { color: var(--night); }
 .demoLabel { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
@@ -30,13 +30,13 @@
 .mark img { width: 100%; height: 100%; padding: 8px; object-fit: contain; }
 .mark span { width: 100%; height: 100%; display: grid; place-items: center; background: var(--night); color: var(--acid); font-size: 30px; font-weight: 850; }
 .identity { min-width: 0; }
-.identity small,.score small,.offer > small { display: block; margin-bottom: 5px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.identity small,.score small,.offer > small { display: block; margin-bottom: 5px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .identity h2 { margin: 0; font-size: clamp(22px,2.2vw,32px); line-height: 1; letter-spacing: -.035em; text-wrap: balance; text-transform: uppercase; overflow-wrap: anywhere; }
 .score { min-width: 86px; padding-left: 18px; border-left: 1px solid rgba(16,15,15,.18); text-align: right; }
 .score strong { display: block; font-size: 30px; line-height: 1; letter-spacing: -.05em; }
-.score strong span { margin-left: 2px; color: var(--muted); font-size: 11px; letter-spacing: 0; }
+.score strong span { margin-left: 2px; color: var(--muted); font-size: 12px; letter-spacing: 0; }
 .bestFor { margin: 0 0 12px; display: flex; align-items: baseline; gap: 12px; }
-.bestFor span { color: #777500; font-size: 11px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+.bestFor span { color: #777500; font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
 .bestFor strong { font-size: 16px; text-transform: uppercase; }
 .reason { max-width: 62ch; margin: 0; color: #34332f; font-size: 15px; line-height: 1.55; text-wrap: pretty; }
 .strengths { margin: 18px 0 20px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; list-style: none; }
@@ -48,21 +48,21 @@
 .terms { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid rgba(16,15,15,.16); display: grid; grid-template-columns: .8fr .9fr 1.3fr; gap: 14px; }
 .terms div { min-width: 0; }
 .terms dt,.terms dd { margin: 0; }
-.terms dt { margin-bottom: 4px; color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.terms dt { margin-bottom: 4px; color: var(--muted); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; }
 .terms dd { font-size: 12px; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
 .actions { padding-top: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
 .visit,.reviewOnly,.actions > a,.actions > button { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; color: var(--night); font: 650 13px/1.2 inherit; }
 .reviewOnly { min-width: 150px; padding: 0 18px; border: 1px solid rgba(16,15,15,.22); background: #e6e3dc; color: var(--muted); }
 .actions > a,.actions > button { padding: 0; border: 0; border-bottom: 1px solid currentColor; border-radius: 0; background: transparent; text-decoration: none; cursor: pointer; }
 .actions :global(.commercialOutboundPrimary).visit { min-width: 150px; padding: 0 20px; border: 0; border-radius: 0; background: var(--red); color: #fff; text-decoration: none; }
-.disclosure { margin: 12px 0 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.disclosure { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .mediaFrame,.mediaFallback { position: relative; min-width: 0; min-height: 100%; overflow: hidden; border-left: 1px solid rgba(16,15,15,.3); background: #171717; color: #fff; }
 .mediaFrame { padding: clamp(22px,3vw,44px); display: grid; place-items: center; background: radial-gradient(circle at 50% 45%,#292929 0,#171717 72%); }
 .mediaFrame img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; display: block; object-fit: contain; object-position: center; filter: drop-shadow(0 18px 28px rgba(0,0,0,.24)); }
 .mediaFrame[data-media-ratio="square"] { padding-inline: clamp(34px,5vw,74px); }
 .mediaFrame[data-media-ratio="unknown"] { padding: clamp(28px,4vw,58px); }
 .mediaFallback { padding: 34px; display: flex; flex-direction: column; justify-content: flex-end; isolation: isolate; }
-.mediaFallback > span { margin-bottom: auto; color: var(--acid); font-size: 10px; font-weight: 750; letter-spacing: .16em; }
+.mediaFallback > span { margin-bottom: auto; color: var(--acid); font-size: 12px; font-weight: 750; letter-spacing: .16em; }
 .mediaFallback strong { max-width: 10ch; font-size: clamp(34px,3.6vw,54px); line-height: .94; letter-spacing: -.045em; text-transform: uppercase; }
 .mediaFallback p { max-width: 33ch; margin: 18px 0 0; color: #b9b6ad; font-size: 13px; line-height: 1.5; }
 .mediaFallback i { position: absolute; inset: 19% -26% auto auto; z-index: -1; width: 76%; aspect-ratio: 1; border: 1px solid rgba(228,226,78,.3); border-radius: 50%; }
@@ -90,7 +90,7 @@
   .context strong { position: static; width: auto; height: auto; margin: 0 0 6px; overflow: visible; clip: auto; display: block; color: var(--night); }
   .card { min-height: 0; grid-template-columns: minmax(0,1fr); }
   .cardBody { padding: 20px; }
-  .recommendationContext { gap: 10px; font-size: 9px; }
+  .recommendationContext { gap: 10px; font-size: 12px; }
   .cardHead { grid-template-columns: 58px minmax(0,1fr) auto; gap: 12px; }
   .mark { width: 58px; height: 58px; }
   .identity h2 { font-size: 21px; }
