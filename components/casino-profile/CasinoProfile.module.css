@@ -521,7 +521,7 @@
   grid-template-columns: minmax(0,58%) minmax(340px,42%);
   border-radius: 8px;
 }
-.heroReview { padding: 34px 38px 32px; animation: none; }
+.heroReview { padding: 108px 38px 32px; animation: none; }
 .hero .breadcrumb { min-height: 44px; margin-bottom: 18px; }
 .demoDisclosure { margin-bottom: 16px; }
 .heroKicker { margin-bottom: 18px; }

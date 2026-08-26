@@ -41,6 +41,61 @@ test("casino profile has no horizontal overflow across approved and defensive wi
   }
 });
 
+test("casino profile breadcrumb clears the fixed public header across responsive widths", async ({ browser }) => {
+  const viewports = [
+    { width: 1440, height: 900 },
+    { width: 1024, height: 900 },
+    { width: 768, height: 900 },
+    { width: 430, height: 932 },
+    { width: 390, height: 844 },
+  ] as const;
+
+  for (const viewport of viewports) {
+    const mobile = viewport.width <= 430;
+    const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
+    const page = await context.newPage();
+    const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    expect(response?.status(), `${viewport.width}px status`).toBe(200);
+
+    const header = page.locator('[data-public-shell="header"]');
+    const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
+    const casinosLink = breadcrumb.getByRole("link", { name: "Casinos", exact: true });
+    const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
+
+    await expect(header, `${viewport.width}px public header`).toBeVisible();
+    await expect(breadcrumb, `${viewport.width}px breadcrumb`).toBeVisible();
+    await expect(casinosLink, `${viewport.width}px Casinos link`).toBeVisible();
+    await expect(casinosLink, `${viewport.width}px Casinos link target`).toBeEnabled();
+    await expect(casinosLink, `${viewport.width}px Casinos href`).toHaveAttribute("href", "/casinos");
+    await expect(hero, `${viewport.width}px hero`).toBeVisible();
+    await expect(hero.getByRole("heading", { level: 1, name: "Demo Northstar Casino" }), `${viewport.width}px hero heading`).toBeVisible();
+
+    const geometry = await page.evaluate(() => {
+      const headerElement = document.querySelector<HTMLElement>('[data-public-shell="header"]')!;
+      const breadcrumbElement = document.querySelector<HTMLElement>('nav[aria-label="Breadcrumb"]')!;
+      const linkElement = breadcrumbElement.querySelector<HTMLAnchorElement>('a[href="/casinos"]')!;
+      const headerRect = headerElement.getBoundingClientRect();
+      const breadcrumbRect = breadcrumbElement.getBoundingClientRect();
+      const linkRect = linkElement.getBoundingClientRect();
+      return {
+        breadcrumbGap: breadcrumbRect.top - headerRect.bottom,
+        horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        linkHeight: linkRect.height,
+        linkTop: linkRect.top,
+        linkWidth: linkRect.width,
+        headerBottom: headerRect.bottom,
+      };
+    });
+
+    expect(geometry.breadcrumbGap, `${viewport.width}px intentional header clearance`).toBeGreaterThanOrEqual(10);
+    expect(geometry.linkTop, `${viewport.width}px link clears header`).toBeGreaterThanOrEqual(geometry.headerBottom);
+    expect(geometry.linkWidth, `${viewport.width}px link width`).toBeGreaterThan(0);
+    expect(geometry.linkHeight, `${viewport.width}px link height`).toBeGreaterThanOrEqual(32);
+    expect(geometry.horizontalOverflow, `${viewport.width}px horizontal overflow`).toBe(0);
+    await context.close();
+  }
+});
+
 test("shared casino profile composition joins the final offer to the footer and separates the mobile score", async ({ browser }) => {
   const viewports = [
     { width: 1440, height: 900 },
