@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { DirectoryFilterSurface } from "@/components/directory-filters/DirectoryFilterSurface";
 import filterStyles from "@/components/directory-filters/DirectoryFilterSurface.module.css";
+import { DirectoryPagination } from "@/components/directory-pagination/DirectoryPagination";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import { discoveryHref } from "@/lib/public-casino-discovery/query";
 import type { CasinoDiscoveryFacetValue, CasinoDiscoveryQuery, CasinoDiscoveryResult, PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
@@ -165,6 +166,12 @@ export function DiscoveryResults({ result }: { result: CasinoDiscoveryResult }) 
     <div className={styles.resultsHeader}><div><span>Casino directory</span><h2>{result.total} {result.total === 1 ? "review record" : "review records"}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? "result" : "results"} · Page {result.page} of {result.pageCount}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>Reviews remain available.</strong><span>Commercial actions stay hidden until offer and internal redirect eligibility pass.</span></div>}
     {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} position={firstPosition + index} />)}</div> : hasActiveFilters ? <div className={styles.emptyState}><span>No matches</span><h2>No published reviews match these controls.</h2><p>Remove one or more filters. B4GAMBLE will not fill the gap with ineligible operators.</p><Link href="/casinos">Clear filters</Link></div> : <div className={styles.emptyState}><span>Casino directory</span><h2>No published reviews yet.</h2></div>}
-    {result.pageCount > 1 && <nav aria-label="Casino results pagination" className={styles.pagination}>{result.page === 1 ? <span aria-disabled="true">Previous</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page - 1 })}>Previous</Link>}<b>Page {result.page} of {result.pageCount}</b>{result.page === result.pageCount ? <span aria-disabled="true">Next</span> : <Link href={discoveryHref(result.appliedFilters, { page: result.page + 1 })}>Next</Link>}</nav>}
+    <DirectoryPagination
+      ariaLabel="Casino results pagination"
+      currentPage={result.page}
+      nextHref={result.page < result.pageCount ? discoveryHref(result.appliedFilters, { page: result.page + 1 }) : null}
+      pageCount={result.pageCount}
+      previousHref={result.page > 1 ? discoveryHref(result.appliedFilters, { page: result.page - 1 }) : null}
+    />
   </div>;
 }

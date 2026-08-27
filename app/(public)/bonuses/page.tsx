@@ -103,7 +103,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
     <section className={styles.directorySection} data-motion-reveal data-nav-theme="cream">
       <div className={styles.shell}>
         <header className={styles.sectionHeading}><h2 className={styles.display}>All bonuses</h2><p>{result.total} offers · sorted by net value</p></header>
-        {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.reviewSeparationNote} role="note"><strong>DEMONSTRATION DATA</strong><p>These fictional records show the comparison experience. They are not current GB promotions, partner offers or claimable bonuses. No commercial visit is available.</p></aside> : null}
+        {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>These fictional records show the comparison experience. They are not current GB promotions, partner offers or claimable bonuses. No commercial visit is available.</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><p className={styles.eyebrow}>Listings unavailable · fail closed</p><h2>The Published Directory Could Not Be Loaded.</h2><p>No cached, legacy, demonstration or invented offer is substituted. Casino reviews, methodology, education and protected Help remain available.</p><Link href="/methodology">Review Methodology</Link></section> : <>
           <BonusFilters activeCount={activeCount} facets={result.facets} query={result.query} total={result.total} />
           <ActiveBonusFilters query={result.query} raw={raw} />

@@ -13,7 +13,6 @@ const allowedDecorativeMicrotype = new Map([
   ["components/bonus-directory/BonusDirectory.module.css::.sectionHeading .eyebrow::10px", "DECORATIVE section notation; the section heading carries the message"],
   ["components/bonus-directory/BonusDirectory.module.css::.controlsIntro .eyebrow::10px", "DECORATIVE section notation; the controls heading carries the message"],
   ["components/bonus-directory/BonusDirectory.module.css::.ledgerIntro span::10px", "DECORATIVE ledger notation; the following heading carries the message"],
-  ["components/bonus-directory/BonusDirectory.module.css::.compactPosition::8px", "DECORATIVE ordinal; list order and card content remain complete without it"],
 ]);
 
 const finalPublicPrefixes = [

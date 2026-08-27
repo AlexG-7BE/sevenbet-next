@@ -7,7 +7,13 @@ import {
   isFeaturedCardMediaCompatible,
   mayPresentPromotionalMedia,
 } from "../lib/media/media-presentation";
-import { withHandoffCasinoDiscoveryData } from "../lib/final-handoff/visual-data-fixture";
+import {
+  withHandoffBonusDirectoryData,
+  withHandoffCasinoDiscoveryData,
+  withHandoffOfferData,
+} from "../lib/final-handoff/visual-data-fixture";
+import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
+import { parsePublicOfferQuery } from "../lib/public-offer/query";
 import type { CasinoDiscoveryResult, PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
 
 test("media dimensions map to the supported presentation classes", () => {
@@ -81,4 +87,36 @@ test("casino discovery fixtures include the required wide, landscape, square and
     [1000, 1000],
     null,
   ]);
+});
+
+test("Phase 2 offer fixtures expose only fictional logo and governed media-ratio states", () => {
+  const seed = temporaryDemoBestOffers()[0];
+  const bestOffers = withHandoffOfferData({ records: [seed], inventoryMode: "DEMO_ONLY" }, true);
+  assert.deepEqual(bestOffers.records.slice(0, 4).map((offer) => offer.casino.hero ? [offer.casino.hero.width, offer.casino.hero.height] : null), [
+    [1600, 900],
+    [1200, 900],
+    [1000, 1000],
+    null,
+  ]);
+  assert.ok(bestOffers.records.every((offer) => offer.casino.logo?.url.startsWith("/demo-casinos/demo-")));
+  assert.ok(bestOffers.records.every((offer) => offer.dataClassification === "DEMO_FIXTURE" && !offer.action.available && offer.action.href === null));
+
+  const query = parsePublicOfferQuery({});
+  const bonuses = withHandoffBonusDirectoryData({
+    records: [seed],
+    total: 1,
+    page: 1,
+    pageSize: 24,
+    pageCount: 1,
+    query,
+    facets: { countries: [], types: [], payments: [], crypto: [], availability: [] },
+    inventoryMode: "DEMO_ONLY",
+  }, true);
+  assert.equal(bonuses.inventoryMode, "DEMO_ONLY");
+  assert.deepEqual(bonuses.records.slice(0, 3).map((offer) => offer.casino.hero ? [offer.casino.hero.width, offer.casino.hero.height] : null), [
+    [1600, 900],
+    [1000, 1000],
+    null,
+  ]);
+  assert.ok(bonuses.records.every((offer) => !offer.action.available && offer.action.href === null));
 });

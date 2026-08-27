@@ -13,6 +13,7 @@ const requiredTests = [
   "tests/home-parity.test.ts",
   "tests/jurisdiction-resolver.test.ts",
   "tests/legal-programme-privacy.test.ts",
+  "tests/media-presentation.test.ts",
   "tests/prisma-runtime-pooling.test.ts",
   "tests/public-casino-discovery.test.ts",
   "tests/public-casino-rendering.test.ts",

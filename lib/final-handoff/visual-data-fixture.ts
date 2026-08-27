@@ -124,10 +124,27 @@ const casinoDirectorySamples = [
   { name: "Perla Casino", score: 7.5, title: "€150 + 30 free spins", wagering: 45, deposit: 25, payout: "48h+", summary: "Boutique live rooms with a higher deposit floor.", signals: "Boutique live rooms" },
 ] as const;
 
-function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { name: string; score: number; title: string; wagering: number; deposit: number; payout: string; summary: string; percentage?: number; maximumBonus?: number; freeSpins?: number }[] = offerSamples): PublicOfferDTO {
+type OfferMediaFixtureMode = "best-offers" | "bonuses";
+
+const phaseTwoMediaFixtures = {
+  wide: { url: "/demo-casinos/phase-11-wide-16x9.svg", width: 1600, height: 900, label: "16:9" },
+  landscape: { url: "/demo-casinos/phase-11-landscape-4x3.svg", width: 1200, height: 900, label: "4:3" },
+  square: { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
+} as const;
+
+function handoffOffer(
+  seed: PublicOfferDTO,
+  index: number,
+  samples: readonly { name: string; score: number; title: string; wagering: number; deposit: number; payout: string; summary: string; percentage?: number; maximumBonus?: number; freeSpins?: number }[] = offerSamples,
+  mediaMode: OfferMediaFixtureMode = "best-offers",
+): PublicOfferDTO {
   const sample = samples[index];
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
   const payment = seed.casino.payments[0];
+  const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
+  const hero = mediaMode === "best-offers"
+    ? [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.landscape, phaseTwoMediaFixtures.square, null][index % 4]
+    : [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.square, null][index % 3];
   return {
     ...seed,
     casino: {
@@ -136,7 +153,8 @@ function handoffOffer(seed: PublicOfferDTO, index: number, samples: readonly { n
       slug: key,
       name: sample.name,
       summary: sample.summary,
-      logo: null,
+      logo: { id: `visual-offer-${index}-logo`, type: "logo", url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160, caption: null },
+      hero: hero ? { id: `visual-offer-${index}-hero`, type: "hero", url: hero.url, alt: `${sample.name} fictional ${hero.label} commercial-layout preview`, width: hero.width, height: hero.height, caption: null } : null,
       editorScore: sample.score,
       featured: index === 0,
       recommended: index < 3,
@@ -369,7 +387,7 @@ export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument
 
 export function withHandoffBonusDirectoryData(result: PublicOfferSearchResult, enabled: boolean): PublicOfferSearchResult {
   if (!enabled || !result.records.length) return result;
-  const records = bonusDirectorySamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index, bonusDirectorySamples));
+  const records = bonusDirectorySamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index, bonusDirectorySamples, "bonuses"));
   return {
     ...result,
     records,
@@ -377,7 +395,7 @@ export function withHandoffBonusDirectoryData(result: PublicOfferSearchResult, e
     page: 1,
     pageSize: Math.max(result.pageSize, records.length),
     pageCount: 1,
-    inventoryMode: "PUBLISHED_ONLY",
+    inventoryMode: "DEMO_ONLY",
   };
 }
 

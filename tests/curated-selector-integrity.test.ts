@@ -41,6 +41,7 @@ function offer(slug: string, patch: { crypto?: boolean; score?: number; wagering
       name: slug,
       summary: "Published evidence",
       logo: null,
+      hero: null,
       editorScore: patch.score ?? 8,
       featured: false,
       recommended: false,

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { DirectoryFilterSurface } from "@/components/directory-filters/DirectoryFilterSurface";
 import filterStyles from "@/components/directory-filters/DirectoryFilterSurface.module.css";
+import { DirectoryPagination } from "@/components/directory-pagination/DirectoryPagination";
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
@@ -75,6 +76,16 @@ function OfferAction({ offer, compact = false }: { offer: PublicOfferDTO; compac
   const href = safeActionHref(offer);
   if (!href) return <span aria-disabled="true" className={compact ? styles.actionUnavailableCompact : styles.actionUnavailable}>No governed visit</span>;
   return <CasinoOutboundAction action={{ href, label: "View Offer" }} className={compact ? styles.offerActionCompact : styles.offerAction} />;
+}
+
+function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
+  return offer.casino.logo ? <img
+    alt={offer.casino.logo.alt || `${offer.casino.name} logo`}
+    height={offer.casino.logo.height ?? 80}
+    loading="lazy"
+    src={offer.casino.logo.url}
+    width={offer.casino.logo.width ?? 160}
+  /> : <span aria-hidden="true">{offer.casino.name.slice(0, 1)}</span>;
 }
 
 export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {
@@ -199,31 +210,24 @@ export function ActiveBonusFilters({ query, raw }: { query: PublicOfferQuery; ra
 
 export function BonusComparisonList({ offers, startPosition }: { offers: PublicOfferDTO[]; startPosition: number }) {
   return <div className={styles.comparison}>
-    {offers.map((offer, index) => <article className={styles.comparisonRow} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <span className={styles.compactLogo} aria-hidden="true">{offer.casino.name.slice(0, 1)}</span>
+    {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card key={`${offer.casino.id}:${offer.bonus.id}`}>
+      <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "fallback"}><OfferLogo offer={offer} /></span>
       <div className={styles.compactIdentity}>
-        <strong>{offer.bonus.title}</strong>
-        <span>{offer.casino.name} · Score {offer.casino.editorScore.toFixed(1)}</span>
-        <small>{offer.casino.licenses[0]?.authority || "Licence not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Payments not listed"}</small>
-        <DemoFixtureNotice offer={offer} />
+        <strong>{offer.casino.name}</strong>
+        <span>Editor Score {offer.casino.editorScore.toFixed(1)} · {offer.casino.licenses[0]?.authority || "Licence not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Payments not listed"}</span>
       </div>
-      <dl className={styles.compactTerms}>
+      <div className={styles.compactOffer}>
+        <span>{offer.dataClassification === "DEMO_FIXTURE" ? "Demonstration offer" : "Welcome offer"}</span>
+        <p className={styles.compactHeadline}>{offer.bonus.title}</p>
+      </div>
+      <DemoFixtureNotice offer={offer} />
+      <dl className={styles.compactTerms} data-material-terms>
         <div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}x`}</dd></div>
         <div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div>
         <div><dt>Payout</dt><dd>{payoutEvidence(offer)}</dd></div>
       </dl>
-      <div className={styles.compactActions}><OfferAction compact offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Review</Link></div>
+      <div className={styles.compactActions} data-governed-actions><OfferAction compact offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link></div>
       <span className={styles.compactPosition} aria-label={`Position ${startPosition + index}`}>{String(startPosition + index).padStart(2, "0")}</span>
-      <div className={`${styles.mobileMaterialResult} ${index === 0 ? styles.mobileMaterialResultFeatured : ""}`}>
-        <span className={styles.mobileResultRank}>{String(startPosition + index).padStart(2, "0")}</span>
-        <h3>{offer.casino.name}</h3>
-        <span className={styles.mobileResultStatus}>{index === 0 ? "Featured" : "Result"}</span>
-        <p className={styles.mobileResultHeadline}>{offer.bonus.title}</p>
-        <DemoFixtureNotice offer={offer} />
-        <div className={styles.mobileResultTerms}><span>DEP&nbsp; {money(offer.bonus.minimumDeposit, offer.bonus.currency)}</span><span>WAGER&nbsp; {offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "—" : `${offer.bonus.wageringMultiplier}×`}</span><span>PAYOUT&nbsp; {payoutEvidence(offer)}</span></div>
-        <p className={styles.mobileResultEvidence}>{offer.casino.licenses[0]?.authority || "Not listed"} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || "Not listed"}</p>
-        <Link className={styles.mobileReviewAction} href={`/casino/${offer.casino.slug}`}>Review →</Link>
-      </div>
     </article>)}
     <aside className={styles.reviewSeparationNote}><strong>Review-first contract · {offers.length} results</strong><p>Material terms stay visible in the list. Review access remains separate from governed visit availability.</p></aside>
   </div>;
@@ -237,11 +241,13 @@ export function BonusPagination({ page, pageCount, raw }: { page: number; pageCo
     if (target > 1) params.set("page", String(target));
     return `/bonuses${params.size ? `?${params}` : ""}`;
   };
-  return <nav aria-label="Bonus result pages" className={styles.pagination}>
-    {page > 1 ? <Link href={href(page - 1)}>← Previous</Link> : <span aria-disabled="true">← Previous</span>}
-    <div><span>Comparison directory</span><strong>Page {page} / {pageCount}</strong></div>
-    {page < pageCount ? <Link href={href(page + 1)}>Next →</Link> : <span aria-disabled="true">Next →</span>}
-  </nav>;
+  return <DirectoryPagination
+    ariaLabel="Bonus result pages"
+    currentPage={page}
+    nextHref={page < pageCount ? href(page + 1) : null}
+    pageCount={pageCount}
+    previousHref={page > 1 ? href(page - 1) : null}
+  />;
 }
 
 export function BonusEducation() {

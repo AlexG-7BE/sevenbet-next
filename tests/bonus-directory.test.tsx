@@ -76,15 +76,40 @@ test("pending and error states fail without invented offer truth", () => {
   assert.match(error, /reset/);
 });
 
-test("mobile material results preserve readable text and flexible content height", () => {
+test("directory cards use normalized logo stages and preserve a readable responsive terms hierarchy", () => {
+  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
-  const termsRule = styles.match(/\.mobileResultTerms span \{[^}]*\}/s)?.[0] ?? "";
-  const evidenceRule = styles.match(/\.mobileResultEvidence \{[^}]*\}/s)?.[0] ?? "";
-  assert.match(styles, /\.mobileMaterialResult \{[^}]*min-height: 178px;[^}]*display: grid;/s);
-  assert.match(termsRule, /font-size: 14px;/);
-  assert.match(termsRule, /overflow-wrap: anywhere;/);
-  assert.match(evidenceRule, /font-size: 12px;/);
-  assert.match(evidenceRule, /overflow-wrap: anywhere;/);
-  assert.match(styles, /\.mobileReviewAction \{[^}]*min-height: 44px;[^}]*font-size: 14px;/s);
-  assert.doesNotMatch(styles, /\.mobileMaterialResult \{[^}]*height: 124px/s);
+  const marketplaceStyles = styles.slice(styles.indexOf("Shared directory grammar"));
+  assert.match(component, /data-bonus-directory-card/);
+  assert.match(component, /data-logo-state=\{offer\.casino\.logo \? "image" : "fallback"\}/);
+  assert.match(component, /offer\.casino\.name\.slice\(0, 1\)/);
+  assert.match(component, /data-material-terms/);
+  assert.match(component, /data-governed-actions/);
+  assert.match(component, /Demonstration offer/);
+  assert.match(component, /Welcome offer/);
+  assert.ok(component.indexOf("data-material-terms") < component.indexOf("data-governed-actions"));
+  assert.match(styles, /\.compactLogo img \{[^}]*max-width:100px;[^}]*max-height:80px;[^}]*object-fit:contain;/s);
+  assert.match(styles, /\.compactHeadline \{ font-size:22px; font-weight:900;/);
+  assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.compactTerms \{[\s\S]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /\.compactActions \.offerActionCompact,[^}]*min-height:44px;/s);
+  assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
+});
+
+test("casino and bonus directories share one presentation-only pagination contract", () => {
+  const pagination = readFileSync("components/directory-pagination/DirectoryPagination.tsx", "utf8");
+  const paginationStyles = readFileSync("components/directory-pagination/DirectoryPagination.module.css", "utf8");
+  const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
+  const casinos = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
+
+  assert.match(pagination, /Page \{currentPage\} of \{pageCount\}/);
+  assert.equal((pagination.match(/aria-disabled="true"/g) || []).length, 2);
+  assert.doesNotMatch(pagination, /←|→/);
+  assert.match(paginationStyles, /grid-template-columns: minmax\(104px, auto\) auto minmax\(104px, auto\)/);
+  assert.match(paginationStyles, /min-height: 44px/);
+  assert.match(paginationStyles, /border-radius: var\(--sb-radius-full\)/);
+  assert.match(paginationStyles, /a\.control:focus-visible/);
+  assert.match(bonuses, /<DirectoryPagination/);
+  assert.match(casinos, /<DirectoryPagination/);
+  assert.match(bonuses, /if \(key !== "page"\) params\.append\(key, item\)/);
+  assert.match(casinos, /discoveryHref\(result\.appliedFilters, \{ page: result\.page [+-] 1 \}\)/);
 });

@@ -35,6 +35,7 @@ function classifyOffer(offer: PublicOfferDTO): PublicOfferDTO {
       name: brand(offer.casino.name),
       summary: brand(offer.casino.summary),
       logo: offer.casino.logo ? { ...offer.casino.logo, alt: brand(offer.casino.logo.alt), caption: offer.casino.logo.caption ? brand(offer.casino.logo.caption) : null } : null,
+      hero: offer.casino.hero ? { ...offer.casino.hero, alt: brand(offer.casino.hero.alt), caption: offer.casino.hero.caption ? brand(offer.casino.hero.caption) : null } : null,
       responsibleGamblingTools: offer.casino.responsibleGamblingTools.map(brand),
     },
     bonus: {
