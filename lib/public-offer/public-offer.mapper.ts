@@ -14,6 +14,7 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] 
         name: casino.name,
         summary: casino.summary,
         logo: casino.media.logo,
+        hero: casino.media.hero,
         editorScore: casino.editorScore,
         featured: casino.featured,
         recommended: casino.recommended,

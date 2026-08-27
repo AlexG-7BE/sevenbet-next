@@ -13,6 +13,7 @@ export interface PublicOfferDTO {
     name: string;
     summary: string;
     logo: PublicCasinoMedia | null;
+    hero: PublicCasinoMedia | null;
     editorScore: number;
     featured: boolean;
     recommended: boolean;

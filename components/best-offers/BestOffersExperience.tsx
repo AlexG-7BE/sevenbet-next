@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CommercialOfferMedia, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { shortlistReason } from "@/lib/public-offer/best-offer-ranking";
 import type { PublicOfferDTO, PublicOfferInventoryMode } from "@/lib/public-offer/public-offer.types";
@@ -29,7 +30,7 @@ function OfferAction({ offer, featured = false }: { offer: PublicOfferDTO; featu
 
 function OfferIdentity({ offer, size = "small" }: { offer: PublicOfferDTO; size?: "small" | "large" }) {
   return <div className={styles.identity} data-size={size}>
-    <span aria-hidden="true">{offer.casino.name.slice(0, 1).toUpperCase()}</span>
+    <OperatorLogo offer={offer} prominent={size === "large"} />
     <h3>{offer.casino.name}</h3>
   </div>;
 }
@@ -74,7 +75,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
             <small className={styles.termLabel}>Welcome offer</small>
             <h4>{featured.bonus.title}</h4>
           </div>
-          <div className={styles.featuredMark} aria-hidden="true"><span>▧</span><small>{featured.casino.name.replace(/\s+casino$/i, "")} media</small></div>
+          <CommercialOfferMedia offer={featured} variant="featured" />
           <dl className={styles.featuredTerms}>
             <div><dt>Payout information</dt><dd>{payout(featured)}</dd></div>
             <div><dt>Wagering</dt><dd>{featured.bonus.wageringMultiplier === null ? "Not listed" : `${featured.bonus.wageringMultiplier}x · terms shown`}</dd></div>
@@ -99,7 +100,7 @@ export function BestOffersExperience({ shortlist, inventoryMode }: {
               <MobileMaterialTerms offer={offer} />
               <div className={styles.actions}><OfferAction offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link><OfferCompare offer={offer} /></div>
             </div>
-            <div className={styles.altMark} aria-hidden="true"><span>▧</span><small>{offer.casino.name.replace(/\s+casino$/i, "")} media</small></div>
+            <CommercialOfferMedia offer={offer} variant="secondary" />
           </article>)}
         </div>
         {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">

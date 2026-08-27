@@ -16,7 +16,6 @@
 .rank { position:absolute; top:22px; right:28px; color:#a7a676; font-size:34px; line-height:1; font-weight:800; }
 .headline { padding:18px 32px 24px; min-height:100px; display:block; font-size:24px; line-height:1.18; text-transform:uppercase; }
 .identity { min-height:100px; padding:18px 32px; display:flex; align-items:center; gap:14px; border-top:1px solid rgba(16,15,15,.1); border-bottom:1px solid rgba(16,15,15,.1); }
-.identity > span { width:46px; height:46px; flex:0 0 auto; display:grid; place-items:center; border-radius:14px; background:var(--night); color:var(--acid); font-size:20px; font-weight:850; }
 .cards h2 { margin:0; font-size:20px; line-height:1; text-transform:uppercase; }
 .identity small { color:var(--muted); font-size:13px; line-height:18px; }
 .identity small span { color:var(--acid); letter-spacing:.06em; }
@@ -24,7 +23,8 @@
 .cards dl div { padding:7px 0; display:flex; justify-content:space-between; gap:16px; font-size:14px; line-height:20px; }
 .cards dd { margin:0; font-weight:650; }
 .cards article > p { margin:0; padding:16px 32px; color:var(--muted); font-size:14px; line-height:21px; border-top:1px solid rgba(16,15,15,.1); }
-.demo { padding:0 32px; color:var(--muted); font-size:14px; line-height:20px; }
+.demo { padding:16px 32px 0; color:var(--muted); font-size:14px; line-height:20px; }
+.primary > [data-offer-media="bonus"] { height:230px; min-height:230px; flex-basis:230px; }
 .actions { margin-top:auto; padding:18px 24px; display:flex; align-items:center; flex-wrap:wrap; gap:12px; border-top:1px solid rgba(16,15,15,.1); }
 .action,.unavailable,.actions a { min-height:44px; padding:11px 18px; border:0; border-radius:12px; display:inline-flex; align-items:center; justify-content:center; background:transparent; color:inherit; font:650 14px/20px inherit; }
 .actions :global(.commercialOutboundPrimary).action { border-color:var(--red); background:var(--red); color:var(--paper); cursor:pointer; text-decoration:none; }
@@ -55,6 +55,7 @@
   .cards dd{max-width:62%;text-align:right;overflow-wrap:anywhere}
   .cards article>p,.cards article:nth-child(3)>p{min-height:0;padding:18px 22px}
   .demo{padding-inline:22px}
+  .primary>[data-offer-media="bonus"]{height:190px;min-height:190px;flex-basis:190px}
   .actions{min-height:0;padding:18px 22px;align-items:stretch;flex-direction:column;flex-wrap:nowrap;gap:8px}
   .action,.unavailable,.actions a,.actions :global(.commercialOutboundPrimary).action{width:100%;min-width:0;min-height:44px;flex:0 0 auto;text-align:center;white-space:normal}
   .method{margin-top:24px;padding:22px;grid-template-columns:1fr;gap:14px}

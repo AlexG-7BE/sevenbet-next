@@ -7,22 +7,21 @@ test("default directory exposes server-owned offers and page two continues at po
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /Value, measured/i })).toBeVisible();
   await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
-  await expect(page.getByText(/Page 1 \/ \d+/)).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Bonus result pages" }).getByText(/Page 1 of \d+/)).toBeVisible();
   const pageTwo = await page.goto(`${baseUrl}/bonuses?page=2`, { waitUntil: "networkidle" });
   expect(pageTwo?.status()).toBe(200);
   await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
-  await expect(page.getByText(/Page 2 \/ \d+/)).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Bonus result pages" }).getByText(/Page 2 of \d+/)).toBeVisible();
   await expect(page.locator('[class*="compactPosition"]').filter({ hasText: "25" }).first()).toBeVisible();
 });
 
 test("every supported URL filter and sort is server owned", async ({ page }) => {
-  await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  const form = page.locator('form[action="/bonuses"]').first();
   const selectCases = [
     ["Country preference", "country"], ["Bonus type", "type"], ["Payment method", "payment"],
-    ["Crypto support", "crypto"], ["Commercial availability", "availability"],
   ] as const;
   for (const [label, parameter] of selectCases) {
+    await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
+    const form = page.locator('form[action="/bonuses"]').first();
     const select = form.getByLabel(label);
     const value = await select.locator("option").nth(1).getAttribute("value");
     expect(value).toBeTruthy();
@@ -30,6 +29,12 @@ test("every supported URL filter and sort is server owned", async ({ page }) => 
     expect(response?.status()).toBe(200);
     await expect(page.getByLabel("Active filters")).toBeVisible();
   }
+  const cryptoResponse = await page.goto(`${baseUrl}/bonuses?crypto=true`, { waitUntil: "networkidle" });
+  expect(cryptoResponse?.status()).toBe(200);
+  await expect(page.locator('[aria-label="Active filters"] a').filter({ hasText: "Crypto supported" }).first()).toBeVisible();
+  const availabilityResponse = await page.goto(`${baseUrl}/bonuses?availability=UNAVAILABLE`, { waitUntil: "networkidle" });
+  expect(availabilityResponse?.status()).toBe(200);
+  await expect(page.locator('[aria-label="Active filters"] a').filter({ hasText: "Review only" }).first()).toBeVisible();
   for (const parameter of ["maxDeposit=1000", "maxWagering=100", "maxDeposit=1000&maxWagering=100&country=GB&type=WELCOME&availability=AVAILABLE"]) {
     const response = await page.goto(`${baseUrl}/bonuses?${parameter}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
@@ -74,7 +79,7 @@ test("canonical, filtered robots and ItemList positions are server rendered", as
   const html = await (await request.get(`${baseUrl}/bonuses`)).text();
   expect(html).toContain('method="get"');
   expect(html).toContain("Bonus result pages");
-  expect(html).toContain("Next →");
+  expect(html).toContain(">Next<");
 });
 
 test("responsive pages have visible focus, no overflow and no console or hydration errors", async ({ browser }) => {

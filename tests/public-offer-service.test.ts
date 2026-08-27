@@ -26,7 +26,7 @@ function offer(slug: string, patch: {
   const available = patch.available ?? false;
   return {
     casino: {
-      id: `${slug}-casino`, slug, name: `Demo ${slug}`, summary: "Fictional published profile", logo: null,
+      id: `${slug}-casino`, slug, name: `Demo ${slug}`, summary: "Fictional published profile", logo: null, hero: null,
       editorScore: patch.score ?? 8, featured: patch.featured ?? false, recommended: patch.recommended ?? false,
       publishedAt: patch.publishedAt ?? "2030-01-01T00:00:00.000Z", lastReviewedAt: "2030-01-01T00:00:00.000Z",
       countries: [{ countryCode: patch.country ?? "GB", availability: "AVAILABLE" }],
@@ -263,6 +263,10 @@ test("redirect authority failure preserves published editorial offers without ac
         licenses: [{ id: "license", authority: "Demo authority", status: "ACTIVE" }],
         paymentMethods: [{ id: "payment", methodKey: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: "10", crypto: false }],
         casinoBonuses: [{ id: "22222222-2222-4222-8222-222222222222", slug: "demo-safe-welcome", title: "Not a live offer", summary: "Synthetic", type: "WELCOME", minimumDeposit: "10", wageringMultiplier: "30", status: "PUBLISHED", offerStatus: "ACTIVE" }],
+        mediaAssets: [
+          { id: "offer-logo", type: "LOGO", publicUrl: "/demo-casinos/demo-northstar-logo.svg", altText: "Demo Safe logo", width: 320, height: 160, status: "ACTIVE" },
+          { id: "offer-hero", type: "HERO", publicUrl: "/demo-casinos/phase-11-wide-16x9.svg", altText: "Demo Safe promotional media", width: 1600, height: 900, status: "ACTIVE" },
+        ],
       },
     }],
     listActiveAffiliateRoutes: async () => { throw new Error("route authority unavailable"); },
@@ -270,6 +274,8 @@ test("redirect authority failure preserves published editorial offers without ac
   };
   const records = await new PublicOfferRepository(casinoStore, { redirectEnabled: true, now: new Date("2030-02-01T00:00:00.000Z") }).listOffers();
   assert.equal(records.length, 1);
+  assert.equal(records[0].casino.logo?.type, "logo");
+  assert.deepEqual(records[0].casino.hero && [records[0].casino.hero.type, records[0].casino.hero.width, records[0].casino.hero.height], ["hero", 1600, 900]);
   assert.equal(records[0].commercialAvailability, "UNAVAILABLE");
   assert.equal(records[0].action.href, null);
 });

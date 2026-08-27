@@ -26,9 +26,7 @@
 .rankLine > span { color:#777500; font-size:64px; line-height:1; font-weight:800; }
 .rankLine > b { padding:7px 16px; border:1px solid rgba(119,117,0,.55); border-radius:999px; color:#777500; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
 .identity { margin:28px 0 18px; display:flex; align-items:center; gap:16px; }
-.identity > span { width:48px; height:48px; flex:0 0 auto; border-radius:14px; display:grid; place-items:center; background:var(--night); color:var(--acid); font-size:20px; font-weight:800; }
 .identity h3 { margin:0; font-size:28px; line-height:1.05; text-transform:uppercase; }
-.identity[data-size="large"] > span { width:52px; height:52px; font-size:22px; }
 .identity[data-size="large"] h3 { font-size:32px; }
 .score { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
 .score small,.termLabel { color:#6f6d66; font-size:13px; line-height:18px; letter-spacing:.09em; text-transform:uppercase; }
@@ -42,10 +40,6 @@
 .commercialCta { min-height:50px; padding:14px 30px; border:0; border-radius:999px; display:inline-flex; align-items:center; justify-content:center; background:var(--red); color:var(--paper); font-weight:650; cursor:pointer; }
 .actions > a { padding-bottom:2px; border-bottom:1px solid currentColor; font-size:14px; }
 .unavailableAction { min-height:48px; padding:13px 20px; border-radius:999px; display:inline-flex; align-items:center; background:rgba(139,138,130,.18); color:#5f5e58; font-size:14px; line-height:20px; }
-.featuredMark,.altMark { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; background:var(--deep); color:#8b8a82; }
-.featuredMark { border-left:1px dashed rgba(16,15,15,.18); background:#e6e4df; color:#77756e; }
-.featuredMark span,.altMark span { font-size:27px; line-height:1; }
-.featuredMark small,.altMark small { font-size:13px; line-height:18px; }
 .featuredTerms { grid-column:1/-1; margin:0; padding:0 24px; border-top:1px solid rgba(16,15,15,.1); display:grid; grid-template-columns:repeat(4,1fr); }
 .featuredTerms div { min-height:86px; padding:20px 24px; border-left:1px solid rgba(16,15,15,.08); display:grid; align-content:center; gap:6px; }
 .featuredTerms div:first-child { border-left:0; }
@@ -128,7 +122,7 @@
 @media (max-width:900px) {
   .featuredCard,.alternativeCard { grid-template-columns:1fr; }
   .worthCards { grid-template-columns:1fr; }
-  .featuredMark,.altMark { min-height:260px; grid-row:1; }
+  .featuredCard > [data-offer-media="featured"] { min-height:260px; grid-row:1; }
   .featuredCopy { grid-row:2; padding:40px 40px 138px; }
   .featuredActions { grid-row:2; padding:0 40px 40px; }
   .altCopy { padding:40px; }
@@ -155,7 +149,8 @@
   .featuredCard,.alternativeCard { width:100%; grid-template-columns:minmax(0,1fr); }
   .featuredCopy { min-width:0; grid-row:auto; padding:24px 20px 18px; }
   .altCopy { min-width:0; padding:22px 20px 24px; }
-  .featuredMark,.altMark { display:none; }
+  .featuredCard > [data-offer-media="featured"] { grid-row:3; }
+  .featuredCard > .mobileMaterialTerms { grid-row:2; }
   .rankLine { gap:14px; }
   .rankLine > span { font-size:42px; }
   .altCopy .rankLine > span { font-size:32px; }
@@ -193,7 +188,6 @@
   .worthCards { gap:12px; }
   .worthHead { min-height:0; padding:18px 54px 14px 18px; gap:12px; }
   .worthHead .identity { margin:0; }
-  .worthHead .identity > span { width:44px; height:44px; border-radius:12px; font-size:20px; }
   .worthHead .identity h3 { font-size:19px; }
   .worthHead > b { position:absolute; top:16px; right:18px; font-size:25px; }
   .worthCards > article { position:relative; border-radius:14px; box-shadow:none; }
