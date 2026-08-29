@@ -9,6 +9,7 @@ import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRout
 import { marketProfileByCountry, type SupportedLocale } from "@/lib/market/registry";
 
 const oneYearInSeconds = 365 * 24 * 60 * 60;
+const maximumReturnPathLength = 2_048;
 
 function invalidPreference() {
   return NextResponse.json(
@@ -54,9 +55,23 @@ export async function POST(request: NextRequest) {
 
   if (!destinationProfile) return invalidPreference();
   const rawReturnPath = typeof requestedReturnPath === "string" ? requestedReturnPath : "/";
-  if (!rawReturnPath.startsWith("/") || rawReturnPath.startsWith("//")) return invalidPreference();
-  const returnUrl = new URL(rawReturnPath, request.nextUrl.origin);
+  if (
+    rawReturnPath.length > maximumReturnPathLength
+    || !rawReturnPath.startsWith("/")
+    || rawReturnPath.startsWith("//")
+    || rawReturnPath.includes("\\")
+    || /[\u0000-\u001f\u007f]/.test(rawReturnPath)
+  ) return invalidPreference();
+  let returnUrl: URL;
+  try {
+    returnUrl = new URL(rawReturnPath, request.nextUrl.origin);
+  } catch {
+    return invalidPreference();
+  }
   const parsedReturnPath = parsePublicMarketRoute(returnUrl.pathname);
+  if (parsedReturnPath.kind === "INVALID" && parsedReturnPath.reason === "ENCODED_SEPARATOR") {
+    return invalidPreference();
+  }
   const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
   const returnPath = isLocalizedPublicDestination(equivalentPathname) ? equivalentPathname : "/";
   const countryFilter = returnUrl.searchParams.get("country");

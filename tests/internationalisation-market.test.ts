@@ -4,8 +4,12 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import generatedPages from "../lib/final-handoff/generated-pages.json" with { type: "json" };
-import { transformCommonHandoff, transformHomeHandoff } from "../lib/final-handoff/transforms";
+import { transformCommonHandoff, transformHomeHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
+import { TRANSLATION_REVIEW_STATE } from "../lib/i18n/review-state";
+import { aboutMessages } from "../lib/i18n/static-pages/about";
+import { faqMessages } from "../lib/i18n/static-pages/faq";
+import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { jurisdictionResolver } from "../lib/jurisdiction/resolver";
@@ -291,6 +295,65 @@ test("every European Home locale has complete localized copy and metadata", () =
   }
 });
 
+test("translation review state keeps every machine-assisted locale noindex and review-gated", () => {
+  assert.deepEqual(TRANSLATION_REVIEW_STATE["en-GB"], {
+    content: "APPROVED_BASELINE",
+    linguisticReview: "COMPLETED",
+    legalReview: "GB_SOURCE_REVIEWED",
+    marketEvidenceReview: "GB_BASELINE",
+    indexingApproved: true,
+  });
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => profile.countryCode !== "GB")) {
+    assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
+      content: "MACHINE_ASSISTED_DRAFT",
+      linguisticReview: "REQUIRED",
+      legalReview: "REQUIRED",
+      marketEvidenceReview: "REQUIRED",
+      indexingApproved: false,
+    });
+  }
+});
+
+test("About and 10 Steps provide complete localized authored copy without changing safety boundaries", () => {
+  const englishTenSteps = transformCommonHandoff(generatedPages.tenSteps.html);
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+    const locale = profile.defaultLocale;
+    const about = aboutMessages(locale);
+    const tenSteps = tenStepsTranslation(locale);
+    assert.ok(about.metadataTitle.trim());
+    assert.equal(about.parts.length, 3);
+    assert.equal(about.separationPoints.length, 3);
+    assert.equal(about.boundaries.length, 3);
+    assert.equal(tenSteps.text.length, TEN_STEPS_SOURCE_COPY.length);
+    const localized = transformTenStepsHandoff(englishTenSteps, locale);
+    assert.ok(localized.includes(tenSteps.text[0]));
+    assert.ok(localized.includes(tenSteps.text[43]));
+    assert.ok(localized.includes(`alt="${tenSteps.text.at(-1)}"`));
+    assert.match(localized, /href="\/program\?entry=start"/);
+    if (locale !== "en-GB") {
+      assert.equal(localized.includes(">The Programme, step by step<"), false, `${locale} leaked the 10 Steps heading`);
+      assert.equal(localized.includes(">Start Mission 01<"), false, `${locale} leaked the 10 Steps CTA`);
+    }
+  }
+});
+
+test("FAQ provides complete localized trust copy without changing commercial or protected-data boundaries", () => {
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+    const locale = profile.defaultLocale;
+    const faq = faqMessages(locale);
+    assert.ok(faq.metadataTitle.trim());
+    assert.equal(faq.groups.length, 5);
+    assert.equal(faq.groups.reduce((total, group) => total + group.items.length, 0), 12);
+    const fullText = JSON.stringify(faq);
+    assert.match(fullText, /B4GAMBLE/);
+    assert.match(fullText, /Editor Score/);
+    if (locale !== "en-GB") {
+      assert.notEqual(faq.titleLead, "Clear", `${locale} leaked the FAQ heading`);
+      assert.notEqual(faq.groups[0].items[0][0], "What is B4GAMBLE?", `${locale} leaked the primary FAQ question`);
+    }
+  }
+});
+
 test("market-first middleware redirects legacy paths and rewrites only validated public routes", () => {
   const legacy = middleware(new NextRequest("http://127.0.0.1:4173/de/de/casinos?sort=score"));
   assert.equal(legacy.status, 308);
@@ -315,8 +378,15 @@ test("market-first middleware redirects legacy paths and rewrites only validated
 
   const invalid = middleware(new NextRequest("http://127.0.0.1:4173/de/en/"));
   assert.equal(invalid.headers.get("x-middleware-rewrite"), null);
-  const protectedRoute = middleware(new NextRequest("http://127.0.0.1:4173/de/admin"));
+  const protectedRoute = middleware(new NextRequest("http://127.0.0.1:4173/de/admin", {
+    headers: {
+      [PRESENTATION_MARKET_HEADER]: "de",
+      [PRESENTATION_LANGUAGE_HEADER]: "de",
+    },
+  }));
   assert.equal(protectedRoute.headers.get("x-middleware-rewrite"), null);
+  assert.equal(protectedRoute.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null);
+  assert.equal(protectedRoute.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null);
 });
 
 test("preference endpoint persists only a validated presentation choice and can clear it", async () => {
@@ -354,4 +424,13 @@ test("preference endpoint persists only a validated presentation choice and can 
     headers: { "content-type": "application/x-www-form-urlencoded" },
   }));
   assert.equal(external.status, 400);
+
+  for (const returnTo of ["/de%2Fadmin", "/de\\admin", `/casinos?${"x".repeat(2_100)}`]) {
+    const unsafe = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
+      method: "POST",
+      body: new URLSearchParams({ choice: "DE|de-DE", returnTo }),
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+    }));
+    assert.equal(unsafe.status, 400, returnTo.slice(0, 80));
+  }
 });

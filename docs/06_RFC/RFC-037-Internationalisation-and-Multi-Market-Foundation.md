@@ -223,6 +223,20 @@ Requirements:
 
 No third-party runtime translation SaaS is required for v1 unless a later decision proves clear value.
 
+### Translation and publication review state
+
+The implementation uses one typed review-state record per supported locale. Review state is publication authority, not a descriptive badge that a route can ignore.
+
+| Locale set | Content state | Linguistic review | Legal review | Market-evidence review | Indexing |
+| --- | --- | --- | --- | --- | --- |
+| `en-GB` | approved source baseline | completed for the existing baseline | GB source reviewed | GB baseline | existing English routes remain indexable |
+| `de-DE`, `it-IT`, `es-ES`, `pt-PT`, `el-GR`, `nl-NL`, `sv-SE`, `da-DK`, `fi-FI`, `nb-NO` | machine-assisted Preview draft | required | required for legal or jurisdiction-sensitive copy | required for local claims/resources | `noindex, follow`; excluded from the indexable sitemap |
+| `en-CA`, `fr-CA` | architecture-only draft | required | required | required | not approved for publication/indexing |
+
+Ordinary non-legal Preview routes may remain inspectable while noindex. Operative Terms, Privacy and Affiliate Disclosure bodies remain unprefixed and are not exposed as localized law until their legal gate is explicitly approved. Protected Programme and Help routes, market-specific Responsible Gambling resources and authored Learning content likewise remain unprefixed until the applicable body copy and evidence are complete; a translated shell is not enough to make a route localized.
+
+The first safe static/trust publication tranche covers complete authored bodies for Home, product/discovery UI, 10 Steps, About and FAQ. Route policy remains fail-closed for Methodology, Contact, Learning, Responsible Gambling, Help, Programme and legal documents until their full critical copy meets the applicable review requirements.
+
 ## Request resolution
 
 For a public request:

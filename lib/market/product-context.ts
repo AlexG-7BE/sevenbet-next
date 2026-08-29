@@ -1,34 +1,26 @@
 import type { Metadata } from "next";
 
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
+import { publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
 import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
-  "en-GB": "APPROVED_BASELINE",
-  "de-DE": "MACHINE_DRAFT",
-  "it-IT": "MACHINE_DRAFT",
-  "es-ES": "MACHINE_DRAFT",
-  "pt-PT": "MACHINE_DRAFT",
-  "el-GR": "MACHINE_DRAFT",
-  "nl-NL": "MACHINE_DRAFT",
-  "sv-SE": "MACHINE_DRAFT",
-  "da-DK": "MACHINE_DRAFT",
-  "fi-FI": "MACHINE_DRAFT",
-  "nb-NO": "MACHINE_DRAFT",
-  "en-CA": "MACHINE_DRAFT",
-  "fr-CA": "MACHINE_DRAFT",
-} as const satisfies Record<SupportedLocale, "APPROVED_BASELINE" | "MACHINE_DRAFT">;
+  ...Object.fromEntries(Object.entries(TRANSLATION_REVIEW_STATE).map(([locale, state]) => [
+    locale,
+    state.content === "APPROVED_BASELINE" ? "APPROVED_BASELINE" : "MACHINE_DRAFT",
+  ])),
+} as Record<SupportedLocale, "APPROVED_BASELINE" | "MACHINE_DRAFT">;
 
 /**
  * Localized product routes remain outside the indexable sitemap during this
  * Preview slice. This reversible gate avoids changing Production SEO authority
  * while machine-assisted copy and reciprocal alternates are reviewed.
  */
-export function localizedProductIndexingApproved(_locale: SupportedLocale) {
-  return false;
+export function localizedProductIndexingApproved(locale: SupportedLocale) {
+  return locale !== "en-GB" && publicTranslationIndexingApproved(locale);
 }
 
 export function productHref(presentation: PresentationResolution, href: string) {
@@ -92,6 +84,12 @@ export function productMetadata(input: {
       url: canonical,
       locale,
       alternateLocale,
+      ...(input.images ? { images: input.images } : {}),
+    },
+    twitter: {
+      card: input.images ? "summary_large_image" : "summary",
+      title: input.title,
+      description: input.description,
       ...(input.images ? { images: input.images } : {}),
     },
   };

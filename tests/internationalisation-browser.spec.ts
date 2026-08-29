@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
+import { aboutMessages } from "../lib/i18n/static-pages/about";
+import { faqMessages } from "../lib/i18n/static-pages/faq";
+import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 
@@ -135,5 +138,53 @@ test("old Preview-only default-language URLs redirect once to market-first canon
   ] as const) {
     await page.goto(`${baseUrl}${legacy}`, { waitUntil: "domcontentloaded" });
     await expect(page).toHaveURL(`${baseUrl}${canonical}`);
+  }
+});
+
+test("localized 10 Steps and About publish complete draft bodies with localized metadata and accessibility text", async ({ page }) => {
+  const tenSteps = tenStepsTranslation("de-DE");
+  await page.goto(`${baseUrl}/de/10-steps`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(tenSteps.text[1]);
+  await expect(page.getByRole("link", { name: tenSteps.text[5] })).toHaveAttribute("href", "/program?entry=start");
+  await expect(page.getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de/10-steps");
+
+  const about = aboutMessages("es-ES");
+  await page.goto(`${baseUrl}/es/about`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(about.titleLead);
+  await expect(page.locator('[data-about-section="three-parts"]')).toContainText(about.parts[0].body);
+  await expect(page.locator('[data-about-section="commercial-separation"]')).toContainText(about.separationPoints[2]);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/es/about");
+
+  const faq = faqMessages("pt-PT");
+  await page.goto(`${baseUrl}/pt/faq`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("html")).toHaveAttribute("lang", "pt-PT");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(faq.titleLead);
+  await expect(page.getByText(faq.groups[0].items[0][1])).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/pt/faq");
+});
+
+test("long localized copy has no horizontal overflow across the required responsive widths", async ({ browser }) => {
+  const samples = [
+    [360, "/de/about"],
+    [375, "/pt/faq"],
+    [390, "/gr/"],
+    [412, "/fi/casinos"],
+    [430, "/es/bonuses"],
+    [768, "/nl/about"],
+    [1024, "/no/10-steps"],
+    [1440, "/de/best-offers"],
+  ] as const;
+  for (const [width, pathname] of samples) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 900 : 1_000 }, isMobile: width <= 430 });
+    const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), pathname).toBe(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${pathname} at ${width}px`).toBe(0);
+    await page.close();
   }
 });

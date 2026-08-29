@@ -82,10 +82,11 @@ test("commercial, clinical and outcome claims remain absent from the body", () =
 });
 
 test("metadata is canonical, indexable and uses only truthful WebPage schemas", () => {
-  assert.match(page, /canonical: absoluteUrl\("\/10-steps"\)/);
-  assert.match(page, /robots: \{ index: true, follow: true \}/);
-  assert.match(page, /openGraph:/);
-  assert.match(page, /twitter:/);
+  const productMetadata = readFileSync("lib/market/product-context.ts", "utf8");
+  assert.match(page, /productMetadata\(\{ presentation, pathname: "\/10-steps"/);
+  assert.match(productMetadata, /const canonical = absoluteUrl\(productCanonicalPath/);
+  assert.match(productMetadata, /openGraph:/);
+  assert.match(productMetadata, /twitter:/);
   assert.match(page, /"@type": "BreadcrumbList"/);
   assert.match(page, /"@type": "WebPage"/);
   assert.doesNotMatch(page, /"@type": "(?:Product|Offer|Course|MedicalWebPage|FAQPage)"/);

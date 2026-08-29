@@ -1,5 +1,6 @@
 import { getArticlePath, learningArticles, learningCategories, type LearningArticle } from "@/lib/learning-center";
 import { HOME_SOURCE_COPY, homeTranslation } from "@/lib/i18n/home-catalog";
+import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
 import type { SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
@@ -514,8 +515,23 @@ export function transformHomeHandoffCss(css: string) {
   `;
 }
 
-export function transformTenStepsHandoff(html: string) {
-  return buttonToLink(html, "Start Mission 01", "/program?entry=start");
+export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB") {
+  const translation = tenStepsTranslation(locale);
+  const textTranslations = new Map<string, string>(TEN_STEPS_SOURCE_COPY.map((source, index) => [source, translation.text[index]]));
+  const translatedText = locale === "en-GB" ? html : html.replace(/>([^<>]*)</g, (match, text: string) => {
+    const value = text.trim();
+    const localized = textTranslations.get(value);
+    if (!localized) return match;
+    const leading = text.slice(0, text.indexOf(value));
+    const trailing = text.slice(text.indexOf(value) + value.length);
+    return `>${leading}${escapeHtml(localized)}${trailing}<`;
+  });
+  const sourceAlt = TEN_STEPS_SOURCE_COPY.at(-1) ?? "";
+  const localizedAlt = translation.text.at(-1) ?? sourceAlt;
+  const translated = locale === "en-GB"
+    ? translatedText
+    : translatedText.replace(`alt="${sourceAlt}"`, `alt="${escapeHtml(localizedAlt)}"`);
+  return buttonToLink(translated, translation.text[5], "/program?entry=start");
 }
 
 export function transformResponsibleGamblingHandoff(html: string) {

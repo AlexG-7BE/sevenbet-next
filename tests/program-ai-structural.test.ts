@@ -192,6 +192,8 @@ test("consumer Programme uses distinct interaction primitives and hides provider
 
 test("public 10-steps metadata uses Starting Point truth and removes stale Moment Map copy", () => {
   const tenStepsPage = read("app/(public)/10-steps/page.tsx");
-  assert.match(tenStepsPage, /build a personal Starting Point/);
-  assert.doesNotMatch(tenStepsPage, /Moment Map/);
+  const tenStepsCatalog = read("lib/i18n/static-pages/ten-steps.ts");
+  assert.match(tenStepsPage, /tenStepsTranslation\(presentation\.locale\)/);
+  assert.match(tenStepsCatalog, /build a personal Starting Point/);
+  assert.doesNotMatch(tenStepsPage + tenStepsCatalog, /Moment Map/);
 });

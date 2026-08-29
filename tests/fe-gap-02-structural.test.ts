@@ -34,14 +34,17 @@ test("Cooling-off uses the approved Pause and Support fail-closed content states
 
 test("FAQ is the server-rendered product and trust surface with native disclosures", () => {
   const faq = read("app/(public)/faq/page.tsx");
-  assert.doesNotMatch(faq, /["']use client["']/);
+  const catalog = read("lib/i18n/static-pages/faq.ts");
+  assert.doesNotMatch(faq + catalog, /["']use client["']/);
   assert.equal((faq.match(/<h1\b/g) ?? []).length, 1);
-  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(faq, new RegExp(group, "i"));
-  assert.match(faq, /<details key=\{q\} open=/);
+  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(catalog, new RegExp(group, "i"));
+  assert.match(faq, /<details key=\{question\} open=/);
   assert.match(faq, /<summary>/);
-  assert.match(faq, /canonical: absoluteUrl\("\/faq"\)/);
-  assert.doesNotMatch(faq, /Help center|FAQ schema|Internal guide links|["']@type["']:\s*["']FAQPage["']/iu);
-  assert.ok(faq.lastIndexOf("Contact us") > faq.lastIndexOf("How do I delete my data?"));
+  assert.match(faq, /productMetadata\(\{ presentation, pathname: "\/faq"/);
+  assert.match(faq, /["']@type["']:\s*["']FAQPage["']/u);
+  assert.match(faq, /acceptedAnswer/);
+  assert.doesNotMatch(faq + catalog, /Help center|Internal guide links/iu);
+  assert.ok(faq.lastIndexOf("<aside") > faq.lastIndexOf("messages.groups.map"));
 });
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {

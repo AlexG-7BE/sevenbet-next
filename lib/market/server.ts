@@ -1,6 +1,7 @@
 import "server-only";
 
 import { cookies, headers } from "next/headers";
+import { cache } from "react";
 
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "./presentation-preference";
@@ -11,7 +12,7 @@ import {
   PRESENTATION_MARKET_HEADER,
 } from "./routing";
 
-export async function resolveServerPresentationContext() {
+export const resolveServerPresentationContext = cache(async function resolveServerPresentationContext() {
   const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
   const presentationEnabled = requestHeaders.get(PRESENTATION_CONTEXT_HEADER) === "public-v1";
   const routeMarket = requestHeaders.get(PRESENTATION_MARKET_HEADER);
@@ -33,4 +34,4 @@ export async function resolveServerPresentationContext() {
     ...resolution,
     isExplicitRoute: resolution.source === "EXPLICIT_ROUTE",
   } as const;
-}
+});
