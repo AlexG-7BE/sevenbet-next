@@ -5,7 +5,7 @@ import {
   PRESENTATION_PREFERENCE_COOKIE,
   serializePresentationPreference,
 } from "@/lib/market/presentation-preference";
-import { isLocalizedPublicDestination, localizePublicPath, stripLocalizedPublicPrefix } from "@/lib/market/routing";
+import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRoute } from "@/lib/market/routing";
 import { marketProfileByCountry, type SupportedLocale } from "@/lib/market/registry";
 
 const oneYearInSeconds = 365 * 24 * 60 * 60;
@@ -29,13 +29,11 @@ export async function POST(request: NextRequest) {
   const requestedReturnPath = formData.get("returnTo");
   if (typeof choice !== "string") return invalidPreference();
 
-  const unprefixedReturnPath = stripLocalizedPublicPrefix(
-    typeof requestedReturnPath === "string" ? requestedReturnPath : "/",
-  );
-  const returnPath = isLocalizedPublicDestination(unprefixedReturnPath) ? unprefixedReturnPath : "/";
   const automatic = choice === "automatic";
-  let destination = returnPath;
+  let destinationMarket = "GB";
   let preferenceValue: string | null = null;
+  let destinationProfile = marketProfileByCountry("GB");
+  let destinationLocale: SupportedLocale = "en-GB";
 
   if (!automatic) {
     const [countryCode, locale, ...unexpected] = choice.split("|");
@@ -49,8 +47,27 @@ export async function POST(request: NextRequest) {
     }
     const preference = parsePresentationPreference(preferenceValue);
     if (!preference?.locale) return invalidPreference();
-    destination = localizePublicPath(profile, preference.locale, returnPath);
+    destinationMarket = profile.countryCode;
+    destinationProfile = profile;
+    destinationLocale = preference.locale;
   }
+
+  if (!destinationProfile) return invalidPreference();
+  const rawReturnPath = typeof requestedReturnPath === "string" ? requestedReturnPath : "/";
+  if (!rawReturnPath.startsWith("/") || rawReturnPath.startsWith("//")) return invalidPreference();
+  const returnUrl = new URL(rawReturnPath, request.nextUrl.origin);
+  const parsedReturnPath = parsePublicMarketRoute(returnUrl.pathname);
+  const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
+  const returnPath = isLocalizedPublicDestination(equivalentPathname) ? equivalentPathname : "/";
+  const countryFilter = returnUrl.searchParams.get("country");
+  if (countryFilter && countryFilter.trim().toUpperCase() !== destinationMarket) {
+    returnUrl.searchParams.delete("country");
+  }
+  const safeQuery = returnUrl.searchParams.toString();
+  const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
+  const destination = automatic
+    ? equivalentReturnPath
+    : localizePublicPath(destinationProfile, destinationLocale, equivalentReturnPath);
 
   const response = new NextResponse(null, {
     status: 303,

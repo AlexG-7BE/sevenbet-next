@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
-import { localizedMarketPath } from "@/lib/market/registry";
+import { publicMarketPath } from "@/lib/market/registry";
 import type { PublicAccountNavigation } from "@/lib/public-shell";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
@@ -19,7 +19,7 @@ export function PublicHeader({
 }) {
   const messages = publicShellMessages(presentation.locale);
   const homeHref = presentation.source === "EXPLICIT_ROUTE"
-    ? localizedMarketPath(presentation.market, presentation.locale)
+    ? publicMarketPath(presentation.market, presentation.locale)
     : "/";
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">

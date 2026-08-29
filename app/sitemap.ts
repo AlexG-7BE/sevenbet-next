@@ -10,7 +10,7 @@ import { parsePublicOfferQuery } from "@/lib/public-offer/query";
 import {
   DEFAULT_MARKET_PROFILE,
   INITIAL_EUROPEAN_MARKET_PROFILES,
-  localizedMarketPath,
+  publicMarketPath,
   type MarketProfile,
 } from "@/lib/market/registry";
 import { localizedProductIndexingApproved } from "@/lib/market/product-context";
@@ -63,7 +63,7 @@ export async function loadMarketSitemapSnapshot(market: MarketProfile) {
 
 export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof loadMarketSitemapSnapshot>>, localized: boolean) {
   const prefix = (pathname: string) => localized
-    ? localizedMarketPath(snapshot.market, snapshot.market.defaultLocale, pathname)
+    ? publicMarketPath(snapshot.market, snapshot.market.defaultLocale, pathname)
     : pathname;
   const publishedDirectory = Boolean(snapshot.discovery && snapshot.discovery.total > 0 && snapshot.discovery.inventoryMode === "PUBLISHED_ONLY");
   const routes = [

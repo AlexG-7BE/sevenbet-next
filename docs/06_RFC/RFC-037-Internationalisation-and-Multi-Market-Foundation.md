@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch.
+Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30.
 
 ## Decision
 
@@ -99,35 +99,38 @@ Programme, Help, self-check, limits, vulnerability or other protected/safety dat
 
 ## URL architecture
 
-Canonical localized public URLs use a two-segment market/locale prefix:
+Market is the primary public URL dimension. The default locale of a market is omitted from its canonical URL. Market and locale remain separate typed runtime concepts; omitting a default language segment does not merge them.
+
+The existing unprefixed root remains the canonical default-market/default-locale baseline, avoiding an unnecessary Production SEO move:
 
 ```text
-/{market}/{language}/...
+/                       = GB / en-GB
+/casinos                = GB / en-GB
+/casino/example         = GB / en-GB
 ```
 
-Examples:
+Other markets using their default locale use one market segment:
 
 ```text
-/gb/en/
-/de/de/
-/it/it/
-/es/es/
-/pt/pt/
-/gr/el/
-/nl/nl/
-/se/sv/
-/dk/da/
-/fi/fi/
-/no/nb/
+/de/
+/it/
+/es/
+/pt/
+/gr/
+/nl/
+/se/
+/dk/
+/fi/
+/no/
 ```
 
-The first segment is the ISO-3166 alpha-2 market code in lowercase. The second segment is the BCP-47 language subtag used by the localized content package.
+Only a secondary locale adds its BCP-47 language subtag. This rule is generic rather than Canada-specific. For example, Canada default `en-CA` is `/ca/` and secondary `fr-CA` is `/ca/fr/`; a future Switzerland profile with default `de-CH` and secondary `fr-CH`/`it-CH` would use `/ch/`, `/ch/fr/` and `/ch/it/`.
 
-This shape is chosen because it keeps market and language explicit and allows future multi-language markets without changing the commercial authority model.
+This shape provides shorter, clearer partner-facing links and removes redundant paths such as `/de/de/`, while retaining multi-language flexibility and an explicit market for every non-default market. It does not change the commercial-authority model: a market segment, secondary-language segment, selected language or translated page remains presentation context only.
 
-The existing unprefixed URLs remain compatible during migration. They must not disappear in the first release. A bounded routing layer may resolve or redirect first-time public traffic to an appropriate localized route, while preserving stable explicit URLs for crawlers, partners, shared links and user choice.
+The Preview-only two-segment default-language routes are compatibility inputs, never canonical copies. They permanently redirect in one hop while preserving the equivalent path and query: `/de/de/...` to `/de/...`, `/gr/el/...` to `/gr/...`, and `/gb/en/...` to the unprefixed GB equivalent. A default-market alias such as `/gb/...` likewise redirects to the unprefixed canonical. Secondary locale routes such as `/ca/fr/...` remain canonical. Unsupported combinations such as `/de/en/...`, unknown markets and market-prefixed protected/internal routes fail closed without a public rewrite.
 
-Geo-based routing must never produce a redirect loop and must provide a deterministic fallback.
+The central typed public-route policy is the only allowlist for market prefixes. Admin, API, MCP, authentication/integration callbacks, editorial Preview, affiliate redirects, outbound actions and other internal or mutation families are never localized by this routing layer. Geo-based presentation must never mutate an explicit URL, produce a redirect loop or create commercial authority.
 
 ## Market registry
 
@@ -224,13 +227,14 @@ No third-party runtime translation SaaS is required for v1 unless a later decisi
 
 For a public request:
 
-1. parse an explicit localized route when present;
-2. read an explicit user presentation preference if supported;
-3. read the trusted request-country observation from the existing Vercel adapter;
-4. resolve the presentation market and locale through the market registry;
-5. resolve jurisdiction/commercial authority independently;
-6. render localized editorial/service content;
-7. project casino and offer actions only if the independent commercial/referral authority passes.
+1. parse and validate an explicit market-first route when present;
+2. resolve a supported unprefixed public route explicitly as `GB` / `en-GB`;
+3. use an explicit user presentation preference to navigate to its canonical market route;
+4. use the trusted request-country observation only as a bounded presentation default where no canonical route has already fixed context;
+5. resolve the presentation market and locale through the market registry;
+6. resolve jurisdiction/commercial authority independently;
+7. render localized editorial/service content;
+8. project casino and offer actions only if the independent commercial/referral authority passes.
 
 Priority rules must prevent a manually selected presentation market from becoming a force-allow mechanism.
 

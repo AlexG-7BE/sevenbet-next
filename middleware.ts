@@ -12,12 +12,12 @@ import {
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
 import {
-  isLocalizedPublicDestination,
-  parseLocalizedPublicPath,
+  parsePublicMarketRoute,
   PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
 } from "@/lib/market/routing";
+import { publicMarketPath } from "@/lib/market/registry";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -89,20 +89,32 @@ export function middleware(request: NextRequest) {
     ));
   }
 
-  const localizedPublicPath = parseLocalizedPublicPath(pathname);
-  if (localizedPublicPath) {
-    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
-    requestHeaders.set(PRESENTATION_MARKET_HEADER, localizedPublicPath.market.routeMarket);
-    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, localizedPublicPath.locale.split("-")[0].toLowerCase());
-    const rewriteUrl = request.nextUrl.clone();
-    rewriteUrl.pathname = localizedPublicPath.pathname;
-    const response = nextResponse(rewriteUrl);
-    response.headers.set("Content-Language", localizedPublicPath.locale);
-    return secureResponse(response);
+  const publicMarketRoute = parsePublicMarketRoute(pathname);
+  if (publicMarketRoute.kind === "LEGACY_REDUNDANT_LOCALE" || publicMarketRoute.kind === "DEFAULT_MARKET_ALIAS") {
+    const destination = request.nextUrl.clone();
+    destination.pathname = publicMarketRoute.canonicalPath;
+    return secureResponse(NextResponse.redirect(destination, 308));
   }
 
-  if (isLocalizedPublicDestination(pathname)) {
+  if (publicMarketRoute.kind !== "INVALID") {
+    const canonicalPathname = publicMarketPath(
+      publicMarketRoute.market,
+      publicMarketRoute.locale,
+      publicMarketRoute.pathname,
+    );
+    if (pathname !== canonicalPathname) {
+      const destination = request.nextUrl.clone();
+      destination.pathname = canonicalPathname;
+      return secureResponse(NextResponse.redirect(destination, 308));
+    }
     requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
+    requestHeaders.set(PRESENTATION_MARKET_HEADER, publicMarketRoute.market.routeMarket);
+    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, publicMarketRoute.locale.split("-")[0].toLowerCase());
+    const rewriteUrl = publicMarketRoute.kind === "UNPREFIXED_DEFAULT" ? undefined : request.nextUrl.clone();
+    if (rewriteUrl) rewriteUrl.pathname = publicMarketRoute.pathname;
+    const response = nextResponse(rewriteUrl);
+    response.headers.set("Content-Language", publicMarketRoute.locale);
+    return secureResponse(response);
   }
 
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";

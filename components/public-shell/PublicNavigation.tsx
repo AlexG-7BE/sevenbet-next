@@ -12,8 +12,8 @@ import {
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
-import { localizePublicHref, stripLocalizedPublicPrefix } from "@/lib/market/routing";
-import { localizedMarketPath } from "@/lib/market/registry";
+import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
+import { publicMarketPath } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import styles from "./PublicShell.module.css";
 
@@ -45,9 +45,9 @@ export function PublicNavigation({
   presentation: PresentationResolution;
 }) {
   const pathname = usePathname();
-  const unprefixedPathname = stripLocalizedPublicPrefix(pathname);
+  const unprefixedPathname = stripPublicMarketPrefix(pathname);
   const homeHref = presentation.source === "EXPLICIT_ROUTE"
-    ? localizedMarketPath(presentation.market, presentation.locale)
+    ? publicMarketPath(presentation.market, presentation.locale)
     : "/";
   const navigationLabels: Record<string, string> = {
     "/best-offers": messages.bestOffers,

@@ -2,14 +2,14 @@ import { expect, test } from "@playwright/test";
 
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, localizedMarketPath } from "../lib/market/registry";
+import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
   const locale = profile.defaultLocale;
-  const pathname = localizedMarketPath(profile, locale);
+  const pathname = publicMarketPath(profile, locale);
   test(`${pathname} renders a localized Home contract`, async ({ page }) => {
     const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
@@ -29,19 +29,19 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
 }
 
 test("invalid market-language pairs and protected prefixed paths fail without a rewrite", async ({ page }) => {
-  for (const pathname of ["/de/en/", "/xx/xx/", "/de/de/admin", "/de/de/program"]) {
+  for (const pathname of ["/de/en/", "/gr/gr/", "/xx/", "/de/admin", "/de/api/private", "/de/program/api/private"]) {
     const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), pathname).toBe(404);
   }
 });
 
 test("desktop selector persists presentation and preserves a supported equivalent path", async ({ page, context }) => {
-  await page.goto(`${baseUrl}/de/de/casinos`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
   const selector = page.getByRole("combobox", { name: messages.changeMarketAndLanguage }).first();
   await selector.selectOption("ES|es-ES");
   await selector.locator("xpath=ancestor::form").getByRole("button", { name: messages.applyPreference }).click();
-  await expect(page).toHaveURL(/\/es\/es\/casinos\/?$/);
+  await expect(page).toHaveURL(/\/es\/casinos\/?$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   const cookies = await context.cookies();
   expect(cookies.find((cookie) => cookie.name === "b4gamble_presentation")?.value).toBe("v1.ES.es-ES");
@@ -50,19 +50,19 @@ test("desktop selector persists presentation and preserves a supported equivalen
 
 test("automatic presentation clears the preference and returns to an unprefixed compatible URL", async ({ page, context }) => {
   await context.addCookies([{ name: "b4gamble_presentation", value: "v1.PT.pt-PT", domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" }]);
-  await page.goto(`${baseUrl}/pt/pt/learn`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/pt/bonuses?type=welcome&country=PT`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("pt-PT");
   const selector = page.getByRole("combobox", { name: messages.changeMarketAndLanguage }).first();
   await selector.selectOption("automatic");
   await selector.locator("xpath=ancestor::form").getByRole("button", { name: messages.applyPreference }).click();
-  await expect(page).toHaveURL(/\/learn\/?$/);
+  await expect(page).toHaveURL(/\/bonuses\?type=welcome$/);
   expect((await context.cookies()).some((cookie) => cookie.name === "b4gamble_presentation")).toBe(false);
 });
 
 test("mobile selector is keyboard-accessible inside the existing modal navigation", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   const messages = publicShellMessages("fi-FI");
-  await page.goto(`${baseUrl}/fi/fi/`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/fi/`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: messages.openNavigation }).click();
   const dialog = page.getByRole("dialog", { name: messages.siteNavigation });
   await expect(dialog).toBeVisible();
@@ -71,7 +71,7 @@ test("mobile selector is keyboard-accessible inside the existing modal navigatio
   await expect(selector).toBeFocused();
   await selector.selectOption("NO|nb-NO");
   await dialog.getByRole("button", { name: messages.applyPreference }).click();
-  await expect(page).toHaveURL(/\/no\/nb\/?$/);
+  await expect(page).toHaveURL(/\/no\/?$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "nb-NO");
   await page.close();
 });
@@ -87,7 +87,7 @@ const representativeProductMarkets = INITIAL_EUROPEAN_MARKET_PROFILES.filter((pr
 
 for (const profile of representativeProductMarkets) {
   const locale = profile.defaultLocale;
-  const prefix = localizedMarketPath(profile, locale).replace(/\/$/, "");
+  const prefix = publicMarketPath(profile, locale).replace(/\/$/, "");
   const messages = productPageMessages(locale);
   test(`${profile.countryCode} product pages use localized bodies, self canonicals and no inferred outbound action`, async ({ page }) => {
     for (const [route, expected] of [
@@ -101,7 +101,11 @@ for (const profile of representativeProductMarkets) {
       await expect(page.getByRole("heading", { level: 1 })).toContainText(expected);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
       expect(new URL(canonical ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
-      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      if (profile.countryCode === "GB") {
+        await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+      } else {
+        await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      }
       expect(await page.locator('main a[href^="/r/"]').count(), `${profile.countryCode}${route} must fail closed`).toBe(0);
     }
   });
@@ -121,3 +125,15 @@ for (const profile of representativeProductMarkets) {
     expect(redirect.headers().location).toBe(`${prefix}/casinos?casino=alpha&casino=beta&differences=true`);
   });
 }
+
+test("old Preview-only default-language URLs redirect once to market-first canonicals", async ({ page }) => {
+  for (const [legacy, canonical] of [
+    ["/de/de/?source=partner", "/de/?source=partner"],
+    ["/de/de/casinos?page=2", "/de/casinos?page=2"],
+    ["/gb/en/", "/"],
+    ["/gr/el/bonuses", "/gr/bonuses"],
+  ] as const) {
+    await page.goto(`${baseUrl}${legacy}`, { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(`${baseUrl}${canonical}`);
+  }
+});

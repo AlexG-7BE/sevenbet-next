@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
@@ -22,6 +22,8 @@ export function MarketLanguageSelector({
   variant: "desktop" | "mobile";
 }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const returnTo = `${pathname}${searchParams.size ? `?${searchParams}` : ""}`;
   const id = `market-language-${variant}`;
   return (
     <form
@@ -47,7 +49,7 @@ export function MarketLanguageSelector({
           )))}
         </select>
       </label>
-      <input name="returnTo" type="hidden" value={pathname} />
+      <input name="returnTo" type="hidden" value={returnTo} />
       <button type="submit">{messages.applyPreference}</button>
       {variant === "mobile" ? <p>{messages.presentationOnlyNotice}</p> : null}
     </form>

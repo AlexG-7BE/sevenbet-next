@@ -28,7 +28,7 @@ test("Home route renders the final handoff with the approved metadata and canoni
   assert.match(page, /openGraph: \{[^}]*title, description/);
   assert.match(page, /twitter: \{ card: "summary", title, description \}/);
   assert.match(page, /alternates: \{ canonical \}/);
-  assert.match(page, /localizedMarketPath\(presentation\.market, presentation\.locale\)/);
+  assert.match(page, /publicMarketPath\(presentation\.market, presentation\.locale\)/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
 });

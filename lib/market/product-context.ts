@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, localizedMarketPath, type SupportedLocale } from "./registry";
+import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
@@ -47,7 +47,7 @@ export function productLanguageAlternates(pathname: string) {
   return Object.fromEntries([
     ...INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => [
       profile.defaultLocale,
-      absoluteUrl(localizedMarketPath(profile, profile.defaultLocale, pathname)),
+      absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
     ]),
     ["x-default", absoluteUrl(pathname)],
   ]);

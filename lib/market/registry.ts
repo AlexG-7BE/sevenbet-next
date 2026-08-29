@@ -243,8 +243,23 @@ export function localeForLanguageSegment(profile: MarketProfile, languageSegment
   return profile.supportedLocales.find((locale) => languageSegmentForLocale(locale) === normalized) ?? null;
 }
 
-export function localizedMarketPath(profile: MarketProfile, locale: SupportedLocale, pathname = "/") {
+/**
+ * Build the one canonical public path for a market, locale and equivalent
+ * pathname. The default market/default locale remains unprefixed, other market
+ * defaults use one segment, and only secondary locales add a language segment.
+ */
+export function publicMarketPath(profile: MarketProfile, locale: SupportedLocale, pathname = "/") {
   if (!profile.supportedLocales.includes(locale)) throw new Error(`Locale ${locale} is not supported by market ${profile.countryCode}`);
-  const suffix = pathname === "/" ? "" : `/${pathname.replace(/^\/+/, "")}`;
-  return `/${profile.routeMarket}/${languageSegmentForLocale(locale)}${suffix || "/"}`;
+  const suffixIndex = pathname.search(/[?#]/);
+  const rawPathname = suffixIndex >= 0 ? pathname.slice(0, suffixIndex) : pathname;
+  const queryOrHash = suffixIndex >= 0 ? pathname.slice(suffixIndex) : "";
+  const normalizedPathname = rawPathname === "/"
+    ? "/"
+    : `/${rawPathname.split("/").filter(Boolean).join("/")}`;
+  const isDefaultMarket = profile.countryCode === DEFAULT_MARKET_PROFILE.countryCode;
+  const localePrefix = locale === profile.defaultLocale ? "" : `/${languageSegmentForLocale(locale)}`;
+  const marketPrefix = isDefaultMarket ? "" : `/${profile.routeMarket}`;
+  const prefix = `${marketPrefix}${localePrefix}`;
+  const canonicalPathname = normalizedPathname === "/" ? `${prefix}/` : `${prefix}${normalizedPathname}`;
+  return `${canonicalPathname || "/"}${queryOrHash}`;
 }
