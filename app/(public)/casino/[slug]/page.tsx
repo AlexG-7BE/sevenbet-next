@@ -11,6 +11,16 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { isLocalHandoffVisualDataFixture, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
+import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import {
+  commercialAuthorityForPresentation,
+  marketAvailability,
+  productHref,
+  productMetadata,
+} from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
+import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
+import { absoluteUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -23,33 +33,81 @@ const loadEditorial = cache(async (slug: string) => {
   }
 });
 const loadCasinoPage = cache(async (slug: string) => {
-  const [authority, editorialResult] = await Promise.all([resolveServerJurisdiction(), loadEditorial(slug)]);
-  const candidate = await publicCasinoService.getCasino(slug, authority);
+  const [presentation, authority, editorialResult] = await Promise.all([
+    resolveServerPresentationContext(),
+    resolveServerJurisdiction(),
+    loadEditorial(slug),
+  ]);
+  const candidate = await publicCasinoService.getCasino(
+    slug,
+    commercialAuthorityForPresentation(authority, presentation.market.countryCode),
+  );
+  const availableForPresentation = candidate
+    ? marketAvailability(candidate.countries, presentation.market.countryCode)
+    : false;
+  const boundedCandidate = candidate && !availableForPresentation
+    ? {
+        ...candidate,
+        affiliate: { href: null, available: false },
+        bonuses: candidate.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
+      }
+    : candidate;
   return {
-    casino: candidate?.source === "cms" ? candidate : null,
+    casino: boundedCandidate?.source === "cms" ? boundedCandidate : null,
     editorialResult,
+    presentation,
+    availableForPresentation,
   };
 });
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { casino, editorialResult } = await loadCasinoPage(slug);
-  return casinoProfileMetadata(casino, casino ? profileEditorialDocument(editorialResult, casino.id) : null);
+  const { casino, editorialResult, presentation, availableForPresentation } = await loadCasinoPage(slug);
+  const messages = productPageMessages(presentation.locale);
+  if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
+  const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
+  const market = presentation.market.seoDisplayName;
+  const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
+  const description = availableForPresentation
+    ? `${messages.profile.currentReview}: ${casino.name}. ${messages.common.originalSourceCopy}`
+    : formatProductMessage(messages.profile.marketUnavailableCopy, { market });
+  return productMetadata({
+    presentation,
+    pathname: `/casino/${casino.slug}`,
+    title,
+    description,
+    robots: isTemporaryDemoCasinoId(casino.id) ? { index: false, follow: true } : base.robots,
+    openGraphType: "article",
+  });
 }
 
 export default async function CasinoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
   const { slug } = await params;
-  const { casino, editorialResult } = await loadCasinoPage(slug);
+  const { casino, editorialResult, presentation, availableForPresentation } = await loadCasinoPage(slug);
   if (!casino) notFound();
   const visualDataFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
   const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture);
   const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(editorialResult, casino.id), visualDataFixture);
-  const schemas = casinoProfileSchemas(runtimeCasino, editorial);
+  const messages = productPageMessages(presentation.locale);
+  const profileUrl = absoluteUrl(productHref(presentation, `/casino/${runtimeCasino.slug}`));
+  const casinoDirectoryUrl = absoluteUrl(productHref(presentation, "/casinos"));
+  const schemas = casinoProfileSchemas(runtimeCasino, editorial).map((schema) => {
+    if (schema["@type"] === "BreadcrumbList") {
+      return {
+        ...schema,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: messages.common.browseReviews, item: casinoDirectoryUrl },
+          { "@type": "ListItem", position: 2, name: runtimeCasino.name, item: profileUrl },
+        ],
+      };
+    }
+    return schema["@type"] === "WebPage" ? { ...schema, url: profileUrl } : schema;
+  });
 
   return <>
     <CommercialSurfaceView surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile casino={runtimeCasino} editorial={editorial} />
+    <CasinoProfile availableForPresentation={availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
 }

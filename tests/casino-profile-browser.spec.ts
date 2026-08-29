@@ -59,7 +59,7 @@ test("casino profile breadcrumb clears the fixed public header across responsive
 
     const header = page.locator('[data-public-shell="header"]');
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
-    const casinosLink = breadcrumb.getByRole("link", { name: "Casinos", exact: true });
+    const casinosLink = breadcrumb.locator('a[href="/casinos"]');
     const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
 
     await expect(header, `${viewport.width}px public header`).toBeVisible();
@@ -238,7 +238,7 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
 test("unknown profiles fail closed and are noindex", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/casino/not-a-published-profile`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(404);
-  await expect(page.getByRole("heading", { level: 1, name: "This review is not available." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Casino profile unavailable" })).toBeVisible();
   const robots = await page.locator('meta[name="robots"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute("content") ?? ""));
   expect(robots.length).toBeGreaterThan(0);
   expect(robots.every((value) => value.includes("noindex"))).toBe(true);

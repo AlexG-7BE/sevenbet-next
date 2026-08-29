@@ -17,6 +17,7 @@ import type { PublicCasinoStore } from "../lib/repositories/public-casino.reposi
 import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { isTemporaryDemoCasinoId } from "../lib/demo-data/temporary-demo-authority";
+import { commercialAuthorityForPresentation } from "../lib/market/product-context";
 
 function offer(slug: string, patch: {
   score?: number; featured?: boolean; recommended?: boolean; country?: string; type?: string; payment?: string;
@@ -83,6 +84,39 @@ test("search filters eligible public offers and returns deterministic pagination
   assert.equal(all.total, 3);
   assert.equal(all.page, 2);
   assert.equal(all.records[0].casino.slug, "beta");
+});
+
+test("presentation country is the default editorial offer market without a GB substitute", async () => {
+  const service = new PublicOfferService(store([
+    offer("great-britain", { country: "GB" }),
+    offer("germany", { country: "DE", featured: true }),
+  ]), { cmsEnabled: true });
+  const baseQuery = parsePublicOfferQuery({});
+  assert.deepEqual((await service.searchOffers(baseQuery, null, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany"]);
+  assert.deepEqual((await service.searchOffers(baseQuery, null, { defaultEditorialCountry: "ES" })).records, []);
+  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "GB" }), null, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["great-britain"]);
+  const bestOffers = await service.getBestOffersPageData({ country: "DE" });
+  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["germany"]);
+});
+
+test("DE/GB and GB/DE presentation-authority mismatches keep offer actions unavailable", async () => {
+  const service = new PublicOfferService(store([
+    offer("de-offer", { country: "DE", available: true }),
+    offer("gb-offer", { country: "GB", available: true }),
+  ]), { cmsEnabled: true, redirectEnabled: true }, allowOperatorAuthority);
+  const deWithGbAuthority = await service.searchOffers(
+    parsePublicOfferQuery({}),
+    commercialAuthorityForPresentation(allowJurisdictionAuthority, "DE"),
+    { defaultEditorialCountry: "DE" },
+  );
+  assert.deepEqual(deWithGbAuthority.records.map((item) => [item.casino.slug, item.action.available]), [["de-offer", false]]);
+  const assertedDeAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
+  const gbWithDeAuthority = await service.searchOffers(
+    parsePublicOfferQuery({}),
+    commercialAuthorityForPresentation(assertedDeAuthority, "GB"),
+    { defaultEditorialCountry: "GB" },
+  );
+  assert.deepEqual(gbWithDeAuthority.records.map((item) => [item.casino.slug, item.action.available]), [["gb-offer", false]]);
 });
 
 test("default page contains 24 records and page two preserves the twenty-fifth", async () => {
@@ -311,7 +345,7 @@ test("public offer pages use the service boundary and expose no raw destination 
   assert.equal((bestOffersPage.match(/getBestOffersPageData\(/g) || []).length, 1);
   assert.match(bestOffersPage, /result\.status === "available" && result\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(bestOffersPage, /result\.status === "unavailable"/);
-  assert.match(bestOffersPage, /Casino Offer Comparison Unavailable/);
+  assert.match(bestOffersPage, /messages\.bestOffers\.unavailableTitle/);
   const experience = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
   assert.match(experience, /const top = shortlist\.slice\(0, 3\)/);
   assert.match(experience, /const featured = top\[0\] \?\? null/);

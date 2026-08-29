@@ -315,7 +315,7 @@ test("comparison architecture remains database-driven, server-owned and raw-dest
   const api = readFileSync("app/api/public/comparison/route.ts", "utf8");
   const service = readFileSync("lib/services/public-comparison.service.ts", "utf8");
   const component = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
-  assert.match(page, /permanentRedirect\(`\/casinos/);
+  assert.match(page, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(api, /publicComparisonService\.compare\(query, authority\)/);
   assert.match(component, /sessionStorage/);
   assert.match(component, /showModal\(\)/);

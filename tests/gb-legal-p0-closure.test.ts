@@ -170,6 +170,7 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
   const demo = source("components/bonus-directory/BonusDirectory.tsx");
   const outbound = source("components/casino-profile/CasinoOutboundAction.tsx");
+  const productCatalog = source("lib/i18n/product-pages-catalog.ts");
   assert.match(transforms, /No casino, bonus or affiliate actions appear here/);
   assert.match(transforms, /call 999 or go to A&amp;E now/);
   assert.match(affiliate, /Affiliate link · We may earn commission/);
@@ -183,6 +184,8 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   assert.equal(footer.match(/"\/terms"/g)?.length, 1);
   assert.equal(footer.match(/"\/privacy"/g)?.length, 1);
   assert.equal(footer.match(/"\/contact"/g)?.length, 1);
-  assert.match(demo, /DEMONSTRATION DATA/);
-  assert.match(outbound, /You are about to visit a third-party gambling operator/);
+  assert.match(demo, /messages\.common\.demoData/);
+  assert.match(outbound, /messages\?\.description/);
+  assert.match(productCatalog, /demoData: "DEMONSTRATION DATA"/);
+  assert.match(productCatalog, /You are about to visit a third-party gambling operator/);
 });

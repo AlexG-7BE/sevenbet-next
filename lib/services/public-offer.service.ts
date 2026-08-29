@@ -167,7 +167,11 @@ export class PublicOfferService {
     }
   }
 
-  async searchOffers(query: PublicOfferQuery, authority?: CommercialJurisdictionAuthority | null): Promise<PublicOfferSearchResult> {
+  async searchOffers(
+    query: PublicOfferQuery,
+    authority?: CommercialJurisdictionAuthority | null,
+    options: { defaultEditorialCountry?: string } = {},
+  ): Promise<PublicOfferSearchResult> {
     let all: PublicOfferDTO[];
     try {
       all = await this.listEligibleOffers(authority, { throwOnError: true });
@@ -183,7 +187,12 @@ export class PublicOfferService {
         inventoryMode: "UNAVAILABLE",
       };
     }
-    const filtered = all.filter((offer) => matches(offer, query));
+    const editorialQuery = query.country
+      ? query
+      : options.defaultEditorialCountry
+        ? { ...query, country: options.defaultEditorialCountry }
+        : query;
+    const filtered = all.filter((offer) => matches(offer, editorialQuery));
     const sorted = sortOffers(filtered, query.sort);
     const pageCount = Math.max(1, Math.ceil(sorted.length / query.pageSize));
     const page = Math.min(query.page, pageCount);

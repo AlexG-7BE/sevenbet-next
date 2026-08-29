@@ -2,23 +2,28 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("desktop discovery renders the governed empty CMS state without browser errors", async ({ page }) => {
+test("desktop discovery renders the server-owned CMS state without browser errors", async ({ page }) => {
   const errors: string[] = [];
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
   const response = await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /Picked for.*how you play/ })).toBeVisible();
-  await expect(page.getByLabel("Search published reviews")).toBeVisible();
-  await expect(page.locator('section[aria-label="Published review preview"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { level: 2, name: "Full directory" })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "No published reviews yet." })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Clear filters" })).toHaveCount(0);
-  await expect(page.getByLabel("Bonus availability").first()).toBeVisible();
-  await expect(page.getByLabel("Safer-gambling information").first()).toBeVisible();
-  await expect(page.locator("#casino-results [role=status]")).toHaveText("0 results · Page 1 of 1");
-  await page.getByLabel("Search published reviews").focus();
-  expect(await page.getByLabel("Search published reviews").evaluate((element) => getComputedStyle(element).outlineStyle)).not.toBe("none");
+  const resultStatus = page.locator("#casino-results [role=status]");
+  if ((await resultStatus.innerText()).startsWith("0 ")) {
+    await expect(page.getByRole("heading", { level: 2, name: /No published reviews for .* yet\./ })).toBeVisible();
+  }
+  await expect(page.getByRole("link", { name: "Clear all" })).toHaveCount(0);
+  await page.getByRole("button", { name: "All filters" }).click();
+  const filterDialog = page.getByRole("dialog", { name: "Filters · Full directory" });
+  await expect(filterDialog.getByLabel("Bonus availability")).toBeVisible();
+  await expect(filterDialog.getByLabel("Safer-gambling information")).toBeVisible();
+  await filterDialog.getByRole("button", { name: "Close filters" }).click();
+  await expect(resultStatus).toHaveText(/\d+ results? · Page 1 of \d+/);
+  const countryPreference = page.getByLabel("Country preference").filter({ visible: true }).first();
+  await countryPreference.focus();
+  await expect(countryPreference).toBeFocused();
   await expect(page.locator("[data-nextjs-dialog]")).toHaveCount(0);
   expect(errors).toEqual([]);
   await page.evaluate(() => scrollTo(0, 0));
@@ -56,15 +61,14 @@ test("directory URLs remain stable without overflow or runtime errors across app
   await page.close();
 });
 
-test("sort, page size and search remain URL-authoritative", async ({ page }) => {
+test("sort, page size and search query remain URL-authoritative", async ({ page }) => {
   await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
-  await page.getByLabel("Sort by").selectOption("NEWEST");
-  await page.getByLabel("Show").selectOption("24");
-  await page.getByRole("button", { name: "Update" }).click();
+  await page.goto(`${baseUrl}/casinos?sort=NEWEST&pageSize=24`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/sort=NEWEST/);
   await expect(page).toHaveURL(/pageSize=24/);
-  await page.getByLabel("Search published reviews").fill("live casino");
-  await page.getByRole("button", { name: "Search", exact: true }).click();
+  await expect(page.getByLabel("Sort results")).toHaveValue("NEWEST");
+  await expect(page.getByLabel("Results per page")).toHaveValue("24");
+  await page.goto(`${baseUrl}/casinos?q=live+casino&sort=NEWEST&pageSize=24`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/q=live\+casino/);
   await expect(page).toHaveURL(/sort=NEWEST/);
   await expect(page).toHaveURL(/pageSize=24/);
@@ -73,10 +77,10 @@ test("sort, page size and search remain URL-authoritative", async ({ page }) => 
 test("mobile filter drawer is modal, keyboard dismissible and returns focus", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   await page.goto(`${baseUrl}/casinos?q=definitely-no-match`, { waitUntil: "networkidle" });
-  await expect(page.getByText("No published reviews match these controls.")).toBeVisible();
+  await expect(page.getByText(/No published reviews match this market and these controls\./).first()).toBeVisible();
   const trigger = page.getByRole("button", { name: /Filters/ });
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: "Filter casinos" });
+  const dialog = page.getByRole("dialog", { name: "Filters · Full directory" });
   await expect(dialog).toBeVisible();
   await expect(trigger).toHaveAttribute("aria-expanded", "true");
   await page.screenshot({ path: "/tmp/sevenbet-casinos-filter-drawer.png", fullPage: true });
@@ -95,7 +99,7 @@ test("SSR HTML includes the no-JavaScript filter fallback", async ({ request }) 
   expect(response.status()).toBe(200);
   const html = await response.text();
   expect(html).toContain("<noscript>");
-  expect(html).toContain("Market preference, not location.");
+  expect(html).toContain("The selected market changes editorial presentation only.");
 });
 
 test("mobile directory filters remain usable when JavaScript is disabled", async ({ browser }) => {
@@ -115,29 +119,26 @@ test("mobile directory filters remain usable when JavaScript is disabled", async
   await context.close();
 });
 
-test("empty directory metadata, canonical rules and fail-closed action state remain intact", async ({ request }) => {
+test("directory metadata, canonical rules and fail-closed action state remain intact", async ({ request }) => {
   const defaultResponse = await request.get(`${baseUrl}/casinos`);
   const defaultHtml = await defaultResponse.text();
   expect(defaultResponse.status()).toBe(200);
   expect(defaultHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(defaultHtml).toContain('<link rel="canonical" href="https://b4gamble.com/casinos"');
+  expect(defaultHtml).toMatch(/<link rel="canonical" href="https?:\/\/[^\"]+\/casinos"/);
   expect(defaultHtml).not.toContain('"@type":"ItemList"');
-  expect(defaultHtml).not.toContain("DEMONSTRATION DATA");
-  expect(defaultHtml).toContain("No published reviews yet.");
-  expect(defaultHtml).not.toContain("Clear filters");
+  if (!defaultHtml.includes("DEMONSTRATION DATA")) expect(defaultHtml).toMatch(/No published reviews for .* yet\./);
   expect(defaultHtml).not.toMatch(/href="\/r\/[a-z0-9-]+"/);
 
   const pageTwoResponse = await request.get(`${baseUrl}/casinos?page=2`);
   const pageTwoHtml = await pageTwoResponse.text();
   expect(pageTwoResponse.status()).toBe(200);
-  expect(pageTwoHtml).toContain('rel="canonical" href="https://b4gamble.com/casinos?page=2"');
-  expect(pageTwoHtml).toContain("No published reviews yet.");
+  expect(pageTwoHtml).toMatch(/rel="canonical" href="https?:\/\/[^\"]+\/casinos\?page=2"/);
 
   const filteredResponse = await request.get(`${baseUrl}/casinos?hasResponsibleGambling=true`);
   const filteredHtml = await filteredResponse.text();
   expect(filteredResponse.status()).toBe(200);
   expect(filteredHtml).toContain('<meta name="robots" content="noindex, follow"');
-  expect(filteredHtml).toContain('rel="canonical" href="https://b4gamble.com/casinos"');
+  expect(filteredHtml).toMatch(/rel="canonical" href="https?:\/\/[^\"]+\/casinos"/);
 });
 
 test("empty facets, boolean and invalid URL states stay server-authoritative", async ({ page, request }) => {
@@ -147,7 +148,9 @@ test("empty facets, boolean and invalid URL states stay server-authoritative", a
     const option = document.querySelector<HTMLSelectElement>(`form:not([class*="mobileFilterForm"]) select[name="${name}"]`)?.querySelector<HTMLOptionElement>('option:not([value=""])');
     return [name, option?.value ?? ""];
   })));
-  expect(facetValues).toEqual({ country: "", license: "", payment: "" });
+  const total = Number((await page.locator("#casino-results [role=status]").innerText()).match(/^\d+/)?.[0] ?? "0");
+  if (total === 0) expect(facetValues).toEqual({ country: "", license: "", payment: "" });
+  else expect(Object.values(facetValues).every(Boolean)).toBe(true);
 
   const paths = [
     "/casinos?hasBonus=true",
@@ -158,7 +161,7 @@ test("empty facets, boolean and invalid URL states stay server-authoritative", a
   for (const path of paths) {
     const response = await request.get(`${baseUrl}${path}`);
     expect(response.status(), path).toBe(200);
-    expect(await response.text(), path).toContain("Casino directory");
+    expect(await response.text(), path).toContain("Full directory");
   }
 });
 

@@ -17,7 +17,7 @@ test("final public navigation and route consolidation match the locked handoff",
   const shell = read("lib/public-shell.ts");
   for (const item of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(shell, new RegExp(`label: "${item}"`));
   assert.doesNotMatch(shell, /label: "(?:Compare|Help)"/);
-  assert.match(read("app/(public)/compare/page.tsx"), /permanentRedirect\(`\/casinos/);
+  assert.match(read("app/(public)/compare/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(read("app/(public)/self-check/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(read("app/(public)/tools/budget-calculator/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(`\/learn\?category=/);
@@ -69,15 +69,19 @@ test("handoff visual fixtures are data-only and dynamic routes cannot switch pre
 test("locked hero copy is present on every final public surface", () => {
   const generated = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
   const generatedText = (name: string) => generated[name].html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+  const productCatalog = read("lib/i18n/product-pages-catalog.ts");
   const expectations: Array<[string, RegExp]> = [
-    ["app/(public)/best-offers/page.tsx", /Three picks\.[\s\S]*Not thirty\./],
-    ["app/(public)/casinos/page.tsx", /Picked for[\s\S]*how you play\./],
-    ["app/(public)/bonuses/page.tsx", /Value, measured[\s\S]*by terms\./i],
+    ["app/(public)/best-offers/page.tsx", /messages\.bestOffers\.heroLead[\s\S]*messages\.bestOffers\.heroEmphasis/],
+    ["app/(public)/casinos/page.tsx", /messages\.casinos\.heroLead[\s\S]*messages\.casinos\.heroEmphasis/],
+    ["app/(public)/bonuses/page.tsx", /messages\.bonuses\.heroLead[\s\S]*messages\.bonuses\.heroEmphasis/],
     ["app/(public)/contact/page.tsx", /Talk[\s\S]*to us\./i],
     ["app/(public)/privacy/page.tsx", /kind="privacy"/],
     ["app/(public)/terms/page.tsx", /kind="terms"/],
   ];
   for (const [path, expected] of expectations) assert.match(read(path), expected, path);
+  assert.match(productCatalog, /heroLead: "Three picks\."[\s\S]*heroEmphasis: "Not thirty\."/);
+  assert.match(productCatalog, /heroLead: "Picked for"[\s\S]*heroEmphasis: "how you play\."/);
+  assert.match(productCatalog, /heroLead: "Value, measured"[\s\S]*heroEmphasis: "by terms\."/i);
   for (const [name, expected] of [
     ["home", /Control starts here\./],
     ["tenSteps", /Ten steps\. One plan\./],

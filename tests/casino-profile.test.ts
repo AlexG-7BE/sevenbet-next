@@ -153,8 +153,8 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const action = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
-  assert.match(route, /candidate\?\.source === "cms"/);
-  assert.match(component, /Offer unavailable/);
+  assert.match(route, /boundedCandidate\?\.source === "cms"/);
+  assert.match(component, /messages\.profile\.offerUnavailable/);
   assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
   assert.match(action, /href=\{confirmationHref\}/);
   assert.match(action, /aria-haspopup="dialog"/);

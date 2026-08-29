@@ -3,7 +3,9 @@
 import Link from "next/link";
 
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
+import { useProductPageContext } from "@/lib/i18n/use-product-page-context";
 
 export default function CasinoDiscoveryError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return <div className={styles.page}><section className={styles.statePage}><div><span>Casino directory</span><h1>We could not load the catalogue.</h1><p>Try again in a moment. No database, provider or technical details have been exposed.</p><div className={styles.statePageActions}><button onClick={reset} type="button">Try again</button><Link href="/methodology">Review methodology</Link><Link href="/help">Open protected Help</Link></div></div></section></div>;
+  const { messages } = useProductPageContext();
+  return <div className={styles.page}><section className={styles.statePage}><div><span>{messages.casinos.directoryTitle}</span><h1>{messages.common.commercialUnavailable}</h1><p>{messages.casinos.noMatchesCopy}</p><div className={styles.statePageActions}><button onClick={reset} type="button">{messages.common.current}</button><Link href="/methodology">{messages.common.reviewMethodology}</Link><Link href="/help">{messages.common.protectedHelp}</Link></div></div></section></div>;
 }

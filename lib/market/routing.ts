@@ -16,6 +16,7 @@ const localizedPublicRoots = new Set([
   "bonuses",
   "casino",
   "casinos",
+  "compare",
   "learn",
 ]);
 
@@ -57,12 +58,15 @@ export function localizePublicPath(
   locale: SupportedLocale,
   pathname: string,
 ) {
-  const unprefixedPathname = stripLocalizedPublicPrefix(pathname);
-  return localizedMarketPath(
+  const clean = cleanPathname(pathname);
+  const suffix = pathname.slice(clean.length);
+  const unprefixedPathname = stripLocalizedPublicPrefix(clean);
+  const localized = localizedMarketPath(
     profile,
     locale,
     isLocalizedPublicDestination(unprefixedPathname) ? unprefixedPathname : "/",
   );
+  return `${localized}${suffix}`;
 }
 
 export function localizePublicHref(

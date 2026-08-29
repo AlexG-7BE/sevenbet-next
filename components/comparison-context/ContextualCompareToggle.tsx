@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
 import { useEffect, useState } from "react";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 
 const EVENT_NAME = "b4gamble:comparison-change";
 
-export function ContextualCompareToggle({ casinoSlug, casinoName }: { casinoSlug: string; casinoName: string }) {
+export function ContextualCompareToggle({ casinoSlug, casinoName, messages }: { casinoSlug: string; casinoName: string; messages?: ProductPageMessages["comparison"] }) {
   const [selected, setSelected] = useState(false);
 
   useEffect(() => {
@@ -21,5 +23,5 @@ export function ContextualCompareToggle({ casinoSlug, casinoName }: { casinoSlug
     aria-pressed={selected}
     onClick={() => window.dispatchEvent(new CustomEvent("b4gamble:comparison-toggle", { detail: { slug: casinoSlug } }))}
     type="button"
-  >{selected ? `Remove ${casinoName}` : "Compare"}</button>;
+  >{selected ? `${messages?.remove ?? "Remove"} ${casinoName}` : messages?.add ?? "Compare"}</button>;
 }

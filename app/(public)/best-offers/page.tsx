@@ -11,88 +11,96 @@ import { publicOfferService } from "@/lib/services/public-offer.service";
 import { absoluteUrl } from "@/lib/site";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { isLocalHandoffVisualDataFixture, withHandoffOfferData } from "@/lib/final-handoff/visual-data-fixture";
+import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import {
+  commercialAuthorityForPresentation,
+  productHref,
+  productMetadata,
+} from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
 
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
-  const authority = await resolveServerJurisdiction({ routeCountryOrMarketSlug: "GB" });
-  return publicOfferService.getBestOffersPageData({ country: "GB", limit: 12 }, authority);
+  const [presentation, authority] = await Promise.all([
+    resolveServerPresentationContext(),
+    resolveServerJurisdiction(),
+  ]);
+  const commercialAuthority = commercialAuthorityForPresentation(authority, presentation.market.countryCode);
+  const result = await publicOfferService.getBestOffersPageData(
+    { country: presentation.market.countryCode, limit: 12 },
+    commercialAuthority,
+  );
+  return { commercialAuthority, presentation, result };
 });
 
 export async function generateMetadata(): Promise<Metadata> {
-  const result = await loadBestOffersPageData();
+  const { presentation, result } = await loadBestOffersPageData();
+  const messages = productPageMessages(presentation.locale);
+  const market = presentation.market.seoDisplayName;
   const unavailable = result.status === "unavailable";
-  const demoOnly = result.inventoryMode === "DEMO_ONLY";
-  const mixed = result.inventoryMode === "MIXED";
-  const containsDemo = demoOnly || mixed;
-  const title = unavailable
-    ? "Casino Offer Comparison Unavailable | B4GAMBLE"
-    : demoOnly
-      ? "Casino Offer Ranking Demonstration | B4GAMBLE"
-      : mixed
-        ? "Published and Fictional Casino Offer Comparison | B4GAMBLE"
-        : "Casino Offer Comparison for GB | B4GAMBLE";
-  const description = unavailable
-    ? "The published GB offer comparison is temporarily unavailable. No cached, legacy or invented listing is substituted."
-    : demoOnly
-      ? "An explainable ranking demonstration using fictional records, not current GB promotions or partner offers."
-      : mixed
-        ? "An explainable comparison of published offers and explicitly labelled fictional demonstrations without mixing their source or commercial status."
-        : "An explainable editorial shortlist with material terms, methodology and commercial boundaries before action.";
-  return {
+  const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
+  const title = formatProductMessage(unavailable ? messages.bestOffers.unavailableTitle : messages.bestOffers.title, { market });
+  const description = formatProductMessage(unavailable ? messages.bestOffers.unavailableDescription : messages.bestOffers.description, { market });
+  return productMetadata({
+    presentation,
+    pathname: "/best-offers",
     title,
     description,
-    alternates: { canonical: absoluteUrl("/best-offers") },
     robots: unavailable || containsDemo ? { index: false, follow: true } : { index: true, follow: true },
-  };
+  });
 }
 
 export default async function BestOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
-  const result = withHandoffOfferData(await loadBestOffersPageData(), isLocalHandoffVisualDataFixture(raw.visualFixture));
+  const loaded = await loadBestOffersPageData();
+  const { presentation } = loaded;
+  const messages = productPageMessages(presentation.locale);
+  const market = presentation.market.seoDisplayName;
+  const result = withHandoffOfferData(loaded.result, isLocalHandoffVisualDataFixture(raw.visualFixture));
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
   const hero = demoOnly ? {
-    copy: "Fictional records demonstrate ranking and material-term presentation. No current promotion, partner relationship, real-money test or claim action is represented.",
-    kicker: "Fictional product demonstration",
-    stats: [[String(result.records.length), "fictional records"], ["0", "live offers"], ["0", "claim actions"]],
-    ticker: ["Fictional records only", "Material terms shown before action", "Availability fails closed"],
+    copy: messages.common.demoDisclosure,
+    kicker: messages.common.demoData,
+    stats: [[String(result.records.length), messages.common.records], ["0", messages.common.actionAvailable], ["0", messages.bestOffers.inferredActions]],
+    ticker: [messages.common.demoData, messages.common.materialTerms, messages.common.commercialUnavailable],
   } : containsDemo ? {
-    copy: "Published records and explicitly labelled fictional demonstrations remain separate. Only governed, eligible records can expose a commercial action.",
-    kicker: "Mixed inventory · source labelled",
-    stats: [[String(result.records.length), "labelled records"], ["GB", "current scope"], ["0", "inferred actions"]],
-    ticker: ["Source status shown", "Material terms shown before action", "Availability fails closed"],
+    copy: messages.common.demoDisclosure,
+    kicker: `${messages.common.sourceStatus} · ${messages.common.classified}`,
+    stats: [[String(result.records.length), messages.common.records], [presentation.market.countryCode, messages.bestOffers.currentMarket], ["0", messages.bestOffers.inferredActions]],
+    ticker: [messages.common.sourceStatus, messages.common.materialTerms, messages.common.commercialUnavailable],
   } : {
-    copy: "A current eligible shortlist ranked from published records, with material terms and commercial availability shown before action.",
-    kicker: "Current eligible shortlist",
-    stats: [[String(result.records.length), "eligible records"], ["GB", "current scope"], ["0", "inferred actions"]],
-    ticker: ["Published records only", "Material terms shown before action", "Availability fails closed"],
+    copy: formatProductMessage(messages.bestOffers.heroCopy, { market }),
+    kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }),
+    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.market.countryCode, messages.bestOffers.currentMarket], ["0", messages.bestOffers.inferredActions]],
+    ticker: [messages.common.published, messages.common.materialTerms, messages.common.commercialUnavailable],
   };
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "B4GAMBLE published GB offer shortlist",
+    name: `B4GAMBLE ${market} ${messages.bestOffers.sectionTitle}`,
     numberOfItems: result.records.length,
     itemListElement: result.records.map((offer, index) => ({
       "@type": "ListItem",
       position: index + 1,
       name: `${offer.casino.name}: ${offer.bonus.title}`,
-      url: absoluteUrl(`/casino/${offer.casino.slug}`),
+      url: absoluteUrl(productHref(presentation, `/casino/${offer.casino.slug}`)),
     })),
   } : null;
 
   return <div className={styles.page} data-runtime-renderer="best-offers">
-    <p className="srOnly">Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>
+    <p className="srOnly">{messages.bestOffers.commissionNote}</p>
     <CommercialSurfaceView surface="best_offers" />
-    <ContextualComparison />
+    <ContextualComparison messages={messages} presentation={presentation} />
     {schema ? <JsonLd data={schema} /> : null}
     <section className={styles.hero} data-nav-theme="dark"><div className={`${styles.shell} ${styles.heroInner}`}>
       <p className={styles.kicker}>✓ &nbsp; {hero.kicker}</p>
-      <h1><span>Three picks.</span><em>Not thirty.</em></h1>
+      <h1><span>{messages.bestOffers.heroLead}</span><em>{messages.bestOffers.heroEmphasis}</em></h1>
       <p className={styles.heroCopy}>{hero.copy}</p>
       <div className={styles.heroStats}>{hero.stats.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
-      <div className={styles.heroTicker}>{hero.ticker.map((item) => <span key={item}>{item}</span>)}<Link href="/methodology">How ranking works →</Link></div>
+      <div className={styles.heroTicker}>{hero.ticker.map((item) => <span key={item}>{item}</span>)}<Link href="/methodology">{messages.bestOffers.rankingLink}</Link></div>
     </div></section>
-    {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>DEMONSTRATION DATA.</strong> Every fictional record is a product demonstration, not a current GB promotion, partner offer or claimable bonus. No commercial visit is available.</p></div></section> : null}
-    {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} shortlist={result.records} /> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{result.status === "unavailable" ? "Listings unavailable · fail closed" : "No eligible records"}</p><h2>{result.status === "unavailable" ? "The comparison could not be loaded." : "Nothing currently clears every gate."}</h2><p>{result.status === "unavailable" ? "No cached, legacy or invented commercial result is substituted. Programme and protected Help remain separate and available." : "No current record has both GB availability and every required material term. B4GAMBLE does not relax the method to fill the page."}</p><Link href="/methodology">Review methodology</Link><Link href="/casinos">Browse casino reviews</Link></div></div></section>}
+    {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.common.demoDisclosure}</p></div></section> : null}
+    {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} /> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><Link href="/methodology">{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></section>}
   </div>;
 }

@@ -38,13 +38,13 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
 test("full canonical card renders published evidence and only the governed internal visit route", () => {
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={card()} classNames={classNames} position={7} />);
   assert.match(html, /href="\/casino\/full-casino"/);
-  assert.match(html, /aria-label="Editorial score 8\.4 out of 10"/);
-  assert.match(html, /aria-label="Directory result position 7"/);
+  assert.match(html, /aria-label="Editor Score 8\.4 \/ 10"/);
+  assert.match(html, /aria-label="result 7"/);
   assert.match(html, /aria-haspopup="dialog"/);
   assert.match(html, /href="\/outbound\/full-casino-visit"/);
   assert.match(html, /href="\/r\/full-casino-visit"/);
   assert.match(html, /rel="nofollow sponsored noopener"/);
-  assert.match(html, /Review access is editorial\. A visit action is conditional and may compensate B4GAMBLE\./);
+  assert.match(html, /We may earn a commission from an eligible labelled link\./);
   assert.doesNotMatch(html, /destinationUrl|trackingUrl|operator\.example/);
   assert.doesNotMatch(html, /featured published review|recommended|best placement|available where you are|eligible in your location/i);
 });
@@ -58,9 +58,9 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
   });
   const html = renderToStaticMarkup(<CasinoDiscoveryCardMarkup casino={sparse} classNames={classNames} position={2} />);
   assert.match(html, /href="\/casino\/sparse-casino"/);
-  assert.match(html, /A governed visit link is not currently available\. The published review remains available\./);
-  assert.match(html, /No active public bonus/);
-  assert.match(html, /The review remains available without a commercial bonus\./);
+  assert.match(html, /The review remains available while commercial action is unavailable\./);
+  assert.match(html, /Commercial action unavailable/);
+  assert.match(html, /Review only/);
   assert.doesNotMatch(html, /href="\/r\//);
   assert.doesNotMatch(html, /<img|Editorial score|Reviewed/);
   assert.doesNotMatch(html, /No licence|Unlicensed|Unsupported|destinationUrl|trackingUrl/i);
@@ -69,13 +69,13 @@ test("sparse review-only card omits unexplained fact rows and invented values", 
 test("first-result theatre stays neutral for default, search, sort and later-page contexts", () => {
   for (const context of ["default", "search", "NAME_ASC", "page-2"]) {
     const html = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={card({ name: `Preview ${context}` })} classNames={classNames} />);
-    assert.match(html, /Published casino review/);
+    assert.match(html, /Published · 18\+/);
     assert.match(html, /casino-directory(?:%2F|\/)editorial-media\.jpg/);
     assert.match(html, /alt="" aria-hidden="true"/);
     assert.doesNotMatch(html, /Featured published review|recommended review|best review|top review/i);
   }
   const empty = renderToStaticMarkup(<DirectoryFeaturedTheatreMarkup casino={undefined} classNames={classNames} />);
-  assert.match(empty, /Reviews appear only after editorial publication/);
+  assert.match(empty, /No published reviews for United Kingdom yet\./);
   assert.doesNotMatch(empty, /Featured published review|recommended review|best review|top review/i);
 });
 
@@ -84,8 +84,8 @@ test("demo cards disclose fictional status and never render a commercial action"
     dataClassification: "DEMO_FIXTURE",
     visitAction: { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" },
   })} classNames={classNames} position={1} />);
-  assert.match(html, /DEMONSTRATION DATA · FICTIONAL OPERATOR/);
-  assert.match(html, /not a current operator, licence claim, partner offer or live promotion/i);
-  assert.match(html, /Not claimable/);
+  assert.match(html, /DEMONSTRATION DATA/);
+  assert.match(html, /not current operators, partner offers or live promotions/i);
+  assert.match(html, /View demonstration/);
   assert.doesNotMatch(html, /href="\/r\//);
 });

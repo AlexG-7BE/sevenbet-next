@@ -11,41 +11,45 @@ import {
   type CuratedBonusSelector as Selector,
 } from "@/lib/public-offer/curated-selector";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import type { PresentationResolution } from "@/lib/market/presentation-resolver";
+import { productHref } from "@/lib/market/product-context";
 
 import styles from "./CuratedBonusShortlist.module.css";
 
-function money(value: number | null, currency: string | null) {
-  if (value === null) return "Not listed";
-  try { return new Intl.NumberFormat("en-GB", { style: "currency", currency: currency || "GBP", maximumFractionDigits: 0 }).format(value); }
+function money(value: number | null, currency: string | null, locale: string, notListed: string) {
+  if (value === null) return notListed;
+  if (!currency) return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
+  try { return new Intl.NumberFormat(locale, { style: "currency", currency, maximumFractionDigits: 0 }).format(value); }
   catch { return `${value} ${currency || ""}`.trim(); }
 }
 
-function Action({ offer }: { offer: PublicOfferDTO }) {
+function Action({ offer, messages }: { offer: PublicOfferDTO; messages: ProductPageMessages }) {
   const href = offer.dataClassification !== "DEMO_FIXTURE" && offer.action.available && offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href) ? offer.action.href : null;
-  if (!href) return <span className={styles.unavailable}>Review only</span>;
-  return <CasinoOutboundAction action={{ href, label: "View Offer" }} className={styles.action} />;
+  if (!href) return <span className={styles.unavailable}>{messages.common.reviewOnly}</span>;
+  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} messages={messages.outbound} />;
 }
 
-function payout(offer: PublicOfferDTO) {
-  return offer.casino.payments.find((payment) => payment.supportsWithdrawals && payment.withdrawalTime)?.withdrawalTime || "Not listed";
+function payout(offer: PublicOfferDTO, messages: ProductPageMessages) {
+  return offer.casino.payments.find((payment) => payment.supportsWithdrawals && payment.withdrawalTime)?.withdrawalTime || messages.common.notListed;
 }
 
-export function CuratedBonusShortlist({ offers }: { offers: PublicOfferDTO[] }) {
+export function CuratedBonusShortlist({ offers, messages, presentation }: { offers: PublicOfferDTO[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedBonuses(offers, selector), [offers, selector]);
   return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
-    <div className={styles.tabs} aria-label="Bonus selectors" role="tablist">{selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{label}</button>)}</div>
-    <p className={styles.label} id="bonus-shortlist-title">Top 3 for “{selector}” — ranked by realistic net value after terms.</p>
-    {!top.length ? <div className={styles.empty} role="status"><strong>No eligible matches available</strong><p>No published offer record has sufficient authoritative evidence for this selector.</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <header><small>Welcome package</small><span className={styles.rank}>0{index + 1}</span></header>
+    <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} role="tablist">{selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{messages.common.filters} {selectors.indexOf(label) + 1}</button>)}</div>
+    <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
+    {!top.length ? <div className={styles.empty} role="status"><strong>{messages.bonuses.noMatchesTitle}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
+      <header><small>{messages.common.current}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
-      <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>Editor Score {offer.casino.editorScore.toFixed(1)} <span aria-hidden="true">★★★★★</span></small></div></div>
-      <dl><div><dt>Wagering</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || "Not listed" : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>Min deposit</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency)}</dd></div><div><dt>Max bonus</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency)}</dd></div><div><dt>Payout</dt><dd>{payout(offer)}</dd></div></dl>
+      <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {offer.casino.editorScore.toFixed(1)} <span aria-hidden="true">★★★★★</span></small></div></div>
+      <dl><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div></dl>
       <p>{offer.bonus.importantConditions.slice(0, 2).join(" · ") || offer.bonus.summary}</p>
       <CommercialOfferMedia offer={offer} variant="bonus" />
-      {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>DEMONSTRATION DATA — Fictional example for interface testing. Not a real casino, current offer or B4GAMBLE partner. No gambling or affiliate link is available.</b> : null}
-      <div className={styles.actions}><Action offer={offer} /><Link href={`/casino/${offer.casino.slug}`}>Read Review</Link></div>
+      {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>{messages.common.demoData} — {messages.common.demoDisclosure}</b> : null}
+      <div className={styles.actions}><Action messages={messages} offer={offer} /><Link href={productHref(presentation, `/casino/${offer.casino.slug}`)}>{messages.common.readReview}</Link></div>
     </article>)}</div>}
-    {top.length ? <aside className={styles.method}><strong>How we rank bonuses</strong><span>Net value after wagering, not headline size</span><span>Current evidence, terms and source status disclosed</span><Link href="/bonus-guide">Bonus guide →</Link></aside> : null}
+    {top.length ? <aside className={styles.method}><strong>{messages.bonuses.methodKicker}</strong><span>{messages.bonuses.sortedByValue}</span><span>{messages.bonuses.proofSources}</span><Link href="/bonus-guide">{messages.common.bonusGuide} →</Link></aside> : null}
   </div></section>;
 }

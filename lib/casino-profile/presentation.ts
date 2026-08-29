@@ -22,24 +22,24 @@ export interface CasinoProfileFaqItem {
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
-export function formatProfileDate(value: string | null | undefined) {
+export function formatProfileDate(value: string | null | undefined, locale = "en-GB") {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(date);
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric" }).format(date);
 }
 
-export function formatProfileMoney(value: number | null | undefined, currency: string | null | undefined) {
+export function formatProfileMoney(value: number | null | undefined, currency: string | null | undefined, locale = "en-GB") {
   if (value === null || value === undefined || !Number.isFinite(value)) return null;
-  if (!currency || !/^[A-Z]{3}$/.test(currency)) return new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(value);
+  if (!currency || !/^[A-Z]{3}$/.test(currency)) return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value);
   try {
-    return new Intl.NumberFormat("en-GB", {
+    return new Intl.NumberFormat(locale, {
       style: "currency",
       currency,
       maximumFractionDigits: Number.isInteger(value) ? 0 : 2,
     }).format(value);
   } catch {
-    return `${currency} ${new Intl.NumberFormat("en-GB", { maximumFractionDigits: 2 }).format(value)}`;
+    return `${currency} ${new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(value)}`;
   }
 }
 
@@ -64,8 +64,8 @@ export function profileAction(casino: PublicCasinoDTO, bonus: PublicCasinoBonus 
   return { href, label: `Visit ${casino.name}` };
 }
 
-export function profileOfferHeadline(bonus: PublicCasinoBonus) {
-  const maximum = formatProfileMoney(bonus.maximumBonus, bonus.currency);
+export function profileOfferHeadline(bonus: PublicCasinoBonus, locale = "en-GB") {
+  const maximum = formatProfileMoney(bonus.maximumBonus, bonus.currency, locale);
   if (bonus.percentage !== null && maximum) {
     const spins = bonus.freeSpins !== null && bonus.freeSpins > 0 ? ` + ${bonus.freeSpins} free spins` : "";
     return `${bonus.percentage}% up to ${maximum}${spins}`;

@@ -13,6 +13,7 @@ type DirectoryFilterSurfaceProps = {
   secondary: ReactNode;
   summary: ReactNode;
   note: ReactNode;
+  labels?: { allFilters: string; directoryControls: string; closeFilters: string };
 };
 
 export function DirectoryFilterSurface({
@@ -23,6 +24,7 @@ export function DirectoryFilterSurface({
   secondary,
   summary,
   note,
+  labels,
 }: DirectoryFilterSurfaceProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -61,7 +63,7 @@ export function DirectoryFilterSurface({
         type="button"
       >
         <span aria-hidden="true" className={styles.slidersIcon}><i /><i /><i /></span>
-        <span>All filters</span>
+        <span>{labels?.allFilters ?? "All filters"}</span>
         {activeCount ? <b>{activeCount}</b> : null}
       </button>
       <div className={styles.meta}>
@@ -77,8 +79,8 @@ export function DirectoryFilterSurface({
         ref={dialogRef}
       >
         <div className={styles.drawerHeader}>
-          <div><span>Directory controls</span><h2 id={headingId}>{title}</h2></div>
-          <button aria-label="Close all filters" className={styles.drawerClose} onClick={close} type="button">×</button>
+          <div><span>{labels?.directoryControls ?? "Directory controls"}</span><h2 id={headingId}>{title}</h2></div>
+          <button aria-label={labels?.closeFilters ?? "Close all filters"} className={styles.drawerClose} onClick={close} type="button">×</button>
         </div>
         <div className={styles.drawerBody}>{secondary}</div>
       </dialog>

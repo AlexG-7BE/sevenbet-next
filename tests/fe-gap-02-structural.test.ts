@@ -90,7 +90,7 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
   assert.match(shellCatalog, /privacy: "Privacy"/);
   assert.match(shellCatalog, /terms: "Terms"/);
-  assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(sitemap, /snapshot\.bestOffers && snapshot\.bestOffers\.status !== "unavailable" && snapshot\.bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(sitemap, /"\/best-offers"/);
   assert.doesNotMatch(sitemap, /"\/compare"/);
   assert.doesNotMatch(sitemap, /helpGuideRoutes|learningCategoryRoutes/);

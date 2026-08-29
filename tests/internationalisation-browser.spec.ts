@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { INITIAL_EUROPEAN_MARKET_PROFILES, localizedMarketPath } from "../lib/market/registry";
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -81,3 +82,42 @@ test("unprefixed public URLs remain compatible", async ({ page }) => {
     expect(response?.status(), pathname).toBe(200);
   }
 });
+
+const representativeProductMarkets = INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => ["GB", "DE", "ES", "GR", "NL", "NO"].includes(profile.countryCode));
+
+for (const profile of representativeProductMarkets) {
+  const locale = profile.defaultLocale;
+  const prefix = localizedMarketPath(profile, locale).replace(/\/$/, "");
+  const messages = productPageMessages(locale);
+  test(`${profile.countryCode} product pages use localized bodies, self canonicals and no inferred outbound action`, async ({ page }) => {
+    for (const [route, expected] of [
+      ["/best-offers", messages.bestOffers.heroLead],
+      ["/casinos", messages.casinos.heroLead],
+      ["/bonuses", messages.bonuses.heroLead],
+    ] as const) {
+      const response = await page.goto(`${baseUrl}${prefix}${route}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), `${profile.countryCode}${route}`).toBe(200);
+      await expect(page.locator("html")).toHaveAttribute("lang", locale);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(expected);
+      const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+      expect(new URL(canonical ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      expect(await page.locator('main a[href^="/r/"]').count(), `${profile.countryCode}${route} must fail closed`).toBe(0);
+    }
+  });
+
+  test(`${profile.countryCode} localized profile and Compare preserve the explicit prefix`, async ({ page, request }) => {
+    const profilePath = `${prefix}/casino/demo-northstar`;
+    const response = await page.goto(`${baseUrl}${profilePath}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status()).toBe(200);
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
+    expect(new URL(canonical ?? "http://invalid").pathname).toBe(profilePath);
+    await expect(page.getByText(messages.profile.offerUnavailable).first()).toBeVisible();
+    await expect(page.locator(`a[href="${prefix}/casinos"]`).first()).toBeVisible();
+    expect(await page.locator('main a[href^="/r/"]').count()).toBe(0);
+
+    const redirect = await request.get(`${baseUrl}${prefix}/compare?casino=alpha&casino=beta&differences=true`, { maxRedirects: 0 });
+    expect(redirect.status()).toBe(308);
+    expect(redirect.headers().location).toBe(`${prefix}/casinos?casino=alpha&casino=beta&differences=true`);
+  });
+}

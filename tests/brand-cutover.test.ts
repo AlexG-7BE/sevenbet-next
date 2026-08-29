@@ -158,6 +158,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
 
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalBonusSearch = publicOfferService.searchOffers;
   const originalCompare = publicComparisonService.compare;
   publicCasinoDiscoveryService.discover = async () => ({
     items: [], total: 0, page: 1, pageSize: 48, pageCount: 0,
@@ -166,6 +167,10 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   publicOfferService.getBestOffersPageData = async () => ({
     status: "unavailable", inventoryMode: "UNAVAILABLE",
   }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicOfferService.searchOffers = async () => ({
+    records: [], total: 0, page: 1, pageSize: 1, pageCount: 0,
+    query: {} as never, facets: {} as never, inventoryMode: "UNAVAILABLE",
+  }) as Awaited<ReturnType<typeof originalBonusSearch>>;
   publicComparisonService.compare = async () => ({
     status: "unavailable", inventoryMode: "UNAVAILABLE",
   }) as unknown as Awaited<ReturnType<typeof originalCompare>>;
@@ -175,6 +180,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   } finally {
     publicCasinoDiscoveryService.discover = originalDiscover;
     publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicOfferService.searchOffers = originalBonusSearch;
     publicComparisonService.compare = originalCompare;
   }
   assert.ok(entries.length > 10);
@@ -191,10 +197,15 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
 test("sitemap keeps final static and learning routes when casino discovery throws", async () => {
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalBonusSearch = publicOfferService.searchOffers;
   publicCasinoDiscoveryService.discover = async () => { throw new Error("discovery unavailable"); };
   publicOfferService.getBestOffersPageData = async () => ({
     status: "available", records: [], inventoryMode: "PUBLISHED_ONLY",
   }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicOfferService.searchOffers = async () => ({
+    records: [], total: 0, page: 1, pageSize: 1, pageCount: 0,
+    query: {} as never, facets: {} as never, inventoryMode: "UNAVAILABLE",
+  }) as Awaited<ReturnType<typeof originalBonusSearch>>;
 
   let entries: Awaited<ReturnType<typeof sitemap>>;
   try {
@@ -202,6 +213,7 @@ test("sitemap keeps final static and learning routes when casino discovery throw
   } finally {
     publicCasinoDiscoveryService.discover = originalDiscover;
     publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicOfferService.searchOffers = originalBonusSearch;
   }
 
   const urls = entries.map((entry) => entry.url);

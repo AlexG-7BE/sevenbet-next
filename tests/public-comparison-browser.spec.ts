@@ -29,7 +29,7 @@ test("comparison stays contextual and opens automatically on the second selectio
   await expect(page.getByRole("heading", { name: "Side by side" })).toBeVisible();
   await expect(page.getByText("2 of 3 selected")).toBeVisible();
   await expect(page).toHaveURL(/casino=[a-z0-9-]+.*casino=[a-z0-9-]+/);
-  await expect(page.getByText("Same evidence fields for every casino")).toBeVisible();
+  await expect(page.getByLabel("Side by side").getByText("The same evidence fields for every casino")).toBeVisible();
   await expect(page.getByText("Country is a comparison preference, not proof of eligibility.")).toBeVisible();
 });
 

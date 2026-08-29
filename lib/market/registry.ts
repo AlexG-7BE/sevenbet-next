@@ -214,6 +214,8 @@ export const INITIAL_EUROPEAN_MARKET_PROFILES: readonly MarketProfile[] = profil
   (profile) => initialEuropeanMarketCodes.has(profile.countryCode),
 );
 
+export const DEFAULT_MARKET_PROFILE = profiles[0];
+
 export function isInitialEuropeanMarket(profile: MarketProfile) {
   return initialEuropeanMarketCodes.has(profile.countryCode);
 }

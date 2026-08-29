@@ -9,6 +9,7 @@ import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
+import { commercialAuthorityForPresentation } from "../lib/market/product-context";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -89,6 +90,39 @@ test("filters use OR within a facet and AND between facets", async () => {
   const responsible = await service.discover({ hasResponsibleGambling: true });
   assert.deepEqual(responsible.items.map((item) => item.slug), ["alpha"]);
   assert.equal(responsible.items[0]?.responsibleGamblingLabel, "Responsible gambling tools available");
+});
+
+test("presentation country is the default editorial casino market and an explicit filter can override it", async () => {
+  const service = new PublicCasinoDiscoveryService(store([
+    record("alpha-id", "alpha", "Alpha"),
+    record("beta-id", "beta", "Beta"),
+  ]), () => now);
+  assert.deepEqual((await service.discover({}, null, { defaultEditorialCountry: "GB" })).items.map((item) => item.slug), ["alpha"]);
+  assert.deepEqual((await service.discover({}, null, { defaultEditorialCountry: "DE" })).items, []);
+  assert.deepEqual((await service.discover({ country: ["CA"] }, null, { defaultEditorialCountry: "GB" })).items.map((item) => item.slug), ["beta"]);
+});
+
+test("DE/GB and GB/DE presentation-authority mismatches keep discovery CTAs unavailable", async () => {
+  const deCasino = record("de-id", "de-casino", "DE Casino", {
+    countries: [{ id: "de-country", countryCode: "DE", availability: "AVAILABLE" }],
+  });
+  const gbCasino = record("gb-id", "gb-casino", "GB Casino", {
+    countries: [{ id: "gb-country", countryCode: "GB", availability: "AVAILABLE" }],
+  });
+  const deOffer = activeOffer("de-id");
+  const gbOffer = activeOffer("gb-id");
+  const service = new PublicCasinoDiscoveryService(store([deCasino, gbCasino], {
+    offers: [deOffer, gbOffer],
+    redirects: [
+      { casinoId: "de-id", casinoBonusId: null, affiliateOfferId: deOffer.id, slug: "de-visit" },
+      { casinoId: "gb-id", casinoBonusId: null, affiliateOfferId: gbOffer.id, slug: "gb-visit" },
+    ],
+  }), () => now, allowOperatorAuthority, () => true);
+  const deWithGb = await service.discover({}, commercialAuthorityForPresentation(allowJurisdictionAuthority, "DE"), { defaultEditorialCountry: "DE" });
+  assert.deepEqual(deWithGb.items.map((item) => [item.slug, item.visitAction.available]), [["de-casino", false]]);
+  const assertedDeAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
+  const gbWithDe = await service.discover({}, commercialAuthorityForPresentation(assertedDeAuthority, "GB"), { defaultEditorialCountry: "GB" });
+  assert.deepEqual(gbWithDe.items.map((item) => [item.slug, item.visitAction.available]), [["gb-casino", false]]);
 });
 
 test("every directory filter returns the expected classified identities and count", async () => {

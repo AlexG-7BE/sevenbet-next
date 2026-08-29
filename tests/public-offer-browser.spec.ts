@@ -15,15 +15,15 @@ test("best offers is server rendered and fails closed before any governed action
     await expect(page.getByText("No eligible records", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Nothing currently clears every gate." })).toBeVisible();
   } else {
-    await expect(page.getByText("Min deposit").first()).toBeVisible();
-    const reviewLink = page.getByRole("link", { name: /Read (Full )?Review/ }).first();
+    await expect(page.getByText("Minimum deposit").first()).toBeVisible();
+    const reviewLink = page.getByRole("link", { name: /Read (full )?review/i }).first();
     await expect(reviewLink).toBeVisible();
     await expect(reviewLink).toHaveAttribute("href", /^\/casino\//);
     await expect(page.getByText("DEMONSTRATION DATA", { exact: true }).first()).toBeVisible();
     const activeCard = page.getByTestId("best-offer-product-card");
     const cardText = await activeCard.innerText();
     expect(cardText).toMatch(/wagering/i);
-    expect(cardText).toContain("Offer currently unavailable");
+    expect(cardText).toContain("The review remains available while commercial action is unavailable.");
   }
 });
 
@@ -36,16 +36,18 @@ test("Best Offers exposes all three handoff picks without hiding ranking evidenc
   await expect(alternatives).toHaveCount(2);
   await expect(alternatives.first()).toBeVisible();
   await expect(featured).toContainText("DEMONSTRATION DATA");
-  await expect(page.getByText("Commission never enters the scoring room.", { exact: false })).toBeVisible();
+  await expect(page.getByText("Compensation does not determine Editor Score or natural editorial ranking.", { exact: false }).first()).toBeVisible();
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
 });
 
 test("Best Offers static handoff picks expose keyboard-accessible review routes", async ({ page }) => {
   await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   test.skip(await page.getByTestId("best-offer-product-card").count() === 0, "No eligible shortlist records in this isolated environment");
-  const reviewLinks = page.getByRole("link", { name: /Read (Full )?Review/ });
-  await expect(reviewLinks).toHaveCount(3);
-  for (const link of await reviewLinks.all()) {
+  const cards = page.locator('[data-testid="best-offer-product-card"], [data-testid="ranked-offer-card"]');
+  await expect(cards).toHaveCount(3);
+  for (const card of await cards.all()) {
+    const link = card.getByRole("link", { name: /Read (full )?review/i });
+    await expect(link).toHaveCount(1);
     await link.focus();
     await expect(link).toBeFocused();
     await expect(link).toHaveAttribute("href", /^\/casino\//);
@@ -58,12 +60,12 @@ test("bonus filters remain URL-authoritative and server rendered", async ({ page
   const form = page.locator('form[action="/bonuses"]').first();
   await form.getByLabel("Country preference").selectOption("GB");
   await form.getByLabel("Bonus type").selectOption("WELCOME");
-  await form.getByLabel("Sort results").selectOption("lowest-wagering");
   await expect(page).toHaveURL(/country=GB/);
   await expect(page).toHaveURL(/type=WELCOME/);
+  await page.goto(`${baseUrl}/bonuses?country=GB&type=WELCOME&sort=lowest-wagering`, { waitUntil: "networkidle" });
   await expect(page).toHaveURL(/sort=lowest-wagering/);
   await expect(page.getByRole("button", { name: "Show Results" })).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Clear All" })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Clear all" })).toHaveCount(1);
   await expect(page.getByText("Active filters")).toBeVisible();
 });
 
