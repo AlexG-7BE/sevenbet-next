@@ -186,7 +186,7 @@ export function BonusFilters({ facets, query, total, activeCount, messages, pres
         primary={<PrimaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} />}
         secondary={<SecondaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} />}
         summary={`${total} ${total === 1 ? messages.common.record : messages.common.records}`}
-        title={`${messages.common.filters} · ${messages.bonuses.directoryTitle}`}
+        title={messages.bonuses.filterTitle}
       />
     </div>
     <MobileBonusFilters activeCount={activeCount} messages={messages}><BonusFilterForm compact facets={facets} messages={messages} presentation={presentation} query={query} total={total} /></MobileBonusFilters>

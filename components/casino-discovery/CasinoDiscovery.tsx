@@ -125,7 +125,7 @@ export function DiscoveryControls({ result, messages, presentation }: { result: 
         primary={<PrimaryFilterForm messages={messages} presentation={presentation} result={result} />}
         secondary={<SecondaryFilterForm messages={messages} presentation={presentation} result={result} />}
         summary={`${result.total} ${result.total === 1 ? messages.common.record : messages.common.records}`}
-        title={`${messages.common.filters} · ${messages.casinos.directoryTitle}`}
+        title={messages.casinos.filterTitle}
       />
     </div>
     <div className={styles.mobileControls}><MobileCasinoFilters activeCount={count} messages={messages}><FilterForm messages={messages} mobile presentation={presentation} result={result} /></MobileCasinoFilters></div>
