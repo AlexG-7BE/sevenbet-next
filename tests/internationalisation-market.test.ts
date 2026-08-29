@@ -163,6 +163,16 @@ test("localized product links, canonicals and reciprocal alternates preserve exp
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
+  const gbPresentation = resolvePresentationContext({ routeMarket: "gb", routeLanguage: "en" });
+  const gbMetadata = productMetadata({
+    presentation: gbPresentation,
+    pathname: "/casinos",
+    title: "Casinos",
+    description: "Published records",
+    robots: { index: true, follow: true },
+  });
+  assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
+
   const differentGeo = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(second.alternates?.canonical, metadata.alternates?.canonical, "geo cannot mutate an explicit canonical");

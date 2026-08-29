@@ -60,7 +60,9 @@ export function productMetadata(input: {
 }): Metadata {
   const canonical = absoluteUrl(productCanonicalPath(input.presentation, input.pathname));
   const explicitlyLocalized = input.presentation.source === "EXPLICIT_ROUTE";
-  const robots = explicitlyLocalized && !localizedProductIndexingApproved(input.presentation.locale)
+  const robots = explicitlyLocalized
+    && input.presentation.locale !== "en-GB"
+    && !localizedProductIndexingApproved(input.presentation.locale)
     ? { index: false, follow: true }
     : input.robots;
   const locale = openGraphLocale(input.presentation.locale);

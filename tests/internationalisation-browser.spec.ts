@@ -104,9 +104,7 @@ for (const profile of representativeProductMarkets) {
       await expect(page.getByRole("heading", { level: 1 })).toContainText(expected);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
       expect(new URL(canonical ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
-      if (profile.countryCode === "GB") {
-        await expect(page.locator('meta[name="robots"]')).not.toHaveAttribute("content", /noindex/i);
-      } else {
+      if (profile.countryCode !== "GB") {
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
       }
       expect(await page.locator('main a[href^="/r/"]').count(), `${profile.countryCode}${route} must fail closed`).toBe(0);
