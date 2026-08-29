@@ -5,6 +5,7 @@ import test from "node:test";
 
 const page = readFileSync("app/(public)/page.tsx", "utf8");
 const layout = readFileSync("app/(public)/layout.tsx", "utf8");
+const homeCatalog = readFileSync("lib/i18n/home-catalog.ts", "utf8");
 const home = readFileSync("components/home/TiltHome.tsx", "utf8");
 const carousel = readFileSync("components/home/HomeProgrammeCarousel.tsx", "utf8");
 const css = readFileSync("components/home/TiltHome.module.css", "utf8");
@@ -21,11 +22,13 @@ const homeAssets = [
 
 test("Home route renders the final handoff with the approved metadata and canonical", () => {
   assert.match(page, /import \{ HandoffPage \}/);
-  assert.match(page, /<HandoffPage cssTransform=\{transformHomeHandoffCss\} name="home" transform=\{transformHomeHandoff\} \/>/);
-  assert.match(page, /const title = "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(page, /transform=\{\(html\) => transformHomeHandoff\(html, presentation\.locale\)\}/);
+  assert.match(page, /export async function generateMetadata/);
+  assert.match(homeCatalog, /title: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(page, /openGraph: \{[^}]*title, description/);
   assert.match(page, /twitter: \{ card: "summary", title, description \}/);
-  assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
+  assert.match(page, /alternates: \{ canonical \}/);
+  assert.match(page, /localizedMarketPath\(presentation\.market, presentation\.locale\)/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
 });
@@ -124,15 +127,20 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const shellCatalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
-  assert.match(header, /aria-label="B4GAMBLE home"/);
+  assert.match(header, /aria-label=\{messages\.homeLabel\}/);
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Information, comparison and education\./);
-  assert.match(footer, /Not a gambling operator\./);
-  assert.match(footer, /Gambling involves financial risk\./);
-  assert.match(footer, /We may earn commission from clearly labelled affiliate links\./);
+  assert.match(footer, /\{footer\.description\}/);
+  assert.match(footer, /\{footer\.operatorDisclaimer\}/);
+  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /\{footer\.commissionDisclosure\}/);
+  assert.match(shellCatalog, /description: "Information, comparison and education\."/);
+  assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([

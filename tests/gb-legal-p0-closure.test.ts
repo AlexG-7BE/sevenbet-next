@@ -167,13 +167,16 @@ test("public safety, affiliate and demonstration disclosures remain at their gov
   const transforms = source("lib/final-handoff/transforms.ts");
   const affiliate = source("app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
   const demo = source("components/bonus-directory/BonusDirectory.tsx");
   const outbound = source("components/casino-profile/CasinoOutboundAction.tsx");
   assert.match(transforms, /No casino, bonus or affiliate actions appear here/);
   assert.match(transforms, /call 999 or go to A&amp;E now/);
   assert.match(affiliate, /Affiliate link · We may earn commission/);
-  assert.match(footer, /Gambling involves financial risk/);
-  assert.match(footer, /<p className=\{styles\.footerCommission\}>We may earn commission from clearly labelled affiliate links\.<\/p>/);
+  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /<p className=\{styles\.footerCommission\}>\{footer\.commissionDisclosure\}<\/p>/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.equal(footer.match(/"\/affiliate-disclosure"/g)?.length, 1);
   assert.equal(footer.match(/"\/responsible-gambling"/g)?.length, 1);
   assert.equal(footer.match(/"\/help"/g)?.length, 1);

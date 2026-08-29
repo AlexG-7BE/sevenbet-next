@@ -78,6 +78,7 @@ test("runtime text and sitemap policy match current product truth", () => {
   const site = read("lib/site.ts");
   const sitemap = read("app/sitemap.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   assert.match(llms, /practical control/);
   assert.match(llms, /Casino Data Boundary/);
   assert.match(llms, /Demonstration records are fictional/);
@@ -85,8 +86,10 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   assert.match(site, /["']\/privacy["']/);
   assert.match(site, /["']\/terms["']/);
-  assert.match(footer, /<Link href="\/privacy">Privacy<\/Link>/);
-  assert.match(footer, /<Link href="\/terms">Terms<\/Link>/);
+  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
+  assert.match(shellCatalog, /privacy: "Privacy"/);
+  assert.match(shellCatalog, /terms: "Terms"/);
   assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(sitemap, /"\/best-offers"/);
   assert.doesNotMatch(sitemap, /"\/compare"/);

@@ -68,14 +68,15 @@ test("account navigation is server-state-derived and never invents XP", () => {
 test("desktop and mobile header actions render the shared account label with icon-only navigation controls", () => {
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
 
-  assert.doesNotMatch(navigation, /authenticated\s*\?\s*["']My Programme["']\s*:\s*account\.primaryLabel/);
-  assert.equal(navigation.match(/\{account\.primaryLabel\}/g)?.length, 2);
+  assert.match(navigation, /const primaryLabel = authenticated \? messages\.myProgramme : messages\.startProgramme/);
+  assert.equal(navigation.match(/\{primaryLabel\}/g)?.length, 2);
   assert.doesNotMatch(navigation, />\s*Menu\s*</);
   assert.doesNotMatch(navigation, />\s*Close\s*</);
-  assert.match(navigation, /aria-label="Open navigation"/);
-  assert.match(navigation, /aria-label="Close navigation"/);
+  assert.match(navigation, /aria-label=\{messages\.openNavigation\}/);
+  assert.match(navigation, /aria-label=\{messages\.closeNavigation\}/);
   assert.match(navigation, /<MenuIcon \/>/);
   assert.match(navigation, /<CloseIcon \/>/);
+  assert.match(navigation, /<MarketLanguageSelector/);
 });
 
 test("the public layout owns one landmark and reads auth on the server", () => {

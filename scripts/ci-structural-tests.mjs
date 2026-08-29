@@ -11,6 +11,7 @@ const requiredTests = [
   "tests/founder-unified-shell.test.ts",
   "tests/gb-legal-p0-closure.test.ts",
   "tests/home-parity.test.ts",
+  "tests/internationalisation-market.test.ts",
   "tests/jurisdiction-resolver.test.ts",
   "tests/legal-programme-privacy.test.ts",
   "tests/media-presentation.test.ts",

@@ -151,17 +151,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
 test("shared navigation and footer expose only the final handoff destinations", () => {
   const navigation = read("lib/public-shell.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   const category = read("app/(public)/learn/[category]/LearningCategoryView.tsx");
   for (const destination of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(navigation, new RegExp(`label: "${destination}"`));
   assert.doesNotMatch(navigation, /label: "(?:Help|Compare)"/);
   assert.match(navigation, /const protectedHelpPrefixes = \["\/help"\]/);
-  assert.match(footer, /aria-label="Control and support"/);
-  for (const destination of [
-    '"Responsible Gambling", "/responsible-gambling"',
-    '"Learn", "/learn"',
-    '<Link href="/privacy">Privacy</Link>',
-    '<Link href="/terms">Terms</Link>',
-  ]) assert.ok(footer.includes(destination), destination);
+  assert.match(footer, /aria-label=\{footer\.label\}/);
+  assert.match(shellCatalog, /label: "Control and support"/);
+  for (const destination of ["/responsible-gambling", "/learn", "/privacy", "/terms"]) {
+    assert.ok(footer.includes(destination), destination);
+  }
+  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
   assert.doesNotMatch(footer, /\/self-check|\/tools\/budget-calculator|\/compare/);
   assert.match(category, /Open Responsible Gambling hub/);
 });

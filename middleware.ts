@@ -11,6 +11,13 @@ import {
   createCspNonce,
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
+import {
+  isLocalizedPublicDestination,
+  parseLocalizedPublicPath,
+  PRESENTATION_CONTEXT_HEADER,
+  PRESENTATION_LANGUAGE_HEADER,
+  PRESENTATION_MARKET_HEADER,
+} from "@/lib/market/routing";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -50,9 +57,14 @@ export function middleware(request: NextRequest) {
     formActionOrigins: pathname === commercialMcpConsentPath ? [chatGptWorkOrigin] : [],
   });
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete(PRESENTATION_CONTEXT_HEADER);
+  requestHeaders.delete(PRESENTATION_LANGUAGE_HEADER);
+  requestHeaders.delete(PRESENTATION_MARKET_HEADER);
   requestHeaders.set(CSP_NONCE_REQUEST_HEADER, nonce);
   requestHeaders.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
-  const nextResponse = () => NextResponse.next({ request: { headers: requestHeaders } });
+  const nextResponse = (rewriteUrl?: URL) => rewriteUrl
+    ? NextResponse.rewrite(rewriteUrl, { request: { headers: requestHeaders } })
+    : NextResponse.next({ request: { headers: requestHeaders } });
   const secureResponse = (response: NextResponse) => {
     response.headers.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
     return response;
@@ -75,6 +87,22 @@ export function middleware(request: NextRequest) {
         headers: { "Cache-Control": "no-store" },
       },
     ));
+  }
+
+  const localizedPublicPath = parseLocalizedPublicPath(pathname);
+  if (localizedPublicPath) {
+    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
+    requestHeaders.set(PRESENTATION_MARKET_HEADER, localizedPublicPath.market.routeMarket);
+    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, localizedPublicPath.locale.split("-")[0].toLowerCase());
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = localizedPublicPath.pathname;
+    const response = nextResponse(rewriteUrl);
+    response.headers.set("Content-Language", localizedPublicPath.locale);
+    return secureResponse(response);
+  }
+
+  if (isLocalizedPublicDestination(pathname)) {
+    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
   }
 
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";

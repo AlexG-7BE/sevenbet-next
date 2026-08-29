@@ -70,6 +70,7 @@ test("Contact page has exact public contract and footer navigation", () => {
   const page = source("app/(public)/contact/page.tsx");
   const form = source("app/(public)/contact/ContactForm.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
   const site = source("lib/site.ts");
   assert.match(page, /<h1>Talk <em>to us\.<\/em><\/h1>/);
   assert.match(page, /absoluteUrl\("\/contact"\)/);
@@ -85,7 +86,8 @@ test("Contact page has exact public contract and footer navigation", () => {
   assert.match(form, /Please do not include passwords, payment details or private Programme answers/);
   assert.match(form, /inFlight\.current/);
   assert.doesNotMatch(form, /localStorage|sessionStorage|productAnalytics|track\(/);
-  assert.match(footer, /<Link href="\/contact">Contact<\/Link>/);
+  assert.match(footer, /<Link href="\/contact">\{footer\.contact\}<\/Link>/);
+  assert.match(shellCatalog, /contact: "Contact"/);
   assert.match(site, /"\/contact"/);
   assert.doesNotMatch(source("app/sitemap.ts"), /api\/contact/);
 });

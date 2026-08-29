@@ -1,4 +1,6 @@
 import { getArticlePath, learningArticles, learningCategories, type LearningArticle } from "@/lib/learning-center";
+import { HOME_SOURCE_COPY, homeTranslation } from "@/lib/i18n/home-catalog";
+import type { SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -431,7 +433,38 @@ function homeResponsiveImage(imageTag: string) {
   return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
 }
 
-export function transformHomeHandoff(html: string) {
+function translateHomeHandoff(html: string, locale: SupportedLocale) {
+  const translation = homeTranslation(locale);
+  if (!translation) return html;
+
+  const textTranslations = new Map<string, string>();
+  for (const section of Object.keys(HOME_SOURCE_COPY) as Array<keyof typeof HOME_SOURCE_COPY>) {
+    if (section === "imageAlts") continue;
+    const source = HOME_SOURCE_COPY[section];
+    const localized = translation[section];
+    if (source.length !== localized.length) throw new Error(`Incomplete ${locale} Home translation: ${section}`);
+    source.forEach((value, index) => textTranslations.set(value, localized[index]));
+  }
+
+  let output = html.replace(/>([^<>]*)</g, (match, text: string) => {
+    const value = text.trim();
+    const localized = textTranslations.get(value);
+    if (!localized) return match;
+    const leading = text.slice(0, text.indexOf(value));
+    const trailing = text.slice(text.indexOf(value) + value.length);
+    return `>${leading}${escapeHtml(localized)}${trailing}<`;
+  });
+
+  if (HOME_SOURCE_COPY.imageAlts.length !== translation.imageAlts.length) {
+    throw new Error(`Incomplete ${locale} Home translation: imageAlts`);
+  }
+  HOME_SOURCE_COPY.imageAlts.forEach((source, index) => {
+    output = output.replaceAll(`alt="${source}"`, `alt="${escapeHtml(translation.imageAlts[index])}"`);
+  });
+  return output;
+}
+
+export function transformHomeHandoff(html: string, locale: SupportedLocale = "en-GB") {
   const transformed = html
     .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
     .replace(
@@ -442,10 +475,11 @@ export function transformHomeHandoff(html: string) {
       HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap="" data-home-snap-label="${label}"` : tag
     ));
 
-  return HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
+  const withSnapAnchors = HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
     `<div data-screen-label="${label}"`,
     `<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="${label}" style="height:1px;margin-bottom:-1px;pointer-events:none;width:1px;"></div><div data-screen-label="${label}"`,
   ), transformed);
+  return translateHomeHandoff(withSnapAnchors, locale);
 }
 
 export function transformHomeHandoffCss(css: string) {

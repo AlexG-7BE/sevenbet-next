@@ -10,6 +10,11 @@ import {
   type PublicAccountNavigation,
 } from "@/lib/public-shell";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
+import type { PresentationResolution } from "@/lib/market/presentation-resolver";
+import { localizePublicHref, stripLocalizedPublicPrefix } from "@/lib/market/routing";
+import { localizedMarketPath } from "@/lib/market/registry";
+import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import styles from "./PublicShell.module.css";
 
 function MenuIcon() {
@@ -31,11 +36,28 @@ function CloseIcon() {
 export function PublicNavigation({
   account,
   authenticated,
+  messages,
+  presentation,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
+  messages: PublicShellMessages;
+  presentation: PresentationResolution;
 }) {
   const pathname = usePathname();
+  const unprefixedPathname = stripLocalizedPublicPrefix(pathname);
+  const homeHref = presentation.source === "EXPLICIT_ROUTE"
+    ? localizedMarketPath(presentation.market, presentation.locale)
+    : "/";
+  const navigationLabels: Record<string, string> = {
+    "/best-offers": messages.bestOffers,
+    "/casinos": messages.casinos,
+    "/bonuses": messages.bonuses,
+    "/learn": messages.learn,
+  };
+  const navigationLabel = (href: string) => navigationLabels[href] ?? href;
+  const accountLabel = authenticated ? messages.myProgramme : messages.logIn;
+  const primaryLabel = authenticated ? messages.myProgramme : messages.startProgramme;
   const [menuOpen, setMenuOpen] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -77,24 +99,25 @@ export function PublicNavigation({
   return (
     <>
       <div className={styles.desktopNavigation}>
-        <nav className={styles.primaryNavigation} aria-label="Primary navigation">
+        <nav className={styles.primaryNavigation} aria-label={messages.primaryNavigation}>
           {PUBLIC_NAVIGATION.map((item) => (
             <Link
               className={"safety" in item && item.safety ? styles.helpLink : undefined}
-              href={item.href}
+              href={localizePublicHref(item.href, pathname, presentation.market, presentation.locale)}
               key={item.href}
-              aria-current={isCurrentPublicRoute(pathname, item.href) ? "page" : undefined}
+              aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
             >
-              {item.label}
+              {navigationLabel(item.href)}
             </Link>
           ))}
         </nav>
         <div className={styles.accountNavigation}>
+          <MarketLanguageSelector messages={messages} presentation={presentation} variant="desktop" />
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
-          {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{account.accountLabel}</Link> : null}
+          {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
           <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
             if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
-          }}>{account.primaryLabel}</Link>
+          }}>{primaryLabel}</Link>
         </div>
       </div>
 
@@ -102,11 +125,11 @@ export function PublicNavigation({
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
         <Link className={styles.mobilePrimaryAction} href={account.primaryHref} onClick={() => {
           if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
-        }}>{account.primaryLabel}</Link>
+        }}>{primaryLabel}</Link>
         <button
           aria-controls="public-mobile-navigation"
           aria-expanded={menuOpen}
-          aria-label="Open navigation"
+          aria-label={messages.openNavigation}
           className={styles.menuButton}
           onClick={openMenu}
           ref={triggerRef}
@@ -115,7 +138,7 @@ export function PublicNavigation({
           <MenuIcon />
         </button>
         <dialog
-          aria-label="Site navigation"
+          aria-label={messages.siteNavigation}
           className={styles.mobileDialog}
           id="public-mobile-navigation"
           onCancel={(event) => {
@@ -126,35 +149,36 @@ export function PublicNavigation({
           ref={dialogRef}
         >
           <div className={styles.dialogTopbar}>
-            <Link className={styles.dialogBrand} href="/" onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
-            <button aria-label="Close navigation" className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
+            <Link className={styles.dialogBrand} href={homeHref} onClick={() => closeMenu({ restoreFocus: false })} translate="no">B4GAMBLE</Link>
+            <button aria-label={messages.closeNavigation} className={styles.menuButton} onClick={() => closeMenu()} ref={closeRef} type="button"><CloseIcon /></button>
           </div>
-          <nav className={styles.mobileRouteList} aria-label="Mobile primary navigation">
+          <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
             {PUBLIC_NAVIGATION.filter((item) => !("safety" in item && item.safety)).map((item) => (
               <Link
-                href={item.href}
+                href={localizePublicHref(item.href, pathname, presentation.market, presentation.locale)}
                 key={item.href}
                 onClick={() => closeMenu({ restoreFocus: false })}
-                aria-current={isCurrentPublicRoute(pathname, item.href) ? "page" : undefined}
+                aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
               >
-                <span>{item.label}</span><small>VIEW</small>
+                <span>{navigationLabel(item.href)}</span><small>{messages.view}</small>
               </Link>
             ))}
           </nav>
+          <MarketLanguageSelector messages={messages} presentation={presentation} variant="mobile" />
           <div className={styles.mobileHelp}>
-            <span>CONTROL &amp; SUPPORT</span>
-            <Link href="/help" onClick={() => closeMenu({ restoreFocus: false })}>Open Help</Link>
+            <span>{messages.controlAndSupport}</span>
+            <Link href="/help" onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
           </div>
           <div className={styles.mobileAccount}>
-            {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{account.accountLabel}</Link> : null}
+            {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{accountLabel}</Link> : null}
             <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
               if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
               closeMenu({ restoreFocus: false });
             }}>
-              {authenticated ? "Open My Programme" : account.primaryLabel}
+              {authenticated ? messages.openProgramme : primaryLabel}
             </Link>
           </div>
-          <p className={styles.dialogLegal}>18+ · Information and comparison service · Help stays separate from commercial discovery.</p>
+          <p className={styles.dialogLegal}>{messages.adultServiceNotice}</p>
         </dialog>
       </div>
     </>

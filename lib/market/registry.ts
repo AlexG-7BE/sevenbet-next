@@ -194,6 +194,30 @@ const profiles = [
 
 export const MARKET_PROFILES: readonly MarketProfile[] = profiles;
 
+export const INITIAL_EUROPEAN_MARKET_CODES = [
+  "GB",
+  "DE",
+  "IT",
+  "ES",
+  "PT",
+  "GR",
+  "NL",
+  "SE",
+  "DK",
+  "FI",
+  "NO",
+] as const satisfies readonly MarketCode[];
+
+const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);
+
+export const INITIAL_EUROPEAN_MARKET_PROFILES: readonly MarketProfile[] = profiles.filter(
+  (profile) => initialEuropeanMarketCodes.has(profile.countryCode),
+);
+
+export function isInitialEuropeanMarket(profile: MarketProfile) {
+  return initialEuropeanMarketCodes.has(profile.countryCode);
+}
+
 const byCountry = new Map<MarketCode, MarketProfile>(profiles.map((profile) => [profile.countryCode, profile]));
 const byRouteMarket = new Map<string, MarketProfile>(profiles.map((profile) => [profile.routeMarket, profile]));
 

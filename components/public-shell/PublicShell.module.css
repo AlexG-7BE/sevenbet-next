@@ -92,6 +92,62 @@
 .primaryNavigation { gap: 36px; }
 .accountNavigation { justify-content: flex-end; gap: 28px; }
 
+.presentationSelector,
+.mobilePresentationSelector {
+  font-family: var(--font-seven-sans), Arial, sans-serif;
+}
+
+.presentationSelector {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.presentationSelector label { min-width: 0; }
+.presentationSelector select,
+.mobilePresentationSelector select {
+  min-height: 40px;
+  border: 1px solid currentColor;
+  border-radius: var(--sb-radius-full);
+  background: transparent;
+  color: inherit;
+  font: 600 12px/16px var(--font-seven-sans), Arial, sans-serif;
+}
+.presentationSelector select {
+  width: 116px;
+  padding: 0 10px;
+  text-overflow: ellipsis;
+}
+.presentationSelector select option,
+.mobilePresentationSelector select option { background: var(--shell-night); color: var(--shell-white); }
+.presentationSelector button,
+.mobilePresentationSelector button {
+  min-height: 40px;
+  border: 1px solid currentColor;
+  border-radius: var(--sb-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: 650 12px/16px var(--font-seven-sans), Arial, sans-serif;
+}
+.presentationSelector button { padding: 0 10px; }
+
+.mobilePresentationSelector {
+  margin: 16px 16px 0;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  border: 1px solid rgba(250, 250, 247, .18);
+  border-radius: 20px;
+}
+.mobilePresentationSelector label { min-width: 0; display: grid; gap: 8px; }
+.presentationSelectorLabel { color: var(--shell-night-muted); font-size: 12px; line-height: 16px; letter-spacing: .08em; text-transform: uppercase; }
+.mobilePresentationSelector select { width: 100%; padding: 0 12px; }
+.mobilePresentationSelector button { align-self: end; padding: 0 14px; }
+.mobilePresentationSelector p { grid-column: 1 / -1; margin: 0; color: var(--shell-night-muted); font-size: 12px; line-height: 18px; }
+
 .primaryNavigation a,
 .accountLink,
 .menuButton,
@@ -443,6 +499,13 @@
   .availabilityNotice { min-height: 210px; padding: 16px; align-items: flex-start; flex-direction: column; }
   .availabilityNotice[data-state="unavailable"] { min-height: 242px; }
   .availabilityActions { flex-wrap: wrap; }
+}
+
+@media (min-width: 901px) and (max-width: 1200px) {
+  .headerInner { gap: 24px; }
+  .desktopNavigation { gap: 16px; }
+  .primaryNavigation { gap: 20px; }
+  .accountNavigation { gap: 12px; }
 }
 
 @media (max-width: 420px) {

@@ -11,7 +11,7 @@ test("signed-out desktop public shell has one semantic chrome and approved desti
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Casinos", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("link", { name: "Log in", exact: true })).toHaveAttribute("href", "/login");
   await expect(page.getByRole("link", { name: /Help — protected support/ }).last()).toHaveAttribute("href", "/help");
-  await expect(page.getByText(/We may earn commission — how we're funded/i)).toBeVisible();
+  await expect(page.getByText(/We may earn commission from clearly labelled affiliate links/i)).toBeVisible();
   const primaryAction = page.locator('header[data-public-shell] a[href^="/program"]').first();
   const primaryRect = await primaryAction.evaluate((target) => target.getBoundingClientRect().toJSON());
   expect(primaryRect.width).toBeGreaterThanOrEqual(44);
