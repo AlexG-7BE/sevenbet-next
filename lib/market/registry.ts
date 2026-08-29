@@ -1,8 +1,10 @@
-export type MarketCode = "GB" | "DE" | "SE" | "DK" | "FI" | "NO" | "CA";
+export type MarketCode = "GB" | "DE" | "IT" | "ES" | "SE" | "DK" | "FI" | "NO" | "CA";
 
 export type SupportedLocale =
   | "en-GB"
   | "de-DE"
+  | "it-IT"
+  | "es-ES"
   | "sv-SE"
   | "da-DK"
   | "fi-FI"
@@ -54,6 +56,32 @@ const profiles = [
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "de",
     partnerReadinessNotes: "First European partner-readiness tranche.",
+  },
+  {
+    countryCode: "IT",
+    routeMarket: "it",
+    seoDisplayName: "Italia",
+    defaultLocale: "it-IT",
+    supportedLocales: ["it-IT"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "it",
+    partnerReadinessNotes: "First European partner-readiness tranche; localized readiness is independent of commercial authority.",
+  },
+  {
+    countryCode: "ES",
+    routeMarket: "es",
+    seoDisplayName: "España",
+    defaultLocale: "es-ES",
+    supportedLocales: ["es-ES"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "es",
+    partnerReadinessNotes: "First European partner-readiness tranche; Spain is a market profile while Spanish-language expansion to other countries remains separate.",
   },
   {
     countryCode: "SE",
