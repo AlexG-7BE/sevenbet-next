@@ -91,7 +91,7 @@ export function middleware(request: NextRequest) {
 
   const publicMarketRoute = parsePublicMarketRoute(pathname);
   if (publicMarketRoute.kind === "LEGACY_REDUNDANT_LOCALE" || publicMarketRoute.kind === "DEFAULT_MARKET_ALIAS") {
-    const destination = request.nextUrl.clone();
+    const destination = new URL(request.url);
     destination.pathname = publicMarketRoute.canonicalPath;
     return secureResponse(NextResponse.redirect(destination, 308));
   }
@@ -103,7 +103,7 @@ export function middleware(request: NextRequest) {
       publicMarketRoute.pathname,
     );
     if (pathname !== canonicalPathname) {
-      const destination = request.nextUrl.clone();
+      const destination = new URL(request.url);
       destination.pathname = canonicalPathname;
       return secureResponse(NextResponse.redirect(destination, 308));
     }
@@ -115,6 +115,15 @@ export function middleware(request: NextRequest) {
     const response = nextResponse(rewriteUrl);
     response.headers.set("Content-Language", publicMarketRoute.locale);
     return secureResponse(response);
+  }
+
+  // `skipTrailingSlashRedirect` lets market homes keep `/de/`. Preserve the
+  // framework's prior no-trailing-slash behavior everywhere else, including
+  // protected/internal routes, with the same method-preserving status.
+  if (pathname.length > 1 && pathname.endsWith("/")) {
+    const destination = new URL(request.url);
+    destination.pathname = pathname.replace(/\/+$/, "") || "/";
+    return secureResponse(NextResponse.redirect(destination, 308));
   }
 
   const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";

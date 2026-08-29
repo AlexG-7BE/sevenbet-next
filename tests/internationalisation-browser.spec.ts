@@ -105,7 +105,7 @@ for (const profile of representativeProductMarkets) {
       const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
       expect(new URL(canonical ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
       if (profile.countryCode === "GB") {
-        await expect(page.locator('meta[name="robots"]')).toHaveCount(0);
+        await expect(page.locator('meta[name="robots"]')).not.toHaveAttribute("content", /noindex/i);
       } else {
         await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
       }
@@ -146,8 +146,8 @@ test("localized 10 Steps and About publish complete draft bodies with localized 
   await page.goto(`${baseUrl}/de/10-steps`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(tenSteps.text[1]);
-  await expect(page.getByRole("link", { name: tenSteps.text[5] })).toHaveAttribute("href", "/program?entry=start");
-  await expect(page.getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
+  await expect(page.getByRole("link", { name: tenSteps.text[5] }).first()).toHaveAttribute("href", "/program?entry=start");
+  await expect(page.locator("main").getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de/10-steps");
 

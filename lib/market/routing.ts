@@ -166,12 +166,13 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
     };
   }
 
-  if (possibleLanguage && /^[a-z]{2,3}$/i.test(possibleLanguage)) {
-    return invalid(clean, "UNSUPPORTED_LOCALE");
-  }
-
   const equivalentPathname = unprefixedPath(segments.slice(1));
-  if (!isLocalizedPublicDestination(equivalentPathname)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+  if (!isLocalizedPublicDestination(equivalentPathname)) {
+    if (possibleLanguage && /^[a-z]{2,3}$/i.test(possibleLanguage)) {
+      return invalid(clean, "UNSUPPORTED_LOCALE");
+    }
+    return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+  }
   if (routeMarket.countryCode === DEFAULT_MARKET_PROFILE.countryCode) {
     return {
       kind: "DEFAULT_MARKET_ALIAS",

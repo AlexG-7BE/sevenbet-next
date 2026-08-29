@@ -100,13 +100,16 @@ test("canonical paths keep market primary and add a language only for secondary 
 
 test("market-first parser distinguishes canonical, secondary, legacy and invalid paths", () => {
   const germany = marketProfileByCountry("DE");
+  const portugal = marketProfileByCountry("PT");
   const spain = marketProfileByCountry("ES");
   assert.ok(germany);
+  assert.ok(portugal);
   assert.ok(spain);
   const canada = marketProfileByCountry("CA");
   assert.ok(canada);
   assert.deepEqual(parsePublicMarketRoute("/de/casinos"), { kind: "MARKET_DEFAULT", market: germany, locale: "de-DE", pathname: "/casinos" });
   assert.deepEqual(parsePublicMarketRoute("/ca/fr/casinos"), { kind: "SECONDARY_LOCALE", market: canada, locale: "fr-CA", pathname: "/casinos" });
+  assert.deepEqual(parsePublicMarketRoute("/pt/faq"), { kind: "MARKET_DEFAULT", market: portugal, locale: "pt-PT", pathname: "/faq" });
   assert.deepEqual(parsePublicMarketRoute("/de/de/casinos"), { kind: "LEGACY_REDUNDANT_LOCALE", market: germany, locale: "de-DE", pathname: "/casinos", canonicalPath: "/de/casinos" });
   assert.equal(parsePublicMarketRoute("/de/en/").kind, "INVALID");
   assert.equal(parsePublicMarketRoute("/gr/gr/").kind, "INVALID");
@@ -368,6 +371,13 @@ test("market-first middleware redirects legacy paths and rewrites only validated
   assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "de");
   assert.ok(response.headers.get("content-security-policy"));
 
+  const marketHome = middleware(new NextRequest("http://127.0.0.1:4173/de/"));
+  assert.equal(marketHome.status, 200);
+  assert.equal(new URL(marketHome.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/");
+  const unslashedMarketHome = middleware(new NextRequest("http://127.0.0.1:4173/de"));
+  assert.equal(unslashedMarketHome.status, 308);
+  assert.equal(new URL(unslashedMarketHome.headers.get("location") ?? "http://invalid").pathname, "/de/");
+
   const gb = middleware(new NextRequest("http://127.0.0.1:4173/casinos"));
   assert.equal(gb.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
   assert.equal(gb.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
@@ -378,6 +388,9 @@ test("market-first middleware redirects legacy paths and rewrites only validated
 
   const invalid = middleware(new NextRequest("http://127.0.0.1:4173/de/en/"));
   assert.equal(invalid.headers.get("x-middleware-rewrite"), null);
+  const ordinaryTrailingSlash = middleware(new NextRequest("http://127.0.0.1:4173/terms/"));
+  assert.equal(ordinaryTrailingSlash.status, 308);
+  assert.equal(new URL(ordinaryTrailingSlash.headers.get("location") ?? "http://invalid").pathname, "/terms");
   const protectedRoute = middleware(new NextRequest("http://127.0.0.1:4173/de/admin", {
     headers: {
       [PRESENTATION_MARKET_HEADER]: "de",
