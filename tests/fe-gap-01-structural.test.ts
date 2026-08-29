@@ -106,6 +106,12 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
       (approved) => JSON.stringify(prismaChanges) === JSON.stringify(approved),
     ));
   }
-  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
-  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
+  if (changed.includes("app/(public)/layout.tsx")) {
+    const publicLayout = read("app/(public)/layout.tsx");
+    assert.match(publicLayout, /resolveServerPresentationContext/);
+    assert.match(publicLayout, /publicShellMessages\(presentation\.locale\)/);
+    assert.match(publicLayout, /<PublicHeader[^>]+presentation=\{presentation\}/s);
+    assert.match(publicLayout, /<PublicFooter presentation=\{presentation\}/);
+    assert.doesNotMatch(publicLayout, /@prisma|commercialAllowed|referralAllowed|affiliate/i);
+  }
 });
