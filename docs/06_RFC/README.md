@@ -65,16 +65,17 @@ orientation.
 | [RFC-034 — Final Design Handoff Public Site](RFC-034-Final-Design-Handoff-Public-Site.md) | `HISTORICAL` | Records the completed final public-design handoff. |
 | [RFC-035 — Home Performance and Motion Polish](RFC-035-Home-Performance-and-Motion-Polish.md) | `HISTORICAL` | Records the completed Home motion and final site-polish delivery. |
 | [RFC-036 — GB Public Legal P0 Closure](RFC-036-GB-Public-Legal-P0-Closure.md) | `ACTIVE` | GB public legal, necessary-technology, licence-evidence and accepted-deferral authority. |
+| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first market/locale architecture, live localized partner-readiness and separation from commercial authority. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 15 |
+| `ACTIVE` | 16 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 2 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **36** |
+| **Total RFC artifacts** | **37** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or
