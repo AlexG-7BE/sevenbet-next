@@ -64,13 +64,15 @@ test("protected Help remains commercial-free after the runtime transform", () =>
 test("real dynamic release surfaces keep runtime renderers and fail-closed demo actions", () => {
   const bestOffersPage = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
+  const productMessages = readFileSync("lib/i18n/product-pages-catalog.ts", "utf8");
   const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   const programme = readFileSync("app/program/page.tsx", "utf8");
   assert.match(bestOffersPage, /data-runtime-renderer="best-offers"/);
   assert.match(casinos, /data-runtime-renderer="casinos"/);
   assert.match(programme, /data-public-programme-renderer="program-ai"/);
   assert.match(bestOffers, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null/);
-  assert.match(bestOffers, /No commercial visit is available|Offer currently unavailable/);
+  assert.match(bestOffers, /messages\.common\.reviewAvailableNoAction/);
+  assert.match(productMessages, /reviewAvailableNoAction: "The review remains available while commercial action is unavailable\."/);
   assert.doesNotMatch(bestOffersPage + bestOffers + casinos + programme, /<HandoffPage/);
 });
 
