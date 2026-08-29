@@ -11,20 +11,28 @@ import {
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 
 test("initial market registry exposes the partner-readiness tranche without implying commercial authority", () => {
-  assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "SE", "DK", "FI", "NO", "CA"]);
+  assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "IT", "ES", "SE", "DK", "FI", "NO", "CA"]);
   for (const profile of MARKET_PROFILES) {
     assert.equal(profile.commercialPresentationState, "AUTHORITY_REQUIRED");
   }
   assert.equal(marketProfileByCountry("de")?.defaultLocale, "de-DE");
+  assert.equal(marketProfileByCountry("it")?.defaultLocale, "it-IT");
+  assert.equal(marketProfileByCountry("es")?.defaultLocale, "es-ES");
   assert.equal(marketProfileByRouteMarket("SE")?.countryCode, "SE");
 });
 
 test("localized paths keep market and language explicit", () => {
   const germany = marketProfileByCountry("DE");
+  const italy = marketProfileByCountry("IT");
+  const spain = marketProfileByCountry("ES");
   const canada = marketProfileByCountry("CA");
   assert.ok(germany);
+  assert.ok(italy);
+  assert.ok(spain);
   assert.ok(canada);
   assert.equal(localizedMarketPath(germany, "de-DE"), "/de/de/");
+  assert.equal(localizedMarketPath(italy, "it-IT"), "/it/it/");
+  assert.equal(localizedMarketPath(spain, "es-ES"), "/es/es/");
   assert.equal(localizedMarketPath(germany, "de-DE", "/casinos"), "/de/de/casinos");
   assert.equal(localizedMarketPath(canada, "fr-CA", "/help"), "/ca/fr/help");
   assert.throws(() => localizedMarketPath(germany, "en-GB"));
@@ -55,12 +63,16 @@ test("user presentation preference can select presentation but is not a commerci
   assert.equal("referralAllowed" in result, false);
 });
 
-test("trusted geo selects a supported market and unsupported geo falls back deterministically to GB", () => {
-  const germany = resolvePresentationContext({ trustedCountryCode: "DE" });
+test("trusted geo selects supported Italy and Spain markets and unsupported geo falls back deterministically to GB", () => {
+  const italy = resolvePresentationContext({ trustedCountryCode: "IT" });
+  const spain = resolvePresentationContext({ trustedCountryCode: "ES" });
   const unsupported = resolvePresentationContext({ trustedCountryCode: "US" });
-  assert.equal(germany.market.countryCode, "DE");
-  assert.equal(germany.locale, "de-DE");
-  assert.equal(germany.source, "TRUSTED_GEO");
+  assert.equal(italy.market.countryCode, "IT");
+  assert.equal(italy.locale, "it-IT");
+  assert.equal(italy.source, "TRUSTED_GEO");
+  assert.equal(spain.market.countryCode, "ES");
+  assert.equal(spain.locale, "es-ES");
+  assert.equal(spain.source, "TRUSTED_GEO");
   assert.equal(unsupported.market.countryCode, "GB");
   assert.equal(unsupported.locale, "en-GB");
   assert.equal(unsupported.source, "DEFAULT");
