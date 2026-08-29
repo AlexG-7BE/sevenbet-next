@@ -72,6 +72,8 @@ Examples:
 
 - market `GB` may default to locale `en-GB`;
 - market `DE` may default to locale `de-DE`;
+- market `ES` may default to locale `es-ES`;
+- Spanish can later be used by other market profiles without making those markets equivalent to Spain;
 - market `CA` can support more than one locale over time;
 - a user may choose another supported language without acquiring commercial eligibility for another country.
 
@@ -108,6 +110,8 @@ Examples:
 ```text
 /gb/en/
 /de/de/
+/it/it/
+/es/es/
 /se/sv/
 /dk/da/
 /fi/fi/
@@ -147,13 +151,17 @@ The first infrastructure release should be capable of serving these explicit mar
 | Market | Initial locale | Purpose |
 | --- | --- | --- |
 | Great Britain | `en-GB` | Existing baseline and compatibility reference. |
-| Germany | `de-DE` | High-value partner-readiness market already present in network discussions. |
+| Germany | `de-DE` | Major European market and partner-readiness target. |
+| Italy | `it-IT` | Major European localization target; infrastructure readiness does not imply offer authority. |
+| Spain | `es-ES` | Major European localization target and Spanish-language foundation; Spain remains a distinct market authority. |
 | Sweden | `sv-SE` | ComeOn portfolio relevance and localized partner review. |
 | Denmark | `da-DK` | ComeOn portfolio relevance and localized partner review. |
 | Finland | `fi-FI` | ComeOn portfolio relevance and localized partner review. |
 | Norway | `nb-NO` | ComeOn portfolio relevance and localized partner review; commercial legality remains a separate authority question. |
 
 Canada/Ontario is architecturally supported but does not need to block the first European localization tranche. Netherlands and Poland remain candidate markets; current ComeOn public-material scope has a recorded inconsistency and neither market should be represented as commercially approved merely because a localized B4GAMBLE version exists.
+
+Spanish-language expansion outside Spain is expected to reuse the localization capability but must add distinct market profiles (for example, a future Mexico profile) with their own market, legal, help, editorial and commercial authority. `es-ES` is not a proxy for all Spanish-speaking countries.
 
 ## Localization scope
 
@@ -286,6 +294,8 @@ This is the state that can be shown to a network for reassessment before offers 
 Publish complete public localized versions for:
 
 - `de-DE`;
+- `it-IT`;
+- `es-ES`;
 - `sv-SE`;
 - `da-DK`;
 - `fi-FI`;
