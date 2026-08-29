@@ -112,6 +112,9 @@ Examples:
 /de/de/
 /it/it/
 /es/es/
+/pt/pt/
+/gr/el/
+/nl/nl/
 /se/sv/
 /dk/da/
 /fi/fi/
@@ -144,22 +147,36 @@ Introduce one server-owned registry defining presentation support, independent o
 
 Presentation states must not duplicate or override jurisdiction/commercial authority. They answer whether the B4GAMBLE product experience is ready to be shown for the market, not whether an operator can receive referral traffic.
 
-## Initial live localization tranche
+## Minimum partner-ready European localization tranche
 
 The first infrastructure release should be capable of serving these explicit market/locale profiles:
 
 | Market | Initial locale | Purpose |
 | --- | --- | --- |
 | Great Britain | `en-GB` | Existing baseline and compatibility reference. |
-| Germany | `de-DE` | Major European market and partner-readiness target. |
-| Italy | `it-IT` | Major European localization target; infrastructure readiness does not imply offer authority. |
-| Spain | `es-ES` | Major European localization target and Spanish-language foundation; Spain remains a distinct market authority. |
-| Sweden | `sv-SE` | ComeOn portfolio relevance and localized partner review. |
-| Denmark | `da-DK` | ComeOn portfolio relevance and localized partner review. |
-| Finland | `fi-FI` | ComeOn portfolio relevance and localized partner review. |
-| Norway | `nb-NO` | ComeOn portfolio relevance and localized partner review; commercial legality remains a separate authority question. |
+| Germany | `de-DE` | EGO/ComeOn and broader regulated-Europe relevance. |
+| Italy | `it-IT` | NetoPartners and broader European partner-readiness relevance. |
+| Spain | `es-ES` | EGO relevance and Spanish-language foundation; Spain remains a distinct market authority. |
+| Portugal | `pt-PT` | SkillOnNet/EGO portfolio evidence and NetoPartners language coverage. |
+| Greece | `el-GR` | Current SkillOnNet/EGO market relevance; commercial activation requires separate Greek authority checks. |
+| Netherlands | `nl-NL` | NetoPartners and ComeOn portfolio relevance; commercial advertising remains subject to Ksa restrictions and exact operator authority. |
+| Sweden | `sv-SE` | ComeOn/EGO portfolio relevance and localized partner review. |
+| Denmark | `da-DK` | ComeOn/EGO portfolio relevance and localized partner review. |
+| Finland | `fi-FI` | ComeOn/NetoPartners relevance and localized partner review. |
+| Norway | `nb-NO` | ComeOn/NetoPartners relevance; commercial legality remains a separate authority question. |
 
-Canada/Ontario is architecturally supported but does not need to block the first European localization tranche. Netherlands and Poland remain candidate markets; current ComeOn public-material scope has a recorded inconsistency and neither market should be represented as commercially approved merely because a localized B4GAMBLE version exists.
+Canada/Ontario remains architecturally supported because it is relevant to ComeOn and SkillOnNet, but it does not block the first European localization tranche.
+
+This tranche is intentionally a **commercially motivated minimum**, not a promise to support every European language. It covers the languages and markets with current evidence across B4GAMBLE's priority multi-brand prospects while avoiding translation work that has no present partner-readiness value.
+
+### Explicit exclusions from the initial casino-commercial tranche
+
+As of the authoritative review on 2026-08-29:
+
+- France is not treated as a B4GAMBLE online-casino commercial target because the French ANJ states that online casinos are not authorised. French can remain available where another supported market requires it, such as `fr-CA` in Canada.
+- Poland is not treated as a B4GAMBLE private online-casino commercial target because current Polish Ministry of Finance guidance states that online casino activity, apart from statutory exceptions, is under the state monopoly. ComeOn's public brand material also conflicts with its general approved-jurisdiction terms for Poland.
+
+These exclusions do not prohibit future editorial localization. They prevent the localization registry from being misread as a commercial-eligibility statement. A later authoritative legal/partner review may add a market if the relevant facts change.
 
 Spanish-language expansion outside Spain is expected to reuse the localization capability but must add distinct market profiles (for example, a future Mexico profile) with their own market, legal, help, editorial and commercial authority. `es-ES` is not a proxy for all Spanish-speaking countries.
 
@@ -289,13 +306,16 @@ This is the state that can be shown to a network for reassessment before offers 
 - removal of GB defaults from request-aware public-service call sites;
 - regression tests proving commercial authority remains independent.
 
-### Phase B — First live European locales
+### Phase B — Minimum partner-ready European locales
 
 Publish complete public localized versions for:
 
 - `de-DE`;
 - `it-IT`;
 - `es-ES`;
+- `pt-PT`;
+- `el-GR`;
+- `nl-NL`;
 - `sv-SE`;
 - `da-DK`;
 - `fi-FI`;
