@@ -135,14 +135,14 @@
 .score { width: 62px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 14px; background: var(--acid); }
 .score strong { font-size: 1.25rem; line-height: 1; }
 .score span { font-size: 13px; }
-.description { min-height: 3em; display: -webkit-box; overflow: hidden; margin: 18px 0 12px; color: #393832; font-size: 14px; line-height: 1.45; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+.description { min-height: 3em; margin: 18px 0 12px; color: #393832; font-size: 14px; line-height: 1.45; }
 .signals { display: flex; flex-wrap: wrap; gap: 6px; }
 .signal { min-height: 28px; display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px; border: 1px solid var(--line); border-radius: var(--sb-radius-full); background: var(--acid-soft); font-size: 13px; font-weight: 700; }
 .signal i { width: 8px; height: 8px; flex: 0 0 auto; border-radius: 50%; background: var(--sb-teal); }
 .offerBlock { min-height: 112px; margin-top: 14px; padding: 15px; border-radius: 14px; background: var(--acid-soft); }
 .offerBlock > span { display: block; margin-bottom: 8px; }
 .offerBlock > strong { display: block; overflow-wrap: anywhere; font-size: 1rem; line-height: 1.1; }
-.offerBlock > p { display: -webkit-box; overflow: hidden; margin: 7px 0 0; color: #494842; font-size: 14px; line-height: 1.4; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.offerBlock > p { margin: 7px 0 0; color: #494842; font-size: 14px; line-height: 1.4; }
 .offerBlock > small { display: block; margin-top: 8px; color: #494842; font-size: 13px; line-height: 1.35; }
 .commission { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
 .unavailable { margin: 9px 0 0; padding: 8px 10px; border-left: 3px solid #8e8d1b; background: #f5f4cf; color: #4b4a32; font-size: 13px; line-height: 1.35; }
@@ -765,7 +765,6 @@
     color:#4f4e48;
     font-size:13px;
     line-height:19px;
-    -webkit-line-clamp:3;
   }
   .casinoCard .score {
     grid-area:score;
@@ -813,7 +812,7 @@
   .casinoCard .offerBlock::before { display:none; }
   .casinoCard .offerBlock > span { font-size:12px; line-height:16px; }
   .casinoCard .offerBlock > strong { max-width:20ch; font-size:25px; line-height:28px; }
-  .casinoCard .offerBlock > p { font-size:13px; line-height:19px; -webkit-line-clamp:2; }
+  .casinoCard .offerBlock > p { font-size:13px; line-height:19px; }
   .casinoCard .offerBlock > small { font-size:12px; line-height:17px; }
   .casinoCard .signals {
     grid-area:signals;

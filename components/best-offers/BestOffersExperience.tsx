@@ -44,7 +44,7 @@ function OfferCompare({ offer, messages }: { offer: PublicOfferDTO; messages: Pr
 }
 
 function MobileMaterialTerms({ offer, messages, locale }: { offer: PublicOfferDTO; messages: ProductPageMessages; locale: string }) {
-  return <dl className={styles.mobileMaterialTerms} aria-label={`${offer.casino.name} · ${messages.common.materialTerms}`}>
+  return <dl className={styles.mobileMaterialTerms} aria-label={`${offer.casino.name} · ${messages.common.materialOfferTerms}`}>
     <div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div>
     <div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, locale, messages.common.notListed)}</dd></div>
     <div><dt>{messages.common.eligibility}</dt><dd>{offer.bonus.eligibility || messages.common.notListed}</dd></div>
@@ -109,7 +109,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
           </article>)}
         </div>
         {worthALook.length ? <section className={styles.worthALook} aria-labelledby="worth-a-look-title">
-          <div className={styles.sectionRule}><span id="worth-a-look-title">{messages.bestOffers.whyTitle}</span><i /></div>
+          <div className={styles.sectionRule}><span id="worth-a-look-title">{messages.bestOffers.worthALookTitle}</span><i /></div>
           <div className={styles.worthCards}>
             {worthALook.map((offer, index) => <article key={`${offer.casino.id}-${offer.bonus.id}`}>
               <div className={styles.worthHead}><OfferIdentity offer={offer} /><b>0{index + 4}</b></div>
@@ -144,7 +144,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
     </div></section>
 
     <section className={styles.finalOffer} aria-labelledby="final-offer-title" data-motion-reveal data-nav-theme="dark"><div>
-      <p className={styles.darkKicker}>{messages.bestOffers.beforeClick}</p>
+      <p className={styles.darkKicker}>{messages.bestOffers.finalKicker}</p>
       <h2 id="final-offer-title">{featured.casino.name}.<em>{messages.bestOffers.sectionTitle}</em></h2>
       <p>{featured.bonus.title} · {messages.common.wagering} {featured.bonus.wageringMultiplier === null ? messages.common.notListed : `${featured.bonus.wageringMultiplier}x`} · {messages.common.minimumDeposit} {money(featured.bonus.minimumDeposit, featured.bonus.currency, presentation.locale, messages.common.notListed)} · {messages.common.payout} {payout(featured, messages)}</p>
       <OfferAction featured messages={messages} offer={featured} />

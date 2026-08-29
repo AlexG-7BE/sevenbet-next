@@ -6,11 +6,11 @@ import styles from "./BonusesFinal.module.css";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 
 const gameWeights = [
-  { percent: "100%", value: 1 },
-  { percent: "50%", value: 0.5 },
-  { percent: "20%", value: 0.2 },
-  { percent: "10%", value: 0.1 },
-];
+  { label: "slots", percent: "100%", value: 1 },
+  { label: "tableGames", percent: "50%", value: 0.5 },
+  { label: "roulette", percent: "20%", value: 0.2 },
+  { label: "blackjack", percent: "10%", value: 0.1 },
+] as const;
 
 function euros(value: number, locale: string) {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 0, style: "currency", currency: "EUR" }).format(value);
@@ -44,7 +44,7 @@ export function BonusCalculator({ messages, locale }: { messages: ProductPageMes
         </div></fieldset>
 
         <fieldset><legend>{messages.calculator.gameWeight}</legend><div className={styles.gameWeights}>
-          {gameWeights.map((game) => <label className={weight === game.value ? styles.selected : ""} key={game.value}><input checked={weight === game.value} name="game-weight" onChange={() => setWeight(game.value)} type="radio" />{messages.profile.games} · {game.percent}</label>)}
+          {gameWeights.map((game) => <label className={weight === game.value ? styles.selected : ""} key={game.value}><input checked={weight === game.value} name="game-weight" onChange={() => setWeight(game.value)} type="radio" />{messages.calculator[game.label]} · {game.percent}</label>)}
         </div></fieldset>
       </div>
 

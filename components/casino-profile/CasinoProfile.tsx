@@ -115,7 +115,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
               {casino.media.logo ? <img alt={casino.media.logo.alt || `${casino.name} logo`} height={casino.media.logo.height || 80} src={casino.media.logo.url} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
             </div>
             <div><small>{messages.profile.operatorReview}</small><strong>{casino.name}</strong>{freshness ? <span>{messages.common.current} {freshness.value}</span> : <span>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</span>}</div>
-            <Signal>{demo ? messages.common.demoData : `${age}+`}</Signal>
+            <Signal>{demo ? messages.profile.demoAgeField : `${age}+`}</Signal>
           </div>
           <h1 id="casino-profile-title">{casino.name}</h1>
           <div className={styles.scoreVerdict}>
@@ -123,12 +123,12 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             <p><em>{messages.profile.verdict}</em> {editorial?.summary || casino.summary}</p>
           </div>
           <div aria-label={demo ? messages.common.demoData : messages.common.sourceStatus} className={styles.signals}>
-            {licence ? <Signal verified={!demo && licenceChecked}>{demo ? messages.common.demoData : `${messages.common.licence} · ${licenceChecked ? messages.common.current : messages.common.notListed}`}</Signal> : null}
-            {payments.length ? <Signal>{demo ? messages.common.demoData : payments.join(" + ").toUpperCase()}</Signal> : null}
-            {withdrawal ? <Signal>{demo ? messages.common.demoData : withdrawal}</Signal> : null}
+            {licence ? <Signal verified={!demo && licenceChecked}>{demo ? messages.profile.demoLicenceField : `${messages.common.licence} · ${licenceChecked ? messages.common.current : messages.common.notListed}`}</Signal> : null}
+            {payments.length ? <Signal>{demo ? messages.profile.demoPaymentFields : payments.join(" + ").toUpperCase()}</Signal> : null}
+            {withdrawal ? <Signal>{demo ? messages.profile.demoWithdrawalField : withdrawal}</Signal> : null}
           </div>
           {bonus ? <div className={styles.heroOfferSummary}>
-            <div className={styles.heroOfferCopy}><span>{demo ? messages.common.demoData : messages.common.current}</span><strong>{offerHeadline}</strong><dl>
+            <div className={styles.heroOfferCopy}><span>{demo ? messages.profile.demoOfferField : messages.common.current}</span><strong>{offerHeadline}</strong><dl>
               <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || (bonus.wageringMultiplier !== null ? `${bonus.wageringMultiplier}×` : messages.common.notListed)}</dd></div>
               <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit ?? messages.common.notListed}</dd></div>
               {bonus.eligibility ? <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility}</dd></div> : null}
@@ -176,7 +176,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         </div>
         <div className={styles.offerComposition}>
           <div className={styles.offerCopy}>
-            <span>{demo ? messages.common.demoData : messages.common.materialTerms}</span>
+            <span>{demo ? messages.profile.demoTerms : messages.common.materialTerms}</span>
             {bonus ? <>
               <h3>{structuredOfferHeading ? <><span>{structuredOfferHeading.primary}</span>{structuredOfferHeading.secondary ? <em>{structuredOfferHeading.secondary}</em> : null}</> : offerHeadline}</h3>
               <p>{bonus.summary}</p>
@@ -238,7 +238,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
           <aside className={styles.finalOffer} data-demo-state={demo ? "fictional" : undefined} data-motion-reveal data-nav-theme="dark">
             <div className={styles.finalOfferInner}>
-              {bonus ? <><span>{demo ? messages.common.demoData : messages.profile.verdict}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[offerHeadline, bonus.wageringText, minimumDeposit ? `${messages.common.minimumDeposit} ${minimumDeposit}` : null, withdrawal ? `${messages.common.payout} ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</> : <><span>{messages.profile.currentReview}</span><h3>{messages.profile.offerUnavailable}</h3><p>{messages.common.reviewAvailableNoAction}</p><UnavailableAction messages={messages} /></>}
+              {bonus ? <><span>{demo ? messages.profile.demoFinalFields : messages.profile.verdict}</span><h3>{casino.name} — <em>{casino.editorScore.toFixed(1)}</em></h3><p>{[offerHeadline, bonus.wageringText, minimumDeposit ? `${messages.common.minimumDeposit} ${minimumDeposit}` : null, withdrawal ? `${messages.common.payout} ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</> : <><span>{messages.profile.currentReview}</span><h3>{messages.profile.offerUnavailable}</h3><p>{messages.common.reviewAvailableNoAction}</p><UnavailableAction messages={messages} /></>}
             </div>
           </aside>
         </div>

@@ -60,10 +60,10 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
   const hero = demoOnly ? {
-    copy: messages.common.demoDisclosure,
-    kicker: messages.common.demoData,
-    stats: [[String(result.records.length), messages.common.records], ["0", messages.common.actionAvailable], ["0", messages.bestOffers.inferredActions]],
-    ticker: [messages.common.demoData, messages.common.materialTerms, messages.common.commercialUnavailable],
+    copy: messages.bestOffers.demoCopy,
+    kicker: messages.bestOffers.demoKicker,
+    stats: [[String(result.records.length), messages.bestOffers.fictionalRecords], ["0", messages.bestOffers.liveOffers], ["0", messages.bestOffers.claimActions]],
+    ticker: [messages.bestOffers.fictionalRecordsOnly, messages.bestOffers.termsBeforeAction, messages.bestOffers.availabilityFailsClosed],
   } : containsDemo ? {
     copy: messages.common.demoDisclosure,
     kicker: `${messages.common.sourceStatus} · ${messages.common.classified}`,

@@ -18,6 +18,14 @@ import { productHref } from "@/lib/market/product-context";
 
 import styles from "./CuratedCasinoShortlist.module.css";
 
+function selectorLabel(selector: Selector, messages: ProductPageMessages) {
+  if (selector === "Best Overall") return messages.casinos.bestOverall;
+  if (selector === "Crypto") return messages.casinos.crypto;
+  if (selector === "Mobile") return messages.casinos.mobile;
+  if (selector === "Best Bonuses") return messages.casinos.bestBonuses;
+  return messages.casinos.newCasinos;
+}
+
 function Visit({ casino, messages }: { casino: PublicCasinoCardDto; messages: ProductPageMessages }) {
   if (casino.dataClassification === "DEMO_FIXTURE" || !casino.visitAction.available || !casino.visitAction.redirectSlug) return <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>;
   return <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: `${messages.common.actionAvailable}: ${casino.name}` }} className={styles.visit} messages={messages.outbound} />;
@@ -62,27 +70,28 @@ function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto
 export function CuratedCasinoShortlist({ casinos, messages, presentation }: { casinos: PublicCasinoCardDto[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
+  const selectedLabel = selectorLabel(selector, messages);
 
   return <section className={styles.section} aria-labelledby="curated-title" data-motion-reveal data-nav-theme="light">
     <div className={styles.shell}>
       <div className={styles.tabs} aria-label={messages.casinos.directoryTitle} role="tablist">
-        {selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{messages.common.filters} {selectors.indexOf(label) + 1}</button>)}
+        {selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{selectorLabel(label, messages)}</button>)}
       </div>
-      <p className={styles.context} id="curated-title"><strong>{messages.casinos.directoryTitle}</strong><span>{messages.casinos.proofLimit} · {messages.casinos.proofEvidence}</span></p>
+      <p className={styles.context} id="curated-title"><strong>{selectedLabel}</strong><span>{messages.casinos.proofLimit} · {messages.casinos.proofEvidence}</span></p>
       {!top.length ? <div className={styles.empty} role="status"><strong>{messages.casinos.noMatchesTitle}</strong><p>{messages.casinos.noMatchesCopy}</p></div> : <div className={styles.cards}>
         {top.map((casino, index) => {
           const fixture = casino.dataClassification !== "PUBLISHED_RECORD";
           const strengths = casino.highlights.slice(0, 3);
           return <article className={styles.card} key={casino.id}>
             <div className={styles.cardBody}>
-              <div className={styles.recommendationContext}><span>{messages.casinos.directoryTitle}</span><b>{String(index + 1).padStart(2, "0")} / {String(top.length).padStart(2, "0")}</b></div>
+              <div className={styles.recommendationContext}><span>{selectedLabel}</span><b>{String(index + 1).padStart(2, "0")} / {String(top.length).padStart(2, "0")}</b></div>
               {fixture ? <p className={styles.demoLabel}><strong>{messages.common.demoData}</strong> · {messages.common.demoDisclosure}</p> : null}
               <div className={styles.cardHead}>
                 <div className={styles.mark}>{casino.logo ? <img alt={casino.logo.alt || `${casino.name} logo`} height={casino.logo.height ?? 120} src={casino.logo.url} width={casino.logo.width ?? 240} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
                 <div className={styles.identity}><small>{messages.profile.operatorReview}</small><h2>{casino.name}</h2></div>
                 <div className={styles.score} aria-label={`${messages.common.editorScore} ${casino.rating?.toFixed(1) ?? messages.common.notListed} / 10`}><small>{messages.common.editorScore}</small><strong>{casino.rating?.toFixed(1) ?? "—"}<span>/10</span></strong></div>
               </div>
-              <p className={styles.bestFor}><span>{messages.profile.bestFor}</span><strong>{messages.casinos.directoryTitle}</strong></p>
+              <p className={styles.bestFor}><span>{messages.profile.bestFor}</span><strong>{selectedLabel}</strong></p>
               <p className={styles.reason}>{casino.shortDescription || messages.casinos.heroCopy}</p>
               {strengths.length ? <ul className={styles.strengths}>{strengths.map((strength) => <li key={strength}>{strength}</li>)}</ul> : null}
               <div className={styles.offer}>
