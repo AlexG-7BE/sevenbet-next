@@ -1,0 +1,154 @@
+export type MarketCode = "GB" | "DE" | "SE" | "DK" | "FI" | "NO" | "CA";
+
+export type SupportedLocale =
+  | "en-GB"
+  | "de-DE"
+  | "sv-SE"
+  | "da-DK"
+  | "fi-FI"
+  | "nb-NO"
+  | "en-CA"
+  | "fr-CA";
+
+export type MarketEditorialState = "LIVE_BASELINE" | "LOCALIZATION_REQUIRED";
+export type MarketLegalContentState = "GB_REVIEWED" | "LOCAL_REVIEW_REQUIRED";
+export type MarketCommercialPresentationState = "AUTHORITY_REQUIRED";
+
+export type MarketProfile = Readonly<{
+  countryCode: MarketCode;
+  routeMarket: Lowercase<MarketCode>;
+  seoDisplayName: string;
+  defaultLocale: SupportedLocale;
+  supportedLocales: readonly SupportedLocale[];
+  currencyHints: readonly string[];
+  editorialState: MarketEditorialState;
+  legalContentState: MarketLegalContentState;
+  commercialPresentationState: MarketCommercialPresentationState;
+  helpResourceProfile: string;
+  partnerReadinessNotes: string | null;
+}>;
+
+const profiles = [
+  {
+    countryCode: "GB",
+    routeMarket: "gb",
+    seoDisplayName: "United Kingdom",
+    defaultLocale: "en-GB",
+    supportedLocales: ["en-GB"],
+    currencyHints: ["GBP"],
+    editorialState: "LIVE_BASELINE",
+    legalContentState: "GB_REVIEWED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "gb",
+    partnerReadinessNotes: "Existing public baseline and compatibility reference.",
+  },
+  {
+    countryCode: "DE",
+    routeMarket: "de",
+    seoDisplayName: "Deutschland",
+    defaultLocale: "de-DE",
+    supportedLocales: ["de-DE"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "de",
+    partnerReadinessNotes: "First European partner-readiness tranche.",
+  },
+  {
+    countryCode: "SE",
+    routeMarket: "se",
+    seoDisplayName: "Sverige",
+    defaultLocale: "sv-SE",
+    supportedLocales: ["sv-SE"],
+    currencyHints: ["SEK"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "se",
+    partnerReadinessNotes: "First European partner-readiness tranche.",
+  },
+  {
+    countryCode: "DK",
+    routeMarket: "dk",
+    seoDisplayName: "Danmark",
+    defaultLocale: "da-DK",
+    supportedLocales: ["da-DK"],
+    currencyHints: ["DKK"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "dk",
+    partnerReadinessNotes: "First European partner-readiness tranche.",
+  },
+  {
+    countryCode: "FI",
+    routeMarket: "fi",
+    seoDisplayName: "Suomi",
+    defaultLocale: "fi-FI",
+    supportedLocales: ["fi-FI"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "fi",
+    partnerReadinessNotes: "First European partner-readiness tranche.",
+  },
+  {
+    countryCode: "NO",
+    routeMarket: "no",
+    seoDisplayName: "Norge",
+    defaultLocale: "nb-NO",
+    supportedLocales: ["nb-NO"],
+    currencyHints: ["NOK"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "no",
+    partnerReadinessNotes: "Localized editorial readiness does not imply commercial legality or referral authority.",
+  },
+  {
+    countryCode: "CA",
+    routeMarket: "ca",
+    seoDisplayName: "Canada",
+    defaultLocale: "en-CA",
+    supportedLocales: ["en-CA", "fr-CA"],
+    currencyHints: ["CAD"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "ca",
+    partnerReadinessNotes: "Architecture-ready; not a blocker for the first European tranche.",
+  },
+] as const satisfies readonly MarketProfile[];
+
+export const MARKET_PROFILES: readonly MarketProfile[] = profiles;
+
+const byCountry = new Map<MarketCode, MarketProfile>(profiles.map((profile) => [profile.countryCode, profile]));
+const byRouteMarket = new Map<string, MarketProfile>(profiles.map((profile) => [profile.routeMarket, profile]));
+
+export function marketProfileByCountry(countryCode: string | null | undefined): MarketProfile | null {
+  if (!countryCode) return null;
+  return byCountry.get(countryCode.trim().toUpperCase() as MarketCode) ?? null;
+}
+
+export function marketProfileByRouteMarket(routeMarket: string | null | undefined): MarketProfile | null {
+  if (!routeMarket) return null;
+  return byRouteMarket.get(routeMarket.trim().toLowerCase()) ?? null;
+}
+
+export function languageSegmentForLocale(locale: SupportedLocale) {
+  return locale.split("-")[0].toLowerCase();
+}
+
+export function localeForLanguageSegment(profile: MarketProfile, languageSegment: string | null | undefined): SupportedLocale | null {
+  if (!languageSegment) return null;
+  const normalized = languageSegment.trim().toLowerCase();
+  return profile.supportedLocales.find((locale) => languageSegmentForLocale(locale) === normalized) ?? null;
+}
+
+export function localizedMarketPath(profile: MarketProfile, locale: SupportedLocale, pathname = "/") {
+  if (!profile.supportedLocales.includes(locale)) throw new Error(`Locale ${locale} is not supported by market ${profile.countryCode}`);
+  const suffix = pathname === "/" ? "" : `/${pathname.replace(/^\/+/, "")}`;
+  return `/${profile.routeMarket}/${languageSegmentForLocale(locale)}${suffix || "/"}`;
+}
