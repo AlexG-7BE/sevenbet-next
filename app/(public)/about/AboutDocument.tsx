@@ -5,7 +5,7 @@ import styles from "./AboutPage.module.css";
 
 export function AboutDocument({ messages }: { messages: AboutMessages }) {
   const parts = messages.parts.map((part, index) => [(["I", "II", "III"] as const)[index], part.title, part.body] as const);
-  return <article className={styles.page} data-about-document>
+  return <article className={styles.page} data-about-document data-handoff-page="about">
     <header className={styles.hero} data-about-section="hero">
       <div className={styles.heroInner}>
         <p className={styles.eyebrow}>{messages.eyebrow}</p>
