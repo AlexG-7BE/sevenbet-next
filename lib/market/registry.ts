@@ -1,10 +1,13 @@
-export type MarketCode = "GB" | "DE" | "IT" | "ES" | "SE" | "DK" | "FI" | "NO" | "CA";
+export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "CA";
 
 export type SupportedLocale =
   | "en-GB"
   | "de-DE"
   | "it-IT"
   | "es-ES"
+  | "pt-PT"
+  | "el-GR"
+  | "nl-NL"
   | "sv-SE"
   | "da-DK"
   | "fi-FI"
@@ -82,6 +85,45 @@ const profiles = [
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "es",
     partnerReadinessNotes: "First European partner-readiness tranche; Spain is a market profile while Spanish-language expansion to other countries remains separate.",
+  },
+  {
+    countryCode: "PT",
+    routeMarket: "pt",
+    seoDisplayName: "Portugal",
+    defaultLocale: "pt-PT",
+    supportedLocales: ["pt-PT"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "pt",
+    partnerReadinessNotes: "Partner-readiness target supported by current SkillOnNet and NetoPartners portfolio evidence; commercial authority remains separate.",
+  },
+  {
+    countryCode: "GR",
+    routeMarket: "gr",
+    seoDisplayName: "Ελλάδα",
+    defaultLocale: "el-GR",
+    supportedLocales: ["el-GR"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "gr",
+    partnerReadinessNotes: "SkillOnNet/EGO relevance; Greek affiliate promotion requires separate HGC suitability and approved-URL authority before commercial activation.",
+  },
+  {
+    countryCode: "NL",
+    routeMarket: "nl",
+    seoDisplayName: "Nederland",
+    defaultLocale: "nl-NL",
+    supportedLocales: ["nl-NL"],
+    currencyHints: ["EUR"],
+    editorialState: "LOCALIZATION_REQUIRED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "nl",
+    partnerReadinessNotes: "Partner-readiness target; Dutch affiliate advertising is permitted only within applicable Ksa rules and licensed-operator authority.",
   },
   {
     countryCode: "SE",
