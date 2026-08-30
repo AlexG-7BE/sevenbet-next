@@ -227,7 +227,7 @@
   align-items: center;
   justify-content: center;
   color: var(--shell-night-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1;
   font-weight: 700;
   letter-spacing: .08em;
@@ -275,7 +275,7 @@
 }
 .presentationSelectorLabel {
   color: var(--shell-night-muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 16px;
   font-weight: 600;
   letter-spacing: .1em;
