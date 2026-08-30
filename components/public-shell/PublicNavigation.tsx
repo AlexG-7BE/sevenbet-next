@@ -13,7 +13,7 @@ import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
-import { publicMarketPath } from "@/lib/market/registry";
+import { publicMarketPath, type MarketProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import styles from "./PublicShell.module.css";
 
@@ -38,11 +38,13 @@ export function PublicNavigation({
   authenticated,
   messages,
   presentation,
+  selectableMarkets,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   messages: PublicShellMessages;
   presentation: PresentationResolution;
+  selectableMarkets: readonly MarketProfile[];
 }) {
   const pathname = usePathname();
   const unprefixedPathname = stripPublicMarketPrefix(pathname);
@@ -112,7 +114,7 @@ export function PublicNavigation({
           ))}
         </nav>
         <div className={styles.accountNavigation}>
-          <MarketLanguageSelector messages={messages} presentation={presentation} variant="desktop" />
+          <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="desktop" />
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
           <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
@@ -164,7 +166,7 @@ export function PublicNavigation({
               </Link>
             ))}
           </nav>
-          <MarketLanguageSelector messages={messages} presentation={presentation} variant="mobile" />
+          <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="mobile" />
           <div className={styles.mobileHelp}>
             <span>{messages.controlAndSupport}</span>
             <Link href={localizePublicHref("/help", pathname, presentation.market, presentation.locale)} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>

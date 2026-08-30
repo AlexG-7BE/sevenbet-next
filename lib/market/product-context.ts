@@ -5,7 +5,7 @@ import { publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/l
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
 import { FIRST_WAVE_MARKETS } from "./first-wave-evidence";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
+import { PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
@@ -16,9 +16,9 @@ export const PRODUCT_TRANSLATION_REVIEW_STATE = {
 } as Record<SupportedLocale, "SOURCE_BASELINE" | "MACHINE_TRANSLATED">;
 
 /**
- * Localized product routes remain outside the indexable sitemap during this
- * Preview slice. This reversible gate avoids changing Production SEO authority
- * while machine-assisted copy and reciprocal alternates are reviewed.
+ * Founder editorial publication acceptance and indexing authority are separate.
+ * A translated route stays outside the indexable sitemap and renders noindex
+ * until its explicit indexing authority is activated.
  */
 export function localizedProductIndexingApproved(locale: SupportedLocale) {
   return locale !== "en-GB" && publicTranslationIndexingApproved(locale);
@@ -38,7 +38,7 @@ export function productCanonicalPath(presentation: PresentationResolution, pathn
 
 export function productLanguageAlternates(pathname: string) {
   return Object.fromEntries([
-    ...INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => [
+    ...PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => [
       profile.defaultLocale,
       absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
     ]),
@@ -81,7 +81,7 @@ export function productMetadata(input: {
     ? { index: false, follow: true }
     : input.robots;
   const locale = openGraphLocale(input.presentation.locale);
-  const alternateLocale = INITIAL_EUROPEAN_MARKET_PROFILES
+  const alternateLocale = PUBLICATION_APPROVED_MARKET_PROFILES
     .map((profile) => openGraphLocale(profile.defaultLocale))
     .filter((candidate) => candidate !== locale);
 

@@ -18,8 +18,10 @@ import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-sh
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { jurisdictionResolver } from "../lib/jurisdiction/resolver";
 import {
+  FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
   MARKET_PROFILES,
+  PUBLICATION_APPROVED_MARKET_PROFILES,
   publicMarketPath,
   marketProfileByCountry,
   marketProfileByRouteMarket,
@@ -55,6 +57,16 @@ test("initial market registry exposes the partner-readiness tranche without impl
   assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "IT", "ES", "PT", "GR", "NL", "SE", "DK", "FI", "NO", "CA"]);
   for (const profile of MARKET_PROFILES) {
     assert.equal(profile.commercialPresentationState, "AUTHORITY_REQUIRED");
+  }
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "SE", "DK", "GR"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "GR", "SE", "DK"]);
+  for (const profile of MARKET_PROFILES) {
+    const expected: "LIVE_BASELINE" | "LIVE_LOCALIZED" | "LOCALIZATION_REQUIRED" = profile.countryCode === "GB"
+      ? "LIVE_BASELINE"
+      : (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+        ? "LIVE_LOCALIZED"
+        : "LOCALIZATION_REQUIRED";
+    assert.equal(profile.editorialState, expected, profile.countryCode);
   }
   assert.equal(marketProfileByCountry("de")?.defaultLocale, "de-DE");
   assert.equal(marketProfileByCountry("it")?.defaultLocale, "it-IT");
@@ -166,7 +178,7 @@ test("localized product links, canonicals and reciprocal alternates preserve exp
   assert.equal(new URL(languages["en-GB"]).pathname, "/casinos");
   assert.equal(new URL(languages["de-DE"]).pathname, "/de/casinos");
   assert.equal(new URL(languages["es-ES"]).pathname, "/es/casinos");
-  assert.equal(Object.keys(languages).length, INITIAL_EUROPEAN_MARKET_PROFILES.length + 1);
+  assert.equal(Object.keys(languages).length, PUBLICATION_APPROVED_MARKET_PROFILES.length + 1);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
@@ -342,7 +354,7 @@ test("every European Home locale has complete localized copy and metadata", () =
   }
 });
 
-test("translation review state keeps every machine-assisted locale noindex and review-gated", () => {
+test("translation review state records only first-wave Founder publication acceptance while keeping every translated locale noindex", () => {
   assert.deepEqual(TRANSLATION_REVIEW_STATE["en-GB"], {
     content: "SOURCE_BASELINE",
     aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE",
@@ -355,7 +367,9 @@ test("translation review state keeps every machine-assisted locale noindex and r
     assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
       content: "MACHINE_TRANSLATED",
       aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
-      founderPublication: "FOUNDER_PUBLICATION_NOT_ACCEPTED",
+      founderPublication: (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+        ? "FOUNDER_PUBLICATION_ACCEPTED"
+        : "FOUNDER_PUBLICATION_NOT_ACCEPTED",
       legalReview: "REQUIRED",
       marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
       indexingAuthority: "NOT_ACTIVATED",
@@ -446,6 +460,41 @@ test("market-first middleware redirects legacy paths and rewrites only validated
   assert.equal(protectedRoute.headers.get("x-middleware-rewrite"), null);
   assert.equal(protectedRoute.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null);
   assert.equal(protectedRoute.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null);
+});
+
+test("Production routing and preference selection expose only Founder-publication-approved markets", async () => {
+  const previousVercelEnvironment = process.env.VERCEL_ENV;
+  process.env.VERCEL_ENV = "production";
+  try {
+    const approved = middleware(new NextRequest("https://b4gamble.com/de/casinos"));
+    assert.equal(new URL(approved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
+    assert.equal(approved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
+
+    for (const market of ["it", "pt", "nl", "fi", "no", "ca"]) {
+      const denied = middleware(new NextRequest(`https://b4gamble.com/${market}/`));
+      assert.equal(denied.headers.get("x-middleware-rewrite"), null, market);
+      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, market);
+      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null, market);
+    }
+
+    const acceptedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
+      method: "POST",
+      body: new URLSearchParams({ choice: "DE|de-DE", returnTo: "/casinos" }),
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+    }));
+    assert.equal(acceptedSelection.status, 303);
+    assert.equal(acceptedSelection.headers.get("location"), "/de/casinos");
+
+    const unapprovedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
+      method: "POST",
+      body: new URLSearchParams({ choice: "IT|it-IT", returnTo: "/casinos" }),
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+    }));
+    assert.equal(unapprovedSelection.status, 400);
+  } finally {
+    if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercelEnvironment;
+  }
 });
 
 test("preference endpoint persists only a validated presentation choice and can clear it", async () => {

@@ -27,8 +27,9 @@ const machineTranslated: TranslationReviewState = {
   indexingAuthority: "NOT_ACTIVATED",
 };
 
-const firstWaveMachineTranslated: TranslationReviewState = {
+const firstWavePublicationAccepted: TranslationReviewState = {
   ...machineTranslated,
+  founderPublication: "FOUNDER_PUBLICATION_ACCEPTED",
   marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
 };
 
@@ -41,18 +42,18 @@ const architectureOnlyTranslated: TranslationReviewState = {
  * AI_LANGUAGE_QA_PASSED records the bounded automated catalog report in
  * `docs/internationalisation/ai-language-qa-report.json`. It is not human,
  * native-speaker, legal or publication review. Founder publication acceptance
- * is external authority and is deliberately false for every translated locale.
+ * is separately recorded only for the five explicitly accepted locales.
  */
 export const TRANSLATION_REVIEW_STATE = {
   "en-GB": sourceBaseline,
-  "de-DE": firstWaveMachineTranslated,
+  "de-DE": firstWavePublicationAccepted,
   "it-IT": machineTranslated,
-  "es-ES": firstWaveMachineTranslated,
+  "es-ES": firstWavePublicationAccepted,
   "pt-PT": machineTranslated,
-  "el-GR": firstWaveMachineTranslated,
+  "el-GR": firstWavePublicationAccepted,
   "nl-NL": machineTranslated,
-  "sv-SE": firstWaveMachineTranslated,
-  "da-DK": firstWaveMachineTranslated,
+  "sv-SE": firstWavePublicationAccepted,
+  "da-DK": firstWavePublicationAccepted,
   "fi-FI": machineTranslated,
   "nb-NO": machineTranslated,
   "en-CA": architectureOnlyTranslated,
@@ -61,6 +62,10 @@ export const TRANSLATION_REVIEW_STATE = {
 
 export function translationReviewState(locale: SupportedLocale) {
   return TRANSLATION_REVIEW_STATE[locale];
+}
+
+export function founderEditorialPublicationAccepted(locale: SupportedLocale) {
+  return translationReviewState(locale).founderPublication === "FOUNDER_PUBLICATION_ACCEPTED";
 }
 
 export function publicTranslationIndexingApproved(locale: SupportedLocale) {

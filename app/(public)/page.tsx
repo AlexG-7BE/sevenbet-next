@@ -2,24 +2,13 @@ import type { Metadata } from "next";
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { transformHomeHandoff, transformHomeHandoffCss } from "@/lib/final-handoff/transforms";
 import { homeMetadata } from "@/lib/i18n/home-catalog";
+import { productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
-import { publicMarketPath } from "@/lib/market/registry";
-import { absoluteUrl } from "@/lib/site";
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
   const { title, description } = homeMetadata(presentation.locale);
-  const canonicalPath = presentation.source === "EXPLICIT_ROUTE"
-    ? publicMarketPath(presentation.market, presentation.locale)
-    : "/";
-  const canonical = absoluteUrl(canonicalPath);
-  return {
-    title,
-    description,
-    alternates: { canonical },
-    openGraph: { type: "website", siteName: "B4GAMBLE", title, description, url: canonical, locale: presentation.locale.replace("-", "_") },
-    twitter: { card: "summary", title, description },
-  };
+  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true } });
 }
 
 export default async function HomePage() {

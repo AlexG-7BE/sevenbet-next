@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30. A later explicit Founder instruction on 2026-08-30 removed human/native-speaker linguistic review as a publication-state requirement, required actual bounded AI language QA, retained Founder publication acceptance as separate non-automatic authority, and authorised the first-wave DE/ES/SE/DK/GR evidence implementation described below.
+Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30. A later explicit Founder instruction on 2026-08-30 removed human/native-speaker linguistic review as a publication-state requirement, required actual bounded AI language QA, retained Founder publication acceptance as separate non-automatic authority, and authorised the first-wave DE/ES/SE/DK/GR evidence implementation described below. The current Founder publication-acceptance instruction on 2026-08-30 accepts the localized editorial versions for DE/de-DE, ES/es-ES, SE/sv-SE, DK/da-DK and GR/el-GR for public Production presentation, with indexing not activated and commercial authority still fail-closed.
 
 ## Decision
 
@@ -230,19 +230,33 @@ The implementation uses one typed review-state record per supported locale. Revi
 | Locale set | Content state | AI language QA | Founder publication | Legal review | Market-evidence review | Indexing |
 | --- | --- | --- | --- | --- | --- | --- |
 | `en-GB` | `SOURCE_BASELINE` | not applicable to source baseline | source-baseline authority | GB source reviewed | GB baseline | existing English routes retain their existing indexing policy |
-| `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required for legal or jurisdiction-sensitive copy | first-wave evidence reviewed | `noindex, follow`; excluded from the indexable sitemap |
+| `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_ACCEPTED` | required for legal or jurisdiction-sensitive copy | first-wave evidence reviewed | `noindex, follow`; excluded from the indexable sitemap |
 | `it-IT`, `pt-PT`, `nl-NL`, `fi-FI`, `nb-NO` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required for legal or jurisdiction-sensitive copy | required | `noindex, follow`; excluded from the indexable sitemap |
 | `en-CA`, `fr-CA` | architecture-only machine translation | required | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required | required | not approved for publication/indexing |
 
-`AI_LANGUAGE_QA_PASSED` records an actual deterministic repository check of completeness, non-empty strings, obvious English and wrong-locale leakage, placeholders, Unicode, unsafe HTML/text transforms, terminology, protected names, Programme/commercial separation, no-clinical semantics, and affiliate/editorial independence. The generated report is `docs/internationalisation/ai-language-qa-report.json`. It is not human review, native-speaker review, legal approval or Founder publication acceptance. Founder acceptance is never inferred from an AI pass, route availability, market evidence or CI. Every non-English locale remains noindex until separate Founder indexing authority is recorded.
+`AI_LANGUAGE_QA_PASSED` records an actual deterministic repository check of completeness, non-empty strings, obvious English and wrong-locale leakage, placeholders, Unicode, unsafe HTML/text transforms, terminology, protected names, Programme/commercial separation, no-clinical semantics, and affiliate/editorial independence. The generated report is `docs/internationalisation/ai-language-qa-report.json`. It is not human review, native-speaker review or legal approval. Founder acceptance is never inferred from an AI pass, route availability, market evidence or CI; it is recorded only from explicit Founder authority. For the five accepted locales, the Founder has decided that the recorded AI language-QA pass is sufficient for editorial publication without a separate human/native-speaker gate. Every non-English locale remains noindex until separate Founder indexing authority is recorded.
 
 Ordinary non-legal Preview routes may remain inspectable while noindex. Operative Terms, Privacy and Affiliate Disclosure bodies remain unprefixed and are not exposed as localized law until their legal gate is explicitly approved. Programme remains unprefixed. The exact `/help` and `/responsible-gambling` routes are localized only for the five first-wave evidence profiles below; Help subroutes remain protected and unprefixed. A translated shell alone cannot make another safety route localizable.
 
-The Founder engineering-closure instruction of 2026-08-30 extends the safe static/trust tranche to complete Methodology, Contact and Learning bodies. Their repository-controlled machine-translated catalogs, localized metadata and short market routes may be exposed in Preview with `noindex, follow`. Learning preserves article/source identity and explicitly reports its unavailable claim-level source status; localization does not manufacture evidence. The first-wave instruction additionally allows localized Help and Responsible Gambling presentations for DE/ES/SE/DK/GR using the evidence below. Programme and legal documents remain review-gated and unprefixed. The presence of a localized market route still grants no legal, commercial, publication or indexing approval.
+The Founder engineering-closure instruction of 2026-08-30 extends the safe static/trust tranche to complete Methodology, Contact and Learning bodies. Their repository-controlled machine-translated catalogs, localized metadata and short market routes may be exposed in Preview with `noindex, follow`. Learning preserves article/source identity and explicitly reports its unavailable claim-level source status; localization does not manufacture evidence. The first-wave instruction additionally allows localized Help and Responsible Gambling presentations for DE/ES/SE/DK/GR using the evidence below. Programme and legal documents remain review-gated and unprefixed. Route presence by itself grants no legal, commercial, publication or indexing approval; the five-market publication authority now comes only from the later explicit Founder decision recorded above.
+
+### Founder editorial publication acceptance — 2026-08-30
+
+The Founder accepts DE/de-DE, ES/es-ES, SE/sv-SE, DK/da-DK and GR/el-GR as `LIVE_LOCALIZED` editorial presentations. This is authority to make their approved public product, trust, Learning, Help and Responsible Gambling routes publicly available in Production after the ordinary PR and deployment process. It does not itself perform a merge or deployment.
+
+This acceptance is deliberately bounded:
+
+- `AI_LANGUAGE_QA_PASSED` is sufficient for these five editorial publications; no human or native-speaker review is required;
+- indexing remains `NOT_ACTIVATED`, so every non-GB localized page remains `noindex, follow` and excluded from the indexable sitemap;
+- partner, operator, licence, offer, tracking and referral authority remain separate and cumulative, with absent evidence failing closed;
+- localized Programme runtime and localized operative legal documents are not accepted or activated;
+- Italy, Portugal, the Netherlands, Finland, Norway and Canada remain Preview/draft or architecture-only presentations and are not approved for public Production presentation.
+
+Production exposure follows this authority rather than treating every technically routed locale as published: the public selector and canonical language alternatives include only GB plus the five accepted markets, and requests that claim an unaccepted market do not enter the localized rewrite in Production. Preview retains the wider locale matrix for editorial inspection.
 
 ## First-wave market evidence implementation — 2026-08-30
 
-The implementation stores bounded typed evidence profiles rather than a legal-rules engine. All claims below are **DETECTED** from the linked live authoritative source as reviewed on 2026-08-30. Applicability text records how the fact may be used and prevents evidence presence from being interpreted as approval. Every record has a next-review date. No profile grants commercial or publication authority.
+The implementation stores bounded typed evidence profiles rather than a legal-rules engine. All claims below are **DETECTED** from the linked live authoritative source as reviewed on 2026-08-30. Applicability text records how the fact may be used and prevents evidence presence from being interpreted as approval. Every record has a next-review date. No evidence profile grants commercial or publication authority; publication authority for the five markets is the separate explicit Founder decision above.
 
 | Market | DETECTED authoritative evidence | Bounded implementation consequence |
 | --- | --- | --- |
@@ -349,28 +363,26 @@ This is the state that can be shown to a network for reassessment before offers 
 - removal of GB defaults from request-aware public-service call sites;
 - regression tests proving commercial authority remains independent.
 
-### Phase B — Minimum partner-ready European locales
+### Phase B — Founder-accepted first public localized tranche
 
 Publish complete public localized versions for:
 
 - `de-DE`;
-- `it-IT`;
 - `es-ES`;
-- `pt-PT`;
 - `el-GR`;
-- `nl-NL`;
 - `sv-SE`;
 - `da-DK`;
-- `fi-FI`;
-- `nb-NO`;
 
 with `en-GB` as the baseline reference.
+
+Retain `it-IT`, `pt-PT`, `nl-NL`, `fi-FI` and `nb-NO` as Preview-inspectable drafts until separately accepted by the Founder.
 
 ### Phase C — Market-specific content hardening
 
 - local responsible-gambling/help resources;
 - local legal/privacy/affiliate-disclosure review state;
-- localized Learning Center and Programme content completeness;
+- localized Learning Center completeness;
+- any future localized Programme runtime only under separate Founder and Programme authority;
 - market-specific casino editorial inventory as evidence becomes available.
 
 ### Phase D — Partner reassessment

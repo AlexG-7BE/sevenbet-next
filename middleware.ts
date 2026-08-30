@@ -17,7 +17,7 @@ import {
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
 } from "@/lib/market/routing";
-import { publicMarketPath } from "@/lib/market/registry";
+import { marketEditorialPublicationApproved, publicMarketPath } from "@/lib/market/registry";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -90,6 +90,13 @@ export function middleware(request: NextRequest) {
   }
 
   const publicMarketRoute = parsePublicMarketRoute(pathname);
+  if (
+    publicMarketRoute.kind !== "INVALID"
+    && process.env.VERCEL_ENV === "production"
+    && !marketEditorialPublicationApproved(publicMarketRoute.market)
+  ) {
+    return secureResponse(nextResponse());
+  }
   if (publicMarketRoute.kind === "LEGACY_REDUNDANT_LOCALE" || publicMarketRoute.kind === "DEFAULT_MARKET_ALIAS") {
     const destination = new URL(request.url);
     destination.pathname = publicMarketRoute.canonicalPath;

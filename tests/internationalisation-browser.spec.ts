@@ -15,6 +15,59 @@ import { FIRST_WAVE_MARKET_EVIDENCE, FIRST_WAVE_MARKETS } from "../lib/market/fi
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
+const founderPublicationSmoke = [
+  { market: "DE", locale: "de-DE", representativePath: "/casinos", representativeCopy: productPageMessages("de-DE").casinos.heroLead },
+  { market: "ES", locale: "es-ES", representativePath: "/bonuses", representativeCopy: productPageMessages("es-ES").bonuses.heroLead },
+  { market: "SE", locale: "sv-SE", representativePath: "/best-offers", representativeCopy: productPageMessages("sv-SE").bestOffers.heroLead },
+  { market: "DK", locale: "da-DK", representativePath: "/methodology", representativeCopy: methodologyMessages("da-DK").copy.get("Evidence before") ?? "" },
+  { market: "GR", locale: "el-GR", representativePath: "/about", representativeCopy: aboutMessages("el-GR").titleLead },
+] as const;
+
+const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
+
+for (const acceptance of founderPublicationSmoke) {
+  const prefix = `/${acceptance.market.toLowerCase()}`;
+  const evidence = FIRST_WAVE_MARKET_EVIDENCE[acceptance.market];
+  const article = localizedLearningArticles(acceptance.locale)[0];
+  const rootHero = homeTranslation(acceptance.locale)?.hero ?? HOME_SOURCE_COPY.hero;
+  const routes = [
+    { pathname: `${prefix}/`, heading: rootHero[2], publicSelector: true },
+    { pathname: `${prefix}${acceptance.representativePath}`, heading: acceptance.representativeCopy, publicSelector: true },
+    { pathname: `${prefix}/help`, heading: evidence.copy.helpTitle, publicSelector: false },
+    { pathname: `${prefix}/responsible-gambling`, heading: evidence.copy.responsibleTitle, publicSelector: false },
+    { pathname: `${prefix}/learn/casino-basics/online-casino-basics`, heading: article.title, publicSelector: true },
+  ] as const;
+
+  test(`Founder-publication smoke: ${acceptance.market} is localized, noindex, fail-closed and internally connected`, async ({ page, request }) => {
+    const internalLinks = new Set<string>();
+    for (const route of routes) {
+      const response = await page.goto(`${baseUrl}${route.pathname}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), route.pathname).toBe(200);
+      await expect(page.locator("html")).toHaveAttribute("lang", acceptance.locale);
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(route.heading);
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(route.pathname);
+      if (route.publicSelector) {
+        await expect(page.getByRole("combobox", { name: publicShellMessages(acceptance.locale).changeMarketAndLanguage }).first()).toHaveValue(`${acceptance.market}|${acceptance.locale}`);
+      }
+      expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count(), `${route.pathname} must not expose outbound commercial actions`).toBe(0);
+      await expect(page.locator("main")).not.toContainText(knownEnglishLeakage);
+      if (route.pathname.endsWith("/help") || route.pathname.endsWith("/responsible-gambling")) {
+        await expect(page.locator("main")).not.toContainText(/GAMSTOP|GamCare|NHS/);
+      }
+      for (const href of await page.locator('a[href^="/"]').evaluateAll((anchors) => anchors.map((anchor) => anchor.getAttribute("href")).filter((href): href is string => Boolean(href)))) {
+        internalLinks.add(href);
+      }
+    }
+
+    for (const href of internalLinks) {
+      if (/^\/(?:[a-z]{2}\/)?casino\//.test(new URL(href, baseUrl).pathname)) continue;
+      const response = await request.get(new URL(href, baseUrl).toString());
+      expect(response.status(), `${acceptance.market} internal link ${href}`).toBeLessThan(400);
+    }
+  });
+}
+
 for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
   const locale = profile.defaultLocale;
   const pathname = publicMarketPath(profile, locale);
@@ -151,15 +204,19 @@ for (const profile of representativeProductMarkets) {
   });
 }
 
-test("old Preview-only default-language URLs redirect once to market-first canonicals", async ({ page }) => {
+test("old Preview-only default-language URLs redirect in exactly one hop to market-first canonicals", async ({ request }) => {
   for (const [legacy, canonical] of [
-    ["/de/de/?source=partner", "/de/?source=partner"],
-    ["/de/de/casinos?page=2", "/de/casinos?page=2"],
+    ["/de/de/casinos?source=partner", "/de/casinos?source=partner"],
+    ["/es/es/bonuses", "/es/bonuses"],
+    ["/se/sv/best-offers", "/se/best-offers"],
+    ["/dk/da/methodology", "/dk/methodology"],
+    ["/gr/el/about", "/gr/about"],
     ["/gb/en/", "/"],
-    ["/gr/el/bonuses", "/gr/bonuses"],
   ] as const) {
-    await page.goto(`${baseUrl}${legacy}`, { waitUntil: "domcontentloaded" });
-    await expect(page).toHaveURL(`${baseUrl}${canonical}`);
+    const redirect = await request.get(`${baseUrl}${legacy}`, { maxRedirects: 0 });
+    expect(redirect.status(), legacy).toBe(308);
+    expect(redirect.headers().location, legacy).toBe(canonical);
+    expect((await request.get(`${baseUrl}${canonical}`, { maxRedirects: 0 })).status(), canonical).toBe(200);
   }
 });
 

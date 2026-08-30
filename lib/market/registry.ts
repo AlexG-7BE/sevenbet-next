@@ -15,7 +15,7 @@ export type SupportedLocale =
   | "en-CA"
   | "fr-CA";
 
-export type MarketEditorialState = "LIVE_BASELINE" | "LOCALIZATION_REQUIRED";
+export type MarketEditorialState = "LIVE_BASELINE" | "LIVE_LOCALIZED" | "LOCALIZATION_REQUIRED";
 export type MarketLegalContentState = "GB_REVIEWED" | "LOCAL_REVIEW_REQUIRED";
 export type MarketCommercialPresentationState = "AUTHORITY_REQUIRED";
 
@@ -54,7 +54,7 @@ const profiles = [
     defaultLocale: "de-DE",
     supportedLocales: ["de-DE"],
     currencyHints: ["EUR"],
-    editorialState: "LOCALIZATION_REQUIRED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "de",
@@ -80,7 +80,7 @@ const profiles = [
     defaultLocale: "es-ES",
     supportedLocales: ["es-ES"],
     currencyHints: ["EUR"],
-    editorialState: "LOCALIZATION_REQUIRED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "es",
@@ -106,7 +106,7 @@ const profiles = [
     defaultLocale: "el-GR",
     supportedLocales: ["el-GR"],
     currencyHints: ["EUR"],
-    editorialState: "LOCALIZATION_REQUIRED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "gr",
@@ -132,7 +132,7 @@ const profiles = [
     defaultLocale: "sv-SE",
     supportedLocales: ["sv-SE"],
     currencyHints: ["SEK"],
-    editorialState: "LOCALIZATION_REQUIRED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "se",
@@ -145,7 +145,7 @@ const profiles = [
     defaultLocale: "da-DK",
     supportedLocales: ["da-DK"],
     currencyHints: ["DKK"],
-    editorialState: "LOCALIZATION_REQUIRED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "dk",
@@ -211,16 +211,27 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
 export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
+export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
+export type FounderPublicationAcceptedMarketCode = typeof FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES[number];
+
 const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);
 
 export const INITIAL_EUROPEAN_MARKET_PROFILES: readonly MarketProfile[] = profiles.filter(
   (profile) => initialEuropeanMarketCodes.has(profile.countryCode),
 );
 
+export const PUBLICATION_APPROVED_MARKET_PROFILES: readonly MarketProfile[] = profiles.filter(
+  (profile) => profile.editorialState === "LIVE_BASELINE" || profile.editorialState === "LIVE_LOCALIZED",
+);
+
 export const DEFAULT_MARKET_PROFILE = profiles[0];
 
 export function isInitialEuropeanMarket(profile: MarketProfile) {
   return initialEuropeanMarketCodes.has(profile.countryCode);
+}
+
+export function marketEditorialPublicationApproved(profile: MarketProfile) {
+  return profile.editorialState === "LIVE_BASELINE" || profile.editorialState === "LIVE_LOCALIZED";
 }
 
 const byCountry = new Map<MarketCode, MarketProfile>(profiles.map((profile) => [profile.countryCode, profile]));

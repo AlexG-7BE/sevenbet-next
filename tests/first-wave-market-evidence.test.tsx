@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { evaluateFirstWaveCommercialReadiness, type FirstWaveCommercialEvidence } from "../lib/affiliate-commercial/first-wave-commercial-readiness";
+import { evaluateFirstWaveCommercialReadiness, type FirstWaveCommercialEvidence, type FirstWaveCommercialRequirement } from "../lib/affiliate-commercial/first-wave-commercial-readiness";
 import { generateLanguageQaReport } from "../lib/i18n/language-qa";
-import { TRANSLATION_REVIEW_STATE, publicTranslationIndexingApproved } from "../lib/i18n/review-state";
+import { TRANSLATION_REVIEW_STATE, founderEditorialPublicationAccepted, publicTranslationIndexingApproved } from "../lib/i18n/review-state";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { FIRST_WAVE_MARKET_EVIDENCE, FIRST_WAVE_MARKETS } from "../lib/market/first-wave-evidence";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import { firstWaveSafetyLanguageAlternates, productHref, productMetadata } from "../lib/market/product-context";
-import { marketProfileByCountry } from "../lib/market/registry";
+import { FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry } from "../lib/market/registry";
 import { parsePublicMarketRoute } from "../lib/market/routing";
 
 const allCommercialEvidence: FirstWaveCommercialEvidence = {
@@ -40,15 +40,19 @@ test("bounded automated language QA passes every European machine-translated cat
 
 test("review states distinguish source, machine translation, AI QA and Founder authority without human-review claims", () => {
   const source = readFileSync("lib/i18n/review-state.ts", "utf8");
+  const acceptedLocales = new Set(["de-DE", "es-ES", "sv-SE", "da-DK", "el-GR"]);
   assert.doesNotMatch(source, /linguisticReview|HUMAN_REVIEW_REQUIRED|NATIVE_SPEAKER_REQUIRED/);
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
     assert.equal(state.content, "MACHINE_TRANSLATED", locale);
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
-    assert.equal(state.founderPublication, "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
+    assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
+    assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
     assert.equal(state.indexingAuthority, "NOT_ACTIVATED", locale);
     assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), false, locale);
   }
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "SE", "DK", "GR"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "GR", "SE", "DK"]);
 });
 
 test("first-wave profiles contain dated detected evidence and market-specific safety resources", () => {
@@ -76,18 +80,35 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
 
 test("commercial readiness is fail-closed and adds the exact market-specific gates", () => {
   const expectedSpecific = { DE: "EXACT_OPERATOR_DOMAIN_MATCH", ES: "PROMOTIONAL_COPY_REVIEW", SE: null, DK: null, GR: "HGC_AFFILIATE_SUITABILITY_REQUIRED" } as const;
+  const evidenceField = {
+    EXISTING_COMMERCIAL_AUTHORITY: "existingCommercialAuthority",
+    CURRENT_OPERATOR_MARKET_LICENCE: "operatorMarketLicenceEvidence",
+    EXACT_OPERATOR_DOMAIN_MATCH: "exactOperatorDomainEvidence",
+    ADVERTISING_WITHIN_OPERATOR_AUTHORITY: "requestedAdvertisingWithinOperatorAuthority",
+    PROMOTIONAL_COPY_REVIEW: "promotionalCopyReviewCleared",
+    HGC_AFFILIATE_SUITABILITY_REQUIRED: "hgcAffiliateSuitabilityEvidence",
+    PARTNER_APPROVAL: "partnerApproved",
+    ACTIVE_OFFER: "offerActive",
+    TRACKING_READY: "trackingReady",
+  } as const satisfies Record<FirstWaveCommercialRequirement, keyof FirstWaveCommercialEvidence>;
   for (const market of FIRST_WAVE_MARKETS) {
-    const denied = evaluateFirstWaveCommercialReadiness(market, { ...allCommercialEvidence, existingCommercialAuthority: false });
-    assert.equal(denied.eligible, false);
-    assert.equal(denied.decision, "DENIED_FAIL_CLOSED");
-    assert.ok(denied.unmet.includes("EXISTING_COMMERCIAL_AUTHORITY"));
-    for (const common of ["CURRENT_OPERATOR_MARKET_LICENCE", "PARTNER_APPROVAL", "ACTIVE_OFFER", "TRACKING_READY"] as const) assert.ok(denied.requirements.includes(common), `${market}:${common}`);
-    if (expectedSpecific[market]) assert.ok(denied.requirements.includes(expectedSpecific[market]), `${market}:${expectedSpecific[market]}`);
+    const requirements = evaluateFirstWaveCommercialReadiness(market, allCommercialEvidence).requirements;
+    for (const requirement of requirements) {
+      const denied = evaluateFirstWaveCommercialReadiness(market, { ...allCommercialEvidence, [evidenceField[requirement]]: false });
+      assert.equal(denied.eligible, false, `${market}:${requirement}`);
+      assert.equal(denied.decision, "DENIED_FAIL_CLOSED", `${market}:${requirement}`);
+      assert.ok(denied.unmet.includes(requirement), `${market}:${requirement}`);
+    }
+    for (const common of ["CURRENT_OPERATOR_MARKET_LICENCE", "PARTNER_APPROVAL", "ACTIVE_OFFER", "TRACKING_READY"] as const) assert.ok(requirements.includes(common), `${market}:${common}`);
+    if (expectedSpecific[market]) assert.ok(requirements.includes(expectedSpecific[market]), `${market}:${expectedSpecific[market]}`);
     const theoretical = evaluateFirstWaveCommercialReadiness(market, allCommercialEvidence);
     assert.equal(theoretical.eligible, true);
     assert.equal(theoretical.decision, "ELIGIBLE_FOR_EXISTING_GOVERNED_FLOW");
   }
   assert.ok(evaluateFirstWaveCommercialReadiness("ES", allCommercialEvidence).requirements.includes("ADVERTISING_WITHIN_OPERATOR_AUTHORITY"));
+  const greekHold = evaluateFirstWaveCommercialReadiness("GR", { ...allCommercialEvidence, hgcAffiliateSuitabilityEvidence: false });
+  assert.equal(greekHold.decision, "DENIED_FAIL_CLOSED");
+  assert.deepEqual(greekHold.unmet, ["HGC_AFFILIATE_SUITABILITY_REQUIRED"]);
 });
 
 test("only GB and the five first-wave markets receive localized Help and Responsible Gambling routes", () => {

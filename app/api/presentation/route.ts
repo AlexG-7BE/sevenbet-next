@@ -6,7 +6,7 @@ import {
   serializePresentationPreference,
 } from "@/lib/market/presentation-preference";
 import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRoute } from "@/lib/market/routing";
-import { marketProfileByCountry, type SupportedLocale } from "@/lib/market/registry";
+import { marketEditorialPublicationApproved, marketProfileByCountry, type SupportedLocale } from "@/lib/market/registry";
 
 const oneYearInSeconds = 365 * 24 * 60 * 60;
 const maximumReturnPathLength = 2_048;
@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     if (!countryCode || !locale || unexpected.length > 0) return invalidPreference();
     const profile = marketProfileByCountry(countryCode);
     if (!profile) return invalidPreference();
+    if (process.env.VERCEL_ENV === "production" && !marketEditorialPublicationApproved(profile)) return invalidPreference();
     try {
       preferenceValue = serializePresentationPreference(profile, locale as SupportedLocale);
     } catch {

@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
-import { publicMarketPath } from "@/lib/market/registry";
+import { INITIAL_EUROPEAN_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "@/lib/market/registry";
 import type { PublicAccountNavigation } from "@/lib/public-shell";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
 import { PublicNavigation } from "./PublicNavigation";
@@ -21,13 +21,16 @@ export function PublicHeader({
   const homeHref = presentation.source === "EXPLICIT_ROUTE"
     ? publicMarketPath(presentation.market, presentation.locale)
     : "/";
+  const selectableMarkets = process.env.VERCEL_ENV === "production"
+    ? PUBLICATION_APPROVED_MARKET_PROFILES
+    : INITIAL_EUROPEAN_MARKET_PROFILES;
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>
         <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} translate="no">
           B4GAMBLE
         </Link>
-        <PublicNavigation account={account} authenticated={authenticated} messages={messages} presentation={presentation} />
+        <PublicNavigation account={account} authenticated={authenticated} messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} />
       </div>
       <PublicHeaderThemeController />
     </header>
