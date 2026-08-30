@@ -98,7 +98,7 @@ for (const acceptance of cases) {
     await dialog.getByRole("button", { name: messages.common.closeFilters }).click();
     await expect(dialog).toBeHidden();
     await expect(trigger).toBeFocused();
-    expect(await page.evaluate(() => document.body.style.overflow)).toBe("");
+    await expect.poll(() => page.evaluate(() => document.body.style.overflow)).toBe("");
 
     const filteredTotal = Number(await page.locator("#casino-results").getAttribute("data-result-count") ?? "0");
     const reset = filteredTotal > 0
