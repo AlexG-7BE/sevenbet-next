@@ -246,7 +246,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}>
         <div><span>{messages.profile.relatedTitle}</span><h2>{messages.profile.relatedCopy}</h2></div>
-        <div><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/bonuses")}>{demo ? messages.profile.exploreBonusInformation : messages.profile.compareBonusTerms} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link><Link href="/help">{messages.common.protectedHelp} <span aria-hidden="true">→</span></Link></div>
+        <div><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/bonuses")}>{demo ? messages.profile.exploreBonusInformation : messages.profile.compareBonusTerms} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/help")}>{messages.common.protectedHelp} <span aria-hidden="true">→</span></Link></div>
       </nav>
     </div>
   </article>;

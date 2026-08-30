@@ -14,7 +14,7 @@ export default function CasinoProfileError({ reset }: { error: Error & { digest?
       <p>{messages.profile.unavailableDescription}</p>
       <div className={styles.unavailableMarker}><strong>{messages.common.commercialUnavailable}</strong><span>{messages.common.reviewAvailableNoAction}</span></div>
       <div className={styles.unavailableLinks}><button className={styles.primaryAction} onClick={reset} type="button">{messages.common.current}</button><Link className={styles.secondaryAction} href={productHref("/casinos")}>{messages.common.browseReviews}</Link></div>
-      <Link className={styles.helpLink} href="/help">{messages.common.protectedHelp}</Link>
+      <Link className={styles.helpLink} href={productHref("/help")}>{messages.common.protectedHelp}</Link>
     </div>
   </article>;
 }

@@ -1,43 +1,62 @@
 import type { SupportedLocale } from "@/lib/market/registry";
 
 export type TranslationReviewState = Readonly<{
-  content: "APPROVED_BASELINE" | "MACHINE_ASSISTED_DRAFT";
-  linguisticReview: "COMPLETED" | "REQUIRED";
+  content: "SOURCE_BASELINE" | "MACHINE_TRANSLATED";
+  aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE" | "AI_LANGUAGE_QA_REQUIRED" | "AI_LANGUAGE_QA_PASSED";
+  founderPublication: "SOURCE_BASELINE_AUTHORITY" | "FOUNDER_PUBLICATION_NOT_ACCEPTED" | "FOUNDER_PUBLICATION_ACCEPTED";
   legalReview: "GB_SOURCE_REVIEWED" | "REQUIRED";
-  marketEvidenceReview: "GB_BASELINE" | "REQUIRED";
-  indexingApproved: boolean;
+  marketEvidenceReview: "GB_BASELINE" | "FIRST_WAVE_EVIDENCE_REVIEWED" | "REQUIRED";
+  indexingAuthority: "GB_SOURCE_BASELINE" | "NOT_ACTIVATED" | "FOUNDER_INDEXING_ACTIVATED";
 }>;
 
-const approvedBaseline: TranslationReviewState = {
-  content: "APPROVED_BASELINE",
-  linguisticReview: "COMPLETED",
+const sourceBaseline: TranslationReviewState = {
+  content: "SOURCE_BASELINE",
+  aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE",
+  founderPublication: "SOURCE_BASELINE_AUTHORITY",
   legalReview: "GB_SOURCE_REVIEWED",
   marketEvidenceReview: "GB_BASELINE",
-  indexingApproved: true,
+  indexingAuthority: "GB_SOURCE_BASELINE",
 };
 
-const machineDraft: TranslationReviewState = {
-  content: "MACHINE_ASSISTED_DRAFT",
-  linguisticReview: "REQUIRED",
+const machineTranslated: TranslationReviewState = {
+  content: "MACHINE_TRANSLATED",
+  aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
+  founderPublication: "FOUNDER_PUBLICATION_NOT_ACCEPTED",
   legalReview: "REQUIRED",
   marketEvidenceReview: "REQUIRED",
-  indexingApproved: false,
+  indexingAuthority: "NOT_ACTIVATED",
 };
 
+const firstWaveMachineTranslated: TranslationReviewState = {
+  ...machineTranslated,
+  marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
+};
+
+const architectureOnlyTranslated: TranslationReviewState = {
+  ...machineTranslated,
+  aiLanguageQa: "AI_LANGUAGE_QA_REQUIRED",
+};
+
+/**
+ * AI_LANGUAGE_QA_PASSED records the bounded automated catalog report in
+ * `docs/internationalisation/ai-language-qa-report.json`. It is not human,
+ * native-speaker, legal or publication review. Founder publication acceptance
+ * is external authority and is deliberately false for every translated locale.
+ */
 export const TRANSLATION_REVIEW_STATE = {
-  "en-GB": approvedBaseline,
-  "de-DE": machineDraft,
-  "it-IT": machineDraft,
-  "es-ES": machineDraft,
-  "pt-PT": machineDraft,
-  "el-GR": machineDraft,
-  "nl-NL": machineDraft,
-  "sv-SE": machineDraft,
-  "da-DK": machineDraft,
-  "fi-FI": machineDraft,
-  "nb-NO": machineDraft,
-  "en-CA": machineDraft,
-  "fr-CA": machineDraft,
+  "en-GB": sourceBaseline,
+  "de-DE": firstWaveMachineTranslated,
+  "it-IT": machineTranslated,
+  "es-ES": firstWaveMachineTranslated,
+  "pt-PT": machineTranslated,
+  "el-GR": firstWaveMachineTranslated,
+  "nl-NL": machineTranslated,
+  "sv-SE": firstWaveMachineTranslated,
+  "da-DK": firstWaveMachineTranslated,
+  "fi-FI": machineTranslated,
+  "nb-NO": machineTranslated,
+  "en-CA": architectureOnlyTranslated,
+  "fr-CA": architectureOnlyTranslated,
 } as const satisfies Record<SupportedLocale, TranslationReviewState>;
 
 export function translationReviewState(locale: SupportedLocale) {
@@ -45,7 +64,13 @@ export function translationReviewState(locale: SupportedLocale) {
 }
 
 export function publicTranslationIndexingApproved(locale: SupportedLocale) {
-  return translationReviewState(locale).indexingApproved;
+  const state = translationReviewState(locale);
+  if (state.content === "SOURCE_BASELINE") return state.indexingAuthority === "GB_SOURCE_BASELINE";
+  return state.aiLanguageQa === "AI_LANGUAGE_QA_PASSED"
+    && state.founderPublication === "FOUNDER_PUBLICATION_ACCEPTED"
+    && state.marketEvidenceReview !== "REQUIRED"
+    && state.legalReview !== "REQUIRED"
+    && state.indexingAuthority === "FOUNDER_INDEXING_ACTIVATED";
 }
 
 export function legalBodyPublicationApproved(locale: SupportedLocale) {

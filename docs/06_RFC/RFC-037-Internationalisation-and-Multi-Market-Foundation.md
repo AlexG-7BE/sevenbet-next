@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30.
+Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30. A later explicit Founder instruction on 2026-08-30 removed human/native-speaker linguistic review as a publication-state requirement, required actual bounded AI language QA, retained Founder publication acceptance as separate non-automatic authority, and authorised the first-wave DE/ES/SE/DK/GR evidence implementation described below.
 
 ## Decision
 
@@ -227,15 +227,40 @@ No third-party runtime translation SaaS is required for v1 unless a later decisi
 
 The implementation uses one typed review-state record per supported locale. Review state is publication authority, not a descriptive badge that a route can ignore.
 
-| Locale set | Content state | Linguistic review | Legal review | Market-evidence review | Indexing |
-| --- | --- | --- | --- | --- | --- |
-| `en-GB` | approved source baseline | completed for the existing baseline | GB source reviewed | GB baseline | existing English routes remain indexable |
-| `de-DE`, `it-IT`, `es-ES`, `pt-PT`, `el-GR`, `nl-NL`, `sv-SE`, `da-DK`, `fi-FI`, `nb-NO` | machine-assisted Preview draft | required | required for legal or jurisdiction-sensitive copy | required for local claims/resources | `noindex, follow`; excluded from the indexable sitemap |
-| `en-CA`, `fr-CA` | architecture-only draft | required | required | required | not approved for publication/indexing |
+| Locale set | Content state | AI language QA | Founder publication | Legal review | Market-evidence review | Indexing |
+| --- | --- | --- | --- | --- | --- | --- |
+| `en-GB` | `SOURCE_BASELINE` | not applicable to source baseline | source-baseline authority | GB source reviewed | GB baseline | existing English routes retain their existing indexing policy |
+| `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required for legal or jurisdiction-sensitive copy | first-wave evidence reviewed | `noindex, follow`; excluded from the indexable sitemap |
+| `it-IT`, `pt-PT`, `nl-NL`, `fi-FI`, `nb-NO` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required for legal or jurisdiction-sensitive copy | required | `noindex, follow`; excluded from the indexable sitemap |
+| `en-CA`, `fr-CA` | architecture-only machine translation | required | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required | required | not approved for publication/indexing |
 
-Ordinary non-legal Preview routes may remain inspectable while noindex. Operative Terms, Privacy and Affiliate Disclosure bodies remain unprefixed and are not exposed as localized law until their legal gate is explicitly approved. Protected Programme and Help routes and market-specific Responsible Gambling resources likewise remain unprefixed until the applicable body copy and evidence are complete; a translated shell is not enough to make a route localized.
+`AI_LANGUAGE_QA_PASSED` records an actual deterministic repository check of completeness, non-empty strings, obvious English and wrong-locale leakage, placeholders, Unicode, unsafe HTML/text transforms, terminology, protected names, Programme/commercial separation, no-clinical semantics, and affiliate/editorial independence. The generated report is `docs/internationalisation/ai-language-qa-report.json`. It is not human review, native-speaker review, legal approval or Founder publication acceptance. Founder acceptance is never inferred from an AI pass, route availability, market evidence or CI. Every non-English locale remains noindex until separate Founder indexing authority is recorded.
 
-The Founder engineering-closure instruction of 2026-08-30 extends the safe static/trust tranche to complete Methodology, Contact and Learning bodies. Their repository-controlled machine-assisted catalogs, localized metadata and short market routes may be exposed in Preview with `noindex, follow`. Learning preserves article/source identity and explicitly reports its unavailable claim-level source status; localization does not manufacture evidence. Responsible Gambling, Help, Programme and legal documents remain review-gated and unprefixed. The presence of a localized market route still grants no linguistic, legal, market, resource or commercial approval.
+Ordinary non-legal Preview routes may remain inspectable while noindex. Operative Terms, Privacy and Affiliate Disclosure bodies remain unprefixed and are not exposed as localized law until their legal gate is explicitly approved. Programme remains unprefixed. The exact `/help` and `/responsible-gambling` routes are localized only for the five first-wave evidence profiles below; Help subroutes remain protected and unprefixed. A translated shell alone cannot make another safety route localizable.
+
+The Founder engineering-closure instruction of 2026-08-30 extends the safe static/trust tranche to complete Methodology, Contact and Learning bodies. Their repository-controlled machine-translated catalogs, localized metadata and short market routes may be exposed in Preview with `noindex, follow`. Learning preserves article/source identity and explicitly reports its unavailable claim-level source status; localization does not manufacture evidence. The first-wave instruction additionally allows localized Help and Responsible Gambling presentations for DE/ES/SE/DK/GR using the evidence below. Programme and legal documents remain review-gated and unprefixed. The presence of a localized market route still grants no legal, commercial, publication or indexing approval.
+
+## First-wave market evidence implementation — 2026-08-30
+
+The implementation stores bounded typed evidence profiles rather than a legal-rules engine. All claims below are **DETECTED** from the linked live authoritative source as reviewed on 2026-08-30. Applicability text records how the fact may be used and prevents evidence presence from being interpreted as approval. Every record has a next-review date. No profile grants commercial or publication authority.
+
+| Market | DETECTED authoritative evidence | Bounded implementation consequence |
+| --- | --- | --- |
+| Germany | [GGL legal framework](https://www.gluecksspiel-behoerde.de/de/fuer-gluecksspielanbieter/gesetzliche-regelungen), [GGL permitted-provider/domain list](https://www.gluecksspiel-behoerde.de/de/fuer-spielende/uebersicht-erlaubter-anbieter-whitelist), [GGL terminology FAQ](https://www.gluecksspiel-behoerde.de/de/fuer-spielende/informationen-fuer-spielende-faqs/faq-was-sind-legale-online-casinos-in-deutschland) | Use `Glücksspielanbieter` when no precise legal game category is established. Any later commercial decision requires a current exact operator-and-domain match. |
+| Spain | [DGOJ affiliate boundary](https://www.ordenacionjuego.es/preguntas-frecuentes?faq=194), [DGOJ operator directory](https://www.ordenacionjuego.es/operadores-juego/operadores-licencia/operadores), [Supreme Court annulment notice](https://www.poderjudicial.es/cgpj/es/Poder-Judicial/Noticias-Judiciales/El-Tribunal-Supremo-anula-varios-articulos-del-Real-Decreto-958-2020-de-comunicaciones-comerciales-de-las-actividades-de-juego), [DGOJ July 2026 reform update](https://www.ordenacionjuego.es/novedades/dgoj-inicia-ronda-reuniones-entidades-han-presentado-aportaciones-reforma-ley-juego) | Do not encode the annulled RD 958/2020 articles 13.1, 13.3, 15, 23.1, 25.3, 26.2 or 26.3 as current rules. Require exact operator/advertising authority and fresh promotional-copy review. |
+| Sweden | [Swedish Gambling Act, regulator-hosted unofficial translation](https://www.spelinspektionen.se/globalassets/dokument/engelsk/oversatt-spellagen/english-spellagen-sfs-2018_1138-uppdat-sfs-2024_255.pdf), [Spelinspektionen illegal-gambling guidance](https://www.spelinspektionen.se/lagar-regler/olagligt-spel/vad-ar-olaglig-spelverksamhet/) | Do not promote an operator without current Swedish licence evidence; preserve moderation, self-exclusion, age and support-information considerations for later promotional review. |
+| Denmark | [Spillemyndigheden illegal gambling and advertising](https://spillemyndigheden.dk/en-us/public-and-players/illegal-gambling-and-advertising), [operator guideline v9](https://www.spillemyndigheden.dk/uploads/2025-06/Guidelines%20for%20operators%20of%20betting%20and%20online%20casino%20version%209.0%202025.pdf) | Affiliate-only marketing does not by itself create a B4GAMBLE gambling-licence claim; future promotion still needs licensed-operator and ordinary commercial evidence. |
+| Greece | [HGC Affiliate Suitability regulation](https://licensing.gamingcommission.gov.gr/shared%20documents/FEK-2020-B-04140.pdf), [HGC Affiliate Registry](https://certifications.gamingcommission.gov.gr/publicRecordsOnline/SitePages/AffiliatesOnline.aspx) | `HGC_AFFILIATE_SUITABILITY_REQUIRED`. Current B4GAMBLE evidence is explicitly `NOT VERIFIED / REQUIRED`; operator or network evidence cannot substitute for it. |
+
+### Local safety presentation
+
+The exact DE/ES/SE/DK/GR Help and Responsible Gambling pages use their evidence profile for local self-exclusion, support and information routes. The page visibly attributes each external provider, shows the evidence review date, identifies external navigation, and states that B4GAMBLE is not the regulator, emergency service or treatment provider. Greece identifies BetBlocker as an independent non-profit rather than a government service. No official source logos are copied.
+
+The localized safety pages contain no operator cards, offers, bonuses, affiliate redirects, Programme actions or safety-derived commercial personalisation. They never substitute GAMSTOP, GamCare, NHS or another UK resource for a missing local resource. Missing local resource categories render a neutral unavailable state.
+
+### First-wave commercial matrix
+
+Evidence evaluation is cumulative and fail-closed. All five markets require existing B4GAMBLE commercial authority, current operator-market licence evidence, partner approval, an active offer and ready tracking. Germany additionally requires the exact operator domain. Spain additionally requires evidence that the requested advertising is within operator authority plus a cleared promotional-copy review. Greece additionally requires current HGC Affiliate Suitability evidence. Any missing item yields `DENIED_FAIL_CLOSED`; a complete theoretical result is only `ELIGIBLE_FOR_EXISTING_GOVERNED_FLOW`, never automatic activation.
 
 ## Request resolution
 

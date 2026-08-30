@@ -14,7 +14,7 @@ const combined = `${page}\n${layout}\n${hub}\n${shell}\n${css}`;
 test("Protected Help is a server-rendered route-scoped shell with one Hub h1", () => {
   assert.doesNotMatch(page, /["']use client["']/);
   assert.doesNotMatch(layout, /["']use client["']/);
-  assert.match(layout, /<ProtectedHelpHeader \/>[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<ProtectedHelpFooter \/>/);
+  assert.match(layout, /<ProtectedHelpHeader[^>]*\/>[\s\S]*<main id="main-content">\{children\}<\/main>[\s\S]*<ProtectedHelpFooter[^>]*\/>/);
   assert.match(layout, /data-protected-help-shell="true"/);
   assert.doesNotMatch(layout, /PublicHeader|PublicFooter|getServerSession/);
   assert.equal((hub.match(/<h1\b/g) ?? []).length, 1);
@@ -45,10 +45,11 @@ test("Hub hierarchy follows the approved desktop and mobile Protected Help famil
 });
 
 test("metadata is canonical, indexable and limited to truthful WebPage schemas", () => {
-  assert.match(page, /canonical: absoluteUrl\("\/help"\)/);
+  assert.match(page, /pathname: "\/help"/);
+  assert.match(page, /productMetadata/);
+  assert.match(page, /firstWaveSafetyLanguageAlternates\("\/help"\)/);
   assert.match(page, /robots: \{ index: true, follow: true \}/);
-  assert.match(page, /openGraph:/);
-  assert.match(page, /twitter:/);
+  assert.match(page, /productMetadata/);
   assert.match(page, /"@type": "BreadcrumbList"/);
   assert.match(page, /"@type": "WebPage"/);
   assert.doesNotMatch(page, /"@type": "(?:MedicalWebPage|MedicalCondition|HowTo|Course|Product|Offer|AggregateRating|FAQPage)"/);

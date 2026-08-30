@@ -208,6 +208,9 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "NO",
 ] as const satisfies readonly MarketCode[];
 
+export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
+export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
+
 const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);
 
 export const INITIAL_EUROPEAN_MARKET_PROFILES: readonly MarketProfile[] = profiles.filter(

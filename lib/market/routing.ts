@@ -1,5 +1,6 @@
 import {
   DEFAULT_MARKET_PROFILE,
+  FIRST_WAVE_EVIDENCE_MARKET_CODES,
   localeForLanguageSegment,
   marketProfileByRouteMarket,
   publicMarketPath,
@@ -14,6 +15,7 @@ export const PRESENTATION_CONTEXT_HEADER = "x-b4gamble-presentation-context";
 export type PublicRoutePolicy =
   | "LOCALIZABLE_PUBLIC"
   | "LOCALIZABLE_DYNAMIC"
+  | "FIRST_WAVE_SAFETY"
   | "UNPREFIXED_ONLY"
   | "PROTECTED"
   | "INTERNAL"
@@ -47,6 +49,7 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "learn", match: "SUBTREE", policy: "LOCALIZABLE_PUBLIC" },
   { root: "login", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "methodology", match: "EXACT", policy: "LOCALIZABLE_PUBLIC" },
+  { root: "responsible-gambling", match: "EXACT", policy: "FIRST_WAVE_SAFETY" },
   { root: "responsible-gambling", match: "SUBTREE", policy: "UNPREFIXED_ONLY" },
   { root: "responsible-gaming", match: "EXACT", policy: "UNPREFIXED_ONLY" },
   { root: "self-check", match: "EXACT", policy: "UNPREFIXED_ONLY" },
@@ -56,6 +59,7 @@ export const PUBLIC_LOCALIZATION_ROUTE_MANIFEST = [
   { root: "privacy", match: "EXACT", policy: "LEGAL_REVIEW_GATED" },
   { root: "terms", match: "EXACT", policy: "LEGAL_REVIEW_GATED" },
 
+  { root: "help", match: "EXACT", policy: "FIRST_WAVE_SAFETY" },
   { root: "help", match: "SUBTREE", policy: "PROTECTED" },
   { root: "program", match: "SUBTREE", policy: "PROTECTED" },
 
@@ -91,9 +95,14 @@ export function publicRoutePolicy(pathname: string): PublicRoutePolicy | null {
   return entry?.policy ?? null;
 }
 
-export function isLocalizedPublicDestination(pathname: string) {
+export function isLocalizedPublicDestination(pathname: string, profile: MarketProfile = DEFAULT_MARKET_PROFILE) {
   const policy = publicRoutePolicy(pathname);
-  return policy === "LOCALIZABLE_PUBLIC" || policy === "LOCALIZABLE_DYNAMIC";
+  return policy === "LOCALIZABLE_PUBLIC"
+    || policy === "LOCALIZABLE_DYNAMIC"
+    || (policy === "FIRST_WAVE_SAFETY" && (
+      profile.countryCode === "GB"
+      || (FIRST_WAVE_EVIDENCE_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+    ));
 }
 
 type PublicMarketRoute = Readonly<{
@@ -145,7 +154,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
 
   if (redundantDefaultLocale) {
     const equivalentPathname = unprefixedPath(segments.slice(2));
-    if (!isLocalizedPublicDestination(equivalentPathname)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+    if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
     return {
       kind: "LEGACY_REDUNDANT_LOCALE",
       market: routeMarket,
@@ -157,7 +166,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
 
   if (secondaryLocale) {
     const equivalentPathname = unprefixedPath(segments.slice(2));
-    if (!isLocalizedPublicDestination(equivalentPathname)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+    if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
     return {
       kind: "SECONDARY_LOCALE",
       market: routeMarket,
@@ -167,7 +176,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
   }
 
   const equivalentPathname = unprefixedPath(segments.slice(1));
-  if (!isLocalizedPublicDestination(equivalentPathname)) {
+  if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) {
     if (possibleLanguage && /^[a-z]{2,3}$/i.test(possibleLanguage)) {
       return invalid(clean, "UNSUPPORTED_LOCALE");
     }
@@ -202,13 +211,13 @@ export function localizePublicPath(profile: MarketProfile, locale: SupportedLoca
   return publicMarketPath(
     profile,
     locale,
-    isLocalizedPublicDestination(equivalentPathname) ? equivalentPathname : "/",
+    isLocalizedPublicDestination(equivalentPathname, profile) ? equivalentPathname : "/",
   ) + suffix;
 }
 
 export function localizePublicHref(href: string, currentPathname: string, profile: MarketProfile, locale: SupportedLocale) {
   const current = parsePublicMarketRoute(currentPathname);
-  return current.kind !== "INVALID" && isLocalizedPublicDestination(href)
+  return current.kind !== "INVALID" && isLocalizedPublicDestination(href, profile)
     ? localizePublicPath(profile, locale, href)
     : href;
 }

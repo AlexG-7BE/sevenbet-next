@@ -40,7 +40,8 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   const helpLayout = read("app/help/layout.tsx");
   const legacy = read("app/(public)/responsible-gambling/[slug]/page.tsx");
 
-  assert.match(hub, /canonical: absoluteUrl\("\/responsible-gambling"\)/);
+  assert.match(hub, /pathname: "\/responsible-gambling"/);
+  assert.match(hub, /firstWaveSafetyLanguageAlternates\("\/responsible-gambling"\)/);
   assert.match(hub, /transformResponsibleGamblingHandoff/);
   assert.match(hub, /<HandoffPage name="responsibleGambling" transform=\{transformResponsibleGamblingHandoff\} \/>/);
   for (const path of ["/learn", "/10-steps", "/help"]) {
@@ -48,7 +49,8 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   }
   assert.doesNotMatch(hubDocument, /href:\s*"\/(?:self-check|tools\/budget-calculator)"/);
   assert.doesNotMatch(hubDocument, /safe for you|affordability score|diagnoses you|treatment plan|guaranteed outcome/iu);
-  assert.match(help, /canonical: absoluteUrl\("\/help"\)/);
+  assert.match(help, /pathname: "\/help"/);
+  assert.match(help, /firstWaveSafetyLanguageAlternates\("\/help"\)/);
   assert.match(helpLayout, /data-protected-help-shell="true"/);
   assert.doesNotMatch(helpLayout, /PublicHeader|PublicFooter/);
   assert.match(legacy, /getLegacyResponsibleGamblingRoute\(slug\)/);

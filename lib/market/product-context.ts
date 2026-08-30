@@ -4,15 +4,16 @@ import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commerc
 import { publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath, type SupportedLocale } from "./registry";
+import { FIRST_WAVE_MARKETS } from "./first-wave-evidence";
+import { INITIAL_EUROPEAN_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
   ...Object.fromEntries(Object.entries(TRANSLATION_REVIEW_STATE).map(([locale, state]) => [
     locale,
-    state.content === "APPROVED_BASELINE" ? "APPROVED_BASELINE" : "MACHINE_DRAFT",
+    state.content,
   ])),
-} as Record<SupportedLocale, "APPROVED_BASELINE" | "MACHINE_DRAFT">;
+} as Record<SupportedLocale, "SOURCE_BASELINE" | "MACHINE_TRANSLATED">;
 
 /**
  * Localized product routes remain outside the indexable sitemap during this
@@ -24,7 +25,7 @@ export function localizedProductIndexingApproved(locale: SupportedLocale) {
 }
 
 export function productHref(presentation: PresentationResolution, href: string) {
-  return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href)
+  return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, presentation.market)
     ? localizePublicPath(presentation.market, presentation.locale, href)
     : href;
 }
@@ -45,6 +46,19 @@ export function productLanguageAlternates(pathname: string) {
   ]);
 }
 
+export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling") {
+  const profiles = ["GB", ...FIRST_WAVE_MARKETS]
+    .map((countryCode) => marketProfileByCountry(countryCode))
+    .filter((profile) => profile !== null);
+  return Object.fromEntries([
+    ...profiles.map((profile) => [
+      profile.defaultLocale,
+      absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
+    ]),
+    ["x-default", absoluteUrl(pathname)],
+  ]);
+}
+
 export function openGraphLocale(locale: SupportedLocale) {
   return locale.replace("-", "_");
 }
@@ -57,6 +71,7 @@ export function productMetadata(input: {
   robots?: Metadata["robots"];
   openGraphType?: "website" | "article";
   images?: NonNullable<Metadata["openGraph"]>["images"];
+  languageAlternates?: Record<string, string>;
 }): Metadata {
   const canonical = absoluteUrl(productCanonicalPath(input.presentation, input.pathname));
   const explicitlyLocalized = input.presentation.source === "EXPLICIT_ROUTE";
@@ -75,7 +90,7 @@ export function productMetadata(input: {
     description: input.description,
     alternates: {
       canonical,
-      languages: productLanguageAlternates(input.pathname),
+      languages: input.languageAlternates ?? productLanguageAlternates(input.pathname),
     },
     ...(robots ? { robots } : {}),
     openGraph: {

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     return invalidPreference();
   }
   const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
-  const returnPath = isLocalizedPublicDestination(equivalentPathname) ? equivalentPathname : "/";
+  const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
   const countryFilter = returnUrl.searchParams.get("country");
   if (countryFilter && countryFilter.trim().toUpperCase() !== destinationMarket) {
     returnUrl.searchParams.delete("country");

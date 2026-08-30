@@ -10,6 +10,6 @@ export function usePublicErrorContext() {
   const presentation = parsed.kind === "INVALID" ? null : parsed;
   return {
     messages: publicErrorMessages(presentation?.locale ?? "en-GB"),
-    hrefFor: (href: string) => presentation && isLocalizedPublicDestination(href) ? localizePublicPath(presentation.market, presentation.locale, href) : href,
+    hrefFor: (href: string) => presentation && isLocalizedPublicDestination(href, presentation.market) ? localizePublicPath(presentation.market, presentation.locale, href) : href,
   };
 }

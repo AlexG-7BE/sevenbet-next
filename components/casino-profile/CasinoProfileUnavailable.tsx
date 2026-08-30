@@ -25,7 +25,7 @@ export function CasinoProfileUnavailable({
       <p>{description}</p>
       <div className={styles.unavailableMarker}><strong>{messages?.profile.offerUnavailable ?? "NO PUBLIC PROFILE"}</strong><span>{messages?.common.reviewAvailableNoAction ?? "Nothing from a draft, archived record or legacy fallback is rendered here."}</span></div>
       <div className={styles.unavailableLinks}><Link className={styles.primaryAction} href={presentation ? productHref(presentation, "/casinos") : "/casinos"}>{messages?.common.browseReviews ?? "Browse published reviews"}</Link><Link className={styles.secondaryAction} href={presentation ? productHref(presentation, "/methodology") : "/methodology"}>{messages?.common.reviewMethodology ?? "View methodology"}</Link></div>
-      <Link className={styles.helpLink} href="/help">{messages?.common.protectedHelp ?? "Open protected Help"}</Link>
+      <Link className={styles.helpLink} href={presentation ? productHref(presentation, "/help") : "/help"}>{messages?.common.protectedHelp ?? "Open protected Help"}</Link>
     </div>
   </article>;
 }

@@ -91,7 +91,7 @@ const messages = {
     marketAndLanguage: "Markt und Sprache",
     changeMarketAndLanguage: "Markt und Sprache ändern",
     bestOffers: "Beste Angebote",
-    casinos: "Casinos",
+    casinos: "Glücksspielanbieter",
     bonuses: "Boni",
     learn: "Lernen",
     logIn: "Anmelden",
@@ -99,7 +99,7 @@ const messages = {
     myProgramme: "Mein Programm",
     applyPreference: "Anwenden",
     automaticPresentation: "Automatisch",
-    presentationOnlyNotice: "Diese Auswahl ändert nur die Darstellung. Sie macht keine Casino-Angebote verfügbar.",
+    presentationOnlyNotice: "Diese Auswahl ändert nur die Darstellung. Sie macht keine Angebote von Glücksspielanbietern verfügbar.",
   },
   "it-IT": {
     skipToMain: "Vai al contenuto principale",

@@ -11,6 +11,7 @@ import { learningMessages, localizedLearningArticles } from "../lib/i18n/learnin
 import { publicErrorMessages } from "../lib/i18n/public-errors";
 import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { FIRST_WAVE_MARKET_EVIDENCE, FIRST_WAVE_MARKETS } from "../lib/market/first-wave-evidence";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -36,11 +37,30 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
 }
 
 test("invalid market-language pairs and protected prefixed paths fail without a rewrite", async ({ page }) => {
-  for (const pathname of ["/de/en/", "/gr/gr/", "/xx/", "/de/admin", "/de/api/private", "/de/program/api/private"]) {
+  for (const pathname of ["/de/en/", "/gr/gr/", "/xx/", "/de/admin", "/de/api/private", "/de/program/api/private", "/it/help", "/nl/responsible-gambling", "/de/help/article"]) {
     const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), pathname).toBe(404);
   }
 });
+
+for (const market of FIRST_WAVE_MARKETS) {
+  const evidence = FIRST_WAVE_MARKET_EVIDENCE[market];
+  const prefix = `/${market.toLowerCase()}`;
+  test(`${market} renders localized, noindex Help and Responsible Gambling evidence`, async ({ page }) => {
+    for (const [route, title] of [["/help", evidence.copy.helpTitle], ["/responsible-gambling", evidence.copy.responsibleTitle]] as const) {
+      const response = await page.goto(`${baseUrl}${prefix}${route}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), `${market}${route}`).toBe(200);
+      await expect(page.locator("html")).toHaveAttribute("lang", evidence.locale);
+      await expect(page.locator(`[data-first-wave-safety="${market}"]`)).toBeVisible();
+      await expect(page.getByRole("heading", { level: 1 })).toContainText(title);
+      await expect(page.locator("aside strong").filter({ hasText: evidence.authorityName })).toBeVisible();
+      await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+      expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(`${prefix}${route}`);
+      expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"], main a[href^="/program"], main a[href^="/casinos"], main a[href^="/bonuses"]').count()).toBe(0);
+      await expect(page.locator("main")).not.toContainText(/GAMSTOP|GamCare|NHS/);
+    }
+  });
+}
 
 test("desktop selector persists presentation and preserves a supported equivalent path", async ({ page, context }) => {
   await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "domcontentloaded" });

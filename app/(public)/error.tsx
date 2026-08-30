@@ -15,7 +15,7 @@ export default function PublicError({ reset }: { error: Error & { digest?: strin
         <div className={styles.actions}>
           <ActionButton onClick={reset}>{messages.retry}</ActionButton>
           <ActionLink href={hrefFor("/")} variant="ghost-paper">{messages.home}</ActionLink>
-          <ActionLink href="/help" variant="ghost-paper">{messages.help}</ActionLink>
+          <ActionLink href={hrefFor("/help")} variant="ghost-paper">{messages.help}</ActionLink>
         </div>
       </div>
     </section>

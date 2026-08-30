@@ -14,7 +14,7 @@ export function PublicFooter({ presentation = resolvePresentationContext({}) }: 
     { title: footer.programmeAndSupport, links: [[shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
     { title: footer.trust, links: [[footer.about, "/about"], [footer.methodology, "/methodology"], [footer.faq, "/faq"], [footer.affiliateDisclosure, "/affiliate-disclosure"]] },
   ] as const;
-  const localizedHref = (href: string) => presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href)
+  const localizedHref = (href: string) => presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, presentation.market)
     ? localizePublicPath(presentation.market, presentation.locale, href)
     : href;
   return (

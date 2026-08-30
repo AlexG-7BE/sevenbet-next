@@ -167,7 +167,7 @@ export function PublicNavigation({
           <MarketLanguageSelector messages={messages} presentation={presentation} variant="mobile" />
           <div className={styles.mobileHelp}>
             <span>{messages.controlAndSupport}</span>
-            <Link href="/help" onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
+            <Link href={localizePublicHref("/help", pathname, presentation.market, presentation.locale)} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
           </div>
           <div className={styles.mobileAccount}>
             {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{accountLabel}</Link> : null}

@@ -1,0 +1,210 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-30",
+  "assurance": "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW",
+  "sourceLocale": "en-GB",
+  "catalogDigest": "5167a51fa24122ea1487e60c3c469c850293339614bab079e17937dbda00ab37",
+  "status": "PASS",
+  "locales": [
+    {
+      "locale": "de-DE",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "it-IT",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "es-ES",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "pt-PT",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "el-GR",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "nl-NL",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "sv-SE",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "da-DK",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "fi-FI",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    },
+    {
+      "locale": "nb-NO",
+      "status": "PASS",
+      "checkedStrings": 714,
+      "checks": {
+        "SOURCE_KEY_COMPLETENESS": "PASS",
+        "NON_EMPTY_STRINGS": "PASS",
+        "OBVIOUS_ENGLISH_UI_LEAKAGE": "PASS",
+        "WRONG_LOCALE_LEAKAGE": "PASS",
+        "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY": "PASS",
+        "UNICODE_INTEGRITY": "PASS",
+        "HTML_TEXT_SAFETY": "PASS",
+        "TERMINOLOGY_CONSISTENCY": "PASS",
+        "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
+        "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
+        "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+      },
+      "findings": []
+    }
+  ]
+}

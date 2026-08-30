@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 
 import { productPageMessages } from "./product-pages-catalog";
-import { parsePublicMarketRoute, localizePublicPath } from "@/lib/market/routing";
+import { isLocalizedPublicDestination, parsePublicMarketRoute, localizePublicPath } from "@/lib/market/routing";
 
 export function useProductPageContext() {
   const pathname = usePathname();
@@ -13,7 +13,9 @@ export function useProductPageContext() {
   return {
     messages,
     productHref(href: string) {
-      return explicit ? localizePublicPath(explicit.market, explicit.locale, href) : href;
+      return explicit && isLocalizedPublicDestination(href, explicit.market)
+        ? localizePublicPath(explicit.market, explicit.locale, href)
+        : href;
     },
   };
 }

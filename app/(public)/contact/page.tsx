@@ -5,7 +5,7 @@ import { NonceStyle } from "@/components/security/NonceStyle";
 import { SUPPORT_MAILBOX } from "@/lib/contact/contracts";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { contactMessages } from "@/lib/i18n/static-pages/contact";
-import { productCanonicalPath, productMetadata } from "@/lib/market/product-context";
+import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 import { ContactForm } from "./ContactForm";
@@ -39,7 +39,7 @@ export default async function ContactPage() {
             <p className={styles.routesLabel}>{messages.otherWays}</p>
             <section className={styles.contextBlock} aria-labelledby="direct-contact-title"><h2 id="direct-contact-title">{messages.emailTitle}</h2><a className={styles.emailLink} href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a></section>
             <section className={styles.contextBlock}><h2>{messages.correctionsTitle}</h2><p>{messages.correctionsCopy}</p></section>
-            <section className={styles.helpBlock} aria-labelledby="gambling-help-title"><h2 id="gambling-help-title">{messages.helpTitle}</h2><p>{messages.helpCopy}</p><Link className={styles.helpAction} href="/help">{messages.helpAction}</Link></section>
+            <section className={styles.helpBlock} aria-labelledby="gambling-help-title"><h2 id="gambling-help-title">{messages.helpTitle}</h2><p>{messages.helpCopy}</p><Link className={styles.helpAction} href={productHref(presentation, "/help")}>{messages.helpAction}</Link></section>
             <section className={styles.contextBlock}><h2>{messages.responseTitle}</h2><p>{messages.responseCopy}</p></section>
           </aside>
 

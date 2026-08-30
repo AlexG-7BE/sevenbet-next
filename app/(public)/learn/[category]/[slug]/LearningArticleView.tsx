@@ -184,8 +184,8 @@ export function LearningArticleView({
           <div>
             <p>{messages.ui.responsibleNoTransition}</p>
             <div className={styles.protectedActions}>
-              <Link href="/responsible-gambling">{messages.ui.exploreResponsible} <span aria-hidden="true">↗</span></Link>
-              <Link href="/help">{messages.ui.openHelp} <span aria-hidden="true">↗</span></Link>
+              <Link href={hrefFor("/responsible-gambling")}>{messages.ui.exploreResponsible} <span aria-hidden="true">↗</span></Link>
+              <Link href={hrefFor("/help")}>{messages.ui.openHelp} <span aria-hidden="true">↗</span></Link>
             </div>
           </div>
         </aside>

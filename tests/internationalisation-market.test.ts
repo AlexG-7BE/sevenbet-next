@@ -127,7 +127,8 @@ test("market-first parser distinguishes canonical, secondary, legacy and invalid
   assert.equal(localizePublicPath(germany, "de-DE", "/compare?casino=alpha&casino=beta"), "/de/compare?casino=alpha&casino=beta");
   assert.equal(localizePublicPath(spain, "es-ES", "/privacy"), "/es/");
   assert.equal(localizePublicHref("/casinos", "/de/", germany, "de-DE"), "/de/casinos");
-  assert.equal(localizePublicHref("/help", "/de/", germany, "de-DE"), "/help");
+  assert.equal(localizePublicHref("/help", "/de/", germany, "de-DE"), "/de/help");
+  assert.equal(localizePublicPath(portugal, "pt-PT", "/help"), "/pt/");
   assert.ok(PUBLIC_LOCALIZATION_ROUTE_MANIFEST.some((entry) => entry.root === "api" && entry.policy === "INTERNAL"));
   assert.ok(PUBLIC_LOCALIZATION_ROUTE_MANIFEST.some((entry) => entry.root === "privacy" && entry.policy === "LEGAL_REVIEW_GATED"));
 });
@@ -144,7 +145,7 @@ test("all eleven European product catalogs are complete Preview drafts without E
     assert.ok(values.every((value) => value.trim().length > 0), `${profile.defaultLocale} contains empty product copy`);
     assert.equal(
       PRODUCT_TRANSLATION_REVIEW_STATE[profile.defaultLocale],
-      profile.defaultLocale === "en-GB" ? "APPROVED_BASELINE" : "MACHINE_DRAFT",
+      profile.defaultLocale === "en-GB" ? "SOURCE_BASELINE" : "MACHINE_TRANSLATED",
     );
     const presentation = resolvePresentationContext({ routeMarket: profile.routeMarket, routeLanguage: profile.defaultLocale.split("-")[0] });
     for (const pathname of ["/best-offers", "/casinos", "/bonuses", "/casino/example", "/compare?casino=example"]) {
@@ -343,19 +344,21 @@ test("every European Home locale has complete localized copy and metadata", () =
 
 test("translation review state keeps every machine-assisted locale noindex and review-gated", () => {
   assert.deepEqual(TRANSLATION_REVIEW_STATE["en-GB"], {
-    content: "APPROVED_BASELINE",
-    linguisticReview: "COMPLETED",
+    content: "SOURCE_BASELINE",
+    aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE",
+    founderPublication: "SOURCE_BASELINE_AUTHORITY",
     legalReview: "GB_SOURCE_REVIEWED",
     marketEvidenceReview: "GB_BASELINE",
-    indexingApproved: true,
+    indexingAuthority: "GB_SOURCE_BASELINE",
   });
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => profile.countryCode !== "GB")) {
     assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
-      content: "MACHINE_ASSISTED_DRAFT",
-      linguisticReview: "REQUIRED",
+      content: "MACHINE_TRANSLATED",
+      aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
+      founderPublication: "FOUNDER_PUBLICATION_NOT_ACCEPTED",
       legalReview: "REQUIRED",
-      marketEvidenceReview: "REQUIRED",
-      indexingApproved: false,
+      marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
+      indexingAuthority: "NOT_ACTIVATED",
     });
   }
 });
