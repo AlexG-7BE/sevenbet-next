@@ -1,5 +1,7 @@
 import { expect, test } from "@playwright/test";
 
+import { contactMessages } from "../lib/i18n/static-pages/contact";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
 test("unknown route is a branded noindex HTTP 404 with safe no-JS recovery", async ({ page }) => {
@@ -32,17 +34,18 @@ test("final handoff Contact link reaches the canonical Contact page", async ({ p
 });
 
 test("Contact form has accessible adjacent validation", async ({ page }) => {
+  const messages = contactMessages("en-GB");
   await page.goto(`${baseUrl}/contact`, { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Send message" }).click();
-  await expect(page.getByRole("textbox", { name: "Email", exact: true })).toBeFocused();
-  await expect(page.getByText("Enter your email address.")).toBeVisible();
-  await expect(page.getByText("Enter a subject.")).toBeVisible();
-  await expect(page.getByText("Enter at least 10 meaningful characters.")).toBeVisible();
-  await page.getByRole("textbox", { name: "Email", exact: true }).fill("not-an-email");
-  await page.getByRole("textbox", { name: "Subject", exact: true }).fill("Question");
-  await page.getByRole("textbox", { name: "Message", exact: true }).fill("A complete example message.");
-  await page.getByRole("button", { name: "Send message" }).click();
-  await expect(page.getByText("Enter a valid email address.")).toBeVisible();
+  await page.getByRole("button", { name: messages.submit }).click();
+  await expect(page.getByRole("textbox", { name: messages.emailLabel, exact: true })).toBeFocused();
+  await expect(page.getByText(messages.emailError)).toBeVisible();
+  await expect(page.getByText(messages.subjectError)).toBeVisible();
+  await expect(page.getByText(messages.messageError)).toBeVisible();
+  await page.getByRole("textbox", { name: messages.emailLabel, exact: true }).fill("not-an-email");
+  await page.getByRole("textbox", { name: messages.subjectLabel, exact: true }).fill("Question");
+  await page.getByRole("textbox", { name: messages.messageLabel, exact: true }).fill("A complete example message.");
+  await page.getByRole("button", { name: messages.submit }).click();
+  await expect(page.getByText(messages.emailError)).toBeVisible();
 });
 
 test("successful keyboard submission clears fields and suppresses an in-flight duplicate", async ({ page }) => {
