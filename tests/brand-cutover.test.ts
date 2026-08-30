@@ -239,12 +239,13 @@ test("sitemap keeps final static and learning routes when casino discovery throw
 test("home-only canonical and social metadata do not leak into auth, outbound or admin routes", () => {
   const root = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");
+  const productContext = source("lib/market/product-context.ts");
   assert.doesNotMatch(root, /alternates:\s*\{\s*canonical/);
   assert.match(root, /"@type": "Organization"[\s\S]*url: absoluteUrl\("\/"\)/);
-  assert.match(home, /const canonicalPath = presentation\.source === "EXPLICIT_ROUTE"/);
-  assert.match(home, /const canonical = absoluteUrl\(canonicalPath\)/);
-  assert.match(home, /alternates: \{ canonical \}/);
-  assert.match(home, /url: canonical/);
+  assert.match(home, /productMetadata\(\{ presentation, pathname: "\/", title, description/);
+  assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
+  assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);
+  assert.match(productContext, /openGraph: \{[\s\S]*url: canonical/);
 });
 
 test("Better Auth and disabled communication templates expose only B4GAMBLE", () => {
