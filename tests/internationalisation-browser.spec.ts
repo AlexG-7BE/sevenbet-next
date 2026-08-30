@@ -5,6 +5,10 @@ import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-sh
 import { aboutMessages } from "../lib/i18n/static-pages/about";
 import { faqMessages } from "../lib/i18n/static-pages/faq";
 import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
+import { contactMessages } from "../lib/i18n/static-pages/contact";
+import { methodologyMessages } from "../lib/i18n/static-pages/methodology";
+import { learningMessages, localizedLearningArticles } from "../lib/i18n/learning-center";
+import { publicErrorMessages } from "../lib/i18n/public-errors";
 import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 
@@ -165,6 +169,75 @@ test("localized 10 Steps and About publish complete draft bodies with localized 
   await expect(page.getByText(faq.groups[0].items[0][1])).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/pt/faq");
+});
+
+for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+  const locale = profile.defaultLocale;
+  const prefix = publicMarketPath(profile, locale).replace(/\/$/, "");
+  test(`${profile.countryCode} Methodology, Contact and Learn bodies are locale-complete`, async ({ page }) => {
+    const methodology = methodologyMessages(locale);
+    await page.goto(`${baseUrl}${prefix}/methodology`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("html")).toHaveAttribute("lang", locale);
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(methodology.copy.get("Evidence before") ?? "Evidence before");
+    expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(`${prefix}/methodology` || "/methodology");
+
+    const contact = contactMessages(locale);
+    await page.goto(`${baseUrl}${prefix}/contact`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(contact.titleLead);
+    await expect(page.getByRole("textbox", { name: contact.emailLabel, exact: true })).toBeVisible();
+
+    const learning = learningMessages(locale);
+    await page.goto(`${baseUrl}${prefix}/learn`, { waitUntil: "domcontentloaded" });
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(learning.hub[1]);
+    await expect(page.getByRole("searchbox", { name: learning.hub[10] })).toBeVisible();
+    await expect(page.locator('a[data-learn-category]')).toHaveCount(17);
+    if (locale !== "en-GB") await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  });
+}
+
+test("localized Contact validation announces active-locale constraints without sending", async ({ page }) => {
+  const messages = contactMessages("pt-PT");
+  await page.goto(`${baseUrl}/pt/contact`, { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: messages.submit }).click();
+  await expect(page.getByText(messages.emailError)).toBeVisible();
+  await expect(page.getByRole("textbox", { name: messages.emailLabel, exact: true })).toBeFocused();
+});
+
+test("localized Learning article preserves source-unavailable semantics and prefixed internal links", async ({ page }) => {
+  const messages = learningMessages("el-GR");
+  const article = localizedLearningArticles("el-GR")[0];
+  await page.goto(`${baseUrl}/gr/learn/casino-basics/online-casino-basics`, { waitUntil: "domcontentloaded" });
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(article.title);
+  await expect(page.getByRole("heading", { name: messages.ui.sourceUnavailable })).toBeVisible();
+  await expect(page.getByText(messages.ui.noClaimSource)).toBeVisible();
+  await expect(page.locator('a[href^="/gr/learn/"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/gr/casinos"]').first()).toBeVisible();
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/gr/learn/casino-basics/online-casino-basics");
+});
+
+test("localized not-found copy is used when a valid market route has no editorial record", async ({ page }) => {
+  const messages = publicErrorMessages("de-DE");
+  const response = await page.goto(`${baseUrl}/de/learn/unknown/unknown`, { waitUntil: "domcontentloaded" });
+  expect(response?.status()).toBe(404);
+  await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
+  await expect(page.getByText(messages.notFoundLost)).toBeVisible();
+  await expect(page.getByRole("link", { name: messages.notFoundHome })).toHaveAttribute("href", "/de/");
+});
+
+test("newly localized long-copy surfaces have no horizontal overflow at every required width", async ({ browser }) => {
+  const samples = [
+    [360, "/de/methodology"], [375, "/pt/contact"], [390, "/gr/learn"],
+    [412, "/fi/learn/casino-basics/online-casino-basics"], [430, "/es/contact"],
+    [768, "/nl/methodology"], [1024, "/no/learn"], [1440, "/de/learn/casino-basics/online-casino-basics"],
+  ] as const;
+  for (const [width, pathname] of samples) {
+    const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 960 : 1_000 }, isMobile: width <= 430 });
+    const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), pathname).toBe(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${pathname} at ${width}px`).toBe(0);
+    await page.close();
+  }
 });
 
 test("long localized copy has no horizontal overflow across the required responsive widths", async ({ browser }) => {

@@ -373,16 +373,12 @@ export function HandoffInteractions({ name }: { name: string }) {
     const cleanUpShared = setupSharedHandoffInteractions(root);
     const cleanUpHome = name === "home" ? setupHomeInteractions(root) : undefined;
 
-    const learnTopics = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
-    const learnInput = name === "learn" ? root.querySelector<HTMLInputElement>('input[placeholder^="Search guides"]') : null;
-    const allGuides = name === "learn"
-      ? [...root.querySelectorAll("h2")].find((heading) => normalized(heading.textContent) === "all guides")
-      : undefined;
+    const learnInput = name === "learn" ? root.querySelector<HTMLInputElement>("[data-learn-discovery-search] input") : null;
+    const allGuides = name === "learn" ? root.querySelector<HTMLElement>("[data-learn-all-guides]") : null;
     const learnSection = allGuides?.parentElement?.parentElement ?? null;
     const learnCards = learnSection ? [...learnSection.querySelectorAll<HTMLAnchorElement>("a[data-learn-category]")] : [];
-    const learnButtons = learnSection
-      ? [...learnSection.querySelectorAll<HTMLButtonElement>("button")].filter((button) => learnTopics.includes(normalized(button.textContent)))
-      : [];
+    const learnButtons = learnSection ? [...learnSection.querySelectorAll<HTMLButtonElement>("button[data-learn-topic]")] : [];
+    const learnI18n = name === "learn" ? root.querySelector<HTMLElement>("[data-learn-i18n]") : null;
     const learnCount = allGuides?.parentElement?.querySelector<HTMLElement>(".sc-interp") ?? null;
     const learnGrid = learnCards[0]?.parentElement ?? null;
     const learnStatus = name === "learn" ? document.createElement("p") : null;
@@ -401,11 +397,10 @@ export function HandoffInteractions({ name }: { name: string }) {
 
     if (learnInput) {
       learnInput.type = "search";
-      learnInput.setAttribute("aria-label", "Search guides");
     }
     for (const button of learnButtons) {
       button.type = "button";
-      button.setAttribute("aria-pressed", String(normalized(button.textContent) === learnTopic));
+      button.setAttribute("aria-pressed", String(button.dataset.learnTopic === learnTopic));
     }
     if (learnStatus && learnGrid) {
       learnStatus.dataset.learnResultsStatus = "";
@@ -417,7 +412,7 @@ export function HandoffInteractions({ name }: { name: string }) {
 
     const updateLearnButtonState = () => {
       for (const item of learnButtons) {
-        const active = normalized(item.textContent) === learnTopic;
+        const active = item.dataset.learnTopic === learnTopic;
         item.setAttribute("aria-pressed", String(active));
         item.style.background = active ? "rgb(16, 15, 15)" : "transparent";
         item.style.color = active ? "rgb(250, 250, 247)" : "rgb(16, 15, 15)";
@@ -439,8 +434,8 @@ export function HandoffInteractions({ name }: { name: string }) {
       if (learnCount) learnCount.textContent = String(visible);
       if (learnStatus) {
         learnStatus.textContent = visible
-          ? `${visible} ${visible === 1 ? "guide" : "guides"} shown.`
-          : "No guides match. Clear the search or choose All topics.";
+          ? `${visible} ${visible === 1 ? learnI18n?.dataset.learnOne : learnI18n?.dataset.learnMany}`
+          : (learnI18n?.dataset.learnNone ?? "");
       }
       updateLearnButtonState();
     };
@@ -450,13 +445,13 @@ export function HandoffInteractions({ name }: { name: string }) {
     const onClick = (event: MouseEvent) => {
       const button = (event.target as Element | null)?.closest<HTMLButtonElement>("button");
       if (!button) return;
-      const label = normalized(button.textContent);
+      const label = button.dataset.learnTopic ?? normalized(button.textContent);
       if (label === "start programme") {
         window.location.assign("/program?entry=start");
         return;
       }
       if (name !== "learn") return;
-      if (!learnTopics.includes(label)) return;
+      if (!button.dataset.learnTopic) return;
       learnTopic = label;
       applyLearnFilters();
     };

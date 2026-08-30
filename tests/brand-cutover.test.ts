@@ -142,7 +142,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   assert.doesNotMatch(publicAuthority, /VERCEL_BRANCH_URL|VERCEL_URL/);
   assert.match(source("lib/auth/runtime-config.ts"), /VERCEL_BRANCH_URL/);
   const contact = source("app/(public)/contact/page.tsx");
-  assert.match(contact, /absoluteUrl\("\/contact"\)/);
+  assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\)\)/);
   assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
   assert.deepEqual(robots(), {
     rules: [

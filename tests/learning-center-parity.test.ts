@@ -22,6 +22,7 @@ const categoryView = readFileSync("app/(public)/learn/[category]/LearningCategor
 const articleRoute = readFileSync("app/(public)/learn/[category]/[slug]/page.tsx", "utf8");
 const articleView = readFileSync("app/(public)/learn/[category]/[slug]/LearningArticleView.tsx", "utf8");
 const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
+const learningI18n = readFileSync("lib/i18n/learning-center.ts", "utf8");
 
 test("the Learning route family is server owned and uses the unchanged Public Shell", () => {
   for (const source of [hubRoute, hubView, categoryRoute, categoryView, articleRoute, articleView]) {
@@ -41,7 +42,8 @@ test("hub renders the locked handoff catalogue while current taxonomy remains au
   assert.equal(learningCategories.length, 13);
   assert.equal(learningArticles.length, 13);
   assert.equal(learningPaths.length, 6);
-  assert.match(hubRoute, /<HandoffPage name="learn" transform=\{transformLearnHandoff\} \/>/);
+  assert.match(hubRoute, /transformLearnHandoff\(html, presentation\.locale/);
+  assert.match(hubRoute, /productHref\(presentation, href\)/);
   for (const title of ["Wagering requirements, explained with real numbers", "How casino payouts really work — and why they stall", "How to judge a casino in ten minutes", "Session limits that actually hold"]) {
     assert.ok(handoffPages.learn.html.includes(title), title);
   }
@@ -63,25 +65,27 @@ test("category pages publish current article records and fail closed when empty"
   assert.match(categoryView, /NO PUBLISHED GUIDES YET/);
   assert.doesNotMatch(categoryView, /plannedTopics|Browse Casinos|Browse Bonuses|Claim|Play now/iu);
   assert.match(categoryRoute, /if \(!getLearningCategory\(category\)\) notFound\(\)/);
-  assert.match(categoryRoute, /permanentRedirect\(`\/learn\?category=/);
+  assert.match(categoryRoute, /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
 });
 
 test("article template is truthful about missing evidence and preserves the protected boundary", () => {
-  assert.match(articleView, /SOURCE STATUS: UNAVAILABLE/);
-  assert.match(articleView, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
-  assert.doesNotMatch(articleView, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
+  assert.match(articleView, /messages\.ui\.sourceUnavailable/);
+  assert.match(articleView, /messages\.ui\.sourceUnavailableCopy/);
+  assert.match(learningI18n, /SOURCE STATUS: UNAVAILABLE/);
+  assert.match(learningI18n, /does not provide source links, a source owner, a review-due date or a compliance-review status/);
+  assert.doesNotMatch(learningI18n, /SOURCE STATUS: VERIFIED|Compliance reviewed|Review due:/i);
   assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
-  assert.match(articleView, /href="\/casinos"/);
+  assert.match(articleView, /href=\{hrefFor\("\/casinos"\)\}/);
   assert.doesNotMatch(articleView, /href="\/compare"/);
   assert.match(articleView, /href="\/responsible-gambling"/);
   assert.match(articleView, /href="\/help"/);
   assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);
-  assert.match(articleRoute, /if \(!article\) notFound\(\)/);
+  assert.match(articleRoute, /if \(!sourceArticle\) notFound\(\)/);
 });
 
 test("metadata and structured data remain aligned with visible content", () => {
-  assert.match(hubRoute, /canonical: absoluteUrl\("\/learn"\)/);
-  assert.match(categoryRoute, /permanentRedirect\(`\/learn\?category=/);
+  assert.match(hubRoute, /productMetadata\(\{ presentation, pathname: "\/learn"/);
+  assert.match(categoryRoute, /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
   assert.doesNotMatch(categoryRoute, /BreadcrumbList|FAQPage/);
   assert.match(articleRoute, /BreadcrumbList/);
   assert.match(articleRoute, /"@type": "Article"/);
@@ -94,7 +98,8 @@ test("metadata and structured data remain aligned with visible content", () => {
 test("the live handoff has one accessible search beside All guides with dynamic category recovery", () => {
   assert.match(handoffTransforms, /replace\(\/<input placeholder="Search guides[^\n]+, ""\)/);
   assert.match(handoffTransforms, /data-learn-discovery-search/);
-  assert.match(handoffTransforms, /type="search" aria-label="Search guides"/);
+  assert.match(handoffTransforms, /type="search" aria-label="\$\{escapeHtml\(messages\.hub\[10\]\)\}"/);
+  assert.match(handoffTransforms, /data-learn-topic/);
   assert.match(handoffInteractions, /dataset\.learnResultsStatus/);
   assert.match(handoffInteractions, /aria-live/);
   assert.match(handoffInteractions, /data-learn-category/);

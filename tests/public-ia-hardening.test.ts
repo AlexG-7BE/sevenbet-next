@@ -64,7 +64,7 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   }
   assert.match(read("components/protected-help/ProtectedHelpHub.tsx"), /We&apos;re here\.<br \/>No strings\./i);
   assert.match(read("app/help/[slug]/page.tsx"), /permanentRedirect\(article \? `\/help#/);
-  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(`\/learn\?category=/);
+  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
 });
 
 test("every former mixed Responsible Gambling article has one explicit canonical authority", () => {

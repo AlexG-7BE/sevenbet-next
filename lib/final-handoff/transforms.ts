@@ -1,6 +1,9 @@
-import { getArticlePath, learningArticles, learningCategories, type LearningArticle } from "@/lib/learning-center";
+import { getArticlePath, learningArticles, type LearningArticle } from "@/lib/learning-center";
 import { HOME_SOURCE_COPY, homeTranslation } from "@/lib/i18n/home-catalog";
+import { learningMessages, localizedLearningArticles, localizedLearningCategories } from "@/lib/i18n/learning-center";
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
+import type { MethodologyMessages } from "@/lib/i18n/static-pages/methodology";
+import type { PublicErrorMessages } from "@/lib/i18n/public-errors";
 import type { SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
@@ -13,6 +16,17 @@ function escapeHtml(value: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function translateHtmlTextNodes(html: string, translations: ReadonlyMap<string, string>) {
+  const replacements = [...translations.entries()].sort(([left], [right]) => right.length - left.length);
+  return html.replace(/>([^<>]+)</g, (match, text: string) => {
+    let translated = text;
+    for (const [source, replacement] of replacements) {
+      translated = translated.replaceAll(escapeHtml(source), escapeHtml(replacement));
+    }
+    return `>${translated}<`;
+  });
 }
 
 function qualifyUnsupportedHandoffClaims(html: string) {
@@ -247,8 +261,15 @@ export function transformCommonHandoff(html: string) {
  * the first real content section. The data hooks let application CSS own that
  * relationship without rewriting any captured copy or visual treatment.
  */
-export function transformLearnHandoff(html: string) {
-  const categoryTitles = new Map(learningCategories.map((category) => [category.slug, category.title]));
+export function transformLearnHandoff(
+  html: string,
+  locale: SupportedLocale = "en-GB",
+  hrefFor: (href: string) => string = (href) => href,
+) {
+  const messages = learningMessages(locale);
+  const articles = localizedLearningArticles(locale);
+  const categories = localizedLearningCategories(locale);
+  const categoryTitles = new Map(categories.map((category) => [category.slug, category.title]));
   const topicFor = (article: LearningArticle) => {
     if (article.categorySlug === "casino-bonuses") return "bonuses";
     if (["payments", "crypto-casinos"].includes(article.categorySlug)) return "banking";
@@ -257,31 +278,31 @@ export function transformLearnHandoff(html: string) {
     if (article.categorySlug === "industry-news") return "industry";
     return "casinos";
   };
-  const updated = (article: LearningArticle) => new Intl.DateTimeFormat("en-GB", {
+  const updated = (article: LearningArticle) => new Intl.DateTimeFormat(locale, {
     month: "short",
     timeZone: "UTC",
     year: "numeric",
   }).format(new Date(article.lastUpdated));
-  const startCard = (article: LearningArticle) => `<a href="${escapeHtml(getArticlePath(article))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+  const startCard = (article: LearningArticle) => `<a href="${escapeHtml(hrefFor(getArticlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
           <div style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitles.get(article.categorySlug) || article.categorySlug)}</div>
           <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.2; margin-bottom: 12px;">${escapeHtml(article.title)}</div>
           <p style="font-size: 14px; line-height: 1.6; color: rgb(100, 99, 92); margin: 0px 0px 20px; flex: 1 1 0%;">${escapeHtml(article.summary)}</p>
-          <div style="font-size: 13px; color: rgb(139, 138, 130);">${escapeHtml(article.readingTime)} · Updated ${updated(article)}</div>
+          <div style="font-size: 13px; color: rgb(139, 138, 130);">${escapeHtml(article.readingTime)} · ${escapeHtml(messages.ui.updated)} ${updated(article)}</div>
         </a>`;
-  const guideCard = (article: LearningArticle) => `<a href="${escapeHtml(getArticlePath(article))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+  const guideCard = (article: LearningArticle) => `<a href="${escapeHtml(hrefFor(getArticlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
             <div style="flex: 1 1 0%; min-width: 260px;">
               <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 6px;"><span class="sc-interp">${escapeHtml(categoryTitles.get(article.categorySlug) || article.categorySlug)}</span></div>
               <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 19px; line-height: 1.25;"><span class="sc-interp">${escapeHtml(article.title)}</span></div>
               <div style="font-size: 14px; color: rgb(100, 99, 92); margin-top: 6px;"><span class="sc-interp">${escapeHtml(article.summary)}</span></div>
             </div>
-            <div style="font-size: 13px; color: rgb(139, 138, 130); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime.replace(" read", ""))} · ${updated(article)}</span></div>
-            <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">Read →</span>
+            <div style="font-size: 13px; color: rgb(139, 138, 130); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime)} · ${updated(article)}</span></div>
+            <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">${escapeHtml(messages.hub[19])}</span>
           </a>`;
   let output = html
     .replace(/<input placeholder="Search guides — wagering, payouts, RTP…"[^>]*>/, "")
     .replace(
       /(<h2[^>]*>All guides<\/h2>)/,
-      '$1<label data-learn-discovery-search=""><span>Search guides</span><input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…" value=""></label>',
+      `$1<label data-learn-discovery-search=""><span>${escapeHtml(messages.hub[10])}</span><input type="search" aria-label="${escapeHtml(messages.hub[10])}" placeholder="${escapeHtml(messages.ui.searchPlaceholder)}" value=""></label>`,
     )
     .replace('data-mob="pad"', 'data-mob="pad" data-learn-hero-axis=""')
     .replace(
@@ -292,23 +313,46 @@ export function transformLearnHandoff(html: string) {
       '<div style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
       '<div data-learn-start-section="" style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-learn-start-axis="" data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
     );
-  const featured = learningArticles.filter((article) => article.featured).slice(0, 4);
+  const featured = articles.filter((article) => article.featured).slice(0, 4);
   let featuredIndex = 0;
   output = output.replace(/<a href="[^"]+" class="scp2"[\s\S]*?<\/a>/g, () => {
     const article = featured[featuredIndex++];
     return article ? startCard(article) : "";
   });
-  const guides = learningArticles.map(guideCard).join("\n        ");
+  const guides = articles.map(guideCard).join("\n        ");
   let replacedGuideList = false;
   output = output.replace(/<a href="[^"]+" class="scp3"[\s\S]*?<\/a>/g, () => {
     if (replacedGuideList) return "";
     replacedGuideList = true;
     return guides;
   });
-  return output.replace(
+  output = output.replace(
     /<span class="sc-interp">11<\/span> guides/,
-    `<span class="sc-interp">${learningArticles.length}</span> guides`,
+    `<span class="sc-interp">${articles.length}</span> ${escapeHtml(messages.hub[11])}`,
   );
+  output = output.replace(/<h2([^>]*)>All guides<\/h2>/, '<h2$1 data-learn-all-guides="">All guides</h2>');
+  const topicIds = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
+  const topicLabels = ["All topics", "Bonuses", "Banking", "Casinos", "Games", "Responsible play", "Industry"];
+  output = output.replace(/<button([^>]*)>([\s\S]*?)<\/button>/g, (button, attributes: string, content: string) => {
+    const label = content.replace(/<[^>]+>/g, "").trim();
+    const topicIndex = topicLabels.indexOf(label);
+    return topicIndex < 0 ? button : `<button${attributes} data-learn-topic="${topicIds[topicIndex]}">${content}</button>`;
+  });
+  output = translateHtmlTextNodes(output, messages.hubCopy);
+  const i18nData = `<span hidden data-learn-i18n data-learn-one="${escapeHtml(messages.ui.oneShown)}" data-learn-many="${escapeHtml(messages.ui.manyShown)}" data-learn-none="${escapeHtml(messages.ui.noneShown)}"></span>`;
+  return i18nData + output;
+}
+
+export function transformMethodologyHandoff(
+  html: string,
+  messages: MethodologyMessages,
+  hrefFor: (href: string) => string = (href) => href,
+) {
+  let output = html;
+  output = translateHtmlTextNodes(output, messages.copy);
+  return output
+    .replaceAll('href="/contact"', `href="${escapeHtml(hrefFor("/contact"))}"`)
+    .replaceAll('href="/methodology"', `href="${escapeHtml(hrefFor("/methodology"))}"`);
 }
 
 export function transformBonusGuideHandoff(html: string) {
@@ -595,9 +639,16 @@ export function transformHelpHandoff(html: string) {
   return output;
 }
 
-export function transformNotFoundHandoff(html: string) {
+export function transformNotFoundHandoff(html: string, messages: PublicErrorMessages, hrefFor: (href: string) => string = (href) => href) {
   return html.replace(
     /<div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp\(120px, 18vw, 240px\); line-height: 0\.9; letter-spacing: -0\.02em;">404<\/div>/,
     '<h1 style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp(120px, 18vw, 240px); line-height: 0.9; letter-spacing: -0.02em; margin: 0px;">404</h1>',
-  );
+  )
+    .replaceAll("This route is lost.", escapeHtml(messages.notFoundLost))
+    .replaceAll("Let&#x27;s get you back on course.", escapeHtml(messages.notFoundBack))
+    .replaceAll("Let's get you back on course.", escapeHtml(messages.notFoundBack))
+    .replaceAll("Go to homepage", escapeHtml(messages.notFoundHome))
+    .replaceAll("About the Programme →", escapeHtml(messages.notFoundAbout))
+    .replace('href="/"', `href="${escapeHtml(hrefFor("/"))}"`)
+    .replace('href="/10-steps"', `href="${escapeHtml(hrefFor("/10-steps"))}"`);
 }

@@ -97,6 +97,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
+  const completedLocalizedEditorialPaths = [
+    "/methodology",
+    "/contact",
+    "/learn",
+    ...centerArticles.map(getArticlePath),
+  ];
+  const localizedEditorialRoutes = INITIAL_EUROPEAN_MARKET_PROFILES
+    .filter((market) => localizedProductIndexingApproved(market.defaultLocale))
+    .flatMap((market) => completedLocalizedEditorialPaths.map((pathname) => ({
+      url: absoluteUrl(publicMarketPath(market, market.defaultLocale, pathname)),
+      changeFrequency: "monthly" as const,
+      priority: pathname === "/learn" ? 0.8 : 0.7,
+    })));
 
   return [
     ...coreRoutes.map((route) => ({
@@ -110,6 +123,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     })),
     ...learningArticleRoutes,
+    ...localizedEditorialRoutes,
     ...baseProducts.casinoRoutes,
     ...localizedProducts.flatMap((entry) => entry.casinoRoutes),
   ];

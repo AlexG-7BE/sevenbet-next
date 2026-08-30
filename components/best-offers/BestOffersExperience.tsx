@@ -128,7 +128,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
     </section>
 
     <section className={styles.whyPicked} aria-labelledby="why-picked-title" data-motion-reveal data-nav-theme="cream"><div className={styles.shell}>
-      <div><p className={styles.lightKicker}>{messages.bestOffers.whyTitle}</p><h2 id="why-picked-title">{messages.common.materialTerms} · {messages.common.sourceStatus}</h2><p>{inventoryMode === "DEMO_ONLY" ? messages.common.demoDisclosure : messages.bestOffers.whyCopy} <Link href="/methodology">{messages.common.reviewMethodology} →</Link></p></div>
+      <div><p className={styles.lightKicker}>{messages.bestOffers.whyTitle}</p><h2 id="why-picked-title">{messages.common.materialTerms} · {messages.common.sourceStatus}</h2><p>{inventoryMode === "DEMO_ONLY" ? messages.common.demoDisclosure : messages.bestOffers.whyCopy} <Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></p></div>
       <ol>
         <li><span>01</span><div><strong>{messages.common.sourceStatus}</strong><p>{messages.common.demoDisclosure}</p></div></li>
         <li><span>02</span><div><strong>{messages.common.materialTerms}</strong><p>{messages.bestOffers.whyCopy}</p></div></li>

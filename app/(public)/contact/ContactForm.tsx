@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 
 import { SUPPORT_MAILBOX, type ContactFieldErrors } from "@/lib/contact/contracts";
 import { validateContactPayload } from "@/lib/contact/validation";
+import type { ContactMessages } from "@/lib/i18n/static-pages/contact";
 import styles from "./ContactPage.module.css";
 
 type Values = { name: string; email: string; subject: string; message: string; company: string };
@@ -15,7 +16,7 @@ function describedBy(hint: string, error: string, hasError: boolean) {
   return hasError ? `${hint} ${error}` : hint;
 }
 
-export function ContactForm() {
+export function ContactForm({ messages }: { messages: ContactMessages }) {
   const [values, setValues] = useState<Values>(emptyValues);
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({});
   const [submissionState, setSubmissionState] = useState<SubmissionState>("idle");
@@ -40,7 +41,10 @@ export function ContactForm() {
 
     const validation = validateContactPayload(values);
     if (!validation.ok) {
-      setFieldErrors(validation.fieldErrors);
+      setFieldErrors(Object.fromEntries(Object.keys(validation.fieldErrors).map((field) => [
+        field,
+        messages[`${field}Error` as "nameError" | "emailError" | "subjectError" | "messageError"],
+      ])));
       setSubmissionState("idle");
       requestAnimationFrame(() => document.querySelector<HTMLElement>("[data-contact-form] [aria-invalid='true']")?.focus());
       return;
@@ -57,7 +61,12 @@ export function ContactForm() {
       });
       const result = await response.json().catch(() => null) as { fieldErrors?: ContactFieldErrors } | null;
       if (!response.ok) {
-        if (response.status === 400 && result?.fieldErrors) setFieldErrors(result.fieldErrors);
+        if (response.status === 400 && result?.fieldErrors) {
+          setFieldErrors(Object.fromEntries(Object.keys(result.fieldErrors).map((field) => [
+            field,
+            messages[`${field}Error` as "nameError" | "emailError" | "subjectError" | "messageError"],
+          ])));
+        }
         setSubmissionState("error");
         focusStatus();
         return;
@@ -77,9 +86,9 @@ export function ContactForm() {
     <div className={styles.formPanel}>
       <form className={styles.form} data-contact-form noValidate onSubmit={submit}>
         <div className={styles.field}>
-          <label htmlFor="contact-name">Your name</label>
+          <label htmlFor="contact-name">{messages.nameLabel}</label>
           <input
-            aria-label="Name (optional)"
+            aria-label={messages.nameAria}
             aria-describedby={describedBy("contact-name-hint", "contact-name-error", Boolean(fieldErrors.name))}
             aria-invalid={Boolean(fieldErrors.name)}
             autoComplete="name"
@@ -87,16 +96,16 @@ export function ContactForm() {
             maxLength={100}
             name="name"
             onChange={(event) => update("name", event.target.value)}
-            placeholder="How should we address you?"
+            placeholder={messages.namePlaceholder}
             type="text"
             value={values.name}
           />
-          <p className={styles.srOnly} id="contact-name-hint">Name is optional; up to 100 characters.</p>
+          <p className={styles.srOnly} id="contact-name-hint">{messages.nameHint}</p>
           {fieldErrors.name ? <p className={styles.error} id="contact-name-error">{fieldErrors.name}</p> : null}
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="contact-email">Email</label>
+          <label htmlFor="contact-email">{messages.emailLabel}</label>
           <input
             aria-describedby={describedBy("contact-email-hint", "contact-email-error", Boolean(fieldErrors.email))}
             aria-invalid={Boolean(fieldErrors.email)}
@@ -105,17 +114,17 @@ export function ContactForm() {
             maxLength={254}
             name="email"
             onChange={(event) => update("email", event.target.value)}
-            placeholder="Where we reply"
+            placeholder={messages.emailPlaceholder}
             required
             type="email"
             value={values.email}
           />
-          <p className={styles.srOnly} id="contact-email-hint">Used only to handle your enquiry.</p>
+          <p className={styles.srOnly} id="contact-email-hint">{messages.emailHint}</p>
           {fieldErrors.email ? <p className={styles.error} id="contact-email-error">{fieldErrors.email}</p> : null}
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="contact-subject">Subject</label>
+          <label htmlFor="contact-subject">{messages.subjectLabel}</label>
           <input
             aria-describedby={describedBy("contact-subject-hint", "contact-subject-error", Boolean(fieldErrors.subject))}
             aria-invalid={Boolean(fieldErrors.subject)}
@@ -123,17 +132,17 @@ export function ContactForm() {
             maxLength={160}
             name="subject"
             onChange={(event) => update("subject", event.target.value)}
-            placeholder="A few words"
+            placeholder={messages.subjectPlaceholder}
             required
             type="text"
             value={values.subject}
           />
-          <p className={styles.srOnly} id="contact-subject-hint">Up to 160 characters.</p>
+          <p className={styles.srOnly} id="contact-subject-hint">{messages.subjectHint}</p>
           {fieldErrors.subject ? <p className={styles.error} id="contact-subject-error">{fieldErrors.subject}</p> : null}
         </div>
 
         <div className={styles.field}>
-          <label htmlFor="contact-message">Message</label>
+          <label htmlFor="contact-message">{messages.messageLabel}</label>
           <textarea
             aria-describedby={describedBy("contact-message-hint", "contact-message-error", Boolean(fieldErrors.message))}
             aria-invalid={Boolean(fieldErrors.message)}
@@ -142,17 +151,17 @@ export function ContactForm() {
             minLength={10}
             name="message"
             onChange={(event) => update("message", event.target.value)}
-            placeholder="What's on your mind?"
+            placeholder={messages.messagePlaceholder}
             required
             rows={6}
             value={values.message}
           />
-          <p className={styles.srOnly} id="contact-message-hint">10–4,000 characters.</p>
+          <p className={styles.srOnly} id="contact-message-hint">{messages.messageHint}</p>
           {fieldErrors.message ? <p className={styles.error} id="contact-message-error">{fieldErrors.message}</p> : null}
         </div>
 
         <div className={styles.honeypot} aria-hidden="true">
-          <label htmlFor="contact-company">Company website</label>
+          <label htmlFor="contact-company">{messages.honeypotLabel}</label>
           <input
             autoComplete="off"
             id="contact-company"
@@ -164,26 +173,26 @@ export function ContactForm() {
           />
         </div>
 
-        <p className={styles.srOnly}>Please do not include passwords, payment details or private Programme answers in this form.</p>
-        <p className={styles.srOnly}>Privacy Notice: we use the information you submit only to handle your enquiry and protect the form from abuse.</p>
+        <p className={styles.srOnly}>{messages.sensitiveWarning}</p>
+        <p className={styles.srOnly}>{messages.privacyNotice}</p>
 
         {submissionState === "success" ? (
           <div className={styles.status} data-state="success" ref={statusRef} role="status" tabIndex={-1}>
-            <strong>Message sent.</strong>
-            <p>We received your enquiry.</p>
+            <strong>{messages.sentTitle}</strong>
+            <p>{messages.sentCopy}</p>
           </div>
         ) : null}
         {submissionState === "error" ? (
           <div className={styles.status} data-state="error" ref={statusRef} role="alert" tabIndex={-1}>
-            <strong>We couldn&apos;t send your message.</strong>
-            <p>Please try again or email <a href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a> directly.</p>
+            <strong>{messages.failureTitle}</strong>
+            <p>{messages.failureCopy} <a href={`mailto:${SUPPORT_MAILBOX}`}>{SUPPORT_MAILBOX}</a></p>
           </div>
         ) : null}
 
         <button className={styles.submit} disabled={submissionState === "submitting"} type="submit">
-          {submissionState === "submitting" ? "Sending…" : "Send message"}
+          {submissionState === "submitting" ? messages.sending : messages.submit}
         </button>
-        <p className={styles.note}>Contact details are used to handle your enquiry and protect the form from abuse. Messages do not feed offers or rankings.</p>
+        <p className={styles.note}>{messages.formNote}</p>
       </form>
     </div>
   );

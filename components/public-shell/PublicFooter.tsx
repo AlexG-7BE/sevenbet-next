@@ -33,7 +33,7 @@ export function PublicFooter({ presentation = resolvePresentationContext({}) }: 
           ))}
         </div>
         <div className={styles.footerBaseline}>
-          <div><span className={styles.age}>18+</span><span>{footer.financialRisk}</span><Link href="/terms">{footer.terms}</Link><Link href="/privacy">{footer.privacy}</Link><Link href="/contact">{footer.contact}</Link></div>
+          <div><span className={styles.age}>18+</span><span>{footer.financialRisk}</span><Link href="/terms">{footer.terms}</Link><Link href="/privacy">{footer.privacy}</Link><Link href={localizedHref("/contact")}>{footer.contact}</Link></div>
           <p className={styles.footerCommission}>{footer.commissionDisclosure}</p>
         </div>
         <span aria-hidden="true" className={styles.footerEnd} data-public-footer-bottom />

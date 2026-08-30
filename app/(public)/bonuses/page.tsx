@@ -104,7 +104,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
       <div className={styles.shell}>
         <header className={styles.sectionHeading}><h2 className={styles.display}>{messages.bonuses.directoryTitle}</h2><p>{result.total} {messages.common.records} · {messages.bonuses.sortedByValue}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
-        {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><p className={styles.eyebrow}>{messages.common.commercialUnavailable}</p><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href="/methodology">{messages.common.reviewMethodology}</Link></section> : <>
+        {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><p className={styles.eyebrow}>{messages.common.commercialUnavailable}</p><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <>
           <BonusFilters activeCount={activeCount} facets={result.facets} messages={messages} presentation={presentation} query={result.query} total={result.total} />
           <ActiveBonusFilters messages={messages} presentation={presentation} query={result.query} raw={raw} />
 

@@ -110,7 +110,7 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
           </article>;
         })}
       </div>}
-      {top.length ? <div className={styles.why}><strong>{messages.bestOffers.whyTitle}</strong><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofPublished}</span><Link href="/methodology">{messages.common.methodology} →</Link></div> : null}
+      {top.length ? <div className={styles.why}><strong>{messages.bestOffers.whyTitle}</strong><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofPublished}</span><Link href={productHref(presentation, "/methodology")}>{messages.common.methodology} →</Link></div> : null}
     </div>
   </section>;
 }

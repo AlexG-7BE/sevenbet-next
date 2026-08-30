@@ -4,11 +4,15 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import generatedPages from "../lib/final-handoff/generated-pages.json" with { type: "json" };
-import { transformCommonHandoff, transformHomeHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
+import { transformCommonHandoff, transformHomeHandoff, transformLearnHandoff, transformMethodologyHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
 import { TRANSLATION_REVIEW_STATE } from "../lib/i18n/review-state";
 import { aboutMessages } from "../lib/i18n/static-pages/about";
 import { faqMessages } from "../lib/i18n/static-pages/faq";
+import { contactMessages } from "../lib/i18n/static-pages/contact";
+import { METHODOLOGY_SOURCE_COPY, methodologyMessages } from "../lib/i18n/static-pages/methodology";
+import { learningMessages, localizedLearningArticles } from "../lib/i18n/learning-center";
+import { publicErrorMessages } from "../lib/i18n/public-errors";
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
@@ -110,6 +114,8 @@ test("market-first parser distinguishes canonical, secondary, legacy and invalid
   assert.deepEqual(parsePublicMarketRoute("/de/casinos"), { kind: "MARKET_DEFAULT", market: germany, locale: "de-DE", pathname: "/casinos" });
   assert.deepEqual(parsePublicMarketRoute("/ca/fr/casinos"), { kind: "SECONDARY_LOCALE", market: canada, locale: "fr-CA", pathname: "/casinos" });
   assert.deepEqual(parsePublicMarketRoute("/pt/faq"), { kind: "MARKET_DEFAULT", market: portugal, locale: "pt-PT", pathname: "/faq" });
+  assert.deepEqual(parsePublicMarketRoute("/de/contact"), { kind: "MARKET_DEFAULT", market: germany, locale: "de-DE", pathname: "/contact" });
+  assert.deepEqual(parsePublicMarketRoute("/de/learn/casino-basics/online-casino-basics"), { kind: "MARKET_DEFAULT", market: germany, locale: "de-DE", pathname: "/learn/casino-basics/online-casino-basics" });
   assert.deepEqual(parsePublicMarketRoute("/de/de/casinos"), { kind: "LEGACY_REDUNDANT_LOCALE", market: germany, locale: "de-DE", pathname: "/casinos", canonicalPath: "/de/casinos" });
   assert.equal(parsePublicMarketRoute("/de/en/").kind, "INVALID");
   assert.equal(parsePublicMarketRoute("/gr/gr/").kind, "INVALID");
@@ -152,7 +158,7 @@ test("all eleven European product catalogs are complete Preview drafts without E
 test("localized product links, canonicals and reciprocal alternates preserve explicit presentation", () => {
   const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de/casino/example?from=compare");
-  assert.equal(productHref(presentation, "/methodology"), "/methodology");
+  assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de/casinos");
   const languages = metadata.alternates?.languages as Record<string, string>;
@@ -176,6 +182,33 @@ test("localized product links, canonicals and reciprocal alternates preserve exp
   const differentGeo = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(second.alternates?.canonical, metadata.alternates?.canonical, "geo cannot mutate an explicit canonical");
+});
+
+test("Methodology, Contact, Learning and generic-error catalogs cover all eleven European locales", () => {
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+    const locale = profile.defaultLocale;
+    assert.equal(methodologyMessages(locale).copy.size, METHODOLOGY_SOURCE_COPY.length, locale);
+    assert.equal(localizedLearningArticles(locale).length, 13, locale);
+    assert.equal(learningMessages(locale).hubCopy.size, 25, locale);
+    if (locale !== "en-GB") assert.notEqual(learningMessages(locale).ui.learn, "Learn", locale);
+    assert.ok(Object.values(contactMessages(locale)).every((value) => value.trim().length > 0), locale);
+    assert.ok(Object.values(publicErrorMessages(locale)).every((value) => value.trim().length > 0), locale);
+  }
+  const methodology = transformMethodologyHandoff(
+    transformCommonHandoff(generatedPages.methodology.html),
+    methodologyMessages("de-DE"),
+    (href) => `/de${href}`,
+  );
+  const methodologyText = [...methodology.matchAll(/>([^<>]+)</g)].map((match) => match[1]).join(" ");
+  for (const source of METHODOLOGY_SOURCE_COPY) {
+    assert.equal(methodologyText.includes(source.replaceAll("&", "&amp;")), false, `German Methodology leaked: ${source}`);
+  }
+  const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html), "de-DE", (href) => `/de${href}`);
+  assert.match(learn, /href="\/de\/learn\/casino-basics\/online-casino-basics"/);
+  assert.match(learn, /data-learn-topic="all topics"/);
+  assert.match(learn, /<span class="sc-interp">13<\/span> Leitfäden/);
+  assert.doesNotMatch(learn, />All guides</);
+  assert.doesNotMatch(learn, />Read →</);
 });
 
 test("presentation and commercial jurisdiction must match before any authority reaches a product service", () => {

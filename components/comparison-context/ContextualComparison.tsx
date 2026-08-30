@@ -166,7 +166,7 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
             </article>;
           })}
         </div> : <p className={styles.state} role="status">{messages.comparison.unavailable}</p>}
-        <footer><span>{messages.comparison.footer} <Link href="/methodology">{messages.common.methodology}</Link>.</span></footer>
+        <footer><span>{messages.comparison.footer} <Link href={productHref(presentation, "/methodology")}>{messages.common.methodology}</Link>.</span></footer>
       </div>
     </dialog>
   </>;

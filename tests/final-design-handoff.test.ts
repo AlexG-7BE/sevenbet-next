@@ -20,7 +20,7 @@ test("final public navigation and route consolidation match the locked handoff",
   assert.match(read("app/(public)/compare/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(read("app/(public)/self-check/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);
   assert.match(read("app/(public)/tools/budget-calculator/page.tsx"), /permanentRedirect\("\/responsible-gambling"\)/);
-  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(`\/learn\?category=/);
+  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
   assert.match(read("app/help/[slug]/page.tsx"), /permanentRedirect\(article \? `\/help#/);
   assert.match(read("lib/site.ts"), /"\/bonus-guide"/);
   assert.doesNotMatch(read("app/sitemap.ts"), /"\/compare"|protectedHelpArticles|getCategoryPath/);
@@ -70,11 +70,12 @@ test("locked hero copy is present on every final public surface", () => {
   const generated = JSON.parse(read("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
   const generatedText = (name: string) => generated[name].html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
   const productCatalog = read("lib/i18n/product-pages-catalog.ts");
+  const contactCatalog = read("lib/i18n/static-pages/contact.ts");
   const expectations: Array<[string, RegExp]> = [
     ["app/(public)/best-offers/page.tsx", /messages\.bestOffers\.heroLead[\s\S]*messages\.bestOffers\.heroEmphasis/],
     ["app/(public)/casinos/page.tsx", /messages\.casinos\.heroLead[\s\S]*messages\.casinos\.heroEmphasis/],
     ["app/(public)/bonuses/page.tsx", /messages\.bonuses\.heroLead[\s\S]*messages\.bonuses\.heroEmphasis/],
-    ["app/(public)/contact/page.tsx", /Talk[\s\S]*to us\./i],
+    ["app/(public)/contact/page.tsx", /messages\.titleLead[\s\S]*messages\.titleEmphasis/],
     ["app/(public)/privacy/page.tsx", /kind="privacy"/],
     ["app/(public)/terms/page.tsx", /kind="terms"/],
   ];
@@ -82,6 +83,7 @@ test("locked hero copy is present on every final public surface", () => {
   assert.match(productCatalog, /heroLead: "Three picks\."[\s\S]*heroEmphasis: "Not thirty\."/);
   assert.match(productCatalog, /heroLead: "Picked for"[\s\S]*heroEmphasis: "how you play\."/);
   assert.match(productCatalog, /heroLead: "Value, measured"[\s\S]*heroEmphasis: "by terms\."/i);
+  assert.match(contactCatalog, /titleLead: "Talk"[\s\S]*titleEmphasis: "to us\."/i);
   for (const [name, expected] of [
     ["home", /Control starts here\./],
     ["tenSteps", /Ten steps\. One plan\./],

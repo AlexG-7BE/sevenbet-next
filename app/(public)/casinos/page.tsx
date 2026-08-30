@@ -84,7 +84,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
     <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>{messages.casinos.directoryTitle}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? messages.common.published : messages.common.classified} {result.total === 1 ? messages.common.record : messages.common.records}</span></div>
-      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure} {hasLocalPreviewAction ? messages.common.marketPresentationNotice : messages.common.commercialUnavailable}</p><Link href="/methodology">{messages.common.reviewMethodology} →</Link></div> : null}
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure} {hasLocalPreviewAction ? messages.common.marketPresentationNotice : messages.common.commercialUnavailable}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></div> : null}
       <DiscoveryControls messages={messages} presentation={presentation} result={result} />
       <ActiveDiscoveryFilters messages={messages} presentation={presentation} result={result} />
       <DiscoveryResults messages={messages} presentation={presentation} result={result} />
