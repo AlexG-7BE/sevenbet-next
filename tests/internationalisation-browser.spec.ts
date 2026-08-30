@@ -146,8 +146,8 @@ test("automatic presentation clears the preference and returns to an unprefixed 
 
 test("mobile selector is keyboard-accessible inside the existing modal navigation", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
-  const messages = publicShellMessages("fi-FI");
-  await page.goto(`${baseUrl}/fi/`, { waitUntil: "domcontentloaded" });
+  const messages = publicShellMessages("da-DK");
+  await page.goto(`${baseUrl}/dk/`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: messages.openNavigation }).click();
   const dialog = page.getByRole("dialog", { name: messages.siteNavigation });
   await expect(dialog).toBeVisible();
@@ -164,12 +164,12 @@ test("mobile selector is keyboard-accessible inside the existing modal navigatio
   await expect(selector).toBeFocused();
   await selector.press("Enter");
   await expect(menu).toBeVisible();
-  const norway = menu.locator('button[value="NO|nb-NO"]');
-  await norway.focus();
-  await norway.press("Enter");
-  await expect(page).toHaveURL(/\/no\/?$/);
+  const spain = menu.locator('button[value="ES|es-ES"]');
+  await spain.focus();
+  await spain.press("Enter");
+  await expect(page).toHaveURL(/\/es\/?$/);
   await expect(page.getByRole("menu")).toHaveCount(0);
-  await expect(page.locator("html")).toHaveAttribute("lang", "nb-NO");
+  await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   await page.close();
 });
 

@@ -35,6 +35,12 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
 
+### Unmerged internationalisation candidate
+
+**PROPOSED UNTIL MERGE — PR #105 feature-branch evidence, 30 August 2026:** the current internationalisation candidate defines `HOME_READY`, `PUBLIC_CORE_READY` and `ARCHITECTURE_ONLY` presentation states; limits both Preview and Production selectors to the GB baseline plus Founder-accepted DE/ES/SE/DK/GR public-core locales; and adds rendered localization, interpolation, curated-control and responsive-overflow regression coverage. The detailed route/locale matrix is recorded in [Localization quality and route coverage](internationalisation/localization-quality-audit.md).
+
+This entry does not change the Production SHA above. It does not activate indexing, localized operative legal documents, a partner, an offer, tracking or any non-GB commercial action.
+
 ## Detected release evidence
 
 ### Public product and legal baseline

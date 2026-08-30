@@ -93,7 +93,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
       <div className={finalStyles.heroCopy}>
         <small><span className={finalStyles.desktopKicker}>{messages.bonuses.heroKicker}</span><span className={finalStyles.mobileKicker}>{formatProductMessage(messages.bonuses.description, { market })}</span></small>
         <h1>{messages.bonuses.heroLead}<em>{messages.bonuses.heroEmphasis}</em></h1>
-        <p>{messages.bonuses.heroCopy}</p>
+        <p>{formatProductMessage(messages.bonuses.heroCopy, { market })}</p>
       </div>
       <div className={finalStyles.heroMeta}><span>{messages.bonuses.proofTerms}</span><span>{messages.bonuses.proofClaims}</span><span>{messages.bonuses.proofSources}</span></div>
     </section>
@@ -112,7 +112,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
             <p className={styles.resultsStatus} aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? messages.common.result : messages.common.results} · {messages.common.pageOf.replace("{page}", String(result.page)).replace("{pages}", String(result.pageCount))}</p>
             <BonusComparisonList messages={messages} offers={result.records} presentation={presentation} startPosition={startPosition} />
             <BonusPagination messages={messages} page={result.page} pageCount={result.pageCount} presentation={presentation} raw={raw} />
-          </> : <section className={styles.empty}><p className={styles.eyebrow}>{messages.bonuses.noMatchesTitle}</p><h2>{formatProductMessage(messages.bonuses.noMatchesTitle, { market })}</h2><p>{messages.bonuses.noMatchesCopy}</p></section>}
+          </> : <section className={styles.empty}><p className={styles.eyebrow}>{messages.bonuses.directoryTitle}</p><h2>{formatProductMessage(messages.bonuses.noMatchesTitle, { market })}</h2><p>{messages.bonuses.noMatchesCopy}</p></section>}
         </>}
       </div>
     </section>

@@ -12,7 +12,7 @@ import {
 } from "@/lib/public-casino-discovery/curated-selector";
 import { classifyMediaRatio, isFeaturedCardMediaCompatible, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
 import type { PublicCasinoCardDto } from "@/lib/public-casino-discovery/public-casino-discovery.types";
-import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 
@@ -71,6 +71,7 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
   const selectedLabel = selectorLabel(selector, messages);
+  const market = presentation.market.seoDisplayName;
 
   return <section className={styles.section} aria-labelledby="curated-title" data-motion-reveal data-nav-theme="light">
     <div className={styles.shell}>
@@ -78,7 +79,7 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
         {selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{selectorLabel(label, messages)}</button>)}
       </div>
       <p className={styles.context} id="curated-title"><strong>{selectedLabel}</strong><span>{messages.casinos.proofLimit} · {messages.casinos.proofEvidence}</span></p>
-      {!top.length ? <div className={styles.empty} role="status"><strong>{messages.casinos.noMatchesTitle}</strong><p>{messages.casinos.noMatchesCopy}</p></div> : <div className={styles.cards}>
+      {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.casinos.noMatchesTitle, { market })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market })}</p></div> : <div className={styles.cards}>
         {top.map((casino, index) => {
           const fixture = casino.dataClassification !== "PUBLISHED_RECORD";
           const strengths = casino.highlights.slice(0, 3);
@@ -92,7 +93,7 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
                 <div className={styles.score} aria-label={`${messages.common.editorScore} ${casino.rating?.toFixed(1) ?? messages.common.notListed} / 10`}><small>{messages.common.editorScore}</small><strong>{casino.rating?.toFixed(1) ?? "—"}<span>/10</span></strong></div>
               </div>
               <p className={styles.bestFor}><span>{messages.profile.bestFor}</span><strong>{selectedLabel}</strong></p>
-              <p className={styles.reason}>{casino.shortDescription || messages.casinos.heroCopy}</p>
+              <p className={styles.reason}>{casino.shortDescription || formatProductMessage(messages.casinos.heroCopy, { market })}</p>
               {strengths.length ? <ul className={styles.strengths}>{strengths.map((strength) => <li key={strength}>{strength}</li>)}</ul> : null}
               <div className={styles.offer}>
                 <small>{fixture ? messages.common.demoData : casino.featuredBonus ? messages.common.current : messages.common.commercialUnavailable}</small>

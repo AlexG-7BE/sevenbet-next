@@ -253,6 +253,12 @@ body:has(> [data-public-shell="header"]) {
 }
 
 @media (max-width: 760px) {
+  [data-handoff-page="learn"] a.scp2,
+  [data-handoff-page="learn"] a.scp3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
   [data-handoff-page="learn"] [data-learn-discovery-search] {
     flex-basis: 100%;
     max-width: none;
@@ -263,6 +269,20 @@ body:has(> [data-public-shell="header"]) {
   [data-handoff-page="learn"] input[type="search"] {
     min-height: 48px;
     font-size: 16px !important;
+  }
+
+  [data-handoff-page="learn"] a.scp3 {
+    width: 100%;
+    min-width: 0;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding-inline: 20px !important;
+  }
+
+  [data-handoff-page="learn"] a.scp3 > div:first-child {
+    width: 100%;
+    min-width: 0 !important;
   }
 
   [data-handoff-page="article"] [data-mob="grid"] {
@@ -280,15 +300,6 @@ body:has(> [data-public-shell="header"]) {
     overflow-wrap: anywhere;
   }
 
-  [data-handoff-page="learn"] a.scp3 {
-    width: 100%;
-    min-width: 0;
-    padding-inline: 20px !important;
-  }
-
-  [data-handoff-page="learn"] a.scp3 > div:first-child {
-    min-width: 0 !important;
-  }
 }
 
 .bonusGuidePage aside nav a { min-height: 44px; display: flex; align-items: center; }

@@ -3,13 +3,13 @@
   "generatedAt": "2026-08-30",
   "assurance": "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW",
   "sourceLocale": "en-GB",
-  "catalogDigest": "8b74aaf92c9c1af4efaa63fd0a1be3b28780004a57420449bd09637268587b1e",
+  "catalogDigest": "64bb2daa0dac5fdaa92d7da94158b645c0a2765a0658506d4c8f13c471dbe1d1",
   "status": "PASS",
   "locales": [
     {
       "locale": "de-DE",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -22,14 +22,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "it-IT",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -42,14 +43,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "es-ES",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -62,14 +64,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "pt-PT",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -82,14 +85,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "el-GR",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -102,14 +106,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "nl-NL",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -122,14 +127,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "sv-SE",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -142,14 +148,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "da-DK",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -162,14 +169,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "fi-FI",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -182,14 +190,15 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     },
     {
       "locale": "nb-NO",
       "status": "PASS",
-      "checkedStrings": 713,
+      "checkedStrings": 718,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -202,7 +211,8 @@
         "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION": "PASS",
         "PROGRAMME_COMMERCIAL_SEPARATION": "PASS",
         "NO_CLINICAL_CLAIM_SEMANTICS": "PASS",
-        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS"
+        "AFFILIATE_EDITORIAL_INDEPENDENCE": "PASS",
+        "CURATED_CONTROL_SEMANTICS": "PASS"
       },
       "findings": []
     }

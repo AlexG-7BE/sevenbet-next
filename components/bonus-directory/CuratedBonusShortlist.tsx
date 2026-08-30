@@ -11,7 +11,7 @@ import {
   type CuratedBonusSelector as Selector,
 } from "@/lib/public-offer/curated-selector";
 import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
-import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
 
@@ -38,9 +38,16 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedBonuses(offers, selector), [offers, selector]);
   return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
-    <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} role="tablist">{selectors.map((label) => <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{messages.common.filters} {selectors.indexOf(label) + 1}</button>)}</div>
+    <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} role="tablist">{selectors.map((label) => {
+      const localizedLabel = label === "Best Overall" ? messages.bonuses.selectorBestOverall
+        : label === "Low Wagering" ? messages.bonuses.selectorLowWagering
+          : label === "Low Deposit" ? messages.bonuses.selectorLowDeposit
+            : label === "Crypto" ? messages.bonuses.selectorCrypto
+              : messages.bonuses.selectorNewest;
+      return <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{localizedLabel}</button>;
+    })}</div>
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
-    {!top.length ? <div className={styles.empty} role="status"><strong>{messages.bonuses.noMatchesTitle}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
+    {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.bonuses.noMatchesTitle, { market: presentation.market.seoDisplayName })}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>{messages.common.current}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
       <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {offer.casino.editorScore.toFixed(1)} <span aria-hidden="true">★★★★★</span></small></div></div>

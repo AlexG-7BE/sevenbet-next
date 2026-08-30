@@ -74,7 +74,7 @@ export default async function CasinosPage({ searchParams }: PageProps) {
     <section className={styles.hero} data-nav-theme="dark">
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
-          <header><p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p><h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1><span>{messages.casinos.heroCopy}</span></header>
+          <header><p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p><h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1><span>{formatProductMessage(messages.casinos.heroCopy, { market })}</span></header>
         </div>
         <div className={styles.heroProof}><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofLimit}</span><span>{messages.casinos.proofPublished}</span></div>
       </div>
@@ -94,6 +94,6 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       [messages.casinos.faqDifferenceQuestion, messages.casinos.faqDifferenceAnswer],
       [messages.casinos.faqReviewOnlyQuestion, messages.casinos.faqReviewOnlyAnswer],
       [messages.casinos.faqCommissionQuestion, messages.casinos.faqCommissionAnswer],
-    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
+    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{formatProductMessage(answer, { market })}</p></details>)}</div></div></section>
   </div>;
 }

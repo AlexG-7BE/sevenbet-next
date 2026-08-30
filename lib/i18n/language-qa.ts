@@ -23,6 +23,7 @@ export const LANGUAGE_QA_CHECKS = [
   "PLACEHOLDER_AND_INTERPOLATION_INTEGRITY", "UNICODE_INTEGRITY", "HTML_TEXT_SAFETY", "TERMINOLOGY_CONSISTENCY",
   "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION", "PROGRAMME_COMMERCIAL_SEPARATION", "NO_CLINICAL_CLAIM_SEMANTICS",
   "AFFILIATE_EDITORIAL_INDEPENDENCE",
+  "CURATED_CONTROL_SEMANTICS",
 ] as const;
 
 export type LanguageQaCheck = typeof LANGUAGE_QA_CHECKS[number];
@@ -137,6 +138,11 @@ function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<
   if (!terms.programme.test(corpus) || !terms.commercial.test(corpus)) fail("PROGRAMME_COMMERCIAL_SEPARATION", "required Programme/commercial separation vocabulary is absent");
   if (!terms.clinical.test(corpus)) fail("NO_CLINICAL_CLAIM_SEMANTICS", "bounded no-clinical-claim vocabulary is absent");
   if (!terms.affiliate.test(corpus) || !terms.editorial.test(corpus) || !corpus.includes("Editor Score")) fail("AFFILIATE_EDITORIAL_INDEPENDENCE", "affiliate/editorial independence vocabulary is absent");
+  const selectorPaths = ["selectorBestOverall", "selectorLowWagering", "selectorLowDeposit", "selectorCrypto", "selectorNewest"];
+  const selectorLabels = selectorPaths.map((key) => target[`product.bonuses.${key}`]);
+  if (selectorLabels.some((label) => !label) || new Set(selectorLabels).size !== selectorPaths.length || selectorLabels.some((label) => /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i.test(label))) {
+    fail("CURATED_CONTROL_SEMANTICS", `bonus selector labels are missing, duplicated or generic: ${selectorLabels.join(" | ")}`);
+  }
   return { locale, status: Object.values(checks).every((status) => status === "PASS") ? "PASS" : "FAIL", checkedStrings: Object.keys(target).length, checks, findings };
 }
 

@@ -350,6 +350,10 @@ export function transformMethodologyHandoff(
 ) {
   let output = html;
   output = translateHtmlTextNodes(output, messages.copy);
+  output = output.replace(
+    /(<div style="display: flex; gap: 14px;"><span[^>]*>[^<]*<\/span>)([\s\S]*?)(<\/div>)/g,
+    '$1<span data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;">$2</span>$3',
+  );
   return output
     .replaceAll('href="/contact"', `href="${escapeHtml(hrefFor("/contact"))}"`)
     .replaceAll('href="/methodology"', `href="${escapeHtml(hrefFor("/methodology"))}"`);
@@ -506,6 +510,11 @@ function translateHomeHandoff(html: string, locale: SupportedLocale) {
   HOME_SOURCE_COPY.imageAlts.forEach((source, index) => {
     output = output.replaceAll(`alt="${source}"`, `alt="${escapeHtml(translation.imageAlts[index])}"`);
   });
+  const localizedKicker = escapeHtml(translation.hero[0]);
+  output = output.replace(
+    new RegExp(`<div([^>]*)>${escapePattern(localizedKicker)}</div>`),
+    `<div$1 data-home-hero-kicker="">${localizedKicker}</div>`,
+  );
   return output;
 }
 
@@ -538,6 +547,29 @@ export function transformHomeHandoffCss(css: string) {
       "",
     );
   return `${withoutCapturedHomeControls}
+    [data-home-hero-kicker] {
+      max-width: min(760px, calc(100vw - 96px));
+      line-height: 1.35 !important;
+      text-wrap: balance;
+      white-space: normal !important;
+    }
+    html[lang="de-DE"] [data-handoff-page="home"] [data-hero] h1 {
+      max-width: calc(100vw - 48px);
+      font-size: clamp(48px, 7.4vw, 112px) !important;
+      overflow-wrap: normal;
+      text-wrap: balance;
+    }
+    @media (max-width: 760px) {
+      [data-home-hero-kicker] {
+        max-width: calc(100vw - 112px);
+        font-size: 11px !important;
+        letter-spacing: .16em !important;
+      }
+      html[lang="de-DE"] [data-handoff-page="home"] [data-hero] h1 {
+        font-size: clamp(42px, 12.5vw, 54px) !important;
+        line-height: .94 !important;
+      }
+    }
     [data-home-snap] {
       scroll-snap-align: start;
       scroll-snap-stop: normal !important;

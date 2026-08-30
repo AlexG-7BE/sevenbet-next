@@ -4,9 +4,9 @@ import test from "node:test";
 import { NextRequest } from "next/server";
 
 import generatedPages from "../lib/final-handoff/generated-pages.json" with { type: "json" };
-import { transformCommonHandoff, transformHomeHandoff, transformLearnHandoff, transformMethodologyHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
+import { transformCommonHandoff, transformHomeHandoff, transformHomeHandoffCss, transformLearnHandoff, transformMethodologyHandoff, transformTenStepsHandoff } from "../lib/final-handoff/transforms";
 import { HOME_SOURCE_COPY, homeMetadata, homeTranslation } from "../lib/i18n/home-catalog";
-import { TRANSLATION_REVIEW_STATE } from "../lib/i18n/review-state";
+import { TRANSLATION_REVIEW_STATE, homeTranslationReady, publicCoreTranslationReady } from "../lib/i18n/review-state";
 import { aboutMessages } from "../lib/i18n/static-pages/about";
 import { faqMessages } from "../lib/i18n/static-pages/faq";
 import { contactMessages } from "../lib/i18n/static-pages/contact";
@@ -15,7 +15,7 @@ import { learningMessages, localizedLearningArticles } from "../lib/i18n/learnin
 import { publicErrorMessages } from "../lib/i18n/public-errors";
 import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
-import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { jurisdictionResolver } from "../lib/jurisdiction/resolver";
 import {
   FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
@@ -216,6 +216,7 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
   for (const source of METHODOLOGY_SOURCE_COPY) {
     assert.equal(methodologyText.includes(source.replaceAll("&", "&amp;")), false, `German Methodology leaked: ${source}`);
   }
+  assert.match(methodology, /data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;"/);
   const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html), "de-DE", (href) => `/de${href}`);
   assert.match(learn, /href="\/de\/learn\/casino-basics\/online-casino-basics"/);
   assert.match(learn, /data-learn-topic="all topics"/);
@@ -354,9 +355,63 @@ test("every European Home locale has complete localized copy and metadata", () =
   }
 });
 
+test("Home and public-core readiness are explicit and selector-safe", () => {
+  const core = new Set(["GB", "DE", "ES", "GR", "SE", "DK"]);
+  for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
+    assert.equal(homeTranslationReady(profile.defaultLocale), true, profile.countryCode);
+    assert.equal(publicCoreTranslationReady(profile.defaultLocale), core.has(profile.countryCode), profile.countryCode);
+  }
+  const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
+  assert.match(header, /publicCoreTranslationReady\(profile\.defaultLocale\)/);
+  assert.match(header, /VERCEL_ENV === "production"[\s\S]*PUBLICATION_APPROVED_MARKET_PROFILES/);
+});
+
+test("curated bonus selectors keep stable semantics and exact localized labels", () => {
+  const expected = {
+    "en-GB": ["Best Overall", "Low Wagering", "Low Deposit", "Crypto", "Newest"],
+    "de-DE": ["Insgesamt am besten", "Niedrige Umsatzbedingung", "Niedrige Einzahlung", "Krypto", "Neueste"],
+    "it-IT": ["Migliore in assoluto", "Requisiti di puntata bassi", "Deposito basso", "Cripto", "Più recenti"],
+    "es-ES": ["Mejor en general", "Requisito de apuesta bajo", "Depósito bajo", "Cripto", "Más recientes"],
+    "pt-PT": ["Melhor no geral", "Requisitos de apostas baixos", "Depósito baixo", "Cripto", "Mais recentes"],
+    "el-GR": ["Καλύτερο συνολικά", "Χαμηλή απαίτηση στοιχηματισμού", "Χαμηλή κατάθεση", "Κρυπτονομίσματα", "Νεότερα"],
+    "nl-NL": ["Beste algemeen", "Lage inzetvereiste", "Lage storting", "Crypto", "Nieuwste"],
+    "sv-SE": ["Bäst totalt", "Lågt omsättningskrav", "Låg insättning", "Krypto", "Senaste"],
+    "da-DK": ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"],
+    "fi-FI": ["Paras kokonaisuus", "Matala kierrätysvaatimus", "Pieni talletus", "Krypto", "Uusimmat"],
+    "nb-NO": ["Best totalt", "Lavt omsetningskrav", "Lavt innskudd", "Krypto", "Nyeste"],
+  } as const;
+  for (const [locale, labels] of Object.entries(expected)) {
+    const messages = productPageMessages(locale as keyof typeof TRANSLATION_REVIEW_STATE).bonuses;
+    assert.deepEqual(
+      [messages.selectorBestOverall, messages.selectorLowWagering, messages.selectorLowDeposit, messages.selectorCrypto, messages.selectorNewest],
+      labels,
+      locale,
+    );
+    assert.equal(new Set(labels).size, 5, locale);
+  }
+  const renderer = readFileSync("components/bonus-directory/CuratedBonusShortlist.tsx", "utf8");
+  assert.doesNotMatch(renderer, /messages\.common\.filters[^\n]+selectors\.indexOf/);
+  assert.doesNotMatch(renderer, /(?:Filter|Filtre|Filtro|Suodatin)\s*\{?\w*\}?\s*[+]?\s*1/i);
+});
+
+test("public-core product copy resolves every supported runtime token", () => {
+  for (const locale of ["en-GB", "de-DE", "es-ES", "el-GR", "sv-SE", "da-DK"] as const) {
+    const formatted = JSON.stringify(productPageMessages(locale), (_key, value) => typeof value === "string"
+      ? formatProductMessage(value, { market: "Test Market", page: 1, pages: 2, count: 1 })
+      : value);
+    assert.doesNotMatch(formatted, /\{\{?[a-z][a-z0-9_-]*\}?\}/i, locale);
+    assert.doesNotMatch(formatted, /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i, locale);
+  }
+  assert.deepEqual(homeTranslation("es-ES")?.recognition.slice(0, 2), ["El juego resulta", "cada vez más difícil de controlar."]);
+  const homeCss = transformHomeHandoffCss("");
+  assert.match(homeCss, /html\[lang="de-DE"\][\s\S]*\[data-hero\] h1/);
+  assert.match(transformHomeHandoff(transformCommonHandoff(generatedPages.home.html), "de-DE"), /data-home-hero-kicker/);
+});
+
 test("translation review state records only first-wave Founder publication acceptance while keeping every translated locale noindex", () => {
   assert.deepEqual(TRANSLATION_REVIEW_STATE["en-GB"], {
     content: "SOURCE_BASELINE",
+    publicExperience: "PUBLIC_CORE_READY",
     aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE",
     founderPublication: "SOURCE_BASELINE_AUTHORITY",
     legalReview: "GB_SOURCE_REVIEWED",
@@ -366,6 +421,9 @@ test("translation review state records only first-wave Founder publication accep
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => profile.countryCode !== "GB")) {
     assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
       content: "MACHINE_TRANSLATED",
+      publicExperience: (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
+        ? "PUBLIC_CORE_READY"
+        : "HOME_READY",
       aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
       founderPublication: (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
         ? "FOUNDER_PUBLICATION_ACCEPTED"

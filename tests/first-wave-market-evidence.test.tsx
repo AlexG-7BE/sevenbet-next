@@ -45,6 +45,7 @@ test("review states distinguish source, machine translation, AI QA and Founder a
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
     assert.equal(state.content, "MACHINE_TRANSLATED", locale);
+    assert.equal(state.publicExperience, acceptedLocales.has(locale) ? "PUBLIC_CORE_READY" : ["en-CA", "fr-CA"].includes(locale) ? "ARCHITECTURE_ONLY" : "HOME_READY", locale);
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);

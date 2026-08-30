@@ -2,6 +2,7 @@ import type { SupportedLocale } from "@/lib/market/registry";
 
 export type TranslationReviewState = Readonly<{
   content: "SOURCE_BASELINE" | "MACHINE_TRANSLATED";
+  publicExperience: "ARCHITECTURE_ONLY" | "HOME_READY" | "PUBLIC_CORE_READY";
   aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE" | "AI_LANGUAGE_QA_REQUIRED" | "AI_LANGUAGE_QA_PASSED";
   founderPublication: "SOURCE_BASELINE_AUTHORITY" | "FOUNDER_PUBLICATION_NOT_ACCEPTED" | "FOUNDER_PUBLICATION_ACCEPTED";
   legalReview: "GB_SOURCE_REVIEWED" | "REQUIRED";
@@ -11,6 +12,7 @@ export type TranslationReviewState = Readonly<{
 
 const sourceBaseline: TranslationReviewState = {
   content: "SOURCE_BASELINE",
+  publicExperience: "PUBLIC_CORE_READY",
   aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE",
   founderPublication: "SOURCE_BASELINE_AUTHORITY",
   legalReview: "GB_SOURCE_REVIEWED",
@@ -20,6 +22,7 @@ const sourceBaseline: TranslationReviewState = {
 
 const machineTranslated: TranslationReviewState = {
   content: "MACHINE_TRANSLATED",
+  publicExperience: "HOME_READY",
   aiLanguageQa: "AI_LANGUAGE_QA_PASSED",
   founderPublication: "FOUNDER_PUBLICATION_NOT_ACCEPTED",
   legalReview: "REQUIRED",
@@ -29,12 +32,14 @@ const machineTranslated: TranslationReviewState = {
 
 const firstWavePublicationAccepted: TranslationReviewState = {
   ...machineTranslated,
+  publicExperience: "PUBLIC_CORE_READY",
   founderPublication: "FOUNDER_PUBLICATION_ACCEPTED",
   marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
 };
 
 const architectureOnlyTranslated: TranslationReviewState = {
   ...machineTranslated,
+  publicExperience: "ARCHITECTURE_ONLY",
   aiLanguageQa: "AI_LANGUAGE_QA_REQUIRED",
 };
 
@@ -66,6 +71,15 @@ export function translationReviewState(locale: SupportedLocale) {
 
 export function founderEditorialPublicationAccepted(locale: SupportedLocale) {
   return translationReviewState(locale).founderPublication === "FOUNDER_PUBLICATION_ACCEPTED";
+}
+
+export function homeTranslationReady(locale: SupportedLocale) {
+  return translationReviewState(locale).publicExperience === "HOME_READY"
+    || translationReviewState(locale).publicExperience === "PUBLIC_CORE_READY";
+}
+
+export function publicCoreTranslationReady(locale: SupportedLocale) {
+  return translationReviewState(locale).publicExperience === "PUBLIC_CORE_READY";
 }
 
 export function publicTranslationIndexingApproved(locale: SupportedLocale) {

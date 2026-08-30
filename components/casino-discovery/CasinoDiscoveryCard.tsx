@@ -69,11 +69,11 @@ export function CasinoDiscoveryCardMarkup({ casino, position, classNames, messag
 }
 
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames, messages = productPageMessages("en-GB"), presentation = resolvePresentationContext({}) }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames; messages?: ProductPageMessages; presentation?: PresentationResolution }) {
-  if (!casino) return <div className={classNames.featurePlaceholder}><span>{messages.casinos.directoryTitle}</span><strong>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</strong><p>{messages.casinos.noMatchesCopy}</p></div>;
+  if (!casino) return <div className={classNames.featurePlaceholder}><span>{messages.casinos.directoryTitle}</span><strong>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.market.seoDisplayName })}</p></div>;
   return <section aria-label={messages.casinos.directoryTitle} className={classNames.featureTheatre}>
     <Image alt="" aria-hidden="true" className={classNames.featureMedia} fill priority sizes="(max-width: 760px) 1px, (max-width: 1280px) 100vw, 1280px" src={DIRECTORY_EDITORIAL_MEDIA} />
     <div aria-hidden="true" className={classNames.featureOverlay} />
-    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>{casino.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published} · 18+</span><h2>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h2><p>{messages.casinos.heroCopy}</p><div className={classNames.featureMetrics}><span><b>10</b> {messages.common.editorScore}</span><span><b>{messages.common.sourceStatus}</b></span><span><b>{messages.common.reviewOnly}</b></span></div></div>
+    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>{casino.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published} · 18+</span><h2>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h2><p>{formatProductMessage(messages.casinos.heroCopy, { market: presentation.market.seoDisplayName })}</p><div className={classNames.featureMetrics}><span><b>10</b> {messages.common.editorScore}</span><span><b>{messages.common.sourceStatus}</b></span><span><b>{messages.common.reviewOnly}</b></span></div></div>
     <article className={classNames.featureCard}><ReviewCardContents casino={casino} classNames={classNames} messages={messages} presentation={presentation} /></article>
   </section>;
 }
