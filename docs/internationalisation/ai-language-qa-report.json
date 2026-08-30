@@ -3,13 +3,13 @@
   "generatedAt": "2026-08-30",
   "assurance": "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW",
   "sourceLocale": "en-GB",
-  "catalogDigest": "5167a51fa24122ea1487e60c3c469c850293339614bab079e17937dbda00ab37",
+  "catalogDigest": "8b74aaf92c9c1af4efaa63fd0a1be3b28780004a57420449bd09637268587b1e",
   "status": "PASS",
   "locales": [
     {
       "locale": "de-DE",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -29,7 +29,7 @@
     {
       "locale": "it-IT",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -49,7 +49,7 @@
     {
       "locale": "es-ES",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -69,7 +69,7 @@
     {
       "locale": "pt-PT",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -89,7 +89,7 @@
     {
       "locale": "el-GR",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -109,7 +109,7 @@
     {
       "locale": "nl-NL",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -129,7 +129,7 @@
     {
       "locale": "sv-SE",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -149,7 +149,7 @@
     {
       "locale": "da-DK",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -169,7 +169,7 @@
     {
       "locale": "fi-FI",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",
@@ -189,7 +189,7 @@
     {
       "locale": "nb-NO",
       "status": "PASS",
-      "checkedStrings": 714,
+      "checkedStrings": 713,
       "checks": {
         "SOURCE_KEY_COMPLETENESS": "PASS",
         "NON_EMPTY_STRINGS": "PASS",

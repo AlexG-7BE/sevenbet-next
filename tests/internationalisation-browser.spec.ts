@@ -48,7 +48,7 @@ for (const acceptance of founderPublicationSmoke) {
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
       expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(route.pathname);
       if (route.publicSelector) {
-        await expect(page.getByRole("combobox", { name: publicShellMessages(acceptance.locale).changeMarketAndLanguage }).first()).toHaveValue(`${acceptance.market}|${acceptance.locale}`);
+        await expect(page.getByRole("button", { name: publicShellMessages(acceptance.locale).changeMarketAndLanguage }).first()).toContainText(acceptance.locale.split("-")[0].toUpperCase());
       }
       expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count(), `${route.pathname} must not expose outbound commercial actions`).toBe(0);
       await expect(page.locator("main")).not.toContainText(knownEnglishLeakage);
@@ -83,7 +83,7 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     await expect(page.getByRole("heading", { name: `${hero[1]} ${hero[2]}` })).toBeVisible();
     const messages = publicShellMessages(locale);
     await expect(page.getByRole("navigation", { name: messages.primaryNavigation })).toBeVisible();
-    await expect(page.getByRole("combobox", { name: messages.changeMarketAndLanguage }).first()).toHaveValue(`${profile.countryCode}|${locale}`);
+    await expect(page.getByRole("button", { name: messages.changeMarketAndLanguage }).first()).toContainText(locale.split("-")[0].toUpperCase());
     const footer = publicFooterMessages(locale);
     await expect(page.getByRole("contentinfo", { name: footer.label })).toContainText(footer.financialRisk);
   });
@@ -118,10 +118,16 @@ for (const market of FIRST_WAVE_MARKETS) {
 test("desktop selector persists presentation and preserves a supported equivalent path", async ({ page, context }) => {
   await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
-  const selector = page.getByRole("combobox", { name: messages.changeMarketAndLanguage }).first();
-  await selector.selectOption("ES|es-ES");
-  await selector.locator("xpath=ancestor::form").getByRole("button", { name: messages.applyPreference }).click();
+  const trigger = page.getByRole("button", { name: messages.changeMarketAndLanguage }).first();
+  await expect(trigger).toHaveAttribute("aria-expanded", "false");
+  await trigger.click();
+  const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('button[value="DE|de-DE"]')).toHaveAttribute("aria-checked", "true");
+  await expect(page.getByRole("button", { name: "Anwenden", exact: true })).toHaveCount(0);
+  await menu.locator('button[value="ES|es-ES"]').click();
   await expect(page).toHaveURL(/\/es\/casinos\/?$/);
+  await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   const cookies = await context.cookies();
   expect(cookies.find((cookie) => cookie.name === "b4gamble_presentation")?.value).toBe("v1.ES.es-ES");
@@ -132,9 +138,8 @@ test("automatic presentation clears the preference and returns to an unprefixed 
   await context.addCookies([{ name: "b4gamble_presentation", value: "v1.PT.pt-PT", domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" }]);
   await page.goto(`${baseUrl}/pt/bonuses?type=welcome&country=PT`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("pt-PT");
-  const selector = page.getByRole("combobox", { name: messages.changeMarketAndLanguage }).first();
-  await selector.selectOption("automatic");
-  await selector.locator("xpath=ancestor::form").getByRole("button", { name: messages.applyPreference }).click();
+  await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
+  await page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first().locator('button[value="automatic"]').click();
   await expect(page).toHaveURL(/\/bonuses\?type=welcome$/);
   expect((await context.cookies()).some((cookie) => cookie.name === "b4gamble_presentation")).toBe(false);
 });
@@ -146,12 +151,24 @@ test("mobile selector is keyboard-accessible inside the existing modal navigatio
   await page.getByRole("button", { name: messages.openNavigation }).click();
   const dialog = page.getByRole("dialog", { name: messages.siteNavigation });
   await expect(dialog).toBeVisible();
-  const selector = dialog.getByRole("combobox", { name: messages.changeMarketAndLanguage });
+  const selector = dialog.getByRole("button", { name: messages.changeMarketAndLanguage });
   await selector.focus();
   await expect(selector).toBeFocused();
-  await selector.selectOption("NO|nb-NO");
-  await dialog.getByRole("button", { name: messages.applyPreference }).click();
+  await selector.press("Enter");
+  const menu = dialog.getByRole("menu", { name: messages.changeMarketAndLanguage });
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('[role="menuitemradio"][aria-checked="true"]')).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(dialog).toBeVisible();
+  await expect(selector).toBeFocused();
+  await selector.press("Enter");
+  await expect(menu).toBeVisible();
+  const norway = menu.locator('button[value="NO|nb-NO"]');
+  await norway.focus();
+  await norway.press("Enter");
   await expect(page).toHaveURL(/\/no\/?$/);
+  await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute("lang", "nb-NO");
   await page.close();
 });

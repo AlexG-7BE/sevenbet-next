@@ -79,6 +79,19 @@ test("desktop and mobile header actions render the shared account label with ico
   assert.match(navigation, /<MarketLanguageSelector/);
 });
 
+test("the presentation selector applies one-tap choices with an accessible selected state", () => {
+  const selector = readFileSync("components/public-shell/MarketLanguageSelector.tsx", "utf8");
+
+  assert.match(selector, /aria-expanded=\{open\}/);
+  assert.match(selector, /aria-haspopup="menu"/);
+  assert.match(selector, /role="menuitemradio"/);
+  assert.match(selector, /aria-checked=\{selected\}/);
+  assert.match(selector, /name="choice"/);
+  assert.match(selector, /type="submit"/);
+  assert.match(selector, /value="automatic"/);
+  assert.doesNotMatch(selector, /<select|applyPreference/);
+});
+
 test("the public layout owns one landmark and reads auth on the server", () => {
   const rootLayout = readFileSync("app/layout.tsx", "utf8");
   const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
