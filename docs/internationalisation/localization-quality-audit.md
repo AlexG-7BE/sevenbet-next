@@ -1,7 +1,7 @@
 # Localization quality and route coverage
 
-**Evidence date:** 30 August 2026  
-**Scope:** PR #105 feature branch; not merged or deployed to Production  
+**Evidence date:** 30 August 2026
+**Scope:** PR #105 feature branch; not merged or deployed to Production
 **Assurance:** repository and rendered-runtime engineering QA; not legal review or a new Founder publication decision
 
 ## Coverage matrix
