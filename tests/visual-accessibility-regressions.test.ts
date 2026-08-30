@@ -34,8 +34,8 @@ test("Best Offers keeps native cards, material terms, and reachable controls", (
   const experience = read("components/best-offers/BestOffersExperience.tsx");
 
   assert.match(experience, /<article className=\{styles\.featuredCard\} data-testid="best-offer-product-card">/);
-  assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} material offer terms`\}>/);
-  assert.match(experience, /<details><summary>What does “wagering 35x” actually mean\?<\/summary>/);
+  assert.match(experience, /<dl className=\{styles\.mobileMaterialTerms\} aria-label=\{`\$\{offer\.casino\.name\} · \$\{messages\.common\.materialOfferTerms\}`\}>/);
+  assert.match(experience, /<details><summary>\{messages\.bestOffers\.faqWageringQuestion\}<\/summary>/);
   assert.match(experience, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null;/);
   assert.match(cssRule(styles, ".commercialCta"), /min-height:50px/);
   assert.match(cssRule(styles, ".actions > button"), /min-height:44px/);
@@ -56,6 +56,10 @@ test("bonus comparison uses native article semantics and readable state labels",
 
 test("casino discovery and profile preserve touch, scroll, and document semantics", () => {
   const discovery = read("components/casino-discovery/CasinoDiscovery.module.css");
+  const discoveryCard = read("components/casino-discovery/CasinoDiscoveryCard.tsx");
+  const bonusDirectory = read("components/bonus-directory/BonusDirectory.tsx");
+  const curated = read("components/casino-discovery/CuratedCasinoShortlist.tsx");
+  const offerMedia = read("components/commercial-media/CommercialOfferMedia.tsx");
   const profile = read("components/casino-profile/CasinoProfile.tsx");
   const profileStyles = read("components/casino-profile/CasinoProfile.module.css");
 
@@ -68,9 +72,14 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(discovery, /\.readingGuide \.sectionIntro > p, \.compare p\s*\{\s*color: #4f4e48;\s*\}/);
 
   assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
-  assert.match(profile, /<nav aria-label="Casino review sections"/);
-  assert.match(profile, /<strong aria-label=\{`\$\{demo \? "Fictional editorial score" : "Editorial score"\} \$\{casino\.editorScore\} out of 10`\}>/);
-  assert.match(profile, /<details className=\{styles\.evidenceDisclosure\}>\s*<summary>Evidence, payments &amp; control tools<\/summary>/);
+  assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <img\s+alt=""/);
+  assert.match(discoveryCard, /casino\.logo \? <img alt=""/);
+  assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);
+  assert.match(curated, /casino\.logo \? <img alt=""/);
+  assert.match(profile, /casino\.media\.logo \? <img alt=""/);
+  assert.match(profile, /<nav aria-label=\{messages\.profile\.currentReview\}/);
+  assert.match(profile, /<strong aria-label=\{`\$\{messages\.common\.editorScore\} \$\{formattedEditorScore\} \/ 10`\}>\{formattedEditorScore\}<\/strong>/);
+  assert.match(profile, /<details className=\{styles\.evidenceDisclosure\}>\s*<summary>\{messages\.profile\.evidencePaymentsTools\}<\/summary>/);
   assert.match(profile, /<dl className=\{`\$\{styles\.facts\} \$\{styles\.checkCard\}`\}>/);
   assert.match(profileStyles, /\.decisionBar > div a\s*\{[^}]*min-height: 44px;/);
   assert.match(profileStyles, /\.faqGrid summary\s*\{[^}]*min-height: 66px;/);

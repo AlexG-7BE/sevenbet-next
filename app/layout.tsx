@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 
 const archivo = Archivo({
   subsets: ["latin"],
+  axes: ["wdth"],
   variable: "--font-seven-sans",
   display: "swap",
 });

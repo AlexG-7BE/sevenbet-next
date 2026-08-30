@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { commercialDiscoveryLinks, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const expectGoogle = process.env.EXPECT_GOOGLE_AUTH === "true";
@@ -28,33 +29,54 @@ function authority(journeyId: string) {
 }
 
 function homeFixture(currentMission = 2) {
-  const titles = ["Get started", "Set your limits", "Understand your triggers", "Build one boundary", "Reality check", "Decision framework", "Play plan", "Safer play", "Review & adjust", "Long-term control"];
-  const missions = titles.map((title, index) => ({
+  const missions = programmeMissionTitles.map((title, index) => ({
     missionNumber: index + 1,
     title,
     status: index + 1 < currentMission ? "completed" : index + 1 === currentMission ? "current" : "locked",
-    actionsCompleted: index + 1 < currentMission ? 1 : 0,
-    actionsTotal: 3,
-    xpEarnedHere: index + 1 < currentMission ? 40 : 0,
-    completionBonus: 20,
+    actionsCompleted: index + 1 < currentMission ? index === 0 ? 2 : 3 : 0,
+    actionsTotal: index === 0 ? 2 : 3,
+    xpEarnedHere: index + 1 < currentMission ? index === 0 ? 40 : 75 : 0,
+    completionBonus: index === 0 ? 0 : 25,
   }));
+  const firstReviewAvailable = currentMission > 3;
   return {
-    totalXp: 40,
+    totalXp: firstReviewAvailable ? 190 : 40,
     activeDays: 1,
     currentStreak: 1,
-    achievements: [],
+    achievements: [
+      { slug: "first-plan", title: "First Plan", state: currentMission > 2 ? "earned" : "locked", awardedAt: currentMission > 2 ? "2026-08-19T00:00:00.000Z" : null },
+      { slug: "boundary-built", title: "Boundary Built", state: currentMission > 4 ? "earned" : "locked", awardedAt: currentMission > 4 ? "2026-08-19T00:00:00.000Z" : null },
+    ],
     currentMission,
+    primaryAction: "start-mission",
     engagementDayBucket: "day_1",
-    currentAction: "choose_direction",
+    currentAction: firstReviewAvailable ? "choose_boundary" : "choose_direction",
     startingPoint: candidate,
     missions,
     reviews: [
-      { milestone: "first", unlockMission: 3, title: "First Review", maxWords: 200, status: "locked" },
-      { milestone: "mid", unlockMission: 6, title: "Mid Review", maxWords: 250, status: "locked" },
-      { milestone: "full", unlockMission: 10, title: "Full Review", maxWords: 300, status: "locked" },
+      { milestone: "first", unlockMission: 3, title: "First Personal Review", maxWords: 250, status: firstReviewAvailable ? "available" : "locked" },
+      { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", maxWords: 300, status: "locked" },
+      { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
     ],
-    nextReview: { milestone: "first", unlockMission: 3, title: "First Review", xpRemaining: 20, missionsRemaining: 1 },
-    discoveryLinks: [],
+    nextReview: firstReviewAvailable
+      ? { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", xpRemaining: 225, missionsRemaining: 3 }
+      : { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
+    discoveryLinks: commercialDiscoveryLinks,
+  };
+}
+
+function partialMissionOneHomeFixture() {
+  const home = homeFixture(1);
+  return {
+    ...home,
+    totalXp: 20,
+    primaryAction: "finish-mission-one",
+    currentAction: "program_ai_starting_point_complete",
+    startingPoint: null,
+    missions: home.missions.map((mission) => mission.missionNumber === 1
+      ? { ...mission, actionsCompleted: 1, xpEarnedHere: 20 }
+      : mission),
+    nextReview: { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 170, missionsRemaining: 3 },
   };
 }
 
@@ -88,7 +110,7 @@ async function reachRegistration(page: Page) {
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(candidate.startingPoint);
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
 }
 
 async function seedOAuthJourney(page: Page, journeyId: string) {
@@ -167,7 +189,7 @@ test("Google cancellation retains the canonical Starting Point without legacy UI
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error&error=provider-payload-must-not-render");
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toContainText("Google account access was not completed");
   await expect(page.locator('p[role="alert"]')).not.toContainText("provider-payload-must-not-render");
   await expect(page.locator('[data-programme-runtime="legacy"], [data-legacy-programme]')).toHaveCount(0);
@@ -185,7 +207,7 @@ test("Google cancellation without a provider code still keeps recovery actions v
   await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
   await page.route("**/api/program/program-ai/authority", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
   await open(page, "/program?auth=google-error");
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Google account access was not completed. You can retry or use email instead.");
   await expect(page.getByRole("button", { name: "Use email instead" })).toBeVisible();
 });
@@ -270,7 +292,7 @@ test("Google return retries canonical claim redemption and transfers local autho
       : { status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture() }) });
   });
   await open(page, "/program?auth=google-return");
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.locator('p[role="alert"]')).toHaveText("Your progress could not be saved yet");
   expect(redemptions).toBe(1);
   await page.getByRole("button", { name: "Save to my account" }).click();
@@ -287,6 +309,22 @@ test("Google return retries canonical claim redemption and transfers local autho
   expect(transferred.journeyContent).toBeNull();
   expect(transferred.userContent).toBeNull();
   expect(transferred.userAuthority).toContain(journeyId);
+});
+
+test("authenticated partial Mission 01 truthfully re-enters private intake without discarding saved progress", async ({ page }) => {
+  const userId = "partial-mission-one-user";
+  await installAuthenticatedSession(page, userId);
+  await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
+    status: 200,
+    contentType: "application/json",
+    body: JSON.stringify({ ok: true, home: partialMissionOneHomeFixture() }),
+  }));
+  await open(page, "/program");
+  await expect(page.getByRole("heading", { name: "Mission 01 — Map the moment" })).toBeVisible();
+  await expect(page.getByText("Your first action and XP are saved. For privacy, the situation itself was not retained. Enter one again to finish your Starting Point.", { exact: true })).toBeVisible();
+  await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {

@@ -213,7 +213,7 @@ test("a rate-limited guidance request returns the deterministic fallback without
   let providerCalls = 0;
   const missions = {
     mission: async () => ({
-      title: "Set a goal",
+      title: "Set a 7-day goal",
       artifact: {},
       actionsCompleted: 0,
     }),
@@ -240,7 +240,7 @@ test("provider failures retain a usable fallback and expose only a closed reliab
   const previousFlag = process.env.PROGRAM_AI_V1_ENABLED;
   process.env.PROGRAM_AI_V1_ENABLED = "true";
   const missions = {
-    mission: async () => ({ title: "Set a goal", artifact: {}, actionsCompleted: 0 }),
+    mission: async () => ({ title: "Set a 7-day goal", artifact: {}, actionsCompleted: 0 }),
     home: async () => ({ startingPoint: null }),
   };
   try {

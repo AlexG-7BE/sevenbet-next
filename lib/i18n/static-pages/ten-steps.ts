@@ -63,7 +63,7 @@ const catalog: Record<SupportedLocale, TenStepsTranslation> = {
   ] },
   "nl-NL": { metadataTitle: "Het 10-stappenprogramma van B4GAMBLE", metadataDescription: "Bekijk hoe tien zelfgestuurde Missies een persoonlijk Startpunt en controleplan opbouwen.", text: [
     "Het Programma, stap voor stap", "Tien stappen.", "Eén", "plan.", "Elke Missie duurt 5–15 minuten en eindigt met iets dat je bewaart. Dit is precies wat er gebeurt — zonder verrassingen of kleine lettertjes.", "Start Missie 01", "Waarom B4GAMBLE →", "01–03 Begrijpen", "04–07 Opbouwen", "08–10 Toepassen", "Scroll ↓",
-    "Wat je opbouwt", "Drie dingen die je aan het einde hebt.", "Een helder beeld", "Je triggers, patronen en de momenten waarop beslissingen echt plaatsvinden.", "Werkbare grenzen", "Grenzen die je ontwerpt, in echte weken test en aanpast tot ze standhouden.", "Een herzienbaar plan", "Eén document dat beschrijft hoe je speelt — wanneer je wilt opnieuw te bekijken.", "Het pad",
+    "Wat je opbouwt", "Drie dingen die je aan het einde hebt.", "Een helder beeld", "Je triggers, patronen en de momenten waarop beslissingen echt plaatsvinden.", "Werkbare grenzen", "Grenzen die je ontwerpt, in echte weken test en aanpast tot ze standhouden.", "Een herzienbaar plan", "Eén document dat beschrijft hoe je speelt — dat je kunt herzien wanneer je wilt.", "Het pad",
     "Beginnen", "Vertel wat er gebeurt en ontvang je Startpunt.", "Stel je grenzen in", "Een eerste versie van tijd- en geldgrenzen.", "Begrijp je triggers", "Breng de momenten in kaart die sessies starten.", "Bouw één grens", "Eén grens die je deze week kunt volhouden.", "Realiteitscheck", "Een eerlijke blik op de cijfers van week twee.", "Besliskader", "Een eenvoudige regel voor ja, nee en vanavond-niet.", "Speelplan", "Schrijf het plan dat je werkelijk gaat volgen.", "Spelen met meer controle", "Verminder frictie, beoordeel aanbieders en bescherm je plan.", "Beoordelen en aanpassen", "Bekijk wat standhield. Herstel wat niet werkte.", "Controle op lange termijn", "Maak van tien Missies een blijvende gewoonte.",
     "Begin privé", "Wat je hier zegt,", "blijft hier.", "Je situatie en plan worden nooit gebruikt voor aanbiedingen, ranglijsten of advertenties.", "Vraag export of verwijdering aan via accountondersteuning; wettelijke bewaring en back-ups kunnen van toepassing zijn.", "Geen Missie vraagt je om te storten, een aanbieding te claimen of te spelen.", "Missie 01 duurt ongeveer", "één minuut.", "Geen registratie voordat je Startpunt klaar is.", "Tien lantaarns langs een donker pad, de eerste branden — volgorde en bestemming",
   ] },
@@ -95,8 +95,234 @@ const catalog: Record<SupportedLocale, TenStepsTranslation> = {
   "fr-CA": en,
 };
 
+type CurrentMissionCopy = Readonly<{ title: string; description: string }>;
+
+type CurrentProgrammeCopy = Readonly<{
+  overview: string;
+  missions: readonly CurrentMissionCopy[];
+  closingLead: string;
+  closingEmphasis: string;
+  closingBody: string;
+}>;
+
+const enCurrent: CurrentProgrammeCopy = {
+  overview: "Most Missions take 5–8 minutes and end with something you keep. Mission 01 begins with a short Starting Point. Here's exactly what happens — no surprises, no fine print.",
+  missions: [
+    { title: "Map the moment", description: "Map one recent decision moment and build your Starting Point." },
+    { title: "Set a 7-day goal", description: "Turn your Starting Point into one small seven-day experiment." },
+    { title: "Understand the urge", description: "Notice the sequence early enough to create a choice point." },
+    { title: "Build one boundary", description: "Make one boundary specific enough to use under pressure." },
+    { title: "Check before deciding", description: "Put three practical checks between an impulse and a decision." },
+    { title: "Add friction", description: "Make the fast route less automatic with one or two practical layers." },
+    { title: "Prepare support", description: "Prepare a support route without needing to disclose a person's identity." },
+    { title: "Research responsibly", description: "Use material terms and safer-gambling facts when comparing options." },
+    { title: "Rehearse the decision", description: "Practise one response before the decision is live." },
+    { title: "Make the plan reviewable", description: "Bring the useful parts together and decide when to review them." },
+  ],
+  closingLead: "Mission 01 starts with",
+  closingEmphasis: "your Starting Point.",
+  closingBody: "Complete the Starting Point's two actions for 40 XP. Registration awards no XP and only follows when it is ready.",
+};
+
+const currentProgrammeCatalog: Record<SupportedLocale, CurrentProgrammeCopy> = {
+  "en-GB": enCurrent,
+  "de-DE": {
+    overview: "Die meisten Missionen dauern etwa 5–8 Minuten und enden mit etwas, das du behältst. Mission 01 beginnt mit einem kurzen Ausgangspunkt. Hier siehst du genau, was geschieht — ohne Überraschungen und Kleingedrucktes.",
+    missions: [
+      { title: "Erfasse den Moment", description: "Beschreibe, was geschieht, und erhalte deinen persönlichen Ausgangspunkt." },
+      { title: "Setze ein 7-Tage-Ziel", description: "Mach aus deinem Ausgangspunkt ein kleines Experiment für die nächsten sieben Tage." },
+      { title: "Verstehe den Spielimpuls", description: "Erkenne die Abfolge früh genug, um Raum für eine bewusste Entscheidung zu schaffen." },
+      { title: "Setze eine Grenze", description: "Formuliere eine Grenze so konkret, dass du sie auch unter Druck anwenden kannst." },
+      { title: "Prüfe, bevor du entscheidest", description: "Baue drei praktische Prüfungen zwischen Impuls und Entscheidung ein." },
+      { title: "Baue Hürden ein", description: "Mach den schnellen Weg mit ein oder zwei praktischen Hürden weniger automatisch." },
+      { title: "Bereite Unterstützung vor", description: "Bereite einen Weg zu Unterstützung vor, ohne die Identität einer Person nennen zu müssen." },
+      { title: "Informiere dich verantwortungsvoll", description: "Nutze beim Vergleichen wesentliche Bedingungen und Fakten zum sichereren Spielen." },
+      { title: "Spiele die Entscheidung durch", description: "Übe eine Reaktion, bevor die Entscheidung ansteht." },
+      { title: "Mach den Plan überprüfbar", description: "Führe die nützlichen Teile zusammen und entscheide, wann du sie erneut überprüfst." },
+    ],
+    closingLead: "Mission 01 beginnt mit",
+    closingEmphasis: "deinem Ausgangspunkt.",
+    closingBody: "Schließe die beiden Aktionen zum Ausgangspunkt ab und erhalte 40 XP. Die Registrierung bringt keine XP und folgt erst, wenn der Ausgangspunkt bereit ist.",
+  },
+  "it-IT": {
+    overview: "La maggior parte delle Missioni dura circa 5–8 minuti e termina con qualcosa che conservi. La Missione 01 inizia con un breve Punto di partenza. Ecco cosa accade, senza sorprese né clausole nascoste.",
+    missions: [
+      { title: "Mappa il momento", description: "Descrivi cosa succede e ottieni il tuo Punto di partenza personale." },
+      { title: "Definisci un obiettivo di 7 giorni", description: "Trasforma il tuo Punto di partenza in un piccolo esperimento di sette giorni." },
+      { title: "Comprendi l’impulso", description: "Riconosci la sequenza abbastanza presto da creare uno spazio di scelta." },
+      { title: "Costruisci un limite", description: "Rendi un limite abbastanza concreto da poterlo applicare sotto pressione." },
+      { title: "Verifica prima di decidere", description: "Inserisci tre verifiche pratiche tra un impulso e una decisione." },
+      { title: "Aggiungi attrito", description: "Rendi il percorso più rapido meno automatico con uno o due ostacoli pratici." },
+      { title: "Prepara il supporto", description: "Prepara un percorso di supporto senza dover rivelare l’identità di una persona." },
+      { title: "Informati in modo responsabile", description: "Quando confronti le opzioni, usa le condizioni essenziali e le informazioni sul gioco più sicuro." },
+      { title: "Simula la decisione", description: "Esercitati con una risposta prima che arrivi il momento di decidere." },
+      { title: "Rendi il piano verificabile", description: "Riunisci le parti utili e decidi quando rivederle." },
+    ],
+    closingLead: "La Missione 01 inizia con",
+    closingEmphasis: "il tuo Punto di partenza.",
+    closingBody: "Completa le due azioni del Punto di partenza per ottenere 40 XP. La registrazione non assegna XP e avviene solo quando il Punto di partenza è pronto.",
+  },
+  "es-ES": {
+    overview: "La mayoría de las Misiones dura entre 5 y 8 minutos y termina con algo que conservas. La Misión 01 comienza con un breve Punto de partida. Esto es exactamente lo que ocurre, sin sorpresas ni letra pequeña.",
+    missions: [
+      { title: "Mapea el momento", description: "Describe qué ocurre y crea tu Punto de partida personal." },
+      { title: "Fija un objetivo de 7 días", description: "Convierte tu Punto de partida en un pequeño experimento de siete días." },
+      { title: "Comprende el impulso", description: "Detecta la secuencia con suficiente antelación para crear un punto de elección." },
+      { title: "Crea un límite", description: "Haz que un límite sea lo bastante concreto para usarlo bajo presión." },
+      { title: "Comprueba antes de decidir", description: "Coloca tres comprobaciones prácticas entre un impulso y una decisión." },
+      { title: "Añade fricción", description: "Haz que la vía rápida sea menos automática con una o dos barreras prácticas." },
+      { title: "Prepara apoyo", description: "Prepara una vía de apoyo sin tener que revelar la identidad de nadie." },
+      { title: "Investiga de forma responsable", description: "Usa las condiciones esenciales y datos sobre juego más seguro al comparar opciones." },
+      { title: "Ensaya la decisión", description: "Practica una respuesta antes de que la decisión sea real." },
+      { title: "Haz que el plan sea revisable", description: "Reúne las partes útiles y decide cuándo revisarlas." },
+    ],
+    closingLead: "La Misión 01 comienza con",
+    closingEmphasis: "tu Punto de partida.",
+    closingBody: "Completa las dos acciones del Punto de partida para obtener 40 XP. El registro no otorga XP y solo aparece cuando el Punto de partida está listo.",
+  },
+  "pt-PT": {
+    overview: "A maioria das Missões demora entre 5 e 8 minutos e termina com algo que guardas. A Missão 01 começa com um breve Ponto de partida. Eis exatamente o que acontece — sem surpresas nem letras pequenas.",
+    missions: [
+      { title: "Mapeia o momento", description: "Descreve o que acontece e cria o teu Ponto de partida pessoal." },
+      { title: "Define um objetivo de 7 dias", description: "Transforma o teu Ponto de partida numa pequena experiência de sete dias." },
+      { title: "Compreende o impulso", description: "Repara na sequência com antecedência suficiente para criar um momento de escolha." },
+      { title: "Cria um limite", description: "Torna um limite suficientemente concreto para o usares sob pressão." },
+      { title: "Verifica antes de decidir", description: "Coloca três verificações práticas entre um impulso e uma decisão." },
+      { title: "Adiciona fricção", description: "Torna o caminho rápido menos automático com uma ou duas barreiras práticas." },
+      { title: "Prepara apoio", description: "Prepara uma via de apoio sem teres de revelar a identidade de ninguém." },
+      { title: "Pesquisa de forma responsável", description: "Usa condições essenciais e factos sobre jogo mais seguro ao comparar opções." },
+      { title: "Ensaia a decisão", description: "Pratica uma resposta antes de a decisão ser real." },
+      { title: "Torna o plano revisável", description: "Reúne as partes úteis e decide quando as rever." },
+    ],
+    closingLead: "A Missão 01 começa com",
+    closingEmphasis: "o teu Ponto de partida.",
+    closingBody: "Conclui as duas ações do Ponto de partida para receberes 40 XP. O registo não atribui XP e só acontece quando o Ponto de partida estiver pronto.",
+  },
+  "el-GR": {
+    overview: "Οι περισσότερες Αποστολές διαρκούν περίπου 5–8 λεπτά και τελειώνουν με κάτι που κρατάς. Η Αποστολή 01 ξεκινά με ένα σύντομο Σημείο Εκκίνησης. Δες ακριβώς τι συμβαίνει — χωρίς εκπλήξεις ή ψιλά γράμματα.",
+    missions: [
+      { title: "Χαρτογράφησε τη στιγμή", description: "Περιέγραψε τι συμβαίνει και δημιούργησε το προσωπικό σου Σημείο Εκκίνησης." },
+      { title: "Θέσε έναν στόχο 7 ημερών", description: "Μετέτρεψε το Σημείο Εκκίνησής σου σε ένα μικρό πείραμα επτά ημερών." },
+      { title: "Κατανόησε την παρόρμηση", description: "Παρατήρησε τη σειρά αρκετά νωρίς ώστε να δημιουργήσεις ένα σημείο επιλογής." },
+      { title: "Δημιούργησε ένα όριο", description: "Κάνε ένα όριο αρκετά συγκεκριμένο ώστε να το χρησιμοποιείς υπό πίεση." },
+      { title: "Έλεγξε πριν αποφασίσεις", description: "Βάλε τρεις πρακτικούς ελέγχους ανάμεσα σε μια παρόρμηση και μια απόφαση." },
+      { title: "Πρόσθεσε τριβή", description: "Κάνε τη γρήγορη διαδρομή λιγότερο αυτόματη με ένα ή δύο πρακτικά εμπόδια." },
+      { title: "Προετοίμασε υποστήριξη", description: "Προετοίμασε μια διαδρομή υποστήριξης χωρίς να χρειάζεται να αποκαλύψεις την ταυτότητα κάποιου." },
+      { title: "Κάνε υπεύθυνη έρευνα", description: "Χρησιμοποίησε ουσιώδεις όρους και στοιχεία για ασφαλέστερο παιχνίδι όταν συγκρίνεις επιλογές." },
+      { title: "Κάνε πρόβα την απόφαση", description: "Εξάσκησε μία αντίδραση πριν η απόφαση γίνει πραγματική." },
+      { title: "Κάνε το σχέδιο αναθεωρήσιμο", description: "Συνδύασε τα χρήσιμα μέρη και αποφάσισε πότε θα τα επανεξετάσεις." },
+    ],
+    closingLead: "Η Αποστολή 01 ξεκινά με",
+    closingEmphasis: "το Σημείο Εκκίνησής σου.",
+    closingBody: "Ολοκλήρωσε τις δύο ενέργειες του Σημείου Εκκίνησης για 40 XP. Η εγγραφή δεν δίνει XP και ακολουθεί μόνο όταν το Σημείο Εκκίνησης είναι έτοιμο.",
+  },
+  "nl-NL": {
+    overview: "De meeste Missies duren ongeveer 5–8 minuten en eindigen met iets dat je bewaart. Missie 01 begint met een kort Startpunt.",
+    missions: [
+      { title: "Breng het moment in kaart", description: "Beschrijf wat er gebeurt en maak je persoonlijke Startpunt." },
+      { title: "Stel een doel voor 7 dagen", description: "Maak van je Startpunt één klein experiment voor zeven dagen." },
+      { title: "Begrijp de drang", description: "Merk het verloop vroeg genoeg op om een keuzemoment te creëren." },
+      { title: "Bouw één grens", description: "Maak één grens concreet genoeg om die onder druk te gebruiken." },
+      { title: "Controleer voordat je beslist", description: "Zet drie praktische checks tussen een impuls en je beslissing." },
+      { title: "Bouw frictie in", description: "Maak de snelle route minder automatisch met één of twee praktische drempels." },
+      { title: "Bereid steun voor", description: "Bepaal hoe je steun kunt krijgen zonder iemands identiteit te hoeven delen." },
+      { title: "Doe verantwoord onderzoek", description: "Gebruik belangrijke voorwaarden en feiten over veiliger spelen wanneer je opties vergelijkt." },
+      { title: "Oefen het beslismoment", description: "Oefen één reactie voordat je echt voor de beslissing staat." },
+      { title: "Maak het plan herzienbaar", description: "Breng de bruikbare onderdelen samen en bepaal wanneer je het plan opnieuw bekijkt." },
+    ],
+    closingLead: "Missie 01 begint met",
+    closingEmphasis: "je Startpunt.",
+    closingBody: "Voltooi de twee acties van je Startpunt om 40 XP te verdienen. Je registreert je pas als je Startpunt klaar is; registratie levert geen XP op.",
+  },
+  "sv-SE": {
+    overview: "De flesta Uppdrag tar ungefär 5–8 minuter och slutar med något du behåller. Uppdrag 01 börjar med en kort Startpunkt.",
+    missions: [
+      { title: "Kartlägg stunden", description: "Beskriv vad som händer och skapa din personliga Startpunkt." },
+      { title: "Sätt ett 7-dagarsmål", description: "Utgå från din Startpunkt och skapa ett litet experiment för sju dagar." },
+      { title: "Förstå spelsuget", description: "Lägg märke till förloppet tidigt nog för att skapa utrymme för ett val." },
+      { title: "Bygg en gräns", description: "Gör en gräns tillräckligt konkret för att använda den under press." },
+      { title: "Kontrollera innan du bestämmer dig", description: "Lägg tre praktiska kontroller mellan en impuls och ett beslut." },
+      { title: "Bygg in friktion", description: "Gör den snabba vägen mindre automatisk med ett eller två praktiska hinder." },
+      { title: "Förbered stöd", description: "Förbered en väg till stöd utan att behöva uppge någons identitet." },
+      { title: "Undersök ansvarsfullt", description: "Använd viktiga villkor och fakta om säkrare spelande när du jämför alternativ." },
+      { title: "Öva på beslutet", description: "Öva på ett svar innan du står inför beslutet på riktigt." },
+      { title: "Gör planen möjlig att granska", description: "Samla de användbara delarna och bestäm när du ska granska planen igen." },
+    ],
+    closingLead: "Uppdrag 01 börjar med",
+    closingEmphasis: "din Startpunkt.",
+    closingBody: "Slutför Startpunktens två moment för att få 40 XP. Du registrerar dig först när Startpunkten är klar; registreringen ger inga XP.",
+  },
+  "da-DK": {
+    overview: "De fleste Missioner tager cirka 5–8 minutter og slutter med noget, du beholder. Mission 01 begynder med et kort Udgangspunkt.",
+    missions: [
+      { title: "Kortlæg øjeblikket", description: "Beskriv hvad der sker, og skab dit personlige Udgangspunkt." },
+      { title: "Sæt et mål for 7 dage", description: "Gør dit Udgangspunkt til ét lille forsøg over syv dage." },
+      { title: "Forstå trangen", description: "Læg mærke til forløbet tidligt nok til at skabe plads til et valg." },
+      { title: "Byg én grænse", description: "Gør én grænse konkret nok til, at den kan bruges under pres." },
+      { title: "Tjek før du beslutter dig", description: "Sæt tre praktiske tjek mellem en impuls og en beslutning." },
+      { title: "Indbyg friktion", description: "Gør den hurtige vej mindre automatisk med én eller to praktiske barrierer." },
+      { title: "Forbered støtte", description: "Forbered en vej til støtte uden at skulle oplyse nogens identitet." },
+      { title: "Undersøg ansvarligt", description: "Brug vigtige vilkår og fakta om sikrere spil, når du sammenligner muligheder." },
+      { title: "Gennemspil beslutningen", description: "Øv ét svar, før du står i den virkelige beslutningssituation." },
+      { title: "Gør planen klar til gennemgang", description: "Saml de brugbare dele, og beslut, hvornår du vil gennemgå planen igen." },
+    ],
+    closingLead: "Mission 01 begynder med",
+    closingEmphasis: "dit Udgangspunkt.",
+    closingBody: "Gennemfør Udgangspunktets to handlinger for at få 40 XP. Du registrerer dig først, når Udgangspunktet er klart; registreringen giver ingen XP.",
+  },
+  "fi-FI": {
+    overview: "Useimmat Tehtävät kestävät noin 5–8 minuuttia ja päättyvät johonkin, jonka säilytät. Tehtävä 01 alkaa lyhyen Lähtökohdan laatimisella.",
+    missions: [
+      { title: "Kartoita hetki", description: "Kuvaa, mitä tapahtuu, ja luo henkilökohtainen Lähtökohtasi." },
+      { title: "Aseta 7 päivän tavoite", description: "Tee Lähtökohdastasi yksi pieni seitsemän päivän kokeilu." },
+      { title: "Ymmärrä pelihalu", description: "Tunnista tapahtumaketju ajoissa, jotta syntyy tilaa valinnalle." },
+      { title: "Rakenna yksi raja", description: "Määritä yksi raja niin konkreettisesti, että voit käyttää sitä paineen alla." },
+      { title: "Tarkista ennen päätöstä", description: "Aseta kolme käytännön tarkistusta impulssin ja päätöksen väliin." },
+      { title: "Lisää kitkaa", description: "Vähennä nopean reitin automaattisuutta yhdellä tai kahdella käytännön esteellä." },
+      { title: "Valmistele tuki", description: "Valmistele tapa saada tukea ilman, että kenenkään henkilöllisyyttä tarvitsee kertoa." },
+      { title: "Tutki vastuullisesti", description: "Käytä vaihtoehtojen vertailussa olennaisia ehtoja ja turvallisemman pelaamisen tietoja." },
+      { title: "Harjoittele päätöstä", description: "Harjoittele yhtä vastausta ennen todellista päätöstilannetta." },
+      { title: "Tee suunnitelmasta tarkistettava", description: "Kokoa hyödylliset osat yhteen ja päätä, milloin tarkistat suunnitelman uudelleen." },
+    ],
+    closingLead: "Tehtävä 01 alkaa",
+    closingEmphasis: "Lähtökohdastasi.",
+    closingBody: "Suorita Lähtökohdan kaksi toimintoa ansaitaksesi 40 XP:tä. Rekisteröityminen seuraa vasta, kun Lähtökohta on valmis; rekisteröitymisestä ei saa XP:tä.",
+  },
+  "nb-NO": {
+    overview: "De fleste Oppdrag tar omtrent 5–8 minutter og avsluttes med noe du beholder. Oppdrag 01 begynner med et kort Utgangspunkt.",
+    missions: [
+      { title: "Kartlegg øyeblikket", description: "Beskriv hva som skjer, og lag ditt personlige Utgangspunkt." },
+      { title: "Sett et mål for 7 dager", description: "Gjør Utgangspunktet ditt til ett lite forsøk over sju dager." },
+      { title: "Forstå trangen", description: "Legg merke til forløpet tidlig nok til å skape rom for et valg." },
+      { title: "Bygg én grense", description: "Gjør én grense konkret nok til å bruke under press." },
+      { title: "Sjekk før du bestemmer deg", description: "Legg tre praktiske sjekker mellom en impuls og en beslutning." },
+      { title: "Bygg inn friksjon", description: "Gjør den raske veien mindre automatisk med ett eller to praktiske hindre." },
+      { title: "Forbered støtte", description: "Forbered en vei til støtte uten å måtte oppgi noens identitet." },
+      { title: "Undersøk ansvarlig", description: "Bruk viktige vilkår og fakta om tryggere spill når du sammenligner alternativer." },
+      { title: "Øv på beslutningen", description: "Øv på én respons før du må ta beslutningen på ordentlig." },
+      { title: "Gjør planen klar for gjennomgang", description: "Samle de nyttige delene, og bestem når du skal gjennomgå planen igjen." },
+    ],
+    closingLead: "Oppdrag 01 begynner med",
+    closingEmphasis: "Utgangspunktet ditt.",
+    closingBody: "Fullfør Utgangspunktets to handlinger for å få 40 XP. Du registrerer deg først når Utgangspunktet er klart; registreringen gir ingen XP.",
+  },
+  "en-CA": enCurrent,
+  "fr-CA": enCurrent,
+};
+
+function withCurrentProgrammeCopy(translation: TenStepsTranslation, current: CurrentProgrammeCopy): TenStepsTranslation {
+  if (current.missions.length !== 10) throw new Error("10 Steps current Programme copy must contain exactly ten Missions");
+  const text = [...translation.text];
+  text[4] = current.overview;
+  text.splice(20, 20, ...current.missions.flatMap((mission) => [mission.title, mission.description]));
+  text[46] = current.closingLead;
+  text[47] = current.closingEmphasis;
+  text[48] = current.closingBody;
+  return { ...translation, text };
+}
+
 export function tenStepsTranslation(locale: SupportedLocale) {
-  const translation = catalog[locale];
+  const translation = withCurrentProgrammeCopy(catalog[locale], currentProgrammeCatalog[locale]);
   if (translation.text.length !== TEN_STEPS_SOURCE_COPY.length) {
     throw new Error(`Incomplete ${locale} 10 Steps translation`);
   }

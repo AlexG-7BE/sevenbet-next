@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { HOME_SOURCE_COPY, homeTranslation } from "./home-catalog";
+import { demoProfileCopy } from "./demo-profile-catalog";
 import { learningMessages } from "./learning-center";
 import { productPageMessages } from "./product-pages-catalog";
 import { publicErrorMessages } from "./public-errors";
@@ -10,7 +11,9 @@ import { contactMessages } from "./static-pages/contact";
 import { faqMessages } from "./static-pages/faq";
 import { methodologyMessages } from "./static-pages/methodology";
 import { tenStepsTranslation } from "./static-pages/ten-steps";
+import { visualFixtureCopy } from "./visual-fixture-catalog";
 import type { SupportedLocale } from "@/lib/market/registry";
+import { FIRST_WAVE_MARKET_EVIDENCE } from "@/lib/market/first-wave-evidence";
 
 export const EUROPEAN_MACHINE_TRANSLATED_LOCALES = [
   "de-DE", "it-IT", "es-ES", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO",
@@ -24,6 +27,7 @@ export const LANGUAGE_QA_CHECKS = [
   "B4GAMBLE_AND_SOURCE_NAME_PRESERVATION", "PROGRAMME_COMMERCIAL_SEPARATION", "NO_CLINICAL_CLAIM_SEMANTICS",
   "AFFILIATE_EDITORIAL_INDEPENDENCE",
   "CURATED_CONTROL_SEMANTICS",
+  "NATURAL_PUBLIC_LANGUAGE",
 ] as const;
 
 export type LanguageQaCheck = typeof LANGUAGE_QA_CHECKS[number];
@@ -52,11 +56,19 @@ function snapshot(locale: SupportedLocale) {
   return {
     shell: publicShellMessages(locale), footer: publicFooterMessages(locale),
     home: locale === "en-GB" ? HOME_SOURCE_COPY : homeTranslation(locale), product: productPageMessages(locale),
+    demoProfile: demoProfileCopy(locale),
     errors: publicErrorMessages(locale), about: aboutMessages(locale), contact: contactMessages(locale), faq: faqMessages(locale),
     methodology: { metadataTitle: methodology.metadataTitle, metadataDescription: methodology.metadataDescription, text: [...methodology.copy.values()] },
     tenSteps: tenStepsTranslation(locale),
+    visualFixture: visualFixtureCopy(locale),
     learning: { categories: learning.categories, articles: learning.articles, hub: learning.hub, template: learning.template, ui: learning.ui },
   };
+}
+
+function supplementalSnapshot(locale: SupportedLocale) {
+  const firstWaveSafety = Object.values(FIRST_WAVE_MARKET_EVIDENCE)
+    .find((profile) => profile.locale === locale)?.copy ?? null;
+  return { firstWaveSafety };
 }
 
 function flatten(value: unknown, path = "", output: Record<string, string> = {}) {
@@ -74,7 +86,7 @@ function hasMalformedUnicode(value: string) {
   return value.includes("�") || /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/u.test(value);
 }
 
-const englishUiLeakage = /\b(?:Skip to main content|Best Offers|Start Programme|No guides match|This choice changes|Casino offer comparison|Casino reviews for|Open protected Help)\b/;
+const englishUiLeakage = /\b(?:Skip to main content|Best Offers|Start Programme|No guides match|This choice changes|Casino offer comparison|Casino reviews for|Open protected Help|Name \(optional\)|Research|discovery|paywall)\b/i;
 const localeMarkers: Record<EuropeanMachineTranslatedLocale, string> = {
   "de-DE": "verantwortungsvolles glücksspiel", "it-IT": "gioco responsabile", "es-ES": "juego responsable",
   "pt-PT": "jogo responsável", "el-GR": "υπεύθυνο παιχνίδι", "nl-NL": "verantwoord gokken", "sv-SE": "ansvarsfullt spel",
@@ -93,15 +105,28 @@ const semanticTerms: Record<EuropeanMachineTranslatedLocale, Readonly<{ programm
   "nb-NO": { programme: /program/i, commercial: /kommer/i, clinical: /klinisk/i, affiliate: /affiliate/i, editorial: /redaksjon/i },
 };
 const protectedNames = ["B4GAMBLE", "NHS", "NICE", "Editor Score"] as const;
+const internalRoutingLanguage: Record<EuropeanMachineTranslatedLocale, readonly RegExp[]> = {
+  "de-DE": [/Anfrage-Autorität/i, /rohe Ziel-URL/i, /Autorität aus dem Browser/i, /Verfügbarkeit bleibt geschlossen/i, /abgeleitete Aktionen/i, /Beanspruchungsaktionen/i, /Weiterleitungsautorität/i, /kontrolliert freigegebene Anmelderoute/i, /kontrollierten kommerziellen Link/i, /Produktgrenze/i],
+  "it-IT": [/autorizzazione separata al momento della richiesta/i, /URL di destinazione/i, /fornita dal browser/i, /disponibilità resta chiusa/i, /per questa richiesta/i, /percorso di registrazione autorizzato/i, /link commerciale controllato/i, /confine del prodotto/i],
+  "es-ES": [/autorizzación independiente en el momento de la solicitud/i, /la disponibilidad falla de forma segura/i, /acciones (?:inferidas|supuestas|de oferta)/i, /ruta de registro autorizada/i, /autoridad de redirección/i, /enlace comercial controlado/i, /límite del producto/i],
+  "pt-PT": [/autorização separada no momento do pedido/i, /URL de destino/i, /fornecida pelo navegador/i, /disponibilidade permanece bloqueada/i, /para este pedido/i, /rota de registo autorizada/i, /ligação comercial controlada/i, /limite do produto/i],
+  "el-GR": [/ξεχωριστή έγκριση τη στιγμή του αιτήματος/i, /υποτιθέμενες ενέργειες/i, /ενέργειες προσφοράς/i, /εγκεκριμένη διαδρομή εγγραφής/i, /έγκριση ανακατεύθυνσης/i, /ελεγχόμενο εμπορικό σύνδεσμο/i, /όριο του προϊόντος/i],
+  "nl-NL": [/afzonderlijke toestemming nodig op het moment van de aanvraag/i, /bestemmings-URL/i, /toestemming vanuit de browser/i, /actie geblokkeerd/i, /voor deze aanvraag/i, /beheerste aanmeldroute/i, /beheerste commerciële link/i, /productgrens/i],
+  "sv-SE": [/separat behörighet vid varje begäran/i, /antagna åtgärder/i, /erbjudandeåtgärder/i, /godkänd registreringsväg/i, /omdirigering är godkänd/i, /styrd registreringsväg/i, /styrd kommersiell länk/i, /produktgränsen/i],
+  "da-DK": [/særskilt godkendelse ved hver forespørgsel/i, /formodede handlinger/i, /tilbudshandlinger/i, /godkendt tilmeldingsvej/i, /viderestilling er godkendt/i, /styret tilmeldingsrute/i, /styret kommercielt link/i, /produktgrænsen/i],
+  "fi-FI": [/aina, kun sitä pyydetään/i, /toiminto pysyy suljettuna/i, /tälle pyynnölle/i, /rekisteröitymisreitti/i, /hallitun kaupallisen linkin/i, /Tuoteraja/i],
+  "nb-NO": [/hver gang du ber om å fortsette/i, /handlingen stengt/i, /for denne forespørselen/i, /registreringsvei/i, /styrt registreringsrute/i, /styrt kommersiell lenke/i, /produktgrensen/i],
+};
 
 function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<string, string>): LanguageQaLocaleResult {
-  const target = flatten(snapshot(locale));
+  const coreTarget = flatten(snapshot(locale));
+  const target = { ...coreTarget, ...flatten(supplementalSnapshot(locale), "supplemental") };
   const findings: string[] = [];
   const checks = Object.fromEntries(LANGUAGE_QA_CHECKS.map((check) => [check, "PASS"])) as Record<LanguageQaCheck, "PASS" | "FAIL">;
   const fail = (check: LanguageQaCheck, finding: string) => { checks[check] = "FAIL"; if (findings.length < 50) findings.push(`${check}: ${finding}`); };
 
   const sourceKeys = Object.keys(source).sort();
-  const targetKeys = Object.keys(target).sort();
+  const targetKeys = Object.keys(coreTarget).sort();
   const allowedPlaceholders = new Set(Object.values(source).flatMap(placeholders));
   if (JSON.stringify(sourceKeys) !== JSON.stringify(targetKeys)) {
     const missing = sourceKeys.filter((key) => !(key in target));
@@ -125,13 +150,19 @@ function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<
     }
   }
   const corpus = Object.values(target).join("\n");
-  const sourceCorpus = Object.values(source).join("\n");
-  for (const name of protectedNames) {
-    if (sourceCorpus.includes(name) && !corpus.includes(name)) fail("B4GAMBLE_AND_SOURCE_NAME_PRESERVATION", `catalog dropped ${name}`);
+  for (const [path, value] of Object.entries(source)) {
+    for (const name of protectedNames) {
+      if (value.includes(name) && !coreTarget[path]?.includes(name)) {
+        fail("B4GAMBLE_AND_SOURCE_NAME_PRESERVATION", `${path} dropped ${name}`);
+      }
+    }
   }
   for (const [otherLocale, marker] of Object.entries(localeMarkers)) if (otherLocale !== locale && corpus.toLocaleLowerCase(locale).includes(marker)) fail("WRONG_LOCALE_LEAKAGE", `contains ${otherLocale} marker: ${marker}`);
   if (locale === "de-DE") {
-    const genericCasinoPaths = Object.entries(target).filter(([, value]) => /\b(?:Online-Casino|Casinos?)\b/i.test(value)).map(([path]) => path);
+    const genericCasinoPaths = Object.entries(target)
+      .filter(([path, value]) => /\b(?:Online-Casino|Casinos?)\b/i.test(value)
+        && !(path.startsWith("demoProfile.") && value.includes("Solvane Casino")))
+      .map(([path]) => path);
     if (genericCasinoPaths.length) fail("TERMINOLOGY_CONSISTENCY", `generic Casino/Online-Casino terminology remains at ${genericCasinoPaths.join(",")}`);
   }
   const terms = semanticTerms[locale];
@@ -143,12 +174,21 @@ function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<
   if (selectorLabels.some((label) => !label) || new Set(selectorLabels).size !== selectorPaths.length || selectorLabels.some((label) => /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i.test(label))) {
     fail("CURATED_CONTROL_SEMANTICS", `bonus selector labels are missing, duplicated or generic: ${selectorLabels.join(" | ")}`);
   }
+  for (const pattern of internalRoutingLanguage[locale]) {
+    if (pattern.test(corpus)) fail("NATURAL_PUBLIC_LANGUAGE", `internal routing language remains: ${pattern}`);
+  }
   return { locale, status: Object.values(checks).every((status) => status === "PASS") ? "PASS" : "FAIL", checkedStrings: Object.keys(target).length, checks, findings };
 }
 
 export function generateLanguageQaReport(): LanguageQaReport {
   const source = flatten(snapshot("en-GB"));
   const locales = EUROPEAN_MACHINE_TRANSLATED_LOCALES.map((locale) => evaluateLocale(locale, source));
-  const catalogDigest = createHash("sha256").update(JSON.stringify({ source, targets: EUROPEAN_MACHINE_TRANSLATED_LOCALES.map((locale) => snapshot(locale)) })).digest("hex");
+  const catalogDigest = createHash("sha256").update(JSON.stringify({
+    source,
+    targets: EUROPEAN_MACHINE_TRANSLATED_LOCALES.map((locale) => ({
+      core: snapshot(locale),
+      supplemental: supplementalSnapshot(locale),
+    })),
+  })).digest("hex");
   return { schemaVersion: 1, generatedAt: "2026-08-30", assurance: "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW", sourceLocale: "en-GB", catalogDigest, status: locales.every((locale) => locale.status === "PASS") ? "PASS" : "FAIL", locales };
 }

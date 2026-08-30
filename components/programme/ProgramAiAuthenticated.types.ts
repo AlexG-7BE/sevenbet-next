@@ -12,6 +12,7 @@ export type ProgramAiHome = {
     awardedAt: string | null;
   }>;
   currentMission: number;
+  primaryAction: "start-mission-one" | "finish-mission-one" | "start-mission" | "resume-mission" | "review-mission";
   engagementDayBucket: ProductAnalyticsEventMap["programme_home_viewed"]["engagementDayBucket"];
   currentAction: string | null;
   startingPoint: ProgrammeStartingPointValue | null;
@@ -49,11 +50,13 @@ export type ProgramAiMission = {
   status: string;
   actions: Array<{ id: string; label: string; xp: 15 | 20; completed: boolean }>;
   currentAction: string | null;
+  currentActionPosition: number | null;
   actionsCompleted: number;
+  actionsTotal: number;
   artifact: Record<string, string | number | boolean | string[]>;
   artifactVersion: string;
   xpEarnedHere: number;
-  completionBonus: 25;
+  completionBonus: number;
   completedAt: string | null;
   legacyCompletion: boolean;
   programmeFacts?: {

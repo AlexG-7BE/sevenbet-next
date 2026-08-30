@@ -3,6 +3,7 @@ import type { PublicCasinoDataClassification, PublicCasinoInventoryMode } from "
 
 export type PublicComparisonEvidenceStatus =
   | "Published"
+  | "Demonstration"
   | "Editorial"
   | "Operator-published"
   | "Unknown"
@@ -67,6 +68,7 @@ export interface PublicComparisonCasino {
 export interface PublicComparisonValue {
   text: string;
   status: PublicComparisonEvidenceStatus;
+  statusLabel?: string;
 }
 
 export interface PublicComparisonRow {

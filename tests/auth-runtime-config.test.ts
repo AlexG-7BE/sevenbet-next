@@ -135,7 +135,7 @@ test("exact Preview deployment host canonicalizes to the stable branch with path
   );
 });
 
-test("Preview canonical redirect is temporary and preserves non-GET method semantics", () => {
+test("Preview canonical redirect is temporary and preserves non-GET method semantics", async () => {
   const previous = {
     VERCEL_BRANCH_URL: process.env.VERCEL_BRANCH_URL,
     VERCEL_ENV: process.env.VERCEL_ENV,
@@ -143,7 +143,7 @@ test("Preview canonical redirect is temporary and preserves non-GET method seman
   };
   Object.assign(process.env, previewEnvironment);
   try {
-    const response = middleware(new NextRequest(
+    const response = await middleware(new NextRequest(
       `https://${deploymentHost}/api/auth/sign-in/social?attempt=1`,
       { method: "POST" },
     ));

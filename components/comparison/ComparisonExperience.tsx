@@ -14,6 +14,7 @@ import styles from "./Comparison.module.css";
 
 const evidenceDescriptions: Record<PublicComparisonEvidenceStatus, string> = {
   Published: "Present in the latest public snapshot.",
+  Demonstration: "Fixed fictional data for product demonstration only.",
   Editorial: "B4GAMBLE editorial assessment.",
   "Operator-published": "Published operator information; verify current terms.",
   Unknown: "Not established and never inferred.",
@@ -91,6 +92,7 @@ function SelectionSummary({ result }: { result: PublicComparisonResult }) {
 
 function evidenceStatusPresentation(status: PublicComparisonEvidenceStatus, demonstration: boolean) {
   if (!demonstration) return { label: status, description: evidenceDescriptions[status] };
+  if (status === "Demonstration") return { label: "Illustrative field", description: evidenceDescriptions.Demonstration };
   if (status === "Published") return { label: "Illustrative field", description: "Fixed fictional data for product demonstration only." };
   if (status === "Operator-published") return { label: "Fictional field", description: "Not operator information, evidence or current terms." };
   if (status === "Editorial") return { label: "Illustrative editorial", description: "A fictional B4GAMBLE presentation value, not a live review claim." };
@@ -116,7 +118,7 @@ function cellCopy(value: string, demonstration: boolean) {
 }
 
 function EvidenceLegend({ inventoryMode }: { inventoryMode: PublicComparisonResult["inventoryMode"] }) {
-  const statuses: PublicComparisonEvidenceStatus[] = ["Published", "Editorial", "Operator-published", "Unknown", "Unavailable", "Not comparable", "Policy-gated"];
+  const statuses: PublicComparisonEvidenceStatus[] = ["Published", "Demonstration", "Editorial", "Operator-published", "Unknown", "Unavailable", "Not comparable", "Policy-gated"];
   const demoOnly = inventoryMode === "DEMO_ONLY";
   const mixed = inventoryMode === "MIXED";
   return <section className={styles.legendSection} aria-labelledby="legend-title">

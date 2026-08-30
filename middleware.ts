@@ -12,16 +12,140 @@ import {
   CSP_NONCE_REQUEST_HEADER,
 } from "@/lib/security/content-security-policy";
 import {
+  isLocalizedPublicDestination,
   parsePublicMarketRoute,
   PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
 } from "@/lib/market/routing";
-import { marketEditorialPublicationApproved, publicMarketPath } from "@/lib/market/registry";
+import { homeTranslationReady } from "@/lib/i18n/review-state";
+import {
+  localeForLanguageSegment,
+  marketEditorialPublicationApproved,
+  marketProfileByRouteMarket,
+  publicMarketPath,
+} from "@/lib/market/registry";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
 const commercialMcpConsentPath = "/admin/integrations/chatgpt-work/consent";
+const internalPresentationTokenHeader = "x-b4gamble-internal-presentation-token";
+const internalPresentationTokenMaxAgeMs = 30_000;
+const localPresentationSigningSecret = "b4gamble-local-presentation-rewrite-v1";
+
+function presentationSigningSecret() {
+  const configured = process.env.BETTER_AUTH_SECRET?.trim();
+  if (configured) return configured;
+  return process.env.VERCEL_ENV === "preview" || process.env.VERCEL_ENV === "production"
+    ? null
+    : localPresentationSigningSecret;
+}
+
+function presentationTokenPayload({
+  issuedAt,
+  locale,
+  market,
+  origin,
+  pathname,
+  search,
+}: {
+  issuedAt: number;
+  locale: string;
+  market: string;
+  origin: string;
+  pathname: string;
+  search: string;
+}) {
+  return ["public-v1", origin, `${pathname}${search}`, market, locale, String(issuedAt)].join("\u0000");
+}
+
+async function presentationSigningKey() {
+  const secret = presentationSigningSecret();
+  return secret
+    ? crypto.subtle.importKey(
+        "raw",
+        new TextEncoder().encode(secret),
+        { hash: "SHA-256", name: "HMAC" },
+        false,
+        ["sign", "verify"],
+      )
+    : null;
+}
+
+function encodeBase64Url(value: ArrayBuffer) {
+  const binary = String.fromCharCode(...new Uint8Array(value));
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/, "");
+}
+
+function decodeBase64Url(value: string) {
+  const base64 = value.replaceAll("-", "+").replaceAll("_", "/").padEnd(Math.ceil(value.length / 4) * 4, "=");
+  const binary = atob(base64);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+async function signInternalPresentation(
+  rewriteUrl: URL,
+  market: string,
+  locale: string,
+) {
+  const key = await presentationSigningKey();
+  if (!key) return null;
+  const issuedAt = Date.now();
+  const payload = presentationTokenPayload({
+    issuedAt,
+    locale,
+    market,
+    origin: rewriteUrl.origin,
+    pathname: rewriteUrl.pathname,
+    search: rewriteUrl.search,
+  });
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return `${issuedAt}.${encodeBase64Url(signature)}`;
+}
+
+async function inheritedPresentation(request: NextRequest, pathname: string) {
+  const token = request.headers.get(internalPresentationTokenHeader);
+  if (!token || request.headers.get(PRESENTATION_CONTEXT_HEADER) !== "public-v1") return null;
+
+  const market = marketProfileByRouteMarket(request.headers.get(PRESENTATION_MARKET_HEADER));
+  const locale = market
+    ? localeForLanguageSegment(market, request.headers.get(PRESENTATION_LANGUAGE_HEADER))
+    : null;
+  if (!market || !locale || !isLocalizedPublicDestination(pathname, market)) return null;
+
+  const [issuedAtValue, signatureValue, ...extra] = token.split(".");
+  const issuedAt = Number(issuedAtValue);
+  const age = Date.now() - issuedAt;
+  if (
+    extra.length
+    || !Number.isSafeInteger(issuedAt)
+    || age < -5_000
+    || age > internalPresentationTokenMaxAgeMs
+    || !/^[A-Za-z0-9_-]{43}$/.test(signatureValue ?? "")
+  ) return null;
+
+  const key = await presentationSigningKey();
+  if (!key) return null;
+  const payload = presentationTokenPayload({
+    issuedAt,
+    locale,
+    market: market.routeMarket,
+    origin: request.nextUrl.origin,
+    pathname,
+    search: request.nextUrl.search,
+  });
+  try {
+    const verified = await crypto.subtle.verify(
+      "HMAC",
+      key,
+      decodeBase64Url(signatureValue),
+      new TextEncoder().encode(payload),
+    );
+    return verified ? { locale, market } : null;
+  } catch {
+    return null;
+  }
+}
 
 function getAdminPreviewToken() {
   return process.env.SEVENBET_ADMIN_PREVIEW_TOKEN?.trim() || null;
@@ -49,17 +173,19 @@ function privateAdminResponse(response: NextResponse) {
   return response;
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const nonce = createCspNonce();
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce, {
     development: process.env.NODE_ENV === "development",
     formActionOrigins: pathname === commercialMcpConsentPath ? [chatGptWorkOrigin] : [],
+    upgradeInsecureRequests: request.nextUrl.protocol === "https:",
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete(PRESENTATION_CONTEXT_HEADER);
   requestHeaders.delete(PRESENTATION_LANGUAGE_HEADER);
   requestHeaders.delete(PRESENTATION_MARKET_HEADER);
+  requestHeaders.delete(internalPresentationTokenHeader);
   requestHeaders.set(CSP_NONCE_REQUEST_HEADER, nonce);
   requestHeaders.set(CONTENT_SECURITY_POLICY_HEADER, contentSecurityPolicy);
   const nextResponse = (rewriteUrl?: URL) => rewriteUrl
@@ -89,7 +215,38 @@ export function middleware(request: NextRequest) {
     ));
   }
 
+  // Next invokes middleware again for an internal rewrite. Carry presentation
+  // only when the preceding invocation supplied a fresh HMAC bound to this
+  // origin, destination, market and locale. Client presentation headers remain
+  // untrusted and are removed before either pass reaches the application.
+  const inherited = await inheritedPresentation(request, pathname);
+  if (inherited && !homeTranslationReady(inherited.locale)) {
+    return secureResponse(nextResponse());
+  }
+  if (
+    inherited
+    && process.env.VERCEL_ENV === "production"
+    && !marketEditorialPublicationApproved(inherited.market)
+  ) {
+    return secureResponse(nextResponse());
+  }
+
+  if (inherited) {
+    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
+    requestHeaders.set(PRESENTATION_MARKET_HEADER, inherited.market.routeMarket);
+    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, inherited.locale.split("-")[0].toLowerCase());
+    const response = nextResponse();
+    response.headers.set("Content-Language", inherited.locale);
+    return secureResponse(response);
+  }
+
   const publicMarketRoute = parsePublicMarketRoute(pathname);
+  if (
+    publicMarketRoute.kind !== "INVALID"
+    && !homeTranslationReady(publicMarketRoute.locale)
+  ) {
+    return secureResponse(nextResponse());
+  }
   if (
     publicMarketRoute.kind !== "INVALID"
     && process.env.VERCEL_ENV === "production"
@@ -118,7 +275,16 @@ export function middleware(request: NextRequest) {
     requestHeaders.set(PRESENTATION_MARKET_HEADER, publicMarketRoute.market.routeMarket);
     requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, publicMarketRoute.locale.split("-")[0].toLowerCase());
     const rewriteUrl = publicMarketRoute.kind === "UNPREFIXED_DEFAULT" ? undefined : request.nextUrl.clone();
-    if (rewriteUrl) rewriteUrl.pathname = publicMarketRoute.pathname;
+    if (rewriteUrl) {
+      rewriteUrl.pathname = publicMarketRoute.pathname;
+      const token = await signInternalPresentation(
+        rewriteUrl,
+        publicMarketRoute.market.routeMarket,
+        publicMarketRoute.locale,
+      );
+      if (!token) return secureResponse(nextResponse());
+      requestHeaders.set(internalPresentationTokenHeader, token);
+    }
     const response = nextResponse(rewriteUrl);
     response.headers.set("Content-Language", publicMarketRoute.locale);
     return secureResponse(response);

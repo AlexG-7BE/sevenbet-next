@@ -76,6 +76,7 @@ type ProgramAiLocalState = {
   situation: string;
   candidate: ProgrammeStartingPointValue | null;
   inputMode: "text" | "voice";
+  xpPreview: number;
 };
 
 type ApiPayload<T> = { ok?: boolean; error?: string; code?: string } & T;
@@ -89,6 +90,7 @@ const emptyLocalState: ProgramAiLocalState = {
   situation: "",
   candidate: null,
   inputMode: "voice",
+  xpPreview: 0,
 };
 
 function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): ProgramAiLocalState {
@@ -99,7 +101,7 @@ function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): 
     : legacyPhase === "candidate" || legacyPhase === "reward"
       ? value.candidate ? "registration" : "intake"
       : value.phase === "home" ? "intake" : value.phase;
-  return { phase, situation: value.situation || "", candidate: value.candidate || null, inputMode: value.inputMode === "text" ? "text" : "voice" };
+  return { phase, situation: value.situation || "", candidate: value.candidate || null, inputMode: value.inputMode === "text" ? "text" : "voice", xpPreview: Number.isFinite(value.xpPreview) ? value.xpPreview : 0 };
 }
 
 async function programAiRequest<T>(
@@ -318,6 +320,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
           candidate?: ProgrammeStartingPointValue;
           disposition: "CONTINUE" | "SUPPORT_FIRST";
         };
+        progress: { taskStates: string[]; xpPreview: number };
         timing?: { programmeAiTurnMs?: number };
       }>("/api/program/program-ai/turn", subject, {
         method: "POST",
@@ -327,7 +330,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       if (payload.result.kind !== "STARTING_POINT_CANDIDATE" || !payload.result.candidate) {
         throw new Error("Your Starting Point could not be prepared");
       }
-      const readyState = { ...local, candidate: payload.result.candidate, phase: "registration" as const };
+      const readyState = { ...local, candidate: payload.result.candidate, phase: "registration" as const, xpPreview: payload.progress?.xpPreview ?? 0 };
       if (payload.result.disposition === "SUPPORT_FIRST") {
         persist({ ...readyState, phase: "support" });
       } else {
@@ -562,7 +565,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
   }
 
-  function startFromHome() {
+  function enterMissionOneFromHome() {
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
     setSubject(journey);
     setLocal(emptyLocalState);
@@ -596,11 +599,11 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen />);
   if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
   if (phase === "intake") return renderPhase(<Mission01IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
-  if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} onContinue={continueAfterSupport} />);
+  if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
   if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onReview={openReview} onStart={startFromHome} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} />);
   return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
 }

@@ -17,6 +17,8 @@ import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-p
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { jurisdictionResolver } from "../lib/jurisdiction/resolver";
+import { programAiMissionRegistry, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
+import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
 import {
   FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
@@ -25,6 +27,7 @@ import {
   publicMarketPath,
   marketProfileByCountry,
   marketProfileByRouteMarket,
+  type SupportedLocale,
 } from "../lib/market/registry";
 import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import {
@@ -44,6 +47,7 @@ import {
   localizePublicPath,
   parsePublicMarketRoute,
   PUBLIC_LOCALIZATION_ROUTE_MANIFEST,
+  PRESENTATION_CONTEXT_HEADER,
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
   stripPublicMarketPrefix,
@@ -52,6 +56,102 @@ import { POST as updatePresentationPreference } from "../app/api/presentation/ro
 import { middleware } from "../middleware";
 import { parsePublicComparisonQuery, serializePublicComparisonQuery } from "../lib/public-comparison/query";
 import { allowJurisdictionAuthority } from "./market-authority.fixtures";
+
+function middlewareRequestHeaders(response: { headers: Headers }) {
+  const requestHeaders = new Headers();
+  for (const [name, value] of response.headers) {
+    if (name.startsWith("x-middleware-request-")) {
+      requestHeaders.set(name.slice("x-middleware-request-".length), value);
+    }
+  }
+  return requestHeaders;
+}
+
+function escapeTenStepsText(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+const englishTenStepsSignals = {
+  startingPoint: /Starting Point/u,
+  twoActions: /two actions/u,
+  registrationZero: /Registration awards no XP/u,
+  registrationAfterReady: /only follows when it is ready/u,
+};
+
+const tenStepsContractSignals: Record<SupportedLocale, {
+  startingPoint: RegExp;
+  twoActions: RegExp;
+  registrationZero: RegExp;
+  registrationAfterReady: RegExp;
+}> = {
+  "en-GB": englishTenStepsSignals,
+  "de-DE": {
+    startingPoint: /Ausgangspunkt/u,
+    twoActions: /beiden Aktionen/u,
+    registrationZero: /Registrierung bringt keine XP/u,
+    registrationAfterReady: /folgt erst, wenn der Ausgangspunkt bereit ist/iu,
+  },
+  "it-IT": {
+    startingPoint: /Punto di partenza/u,
+    twoActions: /due azioni/u,
+    registrationZero: /registrazione non assegna XP/iu,
+    registrationAfterReady: /avviene solo quando il Punto di partenza è pronto/iu,
+  },
+  "es-ES": {
+    startingPoint: /Punto de partida/u,
+    twoActions: /dos acciones/u,
+    registrationZero: /registro no otorga XP/iu,
+    registrationAfterReady: /solo aparece cuando el Punto de partida está listo/iu,
+  },
+  "pt-PT": {
+    startingPoint: /Ponto de partida/u,
+    twoActions: /duas ações/u,
+    registrationZero: /registo não atribui XP/iu,
+    registrationAfterReady: /só acontece quando o Ponto de partida estiver pronto/iu,
+  },
+  "el-GR": {
+    startingPoint: /Σημεί(?:ο|ου) Εκκίνησ/u,
+    twoActions: /δύο ενέργειες/u,
+    registrationZero: /εγγραφή δεν δίνει XP/iu,
+    registrationAfterReady: /ακολουθεί μόνο όταν το Σημείο Εκκίνησης είναι έτοιμο/iu,
+  },
+  "nl-NL": {
+    startingPoint: /Startpunt/u,
+    twoActions: /twee acties/u,
+    registrationZero: /registratie levert geen XP op/iu,
+    registrationAfterReady: /registreert je pas als je Startpunt klaar is/iu,
+  },
+  "sv-SE": {
+    startingPoint: /Startpunkt/u,
+    twoActions: /två moment/u,
+    registrationZero: /registreringen ger inga XP/iu,
+    registrationAfterReady: /registrerar dig först när Startpunkten är klar/iu,
+  },
+  "da-DK": {
+    startingPoint: /Udgangspunkt/u,
+    twoActions: /to handlinger/u,
+    registrationZero: /registreringen giver ingen XP/iu,
+    registrationAfterReady: /registrerer dig først, når Udgangspunktet er klart/iu,
+  },
+  "fi-FI": {
+    startingPoint: /Lähtökoh/u,
+    twoActions: /kaksi toimintoa/u,
+    registrationZero: /rekisteröitymisestä ei saa XP/iu,
+    registrationAfterReady: /Rekisteröityminen seuraa vasta, kun Lähtökohta on valmis/u,
+  },
+  "nb-NO": {
+    startingPoint: /Utgangspunkt/u,
+    twoActions: /to handlinger/u,
+    registrationZero: /registreringen gir ingen XP/iu,
+    registrationAfterReady: /registrerer deg først når Utgangspunktet er klart/iu,
+  },
+  "en-CA": englishTenStepsSignals,
+  "fr-CA": englishTenStepsSignals,
+};
 
 test("initial market registry exposes the partner-readiness tranche without implying commercial authority", () => {
   assert.deepEqual(MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "IT", "ES", "PT", "GR", "NL", "SE", "DK", "FI", "NO", "CA"]);
@@ -370,9 +470,9 @@ test("curated bonus selectors keep stable semantics and exact localized labels",
   const expected = {
     "en-GB": ["Best Overall", "Low Wagering", "Low Deposit", "Crypto", "Newest"],
     "de-DE": ["Insgesamt am besten", "Niedrige Umsatzbedingung", "Niedrige Einzahlung", "Krypto", "Neueste"],
-    "it-IT": ["Migliore in assoluto", "Requisiti di puntata bassi", "Deposito basso", "Cripto", "Più recenti"],
+    "it-IT": ["Migliore in assoluto", "Requisito di puntata basso", "Deposito basso", "Criptovalute", "Più recenti"],
     "es-ES": ["Mejor en general", "Requisito de apuesta bajo", "Depósito bajo", "Cripto", "Más recientes"],
-    "pt-PT": ["Melhor no geral", "Requisitos de apostas baixos", "Depósito baixo", "Cripto", "Mais recentes"],
+    "pt-PT": ["Melhor no geral", "Requisito de apostas baixo", "Depósito baixo", "Criptomoedas", "Mais recentes"],
     "el-GR": ["Καλύτερο συνολικά", "Χαμηλή απαίτηση στοιχηματισμού", "Χαμηλή κατάθεση", "Κρυπτονομίσματα", "Νεότερα"],
     "nl-NL": ["Beste algemeen", "Lage inzetvereiste", "Lage storting", "Crypto", "Nieuwste"],
     "sv-SE": ["Bäst totalt", "Lågt omsättningskrav", "Låg insättning", "Krypto", "Senaste"],
@@ -402,7 +502,7 @@ test("public-core product copy resolves every supported runtime token", () => {
     assert.doesNotMatch(formatted, /\{\{?[a-z][a-z0-9_-]*\}?\}/i, locale);
     assert.doesNotMatch(formatted, /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i, locale);
   }
-  assert.deepEqual(homeTranslation("es-ES")?.recognition.slice(0, 2), ["El juego resulta", "cada vez más difícil de controlar."]);
+  assert.deepEqual(homeTranslation("es-ES")?.recognition.slice(0, 2), ["¿Te resulta cada vez", "más difícil controlar el juego?"]);
   const homeCss = transformHomeHandoffCss("");
   assert.match(homeCss, /html\[lang="de-DE"\][\s\S]*\[data-hero\] h1/);
   assert.match(transformHomeHandoff(transformCommonHandoff(generatedPages.home.html), "de-DE"), /data-home-hero-kicker/);
@@ -435,23 +535,128 @@ test("translation review state records only first-wave Founder publication accep
   }
 });
 
-test("About and 10 Steps provide complete localized authored copy without changing safety boundaries", () => {
-  const englishTenSteps = transformCommonHandoff(generatedPages.tenSteps.html);
+test("About provides complete localized authored copy without changing safety boundaries", () => {
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     const locale = profile.defaultLocale;
     const about = aboutMessages(locale);
-    const tenSteps = tenStepsTranslation(locale);
     assert.ok(about.metadataTitle.trim());
     assert.equal(about.parts.length, 3);
     assert.equal(about.separationPoints.length, 3);
     assert.equal(about.boundaries.length, 3);
-    assert.equal(tenSteps.text.length, TEN_STEPS_SOURCE_COPY.length);
-    const localized = transformTenStepsHandoff(englishTenSteps, locale);
-    assert.ok(localized.includes(tenSteps.text[0]));
-    assert.ok(localized.includes(tenSteps.text[43]));
-    assert.ok(localized.includes(`alt="${tenSteps.text.at(-1)}"`));
-    assert.match(localized, /href="\/program\?entry=start"/);
-    if (locale !== "en-GB") {
+  }
+});
+
+test("Home presents the current 5–8-minute Mission guidance in every supported locale", () => {
+  const sourceRuntime = transformCommonHandoff(generatedPages.home.html);
+  const supportedLocales = [...new Set(MARKET_PROFILES.flatMap((profile) => profile.supportedLocales))];
+
+  for (const locale of supportedLocales) {
+    const hero = homeTranslation(locale)?.hero ?? HOME_SOURCE_COPY.hero;
+    const programme = homeTranslation(locale)?.programme ?? HOME_SOURCE_COPY.programme;
+    const trust = homeTranslation(locale)?.trust ?? HOME_SOURCE_COPY.trust;
+    const final = homeTranslation(locale)?.final ?? HOME_SOURCE_COPY.final;
+    const localized = transformHomeHandoff(sourceRuntime, locale);
+    assert.match(hero[5], /02–10/u, `${locale} Home timing applies only to Missions 02–10`);
+    assert.match(hero[5], /5–8/u, `${locale} Home timing`);
+    assert.doesNotMatch(hero[5], /5–15/u, `${locale} stale Home timing`);
+    assert.ok(localized.includes(hero[5]), `${locale} renders the current Home timing`);
+    assert.ok(localized.includes(programme[3]) && localized.includes(programme[4]), `${locale} renders the pace without an invented duration`);
+    assert.ok(localized.includes(hero[6]) && localized.includes(programme[6]) && localized.includes(trust[4]), `${locale} qualifies the current Programme's free status`);
+    assert.ok(localized.includes(final[1]) && localized.includes(final[2]), `${locale} presents the actual one-situation Starting Point flow`);
+    assert.doesNotMatch(localized, /~2|weeks, your pace/u, `${locale} leaked the invented Home duration`);
+    assert.doesNotMatch(localized, /no paywall inside, ever|now and always|honest minute|One question at a time/u, `${locale} leaked stale Home promises`);
+    assert.doesNotMatch(localized, />10 missions · 5–15 minutes each</u, `${locale} leaked generated Home timing`);
+  }
+});
+
+test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary for every supported locale", () => {
+  const sourceRuntime = transformCommonHandoff(generatedPages.tenSteps.html);
+  const supportedLocales = [...new Set(MARKET_PROFILES.flatMap((profile) => profile.supportedLocales))];
+  const expectedSections = ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"];
+
+  assert.equal(TEN_STEPS_SOURCE_COPY.length, 50);
+  assert.equal(programmeMissionTitles.length, 10);
+  assert.equal(supportedLocales.length, 13);
+  assert.equal(
+    programAiMissionOneRewardPolicy.situationSubmitted.xp + programAiMissionOneRewardPolicy.startingPointComplete.xp,
+    40,
+  );
+  assert.equal(programAiMissionOneRewardPolicy.registration.xp, 0);
+
+  const english = tenStepsTranslation("en-GB");
+  assert.deepEqual(
+    Array.from({ length: 10 }, (_, index) => english.text[20 + index * 2]),
+    programmeMissionTitles,
+  );
+  assert.deepEqual(
+    Array.from({ length: 9 }, (_, index) => english.text[23 + index * 2]),
+    programAiMissionRegistry.map((mission) => mission.purpose),
+  );
+  assert.deepEqual(tenStepsTranslation("en-CA"), english);
+  assert.deepEqual(tenStepsTranslation("fr-CA"), english);
+
+  for (const locale of supportedLocales) {
+    const messages = tenStepsTranslation(locale);
+    const signals = tenStepsContractSignals[locale];
+    const missionPairs = Array.from({ length: 10 }, (_, index) => ({
+      title: messages.text[20 + index * 2],
+      description: messages.text[21 + index * 2],
+    }));
+
+    assert.equal(messages.text.length, 50, locale);
+    assert.equal(missionPairs.length, 10, locale);
+    for (const [index, mission] of missionPairs.entries()) {
+      assert.ok(mission.title.trim(), `${locale} Mission ${index + 1} title`);
+      assert.ok(mission.description.trim(), `${locale} Mission ${index + 1} description`);
+    }
+
+    assert.match(messages.text[4], /5\s*(?:[–-]|y|e)\s*8/u, `${locale} current Mission timing`);
+    assert.doesNotMatch(messages.text[4], /15/u, `${locale} stale 5–15-minute timing`);
+    assert.match(`${messages.text[46]} ${messages.text[47]}`, signals.startingPoint, `${locale} closing Starting Point`);
+    assert.doesNotMatch(`${messages.text[46]} ${messages.text[47]}`, /minut|λεπτ/iu, `${locale} stale one-minute claim`);
+    assert.match(messages.text[48], signals.twoActions, `${locale} two Mission 01 actions`);
+    assert.match(messages.text[48], /40 XP/u, `${locale} Mission 01 reward`);
+    assert.match(messages.text[48], signals.registrationZero, `${locale} registration-zero boundary`);
+    assert.match(messages.text[48], signals.registrationAfterReady, `${locale} post-result registration boundary`);
+    assert.ok(messages.text[48].search(signals.twoActions) < messages.text[48].indexOf("40 XP"), `${locale} actions precede reward`);
+    assert.ok(messages.text[48].indexOf("40 XP") < messages.text[48].search(signals.registrationZero), `${locale} registration follows reward`);
+
+    const localized = transformTenStepsHandoff(sourceRuntime, locale);
+    assert.deepEqual(
+      [...localized.matchAll(/data-ten-steps-section="([^"]+)"/g)].map((match) => match[1]),
+      expectedSections,
+      `${locale} active section order`,
+    );
+    assert.equal((localized.match(/role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/g) ?? []).length, 1, locale);
+    assert.equal((localized.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, 10, locale);
+
+    let missionCursor = localized.indexOf('data-ten-steps-mission-list=""');
+    const missionSectionEnd = localized.indexOf('data-ten-steps-section="account-boundary"', missionCursor);
+    assert.ok(missionCursor >= 0 && missionSectionEnd > missionCursor, `${locale} Mission path bounds`);
+    for (const [index, mission] of missionPairs.entries()) {
+      const numberIndex = localized.indexOf(`>${String(index + 1).padStart(2, "0")}</span>`, missionCursor);
+      const titleIndex = localized.indexOf(`>${escapeTenStepsText(mission.title)}</div>`, numberIndex);
+      const descriptionIndex = localized.indexOf(`>${escapeTenStepsText(mission.description)}</div>`, titleIndex);
+      assert.ok(numberIndex >= missionCursor, `${locale} Mission ${index + 1} number order`);
+      assert.ok(titleIndex > numberIndex, `${locale} Mission ${index + 1} title order`);
+      assert.ok(descriptionIndex > titleIndex && descriptionIndex < missionSectionEnd, `${locale} Mission ${index + 1} description order`);
+      missionCursor = descriptionIndex;
+    }
+
+    assert.ok(localized.includes(escapeTenStepsText(messages.text[4])), `${locale} current overview`);
+    assert.ok(localized.includes(escapeTenStepsText(messages.text[43])), `${locale} privacy boundary`);
+    assert.ok(localized.includes(escapeTenStepsText(messages.text[48])), `${locale} current reward boundary`);
+    assert.ok(localized.includes(`alt="${escapeTenStepsText(messages.text.at(-1) ?? "")}"`), `${locale} image alternative`);
+    assert.match(localized, /href="\/program\?entry=start"/, `${locale} canonical Programme entry`);
+    assert.doesNotMatch(localized, />Each mission takes 5–15 minutes</u, `${locale} leaked source timing`);
+    assert.doesNotMatch(localized, />Mission 01 takes about</u, `${locale} leaked source closing claim`);
+    assert.doesNotMatch(localized, />one minute\.</u, `${locale} leaked source one-minute claim`);
+
+    for (const source of TEN_STEPS_SOURCE_COPY.slice(20, 40)) {
+      if (messages.text.slice(20, 40).includes(source)) continue;
+      assert.equal(localized.includes(`>${escapeTenStepsText(source)}<`), false, `${locale} leaked source Mission copy: ${source}`);
+    }
+    if (locale !== "en-GB" && locale !== "en-CA" && locale !== "fr-CA") {
       assert.equal(localized.includes(">The Programme, step by step<"), false, `${locale} leaked the 10 Steps heading`);
       assert.equal(localized.includes(">Start Mission 01<"), false, `${locale} leaked the 10 Steps CTA`);
     }
@@ -475,41 +680,69 @@ test("FAQ provides complete localized trust copy without changing commercial or 
   }
 });
 
-test("market-first middleware redirects legacy paths and rewrites only validated public routes", () => {
-  const legacy = middleware(new NextRequest("http://127.0.0.1:4173/de/de/casinos?sort=score"));
+test("market-first middleware redirects legacy paths and rewrites only validated public routes", async () => {
+  const legacy = await middleware(new NextRequest("http://127.0.0.1:4173/de/de/casinos?sort=score"));
   assert.equal(legacy.status, 308);
   const legacyLocation = new URL(legacy.headers.get("location") ?? "http://invalid");
   assert.equal(`${legacyLocation.pathname}${legacyLocation.search}`, "/de/casinos?sort=score");
 
-  const response = middleware(new NextRequest("http://127.0.0.1:4173/de/casinos?sort=score"));
+  const response = await middleware(new NextRequest("http://127.0.0.1:4173/de/casinos?sort=score"));
   assert.equal(response.status, 200);
   const rewrite = new URL(response.headers.get("x-middleware-rewrite") ?? "http://invalid");
   assert.equal(`${rewrite.pathname}${rewrite.search}`, "/casinos?sort=score");
   assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
   assert.equal(response.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "de");
-  assert.ok(response.headers.get("content-security-policy"));
+  const localCsp = response.headers.get("content-security-policy") ?? "";
+  assert.ok(localCsp);
+  assert.doesNotMatch(localCsp, /upgrade-insecure-requests/);
 
-  const marketHome = middleware(new NextRequest("http://127.0.0.1:4173/de/"));
+  const secureResponse = await middleware(new NextRequest("https://b4gamble.com/casinos"));
+  assert.match(secureResponse.headers.get("content-security-policy") ?? "", /upgrade-insecure-requests/);
+
+  const inheritedHeaders = middlewareRequestHeaders(response);
+  const rewrittenResponse = await middleware(new NextRequest(rewrite, { headers: inheritedHeaders }));
+  assert.equal(rewrittenResponse.headers.get("x-middleware-rewrite"), null);
+  assert.equal(rewrittenResponse.headers.get("content-language"), "de-DE");
+  assert.equal(rewrittenResponse.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
+  assert.equal(rewrittenResponse.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "de");
+  assert.equal(rewrittenResponse.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
+
+  const spoofedInternalRewrite = await middleware(new NextRequest("http://127.0.0.1:4173/casinos", {
+    headers: {
+      [PRESENTATION_CONTEXT_HEADER]: "public-v1",
+      [PRESENTATION_MARKET_HEADER]: "de",
+      [PRESENTATION_LANGUAGE_HEADER]: "de",
+      "x-b4gamble-internal-presentation-token": "client-supplied",
+    },
+  }));
+  assert.equal(spoofedInternalRewrite.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+  assert.equal(spoofedInternalRewrite.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+
+  const marketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de/"));
   assert.equal(marketHome.status, 200);
   assert.equal(new URL(marketHome.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/");
-  const unslashedMarketHome = middleware(new NextRequest("http://127.0.0.1:4173/de"));
+  const unslashedMarketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de"));
   assert.equal(unslashedMarketHome.status, 308);
   assert.equal(new URL(unslashedMarketHome.headers.get("location") ?? "http://invalid").pathname, "/de/");
 
-  const gb = middleware(new NextRequest("http://127.0.0.1:4173/casinos"));
+  const gb = await middleware(new NextRequest("http://127.0.0.1:4173/casinos"));
   assert.equal(gb.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
   assert.equal(gb.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
 
-  const gbAlias = middleware(new NextRequest("http://127.0.0.1:4173/gb/en/"));
+  const gbAlias = await middleware(new NextRequest("http://127.0.0.1:4173/gb/en/"));
   assert.equal(gbAlias.status, 308);
   assert.equal(new URL(gbAlias.headers.get("location") ?? "http://invalid").pathname, "/");
 
-  const invalid = middleware(new NextRequest("http://127.0.0.1:4173/de/en/"));
+  const invalid = await middleware(new NextRequest("http://127.0.0.1:4173/de/en/"));
   assert.equal(invalid.headers.get("x-middleware-rewrite"), null);
-  const ordinaryTrailingSlash = middleware(new NextRequest("http://127.0.0.1:4173/terms/"));
+  const architectureOnly = await middleware(new NextRequest("http://127.0.0.1:4173/ca/fr/casinos"));
+  assert.equal(architectureOnly.headers.get("x-middleware-rewrite"), null);
+  assert.equal(architectureOnly.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null);
+  assert.equal(architectureOnly.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null);
+  const ordinaryTrailingSlash = await middleware(new NextRequest("http://127.0.0.1:4173/terms/"));
   assert.equal(ordinaryTrailingSlash.status, 308);
   assert.equal(new URL(ordinaryTrailingSlash.headers.get("location") ?? "http://invalid").pathname, "/terms");
-  const protectedRoute = middleware(new NextRequest("http://127.0.0.1:4173/de/admin", {
+  const protectedRoute = await middleware(new NextRequest("http://127.0.0.1:4173/de/admin", {
     headers: {
       [PRESENTATION_MARKET_HEADER]: "de",
       [PRESENTATION_LANGUAGE_HEADER]: "de",
@@ -520,16 +753,144 @@ test("market-first middleware redirects legacy paths and rewrites only validated
   assert.equal(protectedRoute.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null);
 });
 
+test("signed presentation continuations are bound to the exact query and a narrow issuance window", async () => {
+  const previousVercelEnvironment = process.env.VERCEL_ENV;
+  const previousBetterAuthSecret = process.env.BETTER_AUTH_SECRET;
+  const previousDateNow = Date.now;
+  const issuedAt = 2_000_000_000_000;
+  process.env.VERCEL_ENV = "production";
+  process.env.BETTER_AUTH_SECRET = "internationalisation-middleware-binding-test-secret";
+  Date.now = () => issuedAt;
+
+  try {
+    const firstPass = await middleware(new NextRequest("https://b4gamble.com/de/casinos?sort=score&page=2"));
+    const rewrite = new URL(firstPass.headers.get("x-middleware-rewrite") ?? "http://invalid");
+    assert.equal(`${rewrite.pathname}${rewrite.search}`, "/casinos?sort=score&page=2");
+
+    const continuationHeaders = middlewareRequestHeaders(firstPass);
+    assert.ok(continuationHeaders.get("x-b4gamble-internal-presentation-token"));
+
+    const exactReplay = await middleware(new NextRequest(rewrite, {
+      headers: new Headers(continuationHeaders),
+    }));
+    assert.equal(exactReplay.headers.get("content-language"), "de-DE");
+    assert.equal(exactReplay.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
+    assert.equal(exactReplay.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "de");
+    assert.equal(exactReplay.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
+
+    const queryMutation = await middleware(new NextRequest("https://b4gamble.com/casinos?sort=score&page=3", {
+      headers: new Headers(continuationHeaders),
+    }));
+    assert.equal(queryMutation.headers.get("x-middleware-rewrite"), null);
+    assert.equal(queryMutation.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+    assert.equal(queryMutation.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+    assert.equal(queryMutation.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
+
+    Date.now = () => issuedAt + 30_001;
+    const expiredReplay = await middleware(new NextRequest(rewrite, {
+      headers: new Headers(continuationHeaders),
+    }));
+    assert.equal(expiredReplay.headers.get("x-middleware-rewrite"), null);
+    assert.equal(expiredReplay.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+    assert.equal(expiredReplay.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+    assert.equal(expiredReplay.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
+
+    Date.now = () => issuedAt - 5_001;
+    const futureReplay = await middleware(new NextRequest(rewrite, {
+      headers: new Headers(continuationHeaders),
+    }));
+    assert.equal(futureReplay.headers.get("x-middleware-rewrite"), null);
+    assert.equal(futureReplay.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+    assert.equal(futureReplay.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+    assert.equal(futureReplay.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
+  } finally {
+    Date.now = previousDateNow;
+    if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercelEnvironment;
+    if (previousBetterAuthSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = previousBetterAuthSecret;
+  }
+});
+
+test("Preview and Production fail closed when the presentation signing secret is missing", async () => {
+  const previousVercelEnvironment = process.env.VERCEL_ENV;
+  const previousBetterAuthSecret = process.env.BETTER_AUTH_SECRET;
+  const previousVercelUrl = process.env.VERCEL_URL;
+  const previousVercelBranchUrl = process.env.VERCEL_BRANCH_URL;
+  delete process.env.BETTER_AUTH_SECRET;
+
+  try {
+    const scenarios = [
+      {
+        environment: "production",
+        url: "https://b4gamble.com/de/casinos?sort=score",
+      },
+      {
+        environment: "preview",
+        url: "https://sevenbet-next-git-i18n.vercel.app/de/casinos?sort=score",
+      },
+    ] as const;
+
+    for (const scenario of scenarios) {
+      process.env.VERCEL_ENV = scenario.environment;
+      if (scenario.environment === "preview") {
+        process.env.VERCEL_URL = "sevenbet-next-a1b2c3.vercel.app";
+        process.env.VERCEL_BRANCH_URL = "sevenbet-next-git-i18n.vercel.app";
+      } else {
+        delete process.env.VERCEL_URL;
+        delete process.env.VERCEL_BRANCH_URL;
+      }
+
+      const response = await middleware(new NextRequest(scenario.url));
+      assert.equal(response.status, 200, scenario.environment);
+      assert.equal(response.headers.get("x-middleware-rewrite"), null, scenario.environment);
+      assert.equal(response.headers.get("content-language"), null, scenario.environment);
+      assert.equal(
+        response.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"),
+        null,
+        scenario.environment,
+      );
+    }
+  } finally {
+    if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
+    else process.env.VERCEL_ENV = previousVercelEnvironment;
+    if (previousBetterAuthSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = previousBetterAuthSecret;
+    if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previousVercelUrl;
+    if (previousVercelBranchUrl === undefined) delete process.env.VERCEL_BRANCH_URL;
+    else process.env.VERCEL_BRANCH_URL = previousVercelBranchUrl;
+  }
+});
+
 test("Production routing and preference selection expose only Founder-publication-approved markets", async () => {
   const previousVercelEnvironment = process.env.VERCEL_ENV;
+  const previousBetterAuthSecret = process.env.BETTER_AUTH_SECRET;
   process.env.VERCEL_ENV = "production";
+  process.env.BETTER_AUTH_SECRET = "internationalisation-middleware-test-secret";
   try {
-    const approved = middleware(new NextRequest("https://b4gamble.com/de/casinos"));
+    const approved = await middleware(new NextRequest("https://b4gamble.com/de/casinos"));
     assert.equal(new URL(approved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
     assert.equal(approved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
 
+    const approvedHeaders = middlewareRequestHeaders(approved);
+    const mutatedHeaders = new Headers(approvedHeaders);
+    mutatedHeaders.set(PRESENTATION_MARKET_HEADER, "it");
+    mutatedHeaders.set(PRESENTATION_LANGUAGE_HEADER, "it");
+    const mutated = await middleware(new NextRequest("https://b4gamble.com/casinos", { headers: mutatedHeaders }));
+    assert.equal(mutated.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+    assert.equal(mutated.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+
+    const crossPathReplay = await middleware(new NextRequest("https://b4gamble.com/bonuses", { headers: approvedHeaders }));
+    assert.equal(crossPathReplay.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
+    assert.equal(crossPathReplay.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
+
+    const crossHostReplay = await middleware(new NextRequest("https://attacker.example/casinos", { headers: approvedHeaders }));
+    assert.equal(crossHostReplay.status, 308);
+    assert.equal(crossHostReplay.headers.get("location"), "https://b4gamble.com/casinos");
+
     for (const market of ["it", "pt", "nl", "fi", "no", "ca"]) {
-      const denied = middleware(new NextRequest(`https://b4gamble.com/${market}/`));
+      const denied = await middleware(new NextRequest(`https://b4gamble.com/${market}/`));
       assert.equal(denied.headers.get("x-middleware-rewrite"), null, market);
       assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, market);
       assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null, market);
@@ -552,6 +913,8 @@ test("Production routing and preference selection expose only Founder-publicatio
   } finally {
     if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = previousVercelEnvironment;
+    if (previousBetterAuthSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = previousBetterAuthSecret;
   }
 });
 

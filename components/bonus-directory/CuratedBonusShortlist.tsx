@@ -5,6 +5,8 @@ import { useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CommercialOfferMedia, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
+import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import {
   curatedBonusSelectors as selectors,
   selectCuratedBonuses,
@@ -30,6 +32,11 @@ function Action({ offer, messages }: { offer: PublicOfferDTO; messages: ProductP
   return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} messages={messages.outbound} />;
 }
 
+function Review({ offer, messages, presentation }: { offer: PublicOfferDTO; messages: ProductPageMessages; presentation: PresentationResolution }) {
+  const href = publicCasinoReviewHref(offer.casino);
+  return href ? <Link href={productHref(presentation, href)}>{messages.common.readReview}</Link> : null;
+}
+
 function payout(offer: PublicOfferDTO, messages: ProductPageMessages) {
   return offer.casino.payments.find((payment) => payment.supportsWithdrawals && payment.withdrawalTime)?.withdrawalTime || messages.common.notListed;
 }
@@ -38,24 +45,24 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
   const [selector, setSelector] = useState<Selector>("Best Overall");
   const top = useMemo(() => selectCuratedBonuses(offers, selector), [offers, selector]);
   return <section className={styles.section} aria-labelledby="bonus-shortlist-title" data-motion-reveal data-nav-theme="light"><div className={styles.shell}>
-    <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} role="tablist">{selectors.map((label) => {
+    {offers.length ? <div className={styles.tabs} aria-label={messages.bonuses.directoryTitle} data-selector-group="curated-bonuses" role="group">{selectors.map((label) => {
       const localizedLabel = label === "Best Overall" ? messages.bonuses.selectorBestOverall
         : label === "Low Wagering" ? messages.bonuses.selectorLowWagering
           : label === "Low Deposit" ? messages.bonuses.selectorLowDeposit
             : label === "Crypto" ? messages.bonuses.selectorCrypto
               : messages.bonuses.selectorNewest;
-      return <button aria-selected={selector === label} key={label} onClick={() => setSelector(label)} role="tab" type="button">{localizedLabel}</button>;
-    })}</div>
+      return <button aria-pressed={selector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
+    })}</div> : null}
     <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
     {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.bonuses.noMatchesTitle, { market: presentation.market.seoDisplayName })}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
-      <header><small>{messages.common.current}</small><span className={styles.rank}>0{index + 1}</span></header>
+      <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
-      <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {offer.casino.editorScore.toFixed(1)} <span aria-hidden="true">★★★★★</span></small></div></div>
+      <div className={styles.identity}><OperatorLogo offer={offer} prominent={index === 0} /><div><h2>{offer.casino.name}</h2><small>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} <span aria-hidden="true">★★★★★</span></small></div></div>
       <dl><div><dt>{messages.common.wagering}</dt><dd>{offer.bonus.wageringMultiplier === null ? offer.bonus.wageringText || messages.common.notListed : `${offer.bonus.wageringMultiplier}x`}</dd></div><div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.maximumBonus}</dt><dd>{money(offer.bonus.maximumBonus, offer.bonus.currency, presentation.locale, messages.common.notListed)}</dd></div><div><dt>{messages.common.payout}</dt><dd>{payout(offer, messages)}</dd></div></dl>
       <p>{offer.bonus.importantConditions.slice(0, 2).join(" · ") || offer.bonus.summary}</p>
-      <CommercialOfferMedia offer={offer} variant="bonus" />
+      <CommercialOfferMedia messages={messages} offer={offer} variant="bonus" />
       {offer.dataClassification === "DEMO_FIXTURE" ? <b className={styles.demo}>{messages.common.demoData} — {messages.common.demoDisclosure}</b> : null}
-      <div className={styles.actions}><Action messages={messages} offer={offer} /><Link href={productHref(presentation, `/casino/${offer.casino.slug}`)}>{messages.common.readReview}</Link></div>
+      <div className={styles.actions}><Action messages={messages} offer={offer} /><Review messages={messages} offer={offer} presentation={presentation} /></div>
     </article>)}</div>}
     {top.length ? <aside className={styles.method}><strong>{messages.bonuses.methodKicker}</strong><span>{messages.bonuses.sortedByValue}</span><span>{messages.bonuses.proofSources}</span><Link href="/bonus-guide">{messages.common.bonusGuide} →</Link></aside> : null}
   </div></section>;

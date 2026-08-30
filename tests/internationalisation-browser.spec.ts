@@ -25,6 +25,19 @@ const founderPublicationSmoke = [
 
 const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
 
+test("localized internal rewrites terminate with signed context and expose no continuation credential", async ({ request }) => {
+  const response = await request.get(`${baseUrl}/de/about`, { maxRedirects: 0 });
+  expect(response.status()).toBe(200);
+  expect(response.url()).toBe(`${baseUrl}/de/about`);
+  expect(response.headers()["content-language"]).toBe("de-DE");
+  expect(response.headers()["x-b4gamble-internal-presentation-token"]).toBeUndefined();
+  expect(response.headers()["x-middleware-request-x-b4gamble-internal-presentation-token"]).toBeUndefined();
+  const html = await response.text();
+  expect(html.match(/<html\b/g)).toHaveLength(1);
+  expect(html).toContain('<html lang="de-DE"');
+  expect(html).toContain(aboutMessages("de-DE").titleLead);
+});
+
 for (const acceptance of founderPublicationSmoke) {
   const prefix = `/${acceptance.market.toLowerCase()}`;
   const evidence = FIRST_WAVE_MARKET_EVIDENCE[acceptance.market];
@@ -351,5 +364,111 @@ test("long localized copy has no horizontal overflow across the required respons
     expect(response?.status(), pathname).toBe(200);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${pathname} at ${width}px`).toBe(0);
     await page.close();
+  }
+});
+
+test("reported localized article and 10 Steps compounds fit without clipping", async ({ browser }) => {
+  test.setTimeout(120_000);
+  const context = await browser.newContext({
+    reducedMotion: "reduce",
+    viewport: { width: 390, height: 844 },
+  });
+  const page = await context.newPage();
+
+  const measureReadableRegion = async (selector: string, last = false) => {
+    const matches = page.locator(selector);
+    const root = last ? matches.last() : matches.first();
+    await expect(root).toBeVisible();
+    return root.evaluate((region) => {
+      const viewportWidth = document.documentElement.clientWidth;
+      const hiddenOverflow = new Set(["clip", "hidden"]);
+      const candidates = [region, ...region.querySelectorAll<HTMLElement>("h1,h2,summary,li,a,strong,span,em")];
+      const offenders = candidates.flatMap((element) => {
+        const box = element.getBoundingClientRect();
+        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+        if (!text || box.width <= 0 || box.height <= 0) return [];
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        const textRects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+        const left = textRects.length ? Math.min(...textRects.map((rect) => rect.left)) : box.left;
+        const right = textRects.length ? Math.max(...textRects.map((rect) => rect.right)) : box.right;
+        const issues: string[] = [];
+        if (element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1) issues.push("self-overflow");
+        if (left < -1 || right > viewportWidth + 1) issues.push("outside-viewport");
+        let ancestor = element.parentElement;
+        while (ancestor && ancestor !== document.body && ancestor !== document.documentElement) {
+          const style = getComputedStyle(ancestor);
+          if (hiddenOverflow.has(style.overflowX)) {
+            const clip = ancestor.getBoundingClientRect();
+            if (left < clip.left - 1 || right > clip.right + 1) {
+              issues.push("ancestor-clip");
+              break;
+            }
+          }
+          ancestor = ancestor.parentElement;
+        }
+        return issues.length ? [{ element: element.tagName.toLowerCase(), issues, left, right, text: text.slice(0, 100) }] : [];
+      });
+      return {
+        documentOffenders: document.documentElement.scrollWidth <= viewportWidth + 1 ? [] : Array.from(document.querySelectorAll<HTMLElement>("body *"))
+          .map((element) => {
+            const rect = element.getBoundingClientRect();
+            return { element: element.tagName.toLowerCase(), left: rect.left, right: rect.right, text: element.textContent?.replace(/\s+/g, " ").trim().slice(0, 100) ?? "" };
+          })
+          .filter(({ left, right }) => left < -1 || right > viewportWidth + 1)
+          .slice(0, 8),
+        documentWidth: document.documentElement.scrollWidth,
+        offenders: offenders.slice(0, 8),
+        viewportWidth,
+      };
+    });
+  };
+
+  const articleCases = [
+    ["/de/learn/casino-bonuses/welcome-bonus-terms", "related"],
+    ["/de/learn/casino-reviews/how-casino-reviews-work", "related"],
+    ["/de/learn/country-guides/country-guide-structure", "related"],
+    ["/se/learn/responsible-gambling/responsible-gambling-tools", "faq"],
+    ["/se/learn/casino-bonuses/welcome-bonus-terms", "faq"],
+    ["/se/learn/casino-reviews/how-casino-reviews-work", "faq"],
+    ["/se/learn/country-guides/country-guide-structure", "faq"],
+    ["/dk/learn/responsible-gambling/responsible-gambling-tools", "faq"],
+    ["/dk/learn/casino-bonuses/welcome-bonus-terms", "faq"],
+    ["/dk/learn/casino-reviews/how-casino-reviews-work", "faq"],
+    ["/dk/learn/country-guides/country-guide-structure", "faq"],
+    ["/nl/learn/responsible-gambling/responsible-gambling-tools", "related"],
+    ["/nl/learn/casino-reviews/how-casino-reviews-work", "related"],
+    ["/nl/learn/country-guides/country-guide-structure", "related"],
+  ] as const;
+
+  try {
+    for (const [pathname, region] of articleCases) {
+      const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), pathname).toBe(200);
+      await page.evaluate(() => document.fonts.ready);
+      const selector = region === "faq"
+        ? '[data-learning-article] section[aria-labelledby="article-faq-title"]'
+        : '[data-learning-article] section[aria-labelledby="related-reading-title"]';
+      const report = await measureReadableRegion(selector);
+      expect(report.documentWidth, `${pathname}: document overflow`).toBeLessThanOrEqual(report.viewportWidth + 1);
+      expect(report.offenders, `${pathname}: clipped ${region} copy`).toEqual([]);
+    }
+
+    for (const sample of [
+      { height: 844, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 390 },
+      { height: 932, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 430 },
+      { height: 900, pathname: "/fi/10-steps", selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > h1', useLast: false, width: 1440 },
+    ] as const) {
+      await page.setViewportSize({ width: sample.width, height: sample.height });
+      const response = await page.goto(`${baseUrl}${sample.pathname}`, { waitUntil: "domcontentloaded" });
+      expect(response?.status(), sample.pathname).toBe(200);
+      await page.evaluate(() => document.fonts.ready);
+      const report = await measureReadableRegion(sample.selector, sample.useLast);
+      expect(report.documentWidth, `${sample.pathname} at ${sample.width}px: document overflow ${JSON.stringify(report.documentOffenders)}`)
+        .toBeLessThanOrEqual(report.viewportWidth + 1);
+      expect(report.offenders, `${sample.pathname} at ${sample.width}px: clipped heading`).toEqual([]);
+    }
+  } finally {
+    await context.close();
   }
 });

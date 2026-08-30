@@ -42,7 +42,7 @@ async function installAnonymousProgramme(page) {
     return route.fulfill({
       status: 201,
       contentType: "application/json",
-      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-07:updated-2026-08-09", privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-13", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.founder.mobile" } }),
+      body: JSON.stringify({ ok: true, authority: { version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId, createdAt, expiresAt: createdAt + 3_600_000, termsVersion: "terms:effective-2026-08-19:updated-2026-08-19", privacyVersion: "privacy:effective-2026-08-19:updated-2026-08-19", adultConfirmedAt: createdAt, termsAcceptedAt: createdAt, privacyAcknowledgedAt: createdAt, proof: "pa1.founder.mobile" } }),
     });
   });
   await page.route("**/api/program/program-ai/session", (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
@@ -82,31 +82,32 @@ async function installDashboardProgramme(page) {
       user: { id: userId, name: "Founder review", email: "founder-review@example.invalid", emailVerified: true, createdAt: now, updatedAt: now },
     }),
   }));
-  const titles = ["Get started", "Set your limits", "Understand your triggers", "Build one boundary", "Reality check", "Decision framework", "Play plan", "Safer play", "Review & adjust", "Long-term control"];
+  const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Research responsibly", "Rehearse the decision", "Make the plan reviewable"];
   const missions = titles.map((title, index) => ({
     missionNumber: index + 1,
     title,
     status: index < 3 ? "completed" : index === 3 ? "current" : "locked",
-    actionsCompleted: index < 3 ? 1 : index === 3 ? 1 : 0,
-    actionsTotal: index < 3 ? 1 : index === 3 ? 5 : 3,
-    xpEarnedHere: index < 3 ? 40 : 0,
-    completionBonus: index < 3 ? 20 : 25,
+    actionsCompleted: index === 0 ? 2 : index < 3 ? 3 : index === 3 ? 1 : 0,
+    actionsTotal: index === 0 ? 2 : 3,
+    xpEarnedHere: index === 0 ? 40 : index < 3 ? 75 : index === 3 ? 15 : 0,
+    completionBonus: index === 0 ? 0 : 25,
   }));
   await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
     status: 200,
     contentType: "application/json",
     body: JSON.stringify({
       home: {
-        totalXp: 1240,
+        totalXp: 205,
         activeDays: 18,
         currentStreak: 12,
         achievements: [
-          { slug: "first-boundary", title: "First boundary", state: "earned", awardedAt: now },
-          { slug: "seven-day-streak", title: "7-day streak", state: "earned", awardedAt: now },
+          { slug: "first-plan", title: "First Plan", state: "earned", awardedAt: now },
+          { slug: "boundary-built", title: "Boundary Built", state: "locked", awardedAt: null },
         ],
         currentMission: 4,
+        primaryAction: "resume-mission",
         engagementDayBucket: "day_30_plus",
-        currentAction: "choose_boundary",
+        currentAction: "build_boundary_rule",
         startingPoint: {
           startingPoint: "Autopilot sessions after work that grow by the weekend. Your plan focuses on catching that moment before it starts.",
           desiredChange: "Build more control around the situation described here.",
@@ -115,12 +116,16 @@ async function installDashboardProgramme(page) {
         },
         missions,
         reviews: [
-          { milestone: "first", unlockMission: 3, title: "First Review", maxWords: 200, status: "locked" },
-          { milestone: "mid", unlockMission: 6, title: "Mid Review", maxWords: 250, status: "locked" },
-          { milestone: "full", unlockMission: 10, title: "Full Review", maxWords: 300, status: "locked" },
+          { milestone: "first", unlockMission: 3, title: "First Personal Review", maxWords: 250, status: "available" },
+          { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", maxWords: 300, status: "locked" },
+          { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
         ],
-        nextReview: { milestone: "mid", unlockMission: 6, title: "Mid Review", xpRemaining: 125, missionsRemaining: 2 },
-        discoveryLinks: [],
+        nextReview: { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", xpRemaining: 210, missionsRemaining: 3 },
+        discoveryLinks: [
+          { href: "/casinos", label: "Compare casinos" },
+          { href: "/bonuses", label: "Bonuses" },
+          { href: "/best-offers", label: "Best offers" },
+        ],
       },
     }),
   }));

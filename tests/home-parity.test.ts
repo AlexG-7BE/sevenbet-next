@@ -118,7 +118,12 @@ test("Self Recognition remains static language rather than a diagnostic form", (
 test("Programme availability and evidence limitations remain truthful", () => {
   assert.match(home + carousel, /Ten practical Missions form one reviewable path\./);
   assert.match(home + carousel, /Missions 02–10 · unlock in sequence/);
-  assert.match(home, /10 missions · 5–15 minutes each/);
+  assert.match(home, /Missions 02–10 · 5–8 minutes each/);
+  assert.match(home, />Your<.*>pace</s);
+  assert.match(home, /Current Programme: free, with no paywall inside/);
+  assert.match(home, /Share one situation\. Your Starting Point takes shape from it\./);
+  assert.doesNotMatch(home, /~2|weeks, your pace|no paywall inside, ever|now and always|honest minute|One question at a time/);
+  assert.doesNotMatch(homeCatalog + home, /5–15 minutes/);
   assert.doesNotMatch(home + carousel, /Missions 01–04 are implemented|not yet available|later missions remain planned/);
   assert.match(home, /public NHS and NICE guidance/);
   assert.match(home, /The complete Programme has not yet been clinically evaluated\./);

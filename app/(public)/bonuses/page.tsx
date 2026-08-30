@@ -24,6 +24,7 @@ import { isLocalHandoffVisualDataFixture, withHandoffBonusDirectoryData } from "
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
 const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", style: ["normal", "italic"], variable: "--font-seven-serif" });
 
@@ -63,15 +64,19 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function BonusesPage({ searchParams }: PageProps) {
   const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parsePublicOfferQuery(raw, 24);
   const presentation = await resolveServerPresentationContext();
   const messages = productPageMessages(presentation.locale);
   const market = presentation.market.seoDisplayName;
+  const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
   const result = withHandoffBonusDirectoryData(
     await loadBonusDirectory(query, presentation.market.countryCode),
-    isLocalHandoffVisualDataFixture(raw.visualFixture),
+    visualFixture,
+    presentation.locale,
+    query,
   );
-  const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability].filter((value) => value !== undefined).length;
+  const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability, query.featured, query.recommended].filter((value) => value !== undefined).length;
   const startPosition = (result.page - 1) * result.pageSize + 1;
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",
@@ -105,14 +110,14 @@ export default async function BonusesPage({ searchParams }: PageProps) {
         <header className={styles.sectionHeading}><h2 className={styles.display}>{messages.bonuses.directoryTitle}</h2><p>{result.total} {messages.common.records} · {messages.bonuses.sortedByValue}</p></header>
         {result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED" ? <aside className={styles.demoDirectoryDisclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure}</p></aside> : null}
         {result.inventoryMode === "UNAVAILABLE" ? <section className={styles.empty} role="status"><p className={styles.eyebrow}>{messages.common.commercialUnavailable}</p><h2>{messages.bonuses.unavailableTitleBody}</h2><p>{messages.bonuses.unavailableCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></section> : <>
-          <BonusFilters activeCount={activeCount} facets={result.facets} messages={messages} presentation={presentation} query={result.query} total={result.total} />
-          <ActiveBonusFilters messages={messages} presentation={presentation} query={result.query} raw={raw} />
+          {result.total > 0 || activeCount > 0 ? <BonusFilters activeCount={activeCount} facets={result.facets} messages={messages} presentation={presentation} query={result.query} total={result.total} visualFixture={visualFixture} /> : null}
+          <ActiveBonusFilters facets={result.facets} messages={messages} presentation={presentation} query={result.query} raw={raw} total={result.total} />
 
           {result.records.length > 0 ? <>
             <p className={styles.resultsStatus} aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? messages.common.result : messages.common.results} · {messages.common.pageOf.replace("{page}", String(result.page)).replace("{pages}", String(result.pageCount))}</p>
             <BonusComparisonList messages={messages} offers={result.records} presentation={presentation} startPosition={startPosition} />
             <BonusPagination messages={messages} page={result.page} pageCount={result.pageCount} presentation={presentation} raw={raw} />
-          </> : <section className={styles.empty}><p className={styles.eyebrow}>{messages.bonuses.directoryTitle}</p><h2>{formatProductMessage(messages.bonuses.noMatchesTitle, { market })}</h2><p>{messages.bonuses.noMatchesCopy}</p></section>}
+          </> : <section className={styles.empty} data-public-empty-state={activeCount > 0 ? "filtered" : "unfiltered"} data-result-count="0"><p className={styles.eyebrow}>{messages.bonuses.directoryTitle}</p><h2>{formatProductMessage(messages.bonuses.noMatchesTitle, { market })}</h2><p>{messages.bonuses.noMatchesCopy}</p><div className={styles.emptyActions}>{activeCount > 0 ? <Link data-empty-reset href={productHref(presentation, "/bonuses")}>{messages.common.clearAll}</Link> : null}<Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link></div></section>}
         </>}
       </div>
     </section>

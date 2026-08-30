@@ -230,8 +230,8 @@ function setupHomeInteractions(root: HTMLElement) {
     const nextIndex = Math.min(canonicalDestinations.length - 1, Math.max(0, baseIndex + direction));
     wheelTargetIndex = nextIndex;
     lastWheelDirection = direction;
-    if (nextIndex === baseIndex) return;
     if (reversing) window.scrollTo({ behavior: "auto", top: window.scrollY });
+    if (nextIndex === baseIndex) return;
     window.scrollTo({ behavior: "smooth", top: canonicalDestinations[nextIndex] });
   };
 

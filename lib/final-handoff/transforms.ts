@@ -185,6 +185,36 @@ function removeElementContaining(
   return html;
 }
 
+function transformElementContaining(
+  html: string,
+  marker: string,
+  predicate: (elementHtml: string, startTag: string) => boolean,
+  transform: (elementHtml: string, startTag: string) => string,
+  occurrence: "first" | "last" = "first",
+) {
+  const markerIndex = occurrence === "first" ? html.indexOf(marker) : html.lastIndexOf(marker);
+  if (markerIndex < 0) return html;
+  const ancestors = htmlAncestorsAt(html, markerIndex);
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const element = ancestors[index];
+    const elementHtml = html.slice(element.start, element.end);
+    if (!predicate(elementHtml, element.startTag)) continue;
+    return html.slice(0, element.start) + transform(elementHtml, element.startTag) + html.slice(element.end);
+  }
+  return html;
+}
+
+function retagElement(elementHtml: string, startTag: string, name: string, attributes: string) {
+  const tag = htmlTagAt(startTag, 0);
+  if (!tag || tag.closing || tag.selfClosing) return elementHtml;
+  const closingTag = `</${tag.name}>`;
+  if (!elementHtml.endsWith(closingTag)) return elementHtml;
+  const transformedStartTag = startTag
+    .replace(/^<([a-zA-Z][\w:-]*)/, `<${name}`)
+    .replace(/>$/, ` ${attributes}>`);
+  return `${transformedStartTag}${elementHtml.slice(startTag.length, -closingTag.length)}</${name}>`;
+}
+
 /**
  * Generated handoff pages are content sources, never owners of application chrome.
  * Remove their captured prototype header/footer elements before React mounts the
@@ -313,6 +343,10 @@ export function transformLearnHandoff(
       '<div style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
       '<div data-learn-start-section="" style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-learn-start-axis="" data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
     );
+  output = output.replace(
+    /<div data-learn-meta-axis=""[^>]*>[\s\S]*?<\/div>/,
+    (meta) => meta.replaceAll("<span ", '<span data-learn-meta-item="" '),
+  );
   const featured = articles.filter((article) => article.featured).slice(0, 4);
   let featuredIndex = 0;
   output = output.replace(/<a href="[^"]+" class="scp2"[\s\S]*?<\/a>/g, () => {
@@ -447,6 +481,7 @@ const HOME_MEDIA: Record<string, { height: number; width: number }> = {
 };
 
 const HOME_MEDIA_WIDTHS = [320, 640, 1280, 1920] as const;
+const HOME_GENERATED_TIMING_COPY = "10 missions · 5–15 minutes each";
 const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "Applying the plan"]);
 const HOME_SNAP_LABELS = new Set([
   "Hero",
@@ -520,7 +555,31 @@ function translateHomeHandoff(html: string, locale: SupportedLocale) {
 
 export function transformHomeHandoff(html: string, locale: SupportedLocale = "en-GB") {
   const transformed = html
+    .replaceAll(HOME_GENERATED_TIMING_COPY, HOME_SOURCE_COPY.hero[5])
+    .replaceAll("Free — no paywall inside, ever", HOME_SOURCE_COPY.hero[6])
+    .replaceAll("now and always", HOME_SOURCE_COPY.programme[6])
+    .replaceAll("Free — no paywall, no upsell inside missions, ever.", HOME_SOURCE_COPY.trust[4])
+    .replaceAll("honest minute.", HOME_SOURCE_COPY.final[1])
+    .replaceAll("One question at a time. Your starting point builds itself as you answer.", HOME_SOURCE_COPY.final[2])
+    .replace(/>~2</g, `>${HOME_SOURCE_COPY.programme[3]}<`)
+    .replace(/>weeks, your pace</g, `>${HOME_SOURCE_COPY.programme[4]}<`)
     .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
+    .replace(
+      /<div data-screen-label="Missions (\d{2}-\d{2})" data-stackpanel=""/g,
+      '<div data-screen-label="Missions $1" data-home-chapter="$1" data-stackpanel=""',
+    )
+    .replaceAll('<div data-mob="chapter"', '<div data-home-chapter-copy="" data-mob="chapter"')
+    .replace(
+      /(<div data-home-chapter-copy=""[^>]*>[\s\S]*?)<h2 /g,
+      '$1<h2 data-home-chapter-title="" ',
+    )
+    .replace("<h1 ", '<h1 data-home-hero-title="" ')
+    .replace(
+      /(<h1 data-home-hero-title=""[^>]*>[\s\S]*?<\/h1>\s*)<p /,
+      '$1<p data-home-hero-copy="" ',
+    )
+    .replace('<a href="/program" class="scp2"', '<a href="/program" class="scp2" data-home-hero-cta=""')
+    .replace('<div style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;', '<div data-home-hero-meta="" style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;')
     .replace(
       '<div data-screen-label="Final CTA" data-snap=""',
       '<div data-screen-label="Final CTA" data-home-final-composition=""',
@@ -592,9 +651,52 @@ export function transformHomeHandoffCss(css: string) {
 }
 
 export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB") {
+  let semanticHtml = transformElementContaining(
+    html,
+    "Ten steps.<br>",
+    (_elementHtml, startTag) => startTag.includes("min-height: 92vh"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="hero" aria-labelledby="ten-steps-title"')
+      .replace("<h1 ", '<h1 id="ten-steps-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "Three things you'll have at the end.",
+    (_elementHtml, startTag) => startTag.includes("position: relative; overflow: hidden; background: rgb(250, 250, 247)"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="programme-builds" aria-labelledby="ten-steps-builds-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-builds-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    ">The path</h2>",
+    (elementHtml, startTag) => startTag.includes("background: rgb(244, 241, 235)") && elementHtml.includes("Long-term control"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="mission-map" aria-labelledby="ten-steps-path-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-path-title" ')
+      .replace(
+        '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0px 72px;">',
+        '<div role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0px 72px;">',
+      )
+      .replaceAll(
+        '<div style="display: flex; gap: 22px; padding: 22px 0px; border-bottom: 1px solid rgba(16, 15, 15, 0.12);">',
+        '<div role="listitem" data-ten-steps-mission="" style="display: flex; gap: 22px; padding: 22px 0px; border-bottom: 1px solid rgba(16, 15, 15, 0.12);">',
+      ),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "What you say here,",
+    (elementHtml, startTag) => startTag.includes("background: rgb(244, 241, 235)") && elementHtml.includes("No mission ever asks"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="account-boundary" aria-labelledby="ten-steps-account-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-account-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "Mission 01 takes about<br>",
+    (_elementHtml, startTag) => startTag.includes("position: relative; background: rgb(16, 15, 15)"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="final-action" aria-labelledby="ten-steps-final-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-final-title" '),
+  );
   const translation = tenStepsTranslation(locale);
   const textTranslations = new Map<string, string>(TEN_STEPS_SOURCE_COPY.map((source, index) => [source, translation.text[index]]));
-  const translatedText = locale === "en-GB" ? html : html.replace(/>([^<>]*)</g, (match, text: string) => {
+  const translatedText = semanticHtml.replace(/>([^<>]*)</g, (match, text: string) => {
     const value = text.trim();
     const localized = textTranslations.get(value);
     if (!localized) return match;
@@ -604,9 +706,7 @@ export function transformTenStepsHandoff(html: string, locale: SupportedLocale =
   });
   const sourceAlt = TEN_STEPS_SOURCE_COPY.at(-1) ?? "";
   const localizedAlt = translation.text.at(-1) ?? sourceAlt;
-  const translated = locale === "en-GB"
-    ? translatedText
-    : translatedText.replace(`alt="${sourceAlt}"`, `alt="${escapeHtml(localizedAlt)}"`);
+  const translated = translatedText.replace(`alt="${sourceAlt}"`, `alt="${escapeHtml(localizedAlt)}"`);
   return buttonToLink(translated, translation.text[5], "/program?entry=start");
 }
 

@@ -4,8 +4,9 @@ import Link from "next/link";
 
 import styles from "@/components/comparison/Comparison.module.css";
 import { usePublicErrorContext } from "@/lib/i18n/use-public-error-context";
+import { retryPublicCommercialError } from "@/lib/qa/retry-public-commercial-error";
 
 export default function ComparisonError({ reset }: { error: Error; reset: () => void }) {
   const { messages, hrefFor } = usePublicErrorContext();
-  return <div className={styles.page} data-comparison-page><section className={styles.stateSection}><div className={styles.shell}><p className={styles.kicker}>{messages.compareKicker}</p><h1>{messages.compareTitle}</h1><p>{messages.compareCopy}</p><button onClick={reset} type="button">{messages.retry}</button> <Link href={hrefFor("/casinos")}>{messages.browse}</Link> <Link href={hrefFor("/help")}>{messages.protectedHelp}</Link></div></section></div>;
+  return <div className={styles.page} data-comparison-page data-public-commercial-error="compare"><section className={`${styles.stateSection} ${styles.errorStateSection}`} data-nav-theme="light"><div className={styles.shell} role="alert"><p className={styles.kicker}>{messages.compareKicker}</p><h1>{messages.compareTitle}</h1><p>{messages.compareCopy}</p><div className={styles.stateActions} data-public-error-actions><button onClick={() => retryPublicCommercialError(reset)} type="button">{messages.retry}</button><Link href={hrefFor("/casinos")}>{messages.browse}</Link><Link href={hrefFor("/help")}>{messages.protectedHelp}</Link></div></div></section></div>;
 }

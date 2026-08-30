@@ -38,13 +38,17 @@
 }
 
 .hero h1 {
-  max-width: 930px;
+  width: 100%;
+  max-width: min(930px, 100%);
   margin: 18px 0 0;
   font-size: clamp(44px, 7vw, 88px);
   font-weight: 900;
+  hyphens: none;
   letter-spacing: -.055em;
   line-height: .96;
+  overflow-wrap: normal;
   text-wrap: balance;
+  word-break: normal;
 }
 
 .lead {
@@ -70,17 +74,27 @@
   padding-top: 64px;
   padding-bottom: 64px;
   display: grid;
-  grid-template-columns: minmax(190px, .65fr) 2fr;
+  grid-template-columns: minmax(360px, .75fr) minmax(0, 2fr);
   gap: 48px;
   border-bottom: 1px solid var(--safety-line);
 }
 
+.section > *,
+.boundary > * {
+  min-width: 0;
+}
+
 .sectionHeading h2,
 .evidence h2 {
+  min-width: 0;
   margin: 10px 0 0;
   font-size: clamp(28px, 3.5vw, 44px);
+  hyphens: none;
   letter-spacing: -.035em;
   line-height: 1.05;
+  overflow-wrap: normal;
+  text-wrap: balance;
+  word-break: normal;
 }
 
 .resourceGrid {
@@ -202,6 +216,23 @@
   .localNavigation {
     flex-direction: column;
     gap: 4px;
+  }
+}
+
+@media (max-width: 520px) {
+  .hero h1 {
+    hyphens: auto;
+    hyphenate-limit-chars: 14 6 5;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1000px) {
+  .section {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .boundary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

@@ -253,10 +253,30 @@ body:has(> [data-public-shell="header"]) {
 }
 
 @media (max-width: 760px) {
+  /* Proof statements keep their authored type scale, but localized copy may
+     wrap and grow the row instead of retaining the captured nowrap contract. */
+  [data-handoff-page="learn"] [data-learn-meta-axis] {
+    height: auto !important;
+    align-items: flex-start !important;
+  }
+
+  [data-handoff-page="learn"] [data-learn-meta-item] {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal !important;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    word-break: normal;
+    text-wrap: pretty;
+  }
+
   [data-handoff-page="learn"] a.scp2,
   [data-handoff-page="learn"] a.scp3 {
     min-width: 0;
-    overflow-wrap: anywhere;
+    hyphens: auto;
+    hyphenate-limit-chars: 14 6 5;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 
   [data-handoff-page="learn"] [data-learn-discovery-search] {
@@ -294,19 +314,229 @@ body:has(> [data-public-shell="header"]) {
   }
 }
 
-@media (max-width: 340px) {
-  [data-handoff-page="learn"] [data-learn-meta-axis] span {
-    white-space: normal !important;
-    overflow-wrap: anywhere;
-  }
-
-}
-
 .bonusGuidePage aside nav a { min-height: 44px; display: flex; align-items: center; }
 [aria-label="On this page"] a { min-height: 44px; display: flex; align-items: center; font-size: 14px !important; line-height: 1.4; }
 
+/* Native learning articles sit beneath fixed public chrome. Their localized
+   titles own a bounded grid track and wrap at authored word boundaries before
+   reaching summary metadata. Visual-handoff articles retain their authored
+   composition. */
+[data-learning-article]:not([data-handoff-article]) > header {
+  padding-top: calc(128px + env(safe-area-inset-top));
+}
+[data-learning-article]:not([data-handoff-article]) > header > nav + div {
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 288px);
+  gap: clamp(40px, 3.5vw, 48px);
+}
+[data-learning-article]:not([data-handoff-article]) > header > nav + div > div {
+  min-width: 0;
+}
+[data-learning-article]:not([data-handoff-article]) > header h1 {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  hyphens: none;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-wrap: balance;
+}
+@media (max-width: 1500px) {
+  [data-learning-article]:not([data-handoff-article]) > header > nav + div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  [data-learning-article]:not([data-handoff-article]) > header > nav + div > div:last-child {
+    max-width: 52ch;
+  }
+}
+@media (max-width: 520px) {
+  [data-learning-article]:not([data-handoff-article]) > header {
+    padding-top: calc(108px + env(safe-area-inset-top));
+  }
+
+  /* Preserve complete authored words until a word is genuinely too long for
+     the mobile measure. At that point the document language may supply a
+     dictionary break; short words such as casino remain indivisible. */
+  [data-learning-article]:not([data-handoff-article]) > header h1 {
+    font-size: clamp(32px, 10vw, 44px);
+    hyphens: auto;
+    hyphenate-limit-chars: 14 6 5;
+  }
+
+  /* Germanic compound nouns need a smaller optical scale on narrow screens.
+     Keeping the complete word is easier to scan than dictionary hyphenation in
+     an all-caps display heading. Archivo's width axis and the 26px floor keep
+     the longest published compound inside the 320px article measure. */
+  html:lang(de) [data-learning-article]:not([data-handoff-article]) > header h1,
+  html:lang(sv) [data-learning-article]:not([data-handoff-article]) > header h1,
+  html:lang(da) [data-learning-article]:not([data-handoff-article]) > header h1 {
+    font-size: clamp(26px, 8vw, 34px);
+    font-stretch: 75%;
+    letter-spacing: -.02em;
+    hyphens: none;
+    hyphenate-limit-chars: auto;
+  }
+}
+
+@media (max-width: 340px) {
+  [data-learning-article]:not([data-handoff-article]) > header > nav {
+    flex-wrap: wrap;
+    row-gap: 4px;
+  }
+
+  html:lang(de) [data-learning-article]:not([data-handoff-article]) > header h1,
+  html:lang(sv) [data-learning-article]:not([data-handoff-article]) > header h1,
+  html:lang(da) [data-learning-article]:not([data-handoff-article]) > header h1 {
+    font-stretch: 70%;
+  }
+
+  html:lang(de) [data-learning-article]:not([data-handoff-article]) #direct-answer-title,
+  html:lang(sv) [data-learning-article]:not([data-handoff-article]) #direct-answer-title,
+  html:lang(da) [data-learning-article]:not([data-handoff-article]) #direct-answer-title {
+    font-size: 28px;
+    font-stretch: 90%;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+}
+
+/* The authored 10 Steps display scale remains intact while translated compound
+   words receive a real box to wrap in. The desktop hero may grow into the
+   composition's existing gradient plane; the mobile title stays viewport-bound. */
+[data-handoff-page="tenSteps"] [data-mob="copy"] > h1,
+[data-handoff-page="tenSteps"] .sc-host > div > div:last-child > div > h2 {
+  min-width: 0;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+[data-handoff-page="tenSteps"] .sc-host > div > div:last-child > div > h2 {
+  max-width: 100%;
+}
+
+@media (min-width: 901px) {
+  [data-handoff-page="tenSteps"] [data-mob="copy"] > h1 {
+    width: max-content;
+    max-width: min(900px, calc(100vw - 144px));
+  }
+}
+
+@media (max-width: 900px) {
+  [data-handoff-page="tenSteps"] [data-mob="copy"] {
+    width: 100% !important;
+    min-width: 0;
+  }
+
+  [data-handoff-page="tenSteps"] [data-mob="copy"] > h1 {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  [data-handoff-page="tenSteps"] [data-mob="copy"] > div:first-child {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    align-items: flex-start !important;
+  }
+
+  [data-handoff-page="tenSteps"] [data-mob="copy"] > div:first-child > div:first-child {
+    flex: 0 0 44px;
+    margin-top: .6em;
+  }
+
+  [data-handoff-page="tenSteps"] [data-mob="copy"] > div:first-child > div:last-child {
+    min-width: 0;
+    max-width: 100%;
+    white-space: normal !important;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
+    line-height: 1.45;
+  }
+
+  [data-handoff-page="tenSteps"] [style*="minmax(380px"] {
+    width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  [data-handoff-page="tenSteps"] [style*="minmax(380px"] > * {
+    min-width: 0 !important;
+  }
+}
+
 /* Founder Home mobile polish. The generated handoff remains the content and visual
    authority; these overrides only tune its mobile composition and scroll rhythm. */
+[data-handoff-page="home"] [data-home-chapter-copy] {
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+[data-handoff-page="home"] [data-home-chapter-title] {
+  max-width: 100%;
+  min-width: 0;
+  hyphens: auto;
+  hyphenate-limit-chars: 6 3 3;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 761px) {
+  /* The captured 640px chapter lane was authored before the application-wide
+     border-box reset. Restore its usable measure, while retaining the original
+     left/right editorial split on tablet canvases. */
+  [data-handoff-page="home"] [data-home-chapter-copy] {
+    width: min(824px, 62vw) !important;
+    max-width: 824px !important;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1399px) {
+  /* Preserve the four-photo editorial composition at compact desktop widths by
+     giving translated display copy its own safe central column. */
+  [data-handoff-page="home"] [data-screen-label="Hero"] h1 {
+    max-width: 56vw;
+    margin-inline: auto !important;
+    font-size: clamp(52px, 8vw, 108px) !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"] {
+    left: 1.5% !important;
+    top: 12% !important;
+    width: min(19vw, 285px) !important;
+    height: min(23vw, 335px) !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {
+    right: 1.5% !important;
+    width: min(17vw, 255px) !important;
+    height: min(21vw, 305px) !important;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 1000px) {
+  /* Keep localized eyebrow copy inside the gap between the two opening
+     portraits. It may wrap, but its type scale and both photo crops stay intact. */
+  [data-handoff-page="home"] [data-home-hero-kicker] {
+    max-width: 56vw !important;
+    margin-inline: auto;
+  }
+}
+
+@media (min-width: 1400px) and (max-width: 1649px) {
+  /* Bridge the authored desktop scale into its 132px cap without letting the
+     longest localized display line enter the two upper photo planes. */
+  [data-handoff-page="home"] [data-screen-label="Hero"] h1 {
+    max-width: 60vw;
+    margin-inline: auto !important;
+    font-size: min(8vw, 132px) !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"] {
+    left: 2% !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] {
+    right: 2% !important;
+  }
+}
+
 @media (max-width: 760px) {
   /* On mobile the final CTA returns to the handoff's standalone narrative
      section. It no longer consumes a footer-derived height; the one real
@@ -315,8 +545,17 @@ body:has(> [data-public-shell="header"]) {
     min-height: 100svh !important;
   }
 
+  /* Localized copy establishes the compact hero height. The captured fixed
+     frame otherwise lets long copy collapse into its non-shrinking ticker. */
+  [data-handoff-page="home"] [data-screen-label="Hero"] {
+    height: auto !important;
+    min-height: max(700px, 100svh) !important;
+  }
+
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child {
     align-items: flex-start !important;
+    flex: 1 0 auto !important;
+    min-height: 0 !important;
     padding: clamp(280px, 31.5svh, 304px) 24px 40px !important;
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) {
@@ -325,6 +564,9 @@ body:has(> [data-public-shell="header"]) {
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] h1 + p {
     text-wrap: balance;
+  }
+  [data-handoff-page="home"] [data-screen-label="Hero"] h1 {
+    font-size: clamp(40px, 12.75vw, 52px) !important;
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] > div:first-child > div:not([data-tphoto]) > div:first-child {
     gap: 8px !important;
@@ -346,6 +588,10 @@ body:has(> [data-public-shell="header"]) {
   }
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="a"] { left: 12px !important; }
   [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="b"] { right: 12px !important; }
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="c"],
+  [data-handoff-page="home"] [data-screen-label="Hero"] [data-tphoto="d"] {
+    display: none !important;
+  }
 
   [data-handoff-page="home"] [data-screen-label="Recognition"] {
     min-height: auto !important;
@@ -355,6 +601,15 @@ body:has(> [data-public-shell="header"]) {
   [data-handoff-page="home"] [data-screen-label="Recognition"] > div > div {
     grid-template-columns: minmax(0, 1fr) !important;
     gap: 40px !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Recognition"] > div > div > div:last-child > div {
+    gap: 16px !important;
+    min-width: 0 !important;
+  }
+  [data-handoff-page="home"] [data-screen-label="Recognition"] > div > div > div:last-child > div > div {
+    min-width: 0 !important;
+    hyphens: auto;
+    overflow-wrap: anywhere;
   }
   [data-handoff-page="home"] [data-screen-label="A plan you can see"] {
     justify-content: flex-start !important;
@@ -369,6 +624,10 @@ body:has(> [data-public-shell="header"]) {
   [data-handoff-page="home"] [data-stackpanel] {
     scroll-snap-align: start !important;
     scroll-snap-stop: normal;
+  }
+  [data-handoff-page="home"] [data-home-chapter-copy] {
+    width: 100% !important;
+    max-width: 100% !important;
   }
   [data-handoff-page="home"] [data-stackpanel] + [data-stackpanel] {
     margin-top: clamp(144px, 22svh, 204px) !important;

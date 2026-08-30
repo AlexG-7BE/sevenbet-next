@@ -130,9 +130,9 @@
   .body form > div:has(> label) > label {
     min-width: 0;
     display: grid !important;
-    grid-template-columns: 120px minmax(0, 1fr) !important;
-    align-items: center !important;
-    gap: 12px !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: stretch !important;
+    gap: 7px !important;
   }
 
   .body form label > span {
@@ -149,6 +149,8 @@
     line-height: 1.25 !important;
     font-weight: 800 !important;
     letter-spacing: 0.06em !important;
+    hyphens: auto !important;
+    overflow-wrap: anywhere !important;
     text-transform: uppercase !important;
   }
 
@@ -187,7 +189,7 @@
     line-height: 1.5 !important;
   }
 
-  .body form > div:last-child:not(:has(> label)) {
+  .body form > div:last-of-type:not(:has(> label)) {
     position: sticky !important;
     bottom: 0 !important;
     z-index: 3 !important;
@@ -203,18 +205,18 @@
     color: var(--sb-white, #fff) !important;
   }
 
-  .body form > div:last-child:not(:has(> label)) > div {
+  .body form > div:last-of-type:not(:has(> label)) > div {
     margin: 0 !important;
     display: grid !important;
     gap: 3px !important;
   }
 
-  .body form > div:last-child:not(:has(> label)) strong {
+  .body form > div:last-of-type:not(:has(> label)) strong {
     color: var(--sb-white, #fff) !important;
     font-size: 15px !important;
   }
 
-  .body form > div:last-child:not(:has(> label)) span {
+  .body form > div:last-of-type:not(:has(> label)) span {
     color: #c8c5bc !important;
     font-size: 12px !important;
   }

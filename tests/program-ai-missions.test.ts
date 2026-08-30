@@ -184,6 +184,7 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     const empty = await emptyService.home("new-user");
     assert.equal(empty.totalXp, 0);
     assert.equal(empty.currentMission, 1);
+    assert.equal(empty.primaryAction, "start-mission-one");
     assert.equal(empty.currentAction, "program_ai_situation_submitted");
     assert.deepEqual(
       { completed: empty.missions[0].actionsCompleted, total: empty.missions[0].actionsTotal, xp: empty.missions[0].xpEarnedHere },
@@ -197,6 +198,7 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     const partialService = new ProgrammeAiMissionsService(fakeUnitOfWork({ m1Incomplete: true }).unit as never);
     const partial = await partialService.home("user-a");
     assert.equal(partial.currentAction, "program_ai_starting_point_complete");
+    assert.equal(partial.primaryAction, "finish-mission-one");
     assert.deepEqual(
       { completed: partial.missions[0].actionsCompleted, total: partial.missions[0].actionsTotal, xp: partial.missions[0].xpEarnedHere },
       { completed: 1, total: 2, xp: 20 },
@@ -209,6 +211,7 @@ test("Programme Home projects exact Mission 01 progress and first Review distanc
     const completedService = new ProgrammeAiMissionsService(fakeUnitOfWork().unit as never);
     const completed = await completedService.home("user-a");
     assert.equal(completed.currentMission, 2);
+    assert.equal(completed.primaryAction, "start-mission");
     assert.deepEqual(
       { completed: completed.missions[0].actionsCompleted, total: completed.missions[0].actionsTotal, xp: completed.missions[0].xpEarnedHere },
       { completed: 2, total: 2, xp: 40 },
@@ -256,6 +259,54 @@ test("first Review distance follows each remaining approved action and completio
   }
 });
 
+test("Mission projections own action position and Review availability", async () => {
+  const previous = process.env.PROGRAM_AI_V1_ENABLED;
+  process.env.PROGRAM_AI_V1_ENABLED = "true";
+  try {
+    const service = new ProgrammeAiMissionsService(fakeUnitOfWork().unit as never);
+    const missionTwo = programAiMissionRegistry[0];
+    let projected = await service.mission("user-a", missionTwo.missionNumber);
+    assert.deepEqual(
+      { actionsTotal: projected.actionsTotal, currentActionPosition: projected.currentActionPosition, currentAction: projected.currentAction },
+      { actionsTotal: 3, currentActionPosition: 1, currentAction: missionTwo.actions[0].id },
+    );
+
+    for (const [index, action] of missionTwo.actions.entries()) {
+      projected = (await service.recordAction("user-a", missionTwo.missionNumber, {
+        action: action.id,
+        artifact: actionInputs[action.id],
+      })).mission;
+      assert.equal(projected.actionsTotal, 3);
+      assert.equal(projected.currentActionPosition, index < 2 ? index + 2 : null);
+      assert.equal(projected.currentAction, index < 2 ? missionTwo.actions[index + 1].id : null);
+    }
+    await service.complete("user-a", missionTwo.missionNumber);
+
+    const missionThree = programAiMissionRegistry[1];
+    for (const action of missionThree.actions) {
+      await service.recordAction("user-a", missionThree.missionNumber, {
+        action: action.id,
+        artifact: actionInputs[action.id],
+      });
+    }
+    const completion = await service.complete("user-a", missionThree.missionNumber);
+    assert.equal(completion.mission.currentActionPosition, null);
+    assert.deepEqual(
+      completion.home.reviews.find((review) => review.milestone === "first"),
+      {
+        milestone: "first",
+        unlockMission: 3,
+        title: "First Personal Review",
+        maxWords: 250,
+        status: "available",
+      },
+    );
+  } finally {
+    if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previous;
+  }
+});
+
 test("every Mission action validates its exact closed artifact and rejects unknown client fields", () => {
   for (const mission of programAiMissionRegistry) {
     for (const action of mission.actions) {
@@ -290,6 +341,9 @@ test("clean sequential and concurrent duplicate progression reaches exactly 715 
     }
     const home = await service.home("user-a");
     assert.equal(home.totalXp, 715);
+    assert.equal(home.currentMission, 10);
+    assert.equal(home.primaryAction, "review-mission");
+    assert.equal(home.missions[9].status, "completed");
     assert.equal(home.missions[0].xpEarnedHere, 40);
     assert.deepEqual(home.reviews.map((review) => review.status), ["available", "available", "available"]);
     assert.equal(home.nextReview, null);
@@ -416,6 +470,7 @@ test("an authenticated incomplete Mission 01 reports its accepted action and XP 
     assert.equal(home.missions[0].actionsCompleted, 1);
     assert.equal(home.missions[0].actionsTotal, 2);
     assert.equal(home.missions[0].xpEarnedHere, 20);
+    assert.equal(home.primaryAction, "finish-mission-one");
     assert.equal(fake.xpEvents.size, 1);
   } finally {
     if (previous === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;

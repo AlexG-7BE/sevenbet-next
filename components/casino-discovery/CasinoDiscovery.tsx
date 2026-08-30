@@ -27,6 +27,7 @@ function HiddenQuery({ query, except = [] }: { query: CasinoDiscoveryQuery; exce
     {query.search && !except.includes("q") ? <input name="q" type="hidden" value={query.search} /> : null}
     {query.sort && !except.includes("sort") ? <input name="sort" type="hidden" value={query.sort} /> : null}
     {query.pageSize && !except.includes("pageSize") ? <input name="pageSize" type="hidden" value={query.pageSize} /> : null}
+    {query.visualFixture && !except.includes("visualFixture") ? <input name="visualFixture" type="hidden" value="true" /> : null}
   </>;
 }
 
@@ -88,7 +89,7 @@ function activeFilterCount(query: CasinoDiscoveryQuery) {
 function FilterForm({ result, messages, presentation, mobile = false, noScript = false }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution; mobile?: boolean; noScript?: boolean }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={mobile ? styles.mobileFilterForm : styles.filterForm} key={`filters:${mobile}:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["q", "country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
+    <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
     <div className={styles.filterPrompt}><span>{messages.common.allFilters}</span><strong>{messages.comparison.subtitle}</strong></div>
     <FilterFields messages={messages} result={result} />
     <p className={styles.preferenceNote}>{messages.common.marketPresentationNotice}</p>
@@ -99,7 +100,7 @@ function FilterForm({ result, messages, presentation, mobile = false, noScript =
 function PrimaryFilterForm({ result, messages, presentation }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={filterStyles.primaryForm} key={`casino-primary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["q", "country", "license", "payment", "bonusType"]} query={query} />
+    <HiddenQuery except={["country", "license", "payment", "bonusType"]} query={query} />
     <PrimaryFilterFields messages={messages} result={result} />
   </InstantDiscoveryForm>;
 }
@@ -107,7 +108,7 @@ function PrimaryFilterForm({ result, messages, presentation }: { result: CasinoD
 function SecondaryFilterForm({ result, messages, presentation }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={filterStyles.drawerForm} key={`casino-secondary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["q", "gameProvider", "category", ...booleanFields.map(([name]) => name), "sort", "pageSize"]} query={query} />
+    <HiddenQuery except={["gameProvider", "category", ...booleanFields.map(([name]) => name), "sort", "pageSize"]} query={query} />
     <SecondaryFilterFields messages={messages} result={result} />
     <div className={filterStyles.drawerFooter}><Link href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link><span>{messages.common.updatingResults}</span></div>
   </InstantDiscoveryForm>;
@@ -160,7 +161,7 @@ export function ActiveDiscoveryFilters({ result, messages, presentation }: { res
   for (const [field] of arrayFields) for (const value of query[field] ?? []) chips.push({ label: labels[field]?.get(value) ?? value.replaceAll("_", " "), context: field, href: removeValue(query, field, value) });
   for (const [field] of booleanFields) if (query[field]) chips.push({ label: booleanFilterLabel(field, messages), context: "availability", href: removeValue(query, field) });
   if (!chips.length) return null;
-  return <div aria-label={messages.common.activeFilters} className={styles.activeFilters}>{chips.map((chip) => <Link aria-label={`${messages.comparison.remove} ${chip.label}`} href={productHref(presentation, chip.href)} key={`${chip.context}-${chip.label}`}><span>{chip.label}</span><b aria-hidden="true">×</b></Link>)}<Link className={styles.clearAll} href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link></div>;
+  return <div aria-label={messages.common.activeFilters} className={styles.activeFilters} data-active-filter-state="casinos">{chips.map((chip) => <Link aria-label={`${messages.comparison.remove} ${chip.label}`} href={productHref(presentation, chip.href)} key={`${chip.context}-${chip.label}`}><span>{chip.label}</span><b aria-hidden="true">×</b></Link>)}{result.total > 0 ? <Link className={styles.clearAll} data-empty-reset href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link> : null}</div>;
 }
 
 export function CasinoDiscoveryCard({ casino, position, messages, presentation }: { casino: PublicCasinoCardDto; position: number; messages: ProductPageMessages; presentation: PresentationResolution }) {
@@ -175,10 +176,10 @@ export function DiscoveryResults({ result, messages, presentation }: { result: C
   const firstPosition = (result.page - 1) * result.pageSize + 1;
   const noVisitActions = result.items.length > 0 && result.items.every((casino) => !casino.visitAction.available);
   const hasActiveFilters = activeFilterCount(result.appliedFilters) > 0;
-  return <div className={styles.results} id="casino-results">
+  return <div className={styles.results} data-result-count={result.total} id="casino-results">
     <div className={styles.resultsHeader}><div><span>{messages.casinos.directoryTitle}</span><h2>{result.total} {result.total === 1 ? messages.common.record : messages.common.records}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? messages.common.result : messages.common.results} · {messages.common.pageOf.replace("{page}", String(result.page)).replace("{pages}", String(result.pageCount))}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>{messages.common.reviewAvailableNoAction}</strong><span>{messages.casinos.reviewOnlyNotice}</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} messages={messages} position={firstPosition + index} presentation={presentation} />)}</div> : hasActiveFilters ? <div className={styles.emptyState}><span>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</span><h2>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</h2><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.market.seoDisplayName })}</p><Link href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link></div> : <div className={styles.emptyState}><span>{messages.casinos.directoryTitle}</span><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</h2></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} messages={messages} position={firstPosition + index} presentation={presentation} />)}</div> : hasActiveFilters ? <div className={styles.emptyState} data-public-empty-state="filtered" data-result-count="0"><span>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</span><h2>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</h2><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.market.seoDisplayName })}</p><Link data-empty-reset href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link></div> : <div className={styles.emptyState} data-public-empty-state="unfiltered" data-result-count="0"><span>{messages.casinos.directoryTitle}</span><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</h2></div>}
     <DirectoryPagination
       ariaLabel={messages.casinos.directoryTitle}
       currentPage={result.page}

@@ -15,6 +15,7 @@ import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from 
 import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -45,6 +46,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
 
 export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parseCasinoDiscoveryQuery(raw);
   const [presentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
@@ -59,8 +61,16 @@ export default async function CasinosPage({ searchParams }: PageProps) {
       { defaultEditorialCountry: presentation.market.countryCode },
     ),
     isLocalHandoffVisualDataFixture(raw.visualFixture),
+    presentation.market.countryCode === "GB",
+    presentation.locale,
+    query,
   );
-  const hasLocalPreviewAction = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE" && casino.visitAction.available);
+  const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
+  const hasGovernedAction = result.items.some((casino) => casino.dataClassification !== "DEMO_FIXTURE" && casino.visitAction.available && casino.visitAction.redirectSlug);
+  const fixtureDisclosure = containsLocalPreview || (result.inventoryMode === "MIXED" && hasGovernedAction)
+    ? `${messages.common.marketPresentationNotice}${hasGovernedAction ? "" : ` ${messages.common.commercialUnavailable}`}`
+    : messages.common.demoDisclosure;
+  const showDiscoveryControls = result.total > 0 || hasDiscoveryFilters(result.appliedFilters);
   const schemas = [
     { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productHref(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.casinos.directoryTitle, item: absoluteUrl(productHref(presentation, "/casinos")) }] },
     ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: messages.casinos.directoryTitle, numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(productHref(presentation, `/casino/${casino.slug}`)) })) }] : []),
@@ -84,8 +94,8 @@ export default async function CasinosPage({ searchParams }: PageProps) {
 
     <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
       <div className={styles.directoryHeading}><div><p>{messages.casinos.directoryTitle}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? messages.common.published : messages.common.classified} {result.total === 1 ? messages.common.record : messages.common.records}</span></div>
-      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{messages.common.demoDisclosure} {hasLocalPreviewAction ? messages.common.marketPresentationNotice : messages.common.commercialUnavailable}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></div> : null}
-      <DiscoveryControls messages={messages} presentation={presentation} result={result} />
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{fixtureDisclosure}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></div> : null}
+      {showDiscoveryControls ? <DiscoveryControls messages={messages} presentation={presentation} result={result} /> : null}
       <ActiveDiscoveryFilters messages={messages} presentation={presentation} result={result} />
       <DiscoveryResults messages={messages} presentation={presentation} result={result} />
     </div></section>

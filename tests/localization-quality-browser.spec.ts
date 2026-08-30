@@ -50,13 +50,13 @@ test("Preview and Production-grade selectors expose only public-core-ready marke
 test("Danish Bonuses renders the five real curated controls and no raw token", async ({ page }) => {
   await page.goto(`${baseUrl}/dk/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   const labels = ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"];
-  const tabs = page.getByRole("tablist").getByRole("tab");
-  await expect(tabs).toHaveCount(5);
-  await expect(tabs).toHaveText(labels);
+  const controls = page.getByRole("group", { name: productPageMessages("da-DK").bonuses.directoryTitle }).getByRole("button");
+  await expect(controls).toHaveCount(5);
+  await expect(controls).toHaveText(labels);
   for (const label of labels) {
-    const tab = page.getByRole("tab", { name: label, exact: true });
-    await tab.click();
-    await expect(tab).toHaveAttribute("aria-selected", "true");
+    const control = page.getByRole("button", { name: label, exact: true });
+    await control.click();
+    await expect(control).toHaveAttribute("aria-pressed", "true");
   }
   const visibleText = await page.locator("body").innerText();
   expect(visibleText).not.toMatch(unresolvedToken);

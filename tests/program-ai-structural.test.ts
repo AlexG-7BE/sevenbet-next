@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 
+import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "../components/programme/ProgramAiHome.copy";
+
 function read(path: string) {
   return readFileSync(path, "utf8");
 }
@@ -119,7 +121,7 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   assert.match(frontend, /clarificationAnswers: \[\]/);
   assert.match(frontend, /prepareClaimForRegistration/);
   assert.match(frontendRuntime, /Your Starting Point is ready/);
-  assert.match(frontendRuntime, /Continue with Google — save my plan/);
+  assert.match(frontendRuntime, /Continue with Google — save my Starting Point/);
   assert.match(frontendRuntime, /Use email instead/);
   assert.match(frontend, /async function handleGoogle\(\)[\s\S]*requestSignUp: true/);
   assert.doesNotMatch(frontendRuntime, /function (?:ClarificationScreen|CandidateScreen|RewardScreen)/);
@@ -178,6 +180,87 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(frontend + authenticatedHome, /% complete|progressPercent|Math\.round\([^)]*100/);
   assert.match(authenticatedHome, /Completion, current position and locks come from your server record/);
   assert.match(authenticatedHome, /Each Review becomes available at a meaningful point/);
+  assert.doesNotMatch(authenticatedHome + missionsService, /completionPercent|Programme completion|home\.currentMission \* 10/);
+  assert.doesNotMatch(authenticatedHome, /home\.currentMission \+ 1|\.filter\(\(mission\) => mission\.status === "completed"\)|Up next/);
+  assert.doesNotMatch(authenticatedHome, /actionsCompleted \+ 1/);
+  assert.doesNotMatch(authenticatedHome, /home\.currentMission >= 2/);
+  assert.match(missionsService, /primaryAction: "start-mission-one" as const/);
+  assert.match(missionsService, /currentMission === 1[\s\S]*missionOne\.actionsCompleted > 0[\s\S]*"finish-mission-one" as const[\s\S]*"start-mission-one" as const[\s\S]*currentProgress\?\.status === "COMPLETED"[\s\S]*"review-mission" as const[\s\S]*currentProgress\?\.taskStates\.length[\s\S]*"resume-mission" as const[\s\S]*"start-mission" as const/);
+  assert.doesNotMatch(authenticatedHome, /~6 min left|Week 2 review unlocks after Mission 05/);
+  assert.doesNotMatch(authenticatedHome, /once your plan is built, not before/);
+  assert.doesNotMatch(authenticatedHome, /Research links are temporarily unavailable/);
+  assert.match(authenticatedHome, /Use the main navigation for public casino information/);
+  assert.doesNotMatch(authenticatedHome, /Review or update/);
+  assert.match(authenticatedHome, /Saved Starting Point/);
+  assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);
+  assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction\)/);
+  assert.match(authenticatedHome, /home\.primaryAction === "finish-mission-one"/);
+  assert.match(authenticatedHome, /For privacy, the situation itself was not retained/);
+  assert.match(frontend, /onMissionOneEntry=\{enterMissionOneFromHome\}/);
+  assert.doesNotMatch(authenticatedHome + frontend, /continue-mission-one|Continue Mission 01|startFromHome/);
+});
+
+test("Home presentation copy uses total Mission guidance and projected Review distance", () => {
+  assert.equal(programmeMissionProgressCopy({
+    missionNumber: 1,
+    title: "Map the moment",
+    status: "current",
+    actionsCompleted: 1,
+    actionsTotal: 2,
+    xpEarnedHere: 20,
+    completionBonus: 0,
+  }), "1 of 2 actions complete · Short Starting Point");
+  assert.equal(programmeMissionProgressCopy({
+    missionNumber: 4,
+    title: "Build one boundary",
+    status: "current",
+    actionsCompleted: 2,
+    actionsTotal: 3,
+    xpEarnedHere: 35,
+    completionBonus: 25,
+  }), "2 of 3 actions complete · About 5–8 min total");
+
+  const firstReview = {
+    milestone: "first" as const,
+    unlockMission: 3 as const,
+    title: "First Personal Review",
+    maxWords: 250,
+    status: "locked" as const,
+  };
+  assert.equal(programmeReviewStatusCopy({
+    reviews: [firstReview],
+    nextReview: { ...firstReview, xpRemaining: 190, missionsRemaining: 3 },
+  }), "First Personal Review unlocks after Mission 03 · 3 Missions and 190 XP remaining.");
+  assert.equal(programmeReviewStatusCopy({
+    reviews: [{ ...firstReview, status: "available" }],
+    nextReview: {
+      milestone: "mid",
+      unlockMission: 6,
+      title: "Mid-Programme Personal Review",
+      xpRemaining: 225,
+      missionsRemaining: 3,
+    },
+  }), "A personal review is ready when you are. Next: Mid-Programme Personal Review unlocks after Mission 06 · 3 Missions and 225 XP remaining.");
+});
+
+test("mounted Mission presentation consumes server-owned action, reward and Review projections", () => {
+  assert.match(missionsService, /actionsTotal: actions\.length/);
+  assert.match(missionsService, /currentActionPosition: currentActionIndex >= 0 \? currentActionIndex \+ 1 : null/);
+  assert.match(missionExperience, /mission\.actionsCompleted\}\/\{mission\.actionsTotal/);
+  assert.match(missionExperience, /mission\.currentActionPosition/);
+  assert.match(missionExperience, /home\.reviews\.find\(\(review\) => review\.unlockMission === mission\.missionNumber && review\.status === "available"\)/);
+  assert.match(missionExperience, /completionReceipt\?\.xpAwarded/);
+  assert.match(missionExperience, /mission\.completionBonus/);
+  assert.doesNotMatch(missionExperience, /actionsCompleted \+ 1|\/3 ACTIONS|\[3, 6, 10\]\.includes/);
+  assert.doesNotMatch(missionExperience, /Mission complete\. 25 XP earned|Complete Mission · \+25 XP|adds the 25 XP/);
+});
+
+test("support-first presents the Mission 01 XP projection returned by the server", () => {
+  assert.match(frontend, /progress: \{ taskStates: string\[\]; xpPreview: number \}/);
+  assert.match(frontend, /xpPreview: payload\.progress\?\.xpPreview \?\? 0/);
+  assert.match(frontend, /xpPreview=\{local\.xpPreview\}/);
+  assert.match(finalPresentation, /Your \{xpPreview\} XP for describing the situation is preserved/);
+  assert.doesNotMatch(finalPresentation, /Your 20 XP for describing the situation is preserved/);
 });
 
 test("consumer Programme uses distinct interaction primitives and hides provider/debug language", () => {

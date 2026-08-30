@@ -207,6 +207,9 @@ test("production CSP is nonce-based and has only documented compatibility except
   assert.match(development, /script-src [^;]*'unsafe-eval'/);
   assert.doesNotMatch(development, /script-src [^;]*'unsafe-inline'/);
   assert.doesNotMatch(development, /upgrade-insecure-requests/);
+  const localProduction = buildContentSecurityPolicy(nonce, { upgradeInsecureRequests: false });
+  assert.doesNotMatch(localProduction, /upgrade-insecure-requests/);
+  assert.doesNotMatch(localProduction, /script-src [^;]*'unsafe-eval'/);
   assert.throws(() => buildContentSecurityPolicy("bad nonce"), /Invalid CSP nonce/);
 });
 

@@ -1,11 +1,37 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
+
+import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+const messages = productPageMessages("en-GB");
 
-async function open(page: import("@playwright/test").Page, path: string) {
+async function open(page: Page, path: string) {
   const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
   expect(response?.status(), path).toBe(200);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), path).toBe(true);
+}
+
+async function expectBonusDirectoryPage(cards: Locator, expectedCount: number) {
+  await expect(cards).toHaveCount(expectedCount);
+  for (const card of await cards.all()) {
+    await expect(card.locator('[data-logo-state="image"], [data-logo-state="fallback"]')).toBeVisible();
+    for (const label of [messages.common.wagering, messages.common.minimumDeposit, messages.common.payout]) {
+      await expect(card.getByText(label, { exact: true })).toBeVisible();
+    }
+    await expect(card.locator("[data-governed-actions]")).toBeVisible();
+    expect(await card.evaluate((node) => {
+      const terms = node.querySelector("[data-material-terms]");
+      const actions = node.querySelector("[data-governed-actions]");
+      return terms && actions ? Boolean(terms.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
+    })).toBe(true);
+  }
+  for (const image of await cards.locator('[data-logo-state="image"] img').all()) {
+    expect(await image.evaluate((node) => getComputedStyle(node).objectFit)).toBe("contain");
+  }
+}
+
+function expectPreservedQuery(url: URL, expected: Readonly<Record<string, string>>) {
+  for (const [key, value] of Object.entries(expected)) expect(url.searchParams.get(key), key).toBe(value);
 }
 
 test("Phase 2 visual fixtures present controlled ratios and keep terms before action", async ({ page }) => {
@@ -19,7 +45,8 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
   await expect(bestMedia.locator("img")).toHaveCount(3);
   for (const image of await bestMedia.locator("img").all()) expect(await image.evaluate((node) => getComputedStyle(node).objectFit)).toBe("contain");
   expect(await best.locator('a[href^="/r/"], a[href^="http"]').count()).toBe(0);
-  await expect(best.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
+  const bestDemoNote = best.getByRole("note").filter({ hasText: messages.common.demoDisclosure });
+  await expect(bestDemoNote).toContainText(messages.common.demoData);
 
   const featuredOrder = await page.getByTestId("best-offer-product-card").evaluate((card) => {
     const terms = card.querySelector("dl");
@@ -43,29 +70,31 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
       return terms && actions ? Boolean(terms.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
     })).toBe(true);
   }
-  await expect(bonuses.locator('aside[role="note"]').filter({ hasText: "DEMONSTRATION DATA" }).first()).toBeVisible();
+  await expect(bonuses.locator('aside[role="note"]').filter({ hasText: messages.common.demoData }).first()).toBeVisible();
   expect(await bonuses.locator('a[href^="/r/"], a[href^="http"]').count()).toBe(0);
 
   const directoryCards = bonuses.locator("[data-bonus-directory-card]");
-  await expect(directoryCards).toHaveCount(8);
-  for (const card of await directoryCards.all()) {
-    await expect(card.locator('[data-logo-state="image"], [data-logo-state="fallback"]')).toBeVisible();
-    for (const label of ["Wagering", "Min deposit", "Payout"]) await expect(card.getByText(label, { exact: true })).toBeVisible();
-    await expect(card.getByRole("link", { name: "Read Review" })).toBeVisible();
-    expect(await card.evaluate((node) => {
-      const terms = node.querySelector("[data-material-terms]");
-      const actions = node.querySelector("[data-governed-actions]");
-      return terms && actions ? Boolean(terms.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING) : false;
-    })).toBe(true);
-  }
-  for (const image of await directoryCards.locator('[data-logo-state="image"] img').all()) expect(await image.evaluate((node) => getComputedStyle(node).objectFit)).toBe("contain");
+  const directoryPagination = bonuses.locator("[data-directory-pagination]");
+  await expect(directoryPagination).toHaveAttribute("data-current-page", "1");
+  await expect(directoryPagination).toHaveAttribute("data-page-count", "2");
+  await expectBonusDirectoryPage(directoryCards, 4);
+  await expect(directoryCards.getByRole("link", { name: messages.common.readReview, exact: true })).toHaveCount(1);
+
+  await directoryPagination.getByRole("link", { name: messages.common.next, exact: true }).click();
+  await expect(directoryPagination).toHaveAttribute("data-current-page", "2");
+  expectPreservedQuery(new URL(page.url()), { page: "2", visualFixture: "true" });
+  await expectBonusDirectoryPage(directoryCards, 4);
+  await expect(directoryCards.getByRole("link", { name: messages.common.readReview, exact: true })).toHaveCount(0);
+  expect(await bonuses.locator('a[href^="/r/"], a[href^="http"]').count()).toBe(0);
 });
 
 test("missing offer media fails to the B4GAMBLE frame without inventing artwork", async ({ page }) => {
   await open(page, "/bonuses?visualFixture=true");
   const fallbacks = page.locator('[data-runtime-renderer="bonuses"] [data-media-state="fallback"]');
-  await expect(fallbacks.first()).toBeVisible();
-  await expect(fallbacks.first()).toContainText("Decision first. Creative optional.");
+  const fallback = fallbacks.first();
+  await expect(fallback).toBeVisible();
+  await expect(fallback.getByText(messages.common.mediaUnavailableTitle, { exact: true })).toBeVisible();
+  await expect(fallback.getByText(messages.common.mediaUnavailableCopy, { exact: true })).toBeVisible();
   expect(await fallbacks.locator("img").count()).toBe(0);
 });
 
@@ -78,19 +107,32 @@ test("Phase 2 pages keep pagination semantics and no overflow at all target widt
   }
 
   const page = await browser.newPage({ viewport: { width: 1024, height: 900 } });
-  const contracts: Array<{ path: string; label: string; preserved: RegExp }> = [
-    { path: "/bonuses?sort=lowest-deposit", label: "Bonus result pages", preserved: /sort=lowest-deposit/ },
-    { path: "/casinos?sort=NAME_ASC&pageSize=24", label: "Casino results pagination", preserved: /sort=NAME_ASC.*pageSize=24|pageSize=24.*sort=NAME_ASC/ },
+  const contracts: Array<{ path: string; label: string; preserved: Readonly<Record<string, string>> }> = [
+    {
+      path: "/bonuses?sort=lowest-deposit&visualFixture=true",
+      label: messages.bonuses.directoryTitle,
+      preserved: { sort: "lowest-deposit", visualFixture: "true" },
+    },
+    {
+      path: "/casinos?sort=NAME_ASC&pageSize=24&visualFixture=true",
+      label: messages.casinos.directoryTitle,
+      preserved: { sort: "NAME_ASC", pageSize: "24", visualFixture: "true" },
+    },
   ];
   let visualContract: Record<string, string> | null = null;
   for (const contract of contracts) {
     await open(page, contract.path);
-    const pagination = page.getByRole("navigation", { name: contract.label });
+    const pagination = page.getByRole("navigation", { name: contract.label, exact: true });
     await expect(pagination).toBeVisible();
-    await expect(pagination.getByText("Previous", { exact: true })).toHaveAttribute("aria-disabled", "true");
-    const next = pagination.getByRole("link", { name: "Next", exact: true });
-    await expect(next).toHaveAttribute("href", /page=2/);
-    await expect(next).toHaveAttribute("href", contract.preserved);
+    await expect(pagination).toHaveAttribute("data-current-page", "1");
+    await expect(pagination).toHaveAttribute("data-page-count", "2");
+    await expect(pagination.getByText(messages.common.previous, { exact: true })).toHaveAttribute("aria-disabled", "true");
+    const next = pagination.getByRole("link", { name: messages.common.next, exact: true });
+    const nextHref = await next.getAttribute("href");
+    expect(nextHref).not.toBeNull();
+    const nextUrl = new URL(nextHref!, baseUrl);
+    expect(nextUrl.searchParams.get("page")).toBe("2");
+    expectPreservedQuery(nextUrl, contract.preserved);
     const currentContract = await pagination.evaluate((node) => {
       const control = node.querySelector("a");
       const label = node.querySelector("b");
@@ -112,14 +154,20 @@ test("Phase 2 pages keep pagination semantics and no overflow at all target widt
     await next.focus();
     await expect(next).toBeFocused();
     await next.click();
-    await expect(page).toHaveURL(/page=2/);
-    await expect(page).toHaveURL(contract.preserved);
-    await expect(pagination.getByText(/Page 2 of \d+/)).toBeVisible();
-    await expect(pagination.getByRole("link", { name: "Previous", exact: true })).toBeVisible();
-    const pageCount = Number((await pagination.locator("b").textContent())?.match(/of (\d+)/)?.[1]);
-    await page.goto(`${baseUrl}${contract.path}${contract.path.includes("?") ? "&" : "?"}page=${pageCount}`, { waitUntil: "networkidle" });
-    const finalPagination = page.getByRole("navigation", { name: contract.label });
-    await expect(finalPagination.getByText("Next", { exact: true })).toHaveAttribute("aria-disabled", "true");
+    await expect(pagination).toHaveAttribute("data-current-page", "2");
+    const pageCount = Number(await pagination.getAttribute("data-page-count"));
+    expect(pageCount).toBe(2);
+    expectPreservedQuery(new URL(page.url()), { ...contract.preserved, page: "2" });
+    await expect(pagination.getByText(formatProductMessage(messages.common.pageOf, { page: 2, pages: pageCount }), { exact: true })).toBeVisible();
+    await expect(pagination.getByRole("link", { name: messages.common.previous, exact: true })).toBeVisible();
+
+    const finalUrl = new URL(contract.path, baseUrl);
+    finalUrl.searchParams.set("page", String(pageCount));
+    await open(page, `${finalUrl.pathname}${finalUrl.search}`);
+    const finalPagination = page.getByRole("navigation", { name: contract.label, exact: true });
+    await expect(finalPagination).toHaveAttribute("data-current-page", String(pageCount));
+    expectPreservedQuery(new URL(page.url()), { ...contract.preserved, page: String(pageCount) });
+    await expect(finalPagination.getByText(messages.common.next, { exact: true })).toHaveAttribute("aria-disabled", "true");
   }
   await page.close();
 });

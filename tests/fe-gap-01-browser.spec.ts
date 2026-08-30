@@ -66,7 +66,10 @@ test("final handoff routes have one H1, no overflow and no browser errors", asyn
     const page = await context.newPage();
     const errors = collectErrors(page);
     for (const route of routes) {
-      const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
+      // Let route-prefetch work settle before reusing the page. WebKit reports
+      // cancelled RSC prefetches as console errors when the next navigation
+      // interrupts them, which would otherwise hide genuine page errors.
+      const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "networkidle" });
       expect(response?.status(), `${route} at ${viewport.width}`).toBe(200);
       await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
       expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${route} overflow at ${viewport.width}`).toBe(false);

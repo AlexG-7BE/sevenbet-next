@@ -7,6 +7,8 @@ import { DirectoryPagination } from "@/components/directory-pagination/Directory
 import { InstantDiscoveryForm } from "@/components/discovery/InstantDiscoveryForm";
 import styles from "@/components/bonus-directory/BonusDirectory.module.css";
 import { MobileBonusFilters } from "@/components/bonus-directory/MobileBonusFilters";
+import { formatProfileScore } from "@/lib/casino-profile/presentation";
+import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import type { PublicOfferDTO, PublicOfferFacets, PublicOfferQuery } from "@/lib/public-offer/public-offer.types";
 import type { PublicOfferSearchParams } from "@/lib/public-offer/query";
 import { productPageMessages, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
@@ -86,7 +88,7 @@ function OfferAction({ offer, compact = false, messages = defaultMessages }: { o
 
 function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
   return offer.casino.logo ? <img
-    alt={offer.casino.logo.alt || `${offer.casino.name} logo`}
+    alt=""
     height={offer.casino.logo.height ?? 80}
     loading="lazy"
     src={offer.casino.logo.url}
@@ -94,17 +96,19 @@ function OfferLogo({ offer }: { offer: PublicOfferDTO }) {
   /> : <span aria-hidden="true">{offer.casino.name.slice(0, 1)}</span>;
 }
 
-export function FeaturedBonusCard({ offer, position, primary = false }: { offer: PublicOfferDTO; position: number; primary?: boolean }) {
+export function FeaturedBonusCard({ offer, position, primary = false, messages = defaultMessages }: { offer: PublicOfferDTO; position: number; primary?: boolean; messages?: ProductPageMessages }) {
+  const reviewHref = publicCasinoReviewHref(offer.casino);
+  const actionAvailable = Boolean(safeActionHref(offer));
   return <article className={`${styles.featureCard} ${primary ? styles.featureCardPrimary : ""}`}>
-    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? "Demo fixture" : "Published"}</span><span>{offer.commercialAvailability === "AVAILABLE" ? "Action available" : "Review only"}</span></div>
+    <div className={styles.featureMeta}><span>{String(position).padStart(2, "0")} / {offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span><span>{actionAvailable ? messages.common.actionAvailable : messages.common.reviewOnly}</span></div>
     <p className={styles.offerType}>{bonusType(offer.bonus.type)}</p>
     <h3>{offer.casino.name}</h3>
     <p className={styles.offerHeadline}>{offer.bonus.title}</p>
     <dl className={styles.featureTerms}>{evidenceRows(offer).slice(0, 7).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>
     <dl className={styles.featureMobileTerms}>{mobileFeaturedTerms(offer).map((term) => <div key={term.label}><dt>{term.label}</dt><dd>{term.value}</dd></div>)}</dl>
     {offer.bonus.importantConditions.length > 0 && <p className={styles.conditions}>{offer.bonus.importantConditions.slice(0, 2).join(" · ")}</p>}
-    <DemoFixtureNotice offer={offer} />
-    <div className={styles.featureActions}><Link href={`/casino/${offer.casino.slug}`}>Read Review <span aria-hidden="true">→</span></Link><OfferAction offer={offer} /></div>
+    <DemoFixtureNotice messages={messages} offer={offer} />
+    <div className={styles.featureActions}>{reviewHref ? <Link href={reviewHref}>{messages.common.readReview} <span aria-hidden="true">→</span></Link> : null}<OfferAction messages={messages} offer={offer} /></div>
   </article>;
 }
 
@@ -117,6 +121,8 @@ function BonusHiddenQuery({ query, except = [] }: { query: PublicOfferQuery; exc
     {query.maxDeposit !== undefined && !except.includes("maxDeposit") ? <input name="maxDeposit" type="hidden" value={String(query.maxDeposit)} /> : null}
     {query.maxWagering !== undefined && !except.includes("maxWagering") ? <input name="maxWagering" type="hidden" value={String(query.maxWagering)} /> : null}
     {query.availability && !except.includes("availability") ? <input name="availability" type="hidden" value={query.availability} /> : null}
+    {query.featured !== undefined && !except.includes("featured") ? <input name="featured" type="hidden" value={String(query.featured)} /> : null}
+    {query.recommended !== undefined && !except.includes("recommended") ? <input name="recommended" type="hidden" value={String(query.recommended)} /> : null}
     {query.sort && !except.includes("sort") ? <input name="sort" type="hidden" value={query.sort} /> : null}
   </>;
 }
@@ -130,7 +136,9 @@ function FilterFields({ facets, query, messages }: { facets: PublicOfferFacets; 
     <label><span>{messages.common.minimumDeposit} ≤</span><input aria-label={`${messages.common.minimumDeposit} ≤`} defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder={`${messages.common.minimumDeposit} ≤`} step="1" type="number" /></label>
     <label><span>{messages.common.wagering}</span><input aria-label={messages.common.wagering} defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder={messages.common.wagering} step="1" type="number" /></label>
     <label><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.actionAvailable : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
-    <label><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.current}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
+    <label><span>{messages.bonuses.featuredFilter}</span><select defaultValue={query.featured === undefined ? "" : String(query.featured)} name="featured"><option value="">{messages.bonuses.featuredFilter}</option><option value="true">{messages.bonuses.featuredTrue}</option><option value="false">{messages.bonuses.featuredFalse}</option></select></label>
+    <label><span>{messages.bonuses.recommendedFilter}</span><select defaultValue={query.recommended === undefined ? "" : String(query.recommended)} name="recommended"><option value="">{messages.bonuses.recommendedFilter}</option><option value="true">{messages.bonuses.recommendedTrue}</option><option value="false">{messages.bonuses.recommendedFalse}</option></select></label>
+    <label><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.newest}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
   </div>;
 }
 
@@ -148,34 +156,39 @@ function SecondaryBonusFields({ facets, query, messages }: { facets: PublicOffer
     <label className={filterStyles.drawerField}><span>{messages.common.cryptoSupport}</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">{messages.common.cryptoSupport}</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.value === "true" ? messages.common.cryptoSupported : messages.common.cryptoUnsupported} · {item.count}</option>)}</select></label>
     <label className={filterStyles.drawerField}><span>{messages.common.minimumDeposit} ≤</span><input aria-label={`${messages.common.minimumDeposit} ≤`} defaultValue={query.maxDeposit} inputMode="decimal" min="0" name="maxDeposit" placeholder={`${messages.common.minimumDeposit} ≤`} step="1" type="number" /></label>
     <label className={filterStyles.drawerField}><span>{messages.common.availability}</span><select defaultValue={query.availability || ""} name="availability"><option value="">{messages.common.availability}</option>{facets.availability.map((item) => <option key={item.value} value={item.value}>{item.value === "AVAILABLE" ? messages.common.actionAvailable : messages.common.reviewOnly} · {item.count}</option>)}</select></label>
-    <label className={filterStyles.drawerField}><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.current}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
+    <label className={filterStyles.drawerField}><span>{messages.bonuses.featuredFilter}</span><select defaultValue={query.featured === undefined ? "" : String(query.featured)} name="featured"><option value="">{messages.bonuses.featuredFilter}</option><option value="true">{messages.bonuses.featuredTrue}</option><option value="false">{messages.bonuses.featuredFalse}</option></select></label>
+    <label className={filterStyles.drawerField}><span>{messages.bonuses.recommendedFilter}</span><select defaultValue={query.recommended === undefined ? "" : String(query.recommended)} name="recommended"><option value="">{messages.bonuses.recommendedFilter}</option><option value="true">{messages.bonuses.recommendedTrue}</option><option value="false">{messages.bonuses.recommendedFalse}</option></select></label>
+    <label className={filterStyles.drawerField}><span>{messages.common.sortResults}</span><select defaultValue={query.sort} name="sort"><option value="editorial">{messages.common.editorScore}</option><option value="newest">{messages.common.newest}</option><option value="highest-bonus">{messages.common.maximumBonus}</option><option value="lowest-wagering">{messages.common.wagering}</option><option value="lowest-deposit">{messages.common.minimumDeposit}</option></select></label>
   </div>;
 }
 
-function BonusFilterForm({ facets, query, total, messages, presentation, compact = false, noScript = false }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; messages: ProductPageMessages; presentation: PresentationResolution; compact?: boolean; noScript?: boolean }) {
+function BonusFilterForm({ facets, query, total, messages, presentation, visualFixture, compact = false, noScript = false }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; messages: ProductPageMessages; presentation: PresentationResolution; visualFixture: boolean; compact?: boolean; noScript?: boolean }) {
   return <InstantDiscoveryForm action={productHref(presentation, "/bonuses")} className={compact ? styles.filterFormCompact : styles.filterForm} debouncedFields={["maxDeposit", "maxWagering"]} key={`bonus-filters:${compact}:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
+    {visualFixture ? <input name="visualFixture" type="hidden" value="true" /> : null}
     <FilterFields facets={facets} messages={messages} query={query} />
     <p className={styles.marketNote}>{messages.common.marketPresentationNotice}</p>
     <div className={styles.filterActions}><div><strong>{total} {total === 1 ? messages.common.record : messages.common.records}</strong><span>{messages.common.updatingResults}</span></div>{noScript ? <button type="submit">{messages.common.applyFilters}</button> : null}</div>
   </InstantDiscoveryForm>;
 }
 
-function PrimaryBonusFilterForm({ facets, query, messages, presentation }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages; presentation: PresentationResolution }) {
+function PrimaryBonusFilterForm({ facets, query, messages, presentation, visualFixture }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages; presentation: PresentationResolution; visualFixture: boolean }) {
   return <InstantDiscoveryForm action={productHref(presentation, "/bonuses")} className={filterStyles.primaryForm} debouncedFields={["maxWagering"]} key={`bonus-primary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
+    {visualFixture ? <input name="visualFixture" type="hidden" value="true" /> : null}
     <BonusHiddenQuery except={["country", "type", "payment", "maxWagering"]} query={query} />
     <PrimaryBonusFields facets={facets} messages={messages} query={query} />
   </InstantDiscoveryForm>;
 }
 
-function SecondaryBonusFilterForm({ facets, query, messages, presentation }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages; presentation: PresentationResolution }) {
+function SecondaryBonusFilterForm({ facets, query, messages, presentation, visualFixture }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages; presentation: PresentationResolution; visualFixture: boolean }) {
   return <InstantDiscoveryForm action={productHref(presentation, "/bonuses")} className={filterStyles.drawerForm} debouncedFields={["maxDeposit"]} key={`bonus-secondary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <BonusHiddenQuery except={["crypto", "maxDeposit", "availability", "sort"]} query={query} />
+    {visualFixture ? <input name="visualFixture" type="hidden" value="true" /> : null}
+    <BonusHiddenQuery except={["crypto", "maxDeposit", "availability", "featured", "recommended", "sort"]} query={query} />
     <SecondaryBonusFields facets={facets} messages={messages} query={query} />
     <div className={filterStyles.drawerFooter}><Link href={productHref(presentation, "/bonuses")}>{messages.common.clearAll}</Link><span>{messages.common.updatingResults}</span></div>
   </InstantDiscoveryForm>;
 }
 
-export function BonusFilters({ facets, query, total, activeCount, messages, presentation }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; activeCount: number; messages: ProductPageMessages; presentation: PresentationResolution }) {
+export function BonusFilters({ facets, query, total, activeCount, messages, presentation, visualFixture }: { facets: PublicOfferFacets; query: PublicOfferQuery; total: number; activeCount: number; messages: ProductPageMessages; presentation: PresentationResolution; visualFixture: boolean }) {
   return <>
     <div className={styles.desktopFilters}>
       <DirectoryFilterSurface
@@ -183,14 +196,14 @@ export function BonusFilters({ facets, query, total, activeCount, messages, pres
         dialogId="bonus-all-filters-dialog"
         labels={{ allFilters: messages.common.allFilters, directoryControls: messages.common.directoryControls, closeFilters: messages.common.closeFilters }}
         note={messages.common.marketPresentationNotice}
-        primary={<PrimaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} />}
-        secondary={<SecondaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} />}
+        primary={<PrimaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} visualFixture={visualFixture} />}
+        secondary={<SecondaryBonusFilterForm facets={facets} messages={messages} presentation={presentation} query={query} visualFixture={visualFixture} />}
         summary={`${total} ${total === 1 ? messages.common.record : messages.common.records}`}
         title={messages.bonuses.filterTitle}
       />
     </div>
-    <MobileBonusFilters activeCount={activeCount} messages={messages}><BonusFilterForm compact facets={facets} messages={messages} presentation={presentation} query={query} total={total} /></MobileBonusFilters>
-    <noscript><div className={styles.noScriptFilters} style={{ display: "block" }}><BonusFilterForm compact facets={facets} messages={messages} noScript presentation={presentation} query={query} total={total} /></div></noscript>
+    <MobileBonusFilters activeCount={activeCount} messages={messages}><BonusFilterForm compact facets={facets} messages={messages} presentation={presentation} query={query} total={total} visualFixture={visualFixture} /></MobileBonusFilters>
+    <noscript><div className={styles.noScriptFilters} style={{ display: "block" }}><BonusFilterForm compact facets={facets} messages={messages} noScript presentation={presentation} query={query} total={total} visualFixture={visualFixture} /></div></noscript>
   </>;
 }
 
@@ -203,28 +216,31 @@ function filterHref(raw: PublicOfferSearchParams, omitted: string) {
   return `/bonuses${params.size ? `?${params}` : ""}`;
 }
 
-export function ActiveBonusFilters({ query, raw, messages, presentation }: { query: PublicOfferQuery; raw: PublicOfferSearchParams; messages: ProductPageMessages; presentation: PresentationResolution }) {
+export function ActiveBonusFilters({ facets, query, raw, messages, presentation, total }: { facets: PublicOfferFacets; query: PublicOfferQuery; raw: PublicOfferSearchParams; messages: ProductPageMessages; presentation: PresentationResolution; total: number }) {
   const values = [
-    ["country", query.country], ["type", query.type && bonusType(query.type)], ["payment", query.payment],
+    ["country", query.country], ["type", query.type && (facets.types.find((item) => item.value === query.type)?.label ?? bonusType(query.type))], ["payment", query.payment],
     ["crypto", query.crypto === undefined ? null : query.crypto ? messages.common.cryptoSupported : messages.common.cryptoUnsupported],
     ["maxDeposit", query.maxDeposit === undefined ? null : `${messages.common.minimumDeposit} ≤ ${query.maxDeposit}`],
     ["maxWagering", query.maxWagering === undefined ? null : `${messages.common.wagering} ≤ ${query.maxWagering}`],
     ["availability", query.availability === "AVAILABLE" ? messages.common.actionAvailable : query.availability === "UNAVAILABLE" ? messages.common.reviewOnly : null],
+    ["featured", query.featured === undefined ? null : query.featured ? messages.bonuses.featuredTrue : messages.bonuses.featuredFalse],
+    ["recommended", query.recommended === undefined ? null : query.recommended ? messages.bonuses.recommendedTrue : messages.bonuses.recommendedFalse],
   ].filter((item): item is [string, string] => Boolean(item[1]));
   if (!values.length) return <p className={styles.filterSummary}>{messages.bonuses.proofSources}</p>;
-  return <div className={styles.activeFilters} aria-label={messages.common.activeFilters}><strong>{messages.common.activeFilters}</strong>{values.map(([key, label]) => <Link aria-label={`${messages.comparison.remove} ${label}`} href={productHref(presentation, filterHref(raw, key))} key={key}>{label}<span aria-hidden="true">×</span></Link>)}<Link className={styles.clearFilters} href={productHref(presentation, "/bonuses")}>{messages.common.clearAll}</Link></div>;
+  return <div className={styles.activeFilters} aria-label={messages.common.activeFilters} data-active-filter-state="bonuses"><strong>{messages.common.activeFilters}</strong>{values.map(([key, label]) => <Link aria-label={`${messages.comparison.remove} ${label}`} href={productHref(presentation, filterHref(raw, key))} key={key}>{label}<span aria-hidden="true">×</span></Link>)}{total > 0 ? <Link className={styles.clearFilters} data-empty-reset href={productHref(presentation, "/bonuses")}>{messages.common.clearAll}</Link> : null}</div>;
 }
 
 export function BonusComparisonList({ offers, startPosition, messages, presentation }: { offers: PublicOfferDTO[]; startPosition: number; messages: ProductPageMessages; presentation: PresentationResolution }) {
+  const resultCountLabel = offers.length === 1 ? messages.common.result : messages.common.results;
   return <div className={styles.comparison}>
     {offers.map((offer, index) => <article className={styles.comparisonRow} data-bonus-directory-card key={`${offer.casino.id}:${offer.bonus.id}`}>
       <span className={styles.compactLogo} data-logo-state={offer.casino.logo ? "image" : "fallback"}><OfferLogo offer={offer} /></span>
       <div className={styles.compactIdentity}>
         <strong>{offer.casino.name}</strong>
-        <span>{messages.common.editorScore} {offer.casino.editorScore.toFixed(1)} · {offer.casino.licenses[0]?.authority || messages.common.notListed} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || messages.common.notListed}</span>
+        <span>{messages.common.editorScore} {formatProfileScore(offer.casino.editorScore, presentation.locale)} · {offer.casino.licenses[0]?.authority || messages.common.notListed} · {offer.casino.payments.slice(0, 2).map((item) => item.name).join(" · ") || messages.common.notListed}</span>
       </div>
       <div className={styles.compactOffer}>
-        <span>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.current}</span>
+        <span>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</span>
         <p className={styles.compactHeadline}>{offer.bonus.title}</p>
       </div>
       <DemoFixtureNotice messages={messages} offer={offer} />
@@ -233,10 +249,10 @@ export function BonusComparisonList({ offers, startPosition, messages, presentat
         <div><dt>{messages.common.minimumDeposit}</dt><dd>{money(offer.bonus.minimumDeposit, offer.bonus.currency, messages, presentation.locale)}</dd></div>
         <div><dt>{messages.common.payout}</dt><dd>{payoutEvidence(offer, messages)}</dd></div>
       </dl>
-      <div className={styles.compactActions} data-governed-actions><OfferAction compact messages={messages} offer={offer} /><Link href={productHref(presentation, `/casino/${offer.casino.slug}`)}>{messages.common.readReview}</Link></div>
+      <div className={styles.compactActions} data-governed-actions><OfferAction compact messages={messages} offer={offer} />{publicCasinoReviewHref(offer.casino) ? <Link href={productHref(presentation, publicCasinoReviewHref(offer.casino)!)}>{messages.common.readReview}</Link> : null}</div>
       <span className={styles.compactPosition} aria-label={`${messages.common.result} ${startPosition + index}`}>{String(startPosition + index).padStart(2, "0")}</span>
     </article>)}
-    <aside className={styles.reviewSeparationNote}><strong>{messages.common.reviewOnly} · {offers.length} {messages.common.results}</strong><p>{messages.common.marketPresentationNotice}</p></aside>
+    <aside className={styles.reviewSeparationNote}><strong>{offers.length} {resultCountLabel}</strong><p>{messages.common.marketPresentationNotice}</p></aside>
   </div>;
 }
 

@@ -52,7 +52,7 @@ export function DirectoryFilterSurface({
   const headingId = `${dialogId}-title`;
 
   return (
-    <section aria-label={`${title} controls`} className={styles.surface}>
+    <section aria-label={labels?.directoryControls ?? title} className={styles.surface}>
       <div className={styles.primary}>{primary}</div>
       <button
         aria-controls={dialogId}

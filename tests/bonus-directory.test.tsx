@@ -10,7 +10,8 @@ test("bonus presentation renders neutral absence and never links an unavailable 
   assert.match(component, /aria-disabled="true"/);
   assert.match(component, /messages\.common\.noGovernedVisit/);
   assert.match(component, /if \(!href\) return/);
-  assert.match(component, /productHref\(presentation, `\/casino\/\$\{offer\.casino\.slug\}`\)/);
+  assert.match(component, /const reviewHref = publicCasinoReviewHref\(offer\.casino\)/);
+  assert.match(component, /productHref\(presentation, publicCasinoReviewHref\(offer\.casino\)!\)/);
 });
 
 test("available actions remain governed internal redirects after material terms", () => {
@@ -58,12 +59,28 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
 
 test("all supported controls are GET parameters and no-JS filters and pagination remain links", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
+  for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "featured", "recommended", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
   assert.match(component, /InstantDiscoveryForm/);
   assert.match(component, /<noscript>/);
   assert.match(component, /ariaLabel=\{messages\.bonuses\.directoryTitle\}/);
   assert.match(component, /\/bonuses\$\{params\.size/);
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
+});
+
+test("featured and recommended controls preserve every tri-state URL value", () => {
+  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
+  const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+
+  assert.equal((component.match(/name="featured"/g) || []).length, 3);
+  assert.equal((component.match(/name="recommended"/g) || []).length, 3);
+  assert.match(component, /query\.featured !== undefined[^\n]+name="featured"[^\n]+String\(query\.featured\)/);
+  assert.match(component, /query\.recommended !== undefined[^\n]+name="recommended"[^\n]+String\(query\.recommended\)/);
+  assert.match(component, /except=\{\["crypto", "maxDeposit", "availability", "featured", "recommended", "sort"\]\}/);
+  assert.match(component, /query\.featured === undefined \? "" : String\(query\.featured\)/);
+  assert.match(component, /query\.recommended === undefined \? "" : String\(query\.recommended\)/);
+  assert.match(component, /query\.featured \? messages\.bonuses\.featuredTrue : messages\.bonuses\.featuredFalse/);
+  assert.match(component, /query\.recommended \? messages\.bonuses\.recommendedTrue : messages\.bonuses\.recommendedFalse/);
+  assert.match(page, /query\.availability, query\.featured, query\.recommended\]\.filter\(\(value\) => value !== undefined\)/);
 });
 
 test("pending and error states fail without invented offer truth", () => {
@@ -91,7 +108,9 @@ test("directory cards use normalized logo stages and preserve a readable respons
   assert.ok(component.indexOf("data-material-terms") < component.indexOf("data-governed-actions"));
   assert.match(styles, /\.compactLogo img \{[^}]*max-width:100px;[^}]*max-height:80px;[^}]*object-fit:contain;/s);
   assert.match(styles, /\.compactHeadline \{ font-size:22px; font-weight:900;/);
-  assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.compactTerms \{[\s\S]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /@media \(max-width:600px\) \{[\s\S]*\.compactTerms \{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.match(styles, /grid-template-columns:96px minmax\(180px,\.72fr\) minmax\(290px,1\.2fr\) minmax\(360px,1\.15fr\)/);
+  assert.match(styles, /\.compactTerms dt \{ min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; \}/);
   assert.match(styles, /\.compactActions \.offerActionCompact,[^}]*min-height:44px;/s);
   assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
 });

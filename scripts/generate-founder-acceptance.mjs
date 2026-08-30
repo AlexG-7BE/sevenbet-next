@@ -119,15 +119,15 @@ async function captureProgrammeImplementation(context, state) {
         user: { id: userId, name: "Founder review", email: "founder-review@example.invalid", emailVerified: true, createdAt: now, updatedAt: now },
       }),
     }));
-    const titles = ["Create your Starting Point", "Set a 7-day goal", "Map the urge sequence", "Build one boundary", "Add friction", "Create a support route", "Read offers clearly", "Rehearse a pressure moment", "Assemble your plan", "Keep the plan current"];
+    const titles = ["Map the moment", "Set a 7-day goal", "Understand the urge", "Build one boundary", "Check before deciding", "Add friction", "Prepare support", "Research responsibly", "Rehearse the decision", "Make the plan reviewable"];
     const missions = titles.map((title, index) => ({
       missionNumber: index + 1,
       title,
       status: index === 0 ? "completed" : index === 1 ? "current" : "locked",
-      actionsCompleted: index === 0 ? 1 : 0,
-      actionsTotal: index === 0 ? 1 : 3,
+      actionsCompleted: index === 0 ? 2 : 0,
+      actionsTotal: index === 0 ? 2 : 3,
       xpEarnedHere: index === 0 ? 40 : 0,
-      completionBonus: index === 0 ? 20 : 25,
+      completionBonus: index === 0 ? 0 : 25,
     }));
     await page.route("**/api/program/program-ai/home", (route) => route.fulfill({
       status: 200,
@@ -136,19 +136,27 @@ async function captureProgrammeImplementation(context, state) {
         totalXp: 40,
         activeDays: 1,
         currentStreak: 1,
-        achievements: [],
+        achievements: [
+          { slug: "first-plan", title: "First Plan", state: "locked", awardedAt: null },
+          { slug: "boundary-built", title: "Boundary Built", state: "locked", awardedAt: null },
+        ],
         currentMission: 2,
+        primaryAction: "start-mission",
         engagementDayBucket: "day_1",
         currentAction: "choose_direction",
         startingPoint: { startingPoint: "After difficult work days I keep opening betting apps late at night.", desiredChange: "Build more control around the situation described here.", broadContext: "NOT_SPECIFIED", continuationCue: "Continue from the situation described in Mission 01." },
         missions,
         reviews: [
-          { milestone: "first", unlockMission: 3, title: "First Review", maxWords: 200, status: "locked" },
-          { milestone: "mid", unlockMission: 6, title: "Mid Review", maxWords: 250, status: "locked" },
-          { milestone: "full", unlockMission: 10, title: "Full Review", maxWords: 300, status: "locked" },
+          { milestone: "first", unlockMission: 3, title: "First Personal Review", maxWords: 250, status: "locked" },
+          { milestone: "mid", unlockMission: 6, title: "Mid-Programme Personal Review", maxWords: 300, status: "locked" },
+          { milestone: "full", unlockMission: 10, title: "Full Programme Personal Review", maxWords: 450, status: "locked" },
         ],
-        nextReview: { milestone: "first", unlockMission: 3, title: "First Review", xpRemaining: 125, missionsRemaining: 2 },
-        discoveryLinks: [],
+        nextReview: { milestone: "first", unlockMission: 3, title: "First Personal Review", xpRemaining: 150, missionsRemaining: 2 },
+        discoveryLinks: [
+          { href: "/casinos", label: "Compare casinos" },
+          { href: "/bonuses", label: "Bonuses" },
+          { href: "/best-offers", label: "Best offers" },
+        ],
       } }),
     }));
     await page.goto(`${baseUrl}/program`, { waitUntil: "domcontentloaded" });

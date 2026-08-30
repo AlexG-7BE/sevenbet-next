@@ -179,7 +179,7 @@ test("Mission 01 uses the final responsive presentation from access through regi
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
   await expect(page.locator("[data-programme-presentation='starting-point-ready']")).toBeVisible();
   await expect(page.locator("[data-programme-presentation-state='registration']")).toBeVisible();
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 });
 

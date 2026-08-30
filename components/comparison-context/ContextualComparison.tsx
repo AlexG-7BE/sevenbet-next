@@ -11,6 +11,7 @@ import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutbound
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
+import { formatProfileScore } from "@/lib/casino-profile/presentation";
 
 const STORAGE_KEY = "b4gamble:public-comparison:v1";
 const CHANGE_EVENT = "b4gamble:comparison-change";
@@ -33,6 +34,7 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogInvokerRef = useRef<HTMLElement | null>(null);
   const previousCount = useRef(0);
   const initialLocationApplied = useRef(false);
 
@@ -93,6 +95,7 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
     const params = new URLSearchParams();
     for (const slug of slugs) params.append("casino", slug);
     params.set("country", searchParams.get("country") || presentation.market.countryCode);
+    params.set("presentationLocale", presentation.locale);
     if (searchParams.get("differences") === "true") params.set("differences", "true");
     if (searchParams.get("visualFixture") === "true") params.set("visualFixture", "true");
     setLoading(true);
@@ -102,13 +105,29 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
       .catch((error: Error) => { if (error.name !== "AbortError") setResult(null); })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [presentation.market.countryCode, searchParams, slugs]);
+  }, [presentation.locale, presentation.market.countryCode, searchParams, slugs]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (open && slugs.length >= 2 && dialog && !dialog.open) dialog.showModal();
+    if (open && slugs.length >= 2 && dialog && !dialog.open) {
+      const activeElement = document.activeElement;
+      dialogInvokerRef.current = activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : null;
+      dialog.showModal();
+    }
     if ((!open || slugs.length < 2) && dialog?.open) dialog.close();
   }, [open, slugs.length]);
+
+  const restoreDialogFocus = useCallback(() => {
+    const invoker = dialogInvokerRef.current;
+    dialogInvokerRef.current = null;
+    requestAnimationFrame(() => {
+      const remainingToggle = slugs
+        .map((slug) => document.querySelector<HTMLElement>(`[data-comparison-toggle="${slug}"]`))
+        .find((element) => element?.isConnected);
+      const fallback = remainingToggle ?? document.querySelector<HTMLElement>("[data-comparison-clear]");
+      (invoker?.isConnected ? invoker : fallback)?.focus();
+    });
+  }, [slugs]);
 
   useEffect(() => {
     if (open && slugs.length >= 2) productAnalyticsClient.comparisonOpened(slugs.length === 2 ? "two" : "three");
@@ -129,10 +148,10 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
       <div><strong>{messages.comparison.selectedOfThree.replace("{count}", String(slugs.length))}</strong><span>{slugs.length === 1 ? messages.comparison.chooseOneMore : messages.comparison.ready}</span></div>
       <div className={styles.trayActions}>
         {slugs.length >= 2 && <button onClick={() => setOpen(true)} type="button">{messages.comparison.open}</button>}
-        <button onClick={() => commit([], false)} type="button">{messages.comparison.clear}</button>
+        <button data-comparison-clear onClick={() => commit([], false)} type="button">{messages.comparison.clear}</button>
       </div>
     </aside>
-    <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
+    <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => { setOpen(false); restoreDialogFocus(); }} ref={dialogRef}>
       <div className={styles.sheet}>
         <header>
           <div><h2 id="comparison-title">{messages.comparison.title}</h2><span>{messages.comparison.subtitle}</span></div>
@@ -148,12 +167,12 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
                 <div><h3>{displayName}</h3><small>{casino?.summary || messages.common.reviewOnly}</small></div>
               </div>
               {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>{messages.comparison.topScore}</strong>}
-              <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
+              <div className={styles.editorScore}><strong>{casino ? formatProfileScore(casino.editorScore, presentation.locale) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
               <div className={styles.factList}>
                 {presentationRows.map((row) => <dl key={row.id} title={row.description}>
                   <dt>{row.id === "withdrawal-time" ? messages.common.payout : row.id === "methods" ? messages.common.paymentMethods : row.id === "control-tools" ? messages.profile.controlTools : row.label}</dt>
                   <dd>{row.values[slug]?.text ?? messages.comparison.unavailable}</dd>
-                  <small>{row.values[slug]?.status ?? messages.comparison.unavailable}</small>
+                  <small>{row.values[slug]?.statusLabel ?? row.values[slug]?.status ?? messages.comparison.unavailable}</small>
                 </dl>)}
               </div>
               {!presentationRows.length && <p className={styles.noEvidence}>{messages.comparison.evidenceUnavailable}</p>}

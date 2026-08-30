@@ -46,20 +46,20 @@ function store(records: PublishedCasinoSnapshotRecord[], context: Partial<Discov
 }
 
 test("query parser normalizes, deduplicates, bounds, and serializes deterministically", () => {
-  const params = new URLSearchParams("q=%20%20Crypto%20%20Casino%20&country=gb&country=GB&payment=bitcoin&sort=name_desc&page=-5&pageSize=999&__proto__=x");
+  const params = new URLSearchParams("q=%20%20Crypto%20%20Casino%20&country=gb&country=GB&payment=bitcoin&sort=name_desc&page=-5&pageSize=999&visualFixture=true&__proto__=x");
   const query = parseCasinoDiscoveryQuery(params);
   assert.equal(query.search, "Crypto Casino");
   assert.deepEqual(query.country, ["GB"]);
   assert.equal(query.page, 1);
   assert.equal(query.pageSize, 12);
   assert.equal(query.sort, "NAME_DESC");
-  assert.equal(serializeCasinoDiscoveryQuery(query).toString(), "q=Crypto+Casino&country=GB&payment=bitcoin&sort=NAME_DESC");
+  assert.equal(serializeCasinoDiscoveryQuery(query).toString(), "q=Crypto+Casino&country=GB&payment=bitcoin&sort=NAME_DESC&visualFixture=true");
 });
 
 test("directory links preserve every public control while pagination can reset", () => {
-  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24"));
-  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24");
-  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24");
+  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24&visualFixture=true"));
+  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24&visualFixture=true");
+  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24&visualFixture=true");
 });
 
 test("unavailable visit actions have safe public explanations", () => {

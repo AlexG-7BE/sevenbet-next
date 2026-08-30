@@ -43,6 +43,10 @@ export function formatProfileMoney(value: number | null | undefined, currency: s
   }
 }
 
+export function formatProfileScore(value: number, locale = "en-GB") {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
+}
+
 export function countryName(countryCode: string) {
   try {
     return new Intl.DisplayNames(["en"], { type: "region" }).of(countryCode) ?? countryCode;
@@ -75,13 +79,13 @@ export function profileOfferHeadline(bonus: PublicCasinoBonus, locale = "en-GB")
   return bonus.title;
 }
 
-export function profileReviewFreshness(casino: PublicCasinoDTO) {
+export function profileReviewFreshness(casino: PublicCasinoDTO, locale = "en-GB") {
   if (isTemporaryDemoCasinoId(casino.id)) {
     return { label: "Fictional review", value: "Demonstration" };
   }
-  const reviewed = formatProfileDate(casino.lastReviewedAt);
+  const reviewed = formatProfileDate(casino.lastReviewedAt, locale);
   if (reviewed) return { label: "Reviewed", value: reviewed };
-  const published = formatProfileDate(casino.publishedAt);
+  const published = formatProfileDate(casino.publishedAt, locale);
   return published ? { label: "Published", value: published } : null;
 }
 

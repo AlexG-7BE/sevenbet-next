@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  formatProfileScore,
   profileAction,
   profileFacts,
   profileFaqItems,
@@ -10,8 +11,9 @@ import {
   profileReviewFreshness,
   selectProfileBonus,
 } from "../lib/casino-profile/presentation";
-import { casinoProfileMetadata, casinoProfileSchemas } from "../lib/casino-profile/seo";
+import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "../lib/casino-profile/seo";
 import type { CasinoEditorialDocument } from "../lib/editorial-review/types";
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { mapPublishedCasino } from "../lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "../lib/public-casino/public-casino.types";
 import { temporaryDemoCasinoIds } from "../lib/demo-data/temporary-demo-authority";
@@ -60,6 +62,8 @@ test("profile presentation uses only published values and a governed internal ac
   assert.equal(profileOfferHeadline(bonus), "100% up to £150 + 20 free spins");
   assert.deepEqual(profileAction(record, bonus), { href: "/r/published-bonus", label: "Visit Published Casino" });
   assert.deepEqual(profileReviewFreshness(record), { label: "Reviewed", value: "3 Feb 2030" });
+  assert.equal(profileReviewFreshness(record, "de-DE")?.value, new Intl.DateTimeFormat("de-DE", { day: "numeric", month: "short", year: "numeric" }).format(new Date(record.lastReviewedAt!)));
+  assert.equal(formatProfileScore(8.7, "de-DE"), "8,7");
   assert.ok(profileFacts(record).some((fact) => fact.label === "Licence" && fact.verified));
   assert.ok(profileFacts(record).some((fact) => fact.label === "Control tools"));
 });
@@ -136,6 +140,35 @@ test("exact-ID demo profiles are noindex, truthful and suppress review/commercia
   assert.doesNotMatch(serialized, /"@type":"Review"|"@type":"FAQPage"|"@type":"Offer"/);
 });
 
+test("localized schema projection translates demo chrome, omits unsafe FAQ chrome and preserves source evidence", () => {
+  const messages = productPageMessages("de-DE");
+  const demo = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo" });
+  const demoSchemas = projectCasinoProfileSchemas(casinoProfileSchemas(demo, editorial), {
+    casino: demo,
+    casinoDirectoryUrl: absoluteUrl("/de/casinos"),
+    locale: "de-DE",
+    messages,
+    profileUrl: absoluteUrl("/de/casino/published-casino"),
+  });
+  const demoSerialized = JSON.stringify(demoSchemas);
+  assert.match(demoSerialized, new RegExp(messages.profile.demoReview));
+  assert.match(demoSerialized, new RegExp(messages.profile.demoDisclosure.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.doesNotMatch(demoSerialized, /fictional review demonstration|Fictional product demonstration/i);
+  assert.doesNotMatch(demoSerialized, /"@type":"FAQPage"/);
+
+  const published = casino();
+  const publishedSchemas = projectCasinoProfileSchemas(casinoProfileSchemas(published, editorial), {
+    casino: published,
+    casinoDirectoryUrl: absoluteUrl("/de/casinos"),
+    locale: "de-DE",
+    messages,
+    profileUrl: absoluteUrl("/de/casino/published-casino"),
+  });
+  const publishedSerialized = JSON.stringify(publishedSchemas);
+  assert.match(publishedSerialized, /Published editorial review/);
+  assert.doesNotMatch(publishedSerialized, /Structured question|"@type":"FAQPage"/);
+});
+
 test("published maximum bet is projected from the existing immutable snapshot field", () => {
   const mapped = mapPublishedCasino({
     casinoId: "casino-id", version: 2, status: "PUBLISHED", publishedAt: new Date("2030-01-01T00:00:00.000Z"), archivedAt: null,
@@ -154,7 +187,17 @@ test("route and component keep Prisma, client fetching, raw destinations and dem
   const source = `${route}\n${component}\n${action}`;
   assert.match(route, /publicCasinoService\.getCasino/);
   assert.match(route, /boundedCandidate\?\.source === "cms"/);
+  assert.match(route, /projectCasinoProfileSchemas/);
   assert.match(component, /messages\.profile\.offerUnavailable/);
+  assert.match(component, /data-content-origin="localized-taxonomy"/);
+  assert.match(component, /editorialSectionLabel\(section\.kind, messages, locale\)/);
+  assert.match(component, /demonstration \? "localized-fixture" : "source-controlled"/);
+  assert.match(component, /demo \? messages\.profile\.demoDisclosure : messages\.profile\.originalEditorialNotice/);
+  assert.match(component, /data-content-origin=\{contentOrigin\}/);
+  assert.match(component, /category\.key\.replaceAll\("-", " "\)/);
+  assert.match(component, /casino\.media\.logo \? <img alt=""/);
+  assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| casino\.name\}/);
+  assert.doesNotMatch(component, /alt=\{casino\.media\.logo\.alt \|\| `\$\{casino\.name\} logo`\}/);
   assert.equal((action.match(/<a[^>]+href=\{action\.href\}/g) ?? []).length, 1);
   assert.match(action, /href=\{confirmationHref\}/);
   assert.match(action, /aria-haspopup="dialog"/);

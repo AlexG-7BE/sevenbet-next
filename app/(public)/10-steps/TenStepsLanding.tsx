@@ -5,16 +5,16 @@ import type { TenStepsLandingState } from "@/lib/ten-steps-landing";
 import styles from "./TenStepsLanding.module.css";
 
 const missionDescriptions = [
-  "Say what’s happening; get your Starting Point.",
-  "First pass at time and money lines.",
-  "Map the moments that start sessions.",
-  "One limit you can keep this week.",
-  "An honest week-two look at the numbers.",
-  "A simple rule for yes, no and not-tonight.",
-  "Write the plan you’ll actually follow.",
-  "Reduce friction, judge operators, protect your plan.",
-  "See what held. Fix what didn’t.",
-  "Turn ten missions into a habit that lasts.",
+  "Map one recent decision moment and build your Starting Point.",
+  "Turn your Starting Point into one small seven-day experiment.",
+  "Notice the sequence early enough to create a choice point.",
+  "Make one boundary specific enough to use under pressure.",
+  "Put three practical checks between an impulse and a decision.",
+  "Make the fast route less automatic with one or two practical layers.",
+  "Prepare a support route without needing to disclose a person's identity.",
+  "Use material terms and safer-gambling facts when comparing options.",
+  "Practise one response before the decision is live.",
+  "Bring the useful parts together and decide when to review them.",
 ];
 
 const missions = programmeMissionTitles.map((title, index) => ({ number:String(index + 1).padStart(2,"0"), title, description:missionDescriptions[index] }));
@@ -47,12 +47,12 @@ export function TenStepsLanding({ state }: { state: TenStepsLandingState }) {
       <div className={styles.accountPromises}><p>✓ &nbsp; Your situation and plan are never used for offers, rankings or ads.</p><p>✓ &nbsp; Export and deletion requests are handled under the Privacy policy.</p><p>✓ &nbsp; No mission asks you to deposit, claim or play.</p></div>
     </section>
 
-    <section className={styles.finalAction} aria-labelledby="final-action-title" data-ten-steps-section="final-action"><span>{returning ? "YOUR PROGRAMME" : fallback ? "YOUR ACCOUNT" : "ONE USEFUL MISSION"}</span><h2 id="final-action-title">{returning ? "Return to the plan you already started." : fallback ? "Programme status is unavailable here." : <>Mission 01 takes about <em>one minute.</em></>}</h2><p>{returning ? "Your saved progress stays inside My Programme." : fallback ? "Open the Programme to start or retry." : "No registration until your starting point is ready."}</p>{returning || fallback ? <ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink> : <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink>}</section>
+    <section className={styles.finalAction} aria-labelledby="final-action-title" data-ten-steps-section="final-action"><span>{returning ? "YOUR PROGRAMME" : fallback ? "YOUR ACCOUNT" : "ONE USEFUL MISSION"}</span><h2 id="final-action-title">{returning ? "Return to the plan you already started." : fallback ? "Programme status is unavailable here." : <>Mission 01 starts with <em>your Starting Point.</em></>}</h2><p>{returning ? "Your saved progress stays inside My Programme." : fallback ? "Open the Programme to start or retry." : <>Complete the Starting Point&apos;s two actions for 40 XP. Registration awards no XP and only follows when it is ready.</>}</p>{returning || fallback ? <ActionLink className={styles.primaryButton} href="/program" size="large">Open My Programme</ActionLink> : <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink>}</section>
   </div>;
 }
 
 function AnonymousHero() {
-  return <div className={styles.heroInner}><div className={styles.heroCopy}><span>THE PROGRAMME, STEP BY STEP</span><h1 id="ten-steps-title"><strong>TEN STEPS.</strong><em>One plan.</em></h1><p>Each mission takes 5–15 minutes and ends with something you keep. Here&apos;s exactly what happens — no surprises, no fine print.</p><ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink><small>01–03 UNDERSTAND &nbsp; · &nbsp; 04–07 BUILD &nbsp; · &nbsp; 08–10 APPLY</small></div><div className={styles.heroVisual}><img alt="" fetchPriority="high" height="1200" src="/home/hero-plan.jpg" width="1800" /></div></div>;
+  return <div className={styles.heroInner}><div className={styles.heroCopy}><span>THE PROGRAMME, STEP BY STEP</span><h1 id="ten-steps-title"><strong>TEN STEPS.</strong><em>One plan.</em></h1><p>Most Missions take 5–8 minutes and end with something you keep. Mission 01 begins with a short Starting Point. Here&apos;s exactly what happens — no surprises, no fine print.</p><ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="ten_steps">Start Mission 01</ProgrammeStartActionLink><small>01–03 UNDERSTAND &nbsp; · &nbsp; 04–07 BUILD &nbsp; · &nbsp; 08–10 APPLY</small></div><div className={styles.heroVisual}><img alt="" fetchPriority="high" height="1200" src="/home/hero-plan.jpg" width="1800" /></div></div>;
 }
 
 function ReturningHero({ state }: { state: Exclude<TenStepsLandingState,{kind:"anonymous"}> }) {

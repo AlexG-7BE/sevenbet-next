@@ -81,11 +81,11 @@ test("Production canonicalisation preserves representative page, API, OAuth and 
   }
 });
 
-test("Production middleware uses a method-preserving permanent redirect before route policy", () => {
+test("Production middleware uses a method-preserving permanent redirect before route policy", async () => {
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
-    const response = middleware(new NextRequest(
+    const response = await middleware(new NextRequest(
       "https://sevenbet-next.vercel.app/api/auth/sign-in/social?attempt=1",
       { method: "POST" },
     ));

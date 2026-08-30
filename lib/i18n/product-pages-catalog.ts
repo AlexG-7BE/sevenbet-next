@@ -1,4 +1,9 @@
 import type { SupportedLocale } from "@/lib/market/registry";
+import { FI_PRODUCT_PAGE_MESSAGES } from "@/lib/i18n/draft-product-pages/fi-FI";
+import { IT_PRODUCT_PAGE_MESSAGES } from "@/lib/i18n/draft-product-pages/it-IT";
+import { NB_PRODUCT_PAGE_MESSAGES } from "@/lib/i18n/draft-product-pages/nb-NO";
+import { NL_PRODUCT_PAGE_MESSAGES } from "@/lib/i18n/draft-product-pages/nl-NL";
+import { PT_PRODUCT_PAGE_MESSAGES } from "@/lib/i18n/draft-product-pages/pt-PT";
 
 export type ProductPageMessages = Readonly<{
   common: Readonly<{
@@ -11,7 +16,8 @@ export type ProductPageMessages = Readonly<{
     pageOf: string; demoData: string; demoDisclosure: string; marketPresentationNotice: string;
     reviewAvailableNoAction: string; affiliateDisclosure: string; methodology: string; bonusGuide: string;
     protectedHelp: string; allFilters: string; directoryControls: string; closeFilters: string;
-    updatingResults: string; sourceStatus: string; materialTerms: string; materialOfferTerms: string; commercialUnavailable: string;
+    updatingResults: string; sourceStatus: string; controlledMedia: string; mediaUnavailableTitle: string; mediaUnavailableCopy: string;
+    materialTerms: string; materialOfferTerms: string; commercialUnavailable: string;
     originalSourceCopy: string; countryPreference: string; bonusType: string; cryptoSupport: string;
     availability: string; sortResults: string; cryptoSupported: string; cryptoUnsupported: string;
     bonusAvailability: string; visitAvailability: string; saferGamblingInformation: string; mobileSupport: string;
@@ -44,6 +50,8 @@ export type ProductPageMessages = Readonly<{
     heroKicker: string; heroLead: string; heroEmphasis: string; heroCopy: string;
     proofTerms: string; proofClaims: string; proofSources: string; directoryTitle: string; filterTitle: string; sortedByValue: string;
     noMatchesTitle: string; noMatchesCopy: string; unavailableTitleBody: string; unavailableCopy: string;
+    featuredFilter: string; featuredTrue: string; featuredFalse: string;
+    recommendedFilter: string; recommendedTrue: string; recommendedFalse: string;
     methodKicker: string; methodLead: string; methodEmphasis: string; methodCopy: string; guideAction: string;
     disclosureTitle: string; disclosureCopy: string; disclosureAction: string;
     selectorBestOverall: string; selectorLowWagering: string; selectorLowDeposit: string; selectorCrypto: string; selectorNewest: string;
@@ -82,16 +90,16 @@ export type ProductPageMessages = Readonly<{
 const en: ProductPageMessages = {
   common: {
     notListed: "Not listed", current: "Current", published: "Published", classified: "classified", record: "record", records: "records",
-    result: "result", results: "results", reviewOnly: "Review only", actionAvailable: "Action available", noGovernedVisit: "No governed visit",
+    result: "result", results: "results", reviewOnly: "Review only", actionAvailable: "Partner link available", noGovernedVisit: "No partner link available",
     readReview: "Read review", viewDemonstration: "View demonstration", browseReviews: "Browse casino reviews", reviewMethodology: "Review methodology",
     editorScore: "Editor Score", wagering: "Wagering", minimumDeposit: "Minimum deposit", maximumBonus: "Maximum bonus", maximumBet: "Maximum bet",
     payout: "Payout", eligibility: "Eligibility", expiry: "Expiry", paymentMethods: "Payments", licence: "Licence",
     activeFilters: "Active filters", clearAll: "Clear all", applyFilters: "Apply filters", filters: "Filters", previous: "Previous", next: "Next",
     pageOf: "Page {page} of {pages}", demoData: "DEMONSTRATION DATA", demoDisclosure: "Fictional product records are not current operators, partner offers or live promotions. No gambling or affiliate destination is available.",
     marketPresentationNotice: "The selected market changes editorial presentation only. It does not prove location, eligibility or commercial availability.",
-    reviewAvailableNoAction: "The review remains available while commercial action is unavailable.", affiliateDisclosure: "Affiliate disclosure", methodology: "Methodology", bonusGuide: "Bonus guide",
+    reviewAvailableNoAction: "The review remains available, but no partner link is.", affiliateDisclosure: "Affiliate disclosure", methodology: "Methodology", bonusGuide: "Bonus guide",
     protectedHelp: "Open protected Help", allFilters: "All filters", directoryControls: "Directory controls", closeFilters: "Close filters", updatingResults: "Updating results…",
-    sourceStatus: "Source status", materialTerms: "Material terms", materialOfferTerms: "material offer terms", commercialUnavailable: "Commercial action unavailable", originalSourceCopy: "Source-controlled facts remain in their published language.",
+    sourceStatus: "Source status", controlledMedia: "Controlled media", mediaUnavailableTitle: "Suitable artwork unavailable", mediaUnavailableCopy: "The review and terms remain available without unsuitable or unverified artwork.", materialTerms: "Material terms", materialOfferTerms: "material offer terms", commercialUnavailable: "No partner link available", originalSourceCopy: "Source-controlled facts remain in their published language.",
     countryPreference: "Country preference", bonusType: "Bonus type", cryptoSupport: "Crypto support", availability: "Availability", sortResults: "Sort results",
     cryptoSupported: "Crypto supported", cryptoUnsupported: "No crypto support",
     bonusAvailability: "Bonus availability", visitAvailability: "Visit availability", saferGamblingInformation: "Safer-gambling information", mobileSupport: "Mobile support",
@@ -100,14 +108,14 @@ const en: ProductPageMessages = {
   },
   bestOffers: {
     title: "Casino offer comparison for {market} | B4GAMBLE", description: "An editorial shortlist for {market}, with material terms and commercial availability shown before action.",
-    unavailableTitle: "Casino offer comparison unavailable | B4GAMBLE", unavailableDescription: "The published offer comparison for {market} is temporarily unavailable. No cached, legacy or invented listing is substituted.",
-    heroLead: "Three picks.", heroEmphasis: "Not thirty.", heroKicker: "Current editorial shortlist for {market}", heroCopy: "Published records are filtered for {market}. Commercial action remains subject to separate request-time authority.",
-    eligibleRecords: "eligible records", currentMarket: "editorial market", inferredActions: "inferred actions", rankingLink: "How ranking works →",
+    unavailableTitle: "Casino offer comparison unavailable | B4GAMBLE", unavailableDescription: "The published offer comparison for {market} is temporarily unavailable. We won't show another list unless its current details can be checked.",
+    heroLead: "Three picks.", heroEmphasis: "Not thirty.", heroKicker: "Current editorial shortlist for {market}", heroCopy: "Published records are filtered for {market}. Partner links appear only when they are available for this visit.",
+    eligibleRecords: "eligible records", currentMarket: "editorial market", inferredActions: "partner links", rankingLink: "How ranking works →",
     sectionTitle: "The top three — material terms shown first", commissionNote: "Affiliate compensation does not determine Editor Score or natural editorial ranking.",
     emptyTitle: "No eligible records for {market}.", emptyCopy: "B4GAMBLE does not substitute a GB shortlist or relax the method to fill this market page.",
-    unavailableTitleBody: "The comparison could not be loaded.", unavailableCopy: "No cached, legacy or invented commercial result is substituted.",
+    unavailableTitleBody: "The comparison could not be loaded.", unavailableCopy: "We won't show another result unless its current details can be checked.",
     demoKicker: "Fictional product demonstration", demoCopy: "Fictional records demonstrate ranking and material-term presentation. No current promotion, partner relationship, real-money test or claim action is represented.",
-    fictionalRecords: "fictional records", liveOffers: "live offers", claimActions: "claim actions", fictionalRecordsOnly: "Fictional records only", termsBeforeAction: "Material terms shown before action", availabilityFailsClosed: "Availability fails closed",
+    fictionalRecords: "fictional records", liveOffers: "live offers", claimActions: "offer links", fictionalRecordsOnly: "Fictional records only", termsBeforeAction: "Material terms shown before action", availabilityFailsClosed: "No partner links available",
     worthALookTitle: "Worth a look — just outside the top three", whyTitle: "Why these records are shown", whyCopy: "Market availability, complete material terms and source status are checked before ranking. Commercial availability is checked separately.", finalKicker: "Still here? The answer hasn't changed.",
     beforeClick: "Before you click", faqWageringQuestion: "What does wagering mean?", faqWageringAnswer: "It is the turnover required by the published terms before bonus winnings can be withdrawn.",
     faqCommissionQuestion: "Do you earn money if I sign up?", faqCommissionAnswer: "An eligible labelled affiliate link may earn commission. Compensation does not determine the editorial score or natural ranking.",
@@ -119,9 +127,9 @@ const en: ProductPageMessages = {
     proofEvidence: "Evidence and limitations disclosed", proofLimit: "Maximum three per use-case", proofPublished: "Current published data only", directoryTitle: "Full directory", filterTitle: "Filter Casinos",
     bestOverall: "Best Overall", crypto: "Crypto", mobile: "Mobile", bestBonuses: "Best Bonuses", newCasinos: "New Casinos",
     noMatchesTitle: "No published reviews match this market and these controls.", noMatchesCopy: "Remove a filter or change presentation. B4GAMBLE will not fill the gap with ineligible operators.",
-    noPublishedTitle: "No published reviews for {market} yet.", reviewOnlyNotice: "Reviews remain available. Commercial actions stay hidden until market, offer and redirect authority all pass.",
+    noPublishedTitle: "No published reviews for {market} yet.", reviewOnlyNotice: "Reviews remain available. Partner links appear only when the market, offer and destination are available.",
     faqTitle: "Before you choose", faqDifferenceQuestion: "How is this different from Best Offers?", faqDifferenceAnswer: "Best Offers is a bounded shortlist. This directory keeps every eligible published review available for comparison.",
-    faqReviewOnlyQuestion: "What does review only mean?", faqReviewOnlyAnswer: "The editorial review is available, but there is no governed signup route for this request.",
+    faqReviewOnlyQuestion: "What does review only mean?", faqReviewOnlyAnswer: "The editorial review is available, but there is currently no partner link.",
     faqCommissionQuestion: "Does commission affect ranking?", faqCommissionAnswer: "No. Affiliate compensation does not determine Editor Score or natural editorial ranking.",
   },
   bonuses: {
@@ -129,7 +137,9 @@ const en: ProductPageMessages = {
     heroKicker: "Bonuses · Terms first · 18+", heroLead: "Value, measured", heroEmphasis: "by terms.", heroCopy: "Headline size means little after wagering. Compare deposits, turnover, restrictions and expiry before any action.",
     proofTerms: "Material terms shown first", proofClaims: "No guaranteed-money claims", proofSources: "Source status stays visible", directoryTitle: "All bonuses", filterTitle: "Filter Bonuses", sortedByValue: "sorted by net value",
     noMatchesTitle: "No comparison records match {market} and these filters.", noMatchesCopy: "Remove a filter or change presentation. No ineligible offer is substituted.",
-    unavailableTitleBody: "The published directory could not be loaded.", unavailableCopy: "No cached, legacy, demonstration or invented offer is substituted.",
+    unavailableTitleBody: "The published directory could not be loaded.", unavailableCopy: "We won't show another offer unless its current details can be checked.",
+    featuredFilter: "Editorial feature status", featuredTrue: "Editorially featured", featuredFalse: "Not editorially featured",
+    recommendedFilter: "Editorial recommendation status", recommendedTrue: "Editorially recommended", recommendedFalse: "Not editorially recommended",
     methodKicker: "How we evaluate bonus terms", methodLead: "The fine print is", methodEmphasis: "the product.", methodCopy: "Wagering, weighting, deposit floors and expiry decide what a bonus can actually require.", guideAction: "Read the Bonus Guide →",
     disclosureTitle: "18+ · Commercial disclosure", disclosureCopy: "B4GAMBLE may receive compensation from future eligible governed links. Compensation does not determine Editor Score or natural ranking. Verify current operator terms and local law before acting.", disclosureAction: "Read disclosure →",
     selectorBestOverall: "Best Overall", selectorLowWagering: "Low Wagering", selectorLowDeposit: "Low Deposit", selectorCrypto: "Crypto", selectorNewest: "Newest",
@@ -148,14 +158,14 @@ const en: ProductPageMessages = {
   },
   comparison: {
     trayLabel: "Casino comparison tray", selectedOfThree: "{count} of 3 selected", chooseOneMore: "Choose one more to compare", ready: "Your comparison is ready", add: "Compare", open: "Open comparison", clear: "Clear",
-    title: "Side by side", subtitle: "The same evidence fields for every casino", close: "Close comparison", loading: "Building the comparison…", unavailable: "The selected public comparison is unavailable. No substitute has been inserted.",
+    title: "Side by side", subtitle: "The same evidence fields for every casino", close: "Close comparison", loading: "Building the comparison…", unavailable: "The selected public comparison is unavailable. We haven't shown an unchecked replacement.",
     fullReview: "Full review", remove: "Remove", topScore: "Top score", evidenceUnavailable: "Published comparison evidence is unavailable.", footer: "18+ · Availability is never assumed · Scores are editorial. Country is a comparison preference, not proof of eligibility.",
   },
   outbound: {
-    affiliateNote: "Affiliate link · We may earn commission.", label: "02 / Outbound confirmation", title: "You are leaving B4GAMBLE.",
-    description: "You are about to visit a third-party gambling operator. An eligible action may earn B4GAMBLE commission. This does not change Editor Score or natural editorial ranking.",
-    contractLabel: "Handoff contract", contractCopy: "No raw destination URL · no browser-supplied authority.", riskCopy: "18+ · Eligibility and operator terms apply · Gambling involves financial risk",
-    continueAction: "Continue to eligible partner →", cancelAction: "Cancel and stay on B4GAMBLE", disclosureAction: "Review affiliate disclosure",
+    affiliateNote: "Affiliate link · We may earn commission.", label: "02 / Leaving B4GAMBLE", title: "You are leaving B4GAMBLE.",
+    description: "You are about to visit a third-party gambling operator. If you continue through an affiliate link, B4GAMBLE may earn commission. This does not affect the editorial score or ranking.",
+    contractLabel: "Destination check", contractCopy: "B4GAMBLE checks the destination link before you leave the site.", riskCopy: "18+ · Eligibility and operator terms apply · Gambling involves financial risk",
+    continueAction: "Continue to operator →", cancelAction: "Cancel and stay on B4GAMBLE", disclosureAction: "Review affiliate disclosure",
   },
   calculator: {
     kicker: "What a bonus really costs", titleLead: "Run the numbers", titleEmphasis: "before you claim.", copy: "Enter the advertised figures to see required turnover and an illustrative expected clearing cost.",
@@ -169,10 +179,10 @@ const en: ProductPageMessages = {
 function translated(overrides: ProductPageMessages): ProductPageMessages { return overrides; }
 
 const de = translated({
-  common: { notListed:"Nicht angegeben",current:"Aktuell",published:"Veröffentlicht",classified:"klassifiziert",record:"Eintrag",records:"Einträge",result:"Ergebnis",results:"Ergebnisse",reviewOnly:"Nur Bewertung",actionAvailable:"Aktion verfügbar",noGovernedVisit:"Kein freigegebener Besuch",readReview:"Bewertung lesen",viewDemonstration:"Demonstration ansehen",browseReviews:"Anbieterbewertungen durchsuchen",reviewMethodology:"Methodik ansehen",editorScore:"Editor Score",wagering:"Umsatzbedingung",minimumDeposit:"Mindesteinzahlung",maximumBonus:"Maximaler Bonus",maximumBet:"Maximaler Einsatz",payout:"Auszahlung",eligibility:"Teilnahmebedingungen",expiry:"Ablauf",paymentMethods:"Zahlungen",licence:"Lizenz",activeFilters:"Aktive Filter",clearAll:"Alle löschen",applyFilters:"Filter anwenden",filters:"Filter",previous:"Zurück",next:"Weiter",pageOf:"Seite {page} von {pages}",demoData:"DEMONSTRATIONSDATEN",demoDisclosure:"Fiktive Produktdaten sind keine aktuellen Anbieter, Partnerangebote oder Live-Aktionen. Es gibt kein Glücksspiel- oder Affiliate-Ziel.",marketPresentationNotice:"Der gewählte Markt ändert nur den redaktionellen Kontext. Er beweist weder Standort noch Berechtigung oder kommerzielle Verfügbarkeit.",reviewAvailableNoAction:"Die Bewertung bleibt verfügbar, während die kommerzielle Aktion nicht verfügbar ist.",affiliateDisclosure:"Affiliate-Hinweis",methodology:"Methodik",bonusGuide:"Bonus-Leitfaden",protectedHelp:"Geschützte Hilfe öffnen",allFilters:"Alle Filter",directoryControls:"Verzeichnisfilter",closeFilters:"Filter schließen",updatingResults:"Ergebnisse werden aktualisiert…",sourceStatus:"Quellenstatus",materialTerms:"Wesentliche Bedingungen",materialOfferTerms:"wesentliche Angebotsbedingungen",commercialUnavailable:"Kommerzielle Aktion nicht verfügbar",originalSourceCopy:"Quellengesteuerte Fakten bleiben in ihrer veröffentlichten Sprache.",countryPreference:"Länderpräferenz",bonusType:"Bonusart",cryptoSupport:"Krypto-Unterstützung",availability:"Verfügbarkeit",sortResults:"Ergebnisse sortieren",cryptoSupported:"Krypto unterstützt",cryptoUnsupported:"Keine Krypto-Unterstützung",bonusAvailability:"Bonusverfügbarkeit",visitAvailability:"Besuchsverfügbarkeit",saferGamblingInformation:"Informationen zu sichererem Glücksspiel",mobileSupport:"Mobilgeräte-Unterstützung",supported:"Unterstützt",resultsPerPage:"Ergebnisse pro Seite",featured:"Empfohlen",relevance:"Relevanz",newest:"Neueste",nameAscending:"Name A–Z",nameDescending:"Name Z–A",breadcrumb:"Brotkrümelnavigation" },
+  common: { notListed:"Nicht angegeben",current:"Aktuell",published:"Veröffentlicht",classified:"klassifiziert",record:"Eintrag",records:"Einträge",result:"Ergebnis",results:"Ergebnisse",reviewOnly:"Nur Bewertung",actionAvailable:"Aktion verfügbar",noGovernedVisit:"Kein freigegebener Besuch",readReview:"Bewertung lesen",viewDemonstration:"Demonstration ansehen",browseReviews:"Anbieterbewertungen durchsuchen",reviewMethodology:"Methodik ansehen",editorScore:"Editor Score",wagering:"Umsatzbedingung",minimumDeposit:"Mindesteinzahlung",maximumBonus:"Maximaler Bonus",maximumBet:"Maximaler Einsatz",payout:"Auszahlung",eligibility:"Teilnahmebedingungen",expiry:"Ablauf",paymentMethods:"Zahlungen",licence:"Lizenz",activeFilters:"Aktive Filter",clearAll:"Alle löschen",applyFilters:"Filter anwenden",filters:"Filter",previous:"Zurück",next:"Weiter",pageOf:"Seite {page} von {pages}",demoData:"DEMONSTRATIONSDATEN",demoDisclosure:"Fiktive Produktdaten sind keine aktuellen Anbieter, Partnerangebote oder Live-Aktionen. Es gibt kein Glücksspiel- oder Affiliate-Ziel.",marketPresentationNotice:"Der gewählte Markt ändert nur den redaktionellen Kontext. Er beweist weder Standort noch Berechtigung oder kommerzielle Verfügbarkeit.",reviewAvailableNoAction:"Die Bewertung bleibt verfügbar, während die kommerzielle Aktion nicht verfügbar ist.",affiliateDisclosure:"Affiliate-Hinweis",methodology:"Methodik",bonusGuide:"Bonus-Leitfaden",protectedHelp:"Geschützte Hilfe öffnen",allFilters:"Alle Filter",directoryControls:"Verzeichnisfilter",closeFilters:"Filter schließen",updatingResults:"Ergebnisse werden aktualisiert…",sourceStatus:"Quellenstatus",controlledMedia:"Geprüftes Bildmaterial",mediaUnavailableTitle:"Passendes Bildmaterial nicht verfügbar",mediaUnavailableCopy:"Bewertung und Bedingungen bleiben verfügbar, ohne ungeeignetes oder ungeprüftes Bildmaterial zu zeigen.",materialTerms:"Wesentliche Bedingungen",materialOfferTerms:"wesentliche Angebotsbedingungen",commercialUnavailable:"Kommerzielle Aktion nicht verfügbar",originalSourceCopy:"Quellengesteuerte Fakten bleiben in ihrer veröffentlichten Sprache.",countryPreference:"Länderpräferenz",bonusType:"Bonusart",cryptoSupport:"Krypto-Unterstützung",availability:"Verfügbarkeit",sortResults:"Ergebnisse sortieren",cryptoSupported:"Krypto unterstützt",cryptoUnsupported:"Keine Krypto-Unterstützung",bonusAvailability:"Bonusverfügbarkeit",visitAvailability:"Besuchsverfügbarkeit",saferGamblingInformation:"Informationen zu sichererem Glücksspiel",mobileSupport:"Mobilgeräte-Unterstützung",supported:"Unterstützt",resultsPerPage:"Ergebnisse pro Seite",featured:"Empfohlen",relevance:"Relevanz",newest:"Neueste",nameAscending:"Name A–Z",nameDescending:"Name Z–A",breadcrumb:"Brotkrümelnavigation" },
   bestOffers:{title:"Angebotsvergleich für Glücksspielanbieter in {market} | B4GAMBLE",description:"Eine redaktionelle Auswahlliste für {market}, mit wesentlichen Bedingungen und Verfügbarkeit vor jeder Aktion.",unavailableTitle:"Angebotsvergleich für Glücksspielanbieter nicht verfügbar | B4GAMBLE",unavailableDescription:"Der veröffentlichte Angebotsvergleich für {market} ist vorübergehend nicht verfügbar. Es wird kein erfundener Ersatz angezeigt.",heroLead:"Drei Empfehlungen.",heroEmphasis:"Nicht dreißig.",heroKicker:"Aktuelle redaktionelle Auswahl für {market}",heroCopy:"Veröffentlichte Einträge werden für {market} gefiltert. Kommerzielle Aktionen benötigen weiterhin eine separate Anfrage-Autorität.",eligibleRecords:"geeignete Einträge",currentMarket:"redaktioneller Markt",inferredActions:"abgeleitete Aktionen",rankingLink:"So funktioniert das Ranking →",sectionTitle:"Die besten drei — wesentliche Bedingungen zuerst",commissionNote:"Wir können über einen berechtigten gekennzeichneten Link Provision erhalten. Die Vergütung bestimmt weder Editor Score noch natürliche Rangfolge.",emptyTitle:"Keine geeigneten Einträge für {market}.",emptyCopy:"B4GAMBLE ersetzt dies nicht durch eine GB-Liste und lockert die Methode nicht.",unavailableTitleBody:"Der Vergleich konnte nicht geladen werden.",unavailableCopy:"Es wird kein zwischengespeichertes, altes oder erfundenes kommerzielles Ergebnis eingesetzt.",demoKicker:"Fiktive Produktdemonstration",demoCopy:"Fiktive Einträge zeigen Ranking und wesentliche Bedingungen. Sie sind keine aktuelle Aktion, Partnerschaft, Echtgeldprüfung oder beanspruchbare Aktion.",fictionalRecords:"fiktive Einträge",liveOffers:"Live-Angebote",claimActions:"Beanspruchungsaktionen",fictionalRecordsOnly:"Nur fiktive Einträge",termsBeforeAction:"Wesentliche Bedingungen vor jeder Aktion",availabilityFailsClosed:"Verfügbarkeit bleibt geschlossen",worthALookTitle:"Einen Blick wert — knapp außerhalb der besten drei",whyTitle:"Warum diese Einträge erscheinen",whyCopy:"Marktverfügbarkeit, vollständige Bedingungen und Quellenstatus werden vor dem Ranking geprüft. Kommerzielle Verfügbarkeit wird getrennt geprüft.",finalKicker:"Noch hier? Die Antwort hat sich nicht geändert.",beforeClick:"Vor dem Klick",faqWageringQuestion:"Was bedeutet die Umsatzbedingung?",faqWageringAnswer:"Sie bezeichnet den laut veröffentlichten Bedingungen erforderlichen Umsatz vor einer Auszahlung.",faqCommissionQuestion:"Verdient ihr bei meiner Anmeldung?",faqCommissionAnswer:"Ein berechtigter gekennzeichneter Affiliate-Link kann Provision bringen. Sie beeinflusst die redaktionelle Bewertung nicht.",faqWhyThreeQuestion:"Warum nur drei Angebote?",faqWhyThreeAnswer:"Eine kurze Liste hält die Entscheidung überschaubar; die Bonusseite zeigt das vollständige geeignete Verzeichnis."},
   casinos:{title:"Anbieterbewertungen für {market} | B4GAMBLE",description:"Veröffentlichte Bewertungen von Glücksspielanbietern im redaktionellen Kontext von {market} suchen und vergleichen.",demoTitle:"Demonstration von Anbieterbewertungen | B4GAMBLE",demoDescription:"Klar gekennzeichnete fiktive Einträge zeigen das Format ohne Live-Aktion.",heroKicker:"Für {market} kuratiert",heroLead:"Kenne den Anbieter",heroEmphasis:"vor dem Angebot.",heroCopy:"Vergleiche Marktverfügbarkeit, Lizenzangaben, Zahlungen, Kontrollen und wesentliche Bedingungen.",proofEvidence:"Evidenz und Grenzen offengelegt",proofLimit:"Höchstens drei pro Anwendungsfall",proofPublished:"Nur aktuelle veröffentlichte Daten",directoryTitle:"Gesamtes Verzeichnis",filterTitle:"Anbieter filtern",bestOverall:"Insgesamt am besten",crypto:"Krypto",mobile:"Mobil",bestBonuses:"Beste Boni",newCasinos:"Neue Anbieter",noMatchesTitle:"Keine veröffentlichte Bewertung passt zu diesem Markt und den Filtern.",noMatchesCopy:"Entferne einen Filter oder ändere die Darstellung. B4GAMBLE ergänzt keine ungeeigneten Anbieter.",noPublishedTitle:"Noch keine veröffentlichten Bewertungen für {market}.",reviewOnlyNotice:"Bewertungen bleiben verfügbar. Kommerzielle Aktionen bleiben verborgen, bis Markt-, Angebot- und Weiterleitungsautorität bestehen.",faqTitle:"Vor deiner Auswahl",faqDifferenceQuestion:"Wie unterscheidet sich dies von Beste Angebote?",faqDifferenceAnswer:"Beste Angebote ist eine begrenzte Auswahl. Dieses Verzeichnis hält alle geeigneten veröffentlichten Bewertungen vergleichbar.",faqReviewOnlyQuestion:"Was bedeutet Nur Bewertung?",faqReviewOnlyAnswer:"Die redaktionelle Bewertung ist verfügbar, aber für diese Anfrage gibt es keinen freigegebenen Anmeldeweg.",faqCommissionQuestion:"Beeinflusst Provision das Ranking?",faqCommissionAnswer:"Nein. Affiliate-Vergütung bestimmt weder Editor Score noch natürliche redaktionelle Rangfolge."},
-  bonuses:{title:"Bonusvergleich für Glücksspielanbieter in {market} | B4GAMBLE",description:"Veröffentlichte Bonusbedingungen für {market} vergleichen, ohne kommerzielle Verfügbarkeit anzunehmen.",demoTitle:"Bonusdemonstration für Glücksspielanbieter | B4GAMBLE",demoDescription:"Fiktive Einträge zeigen den Vergleich. Sie sind keine aktuellen Aktionen.",heroKicker:"Boni · Bedingungen zuerst · 18+",heroLead:"Wert, gemessen",heroEmphasis:"an Bedingungen.",heroCopy:"Große Zahlen sagen nach Umsatzbedingungen wenig. Vergleiche Einzahlung, Umsatz, Einschränkungen und Ablauf.",proofTerms:"Wesentliche Bedingungen zuerst",proofClaims:"Keine Garantieversprechen",proofSources:"Quellenstatus sichtbar",directoryTitle:"Alle Boni",filterTitle:"Boni filtern",sortedByValue:"nach Nettowert sortiert",noMatchesTitle:"Keine Vergleichseinträge passen zu {market} und diesen Filtern.",noMatchesCopy:"Entferne einen Filter oder ändere die Darstellung. Kein ungeeignetes Angebot wird eingesetzt.",unavailableTitleBody:"Das veröffentlichte Verzeichnis konnte nicht geladen werden.",unavailableCopy:"Es wird kein zwischengespeichertes oder erfundenes Angebot eingesetzt.",methodKicker:"So bewerten wir Bonusbedingungen",methodLead:"Das Kleingedruckte ist",methodEmphasis:"das Produkt.",methodCopy:"Umsatz, Gewichtung, Einzahlung und Ablauf bestimmen die tatsächlichen Anforderungen.",guideAction:"Bonus-Leitfaden lesen →",disclosureTitle:"18+ · Kommerzieller Hinweis",disclosureCopy:"B4GAMBLE kann über künftig berechtigte Links Vergütung erhalten. Sie bestimmt weder Editor Score noch Rangfolge. Prüfe aktuelle Bedingungen und lokales Recht.",disclosureAction:"Hinweis lesen →",selectorBestOverall:"Insgesamt am besten",selectorLowWagering:"Niedrige Umsatzbedingung",selectorLowDeposit:"Niedrige Einzahlung",selectorCrypto:"Krypto",selectorNewest:"Neueste"},
+  bonuses:{title:"Bonusvergleich für Glücksspielanbieter in {market} | B4GAMBLE",description:"Veröffentlichte Bonusbedingungen für {market} vergleichen, ohne kommerzielle Verfügbarkeit anzunehmen.",demoTitle:"Bonusdemonstration für Glücksspielanbieter | B4GAMBLE",demoDescription:"Fiktive Einträge zeigen den Vergleich. Sie sind keine aktuellen Aktionen.",heroKicker:"Boni · Bedingungen zuerst · 18+",heroLead:"Wert, gemessen",heroEmphasis:"an Bedingungen.",heroCopy:"Große Zahlen sagen nach Umsatzbedingungen wenig. Vergleiche Einzahlung, Umsatz, Einschränkungen und Ablauf.",proofTerms:"Wesentliche Bedingungen zuerst",proofClaims:"Keine Garantieversprechen",proofSources:"Quellenstatus sichtbar",directoryTitle:"Alle Boni",filterTitle:"Boni filtern",sortedByValue:"nach Nettowert sortiert",noMatchesTitle:"Keine Vergleichseinträge passen zu {market} und diesen Filtern.",noMatchesCopy:"Entferne einen Filter oder ändere die Darstellung. Kein ungeeignetes Angebot wird eingesetzt.",unavailableTitleBody:"Das veröffentlichte Verzeichnis konnte nicht geladen werden.",unavailableCopy:"Es wird kein zwischengespeichertes oder erfundenes Angebot eingesetzt.",featuredFilter:"Status der redaktionellen Hervorhebung",featuredTrue:"Redaktionell hervorgehoben",featuredFalse:"Nicht redaktionell hervorgehoben",recommendedFilter:"Status der redaktionellen Empfehlung",recommendedTrue:"Redaktionell empfohlen",recommendedFalse:"Nicht redaktionell empfohlen",methodKicker:"So bewerten wir Bonusbedingungen",methodLead:"Das Kleingedruckte ist",methodEmphasis:"das Produkt.",methodCopy:"Umsatz, Gewichtung, Einzahlung und Ablauf bestimmen die tatsächlichen Anforderungen.",guideAction:"Bonus-Leitfaden lesen →",disclosureTitle:"18+ · Kommerzieller Hinweis",disclosureCopy:"B4GAMBLE kann über künftig berechtigte Links Vergütung erhalten. Sie bestimmt weder Editor Score noch Rangfolge. Prüfe aktuelle Bedingungen und lokales Recht.",disclosureAction:"Hinweis lesen →",selectorBestOverall:"Insgesamt am besten",selectorLowWagering:"Niedrige Umsatzbedingung",selectorLowDeposit:"Niedrige Einzahlung",selectorCrypto:"Krypto",selectorNewest:"Neueste"},
   profile:{unavailableTitle:"Anbieterprofil nicht verfügbar | B4GAMBLE",unavailableDescription:"Dieses Anbieterprofil ist nicht veröffentlicht oder nicht verfügbar.",review:"Bewertung",operatorReview:"Anbieterbewertung",verdict:"Unser Urteil:",offerUnavailable:"Angebot nicht verfügbar",currentReview:"Aktuelle Bewertung",publishedReview:"Veröffentlichte Bewertung",demoReview:"Fiktive Bewertungsdemonstration",demoDisclosure:"Fiktive Bewertungsfelder; kein aktueller Anbieter, keine Lizenzbehauptung, kein Partnerangebot und kein kommerzieller Besuch.",marketUnavailable:"Nur Bewertung für {market}",marketUnavailableCopy:"Dieses Profil veröffentlicht keine Verfügbarkeit für den gewählten Darstellungsmarkt. Es wird keine Berechtigung abgeleitet und keine kommerzielle Aktion angeboten.",overview:"Überblick",offerEvidence:"Angebot & Evidenz",questions:"FAQ",quickCheck:"Der 30-Sekunden-Check",quickCheckCopy:"Wichtige veröffentlichte Felder vor den Details",bestFor:"Geeignet für",whyWeLikeIt:"Warum es auffällt",thingsToKnow:"Wissenswert",founded:"Gegründet",games:"Spiele",offerTerms:"Angebot & Bedingungen",evidencePaymentsTools:"Evidenz, Zahlungen & Kontrollwerkzeuge",licenceRecord:"Lizenzeintrag",paymentRecords:"Zahlungsangaben",providers:"Anbieter",controlTools:"Kontrollwerkzeuge",keepInView:"Im Blick behalten",scoreExplanation:"Redaktionelles Urteil, keine gewichtete Formel",demoAgeField:"FIKTIVES 18+-FELD",demoLicenceField:"FIKTIVES LIZENZFELD",demoPaymentFields:"FIKTIVE ZAHLUNGSFELDER",demoWithdrawalField:"FIKTIVES AUSZAHLUNGSFELD",demoOfferField:"FIKTIVES ANGEBOTSFELD",demoTerms:"FIKTIVE DEMONSTRATIONSBEDINGUNGEN",demoFinalFields:"FIKTIVE DEMONSTRATIONSFELDER",relatedTitle:"Weiter vergleichen",relatedCopy:"Nutze in jeder Bewertung dieselben Evidenzfelder.",compareBonusTerms:"Veröffentlichte Bonusbedingungen vergleichen",exploreBonusInformation:"Bonusinformationen ansehen",originalEditorialNotice:"Der redaktionelle Bewertungstext ist quellengesteuert und erscheint in seiner veröffentlichten Sprache."},
   comparison:{trayLabel:"Anbietervergleich",selectedOfThree:"{count} von 3 ausgewählt",chooseOneMore:"Wähle noch eines zum Vergleichen",ready:"Dein Vergleich ist bereit",add:"Vergleichen",open:"Vergleich öffnen",clear:"Löschen",title:"Direkter Vergleich",subtitle:"Dieselben Evidenzfelder für jeden Anbieter",close:"Vergleich schließen",loading:"Vergleich wird erstellt…",unavailable:"Der ausgewählte öffentliche Vergleich ist nicht verfügbar. Es wurde kein Ersatz eingesetzt.",fullReview:"Vollständige Bewertung",remove:"Entfernen",topScore:"Höchste Bewertung",evidenceUnavailable:"Veröffentlichte Vergleichsevidenz ist nicht verfügbar.",footer:"18+ · Verfügbarkeit wird nie angenommen · Bewertungen sind redaktionell. Der Markt ist eine Vergleichspräferenz, kein Berechtigungsnachweis."},
   outbound:{affiliateNote:"Affiliate-Link · Wir können Provision erhalten.",label:"02 / Bestätigung der Weiterleitung",title:"Du verlässt B4GAMBLE.",description:"Du besuchst gleich einen externen Glücksspielanbieter. Eine berechtigte Aktion kann B4GAMBLE Provision bringen. Dies ändert die redaktionelle Rangfolge nicht.",contractLabel:"Übergabevertrag",contractCopy:"Keine rohe Ziel-URL · keine Autorität aus dem Browser.",riskCopy:"18+ · Berechtigung und Anbieterbedingungen gelten · Glücksspiel birgt finanzielle Risiken",continueAction:"Zum berechtigten Partner weiter →",cancelAction:"Abbrechen und bei B4GAMBLE bleiben",disclosureAction:"Affiliate-Hinweis ansehen"},
@@ -221,6 +231,30 @@ const draftBreadcrumbLabels: Record<keyof typeof compactTranslations, string> = 
   "da-DK": "Brødkrummenavigation", "fi-FI": "Murupolku", "nb-NO": "Brødsmulenavigasjon",
 };
 
+const draftControlledMediaLabels: Record<keyof typeof compactTranslations, string> = {
+  "it-IT": "Contenuti visivi verificati",
+  "es-ES": "Contenido visual verificado",
+  "pt-PT": "Conteúdo visual verificado",
+  "el-GR": "Ελεγμένο οπτικό υλικό",
+  "nl-NL": "Gecontroleerd beeldmateriaal",
+  "sv-SE": "Granskat bildmaterial",
+  "da-DK": "Kontrolleret billedmateriale",
+  "fi-FI": "Tarkistettu kuvamateriaali",
+  "nb-NO": "Kontrollert bildemateriale",
+};
+
+const draftMediaFallbackCopy: Record<keyof typeof compactTranslations, readonly [string, string]> = {
+  "it-IT": ["Contenuto visivo adatto non disponibile", "La recensione e le condizioni restano disponibili senza mostrare contenuti visivi inadatti o non verificati."],
+  "es-ES": ["No hay material visual adecuado", "La reseña y las condiciones siguen disponibles sin mostrar material visual inadecuado o sin verificar."],
+  "pt-PT": ["Conteúdo visual adequado indisponível", "A análise e os termos continuam disponíveis sem apresentar conteúdo visual inadequado ou não verificado."],
+  "el-GR": ["Δεν υπάρχει κατάλληλο οπτικό υλικό", "Η αξιολόγηση και οι όροι παραμένουν διαθέσιμοι χωρίς ακατάλληλο ή μη επαληθευμένο οπτικό υλικό."],
+  "nl-NL": ["Geen geschikt beeldmateriaal beschikbaar", "De review en voorwaarden blijven beschikbaar zonder ongeschikt of niet-geverifieerd beeldmateriaal te tonen."],
+  "sv-SE": ["Lämpligt bildmaterial saknas", "Recensionen och villkoren finns kvar utan olämpligt eller obekräftat bildmaterial."],
+  "da-DK": ["Egnet billedmateriale mangler", "Anmeldelsen og vilkårene er fortsat tilgængelige uden uegnet eller ubekræftet billedmateriale."],
+  "fi-FI": ["Sopivaa kuvamateriaalia ei ole saatavilla", "Arvio ja ehdot ovat edelleen saatavilla ilman sopimatonta tai vahvistamatonta kuvamateriaalia."],
+  "nb-NO": ["Egnet bildemateriale er ikke tilgjengelig", "Anmeldelsen og vilkårene er fortsatt tilgjengelige uten uegnet eller ubekreftet bildemateriale."],
+};
+
 const draftCasinoSelectorLabels: Record<keyof typeof compactTranslations, readonly [string, string, string, string, string]> = {
   "it-IT": ["Migliore in assoluto", "Crypto", "Mobile", "Migliori bonus", "Nuovi casinò"],
   "es-ES": ["Mejor en general", "Cripto", "Móvil", "Mejores bonos", "Casinos nuevos"],
@@ -243,6 +277,18 @@ const draftBonusSelectorLabels: Record<keyof typeof compactTranslations, readonl
   "da-DK": ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"],
   "fi-FI": ["Paras kokonaisuus", "Matala kierrätysvaatimus", "Pieni talletus", "Krypto", "Uusimmat"],
   "nb-NO": ["Best totalt", "Lavt omsetningskrav", "Lavt innskudd", "Krypto", "Nyeste"],
+};
+
+const draftBonusEditorialFilterLabels: Record<keyof typeof compactTranslations, readonly [string, string, string, string, string, string]> = {
+  "it-IT": ["Stato in evidenza editoriale", "In evidenza editoriale", "Non in evidenza editoriale", "Stato della raccomandazione editoriale", "Raccomandato dalla redazione", "Non raccomandato dalla redazione"],
+  "es-ES": ["Estado destacado editorial", "Destacado editorialmente", "No destacado editorialmente", "Estado de recomendación editorial", "Recomendado editorialmente", "No recomendado editorialmente"],
+  "pt-PT": ["Estado de destaque editorial", "Em destaque editorial", "Sem destaque editorial", "Estado de recomendação editorial", "Recomendado editorialmente", "Não recomendado editorialmente"],
+  "el-GR": ["Κατάσταση συντακτικής προβολής", "Προβάλλεται συντακτικά", "Δεν προβάλλεται συντακτικά", "Κατάσταση συντακτικής σύστασης", "Συνιστάται συντακτικά", "Δεν συνιστάται συντακτικά"],
+  "nl-NL": ["Redactionele uitlichtstatus", "Redactioneel uitgelicht", "Niet redactioneel uitgelicht", "Redactionele aanbevelingsstatus", "Redactioneel aanbevolen", "Niet redactioneel aanbevolen"],
+  "sv-SE": ["Redaktionell framhävning", "Redaktionellt framhävd", "Inte redaktionellt framhävd", "Redaktionell rekommendation", "Redaktionellt rekommenderad", "Inte redaktionellt rekommenderad"],
+  "da-DK": ["Redaktionel fremhævelse", "Redaktionelt fremhævet", "Ikke redaktionelt fremhævet", "Redaktionel anbefaling", "Redaktionelt anbefalet", "Ikke redaktionelt anbefalet"],
+  "fi-FI": ["Toimituksellisen noston tila", "Toimituksellisesti nostettu", "Ei toimituksellisesti nostettu", "Toimituksellisen suosituksen tila", "Toimituksellisesti suositeltu", "Ei toimituksellisesti suositeltu"],
+  "nb-NO": ["Status for redaksjonell fremheving", "Redaksjonelt fremhevet", "Ikke redaksjonelt fremhevet", "Status for redaksjonell anbefaling", "Redaksjonelt anbefalt", "Ikke redaksjonelt anbefalt"],
 };
 
 const draftGameLabels: Record<keyof typeof compactTranslations, readonly [string, string, string, string]> = {
@@ -285,7 +331,9 @@ function localeVariant(locale: keyof typeof compactTranslations): ProductPageMes
   const [bonusAvailability, visitAvailability, saferGamblingInformation, mobileSupport, supported, resultsPerPage, featured, relevance, newest, nameAscending, nameDescending] = draftCasinoControlLabels[locale];
   const [bestOverall, crypto, mobile, bestBonuses, newCasinos] = draftCasinoSelectorLabels[locale];
   const [selectorBestOverall, selectorLowWagering, selectorLowDeposit, selectorCrypto, selectorNewest] = draftBonusSelectorLabels[locale];
+  const [featuredFilter, featuredTrue, featuredFalse, recommendedFilter, recommendedTrue, recommendedFalse] = draftBonusEditorialFilterLabels[locale];
   const [slots, tableGames, roulette, blackjack] = draftGameLabels[locale];
+  const [mediaUnavailableTitle, mediaUnavailableCopy] = draftMediaFallbackCopy[locale];
   const state = `${n.unavailable}. ${copy[1]}`;
   const method = `${n.methodology}: ${n.terms}. ${copy[1]}`;
   return {
@@ -295,7 +343,7 @@ function localeVariant(locale: keyof typeof compactTranslations): ProductPageMes
       editorScore:n.score,wagering:n.wagering,minimumDeposit:n.deposit,maximumBonus:n.value,maximumBet:n.terms,payout:n.payout,eligibility:n.eligibility,expiry:n.expiry,paymentMethods:n.payments,licence:n.licence,
       activeFilters:n.filters,clearAll:n.clear,applyFilters:n.filters,filters:n.filters,previous:n.previous,next:n.next,pageOf:`{page} / {pages}`,demoData:n.demo,demoDisclosure:state,
       marketPresentationNotice:copy[1],reviewAvailableNoAction:state,affiliateDisclosure:n.affiliate,methodology:n.methodology,bonusGuide:n.bonuses,protectedHelp:n.help,allFilters:n.filters,directoryControls:n.filters,closeFilters:n.close,
-      updatingResults:`${n.results} · ${n.current}`,sourceStatus:n.source,materialTerms:n.terms,materialOfferTerms:n.terms,commercialUnavailable:n.unavailable,originalSourceCopy:n.source,
+      updatingResults:`${n.results} · ${n.current}`,sourceStatus:n.source,controlledMedia:draftControlledMediaLabels[locale],mediaUnavailableTitle,mediaUnavailableCopy,materialTerms:n.terms,materialOfferTerms:n.terms,commercialUnavailable:n.unavailable,originalSourceCopy:n.source,
       countryPreference,bonusType,cryptoSupport,availability,sortResults,cryptoSupported,cryptoUnsupported,
       bonusAvailability,visitAvailability,saferGamblingInformation,mobileSupport,supported,resultsPerPage,featured,relevance,newest,nameAscending,nameDescending,
       breadcrumb:draftBreadcrumbLabels[locale],
@@ -316,6 +364,7 @@ function localeVariant(locale: keyof typeof compactTranslations): ProductPageMes
     bonuses: {
       title:`${n.bonuses} — {market} | B4GAMBLE`,description:copy[0],demoTitle:`${n.bonuses} · ${n.demo} | B4GAMBLE`,demoDescription:state,heroKicker:`${n.bonuses} · ${n.terms} · 18+`,heroLead:n.value,heroEmphasis:n.terms,heroCopy:copy[0],
       proofTerms:n.terms,proofClaims:n.source,proofSources:n.source,directoryTitle:n.bonuses,filterTitle:`${n.filters} · ${n.bonuses}`,sortedByValue:n.value,noMatchesTitle:copy[4],noMatchesCopy:copy[1],unavailableTitleBody:n.unavailable,unavailableCopy:state,
+      featuredFilter,featuredTrue,featuredFalse,recommendedFilter,recommendedTrue,recommendedFalse,
       methodKicker:n.methodology,methodLead:n.terms,methodEmphasis:n.value,methodCopy:method,guideAction:`${n.bonuses} →`,disclosureTitle:n.affiliate,disclosureCopy:copy[1],disclosureAction:`${n.affiliate} →`,
       selectorBestOverall,selectorLowWagering,selectorLowDeposit,selectorCrypto,selectorNewest,
     },
@@ -332,12 +381,11 @@ function localeVariant(locale: keyof typeof compactTranslations): ProductPageMes
   };
 }
 
-type ProductPageOverrides = {
+export type ProductPageOverrides = {
   [Section in keyof ProductPageMessages]: Partial<ProductPageMessages[Section]>;
 };
 
-function reviewedLocaleVariant(locale: keyof typeof compactTranslations, overrides: ProductPageOverrides): ProductPageMessages {
-  const base = localeVariant(locale);
+function applyProductPageOverrides(base: ProductPageMessages, overrides: ProductPageOverrides): ProductPageMessages {
   return {
     common: { ...base.common, ...overrides.common },
     bestOffers: { ...base.bestOffers, ...overrides.bestOffers },
@@ -348,6 +396,10 @@ function reviewedLocaleVariant(locale: keyof typeof compactTranslations, overrid
     outbound: { ...base.outbound, ...overrides.outbound },
     calculator: { ...base.calculator, ...overrides.calculator },
   };
+}
+
+function reviewedLocaleVariant(locale: keyof typeof compactTranslations, overrides: ProductPageOverrides): ProductPageMessages {
+  return applyProductPageOverrides(localeVariant(locale), overrides);
 }
 
 const firstWaveEditorialOverrides = {
@@ -403,18 +455,373 @@ const firstWaveEditorialOverrides = {
   },
 } satisfies Record<"es-ES" | "sv-SE" | "da-DK" | "el-GR", ProductPageOverrides>;
 
+const languageQualityOverrides = {
+  "en-GB": {
+    common: {
+      actionAvailable: "Partner link available",
+      noGovernedVisit: "No partner link available",
+      demoDisclosure: "Fictional product records are not current operators, partner offers or live promotions. No link to a gambling operator or affiliate partner is available.",
+      marketPresentationNotice: "Changing the selected market only changes the editorial content shown. It does not confirm your location, eligibility or whether an offer is available.",
+      reviewAvailableNoAction: "The review remains available, but there is no partner link.",
+      commercialUnavailable: "No partner link available",
+      originalSourceCopy: "Facts from original sources remain in the language in which they were published.",
+    },
+    bestOffers: {
+      heroCopy: "Published records are filtered for {market}. Partner links appear only when they are available for this visit.",
+      inferredActions: "partner links",
+      demoCopy: "Fictional records show ranking and material-term presentation. They are not current promotions or partner offers, and none links to a gambling operator.",
+      claimActions: "offer links",
+      availabilityFailsClosed: "No partner links available",
+      commissionNote: "B4GAMBLE may earn commission when a clearly labelled affiliate link is available and used. This does not affect the editorial score or ranking.",
+      faqCommissionAnswer: "B4GAMBLE may earn commission when a clearly labelled affiliate link is available and used. This does not affect the editorial score or ranking.",
+    },
+    casinos: {
+      heroCopy: "Choose what matters to you; the directory shows published reviews for the selected market. An available review does not mean there is a partner offer.",
+      reviewOnlyNotice: "Reviews remain available. Partner links appear only when the market, offer and destination are available.",
+      faqReviewOnlyAnswer: "The editorial review is available, but there is currently no partner link.",
+      faqCommissionAnswer: "No. Affiliate compensation does not determine Editor Score or natural editorial ranking.",
+    },
+    bonuses: {
+      disclosureCopy: "B4GAMBLE may receive compensation if a future, clearly labelled affiliate link is available and used. Compensation does not determine the editorial score or ranking. Check current operator terms and local law before acting.",
+    },
+    profile: {
+      demoDisclosure: "Fictional review fields; they do not describe a current operator, licence or partner offer, and no partner link is available.",
+      marketUnavailableCopy: "This profile does not show offer availability for the selected market. The review remains available, but there is no partner link.",
+      originalEditorialNotice: "The editorial review comes from the published source and is shown in its original language.",
+    },
+    comparison: {},
+    outbound: {
+      label: "02 / Leaving B4GAMBLE",
+      contractLabel: "Destination check",
+      description: "You are about to visit a third-party gambling operator. If you continue through an affiliate link, B4GAMBLE may earn commission. This does not affect the editorial score or ranking.",
+      contractCopy: "B4GAMBLE checks the destination link before you leave the site.",
+      continueAction: "Continue to operator →",
+    },
+    calculator: { titleEmphasis: "before you accept." },
+  },
+  "de-DE": {
+    common: {
+      actionAvailable: "Partnerlink verfügbar",
+      noGovernedVisit: "Kein Partnerlink verfügbar",
+      demoDisclosure: "Fiktive Produktdaten sind keine aktuellen Anbieter, Partnerangebote oder laufenden Aktionen. Es ist kein Link zu einem Glücksspielanbieter oder Affiliate-Partner verfügbar.",
+      marketPresentationNotice: "Die Marktauswahl ändert nur die angezeigten redaktionellen Inhalte. Sie bestätigt weder deinen Standort noch deine Berechtigung oder die Verfügbarkeit eines Angebots.",
+      reviewAvailableNoAction: "Die Bewertung bleibt verfügbar, aber es gibt keinen Partnerlink.",
+      cryptoSupported: "Kryptowährungen werden unterstützt.",
+      visitAvailability: "Verfügbarkeit des Partnerlinks",
+      breadcrumb: "Navigationspfad",
+      commercialUnavailable: "Kein Partnerlink verfügbar",
+      originalSourceCopy: "Angaben aus Originalquellen bleiben in der Sprache ihrer Veröffentlichung.",
+    },
+    bestOffers: {
+      description: "Eine redaktionelle Auswahlliste für {market}, mit wesentlichen Bedingungen und Verfügbarkeit vor dem Klick.",
+      heroCopy: "Veröffentlichte Einträge werden für {market} gefiltert. Partnerlinks erscheinen nur, wenn sie für diesen Besuch verfügbar sind.",
+      inferredActions: "Partnerlinks",
+      commissionNote: "B4GAMBLE kann Provision erhalten, wenn du einen verfügbaren und klar gekennzeichneten Affiliate-Link nutzt. Dies beeinflusst weder die redaktionelle Bewertung noch die Rangfolge.",
+      demoCopy: "Fiktive Einträge zeigen das Ranking und wesentliche Bedingungen. Sie sind keine aktuellen Aktionen oder Partnerangebote und führen nicht zu einem Glücksspielanbieter.",
+      claimActions: "Angebotslinks",
+      availabilityFailsClosed: "Keine Partnerlinks verfügbar",
+      faqCommissionAnswer: "B4GAMBLE kann Provision erhalten, wenn du einen verfügbaren und klar gekennzeichneten Affiliate-Link nutzt. Dies beeinflusst weder die redaktionelle Bewertung noch die Rangfolge.",
+    },
+    casinos: {
+      heroLead: "Prüfe den Anbieter",
+      proofEvidence: "Nachweise und Grenzen offengelegt",
+      reviewOnlyNotice: "Bewertungen bleiben verfügbar. Partnerlinks erscheinen nur, wenn Markt, Angebot und Ziel aktuell verfügbar sind.",
+      faqDifferenceQuestion: "Wie unterscheidet sich das von „Beste Angebote“?",
+      faqDifferenceAnswer: "Beste Angebote ist eine klar begrenzte Auswahl. In diesem Verzeichnis kannst du alle geeigneten veröffentlichten Bewertungen vergleichen.",
+      faqReviewOnlyAnswer: "Die redaktionelle Bewertung ist verfügbar, aber es gibt aktuell keinen Partnerlink.",
+      faqCommissionAnswer: "Nein. Provisionen beeinflussen weder den Editor Score noch die redaktionelle Rangfolge.",
+    },
+    bonuses: {
+      demoDescription: "Fiktive Einträge zeigen, wie Bedingungen verglichen werden. Sie sind keine aktuellen Aktionen oder Partnerangebote.",
+      heroCopy: "Der hervorgehobene Betrag sagt wenig aus, sobald die Umsatzbedingung berücksichtigt wird. Vergleiche Einzahlung, erforderlichen Umsatz, Einschränkungen und Ablauf.",
+      methodCopy: "Umsatzbedingung, Spielgewichtung, Mindesteinzahlung und Ablauf bestimmen, was ein Bonus tatsächlich voraussetzt.",
+      disclosureCopy: "B4GAMBLE kann Provision erhalten, wenn künftig ein verfügbarer und klar gekennzeichneter Affiliate-Link genutzt wird. Dies beeinflusst weder die redaktionelle Bewertung noch die Rangfolge. Prüfe die aktuellen Bedingungen und das geltende Recht.",
+    },
+    profile: {
+      demoDisclosure: "Fiktive Bewertungsfelder; sie beschreiben keinen aktuellen Anbieter, keine Lizenz und kein Partnerangebot. Ein Partnerlink ist nicht verfügbar.",
+      marketUnavailableCopy: "Dieses Profil zeigt für den gewählten Markt keine Angebotsverfügbarkeit. Die Bewertung bleibt verfügbar, aber es gibt keinen Partnerlink.",
+      offerEvidence: "Angebot & Nachweise",
+      founded: "Gründungsjahr",
+      evidencePaymentsTools: "Nachweise, Zahlungen & Kontrollwerkzeuge",
+      relatedCopy: "Vergleiche in jeder Bewertung dieselben Angaben.",
+      originalEditorialNotice: "Der redaktionelle Text stammt aus der veröffentlichten Quelle und wird in deren Sprache angezeigt.",
+    },
+    comparison: {
+      chooseOneMore: "Wähle noch einen Anbieter zum Vergleichen.",
+      subtitle: "Dieselben Angaben für jeden Anbieter",
+      evidenceUnavailable: "Veröffentlichte Vergleichsdaten sind nicht verfügbar.",
+    },
+    outbound: {
+      label: "02 / B4GAMBLE verlassen",
+      contractLabel: "Zielprüfung",
+      description: "Du besuchst gleich einen externen Glücksspielanbieter. Wenn du über einen Affiliate-Link weitergehst, kann B4GAMBLE Provision erhalten. Dies beeinflusst weder die redaktionelle Bewertung noch die Rangfolge.",
+      contractCopy: "B4GAMBLE prüft den Ziel-Link, bevor du die Website verlässt.",
+      continueAction: "Weiter zum Anbieter →",
+    },
+    calculator: {},
+  },
+  "es-ES": {
+    common: {
+      actionAvailable: "Enlace de socio disponible",
+      noGovernedVisit: "No hay enlace de socio disponible",
+      demoDisclosure: "Los registros ficticios no son operadores actuales, ofertas de socios ni promociones activas. No hay ningún enlace a un operador o socio afiliado.",
+      marketPresentationNotice: "Cambiar el mercado seleccionado solo modifica el contenido editorial que ves. No confirma tu ubicación, si cumples los requisitos ni si hay una oferta disponible.",
+      reviewAvailableNoAction: "La reseña sigue disponible, pero no hay enlace de socio.",
+      editorScore: "Editor Score",
+      cryptoSupported: "Admite criptomonedas",
+      visitAvailability: "Disponibilidad del enlace",
+      saferGamblingInformation: "Información sobre juego seguro",
+      commercialUnavailable: "No hay enlace de socio disponible",
+      originalSourceCopy: "Los datos de fuentes originales se muestran en el idioma en el que se publicaron.",
+    },
+    bestOffers: {
+      heroCopy: "Los registros publicados se filtran para {market}. Los enlaces a ofertas solo aparecen cuando están disponibles para esa visita.",
+      eligibleRecords: "resultados disponibles",
+      inferredActions: "enlaces de socios",
+      commissionNote: "B4GAMBLE puede recibir una comisión si utilizas un enlace de afiliación disponible y claramente identificado. Esto no influye en la puntuación ni en el orden editorial.",
+      emptyTitle: "No hay resultados disponibles para {market}.",
+      demoCopy: "Los registros ficticios muestran la clasificación y las condiciones esenciales. No son promociones ni ofertas de socios actuales y no enlazan a ningún operador.",
+      claimActions: "enlaces de ofertas",
+      availabilityFailsClosed: "No hay enlaces disponibles",
+      faqCommissionAnswer: "B4GAMBLE puede recibir una comisión si utilizas un enlace de afiliación disponible y claramente identificado. Esto no influye en la puntuación ni en el orden editorial.",
+      faqWhyThreeAnswer: "Una lista breve facilita la decisión; la página de Bonos reúne todas las opciones disponibles.",
+    },
+    casinos: {
+      noMatchesCopy: "Quita un filtro o cambia la presentación. B4GAMBLE no rellena el hueco con operadores que no cumplen los criterios.",
+      reviewOnlyNotice: "Las reseñas siguen disponibles. Los enlaces de socios solo aparecen cuando el mercado, la oferta y el destino están disponibles.",
+      faqDifferenceAnswer: "Mejores ofertas es una selección breve. Este directorio permite comparar todas las reseñas publicadas disponibles.",
+      faqReviewOnlyAnswer: "La reseña editorial está disponible, pero ahora mismo no hay enlace de socio.",
+      faqCommissionAnswer: "No. Las comisiones no influyen en Editor Score ni en el orden editorial.",
+    },
+    bonuses: {
+      heroCopy: "La cifra principal dice poco cuando se tiene en cuenta el requisito de apuesta. Compara el depósito, el volumen de apuesta, las restricciones y la caducidad.",
+      disclosureCopy: "B4GAMBLE puede recibir una comisión si en el futuro utilizas un enlace de afiliación disponible y claramente identificado. Esto no influye en la puntuación ni en el orden editorial. Comprueba las condiciones actuales y la ley aplicable.",
+    },
+    profile: {
+      demoDisclosure: "Campos ficticios: no describen un operador actual, una licencia ni una oferta de socio. No hay enlace de socio disponible.",
+      marketUnavailableCopy: "Este perfil no muestra ofertas disponibles para el mercado seleccionado. La reseña sigue disponible, pero no hay enlace de socio.",
+      offerEvidence: "Oferta y datos",
+      founded: "Año de fundación",
+      evidencePaymentsTools: "Datos, pagos y herramientas de control",
+      relatedCopy: "Compara los mismos datos en cada reseña.",
+      originalEditorialNotice: "El texto editorial procede de la fuente publicada y se muestra en su idioma original.",
+    },
+    comparison: {
+      title: "Comparación lado a lado",
+      subtitle: "Los mismos datos para cada casino",
+      evidenceUnavailable: "Los datos publicados para la comparación no están disponibles.",
+    },
+    outbound: {
+      label: "02 / Salida de B4GAMBLE",
+      contractLabel: "Comprobación del destino",
+      description: "Estás a punto de visitar a un operador externo. Si continúas mediante un enlace de afiliación, B4GAMBLE puede recibir una comisión. Esto no influye en la puntuación ni en el orden editorial.",
+      contractCopy: "B4GAMBLE comprueba el enlace de destino antes de que salgas del sitio.",
+      continueAction: "Continuar al operador →",
+    },
+    calculator: {
+      copy: "Introduce las cifras anunciadas para ver el volumen de juego requerido y una estimación del coste de completar el requisito.",
+      expectedCost: "Coste estimado para completar el requisito",
+      caveat: "Ilustración estadística, no una predicción. La variación es amplia y prevalecen las condiciones reales.",
+    },
+  },
+  "sv-SE": {
+    common: {
+      actionAvailable: "Partnerlänk tillgänglig",
+      noGovernedVisit: "Ingen partnerlänk tillgänglig",
+      expiry: "Giltighetstid",
+      demoDisclosure: "Fiktiva produktposter är inte aktuella operatörer, partnererbjudanden eller kampanjer. Det finns ingen länk till en speloperatör eller affiliatepartner.",
+      marketPresentationNotice: "Marknadsvalet ändrar bara vilket redaktionellt innehåll som visas. Det bekräftar inte var du befinner dig, om du uppfyller villkoren eller om ett erbjudande är tillgängligt.",
+      reviewAvailableNoAction: "Recensionen finns kvar, men det finns ingen partnerlänk.",
+      editorScore: "Editor Score",
+      commercialUnavailable: "Ingen partnerlänk tillgänglig",
+      originalSourceCopy: "Uppgifter från originalkällor visas på det språk där de publicerades.",
+    },
+    bestOffers: {
+      description: "Ett redaktionellt urval för {market}, där väsentliga villkor och tillgänglighet visas innan du går vidare.",
+      heroCopy: "Publicerade poster filtreras för {market}. Partnerlänkar visas bara när de är tillgängliga för det aktuella besöket.",
+      eligibleRecords: "matchande poster",
+      inferredActions: "partnerlänkar",
+      commissionNote: "B4GAMBLE kan få provision om du använder en tillgänglig och tydligt märkt affiliatelänk. Det påverkar varken betyget eller den redaktionella ordningen.",
+      emptyTitle: "Inga matchande poster för {market}.",
+      emptyCopy: "B4GAMBLE ersätter inte detta med en brittisk lista och luckrar inte upp metoden.",
+      demoCopy: "Fiktiva poster visar rankning och väsentliga villkor. De är inte aktuella kampanjer eller partnererbjudanden och länkar inte till någon speloperatör.",
+      claimActions: "erbjudandelänkar",
+      availabilityFailsClosed: "Inga partnerlänkar tillgängliga",
+      faqCommissionAnswer: "B4GAMBLE kan få provision om du använder en tillgänglig och tydligt märkt affiliatelänk. Det påverkar varken betyget eller den redaktionella ordningen.",
+      faqWhyThreeAnswer: "En kort lista gör valet överskådligt; Bonussidan visar alla tillgängliga alternativ.",
+    },
+    casinos: {
+      demoDescription: "Tydligt märkta fiktiva poster visar formatet utan en aktuell kampanj eller affiliatelänk.",
+      proofEvidence: "Underlag och begränsningar redovisas",
+      noMatchesCopy: "Ta bort ett filter eller byt visning. B4GAMBLE fyller inte luckan med operatörer som inte uppfyller kraven.",
+      reviewOnlyNotice: "Recensionerna finns kvar. Partnerlänkar visas bara när marknad, erbjudande och destination är tillgängliga.",
+      faqReviewOnlyAnswer: "Den redaktionella recensionen är tillgänglig, men det finns ingen partnerlänk just nu.",
+      faqCommissionAnswer: "Nej. Provision påverkar varken Editor Score eller den redaktionella ordningen.",
+    },
+    bonuses: {
+      heroCopy: "Det framhävda beloppet säger lite när omsättningskravet räknas in. Jämför insättning, omsättning, begränsningar och giltighetstid innan du går vidare.",
+      noMatchesCopy: "Ta bort ett filter eller byt visning. Inget erbjudande som inte uppfyller kriterierna används som ersättning.",
+      disclosureCopy: "B4GAMBLE kan få provision om du i framtiden använder en tillgänglig och tydligt märkt affiliatelänk. Det påverkar varken betyget eller den redaktionella ordningen. Kontrollera aktuella villkor och gällande lag.",
+    },
+    profile: {
+      demoDisclosure: "Fiktiva recensionsfält; de beskriver inte en aktuell operatör, licens eller ett partnererbjudande. Ingen partnerlänk är tillgänglig.",
+      marketUnavailableCopy: "Profilen visar inga tillgängliga erbjudanden för den valda marknaden. Recensionen finns kvar, men det finns ingen partnerlänk.",
+      offerEvidence: "Erbjudande och underlag",
+      evidencePaymentsTools: "Underlag, betalningar och kontrollverktyg",
+      relatedCopy: "Jämför samma uppgifter i varje recension.",
+      originalEditorialNotice: "Den redaktionella texten kommer från den publicerade källan och visas på originalspråket.",
+    },
+    comparison: {
+      subtitle: "Samma uppgifter för varje casino",
+      evidenceUnavailable: "De publicerade jämförelseuppgifterna är inte tillgängliga.",
+    },
+    outbound: {
+      label: "02 / Lämna B4GAMBLE",
+      contractLabel: "Kontroll av destination",
+      description: "Du är på väg till en extern speloperatör. Om du fortsätter via en affiliatelänk kan B4GAMBLE få provision. Det påverkar varken betyget eller den redaktionella ordningen.",
+      contractCopy: "B4GAMBLE kontrollerar destinationslänken innan du lämnar webbplatsen.",
+      continueAction: "Fortsätt till operatören →",
+    },
+    calculator: { positive: "Med dessa värden är det annonserade bonusbeloppet större än den beräknade förväntade kostnaden." },
+  },
+  "da-DK": {
+    common: {
+      actionAvailable: "Partnerlink tilgængeligt",
+      noGovernedVisit: "Intet partnerlink tilgængeligt",
+      demoDisclosure: "Fiktive produktposter er ikke aktuelle operatører, partnertilbud eller kampagner. Der er intet link til en spiloperatør eller affiliatepartner.",
+      marketPresentationNotice: "Markedsvalget ændrer kun det redaktionelle indhold, du ser. Det bekræfter ikke din placering, om du opfylder kravene, eller om et tilbud er tilgængeligt.",
+      reviewAvailableNoAction: "Anmeldelsen er stadig tilgængelig, men der er intet partnerlink.",
+      editorScore: "Editor Score",
+      commercialUnavailable: "Intet partnerlink tilgængeligt",
+      originalSourceCopy: "Oplysninger fra originalkilder vises på det sprog, de blev offentliggjort på.",
+    },
+    bestOffers: {
+      description: "En redaktionel kortliste for {market}, hvor væsentlige vilkår og tilgængelighed vises, før du går videre.",
+      heroCopy: "Offentliggjorte poster filtreres for {market}. Partnerlinks vises kun, når de er tilgængelige for det aktuelle besøg.",
+      eligibleRecords: "matchende poster",
+      inferredActions: "partnerlinks",
+      commissionNote: "B4GAMBLE kan modtage provision, hvis du bruger et tilgængeligt og tydeligt markeret affiliatelink. Det påvirker hverken vurderingen eller den redaktionelle rækkefølge.",
+      emptyTitle: "Ingen matchende poster for {market}.",
+      emptyCopy: "B4GAMBLE erstatter ikke dette med en britisk liste og lemper ikke metoden.",
+      demoCopy: "Fiktive poster viser rangering og væsentlige vilkår. De er ikke aktuelle kampagner eller partnertilbud og linker ikke til en spiloperatør.",
+      claimActions: "tilbudslinks",
+      availabilityFailsClosed: "Ingen partnerlinks tilgængelige",
+      faqCommissionAnswer: "B4GAMBLE kan modtage provision, hvis du bruger et tilgængeligt og tydeligt markeret affiliatelink. Det påvirker hverken vurderingen eller den redaktionelle rækkefølge.",
+      faqWhyThreeAnswer: "En kort liste gør valget overskueligt; Bonussiden viser alle tilgængelige muligheder.",
+    },
+    casinos: {
+      demoDescription: "Tydeligt markerede fiktive poster viser formatet uden en aktuel kampagne eller et affiliatelink.",
+      noMatchesCopy: "Fjern et filter, eller skift visning. B4GAMBLE fylder ikke hullet med operatører, der ikke opfylder kravene.",
+      reviewOnlyNotice: "Anmeldelserne er stadig tilgængelige. Partnerlinks vises kun, når marked, tilbud og destination er tilgængelige.",
+      faqReviewOnlyAnswer: "Den redaktionelle anmeldelse er tilgængelig, men der er intet partnerlink lige nu.",
+      faqCommissionAnswer: "Nej. Provision påvirker hverken Editor Score eller den redaktionelle rækkefølge.",
+    },
+    bonuses: {
+      heroCopy: "Beløbet i overskriften betyder mindre, når omsætningskravet regnes med. Sammenlign indbetaling, omsætning, begrænsninger og udløb.",
+      noMatchesCopy: "Fjern et filter, eller skift visning. Intet tilbud, der ikke opfylder kravene, bruges som erstatning.",
+      disclosureCopy: "B4GAMBLE kan modtage provision, hvis du fremover bruger et tilgængeligt og tydeligt markeret affiliatelink. Det påvirker hverken vurderingen eller den redaktionelle rækkefølge. Kontrollér aktuelle vilkår og gældende lov.",
+    },
+    profile: {
+      demoDisclosure: "Fiktive anmeldelsesfelter; de beskriver ikke en aktuel operatør, licens eller et partnertilbud. Intet partnerlink er tilgængeligt.",
+      marketUnavailableCopy: "Profilen viser ingen tilgængelige tilbud for det valgte marked. Anmeldelsen er stadig tilgængelig, men der er intet partnerlink.",
+      originalEditorialNotice: "Den redaktionelle tekst kommer fra den offentliggjorte kilde og vises på originalsproget.",
+    },
+    comparison: {},
+    outbound: {
+      label: "02 / Forlad B4GAMBLE",
+      contractLabel: "Kontrol af destination",
+      description: "Du er på vej til en ekstern spiloperatør. Hvis du fortsætter via et affiliatelink, kan B4GAMBLE modtage provision. Det påvirker hverken vurderingen eller den redaktionelle rækkefølge.",
+      contractCopy: "B4GAMBLE kontrollerer destinationslinket, før du forlader websitet.",
+      continueAction: "Fortsæt til operatøren →",
+    },
+    calculator: {},
+  },
+  "el-GR": {
+    common: {
+      actionAvailable: "Διαθέσιμος σύνδεσμος συνεργάτη",
+      noGovernedVisit: "Δεν υπάρχει διαθέσιμος σύνδεσμος",
+      browseReviews: "Δες αξιολογήσεις καζίνο",
+      clearAll: "Καθάρισε όλα τα φίλτρα",
+      applyFilters: "Εφάρμοσε τα φίλτρα",
+      demoDisclosure: "Οι φανταστικές εγγραφές δεν είναι τρέχοντες πάροχοι, προσφορές συνεργατών ή ενεργές προωθητικές ενέργειες. Δεν υπάρχει σύνδεσμος προς πάροχο τυχερών παιχνιδιών ή συνεργάτη.",
+      marketPresentationNotice: "Η επιλογή αγοράς αλλάζει μόνο το συντακτικό περιεχόμενο που βλέπεις. Δεν επιβεβαιώνει την τοποθεσία σου, αν πληροίς τις προϋποθέσεις ή αν υπάρχει διαθέσιμη προσφορά.",
+      reviewAvailableNoAction: "Η αξιολόγηση παραμένει διαθέσιμη, όχι όμως και σύνδεσμος συνεργάτη.",
+      editorScore: "Editor Score",
+      protectedHelp: "Άνοιξε την προστατευμένη Βοήθεια",
+      closeFilters: "Κλείσε τα φίλτρα",
+      commercialUnavailable: "Δεν υπάρχει διαθέσιμος σύνδεσμος συνεργάτη",
+      originalSourceCopy: "Τα στοιχεία από τις αρχικές πηγές εμφανίζονται στη γλώσσα στην οποία δημοσιεύτηκαν.",
+    },
+    bestOffers: {
+      unavailableDescription: "Η δημοσιευμένη σύγκριση για {market} είναι προσωρινά μη διαθέσιμη. Δεν αντικαθίσταται από αποθηκευμένη, παλιά ή επινοημένη λίστα.",
+      description: "Μια σύντομη συντακτική λίστα για {market}, με τους ουσιώδεις όρους και τη διαθεσιμότητα πριν επιλέξεις.",
+      heroCopy: "Οι δημοσιευμένες εγγραφές φιλτράρονται για {market}. Οι σύνδεσμοι προσφορών εμφανίζονται μόνο όταν είναι διαθέσιμοι για τη συγκεκριμένη επίσκεψη.",
+      eligibleRecords: "εγγραφές που πληρούν τα κριτήρια",
+      inferredActions: "σύνδεσμοι συνεργατών",
+      commissionNote: "Η B4GAMBLE μπορεί να λάβει προμήθεια αν χρησιμοποιήσεις έναν διαθέσιμο σύνδεσμο συνεργάτη με σαφή επισήμανση. Αυτό δεν επηρεάζει τη συντακτική βαθμολογία ή την κατάταξη.",
+      emptyTitle: "Δεν υπάρχουν εγγραφές που πληρούν τα κριτήρια για {market}.",
+      demoCopy: "Οι φανταστικές εγγραφές δείχνουν την κατάταξη και τους ουσιώδεις όρους. Δεν είναι τρέχουσες προωθητικές ενέργειες ή προσφορές συνεργατών και δεν οδηγούν σε πάροχο τυχερών παιχνιδιών.",
+      claimActions: "σύνδεσμοι προσφορών",
+      availabilityFailsClosed: "Δεν υπάρχουν διαθέσιμοι σύνδεσμοι",
+      faqCommissionAnswer: "Η B4GAMBLE μπορεί να λάβει προμήθεια αν χρησιμοποιήσεις έναν διαθέσιμο σύνδεσμο συνεργάτη με σαφή επισήμανση. Αυτό δεν επηρεάζει τη συντακτική βαθμολογία ή την κατάταξη.",
+      faqWhyThreeAnswer: "Μια σύντομη λίστα κάνει την επιλογή πιο ξεκάθαρη· η σελίδα Μπόνους δείχνει όλες τις διαθέσιμες επιλογές.",
+    },
+    casinos: {
+      noMatchesCopy: "Αφαίρεσε ένα φίλτρο ή άλλαξε προβολή. Η B4GAMBLE δεν καλύπτει το κενό με παρόχους που δεν πληρούν τα κριτήρια.",
+      reviewOnlyNotice: "Οι αξιολογήσεις παραμένουν διαθέσιμες. Οι σύνδεσμοι συνεργατών εμφανίζονται μόνο όταν υπάρχει κατάλληλη προσφορά και διαθέσιμος προορισμός για την επιλεγμένη αγορά.",
+      faqReviewOnlyAnswer: "Η συντακτική αξιολόγηση είναι διαθέσιμη, αλλά αυτή τη στιγμή δεν υπάρχει σύνδεσμος συνεργάτη.",
+      faqCommissionAnswer: "Όχι. Η προμήθεια δεν επηρεάζει το Editor Score ή τη συντακτική κατάταξη.",
+    },
+    bonuses: {
+      heroLead: "Η αξία μετριέται",
+      heroEmphasis: "με βάση τους όρους.",
+      heroCopy: "Το ποσό που προβάλλεται λέει λίγα αν δεν συνυπολογίσεις την απαίτηση στοιχηματισμού. Σύγκρινε κατάθεση, τζίρο, περιορισμούς και λήξη πριν επιλέξεις.",
+      disclosureCopy: "Η B4GAMBLE μπορεί να λάβει προμήθεια αν στο μέλλον χρησιμοποιήσεις έναν διαθέσιμο σύνδεσμο συνεργάτη με σαφή επισήμανση. Αυτό δεν επηρεάζει τη συντακτική βαθμολογία ή την κατάταξη. Έλεγξε τους τρέχοντες όρους και το εφαρμοστέο δίκαιο.",
+    },
+    profile: {
+      demoDisclosure: "Φανταστικά πεδία αξιολόγησης· δεν περιγράφουν τρέχοντα πάροχο, άδεια ή προσφορά συνεργάτη. Δεν υπάρχει διαθέσιμος σύνδεσμος συνεργάτη.",
+      marketUnavailableCopy: "Το προφίλ δεν εμφανίζει διαθέσιμες προσφορές για την επιλεγμένη αγορά. Η αξιολόγηση παραμένει διαθέσιμη, αλλά δεν υπάρχει σύνδεσμος συνεργάτη.",
+      founded: "Έτος ίδρυσης",
+      relatedCopy: "Σύγκρινε τα ίδια στοιχεία σε κάθε αξιολόγηση.",
+      originalEditorialNotice: "Το συντακτικό κείμενο προέρχεται από τη δημοσιευμένη πηγή και εμφανίζεται στην αρχική του γλώσσα.",
+    },
+    comparison: {
+      add: "Σύγκρινε",
+      open: "Άνοιξε τη σύγκριση",
+      clear: "Καθάρισε",
+      close: "Κλείσε τη σύγκριση",
+      remove: "Αφαίρεσε",
+    },
+    outbound: {
+      label: "02 / Έξοδος από τη B4GAMBLE",
+      contractLabel: "Έλεγχος προορισμού",
+      title: "Φεύγεις από τη B4GAMBLE.",
+      description: "Πρόκειται να επισκεφθείς εξωτερικό πάροχο τυχερών παιχνιδιών. Αν συνεχίσεις μέσω συνδέσμου συνεργάτη, η B4GAMBLE μπορεί να λάβει προμήθεια. Αυτό δεν επηρεάζει τη συντακτική βαθμολογία ή την κατάταξη.",
+      contractCopy: "Η B4GAMBLE ελέγχει τον σύνδεσμο προορισμού πριν φύγεις από τον ιστότοπο.",
+      continueAction: "Συνέχισε προς τον πάροχο →",
+      cancelAction: "Ακύρωσε και μείνε στη B4GAMBLE",
+    },
+    calculator: {
+      gameWeight: "Το παιχνίδι σου προσμετράται κατά",
+      effectiveTurnover: "Σταθμισμένος τζίρος",
+      expectedCost: "Ενδεικτικό κόστος",
+      expectedValue: "Ενδεικτική καθαρή αξία",
+    },
+  },
+} satisfies Record<"en-GB" | "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR", ProductPageOverrides>;
+
 const catalog: Record<SupportedLocale, ProductPageMessages> = {
-  "en-GB": en,
-  "de-DE": de,
-  "it-IT": localeVariant("it-IT"),
-  "es-ES": reviewedLocaleVariant("es-ES", firstWaveEditorialOverrides["es-ES"]),
-  "pt-PT": localeVariant("pt-PT"),
-  "el-GR": reviewedLocaleVariant("el-GR", firstWaveEditorialOverrides["el-GR"]),
-  "nl-NL": localeVariant("nl-NL"),
-  "sv-SE": reviewedLocaleVariant("sv-SE", firstWaveEditorialOverrides["sv-SE"]),
-  "da-DK": reviewedLocaleVariant("da-DK", firstWaveEditorialOverrides["da-DK"]),
-  "fi-FI": localeVariant("fi-FI"),
-  "nb-NO": localeVariant("nb-NO"),
+  "en-GB": applyProductPageOverrides(en, languageQualityOverrides["en-GB"]),
+  "de-DE": applyProductPageOverrides(de, languageQualityOverrides["de-DE"]),
+  "it-IT": IT_PRODUCT_PAGE_MESSAGES,
+  "es-ES": applyProductPageOverrides(reviewedLocaleVariant("es-ES", firstWaveEditorialOverrides["es-ES"]), languageQualityOverrides["es-ES"]),
+  "pt-PT": PT_PRODUCT_PAGE_MESSAGES,
+  "el-GR": applyProductPageOverrides(reviewedLocaleVariant("el-GR", firstWaveEditorialOverrides["el-GR"]), languageQualityOverrides["el-GR"]),
+  "nl-NL": NL_PRODUCT_PAGE_MESSAGES,
+  "sv-SE": applyProductPageOverrides(reviewedLocaleVariant("sv-SE", firstWaveEditorialOverrides["sv-SE"]), languageQualityOverrides["sv-SE"]),
+  "da-DK": applyProductPageOverrides(reviewedLocaleVariant("da-DK", firstWaveEditorialOverrides["da-DK"]), languageQualityOverrides["da-DK"]),
+  "fi-FI": FI_PRODUCT_PAGE_MESSAGES,
+  "nb-NO": NB_PRODUCT_PAGE_MESSAGES,
   "en-CA": en,
   "fr-CA": en,
 };

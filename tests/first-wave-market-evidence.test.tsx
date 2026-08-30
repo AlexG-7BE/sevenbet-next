@@ -75,6 +75,12 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
     assert.doesNotMatch(JSON.stringify(profile), /officialLogo|logoUrl|imageUrl/);
   }
   assert.match(FIRST_WAVE_MARKET_EVIDENCE.ES.evidence.find((record) => record.id === "es-supreme-court")?.materialFact ?? "", /13\.1.*13\.3.*15.*23\.1.*25\.3.*26\.2.*26\.3/);
+  for (const [market, id] of [["SE", "se-112"], ["DK", "dk-112"]] as const) {
+    const emergency = FIRST_WAVE_MARKET_EVIDENCE[market].evidence.find((record) => record.id === id);
+    assert.ok(emergency, `${market}:${id}`);
+    assert.match(emergency.materialFact, /112/);
+    assert.match(FIRST_WAVE_MARKET_EVIDENCE[market].copy.urgent, /112/);
+  }
   assert.equal(FIRST_WAVE_MARKET_EVIDENCE.GR.terminology[0], "HGC_AFFILIATE_SUITABILITY_REQUIRED");
   assert.equal(FIRST_WAVE_MARKET_EVIDENCE.GR.resources.find((resource) => resource.kind === "BLOCKING_TOOL")?.url, "https://www.betblocker.org/gr/");
 });

@@ -1,6 +1,9 @@
 import { expect, test } from "@playwright/test";
 
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+const messages = productPageMessages("en-GB");
 
 test("curated casino fixtures preserve wide, landscape and square artwork", async ({ browser }) => {
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
@@ -37,11 +40,15 @@ test("casino profile fixtures cover portrait, square, landscape and fallback sta
   for (const [slug, ratio, hasImage] of fixtures) {
     const response = await page.goto(`${baseUrl}/casino/${slug}?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), slug).toBe(200);
-    const stage = page.locator('[class*="heroMedia"][data-media-ratio]').first();
+    const stage = page.locator('[data-runtime-renderer="casino-review"] aside[data-media-ratio]').first();
     await expect(stage, slug).toHaveAttribute("data-media-ratio", ratio);
     await expect(stage.locator("img"), slug).toHaveCount(hasImage ? 1 : 0);
     if (hasImage) expect(await stage.locator("img").evaluate((image) => getComputedStyle(image).objectFit), slug).toBe("contain");
-    else await expect(stage.getByText("Suitable creative unavailable.")).toBeVisible();
+    else {
+      await expect(stage, slug).toHaveAccessibleName(messages.common.mediaUnavailableTitle);
+      await expect(stage.getByText(messages.common.mediaUnavailableTitle, { exact: true }), slug).toBeVisible();
+      await expect(stage.getByText(messages.common.mediaUnavailableCopy, { exact: true }), slug).toBeVisible();
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), slug).toBe(0);
   }
 });

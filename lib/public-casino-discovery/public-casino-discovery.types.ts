@@ -18,6 +18,8 @@ export interface CasinoDiscoveryQuery {
   sort?: CasinoDiscoverySort;
   page?: number;
   pageSize?: number;
+  /** Local-only visual fixture transport; runtime activation remains separately environment-gated. */
+  visualFixture?: true;
 }
 
 export interface PublicLabelDto { key: string; label: string }
@@ -42,6 +44,7 @@ export interface PublicCasinoCardDto {
   id: string;
   dataClassification: PublicCasinoDataClassification;
   slug: string;
+  reviewHref?: string | null;
   name: string;
   logo: PublicMediaDto | null;
   hero?: PublicMediaDto | null;

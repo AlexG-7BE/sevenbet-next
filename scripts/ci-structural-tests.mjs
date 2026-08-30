@@ -28,6 +28,7 @@ const requiredTests = [
   "tests/ten-steps-parity.test.ts",
   "tests/ten-steps-render.test.cjs",
   "tests/ux-perf-structural.test.ts",
+  "tests/visual-accessibility-regressions.test.ts",
 ];
 
 const prohibitedRequiredTests = [

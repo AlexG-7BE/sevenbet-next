@@ -24,7 +24,7 @@ test("root 404 is static, branded and independent of auth and database", () => {
   assert.match(notFound, /productHref\(presentation, href\)/);
   assert.match(notFound, /publicErrorMessages\(presentation\.locale\)/);
   assert.match(document, />404</);
-  assert.match(errorCatalog, /This route is lost/);
+  assert.match(errorCatalog, /We couldn't find this page/);
   assert.match(errorCatalog, /Let's get you back on course/);
   assert.match(document, /href="\/"/);
   assert.doesNotMatch(document, /href="\/help"/);
@@ -57,6 +57,23 @@ test("public and global error boundaries expose safe recovery with no technical 
   assert.match(harness, /PLAYWRIGHT_BASE_URL === "http:\/\/127\.0\.0\.1:4173"/);
   assert.match(harness, /VERCEL_ENV !== "production"/);
   assert.match(harness, /if \(!enabled\) notFound\(\)/);
+
+  const commercialHarness = source("lib/qa/public-commercial-error-harness.ts");
+  assert.match(commercialHarness, /LAUNCH_POLISH_ERROR_HARNESS === "true"/);
+  assert.match(commercialHarness, /PLAYWRIGHT_BASE_URL === LOCAL_BROWSER_ORIGIN/);
+  assert.match(commercialHarness, /VERCEL !== "1"/);
+  assert.match(commercialHarness, /VERCEL_ENV !== "production"/);
+  assert.match(commercialHarness, /value === PUBLIC_COMMERCIAL_ERROR_FIXTURE/);
+  const retry = source("lib/qa/retry-public-commercial-error.ts");
+  assert.match(retry, /searchParams\.delete\("errorFixture"\)/);
+  assert.match(retry, /window\.location\.replace/);
+  for (const route of ["best-offers/page.tsx", "bonuses/page.tsx", "casinos/page.tsx", "casino/[slug]/page.tsx", "compare/page.tsx"]) {
+    const routeSource = source(`app/(public)/${route}`);
+    assert.match(routeSource, /triggerPublicCommercialErrorHarness\(raw\.errorFixture\)/, route);
+  }
+  for (const route of ["best-offers/error.tsx", "bonuses/error.tsx", "casinos/error.tsx", "casino/[slug]/error.tsx", "compare/error.tsx"]) {
+    assert.match(source(`app/(public)/${route}`), /retryPublicCommercialError\(reset\)/, route);
+  }
 });
 
 test("Contact route is bounded and cannot activate dormant communications", () => {

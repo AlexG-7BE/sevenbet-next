@@ -18,6 +18,7 @@ import {
   productMetadata,
 } from "@/lib/market/product-context";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
 export const dynamic = "force-dynamic";
 const loadBestOffersPageData = cache(async () => {
@@ -52,28 +53,33 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BestOffersPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
   const loaded = await loadBestOffersPageData();
   const { presentation } = loaded;
   const messages = productPageMessages(presentation.locale);
   const market = presentation.market.seoDisplayName;
-  const result = withHandoffOfferData(loaded.result, isLocalHandoffVisualDataFixture(raw.visualFixture));
+  const result = withHandoffOfferData(loaded.result, isLocalHandoffVisualDataFixture(raw.visualFixture), presentation.locale);
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
+  const governedActionCount = result.records.filter((offer) => (
+    offer.dataClassification === "PUBLISHED_RECORD" && offer.action.available && Boolean(offer.action.href)
+  )).length;
+  const actionAvailabilityLabel = governedActionCount > 0 ? messages.common.actionAvailable : messages.common.commercialUnavailable;
   const hero = demoOnly ? {
     copy: messages.bestOffers.demoCopy,
     kicker: messages.bestOffers.demoKicker,
     stats: [[String(result.records.length), messages.bestOffers.fictionalRecords], ["0", messages.bestOffers.liveOffers], ["0", messages.bestOffers.claimActions]],
     ticker: [messages.bestOffers.fictionalRecordsOnly, messages.bestOffers.termsBeforeAction, messages.bestOffers.availabilityFailsClosed],
   } : containsDemo ? {
-    copy: messages.common.demoDisclosure,
+    copy: messages.bestOffers.demoCopy,
     kicker: `${messages.common.sourceStatus} · ${messages.common.classified}`,
-    stats: [[String(result.records.length), messages.common.records], [presentation.market.countryCode, messages.bestOffers.currentMarket], ["0", messages.bestOffers.inferredActions]],
-    ticker: [messages.common.sourceStatus, messages.common.materialTerms, messages.common.commercialUnavailable],
+    stats: [[String(result.records.length), messages.common.records], [presentation.market.countryCode, messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    ticker: [messages.common.sourceStatus, messages.common.materialTerms, actionAvailabilityLabel],
   } : {
     copy: formatProductMessage(messages.bestOffers.heroCopy, { market }),
     kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }),
-    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.market.countryCode, messages.bestOffers.currentMarket], ["0", messages.bestOffers.inferredActions]],
-    ticker: [messages.common.published, messages.common.materialTerms, messages.common.commercialUnavailable],
+    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.market.countryCode, messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    ticker: [messages.common.published, messages.common.materialTerms, actionAvailabilityLabel],
   };
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {
     "@context": "https://schema.org",
@@ -100,7 +106,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
       <div className={styles.heroStats}>{hero.stats.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}</div>
       <div className={styles.heroTicker}>{hero.ticker.map((item) => <span key={item}>{item}</span>)}<Link href={productHref(presentation, "/methodology")}>{messages.bestOffers.rankingLink}</Link></div>
     </div></section>
-    {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.common.demoDisclosure}</p></div></section> : null}
-    {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} /> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></section>}
+    {containsDemo ? <section className={styles.demoDisclosure} data-nav-theme="dark" role="note"><div className={styles.shell}><p><strong>{messages.common.demoData}.</strong> {messages.bestOffers.demoCopy}</p></div></section> : null}
+    {result.status === "available" ? <BestOffersExperience inventoryMode={result.inventoryMode} messages={messages} presentation={presentation} shortlist={result.records} /> : <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel} role="status"><p className={styles.kicker}>{messages.common.commercialUnavailable}</p><h2>{result.status === "unavailable" ? messages.bestOffers.unavailableTitleBody : formatProductMessage(messages.bestOffers.emptyTitle, { market })}</h2><p>{result.status === "unavailable" ? messages.bestOffers.unavailableCopy : messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology}</Link><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>}
   </div>;
 }

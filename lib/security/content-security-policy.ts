@@ -15,10 +15,11 @@ function normalizeFormActionOrigin(value: string) {
 
 export function buildContentSecurityPolicy(
   nonce: string,
-  options: { development?: boolean; formActionOrigins?: readonly string[] } = {},
+  options: { development?: boolean; formActionOrigins?: readonly string[]; upgradeInsecureRequests?: boolean } = {},
 ) {
   if (!nonce || /[<>&'";\s]/.test(nonce)) throw new Error("Invalid CSP nonce");
   const development = options.development ?? false;
+  const upgradeInsecureRequests = options.upgradeInsecureRequests ?? !development;
   const formActionOrigins = (options.formActionOrigins ?? []).map(normalizeFormActionOrigin);
   const directives = [
     "default-src 'self'",
@@ -37,7 +38,7 @@ export function buildContentSecurityPolicy(
     "base-uri 'self'",
     `form-action 'self'${formActionOrigins.length ? ` ${formActionOrigins.join(" ")}` : ""}`,
     "frame-ancestors 'none'",
-    ...(development ? [] : ["upgrade-insecure-requests"]),
+    ...(upgradeInsecureRequests ? ["upgrade-insecure-requests"] : []),
   ];
   return directives.join("; ");
 }

@@ -94,7 +94,7 @@
 .footnote { max-width: 1088px; margin: 48px auto 0; color: var(--handoff-muted); font-size: 13px; line-height: 20px; }
 
 @media (max-width: 767px) {
-  .page { min-height: 844px; padding: 44px 20px 70px; }
+  .page { min-height: 844px; padding: calc(93px + env(safe-area-inset-top)) 20px 70px; }
   .confirmationCard, .unavailableCard { min-height: 710px; padding: 30px 20px; border-radius: 20px; }
   .confirmationCard h1, .unavailableCard h1 { margin-top: 38px; font-size: clamp(38px, 11vw, 42px); line-height: 42px; }
   .copy { margin-top: 36px; font-size: 16px; line-height: 24px; }

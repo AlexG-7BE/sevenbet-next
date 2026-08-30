@@ -6,7 +6,7 @@ import { CasinoProfile } from "@/components/casino-profile/CasinoProfile";
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { profileEditorialDocument } from "@/lib/casino-profile/presentation";
-import { casinoProfileMetadata, casinoProfileSchemas } from "@/lib/casino-profile/seo";
+import { casinoProfileMetadata, casinoProfileSchemas, projectCasinoProfileSchemas } from "@/lib/casino-profile/seo";
 import { editorialReviewService } from "@/lib/services/editorial-review.service";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
@@ -21,6 +21,7 @@ import {
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { absoluteUrl } from "@/lib/site";
+import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -83,26 +84,22 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function CasinoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
   const { slug } = await params;
   const { casino, editorialResult, presentation, availableForPresentation } = await loadCasinoPage(slug);
   if (!casino) notFound();
   const visualDataFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
-  const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture);
-  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(editorialResult, casino.id), visualDataFixture);
+  const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale);
+  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(editorialResult, casino.id), visualDataFixture, presentation.locale);
   const messages = productPageMessages(presentation.locale);
   const profileUrl = absoluteUrl(productHref(presentation, `/casino/${runtimeCasino.slug}`));
   const casinoDirectoryUrl = absoluteUrl(productHref(presentation, "/casinos"));
-  const schemas = casinoProfileSchemas(runtimeCasino, editorial).map((schema) => {
-    if (schema["@type"] === "BreadcrumbList") {
-      return {
-        ...schema,
-        itemListElement: [
-          { "@type": "ListItem", position: 1, name: messages.common.browseReviews, item: casinoDirectoryUrl },
-          { "@type": "ListItem", position: 2, name: runtimeCasino.name, item: profileUrl },
-        ],
-      };
-    }
-    return schema["@type"] === "WebPage" ? { ...schema, url: profileUrl } : schema;
+  const schemas = projectCasinoProfileSchemas(casinoProfileSchemas(runtimeCasino, editorial), {
+    casino: runtimeCasino,
+    casinoDirectoryUrl,
+    locale: presentation.locale,
+    messages,
+    profileUrl,
   });
 
   return <>

@@ -389,7 +389,8 @@ export class ProgrammeAiMissionsService {
       xp: action.xp,
       completed: states.includes(actionTaskState(definition.missionNumber, action.id)),
     }));
-    const currentAction = actions.find((action) => !action.completed)?.id ?? null;
+    const currentActionIndex = actions.findIndex((action) => !action.completed);
+    const currentAction = currentActionIndex >= 0 ? actions[currentActionIndex].id : null;
     const hasNewContract = actions.every((action) => action.completed);
     return {
       missionNumber: definition.missionNumber,
@@ -399,7 +400,9 @@ export class ProgrammeAiMissionsService {
       status: progress?.status.toLowerCase() ?? "not_started",
       actions,
       currentAction,
+      currentActionPosition: currentActionIndex >= 0 ? currentActionIndex + 1 : null,
       actionsCompleted: actions.filter((action) => action.completed).length,
+      actionsTotal: actions.length,
       artifact: progress ? artifactFromDraft(progress.draft, definition) : {},
       artifactVersion: definition.artifactVersion,
       xpEarnedHere: actionXpEarned(definition, progress),
@@ -474,6 +477,7 @@ export class ProgrammeAiMissionsService {
         currentStreak: dashboard.currentStreak,
         achievements: dashboard.achievements,
         currentMission: 1,
+        primaryAction: "start-mission-one" as const,
         engagementDayBucket: "unknown" as const,
         currentAction: missionOne.currentAction,
         startingPoint: null,
@@ -520,6 +524,15 @@ export class ProgrammeAiMissionsService {
       currentStreak: dashboard.currentStreak,
       achievements: dashboard.achievements,
       currentMission,
+      primaryAction: currentMission === 1
+        ? missionOne.actionsCompleted > 0
+          ? "finish-mission-one" as const
+          : "start-mission-one" as const
+        : currentProgress?.status === "COMPLETED"
+          ? "review-mission" as const
+          : currentProgress?.taskStates.length
+            ? "resume-mission" as const
+            : "start-mission" as const,
       engagementDayBucket: programmeEngagementDayBucket(enrollment.startedAt),
       currentAction: currentMission === 1
         ? missionOne.currentAction
