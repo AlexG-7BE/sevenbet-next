@@ -77,8 +77,8 @@ test("article template is truthful about missing evidence and preserves the prot
   assert.match(articleView, /article\.categorySlug !== "responsible-gambling"/);
   assert.match(articleView, /href=\{hrefFor\("\/casinos"\)\}/);
   assert.doesNotMatch(articleView, /href="\/compare"/);
-  assert.match(articleView, /href="\/responsible-gambling"/);
-  assert.match(articleView, /href="\/help"/);
+  assert.match(articleView, /href=\{hrefFor\("\/responsible-gambling"\)\}/);
+  assert.match(articleView, /href=\{hrefFor\("\/help"\)\}/);
   assert.doesNotMatch(articleView, /href="\/(?:r|go)\//);
   assert.match(articleRoute, /if \(!sourceArticle\) notFound\(\)/);
 });
