@@ -27,6 +27,14 @@ Execution evidence:
 
 This was a bounded one-time execution path. It does **not** establish a permanent policy of running migrations during every Vercel build. Future Production migrations require a new explicit controlled execution decision appropriate to their risk and migration shape.
 
+## Pending Programme access migration 0024 — not applied to Production
+
+**PROPOSED / NOT DEPLOYED:** `0024_programme_access_acceptance` is an additive table and enum only. It does not alter `ProgramEnrollment`, Mission progress, rewards, `currentStep`, Starting Point, account identity or commercial data. The application change depends on this table, so Production migration and application promotion require an explicit ordered release decision; this implementation task does not run either action.
+
+The compatibility insert marks only a user whose consumed `PendingProgrammeClaim` joins to a `program-ai-01:v1` anonymous session and to a `ProgrammeStartingPoint` with the same user, exact version and `confirmedAt = consumedAt` transaction timestamp. Repository route/service evidence establishes that this narrow session type was created only after signed 18+/Terms/Privacy proof verification. It uses the session creation time as the closest truthful lower-bound timestamp and leaves historical Terms/Privacy versions `NULL`. A generic `ProgramEnrollment`, Mission progress or XP row is not evidence and is never backfilled.
+
+Disposable CI stages all history through `0023`, loads both a provable claim fixture and an unknown generic-enrollment fixture, runs the `0024` preflight, deploys and replays migrations, then verifies one safe acceptance, zero unknown-user acceptances, and byte-equivalent selected Enrollment/progress/reward/currentStep/Starting-Point projections. Production execution remains prohibited without separate Founder authority and a verified pending-migration plan.
+
 ## Pending Better Auth 1.7 sequence — not applied to Production
 
 **DETECTED:** Production remains applied through `0020_commercial_ops_01`. Repository migration `0021_partner_ops_work_bridge_01` is merged history but is not Production-applied. `PARTNER-OPS-WORK-BRIDGE-02` adds `0022_better_auth_17_schema_upgrade`; neither migration is applied by that implementation task.

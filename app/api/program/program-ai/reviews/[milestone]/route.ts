@@ -1,4 +1,4 @@
-import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiGuidanceService } from "@/lib/programme/application/programme-ai-guidance.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
@@ -14,7 +14,7 @@ export async function GET(
   context: { params: Promise<{ milestone: string }> },
 ) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     const milestone = routeReviewMilestone((await context.params).milestone);
     const review = await programmeAiGuidanceService.review(
       user.id,
@@ -42,7 +42,7 @@ export async function POST(
   context: { params: Promise<{ milestone: string }> },
 ) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     const milestone = routeReviewMilestone((await context.params).milestone);
     const providerConfigured = isProgramAiRealProviderEnabled();
     const providerAllowed = !providerConfigured

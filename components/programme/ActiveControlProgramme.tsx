@@ -294,7 +294,7 @@ function mergeDashboardLocal(dashboard: DashboardModel, local: Partial<Programme
 }
 
 async function programmeRequest<T>(path: string, subject: ProgrammeLocalSubject, init?: RequestInit) {
-  const accessGranted = hasProgrammeAccessAuthority(window.sessionStorage, subject);
+  const accessGranted = subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject);
   const response = await fetch(path, {
     credentials: "same-origin",
     cache: "no-store",
@@ -1274,6 +1274,22 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
 
   useEffect(() => {
     if (!localHydrated || !activeSubject || !subjectMatchesSession) return;
+    if (activeSubject.kind === "user") {
+      let cancelled = false;
+      fetch("/api/programme-access/authority", { credentials: "same-origin", cache: "no-store" })
+        .then(async (response) => {
+          const payload = await response.json() as ApiPayload<{ accepted: boolean }>;
+          if (!response.ok || payload.ok === false) throw new Error("PROGRAMME_ACCESS_STATUS_UNAVAILABLE");
+          if (!cancelled) setAccessGranted(Boolean(payload.accepted));
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setAccessGranted(false);
+            setError(PROGRAMME_ACCESS_RETRY_MESSAGE);
+          }
+        });
+      return () => { cancelled = true; };
+    }
     const expiresAt = programmeAccessExpiresAt(window.sessionStorage, activeSubject);
     setAccessGranted(Boolean(expiresAt));
     if (!expiresAt) return;
@@ -1627,16 +1643,14 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
     setBusy(true);
     setError("");
     try {
-      const journey = activeSubject.kind === "journey"
-        ? activeSubject
-        : anonymousProgrammeSubject(window.sessionStorage);
+      const journey = activeSubject.kind === "journey" ? activeSubject : null;
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
         credentials: "same-origin",
         cache: "no-store",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          journeyId: journey.id,
+          ...(journey ? { journeyId: journey.id } : {}),
           adultConfirmed: true,
           termsAccepted: true,
           privacyAcknowledged: true,
@@ -1645,10 +1659,20 @@ export function ActiveControlProgramme({ googleAvailable = false }: { googleAvai
         }),
       });
       const payload = await response.json() as ApiPayload<{ authority?: ProgrammeAccessAuthority }>;
-      if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
-      writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
-      if (activeSubject.kind === "user") {
-        transitionProgrammeAccessToUser(window.sessionStorage, journey, activeSubject);
+      if (!response.ok || payload.ok === false) throw new Error("Current access could not be verified. Try again.");
+      if (journey) {
+        if (!payload.authority) throw new Error("Current access could not be verified. Try again.");
+        writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+      } else {
+        const dashboardPayload = await programmeRequest<{ dashboard: DashboardModel }>(
+          "/api/program/dashboard",
+          activeSubject,
+        );
+        const local = loadProgrammeSubjectContent<ProgrammeLocalContent>(window.sessionStorage, activeSubject);
+        const next = mergeDashboardLocal(dashboardPayload.dashboard, local);
+        setDashboard(next);
+        setMomentMap(next.momentMap || emptyMomentMap);
+        setView("dashboard");
       }
       setAccessGranted(true);
     } catch {

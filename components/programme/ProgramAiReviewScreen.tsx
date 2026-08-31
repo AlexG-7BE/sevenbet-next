@@ -6,22 +6,16 @@ import { ActionButton } from "@/components/design-system/Action";
 import { ProgramAiAuthenticatedHeader } from "@/components/programme/ProgramAiAuthenticatedHeader";
 import type { ProgramAiReview } from "@/components/programme/ProgramAiAuthenticated.types";
 import { programmeText } from "@/lib/i18n/programme-catalog";
-import { PROGRAMME_ACCESS_HEADERS, PROGRAMME_ACCESS_HEADER_VALUES } from "@/lib/programme/access-contract";
-import { hasProgrammeAccessAuthority, userProgrammeSubject } from "@/lib/programme/local-subject-storage";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-async function generateReview(milestone: string, localWording: string, userId: string, locale: ProgrammeLocale) {
-  const subject = userProgrammeSubject(userId);
+async function generateReview(milestone: string, localWording: string, locale: ProgrammeLocale) {
   const response = await fetch(`/api/program/program-ai/reviews/${milestone}?locale=${encodeURIComponent(locale)}`, {
     method: "POST",
     credentials: "same-origin",
     cache: "no-store",
     headers: {
       "content-type": "application/json",
-      ...(hasProgrammeAccessAuthority(window.sessionStorage, subject)
-        ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age }
-        : {}),
     },
     body: JSON.stringify({ locale, ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }),
   });
@@ -47,7 +41,7 @@ export function ProgramAiReviewScreen({ initialReview, milestone, totalXp, userI
   const [generated, setGenerated] = useState(false);
   async function personalise() {
     setBusy(true); setError("");
-    try { setReview(await generateReview(milestone, localWording, userId, locale)); setGenerated(true); }
+    try { setReview(await generateReview(milestone, localWording, locale)); setGenerated(true); }
     catch { setError(programmeText(locale, "The Review could not be prepared")); }
     finally { setBusy(false); }
   }

@@ -1,4 +1,4 @@
-import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { programmeArtefactService } from "@/lib/programme/application/programme-artefact.service";
 import {
   programmeErrorResponse,
@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 export async function PATCH(request: Request) {
   try {
     assertLegacyProgrammeMutationAllowed();
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const urgeLearningRecord = await programmeArtefactService.updateUrgeLearningRecord(
       user.id,
@@ -27,7 +27,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     await programmeArtefactService.deleteUrgeLearningRecord(user.id);
     return programmeResponse({ ok: true });

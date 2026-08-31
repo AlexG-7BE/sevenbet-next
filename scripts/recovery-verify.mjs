@@ -48,6 +48,7 @@ const EXPECTED_PROGRAMME_TABLES = [
   "PendingProgrammeClaim",
   "Program",
   "ProgramEnrollment",
+  "ProgrammeAccessAcceptance",
   "ProgrammeMissionProgress",
   "ProgramStep",
   "ProgramVersion",

@@ -52,10 +52,12 @@ test("Programme client uses tab-scoped storage and sends bounded server payloads
   assert.match(active, /<Link href="\/casinos">Compare casinos<\/Link>/);
 });
 
-test("the consolidated access screen is unchecked and account creation enforces current signed access authority", () => {
+test("the access screen is unchecked, account creation stays signed and authenticated access is durable", () => {
   const active = source("components/programme/ActiveControlProgramme.tsx");
   const middleware = source("middleware.ts");
   const authRoute = source("app/api/auth/[...all]/route.ts");
+  const accessRoute = source("app/api/programme-access/authority/route.ts");
+  const userAccess = source("lib/auth/programme-user-access.ts");
   const accessPolicy = source("lib/auth/programme-access-policy.ts");
   const accessContract = source("lib/programme/access-contract.ts");
   const accessProof = source("lib/auth/programme-access-proof.ts");
@@ -64,10 +66,17 @@ test("the consolidated access screen is unchecked and account creation enforces 
   assert.equal(active.match(/I confirm I am 18 or over · required/g)?.length, 1);
   assert.equal(active.match(/I agree to the .*Terms.* and acknowledge the .*Privacy Notice.* · required/g)?.length, 1);
   assert.match(middleware, /x-sevenbet-age-attestation/);
-  assert.match(middleware, /pathname\.startsWith\("\/api\/program\/"\)/);
+  assert.match(middleware, /programmeMutationAccessCategory\(pathname, request\.method\)/);
+  assert.match(middleware, /programmeMutationCategory === "anonymous"/);
+  assert.match(middleware, /programmeMutationCategory === "unknown"/);
   assert.match(middleware, /matcher: \["\/:path\*"\]/);
   assert.match(authRoute, /sign-up\/email/);
   assert.match(authRoute, /programmeAuthAccessDenial/);
+  assert.match(accessRoute, /programmeAccessService\.userStatus/);
+  assert.match(accessRoute, /acceptAuthenticatedUserOnce/);
+  assert.match(accessRoute, /requireUserAcceptance/);
+  assert.match(userAccess, /requireProgrammeAcceptedUser/);
+  assert.match(userAccess, /programmeAccessService\.requireUserAcceptance/);
   assert.match(accessPolicy, /CURRENT_ACCESS_AUTHORITY_REQUIRED/);
   assert.match(accessPolicy, /verifyProgrammeAccessProof/);
   assert.match(accessProof, /createHmac/);

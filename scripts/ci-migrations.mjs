@@ -404,6 +404,96 @@ async function verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrat
   }
 }
 
+async function verifyProgrammeAccessUpgrade(migrationEntries) {
+  const migrationIndex = migrationEntries.indexOf("0024_programme_access_acceptance");
+  if (migrationIndex < 1) throw new Error("Expected migration 0024_programme_access_acceptance");
+  const programmeMigrationIndex = migrationEntries.indexOf("0015_active_control_program_flow");
+  if (programmeMigrationIndex < 1) throw new Error("Expected migration 0015_active_control_program_flow");
+  const schema = "programme_access_upgrade_v2_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const preProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(preProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", path.join(preProgramme, "schema.prisma"),
+      "--file", "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(preProgramme, { recursive: true, force: true });
+  }
+  const staged = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(staged, "schema.prisma")], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", path.join(staged, "schema.prisma"),
+      "--file", "prisma/fixtures/0024_pre_programme_access_acceptance.sql",
+    ], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", path.join(staged, "schema.prisma"),
+      "--file", "prisma/preflight/0024_programme_access_acceptance.sql",
+    ], environment);
+  } finally {
+    await rm(staged, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    const snapshot = async () => JSON.parse(JSON.stringify(await Promise.all([
+      prisma.programEnrollment.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        orderBy: { userId: "asc" },
+        select: { id: true, userId: true, currentStepId: true, programVersionId: true },
+      }),
+      prisma.programmeMissionProgress.findMany({
+        where: { enrollment: { userId: { in: ["access-safe-user", "access-unknown-user"] } } },
+        orderBy: { id: "asc" },
+        select: { id: true, enrollmentId: true, missionNumber: true, status: true, taskStates: true, completedAt: true },
+      }),
+      prisma.userXpEvent.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        orderBy: { id: "asc" },
+        select: { id: true, userId: true, awardKey: true, xp: true },
+      }),
+      prisma.programmeStartingPoint.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        select: { id: true, userId: true, enrollmentId: true, startingPoint: true, confirmedAt: true },
+      }),
+    ])));
+    const before = await snapshot();
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const after = await snapshot();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error("Programme access migration changed Programme progress, rewards, currentStep or Starting Point");
+    }
+    const acceptances = await prisma.programmeAccessAcceptance.findMany({
+      where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+      orderBy: { userId: "asc" },
+    });
+    if (
+      acceptances.length !== 1
+      || acceptances[0].userId !== "access-safe-user"
+      || acceptances[0].source !== "PROGRAM_AI_CLAIM_BACKFILL"
+      || acceptances[0].termsVersionAtAcceptance !== null
+      || acceptances[0].privacyVersionAtAcceptance !== null
+      || acceptances[0].adultSelfAttestedAt.toISOString() !== "2026-08-01T12:00:00.000Z"
+    ) {
+      throw new Error("Programme access compatibility backfill was not conservative and deterministic");
+    }
+    console.info("Programme access staged migration smoke passed", {
+      safeBackfills: acceptances.length,
+      unknownEnrollmentsBackfilled: 0,
+      progressAndRewardsPreserved: true,
+      replayIdempotent: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -472,6 +562,7 @@ async function main() {
 
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
+  await verifyProgrammeAccessUpgrade(migrationEntries);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
@@ -487,14 +578,15 @@ async function main() {
       );
     }
 
-    const [users, casinos, missionProgress] = await Promise.all([
+    const [users, casinos, missionProgress, programmeAccessAcceptances] = await Promise.all([
       prisma.user.count(),
       prisma.casino.count(),
       prisma.programmeMissionProgress.count(),
+      prisma.programmeAccessAcceptance.count(),
     ]);
     console.info("Ephemeral migration smoke passed", {
       appliedMigrations,
-      representativeRows: { users, casinos, missionProgress },
+      representativeRows: { users, casinos, missionProgress, programmeAccessAcceptances },
     });
   } finally {
     await prisma.$disconnect();

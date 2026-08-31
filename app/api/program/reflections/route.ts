@@ -1,4 +1,5 @@
 import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import {
   programmeErrorResponse,
   programmeResponse,
@@ -19,7 +20,7 @@ function requiredString(value: unknown, field: string) {
 
 export async function GET(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     const programId = requiredString(new URL(request.url).searchParams.get("programId"), "programId");
     const reflections = await programReflectionService.list(user.id, programId);
     return programmeResponse({ ok: true, reflections: reflections.map(({ id, blockId, content, createdAt, updatedAt }) => ({ id, blockId, content, createdAt: createdAt.toISOString(), updatedAt: updatedAt.toISOString() })) });
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const value = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(value, ["programId", "blockId"]);

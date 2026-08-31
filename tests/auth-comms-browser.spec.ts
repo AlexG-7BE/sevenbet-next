@@ -137,6 +137,25 @@ async function installAuthenticatedSession(page: Page, userId: string, isAuthent
       } : null),
     });
   });
+  await page.route("**/api/programme-access/authority", (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: isAuthenticated() ? 200 : 401,
+        contentType: "application/json",
+        body: JSON.stringify(isAuthenticated()
+          ? { ok: true, accepted: true }
+          : { ok: false, code: "AUTHENTICATION_REQUIRED" }),
+      });
+    }
+    const input = route.request().postDataJSON() as { journeyId?: string } | null;
+    return route.fulfill({
+      status: isAuthenticated() ? 200 : 401,
+      contentType: "application/json",
+      body: JSON.stringify(isAuthenticated() && input?.journeyId
+        ? { ok: true, accepted: true, authority: authority(input.journeyId) }
+        : { ok: false, code: "AUTHENTICATION_REQUIRED" }),
+    });
+  });
 }
 
 test("canonical Programme registration keeps access proof on email auth and fails closed", async ({ page }) => {
@@ -347,12 +366,18 @@ test("authenticated partial Mission 01 truthfully re-enters private intake witho
     contentType: "application/json",
     body: JSON.stringify({ ok: true, home: partialMissionOneHomeFixture() }),
   }));
+  await page.route("**/api/program/program-ai/session", (route) => route.fulfill({
+    status: 201,
+    contentType: "application/json",
+    body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: ["situation_described"], xpPreview: 20 } }),
+  }));
   await open(page, "/program");
   await expect(page.getByRole("heading", { name: "Mission 01 — Map the moment" })).toBeVisible();
   await expect(page.getByText("Your first action and XP are saved. For privacy, the situation itself was not retained. Enter one again to finish your Starting Point.", { exact: true })).toBeVisible();
   await expect(page.getByText("1 of 2 actions complete · Short Starting Point", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Finish Mission 01", exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toHaveCount(0);
 });
 
 test("expired access continuation returns to the canonical access screen", async ({ page }) => {

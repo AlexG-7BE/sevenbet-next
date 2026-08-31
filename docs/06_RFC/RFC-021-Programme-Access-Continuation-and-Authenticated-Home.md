@@ -9,6 +9,8 @@
 
 > **Implementation closure — 2026-08-10:** [PR #61](https://github.com/AlexG-7BE/sevenbet-next/pull/61) merged head `d129130acd982624aa7cf5d31ce4a8b8e81dfa58` into main as `324a5b51e2e37f456c2386413a6d6c4831607914`; GOOGLE-OAUTH-ACTIVATE-01 is closed. Production reached READY after merge. Production Google OAuth remains off, and no Production Google credentials, age-verification or KYC authority is established. This RFC remains the historical and current-runtime architecture authority for the merged access, continuation and authenticated-home contract. It does not describe or authorise the later PROGRAM-AI-01 target direction.
 
+> **Founder supersession — 2026-08-31:** the explicit `B4GAMBLE — SYSTEMIC PROGRAMME ACCESS FIX` instruction supersedes this RFC only where the 60-minute browser marker was treated as ongoing authenticated Programme authority. Adult self-attestation, Terms acceptance and Privacy acknowledgement are now recorded once in a purpose-specific, server-side `ProgrammeAccessAcceptance` record. For an authenticated accepted user, normal expiry, sign-out, sign-in, tab/browser/device change, locale change, secret rotation and later legal-copy version metadata cannot revoke acceptance or cause another checkbox prompt. Authenticated Programme routes require both the Better Auth user and that durable record. The signed 60-minute journey proof remains only for anonymous/pre-account access and may be reissued invisibly for an accepted authenticated user who starts the anonymous-style Mission 01 intake. This is self-attestation evidence, not DOB, KYC or verified age. Claim authority, sensitive-input authority, Protected Help and the commercial firewall remain separate and unchanged.
+
 ## 1. Decision
 
 B4GAMBLE will replace the fragmented Programme age and account-creation controls with one access screen. The screen has exactly two unchecked required controls:
@@ -22,7 +24,7 @@ Successful acceptance creates a bounded, versioned, same-tab access-continuation
 
 Programme content claim authority remains separate. Access acceptance never authorises anonymous narrative migration. Only the existing exact claim and server redemption contract may move the current claimed local namespace to the authenticated user.
 
-## 2. Access continuation contract
+## 2. Anonymous and pre-account access continuation contract
 
 The browser stores one `sessionStorage` continuation marker containing a server-issued proof and its non-sensitive authority metadata:
 
@@ -37,11 +39,11 @@ The marker contains no date of birth, account, email, Google subject or token, P
 
 Because issuance uses the server clock while this UX guard reads the browser clock, client validation allows `createdAt` to be at most five minutes ahead of the browser. Five minutes is an explicit bounded device/edge clock-skew allowance and only one-twelfth of the fixed authority lifetime. It does not extend or round `expiresAt`: expiry remains `expiresAt > browserNow`, exact `expiresAt - createdAt === 60 minutes` remains mandatory, and an authority more than five minutes in the browser's future fails closed. The server remains the cryptographic and account-creation authority and applies its unchanged strict current-time verification, so a client-accepted proof that is expired or tampered at the server is still denied.
 
-The time-to-live is 60 minutes. This is long enough for the approved 17–22 minute Mission 01, the earned-result account step and an OAuth redirect, while remaining bounded to the current tab. Missing, malformed, materially future, expired, mismatched or obsolete-version markers fail closed and return the user to the consolidated access screen.
+The time-to-live is 60 minutes for an anonymous/pre-account journey. Missing, malformed, materially future, expired, mismatched or obsolete-version markers fail closed at that anonymous boundary. It is not the authority for an already accepted authenticated user.
 
-On successful email or Google authentication, valid access authority transitions explicitly from the exact journey to the exact `user:<userId>` local subject for the remainder of its original lifetime. The transition moves access authority only. It does not move local Programme content and does not extend the expiry.
+On successful claim redemption, the journey's server-side access acceptance binds atomically to the exact authenticated user. Any client-marker transition is temporary continuity only. It does not move local Programme content, extend expiry or determine authenticated authorization.
 
-On logout, the authenticated access authority, access-continuation marker and OAuth claim marker are removed and a new opaque anonymous journey is created. The new journey inherits no access authority or private content.
+On logout, temporary access-continuation and OAuth claim markers are removed and a new opaque anonymous journey is created. The new journey inherits no authority or private content. The accepted user's durable server record is not deleted or revoked by logout.
 
 ## 3. Server-verifiable auth access boundary
 
@@ -58,7 +60,7 @@ Returning email sign-in does not require the proof because it cannot create an a
 
 Missing, malformed, modified, expired, future-issued, wrong-duration, wrong-intent, wrong-version, wrong-purpose, obsolete-copy, invalid-signature or wrong-journey proofs fail closed with `403`. The client clock-skew allowance does not apply here. Secret rotation invalidates outstanding proofs. The proof is a bounded bearer authority and may be replayed only within its original lifetime and signed journey; no one-time-use claim is made without server state. An attacker can truthfully submit the same self-attestation endpoint as a user can tick the controls, but cannot fabricate or alter server authority merely by choosing headers. This decision proves current server issuance and integrity, not DOB/KYC or the identity of the person making the self-attestation.
 
-No database field, acceptance history, schema migration or dependency is introduced. If durable legal acceptance evidence becomes required, it needs a separate legal/schema decision.
+Migration `0024_programme_access_acceptance` adds the minimum purpose-specific acceptance table. Its values are monotonic in normal application lifecycle: absent may become accepted; application code provides no reset, expiry or version-mismatch revocation path. Versions remain first-acceptance metadata only.
 
 ## 4. Authenticated Programme resolver
 
@@ -66,8 +68,9 @@ Every Programme header derives account state from the settled Better Auth sessio
 
 `/program` resolves the session before choosing its durable view:
 
-- authenticated user with progress → server-authoritative Dashboard/current Mission;
-- authenticated user without an enrollment → server-authoritative empty Programme home with Mission 01 current and explicitly startable;
+- authenticated user with durable acceptance and progress → server-authoritative Dashboard/current Mission;
+- authenticated user with durable acceptance and no enrollment → server-authoritative empty Programme home with Mission 01 current and explicitly startable;
+- authenticated user without durable acceptance → the one-time consolidated access acknowledgement, failing closed before Programme reads or writes;
 - unauthenticated user → the approved consolidated access/onboarding path.
 
 `My Programme` means the authenticated home/resume state. `Start the 10-Step Program` means onboarding/start. Both may use `/program`, but the session and entry state must preserve those distinct semantics. A fresh authenticated user is not dropped directly into Mission 01 and never sees a logged-out Programme header.
@@ -98,7 +101,7 @@ This is not a redesign. The existing Programme shell, typography, color, spacing
 
 The account-creation screen shows Google and email/password choices without duplicate compliance checkboxes. Google remains described as identity only, not age verification or marketing consent.
 
-An access-authority storage/validation failure is presented at the consolidated access screen as a concise retry message. Internal marker-policy or architecture diagnostics are not rendered to the user.
+An anonymous access-authority failure is presented at the consolidated access screen as a concise retry message. If invisible technical proof reissuance fails for an already accepted authenticated user, the interface preserves progress and presents a localized retryable temporary error without showing the acknowledgement controls again.
 
 ## 7. Privacy and commercial containment
 
@@ -110,7 +113,7 @@ Protected Help remains available without acceptance, account or Programme comple
 
 Automated evidence must cover consolidated-screen content and disabled state, signed proof issuance, static-header forgery rejection, signature/expiry/original-duration/version/purpose/copy/journey tamper rejection, server-ahead/browser-behind skew acceptance inside the exact client allowance, materially future and expired client rejection, safe access-screen retry copy, exact deployment-host canonicalization with path/query/method preservation, stable-host non-redirect, non-Preview isolation, malformed Preview metadata rejection, exact stable-host Better Auth trust, email and Google signup enforcement, returning sign-in policy, Google callback transition, failed post-OAuth claim redemption exiting loading without losing the authenticated session, user-authoritative transient claim retry, terminal missing/expired-claim recovery to a truthful zero-progress Dashboard, stale anonymous-session non-mutation, authenticated Mission 01 route ownership, exact claim/local-state preservation across retry, distinct pending-claim and Programme-definition server codes, exactly-once claim/XP/completion migration after retry, fresh and progressed authenticated homes, refresh/navigation consistency, logout/User A→B isolation, content-claim separation, callback replay rejection, RFC-020 regressions and commercial/privacy firewalls.
 
-No Prisma schema, migration, dependency, package-lock, Production credential, Production environment, Production database, email, analytics, CMP, commercial, affiliate or AI change is authorised.
+The 2026-08-31 Founder supersession authorises only the additive `0024` access-evidence schema and its conservative compatibility logic. It does not authorise a Production migration, Production credential/environment change, email, analytics, CMP, commercial, affiliate or AI change.
 
 Founder-controlled real Google Preview verification completed on 2026-08-10 using a Google Test User and credentials/configuration scoped only to the isolated correction branch. The consolidated access screen passed without duplicate account-creation controls; `POST /api/auth/sign-in/social` returned `200`; `GET /api/auth/callback/google` returned `302`; and Better Auth established the authenticated session. Google remained identity-only and did not become age verification. The isolated Preview Control Programme was seeded with B4GAMBLE naming. The verification exposed the post-OAuth Programme claim defect, which was corrected before the final authenticated Mission 01 smoke passed through user-owned endpoints. Logout produced a fresh isolated anonymous journey and required the consolidated access gate again.
 

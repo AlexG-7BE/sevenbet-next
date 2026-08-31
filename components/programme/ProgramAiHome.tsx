@@ -8,7 +8,8 @@ import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-export function ProgramAiHomeScreen({ home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath }: {
+export function ProgramAiHomeScreen({ error, home, userId, onMission, onMissionOneEntry, onReview, locale, programmePath }: {
+  error?: string;
   home: ProgramAiHome;
   userId: string;
   onMission: (missionNumber: number) => void;
@@ -24,6 +25,7 @@ export function ProgramAiHomeScreen({ home, userId, onMission, onMissionOneEntry
     <div className={`${styles.shell} ${styles.dashboardShell}`} data-programme-presentation="dashboard">
       <ProgramAiAuthenticatedHeader dashboard locale={locale} programmePath={programmePath} totalXp={home.totalXp} userId={userId} />
       <main className={styles.dashboard} data-site-classification="STANDARD" data-site-frame="standard">
+        {error ? <p role="alert">{error}</p> : null}
         <p className="srOnly">{t("Completion, current position and locks come from your server record. Each Review becomes available at a meaningful point.")}</p>
         <div className={styles.dashboardGrid}>
           <div className={styles.dashboardLeft}>

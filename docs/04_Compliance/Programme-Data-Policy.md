@@ -1,6 +1,6 @@
 # Programme Data and Commercial-Separation Policy
 
-Status: **Approved implementation policy** under RFC-017. Last reconciled: 2026-08-09.
+Status: **Approved implementation policy** under RFC-017 and the 2026-08-31 Programme-access Founder decision. Last reconciled: 2026-08-31.
 
 ## Decision
 
@@ -42,7 +42,7 @@ API errors may name invalid fields or invalid states but must not include submit
 
 Local narrative is namespaced by the exact anonymous journey or authenticated Better Auth user ID. A current anonymous Mission 01 namespace moves to the exact claimant only after successful claim redemption, then the anonymous source is removed. Ordinary sign-in never imports an arbitrary anonymous namespace. For Google claim continuation, a separate marker contains only fixed intent, exact journey ID, version and timestamps, expires after about 10 minutes and must equal the current journey pointer. It contains no narrative, identity, token or consent state. An authenticated subject change hides and clears the former subject from memory before loading only the next subject's namespace or an empty record. The interface distinguishes “saved to your account” progress from words kept in the current browser tab. Explicit local clear removes the active namespace; sign-out/session expiry rotates to a fresh anonymous journey; the browser tab lifecycle supplies natural expiry. It is not a durable hidden vault.
 
-An unchecked 18-or-over confirmation gates the Programme. Its tab record is subject-isolated by anonymous journey or authenticated user, so one authenticated user's confirmation cannot authorize another. A legitimately claimed current journey may carry its current-session confirmation to the exact claimant; ordinary sign-in does not. Mutating Programme requests require the bounded `x-sevenbet-age-attestation: 18-or-over` header at middleware, and signup independently requires its own unchecked confirmation. Help remains open. **AGE ATTESTATION PERSISTENCE — P1 OPEN:** no DOB, KYC or durable attestation evidence is stored by this release.
+An unchecked 18-or-over confirmation plus Terms acceptance and Privacy acknowledgement gates first access. **Detected:** anonymous/pre-account mutations retain the signed journey proof, opaque HttpOnly Programme session and `x-sevenbet-age-attestation: 18-or-over` middleware boundary. Anonymous access expiry may show the controls again. **Detected:** an authenticated accepted user is authorized instead by the Better Auth user plus the purpose-specific `ProgrammeAccessAcceptance` server record; no browser marker, age header, locale or legal-copy version comparison can substitute for or revoke that record. Claim redemption binds the exact anonymous session acceptance to the exact claimant in the same transaction. New authenticated users without the record fail closed and see the one-time acknowledgement. Protected Help remains open. This stores self-attestation and acceptance timestamps/version metadata only: no DOB, KYC outcome, verified age, narrative, Programme state, marketing permission or commercial signal.
 
 ## Retention, access and erasure
 

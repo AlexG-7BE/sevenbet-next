@@ -11,6 +11,43 @@ import {
   programmeResponse,
   readProgrammeJson,
 } from "@/lib/programme/http";
+import { programmeAccessService } from "@/lib/programme/application/programme-access.service";
+
+const affirmationKeys = [
+  "adultConfirmed",
+  "privacyAcknowledged",
+  "privacyVersion",
+  "termsAccepted",
+  "termsVersion",
+] as const;
+
+function validAffirmation(input: Record<string, unknown>) {
+  return input.adultConfirmed === true
+    && input.termsAccepted === true
+    && input.privacyAcknowledged === true
+    && input.termsVersion === PROGRAMME_TERMS_VERSION
+    && input.privacyVersion === PROGRAMME_PRIVACY_VERSION;
+}
+
+async function optionalServerSession(headers: Headers) {
+  if (!headers.has("cookie")) return null;
+  const { getServerSession } = await import("@/lib/auth/session");
+  return getServerSession(headers);
+}
+
+export async function GET(request: Request) {
+  try {
+    const session = await optionalServerSession(request.headers);
+    if (!session) return programmeResponse({ ok: false, code: "AUTHENTICATION_REQUIRED" }, 401);
+    const acceptance = await programmeAccessService.userStatus(session.user.id);
+    return programmeResponse({
+      ok: true,
+      accepted: Boolean(acceptance),
+    });
+  } catch (error) {
+    return programmeErrorResponse(error);
+  }
+}
 
 export async function POST(request: Request) {
   let body: unknown;
@@ -24,37 +61,51 @@ export async function POST(request: Request) {
     return programmeResponse({ ok: false, code: "INVALID_ACCESS_AFFIRMATION" }, 400);
   }
   const input = body as Record<string, unknown>;
-  const expectedKeys = [
-    "adultConfirmed",
-    "journeyId",
-    "privacyAcknowledged",
-    "privacyVersion",
-    "termsAccepted",
-    "termsVersion",
-  ];
-  if (
-    JSON.stringify(Object.keys(input).sort()) !== JSON.stringify(expectedKeys)
-    || input.adultConfirmed !== true
-    || input.termsAccepted !== true
-    || input.privacyAcknowledged !== true
-    || input.termsVersion !== PROGRAMME_TERMS_VERSION
-    || input.privacyVersion !== PROGRAMME_PRIVACY_VERSION
-    || typeof input.journeyId !== "string"
-  ) {
-    return programmeResponse({ ok: false, code: "INVALID_ACCESS_AFFIRMATION" }, 400);
-  }
 
   try {
+    const session = await optionalServerSession(request.headers);
+    const keys = Object.keys(input).sort();
+    const hasJourney = typeof input.journeyId === "string";
+    const expectedAffirmationKeys = [...affirmationKeys, ...(hasJourney ? ["journeyId"] : [])].sort();
+    const refreshOnly = session
+      && hasJourney
+      && JSON.stringify(keys) === JSON.stringify(["journeyId"]);
+    const affirmation = JSON.stringify(keys) === JSON.stringify(expectedAffirmationKeys)
+      && validAffirmation(input);
+
+    if (session) {
+      if (affirmation) {
+        await programmeAccessService.acceptAuthenticatedUserOnce(session.user.id, {
+          termsVersion: PROGRAMME_TERMS_VERSION,
+          privacyVersion: PROGRAMME_PRIVACY_VERSION,
+        });
+      } else if (refreshOnly) {
+        await programmeAccessService.requireUserAcceptance(session.user.id);
+      } else {
+        return programmeResponse({ ok: false, code: "INVALID_ACCESS_AFFIRMATION" }, 400);
+      }
+      const authority = hasJourney
+        ? issueProgrammeAccessProof({
+            journeyId: input.journeyId as string,
+            secret: programmeAccessSigningSecret(),
+          })
+        : undefined;
+      return programmeResponse({ ok: true, accepted: true, ...(authority ? { authority } : {}) });
+    }
+
+    if (!affirmation || !hasJourney) {
+      return programmeResponse({ ok: false, code: "INVALID_ACCESS_AFFIRMATION" }, 400);
+    }
     const authority = issueProgrammeAccessProof({
-      journeyId: input.journeyId,
+      journeyId: input.journeyId as string,
       secret: programmeAccessSigningSecret(),
     });
-    return programmeResponse({ ok: true, authority });
+    return programmeResponse({ ok: true, accepted: false, authority });
   } catch (cause) {
     const configurationFailure = cause instanceof Error && cause.message === "Programme access signing is not configured";
-    return programmeResponse(
-      { ok: false, code: configurationFailure ? "ACCESS_AUTHORITY_UNAVAILABLE" : "INVALID_ACCESS_AFFIRMATION" },
-      configurationFailure ? 503 : 400,
-    );
+    if (configurationFailure) {
+      return programmeResponse({ ok: false, code: "ACCESS_AUTHORITY_UNAVAILABLE" }, 503);
+    }
+    return programmeErrorResponse(cause);
   }
 }

@@ -1,4 +1,4 @@
-import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { missionOneService } from "@/lib/programme/application/mission-01.service";
 import {
   programmeErrorResponse,
@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 export async function POST(request: Request) {
   try {
     assertLegacyProgrammeMutationAllowed();
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const body = objectInput(await readProgrammeJson(request));
     assertOnlyKeys(body, ["timeZone"]);

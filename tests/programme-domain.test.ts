@@ -164,7 +164,7 @@ test("authenticated Mission 01 routes never resolve an anonymous cookie subject"
     "app/api/program/missions/01/complete/route.ts",
   ]) {
     const route = readFileSync(file, "utf8");
-    assert.match(route, /requireCurrentUser\(request\.headers\)/);
+    assert.match(route, /requireProgrammeAcceptedUser\(request\.headers\)/);
     assert.doesNotMatch(route, /anonymousProgrammeCookie|requestCookie|ProgrammeSessionService/);
   }
 });
