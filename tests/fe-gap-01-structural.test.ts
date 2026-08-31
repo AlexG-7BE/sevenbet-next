@@ -102,6 +102,12 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
         "prisma/schema.prisma",
       ],
       ["prisma/migrations/0023_mcp_dcr_runtime_compat_fix/migration.sql"],
+      [
+        "prisma/fixtures/0024_pre_programme_access_acceptance.sql",
+        "prisma/migrations/0024_programme_access_acceptance/migration.sql",
+        "prisma/preflight/0024_programme_access_acceptance.sql",
+        "prisma/schema.prisma",
+      ],
     ];
     assert.ok(approvedExactPrismaChangeSets.some(
       (approved) => JSON.stringify(prismaChanges) === JSON.stringify(approved),
