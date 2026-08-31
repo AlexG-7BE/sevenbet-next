@@ -11,6 +11,8 @@ import type {
   ProgrammeAiTurnResult,
   ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
+import { isProgrammeLocale } from "@/lib/programme/presentation";
+import { assertSafeProgrammeGeneratedText } from "@/lib/programme/program-ai/output-safety";
 
 const inputModes = ["text", "voice"] as const;
 const broadContexts = [
@@ -38,12 +40,14 @@ function minimumText(value: string, field: string, minimum: number) {
 
 export function parseProgrammeAiTurn(value: unknown): ProgrammeAiTurn {
   const body = objectInput(value);
-  assertOnlyKeys(body, ["inputMode", "situation", "clarificationAnswers"]);
+  assertOnlyKeys(body, ["locale", "inputMode", "situation", "clarificationAnswers"]);
+  if (!isProgrammeLocale(body.locale)) throw new ValidationError("locale is not supported by the Programme");
   const situation = minimumText(text(body.situation, "situation", true, 4000)!, "situation", 20);
   if (situation.split(/\s+/).length < 4) {
     throw new ValidationError("situation must contain a substantive description");
   }
   return {
+    locale: body.locale,
     inputMode: member(body.inputMode, "inputMode", inputModes, true)!,
     situation,
     clarificationAnswers: stringList(body.clarificationAnswers, "clarificationAnswers", {
@@ -110,9 +114,11 @@ export function parseProgrammeAiPortResult(value: unknown): ProgrammeAiTurnResul
   const body = objectInput(value);
   if (body.kind === "CLARIFICATION_REQUIRED") {
     assertOnlyKeys(body, ["kind", "prompt", "reason", "disposition"]);
+    const prompt = minimumText(text(body.prompt, "prompt", true, 240)!, "prompt", 8);
+    assertSafeProgrammeGeneratedText(prompt);
     return {
       kind: "CLARIFICATION_REQUIRED",
-      prompt: minimumText(text(body.prompt, "prompt", true, 240)!, "prompt", 8),
+      prompt,
       reason: member(body.reason, "reason", clarificationReasons, true)!,
       disposition: member(body.disposition, "disposition", supportDispositions, true)!,
     };
@@ -122,9 +128,18 @@ export function parseProgrammeAiPortResult(value: unknown): ProgrammeAiTurnResul
     if (body.generation !== "PROVIDER") {
       throw new ValidationError("Provider result generation is not supported");
     }
+    const candidate = parseCandidate(body.candidate);
+    for (const value of [
+      candidate.startingPoint,
+      candidate.desiredChange,
+      candidate.continuationCue,
+      candidate.chosenBoundaryAction,
+    ]) {
+      if (value) assertSafeProgrammeGeneratedText(value);
+    }
     return {
       kind: "STARTING_POINT_CANDIDATE",
-      candidate: parseCandidate(body.candidate),
+      candidate,
       generation: "PROVIDER",
       disposition: member(body.disposition, "disposition", supportDispositions, true)!,
     };

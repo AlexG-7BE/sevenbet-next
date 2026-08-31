@@ -1,3 +1,5 @@
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
+
 export const PROGRAM_AI_M1_VERSION = "program-ai-01:v1";
 export const PROGRAM_AI_EVIDENCE_VERSION = "program-ai-m1-foundation:2026-08-10";
 export const PROGRAM_AI_SENSITIVE_PURPOSE_VERSION = "programme-personalisation:program-ai-01:v1";
@@ -29,6 +31,7 @@ export type ProgrammeStartingPointValue = {
 };
 
 export type ProgrammeAiTurn = {
+  locale: ProgrammeLocale;
   inputMode: ProgramAiInputMode;
   situation: string;
   clarificationAnswers: string[];

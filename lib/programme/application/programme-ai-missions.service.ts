@@ -18,6 +18,7 @@ import {
   programmeMissionTitles,
   programAiMissionDefinition,
   programAiMissionRegistry,
+  programAiMissionSourcePresentation,
   programAiReviewDefinitions,
   type ProgramAiMissionDefinition,
   type ProgramAiMissionNumber,
@@ -199,7 +200,6 @@ export class ProgrammeAiMissionsService {
           .filter((definition) => definition.missionNumber <= unlockMission)
           .map((definition) => ({
             missionNumber: definition.missionNumber,
-            title: definition.title,
             artifact: progress.get(definition.missionNumber)
               ? artifactFromDraft(progress.get(definition.missionNumber)!.draft, definition)
               : {},
@@ -383,9 +383,10 @@ export class ProgrammeAiMissionsService {
     stepId: string,
   ) {
     const states = progress?.taskStates ?? [];
+    const sourcePresentation = programAiMissionSourcePresentation(definition.missionNumber);
     const actions = definition.actions.map((action) => ({
       id: action.id,
-      label: action.label,
+      label: sourcePresentation.actionLabel(action.id),
       xp: action.xp,
       completed: states.includes(actionTaskState(definition.missionNumber, action.id)),
     }));
@@ -395,8 +396,8 @@ export class ProgrammeAiMissionsService {
     return {
       missionNumber: definition.missionNumber,
       stepId,
-      title: definition.title,
-      purpose: definition.purpose,
+      title: sourcePresentation.title,
+      purpose: sourcePresentation.purpose,
       status: progress?.status.toLowerCase() ?? "not_started",
       actions,
       currentAction,
@@ -434,7 +435,7 @@ export class ProgrammeAiMissionsService {
             if (itemProgress?.status !== "COMPLETED") return [];
             const artifact = artifactFromDraft(itemProgress.draft, item);
             return Object.keys(artifact).length
-              ? [{ missionNumber: item.missionNumber, title: item.title, artifact }]
+              ? [{ missionNumber: item.missionNumber, artifact }]
               : [];
           }),
       },

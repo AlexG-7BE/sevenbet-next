@@ -9,6 +9,7 @@ import {
 } from "@/lib/programme/program-ai/validation";
 import { programmeAiPortFromEnvironment } from "@/lib/programme/program-ai/openai-adapters";
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
+import { programmeText } from "@/lib/i18n/programme-catalog";
 
 export type ProgrammeAiProviderOutcome =
   | "provider"
@@ -27,9 +28,9 @@ function userControlledFallback(
     kind: "STARTING_POINT_CANDIDATE",
     candidate: parseFallbackCandidate({
       startingPoint: concise,
-      desiredChange: "Build more control around the situation described here.",
+      desiredChange: programmeText(input.locale, "Build more control around the situation described here."),
       broadContext: "NOT_SPECIFIED",
-      continuationCue: "Continue from the situation described in Mission 01.",
+      continuationCue: programmeText(input.locale, "Continue from the situation described in Mission 01."),
     }),
     generation: "USER_CONTROLLED_FALLBACK",
     disposition,

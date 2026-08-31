@@ -1,6 +1,8 @@
 import type { ProgramAiStructuralArtifact } from "@/lib/programme/program-ai/mission-validation";
+import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 
-const fieldLabels: Record<string, string> = {
+const fieldLabels: Record<string, ProgrammeMessageKey> = {
   direction: "Your direction",
   goalStyle: "Your 7-day approach",
   reviewWindowDays: "Review point",
@@ -30,9 +32,10 @@ const fieldLabels: Record<string, string> = {
   timelineReviewed: "Programme timeline",
   planPriorityIds: "Plan priorities",
   reviewCadenceDays: "Review cadence",
+  confirm: "Timeline check",
 };
 
-const valueLabels: Record<string, string> = {
+const valueLabels: Record<string, ProgrammeMessageKey> = {
   understand: "Understand the pattern",
   pause: "Practise a pause",
   reduce_impulse: "Reduce one impulsive route",
@@ -138,9 +141,10 @@ const valueLabels: Record<string, string> = {
   support: "Support",
   research: "Research checklist",
   fallback: "Fallback",
+  yes: "I reviewed the available structural facts",
 };
 
-const fieldValueLabels: Record<string, Record<string, string>> = {
+const fieldValueLabels: Record<string, Record<string, ProgrammeMessageKey>> = {
   boundaryCategory: { money: "Money", time: "Time", access: "Access", pause: "Pause" },
   decisionChecks: {
     purpose: "Why am I considering this?",
@@ -161,7 +165,7 @@ const fieldValueLabels: Record<string, Record<string, string>> = {
   },
 };
 
-export const missionResultTitles: Record<number, string> = {
+const missionResultTitles: Record<number, ProgrammeMessageKey> = {
   2: "MY 7-DAY GOAL",
   3: "MY CHOICE POINT",
   4: "MY BOUNDARY",
@@ -175,24 +179,39 @@ export const missionResultTitles: Record<number, string> = {
 
 export type PresentedArtifactRow = { key: string; label: string; value: string };
 
-function presentValue(key: string, value: string | number | boolean | string[]) {
-  if (key === "reviewWindowDays") return "In 7 days";
-  if (key === "reviewCadenceDays") return `Every ${value} days`;
-  if (key === "timelineReviewed") return value === true ? "Reviewed" : "Not reviewed yet";
+function presentValue(key: string, value: string | number | boolean | string[], locale: ProgrammeLocale) {
+  if (key === "reviewWindowDays") return programmeText(locale, "In 7 days");
+  if (key === "reviewCadenceDays") return programmeText(locale, "Every {days} days", { days: String(value) });
+  if (key === "timelineReviewed") return programmeText(locale, value === true ? "Reviewed" : "Not reviewed yet");
   const values = Array.isArray(value) ? value : [value];
-  return values.map((item) => fieldValueLabels[key]?.[String(item)] ?? valueLabels[String(item)] ?? "Unavailable").join(" · ");
+  return values.map((item) => {
+    const label = fieldValueLabels[key]?.[String(item)] ?? valueLabels[String(item)];
+    return label ? programmeText(locale, label) : programmeText(locale, "Unavailable");
+  }).join(" · ");
 }
 
 export function presentMissionArtifact(
   artifact: ProgramAiStructuralArtifact,
+  locale: ProgrammeLocale = "en-GB",
 ): PresentedArtifactRow[] {
   return Object.entries(artifact)
     .filter(([key]) => Boolean(fieldLabels[key]))
-    .map(([key, value]) => ({ key, label: fieldLabels[key], value: presentValue(key, value) }));
+    .map(([key, value]) => ({ key, label: programmeText(locale, fieldLabels[key]), value: presentValue(key, value, locale) }));
 }
 
-export function humanValue(value: string) {
-  return valueLabels[value] ?? "Unavailable";
+export function humanValue(value: string, locale: ProgrammeLocale = "en-GB", fieldKey?: string) {
+  const label = fieldKey ? fieldValueLabels[fieldKey]?.[value] ?? valueLabels[value] : valueLabels[value];
+  return label ? programmeText(locale, label) : programmeText(locale, "Unavailable");
+}
+
+export function programmeArtifactFieldLabel(fieldKey: string, locale: ProgrammeLocale) {
+  const label = fieldLabels[fieldKey];
+  return label ? programmeText(locale, label) : programmeText(locale, "Unavailable");
+}
+
+export function programmeMissionResultTitle(missionNumber: number, locale: ProgrammeLocale) {
+  const title = missionResultTitles[missionNumber];
+  return programmeText(locale, title ?? "YOUR RESULT");
 }
 
 const planPriorityFacts: Record<string, { missionNumber: number; fields: readonly string[] }> = {
@@ -211,7 +230,7 @@ function boundedSegment(value: string, maximum = 84) {
   return value.length <= maximum ? value : `${value.slice(0, maximum - 1).trimEnd()}…`;
 }
 
-export function deterministicFinalPlanText(context: unknown) {
+export function deterministicFinalPlanText(context: unknown, locale: ProgrammeLocale = "en-GB") {
   const record = context && typeof context === "object" && !Array.isArray(context)
     ? context as Record<string, unknown>
     : {};
@@ -225,7 +244,7 @@ export function deterministicFinalPlanText(context: unknown) {
   const segments = priorities.flatMap((priority) => {
     if (priority === "starting_point") {
       return typeof startingPoint.startingPoint === "string" && startingPoint.startingPoint.trim()
-        ? [`Starting Point: ${boundedSegment(startingPoint.startingPoint.trim())}`]
+        ? [`${programmeText(locale, "Starting Point")}: ${boundedSegment(startingPoint.startingPoint.trim())}`]
         : [];
     }
     const projection = planPriorityFacts[priority];
@@ -235,19 +254,19 @@ export function deterministicFinalPlanText(context: unknown) {
     const artifact = fact?.artifact && typeof fact.artifact === "object" && !Array.isArray(fact.artifact)
       ? fact.artifact as ProgramAiStructuralArtifact
       : {};
-    const values = presentMissionArtifact(artifact)
+    const values = presentMissionArtifact(artifact, locale)
       .filter((row) => projection.fields.includes(row.key) && row.value !== "Unavailable")
       .map((row) => row.value);
-    return values.length ? [`${humanValue(priority)}: ${boundedSegment(values.join("; "))}`] : [];
+    return values.length ? [`${humanValue(priority, locale)}: ${boundedSegment(values.join("; "))}`] : [];
   });
-  if (!segments.length) return "Review only the confirmed parts of your Programme; add nothing that is missing.";
+  if (!segments.length) return programmeText(locale, "Review only the confirmed parts of your Programme; add nothing that is missing.");
   return segments.reduce((result, segment) => {
     const candidate = result ? `${result}. ${segment}` : segment;
     return candidate.length <= 238 ? candidate : result;
   }, "") || boundedSegment(segments[0], 238);
 }
 
-export const scenarioCopy: Record<string, string> = {
+const scenarioCopy: Record<string, ProgrammeMessageKey> = {
   unexpected_offer: "A headline appears when you were not planning to look. The quick route is open.",
   difficult_day: "The day has been difficult and an old route feels easier than making another decision.",
   social_prompt: "Someone else brings up gambling and the decision suddenly feels immediate.",
@@ -257,7 +276,7 @@ export const scenarioCopy: Record<string, string> = {
   unclear_terms: "The headline is clear, but the conditions that would shape the decision are not.",
 };
 
-export const offerExplanations: Record<string, string> = {
+const offerExplanations: Record<string, ProgrammeMessageKey> = {
   wagering_requirement: "This tells you how much activity may be required before bonus-linked funds can be withdrawn.",
   expiry: "This tells you how long the terms remain available and whether pressure is being created by a deadline.",
   eligible_games: "This shows which activity counts toward the stated conditions and which does not.",
@@ -265,3 +284,28 @@ export const offerExplanations: Record<string, string> = {
   withdrawal_limit: "This shows whether access to funds is restricted after the offer is used.",
   unclear_terms: "If the material conditions are not clear, the headline is not enough to judge the offer.",
 };
+
+const optionDescriptions: Record<string, ProgrammeMessageKey> = {
+  licensing_status: "Confirms whether the product is permitted for the relevant market.",
+  operator_identity: "Shows the legal business behind the consumer brand.",
+  material_terms: "Reveals the conditions that shape the headline.",
+  withdrawal_conditions: "Shows how and when funds can be accessed.",
+  payments: "Makes fees, methods and processing expectations visible.",
+  safer_gambling_tools: "Shows what account controls are available before they are needed.",
+  offer_conditions: "Separates the headline from the conditions attached to it.",
+};
+
+export function programmeScenarioText(scenario: string, locale: ProgrammeLocale) {
+  const message = scenarioCopy[scenario];
+  return message ? programmeText(locale, message) : scenario;
+}
+
+export function programmeOfferExplanation(value: string, locale: ProgrammeLocale) {
+  const message = offerExplanations[value];
+  return message ? programmeText(locale, message) : programmeText(locale, "Unavailable");
+}
+
+export function programmeOptionDescription(value: string, locale: ProgrammeLocale) {
+  const message = optionDescriptions[value];
+  return message ? programmeText(locale, message) : undefined;
+}

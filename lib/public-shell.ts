@@ -31,23 +31,25 @@ export function isCurrentPublicRoute(pathname: string, href: string) {
 export function accountNavigationFor({
   authenticated,
   authoritativeXp,
+  programmePath = "/program",
 }: {
   authenticated: boolean;
   authoritativeXp?: number | null;
+  programmePath?: string;
 }) {
   return authenticated
     ? {
         accountLabel: "My Programme",
-        accountHref: "/program",
+        accountHref: programmePath,
         primaryLabel: "My Programme",
-        primaryHref: "/program",
+        primaryHref: programmePath,
         xpLabel: Number.isFinite(authoritativeXp) ? `${authoritativeXp} XP` : null,
       }
     : {
         accountLabel: "Log in",
-        accountHref: "/login",
+        accountHref: programmePath === "/program" ? "/login" : `/login?returnTo=${encodeURIComponent(programmePath)}`,
         primaryLabel: "Start Programme",
-        primaryHref: "/program",
+        primaryHref: programmePath,
         xpLabel: null,
       };
 }

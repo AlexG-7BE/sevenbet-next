@@ -25,6 +25,13 @@ import {
   marketProfileByRouteMarket,
   publicMarketPath,
 } from "@/lib/market/registry";
+import {
+  isProgrammeLocale,
+  programmeLocaleFromPath,
+  parseProgrammeRoute,
+  PROGRAMME_PRESENTATION_CONTEXT,
+  programmeRoute,
+} from "@/lib/programme/presentation";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -42,6 +49,7 @@ function presentationSigningSecret() {
 }
 
 function presentationTokenPayload({
+  context,
   issuedAt,
   locale,
   market,
@@ -49,6 +57,7 @@ function presentationTokenPayload({
   pathname,
   search,
 }: {
+  context: "public-v1" | "programme-v1";
   issuedAt: number;
   locale: string;
   market: string;
@@ -56,7 +65,7 @@ function presentationTokenPayload({
   pathname: string;
   search: string;
 }) {
-  return ["public-v1", origin, `${pathname}${search}`, market, locale, String(issuedAt)].join("\u0000");
+  return [context, origin, `${pathname}${search}`, market, locale, String(issuedAt)].join("\u0000");
 }
 
 async function presentationSigningKey() {
@@ -87,11 +96,13 @@ async function signInternalPresentation(
   rewriteUrl: URL,
   market: string,
   locale: string,
+  context: "public-v1" | "programme-v1",
 ) {
   const key = await presentationSigningKey();
   if (!key) return null;
   const issuedAt = Date.now();
   const payload = presentationTokenPayload({
+    context,
     issuedAt,
     locale,
     market,
@@ -105,13 +116,20 @@ async function signInternalPresentation(
 
 async function inheritedPresentation(request: NextRequest, pathname: string) {
   const token = request.headers.get(internalPresentationTokenHeader);
-  if (!token || request.headers.get(PRESENTATION_CONTEXT_HEADER) !== "public-v1") return null;
+  const context = request.headers.get(PRESENTATION_CONTEXT_HEADER);
+  if (!token || (context !== "public-v1" && context !== PROGRAMME_PRESENTATION_CONTEXT)) return null;
 
   const market = marketProfileByRouteMarket(request.headers.get(PRESENTATION_MARKET_HEADER));
   const locale = market
     ? localeForLanguageSegment(market, request.headers.get(PRESENTATION_LANGUAGE_HEADER))
     : null;
-  if (!market || !locale || !isLocalizedPublicDestination(pathname, market)) return null;
+  if (!market || !locale) return null;
+  const validDestination = context === "public-v1"
+    ? isLocalizedPublicDestination(pathname, market)
+    : isProgrammeLocale(locale)
+      && programmeRoute(locale).routeMarket === market.routeMarket
+      && (pathname === "/program" || pathname.startsWith("/program/"));
+  if (!validDestination) return null;
 
   const [issuedAtValue, signatureValue, ...extra] = token.split(".");
   const issuedAt = Number(issuedAtValue);
@@ -127,6 +145,7 @@ async function inheritedPresentation(request: NextRequest, pathname: string) {
   const key = await presentationSigningKey();
   if (!key) return null;
   const payload = presentationTokenPayload({
+    context,
     issuedAt,
     locale,
     market: market.routeMarket,
@@ -141,7 +160,7 @@ async function inheritedPresentation(request: NextRequest, pathname: string) {
       decodeBase64Url(signatureValue),
       new TextEncoder().encode(payload),
     );
-    return verified ? { locale, market } : null;
+    return verified ? { context, locale, market } : null;
   } catch {
     return null;
   }
@@ -220,11 +239,11 @@ export async function middleware(request: NextRequest) {
   // origin, destination, market and locale. Client presentation headers remain
   // untrusted and are removed before either pass reaches the application.
   const inherited = await inheritedPresentation(request, pathname);
-  if (inherited && !homeTranslationReady(inherited.locale)) {
+  if (inherited?.context === "public-v1" && !homeTranslationReady(inherited.locale)) {
     return secureResponse(nextResponse());
   }
   if (
-    inherited
+    inherited?.context === "public-v1"
     && process.env.VERCEL_ENV === "production"
     && !marketEditorialPublicationApproved(inherited.market)
   ) {
@@ -232,11 +251,61 @@ export async function middleware(request: NextRequest) {
   }
 
   if (inherited) {
-    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
+    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, inherited.context);
     requestHeaders.set(PRESENTATION_MARKET_HEADER, inherited.market.routeMarket);
     requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, inherited.locale.split("-")[0].toLowerCase());
     const response = nextResponse();
     response.headers.set("Content-Language", inherited.locale);
+    return secureResponse(response);
+  }
+
+  // A login transition may inherit Programme presentation only from an exact,
+  // validated Programme return path. This affects request-local language only;
+  // it creates no public publication, commercial, cookie or identity authority.
+  const programmeLoginLocale = pathname === "/login"
+    ? programmeLocaleFromPath(searchParams.get("returnTo"))
+    : null;
+  if (programmeLoginLocale) {
+    const route = programmeRoute(programmeLoginLocale);
+    const market = marketProfileByRouteMarket(route.routeMarket);
+    if (market) {
+      requestHeaders.set(PRESENTATION_CONTEXT_HEADER, PROGRAMME_PRESENTATION_CONTEXT);
+      requestHeaders.set(PRESENTATION_MARKET_HEADER, market.routeMarket);
+      requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, programmeLoginLocale.split("-")[0].toLowerCase());
+      const response = nextResponse();
+      response.headers.set("Content-Language", programmeLoginLocale);
+      return secureResponse(response);
+    }
+  }
+
+  const programmeMarketRoute = parseProgrammeRoute(pathname);
+  if (programmeMarketRoute?.trailingSlash) {
+    const destination = new URL(request.url);
+    destination.pathname = programmeMarketRoute.pathname;
+    return secureResponse(NextResponse.redirect(destination, 308));
+  }
+  if (programmeMarketRoute) {
+    const market = marketProfileByRouteMarket(programmeMarketRoute.route.routeMarket);
+    if (!market) return secureResponse(nextResponse());
+    requestHeaders.set(PRESENTATION_CONTEXT_HEADER, PROGRAMME_PRESENTATION_CONTEXT);
+    requestHeaders.set(PRESENTATION_MARKET_HEADER, market.routeMarket);
+    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, programmeMarketRoute.route.locale.split("-")[0].toLowerCase());
+    const rewriteUrl = pathname === programmeMarketRoute.rendererPathname
+      ? undefined
+      : request.nextUrl.clone();
+    if (rewriteUrl) {
+      rewriteUrl.pathname = programmeMarketRoute.rendererPathname;
+      const token = await signInternalPresentation(
+        rewriteUrl,
+        market.routeMarket,
+        programmeMarketRoute.route.locale,
+        PROGRAMME_PRESENTATION_CONTEXT,
+      );
+      if (!token) return secureResponse(nextResponse());
+      requestHeaders.set(internalPresentationTokenHeader, token);
+    }
+    const response = nextResponse(rewriteUrl);
+    response.headers.set("Content-Language", programmeMarketRoute.route.locale);
     return secureResponse(response);
   }
 
@@ -281,6 +350,7 @@ export async function middleware(request: NextRequest) {
         rewriteUrl,
         publicMarketRoute.market.routeMarket,
         publicMarketRoute.locale,
+        "public-v1",
       );
       if (!token) return secureResponse(nextResponse());
       requestHeaders.set(internalPresentationTokenHeader, token);

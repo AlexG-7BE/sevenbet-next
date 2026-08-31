@@ -4,6 +4,9 @@ import type {
   ProgramAiMissionNumber,
   ProgramAiReviewMilestone,
 } from "@/lib/programme/program-ai/mission-registry";
+import { programmeMissionCopy, programmeText } from "@/lib/i18n/programme-catalog";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
+import { assertSafeProgrammeGeneratedText } from "@/lib/programme/program-ai/output-safety";
 
 export const programAiGuidanceOperations = [
   "M2_GOAL",
@@ -55,82 +58,86 @@ export const reviewGuidanceOperation: Record<ProgramAiReviewMilestone, ProgramAi
   full: "REVIEW_M10",
 };
 
-const guidanceFallbacks: Record<ProgramAiGuidanceResult["operation"], Omit<ProgramAiGuidanceResult, "operation" | "generation">> = {
+function guidanceFallbacks(locale: ProgrammeLocale): Record<ProgramAiGuidanceResult["operation"], Omit<ProgramAiGuidanceResult, "operation" | "generation">> {
+  const t = (key: Parameters<typeof programmeText>[1]) => programmeText(locale, key);
+  return {
   M2_GOAL: {
     kind: "guidance",
-    title: "A small seven-day experiment",
-    summary: "Keep the goal narrow: practise your chosen direction in one situation, then notice what made it easier or harder.",
+    title: t("A small seven-day experiment"),
+    summary: t("Keep the goal narrow: practise your chosen direction in one situation, then notice what made it easier or harder."),
     options: [
-      { id: "candidate_1", text: "For seven days, I will pause once when my chosen cue appears." },
-      { id: "candidate_2", text: "For seven days, I will use one boundary before I decide." },
-      { id: "candidate_3", text: "For seven days, I will notice one decision point and choose my next move deliberately." },
+      { id: "candidate_1", text: t("For seven days, I will pause once when my chosen cue appears.") },
+      { id: "candidate_2", text: t("For seven days, I will use one boundary before I decide.") },
+      { id: "candidate_3", text: t("For seven days, I will notice one decision point and choose my next move deliberately.") },
     ],
   },
   M3_PATTERN_REFLECTION: {
     kind: "guidance",
-    title: "One possible pattern",
-    summary: "The early signal may be useful because it appears before the urge becomes the whole decision. Treat this as a possibility, not a label.",
-    options: [{ id: "reflection", text: "Cue → early signal → urge builds → choice point" }],
+    title: t("One possible pattern"),
+    summary: t("The early signal may be useful because it appears before the urge becomes the whole decision. Treat this as a possibility, not a label."),
+    options: [{ id: "reflection", text: t("Cue → early signal → urge builds → choice point") }],
   },
   M4_BOUNDARY_WORDING: {
     kind: "guidance",
-    title: "Make the rule usable",
-    summary: "Name when the boundary starts and the practical step you control. Third-party tools may help, but B4GAMBLE does not enforce them.",
-    options: [{ id: "rule", text: "When the trigger appears, I will use my chosen boundary before continuing." }],
+    title: t("Make the rule usable"),
+    summary: t("Name when the boundary starts and the practical step you control. Third-party tools may help, but B4GAMBLE does not enforce them."),
+    options: [{ id: "rule", text: t("When the trigger appears, I will use my chosen boundary before continuing.") }],
   },
   M6_FRICTION_ORDER: {
     kind: "guidance",
-    title: "Put the easiest layer first",
-    summary: "Set up the layer you can use immediately, then add the second layer if you chose one. Keep a fallback for the route that is easiest to bypass.",
-    options: [{ id: "order", text: "First practical layer → second layer → fallback" }],
+    title: t("Put the easiest layer first"),
+    summary: t("Set up the layer you can use immediately, then add the second layer if you chose one. Keep a fallback for the route that is easiest to bypass."),
+    options: [{ id: "order", text: t("First practical layer → second layer → fallback") }],
   },
   M7_SUPPORT_CARD: {
     kind: "guidance",
-    title: "A support card without names",
-    summary: "You do not need to identify anyone here. The card can connect one cue to one support route or exit action.",
-    options: [{ id: "card", text: "When my cue appears, I can use my chosen support route or leave." }],
+    title: t("A support card without names"),
+    summary: t("You do not need to identify anyone here. The card can connect one cue to one support route or exit action."),
+    options: [{ id: "card", text: t("When my cue appears, I can use my chosen support route or leave.") }],
   },
   M9_REHEARSAL: {
     kind: "guidance",
-    title: "A neutral rehearsal",
-    summary: "The scenario is live and the quick route is available. Choose the response that gives you the clearest decision point.",
+    title: t("A neutral rehearsal"),
+    summary: t("The scenario is live and the quick route is available. Choose the response that gives you the clearest decision point."),
     options: [
-      { id: "pause_and_check", text: "Pause and run the checks before deciding." },
-      { id: "leave_and_return", text: "Leave and return only after the pause." },
-      { id: "use_boundary", text: "Use the boundary already chosen." },
-      { id: "ask_for_support", text: "Use the prepared support route." },
+      { id: "pause_and_check", text: t("Pause and run the checks before deciding.") },
+      { id: "leave_and_return", text: t("Leave and return only after the pause.") },
+      { id: "use_boundary", text: t("Use the boundary already chosen.") },
+      { id: "ask_for_support", text: t("Use the prepared support route.") },
     ],
   },
   M10_FINAL_PLAN: {
     kind: "guidance",
-    title: "Your plan can stay short",
-    summary: "Keep only the parts you actually built: the cue, pause, boundary, checks, friction, support and fallback that are present.",
-    options: [{ id: "plan", text: "Notice → pause → use the plan → review at the chosen cadence" }],
+    title: t("Your plan can stay short"),
+    summary: t("Keep only the parts you actually built: the cue, pause, boundary, checks, friction, support and fallback that are present."),
+    options: [{ id: "plan", text: t("Notice → pause → use the plan → review at the chosen cadence") }],
   },
-};
+  };
+}
 
-function factSummary(context: unknown) {
+function factSummary(context: unknown, locale: ProgrammeLocale) {
   const record = context && typeof context === "object" && !Array.isArray(context)
-    ? context as { facts?: Array<{ title?: unknown; artifact?: unknown }> }
+    ? context as { facts?: Array<{ missionNumber?: unknown; artifact?: unknown }> }
     : {};
   const names = (record.facts ?? [])
     .filter((fact) => fact.artifact && typeof fact.artifact === "object" && Object.keys(fact.artifact as object).length)
-    .map((fact) => typeof fact.title === "string" ? fact.title : "")
+    .map((fact) => typeof fact.missionNumber === "number" ? programmeMissionCopy(locale, fact.missionNumber).title : "")
     .filter(Boolean);
-  return names.length ? names.join(", ") : "the structural choices you confirmed";
+  return names.length ? names.join(", ") : programmeText(locale, "the structural choices you confirmed");
 }
 
 export function deterministicGuidance(
   operation: ProgramAiGuidanceResult["operation"],
   context?: unknown,
+  locale: ProgrammeLocale = "en-GB",
 ): ProgramAiGuidanceResult {
-  const base = guidanceFallbacks[operation];
+  const base = guidanceFallbacks(locale)[operation];
   if (operation === "M10_FINAL_PLAN") {
     return {
       ...base,
       operation,
-      summary: "This one-screen plan uses the confirmed Programme facts behind your selected priorities.",
-      options: [{ id: "plan", text: deterministicFinalPlanText(context) }],
+      summary: programmeText(locale, "This one-screen plan uses the confirmed Programme facts behind your selected priorities."),
+      options: [{ id: "plan", text: deterministicFinalPlanText(context, locale) }],
       generation: "deterministic_fallback",
     };
   }
@@ -140,11 +147,12 @@ export function deterministicGuidance(
   const record = context && typeof context === "object" && !Array.isArray(context) ? context as Record<string, unknown> : {};
   const mission = record.mission && typeof record.mission === "object" && !Array.isArray(record.mission) ? record.mission as Record<string, unknown> : {};
   const artifact = mission.artifact && typeof mission.artifact === "object" && !Array.isArray(mission.artifact) ? mission.artifact as Record<string, unknown> : {};
+  const t = (key: Parameters<typeof programmeText>[1]) => programmeText(locale, key);
   const scenarios: Record<string, { title: string; summary: string }> = {
-    unexpected_offer: { title: "The headline arrives unexpectedly", summary: "You were not planning to look, but the quick route is open. What creates enough space to check the decision?" },
-    urge_after_stress: { title: "The urge follows a stressful moment", summary: "A familiar route feels immediate after stress. Which response gives you a clear next move before acting?" },
-    social_invitation: { title: "A social invitation changes the pace", summary: "Someone else is ready to continue and the decision feels immediate. Which response keeps the choice yours?" },
-    unclear_terms: { title: "The headline is clear; the terms are not", summary: "The offer is easy to see, but the conditions are not. Which response gives you time to check what matters?" },
+    unexpected_offer: { title: t("The headline arrives unexpectedly"), summary: t("You were not planning to look, but the quick route is open. What creates enough space to check the decision?") },
+    urge_after_stress: { title: t("The urge follows a stressful moment"), summary: t("A familiar route feels immediate after stress. Which response gives you a clear next move before acting?") },
+    social_invitation: { title: t("A social invitation changes the pace"), summary: t("Someone else is ready to continue and the decision feels immediate. Which response keeps the choice yours?") },
+    unclear_terms: { title: t("The headline is clear; the terms are not"), summary: t("The offer is easy to see, but the conditions are not. Which response gives you time to check what matters?") },
   };
   const scenario = typeof artifact.scenarioType === "string" ? scenarios[artifact.scenarioType] : undefined;
   return { ...base, ...scenario, operation, options: base.options.map((option) => ({ ...option })), generation: "deterministic_fallback" };
@@ -153,21 +161,23 @@ export function deterministicGuidance(
 export function deterministicReview(
   operation: ProgramAiReviewResult["operation"],
   context: unknown,
+  locale: ProgrammeLocale = "en-GB",
 ): ProgramAiReviewResult {
-  const summary = factSummary(context);
+  const summary = factSummary(context, locale);
+  const t = (key: Parameters<typeof programmeText>[1], values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
   const common = [
-    { id: "where_started", title: "Where you started", body: "Your confirmed Starting Point remains the reference point for this review." },
-    { id: "what_built", title: "What you built", body: `This review includes ${summary}. It does not add details you did not confirm.` },
+    { id: "where_started", title: t("Where you started"), body: t("Your confirmed Starting Point remains the reference point for this review.") },
+    { id: "what_built", title: t("What you built"), body: t("This review includes {summary}. It does not add details you did not confirm.", { summary }) },
   ];
   const sections = operation === "REVIEW_M3"
-    ? [...common, { id: "next_focus", title: "Next focus", body: "Carry the goal, early signal and pause move into the next three Missions." }]
+    ? [...common, { id: "next_focus", title: t("Next focus"), body: t("Carry the goal, early signal and pause move into the next three Missions.") }]
     : operation === "REVIEW_M6"
-      ? [...common, { id: "in_place", title: "What is in place", body: "Your boundary, decision checks and friction choices are ready to be tested in ordinary situations." }, { id: "next_focus", title: "Next focus", body: "Prepare support, research checks and one rehearsed fallback." }]
-      : [...common, { id: "in_place", title: "What you now have in place", body: "The completed structural choices form one reviewable plan; no commercial choice is part of it." }, { id: "review_next", title: "What to review next", body: "At your chosen cadence, keep what is useful and revise what is hard to use." }, { id: "one_screen", title: "Your plan in one screen", body: "Notice the cue. Pause. Use the relevant boundary, checks, friction or support route. Leave when that is the better next action." }];
+      ? [...common, { id: "in_place", title: t("What is in place"), body: t("Your boundary, decision checks and friction choices are ready to be tested in ordinary situations.") }, { id: "next_focus", title: t("Next focus"), body: t("Prepare support, research checks and one rehearsed fallback.") }]
+      : [...common, { id: "in_place", title: t("What you now have in place"), body: t("The completed structural choices form one reviewable plan; no commercial choice is part of it.") }, { id: "review_next", title: t("What to review next"), body: t("At your chosen cadence, keep what is useful and revise what is hard to use.") }, { id: "one_screen", title: t("Your plan in one screen"), body: t("Notice the cue. Pause. Use the relevant boundary, checks, friction or support route. Leave when that is the better next action.") }];
   return {
     kind: "review",
     operation,
-    title: operation === "REVIEW_M3" ? "First Personal Review" : operation === "REVIEW_M6" ? "Mid-Programme Personal Review" : "Full Programme Personal Review",
+    title: operation === "REVIEW_M3" ? t("First Personal Review") : operation === "REVIEW_M6" ? t("Mid-Programme Personal Review") : t("Full Programme Personal Review"),
     sections,
     generation: "deterministic_fallback",
   };
@@ -196,10 +206,7 @@ function safeString(value: unknown, maximum: number) {
     throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
   }
   const result = value.trim();
-  if (/diagnos|risk score|safe to gamble|\bcasino(?:s)?\b|\boperator(?:s)?\b|\bbonus(?:es)?\b|where to play|\bsafest\b|\bxp\b/i.test(result)) {
-    throw new ProgrammeProviderError("PROVIDER_INVALID_OUTPUT");
-  }
-  return result;
+  return assertSafeProgrammeGeneratedText(result, { strictCommercialTerms: true });
 }
 
 export function parseGeneratedResult(

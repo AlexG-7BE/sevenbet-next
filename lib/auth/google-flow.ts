@@ -1,9 +1,19 @@
 import { DEFAULT_AUTH_RETURN_TO, safeAuthReturnTo } from "@/lib/auth/return-to";
+import {
+  PROGRAMME_ROUTES,
+  programmePath,
+  type ProgrammeLocale,
+} from "@/lib/programme/presentation";
 
-export const GOOGLE_AUTH_CALLBACK = "/program?auth=google-return";
-export const GOOGLE_AUTH_ERROR_CALLBACK = "/program?auth=google-error";
-export const GOOGLE_LINK_CALLBACK = "/program?auth=google-link-return";
-export const GOOGLE_LINK_ERROR_CALLBACK = "/program?auth=google-link-error";
+export function programmeGoogleCallbacks(locale: ProgrammeLocale, flow: "sign-in" | "link" = "sign-in") {
+  const path = programmePath(locale);
+  return flow === "link"
+    ? { callbackURL: `${path}?auth=google-link-return`, errorCallbackURL: `${path}?auth=google-link-error` }
+    : { callbackURL: `${path}?auth=google-return`, errorCallbackURL: `${path}?auth=google-error` };
+}
+
+export const { callbackURL: GOOGLE_AUTH_CALLBACK, errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK } = programmeGoogleCallbacks("en-GB");
+export const { callbackURL: GOOGLE_LINK_CALLBACK, errorCallbackURL: GOOGLE_LINK_ERROR_CALLBACK } = programmeGoogleCallbacks("en-GB", "link");
 
 export function googleLoginCallbacks(returnTo: unknown = DEFAULT_AUTH_RETURN_TO, flow: "sign-in" | "link" = "sign-in") {
   const safeReturnTo = safeAuthReturnTo(returnTo);
@@ -23,10 +33,11 @@ export function googleLoginCallbacks(returnTo: unknown = DEFAULT_AUTH_RETURN_TO,
 
 function isAllowedCallbackPair(callbackURL: unknown, errorCallbackURL: unknown, flow: "sign-in" | "link") {
   if (typeof callbackURL !== "string" || typeof errorCallbackURL !== "string") return false;
-  const programmePair = flow === "sign-in"
-    ? { callbackURL: GOOGLE_AUTH_CALLBACK, errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK }
-    : { callbackURL: GOOGLE_LINK_CALLBACK, errorCallbackURL: GOOGLE_LINK_ERROR_CALLBACK };
-  if (callbackURL === programmePair.callbackURL && errorCallbackURL === programmePair.errorCallbackURL) return true;
+  const programmePair = PROGRAMME_ROUTES.some((route) => {
+    const pair = programmeGoogleCallbacks(route.locale, flow);
+    return callbackURL === pair.callbackURL && errorCallbackURL === pair.errorCallbackURL;
+  });
+  if (programmePair) return true;
 
   try {
     const callback = new URL(callbackURL, "https://b4gamble.invalid");
@@ -55,7 +66,9 @@ export function isAllowedGoogleSignInRequest(value: unknown) {
   if (body.provider !== "google"
     || !isAllowedCallbackPair(body.callbackURL, body.errorCallbackURL, "sign-in")
     || typeof body.requestSignUp !== "boolean") return false;
-  const programmeCallback = body.callbackURL === GOOGLE_AUTH_CALLBACK;
+  const programmeCallback = PROGRAMME_ROUTES.some((route) => (
+    body.callbackURL === programmeGoogleCallbacks(route.locale).callbackURL
+  ));
   return programmeCallback || body.requestSignUp === false;
 }
 

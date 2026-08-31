@@ -11,6 +11,7 @@ import {
   programAiMissionDefinition,
   type ProgramAiMissionNumber,
 } from "@/lib/programme/program-ai/mission-registry";
+import { isProgrammeLocale } from "@/lib/programme/presentation";
 
 export type ProgramAiStructuralArtifact = Record<string, string | number | boolean | string[]>;
 
@@ -173,6 +174,10 @@ export function parseProgramAiMissionAction(missionNumber: ProgramAiMissionNumbe
 
 export function parseProgramAiLocalWording(value: unknown) {
   const body = objectInput(value);
-  assertOnlyKeys(body, ["localWording"]);
-  return { localWording: text(body.localWording, "localWording", false, 600) ?? "" };
+  assertOnlyKeys(body, ["locale", "localWording"]);
+  if (!isProgrammeLocale(body.locale)) throw new ValidationError("locale is not supported by the Programme");
+  return {
+    locale: body.locale,
+    localWording: text(body.localWording, "localWording", false, 600) ?? "",
+  };
 }
