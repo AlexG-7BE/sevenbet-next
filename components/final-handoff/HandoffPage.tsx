@@ -34,6 +34,7 @@ export function HandoffPage({
   cssTransform,
   kind,
   effective,
+  programmePath = "/program",
   updated,
 }: {
   name: HandoffPageName;
@@ -41,10 +42,11 @@ export function HandoffPage({
   cssTransform?: (css: string) => string;
   kind?: "privacy" | "terms";
   effective?: string;
+  programmePath?: string;
   updated?: string;
 }) {
   const page = generatedPages[name];
-  const commonHtml = transformCommonHandoff(page.html);
+  const commonHtml = transformCommonHandoff(page.html, programmePath);
   const html = transform ? transform(commonHtml) : commonHtml;
   const sourceCss = cssTransform ? cssTransform(page.css) : page.css;
   const css = name === "home" ? `${sourceCss}\n${HOME_STACK_COMPOSITOR_FIX}` : sourceCss;
@@ -53,7 +55,7 @@ export function HandoffPage({
     <div data-document-effective={effective} data-document-kind={kind} data-document-updated={updated} data-handoff-page={name} data-legal-document={kind}>
       <NonceStyle>{css}</NonceStyle>
       <div dangerouslySetInnerHTML={{ __html: html }} />
-      <HandoffInteractions name={name} />
+      <HandoffInteractions name={name} programmePath={programmePath} />
     </div>
   );
 }

@@ -43,7 +43,7 @@ for (const acceptance of cases) {
     expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
 
     await expect(navigation.getByRole("link", { name: shell.openHelp })).toHaveAttribute("href", acceptance.helpHref);
-    await expect(navigation.getByRole("link", { name: shell.startProgramme, exact: true })).toHaveAttribute("href", /^\/program(?:\?|$)/);
+    await expect(navigation.getByRole("link", { name: shell.startProgramme, exact: true })).toHaveAttribute("href", `${acceptance.prefix}/program`);
 
     const selector = navigation.getByRole("button", { name: shell.changeMarketAndLanguage });
     await selector.click();

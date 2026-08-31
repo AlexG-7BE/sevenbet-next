@@ -20,7 +20,7 @@ test("root 404 is static, branded and independent of auth and database", () => {
   const handoff = JSON.parse(source("lib/final-handoff/generated-pages.json")) as Record<string, { html: string }>;
   const document = notFound + handoff.notFound.html;
   assert.match(notFound, /transformNotFoundHandoff/);
-  assert.match(notFound, /<HandoffPage name="notFound" transform=/);
+  assert.match(notFound, /<HandoffPage name="notFound" programmePath=\{programmePath\} transform=/);
   assert.match(notFound, /productHref\(presentation, href\)/);
   assert.match(notFound, /publicErrorMessages\(presentation\.locale\)/);
   assert.match(document, />404</);

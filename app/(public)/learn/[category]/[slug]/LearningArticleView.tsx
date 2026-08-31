@@ -33,6 +33,7 @@ export function LearningArticleView({
   locale,
   messages,
   hrefFor,
+  programmePath,
 }: {
   article: LearningArticle;
   category: LearningCategory;
@@ -42,6 +43,7 @@ export function LearningArticleView({
   locale: SupportedLocale;
   messages: LearningMessages;
   hrefFor: (href: string) => string;
+  programmePath: string;
 }) {
   const commercialEligible = article.categorySlug !== "responsible-gambling";
   const visual = article.visualPresentation;
@@ -170,7 +172,7 @@ export function LearningArticleView({
           <div>
             <p>{visual?.bridgeText || messages.ui.comparisonCopy}</p>
             {visual
-              ? <Link href="/program">Start Programme</Link>
+              ? <Link href={programmePath}>Start Programme</Link>
               : <Link href={hrefFor("/casinos")}>{messages.ui.compareCasinos} <span aria-hidden="true">↗</span></Link>}
             {!visual ? <small>{messages.ui.commercialDisclosure}</small> : null}
           </div>

@@ -24,6 +24,7 @@ const homeAssets = [
 test("Home route renders the final handoff with the approved metadata and canonical", () => {
   assert.match(page, /import \{ HandoffPage \}/);
   assert.match(page, /transform=\{\(html\) => transformHomeHandoff\(html, presentation\.locale\)\}/);
+  assert.match(page, /programmePath=\{programmePath\}/);
   assert.match(page, /export async function generateMetadata/);
   assert.match(homeCatalog, /title: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(page, /productMetadata\(\{ presentation, pathname: "\/", title, description, robots: \{ index: true, follow: true \} \}\)/);
@@ -84,7 +85,8 @@ test("Home Programme entry stays internal and commercial acquisition stays outsi
   assert.doesNotMatch(home, /href="\/(?:r|go)\//);
   assert.doesNotMatch(home, /casino card|bonus card|best offers|affiliate cta/iu);
   assert.match(layout, /getServerSession/);
-  assert.match(layout, /accountNavigationFor\(\{ authenticated \}\)/);
+  assert.match(layout, /accountNavigationFor\(\{ authenticated, programmePath \}\)/);
+  assert.match(layout, /programme=\{\{ path: programmePath, localizePublicLinks: true \}\}/);
 });
 
 test("Home does not invent authenticated XP or client-side progress", () => {

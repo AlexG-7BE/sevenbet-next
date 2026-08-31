@@ -365,7 +365,7 @@ function setupHomeInteractions(root: HTMLElement) {
   };
 }
 
-export function HandoffInteractions({ name }: { name: string }) {
+export function HandoffInteractions({ name, programmePath = "/program" }: { name: string; programmePath?: string }) {
   useEffect(() => {
     const root = document.querySelector<HTMLElement>(`[data-handoff-page="${name}"]`);
     if (!root) return;
@@ -447,7 +447,7 @@ export function HandoffInteractions({ name }: { name: string }) {
       if (!button) return;
       const label = button.dataset.learnTopic ?? normalized(button.textContent);
       if (label === "start programme") {
-        window.location.assign("/program?entry=start");
+        window.location.assign(`${programmePath}?entry=start`);
         return;
       }
       if (name !== "learn") return;
@@ -471,6 +471,6 @@ export function HandoffInteractions({ name }: { name: string }) {
       cleanUpHome?.();
       cleanUpShared?.();
     };
-  }, [name]);
+  }, [name, programmePath]);
   return null;
 }

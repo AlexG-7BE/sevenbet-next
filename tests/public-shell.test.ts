@@ -63,6 +63,20 @@ test("account navigation is server-state-derived and never invents XP", () => {
     xpLabel: null,
   });
   assert.equal(accountNavigationFor({ authenticated: true, authoritativeXp: 330 }).xpLabel, "330 XP");
+  assert.deepEqual(accountNavigationFor({ authenticated: false, programmePath: "/es/program" }), {
+    accountLabel: "Log in",
+    accountHref: "/login?returnTo=%2Fes%2Fprogram",
+    primaryLabel: "Start Programme",
+    primaryHref: "/es/program",
+    xpLabel: null,
+  });
+  assert.deepEqual(accountNavigationFor({ authenticated: true, programmePath: "/fi/program" }), {
+    accountLabel: "My Programme",
+    accountHref: "/fi/program",
+    primaryLabel: "My Programme",
+    primaryHref: "/fi/program",
+    xpLabel: null,
+  });
 });
 
 test("desktop and mobile header actions render the shared account label with icon-only navigation controls", () => {

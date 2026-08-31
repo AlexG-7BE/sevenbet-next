@@ -38,9 +38,9 @@ const runtimeText = textContent(runtime);
 
 test("mounted 10 Steps handoff keeps the approved hierarchy inside the Public Shell", () => {
   assert.match(page, /import \{ HandoffPage \}/);
-  assert.match(page, /<HandoffPage name="tenSteps" transform=\{\(html\) => transformTenStepsHandoff\(html, presentation\.locale\)\} \/>/);
+  assert.match(page, /<HandoffPage name="tenSteps" programmePath=\{programmePath\} transform=\{\(html\) => transformTenStepsHandoff\(html, presentation\.locale, programmePath\)\} \/>/);
   assert.doesNotMatch(page, /TenStepsLanding|resolveTenStepsLandingState/);
-  assert.match(handoffPage, /const commonHtml = transformCommonHandoff\(page\.html\)/);
+  assert.match(handoffPage, /const commonHtml = transformCommonHandoff\(page\.html, programmePath\)/);
   assert.match(handoffPage, /const html = transform \? transform\(commonHtml\) : commonHtml/);
 
   assert.deepEqual(
