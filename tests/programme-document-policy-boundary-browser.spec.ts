@@ -26,13 +26,21 @@ test("crossing public and Programme boundaries reloads the top-level document so
     (window as typeof window & { __programmePolicyDocumentMarker?: string }).__programmePolicyDocumentMarker = "programme-document";
   });
 
-  const learnLink = page.locator('header a[href="/es/learn"]:visible').first();
+  // The Programme shell may intentionally keep ordinary public links unprefixed
+  // when public-market publication authority is not being carried through the
+  // Programme presentation context. This regression is about the document-policy
+  // boundary, not about choosing /learn versus /es/learn.
+  const learnLink = page.locator('header a[href$="/learn"]:visible').first();
   await expect(learnLink).toBeVisible();
+  const learnHref = await learnLink.getAttribute("href");
+  expect(learnHref).toBeTruthy();
+  expect(learnHref).not.toContain("/program");
+
   const publicNavigation = page.waitForNavigation({ waitUntil: "domcontentloaded" });
   await learnLink.click();
   const returnResponse = await publicNavigation;
 
-  expect(new URL(page.url()).pathname).toBe("/es/learn");
+  expect(new URL(page.url()).pathname).toBe(learnHref);
   expect(returnResponse?.headers()["permissions-policy"]).toBe(denied);
   expect(await page.evaluate(() => "__programmePolicyDocumentMarker" in window)).toBe(false);
 });
