@@ -130,6 +130,43 @@ test("direct Program AI session creation rejects every unsigned, forged or misma
   }
 });
 
+test("valid Programme access receives a stable disabled-runtime response before session creation", async () => {
+  const previousFlag = process.env.PROGRAM_AI_V1_ENABLED;
+  const previousSecret = process.env.BETTER_AUTH_SECRET;
+  process.env.PROGRAM_AI_V1_ENABLED = "false";
+  process.env.BETTER_AUTH_SECRET = accessSecret;
+  const journeyId = "3888d8dc-fbc2-4d5d-9422-82cb3fa6fc75";
+  const authority = issueProgrammeAccessProof({
+    journeyId,
+    secret: accessSecret,
+    now: Date.now(),
+  });
+  try {
+    const response = await createProgramAiSession(new Request(
+      "http://localhost/api/program/program-ai/session",
+      {
+        method: "POST",
+        headers: {
+          [PROGRAMME_AUTH_ACCESS_HEADERS.proof]: authority.proof,
+          [PROGRAMME_AUTH_ACCESS_HEADERS.journey]: journeyId,
+          "x-forwarded-for": "203.0.113.250",
+        },
+      },
+    ));
+    assert.equal(response.status, 404);
+    assert.deepEqual(await response.json(), {
+      ok: false,
+      error: "PROGRAM-AI is unavailable",
+      code: "PROGRAM_AI_DISABLED",
+    });
+  } finally {
+    if (previousFlag === undefined) delete process.env.PROGRAM_AI_V1_ENABLED;
+    else process.env.PROGRAM_AI_V1_ENABLED = previousFlag;
+    if (previousSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = previousSecret;
+  }
+});
+
 test("active authority confirmation is immutable and claim binding becomes user-only", async () => {
   const firstConfirmedAt = new Date("2026-08-10T10:00:00.000Z");
   const later = new Date("2026-08-10T10:05:00.000Z");

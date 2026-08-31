@@ -25,6 +25,7 @@ import {
   loadProgrammeSubjectContent,
   saveProgrammeSubjectContent,
 } from "../lib/programme/local-subject-storage";
+import { programmeAccessFailureMessageKey } from "../lib/programme/program-ai/access-errors";
 import {
   deterministicGuidance,
   deterministicReview,
@@ -131,6 +132,25 @@ test("Programme presentation exposes exactly the Founder-approved locale and rou
   assert.equal(parseProgrammeRoute("/it/program")?.route.locale, "it-IT");
   assert.equal(parseProgrammeRoute("/it/programme"), null);
   assert.equal(parseProgrammeRoute("/de/program%2Fadmin"), null);
+});
+
+test("Programme access failures remain stage-specific, localized and free of server codes", () => {
+  const cases = [
+    ["authority", {}, "We could not verify Programme access. Check both boxes and try again."],
+    ["session", { code: "PROGRAM_AI_DISABLED" }, "Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later."],
+    ["session", { code: "INTERNAL_ERROR" }, "Mission 01 could not be started. Try again."],
+  ] as const;
+
+  for (const locale of PROGRAMME_LOCALES) {
+    for (const [stage, failure, expectedKey] of cases) {
+      const key = programmeAccessFailureMessageKey(stage, failure);
+      assert.equal(key, expectedKey);
+      const message = programmeText(locale, key);
+      assert.ok(message.length > 20, `${locale}: ${key}`);
+      assert.doesNotMatch(message, /PROGRAM_AI|INTERNAL_ERROR|ACCESS_AUTHORITY|404|500/);
+      if (locale !== "en-GB") assert.notEqual(message, key, `${locale}: ${key}`);
+    }
+  }
 });
 
 test("Programme middleware establishes a distinct request-local context for all routes and sanitises spoofed authority", async () => {

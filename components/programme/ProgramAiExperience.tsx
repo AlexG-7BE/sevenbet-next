@@ -36,6 +36,7 @@ import {
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
+import { programmeAccessFailureMessageKey } from "@/lib/programme/program-ai/access-errors";
 import { programmeAudioBlobFitsUploadLimit } from "@/lib/programme/program-ai/transcription-limits";
 import {
   anonymousProgrammeSubject,
@@ -287,8 +288,8 @@ export function ProgramAiExperience({
     const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
+    const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
     try {
-      const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
         credentials: "same-origin",
@@ -306,6 +307,12 @@ export function ProgramAiExperience({
       const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
       if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+    } catch {
+      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
+      setBusy(false);
+      return;
+    }
+    try {
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
@@ -318,8 +325,9 @@ export function ProgramAiExperience({
       voiceTiming.current = null;
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
-    } catch {
-      setError(programmeText(locale, "Current access could not be verified. Try again."));
+    } catch (cause) {
+      const requestError = cause as Error & { code?: string };
+      setError(programmeText(locale, programmeAccessFailureMessageKey("session", requestError)));
     } finally { setBusy(false); }
   }
 

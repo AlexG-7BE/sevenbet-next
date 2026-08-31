@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "../components/programme/ProgramAiHome.copy";
+import { assertProgrammeReleaseRuntime } from "../lib/programme/program-ai/release-runtime";
 
 function read(path: string) {
   return readFileSync(path, "utf8");
@@ -23,6 +24,39 @@ const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
 const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
 const layout = read("app/program/layout.tsx");
+const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
+
+test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
+  const releaseCandidate = {
+    VERCEL_ENV: "preview",
+    VERCEL_GIT_COMMIT_REF: "feat/programme-internationalisation",
+  };
+  assert.throws(
+    () => assertProgrammeReleaseRuntime(releaseCandidate),
+    /PR #106 Preview runtime acceptance failed/,
+  );
+  assert.throws(
+    () => assertProgrammeReleaseRuntime({ ...releaseCandidate, PROGRAM_AI_V1_ENABLED: "TRUE" }),
+    /PROGRAM_AI_V1_ENABLED must be exact true/,
+  );
+  assert.deepEqual(
+    assertProgrammeReleaseRuntime({ ...releaseCandidate, PROGRAM_AI_V1_ENABLED: "true" }),
+    {
+      checked: true,
+      branch: "feat/programme-internationalisation",
+      programmeAiV1Enabled: true,
+    },
+  );
+  assert.deepEqual(assertProgrammeReleaseRuntime({
+    VERCEL_ENV: "preview",
+    VERCEL_GIT_COMMIT_REF: "another-preview",
+  }), { checked: false });
+  assert.deepEqual(assertProgrammeReleaseRuntime({
+    VERCEL_ENV: "production",
+    VERCEL_GIT_COMMIT_REF: "feat/programme-internationalisation",
+  }), { checked: false });
+  assert.match(vercelBuildPreflight, /assertProgrammeReleaseRuntime\(\)/);
+});
 
 test("the schema change is limited to the two approved Program AI concepts", () => {
   assert.equal((schema.match(/model ProgrammeSensitiveInputAuthority\s*\{/g) || []).length, 1);
