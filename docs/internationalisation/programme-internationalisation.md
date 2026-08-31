@@ -198,18 +198,46 @@ Verified branch gates at this evidence point:
 - `npm run ci:migrations`: passed against a disposable PostgreSQL database;
   23 existing migrations, no new migration.
 
-Hosted Preview identifiers, exact-head CI and final rendered Preview evidence
-will be recorded after the PR exists; they are not inferred from local passes.
+## Detected PR, CI and Preview evidence
+
+- PR [#106](https://github.com/AlexG-7BE/sevenbet-next/pull/106) is open
+  from `feat/programme-internationalisation` to `main`. Its exact base is
+  `f457099390c98ed0fd4613996a706aa728ffbb4c`; the implementation evidence head
+  before this documentation update is
+  `7ddd12268e05483f46bfb5166bbd939c9d24cba1`.
+- GitHub Actions run
+  [33374528878](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/33374528878)
+  passed at that exact head. `Agent Core`, `Quality`,
+  `Database / Migration Verification` and `Build / Browser` all completed
+  successfully, including the full browser and typography stages.
+- Vercel deployment `dpl_Ht18HWwzv5BmnJ3TWZhKH9tryDup` is a `READY` Preview
+  whose Git source is that exact head. Its immutable URL is
+  `https://sevenbet-next-ac72ikjfw-alexg-7bes-projects.vercel.app`; the branch
+  alias is
+  `https://sevenbet-next-git-feat-programme-int-041e2b-alexg-7bes-projects.vercel.app`.
+
+Authenticated rendered QA on the exact deployment covered every Programme
+route at both `1440 × 1000` and `390 × 844`, for 22 route/viewport
+combinations. Every combination had the exact document language and canonical
+path, 12 alternate-language links, localized H1 copy, no representative
+English leakage outside `en-GB`, no unresolved interpolation token, no
+horizontal overflow and no clipped interactive control. The responsive
+selector exposed exactly the 11 canonical routes with the active route marked;
+Greek glyph rendering and the Norwegian mobile menu bounds were inspected
+directly. `/it/` retained `noindex, follow` and rendered no Programme runtime,
+confirming that Italian Programme availability did not grant ordinary
+second-wave public publication authority. Unsigned headless requests stopped
+at Vercel deployment protection and were excluded from application QA rather
+than misclassified as application failures.
 
 ## Founder-gated remainder
 
 The following remain pending and must not be presented as completed:
 
-1. focused PR creation and exact-head remote CI;
-2. exact Vercel Preview deployment verification;
-3. desktop/mobile rendered Preview QA across all 11 routes;
-4. Founder visual acceptance;
-5. any merge or Production deployment decision.
+1. Founder visual acceptance;
+2. any merge decision;
+3. any Production deployment, Production data, indexing, ordinary second-wave
+   publication or commercial-authority decision.
 
 Programme localization does not activate non-GB indexing, second-wave public
 publication, localized operative legal documents or any commercial action.
