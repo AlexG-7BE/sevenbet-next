@@ -517,9 +517,17 @@ function homeResponsiveImage(imageTag: string) {
   return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
 }
 
+function tagHomeHeroKicker(html: string, copy: string) {
+  const escapedCopy = escapeHtml(copy);
+  return html.replace(
+    new RegExp(`<div([^>]*)>${escapePattern(escapedCopy)}</div>`),
+    `<div$1 data-home-hero-kicker="">${escapedCopy}</div>`,
+  );
+}
+
 function translateHomeHandoff(html: string, locale: SupportedLocale) {
   const translation = homeTranslation(locale);
-  if (!translation) return html;
+  if (!translation) return tagHomeHeroKicker(html, HOME_SOURCE_COPY.hero[0]);
 
   const textTranslations = new Map<string, string>();
   for (const section of Object.keys(HOME_SOURCE_COPY) as Array<keyof typeof HOME_SOURCE_COPY>) {
@@ -545,12 +553,7 @@ function translateHomeHandoff(html: string, locale: SupportedLocale) {
   HOME_SOURCE_COPY.imageAlts.forEach((source, index) => {
     output = output.replaceAll(`alt="${source}"`, `alt="${escapeHtml(translation.imageAlts[index])}"`);
   });
-  const localizedKicker = escapeHtml(translation.hero[0]);
-  output = output.replace(
-    new RegExp(`<div([^>]*)>${escapePattern(localizedKicker)}</div>`),
-    `<div$1 data-home-hero-kicker="">${localizedKicker}</div>`,
-  );
-  return output;
+  return tagHomeHeroKicker(output, translation.hero[0]);
 }
 
 export function transformHomeHandoff(html: string, locale: SupportedLocale = "en-GB") {

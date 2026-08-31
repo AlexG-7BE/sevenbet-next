@@ -444,6 +444,7 @@ test("every European Home locale has complete localized copy and metadata", () =
     const localizedMetadata = homeMetadata(locale);
     assert.ok(localizedMetadata.title.trim());
     assert.ok(localizedMetadata.description.trim());
+    assert.match(localizedHtml, /data-home-hero-kicker/, `${locale} is missing the responsive Home kicker hook`);
     if (locale === "en-GB") continue;
     const translation = homeTranslation(locale);
     assert.ok(translation);
