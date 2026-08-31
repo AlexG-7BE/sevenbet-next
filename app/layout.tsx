@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo, Instrument_Serif } from "next/font/google";
 import { connection } from "next/server";
 import { SiteMotionController } from "@/components/motion/SiteMotionController";
+import { ProgrammeDocumentPolicyBoundary } from "@/components/programme/ProgrammeDocumentPolicyBoundary";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl, siteUrl } from "@/lib/site";
@@ -48,6 +49,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className={`${archivo.variable} ${instrumentSerif.variable}`}>
         <JsonLd data={{ "@context": "https://schema.org", "@type": "Organization", name: "B4GAMBLE", url: absoluteUrl("/") }} />
         {children}
+        <ProgrammeDocumentPolicyBoundary />
         <SiteMotionController />
       </body>
     </html>
