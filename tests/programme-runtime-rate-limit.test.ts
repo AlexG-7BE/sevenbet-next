@@ -225,9 +225,9 @@ test("a rate-limited guidance request returns the deterministic fallback without
     { generate: async () => { providerCalls += 1; throw new Error("must not run"); } },
   );
   try {
-    const result = await service.missionGuidance("user-a", 2, {}, false);
+    const result = await service.missionGuidance("user-a", 2, { locale: "en-GB" }, false);
     assert.equal(result.generation, "deterministic_fallback");
-    const review = await service.review("user-a", "first", {}, false);
+    const review = await service.review("user-a", "first", { locale: "en-GB" }, false);
     assert.equal(review.generation, "deterministic_fallback");
     assert.equal(providerCalls, 0);
   } finally {
@@ -254,7 +254,7 @@ test("provider failures retain a usable fallback and expose only a closed reliab
         missions as never,
         { generate: async () => { throw new ProgrammeProviderError(providerCode); } },
       );
-      const result = await service.missionGuidance("user-a", 2, {}, true);
+      const result = await service.missionGuidance("user-a", 2, { locale: "en-GB" }, true);
       assert.equal(result.generation, "deterministic_fallback");
       assert.equal(result.providerOutcome, providerOutcome);
     }

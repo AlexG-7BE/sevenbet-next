@@ -17,7 +17,11 @@ import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "../lib/i18n/static-p
 import { publicFooterMessages, publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { jurisdictionResolver } from "../lib/jurisdiction/resolver";
-import { programAiMissionRegistry, programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
+import {
+  programAiMissionRegistry,
+  programmeMissionTitles,
+  programAiMissionSourcePresentation,
+} from "../lib/programme/program-ai/mission-registry";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
 import {
   FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
@@ -591,7 +595,7 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
   );
   assert.deepEqual(
     Array.from({ length: 9 }, (_, index) => english.text[23 + index * 2]),
-    programAiMissionRegistry.map((mission) => mission.purpose),
+    programAiMissionRegistry.map((mission) => programAiMissionSourcePresentation(mission.missionNumber).purpose),
   );
   assert.deepEqual(tenStepsTranslation("en-CA"), english);
   assert.deepEqual(tenStepsTranslation("fr-CA"), english);

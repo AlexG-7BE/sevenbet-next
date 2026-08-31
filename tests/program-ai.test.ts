@@ -199,17 +199,20 @@ test("Mission 01 reward policy has two versioned logical awards and no registrat
 
 test("turn validation admits only bounded text and at most two clarifications", () => {
   const parsed = parseProgrammeAiTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: startingPoint.startingPoint,
     clarificationAnswers: ["I want a pause.", "Mostly after work."],
   });
   assert.equal(parsed.clarificationAnswers.length, 2);
   assert.throws(() => parseProgrammeAiTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: startingPoint.startingPoint,
     clarificationAnswers: ["one", "two", "three"],
   }), /maximum|items|clarificationAnswers/i);
   assert.throws(() => parseProgrammeAiTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: startingPoint.startingPoint,
     clarificationAnswers: [],
@@ -265,6 +268,7 @@ test("provider output is a strict union and cannot smuggle authority, raw payloa
 test("no-adapter orchestration produces a complete best-effort Starting Point without another user question", async () => {
   const orchestrator = new ProgrammeAiOrchestrator(null);
   const result = await orchestrator.createTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: `  ${startingPoint.startingPoint}  `,
     clarificationAnswers: [],
@@ -291,6 +295,7 @@ test("provider clarification output becomes a best-effort Starting Point and pre
     },
   });
   const result = await orchestrator.createTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: startingPoint.startingPoint,
     clarificationAnswers: [],
@@ -350,7 +355,7 @@ test("Mission 01 reserves at most three real-provider calls and then falls back"
     for (let index = 0; index < 4; index += 1) {
       const turn = await service.createTurn(
         "opaque-token",
-        { inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
+        { locale: "en-GB", inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
         new Date("2026-08-10T12:00:00.000Z"),
       );
       if (turn.result.kind === "STARTING_POINT_CANDIDATE") generations.push(turn.result.generation);
@@ -362,7 +367,7 @@ test("Mission 01 reserves at most three real-provider calls and then falls back"
     session.draft = { ...(session.draft as Record<string, unknown>), providerCallCount: 0 };
     const rateLimited = await service.createTurn(
       "opaque-token",
-      { inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
+      { locale: "en-GB", inputMode: "text", situation: startingPoint.startingPoint, clarificationAnswers: [] },
       new Date("2026-08-10T12:00:00.000Z"),
       false,
     );
@@ -389,6 +394,7 @@ test("support-first is a transient port disposition, not a classifier or persist
     },
   });
   const result = await orchestrator.createTurn({
+    locale: "en-GB",
     inputMode: "text",
     situation: startingPoint.startingPoint,
     clarificationAnswers: [],
