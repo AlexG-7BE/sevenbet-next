@@ -2,7 +2,7 @@
 
 **Evidence date:** 31 August 2026
 
-**Status:** implemented and verified on `feat/programme-internationalisation`; not merged or deployed to Production
+**Status:** remediation implemented on `feat/programme-internationalisation`; **PR #106 Preview is on HOLD** pending real hosted Mission 01 and locale-continuity acceptance; not merged or deployed to Production
 
 **Authoritative base:** `f457099390c98ed0fd4613996a706aa728ffbb4c`
 
@@ -19,7 +19,7 @@ foundation or grant Production deployment authority. The historical
 
 The delivery sequence remains:
 
-`feature branch → implementation → tests → PR → CI → Vercel Preview → rendered QA → Founder visual review → STOP`
+`feature branch → implementation → tests → PR → CI → Vercel Preview → real hosted Mission 01 acceptance → Founder review → STOP`
 
 No merge, auto-merge, Production deployment or Production data mutation is
 authorised by this record.
@@ -168,10 +168,10 @@ The durable generated report is
 `docs/internationalisation/programme-ai-language-qa-report.json`.
 
 - Status: `AI_LANGUAGE_QA_PASSED`
-- Catalogue keys: 629
-- Checked strings per locale: 649
+- Catalogue keys: 632
+- Checked strings per locale: 652
 - Locales passing: 11/11
-- Digest: `d46355fba2a6c4783fc93ad71995829923aacc34761f7101273aa5f35405b715`
+- Digest: `28c329583f62296a400c8dd82b6391d17edd5442de138b6bafbffa2c42de74a7`
 
 The report deterministically checks source completeness, non-empty
 translations, untranslated source leakage, interpolation integrity, obvious
@@ -183,7 +183,7 @@ not legal, regulatory, commercial or indexing approval.
 
 Verified branch gates at this evidence point:
 
-- `npm run programme:test`: 136/136 passed.
+- `npm run programme:test`: 139/139 passed.
 - `npm run program-ai:browser`: 16/16 passed.
 - `npm run internationalisation:test`: 56/56 passed.
 - `npm run lint`: passed with zero warnings.
@@ -191,7 +191,7 @@ Verified branch gates at this evidence point:
 - `npm run build`: passed.
 - `npm run ci:quality`: passed in full, including Prisma validation and all
   configured structural/runtime/release Node suites.
-- `npm run ci:browser`: 245 passed and 3 intentionally skipped in the public
+- `npm run ci:browser`: 246 passed and 3 intentionally skipped in the public
   matrix, then 16/16 passed in the Programme/database-backed matrix.
 - `npm run ci:build-secrets`: passed across 807 browser-deliverable files.
 - `npm run ci:structural`: passed.
@@ -230,14 +230,72 @@ second-wave public publication authority. Unsigned headless requests stopped
 at Vercel deployment protection and were excluded from application QA rather
 than misclassified as application failures.
 
+That earlier route/rendering pass did not prove real hosted Mission 01 session
+creation. It must not be used as evidence that the first Programme mutation is
+available in Preview.
+
+## Detected runtime acceptance finding and remediation
+
+The Founder reproduced the missing runtime path on the later exact PR head
+`41d4728387b130e7c0a265a1dfbed9224b4dbc9b`: access-authority creation returned
+`200`, the immediately following Program AI session request returned `404`, and
+the interface reported an authority-verification failure. Repository and Vercel
+configuration evidence identified configuration drift: the session service
+fails closed with stable code `PROGRAM_AI_DISABLED` unless
+`PROGRAM_AI_V1_ENABLED` is exact `true`, while the PR browser configuration
+forces that value for local Playwright. The affected branch had no branch-bound
+Preview value before remediation.
+
+Before enabling the flag, provider evidence established that Preview and
+Production are attached to different Prisma Postgres resources:
+
+- Preview: `sevenbet-preview`, provider resource
+  `store_hLPkkgamL7rJNmCe`, attached only to `preview`;
+- Production: `prisma-postgres-cobalt-school`, provider resource
+  `store_1I4F54ETrwSKS42o`, attached only to `production`.
+
+The immutable resource IDs and mutually exclusive environment attachments are
+the isolation proof. No database value, credential or connection string is
+recorded here. After that proof, `PROGRAM_AI_V1_ENABLED=true` was added only to
+the Preview environment for exact branch
+`feat/programme-internationalisation`. The existing Production-scoped flag was
+not edited.
+
+Implementation commit `c70c7663e4565c9241b9fd8a0eec74d18da19633`
+adds four bounded controls:
+
+1. access-authority failure, disabled/unavailable Mission 01, and general
+   session-creation failure now resolve to distinct repository-controlled copy;
+2. all three messages are localized across all 11 Programme locales and raw
+   server codes, statuses and details are not rendered;
+3. a route regression proves a valid signed access request receives stable
+   server code `PROGRAM_AI_DISABLED` with `404` before session creation when the
+   runtime is disabled; and
+4. Vercel Preview builds for this exact release branch fail unless the runtime
+   flag is exact `true`. Other Preview branches and Production are outside this
+   temporary release-candidate guard.
+
+Local browser tests use controlled routing and therefore validate presentation
+and error mapping, not hosted runtime availability. A fresh protected-Preview
+browser attempt was rejected by the Codex app security layer; no alternate
+access path was used. Real hosted acceptance remains pending and must cover:
+
+- access confirmation through `Enter Mission 01`, authority `200`, successful
+  session creation, and rendered intake without API interception; and
+- `en-GB → de-DE → fi-FI → en-GB` in one browser subject/journey.
+
 ## Founder-gated remainder
 
 The following remain pending and must not be presented as completed:
 
-1. Founder visual acceptance;
-2. any merge decision;
-3. any Production deployment, Production data, indexing, ordinary second-wave
+1. real hosted Mission 01 and locale-continuity acceptance on the new exact
+   remediation deployment;
+2. Founder acceptance;
+3. any merge decision;
+4. any Production deployment, Production data, indexing, ordinary second-wave
    publication or commercial-authority decision.
+
+**PR #106 PREVIEW: HOLD.**
 
 Programme localization does not activate non-GB indexing, second-wave public
 publication, localized operative legal documents or any commercial action.
