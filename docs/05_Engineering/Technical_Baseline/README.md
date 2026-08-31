@@ -35,3 +35,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [09_Programme_Backend_Audit.md](09_Programme_Backend_Audit.md) — evidence audit and implemented Active Control Programme backend delta.
 - [10_PROGRAM_AI_M1_Foundation_Audit.md](10_PROGRAM_AI_M1_Foundation_Audit.md) — detected RFC-022 feature-gated M1 foundation, privacy, progression and provider boundaries.
 - [11_External_Media_Provenance.md](11_External_Media_Provenance.md) — production-facing image/embed inventory, Pexels-to-first-party mapping, privacy effects and unresolved provenance evidence.
+- [12_Programme_Access_Authorization.md](12_Programme_Access_Authorization.md) — candidate durable Programme acceptance, complete mutation classification, anonymous/authenticated boundaries and conservative migration evidence.

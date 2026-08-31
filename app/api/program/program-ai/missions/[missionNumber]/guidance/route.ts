@@ -1,4 +1,4 @@
-import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { productAnalyticsServer } from "@/lib/analytics/vercel-product-analytics";
 import { programmeAiGuidanceService } from "@/lib/programme/application/programme-ai-guidance.service";
 import { programmeErrorResponse, programmeResponse, readProgrammeJson } from "@/lib/programme/http";
@@ -14,7 +14,7 @@ export async function POST(
   context: { params: Promise<{ missionNumber: string }> },
 ) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     const missionNumber = routeMissionNumber((await context.params).missionNumber);
     const providerConfigured = isProgramAiRealProviderEnabled();
     const providerAllowed = !providerConfigured

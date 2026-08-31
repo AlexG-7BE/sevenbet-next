@@ -54,6 +54,7 @@ function fakeDatabase() {
     activeDays: [{ id: "day-a", userId: "user-a", enrollmentId: "enrollment-a" }, { id: "day-b", userId: "user-b", enrollmentId: "enrollment-b" }] as Row[],
     startingPoints: [{ id: "starting-point-a", userId: "user-a", enrollmentId: "enrollment-a", startingPoint: "A-CONFIRMED-STARTING-POINT" }, { id: "starting-point-b", userId: "user-b", enrollmentId: "enrollment-b", startingPoint: "B-CONFIRMED-STARTING-POINT" }] as Row[],
     sensitiveInputAuthorities: [{ id: "authority-a", userId: "user-a", purposeVersion: "purpose-v1", statementVersion: "statement-v1" }, { id: "authority-b", userId: "user-b", purposeVersion: "purpose-v1", statementVersion: "statement-v1" }] as Row[],
+    accessAcceptances: [{ id: "access-a", userId: "user-a", termsVersionAtAcceptance: "terms-v1", privacyVersionAtAcceptance: "privacy-v1" }, { id: "access-b", userId: "user-b", termsVersionAtAcceptance: "terms-v1", privacyVersionAtAcceptance: "privacy-v1" }] as Row[],
     anonymousSessions: [
       { id: "anonymous-a", draft: { momentMap: "A-LEGACY-DRAFT-SENTINEL" } },
       { id: "anonymous-b", draft: { momentMap: "B-DRAFT-SENTINEL" } },
@@ -104,6 +105,7 @@ function fakeDatabase() {
           consumedProgrammeClaims: rows.claims.filter((row) => row.consumedByUserId === userId),
           programmeActiveDays: rows.activeDays.filter((row) => row.userId === userId),
           programmeSensitiveInputAuthorities: rows.sensitiveInputAuthorities.filter((row) => row.userId === userId),
+          programmeAccessAcceptance: rows.accessAcceptances.find((row) => row.userId === userId) ?? null,
         };
       },
       delete: async ({ where }: { where: Row }) => {
@@ -127,6 +129,7 @@ function fakeDatabase() {
     programmeActiveDay: model(rows.activeDays),
     programmeStartingPoint: model(rows.startingPoints),
     programmeSensitiveInputAuthority: model(rows.sensitiveInputAuthorities),
+    programmeAccessAcceptance: model(rows.accessAcceptances),
     pendingProgrammeClaim: model(rows.claims),
     anonymousProgrammeSession: model(rows.anonymousSessions),
     verification: model(rows.verifications),
@@ -154,6 +157,7 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.equal(plan?.counts.legacyDraftBearingAnonymousSessions, 1);
   assert.equal(plan?.counts.startingPoints, 1);
   assert.equal(plan?.counts.sensitiveInputAuthorities, 1);
+  assert.equal(plan?.counts.accessAcceptances, 1);
   assert.equal(rows.users.length, 2, "planning must not mutate either user");
 
   await executeDataSubjectDeletion(database, "user-a");
@@ -167,6 +171,7 @@ test("deletion is dry-run by default at the service boundary and scopes exact Us
   assert.deepEqual(rows.activeDays.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.startingPoints.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.sensitiveInputAuthorities.map((row) => row.userId), ["user-b"]);
+  assert.deepEqual(rows.accessAcceptances.map((row) => row.userId), ["user-b"]);
   assert.deepEqual(rows.verifications.map((row) => row.identifier), ["b@example.test"]);
   assert.equal(rows.claims.find((row) => row.id === "claim-a"), undefined);
   assert.equal(rows.claims.find((row) => row.id === "claim-b")?.consumedByUserId, "user-b");

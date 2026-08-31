@@ -158,6 +158,7 @@ test("every direct legacy write checks mode before auth, input, limits, or servi
     assert.notEqual(guard, -1, identifier);
     const possibleSideEffects = [
       "requireCurrentUser(",
+      "requireProgrammeAcceptedUser(",
       "requestCookie(",
       "assertProgrammeRateLimit(",
       "assertAnonymousProgrammeMutationRateLimit(",
@@ -198,7 +199,7 @@ test("feature-on keeps authenticated reads and personal-data cleanup routes reac
   for (const identifier of featureOnCleanupRoutes) {
     const source = routeMethodSource(identifier);
     assert.doesNotMatch(source, /assertLegacyProgrammeMutationAllowed/, identifier);
-    assert.match(source, /requireCurrentUser\(/, identifier);
+    assert.match(source, /require(?:CurrentUser|ProgrammeAcceptedUser)\(/, identifier);
   }
   const reflections = readFileSync("app/api/program/reflections/route.ts", "utf8");
   assert.doesNotMatch(reflections, /NextResponse/);
@@ -213,7 +214,9 @@ test("every authenticated legacy database mutation uses the RFC-026 user scope",
   for (const identifier of directlyUserRateLimitedRoutes) {
     const source = routeMethodSource(identifier);
     assert.match(source, /assertProgrammeRateLimit\("PROGRAMME_MUTATION_USER", user\.id\)/, identifier);
-    assert.ok(source.indexOf("requireCurrentUser") < source.indexOf("assertProgrammeRateLimit"), identifier);
+    const authorization = [source.indexOf("requireCurrentUser"), source.indexOf("requireProgrammeAcceptedUser")]
+      .filter((index) => index !== -1);
+    assert.ok(Math.min(...authorization) < source.indexOf("assertProgrammeRateLimit"), identifier);
     const inputOrService = ["readProgrammeJson(", "programmeClaimService.", "missionOneService.", "missionTwoService.", "missionThreeService.", "missionFourService.", "programmeArtefactService.", "programReflectionService."]
       .map((needle) => source.indexOf(needle))
       .filter((index) => index !== -1);

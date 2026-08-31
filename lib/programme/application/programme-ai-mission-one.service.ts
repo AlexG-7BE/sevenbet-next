@@ -1,4 +1,5 @@
 import { requireControlProgram } from "@/lib/programme/application/programme-context";
+import { ProgrammeAccessService } from "@/lib/programme/application/programme-access.service";
 import {
   ClaimExpiredError,
   PendingProgrammeClaimUnavailableError,
@@ -70,19 +71,30 @@ export function resolveProgramAiClaimCompatibility(input: {
 }
 
 export class ProgrammeAiMissionOneService {
+  private readonly access: ProgrammeAccessService;
+
   constructor(
     private readonly unitOfWork = programmeUnitOfWork,
     private readonly orchestrator = programmeAiOrchestrator,
-  ) {}
+  ) {
+    this.access = new ProgrammeAccessService(unitOfWork);
+  }
 
-  async createAnonymousSession(now = new Date()) {
+  async createAnonymousSession(
+    accessAuthority: import("@/lib/programme/access-contract").ProgrammeAccessAuthority,
+    now = new Date(),
+  ) {
     assertProgramAiV1Enabled();
     const token = createOpaqueToken();
-    const session = await this.unitOfWork.sessions.createAnonymousSession({
-      tokenHash: hashOpaqueToken(token),
-      missionVersion: PROGRAM_AI_M1_VERSION,
-      evidenceVersion: PROGRAM_AI_EVIDENCE_VERSION,
-      expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+    const session = await this.unitOfWork.serializable(async (unitOfWork) => {
+      const created = await unitOfWork.sessions.createAnonymousSession({
+        tokenHash: hashOpaqueToken(token),
+        missionVersion: PROGRAM_AI_M1_VERSION,
+        evidenceVersion: PROGRAM_AI_EVIDENCE_VERSION,
+        expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+      });
+      await this.access.acceptAnonymousSessionOnce(unitOfWork, created.id, accessAuthority);
+      return created;
     });
     return {
       token,
@@ -318,6 +330,7 @@ export class ProgrammeAiMissionOneService {
       ) {
         throw new ProgrammeStateConflictError("Anonymous Program AI Mission 01 result is unavailable");
       }
+      await this.access.requireAnonymousAcceptance(unitOfWork, anonymousSession.id);
       await this.requireAuthority(anonymousSession.id, unitOfWork);
       const source = await requireControlProgram(unitOfWork);
       let enrollment = await unitOfWork.progress.findEnrollment(userId, source.program.id);
@@ -344,6 +357,12 @@ export class ProgrammeAiMissionOneService {
       if (consumed.count !== 1) {
         throw new ProgrammeStateConflictError("Pending programme claim is no longer available");
       }
+
+      await this.access.bindAnonymousAcceptanceToUser(
+        unitOfWork,
+        anonymousSession.id,
+        userId,
+      );
 
       await unitOfWork.programAiMissionOne.bindAnonymousAuthorityToUser({
         anonymousSessionId: anonymousSession.id,

@@ -42,8 +42,11 @@ export class ProgrammeFlowService {
     this.activeDays = new ActiveDayService(unitOfWork);
   }
 
-  createAnonymousSession(now?: Date) {
-    return this.sessions.createAnonymousSession(now);
+  createAnonymousSession(
+    accessAuthority: import("@/lib/programme/access-contract").ProgrammeAccessAuthority,
+    now?: Date,
+  ) {
+    return this.sessions.createAnonymousSession(accessAuthority, now);
   }
   saveMissionOneDraft(token: string, value: unknown, now?: Date) {
     return this.sessions.saveMissionOneDraft(token, value, now);

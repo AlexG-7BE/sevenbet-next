@@ -1,4 +1,4 @@
-import { requireCurrentUser } from "@/lib/auth/session";
+import { requireProgrammeAcceptedUser } from "@/lib/auth/programme-user-access";
 import { missionFourService } from "@/lib/programme/application/mission-04.service";
 import {
   programmeErrorResponse,
@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
   try {
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     const mission = await missionFourService.getDraft(user.id);
     return programmeResponse({ ok: true, mission });
   } catch (error) {
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 export async function PATCH(request: Request) {
   try {
     assertLegacyProgrammeMutationAllowed();
-    const user = await requireCurrentUser(request.headers);
+    const user = await requireProgrammeAcceptedUser(request.headers);
     await assertProgrammeRateLimit("PROGRAMME_MUTATION_USER", user.id);
     const mission = await missionFourService.saveDraft(
       user.id,

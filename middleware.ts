@@ -32,6 +32,7 @@ import {
   PROGRAMME_PRESENTATION_CONTEXT,
   programmeRoute,
 } from "@/lib/programme/presentation";
+import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -369,8 +370,11 @@ export async function middleware(request: NextRequest) {
     return secureResponse(NextResponse.redirect(destination, 308));
   }
 
-  const programmeMutation = pathname.startsWith("/api/program/") && request.method !== "GET";
-  if (programmeMutation && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over") {
+  const programmeMutationCategory = programmeMutationAccessCategory(pathname, request.method);
+  if (
+    (programmeMutationCategory === "anonymous" || programmeMutationCategory === "unknown")
+    && request.headers.get("x-sevenbet-age-attestation") !== "18-or-over"
+  ) {
     return secureResponse(NextResponse.json(
       { ok: false, error: "Confirm that you are 18 or over before saving Programme progress", code: "AGE_ATTESTATION_REQUIRED" },
       { status: 403, headers: { "Cache-Control": "no-store" } },

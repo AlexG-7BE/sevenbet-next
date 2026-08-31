@@ -257,6 +257,41 @@ async function installAuthenticatedProgramme(
       user: { id: userId, name: "Programme QA", email: "programme-i18n@example.invalid", emailVerified: true, createdAt: now, updatedAt: now },
     }) : "null",
   }));
+  await page.route("**/api/programme-access/authority", (route) => {
+    if (route.request().method() === "GET") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ ok: true, accepted: true }),
+      });
+    }
+    const body = route.request().postDataJSON() as { journeyId?: string } | null;
+    const createdAt = Date.parse(now);
+    return route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        accepted: true,
+        ...(body?.journeyId ? {
+          authority: {
+            version: 1,
+            intent: "PROGRAMME_ACCESS",
+            purpose: "PROGRAMME_AUTH_ACCESS",
+            journeyId: body.journeyId,
+            createdAt,
+            expiresAt: createdAt + 3_600_000,
+            termsVersion: PROGRAMME_TERMS_VERSION,
+            privacyVersion: PROGRAMME_PRIVACY_VERSION,
+            adultConfirmedAt: createdAt,
+            termsAcceptedAt: createdAt,
+            privacyAcknowledgedAt: createdAt,
+            proof: "pa1.programme.authenticated-browser",
+          },
+        } : {}),
+      }),
+    });
+  });
   await page.route("**/api/program/program-ai/home", (route) => control.homeError
     ? route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ ok: false, code: "UNAVAILABLE", error: "INTERNAL ENGLISH MUST NOT RENDER" }) })
     : route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, home: homeFixture(control.missionNumber) }) }));

@@ -1,4 +1,5 @@
 import { requireControlProgram } from "@/lib/programme/application/programme-context";
+import { ProgrammeAccessService } from "@/lib/programme/application/programme-access.service";
 import { ProgrammeDashboardService } from "@/lib/programme/application/programme-dashboard.service";
 import { persistMissionOneCompletion } from "@/lib/programme/application/mission-01.service";
 import {
@@ -17,9 +18,11 @@ import { parseTimeZone } from "@/lib/programme/validation";
 
 export class ProgrammeClaimService {
   private readonly dashboardService: ProgrammeDashboardService;
+  private readonly accessService: ProgrammeAccessService;
 
   constructor(private readonly unitOfWork = programmeUnitOfWork) {
     this.dashboardService = new ProgrammeDashboardService(unitOfWork);
+    this.accessService = new ProgrammeAccessService(unitOfWork);
   }
 
   redeemPendingClaim(
@@ -53,6 +56,7 @@ export class ProgrammeClaimService {
         anonymousSession.taskStates,
         definition.completion.taskStates,
       );
+      await this.accessService.requireAnonymousAcceptance(unitOfWork, anonymousSession.id);
       const source = await requireControlProgram(unitOfWork);
       let enrollment = await unitOfWork.progress.findEnrollment(userId, source.program.id);
       if (enrollment) {
@@ -88,6 +92,11 @@ export class ProgrammeClaimService {
           "Pending programme claim is no longer available",
         );
       }
+      await this.accessService.bindAnonymousAcceptanceToUser(
+        unitOfWork,
+        anonymousSession.id,
+        userId,
+      );
       const completed = await persistMissionOneCompletion({
         unitOfWork,
         userId,

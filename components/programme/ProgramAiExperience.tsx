@@ -123,7 +123,7 @@ async function programAiRequest<T>(
     ...init,
     headers: {
       ...(init?.body && !(init.body instanceof FormData) ? { "content-type": "application/json" } : {}),
-      ...(hasProgrammeAccessAuthority(window.sessionStorage, subject)
+      ...(subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject)
         ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age }
         : {}),
       ...init?.headers,
@@ -257,14 +257,22 @@ export function ProgramAiExperience({
       const localContent = loadProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, userSubject);
       setMissionWording(localContent.programAiMissionWording ?? {});
       setReviewWording(localContent.programAiReviewWording ?? {});
-      fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" })
+      fetch("/api/programme-access/authority", { credentials: "same-origin", cache: "no-store" })
         .then(async (response) => {
-          const payload = await response.json() as ApiPayload<{ home: ProgramAiHome }>;
-          if (!response.ok || !payload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
+          const access = await response.json() as ApiPayload<{ accepted: boolean }>;
+          if (!response.ok || access.ok === false) throw new Error("PROGRAMME_ACCESS_STATUS_UNAVAILABLE");
+          if (!access.accepted) {
+            setHome(null);
+            setPhase("access");
+            return;
+          }
+          const homeResponse = await fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" });
+          const payload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
+          if (!homeResponse.ok || !payload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
           setHome(payload.home);
           setPhase("home");
         })
-        .catch(() => { setError(programmeText(locale, "Programme home unavailable")); setPhase("home"); });
+        .catch(() => { setError(programmeText(locale, "Programme home unavailable")); setHome(null); setPhase("home"); });
       return;
     }
     const journey = anonymousProgrammeSubject(window.sessionStorage);
@@ -285,10 +293,10 @@ export function ProgramAiExperience({
 
   async function grantAccess() {
     if (!subject) return;
-    const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
+    const entryMode = subject.kind === "journey" && hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
-    const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
+    const journey = subject.kind === "journey" ? subject : null;
     try {
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
@@ -296,7 +304,7 @@ export function ProgramAiExperience({
         cache: "no-store",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          journeyId: journey.id,
+          ...(journey ? { journeyId: journey.id } : {}),
           adultConfirmed: true,
           termsAccepted: true,
           privacyAcknowledged: true,
@@ -304,8 +312,19 @@ export function ProgramAiExperience({
           privacyVersion: PROGRAMME_PRIVACY_VERSION,
         }),
       });
-      const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
-      if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
+      const payload = await response.json() as ApiPayload<{ accepted: boolean; authority?: ProgrammeAccessAuthority }>;
+      if (!response.ok || payload.ok === false) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
+      if (!journey) {
+        const homeResponse = await fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" });
+        const homePayload = await homeResponse.json() as ApiPayload<{ home: ProgramAiHome }>;
+        if (!homeResponse.ok || !homePayload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
+        productAnalyticsClient.accessGranted(entryMode);
+        setHome(homePayload.home);
+        setPhase("home");
+        setBusy(false);
+        return;
+      }
+      if (!payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
     } catch {
       setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
@@ -313,6 +332,7 @@ export function ProgramAiExperience({
       return;
     }
     try {
+      if (!journey) return;
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
@@ -594,13 +614,36 @@ export function ProgramAiExperience({
     mergeProgrammeSubjectContent<ProgramAiAuthenticatedLocalContent>(window.sessionStorage, subject, { programAiReviewWording: next });
   }
 
-  function enterMissionOneFromHome() {
+  async function enterMissionOneFromHome() {
     const journey = rotateAnonymousProgrammeSubject(window.sessionStorage);
-    setSubject(journey);
-    setLocal(emptyLocalState);
-    setSensitiveAuthorityActive(false);
-    setPhase("access");
-    setHome(null);
+    setBusy(true); setError("");
+    try {
+      const response = await fetch("/api/programme-access/authority", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ journeyId: journey.id }),
+      });
+      const payload = await response.json() as ApiPayload<{ authority?: ProgrammeAccessAuthority }>;
+      if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_REFRESH_FAILED");
+      writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+      await programAiRequest("/api/program/program-ai/session", journey, {
+        method: "POST",
+        headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
+      });
+      setSubject(journey);
+      setSensitiveAuthorityActive(false);
+      personalisationStartedAt.current = null;
+      accumulatedAiLatencyMs.current = 0;
+      voiceTiming.current = null;
+      persist({ ...emptyLocalState, phase: "intake" }, journey);
+    } catch {
+      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
+      setPhase("home");
+    } finally {
+      setBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -632,7 +675,7 @@ export function ProgramAiExperience({
   if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
   if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen error={error} home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} userId={session.user.id} />);
   if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
   return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
 }

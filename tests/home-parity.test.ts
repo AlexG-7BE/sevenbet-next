@@ -189,6 +189,11 @@ test("Public Shell keeps its approved architecture while exposing the current br
       [
         "prisma/migrations/0023_mcp_dcr_runtime_compat_fix/migration.sql",
       ],
+      [
+        "prisma/migrations/0024_programme_access_acceptance/migration.sql",
+        "prisma/preflight/0024_programme_access_acceptance.sql",
+        "prisma/schema.prisma",
+      ],
     ];
     assert.ok(
       approvedExactSchemaChangeSets.some(

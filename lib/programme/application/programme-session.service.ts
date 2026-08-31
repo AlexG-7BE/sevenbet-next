@@ -16,6 +16,8 @@ import {
   ProgrammeUnitOfWork,
   programmeUnitOfWork,
 } from "@/lib/programme/infrastructure/programme-unit-of-work";
+import { ProgrammeAccessService } from "@/lib/programme/application/programme-access.service";
+import type { ProgrammeAccessAuthority } from "@/lib/programme/access-contract";
 import {
   anonymousSessionLifetimeMs,
   createOpaqueToken,
@@ -30,16 +32,24 @@ function persistenceMissionStatus(value: ReturnType<typeof missionStateFromTaskC
 }
 
 export class ProgrammeSessionService {
-  constructor(private readonly unitOfWork = programmeUnitOfWork) {}
+  private readonly access: ProgrammeAccessService;
 
-  async createAnonymousSession(now = new Date()) {
+  constructor(private readonly unitOfWork = programmeUnitOfWork) {
+    this.access = new ProgrammeAccessService(unitOfWork);
+  }
+
+  async createAnonymousSession(accessAuthority: ProgrammeAccessAuthority, now = new Date()) {
     const policy = implementedMissionDefinition(1).completion;
     const token = createOpaqueToken();
-    const session = await this.unitOfWork.sessions.createAnonymousSession({
-      tokenHash: hashOpaqueToken(token),
-      missionVersion: policy.version,
-      evidenceVersion: policy.evidenceVersion,
-      expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+    const session = await this.unitOfWork.serializable(async (unitOfWork) => {
+      const created = await unitOfWork.sessions.createAnonymousSession({
+        tokenHash: hashOpaqueToken(token),
+        missionVersion: policy.version,
+        evidenceVersion: policy.evidenceVersion,
+        expiresAt: expiresAfter(now, anonymousSessionLifetimeMs),
+      });
+      await this.access.acceptAnonymousSessionOnce(unitOfWork, created.id, accessAuthority);
+      return created;
     });
     return {
       token,

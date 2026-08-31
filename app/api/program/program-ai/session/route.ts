@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         403,
       );
     }
-    const result = await programmeAiMissionOneService.createAnonymousSession();
+    const result = await programmeAiMissionOneService.createAnonymousSession(access.authority);
     const response = programmeResponse({ ok: true, session: result.session }, 201);
     response.cookies.set(anonymousProgrammeCookie, result.token, {
       ...privateCookieOptions,

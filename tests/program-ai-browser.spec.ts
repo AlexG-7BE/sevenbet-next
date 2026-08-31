@@ -234,20 +234,6 @@ async function openCurrentMission(page: Page, missionNumber: number, width: numb
   await noHorizontalOverflow(page);
 }
 
-async function installUserAccessMarker(page: Page, userId: string, authority: AccessAuthority) {
-  const [, encodedClaims] = authority.proof.split(".");
-  const marker = {
-    ...JSON.parse(Buffer.from(encodedClaims, "base64url").toString("utf8")),
-    proof: authority.proof,
-  };
-  await page.addInitScript(({ key, value }) => {
-    window.sessionStorage.setItem(key, value);
-  }, {
-    key: `sevenbet.programme.access-authority.v1:user:${encodeURIComponent(userId)}`,
-    value: JSON.stringify(marker),
-  });
-}
-
 async function programmeInvariantSnapshot(userId: string) {
   const [enrollments, xp, xpEventCount, anonymousSessionCount] = await Promise.all([
     prisma.programEnrollment.findMany({
@@ -755,7 +741,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(capturedClaimCookie, "claim was created only when the registration action was submitted").toBeTruthy();
 
   const user = await prisma.user.findUniqueOrThrow({ where: { email } });
-  const [durableStartingPoints, programmeAiXp, boundAuthority, claim] = await Promise.all([
+  const [durableStartingPoints, programmeAiXp, boundAuthority, claim, accessAcceptance] = await Promise.all([
     prisma.programmeStartingPoint.findMany({ where: { userId: user.id } }),
     prisma.userXpEvent.findMany({
       where: { userId: user.id, awardKey: { in: [
@@ -767,6 +753,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
       where: { userId: user.id, withdrawnAt: null },
     }),
     prisma.pendingProgrammeClaim.findUniqueOrThrow({ where: { anonymousSessionId: anonymousSession.id } }),
+    prisma.programmeAccessAcceptance.findUniqueOrThrow({ where: { userId: user.id } }),
   ]);
   expect(durableStartingPoints).toHaveLength(1);
   expect(durableStartingPoints[0].startingPoint).toBe(bestEffortStartingPoint.startingPoint);
@@ -776,6 +763,8 @@ test("typed fallback path binds exact authority and is idempotent through real e
   expect(boundAuthority.userId).toBe(user.id);
   expect(claim.consumedByUserId).toBe(user.id);
   expect(claim.consumedAt).not.toBeNull();
+  expect(accessAcceptance.anonymousSessionId).toBeNull();
+  expect(accessAcceptance.source).toBe("ANONYMOUS_JOURNEY");
 
   await page.context().addCookies([capturedClaimCookie!]);
   const duplicateClaim = await page.request.post("/api/program/program-ai/claims/redeem", {
@@ -824,13 +813,67 @@ test("typed fallback path binds exact authority and is idempotent through real e
   await prisma.user.deleteMany({ where: { id: { in: [user.id, wrongUser.id] } } });
 });
 
-test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches exactly 715 XP", async ({ page }) => {
+test("unaccepted authenticated mutation fails closed, then one acknowledgement unlocks it", async ({ page }) => {
+  const client = page.request;
+  const authority = await issueAccess(client);
+  const email = `program-ai-unaccepted-${randomUUID()}@example.test`;
+  const { user, authCookieHeader } = await signUp(client, authority, email);
+  const program = await prisma.program.findFirstOrThrow({
+    where: { slug: "sevenbet-10-step-control-program" },
+    include: { steps: { orderBy: { order: "asc" } }, versions: { where: { status: "PUBLISHED" } } },
+  });
+  const version = program.versions.find((item) => item.version === program.publishedVersion)!;
+  const enrollment = await prisma.programEnrollment.create({
+    data: {
+      userId: user.id,
+      programId: program.id,
+      programVersionId: version.id,
+      currentStepId: program.steps[1].id,
+      timezone: "UTC",
+      missionProgress: {
+        create: [
+          { missionNumber: 1, status: "COMPLETED", taskStates: [...programAiMissionOneActions], completedAt: new Date() },
+          { missionNumber: 2, status: "IN_PROGRESS", taskStates: [] },
+        ],
+      },
+    },
+  });
+  const action = () => client.post("/api/program/program-ai/missions/2/actions", {
+    headers: { cookie: authCookieHeader },
+    data: { action: "choose_direction", artifact: missionActionArtifacts.choose_direction },
+  });
+  const blocked = await action();
+  expect(blocked.status()).toBe(403);
+  expect((await blocked.json()).code).toBe("PROGRAMME_ACCESS_ACKNOWLEDGEMENT_REQUIRED");
+  expect(await prisma.programmeMissionProgress.findUniqueOrThrow({
+    where: { enrollmentId_missionNumber: { enrollmentId: enrollment.id, missionNumber: 2 } },
+  })).toMatchObject({ taskStates: [] });
+
+  const accepted = await client.post("/api/programme-access/authority", {
+    data: {
+      adultConfirmed: true,
+      termsAccepted: true,
+      privacyAcknowledged: true,
+      termsVersion: PROGRAMME_TERMS_VERSION,
+      privacyVersion: PROGRAMME_PRIVACY_VERSION,
+    },
+  });
+  expect(accepted.status(), await accepted.text()).toBe(200);
+  const saved = await action();
+  expect(saved.status(), await saved.text()).toBe(200);
+  expect((await saved.json()).xpAwarded).toBe(15);
+  expect(await prisma.programmeAccessAcceptance.count({ where: { userId: user.id } })).toBe(1);
+  await prisma.user.delete({ where: { id: user.id } });
+});
+
+test("durably accepted account survives empty storage, context, login and Missions 02–10 without age headers", async ({ browser, page }) => {
   test.setTimeout(180_000);
   const client = page.request;
   const ready = await prepareReadyClaim(client);
   const email = `program-ai-ten-step-${randomUUID()}@example.test`;
-  const { user, authCookieHeader } = await signUp(client, ready.access, email);
-  await installUserAccessMarker(page, user.id, ready.access);
+  const signedUp = await signUp(client, ready.access, email);
+  const { user } = signedUp;
+  let { authCookieHeader } = signedUp;
   const redeem = await client.post("/api/program/program-ai/claims/redeem", {
     headers: { ...programmeAgeHeader, cookie: `${ready.cookieHeader}; ${ready.claimCookieHeader}; ${authCookieHeader}` },
     data: { timeZone: "UTC", startingPoint },
@@ -838,6 +881,37 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   const redeemPayload = await redeem.json();
   expect(redeem.status(), JSON.stringify(redeemPayload)).toBe(200);
   expect(redeemPayload.home.totalXp).toBe(40);
+  expect(await prisma.programmeAccessAcceptance.count({ where: { userId: user.id } })).toBe(1);
+
+  await page.goto("/program");
+  await page.evaluate(() => window.sessionStorage.clear());
+  await page.reload();
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
+
+  const freshContext = await browser.newContext({
+    baseURL,
+    storageState: { cookies: (await page.context().storageState()).cookies, origins: [] },
+  });
+  const freshPage = await freshContext.newPage();
+  await freshPage.goto("/program");
+  await expect(freshPage.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect(freshPage.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
+  await freshContext.close();
+
+  await page.getByRole("button", { name: "Log out of B4GAMBLE" }).click();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toBeVisible();
+  const signIn = await page.request.post("/api/auth/sign-in/email", {
+    headers: { origin: baseURL, "x-forwarded-for": testClientAddress(email) },
+    data: { email, password: "Programme-test-password-42!" },
+  });
+  expect(signIn.status(), await signIn.text()).toBe(200);
+  const resumedSessionCookie = (await page.context().cookies()).find((cookie) => cookie.name.includes("session_token"));
+  expect(resumedSessionCookie).toBeTruthy();
+  authCookieHeader = `${resumedSessionCookie!.name}=${resumedSessionCookie!.value}`;
+  await page.goto("/program");
+  await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Two checks before you begin" })).toHaveCount(0);
 
   for (const mission of programAiMissionRegistry) {
     if (mission.missionNumber === 3) {
@@ -875,7 +949,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
     }
     for (const [index, action] of mission.actions.entries()) {
       const requestAction = () => client.post(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, {
-        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+        headers: { cookie: authCookieHeader },
         data: { action: action.id, artifact: missionActionArtifacts[action.id] },
       });
       if (mission.missionNumber === 2 && index === 0) {
@@ -905,6 +979,17 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       } else {
         const response = await requestAction();
         expect(response.status(), `${mission.missionNumber}:${action.id} ${await response.text()}`).toBe(200);
+        if (mission.missionNumber === 6 && index === 0) {
+          expect((await response.json()).xpAwarded).toBe(15);
+          const retry = await requestAction();
+          expect(retry.status()).toBe(200);
+          expect((await retry.json()).xpAwarded).toBe(0);
+          const missionSix = await prisma.programmeMissionProgress.findFirstOrThrow({
+            where: { enrollment: { userId: user.id }, missionNumber: 6 },
+          });
+          expect(missionSix.taskStates).toHaveLength(1);
+          expect((await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } }))._sum.xp).toBe(355);
+        }
         if (mission.missionNumber === 4 && index === 0) {
           await openCurrentMission(page, 4, 1024, "Resume mission");
           await page.getByRole("radio", { name: "Bank block" }).check();
@@ -980,7 +1065,6 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
     if (mission.missionNumber === 2) {
       await openCurrentMission(page, 2, 375, "Resume mission");
       const replayPage = await page.context().newPage();
-      await installUserAccessMarker(replayPage, user.id, ready.access);
       await openCurrentMission(replayPage, 2, 375, "Resume mission");
       const completionResponse = page.waitForResponse((response) => response.url().endsWith("/api/program/program-ai/missions/2/complete"));
       await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
@@ -1013,7 +1097,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       expect((beforeLocaleSwitch as { enrollments: unknown[] }).enrollments).toHaveLength(1);
       expect(browserStateBefore.content).toContain(localNarrative);
 
-      for (const [from, to] of [["en-GB", "de-DE"], ["de-DE", "fi-FI"], ["fi-FI", "en-GB"]] as const) {
+      for (const [from, to] of [["en-GB", "de-DE"], ["de-DE", "es-ES"], ["es-ES", "fi-FI"], ["fi-FI", "en-GB"]] as const) {
         await switchProgrammeLocale(page, from, to);
         await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
         await expect(page.getByText(programmeMissionCopy(to, 3).title, { exact: true }).first()).toBeVisible();
@@ -1039,7 +1123,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
     } else {
       const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
-        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+        headers: { cookie: authCookieHeader },
         data: {},
       });
       const completePayload = await complete.json();
@@ -1050,7 +1134,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
     const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
     if (milestone) {
       const beforeReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
-      const review = await client.get(`/api/program/program-ai/reviews/${milestone}?locale=en-GB`, { headers: { ...programmeAgeHeader, cookie: authCookieHeader } });
+      const review = await client.get(`/api/program/program-ai/reviews/${milestone}?locale=en-GB`, { headers: { cookie: authCookieHeader } });
       expect(review.status()).toBe(200);
       expect((await review.json()).review.generation).toBe("deterministic_fallback");
       const afterReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });

@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import type { ProgrammeUnitOfWork } from "../lib/programme/infrastructure/programme-unit-of-work";
+import { issueProgrammeAccessProof } from "../lib/auth/programme-access-proof";
 import {
   missionOneTaskStates,
   missionFourTaskStates,
@@ -28,6 +29,14 @@ import { parseActiveBoundary } from "../lib/programme/validation";
 const now = new Date();
 const programmeId = "10000000-0000-4000-8000-000000000001";
 const versionId = "10000000-0000-4000-8000-000000000002";
+
+function accessAuthority(at = now) {
+  return issueProgrammeAccessProof({
+    journeyId: "10000000-0000-4000-8000-000000000099",
+    secret: "programme-flow-test-secret",
+    now: at.getTime(),
+  });
+}
 
 function currentReviewBase() {
   return now;
@@ -101,11 +110,13 @@ class MemoryProgrammeRepository {
   activeDays: any[] = [];
   unlocks: any[] = [];
   progressEvents: any[] = [];
+  accessAcceptances: any[] = [];
   readonly sessions = this;
   readonly progress = this;
   readonly artefacts = this;
   readonly rewards = this;
   readonly dashboard = this;
+  readonly access = this;
 
   private id() {
     this.sequence += 1;
@@ -138,6 +149,7 @@ class MemoryProgrammeRepository {
         activeDays: this.activeDays,
         unlocks: this.unlocks,
         progressEvents: this.progressEvents,
+        accessAcceptances: this.accessAcceptances,
       });
       try {
         return await operation(this);
@@ -155,6 +167,7 @@ class MemoryProgrammeRepository {
         this.activeDays = snapshot.activeDays;
         this.unlocks = snapshot.unlocks;
         this.progressEvents = snapshot.progressEvents;
+        this.accessAcceptances = snapshot.accessAcceptances;
         throw error;
       }
     });
@@ -184,6 +197,42 @@ class MemoryProgrammeRepository {
     };
     this.anonymousSessions.push(row);
     return row;
+  }
+
+  async findUserAcceptance(userId: string) {
+    return this.accessAcceptances.find((item) => item.userId === userId) ?? null;
+  }
+
+  async findAnonymousAcceptance(anonymousSessionId: string) {
+    return this.accessAcceptances.find((item) => item.anonymousSessionId === anonymousSessionId) ?? null;
+  }
+
+  async acceptUserOnce(userId: string, input: any, source = "DIRECT_AUTHENTICATED") {
+    const existing = await this.findUserAcceptance(userId);
+    if (existing) return existing;
+    const row = { id: this.id(), userId, anonymousSessionId: null, source, ...input };
+    this.accessAcceptances.push(row);
+    return row;
+  }
+
+  async acceptAnonymousSessionOnce(anonymousSessionId: string, input: any) {
+    const existing = await this.findAnonymousAcceptance(anonymousSessionId);
+    if (existing) return existing;
+    const row = { id: this.id(), userId: null, anonymousSessionId, source: "ANONYMOUS_JOURNEY", ...input };
+    this.accessAcceptances.push(row);
+    return row;
+  }
+
+  async bindAnonymousAcceptanceToUser(anonymousSessionId: string, userId: string) {
+    const anonymous = await this.findAnonymousAcceptance(anonymousSessionId);
+    if (!anonymous) return null;
+    const user = await this.findUserAcceptance(userId);
+    if (user) {
+      this.accessAcceptances = this.accessAcceptances.filter((item) => item.id !== anonymous.id);
+      return user;
+    }
+    Object.assign(anonymous, { anonymousSessionId: null, userId });
+    return anonymous;
   }
 
   async findAnonymousSession(tokenHash: string) {
@@ -514,7 +563,7 @@ class MemoryProgrammeRepository {
 }
 
 async function startMissionOne(service: ProgrammeFlowService) {
-  const created = await service.createAnonymousSession(now);
+  const created = await service.createAnonymousSession(accessAuthority(now), now);
   await service.saveMissionOneDraft(created.token, {
     taskStates: [...missionOneTaskStates],
   }, now);
@@ -617,7 +666,7 @@ test("expired anonymous claim cannot keep an authenticated user on the anonymous
 test("anonymous autosave stores neutral continuity and concurrent claim creation has one winner", async () => {
   const repository = new MemoryProgrammeRepository();
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
-  const created = await service.createAnonymousSession(now);
+  const created = await service.createAnonymousSession(accessAuthority(now), now);
   await service.saveMissionOneDraft(created.token, {
     taskStates: ["brief"],
   }, now);
@@ -640,7 +689,7 @@ test("Mission 02 is unavailable without an authenticated enrollment", async () =
   const service = new ProgrammeFlowService(repository as unknown as ProgrammeFlowRepository);
   await assert.rejects(() => service.getMissionTwoDraft("anonymous"), /enrollment not found/i);
   const route = readFileSync("app/api/program/missions/02/route.ts", "utf8");
-  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+  assert.match(route, /requireProgrammeAcceptedUser\(request\.headers\)/);
 });
 
 test("claim redemption saves a neutral continuity marker, gives exactly 60 XP and is one-use", async () => {
@@ -838,7 +887,7 @@ test("Mission 03 is authenticated, resumable and rejects incomplete learning che
   assert.equal(repository.xpEvents.length, 2);
   await assert.rejects(() => service.getMissionThreeDraft("user-2"), /enrollment not found/i);
   const route = readFileSync("app/api/program/missions/03/route.ts", "utf8");
-  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+  assert.match(route, /requireProgrammeAcceptedUser\(request\.headers\)/);
 });
 
 test("Mission 03 remains locked until Mission 02 is completed", async () => {
@@ -955,7 +1004,7 @@ test("Mission 04 is authenticated, resumable and requires all structure checks",
   assert.equal(flow.repository.xpEvents.length, 3);
   await assert.rejects(() => flow.service.getMissionFourDraft("user-2"), /enrollment not found/i);
   const route = readFileSync("app/api/program/missions/04/route.ts", "utf8");
-  assert.match(route, /requireCurrentUser\(request\.headers\)/);
+  assert.match(route, /requireProgrammeAcceptedUser\(request\.headers\)/);
 });
 
 test("Mission 04 remains locked until Mission 03 is completed", async () => {

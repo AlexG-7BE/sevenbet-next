@@ -47,6 +47,19 @@ export async function collectDataSubjectExport(database: PrismaClient, userId: s
           updatedAt: true,
         },
       },
+      programmeAccessAcceptance: {
+        select: {
+          id: true,
+          adultSelfAttestedAt: true,
+          termsAcceptedAt: true,
+          privacyAcknowledgedAt: true,
+          termsVersionAtAcceptance: true,
+          privacyVersionAtAcceptance: true,
+          source: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
       xpEvents: true,
       achievements: { include: { achievement: { select: { slug: true, title: true } } } },
       consumedProgrammeClaims: {
@@ -103,7 +116,7 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
   const [
     sessions, accounts, enrollments, progressEvents, reflections, missionProgress,
     momentMaps, currentGoals, urgeRecords, boundaries, xpEvents, achievements,
-    activeDays, startingPoints, sensitiveInputAuthorities, verifications,
+    activeDays, startingPoints, sensitiveInputAuthorities, accessAcceptances, verifications,
   ] = await Promise.all([
     database.session.count({ where: { userId } }),
     database.account.count({ where: { userId } }),
@@ -120,6 +133,7 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
     database.programmeActiveDay.count({ where: { userId } }),
     database.programmeStartingPoint.count({ where: { userId } }),
     database.programmeSensitiveInputAuthority.count({ where: { userId } }),
+    database.programmeAccessAcceptance.count({ where: { userId } }),
     database.verification.count({ where: { identifier: { equals: user.email, mode: "insensitive" } } }),
   ]);
   return {
@@ -145,6 +159,7 @@ export async function buildDataSubjectDeletionPlan(database: PrismaClient, userI
       activeDays,
       startingPoints,
       sensitiveInputAuthorities,
+      accessAcceptances,
       consumedClaims: consumedClaimRows.length,
       linkedAnonymousSessions: linkedAnonymousSessionIds.size,
       legacyDraftBearingAnonymousSessions,
@@ -184,6 +199,7 @@ export async function executeDataSubjectDeletion(database: PrismaClient, userId:
     await transaction.session.deleteMany({ where: { userId } });
     await transaction.account.deleteMany({ where: { userId } });
     await transaction.programmeSensitiveInputAuthority.deleteMany({ where: { userId } });
+    await transaction.programmeAccessAcceptance.deleteMany({ where: { userId } });
     if (consumedClaimIds.length > 0) await transaction.pendingProgrammeClaim.deleteMany({ where: { id: { in: consumedClaimIds } } });
     if (linkedAnonymousSessionIds.length > 0) await transaction.anonymousProgrammeSession.deleteMany({ where: { id: { in: linkedAnonymousSessionIds } } });
     await transaction.verification.deleteMany({ where: { identifier: { equals: plan.email, mode: "insensitive" } } });
