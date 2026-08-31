@@ -151,6 +151,8 @@ jobs:
       - run: npm run build
       - run: npm run ci:build-secrets
       - run: npm run ci:browser
+      - name: Verify Programme document Permissions-Policy boundary
+        run: npx playwright test --config=playwright.program-ai.config.ts tests/programme-document-policy-boundary-browser.spec.ts
       - run: npm run typography:browser
 
   database-migrations:
