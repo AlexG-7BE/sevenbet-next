@@ -85,13 +85,17 @@ async function assertMcpDcrInvariants(prisma: PrismaClient) {
 async function assertProgrammeAccessPreMigrationInvariants(prisma: PrismaClient) {
   const [claimLifecycle] = await prisma.$queryRawUnsafe<Array<{
     consumed_pair_mismatch: bigint;
+    erased_consumed_claims: bigint;
     missing_user: bigint;
     missing_anonymous_session: bigint;
   }>>(`
     SELECT
       COUNT(*) FILTER (
-        WHERE (claim."consumedAt" IS NULL) <> (claim."consumedByUserId" IS NULL)
+        WHERE claim."consumedAt" IS NULL AND claim."consumedByUserId" IS NOT NULL
       )::bigint AS consumed_pair_mismatch,
+      COUNT(*) FILTER (
+        WHERE claim."consumedAt" IS NOT NULL AND claim."consumedByUserId" IS NULL
+      )::bigint AS erased_consumed_claims,
       COUNT(*) FILTER (
         WHERE claim."consumedByUserId" IS NOT NULL AND account."id" IS NULL
       )::bigint AS missing_user,
@@ -117,6 +121,7 @@ async function assertProgrammeAccessPreMigrationInvariants(prisma: PrismaClient)
   writeEvent({
     event: "production_programme_access_preflight",
     consumedPairMismatch: Number(claimLifecycle.consumed_pair_mismatch),
+    erasedConsumedClaims: Number(claimLifecycle.erased_consumed_claims),
     missingUser: Number(claimLifecycle.missing_user),
     missingAnonymousSession: Number(claimLifecycle.missing_anonymous_session),
   });
