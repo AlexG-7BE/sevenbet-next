@@ -276,8 +276,11 @@ function capturedLinkToRoute(html: string, label: string, href: string) {
   return html.replace(pattern, `<a href="${href}"$1>${label}</a>`);
 }
 
-export function transformCommonHandoff(html: string) {
-  const output = buttonToLink(qualifyUnsupportedHandoffClaims(stripHandoffGlobalChrome(html)), "Start Programme", "/program?entry=start");
+export function transformCommonHandoff(html: string, programmePath = "/program") {
+  const programmeEntryHref = `${programmePath}?entry=start`;
+  const output = buttonToLink(qualifyUnsupportedHandoffClaims(stripHandoffGlobalChrome(html)), "Start Programme", programmeEntryHref)
+    .replaceAll('href="/program?entry=start"', `href="${escapeHtml(programmeEntryHref)}"`)
+    .replaceAll('href="/program"', `href="${escapeHtml(programmePath)}"`);
   return [
     ["Full affiliate disclosure →", "/affiliate-disclosure"],
     ["Methodology", "/methodology"],
@@ -581,7 +584,7 @@ export function transformHomeHandoff(html: string, locale: SupportedLocale = "en
       /(<h1 data-home-hero-title=""[^>]*>[\s\S]*?<\/h1>\s*)<p /,
       '$1<p data-home-hero-copy="" ',
     )
-    .replace('<a href="/program" class="scp2"', '<a href="/program" class="scp2" data-home-hero-cta=""')
+    .replace(/(<a href="[^"]*\/program(?:\?entry=start)?" class="scp2")/, '$1 data-home-hero-cta=""')
     .replace('<div style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;', '<div data-home-hero-meta="" style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;')
     .replace(
       '<div data-screen-label="Final CTA" data-snap=""',
@@ -653,7 +656,7 @@ export function transformHomeHandoffCss(css: string) {
   `;
 }
 
-export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB") {
+export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB", programmePath = "/program") {
   let semanticHtml = transformElementContaining(
     html,
     "Ten steps.<br>",
@@ -710,7 +713,7 @@ export function transformTenStepsHandoff(html: string, locale: SupportedLocale =
   const sourceAlt = TEN_STEPS_SOURCE_COPY.at(-1) ?? "";
   const localizedAlt = translation.text.at(-1) ?? sourceAlt;
   const translated = translatedText.replace(`alt="${sourceAlt}"`, `alt="${escapeHtml(localizedAlt)}"`);
-  return buttonToLink(translated, translation.text[5], "/program?entry=start");
+  return buttonToLink(translated, translation.text[5], `${programmePath}?entry=start`);
 }
 
 export function transformResponsibleGamblingHandoff(html: string) {

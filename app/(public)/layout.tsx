@@ -5,6 +5,7 @@ import { PublicHeader } from "@/components/public-shell/PublicHeader";
 import { getServerSession } from "@/lib/auth/session";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor } from "@/lib/public-shell";
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
@@ -13,7 +14,8 @@ export default async function PublicLayout({ children }: { children: ReactNode }
     resolveServerPresentationContext(),
   ]);
   const authenticated = Boolean(session?.user);
-  const account = accountNavigationFor({ authenticated });
+  const programmePath = programmePathForPresentationLocale(presentation.locale);
+  const account = accountNavigationFor({ authenticated, programmePath });
   const messages = publicShellMessages(presentation.locale);
 
   return (
@@ -21,7 +23,7 @@ export default async function PublicLayout({ children }: { children: ReactNode }
       <a className="skipLink" href="#main-content">{messages.skipToMain}</a>
       <PublicHeader account={account} authenticated={authenticated} presentation={presentation} />
       <main id="main-content">{children}</main>
-      <PublicFooter presentation={presentation} />
+      <PublicFooter presentation={presentation} programme={{ path: programmePath, localizePublicLinks: true }} />
     </>
   );
 }

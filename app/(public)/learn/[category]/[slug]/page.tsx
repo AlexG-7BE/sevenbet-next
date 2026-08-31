@@ -12,6 +12,7 @@ import { learningMessages, localizedLearningArticle, localizedLearningArticles, 
 import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolveServerPresentationContext } from "@/lib/market/server";
+import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { absoluteUrl } from "@/lib/site";
 import { isLocalHandoffVisualDataFixture, withHandoffLearningArticleData } from "@/lib/final-handoff/visual-data-fixture";
 
@@ -142,6 +143,7 @@ export default async function LearningArticlePage({
   const relatedArticles = presentedArticle.relatedArticles
     .map((relatedSlug) => localizedArticles.find((candidate) => candidate.slug === relatedSlug))
     .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate));
+  const programmePath = programmePathForPresentationLocale(presentation.locale);
 
   return (
     <>
@@ -157,6 +159,7 @@ export default async function LearningArticlePage({
         locale={presentation.locale}
         messages={messages}
         hrefFor={(href) => productHref(presentation, href)}
+        programmePath={programmePath}
       />
     </>
   );

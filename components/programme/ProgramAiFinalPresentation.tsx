@@ -12,8 +12,26 @@ import {
 import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiFinalPresentation.module.css";
 
-export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "unsupported" | "transcribing" | "success" | "error";
+export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "policy-denied" | "unsupported" | "transcribing" | "success" | "error";
 type MicrophonePermissionState = PermissionState | "unknown";
+
+type DocumentPermissionsPolicy = Readonly<{
+  allowsFeature: (feature: string) => boolean;
+}>;
+
+function microphoneDeniedByDocumentPolicy() {
+  const controlledDocument = document as Document & {
+    featurePolicy?: DocumentPermissionsPolicy;
+    permissionsPolicy?: DocumentPermissionsPolicy;
+  };
+  const policy = controlledDocument.permissionsPolicy ?? controlledDocument.featurePolicy;
+  if (!policy?.allowsFeature) return false;
+  try {
+    return !policy.allowsFeature("microphone");
+  } catch {
+    return false;
+  }
+}
 
 function StatusMessage({ error, message }: { error?: string; message?: string }) {
   if (error) return <p className={styles.error} role="alert">{error}</p>;
@@ -231,6 +249,10 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       onState("unsupported");
       return;
     }
+    if (microphoneDeniedByDocumentPolicy()) {
+      onState("policy-denied");
+      return;
+    }
     setRecordingError("");
     onState("requesting");
     try {
@@ -319,6 +341,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
 
   const elapsed = `${String(Math.floor(recordingElapsedSeconds / 60)).padStart(2, "0")}:${String(recordingElapsedSeconds % 60).padStart(2, "0")}`;
   const blocked = state === "denied" && microphonePermission === "denied";
+  const policyDenied = state === "policy-denied";
   return (
     <section className={styles.voiceControl} data-state={state} data-voice-state={state}>
       {state === "recording" ? <>
@@ -332,12 +355,13 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
         <button aria-label={t("Record again")} className={styles.typingAction} disabled={disabled} onClick={start} type="button">{t("Record again")}</button>
         <p className={styles.voiceMessage} role="status">{t("Check the editable transcript below, then create your Starting Point.")}</p>
       </> : <>
-        <button aria-label={t(blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
-        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
+        <button aria-label={t(policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || policyDenied || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
+        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : policyDenied ? "Voice recording is unavailable on this page" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
         <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">{t("I'd rather type")}</button>
       </>}
       {state === "error" ? <p className={styles.error} role="alert">{recordingError || t("Voice transcription could not be completed.")} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">{t("Retry this recording")}</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
       {state === "unsupported" ? <p className={styles.error} role="alert">{t("This browser cannot record audio with the features B4GAMBLE needs.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
+      {policyDenied ? <p className={styles.error} role="alert">{t("Voice recording is unavailable on this page")} — <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
       {state === "denied" ? <p className={styles.error} role="alert">{t(blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available.")} {t("Nothing was recorded.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
       {state === "cancelled" ? <p className={styles.voiceMessage} role="status">{t("The recording was discarded. Nothing was submitted.")}</p> : null}
     </section>

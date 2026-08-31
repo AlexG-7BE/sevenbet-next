@@ -23,6 +23,7 @@ import {
   programAiMissionSourcePresentation,
 } from "../lib/programme/program-ai/mission-registry";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
+import { programmePathForPresentationLocale } from "../lib/programme/presentation";
 import {
   FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES,
   INITIAL_EUROPEAN_MARKET_PROFILES,
@@ -321,8 +322,10 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
     assert.equal(methodologyText.includes(source.replaceAll("&", "&amp;")), false, `German Methodology leaked: ${source}`);
   }
   assert.match(methodology, /data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;"/);
-  const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html), "de-DE", (href) => `/de${href}`);
+  const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html, "/de/program"), "de-DE", (href) => `/de${href}`);
   assert.match(learn, /href="\/de\/learn\/casino-basics\/online-casino-basics"/);
+  assert.match(learn, /href="\/de\/program\?entry=start"/);
+  assert.doesNotMatch(learn, /href="\/program(?:\?entry=start)?"/);
   assert.match(learn, /data-learn-topic="all topics"/);
   assert.match(learn, /<span class="sc-interp">13<\/span> Leitfäden/);
   assert.doesNotMatch(learn, />All guides</);
@@ -441,14 +444,18 @@ test("all registered locales have a complete public-shell catalog", () => {
 });
 
 test("every European Home locale has complete localized copy and metadata", () => {
-  const englishHtml = transformCommonHandoff(generatedPages.home.html);
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     const locale = profile.defaultLocale;
+    const programmePath = programmePathForPresentationLocale(locale);
+    const englishHtml = transformCommonHandoff(generatedPages.home.html, programmePath);
     const localizedHtml = transformHomeHandoff(englishHtml, locale);
     const localizedMetadata = homeMetadata(locale);
     assert.ok(localizedMetadata.title.trim());
     assert.ok(localizedMetadata.description.trim());
     assert.match(localizedHtml, /data-home-hero-kicker/, `${locale} is missing the responsive Home kicker hook`);
+    const programmeHrefs = [...localizedHtml.matchAll(/href="([^"]*\/program(?:\?entry=start)?)"/g)].map((match) => match[1]);
+    assert.ok(programmeHrefs.length > 0, `${locale} renders Programme entries`);
+    assert.ok(programmeHrefs.every((href) => href === programmePath || href === `${programmePath}?entry=start`), `${locale} preserves its Programme route`);
     if (locale === "en-GB") continue;
     const translation = homeTranslation(locale);
     assert.ok(translation);
@@ -552,10 +559,11 @@ test("About provides complete localized authored copy without changing safety bo
 });
 
 test("Home presents the current 5–8-minute Mission guidance in every supported locale", () => {
-  const sourceRuntime = transformCommonHandoff(generatedPages.home.html);
   const supportedLocales = [...new Set(MARKET_PROFILES.flatMap((profile) => profile.supportedLocales))];
 
   for (const locale of supportedLocales) {
+    const programmePath = programmePathForPresentationLocale(locale);
+    const sourceRuntime = transformCommonHandoff(generatedPages.home.html, programmePath);
     const hero = homeTranslation(locale)?.hero ?? HOME_SOURCE_COPY.hero;
     const programme = homeTranslation(locale)?.programme ?? HOME_SOURCE_COPY.programme;
     const trust = homeTranslation(locale)?.trust ?? HOME_SOURCE_COPY.trust;
@@ -575,7 +583,6 @@ test("Home presents the current 5–8-minute Mission guidance in every supported
 });
 
 test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary for every supported locale", () => {
-  const sourceRuntime = transformCommonHandoff(generatedPages.tenSteps.html);
   const supportedLocales = [...new Set(MARKET_PROFILES.flatMap((profile) => profile.supportedLocales))];
   const expectedSections = ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"];
 
@@ -601,6 +608,8 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
   assert.deepEqual(tenStepsTranslation("fr-CA"), english);
 
   for (const locale of supportedLocales) {
+    const programmePath = programmePathForPresentationLocale(locale);
+    const sourceRuntime = transformCommonHandoff(generatedPages.tenSteps.html, programmePath);
     const messages = tenStepsTranslation(locale);
     const signals = tenStepsContractSignals[locale];
     const missionPairs = Array.from({ length: 10 }, (_, index) => ({
@@ -626,7 +635,7 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
     assert.ok(messages.text[48].search(signals.twoActions) < messages.text[48].indexOf("40 XP"), `${locale} actions precede reward`);
     assert.ok(messages.text[48].indexOf("40 XP") < messages.text[48].search(signals.registrationZero), `${locale} registration follows reward`);
 
-    const localized = transformTenStepsHandoff(sourceRuntime, locale);
+    const localized = transformTenStepsHandoff(sourceRuntime, locale, programmePath);
     assert.deepEqual(
       [...localized.matchAll(/data-ten-steps-section="([^"]+)"/g)].map((match) => match[1]),
       expectedSections,
@@ -652,7 +661,8 @@ test("10 Steps localizes the active RFC-025 path and Mission 01 reward boundary 
     assert.ok(localized.includes(escapeTenStepsText(messages.text[43])), `${locale} privacy boundary`);
     assert.ok(localized.includes(escapeTenStepsText(messages.text[48])), `${locale} current reward boundary`);
     assert.ok(localized.includes(`alt="${escapeTenStepsText(messages.text.at(-1) ?? "")}"`), `${locale} image alternative`);
-    assert.match(localized, /href="\/program\?entry=start"/, `${locale} canonical Programme entry`);
+    assert.ok(localized.includes(`href="${programmePath}?entry=start"`), `${locale} canonical Programme entry`);
+    assert.doesNotMatch(localized, programmePath === "/program" ? /href="\/[^\"]+\/program/ : /href="\/program(?:\?entry=start)?"/, `${locale} does not leak another Programme route`);
     assert.doesNotMatch(localized, />Each mission takes 5–15 minutes</u, `${locale} leaked source timing`);
     assert.doesNotMatch(localized, />Mission 01 takes about</u, `${locale} leaked source closing claim`);
     assert.doesNotMatch(localized, />one minute\.</u, `${locale} leaked source one-minute claim`);

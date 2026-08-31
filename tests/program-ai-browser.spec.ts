@@ -632,6 +632,41 @@ test("persistently denied microphone state explains browser recovery and recheck
   expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(2);
 });
 
+test("document policy denial is distinct from a browser user denial and keeps the typed path available", async ({ page }) => {
+  await page.addInitScript(() => {
+    let permissionRequests = 0;
+    Object.defineProperty(document, "permissionsPolicy", {
+      configurable: true,
+      value: { allowsFeature: (feature: string) => feature !== "microphone" },
+    });
+    Object.defineProperty(navigator, "permissions", {
+      configurable: true,
+      value: { query: async () => ({ state: "prompt", addEventListener: () => undefined, removeEventListener: () => undefined }) },
+    });
+    Object.defineProperty(navigator, "mediaDevices", {
+      configurable: true,
+      value: { getUserMedia: async () => { permissionRequests += 1; throw new Error("must not be called"); } },
+    });
+    Object.defineProperty(window, "__programAiPermissionRequests", { get: () => permissionRequests });
+  });
+  await page.route("**/api/program/program-ai/session", async (route) => route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, session: { state: "not_started", taskStates: [], xpPreview: 0 } }) }));
+  await page.route("**/api/program/program-ai/authority", async (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: { active: true } }) }));
+  await page.goto("/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  await page.getByRole("button", { name: "Enter Mission 01" }).click();
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
+
+  await page.getByRole("button", { name: "Tap to speak" }).click();
+  await expect(page.locator('[data-state="policy-denied"]')).toBeVisible();
+  await expect(page.locator('[data-state="policy-denied"] p[role="alert"]')).toContainText("Voice recording is unavailable on this page");
+  await expect(page.locator('[data-state="policy-denied"]')).not.toContainText(/site controls beside the address bar/i);
+  await expect(page.getByRole("button", { name: "Voice recording is unavailable on this page" })).toBeDisabled();
+  expect(await page.evaluate(() => (window as unknown as { __programAiPermissionRequests: number }).__programAiPermissionRequests)).toBe(0);
+  await page.getByRole("button", { name: "type instead" }).click();
+  await expect(page.getByRole("textbox", { name: "Your situation" })).toBeVisible();
+});
+
 test("unsupported microphone recording keeps the typed path available", async ({ page }) => {
   await page.addInitScript(() => {
     Object.defineProperty(window, "MediaRecorder", { configurable: true, value: undefined });

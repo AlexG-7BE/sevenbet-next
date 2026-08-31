@@ -64,6 +64,11 @@ export function programmePath(locale: ProgrammeLocale) {
   return programmeRoute(locale).path;
 }
 
+/** Resolve a public presentation locale through the canonical Programme route contract. */
+export function programmePathForPresentationLocale(locale: SupportedLocale) {
+  return programmePath(isProgrammeLocale(locale) ? locale : "en-GB");
+}
+
 export function programmeTranscriptionLanguage(locale: ProgrammeLocale) {
   return programmeRoute(locale).transcriptionLanguage;
 }

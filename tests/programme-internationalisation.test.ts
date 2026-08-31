@@ -53,6 +53,7 @@ import {
   programmeLocaleFromPath,
   programmeLocaleHref,
   programmePath,
+  programmePathForPresentationLocale,
   programmePublicHref,
   programmeTranscriptionLanguage,
   safeProgrammePresentationSearch,
@@ -132,6 +133,35 @@ test("Programme presentation exposes exactly the Founder-approved locale and rou
   assert.equal(parseProgrammeRoute("/it/program")?.route.locale, "it-IT");
   assert.equal(parseProgrammeRoute("/it/programme"), null);
   assert.equal(parseProgrammeRoute("/de/program%2Fadmin"), null);
+  for (const route of PROGRAMME_ROUTES) {
+    assert.equal(programmePathForPresentationLocale(route.locale), route.path);
+  }
+  assert.equal(programmePathForPresentationLocale("en-CA"), "/program");
+  assert.equal(programmePathForPresentationLocale("fr-CA"), "/program");
+});
+
+test("Permissions Policy grants microphone access only on the eleven canonical Programme routes", async () => {
+  const configUrl = new URL("../next.config.mjs", import.meta.url).href;
+  const config = (await import(configUrl)).default as {
+    headers: () => Promise<Array<{ source: string; headers: Array<{ key: string; value: string }> }>>;
+  };
+  const rules = await config.headers();
+  const permissionsPolicy = (source: string) => rules
+    .find((rule) => rule.source === source)
+    ?.headers.find((header) => header.key === "Permissions-Policy")
+    ?.value;
+  const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
+  const programme = "camera=(), microphone=(self), geolocation=(), payment=(), usb=()";
+
+  assert.equal(permissionsPolicy("/(.*)"), denied);
+  assert.deepEqual(
+    rules.filter((rule) => permissionsPolicy(rule.source) === programme).map((rule) => rule.source),
+    PROGRAMME_ROUTES.map((route) => route.path),
+  );
+  for (const route of PROGRAMME_ROUTES) assert.equal(permissionsPolicy(route.path), programme, route.path);
+  for (const ordinaryPath of ["/", "/de", "/de/learn", "/help", "/program/mission-01", "/de/program/mission-01"]) {
+    assert.equal(permissionsPolicy(ordinaryPath), undefined, `${ordinaryPath} must inherit the global deny policy`);
+  }
 });
 
 test("Programme access failures remain stage-specific, localized and free of server codes", () => {

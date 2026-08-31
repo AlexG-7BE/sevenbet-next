@@ -327,6 +327,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await installAnonymousProgramme(page, route.locale, turnLocales);
     const response = await page.goto(`${baseUrl}${route.path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), route.path).toBe(200);
+    expect(response?.headers()["permissions-policy"], route.path).toBe("camera=(), microphone=(self), geolocation=(), payment=(), usb=()");
     await expect(page.locator("html")).toHaveAttribute("lang", route.locale);
     await expect(page.locator('[data-programme-presentation="loading"]')).toBeVisible();
     await expect(page.locator('[data-programme-presentation="access"]')).toBeVisible();
@@ -363,6 +364,33 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
     await context.close();
   }
   expect(turnLocales).toEqual(PROGRAMME_LOCALES);
+});
+
+test("ordinary pages retain deny-all capabilities while localized public Programme entries keep their canonical locale", async ({ request }) => {
+  test.setTimeout(180_000);
+  const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
+  for (const ordinaryPath of ["/", "/de/", "/es/learn", "/fi/10-steps", "/help"]) {
+    const response = await request.get(`${baseUrl}${ordinaryPath}`);
+    expect(response.status(), ordinaryPath).toBe(200);
+    expect(response.headers()["permissions-policy"], ordinaryPath).toBe(denied);
+  }
+
+  for (const route of PROGRAMME_ROUTES) {
+    const prefix = route.locale === "en-GB" ? "" : `/${route.routeMarket}`;
+    for (const pathname of [`${prefix}/`, `${prefix}/10-steps`, `${prefix}/learn`]) {
+      const response = await request.get(`${baseUrl}${pathname}`);
+      expect(response.status(), pathname).toBe(200);
+      const html = await response.text();
+      const hrefs = [...html.matchAll(/href="([^"]*\/program(?:\?entry=start)?)"/g)].map((match) => match[1]);
+      expect(hrefs.length, `${pathname} should render at least one Programme entry`).toBeGreaterThan(0);
+      expect(hrefs.every((href) => href === route.path || href === `${route.path}?entry=start`), `${pathname}: ${hrefs.join(", ")}`).toBe(true);
+    }
+    if (route.locale !== "en-GB") {
+      const response = await request.get(`${baseUrl}${prefix}/`);
+      const html = await response.text();
+      expect(html, `${prefix}/ localized login return target`).toContain(`/login?returnTo=${encodeURIComponent(route.path)}`);
+    }
+  }
 });
 
 test("the Programme selector exposes exactly 11 direct routes and preserves one anonymous subject and local narrative", async ({ page }) => {
