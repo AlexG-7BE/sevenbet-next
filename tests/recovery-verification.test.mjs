@@ -13,7 +13,7 @@ test("recovery verification derives the exact repository migration set", () => {
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
   assert.ok(names.includes("0019_programme_runtime_hardening"));
-  assert.equal(names.at(-1), "0023_mcp_dcr_runtime_compat_fix");
+  assert.equal(names.at(-1), "0024_programme_access_acceptance");
   assert.equal(new Set(names).size, names.length);
 });
 
@@ -33,6 +33,7 @@ test("recovery verification covers authentication and Programme structure", () =
   ]);
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("AnonymousProgrammeSession"));
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("PendingProgrammeClaim"));
+  assert.ok(EXPECTED_PROGRAMME_TABLES.includes("ProgrammeAccessAcceptance"));
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("ProgrammeMissionProgress"));
   assert.ok(EXPECTED_PROGRAMME_TABLES.includes("ProgramEnrollment"));
 });
