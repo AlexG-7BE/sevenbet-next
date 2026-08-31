@@ -2,8 +2,10 @@ import type {
   ProgrammeAiTurn,
   ProgrammeAiTurnResult,
 } from "@/lib/programme/program-ai/contracts";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 
 export type TranscriptionRequest = {
+  locale: ProgrammeLocale;
   audio: Uint8Array;
   mimeType: string;
   fileName: string;

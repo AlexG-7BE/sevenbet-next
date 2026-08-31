@@ -16,7 +16,12 @@ export async function GET(
   try {
     const user = await requireCurrentUser(request.headers);
     const milestone = routeReviewMilestone((await context.params).milestone);
-    const review = await programmeAiGuidanceService.review(user.id, milestone, {}, false);
+    const review = await programmeAiGuidanceService.review(
+      user.id,
+      milestone,
+      { locale: new URL(request.url).searchParams.get("locale") },
+      false,
+    );
     return programmeResponse({
       ok: true,
       review: {

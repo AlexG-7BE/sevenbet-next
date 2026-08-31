@@ -25,8 +25,14 @@ import {
   programAiMissionOneActions,
   type ProgrammeStartingPointValue,
 } from "../lib/programme/program-ai/contracts";
+import { programmeMissionCopy } from "../lib/i18n/programme-catalog";
+import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
 import { programAiMissionOneRewardPolicy } from "../lib/programme/program-ai/reward-policy";
-import { programAiMissionRegistry } from "../lib/programme/program-ai/mission-registry";
+import {
+  programAiMissionRegistry,
+  programAiMissionSourcePresentation,
+} from "../lib/programme/program-ai/mission-registry";
+import { programmePath, type ProgrammeLocale } from "../lib/programme/presentation";
 
 const baseURL = "http://127.0.0.1:4173";
 const authSecret = "program-ai-ci-auth-secret-not-used-by-production";
@@ -169,7 +175,7 @@ async function prepareReadyClaim(client: APIRequestContext) {
   await confirmSensitiveAuthority(client, session.cookieHeader);
   const turn = await client.post("/api/program/program-ai/turn", {
     headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
-    data: { inputMode: "text", situation, clarificationAnswers: [] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(turn.status()).toBe(200);
   const confirm = await client.post("/api/program/program-ai/starting-point", {
@@ -224,7 +230,7 @@ async function openCurrentMission(page: Page, missionNumber: number, width: numb
   await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
   await page.goto("/program");
   await page.getByRole("button", { name: action, exact: true }).click();
-  await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: programAiMissionSourcePresentation(mission.missionNumber).title, exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 }
 
@@ -240,6 +246,64 @@ async function installUserAccessMarker(page: Page, userId: string, authority: Ac
     key: `sevenbet.programme.access-authority.v1:user:${encodeURIComponent(userId)}`,
     value: JSON.stringify(marker),
   });
+}
+
+async function programmeInvariantSnapshot(userId: string) {
+  const [enrollments, xp, xpEventCount, anonymousSessionCount] = await Promise.all([
+    prisma.programEnrollment.findMany({
+      where: { userId },
+      orderBy: { id: "asc" },
+      select: {
+        id: true,
+        userId: true,
+        programId: true,
+        programVersionId: true,
+        completedAt: true,
+        missionProgress: {
+          orderBy: { missionNumber: "asc" },
+          select: {
+            id: true,
+            missionNumber: true,
+            status: true,
+            taskStates: true,
+            completedAt: true,
+          },
+        },
+        programmeStartingPoint: {
+          select: {
+            id: true,
+            enrollmentId: true,
+            startingPoint: true,
+            desiredChange: true,
+            broadContext: true,
+            continuationCue: true,
+            chosenBoundaryAction: true,
+            confirmedAt: true,
+          },
+        },
+      },
+    }),
+    prisma.userXpEvent.aggregate({ where: { userId }, _sum: { xp: true } }),
+    prisma.userXpEvent.count({ where: { userId } }),
+    prisma.anonymousProgrammeSession.count(),
+  ]);
+  return JSON.parse(JSON.stringify({
+    enrollments,
+    xp: xp._sum.xp ?? 0,
+    xpEventCount,
+    anonymousSessionCount,
+  })) as unknown;
+}
+
+async function switchProgrammeLocale(page: Page, from: ProgrammeLocale, to: ProgrammeLocale) {
+  const selector = page.locator("[data-programme-language-selector]:visible");
+  await selector.getByRole("button", { name: publicShellMessages(from).changeMarketAndLanguage }).click();
+  await selector.locator(`a[href="${programmePath(to)}"]`).click();
+  await expect(page).toHaveURL(programmePath(to));
+  await expect(page.locator("html")).toHaveAttribute("lang", to);
+  await expect(page.locator("[data-programme-language-selector]:visible").getByRole("button", {
+    name: publicShellMessages(to).changeMarketAndLanguage,
+  })).toBeVisible();
 }
 
 test.afterAll(async () => {
@@ -637,7 +701,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
       ...programmeAgeHeader,
       cookie: `sevenbet_programme_session=${(await page.context().cookies()).find((cookie) => cookie.name === "sevenbet_programme_session")!.value}`,
     },
-    data: { inputMode: "text", situation, clarificationAnswers: [] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(duplicateTurn.status()).toBe(200);
   expect((await duplicateTurn.json()).progress.xpPreview).toBe(20);
@@ -726,6 +790,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
 });
 
 test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches exactly 715 XP", async ({ page }) => {
+  test.setTimeout(180_000);
   const client = page.request;
   const ready = await prepareReadyClaim(client);
   const email = `program-ai-ten-step-${randomUUID()}@example.test`;
@@ -895,6 +960,42 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       await expect(replayPage.getByText(/This Mission was already complete\. Your completed result is ready to review\./)).toBeVisible();
       await expect(replayPage.getByText("+25", { exact: true })).toHaveCount(0);
       await replayPage.close();
+
+      const localContentKey = `sevenbet.programme.local-content.v2:user:${encodeURIComponent(user.id)}`;
+      const localNarrative = "USER-OWNED-LOCAL-NARRATIVE — preserve exactly across locale changes.";
+      await page.evaluate(({ key, value }) => {
+        window.sessionStorage.setItem(key, JSON.stringify({
+          programAiMissionWording: { "2": value },
+          programAiReviewWording: {},
+        }));
+      }, { key: localContentKey, value: localNarrative });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      const beforeLocaleSwitch = await programmeInvariantSnapshot(user.id);
+      const browserStateBefore = await page.evaluate((key) => ({
+        content: window.sessionStorage.getItem(key),
+        journey: window.sessionStorage.getItem("sevenbet.programme.journey.v2"),
+      }), localContentKey);
+      expect((beforeLocaleSwitch as { enrollments: unknown[] }).enrollments).toHaveLength(1);
+      expect(browserStateBefore.content).toContain(localNarrative);
+
+      for (const [from, to] of [["en-GB", "de-DE"], ["de-DE", "fi-FI"], ["fi-FI", "en-GB"]] as const) {
+        await switchProgrammeLocale(page, from, to);
+        await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+        await expect(page.getByText(programmeMissionCopy(to, 3).title, { exact: true }).first()).toBeVisible();
+        await expect(page.getByText(startingPoint.startingPoint, { exact: true })).toBeVisible();
+        expect(await programmeInvariantSnapshot(user.id)).toEqual(beforeLocaleSwitch);
+        expect(await page.evaluate((key) => ({
+          content: window.sessionStorage.getItem(key),
+          journey: window.sessionStorage.getItem("sevenbet.programme.journey.v2"),
+        }), localContentKey)).toEqual(browserStateBefore);
+        if (to === "fi-FI") {
+          await page.reload();
+          await expect(page.locator('[data-programme-presentation="dashboard"]')).toBeVisible();
+          await expect(page.locator("html")).toHaveAttribute("lang", "fi-FI");
+          expect(await programmeInvariantSnapshot(user.id)).toEqual(beforeLocaleSwitch);
+          expect(await page.evaluate((key) => window.sessionStorage.getItem(key), localContentKey)).toBe(browserStateBefore.content);
+        }
+      }
     } else if (mission.missionNumber === 3) {
       await openCurrentMission(page, 3, 390, "Resume mission");
       await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
@@ -914,7 +1015,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
     const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
     if (milestone) {
       const beforeReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
-      const review = await client.get(`/api/program/program-ai/reviews/${milestone}`, { headers: { ...programmeAgeHeader, cookie: authCookieHeader } });
+      const review = await client.get(`/api/program/program-ai/reviews/${milestone}?locale=en-GB`, { headers: { ...programmeAgeHeader, cookie: authCookieHeader } });
       expect(review.status()).toBe(200);
       expect((await review.json()).review.generation).toBe("deterministic_fallback");
       const afterReview = await prisma.userXpEvent.aggregate({ where: { userId: user.id }, _sum: { xp: true } });
@@ -957,12 +1058,12 @@ test("clarification cannot refresh authority, withdrawal blocks turns, and a new
 
   const firstTurn = await request.post("/api/program/program-ai/turn", {
     headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
-    data: { inputMode: "text", situation, clarificationAnswers: [] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(firstTurn.status()).toBe(200);
   const clarification = await request.post("/api/program/program-ai/turn", {
     headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
-    data: { inputMode: "text", situation, clarificationAnswers: ["I want a pause before I open the app."] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: ["I want a pause before I open the app."] },
   });
   expect(clarification.status()).toBe(200);
   const afterClarification = await request.get("/api/program/program-ai/authority", {
@@ -977,7 +1078,7 @@ test("clarification cannot refresh authority, withdrawal blocks turns, and a new
   expect(withdrawal.status()).toBe(200);
   const blocked = await request.post("/api/program/program-ai/turn", {
     headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
-    data: { inputMode: "text", situation, clarificationAnswers: [] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(blocked.status()).toBe(403);
   expect((await blocked.json()).code).toBe("SENSITIVE_INPUT_AUTHORITY_REQUIRED");
@@ -988,7 +1089,7 @@ test("clarification cannot refresh authority, withdrawal blocks turns, and a new
   );
   const resumed = await request.post("/api/program/program-ai/turn", {
     headers: { ...programmeAgeHeader, cookie: session.cookieHeader },
-    data: { inputMode: "text", situation, clarificationAnswers: [] },
+    data: { locale: "en-GB", inputMode: "text", situation, clarificationAnswers: [] },
   });
   expect(resumed.status()).toBe(200);
 

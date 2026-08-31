@@ -22,21 +22,23 @@ import type {
   ProgramAiMission,
 } from "@/components/programme/ProgramAiAuthenticated.types";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import { programmeMissionCopy, programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import { PROGRAMME_ACCESS_HEADERS, PROGRAMME_ACCESS_HEADER_VALUES } from "@/lib/programme/access-contract";
 import { hasProgrammeAccessAuthority, userProgrammeSubject } from "@/lib/programme/local-subject-storage";
+import { programmeHelpPath, programmePublicHref, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiAuthenticated.module.css";
 
-type Option = { value: string; label: string; description?: string };
-type Field = { key: string; legend: string; options: readonly Option[]; multiple?: boolean; minimum?: number; maximum?: number };
-type ActionUi = { prompt: string; explanation: string; fields: readonly Field[]; constants?: Record<string, string | number | boolean | string[]>; sequence?: readonly string[] };
+type Option = { value: string; label: ProgrammeMessageKey; description?: ProgrammeMessageKey };
+type Field = { key: string; legend: ProgrammeMessageKey; options: readonly Option[]; multiple?: boolean; minimum?: number; maximum?: number };
+type ActionUi = { prompt: ProgrammeMessageKey; explanation: ProgrammeMessageKey; fields: readonly Field[]; constants?: Record<string, string | number | boolean | string[]> };
 type MissionCompletionReceipt = { xpAwarded: number };
 
-const option = (value: string, label: string, description?: string): Option => ({ value, label, description });
+const option = (value: string, label: ProgrammeMessageKey, description?: ProgrammeMessageKey): Option => ({ value, label, description });
 const actionUi: Record<string, ActionUi> = {
   choose_direction: { prompt: "What would be useful to practise for seven days?", explanation: "Choose a direction, not a promise of a perfect week.", fields: [{ key: "direction", legend: "Seven-day direction", options: [option("understand", "Understand the pattern"), option("pause", "Practise a pause"), option("reduce_impulse", "Reduce one impulsive route"), option("set_boundary", "Set one boundary"), option("research_later", "Research only after a pause"), option("seek_support", "Prepare support")] }] },
   build_7_day_goal: { prompt: "Turn the direction into a small experiment.", explanation: "The wording can stay broad. Your optional personal wording stays in this tab.", constants: { reviewWindowDays: 7 }, fields: [{ key: "goalStyle", legend: "Goal style", options: [option("notice_and_note", "Notice and note one moment"), option("pause_first", "Pause before one decision"), option("use_one_boundary", "Use one boundary"), option("research_after_pause", "Research after a pause"), option("ask_for_support", "Use a support route")] }] },
   reality_check: { prompt: "What will you do on a difficult day?", explanation: "A useful goal has a restart route; it does not need a perfect streak.", fields: [{ key: "realityCheck", legend: "Difficult-day response", options: [option("make_it_smaller", "Make the experiment smaller"), option("use_the_pause", "Use the pause only"), option("restart_next_day", "Restart the next day"), option("ask_for_support", "Use support")]}] },
-  map_urge_sequence: { prompt: "Put the choice point back into view.", explanation: "The sequence is keyboard-readable and does not require drag and drop.", sequence: ["Cue", "Early signal", "Urge builds", "Choice point"], constants: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, fields: [{ key: "confirm", legend: "Sequence check", options: [option("yes", "I can use this sequence as a way to notice the moment")] }] },
+  map_urge_sequence: { prompt: "Put the choice point back into view.", explanation: "The sequence is keyboard-readable and does not require drag and drop.", constants: { sequenceOrder: ["cue", "early_signal", "urge_builds", "choice_point"] }, fields: [{ key: "confirm", legend: "Sequence check", options: [option("yes", "I can use this sequence as a way to notice the moment")] }] },
   name_early_signal: { prompt: "Where might the earliest signal show up?", explanation: "Choose the earliest place you might notice a change.", fields: [{ key: "earlySignalCategory", legend: "Early signal category", options: [option("body", "In the body"), option("thought", "In a thought"), option("attention", "In where attention goes"), option("action_tendency", "In the urge to act"), option("not_sure", "Not sure yet")] }] },
   choose_pause_move: { prompt: "Choose one move that creates a little time.", explanation: "The move is an option you control, not a guarantee.", fields: [{ key: "pauseMove", legend: "Pause move", options: [option("three_slow_breaths", "Take three slow breaths"), option("leave_the_screen", "Leave the screen"), option("wait_ten_minutes", "Wait ten minutes"), option("message_support", "Use a support message"), option("open_help", "Open protected Help")] }] },
   choose_boundary: { prompt: "Choose where one boundary begins.", explanation: "Use a category and trigger that you can recognise.", fields: [{ key: "boundaryCategory", legend: "Boundary category", options: [option("money", "Money"), option("time", "Time"), option("access", "Access"), option("pause", "Pause")] }, { key: "triggerType", legend: "When it starts", options: [option("before_access", "Before access"), option("saved_early_signal", "At the saved early signal"), option("scheduled_time", "At a scheduled time"), option("custom_local", "A trigger I word locally")] }] },
@@ -57,7 +59,7 @@ const actionUi: Record<string, ActionUi> = {
   choose_scenario: { prompt: "Choose one decision scenario to rehearse.", explanation: "You will practise one response and one fallback.", fields: [{ key: "scenarioType", legend: "Scenario", options: [option("unexpected_offer", "An unexpected offer"), option("urge_after_stress", "An urge after stress"), option("social_invitation", "A social invitation"), option("unclear_terms", "Unclear terms")] }] },
   rehearse_response: { prompt: "Rehearse the response at the choice point.", explanation: "Choose a strategy; feedback stays short and non-shaming.", fields: [{ key: "responseStrategy", legend: "Response strategy", options: responseOptions() }] },
   build_fallback_response: { prompt: "If the first response is hard to use, what is the fallback?", explanation: "A fallback keeps the plan usable without claiming certainty.", fields: [{ key: "fallbackStrategy", legend: "Fallback strategy", options: responseOptions() }] },
-  review_my_plan: { prompt: "Review what is legitimately present.", explanation: "Missing outputs are omitted. Nothing is invented to make the timeline look complete.", constants: { timelineReviewed: true }, sequence: ["Starting Point", "Goal", "Pause", "Boundary", "Checks", "Friction", "Support", "Research", "Fallback"], fields: [{ key: "confirm", legend: "Timeline check", options: [option("yes", "I reviewed the available structural facts")] }] },
+  review_my_plan: { prompt: "Review what is legitimately present.", explanation: "Missing outputs are omitted. Nothing is invented to make the timeline look complete.", constants: { timelineReviewed: true }, fields: [{ key: "confirm", legend: "Timeline check", options: [option("yes", "I reviewed the available structural facts")] }] },
   assemble_final_plan: { prompt: "Choose up to three priorities for the one-screen plan.", explanation: "Save the parts you want the final plan to emphasise. Only confirmed facts from those parts will be used.", fields: [{ key: "planPriorityIds", legend: "Plan priorities", multiple: true, minimum: 1, maximum: 3, options: [option("starting_point", "Starting Point"), option("goal", "7-day goal"), option("early_signal", "Early signal"), option("pause_move", "Pause move"), option("boundary", "Boundary"), option("decision_checks", "Decision checks"), option("friction", "Friction"), option("support", "Support"), option("research", "Research checklist"), option("fallback", "Fallback")] }] },
   choose_review_cadence: { prompt: "Build the plan, then choose when to review it.", explanation: "The draft uses your persisted priorities and confirmed Programme facts. The cadence creates no email or reminder.", fields: [{ key: "reviewCadenceDays", legend: "Review cadence", options: [option("7", "Every 7 days"), option("14", "Every 14 days"), option("30", "Every 30 days")] }] },
 };
@@ -75,8 +77,8 @@ const correctSequence = ["cue", "early_signal", "urge_builds", "choice_point"];
 async function request<T>(path: string, userId: string, init?: RequestInit) {
   const subject = userProgrammeSubject(userId);
   const response = await fetch(path, { credentials: "same-origin", cache: "no-store", ...init, headers: { ...(init?.body ? { "content-type": "application/json" } : {}), ...(hasProgrammeAccessAuthority(window.sessionStorage, subject) ? { [PROGRAMME_ACCESS_HEADERS.age]: PROGRAMME_ACCESS_HEADER_VALUES.age } : {}), ...init?.headers } });
-  const payload = await response.json() as T & { ok?: boolean; error?: string };
-  if (!response.ok || payload.ok === false) throw new Error(payload.error || "The Mission could not be updated");
+  const payload = await response.json() as T & { ok?: boolean };
+  if (!response.ok || payload.ok === false) throw new Error("PROGRAMME_MISSION_REQUEST_FAILED");
   return payload;
 }
 
@@ -89,7 +91,22 @@ function initialValues(ui: ActionUi, artifact: ProgramAiMission["artifact"]) {
   return values;
 }
 
-export function ProgramAiMissionExperience({ mission: initialMission, home: initialHome, userId, localWording, onLocalWording, onHome, onBack }: {
+function localizedOptions(field: Field, locale: ProgrammeLocale) {
+  return field.options.map((item) => ({
+    value: item.value,
+    label: programmeText(locale, item.label),
+    description: item.description ? programmeText(locale, item.description) : undefined,
+  }));
+}
+
+function selectionNote(field: Field, locale: ProgrammeLocale) {
+  if (!field.multiple || field.minimum === undefined || field.maximum === undefined) return undefined;
+  return field.minimum === field.maximum
+    ? programmeText(locale, "choose {count}", { count: field.minimum })
+    : programmeText(locale, "choose {minimum}–{maximum}", { minimum: field.minimum, maximum: field.maximum });
+}
+
+export function ProgramAiMissionExperience({ mission: initialMission, home: initialHome, userId, localWording, onLocalWording, onHome, onBack, locale, programmePath }: {
   mission: ProgramAiMission;
   home: ProgramAiHome;
   userId: string;
@@ -97,6 +114,8 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   onLocalWording: (value: string) => void;
   onHome: (home: ProgramAiHome) => void;
   onBack: () => void;
+  locale: ProgrammeLocale;
+  programmePath: string;
 }) {
   const [mission, setMission] = useState(initialMission);
   const [home, setHome] = useState(initialHome);
@@ -113,6 +132,8 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const [firstCheck, setFirstCheck] = useState("");
   const current = mission.actions.find((action) => action.id === mission.currentAction);
   const ui = current ? actionUi[current.id] : null;
+  const missionCopy = programmeMissionCopy(locale, mission.missionNumber);
+  const t = (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
   const finalPlanStage = mission.missionNumber === 10 && current?.id === "choose_review_cadence";
   useEffect(() => {
     if (ui) setValues(initialValues(ui, mission.artifact));
@@ -170,8 +191,8 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   async function saveAction() {
     if (!current || !ui || !valid) return;
     if (current.id === "map_urge_sequence" && sequenceOrder.join("|") !== correctSequence.join("|")) {
-      setSequenceFeedback("That starts too late in the moment. Put the cue first, then look for the earliest signal before the urge builds.");
-      setAnnouncement("No XP awarded. Adjust the order and try again.");
+      setSequenceFeedback(t("That starts too late in the moment. Put the cue first, then look for the earliest signal before the urge builds."));
+      setAnnouncement(t("No XP awarded. Adjust the order and try again."));
       return;
     }
     setBusy(true); setError("");
@@ -184,21 +205,21 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
       }
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/actions`, userId, { method: "POST", body: JSON.stringify({ action: current.id, artifact }) });
       setMission(result.mission); setHome(result.home); onHome(result.home);
-      setAnnouncement(result.xpAwarded ? `Action complete. ${result.xpAwarded} XP earned.` : "This action was already saved.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The action could not be saved"); }
+      setAnnouncement(result.xpAwarded ? t("Action complete. {xp} XP earned.", { xp: result.xpAwarded }) : t("This action was already saved."));
+    } catch { setError(t("The action could not be saved")); }
     finally { setBusy(false); }
   }
 
   async function getGuidance() {
     setBusy(true); setError("");
     try {
-      const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, userId, { method: "POST", body: JSON.stringify({ ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
+      const result = await request<{ guidance: ProgramAiGuidance }>(`/api/program/program-ai/missions/${mission.missionNumber}/guidance`, userId, { method: "POST", body: JSON.stringify({ locale, ...(localWording.trim() ? { localWording: localWording.trim() } : {}) }) });
       setGuidance(result.guidance);
       if ((current?.id === "build_support_card" || finalPlanStage) && !localWording.trim() && result.guidance.options[0]) {
         onLocalWording(result.guidance.options[0].text);
       }
       if (finalPlanStage && result.guidance.options[0]) setGuidanceSelected(result.guidance.options[0].id);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Guidance is unavailable"); }
+    } catch { setError(t("Guidance is unavailable")); }
     finally { setBusy(false); }
   }
 
@@ -222,60 +243,83 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     try {
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, userId, { method: "POST", body: "{}" });
       setMission(result.mission); setHome(result.home); onHome(result.home); setCompletionReceipt({ xpAwarded: result.xpAwarded });
-      setAnnouncement(result.xpAwarded ? `Mission complete. ${result.xpAwarded} XP earned.` : "This Mission was already complete.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The Mission could not be completed"); }
+      setAnnouncement(result.xpAwarded ? t("Mission complete. {xp} XP earned.", { xp: result.xpAwarded }) : t("This Mission was already complete."));
+    } catch { setError(t("The Mission could not be completed")); }
     finally { setBusy(false); }
   }
 
   const totalXp = home.totalXp;
   const availableReview = home.reviews.find((review) => review.unlockMission === mission.missionNumber && review.status === "available") ?? null;
   const newlyCompleted = (completionReceipt?.xpAwarded ?? 0) > 0;
-  if (mission.legacyCompletion) return <div className={styles.shell}><ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · COMPLETE`} totalXp={totalXp} userId={userId} /><main className={styles.missionMain}><section className={styles.reward}><span className={styles.eyebrow}>ALREADY COMPLETE</span><h2>{mission.title}</h2><p>Your earlier progress is here. You do not need to repeat this Mission.</p><ActionButton onClick={onBack} size="large">Return to Programme Home</ActionButton></section></main></div>;
-  if (completionReceipt || mission.status === "completed") return <div className={styles.shell}><ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · COMPLETE`} totalXp={totalXp} userId={userId} /><main className={styles.missionMain}><section className={styles.reward}><span className={styles.eyebrow}>MISSION COMPLETE</span><strong>{newlyCompleted ? `+${completionReceipt?.xpAwarded}` : `${mission.xpEarnedHere} XP`}</strong><h2>{mission.title}</h2><p>{newlyCompleted ? "Your result is ready and the completion reward has been added." : completionReceipt ? "This Mission was already complete. Your completed result is ready to review." : "Your completed result is ready to review."}</p>{availableReview ? <div className={styles.reviewReveal}><span>PERSONAL REVIEW AVAILABLE</span><p>{availableReview.title} is ready. Return Home to open it and see what you have built so far.</p></div> : null}<ActionButton onClick={onBack} size="large">Continue from Programme Home</ActionButton><p aria-live="polite">{announcement}</p></section>{[8, 10].includes(mission.missionNumber) ? <CommercialNext missionNumber={mission.missionNumber} /> : null}</main></div>;
+  const completeLabel = t("MISSION {number} · COMPLETE", { number: String(mission.missionNumber).padStart(2, "0") });
+  if (mission.legacyCompletion) return <div className={styles.shell}>
+    <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
+    <main className={styles.missionMain}><section className={styles.reward}>
+      <span className={styles.eyebrow}>{t("ALREADY COMPLETE")}</span>
+      <h2>{missionCopy.title}</h2>
+      <p>{t("Your earlier progress is here. You do not need to repeat this Mission.")}</p>
+      <ActionButton onClick={onBack} size="large">{t("Return to Programme Home")}</ActionButton>
+    </section></main>
+  </div>;
+  if (completionReceipt || mission.status === "completed") return <div className={styles.shell}>
+    <ProgramAiAuthenticatedHeader label={completeLabel} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
+    <main className={styles.missionMain}>
+      <section className={styles.reward}>
+        <span className={styles.eyebrow}>{t("MISSION COMPLETE")}</span>
+        <strong>{newlyCompleted ? `+${completionReceipt?.xpAwarded}` : `${mission.xpEarnedHere} XP`}</strong>
+        <h2>{missionCopy.title}</h2>
+        <p>{newlyCompleted ? t("Your result is ready and the completion reward has been added.") : completionReceipt ? t("This Mission was already complete. Your completed result is ready to review.") : t("Your completed result is ready to review.")}</p>
+        {availableReview ? <div className={styles.reviewReveal}><span>{t("PERSONAL REVIEW AVAILABLE")}</span><p>{t("{title} is ready. Return Home to open it and see what you have built so far.", { title: programmeText(locale, availableReview.milestone === "first" ? "First Personal Review" : availableReview.milestone === "mid" ? "Mid-Programme Personal Review" : "Full Programme Personal Review") })}</p></div> : null}
+        <ActionButton onClick={onBack} size="large">{t("Continue from Programme Home")}</ActionButton>
+        <p aria-live="polite">{announcement}</p>
+      </section>
+      {[8, 10].includes(mission.missionNumber) ? <CommercialNext locale={locale} missionNumber={mission.missionNumber} /> : null}
+    </main>
+  </div>;
 
   return <div className={styles.shell}>
-    <ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · ${mission.title.toUpperCase()}`} totalXp={totalXp} userId={userId} />
+    <ProgramAiAuthenticatedHeader label={`${t("Mission").toLocaleUpperCase(locale)} ${String(mission.missionNumber).padStart(2, "0")} · ${missionCopy.title.toLocaleUpperCase(locale)}`} locale={locale} programmePath={programmePath} totalXp={totalXp} userId={userId} />
     <main className={styles.missionMain}>
-      <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← Programme Home</button><Link className={styles.back} href="/help">Protected Help / pause</Link></div>
-      <section className={styles.missionIntro}><span className={styles.eyebrow}>MISSION {String(mission.missionNumber).padStart(2, "0")} · {mission.actionsCompleted}/{mission.actionsTotal} ACTIONS</span><h1>{mission.title}</h1><p>{mission.purpose}</p></section>
-      <div aria-label="Mission progress" className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={`${action.label}: ${action.completed ? "complete" : "not complete"}`} />)}<span data-complete={false} title="Mission completion bonus" /></div>
+      <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← {t("Programme Home")}</button><Link className={styles.back} href={programmeHelpPath(locale)}>{t("Protected Help / pause")}</Link></div>
+      <section className={styles.missionIntro}><span className={styles.eyebrow}>{t("MISSION {number} · {completed}/{total} ACTIONS", { number: String(mission.missionNumber).padStart(2, "0"), completed: mission.actionsCompleted, total: mission.actionsTotal })}</span><h1>{missionCopy.title}</h1><p>{missionCopy.description}</p></section>
+      <div aria-label={t("Mission progress")} className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={t("{label}: {status}", { label: actionUi[action.id] ? t(actionUi[action.id].prompt) : missionCopy.title, status: t(action.completed ? "complete" : "not complete") })} />)}<span data-complete={false} title={t("Mission completion bonus")} /></div>
       {ui && current ? <div className={styles.workspace}>
-        <section className={styles.challenge}>
-          <span className={styles.eyebrow}>ACTION {mission.currentActionPosition} · +{current.xp} XP</span><h2>{ui.prompt}</h2><p>{ui.explanation}</p>
-          {current.id === "map_urge_sequence" ? <SequenceBuilder feedback={sequenceFeedback} onMove={moveSequence} order={sequenceOrder} /> : null}
-          {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
-          {current.id === "reality_check" ? <ScenarioPanel eyebrow="REALITY CHECK" scenario="It’s been a difficult day. Which version still feels realistic?" /> : null}
-          {["run_decision_check", "choose_scenario"].includes(current.id) && (values.scenarioChoice?.[0] || values.scenarioType?.[0]) ? <ScenarioPanel scenario={values.scenarioChoice?.[0] ?? values.scenarioType?.[0] ?? ""} /> : null}
-          {current.id === "rehearse_response" && typeof mission.artifact.scenarioType === "string" ? <ScenarioPanel eyebrow="YOUR REHEARSAL" scenario={mission.artifact.scenarioType} /> : null}
-          {current.id === "choose_execution" ? <ScenarioPanel eyebrow="PRESSURE CHECK" scenario="The boundary is ready on paper. What would it need before a pressured moment?" /> : null}
-          {current.id === "rehearse_bypass" ? <ScenarioPanel eyebrow="BYPASS TEST" scenario="What could make this easy to undo?" /> : null}
-          {current.id === "commit_pause_rule" ? <><ScenarioPanel eyebrow="APPLY YOUR CHECKS" scenario="A second decision appears with less time and more pressure. Use the routine before choosing your pause rule." /><DecisionApplication applied={appliedChecks} checks={Array.isArray(mission.artifact.decisionChecks) ? mission.artifact.decisionChecks : []} onToggle={toggleAppliedCheck} /></> : null}
+        <section className={styles.challenge} data-programme-action={current.id}>
+          <span className={styles.eyebrow}>{t("ACTION {position} · +{xp} XP", { position: mission.currentActionPosition ?? "", xp: current.xp })}</span><h2>{t(ui.prompt)}</h2><p>{t(ui.explanation)}</p>
+          {current.id === "map_urge_sequence" ? <SequenceBuilder feedback={sequenceFeedback} locale={locale} onMove={moveSequence} order={sequenceOrder} /> : null}
+          {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} locale={locale} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
+          {current.id === "reality_check" ? <ScenarioPanel eyebrow={t("REALITY CHECK")} locale={locale} scenario={t("It’s been a difficult day. Which version still feels realistic?")} /> : null}
+          {["run_decision_check", "choose_scenario"].includes(current.id) && (values.scenarioChoice?.[0] || values.scenarioType?.[0]) ? <ScenarioPanel locale={locale} scenario={values.scenarioChoice?.[0] ?? values.scenarioType?.[0] ?? ""} /> : null}
+          {current.id === "rehearse_response" && typeof mission.artifact.scenarioType === "string" ? <ScenarioPanel eyebrow={t("YOUR REHEARSAL")} locale={locale} scenario={mission.artifact.scenarioType} /> : null}
+          {current.id === "choose_execution" ? <ScenarioPanel eyebrow={t("PRESSURE CHECK")} locale={locale} scenario={t("The boundary is ready on paper. What would it need before a pressured moment?")} /> : null}
+          {current.id === "rehearse_bypass" ? <ScenarioPanel eyebrow={t("BYPASS TEST")} locale={locale} scenario={t("What could make this easy to undo?")} /> : null}
+          {current.id === "commit_pause_rule" ? <><ScenarioPanel eyebrow={t("APPLY YOUR CHECKS")} locale={locale} scenario={t("A second decision appears with less time and more pressure. Use the routine before choosing your pause rule.")} /><DecisionApplication applied={appliedChecks} checks={Array.isArray(mission.artifact.decisionChecks) ? mission.artifact.decisionChecks : []} locale={locale} onToggle={toggleAppliedCheck} /></> : null}
           {finalPlanStage ? <>
-            {!guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">Build my plan</ActionButton> : <AiCandidatePicker guidance={guidance} heading="Review your one-screen plan" onSelect={selectGuidance} selectedId={guidanceSelected} />}
-            {guidance ? <label className={styles.localField}><span>Your wording · kept in this tab</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder="Use the grounded draft above or write your own version…" value={localWording} /></label> : null}
-            {guidance ? ui.fields.map((field) => <ChoiceCards key={field.key} legend={field.legend} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={field.options} selected={values[field.key] ?? []} selectionNote={field.multiple ? `choose ${field.minimum === field.maximum ? field.minimum : `${field.minimum}–${field.maximum}`}` : undefined} />) : null}
-          </> : ui.fields.filter(() => current.id !== "map_urge_sequence" && current.id !== "rehearse_response").map((field) => <ChoiceCards key={field.key} legend={field.legend} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={field.options} selected={values[field.key] ?? []} selectionNote={field.multiple ? `choose ${field.minimum === field.maximum ? field.minimum : `${field.minimum}–${field.maximum}`}` : undefined} />)}
-          {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <ChoiceCards legend="What would you check first?" onChoose={setFirstCheck} options={[option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")]} selected={firstCheck ? [firstCheck] : []} /> : null}
-          {current.id === "build_friction_stack" ? <StackBuilder onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
-          {current.id === "decode_offer_terms" ? <OfferDecoder selected={values.offerTermSignal?.[0] ?? ""} /> : null}
-          {guidance && guidanceBuilderActions.has(current.id) ? <AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : "Choose or edit the wording that fits"} onSelect={selectGuidance} selectedId={guidanceSelected} /> : null}
-          {guidance && !guidanceBuilderActions.has(current.id) ? <aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>USEFUL INSIGHT</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside> : null}
-          {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">That response creates a clear next move. You can still choose a different option before confirming it.</p> : null}
-          {localWordingActions.has(current.id) ? <label className={styles.localField}><span>Your wording · kept in this tab</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder="Choose a draft above or write your own version…" value={localWording} /></label> : null}
-          <div className={styles.submitRow}>{guidanceActions.has(current.id) && !guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">{current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts"}</ActionButton> : null}<ActionButton disabled={busy || !valid} onClick={saveAction} size="large">{busy ? "Saving…" : current.id === "map_urge_sequence" ? `Check sequence · +${current.xp} XP when correct` : `Confirm action · +${current.xp} XP`}</ActionButton></div>
+            {!guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">{t("Build my plan")}</ActionButton> : <AiCandidatePicker guidance={guidance} heading={t("Review your one-screen plan")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} />}
+            {guidance ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Use the grounded draft above or write your own version…")} value={localWording} /></label> : null}
+            {guidance ? ui.fields.map((field) => <ChoiceCards key={field.key} legend={t(field.legend)} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />) : null}
+          </> : ui.fields.filter(() => current.id !== "map_urge_sequence" && current.id !== "rehearse_response").map((field) => <ChoiceCards key={field.key} legend={t(field.legend)} multiple={field.multiple} onChoose={(value) => choose(field, value)} options={localizedOptions(field, locale)} selected={values[field.key] ?? []} selectionNote={selectionNote(field, locale)} />)}
+          {current.id === "run_decision_check" && values.scenarioChoice?.[0] ? <ChoiceCards legend={t("What would you check first?")} onChoose={setFirstCheck} options={localizedOptions({ key: "decisionChecks", legend: "Three checks", options: [option("purpose", "Why am I considering this?"), option("terms", "Are the material terms clear?"), option("mood", "Am I reacting to the moment?"), option("exit", "What is my exit route?")] }, locale)} selected={firstCheck ? [firstCheck] : []} /> : null}
+          {current.id === "build_friction_stack" ? <StackBuilder locale={locale} onMove={(index, direction) => moveSelected("frictionMethods", index, direction)} selected={values.frictionMethods ?? []} /> : null}
+          {current.id === "decode_offer_terms" ? <OfferDecoder locale={locale} selected={values.offerTermSignal?.[0] ?? ""} /> : null}
+          {guidance && guidanceBuilderActions.has(current.id) ? <AiCandidatePicker guidance={guidance} heading={current.id === "rehearse_response" ? guidance.title : t("Choose or edit the wording that fits")} locale={locale} onSelect={selectGuidance} selectedId={guidanceSelected} /> : null}
+          {guidance && !guidanceBuilderActions.has(current.id) ? <aside className={styles.guidance} aria-live="polite"><span className={styles.eyebrow}>{t("USEFUL INSIGHT")}</span><h3>{guidance.title}</h3><p>{guidance.summary}</p><ul>{guidance.options.map((item) => <li key={item.id}>{item.text}</li>)}</ul></aside> : null}
+          {current.id === "rehearse_response" && guidanceSelected ? <p className={styles.contextFeedback} role="status">{t("That response creates a clear next move. You can still choose a different option before confirming it.")}</p> : null}
+          {localWordingActions.has(current.id) ? <label className={styles.localField}><span>{t("Your wording · kept in this tab")}</span><textarea maxLength={600} onChange={(event) => onLocalWording(event.target.value)} placeholder={t("Choose a draft above or write your own version…")} value={localWording} /></label> : null}
+          <div className={styles.submitRow}>{guidanceActions.has(current.id) && !guidance ? <ActionButton disabled={busy} onClick={getGuidance} variant="ghost-paper">{t(current.id === "rehearse_response" ? "Create my rehearsal" : current.id === "build_friction_stack" ? "Suggest an order" : current.id === "name_early_signal" ? "Show one possible pattern" : "Create personal drafts")}</ActionButton> : null}<ActionButton disabled={busy || !valid} onClick={saveAction} size="large">{busy ? t("Saving…") : current.id === "map_urge_sequence" ? t("Check sequence · +{xp} XP when correct", { xp: current.xp }) : t("Confirm action · +{xp} XP", { xp: current.xp })}</ActionButton></div>
           {error ? <p className={styles.error} role="alert">{error}</p> : null}<p aria-live="polite" className={styles.status}>{announcement}</p>
         </section>
-        <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} localWording={localWording} missionNumber={mission.missionNumber} />
-      </div> : <section className={styles.challenge}><span className={styles.eyebrow}>YOUR RESULT IS READY</span><h2>Review what you built, then finish the Mission.</h2><p>The final step adds the {mission.completionBonus} XP completion reward.</p><HumanArtifact artifact={mission.artifact} guidance={guidance} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? "Completing…" : `Complete Mission · +${mission.completionBonus} XP`}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
-      {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>Your support route is ready</h3><p>Keep it simple enough to use. <Link href="/help">Help</Link> is always available.</p></aside> : null}
+        <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} />
+      </div> : <section className={styles.challenge}><span className={styles.eyebrow}>{t("YOUR RESULT IS READY")}</span><h2>{t("Review what you built, then finish the Mission.")}</h2><p>{t("The final step adds the {xp} XP completion reward.", { xp: mission.completionBonus })}</p><HumanArtifact artifact={mission.artifact} guidance={guidance} locale={locale} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? t("Completing…") : t("Complete Mission · +{xp} XP", { xp: mission.completionBonus })}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
+      {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>{t("Your support route is ready")}</h3><p>{t("Keep it simple enough to use.")} <Link href={programmeHelpPath(locale)}>{t("Help")}</Link> {t("is always available.")}</p></aside> : null}
     </main>
   </div>;
 }
 
-function CommercialNext({ missionNumber }: { missionNumber: number }) {
+function CommercialNext({ missionNumber, locale }: { missionNumber: number; locale: ProgrammeLocale }) {
   const sourceSurface = missionNumber === 8 ? "mission_08" : "mission_10";
   const discovery = (destinationRoute: "casinos" | "compare" | "bonuses" | "best_offers" | "bonus_guide") => {
     productAnalyticsClient.discoveryClicked({ sourceSurface, destinationRoute });
   };
-  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>PUT IT TO USE</span><h3>{missionNumber === 8 ? "Research with your checklist" : "Explore when you are ready"}</h3><p>Use B4GAMBLE’s public guides to compare facts and understand offers.</p><nav className={styles.exploreLinks} aria-label="Public guides"><Link href="/casinos" onClick={() => discovery("casinos")}>Compare casinos</Link><Link href="/bonuses" onClick={() => discovery("bonuses")}>Explore bonuses</Link><Link href="/best-offers" onClick={() => discovery("best_offers")}>Best offers</Link>{missionNumber === 8 ? <Link href="/bonus-guide" onClick={() => discovery("bonus_guide")}>Bonus guide</Link> : null}</nav></aside>;
+  return <aside className={styles.commercialAside}><span className={styles.eyebrow}>{programmeText(locale, "PUT IT TO USE")}</span><h3>{programmeText(locale, missionNumber === 8 ? "Research with your checklist" : "Explore when you are ready")}</h3><p>{programmeText(locale, "Use B4GAMBLE’s public guides to compare facts and understand offers.")}</p><nav className={styles.exploreLinks} aria-label={programmeText(locale, "Public guides")}><Link href={programmePublicHref(locale, "/casinos")} onClick={() => discovery("casinos")}>{programmeText(locale, "Compare casinos")}</Link><Link href={programmePublicHref(locale, "/bonuses")} onClick={() => discovery("bonuses")}>{programmeText(locale, "Explore bonuses")}</Link><Link href={programmePublicHref(locale, "/best-offers")} onClick={() => discovery("best_offers")}>{programmeText(locale, "Best offers")}</Link>{missionNumber === 8 ? <Link href={programmePublicHref(locale, "/bonus-guide")} onClick={() => discovery("bonus_guide")}>{programmeText(locale, "Bonus guide")}</Link> : null}</nav></aside>;
 }

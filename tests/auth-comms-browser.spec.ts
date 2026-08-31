@@ -179,8 +179,36 @@ test("canonical access screen reports invalid authority safely", async ({ page }
   await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
   await page.getByRole("button", { name: "Enter Mission 01" }).click();
   const alert = page.locator('p[role="alert"]');
-  await expect(alert).toHaveText("Current access could not be verified. Try again.");
+  await expect(alert).toHaveText("We could not verify Programme access. Check both boxes and try again.");
   await expect(alert).not.toContainText(/authority|continuation|proof/i);
+});
+
+test("canonical access screen distinguishes a disabled runtime from session creation failure", async ({ page }) => {
+  await page.route("**/api/auth/get-session", (route) => route.fulfill({ status: 200, contentType: "application/json", body: "null" }));
+  await page.route("**/api/programme-access/authority", (route) => {
+    const input = route.request().postDataJSON() as { journeyId: string };
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, authority: authority(input.journeyId) }) });
+  });
+  let sessionAttempt = 0;
+  await page.route("**/api/program/program-ai/session", (route) => {
+    sessionAttempt += 1;
+    return route.fulfill(sessionAttempt === 1
+      ? { status: 404, contentType: "application/json", body: JSON.stringify({ ok: false, code: "PROGRAM_AI_DISABLED", error: "server detail must not render" }) }
+      : { status: 500, contentType: "application/json", body: JSON.stringify({ ok: false, code: "INTERNAL_ERROR", error: "server detail must not render" }) });
+  });
+
+  await open(page, "/program");
+  await page.getByRole("checkbox", { name: /I confirm I am 18 or over/ }).check();
+  await page.getByRole("checkbox", { name: /I agree to the Terms/ }).check();
+  const enter = page.getByRole("button", { name: "Enter Mission 01" });
+  await enter.click();
+  const alert = page.locator('p[role="alert"]');
+  await expect(alert).toHaveText("Mission 01 is temporarily unavailable. Your access checks were accepted. Try again later.");
+  await expect(alert).not.toContainText(/PROGRAM_AI|server detail|404/i);
+
+  await enter.click();
+  await expect(alert).toHaveText("Mission 01 could not be started. Try again.");
+  await expect(alert).not.toContainText(/INTERNAL_ERROR|server detail|500/i);
 });
 
 test("Google cancellation retains the canonical Starting Point without legacy UI", async ({ page }) => {

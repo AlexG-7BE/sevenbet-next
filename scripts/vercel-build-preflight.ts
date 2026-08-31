@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
+import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
 const BASELINE_MIGRATION = "0022_better_auth_17_schema_upgrade";
 const TARGET_MIGRATION = "0023_mcp_dcr_runtime_compat_fix";
@@ -82,6 +83,15 @@ async function assertPostMigrationInvariants(prisma: PrismaClient) {
 }
 
 async function maybeApplyDcrFix() {
+  const programmeReleaseRuntime = assertProgrammeReleaseRuntime();
+  if (programmeReleaseRuntime.checked) {
+    writeEvent({
+      event: "programme_release_runtime_acceptance",
+      branch: programmeReleaseRuntime.branch,
+      programmeAiV1Enabled: programmeReleaseRuntime.programmeAiV1Enabled,
+    });
+  }
+
   const readiness = assertVercelDatabaseReadiness();
 
   if (!readiness.checked) {

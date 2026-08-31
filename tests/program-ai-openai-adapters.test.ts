@@ -32,6 +32,7 @@ const config: ProgramAiOpenAiConfig = {
 };
 
 const turn = {
+  locale: "en-GB" as const,
   inputMode: "text" as const,
   situation: "After stressful work days I open betting apps late at night.",
   clarificationAnswers: ["I want to pause before opening one."],
@@ -239,6 +240,7 @@ test("Audio Transcriptions sends one bounded file and logs metadata only", async
     },
   });
   const result = await adapter.transcribe({
+    locale: "en-GB",
     audio: new Uint8Array([1, 2, 3, 4]),
     mimeType: "audio/webm",
     fileName: "programme-m1.webm",
@@ -263,21 +265,25 @@ test("audio upload accepts current browser formats and rejects oversize, long an
     const form = new FormData();
     form.set("audio", new File([new Uint8Array([1, 2])], "capture", { type: mimeType }));
     form.set("durationMs", "90000");
+    form.set("locale", "en-GB");
     const parsed = await parseProgrammeAudioUpload(form);
     assert.equal(parsed.fileName, `programme-m1.${extension}`);
   }
   const long = new FormData();
   long.set("audio", new File([new Uint8Array([1])], "capture", { type: "audio/webm" }));
   long.set("durationMs", "90001");
+  long.set("locale", "en-GB");
   await assert.rejects(parseProgrammeAudioUpload(long), (error) => errorCode(error) === "INPUT_TOO_LARGE");
 
   const unsupported = new FormData();
   unsupported.set("audio", new File([new Uint8Array([1])], "capture", { type: "audio/aac" }));
   unsupported.set("durationMs", "1000");
+  unsupported.set("locale", "en-GB");
   await assert.rejects(parseProgrammeAudioUpload(unsupported), /not supported/i);
 
   const oversize = new FormData();
   oversize.set("audio", new File([new Uint8Array(PROGRAM_AI_MAX_AUDIO_BYTES + 1)], "capture", { type: "audio/webm" }));
   oversize.set("durationMs", "1000");
+  oversize.set("locale", "en-GB");
   await assert.rejects(parseProgrammeAudioUpload(oversize), (error) => errorCode(error) === "INPUT_TOO_LARGE");
 });

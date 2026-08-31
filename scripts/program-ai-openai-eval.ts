@@ -27,6 +27,7 @@ async function main() {
   for (const fixture of programmeAiOpenAiEvalCorpus) {
     try {
       const result = await adapter.createTurn({
+        locale: "en-GB",
         inputMode: "text",
         situation: fixture.situation,
         clarificationAnswers: fixture.clarificationAnswers ?? [],

@@ -11,27 +11,31 @@ import {
   PRESENTATION_LANGUAGE_HEADER,
   PRESENTATION_MARKET_HEADER,
 } from "./routing";
+import { PROGRAMME_PRESENTATION_CONTEXT } from "@/lib/programme/presentation";
 
 export const resolveServerPresentationContext = cache(async function resolveServerPresentationContext() {
   const [requestHeaders, cookieStore] = await Promise.all([headers(), cookies()]);
-  const presentationEnabled = requestHeaders.get(PRESENTATION_CONTEXT_HEADER) === "public-v1";
+  const context = requestHeaders.get(PRESENTATION_CONTEXT_HEADER);
+  const publicPresentation = context === "public-v1";
+  const programmePresentation = context === PROGRAMME_PRESENTATION_CONTEXT;
   const routeMarket = requestHeaders.get(PRESENTATION_MARKET_HEADER);
   const routeLanguage = requestHeaders.get(PRESENTATION_LANGUAGE_HEADER);
-  const preference = presentationEnabled
+  const preference = publicPresentation
     ? parsePresentationPreference(cookieStore.get(PRESENTATION_PREFERENCE_COOKIE)?.value)
     : null;
-  const trustedCountryCode = presentationEnabled
+  const trustedCountryCode = publicPresentation
     ? requestCountrySignalFromHeaders(requestHeaders)?.countryCode
     : null;
   const resolution = resolvePresentationContext({
-    routeMarket,
-    routeLanguage,
+    routeMarket: publicPresentation || programmePresentation ? routeMarket : null,
+    routeLanguage: publicPresentation || programmePresentation ? routeLanguage : null,
     preference,
     trustedCountryCode,
   });
 
   return {
     ...resolution,
+    context: programmePresentation ? PROGRAMME_PRESENTATION_CONTEXT : publicPresentation ? "public-v1" : null,
     isExplicitRoute: resolution.source === "EXPLICIT_ROUTE",
   } as const;
 });

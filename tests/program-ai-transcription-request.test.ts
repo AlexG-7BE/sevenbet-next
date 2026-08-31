@@ -48,6 +48,7 @@ function audioForm(size: number) {
   const form = new FormData();
   form.set("audio", new File([new Uint8Array(size)], "capture", { type: "audio/webm" }));
   form.set("durationMs", "90000");
+  form.set("locale", "en-GB");
   return form;
 }
 

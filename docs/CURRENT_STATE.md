@@ -41,6 +41,8 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 This entry does not change the Production SHA above. It does not activate indexing, localized operative legal documents, a partner, an offer, tracking or any non-GB commercial action.
 
+**PROPOSED UNTIL MERGE — Programme internationalisation PR #106 evidence, 31 August 2026:** a newer explicit Founder instruction authorises an isolated candidate that presents the one language-neutral Programme at `/program` and ten exact localized Programme routes. The candidate keeps locale out of Programme state, identity, rewards and persistence; introduces no Prisma migration; and does not alter ordinary second-wave public publication, legal, indexing or commercial authority. Founder runtime acceptance detected that the previously documented render-only Preview evidence did not prove Mission 01 session creation and exposed a missing branch-scoped runtime flag. The remediation, isolated Preview/Production provider-resource evidence and remaining real hosted acceptance gates are recorded in [Programme internationalisation](internationalisation/programme-internationalisation.md). **PR #106 Preview remains on HOLD** until a real no-interception Mission 01 session and same-journey locale-continuity smoke pass; no merge or Production deployment is represented by this entry.
+
 ## Detected release evidence
 
 ### Public product and legal baseline

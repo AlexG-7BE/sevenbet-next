@@ -310,6 +310,10 @@ const currentProgrammeCatalog: Record<SupportedLocale, CurrentProgrammeCopy> = {
   "fr-CA": enCurrent,
 };
 
+export function currentProgrammeCopy(locale: SupportedLocale): CurrentProgrammeCopy {
+  return currentProgrammeCatalog[locale];
+}
+
 function withCurrentProgrammeCopy(translation: TenStepsTranslation, current: CurrentProgrammeCopy): TenStepsTranslation {
   if (current.missions.length !== 10) throw new Error("10 Steps current Programme copy must contain exactly ten Missions");
   const text = [...translation.text];

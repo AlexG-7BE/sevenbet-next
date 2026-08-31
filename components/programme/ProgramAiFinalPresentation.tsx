@@ -4,11 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState, type CSSProperties, type FormEvent } from "react";
 
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import type { ProgrammeStartingPointValue } from "@/lib/programme/program-ai/contracts";
 import {
-  PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE,
   programmeAudioBlobFitsUploadLimit,
 } from "@/lib/programme/program-ai/transcription-limits";
+import { programmeHelpPath, type ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiFinalPresentation.module.css";
 
 export type ProgrammeRecorderState = "idle" | "requesting" | "recording" | "cancelled" | "denied" | "unsupported" | "transcribing" | "success" | "error";
@@ -19,62 +20,70 @@ function StatusMessage({ error, message }: { error?: string; message?: string })
   return message ? <p className={styles.status} role="status">{message}</p> : null;
 }
 
-export function ProgrammeLoadingScreen() {
+function translated(locale: ProgrammeLocale) {
+  return (key: ProgrammeMessageKey, values: Readonly<Record<string, string | number>> = {}) => programmeText(locale, key, values);
+}
+
+export function ProgrammeLoadingScreen({ locale }: { locale: ProgrammeLocale }) {
+  const t = translated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="loading">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
-          <p className={styles.eyebrow}>Private Programme</p>
-          <h1>Loading your private Programme session…</h1>
-          <Link className={styles.inlineLink} href="/help">Protected Help remains available.</Link>
+          <p className={styles.eyebrow}>{t("Private Programme")}</p>
+          <h1>{t("Loading your private Programme session…")}</h1>
+          <Link className={styles.inlineLink} href={programmeHelpPath(locale)}>{t("Protected Help remains available.")}</Link>
         </div>
       </main>
     </div>
   );
 }
 
-export function ProgrammeUnavailableScreen({ error }: { error: string }) {
+export function ProgrammeUnavailableScreen({ error, locale }: { error: string; locale: ProgrammeLocale }) {
+  const t = translated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="unavailable">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
-          <p className={styles.eyebrow}>Programme</p>
-          <h1>We could not open your Programme.</h1>
-          <StatusMessage error={error || "Programme Home is unavailable. Refresh to retry."} />
+          <p className={styles.eyebrow}>{t("Programme")}</p>
+          <h1>{t("We could not open your Programme.")}</h1>
+          <StatusMessage error={error || t("Programme Home is unavailable. Refresh to retry.")} />
         </div>
       </main>
     </div>
   );
 }
 
-export function ProgrammeAccessScreen({ busy, error, onConfirm }: {
+export function ProgrammeAccessScreen({ busy, error, onConfirm, locale }: {
   busy: boolean;
   error: string;
   onConfirm: () => void;
+  locale: ProgrammeLocale;
 }) {
+  const t = translated(locale);
   const [adult, setAdult] = useState(false);
   const [legal, setLegal] = useState(false);
   return (
     <div className={styles.canvas} data-programme-presentation="access">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.accessState}>
-          <p className={styles.eyebrow}>Programme access</p>
-          <h1 id="programme-access-title">Two checks before you begin.</h1>
+          <p className={styles.eyebrow}>{t("Programme access")}</p>
+          <h1 id="programme-access-title">{t("Two checks before you begin.")}</h1>
           <section className={styles.accessBoundary} aria-labelledby="programme-access-title">
             <label className={styles.checkRow}>
               <input checked={adult} onChange={(event) => setAdult(event.target.checked)} type="checkbox" />
-              <span>I confirm I am 18 or over <small>Required</small></span>
+              <span>{t("I confirm I am 18 or over")} <small>{t("Required")}</small></span>
             </label>
             <div className={styles.checkRow}>
               <input checked={legal} id="programme-legal-acknowledgement" onChange={(event) => setLegal(event.target.checked)} type="checkbox" />
-              <span><label htmlFor="programme-legal-acknowledgement">I agree to the Terms and confirm I have read the Privacy Notice</label><small>Required</small></span>
+              <span><label htmlFor="programme-legal-acknowledgement">{t("I agree to the Terms and confirm I have read the Privacy Notice")}</label><small>{t("Required")}</small></span>
             </div>
-            <p className={styles.legalLinks}><Link href="/terms">Read Terms</Link><Link href="/privacy">Read Privacy Notice</Link></p>
+            <p className={styles.legalLinks}><Link href="/terms">{t("Read Terms")}</Link><Link href="/privacy">{t("Read Privacy Notice")}</Link></p>
             <button className={styles.primaryAction} disabled={busy || !adult || !legal} onClick={onConfirm} type="button">
-              {busy ? "Verifying access…" : "Enter Mission 01"}
+              {busy ? t("Verifying access…") : t("Enter Mission 01")}
             </button>
             <StatusMessage error={error} />
-            <Link className={styles.helpLink} href="/help">Protected Help / pause options →</Link>
+            <Link className={styles.helpLink} href={programmeHelpPath(locale)}>{t("Protected Help / pause options →")}</Link>
           </section>
         </div>
       </main>
@@ -94,14 +103,16 @@ function GoogleIcon() {
   return <svg aria-hidden="true" height="18" viewBox="0 0 24 24" width="18"><path d="M21.35 11.1H12v2.9h5.35c-.5 2.4-2.55 3.8-5.35 3.8a5.8 5.8 0 1 1 0-11.6c1.45 0 2.75.5 3.8 1.45l2.15-2.15A8.9 8.9 0 0 0 12 3a9 9 0 1 0 0 18c5.2 0 8.65-3.65 8.65-8.8 0-.35-.1-.75-.3-1.1z" fill="currentColor" /></svg>;
 }
 
-function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTranscribe, onUseTyped }: {
+function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTranscribe, onUseTyped, locale }: {
   disabled: boolean;
   state: ProgrammeRecorderState;
   onState: (state: ProgrammeRecorderState) => void;
   onTranscript: (transcript: string, timing: { recordingDurationMs: number; transcriptionRequestMs: number }) => void;
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
   onUseTyped: () => void;
+  locale: ProgrammeLocale;
 }) {
+  const t = translated(locale);
   const recorder = useRef<MediaRecorder | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const chunks = useRef<Blob[]>([]);
@@ -191,7 +202,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
     setRecordingError("");
     if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
       releaseRecording();
-      setRecordingError(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);
+      setRecordingError(t("This recording is too large to upload. Record a shorter voice note or type instead."));
       productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
       return;
@@ -204,7 +215,7 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
       productAnalyticsClient.voiceOutcome("transcription_success");
       onState("success");
     } catch {
-      setRecordingError("Voice transcription could not be completed.");
+      setRecordingError(t("Voice transcription could not be completed."));
       productAnalyticsClient.voiceOutcome("transcription_error");
       onState("error");
     }
@@ -311,24 +322,24 @@ function Mission01VoiceControl({ disabled, state, onState, onTranscript, onTrans
   return (
     <section className={styles.voiceControl} data-state={state} data-voice-state={state}>
       {state === "recording" ? <>
-        <p className={styles.eyebrow}>Listening…</p>
+        <p className={styles.eyebrow}>{t("Listening…")}</p>
         <VoiceWave />
         <p className={styles.recordingTime}>{elapsed} / 01:30</p>
-        <p className={styles.recordingTranscript}>Your editable transcript will appear here when you tap Done.</p>
-        <strong className={styles.srOnly} role="status">Recording · {elapsed} / 01:30. Microphone is recording now.</strong>
-        <div className={styles.voiceActions}><button aria-label="Stop recording" className={styles.lightAction} onClick={stop} type="button">Done</button><button aria-label="Cancel" className={styles.secondaryAction} onClick={cancel} type="button">Start over</button></div>
+        <p className={styles.recordingTranscript}>{t("Your editable transcript will appear here when you tap Done.")}</p>
+        <strong className={styles.srOnly} role="status">{t("Recording · {elapsed} / 01:30. Microphone is recording now.", { elapsed })}</strong>
+        <div className={styles.voiceActions}><button aria-label={t("Stop recording")} className={styles.lightAction} onClick={stop} type="button">{t("Done")}</button><button aria-label={t("Cancel")} className={styles.secondaryAction} onClick={cancel} type="button">{t("Start over")}</button></div>
       </> : state === "success" ? <>
-        <button aria-label="Record again" className={styles.typingAction} disabled={disabled} onClick={start} type="button">Record again</button>
-        <p className={styles.voiceMessage} role="status">Check the editable transcript below, then create your Starting Point.</p>
+        <button aria-label={t("Record again")} className={styles.typingAction} disabled={disabled} onClick={start} type="button">{t("Record again")}</button>
+        <p className={styles.voiceMessage} role="status">{t("Check the editable transcript below, then create your Starting Point.")}</p>
       </> : <>
-        <button aria-label={blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak"} className={styles.microphoneAction} disabled={disabled || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
-        <strong className={styles.voiceLabel}>{state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak"}</strong>
-        <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">I&apos;d rather type</button>
+        <button aria-label={t(blocked ? "Check microphone access" : state === "denied" ? "Try microphone again" : "Tap to speak")} className={styles.microphoneAction} disabled={disabled || state === "requesting" || state === "transcribing"} onClick={state === "denied" ? async () => { if (!blocked || await readMicrophonePermission() !== "denied") await start(); } : start} type="button"><MicrophoneIcon /></button>
+        <strong className={styles.voiceLabel}>{t(state === "requesting" ? "Requesting microphone…" : state === "transcribing" ? "Transcribing securely…" : blocked ? "Microphone is blocked for this site" : state === "unsupported" ? "Voice recording is not supported here" : state === "cancelled" ? "Recording discarded" : "Tap to speak")}</strong>
+        <button className={styles.typingAction} disabled={disabled} onClick={useTyped} type="button">{t("I'd rather type")}</button>
       </>}
-      {state === "error" ? <p className={styles.error} role="alert">{recordingError || "Voice transcription could not be completed."} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">Retry this recording</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
-      {state === "unsupported" ? <p className={styles.error} role="alert">This browser cannot record audio with the features B4GAMBLE needs. <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
-      {state === "denied" ? <p className={styles.error} role="alert">{blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available."} Nothing was recorded. <button className={styles.inlineButton} onClick={useTyped} type="button">type instead</button>.</p> : null}
-      {state === "cancelled" ? <p className={styles.voiceMessage} role="status">The recording was discarded. Nothing was submitted.</p> : null}
+      {state === "error" ? <p className={styles.error} role="alert">{recordingError || t("Voice transcription could not be completed.")} {retainedRecording.current ? <button className={styles.inlineButton} onClick={() => void transcribe(retainedRecording.current!, recordingDurationMs.current)} type="button">{t("Retry this recording")}</button> : null} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
+      {state === "unsupported" ? <p className={styles.error} role="alert">{t("This browser cannot record audio with the features B4GAMBLE needs.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
+      {state === "denied" ? <p className={styles.error} role="alert">{t(blocked ? "Your browser will not show another prompt while this site is blocked. Allow microphone access using the site controls beside the address bar, then check access again." : "The permission prompt was dismissed or the microphone was not made available.")} {t("Nothing was recorded.")} <button className={styles.inlineButton} onClick={useTyped} type="button">{t("type instead")}</button>.</p> : null}
+      {state === "cancelled" ? <p className={styles.voiceMessage} role="status">{t("The recording was discarded. Nothing was submitted.")}</p> : null}
     </section>
   );
 }
@@ -344,6 +355,7 @@ export function Mission01IntakeScreen({
   onTranscribe,
   onUseTyped,
   inputMode,
+  locale,
 }: {
   authorityActive: boolean;
   busy: boolean;
@@ -355,7 +367,9 @@ export function Mission01IntakeScreen({
   onTranscribe: (audio: Blob, durationMs: number) => Promise<{ transcript: string; transcriptionRequestMs: number }>;
   onUseTyped: () => void;
   inputMode: "text" | "voice";
+  locale: ProgrammeLocale;
 }) {
+  const t = translated(locale);
   const [authority, setAuthority] = useState(authorityActive);
   const [recorderState, setRecorderState] = useState<ProgrammeRecorderState>("idle");
   useEffect(() => setAuthority(authorityActive), [authorityActive]);
@@ -366,26 +380,26 @@ export function Mission01IntakeScreen({
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.intakeState} data-intake-state={recording ? "recording" : textVisible ? "text" : "idle"}>
           {!recording && !textVisible ? <section className={styles.intakeIntro}>
-          <p className={styles.eyebrow}>Mission 01</p>
-          <span className={styles.srOnly}>Before you share.</span>
-          <span className={styles.srOnly}>What feels hardest to control right now?</span>
-          <h1>Tell us what is happening right now.</h1>
-          <p>In your own words. A minute is plenty — we&apos;ll build your Starting Point from it.</p>
+          <p className={styles.eyebrow}>{t("Mission 01")}</p>
+          <span className={styles.srOnly}>{t("Before you share.")}</span>
+          <span className={styles.srOnly}>{t("What feels hardest to control right now?")}</span>
+          <h1>{t("Tell us what is happening right now.")}</h1>
+          <p>{t("In your own words. A minute is plenty — we'll build your Starting Point from it.")}</p>
         </section> : null}
-        <Mission01VoiceControl disabled={busy || !authority} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
+        <Mission01VoiceControl disabled={busy || !authority} locale={locale} onState={setRecorderState} onTranscript={onTranscript} onTranscribe={onTranscribe} onUseTyped={onUseTyped} state={recorderState} />
         {textVisible ? <section className={styles.transcriptState} data-transcript-mode={inputMode === "voice" ? "transcript" : "text-fallback"}>
           <label>
-            <span>{inputMode === "voice" ? "Editable transcript" : "Your situation"}</span>
-            <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder="For example: I keep opening betting apps late at night after a stressful day…" rows={6} value={situation} />
-            <small>{situation.length}/4000 · {inputMode === "voice" ? "Correct anything you want. " : ""}This draft stays in this browser session; only the Starting Point you confirm is saved.</small>
+            <span>{t(inputMode === "voice" ? "Editable transcript" : "Your situation")}</span>
+            <textarea autoFocus maxLength={4000} onChange={(event) => onSituation(event.target.value)} placeholder={t("For example: I keep opening betting apps late at night after a stressful day…")} rows={6} value={situation} />
+            <small>{situation.length}/4000 · {inputMode === "voice" ? t("Correct anything you want. ") : ""}{t("This draft stays in this browser session; only the Starting Point you confirm is saved.")}</small>
           </label>
-          <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{busy ? "Preparing your Starting Point…" : "Create my Starting Point"}</button>
+          <button className={styles.primaryAction} disabled={busy || !authority || situation.trim().length < 20 || situation.trim().split(/\s+/).length < 4} onClick={onSubmit} type="button">{t(busy ? "Preparing your Starting Point…" : "Create my Starting Point")}</button>
         </section> : null}
         <StatusMessage error={error} />
         {!recording ? <aside className={styles.privacyBoundary}>
-          <div><strong>Before you share.</strong><span>Your words may reveal health or other sensitive information. Typed input, or audio for transcription, is sent to our AI provider to create a suggested Starting Point. B4GAMBLE does not save the audio or use your words for offers or rankings. <Link href="/privacy#ai">Privacy details</Link>.</span></div>
-          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.</span></label>
-          <small>Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.</small>
+          <div><strong>{t("Before you share.")}</strong><span>{t("Your words may reveal health or other sensitive information. Typed input, or audio for transcription, is sent to our AI provider to create a suggested Starting Point. B4GAMBLE does not save the audio or use your words for offers or rankings.")} <Link href="/privacy#ai">{t("Privacy details")}</Link>.</span></div>
+          <label><input checked={authority} disabled={busy || authorityActive} onChange={(event) => setAuthority(event.target.checked)} type="checkbox" /><span>{t("I explicitly consent to B4GAMBLE processing what I type or say, including information that may reveal my health, and sending it to its AI and transcription provider to personalise my Programme.")}</span></label>
+          <small>{t("Optional. You can withdraw before saving. Withdrawal stops future processing and clears this draft, but cannot undo processing already completed.")}</small>
           </aside> : null}
         </div>
       </main>
@@ -393,17 +407,18 @@ export function Mission01IntakeScreen({
   );
 }
 
-export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview }: { busy: boolean; error: string; onContinue: () => void; xpPreview: number }) {
+export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview, locale }: { busy: boolean; error: string; onContinue: () => void; xpPreview: number; locale: ProgrammeLocale }) {
+  const t = translated(locale);
   return (
     <div className={styles.canvas} data-programme-presentation="support-first">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.focusedState}>
-          <p className={styles.eyebrow}>Support first</p>
-          <h1>Pause the Programme. Keep support close.</h1>
-          <p>Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.</p>
-          <div className={styles.focusedActions}><Link className={styles.primaryAction} href="/help">Open protected Help</Link><button className={styles.secondaryAction} disabled={busy} onClick={onContinue} type="button">Continue when I&apos;m ready</button></div>
+          <p className={styles.eyebrow}>{t("Support first")}</p>
+          <h1>{t("Pause the Programme. Keep support close.")}</h1>
+          <p>{t("Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.")}</p>
+          <div className={styles.focusedActions}><Link className={styles.primaryAction} href={programmeHelpPath(locale)}>{t("Open protected Help")}</Link><button className={styles.secondaryAction} disabled={busy} onClick={onContinue} type="button">{t("Continue when I'm ready")}</button></div>
           <StatusMessage error={error} />
-          <small>Your {xpPreview} XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
+          <small>{t("Your {xp} XP for describing the situation is preserved. Registration and celebration are paused on this screen.", { xp: xpPreview })}</small>
         </div>
       </main>
     </div>
@@ -422,6 +437,7 @@ export function StartingPointReadyScreen({
   onGoogle,
   onLinkGoogle,
   onWithdraw,
+  locale,
 }: {
   authenticated: boolean;
   candidate: ProgrammeStartingPointValue;
@@ -434,7 +450,9 @@ export function StartingPointReadyScreen({
   onGoogle: () => void;
   onLinkGoogle: () => void;
   onWithdraw: () => void;
+  locale: ProgrammeLocale;
 }) {
+  const t = translated(locale);
   const [emailOpen, setEmailOpen] = useState(googleLinkRecovery);
   const [mode, setMode] = useState<"sign-up" | "sign-in">(googleLinkRecovery ? "sign-in" : "sign-up");
   const [email, setEmail] = useState("");
@@ -443,27 +461,27 @@ export function StartingPointReadyScreen({
     <div className={styles.canvas} data-programme-presentation="starting-point-ready">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
-          <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
-        <h1>Your Starting Point, in your words.</h1>
+          <p className={styles.readyEyebrow}>{t("✓ Your Starting Point is ready")}</p>
+        <h1>{t("Your Starting Point, in your words.")}</h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
-          <span className={styles.srOnly}>What changes next: {candidate.desiredChange.replace(/[.!?]+$/, "")}. Mission 02 continues here: {candidate.continuationCue.replace(/[.!?]+$/, "")}.</span>
+          <span className={styles.srOnly}>{t("What changes next: {change}. Mission 02 continues here: {cue}.", { change: candidate.desiredChange.replace(/[.!?]+$/, ""), cue: candidate.continuationCue.replace(/[.!?]+$/, "") })}</span>
         </section>
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
-          {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}
-          {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save my Starting Point</button> : null}
-            {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
+          {googleLinkRecovery ? <p>{t("Your confirmed Starting Point stays in this browser while you sign in and link Google securely.")}</p> : null}
+          {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{t(busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account")}</button> : <>
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />{t("Continue with Google — save my Starting Point")}</button> : null}
+            {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{t(emailOpen ? "Hide email option" : "Use email instead")}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
-              <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
-              <label><span>Password</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
-              <button className={styles.primaryAction} disabled={busy} type="submit">{googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email"}</button>
-              {!googleLinkRecovery ? <button className={styles.inlineButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one"}</button> : null}
+              <label><span>{t("Email")}</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>
+              <label><span>{t("Password")}</span><input autoComplete={mode === "sign-up" ? "new-password" : "current-password"} minLength={8} name="password" onChange={(event) => setPassword(event.target.value)} required type="password" value={password} /></label>
+              <button className={styles.primaryAction} disabled={busy} type="submit">{t(googleLinkRecovery ? "Sign in, then link Google" : mode === "sign-up" ? "Create account with email" : "Sign in with email")}</button>
+              {!googleLinkRecovery ? <button className={styles.inlineButton} onClick={() => setMode((value) => value === "sign-up" ? "sign-in" : "sign-up")} type="button">{t(mode === "sign-up" ? "Already have an account? Sign in" : "Need an account? Create one")}</button> : null}
             </form> : null}
           </>}
           <StatusMessage error={error} />
-          <small>Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.</small>
-          {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">Withdraw consent and clear this draft</button> : null}
+          <small>{t("Google provides identity only; it does not verify age or receive your Programme words from B4GAMBLE. Registration adds 0 XP. Programme and Help data never feeds offers or rankings.")}</small>
+          {!authenticated && !googleLinkRecovery ? <button className={styles.withdrawAction} disabled={busy} onClick={onWithdraw} type="button">{t("Withdraw consent and clear this draft")}</button> : null}
           </section>
         </div>
       </main>

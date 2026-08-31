@@ -8,6 +8,7 @@ import {
   PROGRAM_AI_MAX_RECORDING_DURATION_MS,
 } from "@/lib/programme/program-ai/transcription-limits";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
+import { isProgrammeLocale } from "@/lib/programme/presentation";
 
 export {
   PROGRAM_AI_MAX_AUDIO_BYTES,
@@ -45,7 +46,7 @@ function parseDuration(value: FormDataEntryValue | null) {
 
 function assertExactUploadFields(form: FormData) {
   const keys = Array.from(form.keys()).sort();
-  if (keys.length !== 2 || keys[0] !== "audio" || keys[1] !== "durationMs") {
+  if (keys.length !== 3 || keys[0] !== "audio" || keys[1] !== "durationMs" || keys[2] !== "locale") {
     throw new ValidationError("Voice transcription contains unexpected multipart fields");
   }
 }
@@ -85,6 +86,8 @@ export async function parseProgrammeAudioUpload(form: FormData) {
     throw new ProgrammeProviderError("INPUT_TOO_LARGE");
   }
   const durationMs = parseDuration(form.get("durationMs"));
+  const locale = form.get("locale");
+  if (!isProgrammeLocale(locale)) throw new ValidationError("Voice transcription locale is not supported");
   const mimeType = plainMimeType(file.type);
   const extension = audioFormats.get(mimeType);
   if (!extension) throw new ValidationError("This browser audio format is not supported");
@@ -92,6 +95,7 @@ export async function parseProgrammeAudioUpload(form: FormData) {
   return {
     audio,
     durationMs,
+    locale,
     mimeType,
     fileName: `programme-m1.${extension}`,
   };

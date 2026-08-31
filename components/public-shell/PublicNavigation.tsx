@@ -15,6 +15,8 @@ import type { PresentationResolution } from "@/lib/market/presentation-resolver"
 import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
 import { publicMarketPath, type MarketProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
+import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./PublicShell.module.css";
 
 function MenuIcon() {
@@ -38,19 +40,25 @@ export function PublicNavigation({
   authenticated,
   messages,
   presentation,
+  programme,
   selectableMarkets,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   messages: PublicShellMessages;
   presentation: PresentationResolution;
+  programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
   selectableMarkets: readonly MarketProfile[];
 }) {
   const pathname = usePathname();
   const unprefixedPathname = stripPublicMarketPrefix(pathname);
-  const homeHref = presentation.source === "EXPLICIT_ROUTE"
+  const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
     ? publicMarketPath(presentation.market, presentation.locale)
     : "/";
+  const publicHref = (href: string) => programme && !programme.localizePublicLinks
+    ? href
+    : localizePublicHref(href, pathname, presentation.market, presentation.locale);
+  const isProgrammeHref = (href: string) => href === "/program" || /^\/[a-z]{2}\/program(?:[/?#]|$)/.test(href);
   const navigationLabels: Record<string, string> = {
     "/best-offers": messages.bestOffers,
     "/casinos": messages.casinos,
@@ -105,7 +113,7 @@ export function PublicNavigation({
           {PUBLIC_NAVIGATION.map((item) => (
             <Link
               className={"safety" in item && item.safety ? styles.helpLink : undefined}
-              href={localizePublicHref(item.href, pathname, presentation.market, presentation.locale)}
+              href={publicHref(item.href)}
               key={item.href}
               aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
             >
@@ -114,11 +122,13 @@ export function PublicNavigation({
           ))}
         </nav>
         <div className={styles.accountNavigation}>
-          <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="desktop" />
+          {programme
+            ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="desktop" />
+            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="desktop" />}
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
           <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
-            if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+            if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
           }}>{primaryLabel}</Link>
         </div>
       </div>
@@ -126,7 +136,7 @@ export function PublicNavigation({
       <div className={styles.mobileNavigation}>
         {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
         <Link className={styles.mobilePrimaryAction} href={account.primaryHref} onClick={() => {
-          if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+          if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
         }}>{primaryLabel}</Link>
         <button
           aria-controls="public-mobile-navigation"
@@ -157,7 +167,7 @@ export function PublicNavigation({
           <nav className={styles.mobileRouteList} aria-label={messages.mobilePrimaryNavigation}>
             {PUBLIC_NAVIGATION.filter((item) => !("safety" in item && item.safety)).map((item) => (
               <Link
-                href={localizePublicHref(item.href, pathname, presentation.market, presentation.locale)}
+                href={publicHref(item.href)}
                 key={item.href}
                 onClick={() => closeMenu({ restoreFocus: false })}
                 aria-current={isCurrentPublicRoute(unprefixedPathname, item.href) ? "page" : undefined}
@@ -166,15 +176,17 @@ export function PublicNavigation({
               </Link>
             ))}
           </nav>
-          <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="mobile" />
+          {programme
+            ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
+            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="mobile" />}
           <div className={styles.mobileHelp}>
             <span>{messages.controlAndSupport}</span>
-            <Link href={localizePublicHref("/help", pathname, presentation.market, presentation.locale)} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
+            <Link href={publicHref("/help")} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>
           </div>
           <div className={styles.mobileAccount}>
             {!authenticated ? <Link href={account.accountHref} onClick={() => closeMenu({ restoreFocus: false })}>{accountLabel}</Link> : null}
             <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
-              if (!authenticated && account.primaryHref.startsWith("/program")) productAnalyticsClient.startClicked("public_header");
+              if (!authenticated && isProgrammeHref(account.primaryHref)) productAnalyticsClient.startClicked("public_header");
               closeMenu({ restoreFocus: false });
             }}>
               {authenticated ? messages.openProgramme : primaryLabel}

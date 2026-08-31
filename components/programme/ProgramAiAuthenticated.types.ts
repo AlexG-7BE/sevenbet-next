@@ -63,7 +63,6 @@ export type ProgramAiMission = {
     startingPoint: ProgrammeStartingPointValue | null;
     facts: Array<{
       missionNumber: number;
-      title: string;
       artifact: Record<string, string | number | boolean | string[]>;
     }>;
   };

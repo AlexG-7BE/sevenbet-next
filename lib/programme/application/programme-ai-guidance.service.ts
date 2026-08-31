@@ -20,6 +20,7 @@ import {
 import { ProgrammeProviderError } from "@/lib/programme/program-ai/provider-errors";
 import type { ProgrammeAiProviderOutcome } from "@/lib/programme/program-ai/orchestration";
 import { assertProgramAiV1Enabled } from "@/lib/programme/program-ai/runtime-config";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 
 type GuidanceAdapter = Pick<OpenAiMissionGuidanceAdapter, "generate">;
 
@@ -40,24 +41,24 @@ export class ProgrammeAiGuidanceService {
     if (!operation) {
       throw new ProgrammeStateConflictError("This Mission is deterministic and does not use AI guidance");
     }
-    const { localWording } = parseProgramAiLocalWording(value);
+    const { locale, localWording } = parseProgramAiLocalWording(value);
     const mission = await this.missions.mission(userId, missionNumber);
     const context = operation === "M10_FINAL_PLAN"
-      ? finalPlanContext(mission)
+      ? { ...finalPlanContext(mission), locale }
       : {
           operation,
+          locale,
           startingPoint: (await this.missions.home(userId)).startingPoint,
           mission: {
             missionNumber,
-            title: mission.title,
             artifact: mission.artifact,
             actionsCompleted: mission.actionsCompleted,
           },
           ...(localWording ? { localWording } : {}),
         };
     return allowProvider
-      ? this.generateOrFallback(operation, context, () => deterministicGuidance(operation, context))
-      : { ...deterministicGuidance(operation, context), providerOutcome: "fallback" as const };
+      ? this.generateOrFallback(operation, context, locale, () => deterministicGuidance(operation, context, locale))
+      : { ...deterministicGuidance(operation, context, locale), providerOutcome: "fallback" as const };
   }
 
   async review(
@@ -67,18 +68,19 @@ export class ProgrammeAiGuidanceService {
     allowProvider: boolean,
   ) {
     assertProgramAiV1Enabled();
-    const { localWording } = parseProgramAiLocalWording(value);
+    const { locale, localWording } = parseProgramAiLocalWording(value);
     const definition = programAiReviewDefinitions[milestone];
     const operation = reviewGuidanceOperation[milestone];
     const reviewContext = await this.missions.reviewContext(userId, definition.unlockMission);
     const context = {
       operation,
+      locale,
       ...reviewContext,
       ...(localWording ? { localWording } : {}),
     };
-    const fallback = () => deterministicReview(operation, context);
+    const fallback = () => deterministicReview(operation, context, locale);
     const result = allowProvider
-      ? await this.generateOrFallback(operation, context, fallback)
+      ? await this.generateOrFallback(operation, context, locale, fallback)
       : { ...fallback(), providerOutcome: "fallback" as const };
     if (result.kind !== "review" || wordCount(result) > definition.maxWords) {
       return { ...fallback(), providerOutcome: "invalid_output" as const };
@@ -89,12 +91,13 @@ export class ProgrammeAiGuidanceService {
   private async generateOrFallback<T extends ProgramAiGeneratedResult>(
     operation: T["operation"],
     context: unknown,
+    locale: ProgrammeLocale,
     fallback: () => T,
   ): Promise<T & { providerOutcome: ProgrammeAiProviderOutcome }> {
     try {
       const adapter = this.adapter === undefined ? missionGuidanceAdapterFromEnvironment() : this.adapter;
       if (!adapter) return { ...fallback(), providerOutcome: "fallback" };
-      return { ...await adapter.generate(operation, context) as T, providerOutcome: "provider" };
+      return { ...await adapter.generate(operation, context, locale) as T, providerOutcome: "provider" };
     } catch (error) {
       if (error instanceof ProgrammeProviderError) {
         const providerOutcome = error.providerCode === "PROVIDER_TIMEOUT"

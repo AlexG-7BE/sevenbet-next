@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import { programmeMissionProgressCopy, programmeReviewStatusCopy } from "../components/programme/ProgramAiHome.copy";
+import { assertProgrammeReleaseRuntime } from "../lib/programme/program-ai/release-runtime";
 
 function read(path: string) {
   return readFileSync(path, "utf8");
@@ -23,6 +24,39 @@ const reviewScreen = read("components/programme/ProgramAiReviewScreen.tsx");
 const missionsService = read("lib/programme/application/programme-ai-missions.service.ts");
 const page = read("app/program/page.tsx");
 const layout = read("app/program/layout.tsx");
+const vercelBuildPreflight = read("scripts/vercel-build-preflight.ts");
+
+test("PR #106 Preview builds require the exact Programme runtime flag without changing other environments", () => {
+  const releaseCandidate = {
+    VERCEL_ENV: "preview",
+    VERCEL_GIT_COMMIT_REF: "feat/programme-internationalisation",
+  };
+  assert.throws(
+    () => assertProgrammeReleaseRuntime(releaseCandidate),
+    /PR #106 Preview runtime acceptance failed/,
+  );
+  assert.throws(
+    () => assertProgrammeReleaseRuntime({ ...releaseCandidate, PROGRAM_AI_V1_ENABLED: "TRUE" }),
+    /PROGRAM_AI_V1_ENABLED must be exact true/,
+  );
+  assert.deepEqual(
+    assertProgrammeReleaseRuntime({ ...releaseCandidate, PROGRAM_AI_V1_ENABLED: "true" }),
+    {
+      checked: true,
+      branch: "feat/programme-internationalisation",
+      programmeAiV1Enabled: true,
+    },
+  );
+  assert.deepEqual(assertProgrammeReleaseRuntime({
+    VERCEL_ENV: "preview",
+    VERCEL_GIT_COMMIT_REF: "another-preview",
+  }), { checked: false });
+  assert.deepEqual(assertProgrammeReleaseRuntime({
+    VERCEL_ENV: "production",
+    VERCEL_GIT_COMMIT_REF: "feat/programme-internationalisation",
+  }), { checked: false });
+  assert.match(vercelBuildPreflight, /assertProgrammeReleaseRuntime\(\)/);
+});
 
 test("the schema change is limited to the two approved Program AI concepts", () => {
   assert.equal((schema.match(/model ProgrammeSensitiveInputAuthority\s*\{/g) || []).length, 1);
@@ -56,10 +90,10 @@ test("raw Programme input cannot enter either new durable model", () => {
 
 test("the public Programme has one canonical renderer and never swaps to the legacy UI", () => {
   assert.match(page, /data-public-programme-renderer="program-ai"/);
-  assert.match(page, /<ProgramAiExperience googleAvailable=\{isGoogleAuthAvailable\(\)\} \/>/);
+  assert.match(page, /<ProgramAiExperience googleAvailable=\{isGoogleAuthAvailable\(\)\} locale=\{locale\} programmePath=\{path\} \/>/);
   assert.doesNotMatch(page, /ActiveControlProgramme/);
   assert.doesNotMatch(page, /isProgramAiV1Enabled|PROGRAM_AI_V1_ENABLED/);
-  assert.match(layout, /Skip to main content/);
+  assert.match(layout, /messages\.skipToMain/);
   assert.match(layout, /<PublicHeader/);
   assert.match(layout, /<PublicFooter/);
   assert.match(page, /10-Step Control Programme \| Personal Control Plan/);
@@ -93,7 +127,7 @@ test("account-not-linked recovery preserves the claim and requires authenticated
   assert.match(frontend, /accountNotLinked/);
   assert.match(frontend, /authClient\.signIn\.email/);
   assert.match(frontend, /authClient\.linkSocial/);
-  assert.match(frontend, /GOOGLE_LINK_CALLBACK/);
+  assert.match(frontend, /programmeGoogleCallbacks\(locale, "link"\)/);
   assert.match(frontendRuntime, /Your confirmed Starting Point stays in this browser/);
   const explicitLink = frontend.slice(frontend.indexOf("async function startGoogleLink"), frontend.indexOf("async function openMission"));
   assert.doesNotMatch(explicitLink, /clearProgrammeOAuthClaimMarker/);
@@ -112,8 +146,8 @@ test("Program AI reuses the signed access contract and exposes no anonymous clar
   assert.match(sessionRoute, /verifyProgrammeAccessHeaders\(request\.headers/);
   assert.match(frontendRuntime, /Two checks before you begin/);
   assert.match(frontendRuntime, /htmlFor="programme-legal-acknowledgement"/);
-  assert.match(frontendRuntime, /<Link href="\/terms">Read Terms<\/Link>/);
-  assert.match(frontendRuntime, /<Link href="\/privacy">Read Privacy Notice<\/Link>/);
+  assert.match(frontendRuntime, /<Link href="\/terms">\{t\("Read Terms"\)\}<\/Link>/);
+  assert.match(frontendRuntime, /<Link href="\/privacy">\{t\("Read Privacy Notice"\)\}<\/Link>/);
   assert.doesNotMatch(frontendRuntime, /<label[^>]*><input checked=\{legal\}[\s\S]*?<\/label>/);
   assert.equal((frontendRuntime.match(/type="checkbox"/g) || []).length >= 3, true);
   assert.doesNotMatch(frontendRuntime, /Three checks before you begin|I accept the current|I have read the current/);
@@ -193,7 +227,7 @@ test("Home exposes truthful states and only the approved review entitlements", (
   assert.doesNotMatch(authenticatedHome, /Review or update/);
   assert.match(authenticatedHome, /Saved Starting Point/);
   assert.match(authenticatedHome, /home\.primaryAction === "review-mission" \? "Mission complete" : "Current mission"/);
-  assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction\)/);
+  assert.match(authenticatedHome, /programmePrimaryActionLabel\(home\.primaryAction, locale\)/);
   assert.match(authenticatedHome, /home\.primaryAction === "finish-mission-one"/);
   assert.match(authenticatedHome, /For privacy, the situation itself was not retained/);
   assert.match(frontend, /onMissionOneEntry=\{enterMissionOneFromHome\}/);
@@ -209,7 +243,7 @@ test("Home presentation copy uses total Mission guidance and projected Review di
     actionsTotal: 2,
     xpEarnedHere: 20,
     completionBonus: 0,
-  }), "1 of 2 actions complete · Short Starting Point");
+  }, "en-GB"), "1 of 2 actions complete · Short Starting Point");
   assert.equal(programmeMissionProgressCopy({
     missionNumber: 4,
     title: "Build one boundary",
@@ -218,7 +252,7 @@ test("Home presentation copy uses total Mission guidance and projected Review di
     actionsTotal: 3,
     xpEarnedHere: 35,
     completionBonus: 25,
-  }), "2 of 3 actions complete · About 5–8 min total");
+  }, "en-GB"), "2 of 3 actions complete · About 5–8 min total");
 
   const firstReview = {
     milestone: "first" as const,
@@ -230,7 +264,7 @@ test("Home presentation copy uses total Mission guidance and projected Review di
   assert.equal(programmeReviewStatusCopy({
     reviews: [firstReview],
     nextReview: { ...firstReview, xpRemaining: 190, missionsRemaining: 3 },
-  }), "First Personal Review unlocks after Mission 03 · 3 Missions and 190 XP remaining.");
+  }, "en-GB"), "First Personal Review unlocks after Mission 03 · 3 Missions and 190 XP remaining.");
   assert.equal(programmeReviewStatusCopy({
     reviews: [{ ...firstReview, status: "available" }],
     nextReview: {
@@ -240,13 +274,13 @@ test("Home presentation copy uses total Mission guidance and projected Review di
       xpRemaining: 225,
       missionsRemaining: 3,
     },
-  }), "A personal review is ready when you are. Next: Mid-Programme Personal Review unlocks after Mission 06 · 3 Missions and 225 XP remaining.");
+  }, "en-GB"), "A personal review is ready when you are. Next: Mid-Programme Personal Review unlocks after Mission 06 · 3 Missions and 225 XP remaining.");
 });
 
 test("mounted Mission presentation consumes server-owned action, reward and Review projections", () => {
   assert.match(missionsService, /actionsTotal: actions\.length/);
   assert.match(missionsService, /currentActionPosition: currentActionIndex >= 0 \? currentActionIndex \+ 1 : null/);
-  assert.match(missionExperience, /mission\.actionsCompleted\}\/\{mission\.actionsTotal/);
+  assert.match(missionExperience, /completed: mission\.actionsCompleted, total: mission\.actionsTotal/);
   assert.match(missionExperience, /mission\.currentActionPosition/);
   assert.match(missionExperience, /home\.reviews\.find\(\(review\) => review\.unlockMission === mission\.missionNumber && review\.status === "available"\)/);
   assert.match(missionExperience, /completionReceipt\?\.xpAwarded/);
@@ -259,7 +293,7 @@ test("support-first presents the Mission 01 XP projection returned by the server
   assert.match(frontend, /progress: \{ taskStates: string\[\]; xpPreview: number \}/);
   assert.match(frontend, /xpPreview: payload\.progress\?\.xpPreview \?\? 0/);
   assert.match(frontend, /xpPreview=\{local\.xpPreview\}/);
-  assert.match(finalPresentation, /Your \{xpPreview\} XP for describing the situation is preserved/);
+  assert.match(finalPresentation, /Your \{xp\} XP for describing the situation is preserved/);
   assert.doesNotMatch(finalPresentation, /Your 20 XP for describing the situation is preserved/);
 });
 
@@ -269,7 +303,7 @@ test("consumer Programme uses distinct interaction primitives and hides provider
   }
   assert.doesNotMatch(missionExperience + reviewScreen + authenticatedHome, /PRIVATE STRUCTURAL REVIEW|BOUNDED AI REVIEW|DETERMINISTIC REVIEW|Provider-off|provider-failure|Generic public navigation|No Programme data is sent|criterion IDs/);
   assert.doesNotMatch(missionPrimitives, /guidance\.generation|deterministic_fallback|provider/);
-  assert.match(missionExperience, /Check sequence · \+\$\{current\.xp\} XP when correct/);
+  assert.match(missionExperience, /t\("Check sequence · \+\{xp\} XP when correct", \{ xp: current\.xp \}\)/);
   assert.match(missionExperience, /No XP awarded\. Adjust the order and try again/);
 });
 

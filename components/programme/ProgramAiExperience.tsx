@@ -21,11 +21,9 @@ import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client
 import type { ProgrammeMissionNumber } from "@/lib/analytics/product-analytics-events";
 import { authClient, useSession } from "@/lib/auth/client";
 import {
-  GOOGLE_AUTH_CALLBACK,
-  GOOGLE_AUTH_ERROR_CALLBACK,
-  GOOGLE_LINK_CALLBACK,
-  GOOGLE_LINK_ERROR_CALLBACK,
+  programmeGoogleCallbacks,
 } from "@/lib/auth/google-flow";
+import { programmeText, type ProgrammeMessageKey } from "@/lib/i18n/programme-catalog";
 import {
   PROGRAMME_ACCESS_HEADERS,
   PROGRAMME_ACCESS_HEADER_VALUES,
@@ -38,10 +36,8 @@ import {
   PROGRAM_AI_SENSITIVE_STATEMENT_VERSION,
   type ProgrammeStartingPointValue,
 } from "@/lib/programme/program-ai/contracts";
-import {
-  PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE,
-  programmeAudioBlobFitsUploadLimit,
-} from "@/lib/programme/program-ai/transcription-limits";
+import { programmeAccessFailureMessageKey } from "@/lib/programme/program-ai/access-errors";
+import { programmeAudioBlobFitsUploadLimit } from "@/lib/programme/program-ai/transcription-limits";
 import {
   anonymousProgrammeSubject,
   clearProgrammeOAuthClaimMarker,
@@ -58,6 +54,7 @@ import {
   writeProgrammeOAuthClaimMarker,
   type ProgrammeLocalSubject,
 } from "@/lib/programme/local-subject-storage";
+import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import styles from "./ProgramAiExperience.module.css";
 
 type Phase =
@@ -93,6 +90,17 @@ const emptyLocalState: ProgramAiLocalState = {
   xpPreview: 0,
 };
 
+const phaseMessageKeys = {
+  loading: "loading",
+  access: "access",
+  intake: "intake",
+  support: "support",
+  registration: "registration",
+  home: "home",
+  mission: "mission",
+  review: "review",
+} as const satisfies Record<Phase, ProgrammeMessageKey>;
+
 function restoredAnonymousState(value: ProgramAiLocalState | null | undefined): ProgramAiLocalState {
   if (!value) return emptyLocalState;
   const legacyPhase = String(value.phase);
@@ -123,7 +131,7 @@ async function programAiRequest<T>(
   });
   const payload = await response.json() as ApiPayload<T>;
   if (!response.ok || payload.ok === false) {
-    const error = new Error(payload.error || "This Programme step could not be completed") as Error & {
+    const error = new Error("PROGRAMME_REQUEST_FAILED") as Error & {
       code?: string;
       status?: number;
     };
@@ -134,7 +142,15 @@ async function programAiRequest<T>(
   return payload;
 }
 
-export function ProgramAiExperience({ googleAvailable = false }: { googleAvailable?: boolean }) {
+export function ProgramAiExperience({
+  googleAvailable = false,
+  locale,
+  programmePath,
+}: {
+  googleAvailable?: boolean;
+  locale: ProgrammeLocale;
+  programmePath: string;
+}) {
   const { data: session, isPending: sessionPending } = useSession();
   const [phase, setPhase] = useState<Phase>("loading");
   const [subject, setSubject] = useState<ProgrammeLocalSubject | null>(null);
@@ -207,9 +223,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       setError("");
     } else if (linkFailed) {
       setGoogleLinkRecovery(true);
-      setError("Google linking was not completed. Your Starting Point is still here; retry when you are ready.");
+      setError(programmeText(locale, "Google linking was not completed. Your Starting Point is still here; retry when you are ready."));
     } else if (authState === "google-error") {
-      setError("Google account access was not completed. You can retry or use email instead.");
+      setError(programmeText(locale, "Google account access was not completed. You can retry or use email instead."));
     }
     const oauthJourney = readProgrammeOAuthClaimMarker(window.sessionStorage);
     if (oauthJourney && recoveryActive) {
@@ -229,7 +245,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         oauthRedeemStarted.current = true;
         setBusy(true);
         redeem(session.user.id, oauthJourney, restored)
-          .catch((cause) => setError(cause instanceof Error ? cause.message : "Your progress could not be saved yet"))
+          .catch(() => setError(programmeText(locale, "Your progress could not be saved yet")))
           .finally(() => setBusy(false));
       }
       return;
@@ -244,11 +260,11 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       fetch("/api/program/program-ai/home", { credentials: "same-origin", cache: "no-store" })
         .then(async (response) => {
           const payload = await response.json() as ApiPayload<{ home: ProgramAiHome }>;
-          if (!response.ok || !payload.home) throw new Error(payload.error || "Programme home unavailable");
+          if (!response.ok || !payload.home) throw new Error("PROGRAMME_HOME_UNAVAILABLE");
           setHome(payload.home);
           setPhase("home");
         })
-        .catch((cause) => { setError(cause instanceof Error ? cause.message : "Programme home unavailable"); setPhase("home"); });
+        .catch(() => { setError(programmeText(locale, "Programme home unavailable")); setPhase("home"); });
       return;
     }
     const journey = anonymousProgrammeSubject(window.sessionStorage);
@@ -265,15 +281,15 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     } else {
       setSensitiveAuthorityActive(false);
     }
-  }, [googleLinkRecovery, redeem, session?.user.id, sessionPending]);
+  }, [googleLinkRecovery, locale, redeem, session?.user.id, sessionPending]);
 
   async function grantAccess() {
     if (!subject) return;
     const entryMode = hasProgrammeAccessAuthority(window.sessionStorage, subject) ? "resume" : "start";
     productAnalyticsClient.startClicked("other_public");
     setBusy(true); setError("");
+    const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
     try {
-      const journey = subject.kind === "journey" ? subject : rotateAnonymousProgrammeSubject(window.sessionStorage);
       const response = await fetch("/api/programme-access/authority", {
         method: "POST",
         credentials: "same-origin",
@@ -289,8 +305,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         }),
       });
       const payload = await response.json() as ApiPayload<{ authority: ProgrammeAccessAuthority }>;
-      if (!response.ok || !payload.authority) throw new Error("Current access could not be verified. Try again.");
+      if (!response.ok || !payload.authority) throw new Error("PROGRAMME_ACCESS_NOT_VERIFIED");
       writeProgrammeAccessContinuation(window.sessionStorage, journey, payload.authority);
+    } catch {
+      setError(programmeText(locale, programmeAccessFailureMessageKey("authority")));
+      setBusy(false);
+      return;
+    }
+    try {
       await programAiRequest("/api/program/program-ai/session", journey, {
         method: "POST",
         headers: programmeAuthAccessHeaders(window.sessionStorage, journey),
@@ -303,8 +325,9 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       voiceTiming.current = null;
       setSubject(journey);
       persist({ ...emptyLocalState, phase: "intake" }, journey);
-    } catch {
-      setError("Current access could not be verified. Try again.");
+    } catch (cause) {
+      const requestError = cause as Error & { code?: string };
+      setError(programmeText(locale, programmeAccessFailureMessageKey("session", requestError)));
     } finally { setBusy(false); }
   }
 
@@ -324,11 +347,11 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         timing?: { programmeAiTurnMs?: number };
       }>("/api/program/program-ai/turn", subject, {
         method: "POST",
-        body: JSON.stringify({ inputMode: local.inputMode, situation: local.situation, clarificationAnswers: [] }),
+        body: JSON.stringify({ locale, inputMode: local.inputMode, situation: local.situation, clarificationAnswers: [] }),
       });
       accumulatedAiLatencyMs.current += payload.timing?.programmeAiTurnMs ?? 0;
       if (payload.result.kind !== "STARTING_POINT_CANDIDATE" || !payload.result.candidate) {
-        throw new Error("Your Starting Point could not be prepared");
+        throw new Error("STARTING_POINT_NOT_PREPARED");
       }
       const readyState = { ...local, candidate: payload.result.candidate, phase: "registration" as const, xpPreview: payload.progress?.xpPreview ?? 0 };
       if (payload.result.disposition === "SUPPORT_FIRST") {
@@ -357,20 +380,21 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         setSensitiveAuthorityActive(false);
         persist({ ...local, candidate: null, phase: "intake" });
       }
-      setError(cause instanceof Error ? cause.message : "Your Starting Point could not be prepared");
+      setError(programmeText(locale, "Your Starting Point could not be prepared"));
     }
     finally { setBusy(false); }
   }
 
   async function transcribeVoice(audio: Blob, durationMs: number) {
-    if (!subject) throw new Error("Programme session unavailable");
+    if (!subject) throw new Error(programmeText(locale, "Programme session unavailable"));
     if (!programmeAudioBlobFitsUploadLimit(audio.size)) {
-      throw new Error(PROGRAM_AI_AUDIO_TOO_LARGE_MESSAGE);
+      throw new Error(programmeText(locale, "This recording is too large to upload. Record a shorter voice note or type instead."));
     }
     await ensureSensitiveAuthority();
     const form = new FormData();
     form.set("audio", audio, "programme-m1-recording");
     form.set("durationMs", String(durationMs));
+    form.set("locale", locale);
     const payload = await programAiRequest<{
       transcript: string;
       timing?: { transcriptionRequestMs?: number };
@@ -424,7 +448,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         productAnalyticsClient.personalisedValue("starting_point");
         productAnalyticsClient.registrationCtaPresented();
       }
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "The Programme could not resume"); }
+    } catch { setError(programmeText(locale, "The Programme could not resume")); }
     finally { setBusy(false); }
   }
 
@@ -435,12 +459,12 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       await programAiRequest("/api/program/program-ai/authority", subject, { method: "DELETE" });
       setSensitiveAuthorityActive(false);
       persist({ ...emptyLocalState, phase: "intake" });
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Authority could not be withdrawn"); }
+    } catch { setError(programmeText(locale, "Authority could not be withdrawn")); }
     finally { setBusy(false); }
   }
 
   async function prepareClaimForRegistration() {
-    if (!subject || !local.candidate) throw new Error("Your Starting Point is unavailable in this browser session");
+    if (!subject || !local.candidate) throw new Error(programmeText(locale, "Your Starting Point is unavailable in this browser session"));
     await programAiRequest("/api/program/program-ai/starting-point", subject, {
       method: "POST",
       body: JSON.stringify(local.candidate),
@@ -455,7 +479,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       await prepareClaimForRegistration();
       await redeem(session.user.id, subject, local);
     }
-    catch (cause) { setError(cause instanceof Error ? cause.message : "Your progress could not be saved yet"); }
+    catch { setError(programmeText(locale, "Your progress could not be saved yet")); }
     finally { setBusy(false); }
   }
 
@@ -468,13 +492,18 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
       const result = input.mode === "sign-up" && !googleLinkRecovery
         ? await authClient.signUp.email({ email: input.email.trim().toLowerCase(), password: input.password, name: input.email.split("@")[0] || "B4GAMBLE member", fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) } })
         : await authClient.signIn.email({ email: input.email.trim().toLowerCase(), password: input.password });
-      if (result.error || !result.data?.user.id) throw new Error(input.mode === "sign-up" && !googleLinkRecovery ? "This account could not be created. Try signing in if it already exists." : "Email or password is incorrect.");
+      if (result.error || !result.data?.user.id) {
+        setError(programmeText(locale, input.mode === "sign-up" && !googleLinkRecovery
+          ? "This account could not be created. Try signing in if it already exists."
+          : "Email or password is incorrect."));
+        return;
+      }
       if (googleLinkRecovery) {
         await startGoogleLink();
         return;
       }
       await redeem(result.data.user.id, subject, local);
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Account access failed"); }
+    } catch { setError(programmeText(locale, "Account access failed")); }
     finally { emailRedeemStarted.current = false; setBusy(false); }
   }
 
@@ -482,19 +511,19 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     if (!subject || subject.kind !== "journey") return;
     setBusy(true); setError("");
     try {
+      const callbacks = programmeGoogleCallbacks(locale);
       await prepareClaimForRegistration();
       writeProgrammeOAuthClaimMarker(window.sessionStorage, subject);
       const result = await authClient.signIn.social({
         provider: "google",
-        callbackURL: GOOGLE_AUTH_CALLBACK,
-        errorCallbackURL: GOOGLE_AUTH_ERROR_CALLBACK,
+        ...callbacks,
         requestSignUp: true,
         fetchOptions: { headers: programmeAuthAccessHeaders(window.sessionStorage, subject) },
       });
-      if (result.error) throw new Error("Google account access could not be started");
-    } catch (cause) {
+      if (result.error) throw new Error("GOOGLE_ACCOUNT_ACCESS_NOT_STARTED");
+    } catch {
       clearProgrammeOAuthClaimMarker(window.sessionStorage);
-      setError(cause instanceof Error ? cause.message : "Google account access failed");
+      setError(programmeText(locale, "Google account access failed"));
       setBusy(false);
     }
   }
@@ -502,14 +531,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
   async function startGoogleLink() {
     setBusy(true); setError("");
     try {
+      const callbacks = programmeGoogleCallbacks(locale, "link");
       const result = await authClient.linkSocial({
         provider: "google",
-        callbackURL: GOOGLE_LINK_CALLBACK,
-        errorCallbackURL: GOOGLE_LINK_ERROR_CALLBACK,
+        ...callbacks,
       });
-      if (result.error) throw new Error("Google linking could not be started");
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Google linking failed");
+      if (result.error) throw new Error("GOOGLE_LINK_NOT_STARTED");
+    } catch {
+      setError(programmeText(locale, "Google linking failed"));
       setBusy(false);
     }
   }
@@ -528,8 +557,8 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
         missionNumber as ProgrammeMissionNumber,
         payload.mission.status === "completed" ? "review" : payload.mission.actionsCompleted > 0 ? "resume" : "start",
       );
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The Mission could not be opened");
+    } catch {
+      setError(programmeText(locale, "The Mission could not be opened"));
       setPhase("home");
     } finally { setBusy(false); }
   }
@@ -539,14 +568,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     setBusy(true); setError("");
     try {
       const payload = await programAiRequest<{ review: ProgramAiReview }>(
-        `/api/program/program-ai/reviews/${milestone}`,
+        `/api/program/program-ai/reviews/${milestone}?locale=${encodeURIComponent(locale)}`,
         subject,
       );
       setActiveReview({ milestone, review: payload.review });
       setPhase("review");
       productAnalyticsClient.reviewOpened(milestone);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "The Review could not be opened");
+    } catch {
+      setError(programmeText(locale, "The Review could not be opened"));
       setPhase("home");
     } finally { setBusy(false); }
   }
@@ -584,7 +613,7 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
 
   const renderPhase = (screen: ReactNode) => (
     <div
-      aria-label={`Programme ${phase} screen`}
+      aria-label={programmeText(locale, "Programme {phase} screen", { phase: programmeText(locale, phaseMessageKeys[phase]) })}
       className={styles.phaseBoundary}
       data-programme-phase={phase}
       data-runtime-renderer="programme"
@@ -596,14 +625,14 @@ export function ProgramAiExperience({ googleAvailable = false }: { googleAvailab
     </div>
   );
 
-  if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen />);
-  if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
-  if (phase === "intake") return renderPhase(<Mission01IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
-  if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
-  if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
-  if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} userId={session.user.id} />);
-  if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} totalXp={home.totalXp} userId={session.user.id} />);
-  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} userId={session.user.id} />);
-  if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} />);
-  return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} onConfirm={grantAccess} />);
+  if (phase === "loading" || sessionPending) return renderPhase(<ProgrammeLoadingScreen locale={locale} />);
+  if (phase === "access") return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
+  if (phase === "intake") return renderPhase(<Mission01IntakeScreen authorityActive={sensitiveAuthorityActive} busy={busy} error={error} inputMode={local.inputMode} locale={locale} onSituation={(situation) => { const next = { ...local, situation }; setLocal(next); if (subject) mergeProgrammeSubjectContent(window.sessionStorage, subject, { programAi: next }); }} onSubmit={() => submitTurn(true)} onTranscript={acceptTranscript} onTranscribe={transcribeVoice} onUseTyped={useTypedInput} situation={local.situation} />);
+  if (phase === "support") return renderPhase(<ProgrammeSupportScreen busy={busy} error={error} locale={locale} onContinue={continueAfterSupport} xpPreview={local.xpPreview} />);
+  if (phase === "registration" && local.candidate) return renderPhase(<StartingPointReadyScreen authenticated={Boolean(session?.user.id)} busy={busy} candidate={local.candidate} error={error} googleAvailable={googleAvailable} googleLinkRecovery={googleLinkRecovery} locale={locale} onEmail={handleEmail} onGoogle={handleGoogle} onLinkGoogle={startGoogleLink} onSave={saveAuthenticated} onWithdraw={withdrawSensitiveInput} />);
+  if (phase === "mission" && activeMission && home && session?.user.id) return renderPhase(<ProgramAiMissionExperience home={home} locale={locale} localWording={missionWording[activeMission.missionNumber] ?? ""} mission={activeMission} onBack={() => { setActiveMission(null); setPhase("home"); }} onHome={setHome} onLocalWording={(value) => saveMissionWording(activeMission.missionNumber, value)} programmePath={programmePath} userId={session.user.id} />);
+  if (phase === "review" && activeReview && home && session?.user.id) return renderPhase(<ProgramAiReviewScreen initialReview={activeReview.review} locale={locale} localWording={reviewWording[activeReview.milestone] ?? ""} milestone={activeReview.milestone} onBack={() => { setActiveReview(null); setPhase("home"); }} onLocalWording={(value) => saveReviewWording(activeReview.milestone, value)} programmePath={programmePath} totalXp={home.totalXp} userId={session.user.id} />);
+  if (phase === "home" && home && session?.user.id) return renderPhase(<ProgramAiHomeScreen home={home} locale={locale} onMission={openMission} onMissionOneEntry={enterMissionOneFromHome} onReview={openReview} programmePath={programmePath} userId={session.user.id} />);
+  if (phase === "home") return renderPhase(<ProgrammeUnavailableScreen error={error} locale={locale} />);
+  return renderPhase(<ProgrammeAccessScreen busy={busy} error={error} locale={locale} onConfirm={grantAccess} />);
 }
