@@ -71,8 +71,9 @@ test("Bonuses drives the shared chameleon header down and back up and keeps calc
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
   await expect(page.locator('[data-public-shell="header"]')).toHaveAttribute("data-shell-theme", "dark");
   await scrollToTheme(page, '[aria-labelledby="bonus-shortlist-title"]', "light");
-  await page.getByRole("tab", { name: "Low Wagering" }).click();
-  await expect(page.getByRole("tab", { name: "Low Wagering" })).toHaveAttribute("aria-selected", "true");
+  const lowWagering = page.getByRole("group", { name: "All bonuses" }).getByRole("button", { name: "Low Wagering" });
+  await lowWagering.click();
+  await expect(lowWagering).toHaveAttribute("aria-pressed", "true");
   await scrollToTheme(page, "section[class*='directorySection']", "cream");
   await scrollToTheme(page, "#bonus-calculator-title", "dark");
 
@@ -95,8 +96,9 @@ test("Casinos tray, auto-open sheet, reopen and three-selection cap remain conte
   await page.goto(`${baseUrl}/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("tab", { name: "Mobile" }).click();
-  await expect(page.getByRole("tab", { name: "Mobile" })).toHaveAttribute("aria-selected", "true");
+  const mobileSelector = page.getByRole("group", { name: "Full directory" }).getByRole("button", { name: "Mobile" });
+  await mobileSelector.click();
+  await expect(mobileSelector).toHaveAttribute("aria-pressed", "true");
 
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
   const tray = page.locator("[data-comparison-tray]");
@@ -112,7 +114,7 @@ test("Casinos tray, auto-open sheet, reopen and three-selection cap remain conte
   await page.getByRole("button", { name: "Compare", exact: true }).first().click();
   await expect(tray).toHaveAttribute("data-comparison-count", "3");
   const before = await page.evaluate(() => sessionStorage.getItem("b4gamble:public-comparison:v1"));
-  await page.getByRole("button", { name: "Compare", exact: true }).first().click();
+  await expect(page.getByRole("button", { name: "Compare", exact: true }).first()).toBeDisabled();
   expect(await page.evaluate(() => sessionStorage.getItem("b4gamble:public-comparison:v1"))).toBe(before);
 });
 

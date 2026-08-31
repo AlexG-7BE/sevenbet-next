@@ -16,9 +16,9 @@ import { permissionsForRole } from "../lib/cms/permissions";
 import type { AdminRole, CmsUser } from "../lib/cms/types";
 import { middleware } from "../middleware";
 
-function withLegacyEnvironment(
+async function withLegacyEnvironment(
   values: { enabled?: string; token?: string },
-  callback: () => void,
+  callback: () => void | Promise<void>,
 ) {
   const previousEnabled = process.env.CMS_PHASE1_ALLOW_DEV_ADMIN;
   const previousToken = process.env.SEVENBET_ADMIN_PREVIEW_TOKEN;
@@ -36,7 +36,7 @@ function withLegacyEnvironment(
   }
 
   try {
-    callback();
+    await callback();
   } finally {
     if (previousEnabled === undefined) {
       delete process.env.CMS_PHASE1_ALLOW_DEV_ADMIN;
@@ -52,9 +52,9 @@ function withLegacyEnvironment(
   }
 }
 
-test("middleware redirects an anonymous admin page to login", () => {
-  withLegacyEnvironment({}, () => {
-    const response = middleware(
+test("middleware redirects an anonymous admin page to login", async () => {
+  await withLegacyEnvironment({}, async () => {
+    const response = await middleware(
       new NextRequest("http://localhost:4173/admin/programs?status=DRAFT"),
     );
 
@@ -68,8 +68,8 @@ test("middleware redirects an anonymous admin page to login", () => {
   });
 });
 
-test("middleware allows the admin login page without a session", () => {
-  const response = middleware(
+test("middleware allows the admin login page without a session", async () => {
+  const response = await middleware(
     new NextRequest("http://localhost:4173/admin/login"),
   );
 
@@ -78,25 +78,25 @@ test("middleware allows the admin login page without a session", () => {
   assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
 });
 
-test("middleware allows only the dedicated MCP login and consent pages to resolve their own staff checks", () => {
+test("middleware allows only the dedicated MCP login and consent pages to resolve their own staff checks", async () => {
   for (const path of [
     "/admin/integrations/chatgpt-work/login",
     "/admin/integrations/chatgpt-work/consent",
   ]) {
-    const response = middleware(new NextRequest(`http://localhost:4173${path}`));
+    const response = await middleware(new NextRequest(`http://localhost:4173${path}`));
     assert.equal(response.status, 200);
     assert.equal(response.headers.get("x-middleware-next"), "1");
     assert.equal(response.headers.get("cache-control"), "private, no-store, max-age=0");
   }
-  const ordinaryIntegrationPage = middleware(new NextRequest("http://localhost:4173/admin/integrations"));
+  const ordinaryIntegrationPage = await middleware(new NextRequest("http://localhost:4173/admin/integrations"));
   assert.equal(ordinaryIntegrationPage.status, 307);
 });
 
-test("middleware allows a correctly gated legacy preview token", () => {
-  withLegacyEnvironment(
+test("middleware allows a correctly gated legacy preview token", async () => {
+  await withLegacyEnvironment(
     { enabled: "true", token: "configured-preview-token" },
-    () => {
-      const response = middleware(
+    async () => {
+      const response = await middleware(
         new NextRequest("http://localhost:4173/admin", {
           headers: {
             "x-sevenbet-admin-token": "configured-preview-token",

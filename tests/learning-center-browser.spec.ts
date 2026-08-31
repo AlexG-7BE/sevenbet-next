@@ -84,6 +84,72 @@ test("category and article routes preserve content, schemas and truthful evidenc
   expect(errors).toEqual([]);
 });
 
+test("Greek mobile Learning proof copy wraps inside its content-driven row in hub, category and search states", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+
+  const expectProofCopyFits = async (state: string) => {
+    const proof = page.locator('[data-handoff-page="learn"] [data-learn-meta-axis]');
+    const items = proof.locator("[data-learn-meta-item]");
+    await expect(proof, state).toBeVisible();
+    await expect(items, state).toHaveCount(3);
+    const geometry = await proof.evaluate((container) => {
+      const containerBox = container.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      return {
+        clientHeight: container.clientHeight,
+        container: {
+          bottom: containerBox.bottom,
+          left: containerBox.left,
+          right: containerBox.right,
+          top: containerBox.top,
+        },
+        items: Array.from(container.querySelectorAll<HTMLElement>("[data-learn-meta-item]")).map((item) => {
+          const range = document.createRange();
+          range.selectNodeContents(item);
+          const rects = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
+          return {
+            bottom: Math.max(...rects.map((rect) => rect.bottom)),
+            hyphens: getComputedStyle(item).hyphens,
+            left: Math.min(...rects.map((rect) => rect.left)),
+            right: Math.max(...rects.map((rect) => rect.right)),
+            top: Math.min(...rects.map((rect) => rect.top)),
+            whiteSpace: getComputedStyle(item).whiteSpace,
+          };
+        }),
+        scrollHeight: container.scrollHeight,
+        viewportWidth,
+      };
+    });
+
+    expect(geometry.scrollHeight, `${state}: row height follows wrapped copy`).toBeLessThanOrEqual(geometry.clientHeight + 1);
+    for (const item of geometry.items) {
+      expect(item.whiteSpace, `${state}: semantic wrapping`).toBe("normal");
+      expect(item.hyphens, `${state}: language-aware hyphenation`).toBe("auto");
+      expect(item.left, `${state}: left edge`).toBeGreaterThanOrEqual(geometry.container.left - 1);
+      expect(item.right, `${state}: right edge`).toBeLessThanOrEqual(geometry.container.right + 1);
+      expect(item.left, `${state}: viewport left`).toBeGreaterThanOrEqual(-1);
+      expect(item.right, `${state}: viewport right`).toBeLessThanOrEqual(geometry.viewportWidth + 1);
+      expect(item.top, `${state}: top edge`).toBeGreaterThanOrEqual(geometry.container.top - 1);
+      expect(item.bottom, `${state}: bottom edge`).toBeLessThanOrEqual(geometry.container.bottom + 1);
+    }
+  };
+
+  let response = await page.goto(`${baseUrl}/gr/learn`, { waitUntil: "networkidle" });
+  expect(response?.status()).toBe(200);
+  await expect(page.locator('[data-learn-meta-item]').nth(1)).toHaveText("Εκπαιδευτικοί οδηγοί · γνωστοποιούνται εμπορικοί σύνδεσμοι");
+  await expectProofCopyFits("Greek Learning hub at 390x844");
+
+  response = await page.goto(`${baseUrl}/gr/learn/casino-bonuses`, { waitUntil: "networkidle" });
+  expect(response?.status()).toBe(200);
+  await expect(page).toHaveURL(/\/gr\/learn\?category=casino-bonuses$/);
+  await expectProofCopyFits("Greek Learning category at 390x844");
+
+  await page.goto(`${baseUrl}/gr/learn`, { waitUntil: "networkidle" });
+  await page.getByRole("searchbox", { name: "Αναζήτηση οδηγών" }).fill("καζίνο");
+  await expect(page.locator("[data-learn-results-status]")).toBeVisible();
+  await expectProofCopyFits("Greek Learning search at 390x844");
+});
+
 test("responsible-gambling learning article has no commercial transition", async ({ page }) => {
   await page.goto(`${baseUrl}/learn/responsible-gambling/responsible-gambling-tools`, { waitUntil: "networkidle" });
   await expect(page.getByRole("link", { name: /Open protected Help/ })).toHaveAttribute("href", "/help");

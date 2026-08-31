@@ -5,6 +5,8 @@ import test from "node:test";
 
 const page = readFileSync("app/(public)/page.tsx", "utf8");
 const layout = readFileSync("app/(public)/layout.tsx", "utf8");
+const homeCatalog = readFileSync("lib/i18n/home-catalog.ts", "utf8");
+const productContext = readFileSync("lib/market/product-context.ts", "utf8");
 const home = readFileSync("components/home/TiltHome.tsx", "utf8");
 const carousel = readFileSync("components/home/HomeProgrammeCarousel.tsx", "utf8");
 const css = readFileSync("components/home/TiltHome.module.css", "utf8");
@@ -21,11 +23,15 @@ const homeAssets = [
 
 test("Home route renders the final handoff with the approved metadata and canonical", () => {
   assert.match(page, /import \{ HandoffPage \}/);
-  assert.match(page, /<HandoffPage cssTransform=\{transformHomeHandoffCss\} name="home" transform=\{transformHomeHandoff\} \/>/);
-  assert.match(page, /const title = "B4GAMBLE \| Know your limits before you play"/);
-  assert.match(page, /openGraph: \{[^}]*title, description/);
-  assert.match(page, /twitter: \{ card: "summary", title, description \}/);
-  assert.match(page, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
+  assert.match(page, /transform=\{\(html\) => transformHomeHandoff\(html, presentation\.locale\)\}/);
+  assert.match(page, /export async function generateMetadata/);
+  assert.match(homeCatalog, /title: "B4GAMBLE \| Know your limits before you play"/);
+  assert.match(page, /productMetadata\(\{ presentation, pathname: "\/", title, description, robots: \{ index: true, follow: true \} \}\)/);
+  assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
+  assert.match(productContext, /const robots = explicitlyLocalized[\s\S]*\? \{ index: false, follow: true \}/);
+  assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);
+  assert.match(productContext, /openGraph: \{[\s\S]*title: input\.title,[\s\S]*description: input\.description/);
+  assert.match(productContext, /twitter: \{[\s\S]*card: input\.images \? "summary_large_image" : "summary"/);
   assert.equal((home.match(/<h1\b/g) ?? []).length, 1);
   assert.equal(home.match(/href="\/program\?entry=start"/g)?.length, 2);
 });
@@ -112,7 +118,12 @@ test("Self Recognition remains static language rather than a diagnostic form", (
 test("Programme availability and evidence limitations remain truthful", () => {
   assert.match(home + carousel, /Ten practical Missions form one reviewable path\./);
   assert.match(home + carousel, /Missions 02–10 · unlock in sequence/);
-  assert.match(home, /10 missions · 5–15 minutes each/);
+  assert.match(home, /Missions 02–10 · 5–8 minutes each/);
+  assert.match(home, />Your<.*>pace</s);
+  assert.match(home, /Current Programme: free, with no paywall inside/);
+  assert.match(home, /Share one situation\. Your Starting Point takes shape from it\./);
+  assert.doesNotMatch(home, /~2|weeks, your pace|no paywall inside, ever|now and always|honest minute|One question at a time/);
+  assert.doesNotMatch(homeCatalog + home, /5–15 minutes/);
   assert.doesNotMatch(home + carousel, /Missions 01–04 are implemented|not yet available|later missions remain planned/);
   assert.match(home, /public NHS and NICE guidance/);
   assert.match(home, /The complete Programme has not yet been clinically evaluated\./);
@@ -124,15 +135,20 @@ test("Public Shell keeps its approved architecture while exposing the current br
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
   const footer = readFileSync("components/public-shell/PublicFooter.tsx", "utf8");
+  const shellCatalog = readFileSync("lib/i18n/public-shell-catalog.ts", "utf8");
   const shellStyles = readFileSync("components/public-shell/PublicShell.module.css", "utf8");
-  assert.match(header, /aria-label="B4GAMBLE home"/);
+  assert.match(header, /aria-label=\{messages\.homeLabel\}/);
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Information, comparison and education\./);
-  assert.match(footer, /Not a gambling operator\./);
-  assert.match(footer, /Gambling involves financial risk\./);
-  assert.match(footer, /We may earn commission from clearly labelled affiliate links\./);
+  assert.match(footer, /\{footer\.description\}/);
+  assert.match(footer, /\{footer\.operatorDisclaimer\}/);
+  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /\{footer\.commissionDisclosure\}/);
+  assert.match(shellCatalog, /description: "Information, comparison and education\."/);
+  assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /commissionDisclosure: "We may earn commission from clearly labelled affiliate links\."/);
   assert.match(shellStyles, /\.footerColumns\s*\{[^}]*grid-template-columns: repeat\(auto-fit, minmax\(200px, 1fr\)\)/s);
 
   const changed = [...new Set([

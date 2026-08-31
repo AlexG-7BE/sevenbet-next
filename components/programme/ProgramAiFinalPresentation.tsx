@@ -393,7 +393,7 @@ export function Mission01IntakeScreen({
   );
 }
 
-export function ProgrammeSupportScreen({ busy, error, onContinue }: { busy: boolean; error: string; onContinue: () => void }) {
+export function ProgrammeSupportScreen({ busy, error, onContinue, xpPreview }: { busy: boolean; error: string; onContinue: () => void; xpPreview: number }) {
   return (
     <div className={styles.canvas} data-programme-presentation="support-first">
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
@@ -403,7 +403,7 @@ export function ProgrammeSupportScreen({ busy, error, onContinue }: { busy: bool
           <p>Nothing here labels or diagnoses you. If continuing does not feel right, protected Help and pause options are available now.</p>
           <div className={styles.focusedActions}><Link className={styles.primaryAction} href="/help">Open protected Help</Link><button className={styles.secondaryAction} disabled={busy} onClick={onContinue} type="button">Continue when I&apos;m ready</button></div>
           <StatusMessage error={error} />
-          <small>Your 20 XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
+          <small>Your {xpPreview} XP for describing the situation is preserved. Registration and celebration are paused on this screen.</small>
         </div>
       </main>
     </div>
@@ -444,15 +444,15 @@ export function StartingPointReadyScreen({
       <main className={styles.standardFrame} data-site-classification="STANDARD" data-site-frame="standard">
         <div className={styles.readyState}>
           <p className={styles.readyEyebrow}>✓ Your Starting Point is ready</p>
-        <h1>A plan built around your evenings.</h1>
+        <h1>Your Starting Point, in your words.</h1>
         <section className={styles.startingPointCard}>
           <p>{candidate.startingPoint}</p>
           <span className={styles.srOnly}>What changes next: {candidate.desiredChange.replace(/[.!?]+$/, "")}. Mission 02 continues here: {candidate.continuationCue.replace(/[.!?]+$/, "")}.</span>
         </section>
         <section className={styles.registrationActions} data-programme-presentation-state="registration">
           {googleLinkRecovery ? <p>Your confirmed Starting Point stays in this browser while you sign in and link Google securely.</p> : null}
-          {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your plan…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
-            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save my plan</button> : null}
+          {authenticated ? <button className={styles.primaryAction} disabled={busy} onClick={googleLinkRecovery ? onLinkGoogle : onSave} type="button">{busy ? "Saving your Starting Point…" : googleLinkRecovery ? "Link Google securely" : "Save to my account"}</button> : <>
+            {googleAvailable && !googleLinkRecovery ? <button className={`${styles.primaryAction} ${styles.googleAction}`} disabled={busy} onClick={onGoogle} type="button"><GoogleIcon />Continue with Google — save my Starting Point</button> : null}
             {!googleLinkRecovery ? <button className={styles.typingAction} onClick={() => setEmailOpen((value) => !value)} type="button">{emailOpen ? "Hide email option" : "Use email instead"}</button> : null}
             {emailOpen ? <form className={styles.emailForm} onSubmit={(event: FormEvent) => { event.preventDefault(); onEmail({ email, password, mode }); }}>
               <label><span>Email</span><input autoComplete="email" inputMode="email" name="email" onChange={(event) => setEmail(event.target.value)} required spellCheck={false} type="email" value={email} /></label>

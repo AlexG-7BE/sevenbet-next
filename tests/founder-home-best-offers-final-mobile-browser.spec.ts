@@ -2,7 +2,10 @@ import { expect, test, type BrowserContext, type Locator, type Page } from "@pla
 import { resolve } from "node:path";
 import sharp from "sharp";
 
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+const messages = productPageMessages("en-GB");
 const captureEvidence = process.env.UPDATE_FOUNDER_EVIDENCE === "1";
 const homeEvidenceRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/founder-home-mobile-polish");
 const offersEvidenceRoot = resolve("docs/02_Product_Design/qa/final-design-handoff/founder-best-offers-mobile-polish");
@@ -228,7 +231,9 @@ for (const viewport of mobileViewports) {
     });
     expect(sequence).toEqual({ faqAfterMethod: true, methodAfterChoices: true, visibleDemoNotices: 0 });
     await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-    await expect(page.locator("#shortlist p").filter({ hasText: "Affiliate compensation does not determine Editor Score or natural editorial ranking." })).toBeVisible();
+    const commissionDisclosure = topThree.locator('a[href="/affiliate-disclosure"]');
+    await expect(commissionDisclosure).toContainText(messages.common.affiliateDisclosure);
+    await expect(commissionDisclosure.locator("..")).toContainText(messages.bestOffers.commissionNote);
     await expect(page.locator("details").first()).not.toHaveAttribute("open", "");
     await expect(page.locator('[data-runtime-renderer="best-offers"] section').last()).toBeHidden();
 
@@ -263,7 +268,7 @@ for (const viewport of [
     await expect(recordLabel).toBeVisible();
     expect(Number(await recordLabel.locator("..").locator("strong").textContent())).toBeGreaterThan(0);
     await expect(page.getByText("live offers", { exact: true }).locator("..").locator("strong")).toHaveText("0");
-    await expect(page.getByText("claim actions", { exact: true }).locator("..").locator("strong")).toHaveText("0");
+    await expect(page.getByText(messages.bestOffers.claimActions, { exact: true }).locator("..").locator("strong")).toHaveText("0");
     await expect(page.getByText("Fictional records only", { exact: true })).toBeVisible();
     await expect(page.locator("#shortlist")).toContainText(/material terms shown first/i);
     await expect(page.locator("section").filter({ hasText: "Still here? The answer hasn't changed." })).toBeVisible();

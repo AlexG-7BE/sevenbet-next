@@ -8,8 +8,11 @@ import {
   transformCommonHandoff,
   transformHelpHandoff,
   transformLearnHandoff,
+  transformTenStepsHandoff,
 } from "@/lib/final-handoff/transforms";
+import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { learningArticles } from "@/lib/learning-center";
+import { programmeMissionTitles } from "@/lib/programme/program-ai/mission-registry";
 
 function transformed(name: keyof typeof generatedPages, pageTransform?: (html: string) => string) {
   const common = transformCommonHandoff(generatedPages[name].html);
@@ -44,6 +47,19 @@ test("Learn runtime is backed by the current manifest with unique real article r
   assert.match(runtime, /type="search" aria-label="Search guides"/);
 });
 
+test("10 Steps runtime exposes the registry-owned Mission path as an accessible sequence", () => {
+  const runtime = transformed("tenSteps", (html) => transformTenStepsHandoff(html, "en-GB"));
+  assert.deepEqual(
+    [...runtime.matchAll(/data-ten-steps-section="([^"]+)"/g)].map((match) => match[1]),
+    ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"],
+  );
+  assert.match(runtime, /role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/);
+  assert.equal((runtime.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, programmeMissionTitles.length);
+  for (const title of programmeMissionTitles) assert.ok(runtime.includes(`>${title}</div>`), title);
+  assert.match(runtime, /40 XP/);
+  assert.doesNotMatch(runtime, /Mission 01 takes about<br>/);
+});
+
 test("Bonus Guide keeps fictional examples separate from current GB primary sources", () => {
   const runtime = transformed("article", transformBonusGuideHandoff);
   assert.match(runtime, /Educational examples · not current offers/);
@@ -64,13 +80,15 @@ test("protected Help remains commercial-free after the runtime transform", () =>
 test("real dynamic release surfaces keep runtime renderers and fail-closed demo actions", () => {
   const bestOffersPage = readFileSync("app/(public)/best-offers/page.tsx", "utf8");
   const bestOffers = readFileSync("components/best-offers/BestOffersExperience.tsx", "utf8");
+  const productMessages = productPageMessages("en-GB");
   const casinos = readFileSync("app/(public)/casinos/page.tsx", "utf8");
   const programme = readFileSync("app/program/page.tsx", "utf8");
   assert.match(bestOffersPage, /data-runtime-renderer="best-offers"/);
   assert.match(casinos, /data-runtime-renderer="casinos"/);
   assert.match(programme, /data-public-programme-renderer="program-ai"/);
   assert.match(bestOffers, /if \(offer\.dataClassification === "DEMO_FIXTURE"\) return null/);
-  assert.match(bestOffers, /No commercial visit is available|Offer currently unavailable/);
+  assert.match(bestOffers, /messages\.common\.reviewAvailableNoAction/);
+  assert.equal(productMessages.common.reviewAvailableNoAction, "The review remains available, but there is no partner link.");
   assert.doesNotMatch(bestOffersPage + bestOffers + casinos + programme, /<HandoffPage/);
 });
 

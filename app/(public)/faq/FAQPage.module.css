@@ -1,4 +1,4 @@
-.page { background: #fafaf7; color: #100f0f; font-family: var(--font-seven-sans), Arial, sans-serif; }
+.page { background: #fafaf7; color: #100f0f; font-family: var(--font-seven-sans), Arial, sans-serif; overflow-wrap:anywhere; }
 .page * { box-sizing: border-box; }
 .page > header { padding: 100px var(--site-gutter) 80px; background: #171616; color: #fafaf7; }
 .page > header > div { max-width: var(--site-content-max); margin: 0 auto; }
@@ -12,7 +12,7 @@
 .page h2 { margin: 0 0 8px; color: #777500; font-size: 13px; font-weight: 600; letter-spacing: .24em; text-transform: uppercase; }
 .page section > div { border-top: 1px solid rgba(16,15,15,.15); }
 .page details { border-bottom: 1px solid rgba(16,15,15,.12); }
-.page summary { padding: 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; font-size: 19px; font-weight: 800; text-transform: uppercase; list-style: none; }
+.page summary { min-width:0; padding: 20px 0; display: flex; align-items: center; justify-content: space-between; gap: 24px; cursor: pointer; font-size: 19px; font-weight: 800; text-transform: uppercase; list-style: none; }
 .page summary::-webkit-details-marker { display: none; }
 .page summary span { color: #777500; font-size: 22px; transition: transform 150ms; }
 .page details[open] summary span { transform: rotate(45deg); }

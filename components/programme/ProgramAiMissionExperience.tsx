@@ -29,6 +29,7 @@ import styles from "./ProgramAiAuthenticated.module.css";
 type Option = { value: string; label: string; description?: string };
 type Field = { key: string; legend: string; options: readonly Option[]; multiple?: boolean; minimum?: number; maximum?: number };
 type ActionUi = { prompt: string; explanation: string; fields: readonly Field[]; constants?: Record<string, string | number | boolean | string[]>; sequence?: readonly string[] };
+type MissionCompletionReceipt = { xpAwarded: number };
 
 const option = (value: string, label: string, description?: string): Option => ({ value, label, description });
 const actionUi: Record<string, ActionUi> = {
@@ -104,7 +105,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [announcement, setAnnouncement] = useState("");
-  const [completedNow, setCompletedNow] = useState(false);
+  const [completionReceipt, setCompletionReceipt] = useState<MissionCompletionReceipt | null>(null);
   const [sequenceOrder, setSequenceOrder] = useState(["choice_point", "cue", "urge_builds", "early_signal"]);
   const [sequenceFeedback, setSequenceFeedback] = useState("");
   const [guidanceSelected, setGuidanceSelected] = useState("");
@@ -220,25 +221,27 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
     setBusy(true); setError("");
     try {
       const result = await request<{ mission: ProgramAiMission; home: ProgramAiHome; xpAwarded: number }>(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, userId, { method: "POST", body: "{}" });
-      setMission(result.mission); setHome(result.home); onHome(result.home); setCompletedNow(true);
-      setAnnouncement(result.xpAwarded ? "Mission complete. 25 XP earned." : "This Mission was already complete.");
+      setMission(result.mission); setHome(result.home); onHome(result.home); setCompletionReceipt({ xpAwarded: result.xpAwarded });
+      setAnnouncement(result.xpAwarded ? `Mission complete. ${result.xpAwarded} XP earned.` : "This Mission was already complete.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "The Mission could not be completed"); }
     finally { setBusy(false); }
   }
 
   const totalXp = home.totalXp;
+  const availableReview = home.reviews.find((review) => review.unlockMission === mission.missionNumber && review.status === "available") ?? null;
+  const newlyCompleted = (completionReceipt?.xpAwarded ?? 0) > 0;
   if (mission.legacyCompletion) return <div className={styles.shell}><ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · COMPLETE`} totalXp={totalXp} userId={userId} /><main className={styles.missionMain}><section className={styles.reward}><span className={styles.eyebrow}>ALREADY COMPLETE</span><h2>{mission.title}</h2><p>Your earlier progress is here. You do not need to repeat this Mission.</p><ActionButton onClick={onBack} size="large">Return to Programme Home</ActionButton></section></main></div>;
-  if (completedNow || mission.status === "completed") return <div className={styles.shell}><ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · COMPLETE`} totalXp={totalXp} userId={userId} /><main className={styles.missionMain}><section className={styles.reward}><span className={styles.eyebrow}>MISSION COMPLETE</span><strong>{completedNow ? "+25" : mission.xpEarnedHere}</strong><h2>{mission.title}</h2><p>{completedNow ? "Your result is ready and the completion reward has been added." : "Your completed result is ready to review."}</p>{[3, 6, 10].includes(mission.missionNumber) ? <div className={styles.reviewReveal}><span>PERSONAL REVIEW UNLOCKED</span><p>Return Home to open the Review and see what you have built so far.</p></div> : null}<ActionButton onClick={onBack} size="large">Continue from Programme Home</ActionButton><p aria-live="polite">{announcement}</p></section>{[8, 10].includes(mission.missionNumber) ? <CommercialNext missionNumber={mission.missionNumber} /> : null}</main></div>;
+  if (completionReceipt || mission.status === "completed") return <div className={styles.shell}><ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · COMPLETE`} totalXp={totalXp} userId={userId} /><main className={styles.missionMain}><section className={styles.reward}><span className={styles.eyebrow}>MISSION COMPLETE</span><strong>{newlyCompleted ? `+${completionReceipt?.xpAwarded}` : `${mission.xpEarnedHere} XP`}</strong><h2>{mission.title}</h2><p>{newlyCompleted ? "Your result is ready and the completion reward has been added." : completionReceipt ? "This Mission was already complete. Your completed result is ready to review." : "Your completed result is ready to review."}</p>{availableReview ? <div className={styles.reviewReveal}><span>PERSONAL REVIEW AVAILABLE</span><p>{availableReview.title} is ready. Return Home to open it and see what you have built so far.</p></div> : null}<ActionButton onClick={onBack} size="large">Continue from Programme Home</ActionButton><p aria-live="polite">{announcement}</p></section>{[8, 10].includes(mission.missionNumber) ? <CommercialNext missionNumber={mission.missionNumber} /> : null}</main></div>;
 
   return <div className={styles.shell}>
     <ProgramAiAuthenticatedHeader label={`MISSION ${String(mission.missionNumber).padStart(2, "0")} · ${mission.title.toUpperCase()}`} totalXp={totalXp} userId={userId} />
     <main className={styles.missionMain}>
       <div className={styles.missionTopline}><button className={styles.back} onClick={onBack} type="button">← Programme Home</button><Link className={styles.back} href="/help">Protected Help / pause</Link></div>
-      <section className={styles.missionIntro}><span className={styles.eyebrow}>MISSION {String(mission.missionNumber).padStart(2, "0")} · {mission.actionsCompleted}/3 ACTIONS</span><h1>{mission.title}</h1><p>{mission.purpose}</p></section>
+      <section className={styles.missionIntro}><span className={styles.eyebrow}>MISSION {String(mission.missionNumber).padStart(2, "0")} · {mission.actionsCompleted}/{mission.actionsTotal} ACTIONS</span><h1>{mission.title}</h1><p>{mission.purpose}</p></section>
       <div aria-label="Mission progress" className={styles.actionRail}>{mission.actions.map((action) => <span data-complete={action.completed} key={action.id} title={`${action.label}: ${action.completed ? "complete" : "not complete"}`} />)}<span data-complete={false} title="Mission completion bonus" /></div>
       {ui && current ? <div className={styles.workspace}>
         <section className={styles.challenge}>
-          <span className={styles.eyebrow}>ACTION {mission.actionsCompleted + 1} · +{current.xp} XP</span><h2>{ui.prompt}</h2><p>{ui.explanation}</p>
+          <span className={styles.eyebrow}>ACTION {mission.currentActionPosition} · +{current.xp} XP</span><h2>{ui.prompt}</h2><p>{ui.explanation}</p>
           {current.id === "map_urge_sequence" ? <SequenceBuilder feedback={sequenceFeedback} onMove={moveSequence} order={sequenceOrder} /> : null}
           {current.id === "review_my_plan" ? <ProgrammeTimeline facts={mission.programmeFacts?.facts ?? []} startingPoint={mission.programmeFacts?.startingPoint?.startingPoint} /> : null}
           {current.id === "reality_check" ? <ScenarioPanel eyebrow="REALITY CHECK" scenario="It’s been a difficult day. Which version still feels realistic?" /> : null}
@@ -263,7 +266,7 @@ export function ProgramAiMissionExperience({ mission: initialMission, home: init
           {error ? <p className={styles.error} role="alert">{error}</p> : null}<p aria-live="polite" className={styles.status}>{announcement}</p>
         </section>
         <HumanArtifact artifact={mission.artifact} guidance={guidance} guidanceSelected={guidanceSelected} localWording={localWording} missionNumber={mission.missionNumber} />
-      </div> : <section className={styles.challenge}><span className={styles.eyebrow}>YOUR RESULT IS READY</span><h2>Review what you built, then finish the Mission.</h2><p>The final step adds the 25 XP completion reward.</p><HumanArtifact artifact={mission.artifact} guidance={guidance} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? "Completing…" : "Complete Mission · +25 XP"}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
+      </div> : <section className={styles.challenge}><span className={styles.eyebrow}>YOUR RESULT IS READY</span><h2>Review what you built, then finish the Mission.</h2><p>The final step adds the {mission.completionBonus} XP completion reward.</p><HumanArtifact artifact={mission.artifact} guidance={guidance} localWording={localWording} missionNumber={mission.missionNumber} /><ActionButton disabled={busy} onClick={complete} size="large">{busy ? "Completing…" : `Complete Mission · +${mission.completionBonus} XP`}</ActionButton>{error ? <p className={styles.error} role="alert">{error}</p> : null}</section>}
       {mission.missionNumber === 7 ? <aside className={styles.guidance}><h3>Your support route is ready</h3><p>Keep it simple enough to use. <Link href="/help">Help</Link> is always available.</p></aside> : null}
     </main>
   </div>;

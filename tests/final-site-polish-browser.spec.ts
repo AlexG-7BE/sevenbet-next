@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { PROGRAMME_PRIVACY_VERSION, PROGRAMME_TERMS_VERSION } from "@/lib/programme/access-contract";
+
 const situation = "After difficult work days I keep opening betting apps late at night.";
 const consoleErrors = new WeakMap<Page, string[]>();
 
@@ -25,10 +27,6 @@ test.afterEach(async ({ page }) => {
   expect(consoleErrors.get(page) ?? []).toEqual([]);
 });
 
-function desktopForm(page: Page, action: "/bonuses" | "/casinos") {
-  return page.locator(`form[action="${action}"][data-instant-discovery-form]`).first();
-}
-
 async function noOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
 }
@@ -43,8 +41,8 @@ async function installProgramme(page: Page, calls: string[]) {
     return route.fulfill({ status: 201, contentType: "application/json", body: JSON.stringify({ ok: true, authority: {
       version: 1, intent: "PROGRAMME_ACCESS", purpose: "PROGRAMME_AUTH_ACCESS", journeyId: body.journeyId,
       createdAt: now, expiresAt: now + 3_600_000,
-      termsVersion: "terms:effective-2026-08-07:updated-2026-08-09",
-      privacyVersion: "privacy:effective-2026-08-09:updated-2026-08-13",
+      termsVersion: PROGRAMME_TERMS_VERSION,
+      privacyVersion: PROGRAMME_PRIVACY_VERSION,
       adultConfirmedAt: now, termsAcceptedAt: now, privacyAcknowledgedAt: now,
       proof: "pa1.final-site-polish.browser-proof",
     } }) });
@@ -73,24 +71,28 @@ async function installProgramme(page: Page, calls: string[]) {
 
 test("Casinos filters are semantic, instant, reversible, URL-owned and reload-free", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/casinos", { waitUntil: "networkidle" });
+  await page.goto("/casinos?visualFixture=true", { waitUntil: "networkidle" });
   await expect(page.getByLabel("Bonus availability").first().locator("option").first()).toHaveText("Bonus availability");
   await expect(page.getByLabel("Visit availability").first().locator("option").first()).toHaveText("Visit availability");
   await expect(page.getByLabel("Safer-gambling information").first().locator("option").first()).toHaveText("Safer-gambling information");
   await expect(page.getByLabel("Crypto support").first().locator("option").first()).toHaveText("Crypto support");
   await expect(page.getByLabel("Mobile support").first().locator("option").first()).toHaveText("Mobile support");
-  await expect(page.getByLabel("Bonus availability").first().locator('option[value="true"]')).toHaveText("Available");
-  await expect(page.getByLabel("Crypto support").first().locator('option[value="true"]')).toHaveText("Supported");
+  await expect(page.getByLabel("Bonus availability").first().locator('option[value="true"]')).toHaveText("Supported");
+  await expect(page.getByLabel("Crypto support").first().locator('option[value="true"]')).toHaveText("Crypto supported");
   await expect(page.getByRole("button", { name: /Apply|Show|Submit/i })).toHaveCount(0);
 
   let documents = 0;
   page.on("request", (request) => { if (request.resourceType() === "document") documents += 1; });
-  await page.getByLabel("Mobile support").first().selectOption("true");
+  await page.getByRole("button", { name: /All filters/ }).click();
+  const allFilters = page.getByRole("dialog");
+  await expect(allFilters).toBeVisible();
+  await allFilters.getByLabel("Mobile support").selectOption("true");
   await expect(page).toHaveURL(/supportsMobile=true/);
-  await page.getByLabel("Bonus availability").first().selectOption("true");
+  await allFilters.getByLabel("Bonus availability").selectOption("true");
   await expect(page).toHaveURL(/supportsMobile=true.*hasBonus=true|hasBonus=true.*supportsMobile=true/);
-  await expect(page.getByLabel("Active filters").getByRole("link", { name: /Remove availability filter Mobile support/ })).toBeVisible();
-  await page.getByLabel("Active filters").getByRole("link", { name: /Remove availability filter Mobile support/ }).click();
+  await allFilters.getByRole("button", { name: "Close filters" }).click();
+  await expect(page.getByLabel("Active filters").getByRole("link", { name: /Remove Mobile support/ })).toBeVisible();
+  await page.getByLabel("Active filters").getByRole("link", { name: /Remove Mobile support/ }).click();
   await expect(page).not.toHaveURL(/supportsMobile/);
   await expect(page).toHaveURL(/hasBonus=true/);
   await page.goBack();
@@ -99,7 +101,7 @@ test("Casinos filters are semantic, instant, reversible, URL-owned and reload-fr
   await expect(page).not.toHaveURL(/supportsMobile/);
   await page.getByLabel("Active filters").getByRole("link", { name: "Clear all" }).click();
   await expect(page).toHaveURL(/\/casinos$/);
-  await expect(page.getByRole("heading", { name: "No published reviews yet." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /No published reviews for United Kingdom yet\./i })).toBeVisible();
   expect(documents).toBe(0);
   await noOverflow(page);
 });
@@ -113,12 +115,16 @@ test("Bonuses has one Clear All and instant combined filters, deep links, histor
   let documents = 0;
   page.on("request", (request) => { if (request.resourceType() === "document") documents += 1; });
 
-  await desktopForm(page, "/bonuses").getByLabel("Bonus type").selectOption("WELCOME");
+  await page.getByLabel("Bonus type").first().selectOption("WELCOME");
   await expect(page).toHaveURL(/country=GB.*type=WELCOME|type=WELCOME.*country=GB/);
-  await desktopForm(page, "/bonuses").getByLabel("Sort results").selectOption("lowest-wagering");
+  await page.getByRole("button", { name: /All filters/ }).click();
+  const allFilters = page.getByRole("dialog");
+  await expect(allFilters).toBeVisible();
+  await allFilters.getByLabel("Sort results").selectOption("lowest-wagering");
   await expect(page).toHaveURL(/sort=lowest-wagering/);
+  await allFilters.getByRole("button", { name: "Close filters" }).click();
   await expect(page.getByRole("link", { name: "Clear All" })).toHaveCount(1);
-  await page.getByLabel("Active filters").getByRole("link", { name: /Remove welcome filter/i }).click();
+  await page.getByLabel("Active filters").getByRole("link", { name: /Remove WELCOME/i }).click();
   await expect(page).not.toHaveURL(/type=WELCOME/);
   await page.goBack();
   await expect(page).toHaveURL(/type=WELCOME/);
@@ -128,7 +134,7 @@ test("Bonuses has one Clear All and instant combined filters, deep links, histor
   await expect(page).toHaveURL(/\/bonuses$/);
 
   await page.goto("/bonuses?maxDeposit=0", { waitUntil: "networkidle" });
-  await expect(page.getByRole("heading", { name: "No Comparison Records Match These Filters." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /No comparison records match United Kingdom and these filters\./i })).toBeVisible();
   await expect(page.getByRole("link", { name: "Clear All" })).toHaveCount(1);
   expect(documents).toBe(1);
   await noOverflow(page);
@@ -155,7 +161,7 @@ test("Learn has one discovery-adjacent search with combined live filtering and r
   await noOverflow(page);
 });
 
-test("Programme requires two access checks plus just-in-time consent and returns withdrawal to the gate", async ({ page }) => {
+test("Programme requires two access checks plus just-in-time consent and returns withdrawal to clean intake", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 768 });
   const calls: string[] = [];
   await installProgramme(page, calls);
@@ -171,18 +177,21 @@ test("Programme requires two access checks plus just-in-time consent and returns
   }
   await enter.click();
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
-  expect(calls.slice(0, 3)).toEqual(["access-proof", "session", "authority:GET"]);
+  expect(calls.slice(0, 2)).toEqual(["access-proof", "session"]);
   await expect(page.getByRole("checkbox")).toHaveCount(1);
   await page.reload({ waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  expect(calls).toContain("authority:GET");
+  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "I'd rather type" }).click();
   await page.getByLabel("Your situation").fill(situation);
-  await page.getByRole("checkbox", { name: /I explicitly consent to B4GAMBLE processing what I type or say/ }).check();
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   expect(calls).toContain("authority:POST");
-  await page.getByRole("button", { name: /Withdraw sensitive-input authority/ }).click();
-  await expect(page.getByRole("heading", { name: "Two checks before you begin." })).toBeVisible();
-  await expect(page.getByRole("checkbox")).toHaveCount(2);
+  await page.getByRole("button", { name: "Withdraw consent and clear this draft" }).click();
+  await expect(page.getByRole("heading", { name: "Tell us what is happening right now." })).toBeVisible();
+  await expect(page.getByRole("checkbox")).toHaveCount(1);
+  await expect(page.getByRole("checkbox")).not.toBeChecked();
   expect(calls).toContain("authority:DELETE");
   await noOverflow(page);
 });

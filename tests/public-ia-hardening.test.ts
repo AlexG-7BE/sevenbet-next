@@ -40,7 +40,8 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   const helpLayout = read("app/help/layout.tsx");
   const legacy = read("app/(public)/responsible-gambling/[slug]/page.tsx");
 
-  assert.match(hub, /canonical: absoluteUrl\("\/responsible-gambling"\)/);
+  assert.match(hub, /pathname: "\/responsible-gambling"/);
+  assert.match(hub, /firstWaveSafetyLanguageAlternates\("\/responsible-gambling"\)/);
   assert.match(hub, /transformResponsibleGamblingHandoff/);
   assert.match(hub, /<HandoffPage name="responsibleGambling" transform=\{transformResponsibleGamblingHandoff\} \/>/);
   for (const path of ["/learn", "/10-steps", "/help"]) {
@@ -48,7 +49,8 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   }
   assert.doesNotMatch(hubDocument, /href:\s*"\/(?:self-check|tools\/budget-calculator)"/);
   assert.doesNotMatch(hubDocument, /safe for you|affordability score|diagnoses you|treatment plan|guaranteed outcome/iu);
-  assert.match(help, /canonical: absoluteUrl\("\/help"\)/);
+  assert.match(help, /pathname: "\/help"/);
+  assert.match(help, /firstWaveSafetyLanguageAlternates\("\/help"\)/);
   assert.match(helpLayout, /data-protected-help-shell="true"/);
   assert.doesNotMatch(helpLayout, /PublicHeader|PublicFooter/);
   assert.match(legacy, /getLegacyResponsibleGamblingRoute\(slug\)/);
@@ -64,7 +66,7 @@ test("Responsible Gambling hub and Protected Help have separate canonical shells
   }
   assert.match(read("components/protected-help/ProtectedHelpHub.tsx"), /We&apos;re here\.<br \/>No strings\./i);
   assert.match(read("app/help/[slug]/page.tsx"), /permanentRedirect\(article \? `\/help#/);
-  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(`\/learn\?category=/);
+  assert.match(read("app/(public)/learn/[category]/page.tsx"), /permanentRedirect\(productHref\(presentation, `\/learn\?category=/);
 });
 
 test("every former mixed Responsible Gambling article has one explicit canonical authority", () => {
@@ -151,17 +153,18 @@ test("every former mixed Responsible Gambling article has one explicit canonical
 test("shared navigation and footer expose only the final handoff destinations", () => {
   const navigation = read("lib/public-shell.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   const category = read("app/(public)/learn/[category]/LearningCategoryView.tsx");
   for (const destination of ["Best Offers", "Casinos", "Bonuses", "Learn"]) assert.match(navigation, new RegExp(`label: "${destination}"`));
   assert.doesNotMatch(navigation, /label: "(?:Help|Compare)"/);
   assert.match(navigation, /const protectedHelpPrefixes = \["\/help"\]/);
-  assert.match(footer, /aria-label="Control and support"/);
-  for (const destination of [
-    '"Responsible Gambling", "/responsible-gambling"',
-    '"Learn", "/learn"',
-    '<Link href="/privacy">Privacy</Link>',
-    '<Link href="/terms">Terms</Link>',
-  ]) assert.ok(footer.includes(destination), destination);
+  assert.match(footer, /aria-label=\{footer\.label\}/);
+  assert.match(shellCatalog, /label: "Control and support"/);
+  for (const destination of ["/responsible-gambling", "/learn", "/privacy", "/terms"]) {
+    assert.ok(footer.includes(destination), destination);
+  }
+  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
   assert.doesNotMatch(footer, /\/self-check|\/tools\/budget-calculator|\/compare/);
   assert.match(category, /Open Responsible Gambling hub/);
 });
@@ -204,6 +207,9 @@ test("production CSP is nonce-based and has only documented compatibility except
   assert.match(development, /script-src [^;]*'unsafe-eval'/);
   assert.doesNotMatch(development, /script-src [^;]*'unsafe-inline'/);
   assert.doesNotMatch(development, /upgrade-insecure-requests/);
+  const localProduction = buildContentSecurityPolicy(nonce, { upgradeInsecureRequests: false });
+  assert.doesNotMatch(localProduction, /upgrade-insecure-requests/);
+  assert.doesNotMatch(localProduction, /script-src [^;]*'unsafe-eval'/);
   assert.throws(() => buildContentSecurityPolicy("bad nonce"), /Invalid CSP nonce/);
 });
 

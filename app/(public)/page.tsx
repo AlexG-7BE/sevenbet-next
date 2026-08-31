@@ -1,18 +1,23 @@
 import type { Metadata } from "next";
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { transformHomeHandoff, transformHomeHandoffCss } from "@/lib/final-handoff/transforms";
-import { absoluteUrl } from "@/lib/site";
+import { homeMetadata } from "@/lib/i18n/home-catalog";
+import { productMetadata } from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
 
-const title = "B4GAMBLE | Know your limits before you play";
-const description = "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play.";
+export async function generateMetadata(): Promise<Metadata> {
+  const presentation = await resolveServerPresentationContext();
+  const { title, description } = homeMetadata(presentation.locale);
+  return productMetadata({ presentation, pathname: "/", title, description, robots: { index: true, follow: true } });
+}
 
-export const metadata: Metadata = {
-  title,
-  description,
-  alternates: { canonical: absoluteUrl("/") },
-  openGraph: { type: "website", siteName: "B4GAMBLE", title, description, url: absoluteUrl("/") },
-  twitter: { card: "summary", title, description },
-};
-export default function HomePage() {
-  return <HandoffPage cssTransform={transformHomeHandoffCss} name="home" transform={transformHomeHandoff} />;
+export default async function HomePage() {
+  const presentation = await resolveServerPresentationContext();
+  return (
+    <HandoffPage
+      cssTransform={transformHomeHandoffCss}
+      name="home"
+      transform={(html) => transformHomeHandoff(html, presentation.locale)}
+    />
+  );
 }

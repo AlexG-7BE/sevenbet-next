@@ -61,6 +61,7 @@ export function parseCasinoDiscoveryQuery(input: DiscoverySearchParams): CasinoD
     sort: DISCOVERY_SORTS.includes(sortValue!) ? sortValue : search ? "RELEVANCE" : "FEATURED",
     page: integer(input, "page", 1),
     pageSize: DISCOVERY_PAGE_SIZES.includes(requestedPageSize as never) ? requestedPageSize : DEFAULT_DISCOVERY_PAGE_SIZE,
+    visualFixture: values(input, "visualFixture")[0] === "true" ? true : undefined,
   };
 }
 
@@ -76,6 +77,7 @@ export function serializeCasinoDiscoveryQuery(query: CasinoDiscoveryQuery, optio
   if (query.sort && query.sort !== (query.search ? "RELEVANCE" : "FEATURED")) params.set("sort", query.sort);
   if (!options.omitPage && (query.page ?? 1) > 1) params.set("page", String(query.page));
   if ((query.pageSize ?? DEFAULT_DISCOVERY_PAGE_SIZE) !== DEFAULT_DISCOVERY_PAGE_SIZE) params.set("pageSize", String(query.pageSize));
+  if (query.visualFixture) params.set("visualFixture", "true");
   return params;
 }
 

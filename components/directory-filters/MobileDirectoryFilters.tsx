@@ -10,9 +10,10 @@ type MobileDirectoryFiltersProps = {
   children: ReactNode;
   dialogId: string;
   title: string;
+  labels?: { filters: string; refine: string; directoryControls: string; closeFilters: string };
 };
 
-export function MobileDirectoryFilters({ activeCount, children, dialogId, title }: MobileDirectoryFiltersProps) {
+export function MobileDirectoryFilters({ activeCount, children, dialogId, title, labels }: MobileDirectoryFiltersProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
@@ -48,8 +49,8 @@ export function MobileDirectoryFilters({ activeCount, children, dialogId, title 
         ref={triggerRef}
         type="button"
       >
-        <span>Filters{activeCount ? ` (${activeCount})` : ""}</span>
-        <span aria-hidden="true">Refine results ↗</span>
+        <span>{labels?.filters ?? "Filters"}{activeCount ? ` (${activeCount})` : ""}</span>
+        <span aria-hidden="true">{labels?.refine ?? "Refine results"} ↗</span>
       </button>
       <dialog
         aria-labelledby={headingId}
@@ -60,8 +61,8 @@ export function MobileDirectoryFilters({ activeCount, children, dialogId, title 
         ref={dialogRef}
       >
         <div className={styles.header}>
-          <div><span>Directory controls</span><h2 id={headingId}>{title}</h2></div>
-          <button aria-label="Close filters" className={styles.close} onClick={close} type="button">×</button>
+          <div><span>{labels?.directoryControls ?? "Directory controls"}</span><h2 id={headingId}>{title}</h2></div>
+          <button aria-label={labels?.closeFilters ?? "Close filters"} className={styles.close} onClick={close} type="button">×</button>
         </div>
         <div className={styles.body}>{children}</div>
       </dialog>

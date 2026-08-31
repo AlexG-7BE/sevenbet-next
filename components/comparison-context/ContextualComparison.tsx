@@ -8,6 +8,10 @@ import type { PublicComparisonResult } from "@/lib/public-comparison/public-comp
 import styles from "./ContextualComparison.module.css";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
+import type { PresentationResolution } from "@/lib/market/presentation-resolver";
+import { productHref } from "@/lib/market/product-context";
+import { formatProfileScore } from "@/lib/casino-profile/presentation";
 
 const STORAGE_KEY = "b4gamble:public-comparison:v1";
 const CHANGE_EVENT = "b4gamble:comparison-change";
@@ -22,7 +26,7 @@ function urlSlugs(searchParams: URLSearchParams) {
   return validSlugs(searchParams.getAll("casino").flatMap((value) => value.split(",")).map((value) => value.trim().toLowerCase()));
 }
 
-export function ContextualComparison() {
+export function ContextualComparison({ messages, presentation }: { messages: ProductPageMessages; presentation: PresentationResolution }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [slugs, setSlugs] = useState<string[]>([]);
@@ -30,6 +34,7 @@ export function ContextualComparison() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const dialogInvokerRef = useRef<HTMLElement | null>(null);
   const previousCount = useRef(0);
   const initialLocationApplied = useRef(false);
 
@@ -45,15 +50,15 @@ export function ContextualComparison() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("casino");
     for (const slug of next) params.append("casino", slug);
-    if (next.length) params.set("country", params.get("country") || "GB");
+    if (next.length) params.set("country", params.get("country") || presentation.market.countryCode);
     else {
       params.delete("differences");
-      if (params.get("country") === "GB") params.delete("country");
+      if (params.get("country") === presentation.market.countryCode) params.delete("country");
     }
     window.history.replaceState(window.history.state, "", `${pathname}${params.size ? `?${params}` : ""}`);
     if (autoOpen && next.length === 2 && previousCount.current < 2) setOpen(true);
     previousCount.current = next.length;
-  }, [announce, pathname, searchParams]);
+  }, [announce, pathname, presentation.market.countryCode, searchParams]);
 
   useEffect(() => {
     const fromUrl = urlSlugs(new URLSearchParams(searchParams.toString()));
@@ -89,7 +94,8 @@ export function ContextualComparison() {
     const controller = new AbortController();
     const params = new URLSearchParams();
     for (const slug of slugs) params.append("casino", slug);
-    params.set("country", searchParams.get("country") || "GB");
+    params.set("country", searchParams.get("country") || presentation.market.countryCode);
+    params.set("presentationLocale", presentation.locale);
     if (searchParams.get("differences") === "true") params.set("differences", "true");
     if (searchParams.get("visualFixture") === "true") params.set("visualFixture", "true");
     setLoading(true);
@@ -99,13 +105,29 @@ export function ContextualComparison() {
       .catch((error: Error) => { if (error.name !== "AbortError") setResult(null); })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [searchParams, slugs]);
+  }, [presentation.locale, presentation.market.countryCode, searchParams, slugs]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (open && slugs.length >= 2 && dialog && !dialog.open) dialog.showModal();
+    if (open && slugs.length >= 2 && dialog && !dialog.open) {
+      const activeElement = document.activeElement;
+      dialogInvokerRef.current = activeElement instanceof HTMLElement && activeElement !== document.body ? activeElement : null;
+      dialog.showModal();
+    }
     if ((!open || slugs.length < 2) && dialog?.open) dialog.close();
   }, [open, slugs.length]);
+
+  const restoreDialogFocus = useCallback(() => {
+    const invoker = dialogInvokerRef.current;
+    dialogInvokerRef.current = null;
+    requestAnimationFrame(() => {
+      const remainingToggle = slugs
+        .map((slug) => document.querySelector<HTMLElement>(`[data-comparison-toggle="${slug}"]`))
+        .find((element) => element?.isConnected);
+      const fallback = remainingToggle ?? document.querySelector<HTMLElement>("[data-comparison-clear]");
+      (invoker?.isConnected ? invoker : fallback)?.focus();
+    });
+  }, [slugs]);
 
   useEffect(() => {
     if (open && slugs.length >= 2) productAnalyticsClient.comparisonOpened(slugs.length === 2 ? "two" : "three");
@@ -122,48 +144,48 @@ export function ContextualComparison() {
   const highestScore = names.length ? Math.max(...names.map((casino) => casino.editorScore)) : null;
 
   return <>
-    <aside aria-label="Casino comparison tray" className={styles.tray} data-comparison-count={slugs.length} data-comparison-tray>
-      <div><strong>{slugs.length} of 3 selected</strong><span>{slugs.length === 1 ? "Choose one more to compare" : "Your comparison is ready"}</span></div>
+    <aside aria-label={messages.comparison.trayLabel} className={styles.tray} data-comparison-count={slugs.length} data-comparison-tray>
+      <div><strong>{messages.comparison.selectedOfThree.replace("{count}", String(slugs.length))}</strong><span>{slugs.length === 1 ? messages.comparison.chooseOneMore : messages.comparison.ready}</span></div>
       <div className={styles.trayActions}>
-        {slugs.length >= 2 && <button onClick={() => setOpen(true)} type="button">Open comparison</button>}
-        <button onClick={() => commit([], false)} type="button">Clear</button>
+        {slugs.length >= 2 && <button onClick={() => setOpen(true)} type="button">{messages.comparison.open}</button>}
+        <button data-comparison-clear onClick={() => commit([], false)} type="button">{messages.comparison.clear}</button>
       </div>
     </aside>
-    <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => setOpen(false)} ref={dialogRef}>
+    <dialog aria-labelledby="comparison-title" className={styles.dialog} data-runtime-renderer="contextual-comparison" data-screen-label="Compare overlay" onCancel={(event) => { event.preventDefault(); setOpen(false); }} onClose={() => { setOpen(false); restoreDialogFocus(); }} ref={dialogRef}>
       <div className={styles.sheet}>
         <header>
-          <div><h2 id="comparison-title">Side by side</h2><span>Same evidence fields for every casino</span></div>
-          <button aria-label="Close comparison" onClick={() => setOpen(false)} type="button"><span aria-hidden="true">×</span></button>
+          <div><h2 id="comparison-title">{messages.comparison.title}</h2><span>{messages.comparison.subtitle}</span></div>
+          <button aria-label={messages.comparison.close} onClick={() => setOpen(false)} type="button"><span aria-hidden="true">×</span></button>
         </header>
-        {loading ? <p className={styles.state} role="status">Building the comparison…</p> : (result?.status === "available" || result?.status === "no-comparable") && names.length ? <div className={styles.comparisonCards}>
+        {loading ? <p className={styles.state} role="status">{messages.comparison.loading}</p> : (result?.status === "available" || result?.status === "no-comparable") && names.length ? <div className={styles.comparisonCards}>
           {slugs.map((slug) => {
             const casino = names.find((entry) => entry.slug === slug);
             const displayName = casino?.name ?? slug.replaceAll("-", " ");
             return <article className={styles.comparisonCard} key={slug}>
               <div className={styles.casinoHead}>
                 <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
-                <div><h3>{displayName}</h3><small>{casino?.summary || (casino?.dataClassification === "DEMO_FIXTURE" ? "Fictional demo profile" : "Independent review")}</small></div>
+                <div><h3>{displayName}</h3><small>{casino?.summary || messages.common.reviewOnly}</small></div>
               </div>
-              {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>Top score</strong>}
-              <div className={styles.editorScore}><strong>{casino ? casino.editorScore.toFixed(1) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
+              {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>{messages.comparison.topScore}</strong>}
+              <div className={styles.editorScore}><strong>{casino ? formatProfileScore(casino.editorScore, presentation.locale) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
               <div className={styles.factList}>
                 {presentationRows.map((row) => <dl key={row.id} title={row.description}>
-                  <dt>{row.id === "withdrawal-time" ? "Payout" : row.id === "methods" ? "Payments" : row.id === "control-tools" ? "Features" : row.label}</dt>
-                  <dd>{row.values[slug]?.text ?? "Unavailable"}</dd>
-                  <small>{row.values[slug]?.status ?? "Unavailable"}</small>
+                  <dt>{row.id === "withdrawal-time" ? messages.common.payout : row.id === "methods" ? messages.common.paymentMethods : row.id === "control-tools" ? messages.profile.controlTools : row.label}</dt>
+                  <dd>{row.values[slug]?.text ?? messages.comparison.unavailable}</dd>
+                  <small>{row.values[slug]?.statusLabel ?? row.values[slug]?.status ?? messages.comparison.unavailable}</small>
                 </dl>)}
               </div>
-              {!presentationRows.length && <p className={styles.noEvidence}>Published comparison evidence is unavailable.</p>}
+              {!presentationRows.length && <p className={styles.noEvidence}>{messages.comparison.evidenceUnavailable}</p>}
               <div className={styles.columnActions}>
                 {casino?.action.available && casino.action.href
-                  ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} />
-                  : casino ? <Link className={styles.reviewAction} href={casino.reviewHref}>Full review</Link> : null}
-                <button onClick={() => commit(slugs.filter((entry) => entry !== slug), false)} type="button">Remove</button>
+                  ? <CasinoOutboundAction action={{ href: casino.action.href, label: casino.action.label }} className={styles.visitAction} messages={messages.outbound} />
+                  : casino ? <Link className={styles.reviewAction} href={productHref(presentation, casino.reviewHref)}>{messages.comparison.fullReview}</Link> : null}
+                <button onClick={() => commit(slugs.filter((entry) => entry !== slug), false)} type="button">{messages.comparison.remove}</button>
               </div>
             </article>;
           })}
-        </div> : <p className={styles.state} role="status">The selected public comparison is unavailable. No substitute has been inserted.</p>}
-        <footer><span>18+ · Availability is never assumed · Scores are editorial — <Link href="/methodology">how we test</Link>. Country is a comparison preference, not proof of eligibility.</span></footer>
+        </div> : <p className={styles.state} role="status">{messages.comparison.unavailable}</p>}
+        <footer><span>{messages.comparison.footer} <Link href={productHref(presentation, "/methodology")}>{messages.common.methodology}</Link>.</span></footer>
       </div>
     </dialog>
   </>;

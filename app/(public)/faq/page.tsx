@@ -1,14 +1,25 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { JsonLd } from "@/components/seo/JsonLd";
+import { faqMessages } from "@/lib/i18n/static-pages/faq";
+import { productCanonicalPath, productHref, productMetadata } from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 import styles from "./FAQPage.module.css";
 
-export const metadata:Metadata={title:"B4GAMBLE FAQ",description:"Clear answers about B4GAMBLE.",alternates:{ canonical: absoluteUrl("/faq") }};
-const groups=[
-  ["About B4GAMBLE",[["What is B4GAMBLE?","Three connected areas: a private control Programme, educational and editorial casino information, and openly commercial discovery pages for adults who have decided to compare published records."],["Who writes the reviews?","The editorial team maintains review content. Commercial availability is handled separately, and every material source limitation should remain visible."]]],
-  ["Programme",[["Is the Programme really free?","The current Programme is free and has no paywall or commercial upsell inside Missions."],["Who can see what I say in the Programme?","Your situation is used only to generate the Programme output you request. Programme and Help data is excluded from offers, rankings, ads and commercial personalisation; the Privacy page explains saved data and rights requests."],["Do I need an account to start?","No. You speak or type your situation first; registration with Google or email comes only after your Starting Point is ready, so you can save it."]]],
-  ["Casinos & Offers",[["How do you evaluate casinos?","B4GAMBLE applies the disclosed editorial framework to the evidence available for each published record. Source status, dates, missing fields and limitations remain part of the review."],["Why do some casinos say “Review only”?","It means we can’t offer a governed signup route right now, so we don’t fake one. The review and available published information stay visible."],["What happens when I click View Offer?","A confirmation explains that you’re leaving B4GAMBLE and repeats the commission disclosure. You can continue to the operator or stay."]]],
-  ["Commercial model",[["How does B4GAMBLE make money?","B4GAMBLE may earn a commission after a governed commercial link. Commercial actions are labelled and explained before you leave the site."],["Does commission affect rankings?","Affiliate compensation does not determine Editor Score or natural editorial ranking. See the Affiliate Disclosure for the product boundary."]]],
-  ["Help & Privacy",[["What is protected Help?","A commercial-free space linking to immediate independent support, blocking and self-exclusion options. Protected Help activity is not used for offers, rankings or commercial personalisation."],["How do I request my data or deletion?","Contact the controller using the Privacy page. Legal, fraud-prevention and backup retention may continue where applicable."]]],
-] as const;
-export default function FAQPage(){return <article className={styles.page}><header><div><p><span aria-hidden="true" />FAQ</p><h1>Clear <em>answers.</em></h1></div></header><div className={styles.paint} /><main>{groups.map(([name,items],groupIndex)=><section key={name}><h2>{name}</h2><div>{items.map(([q,a],index)=><details key={q} open={groupIndex===0&&index===0}><summary>{q}<span aria-hidden="true">+</span></summary><p>{a}</p></details>)}</div></section>)}<aside className={styles.contactRail}><span>Didn&apos;t find it?</span><Link href="/contact">Contact us →</Link><Link href="/methodology">Methodology</Link><Link href="/affiliate-disclosure">Affiliate Disclosure</Link></aside></main></article>}
+export async function generateMetadata(): Promise<Metadata> {
+  const presentation = await resolveServerPresentationContext();
+  const messages = faqMessages(presentation.locale);
+  return productMetadata({ presentation, pathname: "/faq", title: messages.metadataTitle, description: messages.metadataDescription });
+}
+
+export default async function FAQPage() {
+  const presentation = await resolveServerPresentationContext();
+  const messages = faqMessages(presentation.locale);
+  const canonicalPath = productCanonicalPath(presentation, "/faq");
+  const faqSchema = { "@context": "https://schema.org", "@type": "FAQPage", mainEntity: messages.groups.flatMap((group) => group.items.map(([question, answer]) => ({ "@type": "Question", name: question, acceptedAnswer: { "@type": "Answer", text: answer } }))) };
+  return <>
+    <JsonLd data={[faqSchema, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath) }]} />
+    <article className={styles.page}><header><div><p><span aria-hidden="true" />{messages.eyebrow}</p><h1>{messages.titleLead} <em>{messages.titleEmphasis}</em></h1></div></header><div className={styles.paint} /><main>{messages.groups.map((group, groupIndex)=><section key={group.title}><h2>{group.title}</h2><div>{group.items.map(([question, answer], index)=><details key={question} open={groupIndex===0&&index===0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></section>)}<aside className={styles.contactRail}><span>{messages.railPrompt}</span><Link href={productHref(presentation, "/contact")}>{messages.contactLink}</Link><Link href={productHref(presentation, "/methodology")}>{messages.methodologyLink}</Link><Link href="/affiliate-disclosure">{messages.affiliateLink}</Link></aside></main></article>
+  </>;
+}

@@ -219,11 +219,11 @@ async function noHorizontalOverflow(page: Page) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 }
 
-async function openCurrentMission(page: Page, missionNumber: number, width: number) {
+async function openCurrentMission(page: Page, missionNumber: number, width: number, action: "Start mission" | "Resume mission" = "Start mission") {
   const mission = programAiMissionRegistry.find((item) => item.missionNumber === missionNumber)!;
   await page.setViewportSize({ width, height: width < 700 ? 844 : 1000 });
   await page.goto("/program");
-  await page.getByRole("button", { name: "Resume mission", exact: true }).click();
+  await page.getByRole("button", { name: action, exact: true }).click();
   await expect(page.getByRole("heading", { name: mission.title, exact: true })).toBeVisible();
   await noHorizontalOverflow(page);
 }
@@ -619,7 +619,7 @@ test("typed fallback path binds exact authority and is idempotent through real e
   });
   await page.getByRole("button", { name: "Create my Starting Point" }).click();
 
-  await expect(page.getByRole("heading", { name: "A plan built around your evenings." })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your Starting Point, in your words." })).toBeVisible();
   await expect(page.locator('[data-programme-phase="registration"]')).toBeVisible();
   await expect(page.locator('[data-programme-phase="clarification"], [data-programme-phase="candidate"], [data-programme-phase="reward"]')).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "Check your Starting Point." })).toHaveCount(0);
@@ -742,6 +742,8 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   for (const mission of programAiMissionRegistry) {
     if (mission.missionNumber === 3) {
       await openCurrentMission(page, 3, 390);
+      await expect(page.getByText("MISSION 03 · 0/3 ACTIONS", { exact: true })).toBeVisible();
+      await expect(page.getByText("ACTION 1 · +15 XP", { exact: true })).toBeVisible();
       const builder = page.getByRole("region", { name: "Place the earliest moment first." });
       await expect(builder.getByRole("listitem").nth(0)).toContainText("Choice point");
       await page.getByRole("button", { name: /Check sequence/ }).click();
@@ -752,6 +754,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
       await builder.getByRole("listitem").filter({ hasText: "Choice point" }).getByRole("button", { name: "Move down" }).click();
       await page.getByRole("button", { name: /Check sequence/ }).click();
       await expect(page.getByText("Action complete. 15 XP earned.")).toBeVisible();
+      await expect(page.getByText("ACTION 2 · +20 XP", { exact: true })).toBeVisible();
     }
     if (mission.missionNumber === 5) {
       await openCurrentMission(page, 5, 768);
@@ -788,18 +791,22 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         await page.reload();
         await expect(page.getByRole("button", { name: "Resume mission", exact: true })).toBeVisible();
         await page.getByRole("button", { name: "Resume mission", exact: true }).click();
+        await expect(page.getByText("MISSION 02 · 1/3 ACTIONS", { exact: true })).toBeVisible();
+        await expect(page.getByText("ACTION 2 · +20 XP", { exact: true })).toBeVisible();
         await page.getByRole("radio", { name: "Pause before one decision" }).check();
         await page.getByRole("button", { name: "Create personal drafts" }).click();
         await expect(page.getByRole("heading", { name: "Choose or edit the wording that fits" })).toBeVisible();
         await expect(page.locator("[aria-pressed]")).toHaveCount(3);
         await page.locator("[aria-pressed]").nth(1).click();
         await expect(page.getByTestId("programme-artifact").locator("blockquote")).toContainText("seven days");
+        await page.getByRole("button", { name: "Confirm action · +20 XP" }).click();
+        await expect(page.getByText("ACTION 3 · +15 XP", { exact: true })).toBeVisible();
         await noHorizontalOverflow(page);
       } else {
         const response = await requestAction();
         expect(response.status(), `${mission.missionNumber}:${action.id} ${await response.text()}`).toBe(200);
         if (mission.missionNumber === 4 && index === 0) {
-          await openCurrentMission(page, 4, 1024);
+          await openCurrentMission(page, 4, 1024, "Resume mission");
           await page.getByRole("radio", { name: "Bank block" }).check();
           await page.getByRole("button", { name: "Create personal drafts" }).click();
           await page.locator("[aria-pressed]").first().click();
@@ -807,7 +814,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 5 && index === 1) {
-          await openCurrentMission(page, 5, 768);
+          await openCurrentMission(page, 5, 768, "Resume mission");
           await expect(page.getByText("SECOND PRACTICE MOMENT")).toBeVisible();
           for (const check of ["Why am I considering this?", "Are the material terms clear?", "What is my exit route?"]) {
             await page.getByRole("checkbox", { name: check }).check();
@@ -816,7 +823,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 6 && index === 0) {
-          await openCurrentMission(page, 6, 1024);
+          await openCurrentMission(page, 6, 1024, "Resume mission");
           await page.getByRole("checkbox", { name: "Remove saved payment" }).check();
           await expect(page.getByText("YOUR STACK · 2 LAYERS")).toBeVisible();
           await page.getByRole("button", { name: "Suggest an order" }).click();
@@ -825,26 +832,26 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 7 && index === 0) {
-          await openCurrentMission(page, 7, 375);
+          await openCurrentMission(page, 7, 375, "Resume mission");
           await page.getByRole("radio", { name: "When X, I can Y" }).check();
           await page.getByRole("button", { name: "Create personal drafts" }).click();
           await expect(page.getByTestId("programme-artifact").locator("blockquote")).toBeVisible();
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 8 && index === 0) {
-          await openCurrentMission(page, 8, 1440);
+          await openCurrentMission(page, 8, 1440, "Resume mission");
           await expect(page.getByRole("heading", { name: "What would you check before judging the headline?" })).toBeVisible();
           await page.getByRole("radio", { name: "Wagering requirement" }).check();
           await expect(page.getByText("bonus-linked funds can be withdrawn")).toBeVisible();
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 8 && index === 1) {
-          await openCurrentMission(page, 8, 1440);
+          await openCurrentMission(page, 8, 1440, "Resume mission");
           await expect(page.getByRole("group", { name: /Research checklist/ })).toBeVisible();
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 9 && index === 0) {
-          await openCurrentMission(page, 9, 390);
+          await openCurrentMission(page, 9, 390, "Resume mission");
           await expect(page.getByText("The headline is clear, but the conditions")).toBeVisible();
           await page.getByRole("button", { name: "Create my rehearsal" }).click();
           await expect(page.getByRole("heading", { name: "The headline is clear; the terms are not" })).toBeVisible();
@@ -854,7 +861,7 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
           await noHorizontalOverflow(page);
         }
         if (mission.missionNumber === 10 && index === 0) {
-          await openCurrentMission(page, 10, 768);
+          await openCurrentMission(page, 10, 768, "Resume mission");
           for (const priority of ["Pause move", "Boundary", "Fallback"]) {
             await page.getByRole("checkbox", { name: priority }).check();
           }
@@ -870,13 +877,39 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
         }
       }
     }
-    const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
-      headers: { ...programmeAgeHeader, cookie: authCookieHeader },
-      data: {},
-    });
-    const completePayload = await complete.json();
-    expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
-    expect(completePayload.xpAwarded).toBe(25);
+    if (mission.missionNumber === 2) {
+      await openCurrentMission(page, 2, 375, "Resume mission");
+      const replayPage = await page.context().newPage();
+      await installUserAccessMarker(replayPage, user.id, ready.access);
+      await openCurrentMission(replayPage, 2, 375, "Resume mission");
+      const completionResponse = page.waitForResponse((response) => response.url().endsWith("/api/program/program-ai/missions/2/complete"));
+      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      expect((await (await completionResponse).json()).xpAwarded).toBe(25);
+      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      const replayResponse = replayPage.waitForResponse((response) => response.url().endsWith("/api/program/program-ai/missions/2/complete"));
+      await replayPage.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      expect((await (await replayResponse).json()).xpAwarded).toBe(0);
+      const completionPages = [page, replayPage];
+      await Promise.all(completionPages.map((candidate) => expect(candidate.getByText("MISSION COMPLETE", { exact: true })).toBeVisible()));
+      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      await expect(replayPage.getByText(/This Mission was already complete\. Your completed result is ready to review\./)).toBeVisible();
+      await expect(replayPage.getByText("+25", { exact: true })).toHaveCount(0);
+      await replayPage.close();
+    } else if (mission.missionNumber === 3) {
+      await openCurrentMission(page, 3, 390, "Resume mission");
+      await page.getByRole("button", { name: "Complete Mission · +25 XP" }).click();
+      await expect(page.getByText("Your result is ready and the completion reward has been added.", { exact: true })).toBeVisible();
+      await expect(page.getByText("PERSONAL REVIEW AVAILABLE", { exact: true })).toBeVisible();
+      await expect(page.getByText(/First Personal Review is ready\./)).toBeVisible();
+    } else {
+      const complete = await client.post(`/api/program/program-ai/missions/${mission.missionNumber}/complete`, {
+        headers: { ...programmeAgeHeader, cookie: authCookieHeader },
+        data: {},
+      });
+      const completePayload = await complete.json();
+      expect(complete.status(), `complete ${mission.missionNumber}: ${JSON.stringify(completePayload)}`).toBe(200);
+      expect(completePayload.xpAwarded).toBe(25);
+    }
 
     const milestone = mission.missionNumber === 3 ? "first" : mission.missionNumber === 6 ? "mid" : mission.missionNumber === 10 ? "full" : null;
     if (milestone) {
@@ -896,6 +929,9 @@ test("database-backed Missions 02–10 path resumes, unlocks Reviews and reaches
   await page.goto("/program");
   await expect(page.locator("[data-programme-context-header]").getByText("715 XP", { exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Mission 10 — Make the plan reviewable" })).toBeVisible();
+  await expect(page.getByText("Mission complete", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Review mission", exact: true })).toBeVisible();
+  await expect(page.getByRole("progressbar", { name: "Programme completion" })).toHaveCount(0);
   await expect(page.locator("li[data-state='completed']")).toHaveCount(10);
   await expect(page.getByRole("button", { name: "Open review" })).toHaveCount(3);
   await expect(page.getByText("Your data is private. We never use it for offers or rankings.")).toBeVisible();

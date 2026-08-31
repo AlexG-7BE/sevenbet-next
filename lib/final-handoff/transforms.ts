@@ -1,4 +1,10 @@
-import { getArticlePath, learningArticles, learningCategories, type LearningArticle } from "@/lib/learning-center";
+import { getArticlePath, learningArticles, type LearningArticle } from "@/lib/learning-center";
+import { HOME_SOURCE_COPY, homeTranslation } from "@/lib/i18n/home-catalog";
+import { learningMessages, localizedLearningArticles, localizedLearningCategories } from "@/lib/i18n/learning-center";
+import { TEN_STEPS_SOURCE_COPY, tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
+import type { MethodologyMessages } from "@/lib/i18n/static-pages/methodology";
+import type { PublicErrorMessages } from "@/lib/i18n/public-errors";
+import type { SupportedLocale } from "@/lib/market/registry";
 
 function escapePattern(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -10,6 +16,17 @@ function escapeHtml(value: string) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function translateHtmlTextNodes(html: string, translations: ReadonlyMap<string, string>) {
+  const replacements = [...translations.entries()].sort(([left], [right]) => right.length - left.length);
+  return html.replace(/>([^<>]+)</g, (match, text: string) => {
+    let translated = text;
+    for (const [source, replacement] of replacements) {
+      translated = translated.replaceAll(escapeHtml(source), escapeHtml(replacement));
+    }
+    return `>${translated}<`;
+  });
 }
 
 function qualifyUnsupportedHandoffClaims(html: string) {
@@ -168,6 +185,36 @@ function removeElementContaining(
   return html;
 }
 
+function transformElementContaining(
+  html: string,
+  marker: string,
+  predicate: (elementHtml: string, startTag: string) => boolean,
+  transform: (elementHtml: string, startTag: string) => string,
+  occurrence: "first" | "last" = "first",
+) {
+  const markerIndex = occurrence === "first" ? html.indexOf(marker) : html.lastIndexOf(marker);
+  if (markerIndex < 0) return html;
+  const ancestors = htmlAncestorsAt(html, markerIndex);
+  for (let index = ancestors.length - 1; index >= 0; index -= 1) {
+    const element = ancestors[index];
+    const elementHtml = html.slice(element.start, element.end);
+    if (!predicate(elementHtml, element.startTag)) continue;
+    return html.slice(0, element.start) + transform(elementHtml, element.startTag) + html.slice(element.end);
+  }
+  return html;
+}
+
+function retagElement(elementHtml: string, startTag: string, name: string, attributes: string) {
+  const tag = htmlTagAt(startTag, 0);
+  if (!tag || tag.closing || tag.selfClosing) return elementHtml;
+  const closingTag = `</${tag.name}>`;
+  if (!elementHtml.endsWith(closingTag)) return elementHtml;
+  const transformedStartTag = startTag
+    .replace(/^<([a-zA-Z][\w:-]*)/, `<${name}`)
+    .replace(/>$/, ` ${attributes}>`);
+  return `${transformedStartTag}${elementHtml.slice(startTag.length, -closingTag.length)}</${name}>`;
+}
+
 /**
  * Generated handoff pages are content sources, never owners of application chrome.
  * Remove their captured prototype header/footer elements before React mounts the
@@ -244,8 +291,15 @@ export function transformCommonHandoff(html: string) {
  * the first real content section. The data hooks let application CSS own that
  * relationship without rewriting any captured copy or visual treatment.
  */
-export function transformLearnHandoff(html: string) {
-  const categoryTitles = new Map(learningCategories.map((category) => [category.slug, category.title]));
+export function transformLearnHandoff(
+  html: string,
+  locale: SupportedLocale = "en-GB",
+  hrefFor: (href: string) => string = (href) => href,
+) {
+  const messages = learningMessages(locale);
+  const articles = localizedLearningArticles(locale);
+  const categories = localizedLearningCategories(locale);
+  const categoryTitles = new Map(categories.map((category) => [category.slug, category.title]));
   const topicFor = (article: LearningArticle) => {
     if (article.categorySlug === "casino-bonuses") return "bonuses";
     if (["payments", "crypto-casinos"].includes(article.categorySlug)) return "banking";
@@ -254,31 +308,31 @@ export function transformLearnHandoff(html: string) {
     if (article.categorySlug === "industry-news") return "industry";
     return "casinos";
   };
-  const updated = (article: LearningArticle) => new Intl.DateTimeFormat("en-GB", {
+  const updated = (article: LearningArticle) => new Intl.DateTimeFormat(locale, {
     month: "short",
     timeZone: "UTC",
     year: "numeric",
   }).format(new Date(article.lastUpdated));
-  const startCard = (article: LearningArticle) => `<a href="${escapeHtml(getArticlePath(article))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+  const startCard = (article: LearningArticle) => `<a href="${escapeHtml(hrefFor(getArticlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp2" style="background: rgb(244, 241, 235); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 20px; padding: 32px 36px; display: flex; flex-direction: column; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
           <div style="font-size: 12px; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 16px;">${escapeHtml(categoryTitles.get(article.categorySlug) || article.categorySlug)}</div>
           <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 22px; line-height: 1.2; margin-bottom: 12px;">${escapeHtml(article.title)}</div>
           <p style="font-size: 14px; line-height: 1.6; color: rgb(100, 99, 92); margin: 0px 0px 20px; flex: 1 1 0%;">${escapeHtml(article.summary)}</p>
-          <div style="font-size: 13px; color: rgb(139, 138, 130);">${escapeHtml(article.readingTime)} · Updated ${updated(article)}</div>
+          <div style="font-size: 13px; color: rgb(139, 138, 130);">${escapeHtml(article.readingTime)} · ${escapeHtml(messages.ui.updated)} ${updated(article)}</div>
         </a>`;
-  const guideCard = (article: LearningArticle) => `<a href="${escapeHtml(getArticlePath(article))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
+  const guideCard = (article: LearningArticle) => `<a href="${escapeHtml(hrefFor(getArticlePath(article)))}" data-learn-category="${topicFor(article)}" class="scp3" style="background: rgb(250, 250, 247); border: 1px solid rgba(16, 15, 15, 0.1); border-radius: 14px; padding: 24px 30px; display: flex; align-items: center; gap: 20px 32px; flex-wrap: wrap; color: inherit; text-decoration: none; cursor: pointer; transition: box-shadow 300ms cubic-bezier(0.2, 0.8, 0.2, 1);">
             <div style="flex: 1 1 0%; min-width: 260px;">
               <div style="font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: rgb(119, 117, 0); font-weight: 600; margin-bottom: 6px;"><span class="sc-interp">${escapeHtml(categoryTitles.get(article.categorySlug) || article.categorySlug)}</span></div>
               <div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: 19px; line-height: 1.25;"><span class="sc-interp">${escapeHtml(article.title)}</span></div>
               <div style="font-size: 14px; color: rgb(100, 99, 92); margin-top: 6px;"><span class="sc-interp">${escapeHtml(article.summary)}</span></div>
             </div>
-            <div style="font-size: 13px; color: rgb(139, 138, 130); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime.replace(" read", ""))} · ${updated(article)}</span></div>
-            <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">Read →</span>
+            <div style="font-size: 13px; color: rgb(139, 138, 130); white-space: nowrap;"><span class="sc-interp">${escapeHtml(article.readingTime)} · ${updated(article)}</span></div>
+            <span style="font-size: 14px; color: rgb(16, 15, 15); border-bottom: 1px solid rgba(16, 15, 15, 0.3); padding-bottom: 2px; white-space: nowrap;">${escapeHtml(messages.hub[19])}</span>
           </a>`;
   let output = html
     .replace(/<input placeholder="Search guides — wagering, payouts, RTP…"[^>]*>/, "")
     .replace(
       /(<h2[^>]*>All guides<\/h2>)/,
-      '$1<label data-learn-discovery-search=""><span>Search guides</span><input type="search" aria-label="Search guides" placeholder="Search guides — wagering, payouts, RTP…" value=""></label>',
+      `$1<label data-learn-discovery-search=""><span>${escapeHtml(messages.hub[10])}</span><input type="search" aria-label="${escapeHtml(messages.hub[10])}" placeholder="${escapeHtml(messages.ui.searchPlaceholder)}" value=""></label>`,
     )
     .replace('data-mob="pad"', 'data-mob="pad" data-learn-hero-axis=""')
     .replace(
@@ -289,23 +343,54 @@ export function transformLearnHandoff(html: string) {
       '<div style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
       '<div data-learn-start-section="" style="background: rgb(250, 250, 247); color: rgb(16, 15, 15); padding: 100px clamp(24px, 5vw, 72px);">\n    <div data-learn-start-axis="" data-reveal="" style="max-width: 1440px; margin: 0px auto;">',
     );
-  const featured = learningArticles.filter((article) => article.featured).slice(0, 4);
+  output = output.replace(
+    /<div data-learn-meta-axis=""[^>]*>[\s\S]*?<\/div>/,
+    (meta) => meta.replaceAll("<span ", '<span data-learn-meta-item="" '),
+  );
+  const featured = articles.filter((article) => article.featured).slice(0, 4);
   let featuredIndex = 0;
   output = output.replace(/<a href="[^"]+" class="scp2"[\s\S]*?<\/a>/g, () => {
     const article = featured[featuredIndex++];
     return article ? startCard(article) : "";
   });
-  const guides = learningArticles.map(guideCard).join("\n        ");
+  const guides = articles.map(guideCard).join("\n        ");
   let replacedGuideList = false;
   output = output.replace(/<a href="[^"]+" class="scp3"[\s\S]*?<\/a>/g, () => {
     if (replacedGuideList) return "";
     replacedGuideList = true;
     return guides;
   });
-  return output.replace(
+  output = output.replace(
     /<span class="sc-interp">11<\/span> guides/,
-    `<span class="sc-interp">${learningArticles.length}</span> guides`,
+    `<span class="sc-interp">${articles.length}</span> ${escapeHtml(messages.hub[11])}`,
   );
+  output = output.replace(/<h2([^>]*)>All guides<\/h2>/, '<h2$1 data-learn-all-guides="">All guides</h2>');
+  const topicIds = ["all topics", "bonuses", "banking", "casinos", "games", "responsible play", "industry"];
+  const topicLabels = ["All topics", "Bonuses", "Banking", "Casinos", "Games", "Responsible play", "Industry"];
+  output = output.replace(/<button([^>]*)>([\s\S]*?)<\/button>/g, (button, attributes: string, content: string) => {
+    const label = content.replace(/<[^>]+>/g, "").trim();
+    const topicIndex = topicLabels.indexOf(label);
+    return topicIndex < 0 ? button : `<button${attributes} data-learn-topic="${topicIds[topicIndex]}">${content}</button>`;
+  });
+  output = translateHtmlTextNodes(output, messages.hubCopy);
+  const i18nData = `<span hidden data-learn-i18n data-learn-one="${escapeHtml(messages.ui.oneShown)}" data-learn-many="${escapeHtml(messages.ui.manyShown)}" data-learn-none="${escapeHtml(messages.ui.noneShown)}"></span>`;
+  return i18nData + output;
+}
+
+export function transformMethodologyHandoff(
+  html: string,
+  messages: MethodologyMessages,
+  hrefFor: (href: string) => string = (href) => href,
+) {
+  let output = html;
+  output = translateHtmlTextNodes(output, messages.copy);
+  output = output.replace(
+    /(<div style="display: flex; gap: 14px;"><span[^>]*>[^<]*<\/span>)([\s\S]*?)(<\/div>)/g,
+    '$1<span data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;">$2</span>$3',
+  );
+  return output
+    .replaceAll('href="/contact"', `href="${escapeHtml(hrefFor("/contact"))}"`)
+    .replaceAll('href="/methodology"', `href="${escapeHtml(hrefFor("/methodology"))}"`);
 }
 
 export function transformBonusGuideHandoff(html: string) {
@@ -396,6 +481,7 @@ const HOME_MEDIA: Record<string, { height: number; width: number }> = {
 };
 
 const HOME_MEDIA_WIDTHS = [320, 640, 1280, 1920] as const;
+const HOME_GENERATED_TIMING_COPY = "10 missions · 5–15 minutes each";
 const HOME_CHAPTER_ALTS = new Set(["Noticing the moment", "Writing the rule", "Applying the plan"]);
 const HOME_SNAP_LABELS = new Set([
   "Hero",
@@ -431,9 +517,72 @@ function homeResponsiveImage(imageTag: string) {
   return `<picture data-home-media="${chapter ? "chapter" : "opening"}" style="display:block;width:100%;height:100%;"><source type="image/avif" sizes="${sizes}" srcset="${candidates("avif")}"><source type="image/webp" sizes="${sizes}" srcset="${candidates("webp")}">${responsiveTag}</picture>`;
 }
 
-export function transformHomeHandoff(html: string) {
+function tagHomeHeroKicker(html: string, copy: string) {
+  const escapedCopy = escapeHtml(copy);
+  return html.replace(
+    new RegExp(`<div([^>]*)>${escapePattern(escapedCopy)}</div>`),
+    `<div$1 data-home-hero-kicker="">${escapedCopy}</div>`,
+  );
+}
+
+function translateHomeHandoff(html: string, locale: SupportedLocale) {
+  const translation = homeTranslation(locale);
+  if (!translation) return tagHomeHeroKicker(html, HOME_SOURCE_COPY.hero[0]);
+
+  const textTranslations = new Map<string, string>();
+  for (const section of Object.keys(HOME_SOURCE_COPY) as Array<keyof typeof HOME_SOURCE_COPY>) {
+    if (section === "imageAlts") continue;
+    const source = HOME_SOURCE_COPY[section];
+    const localized = translation[section];
+    if (source.length !== localized.length) throw new Error(`Incomplete ${locale} Home translation: ${section}`);
+    source.forEach((value, index) => textTranslations.set(value, localized[index]));
+  }
+
+  let output = html.replace(/>([^<>]*)</g, (match, text: string) => {
+    const value = text.trim();
+    const localized = textTranslations.get(value);
+    if (!localized) return match;
+    const leading = text.slice(0, text.indexOf(value));
+    const trailing = text.slice(text.indexOf(value) + value.length);
+    return `>${leading}${escapeHtml(localized)}${trailing}<`;
+  });
+
+  if (HOME_SOURCE_COPY.imageAlts.length !== translation.imageAlts.length) {
+    throw new Error(`Incomplete ${locale} Home translation: imageAlts`);
+  }
+  HOME_SOURCE_COPY.imageAlts.forEach((source, index) => {
+    output = output.replaceAll(`alt="${source}"`, `alt="${escapeHtml(translation.imageAlts[index])}"`);
+  });
+  return tagHomeHeroKicker(output, translation.hero[0]);
+}
+
+export function transformHomeHandoff(html: string, locale: SupportedLocale = "en-GB") {
   const transformed = html
+    .replaceAll(HOME_GENERATED_TIMING_COPY, HOME_SOURCE_COPY.hero[5])
+    .replaceAll("Free — no paywall inside, ever", HOME_SOURCE_COPY.hero[6])
+    .replaceAll("now and always", HOME_SOURCE_COPY.programme[6])
+    .replaceAll("Free — no paywall, no upsell inside missions, ever.", HOME_SOURCE_COPY.trust[4])
+    .replaceAll("honest minute.", HOME_SOURCE_COPY.final[1])
+    .replaceAll("One question at a time. Your starting point builds itself as you answer.", HOME_SOURCE_COPY.final[2])
+    .replace(/>~2</g, `>${HOME_SOURCE_COPY.programme[3]}<`)
+    .replace(/>weeks, your pace</g, `>${HOME_SOURCE_COPY.programme[4]}<`)
     .replace(/<img\b[^>]*\bsrc="\/home\/[^"/]+\.jpg"[^>]*>/g, homeResponsiveImage)
+    .replace(
+      /<div data-screen-label="Missions (\d{2}-\d{2})" data-stackpanel=""/g,
+      '<div data-screen-label="Missions $1" data-home-chapter="$1" data-stackpanel=""',
+    )
+    .replaceAll('<div data-mob="chapter"', '<div data-home-chapter-copy="" data-mob="chapter"')
+    .replace(
+      /(<div data-home-chapter-copy=""[^>]*>[\s\S]*?)<h2 /g,
+      '$1<h2 data-home-chapter-title="" ',
+    )
+    .replace("<h1 ", '<h1 data-home-hero-title="" ')
+    .replace(
+      /(<h1 data-home-hero-title=""[^>]*>[\s\S]*?<\/h1>\s*)<p /,
+      '$1<p data-home-hero-copy="" ',
+    )
+    .replace('<a href="/program" class="scp2"', '<a href="/program" class="scp2" data-home-hero-cta=""')
+    .replace('<div style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;', '<div data-home-hero-meta="" style="flex-shrink: 0; background: rgb(16, 15, 15); display: flex;')
     .replace(
       '<div data-screen-label="Final CTA" data-snap=""',
       '<div data-screen-label="Final CTA" data-home-final-composition=""',
@@ -442,10 +591,11 @@ export function transformHomeHandoff(html: string) {
       HOME_SNAP_LABELS.has(label) ? `${tag} data-home-snap="" data-home-snap-label="${label}"` : tag
     ));
 
-  return HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
+  const withSnapAnchors = HOME_STICKY_SNAP_LABELS.reduce((output, label) => output.replace(
     `<div data-screen-label="${label}"`,
     `<div aria-hidden="true" data-home-snap="" data-home-snap-anchor="" data-home-snap-label="${label}" style="height:1px;margin-bottom:-1px;pointer-events:none;width:1px;"></div><div data-screen-label="${label}"`,
   ), transformed);
+  return translateHomeHandoff(withSnapAnchors, locale);
 }
 
 export function transformHomeHandoffCss(css: string) {
@@ -459,6 +609,29 @@ export function transformHomeHandoffCss(css: string) {
       "",
     );
   return `${withoutCapturedHomeControls}
+    [data-home-hero-kicker] {
+      max-width: min(760px, calc(100vw - 96px));
+      line-height: 1.35 !important;
+      text-wrap: balance;
+      white-space: normal !important;
+    }
+    html[lang="de-DE"] [data-handoff-page="home"] [data-hero] h1 {
+      max-width: calc(100vw - 48px);
+      font-size: clamp(48px, 7.4vw, 112px) !important;
+      overflow-wrap: normal;
+      text-wrap: balance;
+    }
+    @media (max-width: 760px) {
+      [data-home-hero-kicker] {
+        max-width: calc(100vw - 112px);
+        font-size: 11px !important;
+        letter-spacing: .16em !important;
+      }
+      html[lang="de-DE"] [data-handoff-page="home"] [data-hero] h1 {
+        font-size: clamp(42px, 12.5vw, 54px) !important;
+        line-height: .94 !important;
+      }
+    }
     [data-home-snap] {
       scroll-snap-align: start;
       scroll-snap-stop: normal !important;
@@ -480,8 +653,64 @@ export function transformHomeHandoffCss(css: string) {
   `;
 }
 
-export function transformTenStepsHandoff(html: string) {
-  return buttonToLink(html, "Start Mission 01", "/program?entry=start");
+export function transformTenStepsHandoff(html: string, locale: SupportedLocale = "en-GB") {
+  let semanticHtml = transformElementContaining(
+    html,
+    "Ten steps.<br>",
+    (_elementHtml, startTag) => startTag.includes("min-height: 92vh"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="hero" aria-labelledby="ten-steps-title"')
+      .replace("<h1 ", '<h1 id="ten-steps-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "Three things you'll have at the end.",
+    (_elementHtml, startTag) => startTag.includes("position: relative; overflow: hidden; background: rgb(250, 250, 247)"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="programme-builds" aria-labelledby="ten-steps-builds-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-builds-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    ">The path</h2>",
+    (elementHtml, startTag) => startTag.includes("background: rgb(244, 241, 235)") && elementHtml.includes("Long-term control"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="mission-map" aria-labelledby="ten-steps-path-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-path-title" ')
+      .replace(
+        '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0px 72px;">',
+        '<div role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list="" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 0px 72px;">',
+      )
+      .replaceAll(
+        '<div style="display: flex; gap: 22px; padding: 22px 0px; border-bottom: 1px solid rgba(16, 15, 15, 0.12);">',
+        '<div role="listitem" data-ten-steps-mission="" style="display: flex; gap: 22px; padding: 22px 0px; border-bottom: 1px solid rgba(16, 15, 15, 0.12);">',
+      ),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "What you say here,",
+    (elementHtml, startTag) => startTag.includes("background: rgb(244, 241, 235)") && elementHtml.includes("No mission ever asks"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="account-boundary" aria-labelledby="ten-steps-account-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-account-title" '),
+  );
+  semanticHtml = transformElementContaining(
+    semanticHtml,
+    "Mission 01 takes about<br>",
+    (_elementHtml, startTag) => startTag.includes("position: relative; background: rgb(16, 15, 15)"),
+    (elementHtml, startTag) => retagElement(elementHtml, startTag, "section", 'data-ten-steps-section="final-action" aria-labelledby="ten-steps-final-title"')
+      .replace("<h2 ", '<h2 id="ten-steps-final-title" '),
+  );
+  const translation = tenStepsTranslation(locale);
+  const textTranslations = new Map<string, string>(TEN_STEPS_SOURCE_COPY.map((source, index) => [source, translation.text[index]]));
+  const translatedText = semanticHtml.replace(/>([^<>]*)</g, (match, text: string) => {
+    const value = text.trim();
+    const localized = textTranslations.get(value);
+    if (!localized) return match;
+    const leading = text.slice(0, text.indexOf(value));
+    const trailing = text.slice(text.indexOf(value) + value.length);
+    return `>${leading}${escapeHtml(localized)}${trailing}<`;
+  });
+  const sourceAlt = TEN_STEPS_SOURCE_COPY.at(-1) ?? "";
+  const localizedAlt = translation.text.at(-1) ?? sourceAlt;
+  const translated = translatedText.replace(`alt="${sourceAlt}"`, `alt="${escapeHtml(localizedAlt)}"`);
+  return buttonToLink(translated, translation.text[5], "/program?entry=start");
 }
 
 export function transformResponsibleGamblingHandoff(html: string) {
@@ -545,9 +774,16 @@ export function transformHelpHandoff(html: string) {
   return output;
 }
 
-export function transformNotFoundHandoff(html: string) {
+export function transformNotFoundHandoff(html: string, messages: PublicErrorMessages, hrefFor: (href: string) => string = (href) => href) {
   return html.replace(
     /<div style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp\(120px, 18vw, 240px\); line-height: 0\.9; letter-spacing: -0\.02em;">404<\/div>/,
     '<h1 style="font-family: Archivo, sans-serif; font-weight: 800; text-transform: uppercase; font-size: clamp(120px, 18vw, 240px); line-height: 0.9; letter-spacing: -0.02em; margin: 0px;">404</h1>',
-  );
+  )
+    .replaceAll("This route is lost.", escapeHtml(messages.notFoundLost))
+    .replaceAll("Let&#x27;s get you back on course.", escapeHtml(messages.notFoundBack))
+    .replaceAll("Let's get you back on course.", escapeHtml(messages.notFoundBack))
+    .replaceAll("Go to homepage", escapeHtml(messages.notFoundHome))
+    .replaceAll("About the Programme →", escapeHtml(messages.notFoundAbout))
+    .replace('href="/"', `href="${escapeHtml(hrefFor("/"))}"`)
+    .replace('href="/10-steps"', `href="${escapeHtml(hrefFor("/10-steps"))}"`);
 }

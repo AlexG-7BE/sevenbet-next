@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import type { ReactNode } from "react";
 
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";

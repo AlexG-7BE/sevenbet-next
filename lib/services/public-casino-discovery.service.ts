@@ -144,7 +144,11 @@ export class PublicCasinoDiscoveryService {
     private readonly redirectEnabled = isAffiliateRedirectEnabled,
   ) {}
 
-  async discover(input: CasinoDiscoveryQuery = {}, authority?: CommercialJurisdictionAuthority | null): Promise<CasinoDiscoveryResult> {
+  async discover(
+    input: CasinoDiscoveryQuery = {},
+    authority?: CommercialJurisdictionAuthority | null,
+    options: { defaultEditorialCountry?: string } = {},
+  ): Promise<CasinoDiscoveryResult> {
     const now = this.now();
     const published = await this.store.listPublished();
     const redirectEnabled = this.redirectEnabled();
@@ -155,8 +159,9 @@ export class PublicCasinoDiscoveryService {
       : new Map<string, GbOperatorEligibilityDecision>();
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);
-    const requestedCountry = input.country?.[0];
-    const countryContext = requestedCountry && published.some((record) => list(object(record.snapshot).countries).some((entry) => text(object(entry).countryCode).toUpperCase() === requestedCountry)) ? requestedCountry : undefined;
+    const requestedCountries = input.country ?? [];
+    const defaultCountryContext = requestedCountries.length ? undefined : options.defaultEditorialCountry;
+    const countryContext = requestedCountries.length === 1 ? requestedCountries[0] : defaultCountryContext;
     const commercialCountryContext = commercialProjection ? authority?.countryCode ?? undefined : undefined;
     const working = published.flatMap((record): WorkingCard[] => {
       const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
@@ -222,7 +227,8 @@ export class PublicCasinoDiscoveryService {
       gameProvider: allowed(input.gameProvider, facets.gameProviders), category: allowed(input.category, facets.categories), bonusType: allowed(input.bonusType, facets.bonusTypes),
       page: Math.max(1, input.page ?? 1), pageSize: Math.min(48, Math.max(1, input.pageSize ?? 12)),
     };
-    const filtered = searched.filter((item) => matchesAny(query.country, item.card.countries.map((entry) => entry.key))
+    const filtered = searched.filter((item) => (!defaultCountryContext || item.card.countries.some((entry) => entry.key === defaultCountryContext))
+      && matchesAny(query.country, item.card.countries.map((entry) => entry.key))
       && matchesAny(query.license, item.card.licenses.map((entry) => entry.key))
       && matchesAny(query.payment, item.card.paymentMethods.map((entry) => entry.key))
       && matchesAny(query.gameProvider, item.card.gameProviders.map((entry) => entry.key))

@@ -17,6 +17,7 @@ const tracker = read("app/(public)/tools/budget-calculator/PersonalLimitTracker.
 const trackerLayout = read("app/(public)/tools/budget-calculator/layout.tsx");
 const about = read("app/(public)/about/AboutDocument.tsx");
 const aboutCss = read("app/(public)/about/AboutPage.module.css");
+const aboutCatalog = read("lib/i18n/static-pages/about.ts");
 
 const placeholders = /\[(?:LEGAL ENTITY|CONTROLLER LEGAL NAME|PRIVACY EMAIL|CONTACT EMAIL|SERVICE ADDRESS)\]|OWNER DECISION REQUIRED|placeholder|coming soon/iu;
 
@@ -77,9 +78,9 @@ test("Personal Limit Tracker compatibility route consolidates into Responsible G
 
 test("About uses the final handoff visual family and three-part product model", () => {
   assert.match(aboutCss, /min-height:88svh/);
-  assert.match(aboutCss, /grid-template-columns:repeat\(3,1fr\)/);
+  assert.match(aboutCss, /grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
   assert.match(aboutCss, /hero-outcome\.jpg/);
-  for (const text of ["Built to be", "on your side", "The Programme", "Research & education", "Commercial discovery", "How we make money", "What stays separate", "What B4GAMBLE is not", "Protected Help"]) assert.ok(about.includes(text), text);
+  for (const text of ["Built to be", "on your side", "The Programme", "Research & education", "Commercial discovery", "How we make money", "What stays separate", "What B4GAMBLE is not", "Protected Help"]) assert.ok((about + aboutCatalog).includes(text), text);
   for (const section of ["hero", "three-parts", "commercial-separation", "clear-lines"]) assert.match(about, new RegExp(`data-about-section="${section}"`));
 });
 
@@ -106,6 +107,12 @@ test("FE-GAP-01 product boundaries survive the authorized legal remediation", ()
       (approved) => JSON.stringify(prismaChanges) === JSON.stringify(approved),
     ));
   }
-  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
-  assert.equal(changed.includes("app/(public)/layout.tsx"), false);
+  if (changed.includes("app/(public)/layout.tsx")) {
+    const publicLayout = read("app/(public)/layout.tsx");
+    assert.match(publicLayout, /resolveServerPresentationContext/);
+    assert.match(publicLayout, /publicShellMessages\(presentation\.locale\)/);
+    assert.match(publicLayout, /<PublicHeader[^>]+presentation=\{presentation\}/s);
+    assert.match(publicLayout, /<PublicFooter presentation=\{presentation\}/);
+    assert.doesNotMatch(publicLayout, /@prisma|commercialAllowed|referralAllowed|affiliate/i);
+  }
 });

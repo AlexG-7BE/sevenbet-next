@@ -15,7 +15,7 @@ function trueValue(value: string | undefined) {
   return value === "true" || value === "1";
 }
 
-export function parsePublicComparisonQuery(input: ComparisonSearchParams): PublicComparisonQuery {
+export function parsePublicComparisonQuery(input: ComparisonSearchParams, defaultCountry = "GB"): PublicComparisonQuery {
   const issues: PublicComparisonQuery["issues"] = [];
   const requested = rawValues(input, "casino").flatMap((value) => value.split(","));
   const casinos: string[] = [];
@@ -33,8 +33,9 @@ export function parsePublicComparisonQuery(input: ComparisonSearchParams): Publi
   }
 
   const requestedCountry = rawValues(input, "country")[0]?.normalize("NFKC").trim().toUpperCase();
-  const country = requestedCountry && /^[A-Z]{2}$/.test(requestedCountry) ? requestedCountry : "GB";
-  if (requestedCountry && country === "GB" && requestedCountry !== "GB") issues.push("INVALID_COUNTRY");
+  const normalizedDefaultCountry = /^[A-Z]{2}$/.test(defaultCountry) ? defaultCountry : "GB";
+  const country = requestedCountry && /^[A-Z]{2}$/.test(requestedCountry) ? requestedCountry : normalizedDefaultCountry;
+  if (requestedCountry && !/^[A-Z]{2}$/.test(requestedCountry)) issues.push("INVALID_COUNTRY");
 
   const requestedDifferences = rawValues(input, "differences")[0]?.trim().toLowerCase();
   const differences = trueValue(requestedDifferences);

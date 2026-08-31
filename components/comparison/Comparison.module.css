@@ -20,9 +20,9 @@
   color-scheme: light;
 }
 
-:global(body):has(.page) { background: var(--paper); color-scheme: light; }
+:global(body):has(.page) { background: var(--sb-paper); color-scheme: light; }
 :global(body):has(.page)::before { display: none; }
-:global(body):has(.page) :global([data-public-shell="header"]) { border-bottom-color: rgba(255,255,255,.16); background: var(--night); color: var(--white); }
+:global(body):has(.page) :global([data-public-shell="header"]) { border-bottom-color: rgba(255,255,255,.16); background: var(--sb-night); color: var(--sb-white); }
 
 .shell { width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
 .kicker { margin: 0; color: var(--muted); font-size: 12px; line-height: 16px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
@@ -154,12 +154,14 @@
 .demoDisclosure p { margin: 0; font-size: 13px; line-height: 20px; }
 
 .stateSection { min-height: 520px; padding: 84px 0; background: var(--paper); }
+.errorStateSection { padding-top: 105px; }
 .stateSection > div { max-width: 900px; }
 .stateSection > div > p:not(.kicker) { max-width: 760px; color: var(--muted); font-size: 17px; line-height: 26px; }
 .stateSection ul { margin: 28px 0; padding: 0; display: grid; gap: 10px; list-style: none; }
 .stateSection li { padding: 16px; display: grid; gap: 5px; border: 1px solid var(--line); background: var(--white); color: var(--muted); font-size: 13px; }
 .stateSection li strong { color: var(--danger); }
 .stateSection a, .stateSection button { width: fit-content; min-height: 48px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--sb-radius-full); background: var(--night); color: var(--white); font: inherit; font-size: 13px; font-weight: 750; cursor: pointer; }
+.stateActions { margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; }
 
 .loadingHero { padding: 48px 0 64px; background: var(--night); color: var(--white); }
 .loadingStateLabel { display: flex; align-items: center; gap: 12px; }
@@ -205,7 +207,7 @@
 }
 
 @media (max-width: 760px) {
-  :global(body):has(.page) :global([data-public-shell="header"]) { border-bottom-color: rgba(16,15,15,.18); background: var(--paper); color: var(--ink); }
+  :global(body):has(.page) :global([data-public-shell="header"]) { border-bottom-color: rgba(16,15,15,.18); background: var(--sb-paper); color: var(--sb-night); }
   .shell { width: min(100% - 48px, 560px); }
   .hero { padding: 30px 0 34px; }
   .hero h1 { margin-top: 16px; font-size: clamp(42px, 12.2vw, 52px); line-height: .96; }
@@ -222,6 +224,7 @@
   .selectionActions button, .selectionActions a { width: 100%; min-height: 54px; }
   .selectionActions span { margin: 0; text-align: center; }
   .legendSection, .decisionSection, .methodSection, .relatedSection, .faqSection, .commercialSection, .stateSection { padding: 36px 0; }
+  .errorStateSection { padding-top: calc(105px + env(safe-area-inset-top)); }
   .legendSection h2, .decisionSection h2, .commercialSection h2, .methodSection h2, .faqSection h2, .relatedSection h2, .stateSection h2 { margin: 10px 0 22px; font-size: 34px; line-height: 36px; }
   .legendGrid { grid-template-columns: 1fr; }
   .legendGrid > div { min-height: 0; }

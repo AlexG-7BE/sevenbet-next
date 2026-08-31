@@ -1,7 +1,10 @@
 import { expect, test } from "@playwright/test";
+import { tenStepsTranslation } from "../lib/i18n/static-pages/ten-steps";
+import { programmeMissionTitles } from "../lib/programme/program-ai/mission-registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const approvedOrder = ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"];
+const messages = tenStepsTranslation("en-GB");
 
 async function assertTenStepsContract(page: import("@playwright/test").Page) {
   await expect(page.locator("body > header[data-public-shell]")).toHaveCount(1);
@@ -9,12 +12,24 @@ async function assertTenStepsContract(page: import("@playwright/test").Page) {
   await expect(page.locator("main")).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
   await expect(page.getByRole("heading", { level: 1, name: "TEN STEPS. One plan." })).toBeVisible();
-  await expect(page.locator("[data-ten-steps-section='mission-map'] > ol > li")).toHaveCount(10);
-  await expect(page.getByRole("heading", { level: 2, name: "Three things you'll have at the end." })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "What you say here, stays here." })).toBeVisible();
-  await expect(page.getByText("✓ Your situation and plan are never used for offers, rankings or ads.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("heading", { level: 2, name: "Mission 01 takes about one minute." })).toBeVisible();
-  await expect(page.getByText("No registration until your starting point is ready.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 2, name: messages.text[12], exact: true })).toBeVisible();
+  const missionMap = page.locator('[data-ten-steps-section="mission-map"]');
+  const missionList = missionMap.getByRole("list", { name: messages.text[19], exact: true });
+  const missionItems = missionList.getByRole("listitem");
+  await expect(missionList).toBeVisible();
+  await expect(missionItems).toHaveCount(programmeMissionTitles.length);
+  for (const [index, title] of programmeMissionTitles.entries()) {
+    await expect(missionItems.nth(index)).toContainText(String(index + 1).padStart(2, "0"));
+    await expect(missionItems.nth(index)).toContainText(title);
+  }
+  const accountBoundary = page.locator('[data-ten-steps-section="account-boundary"]');
+  await expect(accountBoundary.getByRole("heading", { level: 2 })).toContainText(messages.text[41]);
+  await expect(accountBoundary.getByRole("heading", { level: 2 })).toContainText(messages.text[42]);
+  await expect(accountBoundary).toContainText(messages.text[43]);
+  const finalAction = page.locator('[data-ten-steps-section="final-action"]');
+  await expect(finalAction.getByRole("heading", { level: 2 })).toContainText(messages.text[46]);
+  await expect(finalAction.getByRole("heading", { level: 2 })).toContainText(messages.text[47]);
+  await expect(finalAction).toContainText(messages.text[48]);
   await expect(page.getByText(/UK PREVIEW|UK-ready discovery/i)).toHaveCount(0);
   await expect(page.locator("main a[href^='/casinos'], main a[href^='/bonuses'], main a[href^='/best-offers']")).toHaveCount(0);
   expect(await page.locator("[data-ten-steps-section]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-ten-steps-section")))).toEqual(approvedOrder);
@@ -85,7 +100,7 @@ test("all signed-out Programme CTAs use the canonical entry", async ({ page }) =
   await page.goto(`${baseUrl}/10-steps`, { waitUntil: "domcontentloaded" });
   const programmeLinks = page.locator("main a[href='/program?entry=start']");
   await expect(programmeLinks).toHaveCount(2);
-  await expect(programmeLinks.first()).toContainText("Start Mission 01");
+  await expect(programmeLinks.first()).toContainText(messages.text[5]);
   const response = await page.request.get(`${baseUrl}/10-steps`);
   expect(response.headers()["link"] ?? "").not.toContain("mission=");
 });

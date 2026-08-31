@@ -4,26 +4,28 @@ import test from "node:test";
 
 test("bonus presentation renders neutral absence and never links an unavailable action", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const label of ["Minimum deposit", "Wagering", "Maximum bonus", "Expiry", "Licence", "Payments"]) assert.match(component, new RegExp(label));
-  assert.match(component, /return "Not listed"/);
+  for (const label of ["minimumDeposit", "wagering", "payout", "paymentMethods", "editorScore"]) assert.match(component, new RegExp("messages\\.common\\." + label));
+  assert.match(component, /offer\.casino\.licenses\[0\]\?\.authority/);
+  assert.match(component, /return messages\.common\.notListed/);
   assert.match(component, /aria-disabled="true"/);
-  assert.match(component, /No governed visit/);
+  assert.match(component, /messages\.common\.noGovernedVisit/);
   assert.match(component, /if \(!href\) return/);
-  assert.match(component, /href={`\/casino\/\$\{offer\.casino\.slug\}`}/);
+  assert.match(component, /const reviewHref = publicCasinoReviewHref\(offer\.casino\)/);
+  assert.match(component, /productHref\(presentation, publicCasinoReviewHref\(offer\.casino\)!\)/);
 });
 
 test("available actions remain governed internal redirects after material terms", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   const handoff = readFileSync("components/casino-profile/CasinoOutboundAction.tsx", "utf8");
   assert.ok(component.includes('/^\\/r\\/[a-z0-9][a-z0-9-]*$/i'));
-  assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: "View Offer" \}\}/);
+  assert.match(component, /<CasinoOutboundAction action=\{\{ href, label: messages\.common\.actionAvailable \}\}/);
   assert.match(handoff, /href=\{confirmationHref\}/);
   assert.match(handoff, /href=\{action\.href\}/);
   assert.match(handoff, /rel="nofollow sponsored noopener"/);
   const styles = readFileSync("components/bonus-directory/BonusDirectory.module.css", "utf8");
   assert.match(styles, /\.page \.offerActionCompact \{ color: var\(--white\); \}/);
   assert.match(component, /String\(startPosition \+ index\)\.padStart/);
-  assert.ok(component.indexOf("function materialTerms") < component.indexOf("function OfferAction"));
+  assert.ok(component.indexOf("function safeActionHref") < component.indexOf("function OfferAction"));
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
 });
 
@@ -42,27 +44,43 @@ test("page source preserves SSR, metadata, canonical, noindex and ItemList posit
   assert.match(page, /const loadBonusDirectoryResult = cache/);
   assert.equal((page.match(/publicOfferService\.searchOffers\(/g) || []).length, 1);
   assert.match(page, /parsePublicOfferQuery\(raw, 24\)/);
-  assert.match(page, /canonical: absoluteUrl\("\/bonuses"\)/);
+  assert.match(page, /productMetadata\(\{ presentation, pathname: "\/bonuses"/);
   assert.match(page, /index: false, follow: true/);
   assert.match(page, /const empty = result\.total === 0/);
   assert.match(page, /unavailable \|\| filtered \|\| containsDemo \|\| empty/);
   assert.match(page, /"@type": "ItemList"/);
   assert.match(page, /result\.inventoryMode === "PUBLISHED_ONLY" && result\.total > 0 \?/);
   assert.match(page, /result\.inventoryMode === "UNAVAILABLE"/);
-  assert.match(page, /Casino Bonus Directory Unavailable/);
-  assert.match(page, /The Published Directory Could Not Be Loaded/);
+  assert.match(page, /messages\.bonuses\.unavailableTitleBody/);
+  assert.match(page, /messages\.bonuses\.unavailableCopy/);
   assert.match(page, /position: startPosition \+ index/);
   assert.doesNotMatch(page, /@prisma\/client|staticOffers|demo-/);
 });
 
 test("all supported controls are GET parameters and no-JS filters and pagination remain links", () => {
   const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
-  for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
+  for (const name of ["country", "type", "payment", "crypto", "maxDeposit", "maxWagering", "availability", "featured", "recommended", "sort"]) assert.match(component, new RegExp(`name=\\"${name}\\"`));
   assert.match(component, /InstantDiscoveryForm/);
   assert.match(component, /<noscript>/);
-  assert.match(component, /Bonus result pages/);
+  assert.match(component, /ariaLabel=\{messages\.bonuses\.directoryTitle\}/);
   assert.match(component, /\/bonuses\$\{params\.size/);
   assert.doesNotMatch(component, /destinationUrl|trackingUrl|https:\/\/tracking/);
+});
+
+test("featured and recommended controls preserve every tri-state URL value", () => {
+  const component = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
+  const page = readFileSync("app/(public)/bonuses/page.tsx", "utf8");
+
+  assert.equal((component.match(/name="featured"/g) || []).length, 3);
+  assert.equal((component.match(/name="recommended"/g) || []).length, 3);
+  assert.match(component, /query\.featured !== undefined[^\n]+name="featured"[^\n]+String\(query\.featured\)/);
+  assert.match(component, /query\.recommended !== undefined[^\n]+name="recommended"[^\n]+String\(query\.recommended\)/);
+  assert.match(component, /except=\{\["crypto", "maxDeposit", "availability", "featured", "recommended", "sort"\]\}/);
+  assert.match(component, /query\.featured === undefined \? "" : String\(query\.featured\)/);
+  assert.match(component, /query\.recommended === undefined \? "" : String\(query\.recommended\)/);
+  assert.match(component, /query\.featured \? messages\.bonuses\.featuredTrue : messages\.bonuses\.featuredFalse/);
+  assert.match(component, /query\.recommended \? messages\.bonuses\.recommendedTrue : messages\.bonuses\.recommendedFalse/);
+  assert.match(page, /query\.availability, query\.featured, query\.recommended\]\.filter\(\(value\) => value !== undefined\)/);
 });
 
 test("pending and error states fail without invented offer truth", () => {
@@ -71,8 +89,8 @@ test("pending and error states fail without invented offer truth", () => {
   assert.match(pending, /aria-busy=\{pending\}/);
   assert.match(pending, /pendingLabel/);
   assert.doesNotMatch(pending, /maximum bonus|minimum deposit|wagering multiplier/i);
-  assert.match(error, /fail closed/i);
-  assert.match(error, /No cached or invented commercial record/);
+  assert.match(error, /messages\.bonuses\.unavailableTitleBody/);
+  assert.match(error, /messages\.bonuses\.unavailableCopy/);
   assert.match(error, /reset/);
 });
 
@@ -85,12 +103,14 @@ test("directory cards use normalized logo stages and preserve a readable respons
   assert.match(component, /offer\.casino\.name\.slice\(0, 1\)/);
   assert.match(component, /data-material-terms/);
   assert.match(component, /data-governed-actions/);
-  assert.match(component, /Demonstration offer/);
-  assert.match(component, /Welcome offer/);
+  assert.match(component, /messages\.common\.demoData/);
+  assert.match(component, /offer\.bonus\.title/);
   assert.ok(component.indexOf("data-material-terms") < component.indexOf("data-governed-actions"));
   assert.match(styles, /\.compactLogo img \{[^}]*max-width:100px;[^}]*max-height:80px;[^}]*object-fit:contain;/s);
   assert.match(styles, /\.compactHeadline \{ font-size:22px; font-weight:900;/);
-  assert.match(styles, /@media \(max-width:760px\)[\s\S]*\.compactTerms \{[\s\S]*grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+  assert.match(styles, /@media \(max-width:600px\) \{[\s\S]*\.compactTerms \{ grid-template-columns:minmax\(0,1fr\); \}/);
+  assert.match(styles, /grid-template-columns:96px minmax\(180px,\.72fr\) minmax\(290px,1\.2fr\) minmax\(360px,1\.15fr\)/);
+  assert.match(styles, /\.compactTerms dt \{ min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; \}/);
   assert.match(styles, /\.compactActions \.offerActionCompact,[^}]*min-height:44px;/s);
   assert.doesNotMatch(marketplaceStyles, /font-size:(?:\s*)1[01]px/);
 });
@@ -101,7 +121,7 @@ test("casino and bonus directories share one presentation-only pagination contra
   const bonuses = readFileSync("components/bonus-directory/BonusDirectory.tsx", "utf8");
   const casinos = readFileSync("components/casino-discovery/CasinoDiscovery.tsx", "utf8");
 
-  assert.match(pagination, /Page \{currentPage\} of \{pageCount\}/);
+  assert.match(pagination, /labels\?\.pageOf \?\? "Page \{page\} of \{pages\}"/);
   assert.equal((pagination.match(/aria-disabled="true"/g) || []).length, 2);
   assert.doesNotMatch(pagination, /←|→/);
   assert.match(paginationStyles, /grid-template-columns: minmax\(104px, auto\) auto minmax\(104px, auto\)/);

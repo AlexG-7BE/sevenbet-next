@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { profileFaqItems, selectProfileBonus } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { parseRobotsMetadata } from "@/lib/public-casino/public-casino-validation";
@@ -111,4 +112,41 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
   if (Array.isArray(casino.seo.structuredData)) schemas.push(...casino.seo.structuredData);
   else if (casino.seo.structuredData) schemas.push(casino.seo.structuredData);
   return schemas;
+}
+
+export function projectCasinoProfileSchemas(
+  schemas: readonly Record<string, unknown>[],
+  input: {
+    casino: Pick<PublicCasinoDTO, "id" | "name">;
+    casinoDirectoryUrl: string;
+    locale: string;
+    messages: ProductPageMessages;
+    profileUrl: string;
+  },
+) {
+  const localized = input.locale !== "en-GB";
+  const demo = isTemporaryDemoCasinoId(input.casino.id);
+  return schemas.flatMap((schema) => {
+    if (localized && schema["@type"] === "FAQPage") return [];
+    if (schema["@type"] === "BreadcrumbList") {
+      return [{
+        ...schema,
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: input.messages.common.browseReviews, item: input.casinoDirectoryUrl },
+          { "@type": "ListItem", position: 2, name: input.casino.name, item: input.profileUrl },
+        ],
+      }];
+    }
+    if (schema["@type"] === "WebPage") {
+      return [{
+        ...schema,
+        ...(localized && demo ? {
+          name: `${input.casino.name} — ${input.messages.profile.demoReview}`,
+          description: input.messages.profile.demoDisclosure,
+        } : {}),
+        url: input.profileUrl,
+      }];
+    }
+    return [schema];
+  });
 }

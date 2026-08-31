@@ -61,13 +61,19 @@ test("public source surfaces expose B4GAMBLE and no current SevenBet consumer co
   const header = source("components/public-shell/PublicHeader.tsx");
   const navigation = source("components/public-shell/PublicNavigation.tsx");
   const footer = source("components/public-shell/PublicFooter.tsx");
-  assert.match(header, /aria-label="B4GAMBLE home"/);
+  const shellCatalog = source("lib/i18n/public-shell-catalog.ts");
+  assert.match(header, /aria-label=\{messages\.homeLabel\}/);
+  assert.match(shellCatalog, /homeLabel: "B4GAMBLE home"/);
   assert.match(header, />\s*B4GAMBLE\s*</);
   assert.match(navigation, />B4GAMBLE<\/Link>/);
   assert.match(footer, />B4GAMBLE<\/Link>/);
-  assert.match(footer, /Information, comparison and education\.[\s\S]*Not a gambling operator\./);
-  assert.match(footer, /Gambling involves financial risk\./);
-  assert.match(footer, /clearly labelled affiliate links/);
+  assert.match(footer, /\{footer\.description\}[\s\S]*\{footer\.operatorDisclaimer\}/);
+  assert.match(footer, /\{footer\.financialRisk\}/);
+  assert.match(footer, /\{footer\.commissionDisclosure\}/);
+  assert.match(shellCatalog, /description: "Information, comparison and education\."/);
+  assert.match(shellCatalog, /operatorDisclaimer: "Not a gambling operator\."/);
+  assert.match(shellCatalog, /financialRisk: "Gambling involves financial risk\."/);
+  assert.match(shellCatalog, /clearly labelled affiliate links/);
   assert.match(source("lib/services/public-casino-discovery.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-comparison.service.ts"), /currentPublicCasinoBrand\(mapped\)/);
   assert.match(source("lib/services/public-offer.service.ts"), /currentPublicBrandText/);
@@ -97,12 +103,14 @@ test("staff UI and generated demonstration assets expose only B4GAMBLE branding"
 test("root identity, legal trading name and approved contacts are exact", () => {
   const layout = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");
+  const homeCatalog = source("lib/i18n/home-catalog.ts");
   const icon = source("app/icon.svg");
   assert.match(layout, /default: "B4GAMBLE \| Know your limits before you play"/);
   assert.match(layout, /siteName: "B4GAMBLE"/);
   assert.match(layout, /name: "B4GAMBLE"/);
   assert.match(layout, /Educational tools, private self-checks and transparent casino comparison/);
-  assert.match(home, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
+  assert.match(home, /homeMetadata\(presentation\.locale\)/);
+  assert.match(homeCatalog, /Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play\./);
   assert.match(icon, /<svg/);
   assert.match(icon, /fill="#ccff00"/);
   assert.match(icon, /fill="#100f0f"/);
@@ -134,7 +142,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   assert.doesNotMatch(publicAuthority, /VERCEL_BRANCH_URL|VERCEL_URL/);
   assert.match(source("lib/auth/runtime-config.ts"), /VERCEL_BRANCH_URL/);
   const contact = source("app/(public)/contact/page.tsx");
-  assert.match(contact, /absoluteUrl\("\/contact"\)/);
+  assert.match(contact, /absoluteUrl\(productCanonicalPath\(presentation, "\/contact"\)\)/);
   assert.doesNotMatch(contact, /https:\/\/b4gamble\.com\/contact/);
   assert.deepEqual(robots(), {
     rules: [
@@ -150,6 +158,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
 
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalBonusSearch = publicOfferService.searchOffers;
   const originalCompare = publicComparisonService.compare;
   publicCasinoDiscoveryService.discover = async () => ({
     items: [], total: 0, page: 1, pageSize: 48, pageCount: 0,
@@ -158,6 +167,10 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   publicOfferService.getBestOffersPageData = async () => ({
     status: "unavailable", inventoryMode: "UNAVAILABLE",
   }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicOfferService.searchOffers = async () => ({
+    records: [], total: 0, page: 1, pageSize: 1, pageCount: 0,
+    query: {} as never, facets: {} as never, inventoryMode: "UNAVAILABLE",
+  }) as Awaited<ReturnType<typeof originalBonusSearch>>;
   publicComparisonService.compare = async () => ({
     status: "unavailable", inventoryMode: "UNAVAILABLE",
   }) as unknown as Awaited<ReturnType<typeof originalCompare>>;
@@ -167,6 +180,7 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
   } finally {
     publicCasinoDiscoveryService.discover = originalDiscover;
     publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicOfferService.searchOffers = originalBonusSearch;
     publicComparisonService.compare = originalCompare;
   }
   assert.ok(entries.length > 10);
@@ -183,10 +197,15 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
 test("sitemap keeps final static and learning routes when casino discovery throws", async () => {
   const originalDiscover = publicCasinoDiscoveryService.discover;
   const originalBestOffers = publicOfferService.getBestOffersPageData;
+  const originalBonusSearch = publicOfferService.searchOffers;
   publicCasinoDiscoveryService.discover = async () => { throw new Error("discovery unavailable"); };
   publicOfferService.getBestOffersPageData = async () => ({
     status: "available", records: [], inventoryMode: "PUBLISHED_ONLY",
   }) as Awaited<ReturnType<typeof originalBestOffers>>;
+  publicOfferService.searchOffers = async () => ({
+    records: [], total: 0, page: 1, pageSize: 1, pageCount: 0,
+    query: {} as never, facets: {} as never, inventoryMode: "UNAVAILABLE",
+  }) as Awaited<ReturnType<typeof originalBonusSearch>>;
 
   let entries: Awaited<ReturnType<typeof sitemap>>;
   try {
@@ -194,6 +213,7 @@ test("sitemap keeps final static and learning routes when casino discovery throw
   } finally {
     publicCasinoDiscoveryService.discover = originalDiscover;
     publicOfferService.getBestOffersPageData = originalBestOffers;
+    publicOfferService.searchOffers = originalBonusSearch;
   }
 
   const urls = entries.map((entry) => entry.url);
@@ -219,10 +239,13 @@ test("sitemap keeps final static and learning routes when casino discovery throw
 test("home-only canonical and social metadata do not leak into auth, outbound or admin routes", () => {
   const root = source("app/layout.tsx");
   const home = source("app/(public)/page.tsx");
+  const productContext = source("lib/market/product-context.ts");
   assert.doesNotMatch(root, /alternates:\s*\{\s*canonical/);
   assert.match(root, /"@type": "Organization"[\s\S]*url: absoluteUrl\("\/"\)/);
-  assert.match(home, /alternates: \{ canonical: absoluteUrl\("\/"\) \}/);
-  assert.match(home, /url: absoluteUrl\("\/"\)/);
+  assert.match(home, /productMetadata\(\{ presentation, pathname: "\/", title, description/);
+  assert.match(productContext, /const canonical = absoluteUrl\(productCanonicalPath\(input\.presentation, input\.pathname\)\)/);
+  assert.match(productContext, /alternates: \{[\s\S]*canonical,[\s\S]*languages:/);
+  assert.match(productContext, /openGraph: \{[\s\S]*url: canonical/);
 });
 
 test("Better Auth and disabled communication templates expose only B4GAMBLE", () => {

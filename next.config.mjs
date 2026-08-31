@@ -1,6 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {},
+  // Market home canonicals intentionally retain their slash (`/de/`). The
+  // middleware owns normalization so nested and unprefixed routes still use
+  // the existing no-trailing-slash convention without redirect loops.
+  skipTrailingSlashRedirect: true,
   async headers() {
     return [
       {

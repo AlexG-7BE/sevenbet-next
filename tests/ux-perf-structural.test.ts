@@ -40,8 +40,8 @@ test("casino and bonus mobile filters share one shell and interaction contract",
   for (const source of [mobileCasinos, mobileBonuses]) assert.match(source, /MobileDirectoryFilters/);
   assert.match(mobileCasinos, /dialogId="casino-filter-dialog"/);
   assert.match(mobileBonuses, /dialogId="bonus-filter-dialog"/);
-  assert.match(mobileDirectoryFilters, /Filters\{activeCount \? ` \(\$\{activeCount\}\)` : ""\}/);
-  assert.match(mobileDirectoryFilters, /Refine results ↗/);
+  assert.match(mobileDirectoryFilters, /labels\?\.filters \?\? "Filters"/);
+  assert.match(mobileDirectoryFilters, /labels\?\.refine \?\? "Refine results"/);
   assert.match(mobileDirectoryFilters, /dialog\.showModal\(\)/);
   assert.match(mobileDirectoryFilters, /document\.body\.style\.overflow = "hidden"/);
   assert.match(mobileDirectoryFilters, /triggerRef\.current\?\.focus\(\)/);
@@ -69,7 +69,7 @@ test("query projections can omit commercial relations after policy denial", () =
   assert.match(casinoRepository, /includeCommercial \? prisma\.affiliateOffer\.findMany/);
   assert.match(casinoRepository, /includeCommercial \? prisma\.affiliateRedirectSlug\.findMany/);
   assert.match(offerRepository, /options\.includeCommercial \?\? true/);
-  assert.match(comparisonPage, /permanentRedirect\(`\/casinos/);
+  assert.match(comparisonPage, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(comparisonApi, /resolveServerJurisdiction/);
   assert.match(comparisonApi, /publicComparisonService\.compare\(query, authority\)/);
 });

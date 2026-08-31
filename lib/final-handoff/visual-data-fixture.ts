@@ -1,16 +1,23 @@
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import type {
+  CasinoDiscoveryQuery,
   CasinoDiscoveryResult,
   PublicCasinoCardDto,
 } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import type {
   PublicOfferDTO,
+  PublicOfferQuery,
   PublicOfferSearchResult,
 } from "@/lib/public-offer/public-offer.types";
 import type { PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 import type { CasinoEditorialDocument } from "@/lib/editorial-review/types";
 import type { LearningArticle } from "@/lib/learning-center";
+import { temporaryDemoBestOffers } from "@/lib/demo-data/temporary-demo-best-offers";
 import { temporaryDemoCasinoIds } from "@/lib/demo-data/temporary-demo-authority";
+import { demoProfileCopy } from "@/lib/i18n/demo-profile-catalog";
+import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { visualFixtureCopy } from "@/lib/i18n/visual-fixture-catalog";
+import { MARKET_PROFILES, type SupportedLocale } from "@/lib/market/registry";
 
 /**
  * Enables deterministic data for local reference comparison. This flag may only
@@ -91,38 +98,142 @@ export function withHandoffLearningArticleData(article: LearningArticle, enabled
   };
 }
 
+type FixtureOfferTitleStyle = "percentage" | "amount" | "cashback";
+type FixturePayout = Readonly<{ minimumHours: number; maximumHours: number | null; crypto?: true }>;
+type FixtureOfferSample = Readonly<{
+  name: string;
+  score: number;
+  wagering: number;
+  deposit: number;
+  percentage: number;
+  maximumBonus: number;
+  freeSpins: number;
+  titleStyle: FixtureOfferTitleStyle;
+  payout: FixturePayout;
+}>;
+
 const offerSamples = [
-  { name: "Solvane Casino", score: 9.6, title: "100% up to €500 + 200 free spins", wagering: 35, deposit: 20, payout: "0–24h", summary: "Fictional payout and bonus fields for interface testing; not evidence of operator performance or a current offer." },
-  { name: "Marlowe Casino", score: 9.2, title: "100% up to €400 + 150 free spins", wagering: 30, deposit: 20, payout: "0–48h", summary: "Fictional wagering, games and support fields for interface testing." },
-  { name: "Kestrel Casino", score: 8.8, title: "100% up to €300 + 100 free spins", wagering: 35, deposit: 10, payout: "0–24h", summary: "Fictional deposit, withdrawal and game-library fields for interface testing." },
-  { name: "Aldwyn Casino", score: 8.5, title: "100% up to €250 + 100 free spins", wagering: 35, deposit: 20, payout: "0–48h", summary: "Fictional support and game-library fields for interface testing." },
-  { name: "Verano Casino", score: 8.3, title: "50% up to €200 + 50 free spins", wagering: 30, deposit: 10, payout: "24–72h", summary: "Fictional wagering and deposit fields for interface testing." },
-  { name: "Nordhem Casino", score: 8.1, title: "100% up to €150", wagering: 40, deposit: 25, payout: "0–24h", summary: "Fictional payout and wagering fields for interface testing." },
-] as const;
+  { name: "Solvane Casino", score: 9.6, wagering: 35, deposit: 20, percentage: 100, maximumBonus: 500, freeSpins: 200, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 24 } },
+  { name: "Marlowe Casino", score: 9.2, wagering: 30, deposit: 20, percentage: 100, maximumBonus: 400, freeSpins: 150, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 48 } },
+  { name: "Kestrel Casino", score: 8.8, wagering: 35, deposit: 10, percentage: 100, maximumBonus: 300, freeSpins: 100, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 24 } },
+  { name: "Aldwyn Casino", score: 8.5, wagering: 35, deposit: 20, percentage: 100, maximumBonus: 250, freeSpins: 100, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 48 } },
+  { name: "Verano Casino", score: 8.3, wagering: 30, deposit: 10, percentage: 50, maximumBonus: 200, freeSpins: 50, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 72 } },
+  { name: "Nordhem Casino", score: 8.1, wagering: 40, deposit: 25, percentage: 100, maximumBonus: 150, freeSpins: 0, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 24 } },
+] as const satisfies readonly FixtureOfferSample[];
 
 const bonusDirectorySamples = [
   offerSamples[0],
   offerSamples[1],
   offerSamples[2],
-  { name: "Orlan Casino", score: 8.6, title: "125% up to €400 + 125 free spins", wagering: 40, deposit: 20, payout: "0–2h crypto", summary: "Crypto payout speed with the higher wagering requirement shown clearly.", percentage: 125, maximumBonus: 400, freeSpins: 125 },
-  { name: "Vespera Casino", score: 8.4, title: "100% up to €250 + 75 free spins", wagering: 35, deposit: 10, payout: "24–48h", summary: "A lower entry offer with mid-range payout timing.", percentage: 100, maximumBonus: 250, freeSpins: 75 },
-  { name: "Halcyon Casino", score: 8.3, title: "€200 + 50 free spins", wagering: 30, deposit: 25, payout: "48h+", summary: "Lower wagering offset by a higher deposit floor and slower payout range.", percentage: 100, maximumBonus: 200, freeSpins: 50 },
-  { name: "Bruma Casino", score: 8.1, title: "150% up to €150", wagering: 45, deposit: 20, payout: "24–48h", summary: "A larger percentage headline with the highest wagering in this comparison.", percentage: 150, maximumBonus: 150, freeSpins: 0 },
-  { name: "Novara Casino", score: 7.7, title: "10% weekly cashback up to €200", wagering: 1, deposit: 20, payout: "24–48h", summary: "A cashback format shown separately from welcome packages.", percentage: 10, maximumBonus: 200, freeSpins: 0 },
-] as const;
+  { name: "Orlan Casino", score: 8.6, wagering: 40, deposit: 20, percentage: 125, maximumBonus: 400, freeSpins: 125, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 2, crypto: true } },
+  { name: "Vespera Casino", score: 8.4, wagering: 35, deposit: 10, percentage: 100, maximumBonus: 250, freeSpins: 75, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 48 } },
+  { name: "Halcyon Casino", score: 8.3, wagering: 30, deposit: 25, percentage: 100, maximumBonus: 200, freeSpins: 50, titleStyle: "amount", payout: { minimumHours: 48, maximumHours: null } },
+  { name: "Bruma Casino", score: 8.1, wagering: 45, deposit: 20, percentage: 150, maximumBonus: 150, freeSpins: 0, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 48 } },
+  { name: "Novara Casino", score: 7.7, wagering: 1, deposit: 20, percentage: 10, maximumBonus: 200, freeSpins: 0, titleStyle: "cashback", payout: { minimumHours: 24, maximumHours: 48 } },
+] as const satisfies readonly FixtureOfferSample[];
 
 const casinoDirectorySamples = [
-  { ...offerSamples[0], signals: "Live casino · Fast verification" },
-  { ...offerSamples[1], payout: "24–48h", signals: "VIP programme · 24/7 support" },
-  { ...offerSamples[2], signals: "Mobile-first · Low deposit" },
-  { name: "Orlan Casino", score: 8.6, title: "125% up to €400 + 125 free spins", wagering: 40, deposit: 20, payout: "0–24h", summary: "Crypto payout speed with the higher wagering requirement shown clearly.", signals: "Crypto accepted" },
-  { name: "Vespera Casino", score: 8.4, title: "100% up to €250 + 75 free spins", wagering: 35, deposit: 10, payout: "24–48h", summary: "A lower entry offer with mid-range payout timing.", signals: "New 2026 · Crypto" },
-  { name: "Halcyon Casino", score: 8.3, title: "€200 + 50 free spins", wagering: 30, deposit: 25, payout: "48h+", summary: "Lower wagering offset by a higher deposit floor and slower payout range.", signals: "Live-dealer focus" },
-  { name: "Bruma Casino", score: 8.1, title: "150% up to €150", wagering: 45, deposit: 20, payout: "24–48h", summary: "A larger percentage headline with the highest wagering in this comparison.", signals: "High-roller tables" },
-  { name: "Aldwyn Casino", score: 7.9, title: "€100 + 50 free spins", wagering: 35, deposit: 10, payout: "48h+", summary: "A classic slots catalogue with a lower deposit floor.", signals: "Classic slots · Est. 2019" },
-  { name: "Novara Casino", score: 7.7, title: "100% up to €200", wagering: 40, deposit: 20, payout: "24–48h", summary: "A newer mobile-first option with crypto payments.", signals: "New 2026 · Crypto" },
-  { name: "Perla Casino", score: 7.5, title: "€150 + 30 free spins", wagering: 45, deposit: 25, payout: "48h+", summary: "Boutique live rooms with a higher deposit floor.", signals: "Boutique live rooms" },
-] as const;
+  offerSamples[0],
+  { ...offerSamples[1], payout: { minimumHours: 24, maximumHours: 48 } },
+  offerSamples[2],
+  { name: "Orlan Casino", score: 8.6, wagering: 40, deposit: 20, percentage: 125, maximumBonus: 400, freeSpins: 125, titleStyle: "percentage", payout: { minimumHours: 0, maximumHours: 24 } },
+  { name: "Vespera Casino", score: 8.4, wagering: 35, deposit: 10, percentage: 100, maximumBonus: 250, freeSpins: 75, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 48 } },
+  { name: "Halcyon Casino", score: 8.3, wagering: 30, deposit: 25, percentage: 100, maximumBonus: 200, freeSpins: 50, titleStyle: "amount", payout: { minimumHours: 48, maximumHours: null } },
+  { name: "Bruma Casino", score: 8.1, wagering: 45, deposit: 20, percentage: 150, maximumBonus: 150, freeSpins: 0, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 48 } },
+  { name: "Aldwyn Casino", score: 7.9, wagering: 35, deposit: 10, percentage: 100, maximumBonus: 100, freeSpins: 50, titleStyle: "amount", payout: { minimumHours: 48, maximumHours: null } },
+  { name: "Novara Casino", score: 7.7, wagering: 40, deposit: 20, percentage: 100, maximumBonus: 200, freeSpins: 0, titleStyle: "percentage", payout: { minimumHours: 24, maximumHours: 48 } },
+  { name: "Perla Casino", score: 7.5, wagering: 45, deposit: 25, percentage: 100, maximumBonus: 150, freeSpins: 30, titleStyle: "amount", payout: { minimumHours: 48, maximumHours: null } },
+] as const satisfies readonly FixtureOfferSample[];
+
+function fixtureMarket(locale: SupportedLocale) {
+  return MARKET_PROFILES.find((profile) => profile.supportedLocales.includes(locale)) ?? MARKET_PROFILES[0];
+}
+
+function casinoFixtureFacets(locale: SupportedLocale): CasinoDiscoveryResult["facets"] {
+  const market = fixtureMarket(locale);
+  return {
+    countries: [{ key: market.countryCode, label: market.seoDisplayName, count: casinoDirectorySamples.length }],
+    licenses: [],
+    payments: [
+      { key: "visa", label: "Visa", count: casinoDirectorySamples.length },
+      { key: "mastercard", label: "Mastercard", count: casinoDirectorySamples.length },
+    ],
+    gameProviders: [],
+    categories: [],
+    bonusTypes: [{ key: "WELCOME", label: visualFixtureCopy(locale).welcomeBonusType, count: casinoDirectorySamples.length }],
+  };
+}
+
+function offerFixtureFacets(locale: SupportedLocale): PublicOfferSearchResult["facets"] {
+  const market = fixtureMarket(locale);
+  const messages = productPageMessages(locale);
+  return {
+    countries: [{ value: market.countryCode, label: market.seoDisplayName, count: bonusDirectorySamples.length }],
+    types: [{ value: "WELCOME", label: visualFixtureCopy(locale).welcomeBonusType, count: bonusDirectorySamples.length }],
+    payments: [
+      { value: "visa", label: "Visa", count: 4 },
+      { value: "mastercard", label: "Mastercard", count: 4 },
+    ],
+    crypto: [
+      { value: "false", label: messages.common.cryptoUnsupported, count: 7 },
+      { value: "true", label: messages.common.cryptoSupported, count: 1 },
+    ],
+    availability: [{ value: "UNAVAILABLE", label: messages.common.reviewOnly, count: bonusDirectorySamples.length }],
+  };
+}
+
+function formatFixtureMoney(value: number, locale: SupportedLocale) {
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
+}
+
+function formatFixturePayout(payout: FixturePayout, locale: SupportedLocale) {
+  const fixtureCopy = visualFixtureCopy(locale);
+  const hours = new Intl.NumberFormat(locale, { style: "unit", unit: "hour", unitDisplay: "long", maximumFractionDigits: 0 });
+  const range = payout.maximumHours === null
+    ? fixtureCopy.atLeastHours.replace("{hours}", hours.format(payout.minimumHours))
+    : (hours as Intl.NumberFormat & { formatRange(start: number, end: number): string })
+        .formatRange(payout.minimumHours, payout.maximumHours);
+  return payout.crypto ? `${range} · ${fixtureCopy.cryptoPayout}` : range;
+}
+
+function localizedOfferTitle(sample: FixtureOfferSample, locale: SupportedLocale) {
+  const copy = demoProfileCopy(locale);
+  const [leadTemplate, spinsTemplate] = copy.bonus.title.split(" + ");
+  const lead = localizedNumericFixtureCopy(leadTemplate, `${sample.percentage} ${sample.maximumBonus}`);
+  const spins = spinsTemplate ? localizedNumericFixtureCopy(spinsTemplate, String(sample.freeSpins)) : "";
+  if (sample.titleStyle === "cashback") {
+    const percentage = new Intl.NumberFormat(locale, { style: "percent", maximumFractionDigits: 0 }).format(sample.percentage / 100);
+    return visualFixtureCopy(locale).cashbackTitle
+      .replace("{percent}", percentage)
+      .replace("{amount}", formatFixtureMoney(sample.maximumBonus, locale));
+  }
+  if (sample.titleStyle === "amount") return spins ? `${formatFixtureMoney(sample.maximumBonus, locale)} + ${spins}` : formatFixtureMoney(sample.maximumBonus, locale);
+  return sample.freeSpins > 0 && spins ? `${lead} + ${spins}` : lead;
+}
+
+function localizedOfferSummary(sample: FixtureOfferSample, locale: SupportedLocale) {
+  const messages = productPageMessages(locale);
+  return `${messages.common.wagering}: ${sample.wagering}× · ${messages.common.minimumDeposit}: ${formatFixtureMoney(sample.deposit, locale)}.`;
+}
+
+function localizedHighlights(index: number, locale: SupportedLocale) {
+  const messages = productPageMessages(locale);
+  const copy = demoProfileCopy(locale);
+  const cryptoPayout = visualFixtureCopy(locale).cryptoPayout;
+  const sets = [
+    [copy.liveDealer, messages.common.sourceStatus],
+    [messages.profile.controlTools, messages.common.supported],
+    [messages.common.mobileSupport, messages.common.minimumDeposit],
+    [cryptoPayout],
+    [messages.common.sourceStatus, cryptoPayout],
+    [copy.liveDealer, messages.common.payout],
+    [messages.common.maximumBonus, messages.common.wagering],
+    [messages.common.paymentMethods, messages.common.minimumDeposit],
+    [messages.common.mobileSupport, cryptoPayout],
+    [copy.liveDealer, messages.common.eligibility],
+  ];
+  return sets[index % sets.length];
+}
 
 type OfferMediaFixtureMode = "best-offers" | "bonuses";
 
@@ -135,12 +246,15 @@ const phaseTwoMediaFixtures = {
 function handoffOffer(
   seed: PublicOfferDTO,
   index: number,
-  samples: readonly { name: string; score: number; title: string; wagering: number; deposit: number; payout: string; summary: string; percentage?: number; maximumBonus?: number; freeSpins?: number }[] = offerSamples,
+  samples: readonly FixtureOfferSample[] = offerSamples,
   mediaMode: OfferMediaFixtureMode = "best-offers",
+  locale: SupportedLocale = "en-GB",
 ): PublicOfferDTO {
   const sample = samples[index];
+  const copy = demoProfileCopy(locale);
+  const market = fixtureMarket(locale);
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
-  const payment = seed.casino.payments[0];
+  const paymentName = index % 2 === 0 ? "Visa" : "Mastercard";
   const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
   const hero = mediaMode === "best-offers"
     ? [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.landscape, phaseTwoMediaFixtures.square, null][index % 4]
@@ -151,49 +265,47 @@ function handoffOffer(
       ...seed.casino,
       id: temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
       slug: key,
+      reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
       name: sample.name,
-      summary: sample.summary,
-      logo: { id: `visual-offer-${index}-logo`, type: "logo", url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160, caption: null },
-      hero: hero ? { id: `visual-offer-${index}-hero`, type: "hero", url: hero.url, alt: `${sample.name} fictional ${hero.label} commercial-layout preview`, width: hero.width, height: hero.height, caption: null } : null,
+      summary: copy.summary,
+      logo: { id: `visual-offer-${index}-logo`, type: "logo", url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160, caption: null },
+      hero: hero ? { id: `visual-offer-${index}-hero`, type: "hero", url: hero.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", hero.label)}`, width: hero.width, height: hero.height, caption: null } : null,
       editorScore: sample.score,
       featured: index === 0,
       recommended: index < 3,
-      countries: [{ countryCode: "GB", availability: "AVAILABLE" }],
+      countries: [{ countryCode: market.countryCode, availability: "AVAILABLE" }],
       licenses: [],
+      responsibleGamblingTools: [...copy.responsibleGamblingTools],
       payments: [{
-        ...(payment ?? {
-          key: "visa",
-          name: "Visa",
-          minimumDeposit: sample.deposit,
-          supportsWithdrawals: true,
-          withdrawalTime: sample.payout,
-          minimumWithdrawal: null,
-          maximumWithdrawal: null,
-          fees: null,
-          crypto: false,
-        }),
-        key: `visual-payment-${index}`,
-        name: payment?.name ?? "Visa",
+        key: paymentName.toLowerCase(),
+        name: paymentName,
         minimumDeposit: sample.deposit,
         supportsWithdrawals: true,
-        withdrawalTime: sample.payout,
+        withdrawalTime: formatFixturePayout(sample.payout, locale),
+        minimumWithdrawal: null,
+        maximumWithdrawal: null,
+        fees: null,
+        crypto: Boolean(sample.payout.crypto),
       }],
     },
     bonus: {
       ...seed.bonus,
       id: `visual-bonus-${index}`,
       slug: `visual-bonus-${index}`,
-      title: sample.title,
-      summary: `${sample.wagering}x wagering · minimum deposit €${sample.deposit}.`,
-      percentage: sample.percentage ?? (index === 4 ? 50 : 100),
-      maximumBonus: sample.maximumBonus ?? [500, 400, 300, 250, 200, 150][index] ?? seed.bonus.maximumBonus,
+      type: "WELCOME",
+      title: localizedOfferTitle(sample, locale),
+      summary: localizedOfferSummary(sample, locale),
+      percentage: sample.percentage,
+      maximumBonus: sample.maximumBonus,
       currency: "EUR",
-      freeSpins: sample.freeSpins ?? [200, 150, 100, 100, 50, 0][index] ?? seed.bonus.freeSpins,
+      freeSpins: sample.freeSpins,
       minimumDeposit: sample.deposit,
       wageringMultiplier: sample.wagering,
-      wageringText: `${sample.wagering}x`,
-      eligibility: "18+ · New customers · Terms apply",
-      importantConditions: ["Terms shown before action"],
+      wageringText: localizedNumericFixtureCopy(copy.bonus.wagering, String(sample.wagering)),
+      eligibility: copy.bonus.eligibility,
+      importantConditions: [...copy.bonus.conditions],
+      startsAt: null,
+      expiresAt: null,
     },
     action: { available: false, href: null },
     commercialAvailability: "UNAVAILABLE",
@@ -201,14 +313,17 @@ function handoffOffer(
   };
 }
 
-export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean): T {
+export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean, locale: SupportedLocale = "en-GB"): T {
   if (!enabled || !result.records.length) return result;
-  const records = offerSamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index));
+  const records = offerSamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index, offerSamples, "best-offers", locale));
   return { ...result, records, inventoryMode: "DEMO_ONLY" } as unknown as T;
 }
 
-function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCardDto {
+function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPreviewAction: boolean, locale: SupportedLocale): PublicCasinoCardDto {
   const sample = casinoDirectorySamples[index];
+  const copy = demoProfileCopy(locale);
+  const messages = productPageMessages(locale);
+  const market = fixtureMarket(locale);
   const key = sample.name.toLowerCase().replaceAll(" ", "-");
   const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
   const hasLogo = index % 5 !== 3;
@@ -218,26 +333,31 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
     { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
     null,
   ][index % 4];
-  const previewAction = index === 0;
+  const previewAction = allowLocalPreviewAction && index === 0;
   return {
     ...seed,
     id: previewAction ? "local-commercial-phase-preview" : temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
     dataClassification: previewAction ? "LOCAL_PREVIEW_FIXTURE" : "DEMO_FIXTURE",
     slug: key,
+    reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
     name: sample.name,
-    logo: hasLogo ? { url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160 } : null,
-    hero: ratioFixture ? { url: ratioFixture.url, alt: `${sample.name} fictional ${ratioFixture.label} media-ratio preview`, width: ratioFixture.width, height: ratioFixture.height } : null,
-    shortDescription: sample.summary,
+    logo: hasLogo ? { url: `/demo-casinos/demo-${asset}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160 } : null,
+    hero: ratioFixture ? { url: ratioFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", ratioFixture.label)}`, width: ratioFixture.width, height: ratioFixture.height } : null,
+    shortDescription: copy.summary,
     rating: sample.score,
     licenses: [],
-    countries: [{ key: "gb", label: "Great Britain" }],
+    countries: [{ key: market.countryCode, label: market.seoDisplayName }],
     paymentMethods: [{ key: "visa", label: "Visa" }, { key: "mastercard", label: "Mastercard" }],
-    highlights: sample.signals.split(" · "),
+    highlights: localizedHighlights(index, locale),
     featuredBonus: {
-      title: sample.title,
-      summary: `${sample.wagering}x wagering · minimum deposit €${sample.deposit}.`,
+      title: localizedOfferTitle(sample, locale),
+      summary: localizedOfferSummary(sample, locale),
       type: "WELCOME",
-      keyTerms: [sample.payout, `${sample.wagering}x wagering`, `Min €${sample.deposit}`],
+      keyTerms: [
+        formatFixturePayout(sample.payout, locale),
+        `${messages.common.wagering}: ${sample.wagering}×`,
+        `${messages.common.minimumDeposit}: ${formatFixtureMoney(sample.deposit, locale)}`,
+      ],
       wageringRequirement: sample.wagering,
       minimumDeposit: sample.deposit,
       currency: "EUR",
@@ -245,31 +365,69 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number): PublicCasinoCa
       termsApply: true,
     },
     visitAction: previewAction
-      ? { available: true, redirectSlug: "local-preview-no-destination", label: `Visit ${sample.name}`, reasonCode: null }
-      : { available: false, redirectSlug: null, label: `Visit ${sample.name}`, reasonCode: "NO_GOVERNED_ROUTE" },
-    responsibleGamblingLabel: "Control tools listed",
+      ? { available: true, redirectSlug: "local-preview-no-destination", label: `${messages.common.actionAvailable}: ${sample.name}`, reasonCode: null }
+      : { available: false, redirectSlug: null, label: messages.common.commercialUnavailable, reasonCode: "NO_GOVERNED_ROUTE" },
+    responsibleGamblingLabel: messages.profile.controlTools,
   };
 }
 
-export function withHandoffCasinoDiscoveryData(result: CasinoDiscoveryResult, enabled: boolean): CasinoDiscoveryResult {
-  if (!enabled || !result.items.length) return result;
-  const items = casinoDirectorySamples.map((_, index) => handoffCasino(result.items[index % result.items.length], index));
+const casinoFixtureSeed: PublicCasinoCardDto = {
+  id: temporaryDemoCasinoIds[0],
+  dataClassification: "DEMO_FIXTURE",
+  slug: "local-visual-fixture",
+  name: "B4GAMBLE visual fixture",
+  logo: null,
+  hero: null,
+  shortDescription: null,
+  rating: null,
+  reviewCount: null,
+  licenses: [],
+  countries: [],
+  paymentMethods: [],
+  gameProviders: [],
+  categories: [],
+  highlights: [],
+  featuredBonus: null,
+  visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "DEMO_FIXTURE" },
+  responsibleGamblingLabel: null,
+  publishedAt: null,
+  editorialUpdatedAt: null,
+};
+
+export function withHandoffCasinoDiscoveryData(
+  result: CasinoDiscoveryResult,
+  enabled: boolean,
+  allowLocalPreviewAction = false,
+  locale: SupportedLocale = "en-GB",
+  requestedQuery: CasinoDiscoveryQuery = { ...result.appliedFilters, page: result.page },
+): CasinoDiscoveryResult {
+  if (!enabled) return result;
+  const seeds = result.items.length ? result.items : [casinoFixtureSeed];
+  const allItems = casinoDirectorySamples.map((_, index) => handoffCasino(seeds[index % seeds.length], index, allowLocalPreviewAction, locale));
+  const pageCount = 2;
+  const pageSize = Math.ceil(allItems.length / pageCount);
+  const page = Math.min(pageCount, Math.max(1, requestedQuery.page ?? result.page));
+  const items = allItems.slice((page - 1) * pageSize, page * pageSize);
   return {
     ...result,
     items,
     inventoryMode: "DEMO_ONLY",
-    total: items.length,
-    page: 1,
-    pageSize: Math.max(result.pageSize, items.length),
-    pageCount: 1,
+    total: allItems.length,
+    page,
+    pageSize,
+    pageCount,
+    facets: casinoFixtureFacets(locale),
+    appliedFilters: { ...requestedQuery, page },
   };
 }
 
-export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: boolean): PublicCasinoDTO {
+export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: boolean, locale: SupportedLocale = "en-GB"): PublicCasinoDTO {
   if (!enabled) return casino;
   const sample = offerSamples[0];
+  const copy = demoProfileCopy(locale);
+  const market = fixtureMarket(locale);
+  const currency = market.currencyHints[0] ?? "EUR";
   const bonus = casino.bonuses[0];
-  const payment = casino.payments[0];
   const mediaKey = casino.slug.includes("aurora") ? "aurora" : casino.slug.includes("beacon") ? "beacon" : casino.slug.includes("canopy") ? "canopy" : casino.slug.includes("cedar") ? "cedar" : "northstar";
   const profileHasLogo = mediaKey !== "canopy";
   const profileRatioFixtures = {
@@ -281,92 +439,101 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
+    domain: "example.invalid",
     name: sample.name,
-    title: `${sample.name} review`,
-    summary: "Fictional review fields for interface testing; not evidence of operator performance or a current offer.",
-    reviewContent: "This fictional review demonstrates the interface only. It is not based on a real operator, licence, offer or performance test.",
+    title: copy.title,
+    summary: copy.summary,
+    reviewContent: copy.reviewContent,
+    operator: null,
     foundedYear: 2021,
     editorScore: sample.score,
-    pros: ["Players who cash out often", "Live-dealer regulars", "Anyone tired of payout excuses"],
-    cons: ["Wagering excludes some live games", "Not available in all countries", "VIP perks start after real play"],
-    responsibleGamblingTools: ["Deposit limits", "Time-outs", "Self-exclusion"],
+    languages: [locale],
+    currencies: [currency],
+    pros: [...copy.pros],
+    cons: [...copy.cons],
+    responsibleGamblingTools: [...copy.responsibleGamblingTools],
+    seo: {
+      title: copy.editorial.seoTitle,
+      description: copy.editorial.seoDescription,
+      canonical: casino.seo.canonical,
+      robots: "noindex,follow",
+      socialTitle: copy.editorial.seoTitle,
+      socialDescription: copy.editorial.seoDescription,
+      socialImage: null,
+      structuredData: null,
+    },
     licenses: [{ authority: "MGA", licenseNumber: "REFERENCE", jurisdiction: "MT", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2026-08-12T00:00:00.000Z" }],
-    countries: [{ countryCode: "GB", availability: "AVAILABLE", minimumAge: 18, currency: "GBP", language: "en" }],
-    payments: ["Visa", "Skrill", "Bank transfer"].map((name, index) => ({
-      ...(payment ?? {
-        key: "visa",
-        name: "Visa",
-        supportsDeposits: true,
-        supportsWithdrawals: true,
-        currencies: ["EUR"],
-        minimumDeposit: sample.deposit,
-        minimumWithdrawal: null,
-        maximumWithdrawal: null,
-        depositProcessingTime: "Instant",
-        withdrawalTime: sample.payout,
-        fees: null,
-        crypto: false,
-      }),
+    countries: [{ countryCode: market.countryCode, availability: "AVAILABLE", minimumAge: 18, currency, language: locale }],
+    payments: ["Visa", "Skrill", copy.bankTransfer].map((name, index) => ({
       key: `visual-profile-payment-${index}`,
       name,
-      withdrawalTime: sample.payout,
+      supportsDeposits: true,
+      supportsWithdrawals: true,
+      currencies: [currency],
+      withdrawalTime: formatFixturePayout(sample.payout, locale),
       minimumDeposit: sample.deposit,
+      minimumWithdrawal: null,
+      maximumWithdrawal: null,
+      depositProcessingTime: copy.instant,
+      fees: null,
+      crypto: false,
     })),
     providers: [{ key: "visual-slots", name: "Orbit Studios", gameCount: 2400, liveCasino: false }],
-    categories: [{ key: "visual-live", name: "Live dealer", gameCount: 40, featured: true }],
+    categories: [{ key: "visual-live", name: copy.liveDealer, gameCount: 40, featured: true }],
     bonuses: bonus ? [{
       ...bonus,
       id: "visual-solvane-bonus",
       slug: "visual-solvane-bonus",
-      title: sample.title,
-      summary: "A clearly presented welcome offer with the material conditions visible before action.",
+      title: copy.bonus.title,
+      summary: copy.bonus.summary,
+      type: "WELCOME",
       percentage: 100,
       minimumDeposit: sample.deposit,
       maximumBonus: 500,
-      currency: "EUR",
+      maximumBet: 5,
+      currency,
       freeSpins: 200,
       wageringMultiplier: sample.wagering,
-      wageringText: `${sample.wagering}x wagering`,
-      eligibility: "18+ · New customers · Terms apply",
-      importantConditions: ["Terms shown before action", "Maximum bet applies"],
+      wageringText: copy.bonus.wagering,
+      eligibility: copy.bonus.eligibility,
+      importantConditions: [...copy.bonus.conditions],
+      termsUrl: null,
+      startsAt: null,
+      expiresAt: null,
       affiliate: { available: false, href: null },
     }] : [],
     media: {
-      ...casino.media,
-      logo: profileHasLogo ? { id: `visual-${mediaKey}-logo`, type: "logo", url: `/demo-casinos/demo-${mediaKey}-logo.svg`, alt: `${sample.name} fictional preview logo`, width: 320, height: 160, caption: null } : null,
-      hero: profileRatioFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileRatioFixture.url, alt: `${sample.name} fictional ${profileRatioFixture.label} media-ratio preview`, width: profileRatioFixture.width, height: profileRatioFixture.height, caption: null } : null,
+      logo: profileHasLogo ? { id: `visual-${mediaKey}-logo`, type: "logo", url: `/demo-casinos/demo-${mediaKey}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160, caption: null } : null,
+      hero: profileRatioFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileRatioFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", profileRatioFixture.label)}`, width: profileRatioFixture.width, height: profileRatioFixture.height, caption: null } : null,
+      screenshots: [],
+      gallery: [],
+      socialImage: null,
     },
     affiliate: { available: false, href: null },
   };
 }
 
-export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument | null, enabled: boolean): CasinoEditorialDocument | null {
+export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument | null, enabled: boolean, locale: SupportedLocale = "en-GB"): CasinoEditorialDocument | null {
   if (!enabled) return document;
-  const sections = [
-    ["payments", "Payouts", "Illustrative withdrawal-method and timing fields for a fictional operator. No payout test was performed."],
-    ["games", "Games", "Illustrative game-count, live-table and RTP fields for a fictional operator. No provider catalogue was checked."],
-    ["bonuses", "Bonuses", "Illustrative wagering, maximum-win and game-weighting fields. This is not a current or claimable bonus."],
-    ["trust", "Support", "Illustrative response-time and support-quality fields for a fictional operator. No support interaction was tested."],
-    ["payments", "Banking", "Illustrative payment-method, fee and withdrawal fields for a fictional operator."],
-  ] as const;
+  const copy = demoProfileCopy(locale);
   return {
     version: 1,
-    title: "Full review",
-    summary: "Fictional editorial fields for interface testing; not evidence of operator performance.",
-    author: "B4GAMBLE Editorial",
+    title: copy.editorial.title,
+    summary: copy.editorial.summary,
+    author: copy.editorial.author,
     factCheckedAt: "2026-08-12T00:00:00.000Z",
     trustScore: {
       overall: 9.6,
       confidence: "high",
-      evidence: ["Fictional payout evidence field", "Fictional RTP evidence field", "Fictional support evidence field"],
+      evidence: [...copy.editorial.evidence],
       categories: [
-        { key: "Payouts", score: 9.8 },
-        { key: "Bonus terms", score: 9.4 },
-        { key: "Games & live floor", score: 9.5 },
-        { key: "Support", score: 9.2 },
+        { key: copy.editorial.categories[0], score: 9.8 },
+        { key: copy.editorial.categories[1], score: 9.4 },
+        { key: copy.editorial.categories[2], score: 9.5 },
+        { key: copy.editorial.categories[3], score: 9.2 },
       ],
     },
-    sections: sections.map(([kind, title, text], index) => ({
+    sections: copy.editorial.sections.map(([kind, title, text], index) => ({
       id: `visual-section-${index}`,
       kind,
       title,
@@ -374,33 +541,60 @@ export function withHandoffCasinoEditorialData(document: CasinoEditorialDocument
       blocks: [
         { id: `visual-block-${index}`, type: "paragraph" as const, text },
         ...(index === 0 ? [
-          { id: "visual-faq-availability", type: "faq" as const, question: "Is Solvane available in my country?", answer: "No. Solvane is a fictional interface example and has no commercial availability." },
-          { id: "visual-faq-freshness", type: "faq" as const, question: "How fresh is this review?", answer: "This is a deterministic interface fixture, not a current operator review." },
-          { id: "visual-faq-score", type: "faq" as const, question: "Did Solvane pay for this score?", answer: "No. Solvane is fictional, the score is illustrative and no commercial relationship exists." },
+          { id: "visual-faq-availability", type: "faq" as const, question: copy.editorial.faq[0][0], answer: copy.editorial.faq[0][1] },
+          { id: "visual-faq-freshness", type: "faq" as const, question: copy.editorial.faq[1][0], answer: copy.editorial.faq[1][1] },
+          { id: "visual-faq-score", type: "faq" as const, question: copy.editorial.faq[2][0], answer: copy.editorial.faq[2][1] },
         ] : []),
       ],
     })),
     relatedCasinoIds: [],
-    seo: { title: "Solvane Casino review", description: offerSamples[0].summary },
+    seo: { title: copy.editorial.seoTitle, description: copy.editorial.seoDescription },
   };
 }
 
-export function withHandoffBonusDirectoryData(result: PublicOfferSearchResult, enabled: boolean): PublicOfferSearchResult {
-  if (!enabled || !result.records.length) return result;
-  const records = bonusDirectorySamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index, bonusDirectorySamples, "bonuses"));
+export function withHandoffBonusDirectoryData(
+  result: PublicOfferSearchResult,
+  enabled: boolean,
+  locale: SupportedLocale = "en-GB",
+  requestedQuery: PublicOfferQuery = result.query,
+): PublicOfferSearchResult {
+  if (!enabled) return result;
+  const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
+  if (!seeds.length) return result;
+  const allRecords = bonusDirectorySamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, bonusDirectorySamples, "bonuses", locale));
+  const pageCount = 2;
+  const pageSize = Math.ceil(allRecords.length / pageCount);
+  const page = Math.min(pageCount, Math.max(1, requestedQuery.page));
+  const records = allRecords.slice((page - 1) * pageSize, page * pageSize);
   return {
     ...result,
     records,
-    total: records.length,
-    page: 1,
-    pageSize: Math.max(result.pageSize, records.length),
-    pageCount: 1,
+    total: allRecords.length,
+    page,
+    pageSize,
+    pageCount,
+    query: { ...requestedQuery, page },
+    facets: offerFixtureFacets(locale),
     inventoryMode: "DEMO_ONLY",
   };
 }
 
-export function withHandoffComparisonData(result: PublicComparisonResult, enabled: boolean): PublicComparisonResult {
+function localizedNumericFixtureCopy(template: string, source: string) {
+  const sourceNumbers = source.match(/\d+(?:[.,]\d+)?/g) ?? [];
+  let index = 0;
+  return template.replace(/\d+(?:[.,]\d+)?/g, (value) => sourceNumbers[index++] ?? value);
+}
+
+export function withHandoffComparisonData(result: PublicComparisonResult, enabled: boolean, locale: SupportedLocale = "en-GB"): PublicComparisonResult {
   if (!enabled) return result;
+  const messages = productPageMessages(locale);
+  const copy = demoProfileCopy(locale);
+  const unavailableAction = () => ({
+    available: false,
+    href: null,
+    label: messages.common.commercialUnavailable,
+    reason: messages.profile.demoDisclosure,
+  });
   const casinos = (result.casinos.length ? result.casinos : result.selectedSlugs.map((slug, index) => {
     const candidate = result.candidates[index % Math.max(1, result.candidates.length)];
     return {
@@ -408,14 +602,14 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       dataClassification: "DEMO_FIXTURE" as const,
       slug,
       name: offerSamples[index % offerSamples.length].name,
-      summary: offerSamples[index % offerSamples.length].summary,
+      summary: copy.summary,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,
       publishedAt: null,
       lastReviewedAt: null,
       reviewHref: candidate ? `/casino/${candidate.slug}` : "/casinos",
       marketState: "AVAILABLE" as const,
-      action: { available: false, href: null, label: `Visit ${offerSamples[index % offerSamples.length].name}`, reason: "Fictional demonstration records never expose a commercial action." },
+      action: unavailableAction(),
     };
   })).map((casino, index) => {
     const sample = offerSamples[index % offerSamples.length];
@@ -423,43 +617,49 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       ...casino,
       id: `visual-comparison-${index}`,
       dataClassification: "DEMO_FIXTURE" as const,
+      reviewHref: "/casino/demo-plume?visualFixture=true",
       name: sample.name,
-      summary: index === 0 ? "Live casino · Fast verification" : index === 1 ? "VIP programme · 24/7 support" : sample.summary,
+      summary: copy.summary,
       logo: null,
       editorScore: sample.score,
-      action: { available: false, href: null, label: `Visit ${sample.name}`, reason: "Fictional demonstration records never expose a commercial action." },
+      action: unavailableAction(),
     };
   });
   const visualComparisonValues: Record<string, (index: number) => string> = {
-    "offer-title": (index) => offerSamples[index % offerSamples.length].title,
-    wagering: (index) => `${offerSamples[index % offerSamples.length].wagering}x`,
-    "minimum-deposit": (index) => `€${offerSamples[index % offerSamples.length].deposit}`,
-    "withdrawal-time": (index) => offerSamples[index % offerSamples.length].payout,
-    methods: (index) => index === 0 ? "Visa / Mastercard · Skrill · Bank transfer" : "Visa / Mastercard · Bank transfer",
-    "control-tools": () => "Live casino · VIP programme",
+    "offer-title": (index) => localizedOfferTitle(offerSamples[index % offerSamples.length], locale),
+    wagering: (index) => localizedNumericFixtureCopy(copy.bonus.wagering, String(offerSamples[index % offerSamples.length].wagering)),
+    "minimum-deposit": (index) => formatFixtureMoney(offerSamples[index % offerSamples.length].deposit, locale),
+    "withdrawal-time": (index) => formatFixturePayout(offerSamples[index % offerSamples.length].payout, locale),
+    methods: (index) => ["Visa / Mastercard", ...(index === 0 ? ["Skrill"] : []), copy.bankTransfer].join(" · "),
+    "control-tools": () => copy.responsibleGamblingTools.join(" · "),
   };
+  const value = (rowId: string, index: number) => ({
+    text: visualComparisonValues[rowId](index),
+    status: "Demonstration" as const,
+    statusLabel: messages.common.demoData,
+  });
   const fallbackGroups = [
     {
       id: "offer",
-      label: "Offer terms",
+      label: messages.profile.offerTerms,
       rows: [
-        { id: "offer-title", label: "Offer", description: "Deterministic local visual data." },
-        { id: "wagering", label: "Wagering", description: "Deterministic local visual data." },
-        { id: "minimum-deposit", label: "Minimum deposit", description: "Deterministic local visual data." },
-      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }])) })),
+        { id: "offer-title", label: messages.profile.offerEvidence, description: copy.editorial.summary },
+        { id: "wagering", label: messages.common.wagering, description: copy.editorial.summary },
+        { id: "minimum-deposit", label: messages.common.minimumDeposit, description: copy.editorial.summary },
+      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, value(row.id, index)])) })),
     },
     {
       id: "payments",
-      label: "Payments",
+      label: messages.common.paymentMethods,
       rows: [
-        { id: "withdrawal-time", label: "Payout", description: "Deterministic local visual data." },
-        { id: "methods", label: "Payments", description: "Deterministic local visual data." },
-      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }])) })),
+        { id: "withdrawal-time", label: messages.common.payout, description: copy.editorial.summary },
+        { id: "methods", label: messages.common.paymentMethods, description: copy.editorial.summary },
+      ].map((row) => ({ ...row, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, value(row.id, index)])) })),
     },
     {
       id: "safety-commercial",
-      label: "Control tools",
-      rows: [{ id: "control-tools", label: "Features", description: "Deterministic local visual data.", values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues["control-tools"](index), status: "Published" as const }])) }],
+      label: messages.profile.controlTools,
+      rows: [{ id: "control-tools", label: messages.profile.controlTools, description: copy.editorial.summary, values: Object.fromEntries(casinos.map((casino, index) => [casino.slug, value("control-tools", index)])) }],
     },
   ];
   return {
@@ -472,17 +672,11 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       name: offerSamples[index % offerSamples.length].name,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,
+      marketLabel: messages.common.demoData,
     })),
-    groups: (result.groups.length ? result.groups : fallbackGroups).map((group) => ({
-      ...group,
-      rows: group.rows.map((row) => ({
-        ...row,
-        values: visualComparisonValues[row.id]
-          ? Object.fromEntries(casinos.map((casino, index) => [casino.slug, { text: visualComparisonValues[row.id](index), status: "Published" as const }]))
-          : row.values,
-      })),
-    })),
+    groups: fallbackGroups,
     reasons: [],
+    hiddenEqualRows: 0,
     inventoryMode: "DEMO_ONLY",
   };
 }

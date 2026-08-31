@@ -68,14 +68,28 @@ test("account navigation is server-state-derived and never invents XP", () => {
 test("desktop and mobile header actions render the shared account label with icon-only navigation controls", () => {
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
 
-  assert.doesNotMatch(navigation, /authenticated\s*\?\s*["']My Programme["']\s*:\s*account\.primaryLabel/);
-  assert.equal(navigation.match(/\{account\.primaryLabel\}/g)?.length, 2);
+  assert.match(navigation, /const primaryLabel = authenticated \? messages\.myProgramme : messages\.startProgramme/);
+  assert.equal(navigation.match(/\{primaryLabel\}/g)?.length, 2);
   assert.doesNotMatch(navigation, />\s*Menu\s*</);
   assert.doesNotMatch(navigation, />\s*Close\s*</);
-  assert.match(navigation, /aria-label="Open navigation"/);
-  assert.match(navigation, /aria-label="Close navigation"/);
+  assert.match(navigation, /aria-label=\{messages\.openNavigation\}/);
+  assert.match(navigation, /aria-label=\{messages\.closeNavigation\}/);
   assert.match(navigation, /<MenuIcon \/>/);
   assert.match(navigation, /<CloseIcon \/>/);
+  assert.match(navigation, /<MarketLanguageSelector/);
+});
+
+test("the presentation selector applies one-tap choices with an accessible selected state", () => {
+  const selector = readFileSync("components/public-shell/MarketLanguageSelector.tsx", "utf8");
+
+  assert.match(selector, /aria-expanded=\{open\}/);
+  assert.match(selector, /aria-haspopup="menu"/);
+  assert.match(selector, /role="menuitemradio"/);
+  assert.match(selector, /aria-checked=\{selected\}/);
+  assert.match(selector, /name="choice"/);
+  assert.match(selector, /type="submit"/);
+  assert.match(selector, /value="automatic"/);
+  assert.doesNotMatch(selector, /<select|applyPreference/);
 });
 
 test("the public layout owns one landmark and reads auth on the server", () => {

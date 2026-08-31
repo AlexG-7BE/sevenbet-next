@@ -40,6 +40,7 @@
 .termSheet li { padding: 20px 0 38px; border-top: 1px solid var(--line); font-size: 18px; font-weight: 750; text-transform: uppercase; }
 
 .directorySection { padding: 72px 0 90px; }
+.errorDirectorySection { padding-top: 104px; }
 .sectionHeading { display: grid; grid-template-columns: 1fr 420px; align-items: end; gap: 64px; margin-bottom: 44px; }
 .sectionHeading .display { margin-top: 20px; }
 .sectionHeading > p { margin: 0; color: var(--metal); font-size: 16px; line-height: 1.55; }
@@ -52,8 +53,8 @@
 .featureCard h3 { margin: 0; font-size: 34px; font-weight: 900; line-height: 1; letter-spacing: -.045em; text-transform: uppercase; }
 .offerHeadline { min-height: 62px; margin: 14px 0 22px; font-size: 20px; font-weight: 750; line-height: 1.25; }
 .featureTerms { display: grid; margin: 0; border-top: 2px solid currentColor; }
-.featureTerms div { min-width: 0; display: grid; grid-template-columns: 112px 1fr; gap: 16px; padding: 13px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 35%, transparent); }
-.featureTerms dt { color: var(--metal); font-size: 13px; line-height: 18px; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; }
+.featureTerms div { min-width: 0; display: grid; grid-template-columns: minmax(120px,.45fr) minmax(0,1fr); gap: 16px; padding: 13px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 35%, transparent); }
+.featureTerms dt { min-width:0; color: var(--metal); font-size: 13px; line-height: 18px; font-weight: 800; hyphens:none; letter-spacing: .03em; overflow-wrap:normal; text-transform: uppercase; word-break:normal; }
 .featureCardPrimary .featureTerms dt { color: var(--acid); }
 .featureTerms dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-size: 14px; font-weight: 750; line-height: 20px; }
 .conditions { margin: 14px 0 0; color: var(--metal); font-size: 14px; line-height: 20px; }
@@ -116,9 +117,11 @@
 .page .offerActionCompact { color: var(--white); }
 .actionUnavailableCompact { border-color: var(--line); background: #e6e4da; color: var(--metal); }
 .empty { padding: 56px; border: 1px solid var(--ink); background: var(--field); }
-.empty h2 { max-width: 780px; margin: 14px 0; font-size: clamp(38px, 5vw, 70px); line-height: .92; letter-spacing: -.05em; text-transform: uppercase; }
+.empty h1, .empty h2 { width:100%; max-width:min(780px,100%); min-width:0; margin:14px 0; font-size:clamp(38px,5vw,70px); hyphens:none; line-height:.92; letter-spacing:-.05em; overflow-wrap:normal; text-transform:uppercase; text-wrap:balance; word-break:normal; }
 .empty p { max-width: 680px; color: var(--metal); line-height: 1.55; }
 .empty a { min-height: 48px; display: inline-flex; align-items: center; margin-top: 12px; padding: 0 22px; background: var(--night); color: var(--white); font-size: 14px; font-weight: 800; text-transform: uppercase; }
+.emptyActions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.emptyActions > a, .emptyActions > button { margin-top: 12px; }
 
 .contractSection { padding: 52px 0 54px; background: var(--acid); }
 .contractHeading { width: min(1296px, calc(100% - 96px)); margin: auto; }
@@ -211,6 +214,7 @@
   .mobileTermSheet li { height: 51px; padding-top: 14px; border-top: 1px solid #ada894; font-size: 15px; font-weight: 650; line-height: 20px; text-transform: uppercase; }
 
   .directorySection { padding: 0 0 66px; }
+  .errorDirectorySection { padding-top: calc(105px + env(safe-area-inset-top)); }
   .sectionHeading { display: block; margin: 0 0 36px; padding-top: 42px; }
   .sectionHeading .eyebrow { font-size: 10px; line-height: 12px; }
   .mobileSectionTitle { max-width: 330px; margin: 22px 0 0; font-size: 32px; font-weight: 900; line-height: 33px; letter-spacing: -.02em; }
@@ -389,6 +393,7 @@
 /* Shared directory grammar: normalized identity, central offer, evidence, governed action. */
 .compactHeadline { min-width:0; margin:0; overflow-wrap:anywhere; }
 .compactOffer { min-width:0; }
+.compactTerms dt { min-width:0; hyphens:none; overflow-wrap:normal; word-break:normal; }
 
 @media (min-width:1121px) {
   .comparisonRow {
@@ -577,7 +582,7 @@
   .comparison { gap:12px; }
   .comparisonRow {
     min-height:190px;
-    grid-template-columns:96px minmax(180px,.72fr) minmax(330px,1.35fr) minmax(320px,1fr);
+    grid-template-columns:96px minmax(180px,.72fr) minmax(290px,1.2fr) minmax(360px,1.15fr);
     grid-template-areas:
       "logo identity offer terms"
       "logo identity offer actions"
@@ -627,7 +632,7 @@
     grid-area:terms;
     align-self:end;
     min-width:0;
-    grid-template-columns:repeat(3,minmax(0,1fr));
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:16px;
     margin:0;
     padding:4px 0 18px 30px;
@@ -635,6 +640,7 @@
     border-left:1px solid rgba(16,15,15,.11);
   }
   .compactTerms div { min-width:0; gap:6px; padding:0; border:0 !important; }
+  .compactTerms div:last-child { grid-column:1/-1; }
   .compactTerms dt { color:var(--metal); font-size:13px; font-weight:750; line-height:18px; letter-spacing:.055em; text-transform:uppercase; }
   .compactTerms dd { overflow-wrap:anywhere; font-size:16px; font-weight:850; line-height:21px; }
   .compactActions {
@@ -684,8 +690,9 @@
   .compactOffer > span { color:var(--teal); font-size:12px; font-weight:850; line-height:16px; letter-spacing:.08em; text-transform:uppercase; }
   .compactHeadline { font-size:22px; font-weight:850; line-height:25px; letter-spacing:-.03em; text-wrap:balance; }
   .comparisonRow > .conditions { grid-area:disclosure; margin:8px 0 0; padding:12px 0 0; border:0; border-top:1px solid rgba(16,15,15,.09); font-size:12px; line-height:17px; }
-  .compactTerms { grid-area:terms; align-self:end; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0; padding:2px 0 16px 22px; border:0; border-left:1px solid rgba(16,15,15,.11); }
+  .compactTerms { grid-area:terms; align-self:end; grid-template-columns:minmax(0,1fr); gap:10px; margin:0; padding:2px 0 16px 22px; border:0; border-left:1px solid rgba(16,15,15,.11); }
   .compactTerms div { min-width:0; gap:5px; padding:0; border:0 !important; }
+  .compactTerms div:last-child { grid-column:1/-1; }
   .compactTerms dt { font-size:13px; font-weight:750; line-height:18px; letter-spacing:.04em; text-transform:uppercase; }
   .compactTerms dd { font-size:14px; font-weight:850; line-height:19px; }
   .compactActions { grid-area:actions; align-self:start; display:flex; align-items:center; gap:12px; padding:2px 0 2px 22px; border:0; border-left:1px solid rgba(16,15,15,.11); }
@@ -734,6 +741,7 @@
 
 @media (max-width:760px) {
   .comparisonRow {
+    position:relative;
     gap:16px 14px;
     padding:22px;
     border:1px solid rgba(16,15,15,.12) !important;
@@ -750,8 +758,9 @@
   .compactOffer::before { content:""; position:absolute; top:0; left:0; width:30px; height:3px; background:var(--acid); }
   .compactOffer > span { font-size:12px; letter-spacing:.08em; }
   .compactHeadline { font-size:22px; font-weight:850; line-height:25px; letter-spacing:-.03em; text-wrap:balance; }
-  .compactTerms { gap:16px; padding-top:16px; border-top:1px solid rgba(16,15,15,.1); }
+  .compactTerms { grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; padding-top:16px; border-top:1px solid rgba(16,15,15,.1); }
   .compactTerms div { padding:0; border:0 !important; }
+  .compactTerms div:last-child { grid-column:1/-1; }
   .compactTerms dt { font-size:13px; letter-spacing:.035em; }
   .compactTerms dd { font-size:15px; line-height:19px; }
   .compactActions { gap:10px; padding-top:0; }
@@ -759,6 +768,12 @@
   .compactActions .actionUnavailableCompact { border:1px solid rgba(16,15,15,.08); background:#efeee9; color:#5f5e57; }
   .comparisonRow > .conditions { padding-top:12px; border-top:1px solid rgba(16,15,15,.09); }
   .compactPosition { top:10px; right:12px; }
+}
+
+@media (max-width:600px) {
+  .empty h1, .empty h2 { hyphens:auto; hyphenate-limit-chars:14 6 5; }
+  .compactTerms { grid-template-columns:minmax(0,1fr); }
+  .compactTerms div:last-child { grid-column:auto; }
 }
 
 @media (max-width:390px) {

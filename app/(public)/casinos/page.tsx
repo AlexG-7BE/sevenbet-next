@@ -12,6 +12,10 @@ import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-cas
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
 import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
+import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { commercialAuthorityForPresentation, productHref, productMetadata } from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
+import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-error-harness";
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
@@ -19,60 +23,87 @@ type PageProps = { searchParams: Promise<Record<string, string | string[] | unde
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
   const query = parseCasinoDiscoveryQuery(await searchParams);
   const filtered = hasDiscoveryFilters(query);
-  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
-  const result = await publicCasinoDiscoveryService.discover(query, authority);
+  const [presentation, authority] = await Promise.all([
+    resolveServerPresentationContext(),
+    resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null }),
+  ]);
+  const messages = productPageMessages(presentation.locale);
+  const market = presentation.market.seoDisplayName;
+  const result = await publicCasinoDiscoveryService.discover(
+    query,
+    commercialAuthorityForPresentation(authority, presentation.market.countryCode),
+    { defaultEditorialCountry: presentation.market.countryCode },
+  );
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
   const empty = result.total === 0;
   const canonicalParams = new URLSearchParams();
   if (!filtered && (query.page ?? 1) > 1) canonicalParams.set("page", String(query.page));
-  const canonical = absoluteUrl(`/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`);
-  const title = query.page && query.page > 1 ? `Casino Reviews — Page ${query.page} | B4GAMBLE` : containsDemo ? "Casino Review Demonstration | B4GAMBLE" : "Casino Reviews and Comparisons | B4GAMBLE";
-  const description = containsDemo ? "Fictional demonstration casino records showing B4GAMBLE's review format. Not current GB operators, partner offers or live promotions." : "Search and compare published casino reviews by use-case, licence, payments, games, bonus availability and responsible gambling information.";
-  return { title, description, alternates: { canonical }, robots: filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true }, openGraph: { type: "website", title, description, url: canonical } };
+  const canonicalPath = `/casinos${canonicalParams.size ? `?${canonicalParams}` : ""}`;
+  const title = formatProductMessage(containsDemo ? messages.casinos.demoTitle : messages.casinos.title, { market });
+  const description = formatProductMessage(containsDemo ? messages.casinos.demoDescription : messages.casinos.description, { market });
+  return productMetadata({ presentation, pathname: canonicalPath, title, description, robots: filtered || containsDemo || empty ? { index: false, follow: true } : { index: true, follow: true } });
 }
 
 export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
+  triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parseCasinoDiscoveryQuery(raw);
-  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null });
+  const [presentation, authority] = await Promise.all([
+    resolveServerPresentationContext(),
+    resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null }),
+  ]);
+  const messages = productPageMessages(presentation.locale);
+  const market = presentation.market.seoDisplayName;
   const result = withHandoffCasinoDiscoveryData(
-    await publicCasinoDiscoveryService.discover(query, authority),
+    await publicCasinoDiscoveryService.discover(
+      query,
+      commercialAuthorityForPresentation(authority, presentation.market.countryCode),
+      { defaultEditorialCountry: presentation.market.countryCode },
+    ),
     isLocalHandoffVisualDataFixture(raw.visualFixture),
+    presentation.market.countryCode === "GB",
+    presentation.locale,
+    query,
   );
-  const hasLocalPreviewAction = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE" && casino.visitAction.available);
+  const containsLocalPreview = result.items.some((casino) => casino.dataClassification === "LOCAL_PREVIEW_FIXTURE");
+  const hasGovernedAction = result.items.some((casino) => casino.dataClassification !== "DEMO_FIXTURE" && casino.visitAction.available && casino.visitAction.redirectSlug);
+  const fixtureDisclosure = containsLocalPreview || (result.inventoryMode === "MIXED" && hasGovernedAction)
+    ? `${messages.common.marketPresentationNotice}${hasGovernedAction ? "" : ` ${messages.common.commercialUnavailable}`}`
+    : messages.common.demoDisclosure;
+  const showDiscoveryControls = result.total > 0 || hasDiscoveryFilters(result.appliedFilters);
   const schemas = [
-    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "Casino Reviews", item: absoluteUrl("/casinos") }] },
-    ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: "Published casino reviews", numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(`/casino/${casino.slug}`) })) }] : []),
+    { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "B4GAMBLE", item: absoluteUrl(productHref(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.casinos.directoryTitle, item: absoluteUrl(productHref(presentation, "/casinos")) }] },
+    ...(result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? [{ "@context": "https://schema.org", "@type": "ItemList", name: messages.casinos.directoryTitle, numberOfItems: result.total, itemListElement: result.items.map((casino, index) => ({ "@type": "ListItem", position: (result.page - 1) * result.pageSize + index + 1, name: casino.name, url: absoluteUrl(productHref(presentation, `/casino/${casino.slug}`)) })) }] : []),
   ];
 
   return <div className={styles.page} data-page-theme="dark" data-runtime-renderer="casinos">
     <CommercialSurfaceView surface="casinos" />
-    <p className="srOnly">Affiliate compensation does not determine Editor Score or natural editorial ranking.</p>
-    <ContextualComparison />
+    <p className="srOnly">{messages.bestOffers.commissionNote}</p>
+    <ContextualComparison messages={messages} presentation={presentation} />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
     <section className={styles.hero} data-nav-theme="dark">
       <div className={styles.shell}>
         <div className={styles.heroIntro}>
-          <header><p>Curated by use-case</p><h1>Picked for<br /><em>how you play.</em></h1><span>Choose your use-case — we show the three casinos that earned it. The full directory waits below.</span></header>
+          <header><p>{formatProductMessage(messages.casinos.heroKicker, { market })}</p><h1>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h1><span>{formatProductMessage(messages.casinos.heroCopy, { market })}</span></header>
         </div>
-        <div className={styles.heroProof}><span>Evidence and limitations disclosed</span><span>Max 3 per use-case</span><span>Current published data only</span></div>
+        <div className={styles.heroProof}><span>{messages.casinos.proofEvidence}</span><span>{messages.casinos.proofLimit}</span><span>{messages.casinos.proofPublished}</span></div>
       </div>
     </section>
 
-    <CuratedCasinoShortlist casinos={result.items} />
+    <CuratedCasinoShortlist casinos={result.items} messages={messages} presentation={presentation} />
 
     <section className={styles.directory} data-motion-reveal data-nav-theme="cream" id="casino-directory"><div className={styles.shell}>
-      <div className={styles.directoryHeading}><div><p>Casino directory</p><h2>Full directory</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? "published" : "classified"} {result.total === 1 ? "record" : "records"}</span></div>
-      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>DEMONSTRATION DATA</strong><p>Fictional operators and offer fields show the product experience. They are not current GB operators, licence claims, partner offers or live promotions. {hasLocalPreviewAction ? "One local-only CTA demonstrates the eligible visual state, but has no external tracking destination and remains fail-closed at redirect time." : "No commercial visit action is available."}</p><Link href="/methodology">Read our review method →</Link></div> : null}
-      <DiscoveryControls result={result} />
-      <ActiveDiscoveryFilters result={result} />
-      <DiscoveryResults result={result} />
+      <div className={styles.directoryHeading}><div><p>{messages.casinos.directoryTitle}</p><h2>{messages.casinos.directoryTitle}</h2></div><span>{result.total} {result.inventoryMode === "PUBLISHED_ONLY" ? messages.common.published : messages.common.classified} {result.total === 1 ? messages.common.record : messages.common.records}</span></div>
+      {result.inventoryMode !== "PUBLISHED_ONLY" ? <div className={styles.disclosure} role="note"><strong>{messages.common.demoData}</strong><p>{fixtureDisclosure}</p><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} →</Link></div> : null}
+      {showDiscoveryControls ? <DiscoveryControls messages={messages} presentation={presentation} result={result} /> : null}
+      <ActiveDiscoveryFilters messages={messages} presentation={presentation} result={result} />
+      <DiscoveryResults messages={messages} presentation={presentation} result={result} />
     </div></section>
 
-    <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.shell}><div className={styles.sectionIntro}><p>Casino FAQ</p><h2>Before you choose</h2></div><div>{[
-      ["How is this different from Best Offers?", "Best Offers presents a bounded overall shortlist. This page groups eligible published records by use-case while preserving the same data and availability boundaries."],
-      ["What does “Review only” mean?", "We can’t offer a governed signup route for that casino right now, so we don’t fake one. The review and available published information stay visible."],
-      ["Does commission affect the ranking?", "Affiliate compensation does not determine Editor Score or natural editorial ranking. Details are available in our affiliate disclosure."],
-    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{answer}</p></details>)}</div></div></section>
+    <section className={styles.faq} data-motion-reveal data-nav-theme="cream"><div className={styles.shell}><div className={styles.sectionIntro}><p>{messages.casinos.faqTitle}</p><h2>{messages.casinos.faqTitle}</h2></div><div>{[
+      [messages.casinos.faqDifferenceQuestion, messages.casinos.faqDifferenceAnswer],
+      [messages.casinos.faqReviewOnlyQuestion, messages.casinos.faqReviewOnlyAnswer],
+      [messages.casinos.faqCommissionQuestion, messages.casinos.faqCommissionAnswer],
+    ].map(([question, answer], index) => <details key={question} open={index === 0}><summary>{question}<span aria-hidden="true">+</span></summary><p>{formatProductMessage(answer, { market })}</p></details>)}</div></div></section>
   </div>;
 }

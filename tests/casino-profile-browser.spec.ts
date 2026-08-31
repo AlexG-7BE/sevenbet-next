@@ -41,6 +41,163 @@ test("casino profile has no horizontal overflow across approved and defensive wi
   }
 });
 
+test("localized profile facts preserve whole words at the tablet composition and on long desktop terms", async ({ browser }) => {
+  const tabletContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 768, height: 1024 } });
+  const tabletPage = await tabletContext.newPage();
+  const tabletResponse = await tabletPage.goto(`${baseUrl}/gr/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  expect(tabletResponse?.status()).toBe(200);
+  await expect(tabletPage.locator("html")).toHaveAttribute("lang", "el-GR");
+  await expect(tabletPage.locator("#overview-heading")).toContainText("Έλεγχος 30 δευτερολέπτων");
+
+  const tabletLayout = await tabletPage.evaluate(() => {
+    const visibleWordFragments = (elements: Element[]) => elements.flatMap((element) => {
+      const fragments: Array<{ lines: number; word: string }> = [];
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const text = node.textContent ?? "";
+        for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
+          const word = match[0];
+          if (word.length < 4 || match.index === undefined) continue;
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + word.length);
+          const lines = new Set(Array.from(range.getClientRects())
+            .filter((rect) => rect.width > 0.5 && rect.height > 0.5)
+            .map((rect) => Math.round(rect.top * 2) / 2)).size;
+          if (lines > 1) fragments.push({ lines, word });
+        }
+        node = walker.nextNode();
+      }
+      return fragments;
+    });
+
+    const overview = document.querySelector<HTMLElement>("#overview")!;
+    const overviewHeading = overview.querySelector<HTMLElement>("#overview-heading")!;
+    const overviewHeader = overviewHeading.parentElement!;
+    const overviewKicker = overviewHeader.querySelector<HTMLElement>(":scope > p")!;
+    const overviewCopy = overviewHeader.querySelector<HTMLElement>(":scope > span")!;
+    const overviewGrid = overview.children[1] as HTMLElement;
+    const overviewCards = Array.from(overviewGrid.children) as HTMLElement[];
+    const overviewFacts = overview.querySelector<HTMLDListElement>("dl")!;
+
+    const offer = document.querySelector<HTMLElement>("#offer-evidence")!;
+    const offerComposition = offer.children[1] as HTMLElement;
+    const offerCopy = offerComposition.children[0] as HTMLElement;
+    const offerTerms = offerComposition.children[1] as HTMLElement;
+
+    const hero = document.querySelector<HTMLElement>('section[aria-labelledby="casino-profile-title"]')!;
+    const heroTerms = hero.querySelector<HTMLDListElement>("dl")!;
+    const heroRows = Array.from(heroTerms.children) as HTMLElement[];
+
+    const kickerRect = overviewKicker.getBoundingClientRect();
+    const headingRect = overviewHeading.getBoundingClientRect();
+    const copyRect = overviewCopy.getBoundingClientRect();
+    const cardRects = overviewCards.map((card) => card.getBoundingClientRect());
+    return {
+      fragmentedFacts: visibleWordFragments(Array.from(overviewFacts.querySelectorAll("dt, dd"))),
+      fragmentedOverviewHeading: visibleWordFragments([overviewHeading]),
+      fragmentedTerms: visibleWordFragments([
+        ...Array.from(heroTerms.querySelectorAll("dt, dd")),
+        ...Array.from(offerTerms.querySelectorAll("dt, dd")),
+      ]),
+      headingFollowsKicker: headingRect.top >= kickerRect.bottom - 1,
+      copyFollowsHeading: copyRect.top >= headingRect.bottom - 1,
+      overviewCardsStack: cardRects.slice(1).every((rect, index) => rect.top >= cardRects[index].bottom - 1),
+      offerTermsFollowCopy: offerTerms.getBoundingClientRect().top >= offerCopy.getBoundingClientRect().bottom - 1,
+      heroTermsUseRows: heroRows.length > 1 && heroRows[1].getBoundingClientRect().top >= heroRows[0].getBoundingClientRect().bottom - 1,
+      horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+
+  expect(tabletLayout.headingFollowsKicker).toBe(true);
+  expect(tabletLayout.copyFollowsHeading).toBe(true);
+  expect(tabletLayout.overviewCardsStack).toBe(true);
+  expect(tabletLayout.offerTermsFollowCopy).toBe(true);
+  expect(tabletLayout.heroTermsUseRows).toBe(true);
+  expect(tabletLayout.fragmentedOverviewHeading).toEqual([]);
+  expect(tabletLayout.fragmentedFacts).toEqual([]);
+  expect(tabletLayout.fragmentedTerms).toEqual([]);
+  expect(tabletLayout.horizontalOverflow).toBe(0);
+
+  const spanishResponse = await tabletPage.goto(`${baseUrl}/es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  expect(spanishResponse?.status()).toBe(200);
+  await expect(tabletPage.locator("html")).toHaveAttribute("lang", "es-ES");
+  const spanishHeroTerms = tabletPage.locator('section[aria-labelledby="casino-profile-title"] [class*="heroOfferCopy"] dl');
+  await expect(spanishHeroTerms).toBeVisible();
+  const spanishTermLayout = await spanishHeroTerms.evaluate((terms) => {
+    const fragments: Array<{ lines: number; word: string }> = [];
+    for (const value of terms.querySelectorAll("dt, dd")) {
+      const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT);
+      let node = walker.nextNode();
+      while (node) {
+        const text = node.textContent ?? "";
+        for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
+          if (match[0].length < 4 || match.index === undefined) continue;
+          const range = document.createRange();
+          range.setStart(node, match.index);
+          range.setEnd(node, match.index + match[0].length);
+          const lines = new Set(Array.from(range.getClientRects())
+            .filter((rect) => rect.width > .5 && rect.height > .5)
+            .map((rect) => Math.round(rect.top * 2) / 2)).size;
+          if (lines > 1) fragments.push({ lines, word: match[0] });
+        }
+        node = walker.nextNode();
+      }
+    }
+    return {
+      fragments,
+      styles: Array.from(terms.querySelectorAll("dt, dd"), (item) => ({
+        hyphens: getComputedStyle(item).hyphens,
+        overflowWrap: getComputedStyle(item).overflowWrap,
+        wordBreak: getComputedStyle(item).wordBreak,
+      })),
+      text: terms.textContent?.replace(/\s+/g, " ").trim(),
+      viewportOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    };
+  });
+  expect(spanishTermLayout.text).toContain("Se aplican términos y condiciones");
+  expect(spanishTermLayout.fragments).toEqual([]);
+  expect(spanishTermLayout.styles.every((style) => style.hyphens === "none" && style.overflowWrap === "normal" && style.wordBreak === "normal")).toBe(true);
+  expect(spanishTermLayout.viewportOverflow).toBe(0);
+  await tabletContext.close();
+
+  const desktopContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
+  const desktopPage = await desktopContext.newPage();
+  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  expect(desktopResponse?.status()).toBe(200);
+  await expect(desktopPage.locator("html")).toHaveAttribute("lang", "nl-NL");
+
+  const desktopEligibility = await desktopPage.evaluate(() => {
+    const hero = document.querySelector<HTMLElement>('section[aria-labelledby="casino-profile-title"]')!;
+    const row = Array.from(hero.querySelectorAll("dl > div")).find((candidate) => candidate.querySelector("dt")?.textContent?.trim() === "Deelnamevoorwaarden")!;
+    const value = row.querySelector<HTMLElement>("dd")!;
+    const fragments: Array<{ lines: number; word: string }> = [];
+    const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const text = node.textContent ?? "";
+      for (const match of text.matchAll(/\p{L}[\p{L}\p{M}]*/gu)) {
+        if (match[0].length < 4 || match.index === undefined) continue;
+        const range = document.createRange();
+        range.setStart(node, match.index);
+        range.setEnd(node, match.index + match[0].length);
+        const lines = new Set(Array.from(range.getClientRects())
+          .filter((rect) => rect.width > 0.5 && rect.height > 0.5)
+          .map((rect) => Math.round(rect.top * 2) / 2)).size;
+        if (lines > 1) fragments.push({ lines, word: match[0] });
+      }
+      node = walker.nextNode();
+    }
+    return { fragments, text: value.textContent?.trim(), width: value.getBoundingClientRect().width };
+  });
+
+  expect(desktopEligibility.text).toBe("18+ · Nieuwe klanten · Voorwaarden zijn van toepassing");
+  expect(desktopEligibility.width).toBeGreaterThan(0);
+  expect(desktopEligibility.fragments).toEqual([]);
+  await desktopContext.close();
+});
+
 test("casino profile breadcrumb clears the fixed public header across responsive widths", async ({ browser }) => {
   const viewports = [
     { width: 1440, height: 900 },
@@ -59,7 +216,7 @@ test("casino profile breadcrumb clears the fixed public header across responsive
 
     const header = page.locator('[data-public-shell="header"]');
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
-    const casinosLink = breadcrumb.getByRole("link", { name: "Casinos", exact: true });
+    const casinosLink = breadcrumb.locator('a[href="/casinos"]');
     const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
 
     await expect(header, `${viewport.width}px public header`).toBeVisible();
@@ -184,6 +341,20 @@ test("demo profile suppresses review, FAQ and commercial structured data", async
   expect(schemas.some((schema) => ["Review", "FAQPage", "Offer", "Product"].includes(schema["@type"]))).toBe(false);
 });
 
+test("localized demo profile keeps generic English chrome out of structured data", async ({ page }) => {
+  const response = await page.goto(`${baseUrl}/de/casino/demo-northstar`, { waitUntil: "networkidle" });
+  expect(response?.status()).toBe(200);
+  await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
+  await expect(page.getByText("Fiktive Bewertungsdemonstration").first()).toBeVisible();
+
+  const schemas = await page.locator('script[type="application/ld+json"]').evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent || "{}")));
+  const webPage = schemas.find((schema) => schema["@type"] === "WebPage");
+  expect(webPage?.name).toContain("Fiktive Bewertungsdemonstration");
+  expect(webPage?.description).toContain("Fiktive Bewertungsfelder");
+  expect(schemas.some((schema) => schema["@type"] === "FAQPage")).toBe(false);
+  expect(JSON.stringify(schemas)).not.toMatch(/fictional review demonstration|Fictional product demonstration/i);
+});
+
 test("outbound confirmation is absent while market authority denies referral", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
   await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
@@ -238,7 +409,7 @@ test("server HTML remains useful with JavaScript disabled", async ({ browser }) 
 test("unknown profiles fail closed and are noindex", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/casino/not-a-published-profile`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(404);
-  await expect(page.getByRole("heading", { level: 1, name: "This review is not available." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Casino profile unavailable" })).toBeVisible();
   const robots = await page.locator('meta[name="robots"]').evaluateAll((nodes) => nodes.map((node) => node.getAttribute("content") ?? ""));
   expect(robots.length).toBeGreaterThan(0);
   expect(robots.every((value) => value.includes("noindex"))).toBe(true);

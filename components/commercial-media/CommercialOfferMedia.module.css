@@ -38,4 +38,6 @@
   .fallback { padding:20px; }
   .fallback strong { font-size:19px; }
   .fallback p { font-size:12px; line-height:18px; }
+  .fallback[data-offer-media="bonus"] { height:auto; min-height:240px; flex-basis:auto; }
+  .fallback[data-offer-media="bonus"] > :is(span,strong,p) { min-width:0; max-width:100%; overflow-wrap:anywhere; }
 }

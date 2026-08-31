@@ -56,11 +56,11 @@ export function TiltHome() {
           </figure>
         ))}
         <div className={styles.heroCopy}>
-          <span className={styles.heroKicker}>A PRIVATE 10-STEP PROGRAMME</span>
+          <span className={styles.heroKicker}>A SELF-DIRECTED 10-STEP PROGRAMME</span>
           <h1 id="home-title"><strong>CONTROL</strong><em>starts here.</em></h1>
-          <p>Keep gambling your decision, not a habit: ten short missions help you see your patterns and set limits that actually hold. Free and private.</p>
+          <p>Keep gambling your decision, not a habit: ten short missions help you see your patterns and set limits that actually hold. Free to use. Privacy explained.</p>
           <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
-          <span className={styles.heroProof}>10 missions · 5–15 minutes each · Current Programme has no paywall · Your words do not feed offers or rankings</span>
+          <span className={styles.heroProof}>Missions 02–10 · 5–8 minutes each · Current Programme: free, with no paywall inside · Your words do not feed offers or rankings</span>
         </div>
         <a className={styles.scrollCue} href="#programme" aria-label="Scroll to the programme"><span /></a>
       </section>
@@ -87,7 +87,7 @@ export function TiltHome() {
           <h2 id="programme-title">A plan you can actually see.</h2>
           <div className={styles.programmeFacts}>
             <div><strong>10</strong><span>missions</span></div>
-            <div><strong>~2</strong><span>weeks, your pace</span></div>
+            <div><strong>Your</strong><span>pace</span></div>
             <div><strong>Free</strong><span>in the current Programme</span></div>
           </div>
         </div>
@@ -142,8 +142,8 @@ export function TiltHome() {
 
       <section className={styles.finalCta} data-home-section="final-programme-cta" data-nav-theme="dark" aria-labelledby="final-cta-title">
         <span>READY WHEN YOU ARE</span>
-        <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>honest minute.</em></h2>
-        <p>One question at a time. Your starting point builds itself as you answer.</p>
+        <h2 id="final-cta-title"><strong>START WITH ONE</strong><em>situation.</em></h2>
+        <p>Share one situation. Your Starting Point takes shape from it.</p>
         <ProgrammeStartActionLink className={styles.primaryButton} href="/program?entry=start" size="large" sourceSurface="home">Start Programme</ProgrammeStartActionLink>
         <small>Free · private by default · no marketing consent</small>
       </section>

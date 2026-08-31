@@ -14,10 +14,9 @@ not permanent vetoes.
 
 ## Lifecycle model
 
-- `ACTIVE` — current durable authority or architecture.
-- `HISTORICAL` — past decision or delivery history; not a current execution
-  constraint.
-- `SUPERSEDED` — explicitly replaced by a newer decision or RFC.
+- `ACTIVE` — current durable authority or architecture;
+- `HISTORICAL` — past decision or delivery history; not a current execution constraint;
+- `SUPERSEDED` — explicitly replaced by a newer decision or RFC; or
 - `PROPOSED` — not approved and not current authority.
 
 Lifecycle answers whether future work genuinely needs the RFC as a durable
@@ -65,16 +64,17 @@ orientation.
 | [RFC-034 — Final Design Handoff Public Site](RFC-034-Final-Design-Handoff-Public-Site.md) | `HISTORICAL` | Records the completed final public-design handoff. |
 | [RFC-035 — Home Performance and Motion Polish](RFC-035-Home-Performance-and-Motion-Polish.md) | `HISTORICAL` | Records the completed Home motion and final site-polish delivery. |
 | [RFC-036 — GB Public Legal P0 Closure](RFC-036-GB-Public-Legal-P0-Closure.md) | `ACTIVE` | GB public legal, necessary-technology, licence-evidence and accepted-deferral authority. |
+| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first market/locale architecture for live localized B4GAMBLE versions before partner activation; initial European tranche includes DE, IT, ES, SE, DK, FI and NO. |
 
 ## Counts
 
 | Lifecycle | Count |
 | --- | ---: |
-| `ACTIVE` | 15 |
+| `ACTIVE` | 16 |
 | `HISTORICAL` | 18 |
 | `SUPERSEDED` | 2 |
 | `PROPOSED` | 1 |
-| **Total RFC artifacts** | **36** |
+| **Total RFC artifacts** | **37** |
 
 There is no RFC-011 file in this repository. RFC-012 mentions a deferred
 RFC-011 fixture-adapter proposal, but no absent document is classified or

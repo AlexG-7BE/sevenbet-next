@@ -5,8 +5,9 @@ import React, { useId, useRef } from "react";
 
 import type { CasinoProfileAction } from "@/lib/casino-profile/presentation";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
+import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 
-export function CasinoOutboundAction({ action, className = "" }: { action: CasinoProfileAction; className?: string }) {
+export function CasinoOutboundAction({ action, className = "", messages }: { action: CasinoProfileAction; className?: string; messages?: ProductPageMessages["outbound"] }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const stayRef = useRef<HTMLButtonElement>(null);
   const titleId = useId();
@@ -28,21 +29,21 @@ export function CasinoOutboundAction({ action, className = "" }: { action: Casin
     <>
       <a aria-haspopup="dialog" className={`commercialOutboundPrimary ${className}`.trim()} href={confirmationHref} onClick={openConfirmation}>
         <span>{action.label}<span aria-hidden="true">→</span></span>
-        <small className="commercialOutboundDisclosure">Affiliate link · We may earn commission.</small>
+        <small className="commercialOutboundDisclosure">{messages?.affiliateNote ?? "Affiliate link · We may earn commission."}</small>
       </a>
       <dialog aria-describedby={descriptionId} aria-labelledby={titleId} className="commercialOutboundDialog" ref={dialogRef}>
         <div className="commercialOutboundSheet">
-          <p className="commercialOutboundLabel">02 / Outbound confirmation</p>
-          <h2 id={titleId}>You are leaving B4GAMBLE.</h2>
-          <p id={descriptionId}>You are about to visit a third-party gambling operator. B4GAMBLE may earn commission if you complete a qualifying action. This does not change Editor Score or natural editorial ranking.</p>
+          <p className="commercialOutboundLabel">{messages?.label ?? "02 / Outbound confirmation"}</p>
+          <h2 id={titleId}>{messages?.title ?? "You are leaving B4GAMBLE."}</h2>
+          <p id={descriptionId}>{messages?.description ?? "You are about to visit a third-party gambling operator. B4GAMBLE may earn commission if you complete a qualifying action. This does not change Editor Score or natural editorial ranking."}</p>
           <div className="commercialOutboundContract">
-            <span>Handoff contract</span>
-            <strong>No raw destination URL · no browser-supplied authority.</strong>
-            <small>18+ · Eligibility and operator terms apply · Gambling involves financial risk</small>
+            <span>{messages?.contractLabel ?? "Handoff contract"}</span>
+            <strong>{messages?.contractCopy ?? "No raw destination URL · no browser-supplied authority."}</strong>
+            <small>{messages?.riskCopy ?? "18+ · Eligibility and operator terms apply · Gambling involves financial risk"}</small>
           </div>
-          <a className="commercialOutboundPrimary" href={action.href} onClick={() => { productAnalyticsClient.outboundIntent("continued"); dialogRef.current?.close(); }} rel="nofollow sponsored noopener" target="_blank">Continue to eligible partner <span aria-hidden="true">→</span></a>
-          <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">Cancel and stay on B4GAMBLE</button>
-          <Link className="commercialOutboundHelp" href="/affiliate-disclosure">Review affiliate disclosure</Link>
+          <a className="commercialOutboundPrimary" href={action.href} onClick={() => { productAnalyticsClient.outboundIntent("continued"); dialogRef.current?.close(); }} rel="nofollow sponsored noopener" target="_blank">{messages?.continueAction ?? "Continue to eligible partner →"}</a>
+          <button className="commercialOutboundSecondary" onClick={() => dialogRef.current?.close()} ref={stayRef} type="button">{messages?.cancelAction ?? "Cancel and stay on B4GAMBLE"}</button>
+          <Link className="commercialOutboundHelp" href="/affiliate-disclosure">{messages?.disclosureAction ?? "Review affiliate disclosure"}</Link>
         </div>
       </dialog>
     </>

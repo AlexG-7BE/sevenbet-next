@@ -10,6 +10,7 @@ export interface PublicOfferDTO {
   casino: {
     id: string;
     slug: string;
+    reviewHref?: string | null;
     name: string;
     summary: string;
     logo: PublicCasinoMedia | null;

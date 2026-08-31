@@ -4,7 +4,7 @@
 .hero { min-height:72vh; padding-top:84px; display:flex; flex-direction:column; background:radial-gradient(circle at 96% 0,rgba(228,226,78,.08),transparent 42rem),var(--night); }
 .heroInner { min-height:calc(72vh - 84px); padding:76px 0 60px; display:flex; flex-direction:column; justify-content:center; }
 .kicker,.darkKicker,.lightKicker { margin:0; color:var(--acid); font-size:13px; line-height:1.3; letter-spacing:.24em; text-transform:uppercase; }
-.hero h1 { margin:26px 0 0; font-size:clamp(54px,7.4vw,118px); line-height:.98; letter-spacing:-.04em; text-transform:uppercase; }
+.hero h1 { min-width:0; margin:26px 0 0; font-size:clamp(54px,7.4vw,118px); hyphens:none; line-height:.98; letter-spacing:-.04em; overflow-wrap:normal; text-transform:uppercase; word-break:normal; }
 .hero h1 span,.hero h1 em { display:block; }
 .hero h1 em { color:var(--acid); font-family:var(--font-seven-serif),Georgia,serif; font-weight:400; text-transform:none; }
 .heroCopy { max-width:42ch; margin:28px 0 0; color:rgba(250,250,247,.7); font-size:19px; line-height:1.6; }
@@ -44,7 +44,7 @@
 .featuredTerms div { min-height:86px; padding:20px 24px; border-left:1px solid rgba(16,15,15,.08); display:grid; align-content:center; gap:6px; }
 .featuredTerms div:first-child { border-left:0; }
 .featuredTerms div:nth-child(5) { display:none; }
-.featuredTerms dt { font-size:14px; font-weight:650; }
+.featuredTerms dt { min-width:0; font-size:14px; line-height:1.3; font-weight:650; hyphens:none; overflow-wrap:normal; word-break:normal; }
 .featuredTerms dd { margin:0; color:#64635c; font-size:14px; line-height:20px; overflow-wrap:anywhere; }
 .alternatives { margin-top:24px; display:grid; gap:24px; }
 .alternativeCard { overflow:hidden; display:grid; grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr); border:1px solid rgba(250,250,247,.08); border-radius:20px; background:var(--deep); color:var(--paper); }
@@ -78,7 +78,8 @@
 .worthOffer strong { font-size:20px; line-height:1.08; text-transform:uppercase; }
 .worthCards dl { margin:0; padding:15px 24px; border-bottom:1px solid rgba(16,15,15,.09); }
 .worthCards dl div { padding:5px 0; display:flex; justify-content:space-between; gap:14px; color:var(--muted); font-size:14px; line-height:20px; }
-.worthCards dt,.worthCards dd { margin:0; }
+.worthCards dt,.worthCards dd { min-width:0; margin:0; }
+.worthCards dt { hyphens:none; overflow-wrap:normal; word-break:normal; }
 .worthCards dd { color:var(--ink); font-weight:700; text-align:right; }
 .worthCards article > p { min-height:92px; margin:0; padding:20px 24px; color:var(--muted); font-size:14px; line-height:21px; }
 .worthCards .actions { margin-top:auto; padding:18px 24px; border-top:1px solid rgba(16,15,15,.09); gap:12px; }
@@ -113,10 +114,13 @@
 .finalOffer .unavailableAction { color:rgba(250,250,247,.7); background:rgba(250,250,247,.08); }
 .finalOffer small { display:block; margin-top:20px; color:rgba(250,250,247,.45); }
 .statePage { min-height:60vh; padding:100px 0; background:var(--paper); color:var(--ink); }
-.statePanel { padding:40px; border:2px solid var(--acid); background:var(--night); color:var(--paper); }
-.statePanel h2 { font-size:clamp(38px,5vw,70px); }
+.statePanel { min-width:0; padding:clamp(28px,5vw,56px); border:2px solid var(--acid); background:var(--night); color:var(--paper); }
+.statePanel h1,.statePanel h2 { max-width:100%; font-size:clamp(38px,5vw,70px); hyphens:none; overflow-wrap:normal; text-wrap:balance; word-break:normal; }
 .statePanel p { color:rgba(250,250,247,.65); }
 .statePanel a { color:var(--acid); }
+.stateActions { margin-top:28px; display:flex; flex-wrap:wrap; gap:8px 28px; }
+.stateActions a,.stateActions button { min-height:44px; display:inline-flex; align-items:center; justify-content:center; }
+.stateActions button { padding:0 22px; border:0; background:var(--acid); color:var(--ink); cursor:pointer; font:inherit; font-weight:800; }
 .loadingCard { min-height:600px; background:var(--field); }
 
 @media (max-width:900px) {
@@ -132,8 +136,10 @@
 }
 @media (max-width:600px) {
   .hero { min-height:0; padding-top:0; }
-  .heroInner { min-height:0; padding:126px 0 46px; justify-content:flex-start; }
-  .hero h1 { margin-top:22px; font-size:clamp(38px,12vw,54px); line-height:.96; letter-spacing:-.025em; overflow-wrap:anywhere; }
+  .heroInner { width:calc(100% - 24px); min-height:0; padding:126px 0 46px; justify-content:flex-start; }
+  .hero h1 { margin-top:22px; font-size:clamp(38px,10.8vw,54px); line-height:.96; letter-spacing:-.025em; }
+  .statePanel { padding-inline:20px; }
+  .statePanel h1,.statePanel h2 { hyphens:none; overflow-wrap:normal; word-break:normal; }
   .heroCopy { max-width:34ch; margin-top:20px; font-size:15px; line-height:1.5; }
   .kicker,.darkKicker,.lightKicker,.heroTicker a,.score small,.termLabel,.dataNotice { font-size:14px; }
   .heroStats { display:none; }
@@ -165,11 +171,11 @@
   .desktopReason,.altReason,.termSummary { display:none; }
   .mobileReason { margin:14px 0 18px; display:block; color:var(--muted); font-size:14px; line-height:1.5; }
   .altCopy .mobileReason { color:rgba(250,250,247,.67); }
-  .mobileMaterialTerms { margin:18px 0 0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border-top:1px solid rgba(16,15,15,.1); }
+  .mobileMaterialTerms { margin:18px 0 0; padding:0; display:grid; grid-template-columns:minmax(0,1fr); border-top:1px solid rgba(16,15,15,.1); }
   .mobileMaterialTerms div { min-width:0; padding:13px 0; border-bottom:1px solid rgba(16,15,15,.1); display:grid; align-content:start; gap:4px; }
-  .mobileMaterialTerms div:nth-child(odd) { padding-right:12px; }
-  .mobileMaterialTerms div:nth-child(even) { padding-left:12px; border-left:1px solid rgba(16,15,15,.1); }
-  .mobileMaterialTerms dt { color:#6f6d66; font-size:14px; line-height:19px; letter-spacing:.04em; text-transform:uppercase; }
+  .mobileMaterialTerms div:nth-child(odd) { padding-right:0; }
+  .mobileMaterialTerms div:nth-child(even) { padding-left:0; border-left:0; }
+  .mobileMaterialTerms dt { min-width:0; color:#6f6d66; font-size:14px; line-height:19px; letter-spacing:.04em; hyphens:none; overflow-wrap:normal; text-transform:uppercase; word-break:normal; }
   .mobileMaterialTerms dd { margin:0; color:var(--ink); font-size:14px; line-height:1.45; font-weight:700; overflow-wrap:anywhere; }
   .actions { margin-top:20px; align-items:stretch; flex-direction:column; gap:8px; }
   .commercialCta,.unavailableAction,.actions > a,.actions > button { width:100%; min-height:44px; text-align:center; white-space:normal; }
@@ -222,7 +228,13 @@
   .faq details a { min-height:44px; display:inline-flex; align-items:center; }
   .finalOffer { display:none; }
   .whyPicked h2 { font-style:italic; }
+  .stateActions { align-items:stretch; flex-direction:column; }
+  .stateActions a { width:100%; }
 
+}
+
+@media (max-width:360px) {
+  .hero h1,.statePanel h1,.statePanel h2 { hyphens:auto; hyphenate-limit-chars:12 5 5; }
 }
 
 .heroInner { animation:bestOffersHeroIn 600ms cubic-bezier(.2,.8,.2,1) both; }

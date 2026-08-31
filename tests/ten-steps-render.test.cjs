@@ -1,61 +1,91 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
-const React = require("react");
-const { renderToStaticMarkup } = require("react-dom/server");
 
-global.React = React;
+const generatedPages = require("../lib/final-handoff/generated-pages.json");
+const {
+  transformCommonHandoff,
+  transformTenStepsHandoff,
+} = require("../lib/final-handoff/transforms.ts");
+const {
+  TEN_STEPS_SOURCE_COPY,
+  tenStepsTranslation,
+} = require("../lib/i18n/static-pages/ten-steps.ts");
+const { programmeMissionTitles } = require("../lib/programme/program-ai/mission-registry.ts");
 
-require.extensions[".css"] = (module) => {
-  module.exports = {
-    __esModule: true,
-    default: new Proxy({}, { get: (_target, property) => String(property) }),
-  };
-};
-
-const { TenStepsLanding } = require("../app/(public)/10-steps/TenStepsLanding.tsx");
-
-function renderState(state) {
-  const html = renderToStaticMarkup(React.createElement(TenStepsLanding, { state }));
-  const hero = html.match(/<section[^>]*data-ten-steps-section="hero"[\s\S]*?<\/section>/)?.[0];
-  assert.ok(hero, "the rendered page must include its hero section");
-  assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
-  return { hero, html };
+function escapeHtml(value) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
-test("signed-in fallback renders a neutral account state without Programme claims", () => {
-  const { hero } = renderState({ kind: "signed-in-fallback" });
+function renderActiveTenSteps(locale = "en-GB") {
+  const source = transformCommonHandoff(generatedPages.tenSteps.html);
+  return {
+    html: transformTenStepsHandoff(source, locale),
+    messages: tenStepsTranslation(locale),
+  };
+}
 
-  assert.match(hero, /YOUR ACCOUNT/);
-  assert.match(hero, /Programme status is unavailable here\./);
-  assert.match(hero, /Open the Programme to start or retry\./);
-  assert.match(hero, /href="\/program"/);
-  assert.doesNotMatch(hero, /already started|saved progress|next Mission|\d+ XP|\d+ of 10 complete|Mission \d+|Continue Mission/i);
+test("active 10 Steps Handoff runtime exposes one ordered, labelled Mission sequence", () => {
+  const { html, messages } = renderActiveTenSteps();
+  const sections = [...html.matchAll(/data-ten-steps-section="([^"]+)"/g)].map((match) => match[1]);
+  const missionTitles = Array.from({ length: 10 }, (_, index) => messages.text[20 + index * 2]);
+
+  assert.deepEqual(sections, ["hero", "programme-builds", "mission-map", "account-boundary", "final-action"]);
+  assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
+  assert.equal((html.match(/id="ten-steps-path-title"/g) ?? []).length, 1);
+  assert.equal((html.match(/role="list" aria-labelledby="ten-steps-path-title" data-ten-steps-mission-list/g) ?? []).length, 1);
+  assert.equal((html.match(/role="listitem" data-ten-steps-mission/g) ?? []).length, 10);
+  assert.deepEqual(missionTitles, programmeMissionTitles);
+
+  let cursor = html.indexOf('data-ten-steps-mission-list=""');
+  const missionSectionEnd = html.indexOf('data-ten-steps-section="account-boundary"', cursor);
+  assert.ok(cursor >= 0 && missionSectionEnd > cursor);
+  for (const [index, title] of missionTitles.entries()) {
+    const numberIndex = html.indexOf(`>${String(index + 1).padStart(2, "0")}</span>`, cursor);
+    const titleIndex = html.indexOf(`>${escapeHtml(title)}</div>`, numberIndex);
+    assert.ok(numberIndex >= cursor, `Mission ${index + 1} number follows the previous Mission`);
+    assert.ok(titleIndex > numberIndex && titleIndex < missionSectionEnd, `Mission ${index + 1} exposes ${title}`);
+    cursor = titleIndex;
+  }
 });
 
-test("confirmed returning renders only the supplied server-owned values", () => {
-  const { hero } = renderState({ kind: "returning", currentMission: 3, completedMissions: 2, totalXp: 145 });
+test("active 10 Steps copy states current timing and the Mission 01 reward boundary", () => {
+  const { html, messages } = renderActiveTenSteps();
+  const closing = `${messages.text[46]} ${messages.text[47]}`;
+  const actionIndex = messages.text[48].indexOf("two actions");
+  const rewardIndex = messages.text[48].indexOf("40 XP");
+  const registrationIndex = messages.text[48].indexOf("Registration awards no XP");
 
-  assert.match(hero, /Mission 03/);
-  assert.match(hero, /2 of 10 complete/);
-  assert.match(hero, /145 XP/);
-  assert.match(hero, /href="\/program"/);
-  assert.doesNotMatch(hero, /330 XP|4 of 10 complete/);
+  assert.equal(messages.text.length, 50);
+  assert.match(messages.text[4], /5–8 minutes/);
+  assert.doesNotMatch(messages.text[4], /5–15/);
+  assert.equal(closing, "Mission 01 starts with your Starting Point.");
+  assert.doesNotMatch(closing, /minute/i);
+  assert.ok(actionIndex >= 0 && actionIndex < rewardIndex);
+  assert.ok(rewardIndex < registrationIndex);
+  assert.match(messages.text[48], /only follows when it is ready/);
+
+  assert.ok(html.includes(`>${escapeHtml(messages.text[4])}<`));
+  assert.ok(html.includes(`>${escapeHtml(messages.text[46])}<br>`));
+  assert.ok(html.includes(`>${escapeHtml(messages.text[47])}</em>`));
+  assert.ok(html.includes(`>${escapeHtml(messages.text[48])}<`));
+  assert.match(html, /href="\/program\?entry=start"/);
+  assert.doesNotMatch(html, />Each mission takes 5–15 minutes/);
+  assert.doesNotMatch(html, />Mission 01 takes about/);
+  assert.doesNotMatch(html, />one minute\.</);
 });
 
-test("available Programme complete renders only supplied final totals", () => {
-  const { hero } = renderState({ kind: "available-programme-complete", completedMissions: 10, totalXp: 715 });
+test("generated Handoff source keys remain separate from current public copy", () => {
+  const messages = tenStepsTranslation("en-GB");
 
-  assert.match(hero, /10 of 10 complete/);
-  assert.match(hero, /715 XP/);
-  assert.match(hero, /href="\/program"/);
-  assert.doesNotMatch(hero, /Mission 11|available now/i);
-});
-
-test("anonymous hero preserves Mission 01 entry and pending reward boundary", () => {
-  const { hero } = renderState({ kind: "anonymous" });
-
-  assert.match(hero, /Start Mission 01/);
-  assert.match(hero, /Each mission takes 5–15 minutes/);
-  assert.match(hero, /href="\/program\?entry=start"/);
-  assert.doesNotMatch(hero, /WELCOME BACK|MY PROGRAMME|of 10 complete/);
+  assert.equal(TEN_STEPS_SOURCE_COPY.length, 50);
+  assert.match(TEN_STEPS_SOURCE_COPY[4], /5–15 minutes/);
+  assert.equal(TEN_STEPS_SOURCE_COPY[46], "Mission 01 takes about");
+  assert.equal(TEN_STEPS_SOURCE_COPY[47], "one minute.");
+  assert.notEqual(messages.text[4], TEN_STEPS_SOURCE_COPY[4]);
+  assert.notEqual(messages.text[46], TEN_STEPS_SOURCE_COPY[46]);
+  assert.notEqual(messages.text[47], TEN_STEPS_SOURCE_COPY[47]);
 });

@@ -34,14 +34,17 @@ test("Cooling-off uses the approved Pause and Support fail-closed content states
 
 test("FAQ is the server-rendered product and trust surface with native disclosures", () => {
   const faq = read("app/(public)/faq/page.tsx");
-  assert.doesNotMatch(faq, /["']use client["']/);
+  const catalog = read("lib/i18n/static-pages/faq.ts");
+  assert.doesNotMatch(faq + catalog, /["']use client["']/);
   assert.equal((faq.match(/<h1\b/g) ?? []).length, 1);
-  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(faq, new RegExp(group, "i"));
-  assert.match(faq, /<details key=\{q\} open=/);
+  for (const group of ["About B4GAMBLE", "Programme", "Casinos & Offers", "Commercial model", "Help & Privacy"]) assert.match(catalog, new RegExp(group, "i"));
+  assert.match(faq, /<details key=\{question\} open=/);
   assert.match(faq, /<summary>/);
-  assert.match(faq, /canonical: absoluteUrl\("\/faq"\)/);
-  assert.doesNotMatch(faq, /Help center|FAQ schema|Internal guide links|["']@type["']:\s*["']FAQPage["']/iu);
-  assert.ok(faq.lastIndexOf("Contact us") > faq.lastIndexOf("How do I delete my data?"));
+  assert.match(faq, /productMetadata\(\{ presentation, pathname: "\/faq"/);
+  assert.match(faq, /["']@type["']:\s*["']FAQPage["']/u);
+  assert.match(faq, /acceptedAnswer/);
+  assert.doesNotMatch(faq + catalog, /Help center|Internal guide links/iu);
+  assert.ok(faq.lastIndexOf("<aside") > faq.lastIndexOf("messages.groups.map"));
 });
 
 test("Best Offers and Bonuses close their heading and landmark defects without data changes", () => {
@@ -78,6 +81,7 @@ test("runtime text and sitemap policy match current product truth", () => {
   const site = read("lib/site.ts");
   const sitemap = read("app/sitemap.ts");
   const footer = read("components/public-shell/PublicFooter.tsx");
+  const shellCatalog = read("lib/i18n/public-shell-catalog.ts");
   assert.match(llms, /practical control/);
   assert.match(llms, /Casino Data Boundary/);
   assert.match(llms, /Demonstration records are fictional/);
@@ -85,9 +89,11 @@ test("runtime text and sitemap policy match current product truth", () => {
   assert.doesNotMatch(llms, /session limit and stop-loss calculator|Recommended stop-loss|safe gambling budget/i);
   assert.match(site, /["']\/privacy["']/);
   assert.match(site, /["']\/terms["']/);
-  assert.match(footer, /<Link href="\/privacy">Privacy<\/Link>/);
-  assert.match(footer, /<Link href="\/terms">Terms<\/Link>/);
-  assert.match(sitemap, /bestOffers\.status !== "unavailable" && bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
+  assert.match(footer, /<Link href="\/privacy">\{footer\.privacy\}<\/Link>/);
+  assert.match(footer, /<Link href="\/terms">\{footer\.terms\}<\/Link>/);
+  assert.match(shellCatalog, /privacy: "Privacy"/);
+  assert.match(shellCatalog, /terms: "Terms"/);
+  assert.match(sitemap, /snapshot\.bestOffers && snapshot\.bestOffers\.status !== "unavailable" && snapshot\.bestOffers\.inventoryMode === "PUBLISHED_ONLY"/);
   assert.match(sitemap, /"\/best-offers"/);
   assert.doesNotMatch(sitemap, /"\/compare"/);
   assert.doesNotMatch(sitemap, /helpGuideRoutes|learningCategoryRoutes/);

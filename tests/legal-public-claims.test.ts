@@ -37,18 +37,29 @@ test("public copy excludes bounded high-risk positive claims while preserving di
 });
 
 test("commercial surfaces state the enforced compensation boundary without aspirational wording", () => {
-  const files = [
+  const directCopyFiles = [
     "app/(public)/affiliate-disclosure/AffiliateDisclosureDocument.tsx",
     "app/(public)/methodology/MethodologyDocument.tsx",
-    "app/(public)/casinos/page.tsx",
-    "components/best-offers/BestOffersExperience.tsx",
-    "app/(public)/bonuses/page.tsx",
   ];
-  for (const file of files) {
+  for (const file of directCopyFiles) {
     const text = source(file);
     assert.match(text, /Affiliate compensation does not determine (?:B4GAMBLE(?:&apos;|')s )?Editor Score or natural editorial\s+ranking/);
     assert.doesNotMatch(text, /should not automatically determine|independent casino discovery/i);
   }
+
+  const productCatalog = source("lib/i18n/product-pages-catalog.ts");
+  const methodologyCatalog = source("lib/i18n/static-pages/methodology.ts");
+  assert.match(productCatalog, /Affiliate compensation does not determine Editor Score or natural editorial ranking/);
+  assert.match(methodologyCatalog, /Affiliate compensation does not determine Editor Score or natural editorial ranking/);
+
+  const boundSurfaces = [
+    ["app/(public)/methodology/page.tsx", /methodologyMessages\(presentation\.locale\)/],
+    ["app/(public)/casinos/page.tsx", /messages\.bestOffers\.commissionNote/],
+    ["components/best-offers/BestOffersExperience.tsx", /messages\.bestOffers\.commissionNote/],
+    ["app/(public)/bonuses/page.tsx", /messages\.bonuses\.disclosureCopy/],
+  ] as const;
+  for (const [file, contract] of boundSurfaces) assert.match(source(file), contract);
+  assert.doesNotMatch(`${productCatalog}\n${methodologyCatalog}`, /should not automatically determine|independent casino discovery/i);
 });
 
 test("local control tools remain client-local, non-commercial and free of tracking SDKs", () => {

@@ -2,23 +2,25 @@ import type { Metadata } from "next";
 import { HandoffPage } from "@/components/final-handoff/HandoffPage";
 import { transformTenStepsHandoff } from "@/lib/final-handoff/transforms";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
+import { tenStepsTranslation } from "@/lib/i18n/static-pages/ten-steps";
+import { productMetadata, productCanonicalPath } from "@/lib/market/product-context";
+import { resolveServerPresentationContext } from "@/lib/market/server";
 import { absoluteUrl } from "@/lib/site";
 
-const title = "The B4GAMBLE 10-Step Programme";
-const description = "See how ten private missions build a personal Starting Point and control plan.";
+export async function generateMetadata(): Promise<Metadata> {
+  const presentation = await resolveServerPresentationContext();
+  const messages = tenStepsTranslation(presentation.locale);
+  return productMetadata({ presentation, pathname: "/10-steps", title: messages.metadataTitle, description: messages.metadataDescription });
+}
 
-export const metadata: Metadata = {
-  title,
-  description,
-  alternates: { canonical: absoluteUrl("/10-steps") },
-  robots: { index: true, follow: true },
-  openGraph: { type: "website", title, description, url: absoluteUrl("/10-steps") },
-  twitter: { card: "summary", title, description },
-};
-
-export default function TenStepsPage() {
+export default async function TenStepsPage() {
+  const presentation = await resolveServerPresentationContext();
+  const messages = tenStepsTranslation(presentation.locale);
+  const shell = publicShellMessages(presentation.locale);
+  const canonicalPath = productCanonicalPath(presentation, "/10-steps");
   return <>
-    <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") }, { "@type": "ListItem", position: 2, name: "10-Step Programme", item: absoluteUrl("/10-steps") }] }, { "@context": "https://schema.org", "@type": "WebPage", name: title, description, url: absoluteUrl("/10-steps") }]} />
-    <HandoffPage name="tenSteps" transform={transformTenStepsHandoff} />
+    <JsonLd data={[{ "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: shell.homeLabel, item: absoluteUrl(productCanonicalPath(presentation, "/")) }, { "@type": "ListItem", position: 2, name: messages.metadataTitle, item: absoluteUrl(canonicalPath) }] }, { "@context": "https://schema.org", "@type": "WebPage", name: messages.metadataTitle, description: messages.metadataDescription, url: absoluteUrl(canonicalPath) }]} />
+    <HandoffPage name="tenSteps" transform={(html) => transformTenStepsHandoff(html, presentation.locale)} />
   </>;
 }

@@ -1,6 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+const messages = productPageMessages("en-GB");
 
 const viewports = [
   { width: 360, height: 800 },
@@ -206,10 +209,10 @@ async function expectBoundedDialog(page: Page, selector: string) {
 async function selectTwoCasinosForComparison(page: Page) {
   await expect(page.locator('[data-runtime-renderer="casinos"]')).toHaveCount(1);
   await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
-  const controls = page.getByRole("button", { name: "Compare", exact: true });
+  const controls = page.locator('[data-comparison-toggle][aria-pressed="false"]');
   if (await controls.count()) {
     await controls.first().click();
-    await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
+    await expect(page.locator("[data-comparison-tray]")).toHaveAttribute("data-comparison-count", "1");
     await controls.first().click();
     return;
   }
@@ -222,7 +225,7 @@ async function selectTwoCasinosForComparison(page: Page) {
       window.dispatchEvent(new CustomEvent("b4gamble:comparison-toggle", { detail: { slug: casinoSlug } }));
     }, slug);
     if (slug === "demo-northstar") {
-      await expect(page.getByRole("complementary", { name: "Casino comparison tray" })).toContainText("1 of 3 selected");
+      await expect(page.locator("[data-comparison-tray]")).toHaveAttribute("data-comparison-count", "1");
     }
   }
 }
@@ -303,10 +306,9 @@ test("mobile navigation, filters and contextual comparison remain bounded sheets
     await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
     await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
     await page.reload({ waitUntil: "networkidle" });
-    await page.getByRole("tab", { name: "Mobile" }).click();
     await selectTwoCasinosForComparison(page);
     const comparison = await expectBoundedDialog(page, 'dialog[data-runtime-renderer="contextual-comparison"]');
-    const close = comparison.getByRole("button", { name: "Close comparison" });
+    const close = comparison.getByRole("button", { name: messages.comparison.close });
     const closeBox = await close.boundingBox();
     expect(closeBox?.width).toBeGreaterThanOrEqual(44);
     expect(closeBox?.height).toBeGreaterThanOrEqual(44);
@@ -316,7 +318,7 @@ test("mobile navigation, filters and contextual comparison remain bounded sheets
     expect(await page.evaluate(() => scrollY)).toBe(before);
     await close.click();
     await expect(comparison).toBeHidden();
-    await page.getByRole("button", { name: "Open comparison" }).click();
+    await page.getByRole("button", { name: messages.comparison.open }).click();
     await expect(comparison).toBeVisible();
     await context.close();
   }
@@ -333,7 +335,6 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
   await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("tab", { name: "Mobile" }).click();
   await selectTwoCasinosForComparison(page);
   await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toBeVisible();
 

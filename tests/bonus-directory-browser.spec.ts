@@ -7,17 +7,17 @@ test("default directory exposes server-owned offers and page two continues at po
   expect(response?.status()).toBe(200);
   await expect(page.getByRole("heading", { level: 1, name: /Value, measured/i })).toBeVisible();
   await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
-  await expect(page.getByRole("navigation", { name: "Bonus result pages" }).getByText(/Page 1 of \d+/)).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "All bonuses" }).getByText(/Page 1 of \d+/)).toBeVisible();
   const pageTwo = await page.goto(`${baseUrl}/bonuses?page=2`, { waitUntil: "networkidle" });
   expect(pageTwo?.status()).toBe(200);
   await expect(page.locator('article[class*="comparisonRow"]')).toHaveCount(24);
-  await expect(page.getByRole("navigation", { name: "Bonus result pages" }).getByText(/Page 2 of \d+/)).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "All bonuses" }).getByText(/Page 2 of \d+/)).toBeVisible();
   await expect(page.locator('[class*="compactPosition"]').filter({ hasText: "25" }).first()).toBeVisible();
 });
 
 test("every supported URL filter and sort is server owned", async ({ page }) => {
   const selectCases = [
-    ["Country preference", "country"], ["Bonus type", "type"], ["Payment method", "payment"],
+    ["Country preference", "country"], ["Bonus type", "type"], ["Payments", "payment"],
   ] as const;
   for (const [label, parameter] of selectCases) {
     await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
@@ -53,7 +53,7 @@ test("invalid filters fail safely while material terms and commercial states rem
   await expect(page.locator('a[href^="/r/"]')).toHaveCount(0);
 
   await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-  for (const label of ["Min deposit", "Wagering", "Max bonus", "Payout"]) await expect(page.getByText(label, { exact: true }).filter({ visible: true }).first()).toBeVisible();
+  for (const label of ["Minimum deposit", "Wagering", "Maximum bonus", "Payout"]) await expect(page.getByText(label, { exact: true }).filter({ visible: true }).first()).toBeVisible();
   const governedActions = await page.locator('a[href^="/r/"]').count();
   const unavailableActions = await page.getByText("No governed visit", { exact: true }).count();
   expect(governedActions + unavailableActions).toBeGreaterThan(0);
@@ -78,7 +78,7 @@ test("canonical, filtered robots and ItemList positions are server rendered", as
   expect(json.itemListElement[0]?.position).toBe(25);
   const html = await (await request.get(`${baseUrl}/bonuses`)).text();
   expect(html).toContain('method="get"');
-  expect(html).toContain("Bonus result pages");
+  expect(html).toContain('aria-label="All bonuses"');
   expect(html).toContain(">Next<");
 });
 
@@ -103,7 +103,7 @@ test("mobile filter dialog is keyboard dismissible and restores focus", async ({
   await page.goto(`${baseUrl}/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   const trigger = page.getByRole("button", { name: /Filters/i });
   await trigger.click();
-  const dialog = page.getByRole("dialog", { name: /Filter Bonuses/i });
+  const dialog = page.getByRole("dialog", { name: "Filters · All bonuses" });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Close filters" })).toBeFocused();
   await page.keyboard.press("Escape");
@@ -132,13 +132,13 @@ test("bonus calculator recomputes turnover, weighting cost and net value", async
   const valueFor = (label: string) => calculator.getByText(label, { exact: true }).locator("..").locator("dd");
 
   await expect(valueFor("Required turnover")).toHaveText("€7,000");
-  await expect(valueFor("Effective at your weighting")).toHaveText("€7,000");
-  await expect(valueFor("Expected net value")).toHaveText("−€80");
+  await expect(valueFor("Effective turnover at this weighting")).toHaveText("€7,000");
+  await expect(valueFor("Illustrative expected net value")).toHaveText("−€80");
 
   await calculator.getByLabel("Deposit + bonus").check({ force: true });
-  await calculator.getByLabel("Table · 50%").check({ force: true });
+  await calculator.getByLabel("Games · 50%").check({ force: true });
 
   await expect(valueFor("Required turnover")).toHaveText("€14,000");
-  await expect(valueFor("Effective at your weighting")).toHaveText("€28,000");
-  await expect(valueFor("Expected net value")).toHaveText("−€920");
+  await expect(valueFor("Effective turnover at this weighting")).toHaveText("€28,000");
+  await expect(valueFor("Illustrative expected net value")).toHaveText("−€920");
 });
