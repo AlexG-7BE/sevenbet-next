@@ -181,3 +181,17 @@ test("M — authenticated clients and middleware cannot regress to ephemeral-onl
   assert.match(migration, /anonymous_session\."missionVersion" = 'program-ai-01:v1'/);
   assert.doesNotMatch(migration, /INSERT INTO "ProgrammeAccessAcceptance"[\s\S]*FROM "ProgramEnrollment"\s*(?:;|$)/);
 });
+
+test("N — Production release guard permits erased consumed claims without broadening backfill", () => {
+  const originalProgrammeMigration = readFileSync("prisma/migrations/0015_active_control_program_flow/migration.sql", "utf8");
+  assert.match(originalProgrammeMigration, /PendingProgrammeClaim_consumedByUserId_fkey[\s\S]*ON DELETE SET NULL/);
+
+  const releaseGuard = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
+  assert.match(releaseGuard, /claim\."consumedAt" IS NULL AND claim\."consumedByUserId" IS NOT NULL/);
+  assert.match(releaseGuard, /claim\."consumedAt" IS NOT NULL AND claim\."consumedByUserId" IS NULL/);
+  assert.match(releaseGuard, /erasedConsumedClaims/);
+  assert.doesNotMatch(releaseGuard, /\(claim\."consumedAt" IS NULL\) <> \(claim\."consumedByUserId" IS NULL\)/);
+
+  const migration = readFileSync("prisma/migrations/0024_programme_access_acceptance/migration.sql", "utf8");
+  assert.match(migration, /claim\."consumedAt" IS NOT NULL[\s\S]*claim\."consumedByUserId" IS NOT NULL/);
+});
