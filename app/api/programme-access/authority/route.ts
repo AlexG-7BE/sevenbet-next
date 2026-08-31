@@ -11,7 +11,6 @@ import {
   programmeResponse,
   readProgrammeJson,
 } from "@/lib/programme/http";
-import { getServerSession } from "@/lib/auth/session";
 import { programmeAccessService } from "@/lib/programme/application/programme-access.service";
 
 const affirmationKeys = [
@@ -30,9 +29,15 @@ function validAffirmation(input: Record<string, unknown>) {
     && input.privacyVersion === PROGRAMME_PRIVACY_VERSION;
 }
 
+async function optionalServerSession(headers: Headers) {
+  if (!headers.has("cookie")) return null;
+  const { getServerSession } = await import("@/lib/auth/session");
+  return getServerSession(headers);
+}
+
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(request.headers);
+    const session = await optionalServerSession(request.headers);
     if (!session) return programmeResponse({ ok: false, code: "AUTHENTICATION_REQUIRED" }, 401);
     const acceptance = await programmeAccessService.userStatus(session.user.id);
     return programmeResponse({
@@ -58,7 +63,7 @@ export async function POST(request: Request) {
   const input = body as Record<string, unknown>;
 
   try {
-    const session = await getServerSession(request.headers);
+    const session = await optionalServerSession(request.headers);
     const keys = Object.keys(input).sort();
     const hasJourney = typeof input.journeyId === "string";
     const expectedAffirmationKeys = [...affirmationKeys, ...(hasJourney ? ["journeyId"] : [])].sort();
