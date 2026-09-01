@@ -13,6 +13,15 @@ import { temporaryDemoCasinoProfiles } from "@/lib/demo-data/temporary-demo-best
 export const enforceTemporaryDemoReviewOnly = currentPublicCasinoBrand;
 const sourceControlledDemoProfiles = temporaryDemoCasinoProfiles();
 
+function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | null | undefined) {
+  if (countryCode !== undefined) return projectPublicCasinoMarket(casino, countryCode ?? "");
+  if (!casino.marketProfiles.length) return casino;
+  const defaultCountryCode = casino.marketProfiles
+    .map((profile) => profile.countryCode)
+    .sort((left, right) => left.localeCompare(right))[0];
+  return projectPublicCasinoMarket(casino, defaultCountryCode ?? "");
+}
+
 type PublicCasinoCmsEnvironment = {
   [key: string]: string | undefined;
   PUBLIC_CASINO_CMS_ENABLED?: string | undefined;
@@ -85,7 +94,7 @@ export class PublicCasinoService {
       }
 
       const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
-      if (casino) return enforceTemporaryDemoReviewOnly(countryCode === undefined ? casino : projectPublicCasinoMarket(casino, countryCode ?? ""));
+      if (casino) return enforceTemporaryDemoReviewOnly(projectRequestedMarket(casino, countryCode));
       return null;
     }
 
@@ -125,7 +134,7 @@ export class PublicCasinoService {
 
     const cms = published.flatMap((entry) => {
       const casino = mapPublishedCasino(entry, routes, { redirectEnabled: referralAllowed(entry.casinoId), now: this.options.now });
-      const projected = casino && countryCode !== undefined ? projectPublicCasinoMarket(casino, countryCode ?? "") : casino;
+      const projected = casino ? projectRequestedMarket(casino, countryCode) : null;
       return projected ? [enforceTemporaryDemoReviewOnly(projected)] : [];
     });
     const bySlug = new Map<string, PublicCasinoDTO>();
