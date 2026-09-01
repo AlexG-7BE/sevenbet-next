@@ -17,8 +17,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (limit === null) {
     return NextResponse.json(PUBLIC_RESOURCE_LIMIT_ERROR, { status: 400 });
   }
+  const requestedCountry = request.nextUrl.searchParams.get("country")?.trim().toUpperCase() ?? null;
+  if (requestedCountry !== null && !/^[A-Z]{2}$/.test(requestedCountry)) {
+    return NextResponse.json({ ok: false, error: "country must use ISO 3166-1 alpha-2 format" }, { status: 400 });
+  }
   if (resource === "casinos") {
-    const records = (await publicCasinoService.listCasinos()).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
+    const records = (await publicCasinoService.listCasinos(null, requestedCountry)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
       ...casino,
       affiliate: casino.affiliate.href?.startsWith("/r/") ? casino.affiliate : { href: null, available: false },
       bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } })),
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ ok: true, resource, entity: "casino", count: records.length, records });
   }
   if (resource === "bonuses") {
-    const records = (await publicCasinoService.listBonuses()).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
+    const records = (await publicCasinoService.listBonuses(null, requestedCountry)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
     return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records });
   }
   if (resource === "articles") {

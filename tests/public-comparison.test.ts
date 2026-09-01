@@ -57,6 +57,9 @@ function record(slug: string, patch: {
   bonuses?: ReturnType<typeof snapshotBonus>[];
 } = {}): PublishedCasinoSnapshotRecord {
   const id = patch.id ?? `${slug}-id`;
+  const license = { id: `${id}-licence`, authority: "Fictional authority", jurisdiction: "Synthetic", status: "ACTIVE", lastVerifiedAt: "2030-04-01T00:00:00.000Z" };
+  const payment = { id: `${id}-payment`, methodKey: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: 10, minimumWithdrawal: 20, maximumWithdrawal: 2000, withdrawalTime: patch.withdrawal === undefined ? "Within one day" : patch.withdrawal, fees: "Check published terms", crypto: false };
+  const bonuses = patch.bonuses ?? [snapshotBonus(slug, `${slug}-welcome`, { title: `${slug} published offer`, wageringMultiplier: patch.wagering })];
   return {
     casinoId: id,
     version: 2,
@@ -77,10 +80,14 @@ function record(slug: string, patch: {
       currencies: ["GBP"],
       responsibleGamblingTools: patch.responsibleTools ?? ["Deposit limits"],
       reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: patch.featured ?? false, recommended: patch.recommended ?? false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
-      licenses: [{ id: `${id}-licence`, authority: "Fictional authority", jurisdiction: "Synthetic", status: "ACTIVE", lastVerifiedAt: "2030-04-01T00:00:00.000Z" }],
-      countries: [{ id: `${id}-country`, countryCode: patch.country ?? "GB", availability: patch.availability ?? "AVAILABLE", minimumAge: 18 }],
-      paymentMethods: [{ id: `${id}-payment`, methodKey: "visa", name: "Visa", supportsDeposits: true, supportsWithdrawals: true, currencies: ["GBP"], minimumDeposit: 10, minimumWithdrawal: 20, maximumWithdrawal: 2000, withdrawalTime: patch.withdrawal === undefined ? "Within one day" : patch.withdrawal, fees: "Check published terms", crypto: false }],
-      casinoBonuses: patch.bonuses ?? [snapshotBonus(slug, `${slug}-welcome`, { title: `${slug} published offer`, wageringMultiplier: patch.wagering })],
+      licenses: [license],
+      countries: [{
+        id: `${id}-country`, countryCode: patch.country ?? "GB", availability: patch.availability ?? "AVAILABLE", minimumAge: 18,
+        primaryLanguage: "en", supportedLanguages: ["en"], primaryCurrency: "GBP", supportedCurrencies: ["GBP"],
+        licenses: [{ license }], paymentMethods: [payment], gameProviders: [], gameCategories: [], bonuses,
+      }],
+      paymentMethods: [payment],
+      casinoBonuses: bonuses,
     },
   };
 }
@@ -94,9 +101,13 @@ async function selectedOfferTitle(bonuses: ReturnType<typeof snapshotBonus>[]) {
 function activeOffer(casinoId: string): DiscoveryContext["offers"][number] {
   return {
     id: `${casinoId}-offer`, casinoId, casinoBonusId: null, status: "ACTIVE", archivedAt: null, startAt: null, expiresAt: null,
-    featured: false, priority: 10, geoMode: "GLOBAL", countries: [],
-    program: { status: "ACTIVE", archivedAt: null, network: { active: true, archivedAt: null } },
-    trackingLinks: [{ id: `${casinoId}-tracking`, active: true, archivedAt: null, validFrom: null, expiresAt: null, priority: 10, geoMode: "GLOBAL", countries: [] }],
+    featured: false, priority: 10, geoMode: "ALLOW", countries: [{ countryCode: "GB", mode: "ALLOW" }],
+    program: { casinoId, status: "ACTIVE", workflowStatus: "PUBLISHED", supportedCountries: ["GB"], archivedAt: null, network: { active: true, archivedAt: null } },
+    trackingLinks: [{
+      id: `${casinoId}-tracking`, active: true, archivedAt: null, validFrom: null, expiresAt: null, verifiedAt: now, lastCheckedAt: now,
+      destinationUrl: "https://casino.example/welcome", trackingUrl: "https://tracking.example/click", priority: 10, geoMode: "ALLOW",
+      countries: [{ countryCode: "GB", mode: "ALLOW", productionEligible: true, productionEligibilityVerifiedAt: now, productionEligibilityExpiresAt: new Date("2030-06-08T00:00:00.000Z"), productionEligibilityEvidence: "Synthetic explicit authority" }],
+    }],
   };
 }
 

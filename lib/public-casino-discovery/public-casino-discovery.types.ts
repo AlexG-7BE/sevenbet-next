@@ -5,6 +5,7 @@ export type CasinoDiscoverySort = "FEATURED" | "RELEVANCE" | "NEWEST" | "NAME_AS
 export interface CasinoDiscoveryQuery {
   search?: string;
   country?: string[];
+  currency?: string[];
   license?: string[];
   payment?: string[];
   gameProvider?: string[];
@@ -69,6 +70,7 @@ export interface PublicCasinoCardDto {
 export interface CasinoDiscoveryFacetValue extends PublicLabelDto { count: number }
 export interface CasinoDiscoveryFacets {
   countries: CasinoDiscoveryFacetValue[];
+  currencies: CasinoDiscoveryFacetValue[];
   licenses: CasinoDiscoveryFacetValue[];
   payments: CasinoDiscoveryFacetValue[];
   gameProviders: CasinoDiscoveryFacetValue[];
@@ -89,7 +91,14 @@ export interface CasinoDiscoveryResult {
 
 export interface DiscoveryAlias { casinoId: string; value: string }
 export interface DiscoveryRedirect { casinoId: string; casinoBonusId: string | null; affiliateOfferId: string | null; slug: string }
-export interface DiscoveryGeoRule { countryCode: string; mode: "GLOBAL" | "ALLOW" | "BLOCK" }
+export interface DiscoveryGeoRule {
+  countryCode: string;
+  mode: "GLOBAL" | "ALLOW" | "BLOCK";
+  productionEligible?: boolean;
+  productionEligibilityVerifiedAt?: Date | null;
+  productionEligibilityExpiresAt?: Date | null;
+  productionEligibilityEvidence?: string | null;
+}
 export interface DiscoveryOffer {
   id: string;
   casinoId: string;
@@ -102,9 +111,13 @@ export interface DiscoveryOffer {
   priority: number;
   geoMode: "GLOBAL" | "ALLOW" | "BLOCK";
   countries: DiscoveryGeoRule[];
-  program: { status: string; archivedAt: Date | null; network: { active: boolean; archivedAt: Date | null } };
+  program: {
+    casinoId: string | null; status: string; workflowStatus: string; supportedCountries: string[]; archivedAt: Date | null;
+    network: { active: boolean; archivedAt: Date | null };
+  };
   trackingLinks: Array<{
     id: string; active: boolean; archivedAt: Date | null; validFrom: Date | null; expiresAt: Date | null;
+    verifiedAt: Date | null; lastCheckedAt: Date | null; destinationUrl: string; trackingUrl: string;
     priority: number; geoMode: "GLOBAL" | "ALLOW" | "BLOCK"; countries: DiscoveryGeoRule[];
   }>;
 }

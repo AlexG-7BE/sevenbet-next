@@ -1,6 +1,6 @@
 import { getCasinos, type Casino } from "@/lib/data";
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
-import { mapLegacyCasino, mapPublishedCasino, publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
+import { mapLegacyCasino, mapPublishedCasino, projectPublicCasinoMarket, publicCasinoToLegacy } from "@/lib/public-casino/public-casino.mapper";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositories/public-casino.repository";
@@ -59,7 +59,7 @@ export class PublicCasinoService {
     return casino ? enforceTemporaryDemoReviewOnly(casino) : null;
   }
 
-  async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO | null> {
+  async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return this.legacy(slug) ?? this.sourceControlledDemo(slug);
 
@@ -78,14 +78,14 @@ export class PublicCasinoService {
       const referralAllowed = this.redirectEnabled() && jurisdictionAllowsReferral(authority) && operatorDecision?.referralEligible === true;
       if (referralAllowed) {
         try {
-          routes = await this.repository.listActiveAffiliateRoutes([published.casinoId]);
+          routes = await this.repository.listActiveAffiliateRoutes([published.casinoId], countryCode ?? authority?.countryCode ?? undefined, this.options.now);
         } catch {
           // Editorial content remains public without commercial actions when route authority is unavailable.
         }
       }
 
       const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
-      if (casino) return enforceTemporaryDemoReviewOnly(casino);
+      if (casino) return enforceTemporaryDemoReviewOnly(countryCode === undefined ? casino : projectPublicCasinoMarket(casino, countryCode ?? ""));
       return null;
     }
 
@@ -98,7 +98,7 @@ export class PublicCasinoService {
     return this.sourceControlledDemo(slug);
   }
 
-  async listCasinos(authority?: CommercialJurisdictionAuthority | null): Promise<PublicCasinoDTO[]> {
+  async listCasinos(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null): Promise<PublicCasinoDTO[]> {
     if (!this.cmsEnabled()) return this.legacyCasinos.map((casino) => this.legacyForMode(casino));
 
     let published: Awaited<ReturnType<PublicCasinoStore["listPublished"]>> = [];
@@ -117,7 +117,7 @@ export class PublicCasinoService {
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (published.some((entry) => referralAllowed(entry.casinoId))) {
       try {
-        routes = await this.repository.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId));
+        routes = await this.repository.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId), countryCode ?? authority?.countryCode ?? undefined, this.options.now);
       } catch {
         // Editorial profiles remain public without commercial actions when route authority is unavailable.
       }
@@ -125,7 +125,8 @@ export class PublicCasinoService {
 
     const cms = published.flatMap((entry) => {
       const casino = mapPublishedCasino(entry, routes, { redirectEnabled: referralAllowed(entry.casinoId), now: this.options.now });
-      return casino ? [enforceTemporaryDemoReviewOnly(casino)] : [];
+      const projected = casino && countryCode !== undefined ? projectPublicCasinoMarket(casino, countryCode ?? "") : casino;
+      return projected ? [enforceTemporaryDemoReviewOnly(projected)] : [];
     });
     const bySlug = new Map<string, PublicCasinoDTO>();
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
@@ -134,17 +135,17 @@ export class PublicCasinoService {
     return [...bySlug.values()].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
   }
 
-  async getCasinoView(slug: string, authority?: CommercialJurisdictionAuthority | null) {
-    const casino = await this.getCasino(slug, authority);
+  async getCasinoView(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
+    const casino = await this.getCasino(slug, authority, countryCode);
     return casino ? publicCasinoToLegacy(casino) : null;
   }
 
-  async listCasinoViews(authority?: CommercialJurisdictionAuthority | null) {
-    return (await this.listCasinos(authority)).map(publicCasinoToLegacy);
+  async listCasinoViews(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
+    return (await this.listCasinos(authority, countryCode)).map(publicCasinoToLegacy);
   }
 
-  async listBonuses(authority?: CommercialJurisdictionAuthority | null) {
-    const casinos = await this.listCasinos(authority);
+  async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
+    const casinos = await this.listCasinos(authority, countryCode);
     return casinos.flatMap((casino) => casino.bonuses.map((bonus) => ({ casino, bonus })))
       .sort((a, b) => b.casino.editorScore - a.casino.editorScore || a.casino.slug.localeCompare(b.casino.slug) || a.bonus.slug.localeCompare(b.bonus.slug));
   }

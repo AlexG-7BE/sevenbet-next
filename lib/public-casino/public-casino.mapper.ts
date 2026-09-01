@@ -2,7 +2,10 @@ import type { Casino } from "@/lib/data";
 import type {
   PublicAffiliateRoute,
   PublicCasinoDTO,
+  PublicCasinoLicense,
+  PublicCasinoMarketProfile,
   PublicCasinoMedia,
+  PublicCasinoPayment,
   PublishedCasinoSnapshotRecord,
 } from "@/lib/public-casino/public-casino.types";
 import { isSafePublicSlug, safeCanonical, safePublicUrl, validatedStructuredData } from "@/lib/public-casino/public-casino-validation";
@@ -41,6 +44,10 @@ function integer(value: unknown) {
 
 function bool(value: unknown, fallback = false) {
   return typeof value === "boolean" ? value : fallback;
+}
+
+function nullableBool(value: unknown) {
+  return typeof value === "boolean" ? value : null;
 }
 
 function date(value: unknown) {
@@ -98,10 +105,156 @@ function mediaFromSnapshot(snapshot: Record<string, unknown>) {
   });
 }
 
+function mapScopedLicenses(entries: unknown[], now: Date): PublicCasinoLicense[] {
+  return entries.flatMap((entry) => {
+    const relation = object(entry);
+    const record = object(relation.license ?? entry);
+    const expiresAt = date(record.expiresAt);
+    if (text(record.status).toUpperCase() !== "ACTIVE" || (expiresAt && new Date(expiresAt) < now)) return [];
+    const authority = text(record.authority);
+    if (!authority) return [];
+    return [{
+      authority,
+      licenseNumber: nullableText(record.licenseNumber),
+      jurisdiction: nullableText(record.jurisdiction),
+      status: text(record.canonicalStatus, text(record.status, "UNKNOWN")),
+      verificationUrl: safePublicUrl(record.verificationUrl),
+      expiresAt,
+      lastVerifiedAt: date(record.lastVerifiedAt),
+    }];
+  });
+}
+
+function mapScopedPayments(entries: unknown[]): PublicCasinoPayment[] {
+  return entries.flatMap((entry) => {
+    const record = object(entry);
+    const name = text(record.name);
+    if (!name) return [];
+    return [{
+      key: text(record.methodKey, name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-")),
+      name,
+      supportsDeposits: nullableBool(record.supportsDeposits),
+      supportsWithdrawals: nullableBool(record.supportsWithdrawals),
+      currencies: strings(record.currencies),
+      minimumDeposit: number(record.minimumDeposit),
+      minimumWithdrawal: number(record.minimumWithdrawal),
+      maximumWithdrawal: number(record.maximumWithdrawal),
+      depositProcessingTime: nullableText(record.depositProcessingTime),
+      withdrawalTime: nullableText(record.withdrawalTime),
+      fees: nullableText(record.fees),
+      crypto: nullableBool(record.crypto),
+    }];
+  });
+}
+
+function mapScopedProviders(entries: unknown[]) {
+  return entries.flatMap((entry) => {
+    const record = object(entry);
+    const name = text(record.name);
+    return name ? [{ key: text(record.providerKey), name, gameCount: integer(record.gameCount), liveCasino: nullableBool(record.liveCasino) }] : [];
+  });
+}
+
+function mapScopedCategories(entries: unknown[]) {
+  return entries.flatMap((entry) => {
+    const record = object(entry);
+    const name = text(record.name);
+    return name ? [{ key: text(record.categoryKey), name, gameCount: integer(record.gameCount), featured: bool(record.featured) }] : [];
+  });
+}
+
+function mapScopedBonuses(
+  entries: unknown[],
+  casinoId: string,
+  routes: PublicAffiliateRoute[],
+  redirectEnabled: boolean,
+  now: Date,
+) {
+  return entries.flatMap((entry) => {
+    const record = object(entry);
+    const startsAt = date(record.startsAt);
+    const expiresAt = date(record.expiresAt);
+    if (text(record.status) !== "PUBLISHED" || text(record.offerStatus) !== "ACTIVE") return [];
+    if (startsAt && new Date(startsAt) > now) return [];
+    if (expiresAt && new Date(expiresAt) < now) return [];
+    const bonusId = text(record.id);
+    const bonusSlug = text(record.slug);
+    const title = text(record.title);
+    if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
+    const affiliateHref = redirectEnabled ? routeFor(routes, casinoId, bonusId) : null;
+    return [{
+      id: bonusId,
+      slug: bonusSlug,
+      title,
+      summary: text(record.summary),
+      type: text(record.type, "OTHER"),
+      percentage: number(record.percentage),
+      minimumDeposit: number(record.minimumDeposit),
+      maximumBonus: number(record.maximumBonus),
+      maximumBet: number(record.maximumBet),
+      currency: nullableText(record.currency),
+      freeSpins: integer(record.freeSpins),
+      wageringMultiplier: number(record.wageringMultiplier),
+      wageringText: nullableText(record.wageringText),
+      eligibility: nullableText(record.eligibility),
+      importantConditions: strings(record.importantConditions),
+      termsUrl: safePublicUrl(record.termsUrl),
+      startsAt,
+      expiresAt,
+      affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
+    }];
+  });
+}
+
+function unique(values: Array<string | null>) {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: string): PublicCasinoDTO {
+  const normalized = countryCode.toUpperCase();
+  const profile = casino.marketProfiles.find((entry) => entry.countryCode === normalized);
+  if (!profile) return {
+    ...casino,
+    languages: [], currencies: [], countries: [], licenses: [], payments: [], providers: [], categories: [], bonuses: [],
+    marketProfiles: [],
+    affiliate: { href: null, available: false },
+  };
+  const localMedia = profile.media;
+  const logo = localMedia.find((item) => item.type === "logo") ?? casino.media.logo;
+  const hero = localMedia.find((item) => item.type === "hero") ?? casino.media.hero;
+  return {
+    ...casino,
+    domain: profile.localDomain ?? "",
+    languages: unique([profile.primaryLanguage, ...profile.supportedLanguages]),
+    currencies: unique([profile.primaryCurrency, ...profile.supportedCurrencies]),
+    countries: [{
+      countryCode: profile.countryCode,
+      availability: profile.availability,
+      minimumAge: profile.minimumAge,
+      currency: profile.primaryCurrency,
+      language: profile.primaryLanguage,
+    }],
+    licenses: profile.licenses,
+    payments: profile.payments,
+    providers: profile.providers,
+    categories: profile.categories,
+    bonuses: profile.bonuses,
+    marketProfiles: [profile],
+    media: {
+      logo,
+      hero,
+      screenshots: [...localMedia.filter((item) => item.type === "screenshot"), ...casino.media.screenshots],
+      gallery: [...localMedia.filter((item) => item.type === "gallery"), ...casino.media.gallery],
+      socialImage: localMedia.find((item) => item.type === "social") ?? casino.media.socialImage,
+    },
+    affiliate: profile.availability === "AVAILABLE" ? casino.affiliate : { href: null, available: false },
+  };
+}
+
 export function mapPublishedCasino(
   published: PublishedCasinoSnapshotRecord,
   routes: PublicAffiliateRoute[],
-  options: { redirectEnabled: boolean; now?: Date } = { redirectEnabled: false },
+  options: { redirectEnabled: boolean; now?: Date; countryCode?: string | null } = { redirectEnabled: false },
 ): PublicCasinoDTO | null {
   const snapshot = object(published.snapshot);
   const slug = text(snapshot.slug);
@@ -217,11 +370,68 @@ export function mapPublishedCasino(
     }];
   });
 
+  const marketProfiles = list(snapshot.countries).flatMap((entry): PublicCasinoMarketProfile[] => {
+    const record = object(entry);
+    const state = object(countryMetadata[text(record.id)]);
+    const countryCode = text(record.countryCode).toUpperCase();
+    if (bool(state.archived) || !/^[A-Z]{2}$/.test(countryCode)) return [];
+    const explicitLegacyPayments = list(snapshot.paymentMethods).filter((payment) => {
+      const paymentState = object(paymentMetadata[text(object(payment).id)]);
+      return strings(paymentState.countries).map((value) => value.toUpperCase()).includes(countryCode);
+    });
+    const explicitLegacyBonuses = list(snapshot.casinoBonuses).filter((bonus) => {
+      const bonusState = object(object(editorMetadata.bonuses)[text(object(bonus).id)]);
+      return text(bonusState.geoMode) === "ALLOW" && strings(bonusState.allowedCountries).map((value) => value.toUpperCase()).includes(countryCode);
+    });
+    const primaryLanguage = nullableText(record.primaryLanguage) ?? nullableText(state.language);
+    const primaryCurrency = nullableText(record.primaryCurrency) ?? nullableText(state.currency);
+    return [{
+      id: text(record.id),
+      countryCode,
+      availability: text(record.availability, "UNKNOWN"),
+      localDomain: nullableText(record.localDomain),
+      localWebsiteUrl: safePublicUrl(record.localWebsiteUrl),
+      operatingLegalEntity: nullableText(record.operatingLegalEntity),
+      termsUrl: safePublicUrl(record.termsUrl),
+      privacyUrl: safePublicUrl(record.privacyUrl),
+      responsibleGamblingUrl: safePublicUrl(record.responsibleGamblingUrl),
+      primaryLanguage,
+      supportedLanguages: unique([primaryLanguage, ...strings(record.supportedLanguages)]),
+      supportLanguages: strings(record.supportLanguages),
+      primaryCurrency,
+      supportedCurrencies: unique([primaryCurrency, ...strings(record.supportedCurrencies)]),
+      minimumAge: integer(record.minimumAge),
+      kycSummary: nullableText(record.kycSummary),
+      withdrawalSummary: nullableText(record.withdrawalSummary),
+      supportSummary: nullableText(record.supportSummary),
+      lastVerifiedAt: date(record.lastVerifiedAt),
+      evidence: list(record.evidence).flatMap((item) => {
+        const evidence = object(item);
+        const classification = text(evidence.classification);
+        if (!["DETECTED", "INFERRED", "PROPOSED", "UNKNOWN", "CONTRADICTION"].includes(classification)) return [];
+        return [{
+          classification: classification as PublicCasinoMarketProfile["evidence"][number]["classification"],
+          sourceType: text(evidence.sourceType),
+          sourceUrl: safePublicUrl(evidence.sourceUrl),
+          fieldKeys: strings(evidence.fieldKeys),
+          observedAt: date(evidence.observedAt),
+          lastVerifiedAt: date(evidence.lastVerifiedAt),
+        }];
+      }),
+      licenses: mapScopedLicenses(list(record.licenses), now),
+      payments: mapScopedPayments([...list(record.paymentMethods), ...explicitLegacyPayments]),
+      providers: mapScopedProviders(list(record.gameProviders)),
+      categories: mapScopedCategories(list(record.gameCategories)),
+      bonuses: mapScopedBonuses([...list(record.bonuses), ...explicitLegacyBonuses], published.casinoId, routes, options.redirectEnabled, now),
+      media: mediaFromSnapshot(record),
+    }];
+  });
+
   const allMedia = mediaFromSnapshot(snapshot);
   const socialImage = allMedia.find((item) => item.type === "social") ?? null;
   const redirectHref = options.redirectEnabled ? routeFor(routes, published.casinoId, null) : null;
   const summary = text(snapshot.summary, `${name} casino profile and editorial review.`);
-  return {
+  const mapped: PublicCasinoDTO = {
     source: "cms",
     id,
     slug,
@@ -260,6 +470,7 @@ export function mapPublishedCasino(
     providers,
     categories,
     bonuses,
+    marketProfiles,
     media: {
       logo: allMedia.find((item) => item.type === "logo") ?? null,
       hero: allMedia.find((item) => item.type === "hero") ?? null,
@@ -269,6 +480,7 @@ export function mapPublishedCasino(
     },
     affiliate: { href: redirectHref, available: Boolean(redirectHref) },
   };
+  return options.countryCode ? projectPublicCasinoMarket(mapped, options.countryCode) : mapped;
 }
 
 export function mapLegacyCasino(casino: Casino): PublicCasinoDTO {
@@ -312,6 +524,7 @@ export function mapLegacyCasino(casino: Casino): PublicCasinoDTO {
     providers: casino.providers.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, liveCasino: false })),
     categories: casino.gameTypes.map((name) => ({ key: name.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-"), name, gameCount: null, featured: false })),
     bonuses: [{ id: `legacy-${casino.id}`, slug: `${casino.slug}-welcome`, title: casino.bonusHeadline, summary: casino.bonusHeadline, type: "WELCOME", percentage: null, minimumDeposit: casino.minDeposit, maximumBonus: casino.bonusAmountUsd, maximumBet: null, currency: "USD", freeSpins: casino.freeSpins, wageringMultiplier: casino.wagering, wageringText: null, eligibility: null, importantConditions: [], termsUrl: null, startsAt: null, expiresAt: null, affiliate: { href: affiliateHref, available: Boolean(affiliateHref) } }],
+    marketProfiles: [],
     media: { logo: null, hero: null, screenshots: [], gallery: [], socialImage: null },
     affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
   };

@@ -35,6 +35,12 @@ The compatibility insert marks only a user whose consumed `PendingProgrammeClaim
 
 Disposable CI stages all history through `0023`, loads both a provable claim fixture and an unknown generic-enrollment fixture, runs the `0024` preflight, deploys and replays migrations, then verifies one safe acceptance, zero unknown-user acceptances, and byte-equivalent selected Enrollment/progress/reward/currentStep/Starting-Point projections. Production execution remains prohibited without separate Founder authority and a verified pending-migration plan.
 
+## Pending Casino market-profile migration 0025 — not applied to Production
+
+**PROPOSED / NOT DEPLOYED:** `0025_casino_market_profile_architecture` extends `CasinoCountry` as the exact factual market grain; adds market evidence and licence applicability; permits explicit country scoping for payment/provider/category/bonus/media records; and adds fail-closed, default-false tracking-country Production authority metadata. It contains no data DML, creates no inferred market link, and activates no route.
+
+Disposable CI applies all 25 migrations and separately stages the 0024 schema with representative existing Casino, CasinoCountry, licence, payment, provider, category and bonus rows. The 0025 upgrade preserves all rows and IDs, leaves ambiguous facts unscoped, creates no licence links or duplicate market profiles, preserves unknowns, and is a no-op on a second deploy. Production migration remains prohibited without separate Founder authority and an exact migration/release plan. The existing Vercel Production guard deliberately does not execute 0025 and therefore fails closed while it is pending.
+
 ## Pending Better Auth 1.7 sequence — not applied to Production
 
 **DETECTED:** Production remains applied through `0020_commercial_ops_01`. Repository migration `0021_partner_ops_work_bridge_01` is merged history but is not Production-applied. `PARTNER-OPS-WORK-BRIDGE-02` adds `0022_better_auth_17_schema_upgrade`; neither migration is applied by that implementation task.

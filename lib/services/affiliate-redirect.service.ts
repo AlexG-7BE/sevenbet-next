@@ -8,10 +8,11 @@ import type { CountrySignal, JurisdictionDecision } from "@/lib/jurisdiction/typ
 import { affiliateRedirectRepository, type AffiliateRedirectStore } from "@/lib/repositories/affiliate-redirect.repository";
 import { affiliateOfferService, type AffiliateOfferService } from "@/lib/services/affiliate-offer.service";
 import { gbCommercialReadinessService, type GbCommercialReadinessAuthority } from "@/lib/services/gb-commercial-readiness.service";
+import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
 
 import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 
-export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
+export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
   | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility: GbOperatorEligibilityDecision; commercialReadiness: GbCommercialReadinessDecision }
@@ -50,6 +51,7 @@ export class AffiliateRedirectService {
     private readonly offers: Pick<AffiliateOfferService, "activeCandidates"> = affiliateOfferService,
     private readonly jurisdiction: Pick<JurisdictionResolver, "resolve"> = jurisdictionResolver,
     private readonly commercialReadiness: GbCommercialReadinessAuthority = gbCommercialReadinessService,
+    private readonly productionRoutes: Pick<PartnerRouteService, "isProductionEligible"> = partnerRouteService,
   ) {}
 
   list(input?: Parameters<AffiliateRedirectStore["list"]>[0]) {
@@ -167,6 +169,26 @@ export class AffiliateRedirectService {
       now,
     });
     if (!routing.ok) return { ...routing, jurisdictionDecision };
+
+    let productionEligible = false;
+    try {
+      productionEligible = await this.productionRoutes.isProductionEligible({
+        casinoId: routing.casinoId,
+        countryCode: jurisdictionDecision.countryCode ?? "",
+        redirectId: routing.slugId,
+        offerId: routing.offerId,
+        trackingLinkId: routing.trackingLinkId,
+        now,
+        commercialAllowed: jurisdictionDecision.commercialAllowed,
+        referralAllowed: jurisdictionDecision.referralAllowed,
+        redirectEnabled: true,
+      });
+    } catch {
+      productionEligible = false;
+    }
+    if (!productionEligible) {
+      return { ok: false, reason: "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision };
+    }
 
     const commercialReadiness = await this.commercialReadiness.evaluate({
       casinoId: routing.casinoId,

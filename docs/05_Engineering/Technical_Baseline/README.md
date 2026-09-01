@@ -4,21 +4,22 @@
 
 | Field | Value |
 | --- | --- |
-| Audit date | 2026-08-13 |
+| Audit date | 2026-09-01 |
 | Verified repository root | `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` |
 | Audit method | Recursive repository inspection, excluding `.git/`, `node_modules/`, `.next/`, `test-results/`, `coverage/`, caches, and `tsconfig.tsbuildinfo` from source analysis. |
-| Change scope | Entire active repository rescanned at current main `c52595405f0800c8c2b51d5951c4a8d45c133034`, before treating FULL-SITE-QA-01 worktree changes as merged facts. Dependencies, generated directories, build artefacts, caches and `tsconfig.tsbuildinfo` were excluded. Current main includes feature-gated PROGRAM-AI Missions 01–10, migration 0019 runtime hardening, Vercel product analytics, public Contact/Resend delivery code and RFC-029 runtime polish. Draft PR #72 remains unmerged. |
+| Change scope | Entire active repository rescanned from authoritative main `f12d5f35dd5ec36257dd7e1d29a3ca38b16d1e73` before implementing the isolated `CASINO-DATA-ARCH-01` candidate. Dependencies, generated directories, build artefacts, caches, research staging and `tsconfig.tsbuildinfo` were excluded from source claims. |
 
 ## Current counted inventory
 
-**Detected at current main `c525954`:** 90 `app/api/**/route.ts` files, 63 `app/**/page.tsx` files, 19 ordered Prisma migration directories, 94 TS/TSX/MJS `.test`/`.spec` files under `tests/` plus one CJS test, and 88 tracked assets under `public/`. The active audit worktree may contain additional uncommitted tests; those are not counted as current-main baseline.
+**DETECTED on the implementation candidate:** 102 `app/api/**/route.ts` files, 71 `app/**/page.tsx` files, 25 ordered Prisma migration directories, 157 TS/TSX/MJS/CJS `.test`/`.spec` files under `tests/`, and 132 tracked assets under `public/`. The architecture scan covered 1,990 active repository files under the exclusions above.
 
 ## Evidence vocabulary
 
-- **Detected** — directly confirmed by repository files, imports, routes, schemas, migrations, or scripts.
-- **Inferred** — cautious conclusion supported by detected evidence.
-- **Planned** — product/documentation intent without implementation evidence.
-- **Not detected** — no supporting repository evidence was found.
+- **DETECTED** — directly confirmed by repository files, imports, routes, schemas, migrations, or scripts.
+- **INFERRED** — cautious conclusion supported by detected evidence.
+- **PROPOSED** — target or later work without implemented evidence.
+- **UNKNOWN** — current evidence cannot establish the fact.
+- **CONTRADICTION** — authoritative evidence conflicts and has not yet been reconciled.
 
 This baseline describes the observed implementation, not a target architecture or redesign proposal. Product documentation remains the authority for product intent; it does not turn planned capabilities into implemented ones.
 
@@ -36,3 +37,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [10_PROGRAM_AI_M1_Foundation_Audit.md](10_PROGRAM_AI_M1_Foundation_Audit.md) — detected RFC-022 feature-gated M1 foundation, privacy, progression and provider boundaries.
 - [11_External_Media_Provenance.md](11_External_Media_Provenance.md) — production-facing image/embed inventory, Pexels-to-first-party mapping, privacy effects and unresolved provenance evidence.
 - [12_Programme_Access_Authorization.md](12_Programme_Access_Authorization.md) — candidate durable Programme acceptance, complete mutation classification, anonymous/authenticated boundaries and conservative migration evidence.
+- [13_Casino_Market_Data_Architecture.md](13_Casino_Market_Data_Architecture.md) — global Casino, exact-market facts, provenance, public projection, commercial-route separation and migration evidence.

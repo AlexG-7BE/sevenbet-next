@@ -35,7 +35,9 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
 
-### Unmerged internationalisation candidate
+### Unmerged implementation candidates
+
+**PROPOSED UNTIL MERGE — Casino market data architecture candidate, 1 September 2026:** explicit Founder instruction `CASINO-DATA-ARCH-01` authorises the bounded architecture candidate based on main `f12d5f35dd5ec36257dd7e1d29a3ca38b16d1e73`. It keeps `Casino` as global identity, makes `CasinoCountry` the canonical factual market grain, scopes licence/payment/bonus/provider/product facts, adds typed provenance, and resolves commercial routes through the existing normalized Affiliate records with exact country/tracking Production authority defaulting false. It imports no research, activates no real route, publishes no asset, and performs no Production database or deployment change. See [RFC-038](06_RFC/RFC-038-Casino-Market-Data-Architecture.md) and the [technical baseline](05_Engineering/Technical_Baseline/13_Casino_Market_Data_Architecture.md).
 
 **PROPOSED UNTIL MERGE — PR #105 feature-branch evidence, 30 August 2026:** the current internationalisation candidate defines `HOME_READY`, `PUBLIC_CORE_READY` and `ARCHITECTURE_ONLY` presentation states; limits both Preview and Production selectors to the GB baseline plus Founder-accepted DE/ES/SE/DK/GR public-core locales; and adds rendered localization, interpolation, curated-control and responsive-overflow regression coverage. The detailed route/locale matrix is recorded in [Localization quality and route coverage](internationalisation/localization-quality-audit.md).
 

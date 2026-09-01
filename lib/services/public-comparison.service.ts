@@ -245,7 +245,7 @@ export class PublicComparisonService {
 
     const now = this.now();
     const all = published.flatMap((record) => {
-      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now, countryCode: query.country });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
       return casino?.source === "cms" ? [casino] : [];
     });

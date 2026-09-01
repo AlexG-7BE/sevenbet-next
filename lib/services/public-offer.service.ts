@@ -143,7 +143,7 @@ export class PublicOfferService {
     return this.options.cmsEnabled ?? isPublicCasinoCmsEnabled();
   }
 
-  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean } = {}) {
+  private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string } = {}) {
     if (!this.cmsEnabled()) {
       return (this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
         const legacy = mapLegacyCasino(casino);
@@ -157,7 +157,7 @@ export class PublicOfferService {
     try {
       const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
       const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
-      const records = await this.repository.listOffers({ includeCommercial: commercialProjection });
+      const records = await this.repository.listOffers({ includeCommercial: commercialProjection, countryCode: options.countryCode });
       if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
       return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record)).map(classifyOffer);
@@ -174,7 +174,7 @@ export class PublicOfferService {
   ): Promise<PublicOfferSearchResult> {
     let all: PublicOfferDTO[];
     try {
-      all = await this.listEligibleOffers(authority, { throwOnError: true });
+      all = await this.listEligibleOffers(authority, { throwOnError: true, countryCode: query.country ?? options.defaultEditorialCountry });
     } catch {
       return {
         records: [],
@@ -210,8 +210,9 @@ export class PublicOfferService {
   }
 
   async getFeaturedOffers(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
-    const offers = await this.listEligibleOffers(authority);
-    return selectOverallShortlist(offers, { country: options.country ?? "GB", limit: options.limit ?? 12 });
+    const country = options.country ?? "GB";
+    const offers = await this.listEligibleOffers(authority, { countryCode: country });
+    return selectOverallShortlist(offers, { country, limit: options.limit ?? 12 });
   }
 
   async getBestOffersPageData(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
@@ -228,7 +229,7 @@ export class PublicOfferService {
         : demonstration();
     }
     try {
-      const publishedRecords = await this.listEligibleOffers(authority, { throwOnError: true });
+      const publishedRecords = await this.listEligibleOffers(authority, { throwOnError: true, countryCode: country });
       const records = selectOverallShortlist(publishedRecords, { country, limit });
       if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
       return demonstration();

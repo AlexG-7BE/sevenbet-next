@@ -42,6 +42,7 @@ const loadCasinoPage = cache(async (slug: string) => {
   const candidate = await publicCasinoService.getCasino(
     slug,
     commercialAuthorityForPresentation(authority, presentation.market.countryCode),
+    presentation.market.countryCode,
   );
   const availableForPresentation = candidate
     ? marketAvailability(candidate.countries, presentation.market.countryCode)

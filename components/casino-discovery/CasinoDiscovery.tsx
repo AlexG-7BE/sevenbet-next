@@ -16,7 +16,7 @@ import styles from "./CasinoDiscovery.module.css";
 
 const sortValues = ["FEATURED", "RELEVANCE", "NEWEST", "NAME_ASC", "NAME_DESC"] as const;
 const pageSizes = [12, 24, 48] as const;
-const arrayFields = [["country", "country"], ["license", "license"], ["payment", "payment"], ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"]] as const;
+const arrayFields = [["country", "country"], ["currency", "currency"], ["license", "license"], ["payment", "payment"], ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"]] as const;
 const booleanFields = [["hasBonus", "Published bonus"], ["hasAvailableVisitAction", "Visit action available"], ["hasResponsibleGambling", "Responsible gambling information"], ["supportsCrypto", "Cryptocurrency support"], ["supportsMobile", "Mobile support"]] as const;
 const cardClassNames = styles as unknown as CasinoCardClassNames;
 
@@ -141,7 +141,7 @@ function removeValue(query: CasinoDiscoveryQuery, field: keyof CasinoDiscoveryQu
 
 function facetLabels(result: CasinoDiscoveryResult) {
   const values: Record<string, Map<string, string>> = {};
-  for (const [field, facet] of [["country", result.facets.countries], ["license", result.facets.licenses], ["payment", result.facets.payments], ["gameProvider", result.facets.gameProviders], ["category", result.facets.categories], ["bonusType", result.facets.bonusTypes]] as const) values[field] = new Map(facet.map((item) => [item.key, item.label]));
+  for (const [field, facet] of [["country", result.facets.countries], ["currency", result.facets.currencies], ["license", result.facets.licenses], ["payment", result.facets.payments], ["gameProvider", result.facets.gameProviders], ["category", result.facets.categories], ["bonusType", result.facets.bonusTypes]] as const) values[field] = new Map(facet.map((item) => [item.key, item.label]));
   return values;
 }
 

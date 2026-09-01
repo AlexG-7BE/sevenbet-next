@@ -66,3 +66,7 @@ export const allowGbCommercialReadinessAuthority: GbCommercialReadinessAuthority
 export const allowJurisdictionResolver = {
   async resolve() { return allowJurisdictionDecision; },
 };
+
+export const allowPartnerRouteProductionAuthority = {
+  async isProductionEligible() { return true; },
+};
