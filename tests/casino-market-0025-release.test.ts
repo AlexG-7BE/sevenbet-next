@@ -55,14 +55,13 @@ test("F and G — missing or rolled-back 0024 refuses release", () => {
   assert.throws(() => planCasinoMarket0025Release(through0024().map((entry) => entry.migration_name === "0024_programme_access_acceptance" ? { ...entry, finished_at: null, rolled_back_at: new Date() } : entry)), /requires completed baseline/);
 });
 
-test("H through J — guard is partial-state, authority, index and constraint fail-closed", () => {
+test("H through J — steady-state guard is authority, index, constraint and pending-state fail-closed", () => {
   const guard = readFileSync("lib/db/casino-market-0025-release.ts", "utf8");
   const preflight = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
-  assert.match(guard, /unexpected partial 0025 schema state/);
+  assert.match(guard, /must already be applied; steady-state guard is read-only/);
   assert.match(guard, /productionEligible authority/);
   assert.match(guard, /missing 0025 indexes/);
   assert.match(guard, /missing 0025 constraints/);
-  assert.match(guard, /read-only Production guard refuses mutation/);
   assert.doesNotMatch(guard + preflight, /allowMutation\s*:\s*true|spawnSync\([^)]*prisma[^)]*migrate/);
 });
 

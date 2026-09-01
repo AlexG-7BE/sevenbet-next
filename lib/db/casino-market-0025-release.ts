@@ -71,70 +71,6 @@ async function migrationRows(prisma: PrismaClient) {
   );
 }
 
-type ExistingCounts = {
-  casinos: bigint;
-  markets: bigint;
-  licenses: bigint;
-  payments: bigint;
-  providers: bigint;
-  categories: bigint;
-  bonuses: bigint;
-  media: bigint;
-  routeCountries: bigint;
-};
-
-async function existingCounts(prisma: PrismaClient) {
-  const [counts] = await prisma.$queryRawUnsafe<ExistingCounts[]>(`
-    SELECT
-      (SELECT COUNT(*) FROM "Casino") AS casinos,
-      (SELECT COUNT(*) FROM "CasinoCountry") AS markets,
-      (SELECT COUNT(*) FROM "CasinoLicense") AS licenses,
-      (SELECT COUNT(*) FROM "CasinoPaymentMethod") AS payments,
-      (SELECT COUNT(*) FROM "CasinoGameProvider") AS providers,
-      (SELECT COUNT(*) FROM "CasinoGameCategory") AS categories,
-      (SELECT COUNT(*) FROM "CasinoBonus") AS bonuses,
-      (SELECT COUNT(*) FROM "MediaAsset") AS media,
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry") AS "routeCountries"
-  `);
-  if (!counts) throw new Error("Casino market release could not capture preservation counts.");
-  return counts;
-}
-
-async function assertNoPartial0025State(prisma: PrismaClient) {
-  const [state] = await prisma.$queryRawUnsafe<Array<{ hazardous: boolean }>>(`
-    SELECT
-      to_regclass('public."CasinoCountryEvidence"') IS NOT NULL
-      OR to_regclass('public."CasinoCountryLicense"') IS NOT NULL
-      OR EXISTS (
-        SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND (
-          (table_name = 'CasinoCountry' AND column_name = 'localDomain')
-          OR (table_name = 'CasinoPaymentMethod' AND column_name = 'casinoCountryId')
-          OR (table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible')
-        )
-      )
-      OR EXISTS (SELECT 1 FROM pg_type WHERE typname IN ('CasinoMarketEvidenceClassification', 'CasinoMarketEvidenceSourceType'))
-      OR EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE '%casinoCountryId%')
-      OR EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MediaAsset_market_requires_casino_check')
-      AS hazardous
-  `);
-  if (!state || state.hazardous) throw new Error("Casino market release found unexpected partial 0025 schema state.");
-
-  const requiredLegacyIndexes = [
-    "CasinoPaymentMethod_casinoId_methodKey_key",
-    "CasinoGameProvider_casinoId_providerKey_key",
-    "CasinoGameCategory_casinoId_categoryKey_key",
-  ];
-  const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(`
-    SELECT indexname FROM pg_indexes
-    WHERE schemaname = 'public' AND indexname IN (${requiredLegacyIndexes.map((name) => `'${name}'`).join(", ")})
-  `);
-  const names = new Set(indexes.map((row) => row.indexname));
-  if (requiredLegacyIndexes.some((name) => !names.has(name))) {
-    throw new Error("Casino market release found an unexpected legacy uniqueness baseline.");
-  }
-}
-
 async function assert0025Schema(prisma: PrismaClient) {
   const requiredColumns: Array<[string, string]> = [
     ...["localDomain", "localWebsiteUrl", "operatorProfileId", "operatingLegalEntity", "termsUrl", "privacyUrl", "responsibleGamblingUrl", "primaryLanguage", "supportedLanguages", "supportLanguages", "primaryCurrency", "supportedCurrencies", "kycSummary", "withdrawalSummary", "supportSummary", "lastVerifiedAt"].map((column) => ["CasinoCountry", column] as [string, string]),
@@ -217,8 +153,7 @@ export async function inspectCasinoMarket0025Release(
     await assertMigrationComplete(prisma, repositoryMigrations);
     return { state: "already_applied_and_verified" as const };
   }
-  await assertNoPartial0025State(prisma);
-  return { state: "pending_verified_read_only" as const, counts: await existingCounts(prisma) };
+  throw new Error("Casino market migration 0025 must already be applied; steady-state guard is read-only.");
 }
 
 export async function runCasinoMarket0025Readiness() {
@@ -226,11 +161,7 @@ export async function runCasinoMarket0025Readiness() {
   if (!readiness.checked || readiness.environment !== "production") return { state: "skipped_non_production" as const };
   const prisma = new PrismaClient();
   try {
-    const result = await inspectCasinoMarket0025Release(prisma);
-    if (result.state === "pending_verified_read_only") {
-      throw new Error("Casino market migration 0025 is pending; read-only Production guard refuses mutation. Separate Founder-authorised migration execution is required.");
-    }
-    return result;
+    return await inspectCasinoMarket0025Release(prisma);
   } finally {
     await prisma.$disconnect().catch(() => undefined);
   }
