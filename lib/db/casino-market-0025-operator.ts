@@ -1,16 +1,16 @@
 import { spawnSync } from "node:child_process";
 
-import { PrismaClient } from "@prisma/client";
-
+import {
+  casinoMarket0025AdminDatasourceUrl,
+  createCasinoMarket0025AdminClient,
+} from "@/lib/db/casino-market-0025-admin-client";
 import {
   CASINO_MARKET_TARGET_MIGRATION,
   assertCasinoMarket0025MigrationComplete,
-  casinoMarketMigrationRows,
-  casinoMarketPreservationCounts,
   casinoMarketRepositoryChecksum,
   casinoMarketRepositoryMigrations,
-  inspectCasinoMarket0025Release,
-  planCasinoMarket0025Release,
+  inspectCasinoMarket0025ReleaseSnapshot,
+  type CasinoMarket0025AuthoritySnapshot,
   type CasinoMarketPreservationCounts,
 } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
@@ -30,19 +30,6 @@ export type CasinoMarket0025OperatorArguments = {
 type OperatorAuthority = "production" | "disposable-test";
 
 type OperatorEvent = Record<string, unknown>;
-
-type AuthoritySnapshot = {
-  evidence: bigint;
-  licenseLinks: bigint;
-  scopedPayments: bigint;
-  scopedProviders: bigint;
-  scopedCategories: bigint;
-  scopedBonuses: bigint;
-  scopedMedia: bigint;
-  routeCountries: bigint;
-  ineligibleRouteCountries: bigint;
-  eligibleRouteCountries: bigint;
-};
 
 type OperatorOptions = CasinoMarket0025OperatorArguments & {
   authority: OperatorAuthority;
@@ -190,43 +177,7 @@ function stringifyCounts(counts: CasinoMarketPreservationCounts) {
   return Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, value.toString()]));
 }
 
-async function readAuthoritySnapshot(prisma: PrismaClient): Promise<AuthoritySnapshot> {
-  const [snapshot] = await prisma.$queryRawUnsafe<AuthoritySnapshot[]>(`
-    SELECT
-      (SELECT COUNT(*) FROM "CasinoCountryEvidence") AS evidence,
-      (SELECT COUNT(*) FROM "CasinoCountryLicense") AS "licenseLinks",
-      (SELECT COUNT(*) FROM "CasinoPaymentMethod" WHERE "casinoCountryId" IS NOT NULL) AS "scopedPayments",
-      (SELECT COUNT(*) FROM "CasinoGameProvider" WHERE "casinoCountryId" IS NOT NULL) AS "scopedProviders",
-      (SELECT COUNT(*) FROM "CasinoGameCategory" WHERE "casinoCountryId" IS NOT NULL) AS "scopedCategories",
-      (SELECT COUNT(*) FROM "CasinoBonus" WHERE "casinoCountryId" IS NOT NULL) AS "scopedBonuses",
-      (SELECT COUNT(*) FROM "MediaAsset" WHERE "casinoCountryId" IS NOT NULL) AS "scopedMedia",
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry") AS "routeCountries",
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = false) AS "ineligibleRouteCountries",
-      (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS "eligibleRouteCountries"
-  `);
-  if (!snapshot) fail("AUTHORITY_SNAPSHOT_UNAVAILABLE", "Casino market authority state could not be verified.");
-  return snapshot;
-}
-
-function assertEmptyNewAuthority(snapshot: AuthoritySnapshot) {
-  if (snapshot.evidence !== 0n || snapshot.licenseLinks !== 0n) {
-    fail("INVENTED_EVIDENCE_OR_LICENSE_LINK", "Migration verification found non-empty new evidence or licence-link authority.");
-  }
-  if (
-    snapshot.scopedPayments !== 0n
-    || snapshot.scopedProviders !== 0n
-    || snapshot.scopedCategories !== 0n
-    || snapshot.scopedBonuses !== 0n
-    || snapshot.scopedMedia !== 0n
-  ) {
-    fail("INVENTED_MARKET_SCOPE", "Migration verification found legacy records assigned to a market.");
-  }
-  if (snapshot.eligibleRouteCountries !== 0n || snapshot.ineligibleRouteCountries !== snapshot.routeCountries) {
-    fail("INVENTED_PRODUCTION_ELIGIBILITY", "Migration verification found unexpected Production route eligibility.");
-  }
-}
-
-function stringifyAuthoritySnapshot(snapshot: AuthoritySnapshot) {
+function stringifyAuthoritySnapshot(snapshot: CasinoMarket0025AuthoritySnapshot) {
   return Object.fromEntries(Object.entries(snapshot).map(([key, value]) => [key, value.toString()]));
 }
 
@@ -239,10 +190,19 @@ function assertCountsPreserved(before: CasinoMarketPreservationCounts, after: Ca
 }
 
 function deployExactRepositoryMigrations(environment: OperatorEnvironment) {
+  const directUrl = casinoMarket0025AdminDatasourceUrl(environment);
   const result = spawnSync(
     "npx",
     ["prisma", "migrate", "deploy", "--schema", "prisma/schema.prisma"],
-    { encoding: "utf8", env: environment as NodeJS.ProcessEnv, stdio: ["ignore", "pipe", "pipe"] },
+    {
+      encoding: "utf8",
+      env: {
+        ...environment,
+        DATABASE_URL: directUrl,
+        DIRECT_URL: directUrl,
+      } as unknown as NodeJS.ProcessEnv,
+      stdio: ["ignore", "pipe", "pipe"],
+    },
   );
   if (result.error || result.status !== 0) {
     fail("PRISMA_MIGRATE_DEPLOY_FAILED", "The bounded Prisma migration deployment failed; no command output was emitted.");
@@ -256,15 +216,12 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
   const repository = assertCasinoMarket0025RepositoryAuthority(options.expectedReleaseCommit);
   const readiness = assertCasinoMarket0025ExecutionEnvironment(options.authority, environment);
   const timestamp = now().toISOString();
-  const prisma = new PrismaClient();
+  const prisma = createCasinoMarket0025AdminClient(environment);
 
   try {
-    const beforeRows = await casinoMarketMigrationRows(prisma);
-    const plan = planCasinoMarket0025Release(beforeRows, repository.repositoryMigrations);
-    const inspection = await inspectCasinoMarket0025Release(prisma, repository.repositoryMigrations);
-    const beforeCounts = inspection.state === "pending_verified_read_only"
-      ? inspection.counts
-      : await casinoMarketPreservationCounts(prisma);
+    const inspection = await inspectCasinoMarket0025ReleaseSnapshot(prisma, repository.repositoryMigrations);
+    const plan = inspection.plan;
+    const beforeCounts = inspection.counts;
 
     writeEvent({
       event: "casino_market_0025_preflight_verified",
@@ -279,6 +236,7 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
       historicalRolledBackAttempts: plan.historicalRolledBackAttempts,
       preservationCounts: stringifyCounts(beforeCounts),
       eligibilityState: plan.state === "APPLY" ? "not_present_before_0025" : "present_and_verified",
+      transactionSafety: inspection.transactionSafety,
     });
 
     if (plan.state === "APPLY" && !options.executeProduction0025) {
@@ -293,15 +251,14 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
     }
 
     if (plan.state === "VERIFY") {
-      const authority = await readAuthoritySnapshot(prisma);
-      assertEmptyNewAuthority(authority);
+      if (!inspection.authority) fail("AUTHORITY_SNAPSHOT_UNAVAILABLE", "Casino market authority state could not be verified.");
       writeEvent({
         event: "casino_market_0025_already_applied_verified",
         timestamp,
         releaseCommit: repository.currentCommit,
         mutationPerformed: false,
         preservationCounts: stringifyCounts(beforeCounts),
-        authority: stringifyAuthoritySnapshot(authority),
+        authority: stringifyAuthoritySnapshot(inspection.authority),
       });
       return { state: "already_applied_verified" as const, mutationPerformed: false };
     }
@@ -309,15 +266,17 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
     await prisma.$disconnect();
     deployExactRepositoryMigrations(environment);
 
-    const postflight = new PrismaClient();
+    const postflight = createCasinoMarket0025AdminClient(environment);
     try {
-      await assertCasinoMarket0025MigrationComplete(postflight, repository.repositoryMigrations);
-      const afterCounts = await casinoMarketPreservationCounts(postflight);
+      const postflightInspection = await assertCasinoMarket0025MigrationComplete(
+        postflight,
+        repository.repositoryMigrations,
+      );
+      const afterCounts = postflightInspection.counts;
       assertCountsPreserved(beforeCounts, afterCounts);
-      const authority = await readAuthoritySnapshot(postflight);
-      assertEmptyNewAuthority(authority);
-      const afterRows = await casinoMarketMigrationRows(postflight);
-      const afterPlan = planCasinoMarket0025Release(afterRows, repository.repositoryMigrations);
+      if (!postflightInspection.authority) {
+        fail("AUTHORITY_SNAPSHOT_UNAVAILABLE", "Casino market authority state could not be verified.");
+      }
 
       writeEvent({
         event: "casino_market_0025_execution_succeeded",
@@ -326,11 +285,12 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
         migration: CASINO_MARKET_TARGET_MIGRATION,
         migrationSha256: CASINO_MARKET_0025_APPROVED_SHA256,
         mutationPerformed: true,
-        migrationStates: afterPlan.migrationStates,
-        historicalRolledBackAttempts: afterPlan.historicalRolledBackAttempts,
+        migrationStates: postflightInspection.plan.migrationStates,
+        historicalRolledBackAttempts: postflightInspection.plan.historicalRolledBackAttempts,
         preservationCountsBefore: stringifyCounts(beforeCounts),
         preservationCountsAfter: stringifyCounts(afterCounts),
-        authority: stringifyAuthoritySnapshot(authority),
+        authority: stringifyAuthoritySnapshot(postflightInspection.authority),
+        transactionSafety: postflightInspection.transactionSafety,
       });
       return { state: "execution_succeeded" as const, mutationPerformed: true };
     } finally {

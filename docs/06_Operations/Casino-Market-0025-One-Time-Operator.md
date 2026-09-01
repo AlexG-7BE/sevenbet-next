@@ -1,15 +1,17 @@
 # Casino Market 0025 One-Time Operator
 
-Status: **PROPOSED / NOT AUTHORISED / NOT EXECUTED**. This runbook prepares one reviewable mechanism. It does not authorise Production access, schema mutation, application deployment, PR merge, factual import, asset publication, or commercial activation.
+Status: **PROPOSED / NOT EXECUTED**. The 2026-09-01 Founder instruction authorises this branch's direct-admin safety correction, but not Production migration execution, application deployment, PR merge, factual import, asset publication, or commercial activation.
 
 ## Chosen mechanism
 
-**PROPOSED:** a repository-native local/operator CLI is the smallest available controlled path. An authorised Founder Office configuration owner supplies the existing Production-scoped `DATABASE_URL` and `DIRECT_URL` to one repository maintainer process in memory. The command verifies the existing pooled/direct readiness contract and same redacted database identity before opening Prisma.
+The repository-native local/operator CLI remains a bounded, reviewable mechanism. It verifies the existing pooled/direct readiness contract and same redacted database identity before opening a shared Casino release/admin Prisma client exclusively on `DIRECT_URL`. `DATABASE_URL` remains the pooled runtime identity input and is never the administrative datasource.
+
+All preflight and postflight inspection runs inside a PostgreSQL `REPEATABLE READ`, `READ ONLY` transaction. PostgreSQL must confirm `transaction_read_only=on`; transaction-local statement, lock and idle timeouts are bounded at 20 seconds, 5 seconds and 60 seconds. Migration history, preservation counts, partial-schema state and legacy-index state are read once per coherent snapshot.
 
 The alternatives were rejected for this release:
 
 - Generic GitHub Actions has no approved Production database credentials, and adding them would enlarge the trust boundary.
-- The historical temporary Vercel build runner is technically proven but couples schema mutation to an application deployment. It is not needed for an explicitly attended database-only command.
+- The local process cannot receive the existing Vercel Sensitive bindings in the current provider path. The final attended execution mechanism therefore belongs to the separately reviewed Vercel Production build executor layered above this corrected shared direct-admin path.
 - Manual SQL, `prisma db execute`, `db push`, a seed, an import, and an arbitrary migration selector are outside this mechanism.
 
 The Production CLI cannot select a URL, migration name, SQL file, seed, import, affiliate action, asset action, or application deployment. Its only optional mutation switch is `--execute-production-0025`; without it, the command is read-only.
@@ -20,7 +22,7 @@ The Production CLI cannot select a URL, migration name, SQL file, seed, import, 
 
 Two people participate after a separate Founder GO:
 
-1. The **Founder Office configuration owner** verifies the current Production Prisma Postgres resource in the provider control plane and exposes its existing matched pooled/runtime and direct/migration bindings only to the attended process. They do not copy either value into GitHub, a document, chat, a shell command, or a committed file.
+1. The **Founder Office configuration owner** verifies the current Production Prisma Postgres resource and its existing matched pooled/runtime and direct/migration bindings in the provider control plane. They do not copy either value into GitHub, a document, chat, a shell command, or a committed file.
 2. The **repository maintainer acting as migration operator** checks out the exact operator PR commit named verbatim in that later Founder GO and runs the commands below. The operator must be able to stop immediately and retain only the bounded JSON events.
 
 One person may hold both roles only if they possess both existing authorities. No CI service account or ordinary application user is an operator.
@@ -67,13 +69,14 @@ The only GO state is one `casino_market_0025_preflight_verified` event followed 
 - 0025 `pending`;
 - each accepted historical rolled-back attempt named only by migration, with `supersededByCompletedAttempt: true` and `effectiveChecksumMatchesRepository: true`;
 - the nine bounded preservation counts; and
-- `eligibilityState: not_present_before_0025`.
+- `eligibilityState: not_present_before_0025`; and
+- the confirmed repeatable-read, read-only transaction and bounded timeout contract.
 
 The dry-run event must show `mutationPerformed: false` and `futureExecutionRequiresSeparateFounderApproval: true`. Any other output is HOLD. A clean dry run is evidence for review; it does not authorise the execution command.
 
-## Future execution — prohibited until a later separate Founder GO
+## Local execution mode — prohibited and not the final release path
 
-After the Founder reviews the dry-run evidence and explicitly approves execution for the same full commit, run exactly:
+The CLI retains its tightly tested mutation switch, but current provider evidence means it is not the final release path and it must not be invoked under the 2026-09-01 authority. If a future distinct Founder decision explicitly selects this local mechanism and supplies the exact commit, its command shape is:
 
 ```sh
 VERCEL_ENV=production \
@@ -87,7 +90,7 @@ The command re-runs all preflight checks. It then invokes only:
 prisma migrate deploy --schema prisma/schema.prisma
 ```
 
-The mechanism captures and suppresses Prisma stdout/stderr. It never emits credentials.
+The mechanism forces both subprocess connection variables in memory to the already identity-verified `DIRECT_URL`, captures and suppresses Prisma stdout/stderr, and never emits credentials.
 
 ### Success output
 
