@@ -12,6 +12,10 @@ import {
   parseCasinoMarket0025ProductionBuildProbeArguments,
   runCasinoMarket0025ProductionBuildProbeLauncher,
 } from "../scripts/casino-market-0025-production-build-probe";
+import {
+  CASINO_MARKET_0025_VERCEL_ORG_ID,
+  CASINO_MARKET_0025_VERCEL_PROJECT_ID,
+} from "../lib/db/casino-market-0025-vercel-target";
 
 const commit = "a".repeat(40);
 const migration = "0025_casino_market_profile_architecture";
@@ -27,6 +31,7 @@ type State = {
 
 function launch(state: State = {}) {
   const invocations: string[][] = [];
+  const childEnvironments: NodeJS.ProcessEnv[] = [];
   const result = runCasinoMarket0025ProductionBuildProbeLauncher(
     ["--expected-probe-commit", commit],
     {
@@ -39,13 +44,14 @@ function launch(state: State = {}) {
       fileExists: (file) => path.relative("/reviewed-probe", file) !== state.missingFile,
       readFile: () => state.migrationBytes ?? approvedMigration,
       listMigrations: () => state.migrations ?? ["0024_programme_access_acceptance", migration],
-      runVercel: (arguments_) => {
+      runVercel: (arguments_, _cwd, environment) => {
         invocations.push(arguments_);
+        childEnvironments.push(environment);
         return { status: 1, stdout: "", stderr: "" };
       },
     },
   );
-  return { invocations, result };
+  return { childEnvironments, invocations, result };
 }
 
 function assertRefused(state: State, code: string) {
@@ -56,12 +62,14 @@ function assertRefused(state: State, code: string) {
   );
 }
 
-test("exact clean checkout proceeds only to the fixed Vercel invocation", () => {
-  const { invocations, result } = launch();
+test("exact clean checkout proceeds only to the fixed existing-project Vercel invocation", () => {
+  const { childEnvironments, invocations, result } = launch();
   assert.equal(result.status, 1);
   assert.equal(invocations.length, 1);
   assert.deepEqual(invocations[0], [
     "deploy",
+    "--project",
+    CASINO_MARKET_0025_VERCEL_PROJECT_ID,
     "--prod",
     "--skip-domain",
     "--logs",
@@ -72,6 +80,10 @@ test("exact clean checkout proceeds only to the fixed Vercel invocation", () => 
     "--build-env",
     `CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT=${commit}`,
   ]);
+  assert.equal(childEnvironments.length, 1);
+  assert.equal(childEnvironments[0].VERCEL_ORG_ID, CASINO_MARKET_0025_VERCEL_ORG_ID);
+  assert.equal(childEnvironments[0].VERCEL_PROJECT_ID, CASINO_MARKET_0025_VERCEL_PROJECT_ID);
+  assert.equal(invocations[0].includes("link"), false);
   assert.equal(invocations[0].some((value) => /VERCEL_GIT_COMMIT_SHA/.test(value)), false);
   assert.equal(invocations[0].some((value) => ["--prebuilt", "--yes", "--alias", "promote"].includes(value)), false);
 });
@@ -102,6 +114,7 @@ test("malformed expected SHA and arbitrary extra arguments refuse", () => {
     ["--expected-probe-commit", commit, "--prebuilt"],
     ["--expected-probe-commit", commit, "--yes"],
     ["--expected-probe-commit", commit, "--alias", "b4gamble.com"],
+    ["--expected-probe-commit", commit, "--project", "arbitrary-project"],
   ]) {
     assert.throws(() => parseCasinoMarket0025ProductionBuildProbeArguments(arguments_));
   }

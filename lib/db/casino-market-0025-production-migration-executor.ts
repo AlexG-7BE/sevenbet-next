@@ -16,6 +16,7 @@ import {
   type CasinoMarket0025ReadStage,
   type CasinoMarketPreservationCounts,
 } from "@/lib/db/casino-market-0025-release";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "@/lib/db/casino-market-0025-vercel-target";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 
 export const CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256 =
@@ -106,10 +107,9 @@ export function assertCasinoMarket0025ProductionMigrationAuthority(
   if (casinoMarketRepositoryChecksum(CASINO_MARKET_TARGET_MIGRATION) !== CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256) {
     fail("TARGET_CHECKSUM_MISMATCH", "Migration 0025 does not match the Founder-approved checksum.");
   }
-  if (!environment.DATABASE_URL) fail("DATABASE_URL_REQUIRED", "The approved pooled database binding is required.");
-  if (!environment.DIRECT_URL) fail("DIRECT_URL_REQUIRED", "The approved direct database binding is required.");
-
   if (authority === "disposable-test") {
+    if (!environment.DATABASE_URL) fail("DATABASE_URL_REQUIRED", "The approved pooled database binding is required.");
+    if (!environment.DIRECT_URL) fail("DIRECT_URL_REQUIRED", "The approved direct database binding is required.");
     if (environment.CI !== "true" || environment.NODE_ENV !== "test") {
       fail("DISPOSABLE_TEST_AUTHORITY_REQUIRED", "Disposable execution requires explicit CI and test authority.");
     }
@@ -120,6 +120,7 @@ export function assertCasinoMarket0025ProductionMigrationAuthority(
     }
     return {
       deploymentCommit: sourceCommit,
+      vercelProjectId: null,
       repositoryMigrations,
       environment: "disposable-test" as const,
       runtimeMode: "disposable" as const,
@@ -131,6 +132,11 @@ export function assertCasinoMarket0025ProductionMigrationAuthority(
   if (environment.VERCEL_ENV === "preview") fail("PREVIEW_ENVIRONMENT_REFUSED", "Migration execution refuses Preview.");
   if (environment.VERCEL_ENV !== "production") fail("PRODUCTION_ENVIRONMENT_REQUIRED", "Migration execution requires Vercel Production.");
   if (environment.VERCEL !== "1") fail("VERCEL_BUILD_REQUIRED", "Migration execution requires the Vercel build environment.");
+  if (environment.VERCEL_PROJECT_ID !== CASINO_MARKET_0025_VERCEL_PROJECT_ID) {
+    fail("VERCEL_PROJECT_ID_REFUSED", "VERCEL_PROJECT_ID_REFUSED");
+  }
+  if (!environment.DATABASE_URL) fail("DATABASE_URL_REQUIRED", "The approved pooled database binding is required.");
+  if (!environment.DIRECT_URL) fail("DIRECT_URL_REQUIRED", "The approved direct database binding is required.");
   let readiness: ReturnType<typeof assertVercelDatabaseReadiness>;
   try {
     readiness = assertVercelDatabaseReadiness(environment);
@@ -142,6 +148,7 @@ export function assertCasinoMarket0025ProductionMigrationAuthority(
   }
   return {
     deploymentCommit: sourceCommit,
+    vercelProjectId: environment.VERCEL_PROJECT_ID,
     repositoryMigrations,
     environment: readiness.environment,
     runtimeMode: readiness.runtimeMode,
@@ -214,6 +221,7 @@ export async function runCasinoMarket0025ProductionMigration(options: ExecutionO
       timestamp: now().toISOString(),
       environment: authority.environment,
       releaseCommit: authority.deploymentCommit,
+      vercelProjectId: authority.vercelProjectId,
       migration: CASINO_MARKET_TARGET_MIGRATION,
       migrationSha256: CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256,
       runtimeMode: authority.runtimeMode,
@@ -259,6 +267,7 @@ export async function runCasinoMarket0025ProductionMigration(options: ExecutionO
       timestamp: now().toISOString(),
       environment: authority.environment,
       releaseCommit: authority.deploymentCommit,
+      vercelProjectId: authority.vercelProjectId,
       migration: CASINO_MARKET_TARGET_MIGRATION,
       migrationSha256: CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256,
       mutationPerformed: true,

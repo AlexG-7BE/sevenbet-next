@@ -14,6 +14,7 @@ import {
   casinoMarketPreservationCounts,
   runCasinoMarket0025ReadOnlyTransaction,
 } from "../lib/db/casino-market-0025-release";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "../lib/db/casino-market-0025-vercel-target";
 
 const commit = "a".repeat(40);
 
@@ -68,6 +69,7 @@ async function main() {
         environment: {
           VERCEL_ENV: "production",
           VERCEL: "1",
+          VERCEL_PROJECT_ID: CASINO_MARKET_0025_VERCEL_PROJECT_ID,
           CASINO_MARKET_0025_PROBE_AUTHORITY,
           CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: commit,
           CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: commit,
@@ -109,13 +111,14 @@ async function main() {
     assert.deepEqual(Object.keys(preflight).sort(), [
       "deploymentCommit", "eligibilityState", "environment", "event", "migration", "migrationSha256",
       "historicalRolledBackAttempts", "migrationStates", "plan", "preservationCounts", "timestamp",
-      "runtimeMode", "directMode", "sameDatabaseIdentity", "transactionSafety",
+      "runtimeMode", "directMode", "sameDatabaseIdentity", "transactionSafety", "vercelProjectId",
     ].sort());
     assert.deepEqual(Object.keys(go).sort(), [
       "deploymentAuthorised", "deploymentCommit", "environment", "event", "migrationExecutionAuthorised",
       "mutationPerformed", "requiresFounderReview", "timestamp",
     ].sort());
     assert.equal(preflight.plan, "APPLY");
+    assert.equal(preflight.vercelProjectId, CASINO_MARKET_0025_VERCEL_PROJECT_ID);
     assert.equal(preflight.eligibilityState, "not_present_before_0025");
     assert.deepEqual(preflight.historicalRolledBackAttempts, []);
     assert.equal(Object.keys(preflight.preservationCounts as object).length, 9);

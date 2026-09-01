@@ -6,6 +6,7 @@ import {
   CASINO_MARKET_0025_PROBE_AUTHORITY,
   runCasinoMarket0025ProductionBuildProbe,
 } from "../lib/db/casino-market-0025-production-build-probe";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "../lib/db/casino-market-0025-vercel-target";
 
 const expectedPatterns = {
   "unresolved-migration": /unresolved migration attempt/,
@@ -28,6 +29,7 @@ async function main() {
       environment: {
         VERCEL_ENV: "production",
         VERCEL: "1",
+        VERCEL_PROJECT_ID: CASINO_MARKET_0025_VERCEL_PROJECT_ID,
         CASINO_MARKET_0025_PROBE_AUTHORITY,
         CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: "a".repeat(40),
         CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: "a".repeat(40),

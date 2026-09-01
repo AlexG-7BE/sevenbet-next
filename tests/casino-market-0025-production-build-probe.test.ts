@@ -10,6 +10,7 @@ import {
   isCasinoMarket0025ProductionBuildProbeRequested,
   runCasinoMarket0025ProductionBuildProbe,
 } from "../lib/db/casino-market-0025-production-build-probe";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "../lib/db/casino-market-0025-vercel-target";
 
 const commit = "a".repeat(40);
 const directUrl = "postgresql://probe-user:not-a-secret@db.prisma.io:5432/postgres?sslmode=require";
@@ -19,6 +20,7 @@ function productionEnvironment(overrides: Record<string, string | undefined> = {
   return {
     VERCEL_ENV: "production",
     VERCEL: "1",
+    VERCEL_PROJECT_ID: CASINO_MARKET_0025_VERCEL_PROJECT_ID,
     CASINO_MARKET_0025_PROBE_AUTHORITY,
     CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: commit,
     CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: commit,
@@ -93,6 +95,40 @@ test("source attestation mismatch refuses before database client creation", asyn
   assert.equal(clientsCreated, 0);
 });
 
+test("missing or wrong Vercel project refuses before database binding inspection or client creation", async () => {
+  for (const projectId of [undefined, "prj_wrong_project"]) {
+    const environment = productionEnvironment({ VERCEL_PROJECT_ID: projectId });
+    let databaseBindingReads = 0;
+    let clientsCreated = 0;
+    Object.defineProperty(environment, "DATABASE_URL", {
+      get: () => {
+        databaseBindingReads += 1;
+        return pooledUrl;
+      },
+    });
+    Object.defineProperty(environment, "DIRECT_URL", {
+      get: () => {
+        databaseBindingReads += 1;
+        return directUrl;
+      },
+    });
+
+    await assert.rejects(
+      runCasinoMarket0025ProductionBuildProbe({
+        environment,
+        createPrismaClient: () => {
+          clientsCreated += 1;
+          throw new Error("database client must not be created");
+        },
+      }),
+      (error: unknown) => error instanceof CasinoMarket0025ProductionBuildProbeError
+        && error.code === "VERCEL_PROJECT_ID_REFUSED",
+    );
+    assert.equal(databaseBindingReads, 0);
+    assert.equal(clientsCreated, 0);
+  }
+});
+
 test("Vercel Git commit metadata is not build-probe authority", () => {
   const withoutVercelGitMetadata = assertCasinoMarket0025ProductionBuildProbeAuthority(productionEnvironment());
   assert.equal(withoutVercelGitMetadata.deploymentCommit, commit);
@@ -124,6 +160,7 @@ test("cases 5 through 7 — missing or mismatched database identity refuses with
 test("exact Production probe authority is full-commit and byte-identical-migration bound", () => {
   const authority = assertCasinoMarket0025ProductionBuildProbeAuthority(productionEnvironment());
   assert.equal(authority.deploymentCommit, commit);
+  assert.equal(authority.vercelProjectId, CASINO_MARKET_0025_VERCEL_PROJECT_ID);
   assert.equal(authority.runtimeMode, "pooled");
   assert.equal(authority.directMode, "direct");
   assert.equal(authority.sameDatabaseIdentity, true);

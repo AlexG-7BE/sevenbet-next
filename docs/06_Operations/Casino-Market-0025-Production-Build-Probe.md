@@ -10,9 +10,13 @@ The reviewed PR head cannot be embedded in that same Git commit. At the later de
 
 **DETECTED:** the first authorised Vercel CLI attempt proved that `VERCEL_GIT_COMMIT_SHA` is absent on this source-upload path. It is not probe authority and the probe does not set, spoof, require, or inspect it.
 
+**DETECTED:** a later authorised probe attempt ran from an unlinked worktree without an exact project target. Vercel created unrelated project `prj_tMG9xkmvmlqK1bq9Ajp723Qm8SJ2`; its build had no approved database bindings and stopped before a database connection. That project is not a release target and is not modified or deleted by this workstream.
+
+The only authorised target is existing B4GAMBLE project `sevenbet-next`, team `team_WhkUGuXZeIMlU1uFHtowNUqa`, project `prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`. Both launchers use the same repository constant, force `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID` into the child process environment in memory, and pass exact `--project prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`. They do not invoke `vercel link`, write `.vercel/project.json`, or permit project/team input.
+
 ## Safety boundary
 
-The probe is selected when any probe-specific build input is present. The dormant executor is selected when any executor-specific build input is present. Inputs from both modes together fail closed. A complete attempt requires Vercel Production, exposed Vercel system metadata, the mode's exact non-secret authority, equal launcher-attested source and Founder-approved full commit SHAs, the frozen final migration, and the existing matched pooled/direct database-readiness contract. Partial or invalid attempts fail before a database client is created where practical. With no mode-specific input, the existing local, Preview, and Production build behavior remains in control.
+The probe is selected when any probe-specific build input is present. The dormant executor is selected when any executor-specific build input is present. Inputs from both modes together fail closed. A complete attempt requires Vercel Production, exposed Vercel system metadata, exact `VERCEL_PROJECT_ID=prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`, the mode's exact non-secret authority, equal launcher-attested source and Founder-approved full commit SHAs, the frozen final migration, and the existing matched pooled/direct database-readiness contract. Missing or different project identity emits bounded `VERCEL_PROJECT_ID_REFUSED` before either database binding is inspected or a Prisma client is created. Partial or invalid attempts otherwise fail before a database client is created where practical. With no mode-specific input, the existing local, Preview, and Production build behavior remains in control.
 
 Before Vercel is called, the launcher accepts only `--expected-probe-commit <40-character lowercase SHA>`. It verifies that the local `HEAD` exactly equals that value, the working tree is empty under `git status --porcelain=v1 --untracked-files=all`, migration 0025 is final and byte-identical at the approved checksum, and all reviewed probe execution files are present. Any mismatch stops before deployment. Arbitrary Vercel arguments are not accepted.
 
@@ -30,7 +34,7 @@ Before any future invocation:
 2. Confirm that head is still based on `b1cb2cfe5668e8b930d410a9fd013cb08db35846`, is green, and contains no later migration.
 3. Confirm migration 0025 remains byte-identical at the checksum above.
 4. Confirm Vercel system environment variables are already exposed by the existing project configuration. Do not change project configuration for this probe.
-5. Use the existing approved linked project/provider path. Do not pull, print, copy, or persist sensitive database bindings.
+5. Use only the launcher's fixed existing project target. Do not run `vercel link`, depend on local project metadata, or pull, print, copy, or persist sensitive database bindings.
 
 ## Future attended invocation — do not execute without a new GO
 
@@ -43,12 +47,12 @@ npm run casino-market-0025:production-probe -- \
   --expected-probe-commit <FOUNDER_APPROVED_PROBE_COMMIT>
 ```
 
-The launcher invokes exactly `vercel deploy --prod --skip-domain --logs` with the fixed probe authority and these two non-secret, ephemeral attestations:
+The launcher invokes exactly `vercel deploy --project prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb --prod --skip-domain --logs` under in-memory `VERCEL_ORG_ID=team_WhkUGuXZeIMlU1uFHtowNUqa` and `VERCEL_PROJECT_ID=prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`, with the fixed probe authority and these two non-secret, ephemeral attestations:
 
 - `CASINO_MARKET_0025_PROBE_SOURCE_COMMIT=<locally verified HEAD>`
 - `CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT=<FOUNDER_APPROVED_PROBE_COMMIT>`
 
-It supplies no arbitrary extra Vercel arguments. Do not invoke Vercel manually, add these values to Vercel Project Environment Variables, supply `DATABASE_URL`, `DIRECT_URL`, or any credential on the command line, use `--prebuilt` or `--yes`, promote, or assign an alias.
+It supplies no arbitrary extra Vercel arguments. Do not invoke Vercel manually, run `vercel link`, add these values to Vercel Project Environment Variables, supply `DATABASE_URL`, `DIRECT_URL`, or any credential on the command line, use `--prebuilt` or `--yes`, promote, or assign an alias.
 
 ## Expected bounded evidence
 
@@ -71,7 +75,7 @@ npm run casino-market-0025:production-migrate -- \
   --execute-production-0025
 ```
 
-Do not run it without a new explicit Founder GO naming the exact release commit. The launcher checks exact full `HEAD`, an entirely clean worktree including untracked files, expected execution files, migration 0025 finality, and its frozen checksum. It accepts no arbitrary Vercel arguments and supplies the exact authority, source attestation, expected commit, and execution flag only as ephemeral `--build-env` values to `vercel deploy --prod --skip-domain --logs`.
+Do not run it without a new explicit Founder GO naming the exact release commit. The launcher checks exact full `HEAD`, an entirely clean worktree including untracked files, expected execution files, migration 0025 finality, and its frozen checksum. It accepts no arbitrary Vercel arguments, forces the same in-memory team/project target as the probe, and supplies the exact authority, source attestation, expected commit, and execution flag only as ephemeral `--build-env` values to `vercel deploy --project prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb --prod --skip-domain --logs`.
 
 Inside the temporary build, all four inputs are mandatory. Probe authority cannot select or satisfy execution authority. Preview, local, malformed, partial, mixed-mode, checksum-invalid, later-migration, database-identity, history, pending-state, or partial-schema mismatches stop before migration. No Vercel project variable, Git/PR/CI workflow, normal Production build, or Preview is configured to invoke this mode.
 
@@ -81,7 +85,7 @@ If Prisma migration fails, there is no retry, resolve, migration-history edit, m
 
 ## Post-run read-only verification
 
-Using the deployment reference shown by the attended command or the Vercel dashboard, verify that its state is failed/error rather than `READY`, that it has no Production domain alias, and that the currently served Production deployment is unchanged. `vercel inspect <deployment-reference>` is read-only; the dashboard deployment detail is an equivalent evidence source. Never promote the failed deployment.
+Using the deployment reference shown by the attended command or the Vercel dashboard, verify first that its project is exactly `sevenbet-next` / `prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`, then verify that its state is failed/error rather than `READY`, that it has no Production domain alias, and that the currently served Production deployment is unchanged. `vercel inspect <deployment-reference>` is read-only; the dashboard deployment detail is an equivalent evidence source. Never promote the failed deployment.
 
 Retain only the bounded events, exact intentional-stop marker, exact commit, failure state, and no-alias evidence. Do not retain raw environment output or credentials. The evidence permits only a new Founder GO/HOLD decision; it does not authorise migration 0025, merge, or deployment.
 

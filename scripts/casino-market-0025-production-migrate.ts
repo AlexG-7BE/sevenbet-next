@@ -9,6 +9,10 @@ import {
   CASINO_MARKET_0025_EXECUTION_AUTHORITY,
 } from "../lib/db/casino-market-0025-production-migration-executor";
 import { CASINO_MARKET_TARGET_MIGRATION } from "../lib/db/casino-market-0025-release";
+import {
+  CASINO_MARKET_0025_VERCEL_PROJECT_ID,
+  casinoMarket0025VercelChildEnvironment,
+} from "../lib/db/casino-market-0025-vercel-target";
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/;
 
@@ -20,6 +24,7 @@ export const CASINO_MARKET_0025_EXECUTION_EXPECTED_FILES = [
   "lib/db/casino-market-0025-build-mode.ts",
   "lib/db/casino-market-0025-production-migration-executor.ts",
   "lib/db/casino-market-0025-release.ts",
+  "lib/db/casino-market-0025-vercel-target.ts",
   `prisma/migrations/${CASINO_MARKET_TARGET_MIGRATION}/migration.sql`,
 ] as const;
 
@@ -32,7 +37,7 @@ type CommandResult = {
 
 type LauncherDependencies = {
   runGit?: (arguments_: string[], cwd: string) => CommandResult;
-  runVercel?: (arguments_: string[], cwd: string) => CommandResult;
+  runVercel?: (arguments_: string[], cwd: string, environment: NodeJS.ProcessEnv) => CommandResult;
   fileExists?: (file: string) => boolean;
   readFile?: (file: string) => Buffer;
   listMigrations?: (directory: string) => string[];
@@ -81,8 +86,12 @@ function defaultRunGit(arguments_: string[], cwd: string): CommandResult {
   };
 }
 
-function defaultRunVercel(arguments_: string[], cwd: string): CommandResult {
-  const result = spawnSync("vercel", arguments_, { cwd, stdio: "inherit" });
+function defaultRunVercel(
+  arguments_: string[],
+  cwd: string,
+  environment: NodeJS.ProcessEnv,
+): CommandResult {
+  const result = spawnSync("vercel", arguments_, { cwd, env: environment, stdio: "inherit" });
   return {
     status: result.status,
     stdout: "",
@@ -102,6 +111,8 @@ export function createCasinoMarket0025ProductionMigrationVercelArguments(
 ) {
   return [
     "deploy",
+    "--project",
+    CASINO_MARKET_0025_VERCEL_PROJECT_ID,
     "--prod",
     "--skip-domain",
     "--logs",
@@ -163,7 +174,11 @@ export function runCasinoMarket0025ProductionMigrationLauncher(
     sourceCommit,
     expectedReleaseCommit,
   );
-  const deployment = runVercel(vercelArguments, cwd);
+  const deployment = runVercel(
+    vercelArguments,
+    cwd,
+    casinoMarket0025VercelChildEnvironment(process.env),
+  );
   if (deployment.error || deployment.status === null) {
     refuse("VERCEL_INVOCATION_FAILED", "The approved Vercel Production migration build could not be invoked.");
   }

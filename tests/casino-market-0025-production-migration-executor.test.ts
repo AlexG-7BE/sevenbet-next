@@ -11,6 +11,7 @@ import {
   assertCasinoMarket0025ProductionMigrationAuthority,
   runCasinoMarket0025ProductionMigration,
 } from "../lib/db/casino-market-0025-production-migration-executor";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "../lib/db/casino-market-0025-vercel-target";
 
 const commit = "a".repeat(40);
 const directUrl = "postgresql://executor-user:not-a-secret@db.prisma.io:5432/postgres?sslmode=require";
@@ -20,6 +21,7 @@ function productionEnvironment(overrides: Record<string, string | undefined> = {
   return {
     VERCEL_ENV: "production",
     VERCEL: "1",
+    VERCEL_PROJECT_ID: CASINO_MARKET_0025_VERCEL_PROJECT_ID,
     CASINO_MARKET_0025_EXECUTION_AUTHORITY,
     CASINO_MARKET_0025_EXECUTION_SOURCE_COMMIT: commit,
     CASINO_MARKET_0025_EXPECTED_RELEASE_COMMIT: commit,
@@ -52,6 +54,8 @@ test("partial, malformed, probe or non-Production execution authority refuses be
     { VERCEL_ENV: "preview" },
     { VERCEL_ENV: undefined },
     { VERCEL: undefined },
+    { VERCEL_PROJECT_ID: undefined },
+    { VERCEL_PROJECT_ID: "prj_wrong_project" },
     { DATABASE_URL: undefined },
     { DIRECT_URL: undefined },
     { DIRECT_URL: directUrl.replace("executor-user", "other-user") },
@@ -79,9 +83,50 @@ test("partial, malformed, probe or non-Production execution authority refuses be
   }
 });
 
+test("missing or wrong Vercel project refuses before database binding inspection or migration", async () => {
+  for (const projectId of [undefined, "prj_wrong_project"]) {
+    const environment = productionEnvironment({ VERCEL_PROJECT_ID: projectId });
+    let databaseBindingReads = 0;
+    let clientsCreated = 0;
+    let migrationRuns = 0;
+    Object.defineProperty(environment, "DATABASE_URL", {
+      get: () => {
+        databaseBindingReads += 1;
+        return pooledUrl;
+      },
+    });
+    Object.defineProperty(environment, "DIRECT_URL", {
+      get: () => {
+        databaseBindingReads += 1;
+        return directUrl;
+      },
+    });
+
+    await assert.rejects(
+      runCasinoMarket0025ProductionMigration({
+        environment,
+        createPrismaClient: () => {
+          clientsCreated += 1;
+          throw new Error("database client must not be created");
+        },
+        runMigration: () => {
+          migrationRuns += 1;
+          return { status: 0 };
+        },
+      }),
+      (error: unknown) => error instanceof CasinoMarket0025ProductionMigrationExecutorError
+        && error.code === "VERCEL_PROJECT_ID_REFUSED",
+    );
+    assert.equal(databaseBindingReads, 0);
+    assert.equal(clientsCreated, 0);
+    assert.equal(migrationRuns, 0);
+  }
+});
+
 test("exact execution authority is commit, checksum, identity and Production bound", () => {
   const authority = assertCasinoMarket0025ProductionMigrationAuthority(productionEnvironment());
   assert.equal(authority.deploymentCommit, commit);
+  assert.equal(authority.vercelProjectId, CASINO_MARKET_0025_VERCEL_PROJECT_ID);
   assert.equal(authority.environment, "production");
   assert.equal(authority.runtimeMode, "pooled");
   assert.equal(authority.directMode, "direct");

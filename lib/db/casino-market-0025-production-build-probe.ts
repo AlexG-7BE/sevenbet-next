@@ -10,6 +10,7 @@ import {
   type CasinoMarket0025ReadStage,
   type CasinoMarketPreservationCounts,
 } from "@/lib/db/casino-market-0025-release";
+import { CASINO_MARKET_0025_VERCEL_PROJECT_ID } from "@/lib/db/casino-market-0025-vercel-target";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 
 export const CASINO_MARKET_0025_PROBE_APPROVED_SHA256 =
@@ -59,6 +60,9 @@ export function assertCasinoMarket0025ProductionBuildProbeAuthority(environment:
   if (environment.VERCEL !== "1") {
     fail("VERCEL_BUILD_REQUIRED", "The casino market build probe requires the Vercel build environment.");
   }
+  if (environment.VERCEL_PROJECT_ID !== CASINO_MARKET_0025_VERCEL_PROJECT_ID) {
+    fail("VERCEL_PROJECT_ID_REFUSED", "VERCEL_PROJECT_ID_REFUSED");
+  }
   if (environment.CASINO_MARKET_0025_PROBE_AUTHORITY !== CASINO_MARKET_0025_PROBE_AUTHORITY) {
     fail("PROBE_AUTHORITY_MISMATCH", "The exact non-secret casino market build-probe authority is required.");
   }
@@ -99,6 +103,7 @@ export function assertCasinoMarket0025ProductionBuildProbeAuthority(environment:
 
   return {
     deploymentCommit: sourceCommit,
+    vercelProjectId: environment.VERCEL_PROJECT_ID,
     repositoryMigrations,
     environment: readiness.environment,
     runtimeMode: readiness.runtimeMode,
@@ -159,6 +164,7 @@ export async function runCasinoMarket0025ProductionBuildProbe(options: ProbeOpti
       timestamp,
       environment: authority.environment,
       deploymentCommit: authority.deploymentCommit,
+      vercelProjectId: authority.vercelProjectId,
       migration: CASINO_MARKET_TARGET_MIGRATION,
       migrationSha256: CASINO_MARKET_0025_PROBE_APPROVED_SHA256,
       runtimeMode: authority.runtimeMode,

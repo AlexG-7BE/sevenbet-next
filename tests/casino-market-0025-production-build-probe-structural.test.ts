@@ -129,3 +129,16 @@ test("Vercel preflight selects mutually exclusive explicit modes and has no auto
   assert.match(mode, /CASINO_MARKET_0025_EXECUTE_PRODUCTION_0025/);
   assert.doesNotMatch(preflight, /CASINO_MARKET_0025_EXECUTION_AUTHORITY\s*=/);
 });
+
+test("both attended launchers pin the shared project and never link or discover a project", () => {
+  const probeLauncher = readFileSync("scripts/casino-market-0025-production-build-probe.ts", "utf8");
+  const migrationLauncher = readFileSync("scripts/casino-market-0025-production-migrate.ts", "utf8");
+  const target = readFileSync("lib/db/casino-market-0025-vercel-target.ts", "utf8");
+  for (const launcher of [probeLauncher, migrationLauncher]) {
+    assert.match(launcher, /casinoMarket0025VercelChildEnvironment\(process\.env\)/);
+    assert.match(launcher, /CASINO_MARKET_0025_VERCEL_PROJECT_ID/);
+    assert.doesNotMatch(launcher, /vercel\s+link|["']link["']|\.vercel\/project\.json/i);
+  }
+  assert.match(target, /team_WhkUGuXZeIMlU1uFHtowNUqa/);
+  assert.match(target, /prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb/);
+});
