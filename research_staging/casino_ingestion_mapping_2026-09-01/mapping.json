@@ -1,0 +1,72 @@
+{
+  "authority": "NON_AUTHORITATIVE_GENERATED_REPORT",
+  "schemaVersion": "casino-ingestion-mapping-report.v1",
+  "generatedFrom": "data/casino-ingestion/betsson-pe-se.v1.json",
+  "sourceSnapshot": {
+    "phase1FileCount": 53,
+    "phase1AggregateSha256": "3ed74f971ba7979b5a2da434698d67f1871148552ed4442eb5d21147d3a74cd9",
+    "phase1_5FileCount": 20,
+    "phase1_5AggregateSha256": "85a03152fd30e24c0cbf9bf0dddf65baf77c039d4fab3261f5e57439b5f36198",
+    "explicitFilesVerified": 9,
+    "sourceDirectoriesModified": false
+  },
+  "global": {
+    "casinoRecords": 1,
+    "casino": "Betsson",
+    "slug": "betsson",
+    "domain": "betsson.com",
+    "globalOperator": null,
+    "reason": "Operator varies by market/residence."
+  },
+  "markets": {
+    "PE": {
+      "operator": "SFTG Limited",
+      "currency": "PEN",
+      "languages": ["es", "en"],
+      "canonicalLicences": ["11002586010000", "21002586010000"],
+      "paymentCount": 10,
+      "draftBonusCount": 1,
+      "categoryCount": 9,
+      "providerCount": 0,
+      "evidenceCount": 12,
+      "contradiction": "Regulator 21002586010000 versus operator-published 21002586020000 associated with Betsafe evidence."
+    },
+    "SE": {
+      "operator": "Betsson Nordic Ltd",
+      "currency": "SEK",
+      "languages": ["sv"],
+      "canonicalLicences": ["23Si2176"],
+      "paymentCount": 12,
+      "draftBonusCount": 1,
+      "categoryCount": 5,
+      "providerCount": 0,
+      "evidenceCount": 12,
+      "contradiction": "Spin Nordic Ltd and its displayed licence period cannot be assigned unambiguously from the regulator result."
+    }
+  },
+  "transformations": [
+    {
+      "source": "MINCETUR status VIGENTE",
+      "normalized": "ACTIVE",
+      "prisma": "CasinoLicense.status and canonicalStatus",
+      "retention": "Source status and activity type remain in CasinoLicense.notes and evidence."
+    },
+    {
+      "source": "OFFICIAL_PRIVACY or OFFICIAL_RESPONSIBLE_GAMBLING",
+      "normalized": "OTHER",
+      "prisma": "CasinoCountryEvidence.sourceType",
+      "retention": "Exact raw source type remains in sourceReference/notes."
+    },
+    {
+      "source": "Incomplete or contradictory current bonus evidence",
+      "normalized": "DRAFT observation",
+      "prisma": "CasinoBonus with exact casinoCountryId",
+      "retention": "Unknown/conflicting material terms remain null and the bonus cannot surface publicly."
+    }
+  ],
+  "commercialReportOnly": [
+    {"countryCode":"PE","routeSetupId":"9721","portalMarketState":"APPROVED_IN_PORTAL","productionEligible":false,"trackingVerifiedEndToEnd":false},
+    {"countryCode":"SE","routeSetupId":"38112","portalMarketState":"PENDING_APPROVAL","productionEligible":false,"trackingVerifiedEndToEnd":false}
+  ],
+  "commercialWrites": 0
+}

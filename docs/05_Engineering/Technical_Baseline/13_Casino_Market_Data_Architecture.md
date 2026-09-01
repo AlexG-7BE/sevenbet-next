@@ -28,12 +28,18 @@
 
 **PROPOSED:** a dedicated Admin market-profile form is not part of this candidate. The authenticated server contract is usable by later ingestion/admin integration; explicit UI controls for retiring ambiguous legacy facts remain later work.
 
-**UNKNOWN:** no real Casino market profile or route correctness is established by synthetic fixture coverage. No real partner agreement, programme/account, offer, tracking authority, or production eligibility is established.
+**DETECTED:** real frozen Betsson PE/SE factual profiles have been exercised in disposable PostgreSQL and through the public profile/discovery services. No real partner agreement, programme/account, offer, tracking authority, or production eligibility is established.
 
 ## Migration evidence
 
 **DETECTED:** disposable PostgreSQL verification applies all 25 migrations cleanly. A staged 0024→0025 fixture preserves one Casino, one existing CasinoCountry, and one each of legacy licence/payment/provider/category/bonus records. All product facts remain unscoped, no licence join is inferred, no duplicate market profile appears, new unknown fields remain null/empty, and a second `migrate deploy` is a no-op.
 
+## Controlled ingestion validation
+
+**DETECTED:** `data/casino-ingestion/betsson-pe-se.v1.json` is an explicit, checksum-bound Betsson PE/SE bundle. `scripts/casino-market-ingest.ts` defaults to database-free dry run and permits writes only to an explicitly confirmed loopback `_ci` database. It reconciles one global Casino and transaction-bounded market profiles without deleting unrelated data or writing affiliate/commercial authority.
+
+**DETECTED:** the disposable PostgreSQL acceptance test exercises persisted Betsson PE and SE facts against public profile/discovery services, including idempotent retry, targeted evidence update, exact market filtering, visible contradictions/unknowns, and commercial fail-closed behavior. See `docs/05_Engineering/Casino-Market-Ingestion-Runbook.md`.
+
 ## Remaining boundary
 
-**PROPOSED:** `CASINO-DATA-INGEST-02` will map the frozen Phase 1/1.5 corpus, including distinct Betsson PE and SE profiles, into a non-Production database after this architecture is accepted. It must not activate routes or publish staged affiliate assets.
+**PROPOSED:** `CASINO-DATA-ARCH-RELEASE-03` may release migration 0025 DB-first, verify the Production schema, and only then promote compatible runtime. This ingestion evidence does not authorize a Production data import, route activation, or asset publication.
