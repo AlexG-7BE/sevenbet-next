@@ -8,6 +8,8 @@ import { mapPublishedCasino, projectPublicCasinoMarket } from "../lib/public-cas
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import { PublicCasinoDiscoveryService } from "../lib/services/public-casino-discovery.service";
+import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
+import { PublicCasinoService } from "../lib/services/public-casino.service";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -97,6 +99,27 @@ test("one global casino maps two independent market profiles without legacy or c
   assert.deepEqual(se.bonuses.map((item) => item.slug), ["reference-se-welcome"]);
 
   assert.doesNotMatch(JSON.stringify({ pe, se }), /Legacy Pay|Legacy Global Authority|Legacy Provider|legacy-global-language/);
+});
+
+test("an unqualified direct service result selects the stable first explicit market without a global aggregate", async () => {
+  const record = twoMarketRecord();
+  const repository: PublicCasinoStore = {
+    findPublishedBySlug: async () => record,
+    hasManagedSlug: async () => true,
+    listPublished: async () => [record],
+    listManagedSlugs: async () => ["reference-casino"],
+    listActiveAffiliateRoutes: async () => [],
+  };
+  const service = new PublicCasinoService(repository, [], { cmsEnabled: true, redirectEnabled: false, now });
+
+  for (const casino of [await service.getCasino("reference-casino"), ...(await service.listCasinos())]) {
+    assert.ok(casino);
+    assert.deepEqual(casino.marketProfiles.map((profile) => profile.countryCode), ["PE"]);
+    assert.deepEqual(casino.languages, ["es-PE"]);
+    assert.deepEqual(casino.currencies, ["PEN"]);
+    assert.deepEqual(casino.payments.map((item) => item.key), ["visa"]);
+    assert.doesNotMatch(JSON.stringify(casino), /Legacy Pay|Legacy Global Authority|Legacy Provider|legacy-global-language|Swedish Test Authority|swish/);
+  }
 });
 
 test("country and product predicates compose within one market profile", async () => {
