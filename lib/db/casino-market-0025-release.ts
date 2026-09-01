@@ -20,7 +20,7 @@ export type CasinoMarketMigrationRow = {
 
 export type CasinoMarketReleasePlan = { state: "APPLY" | "VERIFY" };
 
-function repositoryChecksum(name: string) {
+export function casinoMarketRepositoryChecksum(name: string) {
   return createHash("sha256")
     .update(readFileSync(`prisma/migrations/${name}/migration.sql`))
     .digest("hex");
@@ -37,6 +37,9 @@ export function planCasinoMarket0025Release(
   rows: CasinoMarketMigrationRow[],
   repositoryMigrations = casinoMarketRepositoryMigrations(),
 ): CasinoMarketReleasePlan {
+  const rolledBack = rows.filter((row) => row.rolled_back_at !== null);
+  if (rolledBack.length) throw new Error(`Casino market release found ${rolledBack.length} rolled-back migration row(s).`);
+
   const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
   if (unresolved.length) throw new Error(`Casino market release found ${unresolved.length} unresolved migration row(s).`);
 
@@ -48,11 +51,11 @@ export function planCasinoMarket0025Release(
   for (const name of CASINO_MARKET_BASELINE_MIGRATIONS) {
     const row = completedByName.get(name);
     if (!row) throw new Error(`Casino market release requires completed baseline ${name}.`);
-    if (row.checksum !== repositoryChecksum(name)) throw new Error(`Casino market release checksum mismatch for ${name}.`);
+    if (row.checksum !== casinoMarketRepositoryChecksum(name)) throw new Error(`Casino market release checksum mismatch for ${name}.`);
   }
 
   const target = completedByName.get(CASINO_MARKET_TARGET_MIGRATION);
-  if (target && target.checksum !== repositoryChecksum(CASINO_MARKET_TARGET_MIGRATION)) {
+  if (target && target.checksum !== casinoMarketRepositoryChecksum(CASINO_MARKET_TARGET_MIGRATION)) {
     throw new Error(`Casino market release checksum mismatch for ${CASINO_MARKET_TARGET_MIGRATION}.`);
   }
 
@@ -65,13 +68,13 @@ export function planCasinoMarket0025Release(
   return { state: target ? "VERIFY" : "APPLY" };
 }
 
-async function migrationRows(prisma: PrismaClient) {
+export async function casinoMarketMigrationRows(prisma: PrismaClient) {
   return prisma.$queryRawUnsafe<CasinoMarketMigrationRow[]>(
     'SELECT "migration_name", "checksum", "finished_at", "rolled_back_at" FROM "_prisma_migrations" ORDER BY "started_at" ASC',
   );
 }
 
-type ExistingCounts = {
+export type CasinoMarketPreservationCounts = {
   casinos: bigint;
   markets: bigint;
   licenses: bigint;
@@ -83,8 +86,8 @@ type ExistingCounts = {
   routeCountries: bigint;
 };
 
-async function existingCounts(prisma: PrismaClient) {
-  const [counts] = await prisma.$queryRawUnsafe<ExistingCounts[]>(`
+export async function casinoMarketPreservationCounts(prisma: PrismaClient) {
+  const [counts] = await prisma.$queryRawUnsafe<CasinoMarketPreservationCounts[]>(`
     SELECT
       (SELECT COUNT(*) FROM "Casino") AS casinos,
       (SELECT COUNT(*) FROM "CasinoCountry") AS markets,
@@ -100,22 +103,33 @@ async function existingCounts(prisma: PrismaClient) {
   return counts;
 }
 
-async function assertNoPartial0025State(prisma: PrismaClient) {
+export async function assertNoPartialCasinoMarket0025State(prisma: PrismaClient) {
   const [state] = await prisma.$queryRawUnsafe<Array<{ hazardous: boolean }>>(`
     SELECT
-      to_regclass('public."CasinoCountryEvidence"') IS NOT NULL
-      OR to_regclass('public."CasinoCountryLicense"') IS NOT NULL
+      to_regclass('"CasinoCountryEvidence"') IS NOT NULL
+      OR to_regclass('"CasinoCountryLicense"') IS NOT NULL
       OR EXISTS (
         SELECT 1 FROM information_schema.columns
-        WHERE table_schema = 'public' AND (
+        WHERE table_schema = current_schema() AND (
           (table_name = 'CasinoCountry' AND column_name = 'localDomain')
           OR (table_name = 'CasinoPaymentMethod' AND column_name = 'casinoCountryId')
           OR (table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible')
         )
       )
-      OR EXISTS (SELECT 1 FROM pg_type WHERE typname IN ('CasinoMarketEvidenceClassification', 'CasinoMarketEvidenceSourceType'))
-      OR EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname LIKE '%casinoCountryId%')
-      OR EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MediaAsset_market_requires_casino_check')
+      OR EXISTS (
+        SELECT 1 FROM pg_type typ
+        JOIN pg_namespace ns ON ns.oid = typ.typnamespace
+        WHERE ns.nspname = current_schema()
+          AND typ.typname IN ('CasinoMarketEvidenceClassification', 'CasinoMarketEvidenceSourceType')
+      )
+      OR EXISTS (SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND indexname LIKE '%casinoCountryId%')
+      OR EXISTS (
+        SELECT 1 FROM pg_constraint con
+        JOIN pg_class rel ON rel.oid = con.conrelid
+        JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+        WHERE ns.nspname = current_schema()
+          AND con.conname = 'MediaAsset_market_requires_casino_check'
+      )
       AS hazardous
   `);
   if (!state || state.hazardous) throw new Error("Casino market release found unexpected partial 0025 schema state.");
@@ -127,7 +141,7 @@ async function assertNoPartial0025State(prisma: PrismaClient) {
   ];
   const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(`
     SELECT indexname FROM pg_indexes
-    WHERE schemaname = 'public' AND indexname IN (${requiredLegacyIndexes.map((name) => `'${name}'`).join(", ")})
+    WHERE schemaname = current_schema() AND indexname IN (${requiredLegacyIndexes.map((name) => `'${name}'`).join(", ")})
   `);
   const names = new Set(indexes.map((row) => row.indexname));
   if (requiredLegacyIndexes.some((name) => !names.has(name))) {
@@ -135,7 +149,7 @@ async function assertNoPartial0025State(prisma: PrismaClient) {
   }
 }
 
-async function assert0025Schema(prisma: PrismaClient) {
+export async function assertCasinoMarket0025Schema(prisma: PrismaClient) {
   const requiredColumns: Array<[string, string]> = [
     ...["localDomain", "localWebsiteUrl", "operatorProfileId", "operatingLegalEntity", "termsUrl", "privacyUrl", "responsibleGamblingUrl", "primaryLanguage", "supportedLanguages", "supportLanguages", "primaryCurrency", "supportedCurrencies", "kycSummary", "withdrawalSummary", "supportSummary", "lastVerifiedAt"].map((column) => ["CasinoCountry", column] as [string, string]),
     ...["casinoCountryId", "lastVerifiedAt", "notes"].map((column) => ["CasinoPaymentMethod", column] as [string, string]),
@@ -144,7 +158,7 @@ async function assert0025Schema(prisma: PrismaClient) {
     ...["productionEligible", "productionEligibilityVerifiedAt", "productionEligibilityExpiresAt", "productionEligibilityEvidence", "productionEligibilityNotes"].map((column) => ["AffiliateTrackingLinkCountry", column] as [string, string]),
   ];
   const columns = await prisma.$queryRawUnsafe<Array<{ table_name: string; column_name: string }>>(`
-    SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'
+    SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = current_schema()
   `);
   const columnSet = new Set(columns.map((row) => `${row.table_name}.${row.column_name}`));
   if (requiredColumns.some(([table, column]) => !columnSet.has(`${table}.${column}`))) {
@@ -158,7 +172,13 @@ async function assert0025Schema(prisma: PrismaClient) {
     "CasinoGameCategory_casinoCountryId_casinoId_fkey", "CasinoBonus_casinoCountryId_casinoId_fkey",
     "MediaAsset_casinoCountryId_fkey", "MediaAsset_market_requires_casino_check",
   ];
-  const constraints = await prisma.$queryRawUnsafe<Array<{ conname: string }>>(`SELECT conname FROM pg_constraint`);
+  const constraints = await prisma.$queryRawUnsafe<Array<{ conname: string }>>(`
+    SELECT con.conname
+    FROM pg_constraint con
+    JOIN pg_class rel ON rel.oid = con.conrelid
+    JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+    WHERE ns.nspname = current_schema()
+  `);
   const constraintSet = new Set(constraints.map((row) => row.conname));
   if (requiredConstraints.some((name) => !constraintSet.has(name))) throw new Error("Casino market release postflight found missing 0025 constraints.");
 
@@ -172,7 +192,7 @@ async function assert0025Schema(prisma: PrismaClient) {
     "CasinoBonus_casinoCountryId_status_offerStatus_idx", "MediaAsset_casinoCountryId_type_status_sortOrder_idx",
     "AffiliateTrackingLinkCountry_countryCode_productionEligible_idx",
   ];
-  const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(`SELECT indexname FROM pg_indexes WHERE schemaname = 'public'`);
+  const indexes = await prisma.$queryRawUnsafe<Array<{ indexname: string }>>(`SELECT indexname FROM pg_indexes WHERE schemaname = current_schema()`);
   const indexSet = new Set(indexes.map((row) => row.indexname));
   if (requiredIndexes.some((name) => !indexSet.has(name))) throw new Error("Casino market release postflight found missing 0025 indexes.");
 
@@ -181,7 +201,7 @@ async function assert0025Schema(prisma: PrismaClient) {
     FROM pg_type typ
     JOIN pg_namespace ns ON ns.oid = typ.typnamespace
     JOIN pg_enum enum ON enum.enumtypid = typ.oid
-    WHERE ns.nspname = 'public'
+    WHERE ns.nspname = current_schema()
       AND typ.typname IN ('CasinoMarketEvidenceClassification', 'CasinoMarketEvidenceSourceType')
     GROUP BY typ.typname
   `);
@@ -193,7 +213,7 @@ async function assert0025Schema(prisma: PrismaClient) {
 
   const [authority] = await prisma.$queryRawUnsafe<Array<{ default_value: string | null; eligible: bigint }>>(`
     SELECT
-      (SELECT column_default FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible') AS default_value,
+      (SELECT column_default FROM information_schema.columns WHERE table_schema = current_schema() AND table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible') AS default_value,
       (SELECT COUNT(*) FROM "AffiliateTrackingLinkCountry" WHERE "productionEligible" = true) AS eligible
   `);
   if (!authority || authority.default_value !== "false" || authority.eligible !== 0n) {
@@ -201,24 +221,24 @@ async function assert0025Schema(prisma: PrismaClient) {
   }
 }
 
-async function assertMigrationComplete(prisma: PrismaClient, repositoryMigrations: string[]) {
-  const rows = await migrationRows(prisma);
+export async function assertCasinoMarket0025MigrationComplete(prisma: PrismaClient, repositoryMigrations: string[]) {
+  const rows = await casinoMarketMigrationRows(prisma);
   const plan = planCasinoMarket0025Release(rows, repositoryMigrations);
   if (plan.state !== "VERIFY") throw new Error("Casino market release postflight still found migration 0025 pending.");
-  await assert0025Schema(prisma);
+  await assertCasinoMarket0025Schema(prisma);
 }
 
 export async function inspectCasinoMarket0025Release(
   prisma: PrismaClient,
   repositoryMigrations = casinoMarketRepositoryMigrations(),
 ) {
-  const plan = planCasinoMarket0025Release(await migrationRows(prisma), repositoryMigrations);
+  const plan = planCasinoMarket0025Release(await casinoMarketMigrationRows(prisma), repositoryMigrations);
   if (plan.state === "VERIFY") {
-    await assertMigrationComplete(prisma, repositoryMigrations);
+    await assertCasinoMarket0025MigrationComplete(prisma, repositoryMigrations);
     return { state: "already_applied_and_verified" as const };
   }
-  await assertNoPartial0025State(prisma);
-  return { state: "pending_verified_read_only" as const, counts: await existingCounts(prisma) };
+  await assertNoPartialCasinoMarket0025State(prisma);
+  return { state: "pending_verified_read_only" as const, counts: await casinoMarketPreservationCounts(prisma) };
 }
 
 export async function runCasinoMarket0025Readiness() {

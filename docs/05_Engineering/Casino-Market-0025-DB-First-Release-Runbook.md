@@ -8,6 +8,8 @@ Status: **PROPOSED** on the Release-03 candidate. No Production execution is aut
 
 **FOUNDER_DECISION_REQUIRED:** this candidate contains no automatic Production mutation path. A separately reviewed, one-time mechanism and exact operator authority are required to execute `prisma migrate deploy` against Production. The read-only guard deliberately stops deployment while 0025 is pending.
 
+**PROPOSED FOLLOW-ON:** the dedicated operator mechanism and exact commands are documented in [Casino Market 0025 One-Time Operator](../06_Operations/Casino-Market-0025-One-Time-Operator.md). It is based on this candidate's exact head, is not merged or executed, and requires its own exact-commit Founder GO followed by a second decision after a real Production dry run.
+
 ## Ordered release
 
 0. Record current `main`, current Production deployment, exact Release-03 head, the checksum above, and read-only Production migration state. Confirm 0024 is completed, its checksum matches, no unresolved row exists, and the only repository-pending suffix is 0025.
@@ -33,4 +35,3 @@ Stop on unknown database identity, non-Production mutation context, missing/mism
 - **After 0025 completes, application release issue:** roll the application deployment back to the previous known-good runtime and keep the additive 0025 expansion.
 - **Later #111 runtime failure:** return to the pre-#111 deployment; 0025 remains.
 - **Later import failure:** use a separate ingestion recovery procedure. Do not mix factual-row recovery with schema rollback.
-

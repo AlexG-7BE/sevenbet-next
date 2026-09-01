@@ -52,7 +52,7 @@ test("E — target checksum mismatch refuses verification", () => {
 
 test("F and G — missing or rolled-back 0024 refuses release", () => {
   assert.throws(() => planCasinoMarket0025Release(through0024().filter((entry) => entry.migration_name !== "0024_programme_access_acceptance")), /requires completed baseline/);
-  assert.throws(() => planCasinoMarket0025Release(through0024().map((entry) => entry.migration_name === "0024_programme_access_acceptance" ? { ...entry, finished_at: null, rolled_back_at: new Date() } : entry)), /requires completed baseline/);
+  assert.throws(() => planCasinoMarket0025Release(through0024().map((entry) => entry.migration_name === "0024_programme_access_acceptance" ? { ...entry, finished_at: null, rolled_back_at: new Date() } : entry)), /rolled-back/);
 });
 
 test("H through J — guard is partial-state, authority, index and constraint fail-closed", () => {

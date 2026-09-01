@@ -494,11 +494,19 @@ async function verifyProgrammeAccessUpgrade(migrationEntries) {
   }
 }
 
-async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex) {
+async function prepareCasinoMarket0024(
+  migrationEntries,
+  programmeMigrationIndex,
+  schema,
+  { finalMigration = "0024_programme_access_acceptance", loadFixture = true } = {},
+) {
   const marketMigration = "0025_casino_market_profile_architecture";
   const migrationIndex = migrationEntries.indexOf(marketMigration);
   if (migrationIndex < 1) throw new Error(`Expected migration ${marketMigration}`);
-  const schema = "casino_market_profile_upgrade_ci";
+  const finalMigrationIndex = migrationEntries.indexOf(finalMigration);
+  if (finalMigrationIndex < 1 || finalMigrationIndex >= migrationIndex) {
+    throw new Error(`Expected pre-0025 baseline migration ${finalMigration}`);
+  }
   const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
   const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
   const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
@@ -511,19 +519,31 @@ async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigra
     await rm(beforeProgramme, { recursive: true, force: true });
   }
 
-  const beforeMarket = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  const beforeMarket = await stageMigrations(migrationEntries.slice(0, finalMigrationIndex + 1));
   try {
     run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeMarket, "schema.prisma")], environment);
-    run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeMarket, "schema.prisma"), "--file", "prisma/fixtures/0025_pre_casino_market_profile.sql"], environment);
+    if (loadFixture) {
+      run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeMarket, "schema.prisma"), "--file", "prisma/fixtures/0025_pre_casino_market_profile.sql"], environment);
+    }
   } finally {
     await rm(beforeMarket, { recursive: true, force: true });
   }
 
-  run("npx", ["prisma", "migrate", "deploy"], environment);
-  run("npx", ["prisma", "migrate", "deploy"], environment);
+  return environment;
+}
+
+async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex) {
+  const schema = "casino_market_profile_upgrade_ci";
+  const environment = await prepareCasinoMarket0024(migrationEntries, programmeMigrationIndex, schema);
+
+  run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator.ts"], {
+    ...environment,
+    CI: "true",
+    NODE_ENV: "test",
+  });
 
   const { PrismaClient } = await import("@prisma/client");
-  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  const prisma = new PrismaClient({ datasourceUrl: environment.DATABASE_URL });
   try {
     const rows = await prisma.$queryRawUnsafe(`
       SELECT
@@ -556,6 +576,169 @@ async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigra
       duplicateMarketProfiles: 0,
       replayIdempotent: true,
       unknownFactsPreserved: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, programmeMigrationIndex) {
+  const cases = [
+    {
+      name: "unresolved-migration",
+      schema: "casino_market_0025_unresolved_ci",
+      mutate: async (prisma) => prisma.$executeRawUnsafe(`
+        INSERT INTO "_prisma_migrations"
+          ("id", "checksum", "migration_name", "started_at", "applied_steps_count")
+        VALUES
+          ('25000000-0000-4000-8000-000000000003', 'fixture', '0025_casino_market_profile_architecture', NOW(), 0)
+      `),
+    },
+    {
+      name: "missing-0024",
+      schema: "casino_market_0025_missing_0024_ci",
+      options: { finalMigration: "0023_mcp_dcr_runtime_compat_fix", loadFixture: false },
+    },
+    {
+      name: "checksum-mismatch",
+      schema: "casino_market_0025_checksum_mismatch_ci",
+      mutate: async (prisma) => prisma.$executeRawUnsafe(`
+        UPDATE "_prisma_migrations"
+        SET "checksum" = 'intentional-disposable-mismatch'
+        WHERE "migration_name" = '0024_programme_access_acceptance'
+      `),
+    },
+    {
+      name: "unexpected-0026",
+      schema: "casino_market_0025_unexpected_0026_ci",
+      mutate: async (prisma) => prisma.$executeRawUnsafe(`
+        INSERT INTO "_prisma_migrations"
+          ("id", "checksum", "finished_at", "migration_name", "started_at", "applied_steps_count")
+        VALUES
+          ('26000000-0000-4000-8000-000000000026', 'fixture', NOW(), '0026_unexpected', NOW(), 1)
+      `),
+    },
+  ];
+
+  const { PrismaClient } = await import("@prisma/client");
+  for (const testCase of cases) {
+    const environment = await prepareCasinoMarket0024(
+      migrationEntries,
+      programmeMigrationIndex,
+      testCase.schema,
+      testCase.options,
+    );
+    if (testCase.mutate) {
+      const prisma = new PrismaClient({ datasourceUrl: environment.DATABASE_URL });
+      try {
+        await testCase.mutate(prisma);
+      } finally {
+        await prisma.$disconnect();
+      }
+    }
+    run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+      ...environment,
+      CI: "true",
+      NODE_ENV: "test",
+      CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: testCase.name,
+    });
+    console.info("Casino market 0025 database-state refusal passed", { case: testCase.name });
+  }
+}
+
+async function verifyCasinoMarketPartialSchemaRefusal(migrationEntries, programmeMigrationIndex) {
+  const schema = "casino_market_0025_partial_refusal_ci";
+  const environment = await prepareCasinoMarket0024(migrationEntries, programmeMigrationIndex, schema);
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: environment.DATABASE_URL });
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TYPE "CasinoMarketEvidenceClassification" AS ENUM (
+        'DETECTED', 'INFERRED', 'PROPOSED', 'UNKNOWN', 'CONTRADICTION'
+      )
+    `);
+  } finally {
+    await prisma.$disconnect();
+  }
+
+  run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+    ...environment,
+    CI: "true",
+    NODE_ENV: "test",
+    CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: "partial-schema",
+  });
+  console.info("Casino market 0025 partial-schema refusal passed", { mutationPerformed: false });
+}
+
+async function verifyCasinoMarketAtomicFailure(migrationEntries, programmeMigrationIndex) {
+  const schema = "casino_market_0025_atomic_failure_ci";
+  const environment = await prepareCasinoMarket0024(migrationEntries, programmeMigrationIndex, schema);
+  const trigger = "casino_market_0025_intentional_failure_ci";
+  const functionName = "casino_market_0025_intentional_failure_ci";
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: environment.DATABASE_URL });
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE FUNCTION "${schema}"."${functionName}"()
+      RETURNS event_trigger
+      LANGUAGE plpgsql
+      AS $$ BEGIN
+        RAISE EXCEPTION 'intentional disposable 0025 migration failure';
+      END $$
+    `);
+    await prisma.$executeRawUnsafe(`
+      CREATE EVENT TRIGGER "${trigger}"
+      ON ddl_command_end
+      WHEN TAG IN ('CREATE TABLE')
+      EXECUTE FUNCTION "${schema}"."${functionName}"()
+    `);
+
+    run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+      ...environment,
+      CI: "true",
+      NODE_ENV: "test",
+      CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: "migration-sql",
+    });
+  } finally {
+    await prisma.$executeRawUnsafe(`DROP EVENT TRIGGER IF EXISTS "${trigger}"`);
+    await prisma.$executeRawUnsafe(`DROP FUNCTION IF EXISTS "${schema}"."${functionName}"()`);
+  }
+
+  run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+    ...environment,
+    CI: "true",
+    NODE_ENV: "test",
+    CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: "unresolved-migration",
+  });
+
+  try {
+    const [state] = await prisma.$queryRawUnsafe(`
+      SELECT
+        to_regclass('"CasinoCountryEvidence"') IS NOT NULL
+          OR to_regclass('"CasinoCountryLicense"') IS NOT NULL
+          OR EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_schema = current_schema()
+              AND ((table_name = 'CasinoCountry' AND column_name = 'localDomain')
+                OR (table_name = 'AffiliateTrackingLinkCountry' AND column_name = 'productionEligible'))
+          )
+          OR EXISTS (
+            SELECT 1 FROM pg_type typ
+            JOIN pg_namespace ns ON ns.oid = typ.typnamespace
+            WHERE ns.nspname = current_schema()
+              AND typ.typname IN ('CasinoMarketEvidenceClassification', 'CasinoMarketEvidenceSourceType')
+          ) AS hazardous,
+        (SELECT COUNT(*)::int FROM "_prisma_migrations"
+          WHERE "migration_name" = '0025_casino_market_profile_architecture'
+            AND "finished_at" IS NULL AND "rolled_back_at" IS NULL) AS unresolved
+    `);
+    if (!state || state.hazardous || Number(state.unresolved) !== 1) {
+      throw new Error("Intentional 0025 SQL failure did not roll back atomically to an unresolved migration record");
+    }
+    console.info("Casino market 0025 intentional SQL failure passed", {
+      atomicRollback: true,
+      partialSchemaObjects: 0,
+      unresolvedMigrationRows: 1,
     });
   } finally {
     await prisma.$disconnect();
@@ -632,6 +815,9 @@ async function main() {
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyCasinoMarketDatabaseStateRefusals(migrationEntries, programmeMigrationIndex);
+  await verifyCasinoMarketPartialSchemaRefusal(migrationEntries, programmeMigrationIndex);
+  await verifyCasinoMarketAtomicFailure(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
