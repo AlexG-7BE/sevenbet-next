@@ -1,7 +1,6 @@
 import { PrismaClient, type Prisma } from "@prisma/client";
 
 import {
-  CASINO_MARKET_BASELINE_MIGRATIONS,
   CASINO_MARKET_TARGET_MIGRATION,
   assertNoPartialCasinoMarket0025State,
   casinoMarketMigrationRows,
@@ -140,25 +139,6 @@ function assertCountsUnchanged(before: CasinoMarketPreservationCounts, after: Ca
   }
 }
 
-function migrationStatus(row: CasinoMarketMigrationRow | undefined) {
-  if (!row) return "pending";
-  if (row.rolled_back_at !== null) return "rolled_back";
-  if (row.finished_at === null) return "unresolved";
-  return "completed";
-}
-
-function boundedMigrationStates(rows: CasinoMarketMigrationRow[]) {
-  const byName = new Map(rows.map((row) => [row.migration_name, row]));
-  return [...CASINO_MARKET_BASELINE_MIGRATIONS, CASINO_MARKET_TARGET_MIGRATION].map((migration) => {
-    const row = byName.get(migration);
-    return {
-      migration,
-      status: migrationStatus(row),
-      checksumMatchesRepository: row ? row.checksum === casinoMarketRepositoryChecksum(migration) : null,
-    };
-  });
-}
-
 function boundedPreservationCounts(counts: CasinoMarketPreservationCounts) {
   return {
     Casino: counts.casinos.toString(),
@@ -202,7 +182,8 @@ async function inspectInReadOnlyTransaction(prisma: PrismaClient, repositoryMigr
 
     return {
       plan: plan.state,
-      migrationStates: boundedMigrationStates(beforeRows),
+      migrationStates: plan.migrationStates,
+      historicalRolledBackAttempts: plan.historicalRolledBackAttempts,
       preservationCounts: boundedPreservationCounts(beforeCounts),
       eligibilityState: "not_present_before_0025" as const,
       mutationPerformed: false as const,
@@ -230,6 +211,7 @@ export async function runCasinoMarket0025ProductionBuildProbe(options: ProbeOpti
       migrationSha256: CASINO_MARKET_0025_PROBE_APPROVED_SHA256,
       plan: evidence.plan,
       migrationStates: evidence.migrationStates,
+      historicalRolledBackAttempts: evidence.historicalRolledBackAttempts,
       preservationCounts: evidence.preservationCounts,
       eligibilityState: evidence.eligibilityState,
     });

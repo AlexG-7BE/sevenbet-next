@@ -8,12 +8,12 @@ import {
 } from "../lib/db/casino-market-0025-production-build-probe";
 
 const expectedPatterns = {
-  "unresolved-migration": /unresolved migration row/,
-  "rolled-back-migration": /rolled-back migration row/,
+  "unresolved-migration": /unresolved migration attempt/,
+  "unsuperseded-rollback": /unsuperseded rolled-back migration attempt for 0024_programme_access_acceptance/,
   "missing-0024": /requires completed baseline 0024_programme_access_acceptance/,
   "checksum-mismatch-0023": /checksum mismatch for 0023_mcp_dcr_runtime_compat_fix/,
   "checksum-mismatch-0024": /checksum mismatch for 0024_programme_access_acceptance/,
-  "unexpected-0026": /completed migrations absent from this repository/,
+  "unexpected-0026": /migration-history divergence/,
   "partial-schema": /unexpected partial 0025 schema state/,
 } as const;
 

@@ -52,7 +52,7 @@ It supplies no arbitrary extra Vercel arguments. Do not invoke Vercel manually, 
 
 A successful inspection is exactly:
 
-1. `casino_market_0025_production_build_probe_preflight_verified`, showing Production, the exact deployment commit, frozen migration/checksum, plan `APPLY`, 0023 and 0024 completed with repository checksums matching, 0025 pending, nine aggregate counts, and `eligibilityState: not_present_before_0025`.
+1. `casino_market_0025_production_build_probe_preflight_verified`, showing Production, the exact deployment commit, frozen migration/checksum, plan `APPLY`, 0023 and 0024 effectively completed with repository checksums matching, 0025 pending with no attempt rows, any historical rolled-back attempts only as bounded safely-superseded entries, nine aggregate counts, and `eligibilityState: not_present_before_0025`.
 2. `casino_market_0025_production_build_probe_go`, showing `mutationPerformed: false`, `deploymentAuthorised: false`, `migrationExecutionAuthorised: false`, and `requiresFounderReview: true`.
 3. The exact terminal marker `CASINO_MARKET_0025_PROBE_COMPLETE_STOP` and a failed build.
 
@@ -66,4 +66,4 @@ Retain only the bounded events, exact intentional-stop marker, exact commit, fai
 
 ## Stop conditions
 
-Stop on any local source authority, checkout cleanliness, expected-file, build attestation, repository checksum/finality, Vercel metadata, database readiness/identity, migration-history/checksum, pending-suffix, partial-schema, legacy-index, read-only-transaction, bounded-output, intentional-stop, deployment-state, or alias discrepancy. Do not repair, retry with weaker controls, expose bindings, execute migration 0025, or promote any deployment.
+Stop on any local source authority, checkout cleanliness, expected-file, build attestation, repository checksum/finality, Vercel metadata, database readiness/identity, unknown, unresolved, unsuperseded, ambiguous, or checksum-invalid effective migration history, any 0025 attempt row, pending-suffix, partial-schema, legacy-index, read-only-transaction, bounded-output, intentional-stop, deployment-state, or alias discrepancy. Historical rolled-back attempts are acceptable only when the shared release planner proves that a later same-name completed attempt is effective and checksum-valid. Do not mutate or resolve migration history, repair, retry with weaker controls, expose bindings, execute migration 0025, or promote any deployment.

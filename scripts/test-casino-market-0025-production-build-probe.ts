@@ -89,7 +89,7 @@ async function main() {
     ]);
     assert.deepEqual(Object.keys(events[0]).sort(), [
       "deploymentCommit", "eligibilityState", "environment", "event", "migration", "migrationSha256",
-      "migrationStates", "plan", "preservationCounts", "timestamp",
+      "historicalRolledBackAttempts", "migrationStates", "plan", "preservationCounts", "timestamp",
     ].sort());
     assert.deepEqual(Object.keys(events[1]).sort(), [
       "deploymentAuthorised", "deploymentCommit", "environment", "event", "migrationExecutionAuthorised",
@@ -97,6 +97,7 @@ async function main() {
     ].sort());
     assert.equal(events[0].plan, "APPLY");
     assert.equal(events[0].eligibilityState, "not_present_before_0025");
+    assert.deepEqual(events[0].historicalRolledBackAttempts, []);
     assert.equal(Object.keys(events[0].preservationCounts as object).length, 9);
     assert.deepEqual(events[1], {
       event: "casino_market_0025_production_build_probe_go",
