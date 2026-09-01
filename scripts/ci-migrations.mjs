@@ -536,6 +536,12 @@ async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigra
   const schema = "casino_market_profile_upgrade_ci";
   const environment = await prepareCasinoMarket0024(migrationEntries, programmeMigrationIndex, schema);
 
+  run("npx", ["tsx", "scripts/test-casino-market-0025-production-build-probe.ts"], {
+    ...environment,
+    CI: "true",
+    NODE_ENV: "test",
+  });
+
   run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator.ts"], {
     ...environment,
     CI: "true",
@@ -586,6 +592,7 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
   const cases = [
     {
       name: "unresolved-migration",
+      operatorFailure: "unresolved-migration",
       schema: "casino_market_0025_unresolved_ci",
       mutate: async (prisma) => prisma.$executeRawUnsafe(`
         INSERT INTO "_prisma_migrations"
@@ -596,12 +603,23 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
     },
     {
       name: "missing-0024",
+      operatorFailure: "missing-0024",
       schema: "casino_market_0025_missing_0024_ci",
       options: { finalMigration: "0023_mcp_dcr_runtime_compat_fix", loadFixture: false },
     },
     {
-      name: "checksum-mismatch",
-      schema: "casino_market_0025_checksum_mismatch_ci",
+      name: "checksum-mismatch-0023",
+      schema: "casino_market_0025_checksum_mismatch_0023_ci",
+      mutate: async (prisma) => prisma.$executeRawUnsafe(`
+        UPDATE "_prisma_migrations"
+        SET "checksum" = 'intentional-disposable-mismatch'
+        WHERE "migration_name" = '0023_mcp_dcr_runtime_compat_fix'
+      `),
+    },
+    {
+      name: "checksum-mismatch-0024",
+      operatorFailure: "checksum-mismatch",
+      schema: "casino_market_0025_checksum_mismatch_0024_ci",
       mutate: async (prisma) => prisma.$executeRawUnsafe(`
         UPDATE "_prisma_migrations"
         SET "checksum" = 'intentional-disposable-mismatch'
@@ -610,6 +628,7 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
     },
     {
       name: "unsuperseded-rollback",
+      operatorFailure: "unsuperseded-rollback",
       schema: "casino_market_0025_unsuperseded_rollback_ci",
       mutate: async (prisma) => prisma.$executeRawUnsafe(`
         INSERT INTO "_prisma_migrations"
@@ -620,6 +639,7 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
     },
     {
       name: "unexpected-0026",
+      operatorFailure: "unexpected-0026",
       schema: "casino_market_0025_unexpected_0026_ci",
       mutate: async (prisma) => prisma.$executeRawUnsafe(`
         INSERT INTO "_prisma_migrations"
@@ -646,13 +666,24 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
         await prisma.$disconnect();
       }
     }
-    run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+    if (testCase.operatorFailure) {
+      run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+        ...environment,
+        CI: "true",
+        NODE_ENV: "test",
+        CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: testCase.operatorFailure,
+      });
+    }
+    run("npx", ["tsx", "scripts/test-casino-market-0025-production-build-probe-refusal.ts"], {
       ...environment,
       CI: "true",
       NODE_ENV: "test",
       CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: testCase.name,
     });
-    console.info("Casino market 0025 database-state refusal passed", { case: testCase.name });
+    console.info("Casino market 0025 database-state refusal passed", {
+      case: testCase.name,
+      productionBuildProbe: "refused_read_only",
+    });
   }
 }
 
@@ -672,6 +703,12 @@ async function verifyCasinoMarketPartialSchemaRefusal(migrationEntries, programm
   }
 
   run("npx", ["tsx", "scripts/test-casino-market-0025-one-time-operator-refusal.ts"], {
+    ...environment,
+    CI: "true",
+    NODE_ENV: "test",
+    CASINO_MARKET_0025_TEST_EXPECTED_FAILURE: "partial-schema",
+  });
+  run("npx", ["tsx", "scripts/test-casino-market-0025-production-build-probe-refusal.ts"], {
     ...environment,
     CI: "true",
     NODE_ENV: "test",

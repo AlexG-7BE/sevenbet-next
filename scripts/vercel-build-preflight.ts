@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
+import { isCasinoMarket0025ProductionBuildProbeRequested } from "@/lib/db/casino-market-0025-production-build-probe";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -306,7 +307,17 @@ async function maybeApplyProgrammeAccessMigration() {
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
 }
 
-maybeApplyProgrammeAccessMigration().catch((error) => {
+async function runVercelBuildPreflight() {
+  if (isCasinoMarket0025ProductionBuildProbeRequested(process.env)) {
+    const { runCasinoMarket0025ProductionBuildProbeAndStop } = await import(
+      "@/lib/db/casino-market-0025-production-build-probe"
+    );
+    await runCasinoMarket0025ProductionBuildProbeAndStop();
+  }
+  await maybeApplyProgrammeAccessMigration();
+}
+
+runVercelBuildPreflight().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   process.stderr.write(`[vercel-build-preflight] ${message}\n`);
   process.exit(1);
