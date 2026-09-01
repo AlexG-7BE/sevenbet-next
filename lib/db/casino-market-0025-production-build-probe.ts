@@ -44,6 +44,7 @@ function fail(code: string, message: string): never {
 
 export function isCasinoMarket0025ProductionBuildProbeRequested(environment: ProbeEnvironment) {
   return environment.CASINO_MARKET_0025_PROBE_AUTHORITY !== undefined
+    || environment.CASINO_MARKET_0025_PROBE_SOURCE_COMMIT !== undefined
     || environment.CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT !== undefined;
 }
 
@@ -65,13 +66,13 @@ export function assertCasinoMarket0025ProductionBuildProbeAuthority(environment:
     fail("PROBE_AUTHORITY_MISMATCH", "The exact non-secret casino market build-probe authority is required.");
   }
 
-  const deploymentCommit = environment.VERCEL_GIT_COMMIT_SHA;
+  const sourceCommit = environment.CASINO_MARKET_0025_PROBE_SOURCE_COMMIT;
   const expectedCommit = environment.CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT;
-  if (!fullCommit(deploymentCommit) || !fullCommit(expectedCommit)) {
-    fail("FULL_COMMIT_REQUIRED", "Actual and expected probe commits must be full lowercase 40-character Git SHAs.");
+  if (!fullCommit(sourceCommit) || !fullCommit(expectedCommit)) {
+    fail("FULL_COMMIT_REQUIRED", "Source and expected probe commits must be full lowercase 40-character Git SHAs.");
   }
-  if (deploymentCommit !== expectedCommit) {
-    fail("PROBE_COMMIT_MISMATCH", "The Vercel deployment commit does not equal the Founder-approved probe commit.");
+  if (sourceCommit !== expectedCommit) {
+    fail("PROBE_COMMIT_MISMATCH", "The locally verified source commit does not equal the Founder-approved probe commit.");
   }
 
   const repositoryMigrations = casinoMarketRepositoryMigrations();
@@ -100,7 +101,7 @@ export function assertCasinoMarket0025ProductionBuildProbeAuthority(environment:
   }
 
   return {
-    deploymentCommit,
+    deploymentCommit: sourceCommit,
     repositoryMigrations,
     environment: readiness.environment,
     runtimeMode: readiness.runtimeMode,

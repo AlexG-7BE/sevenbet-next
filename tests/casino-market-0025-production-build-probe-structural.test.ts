@@ -5,6 +5,7 @@ import test from "node:test";
 import ts from "typescript";
 
 const roots = [
+  "scripts/casino-market-0025-production-build-probe.ts",
   "scripts/vercel-build-preflight.ts",
   "lib/db/casino-market-0025-production-build-probe.ts",
 ];
@@ -106,6 +107,7 @@ test("the executable Vercel build-probe dependency graph is read-only", () => {
   }
 
   assert.ok(graph.has("lib/db/casino-market-0025-production-build-probe.ts"));
+  assert.ok(graph.has("scripts/casino-market-0025-production-build-probe.ts"));
   assert.ok(graph.has("lib/db/casino-market-0025-release.ts"));
   assert.ok(graph.has("lib/db/vercel-database-readiness.ts"));
   assert.equal([...graph].some((file) => /casino-market-0025-operator/.test(file)), false);

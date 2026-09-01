@@ -67,8 +67,8 @@ async function main() {
         environment: {
           VERCEL_ENV: "production",
           VERCEL: "1",
-          VERCEL_GIT_COMMIT_SHA: commit,
           CASINO_MARKET_0025_PROBE_AUTHORITY,
+          CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: commit,
           CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: commit,
           DATABASE_URL: "postgresql://probe-user:not-a-secret@pooled.db.prisma.io:5432/postgres?sslmode=require&connection_limit=1",
           DIRECT_URL: "postgresql://probe-user:not-a-secret@db.prisma.io:5432/postgres?sslmode=require",

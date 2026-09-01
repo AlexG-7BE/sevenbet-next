@@ -19,8 +19,8 @@ function productionEnvironment(overrides: Record<string, string | undefined> = {
   return {
     VERCEL_ENV: "production",
     VERCEL: "1",
-    VERCEL_GIT_COMMIT_SHA: commit,
     CASINO_MARKET_0025_PROBE_AUTHORITY,
+    CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: commit,
     CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: commit,
     DATABASE_URL: pooledUrl,
     DIRECT_URL: directUrl,
@@ -59,7 +59,8 @@ test("case 4 — incorrect, short, symbolic or missing commit refuses before dat
     { CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: "short" },
     { CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: "HEAD" },
     { CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: undefined },
-    { VERCEL_GIT_COMMIT_SHA: undefined },
+    { CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: undefined },
+    { CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: "short" },
   ]) {
     let clientsCreated = 0;
     await assert.rejects(
@@ -74,6 +75,32 @@ test("case 4 — incorrect, short, symbolic or missing commit refuses before dat
     );
     assert.equal(clientsCreated, 0);
   }
+});
+
+test("source attestation mismatch refuses before database client creation", async () => {
+  let clientsCreated = 0;
+  await assert.rejects(
+    runCasinoMarket0025ProductionBuildProbe({
+      environment: productionEnvironment({ CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: "b".repeat(40) }),
+      createPrismaClient: () => {
+        clientsCreated += 1;
+        throw new Error("database client must not be created");
+      },
+    }),
+    (error: unknown) => error instanceof CasinoMarket0025ProductionBuildProbeError
+      && error.code === "PROBE_COMMIT_MISMATCH",
+  );
+  assert.equal(clientsCreated, 0);
+});
+
+test("Vercel Git commit metadata is not build-probe authority", () => {
+  const withoutVercelGitMetadata = assertCasinoMarket0025ProductionBuildProbeAuthority(productionEnvironment());
+  assert.equal(withoutVercelGitMetadata.deploymentCommit, commit);
+
+  const withConflictingVercelGitMetadata = assertCasinoMarket0025ProductionBuildProbeAuthority(
+    productionEnvironment({ VERCEL_GIT_COMMIT_SHA: "not-authority" }),
+  );
+  assert.equal(withConflictingVercelGitMetadata.deploymentCommit, commit);
 });
 
 test("cases 5 through 7 — missing or mismatched database identity refuses without disclosing bindings", () => {
@@ -112,6 +139,9 @@ test("exact Production probe authority is full-commit and byte-identical-migrati
 test("partial probe inputs are treated as fail-closed probe attempts", () => {
   assert.equal(isCasinoMarket0025ProductionBuildProbeRequested({
     CASINO_MARKET_0025_PROBE_AUTHORITY,
+  }), true);
+  assert.equal(isCasinoMarket0025ProductionBuildProbeRequested({
+    CASINO_MARKET_0025_PROBE_SOURCE_COMMIT: commit,
   }), true);
   assert.equal(isCasinoMarket0025ProductionBuildProbeRequested({
     CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT: commit,
