@@ -10,7 +10,7 @@
 
 **DETECTED:** `Casino` remains one global brand/editorial identity. `CasinoCountry` is extended as the Casino × ISO country factual boundary. `CasinoCountryLicense` associates existing licences with exact profiles; payment, provider, category, bonus, and media records can carry an optional exact profile association. Composite constraints prevent a scoped licence/payment/provider/category/bonus from naming a market owned by another Casino.
 
-**DETECTED:** `CasinoCountryEvidence` preserves field-level provenance references while facts remain typed. `UNKNOWN` and `CONTRADICTION` are first-class classifications; unknown typed values remain nullable rather than receiving defaults.
+**DETECTED:** `CasinoCountryEvidence` preserves field-level provenance references while facts remain typed. Its source-type enum distinguishes official casino/operator/regulator/affiliate-portal evidence, official terms, partner communications, internal records, and other sources without collapsing frozen-corpus provenance. `UNKNOWN` and `CONTRADICTION` are first-class classifications; unknown typed values remain nullable rather than receiving defaults.
 
 **DETECTED:** existing unscoped facts remain stored with null `casinoCountryId`. The migration contains no data DML and creates no market, fact, evidence, or licence-link row.
 

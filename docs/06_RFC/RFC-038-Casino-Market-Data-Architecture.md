@@ -40,7 +40,7 @@ The same Casino can therefore have distinct PE and SE profiles without becoming 
 
 ## Provenance
 
-`CasinoCountryEvidence` records typed evidence for one market profile without becoming EAV. Typed facts stay on `CasinoCountry` and its scoped relations. One evidence row can cite multiple `fieldKeys` and records classification (`DETECTED`, `INFERRED`, `PROPOSED`, `UNKNOWN`, or `CONTRADICTION`), source type, source URL/reference, observation and verification times, and notes.
+`CasinoCountryEvidence` records typed evidence for one market profile without becoming EAV. Typed facts stay on `CasinoCountry` and its scoped relations. One evidence row can cite multiple `fieldKeys` and records classification (`DETECTED`, `INFERRED`, `PROPOSED`, `UNKNOWN`, or `CONTRADICTION`), lossless source type (including official terms and partner communications), source URL/reference, observation and verification times, and notes.
 
 Licence provenance continues through `CasinoLicenseEvidence`. Missing, stale, unknown, or contradictory evidence does not become a positive fact.
 

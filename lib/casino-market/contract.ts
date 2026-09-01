@@ -78,7 +78,7 @@ const bonusSchema = z.object({
 const evidenceSchema = z.object({
   id: uuid.optional(),
   classification: z.enum(["DETECTED", "INFERRED", "PROPOSED", "UNKNOWN", "CONTRADICTION"]),
-  sourceType: z.enum(["OFFICIAL_CASINO", "OFFICIAL_OPERATOR", "REGULATOR", "AFFILIATE_PORTAL", "INTERNAL_RECORD", "OTHER"]),
+  sourceType: z.enum(["OFFICIAL_CASINO", "OFFICIAL_OPERATOR", "REGULATOR", "AFFILIATE_PORTAL", "OFFICIAL_TERMS", "PARTNER_COMMUNICATION", "INTERNAL_RECORD", "OTHER"]),
   sourceUrl: nullableUrl,
   sourceReference: z.string().trim().max(1_000).nullable().optional(),
   fieldKeys: z.array(z.string().trim().min(1).max(160).regex(/^[a-z][A-Za-z0-9_.:-]*$/)).max(100).default([]),

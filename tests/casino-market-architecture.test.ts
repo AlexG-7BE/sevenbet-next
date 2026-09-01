@@ -179,6 +179,13 @@ test("admin market payload preserves nullable unknown facts and rejects unsafe o
   });
   assert.equal(valid.payments[0]?.supportsWithdrawals, null);
   assert.equal(valid.evidence[0]?.classification, "UNKNOWN");
+  for (const sourceType of ["OFFICIAL_TERMS", "PARTNER_COMMUNICATION"] as const) {
+    const parsed = parseCasinoMarketProfileMutation({
+      ...valid,
+      evidence: [{ classification: "DETECTED", sourceType, sourceReference: `frozen-research:${sourceType}`, fieldKeys: ["termsUrl"] }],
+    });
+    assert.equal(parsed.evidence[0]?.sourceType, sourceType);
+  }
   assert.throws(() => parseCasinoMarketProfileMutation({ ...valid, localWebsiteUrl: "javascript:alert(1)" }));
   assert.throws(() => parseCasinoMarketProfileMutation({ ...valid, evidence: [{ classification: "DETECTED", sourceType: "OTHER", fieldKeys: ["primaryCurrency"] }] }));
   assert.throws(() => parseCasinoMarketProfileMutation({ ...valid, payments: [valid.payments[0], valid.payments[0]] }));
@@ -195,6 +202,8 @@ test("migration is additive, leaves legacy facts unscoped, and defaults route au
   assert.match(sql, /"productionEligible" BOOLEAN NOT NULL DEFAULT false/);
   assert.match(sql, /ADD COLUMN\s+"casinoCountryId" UUID/);
   assert.match(sql, /MediaAsset_market_requires_casino_check/);
+  assert.match(sql, /'OFFICIAL_TERMS'/);
+  assert.match(sql, /'PARTNER_COMMUNICATION'/);
   assert.doesNotMatch(sql, /^\s*(?:INSERT\s+INTO|UPDATE\s+.+\s+SET|DELETE\s+FROM|TRUNCATE\b)/im);
   assert.doesNotMatch(sql, /CREATE TABLE "PartnerRoute"/);
 });
