@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -71,9 +71,16 @@ test("write authority requires an explicit loopback _ci target and rejects Produ
     vercelEnv: undefined,
   };
   assert.deepEqual(assertCasinoIngestionWriteAuthority({ ...valid, writeRequested: false }), { mode: "DRY_RUN" });
-  assert.deepEqual(assertCasinoIngestionWriteAuthority(valid), { mode: "WRITE", target: "127.0.0.1:54329/casino_ingest_ci" });
+  assert.deepEqual(assertCasinoIngestionWriteAuthority(valid), { mode: "WRITE", target: "127.0.0.1:54329/casino_ingest_ci?schema=public" });
+  assert.deepEqual(assertCasinoIngestionWriteAuthority({
+    ...valid,
+    databaseUrl: `${valid.databaseUrl}?schema=ingest_test`,
+    directUrl: `${valid.directUrl}?schema=ingest_test`,
+  }), { mode: "WRITE", target: "127.0.0.1:54329/casino_ingest_ci?schema=ingest_test" });
   assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, databaseUrl: "postgresql://user:secret@db.example.com/prod" }), /loopback/);
   assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, databaseUrl: "postgresql://user:secret@127.0.0.1/casino_ingest", directUrl: "postgresql://user:secret@127.0.0.1/casino_ingest" }), /_ci/);
+  assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, databaseUrl: `${valid.databaseUrl}?host=db.example.com` }), /schema query parameter/);
+  assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, databaseUrl: `${valid.databaseUrl}?schema=one`, directUrl: `${valid.directUrl}?schema=two` }), /same disposable local database/);
   assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, vercelEnv: "production" }), /Production/);
   assert.throws(() => assertCasinoIngestionWriteAuthority({ ...valid, confirmation: undefined }), /confirm-disposable/);
 });
@@ -95,5 +102,25 @@ test("deterministic IDs are stable and source verification checks only declared 
     await assert.rejects(() => verifyCasinoIngestionSources(verificationBundle, root), /checksum mismatch/);
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("source verification rejects an allow-listed symlink that resolves outside the frozen root", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "casino-ingestion-source-root-"));
+  const outside = await mkdtemp(path.join(os.tmpdir(), "casino-ingestion-source-outside-"));
+  try {
+    const content = "outside evidence\n";
+    const outsidePath = path.join(outside, "evidence.json");
+    await writeFile(outsidePath, content);
+    await symlink(outsidePath, path.join(root, "evidence.json"));
+    const bundle = await loadBundle();
+    const verificationBundle: CasinoIngestionBundle = {
+      ...bundle,
+      sourceFiles: [{ path: "evidence.json", sha256: createHash("sha256").update(content).digest("hex") }],
+    };
+    await assert.rejects(() => verifyCasinoIngestionSources(verificationBundle, root), /symbolic link/);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(outside, { recursive: true, force: true });
   }
 });

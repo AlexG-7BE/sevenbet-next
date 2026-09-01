@@ -20,9 +20,15 @@ function disposableUrl(value: string | undefined, label: string) {
   }
   if (!new Set(["postgres:", "postgresql:"]).has(parsed.protocol)) throw new Error(`${label} must use PostgreSQL.`);
   if (!LOCAL_DATABASE_HOSTS.has(parsed.hostname)) throw new Error(`${label} must resolve to loopback.`);
+  const queryKeys = [...parsed.searchParams.keys()];
+  if (queryKeys.some((key) => key !== "schema") || parsed.searchParams.getAll("schema").length > 1) {
+    throw new Error(`${label} may only use one optional schema query parameter.`);
+  }
   const databaseName = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
   if (!databaseName.endsWith("_ci")) throw new Error(`${label} database name must end in _ci.`);
-  return { hostname: parsed.hostname, port: parsed.port || "5432", databaseName };
+  const schema = parsed.searchParams.get("schema") ?? "public";
+  if (!schema) throw new Error(`${label} schema must not be empty.`);
+  return { hostname: parsed.hostname, port: parsed.port || "5432", databaseName, schema };
 }
 
 export function assertCasinoIngestionWriteAuthority(authority: CasinoIngestionWriteAuthority) {
@@ -32,8 +38,8 @@ export function assertCasinoIngestionWriteAuthority(authority: CasinoIngestionWr
   if (authority.nodeEnv === "production" || authority.vercelEnv === "production") throw new Error("Production environments are forbidden.");
   const database = disposableUrl(authority.databaseUrl, "DATABASE_URL");
   const direct = disposableUrl(authority.directUrl, "DIRECT_URL");
-  if (database.hostname !== direct.hostname || database.port !== direct.port || database.databaseName !== direct.databaseName) {
+  if (database.hostname !== direct.hostname || database.port !== direct.port || database.databaseName !== direct.databaseName || database.schema !== direct.schema) {
     throw new Error("DATABASE_URL and DIRECT_URL must identify the same disposable local database.");
   }
-  return { mode: "WRITE" as const, target: `${database.hostname}:${database.port}/${database.databaseName}` };
+  return { mode: "WRITE" as const, target: `${database.hostname}:${database.port}/${database.databaseName}?schema=${encodeURIComponent(database.schema)}` };
 }
