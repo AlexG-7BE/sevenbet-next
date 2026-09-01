@@ -65,6 +65,7 @@ The only GO state is one `casino_market_0025_preflight_verified` event followed 
 - environment `production`, plan `APPLY`, exact migration and SHA-256;
 - 0023 and 0024 `completed` with `checksumMatchesRepository: true`;
 - 0025 `pending`;
+- each accepted historical rolled-back attempt named only by migration, with `supersededByCompletedAttempt: true` and `effectiveChecksumMatchesRepository: true`;
 - the nine bounded preservation counts; and
 - `eligibilityState: not_present_before_0025`.
 
@@ -109,13 +110,16 @@ Stop without repair or retry if any condition occurs:
 - Founder approval is missing, ambiguous, or names another commit;
 - checkout is dirty, commit/ancestry differs, checksum differs, or any 0026/later migration is present;
 - environment is Preview/non-Production, either binding is missing/invalid, or pooled/direct identities differ;
-- 0023 or 0024 is missing, rolled back, unresolved, or checksum-invalid;
-- any other migration is unresolved/rolled back or a completed migration is absent from the repository;
+- the effective 0023 or 0024 attempt is missing, rolled back, unresolved, ambiguous, or checksum-invalid;
+- any migration has an unresolved attempt, an unsuperseded rolled-back attempt, ambiguous effective history, a checksum-invalid superseding completion, or a name absent from the repository;
+- any attempted 0025 row exists while 0025 is expected pending;
 - 0025 is not the only pending migration;
 - partial 0025 schema objects exist or the legacy uniqueness baseline is missing;
 - dry-run output is incomplete or reports anything other than the GO state above;
 - a preservation count changes, a required object is absent, new evidence/licence/scoped facts appear, or any route becomes eligible; or
 - any request is made to combine this with application deployment, imports, seeds, affiliate activation, asset publication, or manual schema editing.
+
+A historical rolled-back attempt is read-only evidence, not a repair target. It is accepted only when a later completed attempt for the same repository migration is the unambiguous effective state and has the repository checksum. The operator never resolves, deletes, or edits migration-history rows.
 
 An `casino_market_0025_operator_refused` event is always STOP. `mutationStatus: not_confirmed` means the operator must determine state through a separately reviewed read-only investigation; it does not assert rollback by itself.
 

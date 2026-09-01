@@ -18,10 +18,11 @@ function currentCommit() {
 async function main() {
   const expectedFailure = process.env.CASINO_MARKET_0025_TEST_EXPECTED_FAILURE;
   const expectedPatterns = {
-    "unresolved-migration": /unresolved migration row/,
+    "unresolved-migration": /unresolved migration attempt/,
     "missing-0024": /requires completed baseline 0024_programme_access_acceptance/,
     "checksum-mismatch": /checksum mismatch for 0024_programme_access_acceptance/,
-    "unexpected-0026": /completed migrations absent from this repository/,
+    "unsuperseded-rollback": /unsuperseded rolled-back migration attempt for 0024_programme_access_acceptance/,
+    "unexpected-0026": /migration-history divergence/,
     "partial-schema": /unexpected partial 0025 schema state/,
   } as const;
   assert.ok(expectedFailure && (expectedFailure === "migration-sql" || expectedFailure in expectedPatterns));

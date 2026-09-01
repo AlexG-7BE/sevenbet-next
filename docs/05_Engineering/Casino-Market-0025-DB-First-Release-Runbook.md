@@ -12,7 +12,7 @@ Status: **PROPOSED** on the Release-03 candidate. No Production execution is aut
 
 ## Ordered release
 
-0. Record current `main`, current Production deployment, exact Release-03 head, the checksum above, and read-only Production migration state. Confirm 0024 is completed, its checksum matches, no unresolved row exists, and the only repository-pending suffix is 0025.
+0. Record current `main`, current Production deployment, exact Release-03 head, the checksum above, and read-only Production migration state. Confirm the effective 0024 attempt is completed with the repository checksum, every historical rollback is superseded by a later valid completion for the same repository migration, no unresolved or unsuperseded attempt exists, and the only repository-pending suffix is 0025.
 1. Founder gives an explicit GO for the exact DB-first release and separately approves the reviewed one-time migration mechanism. HOLD if either authority is absent.
 2. Merge only the exact reviewed Release-03 head. Do not enable auto-merge.
 3. Before mutation, capture the bounded counts for Casino, CasinoCountry, CasinoLicense, CasinoPaymentMethod, CasinoGameProvider, CasinoGameCategory, CasinoBonus, MediaAsset, and AffiliateTrackingLinkCountry. Run the partial-schema and legacy-index preflight. Do not log Programme/customer content.
@@ -27,7 +27,7 @@ Status: **PROPOSED** on the Release-03 candidate. No Production execution is aut
 
 ## Stop conditions
 
-Stop on unknown database identity, non-Production mutation context, missing/mismatched/rolled-back 0023 or 0024, any unresolved migration, a pending suffix other than exact 0025, target checksum mismatch, partial manual 0025 objects, changed preservation counts, missing postflight object, or any `productionEligible=true` route. Never auto-repair schema drift.
+Stop on unknown database identity, non-Production mutation context, missing or checksum-invalid effective 0023/0024 state, any unresolved or unsuperseded rolled-back attempt, ambiguous or unknown migration history, any attempted 0025 row while it is expected pending, a pending suffix other than exact 0025, target checksum mismatch, partial manual 0025 objects, changed preservation counts, missing postflight object, or any `productionEligible=true` route. Never mutate migration history or auto-repair schema drift.
 
 ## Rollback and failure response
 

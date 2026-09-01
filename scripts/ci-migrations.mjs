@@ -609,6 +609,16 @@ async function verifyCasinoMarketDatabaseStateRefusals(migrationEntries, program
       `),
     },
     {
+      name: "unsuperseded-rollback",
+      schema: "casino_market_0025_unsuperseded_rollback_ci",
+      mutate: async (prisma) => prisma.$executeRawUnsafe(`
+        INSERT INTO "_prisma_migrations"
+          ("id", "checksum", "finished_at", "migration_name", "rolled_back_at", "started_at", "applied_steps_count")
+        VALUES
+          ('24000000-0000-4000-8000-000000000024', 'fixture', NOW(), '0024_programme_access_acceptance', NOW(), NOW(), 0)
+      `),
+    },
+    {
       name: "unexpected-0026",
       schema: "casino_market_0025_unexpected_0026_ci",
       mutate: async (prisma) => prisma.$executeRawUnsafe(`

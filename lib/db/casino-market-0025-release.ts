@@ -18,7 +18,23 @@ export type CasinoMarketMigrationRow = {
   rolled_back_at: Date | null;
 };
 
-export type CasinoMarketReleasePlan = { state: "APPLY" | "VERIFY" };
+export type CasinoMarketHistoricalRolledBackAttempt = {
+  migration: string;
+  supersededByCompletedAttempt: true;
+  effectiveChecksumMatchesRepository: true;
+};
+
+export type CasinoMarketEffectiveMigrationState = {
+  migration: string;
+  status: "completed" | "pending";
+  checksumMatchesRepository: boolean | null;
+};
+
+export type CasinoMarketReleasePlan = {
+  state: "APPLY" | "VERIFY";
+  migrationStates: CasinoMarketEffectiveMigrationState[];
+  historicalRolledBackAttempts: CasinoMarketHistoricalRolledBackAttempt[];
+};
 
 export function casinoMarketRepositoryChecksum(name: string) {
   return createHash("sha256")
@@ -37,16 +53,44 @@ export function planCasinoMarket0025Release(
   rows: CasinoMarketMigrationRow[],
   repositoryMigrations = casinoMarketRepositoryMigrations(),
 ): CasinoMarketReleasePlan {
-  const rolledBack = rows.filter((row) => row.rolled_back_at !== null);
-  if (rolledBack.length) throw new Error(`Casino market release found ${rolledBack.length} rolled-back migration row(s).`);
+  const repositorySet = new Set(repositoryMigrations);
+  const attemptsByName = new Map<string, CasinoMarketMigrationRow[]>();
+  for (const row of rows) {
+    if (!repositorySet.has(row.migration_name)) {
+      throw new Error(`Casino market release found migration-history divergence for ${row.migration_name}; it is absent from this repository.`);
+    }
+    const attempts = attemptsByName.get(row.migration_name) ?? [];
+    attempts.push(row);
+    attemptsByName.set(row.migration_name, attempts);
+  }
 
-  const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
-  if (unresolved.length) throw new Error(`Casino market release found ${unresolved.length} unresolved migration row(s).`);
+  const completedByName = new Map<string, CasinoMarketMigrationRow>();
+  for (const [name, attempts] of attemptsByName) {
+    if (attempts.some((attempt) => attempt.finished_at === null && attempt.rolled_back_at === null)) {
+      throw new Error(`Casino market release found an unresolved migration attempt for ${name}.`);
+    }
 
-  const completed = rows.filter((row) => row.finished_at !== null && row.rolled_back_at === null);
-  const completedByName = new Map(completed.map((row) => [row.migration_name, row]));
-  const unexpectedCompleted = completed.filter((row) => !repositoryMigrations.includes(row.migration_name));
-  if (unexpectedCompleted.length) throw new Error("Casino market release found completed migrations absent from this repository.");
+    const completed = attempts.filter((attempt) => attempt.finished_at !== null && attempt.rolled_back_at === null);
+    if (completed.length > 1) {
+      throw new Error(`Casino market release found ambiguous completed migration attempts for ${name}.`);
+    }
+
+    const effectiveAttempt = attempts.at(-1);
+    if (!effectiveAttempt || effectiveAttempt.rolled_back_at !== null) {
+      throw new Error(`Casino market release found an unsuperseded rolled-back migration attempt for ${name}.`);
+    }
+    if (effectiveAttempt.finished_at === null || completed.length !== 1) {
+      throw new Error(`Casino market release found ambiguous effective migration history for ${name}.`);
+    }
+
+    if (
+      attempts.some((attempt) => attempt.rolled_back_at !== null)
+      && effectiveAttempt.checksum !== casinoMarketRepositoryChecksum(name)
+    ) {
+      throw new Error(`Casino market release checksum mismatch for the effective completed attempt of ${name}.`);
+    }
+    completedByName.set(name, effectiveAttempt);
+  }
 
   for (const name of CASINO_MARKET_BASELINE_MIGRATIONS) {
     const row = completedByName.get(name);
@@ -59,13 +103,35 @@ export function planCasinoMarket0025Release(
     throw new Error(`Casino market release checksum mismatch for ${CASINO_MARKET_TARGET_MIGRATION}.`);
   }
 
-  const applied = new Set(completed.map((row) => row.migration_name));
+  const applied = new Set(completedByName.keys());
   const pending = repositoryMigrations.filter((name) => !applied.has(name));
   const expected = target ? [] : [CASINO_MARKET_TARGET_MIGRATION];
   if (pending.length !== expected.length || pending.some((name, index) => name !== expected[index])) {
     throw new Error(`Casino market release expected pending suffix ${expected.join(", ") || "none"}; found ${pending.join(", ") || "none"}.`);
   }
-  return { state: target ? "VERIFY" : "APPLY" };
+  const migrationStates = [...CASINO_MARKET_BASELINE_MIGRATIONS, CASINO_MARKET_TARGET_MIGRATION].map((migration) => {
+    const effectiveAttempt = completedByName.get(migration);
+    return {
+      migration,
+      status: effectiveAttempt ? "completed" as const : "pending" as const,
+      checksumMatchesRepository: effectiveAttempt
+        ? effectiveAttempt.checksum === casinoMarketRepositoryChecksum(migration)
+        : null,
+    };
+  });
+  const historicalRolledBackAttempts = rows
+    .filter((row) => row.rolled_back_at !== null)
+    .map((row) => ({
+      migration: row.migration_name,
+      supersededByCompletedAttempt: true as const,
+      effectiveChecksumMatchesRepository: true as const,
+    }));
+
+  return {
+    state: target ? "VERIFY" : "APPLY",
+    migrationStates,
+    historicalRolledBackAttempts,
+  };
 }
 
 export async function casinoMarketMigrationRows(prisma: PrismaClient) {

@@ -3,7 +3,6 @@ import { spawnSync } from "node:child_process";
 import { PrismaClient } from "@prisma/client";
 
 import {
-  CASINO_MARKET_BASELINE_MIGRATIONS,
   CASINO_MARKET_TARGET_MIGRATION,
   assertCasinoMarket0025MigrationComplete,
   casinoMarketMigrationRows,
@@ -12,7 +11,6 @@ import {
   casinoMarketRepositoryMigrations,
   inspectCasinoMarket0025Release,
   planCasinoMarket0025Release,
-  type CasinoMarketMigrationRow,
   type CasinoMarketPreservationCounts,
 } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
@@ -192,25 +190,6 @@ function stringifyCounts(counts: CasinoMarketPreservationCounts) {
   return Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, value.toString()]));
 }
 
-function migrationStatus(row: CasinoMarketMigrationRow | undefined) {
-  if (!row) return "pending";
-  if (row.rolled_back_at !== null) return "rolled_back";
-  if (row.finished_at === null) return "unresolved";
-  return "completed";
-}
-
-function boundedMigrationStates(rows: CasinoMarketMigrationRow[]) {
-  const rowByName = new Map(rows.map((row) => [row.migration_name, row]));
-  return [...CASINO_MARKET_BASELINE_MIGRATIONS, CASINO_MARKET_TARGET_MIGRATION].map((name) => {
-    const row = rowByName.get(name);
-    return {
-      migration: name,
-      status: migrationStatus(row),
-      checksumMatchesRepository: row ? row.checksum === casinoMarketRepositoryChecksum(name) : null,
-    };
-  });
-}
-
 async function readAuthoritySnapshot(prisma: PrismaClient): Promise<AuthoritySnapshot> {
   const [snapshot] = await prisma.$queryRawUnsafe<AuthoritySnapshot[]>(`
     SELECT
@@ -296,7 +275,8 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
       migration: CASINO_MARKET_TARGET_MIGRATION,
       migrationSha256: CASINO_MARKET_0025_APPROVED_SHA256,
       plan: plan.state,
-      migrationStates: boundedMigrationStates(beforeRows),
+      migrationStates: plan.migrationStates,
+      historicalRolledBackAttempts: plan.historicalRolledBackAttempts,
       preservationCounts: stringifyCounts(beforeCounts),
       eligibilityState: plan.state === "APPLY" ? "not_present_before_0025" : "present_and_verified",
     });
@@ -337,6 +317,7 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
       const authority = await readAuthoritySnapshot(postflight);
       assertEmptyNewAuthority(authority);
       const afterRows = await casinoMarketMigrationRows(postflight);
+      const afterPlan = planCasinoMarket0025Release(afterRows, repository.repositoryMigrations);
 
       writeEvent({
         event: "casino_market_0025_execution_succeeded",
@@ -345,7 +326,8 @@ export async function runCasinoMarket0025Operator(options: OperatorOptions) {
         migration: CASINO_MARKET_TARGET_MIGRATION,
         migrationSha256: CASINO_MARKET_0025_APPROVED_SHA256,
         mutationPerformed: true,
-        migrationStates: boundedMigrationStates(afterRows),
+        migrationStates: afterPlan.migrationStates,
+        historicalRolledBackAttempts: afterPlan.historicalRolledBackAttempts,
         preservationCountsBefore: stringifyCounts(beforeCounts),
         preservationCountsAfter: stringifyCounts(afterCounts),
         authority: stringifyAuthoritySnapshot(authority),
