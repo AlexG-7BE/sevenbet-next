@@ -6,7 +6,6 @@ import ts from "typescript";
 
 const roots = [
   "scripts/casino-market-0025-production-build-probe.ts",
-  "scripts/vercel-build-preflight.ts",
   "lib/db/casino-market-0025-production-build-probe.ts",
 ];
 const mutationSql = /\b(?:INSERT|UPDATE|DELETE|ALTER|DROP|CREATE)\b/i;
@@ -75,7 +74,11 @@ function inspectExecutableNodes(file: string, sourceFile: ts.SourceFile) {
       const method = propertyName(node.expression);
       const executableText = node.arguments.map((argument) => literalText(argument) ?? "").join(" ");
       if (method === "$executeRawUnsafe") {
-        assert.equal(executableText.trim(), "SET TRANSACTION READ ONLY", `${file} contains unsafe executable SQL`);
+        assert.match(
+          executableText.trim(),
+          /^SET (?:TRANSACTION READ ONLY|LOCAL (?:statement_timeout|lock_timeout|idle_in_transaction_session_timeout) = '\?')$/,
+          `${file} contains unsafe executable SQL`,
+        );
       }
       if (["$executeRaw", "$executeRawUnsafe", "$queryRaw", "$queryRawUnsafe"].includes(method ?? "")) {
         assert.doesNotMatch(executableText, mutationSql, `${file} contains mutation SQL`);
@@ -109,6 +112,20 @@ test("the executable Vercel build-probe dependency graph is read-only", () => {
   assert.ok(graph.has("lib/db/casino-market-0025-production-build-probe.ts"));
   assert.ok(graph.has("scripts/casino-market-0025-production-build-probe.ts"));
   assert.ok(graph.has("lib/db/casino-market-0025-release.ts"));
+  assert.ok(graph.has("lib/db/casino-market-0025-admin-client.ts"));
   assert.ok(graph.has("lib/db/vercel-database-readiness.ts"));
   assert.equal([...graph].some((file) => /casino-market-0025-operator/.test(file)), false);
+  assert.equal([...graph].some((file) => /production-migration-executor/.test(file)), false);
+});
+
+test("Vercel preflight selects mutually exclusive explicit modes and has no automatic execution input", () => {
+  const preflight = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
+  const mode = readFileSync("lib/db/casino-market-0025-build-mode.ts", "utf8");
+  assert.match(preflight, /casinoMarketBuildMode === "read-only-probe"/);
+  assert.match(preflight, /casinoMarketBuildMode === "migration-execution"/);
+  assert.match(preflight, /runCasinoMarket0025ProductionBuildProbeAndStop/);
+  assert.match(preflight, /runCasinoMarket0025ProductionMigrationAndStop/);
+  assert.match(mode, /build modes are mutually exclusive/);
+  assert.match(mode, /CASINO_MARKET_0025_EXECUTE_PRODUCTION_0025/);
+  assert.doesNotMatch(preflight, /CASINO_MARKET_0025_EXECUTION_AUTHORITY\s*=/);
 });

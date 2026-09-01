@@ -2,9 +2,9 @@
 
 ## Authority and purpose
 
-**FOUNDER_DECISION_REQUIRED:** this runbook documents a future, attended, read-only Vercel Production build probe. It does not authorise invoking it. The implementation PR may be reviewed but must not be merged under the implementation authority that created it.
+**DETECTED:** this runbook covers two mutually exclusive, attended Vercel Production build modes: the read-only probe and the dormant migration executor. Neither is an automatic build path. The current Founder authority permits the one read-only retry after exact-head validation; it does not authorise migration execution or merge.
 
-**DETECTED:** the probe candidate is stacked on exact one-time-operator commit `6db849263bc72e957dd5017bc59c4443dcc06940`. It accepts only migration `0025_casino_market_profile_architecture`, which must remain the final repository migration at SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`.
+**DETECTED:** the probe candidate is stacked on corrected direct-administration operator commit `b1cb2cfe5668e8b930d410a9fd013cb08db35846`. It accepts only migration `0025_casino_market_profile_architecture`, which must remain the final repository migration at SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`.
 
 The reviewed PR head cannot be embedded in that same Git commit. At the later decision gate, record the PR's exact 40-character head as `FOUNDER_APPROVED_PROBE_COMMIT`. The attended local launcher must verify that exact commit directly against `git rev-parse HEAD`, verify a completely clean checkout, and upload that source immediately with a matching non-secret build attestation.
 
@@ -12,11 +12,13 @@ The reviewed PR head cannot be embedded in that same Git commit. At the later de
 
 ## Safety boundary
 
-The probe is selected when any probe-specific build input is present. A complete build attempt requires Vercel Production, exposed Vercel system metadata, the exact non-secret acknowledgement, equal launcher-attested source and Founder-approved full commit SHAs, the frozen final migration, and the existing matched pooled/direct database-readiness contract. Partial or invalid attempts fail before a database client is created where practical. With no probe-specific input, the existing local, Preview, and Production build behavior remains in control.
+The probe is selected when any probe-specific build input is present. The dormant executor is selected when any executor-specific build input is present. Inputs from both modes together fail closed. A complete attempt requires Vercel Production, exposed Vercel system metadata, the mode's exact non-secret authority, equal launcher-attested source and Founder-approved full commit SHAs, the frozen final migration, and the existing matched pooled/direct database-readiness contract. Partial or invalid attempts fail before a database client is created where practical. With no mode-specific input, the existing local, Preview, and Production build behavior remains in control.
 
 Before Vercel is called, the launcher accepts only `--expected-probe-commit <40-character lowercase SHA>`. It verifies that the local `HEAD` exactly equals that value, the working tree is empty under `git status --porcelain=v1 --untracked-files=all`, migration 0025 is final and byte-identical at the approved checksum, and all reviewed probe execution files are present. Any mismatch stops before deployment. Arbitrary Vercel arguments are not accepted.
 
-The database inspection runs in one PostgreSQL transaction after `SET TRANSACTION READ ONLY` and verifies PostgreSQL reports `transaction_read_only=on`. Its executable dependency graph contains the read-only 0025 release inspection and database-readiness helpers, not the mutation-capable one-time operator. It reads only migration metadata, schema metadata, nine aggregate preservation counts, and the absence of pre-0025 eligibility authority.
+After pooled/direct identity verification, every administrative inspection connects through `DIRECT_URL`; normal application Prisma continues to use pooled `DATABASE_URL`. The inspection runs in one PostgreSQL `REPEATABLE READ` transaction after `SET TRANSACTION READ ONLY`. It verifies `transaction_read_only=on` and applies transaction-local `statement_timeout=20s`, `lock_timeout=5s`, and `idle_in_transaction_session_timeout=60s`. Its executable dependency graph contains the read-only 0025 release inspection and database-readiness helpers, not the mutation-capable one-time operator or dormant executor. It reads migration metadata, schema metadata, nine aggregate preservation counts, and the absence of pre-0025 eligibility authority once in a coherent snapshot.
+
+Safe stage events identify `transaction_safety`, `migration_history`, `effective_history`, `preservation_counts`, `partial_schema`, `legacy_indexes`, and `post_read_verification`. A read failure reports only the stage, bounded error class/code, elapsed time, whether a connection occurred, and `mutationPerformed: false`; it does not emit SQL, bindings, identity details, or row data.
 
 The probe contains no migration, seed, import, affiliate/commercial mutation, asset publication, or application endpoint. It never emits connection values, hostnames, usernames, passwords, query parameters, or complete database fingerprints.
 
@@ -25,7 +27,7 @@ The probe contains no migration, seed, import, affiliate/commercial mutation, as
 Before any future invocation:
 
 1. Record a new explicit Founder GO naming the exact reviewed probe PR head.
-2. Confirm that head is still based on `6db849263bc72e957dd5017bc59c4443dcc06940`, is green, and contains no later migration.
+2. Confirm that head is still based on `b1cb2cfe5668e8b930d410a9fd013cb08db35846`, is green, and contains no later migration.
 3. Confirm migration 0025 remains byte-identical at the checksum above.
 4. Confirm Vercel system environment variables are already exposed by the existing project configuration. Do not change project configuration for this probe.
 5. Use the existing approved linked project/provider path. Do not pull, print, copy, or persist sensitive database bindings.
@@ -50,13 +52,32 @@ It supplies no arbitrary extra Vercel arguments. Do not invoke Vercel manually, 
 
 ## Expected bounded evidence
 
-A successful inspection is exactly:
+A successful inspection emits:
 
-1. `casino_market_0025_production_build_probe_preflight_verified`, showing Production, the exact deployment commit, frozen migration/checksum, plan `APPLY`, 0023 and 0024 effectively completed with repository checksums matching, 0025 pending with no attempt rows, any historical rolled-back attempts only as bounded safely-superseded entries, nine aggregate counts, and `eligibilityState: not_present_before_0025`.
-2. `casino_market_0025_production_build_probe_go`, showing `mutationPerformed: false`, `deploymentAuthorised: false`, `migrationExecutionAuthorised: false`, and `requiresFounderReview: true`.
-3. The exact terminal marker `CASINO_MARKET_0025_PROBE_COMPLETE_STOP` and a failed build.
+1. the seven bounded stage events above;
+2. `casino_market_0025_production_build_probe_preflight_verified`, showing Production, exact deployment commit, direct administrative mode, matched pooled/direct identity, frozen migration/checksum, plan `APPLY`, 0023 and 0024 effectively completed with repository checksums matching, 0025 pending with no attempt rows, bounded safely-superseded historical rollback entries, nine aggregate counts, `eligibilityState: not_present_before_0025`, and the verified transaction-safety settings;
+3. `casino_market_0025_production_build_probe_go`, showing `mutationPerformed: false`, `deploymentAuthorised: false`, `migrationExecutionAuthorised: false`, and `requiresFounderReview: true`;
+4. the exact terminal marker `CASINO_MARKET_0025_PROBE_COMPLETE_STOP` and a failed build.
 
-The two events followed by that marker distinguish a successful probe from an accidental build failure. Missing, reordered, extra, or unbounded output is HOLD. A build that reaches `next build`, becomes `READY`, produces a usable runtime, or receives a domain alias is a probe-design failure and HOLD.
+These events followed by that marker distinguish a successful probe from an accidental build failure. Missing, reordered, extra, or unbounded output is HOLD. A build that reaches `next build`, becomes `READY`, produces a usable runtime, or receives a domain alias is a probe-design failure and HOLD.
+
+## Dormant Production migration executor — implemented, not executed
+
+**DETECTED / NOT EXECUTED:** the separate executor is available only through this attended local launcher:
+
+```sh
+npm run casino-market-0025:production-migrate -- \
+  --expected-release-commit <EXACT_FOUNDER_APPROVED_RELEASE_COMMIT> \
+  --execute-production-0025
+```
+
+Do not run it without a new explicit Founder GO naming the exact release commit. The launcher checks exact full `HEAD`, an entirely clean worktree including untracked files, expected execution files, migration 0025 finality, and its frozen checksum. It accepts no arbitrary Vercel arguments and supplies the exact authority, source attestation, expected commit, and execution flag only as ephemeral `--build-env` values to `vercel deploy --prod --skip-domain --logs`.
+
+Inside the temporary build, all four inputs are mandatory. Probe authority cannot select or satisfy execution authority. Preview, local, malformed, partial, mixed-mode, checksum-invalid, later-migration, database-identity, history, pending-state, or partial-schema mismatches stop before migration. No Vercel project variable, Git/PR/CI workflow, normal Production build, or Preview is configured to invoke this mode.
+
+Only after the direct read-only preflight verifies exact pending 0025 may the executor close its client and invoke fixed `npx prisma migrate deploy --schema prisma/schema.prisma`, with both child connection variables set in memory to the already verified direct binding. There is no arbitrary migration, SQL, seed, import, db-push, asset, commercial, alias, or promotion input. Direct postflight must verify completed checksum-valid 0025, no pending or unresolved history, full schema invariants, unchanged preservation counts, empty new evidence/licence authority, unscoped legacy records, and zero eligible routes. Success emits `casino_market_0025_execution_succeeded`, then `CASINO_MARKET_0025_MIGRATION_COMPLETE_STOP` intentionally fails the build so no temporary runtime is promoted.
+
+If Prisma migration fails, there is no retry, resolve, migration-history edit, manual SQL, or schema rollback. If postflight fails after migration, report bounded evidence and retain the old runtime; never auto-rollback the additive schema.
 
 ## Post-run read-only verification
 

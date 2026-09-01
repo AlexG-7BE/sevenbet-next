@@ -3,7 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
-import { isCasinoMarket0025ProductionBuildProbeRequested } from "@/lib/db/casino-market-0025-production-build-probe";
+import { casinoMarket0025BuildMode } from "@/lib/db/casino-market-0025-build-mode";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -308,11 +308,18 @@ async function maybeApplyProgrammeAccessMigration() {
 }
 
 async function runVercelBuildPreflight() {
-  if (isCasinoMarket0025ProductionBuildProbeRequested(process.env)) {
+  const casinoMarketBuildMode = casinoMarket0025BuildMode(process.env);
+  if (casinoMarketBuildMode === "read-only-probe") {
     const { runCasinoMarket0025ProductionBuildProbeAndStop } = await import(
       "@/lib/db/casino-market-0025-production-build-probe"
     );
     await runCasinoMarket0025ProductionBuildProbeAndStop();
+  }
+  if (casinoMarketBuildMode === "migration-execution") {
+    const { runCasinoMarket0025ProductionMigrationAndStop } = await import(
+      "@/lib/db/casino-market-0025-production-migration-executor"
+    );
+    await runCasinoMarket0025ProductionMigrationAndStop();
   }
   await maybeApplyProgrammeAccessMigration();
 }

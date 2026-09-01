@@ -5,20 +5,20 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
-  CASINO_MARKET_0025_PROBE_APPROVED_SHA256,
-  CASINO_MARKET_0025_PROBE_AUTHORITY,
-} from "../lib/db/casino-market-0025-production-build-probe";
+  CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256,
+  CASINO_MARKET_0025_EXECUTION_AUTHORITY,
+} from "../lib/db/casino-market-0025-production-migration-executor";
 import { CASINO_MARKET_TARGET_MIGRATION } from "../lib/db/casino-market-0025-release";
 
 const FULL_COMMIT = /^[0-9a-f]{40}$/;
 
-export const CASINO_MARKET_0025_PROBE_EXPECTED_FILES = [
+export const CASINO_MARKET_0025_EXECUTION_EXPECTED_FILES = [
   "package.json",
-  "scripts/casino-market-0025-production-build-probe.ts",
+  "scripts/casino-market-0025-production-migrate.ts",
   "scripts/vercel-build-preflight.ts",
   "lib/db/casino-market-0025-admin-client.ts",
   "lib/db/casino-market-0025-build-mode.ts",
-  "lib/db/casino-market-0025-production-build-probe.ts",
+  "lib/db/casino-market-0025-production-migration-executor.ts",
   "lib/db/casino-market-0025-release.ts",
   `prisma/migrations/${CASINO_MARKET_TARGET_MIGRATION}/migration.sql`,
 ] as const;
@@ -38,29 +38,33 @@ type LauncherDependencies = {
   listMigrations?: (directory: string) => string[];
 };
 
-export class CasinoMarket0025ProductionBuildProbeLauncherError extends Error {
+export class CasinoMarket0025ProductionMigrationLauncherError extends Error {
   constructor(public readonly code: string, message: string) {
     super(message);
-    this.name = "CasinoMarket0025ProductionBuildProbeLauncherError";
+    this.name = "CasinoMarket0025ProductionMigrationLauncherError";
   }
 }
 
 function refuse(code: string, message: string): never {
-  throw new CasinoMarket0025ProductionBuildProbeLauncherError(code, message);
+  throw new CasinoMarket0025ProductionMigrationLauncherError(code, message);
 }
 
-export function parseCasinoMarket0025ProductionBuildProbeArguments(arguments_: string[]) {
-  if (arguments_.length !== 2 || arguments_[0] !== "--expected-probe-commit") {
+export function parseCasinoMarket0025ProductionMigrationArguments(arguments_: string[]) {
+  if (
+    arguments_.length !== 3
+    || arguments_[0] !== "--expected-release-commit"
+    || arguments_[2] !== "--execute-production-0025"
+  ) {
     refuse(
-      "EXACT_ARGUMENT_REQUIRED",
-      "Use exactly --expected-probe-commit followed by the Founder-approved full Git SHA.",
+      "EXACT_ARGUMENTS_REQUIRED",
+      "Use exactly --expected-release-commit, the Founder-approved full Git SHA, and --execute-production-0025.",
     );
   }
-  const expectedProbeCommit = arguments_[1];
-  if (!FULL_COMMIT.test(expectedProbeCommit)) {
-    refuse("FULL_COMMIT_REQUIRED", "The expected probe commit must be a full lowercase 40-character Git SHA.");
+  const expectedReleaseCommit = arguments_[1];
+  if (!FULL_COMMIT.test(expectedReleaseCommit)) {
+    refuse("FULL_COMMIT_REQUIRED", "The expected release commit must be a full lowercase 40-character Git SHA.");
   }
-  return { expectedProbeCommit };
+  return { expectedReleaseCommit, executeProduction0025: true as const };
 }
 
 function defaultRunGit(arguments_: string[], cwd: string): CommandResult {
@@ -92,9 +96,9 @@ function commandOutput(result: CommandResult, code: string, message: string) {
   return result.stdout.trim();
 }
 
-export function createCasinoMarket0025ProductionBuildProbeVercelArguments(
+export function createCasinoMarket0025ProductionMigrationVercelArguments(
   sourceCommit: string,
-  expectedProbeCommit: string,
+  expectedReleaseCommit: string,
 ) {
   return [
     "deploy",
@@ -102,19 +106,21 @@ export function createCasinoMarket0025ProductionBuildProbeVercelArguments(
     "--skip-domain",
     "--logs",
     "--build-env",
-    `CASINO_MARKET_0025_PROBE_AUTHORITY=${CASINO_MARKET_0025_PROBE_AUTHORITY}`,
+    `CASINO_MARKET_0025_EXECUTION_AUTHORITY=${CASINO_MARKET_0025_EXECUTION_AUTHORITY}`,
     "--build-env",
-    `CASINO_MARKET_0025_PROBE_SOURCE_COMMIT=${sourceCommit}`,
+    `CASINO_MARKET_0025_EXECUTION_SOURCE_COMMIT=${sourceCommit}`,
     "--build-env",
-    `CASINO_MARKET_0025_EXPECTED_PROBE_COMMIT=${expectedProbeCommit}`,
+    `CASINO_MARKET_0025_EXPECTED_RELEASE_COMMIT=${expectedReleaseCommit}`,
+    "--build-env",
+    "CASINO_MARKET_0025_EXECUTE_PRODUCTION_0025=1",
   ];
 }
 
-export function runCasinoMarket0025ProductionBuildProbeLauncher(
+export function runCasinoMarket0025ProductionMigrationLauncher(
   arguments_: string[],
   options: LauncherDependencies & { cwd?: string } = {},
 ) {
-  const { expectedProbeCommit } = parseCasinoMarket0025ProductionBuildProbeArguments(arguments_);
+  const { expectedReleaseCommit } = parseCasinoMarket0025ProductionMigrationArguments(arguments_);
   const cwd = path.resolve(options.cwd ?? process.cwd());
   const runGit = options.runGit ?? defaultRunGit;
   const runVercel = options.runVercel ?? defaultRunVercel;
@@ -128,58 +134,51 @@ export function runCasinoMarket0025ProductionBuildProbeLauncher(
   const sourceCommit = commandOutput(
     runGit(["rev-parse", "HEAD"], cwd),
     "GIT_HEAD_UNAVAILABLE",
-    "The local probe launcher could not verify the checked-out Git commit.",
+    "The local migration launcher could not verify the checked-out Git commit.",
   );
-  if (!FULL_COMMIT.test(sourceCommit) || sourceCommit !== expectedProbeCommit) {
-    refuse("PROBE_COMMIT_MISMATCH", "The checked-out commit does not equal the Founder-approved probe commit.");
+  if (!FULL_COMMIT.test(sourceCommit) || sourceCommit !== expectedReleaseCommit) {
+    refuse("RELEASE_COMMIT_MISMATCH", "The checked-out commit does not equal the Founder-approved release commit.");
   }
-
   const worktreeStatus = commandOutput(
     runGit(["status", "--porcelain=v1", "--untracked-files=all"], cwd),
     "GIT_STATUS_UNAVAILABLE",
-    "The local probe launcher could not verify the working tree.",
+    "The local migration launcher could not verify the working tree.",
   );
-  if (worktreeStatus !== "") {
-    refuse("WORKTREE_NOT_CLEAN", "The Production build probe requires a completely clean working tree.");
-  }
+  if (worktreeStatus !== "") refuse("WORKTREE_NOT_CLEAN", "Migration execution requires a completely clean working tree.");
 
-  const missingFiles = CASINO_MARKET_0025_PROBE_EXPECTED_FILES.filter((file) => !fileExists(path.join(cwd, file)));
-  if (missingFiles.length > 0) {
-    refuse("PROBE_FILE_MISSING", "An expected Production build-probe file is missing.");
-  }
-
+  const missingFiles = CASINO_MARKET_0025_EXECUTION_EXPECTED_FILES.filter((file) => !fileExists(path.join(cwd, file)));
+  if (missingFiles.length > 0) refuse("EXECUTION_FILE_MISSING", "An expected migration execution file is missing.");
   const migrations = listMigrations(path.join(cwd, "prisma/migrations"));
   if (migrations.at(-1) !== CASINO_MARKET_TARGET_MIGRATION) {
     refuse("UNEXPECTED_REPOSITORY_MIGRATIONS", "Migration 0025 must be the final repository migration.");
   }
-
-  const migrationChecksum = createHash("sha256")
+  const checksum = createHash("sha256")
     .update(readFile(path.join(cwd, `prisma/migrations/${CASINO_MARKET_TARGET_MIGRATION}/migration.sql`)))
     .digest("hex");
-  if (migrationChecksum !== CASINO_MARKET_0025_PROBE_APPROVED_SHA256) {
+  if (checksum !== CASINO_MARKET_0025_EXECUTION_APPROVED_SHA256) {
     refuse("TARGET_CHECKSUM_MISMATCH", "Migration 0025 does not match the Founder-approved checksum.");
   }
 
-  const vercelArguments = createCasinoMarket0025ProductionBuildProbeVercelArguments(
+  const vercelArguments = createCasinoMarket0025ProductionMigrationVercelArguments(
     sourceCommit,
-    expectedProbeCommit,
+    expectedReleaseCommit,
   );
   const deployment = runVercel(vercelArguments, cwd);
   if (deployment.error || deployment.status === null) {
-    refuse("VERCEL_INVOCATION_FAILED", "The approved Vercel Production build-probe command could not be invoked.");
+    refuse("VERCEL_INVOCATION_FAILED", "The approved Vercel Production migration build could not be invoked.");
   }
-  return { sourceCommit, expectedProbeCommit, vercelArguments, status: deployment.status };
+  return { sourceCommit, expectedReleaseCommit, vercelArguments, status: deployment.status };
 }
 
 function main() {
   try {
-    const result = runCasinoMarket0025ProductionBuildProbeLauncher(process.argv.slice(2));
+    const result = runCasinoMarket0025ProductionMigrationLauncher(process.argv.slice(2));
     process.exitCode = result.status;
   } catch (error: unknown) {
-    const code = error instanceof CasinoMarket0025ProductionBuildProbeLauncherError
+    const code = error instanceof CasinoMarket0025ProductionMigrationLauncherError
       ? error.code
-      : "UNEXPECTED_LOCAL_LAUNCHER_FAILURE";
-    process.stderr.write(`${JSON.stringify({ event: "casino_market_0025_production_build_probe_launcher_refused", code })}\n`);
+      : "UNEXPECTED_LOCAL_MIGRATION_LAUNCHER_FAILURE";
+    process.stderr.write(`${JSON.stringify({ event: "casino_market_0025_production_migration_launcher_refused", code })}\n`);
     process.exitCode = 1;
   }
 }

@@ -1,15 +1,13 @@
-import { PrismaClient, type Prisma } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
+import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import {
   CASINO_MARKET_TARGET_MIGRATION,
-  assertNoPartialCasinoMarket0025State,
-  casinoMarketMigrationRows,
-  casinoMarketPreservationCounts,
+  CasinoMarket0025ReadStageError,
   casinoMarketRepositoryChecksum,
   casinoMarketRepositoryMigrations,
-  inspectCasinoMarket0025Release,
-  planCasinoMarket0025Release,
-  type CasinoMarketMigrationRow,
+  inspectCasinoMarket0025ReleaseSnapshot,
+  type CasinoMarket0025ReadStage,
   type CasinoMarketPreservationCounts,
 } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
@@ -110,35 +108,6 @@ export function assertCasinoMarket0025ProductionBuildProbeAuthority(environment:
   };
 }
 
-export async function enforceCasinoMarket0025ReadOnlyTransaction(
-  transaction: Pick<Prisma.TransactionClient, "$executeRaw">,
-) {
-  await transaction.$executeRaw`SET TRANSACTION READ ONLY`;
-}
-
-function canonicalMigrationRows(rows: CasinoMarketMigrationRow[]) {
-  return rows.map((row) => ({
-    migration: row.migration_name,
-    checksum: row.checksum,
-    finishedAt: row.finished_at?.toISOString() ?? null,
-    rolledBackAt: row.rolled_back_at?.toISOString() ?? null,
-  }));
-}
-
-function assertMigrationRowsUnchanged(before: CasinoMarketMigrationRow[], after: CasinoMarketMigrationRow[]) {
-  if (JSON.stringify(canonicalMigrationRows(before)) !== JSON.stringify(canonicalMigrationRows(after))) {
-    fail("MIGRATION_HISTORY_CHANGED", "Migration history changed during the read-only build probe.");
-  }
-}
-
-function assertCountsUnchanged(before: CasinoMarketPreservationCounts, after: CasinoMarketPreservationCounts) {
-  for (const key of Object.keys(before) as Array<keyof CasinoMarketPreservationCounts>) {
-    if (before[key] !== after[key]) {
-      fail("PRESERVATION_COUNT_CHANGED", "A bounded casino preservation count changed during the read-only build probe.");
-    }
-  }
-}
-
 function boundedPreservationCounts(counts: CasinoMarketPreservationCounts) {
   return {
     Casino: counts.casinos.toString(),
@@ -153,55 +122,38 @@ function boundedPreservationCounts(counts: CasinoMarketPreservationCounts) {
   };
 }
 
-async function inspectInReadOnlyTransaction(prisma: PrismaClient, repositoryMigrations: string[]) {
-  return prisma.$transaction(async (transaction) => {
-    await enforceCasinoMarket0025ReadOnlyTransaction(transaction);
-    const [transactionState] = await transaction.$queryRawUnsafe<Array<{ transaction_read_only: string }>>(
-      "SHOW transaction_read_only",
-    );
-    if (transactionState?.transaction_read_only !== "on") {
-      fail("READ_ONLY_TRANSACTION_NOT_ENFORCED", "PostgreSQL did not confirm a read-only probe transaction.");
-    }
-
-    const beforeRows = await casinoMarketMigrationRows(transaction);
-    const plan = planCasinoMarket0025Release(beforeRows, repositoryMigrations);
-    if (plan.state !== "APPLY") {
-      fail("TARGET_NOT_PENDING", "The Production build probe requires migration 0025 to be exactly pending.");
-    }
-    const beforeCounts = await casinoMarketPreservationCounts(transaction);
-    const inspection = await inspectCasinoMarket0025Release(transaction, repositoryMigrations);
-    if (inspection.state !== "pending_verified_read_only") {
-      fail("TARGET_NOT_PENDING", "The Production build probe did not verify exact pending migration 0025 state.");
-    }
-
-    const afterRows = await casinoMarketMigrationRows(transaction);
-    const afterCounts = await casinoMarketPreservationCounts(transaction);
-    await assertNoPartialCasinoMarket0025State(transaction);
-    assertMigrationRowsUnchanged(beforeRows, afterRows);
-    assertCountsUnchanged(beforeCounts, afterCounts);
-
-    return {
-      plan: plan.state,
-      migrationStates: plan.migrationStates,
-      historicalRolledBackAttempts: plan.historicalRolledBackAttempts,
-      preservationCounts: boundedPreservationCounts(beforeCounts),
-      eligibilityState: "not_present_before_0025" as const,
-      mutationPerformed: false as const,
-    };
-  }, { timeout: 30_000 });
-}
-
 export async function runCasinoMarket0025ProductionBuildProbe(options: ProbeOptions = {}) {
   const environment = options.environment ?? process.env;
   const authority = assertCasinoMarket0025ProductionBuildProbeAuthority(environment);
   const createPrismaClient = options.createPrismaClient
-    ?? (() => new PrismaClient({ datasourceUrl: environment.DATABASE_URL }));
+    ?? (() => createCasinoMarket0025AdminClient(environment));
   const prisma = createPrismaClient();
   const writeEvent = options.writeEvent ?? ((event) => process.stdout.write(`${JSON.stringify(event)}\n`));
   const timestamp = (options.now ?? (() => new Date()))().toISOString();
+  let databaseConnectionOccurred = false;
+  const writeStage = (stage: CasinoMarket0025ReadStage) => {
+    databaseConnectionOccurred = true;
+    writeEvent({ event: "casino_market_0025_production_build_probe_stage", stage });
+  };
 
   try {
-    const evidence = await inspectInReadOnlyTransaction(prisma, authority.repositoryMigrations);
+    const snapshot = await inspectCasinoMarket0025ReleaseSnapshot(
+      prisma,
+      authority.repositoryMigrations,
+      writeStage,
+    );
+    if (snapshot.plan.state !== "APPLY" || snapshot.state !== "pending_verified_read_only") {
+      fail("TARGET_NOT_PENDING", "The Production build probe requires migration 0025 to be exactly pending.");
+    }
+    const evidence = {
+      plan: snapshot.plan.state,
+      migrationStates: snapshot.plan.migrationStates,
+      historicalRolledBackAttempts: snapshot.plan.historicalRolledBackAttempts,
+      preservationCounts: boundedPreservationCounts(snapshot.counts),
+      eligibilityState: "not_present_before_0025" as const,
+      transactionSafety: snapshot.transactionSafety,
+      mutationPerformed: false as const,
+    };
     writeEvent({
       event: "casino_market_0025_production_build_probe_preflight_verified",
       timestamp,
@@ -209,11 +161,15 @@ export async function runCasinoMarket0025ProductionBuildProbe(options: ProbeOpti
       deploymentCommit: authority.deploymentCommit,
       migration: CASINO_MARKET_TARGET_MIGRATION,
       migrationSha256: CASINO_MARKET_0025_PROBE_APPROVED_SHA256,
+      runtimeMode: authority.runtimeMode,
+      directMode: authority.directMode,
+      sameDatabaseIdentity: authority.sameDatabaseIdentity,
       plan: evidence.plan,
       migrationStates: evidence.migrationStates,
       historicalRolledBackAttempts: evidence.historicalRolledBackAttempts,
       preservationCounts: evidence.preservationCounts,
       eligibilityState: evidence.eligibilityState,
+      transactionSafety: evidence.transactionSafety,
     });
     writeEvent({
       event: "casino_market_0025_production_build_probe_go",
@@ -226,6 +182,19 @@ export async function runCasinoMarket0025ProductionBuildProbe(options: ProbeOpti
       requiresFounderReview: true,
     });
     return evidence;
+  } catch (error) {
+    if (error instanceof CasinoMarket0025ReadStageError) {
+      writeEvent({
+        event: "casino_market_0025_production_build_probe_read_failed",
+        stage: error.stage,
+        errorClass: error.errorClass,
+        errorCode: error.errorCode,
+        elapsedMs: error.elapsedMs,
+        databaseConnectionOccurred,
+        mutationPerformed: false,
+      });
+    }
+    throw error;
   } finally {
     await prisma.$disconnect().catch(() => undefined);
   }

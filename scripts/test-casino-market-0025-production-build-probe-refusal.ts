@@ -35,12 +35,16 @@ async function main() {
         DIRECT_URL: "postgresql://probe-user:not-a-secret@db.prisma.io:5432/postgres?sslmode=require",
       },
       writeEvent: (event) => events.push(event),
-      createPrismaClient: () => new PrismaClient({ datasourceUrl: process.env.DATABASE_URL }),
+      createPrismaClient: () => new PrismaClient({ datasourceUrl: process.env.DIRECT_URL }),
     }),
     (error: unknown) => error instanceof Error
       && expectedPatterns[expectedFailure as keyof typeof expectedPatterns].test(error.message),
   );
-  assert.deepEqual(events, []);
+  assert.equal(events.some((event) => event.event === "casino_market_0025_production_build_probe_preflight_verified"), false);
+  assert.equal(events.some((event) => event.event === "casino_market_0025_production_build_probe_go"), false);
+  assert.equal(events.at(-1)?.event, "casino_market_0025_production_build_probe_read_failed");
+  assert.equal(events.at(-1)?.mutationPerformed, false);
+  assert.doesNotMatch(JSON.stringify(events), /probe-user|not-a-secret|postgresql:\/\//);
 }
 
 main().catch((error: unknown) => {
