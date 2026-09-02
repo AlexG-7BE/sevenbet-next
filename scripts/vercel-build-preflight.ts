@@ -307,7 +307,20 @@ async function maybeApplyProgrammeAccessMigration() {
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
 }
 
-maybeApplyProgrammeAccessMigration().catch((error) => {
+async function runVercelBuildPreflight() {
+  const { isBetssonFactualReleaseRequested } = await import(
+    "@/lib/casino-ingestion/production-factual-release"
+  );
+  if (isBetssonFactualReleaseRequested(process.env)) {
+    const { runBetssonProductionFactualReleaseAndStop } = await import(
+      "@/lib/casino-ingestion/production-factual-release"
+    );
+    await runBetssonProductionFactualReleaseAndStop();
+  }
+  await maybeApplyProgrammeAccessMigration();
+}
+
+runVercelBuildPreflight().catch((error) => {
   const message = error instanceof Error ? error.message : String(error);
   process.stderr.write(`[vercel-build-preflight] ${message}\n`);
   process.exit(1);

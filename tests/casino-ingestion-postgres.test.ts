@@ -6,7 +6,7 @@ import test from "node:test";
 import { PrismaClient } from "@prisma/client";
 
 import { parseCasinoIngestionBundle } from "../lib/casino-ingestion/contract";
-import { deterministicCasinoIngestionId, ingestCasinoBundle } from "../lib/casino-ingestion/importer";
+import { deterministicCasinoIngestionId, ingestCasinoBundle, verifyCasinoBundleIdempotency } from "../lib/casino-ingestion/importer";
 import { verifyCasinoIngestionSources } from "../lib/casino-ingestion/source-verification";
 import { assertCasinoIngestionWriteAuthority } from "../lib/casino-ingestion/write-guard";
 import { inspectCasinoMarket0025Release } from "../lib/db/casino-market-0025-release";
@@ -140,6 +140,10 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     assert.equal(second.reconciliation?.created, 0);
     assert.equal(second.reconciliation?.updated, 0);
     assert.deepEqual(json(await loadState()), firstCanonical);
+    const readOnlyComparison = await verifyCasinoBundleIdempotency(prisma, bundle);
+    assert.equal(readOnlyComparison.created, 0);
+    assert.equal(readOnlyComparison.updated, 0);
+    assert.equal(readOnlyComparison.unchanged, second.reconciliation?.unchanged);
 
     await prisma.casino.update({ where: { id: stateAfterFirst.id }, data: { status: "PUBLISHED" } });
     await prisma.casinoBonus.updateMany({ where: { casinoId: stateAfterFirst.id }, data: { status: "PUBLISHED", offerStatus: "PAUSED" } });

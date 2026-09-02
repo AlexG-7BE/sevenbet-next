@@ -4,7 +4,7 @@ import {
   CasinoLifecycleStatus,
   EditorialStatus,
   OfferStatus,
-  type Prisma,
+  Prisma,
   type PrismaClient,
 } from "@prisma/client";
 
@@ -413,15 +413,38 @@ async function reconcileMarket(
   }
 }
 
+async function reconcileCasinoBundle(tx: Transaction, bundle: CasinoIngestionBundle, counts: ReconciliationCounts) {
+  const brandProfileId = await reconcileBrand(tx, bundle, counts);
+  const casinoId = await reconcileCasino(tx, bundle, brandProfileId, counts);
+  for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
+    await reconcileMarket(tx, bundle, casinoId, market, counts);
+  }
+}
+
 export async function ingestCasinoBundle(prisma: PrismaClient, bundle: CasinoIngestionBundle): Promise<CasinoIngestionResult> {
   const result = planCasinoIngestion(bundle);
   const counts = blankCounts();
   await prisma.$transaction(async (tx) => {
-    const brandProfileId = await reconcileBrand(tx, bundle, counts);
-    const casinoId = await reconcileCasino(tx, bundle, brandProfileId, counts);
-    for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
-      await reconcileMarket(tx, bundle, casinoId, market, counts);
-    }
+    await reconcileCasinoBundle(tx, bundle, counts);
   });
   return { ...result, mode: "WRITE", reconciliation: counts };
+}
+
+export async function verifyCasinoBundleIdempotency(prisma: PrismaClient, bundle: CasinoIngestionBundle) {
+  const counts = blankCounts();
+  await prisma.$transaction(async (tx) => {
+    await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+    await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '20s'");
+    await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '5s'");
+    await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '60s'");
+    await reconcileCasinoBundle(tx, bundle, counts);
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    maxWait: 5_000,
+    timeout: 65_000,
+  });
+  if (counts.created !== 0 || counts.updated !== 0) {
+    throw new Error("Casino ingestion idempotency verification detected a pending write.");
+  }
+  return counts;
 }
