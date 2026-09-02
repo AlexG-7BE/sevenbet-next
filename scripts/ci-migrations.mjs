@@ -494,6 +494,74 @@ async function verifyProgrammeAccessUpgrade(migrationEntries) {
   }
 }
 
+async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex) {
+  const marketMigration = "0025_casino_market_profile_architecture";
+  const migrationIndex = migrationEntries.indexOf(marketMigration);
+  if (migrationIndex < 1) throw new Error(`Expected migration ${marketMigration}`);
+  const schema = "casino_market_profile_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+
+  const beforeProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeProgramme, "schema.prisma")], environment);
+    run("npx", ["prisma", "db", "execute", "--schema", "prisma/schema.prisma", "--file", "prisma/preflight/0015_active_control_program_flow.sql"], environment);
+  } finally {
+    await rm(beforeProgramme, { recursive: true, force: true });
+  }
+
+  const beforeMarket = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeMarket, "schema.prisma")], environment);
+    run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeMarket, "schema.prisma"), "--file", "prisma/fixtures/0025_pre_casino_market_profile.sql"], environment);
+  } finally {
+    await rm(beforeMarket, { recursive: true, force: true });
+  }
+
+  run("npx", ["prisma", "migrate", "deploy"], environment);
+  run("npx", ["prisma", "migrate", "deploy"], environment);
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    const rows = await prisma.$queryRawUnsafe(`
+      SELECT
+        (SELECT COUNT(*)::int FROM "${schema}"."Casino" WHERE "id" = '25000000-0000-4000-8000-000000000001') AS "casinos",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoCountry" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001') AS "markets",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoLicense" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001') AS "licenses",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoPaymentMethod" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001' AND "casinoCountryId" IS NULL) AS "legacyPayments",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoGameProvider" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001' AND "casinoCountryId" IS NULL) AS "legacyProviders",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoGameCategory" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001' AND "casinoCountryId" IS NULL) AS "legacyCategories",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoBonus" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001' AND "casinoCountryId" IS NULL) AS "legacyBonuses",
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoCountryLicense" WHERE "casinoId" = '25000000-0000-4000-8000-000000000001') AS "inferredLicenseLinks"
+    `);
+    const result = rows[0];
+    if (!result || [result.casinos, result.markets, result.licenses, result.legacyPayments, result.legacyProviders, result.legacyCategories, result.legacyBonuses].some((count) => Number(count) !== 1)
+      || Number(result.inferredLicenseLinks) !== 0) {
+      throw new Error("Casino market profile upgrade did not preserve legacy records without inferred GEO links");
+    }
+    const profile = await prisma.$queryRawUnsafe(`
+      SELECT "localDomain", "primaryLanguage", "primaryCurrency", "supportedLanguages", "supportedCurrencies"
+      FROM "${schema}"."CasinoCountry"
+      WHERE "id" = '25000000-0000-4000-8000-000000000002'
+    `);
+    if (!profile[0] || profile[0].localDomain !== null || profile[0].primaryLanguage !== null || profile[0].primaryCurrency !== null
+      || profile[0].supportedLanguages.length !== 0 || profile[0].supportedCurrencies.length !== 0) {
+      throw new Error("Casino market profile migration invented values for previously unknown facts");
+    }
+    console.info("Casino market profile staged migration smoke passed", {
+      preserved: { casinos: 1, markets: 1, licenses: 1, legacyPayments: 1, legacyProviders: 1, legacyCategories: 1, legacyBonuses: 1 },
+      inferredGeoLinks: 0,
+      duplicateMarketProfiles: 0,
+      replayIdempotent: true,
+      unknownFactsPreserved: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -563,6 +631,7 @@ async function main() {
   await verifyBetterAuth17Upgrade(migrationEntries, programmeMigrationIndex);
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
+  await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
