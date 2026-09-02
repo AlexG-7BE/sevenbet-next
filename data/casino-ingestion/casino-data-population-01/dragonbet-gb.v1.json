@@ -1,0 +1,290 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "casino-data-population-01",
+  "sourceFiles": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/casino.json",
+      "sha256": "811fdee73441d773bf348d1e58ed3311045871ec3dd47e0e2004c7dd92fc37a7"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/markets/GB.json",
+      "sha256": "2ea1b72b078f4d8b66380665150bf1ce929d460f41fb1a37369cdc1e505857b3"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json",
+      "sha256": "be9dfad15a9eec45f80812d068a8e9b2225882db9594f34550fde61b2495452e"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/assets.json",
+      "sha256": "7acbecb39a9198ad296a2653162a6a71fe7b46fc23e031fe2716d7978421f97b"
+    }
+  ],
+  "casino": {
+    "key": "dragonbet",
+    "slug": "dragonbet",
+    "internalName": "DragonBet",
+    "title": "DragonBet",
+    "domain": "dragonbet.co.uk",
+    "websiteUrl": "https://dragonbet.co.uk/",
+    "summary": "DragonBet offers sportsbook and casino products through one account.",
+    "brand": {
+      "key": "dragonbet",
+      "name": "DragonBet",
+      "domain": "dragonbet.co.uk"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "dragonbet.co.uk",
+      "localWebsiteUrl": "https://dragonbet.co.uk/",
+      "operator": {
+        "key": "dragonbet-ltd",
+        "name": "DragonBet Ltd",
+        "legalName": "DragonBet Ltd",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "DragonBet Ltd (UK company 15718764)",
+      "termsUrl": "https://dragonbet.co.uk/casino?account=static&static=terms-and-conditions",
+      "privacyUrl": "https://dragonbet.co.uk/casino?account=static&static=privacy-policy",
+      "responsibleGamblingUrl": "https://dragonbet.co.uk/casino?account=static&static=safer-gambling",
+      "primaryLanguage": "en",
+      "supportedLanguages": [
+        "en"
+      ],
+      "supportLanguages": [],
+      "primaryCurrency": null,
+      "supportedCurrencies": [],
+      "minimumAge": null,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": "Customer support is published at customerservice@dragonbet.co.uk; an official support URL was not established.",
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "PARTIAL exact-market factual profile from the frozen 31 August 2026 corpus. Missing fields remain explicit UNKNOWN values; no commercial eligibility or cross-market fallback is implied.",
+      "evidence": [
+        {
+          "key": "dragon-site",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://dragonbet.co.uk/casino",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-site",
+          "fieldKeys": [
+            "casino.title",
+            "casino.summary",
+            "availability",
+            "localWebsiteUrl",
+            "operatorProfile",
+            "operatingLegalEntity",
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "primaryLanguage",
+            "supportedLanguages",
+            "supportSummary",
+            "providers",
+            "categories"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "DragonBet Ltd, company 15718764, is the published operator. Casino content includes slots, jackpots, roulette, blackjack, baccarat, live dealer and virtual sports. Site publishes UKGC account 64908 and Irish Remote Bookmaker licence 1022506. The site states that access is restricted outside the UK or Ireland. The Irish bookmaker licence is not evidence of Irish casino authority."
+        },
+        {
+          "key": "dragon-ukgc-domain",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/64908",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-ukgc-domain",
+          "fieldKeys": [
+            "casino.domain",
+            "localDomain",
+            "availability",
+            "operatorProfile"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "dragonbet.co.uk is Active under DragonBet Ltd account 64908."
+        },
+        {
+          "key": "dragon-companies-house",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": "OFFICIAL_COMPANY_REGISTER",
+          "sourceUrl": "https://find-and-update.company-information.service.gov.uk/company/15718764",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-companies-house",
+          "fieldKeys": [
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "DragonBet Ltd is active and was incorporated 2024-05-14."
+        },
+        {
+          "key": "dragon-legacy-trading-name",
+          "classification": "CONTRADICTION",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/trading-names/60213",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-legacy-trading-name",
+          "fieldKeys": [
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Lovell Brothers account 60213 still lists 'dragon bet' as Active. Current exact domain and active casino licence map to DragonBet Ltd account 64908."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FROZEN_RESEARCH_PROFILE",
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/markets/GB.json",
+          "fieldKeys": [
+            "primaryCurrency",
+            "supportedCurrencies",
+            "minimumAge",
+            "kycSummary",
+            "withdrawalSummary",
+            "payments",
+            "bonuses"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The frozen exact-market research did not establish these fields. Null values and empty scoped arrays are intentional and must not be backfilled from another market, operator-wide assumptions, creative labels, or commercial portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-064908-r-339041-003",
+          "authority": "Gambling Commission",
+          "licenseNumber": "064908-R-339041-003",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/64908",
+          "issuedAt": "2024-07-31T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Remote casino licence for account 64908; exact-domain evidence is retained separately.",
+          "evidence": [
+            {
+              "key": "licence-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/64908",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-ukgc",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "DragonBet Ltd holds active Casino Remote licence 064908-R-339041-003 from 2024-07-31."
+            },
+            {
+              "key": "exact-domain-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/64908",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/dragonbet/evidence.json#dragon-ukgc-domain",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "dragonbet.co.uk is Active under DragonBet Ltd account 64908."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [
+        {
+          "key": "inspired",
+          "name": "Inspired",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-08-31T00:00:00.000Z",
+          "sortOrder": 0
+        },
+        {
+          "key": "hacksaw-gaming",
+          "name": "Hacksaw Gaming",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-08-31T00:00:00.000Z",
+          "sortOrder": 1
+        },
+        {
+          "key": "trigger-studios",
+          "name": "Trigger Studios",
+          "websiteUrl": null,
+          "gameCount": null,
+          "liveCasino": null,
+          "verifiedAt": "2026-08-31T00:00:00.000Z",
+          "sortOrder": 2
+        }
+      ],
+      "categories": [
+        {
+          "key": "casino",
+          "name": "Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        },
+        {
+          "key": "live-casino",
+          "name": "Live Casino",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 1
+        },
+        {
+          "key": "slots",
+          "name": "Slots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 2
+        },
+        {
+          "key": "roulette",
+          "name": "Roulette",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 3
+        },
+        {
+          "key": "blackjack",
+          "name": "Blackjack",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 4
+        },
+        {
+          "key": "baccarat",
+          "name": "Baccarat",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 5
+        },
+        {
+          "key": "jackpots",
+          "name": "Jackpots",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 6
+        },
+        {
+          "key": "virtual-sports",
+          "name": "Virtual Sports",
+          "gameCount": null,
+          "featured": false,
+          "sortOrder": 7
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

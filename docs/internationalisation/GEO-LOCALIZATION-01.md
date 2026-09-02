@@ -3,7 +3,7 @@
 **Evidence date:** 2 September 2026
 **Branch:** `codex/geo-localization-routing-01`
 **Base:** detected `origin/main` `fe27d899638d2ca2b55461a75ae869d5db9163b1`
-**State:** PR #121 merged; initial Production release detected; scoped Peru publication correction in progress
+**State:** COMPLETE IN PRODUCTION through PRs #121 and #122
 
 ## Evidence classification
 
@@ -14,7 +14,7 @@
 - **DETECTED:** operative legal pages remain unprefixed and are not presented as Peru-localized law.
 - **DETECTED:** PR #121 merged at `c27b94d22f50fd4822e61d6ae6353b01072d4682`; Vercel Production deployment `dpl_2RioUxbR838XZr8wGytPqrajgQVX` reached Ready and the nine-route read-only smoke passed.
 - **CONTRADICTION:** `/es-pe` and `/es-pe/casinos` returned 404 in that exact release because the older Preview-only publication state remained encoded after the current Founder instruction required Production verification.
-- **PROPOSED UNTIL MERGE:** the scoped release correction records the newer Peru publication authority while retaining `noindex, follow` and every factual/commercial fail-closed boundary.
+- **DETECTED:** the scoped correction PR #122 merged at `1392829c5823354ed9e3cb7d04d29b963e96262c` and deployed as `dpl_2Wey6EznxUqnnRUYd7QVRbwQJ9ud`. All six required localized Production routes return 200; PE remains `noindex, follow`, sitemap-excluded and commercially fail-closed.
 
 ## Canonical route contract
 
@@ -76,7 +76,7 @@ Adding another language to an existing country creates another locale route unde
 - cross-market casino projection isolation: existing `tests/casino-market-architecture.test.ts` and `tests/casino-market-architecture-postgres.test.ts`;
 - complete catalog report: `docs/internationalisation/ai-language-qa-report.json`.
 
-Hosted Preview verification must record the exact Preview URL and test Home, discovery, Betsson PE/SE detail, selector persistence, legacy redirects, canonical/hreflang/robots, responsive widths and absence of outbound commercial action. Production deployment and merge are outside this implementation record.
+Hosted Preview and final Production verification record the exact deployment and test Home, discovery, Betsson PE/SE detail, selector persistence, legacy redirects, canonical/hreflang/robots, responsive layout and absence of outbound commercial action.
 
 | Preview gate | Required result before Founder acceptance |
 | --- | --- |
@@ -87,3 +87,12 @@ Hosted Preview verification must record the exact Preview URL and test Home, dis
 | SEO | reciprocal existing alternates, neutral `x-default`, PE/SE `noindex, follow`, no query duplicate |
 | responsive shell | no horizontal overflow at 360, 390, 430, 768, 1024 and 1440 pixels |
 | Programme | existing market-first Programme path and access/persistence behavior remain intact |
+
+## Final Production evidence
+
+- PR #121 head `43fda94426052c080516253eb9c62c8ccfd824d8` merged as `c27b94d22f50fd4822e61d6ae6353b01072d4682`; initial Production deployment `dpl_2RioUxbR838XZr8wGytPqrajgQVX` exposed the stale Peru publication contradiction.
+- Scoped PR #122 head `617143556efafd2d282b0c4310cafb3f1ffd5658` passed CI run `33635692013`, merged as `1392829c5823354ed9e3cb7d04d29b963e96262c` and deployed from that exact SHA as `dpl_2Wey6EznxUqnnRUYd7QVRbwQJ9ud`.
+- The repository Production smoke passed nine routes. The six required localized routes returned 200 with matching `html lang`, self-canonical URLs, eight reciprocal alternates including `x-default`, correct selector state and zero horizontal overflow in the rendered browser check.
+- The live selector changed `/es-pe/casinos` (`ES · PE`) to `/sv-se/casinos` (`SV · SE`). Legacy GB/SE/PE and case forms returned one-hop canonical redirects while preserving permitted query parameters.
+- PE returned Betsson with PEN, Yape and MINCETUR facts; SE returned fictional Demo Prism plus Betsson with SEK, Swish and Spelinspektionen facts. No PE↔SE fact leakage or affiliate action was detected.
+- `/program` returned 200 and the full CI Programme regression passed without any Programme implementation change.

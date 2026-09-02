@@ -1,0 +1,107 @@
+{
+  "schemaVersion": "casino-data-population-01.v1",
+  "actor": "casino-data-population-01",
+  "frozenCorpusObservedAt": "2026-08-31",
+  "decisionSources": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/FINAL_REPORT.md",
+      "sha256": "7256821fc33d0aea6ff209a8e8078e2fab6d2419cc5e8d3a499b8c7ce0537ce6"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/FINAL_REPORT.md",
+      "sha256": "3e943ad6b55bfb8e8e813c283c7b4da07bcd6d2d0a33dacc7545cb45fce2bd67"
+    },
+    {
+      "path": "research_staging/casino_next_batch_2026-09-01/readiness-matrix.json",
+      "sha256": "06dd60ba1a1dfc27c30e91d0a75eb02acc45169f682a03ff4d71aad36040477b"
+    },
+    {
+      "path": "research_staging/affiliate_assets_2026-08-31/FINAL_REPORT.md",
+      "sha256": "1078c57d5f64a6d338020ac44f7a9a06ba6e6f7c65823d528e905e40153cfa18"
+    },
+    {
+      "path": "research_staging/affiliate_assets_2026-08-31/quality-control.json",
+      "sha256": "cb3f49646f13aa5c5ba15f9ef84e63115af2e30dfd802ae754ae2334353936ac"
+    }
+  ],
+  "bundles": [
+    {
+      "casinoKey": "hello-casino",
+      "casino": "Hello Casino",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/hello-casino-gb.v1.json",
+      "sha256": "9996b4c6ea195bcd259a4b84ade3276057e3a9e17110c71470555b9bc6e94d40",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "skol-casino",
+      "casino": "Skol Casino",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/skol-casino-gb.v1.json",
+      "sha256": "6d934fd81f34f19e9f906bc22a41cc5dcaedfc5669833790043e39a8ca9715b8",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "diamond7",
+      "casino": "Diamond7",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/diamond7-gb.v1.json",
+      "sha256": "0abec393d1ec974a3212255c6e65ba469798a132e62ded092782d78163960940",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "gday-casino",
+      "casino": "G'day Casino",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/gday-casino-gb.v1.json",
+      "sha256": "3e4d43d3a070e83b73b8f1fb5646e6df77ecd105a32b95cfb08e1faba9efe679",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "21-prive",
+      "casino": "21 Privé",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/21-prive-gb.v1.json",
+      "sha256": "7619d8019a1deb764a9fe1fdad44c4b8dfefc6d108e44a29ec22e513945a4f97",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "slotnite",
+      "casino": "Slotnite",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/slotnite-gb.v1.json",
+      "sha256": "013adbd77056271856b0e4a606336fe62f8f613a9836ddab626e5116244989f1",
+      "sourceFiles": 4
+    },
+    {
+      "casinoKey": "dragonbet",
+      "casino": "DragonBet",
+      "countryCode": "GB",
+      "path": "data/casino-ingestion/casino-data-population-01/dragonbet-gb.v1.json",
+      "sha256": "3b8ebaae872deadaa364159cc31333a5dc660e5dae5ba64841db289c63742092",
+      "sourceFiles": 4
+    }
+  ],
+  "skipped": [
+    {
+      "casino": "Betsson",
+      "reasonCode": "UNCHANGED_ALREADY_PRESENT",
+      "reason": "The exact PE and SE factual profiles were already imported and published in Production; the Founder instruction forbids re-importing them."
+    },
+    {
+      "casino": "Gentleman Jim",
+      "reasonCode": "BLOCKED_NO_CURRENT_ACTIVE_GB_CASINO",
+      "reason": "The frozen corpus records a surrendered GB remote-casino licence, inactive exact domain, HTTP 503 site, disabled affiliate account, and contradictory stale affiliate inventory."
+    }
+  ],
+  "assets": {
+    "publicationCount": 0,
+    "fallbackRequired": true,
+    "reason": "The frozen asset evidence marks every candidate publicationEligible=false; Diamond7 GEO remains unknown and the other eligible profiles have no authorised binary."
+  },
+  "commercial": {
+    "routeWrites": 0,
+    "productionEligibleRoutes": 0,
+    "reason": "The six Superfly GB plans are denied and the DragonBet affiliate account is disabled; no exact eligible outbound route exists in the frozen corpus."
+  }
+}

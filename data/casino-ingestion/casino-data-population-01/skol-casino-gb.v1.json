@@ -1,0 +1,194 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "casino-data-population-01",
+  "sourceFiles": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/casino.json",
+      "sha256": "c128a8ef36c7309bdf5b729d158a342026342ddee8caf84445c735cce9d895c5"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/markets/GB.json",
+      "sha256": "6521b64730d060d4825a0914d4178769837427c0f9398e2bc27a6b37e0ebb837"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/evidence.json",
+      "sha256": "affecd0520f4a24b1e0b072ad13abe2fabea63118cb05e27c1f634ab2756858d"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/assets.json",
+      "sha256": "290b939b118699e49bdf9a568e8128fafb75df0bff3d71b109f6937cefc09d18"
+    }
+  ],
+  "casino": {
+    "key": "skol-casino",
+    "slug": "skol-casino",
+    "internalName": "Skol Casino",
+    "title": "Skol Casino",
+    "domain": "skolcasino.com",
+    "websiteUrl": "https://www.skolcasino.com/",
+    "summary": "Skol Casino is a casino brand on the exact domain www.skolcasino.com, which the Gambling Commission lists as active under White Hat Gaming Limited's remote casino licence.",
+    "brand": {
+      "key": "skol-casino",
+      "name": "Skol Casino",
+      "domain": "skolcasino.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.skolcasino.com",
+      "localWebsiteUrl": "https://www.skolcasino.com/",
+      "operator": {
+        "key": "white-hat-gaming-limited",
+        "name": "White Hat Gaming Limited",
+        "legalName": "White Hat Gaming Limited",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "White Hat Gaming Limited (Malta C73232)",
+      "termsUrl": null,
+      "privacyUrl": null,
+      "responsibleGamblingUrl": null,
+      "primaryLanguage": null,
+      "supportedLanguages": [],
+      "supportLanguages": [],
+      "primaryCurrency": null,
+      "supportedCurrencies": [],
+      "minimumAge": null,
+      "kycSummary": null,
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "PARTIAL exact-market factual profile from the frozen 31 August 2026 corpus. Missing fields remain explicit UNKNOWN values; no commercial eligibility or cross-market fallback is implied.",
+      "evidence": [
+        {
+          "key": "skol-ukgc-domain",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/evidence.json#skol-ukgc-domain",
+          "fieldKeys": [
+            "casino.title",
+            "casino.domain",
+            "availability",
+            "localDomain",
+            "localWebsiteUrl",
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The Gambling Commission register lists www.skolcasino.com as an Active domain of White Hat Gaming Limited, account 52894. Supports the GB market profile and exact-domain relationship."
+        },
+        {
+          "key": "skol-whg-operator-identity",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_OPERATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.whitehatgaming.com/terms-and-conditions/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/evidence.json#skol-whg-operator-identity",
+          "fieldKeys": [
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "White Hat Gaming Limited states registration number C73232 and identifies UKGC account 52894 and MGA/B2C/370/2017. The page governs the corporate website and is not the casino player terms."
+        },
+        {
+          "key": "factual-summary-synthesis",
+          "classification": "INFERRED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/markets/GB.json",
+          "fieldKeys": [
+            "casino.summary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The public summary is a concise synthesis of the exact-domain Gambling Commission relationship and active remote-casino licence. It is not a bonus, commercial, or wider-country claim."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FROZEN_RESEARCH_PROFILE",
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/markets/GB.json",
+          "fieldKeys": [
+            "termsUrl",
+            "privacyUrl",
+            "responsibleGamblingUrl",
+            "primaryLanguage",
+            "supportedLanguages",
+            "supportLanguages",
+            "primaryCurrency",
+            "supportedCurrencies",
+            "minimumAge",
+            "kycSummary",
+            "withdrawalSummary",
+            "supportSummary",
+            "payments",
+            "bonuses",
+            "providers"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The frozen exact-market research did not establish these fields. Null values and empty scoped arrays are intentional and must not be backfilled from another market, operator-wide assumptions, creative labels, or commercial portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-052894-r-329546-008",
+          "authority": "Gambling Commission",
+          "licenseNumber": "052894-R-329546-008",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+          "issuedAt": "2018-10-29T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Remote casino licence for account 52894; exact-domain evidence is retained separately.",
+          "evidence": [
+            {
+              "key": "licence-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/evidence.json#skol-ukgc-licence",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "White Hat Gaming Limited, account 52894, holds an Active Casino Remote licence 052894-R-329546-008, current from 29 October 2018."
+            },
+            {
+              "key": "exact-domain-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/skol-casino/evidence.json#skol-ukgc-domain",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "The Gambling Commission register lists www.skolcasino.com as an Active domain of White Hat Gaming Limited, account 52894."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "casino",
+          "name": "Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

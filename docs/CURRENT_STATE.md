@@ -4,9 +4,9 @@
 **Evidence date:** 2 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `c27b94d22f50fd4822e61d6ae6353b01072d4682`
-**Verified post-release runtime baseline SHA:** `c27b94d22f50fd4822e61d6ae6353b01072d4682`
-**Verified post-release runtime deployment:** `dpl_2RioUxbR838XZr8wGytPqrajgQVX`
+**Current Production application SHA (live provider evidence):** `1392829c5823354ed9e3cb7d04d29b963e96262c`
+**Verified post-release runtime baseline SHA:** `1392829c5823354ed9e3cb7d04d29b963e96262c`
+**Verified post-release runtime deployment:** `dpl_2Wey6EznxUqnnRUYd7QVRbwQJ9ud`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -42,7 +42,9 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 **DETECTED — GEO-LOCALIZATION-01 PR #121 merged, 2 September 2026:** merge `c27b94d22f50fd4822e61d6ae6353b01072d4682` deployed as `dpl_2RioUxbR838XZr8wGytPqrajgQVX`. The exact release made lowercase BCP-47 locale-market paths canonical and passed the ordinary Production smoke. `/en-gb`, `/en-gb/casinos`, `/sv-se` and `/sv-se/casinos` returned 200.
 
-**CONTRADICTION / SCOPED RELEASE FIX IN PROGRESS:** the same exact release returned 404 for `/es-pe` and `/es-pe/casinos` because the older Preview-only Peru publication state remained encoded. The current Founder instruction explicitly requires Peru Production verification, so the scoped correction records `es-PE` publication acceptance while retaining `noindex, follow`, sitemap exclusion, exact-country factual projection and fail-closed commercial authority. See [GEO-LOCALIZATION-01 implementation record](internationalisation/GEO-LOCALIZATION-01.md).
+**DETECTED — GEO-LOCALIZATION-01 Production correction PR #122 merged, 2 September 2026:** merge `1392829c5823354ed9e3cb7d04d29b963e96262c` deployed as `dpl_2Wey6EznxUqnnRUYd7QVRbwQJ9ud`. `/en-gb`, `/en-gb/casinos`, `/sv-se`, `/sv-se/casinos`, `/es-pe` and `/es-pe/casinos` return 200 with matching `html lang`, self-canonical URLs, reciprocal locale alternates and exact selector state. Peru and Sweden remain `noindex, follow`; PE/SE public casino facts do not cross markets; no affiliate action appears; the Programme entry remains healthy. See [GEO-LOCALIZATION-01 implementation record](internationalisation/GEO-LOCALIZATION-01.md).
+
+**PROPOSED UNTIL MERGE AND BOUNDED PRODUCTION EXECUTION — CASINO-DATA-POPULATION-01:** the current Founder instruction authorises the next factual population. A checksum-bound candidate contains seven exact GB profiles: Hello Casino, Skol Casino, Diamond7, G'day Casino, 21 Privé, Slotnite and DragonBet. Betsson is explicitly unchanged and Gentleman Jim is blocked by its surrendered remote-casino licence, inactive domain, HTTP 503 site and contradictory stale affiliate inventory. The candidate maps no bonuses, no unevidenced payments, no assets and no commercial routes; whole-batch disposable PostgreSQL rollback and idempotency pass. Production has not been mutated by this candidate. See the [CASINO-DATA-POPULATION-01 release record](06_Operations/Casino-Data-Population-01-Release-Record-2026-09-02.md).
 
 **DETECTED — Programme internationalisation PR #106 merged:** merge `4184c4f` presents one language-neutral Programme through its separately governed localized Programme routes while keeping locale out of Programme state, identity, rewards and persistence. It introduced no Prisma migration and did not extend public-market legal, indexing or commercial authority. Its runtime evidence and historical acceptance gates remain in [Programme internationalisation](internationalisation/programme-internationalisation.md).
 

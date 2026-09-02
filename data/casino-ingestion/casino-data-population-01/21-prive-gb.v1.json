@@ -1,0 +1,310 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "casino-data-population-01",
+  "sourceFiles": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/casino.json",
+      "sha256": "3e8d08fbba5a9dff2271f049036470e59867c7062c40317e7463d5bd26aba881"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/markets/GB.json",
+      "sha256": "9c31790a0202e7eeb96688c480924cbdb733ebdbbc87b0a4c0466ed7d005c804"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json",
+      "sha256": "5a9010d9938417f41fb736bac712458f0c087db9ba41a97c5d9f07297f69a7f7"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/assets.json",
+      "sha256": "b3b09e27caf4065a59b691efc1845818c18d0e7fdb5cd3e920552892345c2347"
+    }
+  ],
+  "casino": {
+    "key": "21-prive",
+    "slug": "21-prive",
+    "internalName": "21 Privé",
+    "title": "21 Privé",
+    "domain": "21prive.com",
+    "websiteUrl": "https://www.21prive.com/",
+    "summary": "21 Privé is a casino brand on the exact domain www.21prive.com, which the Gambling Commission lists as active under White Hat Gaming Limited's remote casino licence.",
+    "brand": {
+      "key": "21-prive",
+      "name": "21 Privé",
+      "domain": "21prive.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.21prive.com",
+      "localWebsiteUrl": "https://www.21prive.com/",
+      "operator": {
+        "key": "white-hat-gaming-limited",
+        "name": "White Hat Gaming Limited",
+        "legalName": "White Hat Gaming Limited",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "White Hat Gaming Limited (Malta C73232)",
+      "termsUrl": "https://www.21prive.com/terms",
+      "privacyUrl": null,
+      "responsibleGamblingUrl": "https://www.21prive.com/index.php?page=playerprotection",
+      "primaryLanguage": "en",
+      "supportedLanguages": [],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": null,
+      "supportedCurrencies": [],
+      "minimumAge": 18,
+      "kycSummary": "Automated checks against registration details verify age 18+, identity and address; further documents may include identity, address, payment-account/card or e-wallet evidence.",
+      "withdrawalSummary": "UKGC withdrawals may remain under review for a minimum of 24 hours; time after approval depends on the withdrawal method. Available methods are account-specific, and the operator states it charges no withdrawal fee while third-party charges may apply.",
+      "supportSummary": "The official 21 Privé support centre provides English-language help at https://21prive.zendesk.com/hc/en-us.",
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "PARTIAL exact-market factual profile from the frozen 31 August 2026 corpus. Missing fields remain explicit UNKNOWN values; no commercial eligibility or cross-market fallback is implied.",
+      "evidence": [
+        {
+          "key": "21prive-ukgc-domain",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-ukgc-domain",
+          "fieldKeys": [
+            "casino.title",
+            "casino.domain",
+            "availability",
+            "localDomain",
+            "localWebsiteUrl",
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The Gambling Commission register lists www.21prive.com as an Active domain of White Hat Gaming Limited, account 52894. Supports the GB market profile and exact-domain relationship."
+        },
+        {
+          "key": "21prive-official-support",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-official-support",
+          "fieldKeys": [
+            "termsUrl",
+            "responsibleGamblingUrl",
+            "primaryLanguage",
+            "supportLanguages",
+            "supportSummary",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The official support centre identifies 21Prive Casino as a brand managed by White Hat Gaming Limited, registration C73232, links the official domain and responsible-gambling page, and provides English support. The support footer also states UKGC account 52894 and MGA/B2C/370/2017; regulator records were checked separately."
+        },
+        {
+          "key": "21prive-verification",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9401930769810-How-do-I-verify-my-account",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-verification",
+          "fieldKeys": [
+            "minimumAge",
+            "kycSummary",
+            "termsUrl"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support says automated checks verify that customers are 18+, match their identity and live at the registered address, and links the player terms at https://www.21prive.com/terms. Exact timing and all GB-specific triggers remain unknown."
+        },
+        {
+          "key": "21prive-document-requirements",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9401851450258-Document-requirements",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-document-requirements",
+          "fieldKeys": [
+            "kycSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support describes possible proof of bank account, identity document, proof of address issued within three months, card and e-wallet ownership evidence. The article says documents may be requested; it does not establish that every document is required in every case."
+        },
+        {
+          "key": "21prive-withdrawal-timing",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9520358382482-How-long-do-withdrawals-take",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-withdrawal-timing",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support states that UKGC withdrawals may remain under review for a minimum of 24 hours, after which delivery time depends on the withdrawal method. No method-specific delivery time was published."
+        },
+        {
+          "key": "21prive-withdrawal-methods",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9520335425682-What-withdrawal-methods-do-you-offer",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-withdrawal-methods",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support says withdrawal methods are displayed in the account, generally reuse supported deposit methods, and fall back to bank-transfer details when a deposit method cannot be used for withdrawal. The exact GB/account-specific method set remains unknown."
+        },
+        {
+          "key": "21prive-withdrawal-fees",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9520421404306-Are-there-any-fees-for-withdrawal",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-withdrawal-fees",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support states that 21Prive charges no withdrawal fees, while card issuers, banks, financial institutions or currency conversion may produce charges. The article is not separately labelled GB."
+        },
+        {
+          "key": "21prive-general-payments",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9423300370706-What-payment-methods-can-I-use",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-general-payments",
+          "fieldKeys": [
+            "payments"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support lists Visa, Mastercard, Paysafecard, Skrill, Neteller and bank transfer as general deposit methods, while explicitly requiring the casino deposit page for country-specific availability. Not promoted to the GB method list because same-market availability was not verified."
+        },
+        {
+          "key": "21prive-current-bonus-unknown",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://21prive.zendesk.com/hc/en-us/articles/9421444662802-Welcome-Bonuses-How-to-Claim-Your-Welcome-Bonus",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-current-bonus-unknown",
+          "fieldKeys": [
+            "bonuses"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The official welcome-bonus support article contains generic examples but no current local amount, percentage, free-spin count, wagering requirement, expiry or maximum conversion. No bonus record should be ingested from this article."
+        },
+        {
+          "key": "21prive-site-access-limited",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.21prive.com/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-site-access-limited",
+          "fieldKeys": [
+            "privacyUrl",
+            "primaryCurrency",
+            "supportedCurrencies",
+            "supportedLanguages",
+            "providers"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Direct web fetch of the official domain returned HTTP 403, while the operator-linked support centre and regulator records remained accessible. This is an evidence-access limitation, not proof the casino is generally unavailable."
+        },
+        {
+          "key": "factual-summary-synthesis",
+          "classification": "INFERRED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/markets/GB.json",
+          "fieldKeys": [
+            "casino.summary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The public summary is a concise synthesis of the exact-domain Gambling Commission relationship and active remote-casino licence. It is not a bonus, commercial, or wider-country claim."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FROZEN_RESEARCH_PROFILE",
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/markets/GB.json",
+          "fieldKeys": [
+            "privacyUrl",
+            "primaryCurrency",
+            "supportedCurrencies",
+            "supportedLanguages",
+            "payments",
+            "bonuses",
+            "providers"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The frozen exact-market research did not establish these fields. Null values and empty scoped arrays are intentional and must not be backfilled from another market, operator-wide assumptions, creative labels, or commercial portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-052894-r-329546-008",
+          "authority": "Gambling Commission",
+          "licenseNumber": "052894-R-329546-008",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+          "issuedAt": "2018-10-29T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Remote casino licence for account 52894; exact-domain evidence is retained separately.",
+          "evidence": [
+            {
+              "key": "licence-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-ukgc-licence",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "White Hat Gaming Limited, account 52894, holds Active Casino Remote licence 052894-R-329546-008, current from 29 October 2018."
+            },
+            {
+              "key": "exact-domain-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/21-prive/evidence.json#21prive-ukgc-domain",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "The Gambling Commission register lists www.21prive.com as an Active domain of White Hat Gaming Limited, account 52894."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "casino",
+          "name": "Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}
