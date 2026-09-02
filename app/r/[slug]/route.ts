@@ -6,6 +6,7 @@ import { isAffiliateRedirectEnabled, preferenceHintsFromRequest } from "@/lib/af
 import { logJurisdictionDecision } from "@/lib/jurisdiction/decision-log";
 import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import { affiliateRedirectService } from "@/lib/services/affiliate-redirect.service";
+import { recordOutboundClickBestEffort } from "@/lib/services/outbound-click.service";
 
 export const dynamic = "force-dynamic";
 
@@ -43,7 +44,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return recoveryResponse(request);
     }
     const response = safeAffiliateRedirectResponse(result.destination);
-    return response.status === 302 ? response : recoveryResponse(request);
+    if (response.status !== 302) return recoveryResponse(request);
+    await recordOutboundClickBestEffort({
+      clickedAt: now,
+      casinoId: result.casinoId,
+      countryCode: result.jurisdictionDecision.countryCode!,
+      redirectSlugId: result.slugId,
+      affiliateOfferId: result.offerId,
+      trackingLinkId: result.trackingLinkId,
+    });
+    return response;
   } catch {
     safeDiagnostic("RESOLUTION_ERROR", { countryCode: requestCountrySignal?.countryCode, ...hints });
     return recoveryResponse(request);

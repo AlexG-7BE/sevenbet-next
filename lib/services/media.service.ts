@@ -26,6 +26,7 @@ export interface UploadMediaInput {
   credit?: string | null;
   featured?: boolean;
   casinoId?: string | null;
+  casinoCountryId?: string | null;
   casinoBonusId?: string | null;
   affiliateOfferId?: string | null;
   metadata?: unknown;
@@ -82,7 +83,7 @@ function extensionFor(mimeType: string) {
 }
 
 function storageKey(input: UploadMediaInput, checksum: string, mimeType: string) {
-  const owner = input.casinoBonusId || input.affiliateOfferId || "catalog";
+  const owner = [input.casinoCountryId, input.casinoBonusId, input.affiliateOfferId].filter(Boolean).join("/") || "catalog";
   return `casino/${input.casinoId}/${owner}/${input.type.toLowerCase()}/${checksum.slice(0, 32)}.${extensionFor(mimeType)}`;
 }
 
@@ -109,10 +110,11 @@ export class MediaService {
     return record;
   }
 
-  private async validateOwnership(input: { casinoId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }, requireTypedOwner = false) {
+  private async validateOwnership(input: { casinoId?: string | null; casinoCountryId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }, requireTypedOwner = false) {
     if (!input.casinoId) throw new ValidationError("casinoId is required for Phase 3.8 media uploads");
-    const owners = await this.repository.resolveOwnership(input.casinoId, input.casinoBonusId, input.affiliateOfferId);
+    const owners = await this.repository.resolveOwnership(input.casinoId, input.casinoCountryId, input.casinoBonusId, input.affiliateOfferId);
     if (!owners.casino) throw new NotFoundError("Casino", { id: input.casinoId });
+    if (input.casinoCountryId && (!owners.marketProfile || owners.marketProfile.casinoId !== input.casinoId)) throw new ValidationError("Casino market profile does not belong to the selected casino");
     if (input.casinoBonusId && (!owners.casinoBonus || owners.casinoBonus.casinoId !== input.casinoId)) throw new ValidationError("Casino bonus does not belong to the selected casino");
     if (input.affiliateOfferId && (!owners.affiliateOffer || owners.affiliateOffer.casinoId !== input.casinoId)) throw new ValidationError("Affiliate offer does not belong to the selected casino");
     if (requireTypedOwner && input.type === MediaAssetType.BONUS_CREATIVE && !input.casinoBonusId) throw new ValidationError("BONUS_CREATIVE requires casinoBonusId");
@@ -141,14 +143,14 @@ export class MediaService {
       if (error instanceof MediaValidationError) throw new ValidationError(error.message, { code: error.code });
       throw error;
     }
-    const duplicate = await this.repository.findDuplicateChecksum(validated.checksum, { casinoId: input.casinoId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
+    const duplicate = await this.repository.findDuplicateChecksum(validated.checksum, { casinoId: input.casinoId, casinoCountryId: input.casinoCountryId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
     if (duplicate) return { record: duplicate, duplicate: true };
     const provider = this.storageFactory();
     await provider.validate();
     const key = storageKey(input, validated.checksum, validated.mimeType);
     const upload = await provider.upload({ key, data: processed.original, contentType: validated.mimeType });
     try {
-      const sortOrder = await this.repository.nextSortOrder({ casinoId: input.casinoId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
+      const sortOrder = await this.repository.nextSortOrder({ casinoId: input.casinoId, casinoCountryId: input.casinoCountryId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
       const record = await this.repository.create({
         type,
         storageProvider: provider.name,
@@ -170,6 +172,7 @@ export class MediaService {
         variants: processed.variants.map((variant) => ({ name: variant.name, mimeType: variant.mimeType, width: variant.width, height: variant.height })),
         createdBy: input.actorId,
         casinoId: input.casinoId,
+        casinoCountryId: input.casinoCountryId,
         casinoBonusId: input.casinoBonusId,
         affiliateOfferId: input.affiliateOfferId,
       });
@@ -191,7 +194,7 @@ export class MediaService {
     const bonusId = input.casinoBonusId !== undefined ? input.casinoBonusId : current.casinoBonusId;
     const offerId = input.affiliateOfferId !== undefined ? input.affiliateOfferId : current.affiliateOfferId;
     await this.validateOwnership(
-      { casinoId: current.casinoId, casinoBonusId: bonusId, affiliateOfferId: offerId, type: current.type },
+      { casinoId: current.casinoId, casinoCountryId: current.casinoCountryId, casinoBonusId: bonusId, affiliateOfferId: offerId, type: current.type },
       true,
     );
     try {

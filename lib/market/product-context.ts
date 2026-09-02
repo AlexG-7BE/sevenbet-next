@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
-import { publicCoreTranslationReady, publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
+import { TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
 import { FIRST_WAVE_MARKETS } from "./first-wave-evidence";
-import { ENABLED_PRESENTATION_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
+import { INDEXABLE_MARKET_PROFILES, marketIndexingApproved, marketProfileByCountry, marketProfileByLocale, publicMarketPath, type MarketProfile, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
@@ -21,7 +21,12 @@ export const PRODUCT_TRANSLATION_REVIEW_STATE = {
  * until its explicit indexing authority is activated.
  */
 export function localizedProductIndexingApproved(locale: SupportedLocale) {
-  return locale !== "en-GB" && publicTranslationIndexingApproved(locale);
+  return locale !== "en-GB" && productIndexingApproved(locale);
+}
+
+export function productIndexingApproved(locale: SupportedLocale) {
+  const profile = marketProfileByLocale(locale);
+  return profile ? marketIndexingApproved(profile) : false;
 }
 
 export function productHref(presentation: PresentationResolution, href: string) {
@@ -36,10 +41,7 @@ export function productCanonicalPath(presentation: PresentationResolution, pathn
     : pathname;
 }
 
-export function productLanguageAlternates(pathname: string) {
-  const profiles = process.env.VERCEL_ENV === "production"
-    ? PUBLICATION_APPROVED_MARKET_PROFILES
-    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale));
+export function productLanguageAlternatesForProfiles(pathname: string, profiles: readonly MarketProfile[]) {
   return Object.fromEntries([
     ...profiles.map((profile) => [
       profile.defaultLocale,
@@ -49,11 +51,15 @@ export function productLanguageAlternates(pathname: string) {
   ]);
 }
 
+export function productLanguageAlternates(pathname: string) {
+  return productLanguageAlternatesForProfiles(pathname, INDEXABLE_MARKET_PROFILES);
+}
+
 export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling") {
   const profiles = ["GB", ...FIRST_WAVE_MARKETS]
     .map((countryCode) => marketProfileByCountry(countryCode))
     .filter((profile) => profile !== null)
-    .filter((profile) => process.env.VERCEL_ENV !== "production" || profile.editorialState !== "PREVIEW_LOCALIZED");
+    .filter(marketIndexingApproved);
   return Object.fromEntries([
     ...profiles.map((profile) => [
       profile.defaultLocale,
@@ -80,14 +86,14 @@ export function productMetadata(input: {
   const canonical = absoluteUrl(productCanonicalPath(input.presentation, input.pathname));
   const explicitlyLocalized = input.presentation.source === "EXPLICIT_ROUTE";
   const robots = explicitlyLocalized
-    && input.presentation.locale !== "en-GB"
-    && !localizedProductIndexingApproved(input.presentation.locale)
+    && !productIndexingApproved(input.presentation.locale)
     ? { index: false, follow: true }
     : input.robots;
+  const languages = productIndexingApproved(input.presentation.locale)
+    ? input.languageAlternates ?? productLanguageAlternates(input.pathname)
+    : undefined;
   const locale = openGraphLocale(input.presentation.locale);
-  const alternateLocale = (process.env.VERCEL_ENV === "production"
-    ? PUBLICATION_APPROVED_MARKET_PROFILES
-    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale)))
+  const alternateLocale = INDEXABLE_MARKET_PROFILES
     .map((profile) => openGraphLocale(profile.defaultLocale))
     .filter((candidate) => candidate !== locale);
 
@@ -96,7 +102,7 @@ export function productMetadata(input: {
     description: input.description,
     alternates: {
       canonical,
-      languages: input.languageAlternates ?? productLanguageAlternates(input.pathname),
+      languages: languages,
     },
     ...(robots ? { robots } : {}),
     openGraph: {

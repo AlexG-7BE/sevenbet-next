@@ -18,3 +18,11 @@ tsconfig.tsbuildinfo
 *.backup
 *.dump
 .recovery-*
+
+# Real partner-portal exports and creatives are local operational inputs. Keep
+# only the inert schemas and empty-directory marker in version control.
+data/commercial-activation/incoming/*
+!data/commercial-activation/incoming/*.template.json
+!data/commercial-activation/incoming/assets/
+data/commercial-activation/incoming/assets/*
+!data/commercial-activation/incoming/assets/.gitkeep

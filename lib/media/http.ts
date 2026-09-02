@@ -55,7 +55,7 @@ export async function readMediaUpload(request: Request) {
   const contentType = request.headers.get("content-type") || "";
   if (!contentType.toLowerCase().startsWith("multipart/form-data;")) throw new ValidationError("Upload must use multipart/form-data");
   const form = await request.formData();
-  const allowed = new Set(["file", "type", "altText", "title", "caption", "credit", "featured", "casinoId", "casinoBonusId", "affiliateOfferId", "metadata"]);
+  const allowed = new Set(["file", "type", "altText", "title", "caption", "credit", "featured", "casinoId", "casinoCountryId", "casinoBonusId", "affiliateOfferId", "metadata"]);
   for (const key of form.keys()) if (!allowed.has(key)) throw new ValidationError(`Unknown upload field: ${key}`);
   const file = form.get("file");
   if (!(file instanceof File)) throw new ValidationError("file is required");
@@ -77,6 +77,7 @@ export async function readMediaUpload(request: Request) {
     credit: formText(form, "credit"),
     featured: featured === "true",
     casinoId: optionalUuid(formText(form, "casinoId"), "casinoId"),
+    casinoCountryId: optionalUuid(formText(form, "casinoCountryId"), "casinoCountryId"),
     casinoBonusId: optionalUuid(formText(form, "casinoBonusId"), "casinoBonusId"),
     affiliateOfferId: optionalUuid(formText(form, "affiliateOfferId"), "affiliateOfferId"),
     metadata,

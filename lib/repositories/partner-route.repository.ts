@@ -97,6 +97,7 @@ export class PartnerRouteRepository implements PartnerRouteStore {
           validFrom: tracking.validFrom,
           expiresAt: tracking.expiresAt,
           archivedAt: tracking.archivedAt,
+          metadata: tracking.metadata,
           countryAuthority: tracking.countries[0] ?? null,
         },
         redirect: {

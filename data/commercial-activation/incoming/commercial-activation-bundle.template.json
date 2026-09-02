@@ -1,0 +1,99 @@
+{
+  "schemaVersion": "commercial-activation-bundle.v1",
+  "bundleId": "replace-with-source-and-date",
+  "generatedAt": null,
+  "source": {
+    "system": "PARTNER_PORTAL",
+    "exportReference": null
+  },
+  "records": [
+    {
+      "casino": {
+        "slug": null,
+        "expectedName": null
+      },
+      "market": {
+        "countryCode": null,
+        "currencyCode": null,
+        "languageCode": null
+      },
+      "network": {
+        "slug": null,
+        "name": null,
+        "type": "OTHER",
+        "websiteUrl": null
+      },
+      "program": {
+        "externalProgramId": null,
+        "name": null,
+        "operator": null,
+        "accountReference": null,
+        "defaultCurrency": null,
+        "gbPartnerAuthority": null
+      },
+      "offer": {
+        "externalOfferId": null,
+        "externalName": null,
+        "internalName": null,
+        "publicLabel": null,
+        "offerType": null,
+        "payoutModel": null,
+        "payoutAmount": null,
+        "payoutCurrency": null,
+        "revenueSharePercentage": null,
+        "hybridTerms": null,
+        "landingPageUrl": null,
+        "languages": [],
+        "devices": [],
+        "validFrom": null,
+        "expiresAt": null,
+        "priority": 0
+      },
+      "trackingLink": {
+        "externalLinkId": null,
+        "label": null,
+        "destinationUrl": null,
+        "trackingUrl": null,
+        "landingPage": null,
+        "campaign": null,
+        "campaignId": null,
+        "linkingCode": null,
+        "subIdTemplate": null,
+        "validFrom": null,
+        "expiresAt": null,
+        "priority": 0
+      },
+      "redirect": {
+        "slug": null
+      },
+      "routeHealth": {
+        "expectedFinalHost": null,
+        "expectedPathPrefix": null,
+        "requiredAttributionParameters": []
+      },
+      "commercialEvidence": {
+        "decision": null,
+        "currentMarketStatus": null,
+        "sourceType": null,
+        "sourceReference": null,
+        "sourceUrl": null,
+        "observedAt": null,
+        "verifiedAt": null,
+        "expiresAt": null,
+        "reviewedBy": null,
+        "notes": null,
+        "requirements": {
+          "existingCommercialAuthority": false,
+          "operatorMarketLicenceEvidence": false,
+          "exactOperatorDomainEvidence": false,
+          "requestedAdvertisingWithinOperatorAuthority": false,
+          "promotionalCopyReviewCleared": false,
+          "hgcAffiliateSuitabilityEvidence": false,
+          "partnerApproved": false,
+          "offerActive": false,
+          "trackingReady": false
+        }
+      }
+    }
+  ]
+}

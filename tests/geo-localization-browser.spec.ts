@@ -17,7 +17,7 @@ test("canonical market homes expose route-owned language, SEO and selector state
   }
 });
 
-test("Peru public core, safety routes and locale alternates are coherent", async ({ page }) => {
+test("Peru public core and safety routes are coherent without noindex hreflang", async ({ page }) => {
   for (const path of ["/es-pe/casinos", "/es-pe/best-offers", "/es-pe/bonuses", "/es-pe/help", "/es-pe/responsible-gambling"] as const) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), path).toBe(200);
@@ -26,7 +26,7 @@ test("Peru public core, safety routes and locale alternates are coherent", async
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
     expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
   }
-  await expect(page.locator('link[rel="alternate"][hreflang="sv-SE"]')).toHaveAttribute("href", /\/sv-se\/responsible-gambling$/);
+  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(0);
   await expect(page.locator("main")).toContainText("MINCETUR");
   await expect(page.locator("main")).not.toContainText(/GAMSTOP|GamCare|Spelpaus|Stödlinjen/);
 });

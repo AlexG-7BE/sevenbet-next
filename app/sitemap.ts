@@ -10,10 +10,10 @@ import { parsePublicOfferQuery } from "@/lib/public-offer/query";
 import {
   DEFAULT_MARKET_PROFILE,
   INITIAL_EUROPEAN_MARKET_PROFILES,
+  marketIndexingApproved,
   publicMarketPath,
   type MarketProfile,
 } from "@/lib/market/registry";
-import { localizedProductIndexingApproved } from "@/lib/market/product-context";
 import { isLocalizedPublicDestination } from "@/lib/market/routing";
 
 export const dynamic = "force-dynamic";
@@ -86,10 +86,13 @@ export function indexableMarketProductPaths(snapshot: Awaited<ReturnType<typeof 
   return { routes, casinoRoutes };
 }
 
+export function localizedIndexableMarketProfiles(markets: readonly MarketProfile[]) {
+  return markets.filter((market) => market.countryCode !== DEFAULT_MARKET_PROFILE.countryCode && marketIndexingApproved(market));
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseSnapshot = await failClosed(() => loadMarketSitemapSnapshot(DEFAULT_MARKET_PROFILE));
-  const localizedSnapshots = await Promise.all(INITIAL_EUROPEAN_MARKET_PROFILES
-    .filter((market) => localizedProductIndexingApproved(market.defaultLocale))
+  const localizedSnapshots = await Promise.all(localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
     .map((market) => failClosed(() => loadMarketSitemapSnapshot(market))));
   const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, true) : { routes: [], casinoRoutes: [] };
   const localizedProducts = localizedSnapshots.flatMap((snapshot) => snapshot ? [indexableMarketProductPaths(snapshot, true)] : []);
@@ -104,8 +107,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/learn",
     ...centerArticles.map(getArticlePath),
   ];
-  const localizedEditorialRoutes = INITIAL_EUROPEAN_MARKET_PROFILES
-    .filter((market) => localizedProductIndexingApproved(market.defaultLocale))
+  const localizedEditorialRoutes = localizedIndexableMarketProfiles(INITIAL_EUROPEAN_MARKET_PROFILES)
     .flatMap((market) => completedLocalizedEditorialPaths.map((pathname) => ({
       url: absoluteUrl(publicMarketPath(market, market.defaultLocale, pathname)),
       changeFrequency: "monthly" as const,

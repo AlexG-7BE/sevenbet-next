@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const query = request.nextUrl.searchParams;
     const result = await mediaService.list({
       casinoId: optionalUuid(query.get("casinoId"), "casinoId") || undefined,
+      casinoCountryId: optionalUuid(query.get("casinoCountryId"), "casinoCountryId") || undefined,
       casinoBonusId: optionalUuid(query.get("casinoBonusId"), "casinoBonusId") || undefined,
       affiliateOfferId: optionalUuid(query.get("affiliateOfferId"), "affiliateOfferId") || undefined,
       type: parseMediaType(query.get("type")),

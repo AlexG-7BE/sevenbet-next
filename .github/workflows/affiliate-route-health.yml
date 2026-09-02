@@ -1,0 +1,90 @@
+name: Affiliate Route Health
+
+on:
+  schedule:
+    - cron: "37 5 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: affiliate-route-health
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  production-routes:
+    name: Production affiliate routes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      AFFILIATE_HEALTH_MONITOR_TOKEN: ${{ secrets.AFFILIATE_HEALTH_MONITOR_TOKEN }}
+      HEALTH_ENDPOINT: https://b4gamble.com/api/internal/affiliate/route-health
+      ALERT_TITLE: "[Production] Affiliate route health alert"
+    steps:
+      - name: Run secret-safe Production route check
+        id: health
+        shell: bash
+        run: |
+          set +e
+          http_status="$(curl --silent --show-error --output route-health.json --write-out "%{http_code}" \
+            --header "Authorization: Bearer ${AFFILIATE_HEALTH_MONITOR_TOKEN}" \
+            --header "Accept: application/json" \
+            "${HEALTH_ENDPOINT}")"
+          curl_status="$?"
+          set -e
+          if [[ "${curl_status}" -eq 0 && "${http_status}" == "200" ]] && jq -e '.ok == true and .healthy == true' route-health.json >/dev/null 2>&1; then
+            echo "healthy=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "healthy=false" >> "${GITHUB_OUTPUT}"
+          fi
+          echo "http_status=${http_status}" >> "${GITHUB_OUTPUT}"
+
+      - name: Prepare actionable alert
+        if: steps.health.outputs.healthy != 'true'
+        shell: bash
+        run: |
+          {
+            echo "The daily first-party affiliate route health check requires attention."
+            echo
+            echo "HTTP status: ${{ steps.health.outputs.http_status }}"
+            echo
+            if jq -e '.results | type == "array"' route-health.json >/dev/null 2>&1; then
+              echo "| Status | Casino × GEO | Route | Reason |"
+              echo "|---|---|---|---|"
+              jq -r '.results[] | select(.status != "HEALTHY") | "| \(.status) | \(.casinoSlug) × \(.countryCode) | /r/\(.redirectSlug // "missing") | \(.reason) |"' route-health.json
+            else
+              echo "The endpoint did not return a valid safe health report. Check deployment configuration and the monitor token."
+            fi
+            echo
+            echo "Runbook: docs/06_Operations/Affiliate-Route-Health-Runbook.md"
+            echo
+            echo "Workflow run: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } > route-health.md
+
+      - name: Create or update one deduplicated GitHub issue
+        if: steps.health.outputs.healthy != 'true'
+        shell: bash
+        run: |
+          issue_number="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --json number,title --jq ".[] | select(.title == \"${ALERT_TITLE}\") | .number" | head -n 1)"
+          if [[ -n "${issue_number}" ]]; then
+            gh issue edit "${issue_number}" --body-file route-health.md
+            gh issue comment "${issue_number}" --body "Updated by daily check ${GITHUB_RUN_ID}."
+          else
+            gh issue create --title "${ALERT_TITLE}" --body-file route-health.md
+          fi
+
+      - name: Close a recovered alert
+        if: steps.health.outputs.healthy == 'true'
+        shell: bash
+        run: |
+          issue_number="$(gh issue list --state open --search "${ALERT_TITLE} in:title" --json number,title --jq ".[] | select(.title == \"${ALERT_TITLE}\") | .number" | head -n 1)"
+          if [[ -n "${issue_number}" ]]; then
+            gh issue close "${issue_number}" --comment "Production affiliate routes recovered in daily check ${GITHUB_RUN_ID}."
+          fi
+
+      - name: Fail after alerting
+        if: steps.health.outputs.healthy != 'true'
+        run: exit 1

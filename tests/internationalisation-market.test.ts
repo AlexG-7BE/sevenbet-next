@@ -282,18 +282,13 @@ test("all eleven European product catalogs are complete Preview drafts without E
   assert.notEqual(productPageMessages("el-GR").comparison.unavailable, productPageMessages("en-GB").comparison.unavailable);
 });
 
-test("localized product links, canonicals and reciprocal alternates preserve explicit presentation", () => {
+test("localized product links and canonicals preserve explicit presentation while noindex stays outside hreflang", () => {
   const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "GB" });
   assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de-de/casino/example?from=compare");
   assert.equal(productHref(presentation, "/methodology"), "/de-de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de-de/casinos");
-  const languages = metadata.alternates?.languages as Record<string, string>;
-  assert.equal(new URL(languages["en-GB"]).pathname, "/en-gb/casinos");
-  assert.equal(new URL(languages["de-DE"]).pathname, "/de-de/casinos");
-  assert.equal(new URL(languages["es-ES"]).pathname, "/es-es/casinos");
-  assert.equal(new URL(languages["es-PE"]).pathname, "/es-pe/casinos");
-  assert.equal(Object.keys(languages).length, PUBLICATION_APPROVED_MARKET_PROFILES.length + 1);
+  assert.equal(metadata.alternates?.languages, undefined);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
@@ -306,6 +301,7 @@ test("localized product links, canonicals and reciprocal alternates preserve exp
     robots: { index: true, follow: true },
   });
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
+  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["en-GB", "x-default"]);
 
   const differentGeo = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -367,7 +363,8 @@ test("localized sitemap publication is review-gated and its market loader has no
   assert.match(source, /loadMarketSitemapSnapshot\(market/);
   assert.match(source, /defaultEditorialCountry: market\.countryCode/);
   assert.doesNotMatch(source, /country:\s*["']GB["']/);
-  assert.match(source, /localizedProductIndexingApproved/);
+  assert.match(source, /localizedIndexableMarketProfiles/);
+  assert.match(source, /marketIndexingApproved/);
 });
 
 test("explicit localized route wins over preference and trusted geo", () => {
@@ -540,7 +537,6 @@ test("translation review state records only first-wave Founder publication accep
     founderPublication: "SOURCE_BASELINE_AUTHORITY",
     legalReview: "GB_SOURCE_REVIEWED",
     marketEvidenceReview: "GB_BASELINE",
-    indexingAuthority: "GB_SOURCE_BASELINE",
   });
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => profile.countryCode !== "GB")) {
     assert.deepEqual(TRANSLATION_REVIEW_STATE[profile.defaultLocale], {
@@ -554,7 +550,6 @@ test("translation review state records only first-wave Founder publication accep
         : "FOUNDER_PUBLICATION_NOT_ACCEPTED",
       legalReview: "REQUIRED",
       marketEvidenceReview: ["DE", "ES", "SE", "DK", "GR"].includes(profile.countryCode) ? "FIRST_WAVE_EVIDENCE_REVIEWED" : "REQUIRED",
-      indexingAuthority: "NOT_ACTIVATED",
     });
   }
 });
