@@ -7,7 +7,7 @@ import {
 } from "@/lib/learning-center";
 import type { SupportedLocale } from "@/lib/market/registry";
 
-type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA">;
+type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA" | "es-PE">;
 
 const HUB_SOURCE = [
   "Guides & insights", "Learn.", "Play smarter.", "Plain answers to the questions the industry prefers you didn't ask.",
@@ -153,13 +153,14 @@ const catalog: Record<EuropeanLocale, Pack> = { "en-GB": en, "de-DE": de, "it-IT
 const learnLabels: Record<EuropeanLocale, string> = { "en-GB": "Learn", "de-DE": "Lernen", "it-IT": "Impara", "es-ES": "Aprende", "pt-PT": "Aprende", "el-GR": "Μάθε", "nl-NL": "Leren", "sv-SE": "Lär dig", "da-DK": "Lær", "fi-FI": "Opi", "nb-NO": "Lær" };
 
 export function learningMessages(locale: SupportedLocale) {
-  const pack = catalog[locale as EuropeanLocale] ?? en;
+  const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
+  const pack = catalog[effectiveLocale as EuropeanLocale] ?? en;
   if (pack.categories.length !== learningCategories.length || pack.articles.length !== learningArticles.length || pack.hub.length !== HUB_SOURCE.length) {
     throw new Error(`Learning translation coverage mismatch for ${locale}`);
   }
   return {
     ...pack,
-    ui: { ...pack.ui, learn: learnLabels[locale as EuropeanLocale] ?? enUi.learn },
+    ui: { ...pack.ui, learn: learnLabels[effectiveLocale as EuropeanLocale] ?? enUi.learn },
     hubCopy: new Map(HUB_SOURCE.map((source, index) => [source, pack.hub[index]])),
   };
 }

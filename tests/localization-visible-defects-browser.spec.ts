@@ -287,7 +287,7 @@ async function expectNativeArticleHeroSeparation(page: import("@playwright/test"
 
 test("localized mobile selector controls wrap inside the viewport while ranks and fallback copy stay inside their cards", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const response = await page.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de-de/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const rail = page.locator('[data-selector-group="curated-bonuses"]');
@@ -330,16 +330,16 @@ test("localized mobile selector controls wrap inside the viewport while ranks an
     expect(bounds.bottom).toBeLessThanOrEqual(fallbackGeometry.container.bottom + 1);
   }
 
-  await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/de-de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   await expectWrappedControlContainment(page.locator('[data-selector-group="curated-casinos"]'), "button");
 
-  await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/de-de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   await expectWrappedControlContainment(page.locator("#editorial-review nav"), "a");
 });
 
 test("long localized payout evidence receives a readable desktop term row", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  const response = await page.goto(`${baseUrl}/fi/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/fi-fi/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const payoutRows = page.locator("[data-bonus-directory-card] [data-material-terms] > div:last-child");
@@ -368,13 +368,13 @@ test("authored display copy wraps between words across long mobile and desktop l
     const cases = [
       {
         context: "DE 10 Steps eyebrow at 390x844",
-        path: "/de/10-steps",
+        path: "/de-de/10-steps",
         selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > div:first-child > div:last-child',
         viewport: { width: 390, height: 844 },
       },
       {
         context: "DE Best Offers hero at 390x844",
-        path: "/de/best-offers?visualFixture=true",
+        path: "/de-de/best-offers?visualFixture=true",
         selector: '[data-runtime-renderer="best-offers"] section[class*="hero"] h1',
         viewport: { width: 390, height: 844 },
       },
@@ -386,19 +386,19 @@ test("authored display copy wraps between words across long mobile and desktop l
       },
       {
         context: "DE responsible-gambling article at 390x844",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
+        path: "/de-de/learn/responsible-gambling/responsible-gambling-tools",
         selector: "[data-learning-article] header h1",
         viewport: { width: 390, height: 844 },
       },
       {
         context: "DE responsible-gambling article headings at 320x700",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
+        path: "/de-de/learn/responsible-gambling/responsible-gambling-tools",
         selector: "[data-learning-article] header h1, [data-learning-article] #direct-answer-title",
         viewport: { width: 320, height: 700 },
       },
       {
         context: "NO curated bonus empty state at 390x844",
-        path: "/no/bonuses?payment=localization-visual-no-match",
+        path: "/nb-no/bonuses?payment=localization-visual-no-match",
         selector: 'section[aria-labelledby="bonus-shortlist-title"] [role="status"] strong',
         viewport: { width: 390, height: 844 },
       },
@@ -417,21 +417,21 @@ test("authored display copy wraps between words across long mobile and desktop l
       {
         context: "DE protected Help hero at 390x844",
         expectedOverflowWrap: "normal",
-        path: "/de/help",
+        path: "/de-de/help",
         requireLongWord: false,
         selector: '[data-first-wave-safety="DE"] header h1',
       },
       {
         context: "DE responsible-gambling hero at 390x844",
         expectedOverflowWrap: "normal",
-        path: "/de/responsible-gambling",
+        path: "/de-de/responsible-gambling",
         requireLongWord: true,
         selector: '[data-first-wave-safety="DE"] header h1',
       },
       {
         context: "PT country-guide article at 390x844",
         expectedOverflowWrap: "normal",
-        path: "/pt/learn/country-guides/country-guide-structure",
+        path: "/pt-pt/learn/country-guides/country-guide-structure",
         requireLongWord: false,
         selector: "[data-learning-article] header h1",
       },
@@ -465,19 +465,19 @@ test("native localized article heroes keep title and summary in separate respons
     for (const surface of [
       {
         context: "DE Welcome Bonus Terms article at 390x844",
-        path: "/de/learn/casino-bonuses/welcome-bonus-terms",
+        path: "/de-de/learn/casino-bonuses/welcome-bonus-terms",
       },
       {
         context: "DE Casino Reviews article at 390x844",
-        path: "/de/learn/casino-reviews/how-casino-reviews-work",
+        path: "/de-de/learn/casino-reviews/how-casino-reviews-work",
       },
       {
         context: "SE Casino Reviews article at 390x844",
-        path: "/se/learn/casino-reviews/how-casino-reviews-work",
+        path: "/sv-se/learn/casino-reviews/how-casino-reviews-work",
       },
       {
         context: "DK Casino Reviews article at 390x844",
-        path: "/dk/learn/casino-reviews/how-casino-reviews-work",
+        path: "/da-dk/learn/casino-reviews/how-casino-reviews-work",
       },
     ]) {
       const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
@@ -494,11 +494,11 @@ test("native localized article heroes keep title and summary in separate respons
     for (const surface of [
       {
         context: "DE Responsible Gambling Tools article at 1440x900",
-        path: "/de/learn/responsible-gambling/responsible-gambling-tools",
+        path: "/de-de/learn/responsible-gambling/responsible-gambling-tools",
       },
       {
         context: "DE Casino Reviews article at 1440x900",
-        path: "/de/learn/casino-reviews/how-casino-reviews-work",
+        path: "/de-de/learn/casino-reviews/how-casino-reviews-work",
       },
     ]) {
       const response = await page.goto(`${baseUrl}${surface.path}`, { waitUntil: "domcontentloaded" });
@@ -544,7 +544,7 @@ test("commercial error and empty-state display headings preserve authored words"
     }
 
     await page.setViewportSize({ width: 390, height: 844 });
-    const response = await page.goto(`${baseUrl}/pt/bonuses?payment=localization-visual-no-match`, { waitUntil: "domcontentloaded" });
+    const response = await page.goto(`${baseUrl}/pt-pt/bonuses?payment=localization-visual-no-match`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await page.evaluate(() => document.fonts.ready);
     await expectAuthoredWordsStayWhole(
@@ -565,7 +565,7 @@ test("localized offer facts recompose instead of fragmenting labels", async ({ b
   const mobileContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const mobilePage = await mobileContext.newPage();
   try {
-    const response = await mobilePage.goto(`${baseUrl}/de/best-offers?visualFixture=true`, { waitUntil: "domcontentloaded" });
+    const response = await mobilePage.goto(`${baseUrl}/de-de/best-offers?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await mobilePage.evaluate(() => document.fonts.ready);
     const terms = mobilePage.locator('[data-runtime-renderer="best-offers"] [class*="mobileMaterialTerms"]').first();
@@ -582,7 +582,7 @@ test("localized offer facts recompose instead of fragmenting labels", async ({ b
   const desktopContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
   const desktopPage = await desktopContext.newPage();
   try {
-    const response = await desktopPage.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
+    const response = await desktopPage.goto(`${baseUrl}/de-de/bonuses?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     await desktopPage.evaluate(() => document.fonts.ready);
     const facts = desktopPage.locator('article[class*="comparisonRow"] [class*="compactTerms"]');
@@ -637,24 +637,24 @@ test("localized commercial route errors resolve accepted and draft locale contex
   const daError = publicErrorMessages("da-DK");
   const cases = [
     {
-      key: "casinos", path: "/de/casinos", locale: "de-DE", heading: de.common.commercialUnavailable,
-      links: [[de.common.reviewMethodology, "/de/methodology"], [de.common.protectedHelp, "/de/help"]],
+      key: "casinos", path: "/de-de/casinos", locale: "de-DE", heading: de.common.commercialUnavailable,
+      links: [[de.common.reviewMethodology, "/de-de/methodology"], [de.common.protectedHelp, "/de-de/help"]],
     },
     {
-      key: "best-offers", path: "/es/best-offers", locale: "es-ES", heading: es.bestOffers.unavailableTitleBody,
-      links: [[es.common.browseReviews, "/es/casinos"]],
+      key: "best-offers", path: "/es-es/best-offers", locale: "es-ES", heading: es.bestOffers.unavailableTitleBody,
+      links: [[es.common.browseReviews, "/es-es/casinos"]],
     },
     {
-      key: "bonuses", path: "/fi/bonuses", locale: "fi-FI", heading: fi.bonuses.unavailableTitleBody,
+      key: "bonuses", path: "/fi-fi/bonuses", locale: "fi-FI", heading: fi.bonuses.unavailableTitleBody,
       links: [[fi.common.bonusGuide, "/bonus-guide"]],
     },
     {
-      key: "casino-profile", path: "/no/casino/demo-plume", locale: "nb-NO", heading: nb.profile.unavailableTitle.replace(/\s*\|\s*B4GAMBLE$/, ""),
-      links: [[nb.common.browseReviews, "/no/casinos"], [nb.common.protectedHelp, "/help"]],
+      key: "casino-profile", path: "/nb-no/casino/demo-plume", locale: "nb-NO", heading: nb.profile.unavailableTitle.replace(/\s*\|\s*B4GAMBLE$/, ""),
+      links: [[nb.common.browseReviews, "/nb-no/casinos"], [nb.common.protectedHelp, "/help"]],
     },
     {
-      key: "compare", path: "/dk/compare", locale: "da-DK", heading: daError.compareTitle,
-      links: [[daError.browse, "/dk/casinos"], [daError.protectedHelp, "/dk/help"]],
+      key: "compare", path: "/da-dk/compare", locale: "da-DK", heading: daError.compareTitle,
+      links: [[daError.browse, "/da-dk/casinos"], [daError.protectedHelp, "/da-dk/help"]],
     },
   ] as const;
 
@@ -686,12 +686,12 @@ test("localized filtered-empty states expose zero results, active filters, and a
   await page.setViewportSize({ width: 390, height: 844 });
 
   const de = productPageMessages("de-DE");
-  let response = await page.goto(`${baseUrl}/de/bonuses?payment=localization-visual-no-match&featured=false&recommended=true`, { waitUntil: "networkidle" });
+  let response = await page.goto(`${baseUrl}/de-de/bonuses?payment=localization-visual-no-match&featured=false&recommended=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   const bonusEmpty = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
   await expect(bonusEmpty).toBeVisible();
   await expect(bonusEmpty).toContainText(de.bonuses.noMatchesCopy);
-  await expect(bonusEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/de/bonuses");
+  await expect(bonusEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/de-de/bonuses");
   const bonusFilters = page.locator('[data-active-filter-state="bonuses"]');
   await expect(bonusFilters).toContainText("localization-visual-no-match");
   await expect(bonusFilters.getByRole("link", { name: `${de.comparison.remove} ${de.bonuses.featuredFalse}`, exact: true })).toBeVisible();
@@ -701,12 +701,12 @@ test("localized filtered-empty states expose zero results, active filters, and a
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBe(0);
 
   const fi = productPageMessages("fi-FI");
-  response = await page.goto(`${baseUrl}/fi/casinos?q=localization-visual-no-match`, { waitUntil: "networkidle" });
+  response = await page.goto(`${baseUrl}/fi-fi/casinos?q=localization-visual-no-match`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   const casinoEmpty = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
   await expect(casinoEmpty).toBeVisible();
   await expect(casinoEmpty).toContainText(fi.casinos.noMatchesCopy);
-  await expect(casinoEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/fi/casinos");
+  await expect(casinoEmpty.locator("[data-empty-reset]")).toHaveAttribute("href", "/fi-fi/casinos");
   const casinoFilters = page.locator('[data-active-filter-state="casinos"]');
   await expect(casinoFilters).toContainText("localization-visual-no-match");
   await expect(casinoFilters.locator("[data-empty-reset]")).toHaveCount(0);
@@ -746,7 +746,7 @@ test("localized mobile bonus-filter footers clear the final sort control", async
 
 test("German Learning card titles use semantic compound-word wrapping at 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const response = await page.goto(`${baseUrl}/de/learn`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/de-de/learn`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await page.evaluate(() => document.fonts.ready);
 
@@ -791,9 +791,9 @@ test("mobile outbound unavailable content clears the fixed public header", async
 test("localized related-reading cards preserve ordinary short words at 390px", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   for (const route of [
-    "/gr/learn/country-guides/country-guide-structure",
+    "/el-gr/learn/country-guides/country-guide-structure",
     "/it/learn/casino-bonuses/welcome-bonus-terms",
-    "/pt/learn/responsible-gambling/responsible-gambling-tools",
+    "/pt-pt/learn/responsible-gambling/responsible-gambling-tools",
   ]) {
     const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), route).toBe(200);
@@ -811,14 +811,14 @@ test("localized related-reading cards preserve ordinary short words at 390px", a
 test("the deterministic casino fixture exposes a truthful second-page boundary", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const messages = productPageMessages("de-DE");
-  const response = await page.goto(`${baseUrl}/de/casinos?page=2&visualFixture=true`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de-de/casinos?page=2&visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const results = page.locator('#casino-results[data-result-count="10"]');
   await expect(results).toBeVisible();
   const pagination = results.locator('[data-directory-pagination][data-current-page="2"][data-page-count="2"]');
   await expect(pagination).toBeVisible();
-  await expect(pagination.getByRole("link", { name: messages.common.previous, exact: true })).toHaveAttribute("href", "/de/casinos?visualFixture=true");
+  await expect(pagination.getByRole("link", { name: messages.common.previous, exact: true })).toHaveAttribute("href", "/de-de/casinos?visualFixture=true");
   await expect(pagination.getByText(messages.common.pageOf.replace("{page}", "2").replace("{pages}", "2"), { exact: true })).toBeVisible();
   await expect(pagination.getByText(messages.common.next, { exact: true })).toHaveAttribute("aria-disabled", "true");
   const cards = results.locator("article");
@@ -830,7 +830,7 @@ test("the deterministic casino fixture exposes a truthful second-page boundary",
 
 test("casino fixture review controls resolve only the matching localized Solvane profile", async ({ page, request }) => {
   const messages = productPageMessages("de-DE");
-  const response = await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de-de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const cards = page.locator("#casino-results article");
@@ -838,20 +838,20 @@ test("casino fixture review controls resolve only the matching localized Solvane
   const first = cards.first();
   const reviewLinks = first.locator('a[href*="/casino/"]');
   await expect(reviewLinks).toHaveCount(2);
-  for (const link of await reviewLinks.all()) await expect(link).toHaveAttribute("href", "/de/casino/demo-plume?visualFixture=true");
+  for (const link of await reviewLinks.all()) await expect(link).toHaveAttribute("href", "/de-de/casino/demo-plume?visualFixture=true");
   for (const card of await cards.all().then((items) => items.slice(1))) await expect(card.locator('a[href*="/casino/"]')).toHaveCount(0);
 
-  const destination = await request.get(`${baseUrl}/de/casino/demo-plume?visualFixture=true`);
+  const destination = await request.get(`${baseUrl}/de-de/casino/demo-plume?visualFixture=true`);
   expect(destination.status()).toBe(200);
   await first.getByRole("link", { name: messages.common.viewDemonstration, exact: true }).click();
-  await page.waitForURL(`${baseUrl}/de/casino/demo-plume?visualFixture=true`);
+  await page.waitForURL(`${baseUrl}/de-de/casino/demo-plume?visualFixture=true`);
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText("Solvane Casino");
 });
 
 test("offer fixture review controls resolve only the matching localized Solvane profile", async ({ page }) => {
   test.setTimeout(120_000);
-  const expectedHref = "/de/casino/demo-plume?visualFixture=true";
-  for (const path of ["/de/best-offers?visualFixture=true", "/de/bonuses?visualFixture=true"]) {
+  const expectedHref = "/de-de/casino/demo-plume?visualFixture=true";
+  for (const path of ["/de-de/best-offers?visualFixture=true", "/de-de/bonuses?visualFixture=true"]) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
     const reviewLinks = page.locator('main a[href*="/casino/"]');
@@ -865,7 +865,7 @@ test("offer fixture review controls resolve only the matching localized Solvane 
 
 test("localized demo editorial declares fixture origin and keeps only adjacent logos decorative", async ({ page }) => {
   const messages = productPageMessages("de-DE");
-  const response = await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de-de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
 
   const profile = page.locator('[data-runtime-renderer="casino-review"]');

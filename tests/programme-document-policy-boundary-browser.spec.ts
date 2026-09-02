@@ -4,7 +4,7 @@ const allowed = "camera=(), microphone=(self), geolocation=(), payment=(), usb=(
 const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
 
 test("crossing public and Programme boundaries reloads the top-level document so Permissions-Policy changes apply", async ({ page }) => {
-  const publicResponse = await page.goto("/es/", { waitUntil: "domcontentloaded" });
+  const publicResponse = await page.goto("/es-es", { waitUntil: "domcontentloaded" });
   expect(publicResponse?.status()).toBe(200);
   expect(publicResponse?.headers()["permissions-policy"]).toBe(denied);
 

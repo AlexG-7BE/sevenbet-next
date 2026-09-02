@@ -29,7 +29,7 @@ const en: TenStepsTranslation = {
   text: TEN_STEPS_SOURCE_COPY,
 };
 
-const catalog: Record<SupportedLocale, TenStepsTranslation> = {
+const baseCatalog: Record<Exclude<SupportedLocale, "es-PE">, TenStepsTranslation> = {
   "en-GB": en,
   "de-DE": { metadataTitle: "Das 10-Schritte-Programm von B4GAMBLE", metadataDescription: "Sieh, wie zehn selbstbestimmte Missionen einen persönlichen Ausgangspunkt und Kontrollplan aufbauen.", text: [
     "Das Programm, Schritt für Schritt", "Zehn Schritte.", "Ein", "Plan.", "Jede Mission dauert 5–15 Minuten und endet mit etwas, das du behältst. Hier siehst du genau, was geschieht — ohne Überraschungen und Kleingedrucktes.", "Mission 01 starten", "Warum B4GAMBLE →", "01–03 Verstehen", "04–07 Aufbauen", "08–10 Anwenden", "Scrollen ↓",
@@ -124,7 +124,7 @@ const enCurrent: CurrentProgrammeCopy = {
   closingBody: "Complete the Starting Point's two actions for 40 XP. Registration awards no XP and only follows when it is ready.",
 };
 
-const currentProgrammeCatalog: Record<SupportedLocale, CurrentProgrammeCopy> = {
+const baseCurrentProgrammeCatalog: Record<Exclude<SupportedLocale, "es-PE">, CurrentProgrammeCopy> = {
   "en-GB": enCurrent,
   "de-DE": {
     overview: "Die meisten Missionen dauern etwa 5–8 Minuten und enden mit etwas, das du behältst. Mission 01 beginnt mit einem kurzen Ausgangspunkt. Hier siehst du genau, was geschieht — ohne Überraschungen und Kleingedrucktes.",
@@ -308,6 +308,16 @@ const currentProgrammeCatalog: Record<SupportedLocale, CurrentProgrammeCopy> = {
   },
   "en-CA": enCurrent,
   "fr-CA": enCurrent,
+};
+
+const catalog: Record<SupportedLocale, TenStepsTranslation> = {
+  ...baseCatalog,
+  "es-PE": baseCatalog["es-ES"],
+};
+
+const currentProgrammeCatalog: Record<SupportedLocale, CurrentProgrammeCopy> = {
+  ...baseCurrentProgrammeCatalog,
+  "es-PE": baseCurrentProgrammeCatalog["es-ES"],
 };
 
 export function currentProgrammeCopy(locale: SupportedLocale): CurrentProgrammeCopy {

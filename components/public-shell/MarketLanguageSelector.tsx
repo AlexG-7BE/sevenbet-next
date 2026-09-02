@@ -120,14 +120,14 @@ export function MarketLanguageSelector({
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={messages.changeMarketAndLanguage}
+        aria-label={`${messages.changeMarketAndLanguage}: ${languageName(presentation.locale, presentation.locale)} · ${presentation.market.seoDisplayName}`}
         className={styles.selectorTrigger}
         onClick={() => setOpen((current) => !current)}
         ref={triggerRef}
         type="button"
       >
         <GlobeIcon />
-        <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)}</span>
+        <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)} · {presentation.market.countryCode}</span>
         <ChevronIcon />
       </button>
       <input name="returnTo" type="hidden" value={returnTo} />
@@ -152,7 +152,7 @@ export function MarketLanguageSelector({
             <span className={styles.selectorOptionCopy}><strong>{messages.automaticPresentation}</strong></span>
             <span aria-hidden="true" className={styles.selectorCheckSlot} />
           </button>
-          {selectableMarkets.flatMap((profile) => profile.supportedLocales.map((locale) => {
+          {selectableMarkets.flatMap((profile) => profile.localeRoutes.filter((route) => route.enabled).map(({ locale }) => {
             const choice = `${profile.countryCode}|${locale}`;
             const selected = choice === activeChoice;
             return (

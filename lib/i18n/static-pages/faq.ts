@@ -29,7 +29,7 @@ const en: FaqMessages = {
   ],
 };
 
-const catalog: Record<SupportedLocale, FaqMessages> = {
+const baseCatalog: Record<Exclude<SupportedLocale, "es-PE">, FaqMessages> = {
   "en-GB": en,
   "de-DE": {
     metadataTitle: "B4GAMBLE FAQ", metadataDescription: "Klare Antworten zu B4GAMBLE.", eyebrow: "FAQ", titleLead: "Klare", titleEmphasis: "Antworten.", railPrompt: "Nicht gefunden?", contactLink: "Kontakt →", methodologyLink: "Methodik", affiliateLink: "Affiliate-Hinweis",
@@ -133,6 +133,11 @@ const catalog: Record<SupportedLocale, FaqMessages> = {
   },
   "en-CA": en,
   "fr-CA": en,
+};
+
+const catalog: Record<SupportedLocale, FaqMessages> = {
+  ...baseCatalog,
+  "es-PE": baseCatalog["es-ES"],
 };
 
 export function faqMessages(locale: SupportedLocale) {

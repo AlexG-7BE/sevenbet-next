@@ -503,6 +503,7 @@ const catalog: Record<SupportedLocale, DemoProfileCopy> = {
   "de-DE": de,
   "it-IT": it,
   "es-ES": es,
+  "es-PE": es,
   "pt-PT": pt,
   "el-GR": el,
   "nl-NL": nl,

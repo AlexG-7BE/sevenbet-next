@@ -30,7 +30,7 @@ test("bounded automated language QA passes every European machine-translated cat
   assert.deepEqual(committed, generated);
   assert.equal(generated.status, "PASS");
   assert.equal(generated.assurance, "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW");
-  assert.equal(generated.locales.length, 10);
+  assert.equal(generated.locales.length, 11);
   for (const locale of generated.locales) {
     assert.equal(locale.status, "PASS", locale.locale);
     assert.ok(Object.values(locale.checks).every((status) => status === "PASS"), locale.locale);
@@ -45,7 +45,7 @@ test("review states distinguish source, machine translation, AI QA and Founder a
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
     assert.equal(state.content, "MACHINE_TRANSLATED", locale);
-    assert.equal(state.publicExperience, acceptedLocales.has(locale) ? "PUBLIC_CORE_READY" : ["en-CA", "fr-CA"].includes(locale) ? "ARCHITECTURE_ONLY" : "HOME_READY", locale);
+    assert.equal(state.publicExperience, acceptedLocales.has(locale) || locale === "es-PE" ? "PUBLIC_CORE_READY" : ["en-CA", "fr-CA"].includes(locale) ? "ARCHITECTURE_ONLY" : "HOME_READY", locale);
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
@@ -57,8 +57,8 @@ test("review states distinguish source, machine translation, AI QA and Founder a
 });
 
 test("first-wave profiles contain dated detected evidence and market-specific safety resources", () => {
-  assert.deepEqual(FIRST_WAVE_MARKETS, ["DE", "ES", "SE", "DK", "GR"]);
-  const expectedResources = { DE: ["OASIS", "BIÖG Beratungstelefon zur Glücksspielsucht", "Check dein Spiel"], ES: ["RGIAJ"], SE: ["Spelpaus.se", "Stödlinjen"], DK: ["ROFUS", "StopSpillet"], GR: ["Οδηγός αποκλεισμού και αυτοαποκλεισμού", "BetBlocker στα ελληνικά"] } as const;
+  assert.deepEqual(FIRST_WAVE_MARKETS, ["DE", "ES", "SE", "DK", "GR", "PE"]);
+  const expectedResources = { DE: ["OASIS", "BIÖG Beratungstelefon zur Glücksspielsucht", "Check dein Spiel"], ES: ["RGIAJ"], SE: ["Spelpaus.se", "Stödlinjen"], DK: ["ROFUS", "StopSpillet"], GR: ["Οδηγός αποκλεισμού και αυτοαποκλεισμού", "BetBlocker στα ελληνικά"], PE: ["Registro de personas prohibidas", "Orientación sobre juego responsable"] } as const;
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = FIRST_WAVE_MARKET_EVIDENCE[market];
     assert.equal(profile.evidenceState, "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL");
@@ -67,7 +67,7 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
     assert.ok(profile.evidence.length >= 4, market);
     for (const record of profile.evidence) {
       assert.equal(record.classification, "DETECTED", `${market}:${record.id}`);
-      assert.equal(record.reviewedAt, "2026-08-30", `${market}:${record.id}`);
+      assert.equal(record.reviewedAt, market === "PE" ? "2026-09-02" : "2026-08-30", `${market}:${record.id}`);
       assert.match(record.url, /^https:\/\//, `${market}:${record.id}`);
       assert.ok(record.nextReviewAt > record.reviewedAt, `${market}:${record.id}`);
     }
@@ -86,7 +86,7 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
 });
 
 test("commercial readiness is fail-closed and adds the exact market-specific gates", () => {
-  const expectedSpecific = { DE: "EXACT_OPERATOR_DOMAIN_MATCH", ES: "PROMOTIONAL_COPY_REVIEW", SE: null, DK: null, GR: "HGC_AFFILIATE_SUITABILITY_REQUIRED" } as const;
+  const expectedSpecific = { DE: "EXACT_OPERATOR_DOMAIN_MATCH", ES: "PROMOTIONAL_COPY_REVIEW", SE: null, DK: null, GR: "HGC_AFFILIATE_SUITABILITY_REQUIRED", PE: "EXACT_OPERATOR_DOMAIN_MATCH" } as const;
   const evidenceField = {
     EXISTING_COMMERCIAL_AUTHORITY: "existingCommercialAuthority",
     CURRENT_OPERATOR_MARKET_LICENCE: "operatorMarketLicenceEvidence",
@@ -118,12 +118,14 @@ test("commercial readiness is fail-closed and adds the exact market-specific gat
   assert.deepEqual(greekHold.unmet, ["HGC_AFFILIATE_SUITABILITY_REQUIRED"]);
 });
 
-test("only GB and the five first-wave markets receive localized Help and Responsible Gambling routes", () => {
+test("only GB and the governed safety markets receive localized Help and Responsible Gambling routes", () => {
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
-    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/help`).kind, "MARKET_DEFAULT", market);
-    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/responsible-gambling`).kind, "MARKET_DEFAULT", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/help`).kind, "LEGACY_MARKET_ROUTE", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/help`).kind, "CANONICAL_LOCALE", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/responsible-gambling`).kind, "LEGACY_MARKET_ROUTE", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/responsible-gambling`).kind, "CANONICAL_LOCALE", market);
   }
   for (const market of ["IT", "PT", "NL", "FI", "NO", "CA"] as const) {
     const profile = marketProfileByCountry(market);
@@ -133,7 +135,7 @@ test("only GB and the five first-wave markets receive localized Help and Respons
   }
   assert.equal(parsePublicMarketRoute("/de/help/article").kind, "INVALID");
   const alternates = firstWaveSafetyLanguageAlternates("/help");
-  assert.deepEqual(Object.keys(alternates).sort(), ["da-DK", "de-DE", "el-GR", "en-GB", "es-ES", "sv-SE", "x-default"].sort());
+  assert.deepEqual(Object.keys(alternates).sort(), ["da-DK", "de-DE", "el-GR", "en-GB", "es-ES", "es-PE", "sv-SE", "x-default"].sort());
 });
 
 test("first-wave safety presentation is localized, attributed and has no commercial or Programme action", () => {
@@ -146,8 +148,8 @@ test("first-wave safety presentation is localized, attributed and has no commerc
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = FIRST_WAVE_MARKET_EVIDENCE[market];
     const presentation = resolvePresentationContext({ routeMarket: market.toLowerCase(), routeLanguage: profile.locale.split("-")[0] });
-    assert.equal(productHref(presentation, "/help"), `/${market.toLowerCase()}/help`);
-    assert.equal(productHref(presentation, "/responsible-gambling"), `/${market.toLowerCase()}/responsible-gambling`);
+    assert.equal(productHref(presentation, "/help"), `/${profile.locale.toLowerCase()}/help`);
+    assert.equal(productHref(presentation, "/responsible-gambling"), `/${profile.locale.toLowerCase()}/responsible-gambling`);
     assert.doesNotMatch(JSON.stringify(profile), /GAMSTOP|GamCare|NHS/, market);
     assert.ok(profile.copy.helpTitle.length > 0 && profile.copy.responsibleTitle.length > 0, market);
   }

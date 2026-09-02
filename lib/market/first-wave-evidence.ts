@@ -10,7 +10,7 @@ export type MarketEvidenceRecord = Readonly<{
   authority: string;
   title: string;
   url: string;
-  reviewedAt: "2026-08-30";
+  reviewedAt: "2026-08-30" | "2026-09-02";
   nextReviewAt: string;
   classification: EvidenceClassification;
   materialFact: string;
@@ -47,7 +47,7 @@ export type FirstWaveSafetyCopy = Readonly<{
 
 export type FirstWaveMarketEvidenceProfile = Readonly<{
   market: FirstWaveMarketCode;
-  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR">;
+  locale: Extract<SupportedLocale, "de-DE" | "es-ES" | "sv-SE" | "da-DK" | "el-GR" | "es-PE">;
   authorityName: string;
   evidenceState: "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL";
   commercialState: "NOT_VERIFIED_FAIL_CLOSED";
@@ -62,6 +62,10 @@ const reviewedAt = "2026-08-30" as const;
 
 function evidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
   return { ...input, reviewedAt, classification: "DETECTED" };
+}
+
+function peruEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
+  return { ...input, reviewedAt: "2026-09-02", classification: "DETECTED" };
 }
 
 export const FIRST_WAVE_MARKET_EVIDENCE = {
@@ -168,6 +172,60 @@ export const FIRST_WAVE_MARKET_EVIDENCE = {
     ],
     copy: {
       eyebrow: "Έλεγχος και υποστήριξη", helpTitle: "Βοήθεια χωριστή από το εμπορικό περιεχόμενο.", helpLead: "Επαληθευμένες ελληνικές πληροφορίες για αυτοαποκλεισμό και εξωτερικά εργαλεία υποστήριξης.", responsibleTitle: "Υπεύθυνο παιχνίδι", responsibleLead: "Ουδέτερες πληροφορίες ελέγχου και υποστήριξης — χωρίς διάγνωση ή προσφορές.", resourcesTitle: "Επαληθευμένοι εξωτερικοί πόροι", selfExclusionTitle: "Αυτοαποκλεισμός", supportTitle: "Υποστήριξη", informationTitle: "Πληροφορίες και εργαλεία", reviewedLabel: "Τα τεκμήρια ελέγχθηκαν", sourceLabel: "Πηγή", externalLabel: "Άνοιγμα εξωτερικού ιστοτόπου", unavailable: "Δεν υπάρχει επαληθευμένος τοπικός πόρος.", nonCommercial: "Η σελίδα δεν περιέχει παρόχους, μπόνους ή ενέργειες συνεργατών.", disclaimer: "Η B4GAMBLE δεν είναι ρυθμιστική αρχή ή πάροχος θεραπείας. Έλεγξε τις υπηρεσίες και την πολιτική απορρήτου κάθε φορέα.", urgent: "Σε άμεσο κίνδυνο επικοινώνησε με τις τοπικές υπηρεσίες έκτακτης ανάγκης. Η B4GAMBLE δεν είναι κλινική ή επείγουσα υπηρεσία.",
+    },
+  },
+  PE: {
+    market: "PE",
+    locale: "es-PE",
+    authorityName: "Ministerio de Comercio Exterior y Turismo (MINCETUR)",
+    evidenceState: "EVIDENCE_FOUNDATION_REVIEWED_NOT_LEGAL_APPROVAL",
+    commercialState: "NOT_VERIFIED_FAIL_CLOSED",
+    promotionalCopyReview: "REQUIRED",
+    terminology: [
+      "Use plataforma autorizada only when a current exact MINCETUR authorization record supports the operator and domain.",
+      "Do not describe the physical-premises exclusion register as universal online self-exclusion.",
+      "Keep operator authorization, B4GAMBLE commercial authority and offer eligibility as separate evidence gates.",
+    ],
+    resources: [
+      {
+        kind: "SELF_EXCLUSION",
+        name: "Registro de personas prohibidas",
+        provider: "MINCETUR",
+        url: "https://www.gob.pe/institucion/mincetur/pages/765-inscribirse-en-el-registro-de-personas-prohibidas-a-acceder-a-las-salas-de-juegos-de-casinos-y-maquinas-tragamonedas",
+        attribution: "Trámite oficial para solicitar la exclusión de salas de casino y máquinas tragamonedas; no se presenta como una exclusión universal de plataformas en línea.",
+      },
+      {
+        kind: "INFORMATION",
+        name: "Orientación sobre juego responsable",
+        provider: "MINCETUR",
+        url: "https://www.gob.pe/institucion/mincetur/noticias/1297424-apuestas-deportivas-mincetur-promueve-el-juego-responsable-ante-encuentros-deportivos",
+        attribution: "Información oficial sobre límites, autocontrol, mayoría de edad y uso de plataformas autorizadas.",
+      },
+    ],
+    evidence: [
+      peruEvidence({ id: "pe-law-31557", authority: "Congreso de la República / MINCETUR", title: "Ley N.º 31557", url: "https://consultasenlinea.mincetur.gob.pe/casinos/archivos/2022LEY31557.pdf", nextReviewAt: "2027-03-02", materialFact: "Law 31557 establishes the Peruvian authorization and taxation framework for remote games and remote sports betting under MINCETUR competence.", applicability: "Regulatory context only; it is not proof of an exact operator, domain, offer or B4GAMBLE commercial authorization." }),
+      peruEvidence({ id: "pe-platform-authorization", authority: "MINCETUR", title: "Autorización de explotación de plataformas tecnológicas", url: "https://www.gob.pe/institucion/mincetur/pages/94255-autorizacion-y-o-renovacion-de-explotacion-de-plataformas-tecnologicas-de-juegos-a-distancia-y-apuestas-deportivas-a-distancia", nextReviewAt: "2026-12-02", materialFact: "MINCETUR publishes the official procedure for authorization or renewal of remote-gaming and remote-sports-betting technology platforms.", applicability: "A current exact authorization remains required for each future operator record; no commercial link is activated here." }),
+      peruEvidence({ id: "pe-illegal-platforms", authority: "MINCETUR", title: "MINCETUR bloquea plataformas que operaban sin autorización", url: "https://www.gob.pe/institucion/mincetur/noticias/1421604-mincetur-bloquea-36-plataformas-de-juegos-a-distancia-y-apuestas-deportivas-que-operaban-sin-autorizacion", nextReviewAt: "2026-12-02", materialFact: "MINCETUR reports blocking unauthorized remote-gambling platforms and directs adults to verify authorization before use.", applicability: "Supports fail-closed operator eligibility and no inference from language, currency or reachability." }),
+      peruEvidence({ id: "pe-self-exclusion", authority: "MINCETUR", title: "Inscribirse en el Registro de personas prohibidas", url: "https://www.gob.pe/institucion/mincetur/pages/765-inscribirse-en-el-registro-de-personas-prohibidas-a-acceder-a-las-salas-de-juegos-de-casinos-y-maquinas-tragamonedas", nextReviewAt: "2027-03-02", materialFact: "MINCETUR provides a voluntary registration process that prevents access to casino gaming rooms and slot-machine premises.", applicability: "Peru Help resource with its physical-premises scope stated; no universal online exclusion claim." }),
+      peruEvidence({ id: "pe-responsible-information", authority: "MINCETUR", title: "MINCETUR promueve el juego responsable", url: "https://www.gob.pe/institucion/mincetur/noticias/1297424-apuestas-deportivas-mincetur-promueve-el-juego-responsable-ante-encuentros-deportivos", nextReviewAt: "2027-03-02", materialFact: "MINCETUR publishes responsible-gambling guidance including adult-only participation, limits, self-control and use of authorized platforms.", applicability: "Neutral Peru Responsible Gambling information; no treatment or hotline claim." }),
+    ],
+    copy: {
+      eyebrow: "Control y apoyo",
+      helpTitle: "Ayuda separada de lo comercial.",
+      helpLead: "Recursos oficiales verificados para información y exclusión voluntaria en Perú, con su alcance indicado.",
+      responsibleTitle: "Juego responsable",
+      responsibleLead: "Información práctica sobre límites, autocontrol y plataformas autorizadas, sin diagnóstico ni promociones.",
+      resourcesTitle: "Recursos externos verificados",
+      selfExclusionTitle: "Exclusión voluntaria",
+      supportTitle: "Apoyo y tratamiento",
+      informationTitle: "Información oficial",
+      reviewedLabel: "Evidencia revisada",
+      sourceLabel: "Fuente",
+      externalLabel: "Abrir sitio externo",
+      unavailable: "No se encontró una línea nacional o un recurso local de tratamiento que pudiera verificarse con una fuente oficial; no se inventa uno.",
+      nonCommercial: "Esta página no contiene operadores, bonos ni acciones de afiliación.",
+      disclaimer: "B4GAMBLE no es MINCETUR ni un proveedor de tratamiento. Revisa el alcance, el servicio y la privacidad directamente con cada entidad.",
+      urgent: "Si existe un peligro inmediato, contacta con los servicios de emergencia locales. B4GAMBLE no es un servicio clínico ni de emergencias.",
     },
   },
 } as const satisfies Record<FirstWaveMarketCode, FirstWaveMarketEvidenceProfile>;

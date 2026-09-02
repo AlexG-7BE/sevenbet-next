@@ -11,7 +11,7 @@ test("German profile fact labels and values never intersect", async ({ browser }
 
   for (const viewport of viewports) {
     const page = await browser.newPage({ reducedMotion: "reduce", viewport });
-    const response = await page.goto(`${baseUrl}/de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/de-de/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${viewport.width}px response`).toBe(200);
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await page.evaluate(() => document.fonts.ready);

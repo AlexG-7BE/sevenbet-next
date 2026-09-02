@@ -1,6 +1,6 @@
 import type { SupportedLocale } from "@/lib/market/registry";
 
-type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA">;
+type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA" | "es-PE">;
 
 export const METHODOLOGY_SOURCE_COPY = [
   "Methodology",
@@ -210,7 +210,8 @@ export type MethodologyMessages = Readonly<{
 }>;
 
 export function methodologyMessages(locale: SupportedLocale): MethodologyMessages {
-  const translated = catalog[locale as EuropeanLocale] ?? enGB;
+  const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
+  const translated = catalog[effectiveLocale as EuropeanLocale] ?? enGB;
   if (translated.length !== METHODOLOGY_SOURCE_COPY.length) {
     throw new Error(`Methodology translation coverage mismatch for ${locale}: ${translated.length}/${METHODOLOGY_SOURCE_COPY.length}`);
   }

@@ -1,4 +1,5 @@
 import {
+  localeMarketRoute,
   localeForLanguageSegment,
   marketProfileByCountry,
   marketProfileByRouteMarket,
@@ -19,9 +20,28 @@ export type PresentationResolution = Readonly<{
 }>;
 
 function preferredLocale(profile: MarketProfile, requested: SupportedLocale | null | undefined) {
-  return requested && profile.supportedLocales.includes(requested)
-    ? requested
-    : profile.defaultLocale;
+  return requested && localeMarketRoute(profile, requested)?.enabled ? requested : null;
+}
+
+function localeFromAcceptLanguage(profile: MarketProfile, value: string | null | undefined) {
+  if (!value) return null;
+  const requestedLanguages = value
+    .split(",")
+    .map((entry) => {
+      const [tag, ...parameters] = entry.trim().split(";");
+      const quality = parameters.find((parameter) => parameter.trim().startsWith("q="))?.split("=")[1];
+      return { tag: tag?.toLowerCase() ?? "", quality: quality === undefined ? 1 : Number(quality) };
+    })
+    .filter(({ quality, tag }) => tag && Number.isFinite(quality) && quality > 0)
+    .sort((a, b) => b.quality - a.quality);
+  for (const { tag } of requestedLanguages) {
+    const exact = profile.localeRoutes.find((route) => route.enabled && route.locale.toLowerCase() === tag);
+    if (exact) return exact.locale;
+    const language = tag.split("-")[0];
+    const sameLanguage = profile.localeRoutes.find((route) => route.enabled && route.locale.toLowerCase().split("-")[0] === language);
+    if (sameLanguage) return sameLanguage.locale;
+  }
+  return null;
 }
 
 export function resolvePresentationContext(input: {
@@ -29,21 +49,24 @@ export function resolvePresentationContext(input: {
   routeLanguage?: string | null;
   preference?: PresentationPreference | null;
   trustedCountryCode?: string | null;
+  acceptLanguage?: string | null;
 }): PresentationResolution {
   if (input.routeMarket) {
     const market = marketProfileByRouteMarket(input.routeMarket);
     const locale = market ? localeForLanguageSegment(market, input.routeLanguage) : null;
-    if (market && locale) {
+    if (market && locale && localeMarketRoute(market, locale)?.enabled) {
       return { market, locale, source: "EXPLICIT_ROUTE", explicitRouteValid: true };
     }
   }
 
   if (input.preference) {
     const market = marketProfileByCountry(input.preference.countryCode);
-    if (market) {
+    if (market && market.localeRoutes.some((route) => route.enabled)) {
       return {
         market,
-        locale: preferredLocale(market, input.preference.locale),
+        locale: preferredLocale(market, input.preference.locale)
+          ?? localeFromAcceptLanguage(market, input.acceptLanguage)
+          ?? market.defaultLocale,
         source: "USER_PREFERENCE",
         explicitRouteValid: !input.routeMarket,
       };
@@ -51,10 +74,10 @@ export function resolvePresentationContext(input: {
   }
 
   const geoMarket = marketProfileByCountry(input.trustedCountryCode);
-  if (geoMarket) {
+  if (geoMarket && geoMarket.localeRoutes.some((route) => route.enabled)) {
     return {
       market: geoMarket,
-      locale: geoMarket.defaultLocale,
+      locale: localeFromAcceptLanguage(geoMarket, input.acceptLanguage) ?? geoMarket.defaultLocale,
       source: "TRUSTED_GEO",
       explicitRouteValid: !input.routeMarket,
     };

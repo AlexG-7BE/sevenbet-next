@@ -64,7 +64,7 @@ orientation.
 | [RFC-034 — Final Design Handoff Public Site](RFC-034-Final-Design-Handoff-Public-Site.md) | `HISTORICAL` | Records the completed final public-design handoff. |
 | [RFC-035 — Home Performance and Motion Polish](RFC-035-Home-Performance-and-Motion-Polish.md) | `HISTORICAL` | Records the completed Home motion and final site-polish delivery. |
 | [RFC-036 — GB Public Legal P0 Closure](RFC-036-GB-Public-Legal-P0-Closure.md) | `ACTIVE` | GB public legal, necessary-technology, licence-evidence and accepted-deferral authority. |
-| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first market/locale architecture for live localized B4GAMBLE versions before partner activation; initial European tranche includes DE, IT, ES, SE, DK, FI and NO. |
+| [RFC-037 — Internationalisation and Multi-Market Foundation](RFC-037-Internationalisation-and-Multi-Market-Foundation.md) | `ACTIVE` | Infrastructure-first market/locale architecture before partner activation; GEO-LOCALIZATION-01 now governs lowercase locale-market canonicals and adds Preview-only PE/es-PE. |
 | [RFC-038 — Casino Market Data Architecture](RFC-038-Casino-Market-Data-Architecture.md) | `ACTIVE` | Casino global identity, `CasinoCountry` factual market grain, market-scoped facts, provenance, logical PartnerRoute projection, and exact fail-closed Production eligibility. |
 
 ## Counts

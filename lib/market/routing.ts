@@ -1,6 +1,8 @@
 import {
   DEFAULT_MARKET_PROFILE,
   FIRST_WAVE_EVIDENCE_MARKET_CODES,
+  localeMarketRoute,
+  localeMarketRouteByPublicSlug,
   localeForLanguageSegment,
   marketProfileByRouteMarket,
   publicMarketPath,
@@ -112,12 +114,10 @@ type PublicMarketRoute = Readonly<{
 }>;
 
 export type PublicMarketRouteParse =
-  | ({ kind: "UNPREFIXED_DEFAULT" } & PublicMarketRoute)
-  | ({ kind: "MARKET_DEFAULT" } & PublicMarketRoute)
-  | ({ kind: "SECONDARY_LOCALE" } & PublicMarketRoute)
-  | ({ kind: "DEFAULT_MARKET_ALIAS"; canonicalPath: string } & PublicMarketRoute)
-  | ({ kind: "LEGACY_REDUNDANT_LOCALE"; canonicalPath: string } & PublicMarketRoute)
-  | Readonly<{ kind: "INVALID"; pathname: string; reason: "ENCODED_SEPARATOR" | "UNREGISTERED_MARKET" | "UNSUPPORTED_LOCALE" | "ROUTE_NOT_LOCALIZABLE" }>;
+  | ({ kind: "CANONICAL_LOCALE" } & PublicMarketRoute)
+  | ({ kind: "MARKET_NEUTRAL" } & PublicMarketRoute)
+  | ({ kind: "LEGACY_MARKET_ROUTE"; canonicalPath: string } & PublicMarketRoute)
+  | Readonly<{ kind: "INVALID"; pathname: string; reason: "ENCODED_SEPARATOR" | "UNREGISTERED_MARKET" | "UNSUPPORTED_LOCALE" | "LOCALE_DISABLED" | "ROUTE_NOT_LOCALIZABLE" }>;
 
 function invalid(pathname: string, reason: Extract<PublicMarketRouteParse, { kind: "INVALID" }>["reason"]): PublicMarketRouteParse {
   return { kind: "INVALID", pathname: cleanPathname(pathname), reason };
@@ -131,15 +131,31 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
   const clean = cleanPathname(pathname);
   if (/%2f|%5c/i.test(clean)) return invalid(clean, "ENCODED_SEPARATOR");
   const segments = routeSegments(clean);
+  const canonical = localeMarketRouteByPublicSlug(segments[0]);
+
+  if (canonical) {
+    if (!canonical.route.enabled) return invalid(clean, "LOCALE_DISABLED");
+    const equivalentPathname = unprefixedPath(segments.slice(1));
+    if (!isLocalizedPublicDestination(equivalentPathname, canonical.market)) {
+      return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+    }
+    return {
+      kind: "CANONICAL_LOCALE",
+      market: canonical.market,
+      locale: canonical.route.locale,
+      pathname: equivalentPathname,
+    };
+  }
+
   const routeMarket = segments[0] ? marketProfileByRouteMarket(segments[0]) : null;
 
   if (!routeMarket) {
-    if (segments[0] && /^[a-z]{2}$/i.test(segments[0]) && !publicRoutePolicy(clean)) {
+    if (segments[0] && (/^[a-z]{2}$/i.test(segments[0]) || /^[a-z]{2,3}-[a-z]{2}$/i.test(segments[0])) && !publicRoutePolicy(clean)) {
       return invalid(clean, "UNREGISTERED_MARKET");
     }
     if (!isLocalizedPublicDestination(clean)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
     return {
-      kind: "UNPREFIXED_DEFAULT",
+      kind: "MARKET_NEUTRAL",
       market: DEFAULT_MARKET_PROFILE,
       locale: DEFAULT_MARKET_PROFILE.defaultLocale,
       pathname: clean,
@@ -148,54 +164,23 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
 
   const possibleLanguage = segments[1] ?? null;
   const explicitLocale = localeForLanguageSegment(routeMarket, possibleLanguage);
-  const defaultLanguage = routeMarket.defaultLocale.split("-")[0].toLowerCase();
-  const redundantDefaultLocale = explicitLocale === routeMarket.defaultLocale && possibleLanguage === defaultLanguage;
-  const secondaryLocale = explicitLocale && explicitLocale !== routeMarket.defaultLocale ? explicitLocale : null;
-
-  if (redundantDefaultLocale) {
-    const equivalentPathname = unprefixedPath(segments.slice(2));
-    if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
-    return {
-      kind: "LEGACY_REDUNDANT_LOCALE",
-      market: routeMarket,
-      locale: routeMarket.defaultLocale,
-      pathname: equivalentPathname,
-      canonicalPath: publicMarketPath(routeMarket, routeMarket.defaultLocale, equivalentPathname),
-    };
-  }
-
-  if (secondaryLocale) {
-    const equivalentPathname = unprefixedPath(segments.slice(2));
-    if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
-    return {
-      kind: "SECONDARY_LOCALE",
-      market: routeMarket,
-      locale: secondaryLocale,
-      pathname: equivalentPathname,
-    };
-  }
-
-  const equivalentPathname = unprefixedPath(segments.slice(1));
+  const locale = explicitLocale ?? routeMarket.defaultLocale;
+  const route = localeMarketRoute(routeMarket, locale);
+  if (!route?.enabled) return invalid(clean, "LOCALE_DISABLED");
+  const hasLegacyLanguageSegment = Boolean(explicitLocale);
+  const equivalentPathname = unprefixedPath(segments.slice(hasLegacyLanguageSegment ? 2 : 1));
   if (!isLocalizedPublicDestination(equivalentPathname, routeMarket)) {
     if (possibleLanguage && /^[a-z]{2,3}$/i.test(possibleLanguage)) {
       return invalid(clean, "UNSUPPORTED_LOCALE");
     }
     return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
   }
-  if (routeMarket.countryCode === DEFAULT_MARKET_PROFILE.countryCode) {
-    return {
-      kind: "DEFAULT_MARKET_ALIAS",
-      market: routeMarket,
-      locale: routeMarket.defaultLocale,
-      pathname: equivalentPathname,
-      canonicalPath: publicMarketPath(routeMarket, routeMarket.defaultLocale, equivalentPathname),
-    };
-  }
   return {
-    kind: "MARKET_DEFAULT",
+    kind: "LEGACY_MARKET_ROUTE",
     market: routeMarket,
-    locale: routeMarket.defaultLocale,
+    locale,
     pathname: equivalentPathname,
+    canonicalPath: publicMarketPath(routeMarket, locale, equivalentPathname),
   };
 }
 

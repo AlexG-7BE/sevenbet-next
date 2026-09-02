@@ -31,6 +31,7 @@ export const resolveServerPresentationContext = cache(async function resolveServ
     routeLanguage: publicPresentation || programmePresentation ? routeLanguage : null,
     preference,
     trustedCountryCode,
+    acceptLanguage: requestHeaders.get("accept-language"),
   });
 
   return {

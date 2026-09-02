@@ -1,12 +1,23 @@
 # Localization quality and route coverage
 
-**Evidence date:** 31 August 2026
+**Evidence date:** 31 August 2026; amended 2 September 2026
 
-**Scope:** PR #105 working tree on `feat/internationalisation-market-foundation`; not merged or deployed to Production
+**Scope:** historical PR #105 quality inventory plus GEO-LOCALIZATION-01 route amendment
 
 **Assurance:** repository and rendered-runtime engineering evidence; not legal review, commercial authority or a new Founder publication decision
 
 **Closure status:** durable route, authority and QA-method inventory; transient clean-pass, exact-head CI and hosted-Preview evidence belongs in PR #105 rather than this repository snapshot
+
+> **2 September amendment — DETECTED/PROPOSED:** PR #105 is merged at
+> `f457099`. The explicit GEO-LOCALIZATION-01 Founder instruction supersedes
+> every market-first public-path example in this historical audit. Canonical
+> public presentation paths are now lowercase `/{locale-market}` (for example
+> `/en-gb`, `/sv-se`, `/es-pe`); unprefixed paths are neutral resolver inputs.
+> PE / `es-PE` is a `PUBLIC_CORE_READY`, AI-QA-passed, noindex, Preview-only
+> presentation with bounded MINCETUR-backed Help/RG copy and no commercial
+> action. The current implementation record and exact route rules are in
+> [GEO-LOCALIZATION-01](GEO-LOCALIZATION-01.md). Programme paths remain governed
+> separately and are not changed by this amendment.
 
 ## Evidence and authority
 

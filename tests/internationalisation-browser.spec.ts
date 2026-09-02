@@ -26,9 +26,9 @@ const founderPublicationSmoke = [
 const knownEnglishLeakage = /Compare casinos|Best offers|How we test|Online Casino Basics|Open protected Help|Source status|Direct answer/;
 
 test("localized internal rewrites terminate with signed context and expose no continuation credential", async ({ request }) => {
-  const response = await request.get(`${baseUrl}/de/about`, { maxRedirects: 0 });
+  const response = await request.get(`${baseUrl}/de-de/about`, { maxRedirects: 0 });
   expect(response.status()).toBe(200);
-  expect(response.url()).toBe(`${baseUrl}/de/about`);
+  expect(response.url()).toBe(`${baseUrl}/de-de/about`);
   expect(response.headers()["content-language"]).toBe("de-DE");
   expect(response.headers()["x-b4gamble-internal-presentation-token"]).toBeUndefined();
   expect(response.headers()["x-middleware-request-x-b4gamble-internal-presentation-token"]).toBeUndefined();
@@ -39,12 +39,12 @@ test("localized internal rewrites terminate with signed context and expose no co
 });
 
 for (const acceptance of founderPublicationSmoke) {
-  const prefix = `/${acceptance.market.toLowerCase()}`;
+  const prefix = `/${acceptance.locale.toLowerCase()}`;
   const evidence = FIRST_WAVE_MARKET_EVIDENCE[acceptance.market];
   const article = localizedLearningArticles(acceptance.locale)[0];
   const rootHero = homeTranslation(acceptance.locale)?.hero ?? HOME_SOURCE_COPY.hero;
   const routes = [
-    { pathname: `${prefix}/`, heading: rootHero[2], publicSelector: true },
+    { pathname: prefix, heading: rootHero[2], publicSelector: true },
     { pathname: `${prefix}${acceptance.representativePath}`, heading: acceptance.representativeCopy, publicSelector: true },
     { pathname: `${prefix}/help`, heading: evidence.copy.helpTitle, publicSelector: false },
     { pathname: `${prefix}/responsible-gambling`, heading: evidence.copy.responsibleTitle, publicSelector: false },
@@ -74,7 +74,7 @@ for (const acceptance of founderPublicationSmoke) {
     }
 
     for (const href of internalLinks) {
-      if (/^\/(?:[a-z]{2}\/)?casino\//.test(new URL(href, baseUrl).pathname)) continue;
+      if (/^\/(?:[a-z]{2}(?:-[a-z]{2})?\/)?casino\//.test(new URL(href, baseUrl).pathname)) continue;
       const response = await request.get(new URL(href, baseUrl).toString());
       expect(response.status(), `${acceptance.market} internal link ${href}`).toBeLessThan(400);
     }
@@ -111,7 +111,7 @@ test("invalid market-language pairs and protected prefixed paths fail without a 
 
 for (const market of FIRST_WAVE_MARKETS) {
   const evidence = FIRST_WAVE_MARKET_EVIDENCE[market];
-  const prefix = `/${market.toLowerCase()}`;
+  const prefix = `/${evidence.locale.toLowerCase()}`;
   test(`${market} renders localized, noindex Help and Responsible Gambling evidence`, async ({ page }) => {
     for (const [route, title] of [["/help", evidence.copy.helpTitle], ["/responsible-gambling", evidence.copy.responsibleTitle]] as const) {
       const response = await page.goto(`${baseUrl}${prefix}${route}`, { waitUntil: "domcontentloaded" });
@@ -129,7 +129,7 @@ for (const market of FIRST_WAVE_MARKETS) {
 }
 
 test("desktop selector persists presentation and preserves a supported equivalent path", async ({ page, context }) => {
-  await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/de-de/casinos`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
   const trigger = page.getByRole("button", { name: messages.changeMarketAndLanguage }).first();
   await expect(trigger).toHaveAttribute("aria-expanded", "false");
@@ -139,7 +139,7 @@ test("desktop selector persists presentation and preserves a supported equivalen
   await expect(menu.locator('button[value="DE|de-DE"]')).toHaveAttribute("aria-checked", "true");
   await expect(page.getByRole("button", { name: "Anwenden", exact: true })).toHaveCount(0);
   await menu.locator('button[value="ES|es-ES"]').click();
-  await expect(page).toHaveURL(/\/es\/casinos\/?$/);
+  await expect(page).toHaveURL(/\/es-es\/casinos\/?$/);
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   const cookies = await context.cookies();
@@ -149,18 +149,18 @@ test("desktop selector persists presentation and preserves a supported equivalen
 
 test("automatic presentation clears the preference and returns to an unprefixed compatible URL", async ({ page, context }) => {
   await context.addCookies([{ name: "b4gamble_presentation", value: "v1.PT.pt-PT", domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" }]);
-  await page.goto(`${baseUrl}/pt/bonuses?type=welcome&country=PT`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/pt-pt/bonuses?type=welcome&country=PT`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("pt-PT");
   await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
   await page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first().locator('button[value="automatic"]').click();
-  await expect(page).toHaveURL(/\/bonuses\?type=welcome$/);
+  await expect(page).toHaveURL(/\/en-gb\/bonuses\?type=welcome$/);
   expect((await context.cookies()).some((cookie) => cookie.name === "b4gamble_presentation")).toBe(false);
 });
 
 test("mobile selector is keyboard-accessible inside the existing modal navigation", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
   const messages = publicShellMessages("da-DK");
-  await page.goto(`${baseUrl}/dk/`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/da-dk`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: messages.openNavigation }).click();
   const dialog = page.getByRole("dialog", { name: messages.siteNavigation });
   await expect(dialog).toBeVisible();
@@ -180,7 +180,7 @@ test("mobile selector is keyboard-accessible inside the existing modal navigatio
   const spain = menu.locator('button[value="ES|es-ES"]');
   await spain.focus();
   await spain.press("Enter");
-  await expect(page).toHaveURL(/\/es\/?$/);
+  await expect(page).toHaveURL(/\/es-es\/?$/);
   await expect(page.getByRole("menu")).toHaveCount(0);
   await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   await page.close();
@@ -234,14 +234,14 @@ for (const profile of representativeProductMarkets) {
   });
 }
 
-test("old Preview-only default-language URLs redirect in exactly one hop to market-first canonicals", async ({ request }) => {
+test("market-first and redundant-language URLs redirect in one hop to locale-market canonicals", async ({ request }) => {
   for (const [legacy, canonical] of [
-    ["/de/de/casinos?source=partner", "/de/casinos?source=partner"],
-    ["/es/es/bonuses", "/es/bonuses"],
-    ["/se/sv/best-offers", "/se/best-offers"],
-    ["/dk/da/methodology", "/dk/methodology"],
-    ["/gr/el/about", "/gr/about"],
-    ["/gb/en/", "/"],
+    ["/de/de/casinos?source=partner", "/de-de/casinos?source=partner"],
+    ["/es/es/bonuses", "/es-es/bonuses"],
+    ["/se/sv/best-offers", "/sv-se/best-offers"],
+    ["/dk/da/methodology", "/da-dk/methodology"],
+    ["/gr/el/about", "/el-gr/about"],
+    ["/gb/en/", "/en-gb"],
   ] as const) {
     const redirect = await request.get(`${baseUrl}${legacy}`, { maxRedirects: 0 });
     expect(redirect.status(), legacy).toBe(308);
@@ -252,30 +252,30 @@ test("old Preview-only default-language URLs redirect in exactly one hop to mark
 
 test("localized 10 Steps and About publish complete draft bodies with localized metadata and accessibility text", async ({ page }) => {
   const tenSteps = tenStepsTranslation("de-DE");
-  await page.goto(`${baseUrl}/de/10-steps`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/de-de/10-steps`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(tenSteps.text[1]);
   await expect(page.getByRole("link", { name: tenSteps.text[5] }).first()).toHaveAttribute("href", "/de/program?entry=start");
   await expect(page.locator("main").getByRole("img")).toHaveAttribute("alt", tenSteps.text.at(-1) ?? "");
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
-  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de/10-steps");
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/de-de/10-steps");
 
   const about = aboutMessages("es-ES");
-  await page.goto(`${baseUrl}/es/about`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/es-es/about`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(about.titleLead);
   await expect(page.locator('[data-about-section="three-parts"]')).toContainText(about.parts[0].body);
   await expect(page.locator('[data-about-section="commercial-separation"]')).toContainText(about.separationPoints[2]);
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
-  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/es/about");
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/es-es/about");
 
   const faq = faqMessages("pt-PT");
-  await page.goto(`${baseUrl}/pt/faq`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/pt-pt/faq`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("html")).toHaveAttribute("lang", "pt-PT");
   await expect(page.getByRole("heading", { level: 1 })).toContainText(faq.titleLead);
   await expect(page.getByText(faq.groups[0].items[0][1])).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
-  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/pt/faq");
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/pt-pt/faq");
 });
 
 for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
@@ -304,7 +304,7 @@ for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
 
 test("localized Contact validation announces active-locale constraints without sending", async ({ page }) => {
   const messages = contactMessages("pt-PT");
-  await page.goto(`${baseUrl}/pt/contact`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/pt-pt/contact`, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: messages.submit }).click();
   await expect(page.getByText(messages.emailError)).toBeVisible();
   await expect(page.getByRole("textbox", { name: messages.emailLabel, exact: true })).toBeFocused();
@@ -313,30 +313,30 @@ test("localized Contact validation announces active-locale constraints without s
 test("localized Learning article preserves source-unavailable semantics and prefixed internal links", async ({ page }) => {
   const messages = learningMessages("el-GR");
   const article = localizedLearningArticles("el-GR")[0];
-  await page.goto(`${baseUrl}/gr/learn/casino-basics/online-casino-basics`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/el-gr/learn/casino-basics/online-casino-basics`, { waitUntil: "domcontentloaded" });
   await expect(page.getByRole("heading", { level: 1 })).toContainText(article.title);
   await expect(page.getByRole("heading", { name: messages.ui.sourceUnavailable })).toBeVisible();
   await expect(page.getByText(messages.ui.noClaimSource)).toBeVisible();
-  await expect(page.locator('a[href^="/gr/learn/"]').first()).toBeVisible();
-  await expect(page.locator('a[href="/gr/casinos"]').first()).toBeVisible();
+  await expect(page.locator('a[href^="/el-gr/learn/"]').first()).toBeVisible();
+  await expect(page.locator('a[href="/el-gr/casinos"]').first()).toBeVisible();
   await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
-  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/gr/learn/casino-basics/online-casino-basics");
+  expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe("/el-gr/learn/casino-basics/online-casino-basics");
 });
 
 test("localized not-found copy is used when a valid market route has no editorial record", async ({ page }) => {
   const messages = publicErrorMessages("de-DE");
-  const response = await page.goto(`${baseUrl}/de/learn/unknown/unknown`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/de-de/learn/unknown/unknown`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(404);
   await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
   await expect(page.getByText(messages.notFoundLost)).toBeVisible();
-  await expect(page.getByRole("link", { name: messages.notFoundHome })).toHaveAttribute("href", "/de/");
+  await expect(page.getByRole("link", { name: messages.notFoundHome })).toHaveAttribute("href", "/de-de");
 });
 
 test("newly localized long-copy surfaces have no horizontal overflow at every required width", async ({ browser }) => {
   const samples = [
-    [360, "/de/methodology"], [375, "/pt/contact"], [390, "/gr/learn"],
-    [412, "/fi/learn/casino-basics/online-casino-basics"], [430, "/es/contact"],
-    [768, "/nl/methodology"], [1024, "/no/learn"], [1440, "/de/learn/casino-basics/online-casino-basics"],
+    [360, "/de-de/methodology"], [375, "/pt-pt/contact"], [390, "/el-gr/learn"],
+    [412, "/fi-fi/learn/casino-basics/online-casino-basics"], [430, "/es-es/contact"],
+    [768, "/nl-nl/methodology"], [1024, "/nb-no/learn"], [1440, "/de-de/learn/casino-basics/online-casino-basics"],
   ] as const;
   for (const [width, pathname] of samples) {
     const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 960 : 1_000 }, isMobile: width <= 430 });
@@ -349,14 +349,14 @@ test("newly localized long-copy surfaces have no horizontal overflow at every re
 
 test("long localized copy has no horizontal overflow across the required responsive widths", async ({ browser }) => {
   const samples = [
-    [360, "/de/about"],
-    [375, "/pt/faq"],
-    [390, "/gr/"],
-    [412, "/fi/casinos"],
-    [430, "/es/bonuses"],
-    [768, "/nl/about"],
-    [1024, "/no/10-steps"],
-    [1440, "/de/best-offers"],
+    [360, "/de-de/about"],
+    [375, "/pt-pt/faq"],
+    [390, "/el-gr"],
+    [412, "/fi-fi/casinos"],
+    [430, "/es-es/bonuses"],
+    [768, "/nl-nl/about"],
+    [1024, "/nb-no/10-steps"],
+    [1440, "/de-de/best-offers"],
   ] as const;
   for (const [width, pathname] of samples) {
     const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 900 : 1_000 }, isMobile: width <= 430 });
@@ -425,20 +425,20 @@ test("reported localized article and 10 Steps compounds fit without clipping", a
   };
 
   const articleCases = [
-    ["/de/learn/casino-bonuses/welcome-bonus-terms", "related"],
-    ["/de/learn/casino-reviews/how-casino-reviews-work", "related"],
-    ["/de/learn/country-guides/country-guide-structure", "related"],
-    ["/se/learn/responsible-gambling/responsible-gambling-tools", "faq"],
-    ["/se/learn/casino-bonuses/welcome-bonus-terms", "faq"],
-    ["/se/learn/casino-reviews/how-casino-reviews-work", "faq"],
-    ["/se/learn/country-guides/country-guide-structure", "faq"],
-    ["/dk/learn/responsible-gambling/responsible-gambling-tools", "faq"],
-    ["/dk/learn/casino-bonuses/welcome-bonus-terms", "faq"],
-    ["/dk/learn/casino-reviews/how-casino-reviews-work", "faq"],
-    ["/dk/learn/country-guides/country-guide-structure", "faq"],
-    ["/nl/learn/responsible-gambling/responsible-gambling-tools", "related"],
-    ["/nl/learn/casino-reviews/how-casino-reviews-work", "related"],
-    ["/nl/learn/country-guides/country-guide-structure", "related"],
+    ["/de-de/learn/casino-bonuses/welcome-bonus-terms", "related"],
+    ["/de-de/learn/casino-reviews/how-casino-reviews-work", "related"],
+    ["/de-de/learn/country-guides/country-guide-structure", "related"],
+    ["/sv-se/learn/responsible-gambling/responsible-gambling-tools", "faq"],
+    ["/sv-se/learn/casino-bonuses/welcome-bonus-terms", "faq"],
+    ["/sv-se/learn/casino-reviews/how-casino-reviews-work", "faq"],
+    ["/sv-se/learn/country-guides/country-guide-structure", "faq"],
+    ["/da-dk/learn/responsible-gambling/responsible-gambling-tools", "faq"],
+    ["/da-dk/learn/casino-bonuses/welcome-bonus-terms", "faq"],
+    ["/da-dk/learn/casino-reviews/how-casino-reviews-work", "faq"],
+    ["/da-dk/learn/country-guides/country-guide-structure", "faq"],
+    ["/nl-nl/learn/responsible-gambling/responsible-gambling-tools", "related"],
+    ["/nl-nl/learn/casino-reviews/how-casino-reviews-work", "related"],
+    ["/nl-nl/learn/country-guides/country-guide-structure", "related"],
   ] as const;
 
   try {
@@ -455,9 +455,9 @@ test("reported localized article and 10 Steps compounds fit without clipping", a
     }
 
     for (const sample of [
-      { height: 844, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 390 },
-      { height: 932, pathname: "/es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 430 },
-      { height: 900, pathname: "/fi/10-steps", selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > h1', useLast: false, width: 1440 },
+      { height: 844, pathname: "/es-es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 390 },
+      { height: 932, pathname: "/es-es/10-steps", selector: '[data-handoff-page="tenSteps"] h2', useLast: true, width: 430 },
+      { height: 900, pathname: "/fi-fi/10-steps", selector: '[data-handoff-page="tenSteps"] [data-mob="copy"] > h1', useLast: false, width: 1440 },
     ] as const) {
       await page.setViewportSize({ width: sample.width, height: sample.height });
       const response = await page.goto(`${baseUrl}${sample.pathname}`, { waitUntil: "domcontentloaded" });

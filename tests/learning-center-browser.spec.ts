@@ -134,17 +134,17 @@ test("Greek mobile Learning proof copy wraps inside its content-driven row in hu
     }
   };
 
-  let response = await page.goto(`${baseUrl}/gr/learn`, { waitUntil: "networkidle" });
+  let response = await page.goto(`${baseUrl}/el-gr/learn`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.locator('[data-learn-meta-item]').nth(1)).toHaveText("Εκπαιδευτικοί οδηγοί · γνωστοποιούνται εμπορικοί σύνδεσμοι");
   await expectProofCopyFits("Greek Learning hub at 390x844");
 
-  response = await page.goto(`${baseUrl}/gr/learn/casino-bonuses`, { waitUntil: "networkidle" });
+  response = await page.goto(`${baseUrl}/el-gr/learn/casino-bonuses`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(/\/gr\/learn\?category=casino-bonuses$/);
   await expectProofCopyFits("Greek Learning category at 390x844");
 
-  await page.goto(`${baseUrl}/gr/learn`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/el-gr/learn`, { waitUntil: "networkidle" });
   await page.getByRole("searchbox", { name: "Αναζήτηση οδηγών" }).fill("καζίνο");
   await expect(page.locator("[data-learn-results-status]")).toBeVisible();
   await expectProofCopyFits("Greek Learning search at 390x844");

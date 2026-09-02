@@ -47,7 +47,7 @@ export type PublicFooterMessages = Readonly<{
   commissionDisclosure: string;
 }>;
 
-const messages = {
+const baseMessages = {
   "en-GB": {
     skipToMain: "Skip to main content",
     homeLabel: "B4GAMBLE home",
@@ -373,13 +373,18 @@ const messages = {
     automaticPresentation: "Automatique",
     presentationOnlyNotice: "Ce choix modifie uniquement la présentation. Il ne rend aucune offre de casino disponible.",
   },
-} as const satisfies Record<SupportedLocale, PublicShellMessages>;
+} as const satisfies Record<Exclude<SupportedLocale, "es-PE">, PublicShellMessages>;
+
+const messages: Record<SupportedLocale, PublicShellMessages> = {
+  ...baseMessages,
+  "es-PE": baseMessages["es-ES"],
+};
 
 export function publicShellMessages(locale: SupportedLocale): PublicShellMessages {
   return messages[locale];
 }
 
-const footerMessages = {
+const baseFooterMessages = {
   "en-GB": {
     label: "Control and support",
     description: "Information, comparison and education.",
@@ -640,7 +645,12 @@ const footerMessages = {
     contact: "Contact",
     commissionDisclosure: "Nous pouvons recevoir une commission grâce aux liens d’affiliation clairement signalés.",
   },
-} as const satisfies Record<SupportedLocale, PublicFooterMessages>;
+} as const satisfies Record<Exclude<SupportedLocale, "es-PE">, PublicFooterMessages>;
+
+const footerMessages: Record<SupportedLocale, PublicFooterMessages> = {
+  ...baseFooterMessages,
+  "es-PE": baseFooterMessages["es-ES"],
+};
 
 export function publicFooterMessages(locale: SupportedLocale): PublicFooterMessages {
   return footerMessages[locale];

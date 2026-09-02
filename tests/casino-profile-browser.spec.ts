@@ -44,7 +44,7 @@ test("casino profile has no horizontal overflow across approved and defensive wi
 test("localized profile facts preserve whole words at the tablet composition and on long desktop terms", async ({ browser }) => {
   const tabletContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 768, height: 1024 } });
   const tabletPage = await tabletContext.newPage();
-  const tabletResponse = await tabletPage.goto(`${baseUrl}/gr/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const tabletResponse = await tabletPage.goto(`${baseUrl}/el-gr/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(tabletResponse?.status()).toBe(200);
   await expect(tabletPage.locator("html")).toHaveAttribute("lang", "el-GR");
   await expect(tabletPage.locator("#overview-heading")).toContainText("Έλεγχος 30 δευτερολέπτων");
@@ -120,7 +120,7 @@ test("localized profile facts preserve whole words at the tablet composition and
   expect(tabletLayout.fragmentedTerms).toEqual([]);
   expect(tabletLayout.horizontalOverflow).toBe(0);
 
-  const spanishResponse = await tabletPage.goto(`${baseUrl}/es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const spanishResponse = await tabletPage.goto(`${baseUrl}/es-es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(spanishResponse?.status()).toBe(200);
   await expect(tabletPage.locator("html")).toHaveAttribute("lang", "es-ES");
   const spanishHeroTerms = tabletPage.locator('section[aria-labelledby="casino-profile-title"] [class*="heroOfferCopy"] dl');
@@ -164,7 +164,7 @@ test("localized profile facts preserve whole words at the tablet composition and
 
   const desktopContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
   const desktopPage = await desktopContext.newPage();
-  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl-nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(desktopResponse?.status()).toBe(200);
   await expect(desktopPage.locator("html")).toHaveAttribute("lang", "nl-NL");
 
@@ -342,7 +342,7 @@ test("demo profile suppresses review, FAQ and commercial structured data", async
 });
 
 test("localized demo profile keeps generic English chrome out of structured data", async ({ page }) => {
-  const response = await page.goto(`${baseUrl}/de/casino/demo-northstar`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de-de/casino/demo-northstar`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
   await expect(page.getByText("Fiktive Bewertungsdemonstration").first()).toBeVisible();
