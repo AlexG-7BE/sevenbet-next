@@ -2,6 +2,10 @@ import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
 import type { PrismaClient } from "@prisma/client";
 
+import {
+  isCasinoCommercialActivation01Requested,
+  runCasinoCommercialActivation01Preflight,
+} from "@/lib/casino-commercial-activation/production-release";
 import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
@@ -224,6 +228,10 @@ async function assertProgrammeAccessPostMigrationInvariants(prisma: PrismaClient
 }
 
 async function maybeApplyProgrammeAccessMigration() {
+  if (isCasinoCommercialActivation01Requested(process.env)) {
+    await runCasinoCommercialActivation01Preflight();
+  }
+
   const programmeReleaseRuntime = assertProgrammeReleaseRuntime();
   if (programmeReleaseRuntime.checked) {
     writeEvent({

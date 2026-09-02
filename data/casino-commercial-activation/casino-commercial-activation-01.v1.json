@@ -1,0 +1,139 @@
+{
+  "schemaVersion": "casino-commercial-activation-01.v1",
+  "observedAt": "2026-09-02T00:00:00.000Z",
+  "sourceMainCommit": "4c89ecb51e305d993b5c6f69a8d6c082e6e4c0e8",
+  "productionBaseline": {
+    "casinos": 34,
+    "marketProfiles": 34,
+    "affiliateNetworks": 1,
+    "affiliatePrograms": 5,
+    "affiliateOffers": 5,
+    "affiliateTrackingLinks": 5,
+    "affiliateRouteCountries": 0,
+    "affiliateRedirects": 5,
+    "productionEligibleRoutes": 0
+  },
+  "candidates": [
+    {
+      "casino": "Hello Casino",
+      "casinoSlug": "hello-casino",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "ABSENT",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved brand campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "Skol Casino",
+      "casinoSlug": "skol-casino",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "ABSENT",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved brand campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "Diamond7",
+      "casinoSlug": "diamond7",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "CONTRADICTED_BY_CURRENT_ZERO_CAMPAIGN_PORTAL_STATE",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_ASSET_RIGHTS_AND_EXACT_GEO_ABSENT",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "G'day Casino",
+      "casinoSlug": "gday-casino",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "ABSENT",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved brand campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "21 Privé",
+      "casinoSlug": "21-prive",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "ABSENT",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved brand campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "Slotnite",
+      "casinoSlug": "slotnite",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Superfly Partners / assigned commission plan",
+      "trackingRoute": "ABSENT",
+      "countryRestriction": "GB_EXPLICITLY_DENIED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["current GB-approved brand campaign and affiliate tracking URL"]
+    },
+    {
+      "casino": "DragonBet",
+      "casinoSlug": "dragonbet",
+      "countryCode": "GB",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Brothers Bet / DragonBet",
+      "trackingRoute": "TRACKER_NAME_ONLY_NO_AFFILIATE_URL",
+      "countryRestriction": "ACCOUNT_DISABLED",
+      "assetState": "FALLBACK_NO_PUBLICATION_ELIGIBLE_ASSET",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["enabled partner account", "completed exact GB affiliate tracking URL"]
+    },
+    {
+      "casino": "Betsson",
+      "casinoSlug": "betsson",
+      "countryCode": "PE",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Betsson Group Affiliates / Betsson",
+      "trackingRoute": "DETECTED_CURRENT_NOT_END_TO_END_VERIFIED",
+      "countryRestriction": "PE_APPROVED_IN_PORTAL",
+      "assetState": "FALLBACK_PORTAL_ASSETS_NOT_ACQUIRED_OR_PUBLICATION_ELIGIBLE",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": [
+        "successful end-to-end PE-market route verification without cross-GEO redirect or HTTP error",
+        "PE advertising-within-operator-authority evidence",
+        "cleared PE promotional CTA copy review"
+      ]
+    },
+    {
+      "casino": "Betsson",
+      "casinoSlug": "betsson",
+      "countryCode": "SE",
+      "factualMarketProfile": "PUBLISHED_AVAILABLE",
+      "networkProgram": "Betsson Group Affiliates / Betsson",
+      "trackingRoute": "DETECTED_CURRENT_NOT_END_TO_END_VERIFIED",
+      "countryRestriction": "SE_PENDING_PARTNER_APPROVAL",
+      "assetState": "FALLBACK_PORTAL_ASSETS_NOT_ACQUIRED_OR_PUBLICATION_ELIGIBLE",
+      "decision": "DENIED_FAIL_CLOSED",
+      "missingExactFields": ["approved SE target-market status", "successful end-to-end SE-market route verification"]
+    }
+  ],
+  "result": {
+    "activatedRoutes": 0,
+    "commercialMutations": 0,
+    "publishedAssets": 0,
+    "reusedAssets": 0,
+    "fallbackProfiles": 9,
+    "nextBatchImportedProfiles": 0,
+    "nextBatchReason": "The bounded current partner sources contain no additional fully evidenced casino-market profile beyond the already-published candidates."
+  }
+}
