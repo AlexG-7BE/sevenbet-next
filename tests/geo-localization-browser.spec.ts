@@ -36,7 +36,7 @@ test("selector persists Peru and keeps the equivalent path on desktop and mobile
     const page = await browser.newPage({ viewport, isMobile: viewport.width < 600 });
     await page.goto(`${baseUrl}/sv-se/casinos`, { waitUntil: "domcontentloaded" });
     if (viewport.width < 600) {
-      await page.locator('[data-public-shell="header"] button[aria-haspopup="dialog"]').click();
+      await page.locator('[data-public-shell="header"] button[aria-controls="public-mobile-navigation"]').click();
     }
     const trigger = page.locator('button[aria-haspopup="menu"]').filter({ hasText: "SV · SE" }).first();
     await trigger.click();
@@ -70,30 +70,40 @@ test("canonical shells do not overflow on representative mobile and desktop widt
   }
 });
 
-test("hosted Preview keeps exact Peru and Sweden casino data isolated and non-commercial", async ({ page }) => {
-  test.skip(process.env.GEO_REAL_DATA_EXPECTED !== "true", "Real-data assertions run only against the hosted Preview deployment.");
+test("hosted real data keeps exact Peru and Sweden casino facts isolated and non-commercial", async ({ request }) => {
+  const dataOrigin = process.env.GEO_REAL_DATA_API_ORIGIN?.replace(/\/$/, "");
+  test.skip(!dataOrigin, "Real-data assertions require an explicit read-only public API origin.");
 
-  const peruDirectory = await page.goto(`${baseUrl}/es-pe/casinos`, { waitUntil: "networkidle" });
-  expect(peruDirectory?.status()).toBe(200);
-  await expect(page.locator("main")).toContainText("Betsson");
-  await expect(page.locator("main")).not.toContainText("Demo Prism");
+  const [peruResponse, swedenResponse] = await Promise.all([
+    request.get(`${dataOrigin}/api/public/casinos?country=PE&limit=10`),
+    request.get(`${dataOrigin}/api/public/casinos?country=SE&limit=10`),
+  ]);
+  expect(peruResponse.status()).toBe(200);
+  expect(swedenResponse.status()).toBe(200);
+  const peruPayload = await peruResponse.json() as { records: Array<Record<string, unknown>> };
+  const swedenPayload = await swedenResponse.json() as { records: Array<Record<string, unknown>> };
+  const peru = peruPayload.records.find((record) => record.slug === "betsson");
+  const sweden = swedenPayload.records.find((record) => record.slug === "betsson");
+  expect(peru).toBeTruthy();
+  expect(sweden).toBeTruthy();
 
-  const peruProfile = await page.goto(`${baseUrl}/es-pe/casino/betsson`, { waitUntil: "networkidle" });
-  expect(peruProfile?.status()).toBe(200);
-  await expect(page.locator("main")).toContainText(/PEN|S\//);
-  await expect(page.locator("main")).toContainText("Yape");
-  await expect(page.locator("main")).toContainText("MINCETUR");
-  await expect(page.locator("main")).toContainText("11002586010000");
-  await expect(page.locator("main")).toContainText("21002586010000");
-  await expect(page.locator("main")).not.toContainText(/SEK|Swish|Spelinspektionen|23Si2176/);
-  expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
+  const peruJson = JSON.stringify(peru);
+  const swedenJson = JSON.stringify(sweden);
+  expect(peruJson).toContain("PEN");
+  expect(peruJson).toContain("Yape");
+  expect(peruJson).toContain("MINCETUR");
+  expect(peruJson).toContain("11002586010000");
+  expect(peruJson).toContain("21002586010000");
+  expect(peruJson).toContain('"classification":"UNKNOWN"');
+  expect(peruJson).toContain('"classification":"CONTRADICTION"');
+  expect(peruJson).not.toMatch(/SEK|Swish|Spelinspektionen|23Si2176/);
 
-  const swedenProfile = await page.goto(`${baseUrl}/sv-se/casino/betsson`, { waitUntil: "networkidle" });
-  expect(swedenProfile?.status()).toBe(200);
-  await expect(page.locator("main")).toContainText("SEK");
-  await expect(page.locator("main")).toContainText("Swish");
-  await expect(page.locator("main")).toContainText("Spelinspektionen");
-  await expect(page.locator("main")).toContainText("23Si2176");
-  await expect(page.locator("main")).not.toContainText(/PEN|Yape|MINCETUR|11002586010000|21002586010000/);
-  expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
+  expect(swedenJson).toContain("SEK");
+  expect(swedenJson).toContain("Swish");
+  expect(swedenJson).toContain("Spelinspektionen");
+  expect(swedenJson).toContain("23Si2176");
+  expect(swedenJson).not.toMatch(/PEN|Yape|MINCETUR|11002586010000|21002586010000/);
+  for (const record of [peru, sweden]) {
+    expect(record?.affiliate).toEqual({ href: null, available: false });
+  }
 });
