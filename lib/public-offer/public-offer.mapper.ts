@@ -2,6 +2,8 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 
 export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] {
+  const editorScore = casino.editorScore;
+  if (editorScore === null) return [];
   return casino.bonuses.map((bonus) => {
     const minimumDeposit = bonus.minimumDeposit
       ?? casino.payments.find((payment) => payment.minimumDeposit !== null)?.minimumDeposit
@@ -15,7 +17,7 @@ export function publicCasinoToOffers(casino: PublicCasinoDTO): PublicOfferDTO[] 
         summary: casino.summary,
         logo: casino.media.logo,
         hero: casino.media.hero,
-        editorScore: casino.editorScore,
+        editorScore,
         featured: casino.featured,
         recommended: casino.recommended,
         publishedAt: casino.publishedAt,

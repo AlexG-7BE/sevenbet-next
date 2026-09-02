@@ -87,7 +87,7 @@ test("published CMS wins over a duplicate legacy slug without expanding to legac
   assert.equal(list.filter((casino) => casino.slug === "10bet").length, 1);
   assert.equal(list.find((casino) => casino.slug === "10bet")?.source, "cms");
   assert.equal(list.some((casino) => casino.slug === legacy[1].slug), false);
-  assert.deepEqual(list.map((casino) => casino.slug), [...list].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug)).map((casino) => casino.slug));
+  assert.deepEqual(list.map((casino) => casino.slug), [...list].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug)).map((casino) => casino.slug));
 });
 
 test("draft and archived snapshots never become public", async () => {

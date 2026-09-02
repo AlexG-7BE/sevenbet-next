@@ -109,7 +109,7 @@ export interface PublicCasinoDTO {
   reviewContent: string;
   operator: string | null;
   foundedYear: number | null;
-  editorScore: number;
+  editorScore: number | null;
   trustScore: number | null;
   featured: boolean;
   recommended: boolean;

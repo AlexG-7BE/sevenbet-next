@@ -87,7 +87,7 @@ export function casinoProfileSchemas(casino: PublicCasinoDTO, editorial: CasinoE
 
   if (demo || legacy) return schemas;
 
-  if (Number.isFinite(casino.editorScore) && casino.editorScore >= 0 && casino.editorScore <= 10 && casino.reviewContent.trim()) {
+  if (typeof casino.editorScore === "number" && Number.isFinite(casino.editorScore) && casino.editorScore >= 0 && casino.editorScore <= 10 && casino.reviewContent.trim()) {
     schemas.push({
       "@context": "https://schema.org",
       "@type": "Review",

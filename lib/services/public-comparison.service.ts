@@ -24,6 +24,7 @@ import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authorit
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
+type ReviewedPublicCasinoDTO = PublicCasinoDTO & { editorScore: number };
 
 function marketState(casino: PublicCasinoDTO, country: string): PublicComparisonMarketState {
   const market = casino.countries.find((entry) => entry.countryCode === country);
@@ -37,7 +38,7 @@ function marketLabel(state: PublicComparisonMarketState, country: string) {
   return `${country} availability not published`;
 }
 
-function comparisonCompleteness(casino: PublicCasinoDTO) {
+function comparisonCompleteness(casino: ReviewedPublicCasinoDTO) {
   const bonus = selectComparisonBonus(casino);
   return Number(Boolean(casino.summary))
     + Number(casino.editorScore > 0)
@@ -50,7 +51,7 @@ function comparisonCompleteness(casino: PublicCasinoDTO) {
     + Number(casino.responsibleGamblingTools.length > 0);
 }
 
-function defaultCandidates(casinos: PublicCasinoDTO[], country: string) {
+function defaultCandidates(casinos: ReviewedPublicCasinoDTO[], country: string) {
   return casinos
     .filter((casino) => marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
     .sort((a, b) => Number(b.featured) - Number(a.featured)
@@ -120,9 +121,9 @@ function listValue(items: string[], status: PublicComparisonEvidenceStatus, miss
   return value(items.length ? items.join(" · ") : null, status, missing);
 }
 
-function buildGroups(casinos: PublicCasinoDTO[], projected: PublicComparisonCasino[], country: string): PublicComparisonGroup[] {
+function buildGroups(casinos: ReviewedPublicCasinoDTO[], projected: PublicComparisonCasino[], country: string): PublicComparisonGroup[] {
   const bySlug = new Map(projected.map((casino) => [casino.slug, casino]));
-  const rows = (definitions: Array<{ id: string; label: string; description: string; get: (casino: PublicCasinoDTO) => PublicComparisonValue }>) => definitions.map((definition) => ({
+  const rows = (definitions: Array<{ id: string; label: string; description: string; get: (casino: ReviewedPublicCasinoDTO) => PublicComparisonValue }>) => definitions.map((definition) => ({
     id: definition.id,
     label: definition.label,
     description: definition.description,
@@ -244,10 +245,11 @@ export class PublicComparisonService {
     }
 
     const now = this.now();
-    const all = published.flatMap((record) => {
+    const all: ReviewedPublicCasinoDTO[] = published.flatMap((record) => {
       const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now, countryCode: query.country });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
-      return casino?.source === "cms" ? [casino] : [];
+      if (casino?.source !== "cms" || casino.editorScore === null) return [];
+      return [{ ...casino, editorScore: casino.editorScore }];
     });
     const demoCount = all.filter((casino) => isTemporaryDemoCasinoId(casino.id)).length;
     const inventoryMode: PublicCasinoInventoryMode = demoCount === 0

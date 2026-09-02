@@ -122,7 +122,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     && isCasinoHeroMediaCompatible(heroRatio)
     && mayPresentPromotionalMedia({ demonstration: demo, governedActionAvailable: Boolean(action) }),
   );
-  const formattedEditorScore = formatProfileScore(casino.editorScore, presentation.locale);
+  const hasEditorScore = casino.editorScore !== null;
+  const formattedEditorScore = casino.editorScore === null
+    ? messages.common.notListed
+    : formatProfileScore(casino.editorScore, presentation.locale);
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />
@@ -143,7 +146,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           </div>
           <h1 id="casino-profile-title">{casino.name}</h1>
           <div className={styles.scoreVerdict}>
-            <div><strong aria-label={`${messages.common.editorScore} ${formattedEditorScore} / 10`}>{formattedEditorScore}</strong><span aria-hidden="true">★★★★★</span><small>{messages.common.editorScore}</small></div>
+            <div><strong aria-label={hasEditorScore ? `${messages.common.editorScore} ${formattedEditorScore} / 10` : `${messages.common.editorScore} ${messages.common.notListed}`}>{formattedEditorScore}</strong>{hasEditorScore ? <span aria-hidden="true">★★★★★</span> : null}<small>{messages.common.editorScore}</small></div>
             <p><em>{messages.profile.verdict}</em> {editorial?.summary || casino.summary}</p>
           </div>
           <div aria-label={demo ? messages.common.demoData : messages.common.sourceStatus} className={styles.signals}>
@@ -235,7 +238,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       <section aria-labelledby="verdict-heading" className={`${styles.verdict} ${scoreCategories.length ? styles.verdictWithBreakdown : ""}`} data-motion-reveal data-nav-theme="cream" id="verdict">
         <div>
           <p>B4GAMBLE · {messages.profile.verdict}</p>
-          <h2 id="verdict-heading">{presentation.locale === "en-GB" ? "Why" : messages.profile.verdict.replace(/:\s*$/, "")} {formattedEditorScore}</h2>
+          <h2 id="verdict-heading">{hasEditorScore ? <>{presentation.locale === "en-GB" ? "Why" : messages.profile.verdict.replace(/:\s*$/, "")} {formattedEditorScore}</> : casino.name}</h2>
           <span>{scoreCategories.length ? messages.profile.scoreExplanation : editorial?.summary || casino.reviewContent}</span>
           {!scoreCategories.length && casino.cons.length ? <div className={styles.verdictLimit}><strong>{messages.profile.keepInView}</strong><span>{casino.cons[0]}</span></div> : null}
         </div>
@@ -246,7 +249,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           </div>)}
           <p>{messages.common.editorScore}: <Link href={productHref(presentation, "/methodology")}>{messages.common.methodology}</Link> · <Link href="/affiliate-disclosure">{messages.common.affiliateDisclosure}</Link>.</p>
         </div> : <div className={styles.scorePanel}>
-          <strong>{formattedEditorScore}</strong><span>{messages.common.editorScore} / 10</span>
+          <strong>{formattedEditorScore}</strong><span>{messages.common.editorScore}{hasEditorScore ? " / 10" : ""}</span>
           <dl>
             <div><dt>{messages.profile.licenceRecord}</dt><dd>{demo ? messages.common.demoData : licenceChecked ? messages.common.current : licence ? messages.common.published : messages.common.notListed}</dd></div>
             <div><dt>{messages.profile.offerTerms}</dt><dd>{demo && bonus ? messages.common.demoData : bonus ? messages.common.published : messages.common.notListed}</dd></div>
