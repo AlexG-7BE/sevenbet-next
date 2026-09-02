@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
+import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
@@ -261,7 +262,7 @@ async function maybeApplyProgrammeAccessMigration() {
     }
   }
 
-  const prisma = new PrismaClient();
+  const prisma = createCasinoMarket0025AdminClient();
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);

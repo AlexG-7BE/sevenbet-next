@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { PrismaClient } from "@prisma/client";
-
-import { inspectCasinoMarket0025Release } from "../lib/db/casino-market-0025-release";
+import { createCasinoMarket0025AdminClient } from "../lib/db/casino-market-0025-admin-client";
+import {
+  CasinoMarket0025ReadStageError,
+  inspectCasinoMarket0025Release,
+  inspectCasinoMarket0025ReleaseSnapshot,
+  runCasinoMarket0025ReadOnlyTransaction,
+} from "../lib/db/casino-market-0025-release";
 
 function assertDisposableDatabase(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL is required");
@@ -15,7 +19,8 @@ function assertDisposableDatabase(value: string | undefined) {
 
 test("A, B, K and L — applied 0025 is verifiable, replay-free and compatible with the pre-#111 client", async () => {
   assertDisposableDatabase(process.env.DATABASE_URL);
-  const prisma = new PrismaClient();
+  assertDisposableDatabase(process.env.DIRECT_URL);
+  const prisma = createCasinoMarket0025AdminClient(process.env);
   try {
     const first = await inspectCasinoMarket0025Release(prisma);
     const repeated = await inspectCasinoMarket0025Release(prisma);
@@ -38,6 +43,46 @@ test("A, B, K and L — applied 0025 is verifiable, replay-free and compatible w
     ]);
     assert.equal(migration[0]?.completed, 1n);
     assert.equal(oldRuntimeReads.length, 5);
+  } finally {
+    await prisma.$disconnect();
+  }
+});
+
+test("direct administrative snapshots are repeatable-read, read-only, and fail fast at the named stage", async () => {
+  assertDisposableDatabase(process.env.DIRECT_URL);
+  const prisma = createCasinoMarket0025AdminClient(process.env);
+  try {
+    const snapshot = await inspectCasinoMarket0025ReleaseSnapshot(prisma);
+    assert.deepEqual(snapshot.transactionSafety, {
+      transactionReadOnly: "on",
+      transactionIsolation: "repeatable read",
+      statementTimeout: "20s",
+      lockTimeout: "5s",
+      idleInTransactionSessionTimeout: "1min",
+    });
+
+    const startedAt = Date.now();
+    await assert.rejects(
+      runCasinoMarket0025ReadOnlyTransaction(prisma, async ({ transaction, stage }) => {
+        await transaction.$executeRawUnsafe("SET LOCAL statement_timeout = '250ms'");
+        return stage("post_read_verification", () => transaction.$queryRawUnsafe("SELECT pg_sleep(2)"));
+      }),
+      (error: unknown) => error instanceof CasinoMarket0025ReadStageError
+        && error.stage === "post_read_verification"
+        && error.errorClass === "PrismaClientKnownRequestError"
+        && error.errorCode === "P2010",
+    );
+    assert.ok(Date.now() - startedAt < 5_000, "the deliberate slow query must fail well below the provider timeout");
+
+    await assert.rejects(
+      runCasinoMarket0025ReadOnlyTransaction(prisma, ({ transaction, stage }) => (
+        stage("post_read_verification", () => transaction.$executeRawUnsafe(
+          'UPDATE "_prisma_migrations" SET "checksum" = "checksum" WHERE FALSE',
+        ))
+      )),
+      (error: unknown) => error instanceof CasinoMarket0025ReadStageError
+        && error.stage === "post_read_verification",
+    );
   } finally {
     await prisma.$disconnect();
   }

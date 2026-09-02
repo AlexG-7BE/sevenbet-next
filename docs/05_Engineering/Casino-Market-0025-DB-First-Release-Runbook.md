@@ -1,36 +1,50 @@
-# Casino Market 0025 DB-First Release Runbook
+# Casino Market 0025 DB-First Release Record
 
-Status: **PROPOSED** on the Release-03 candidate. No Production execution is authorised by this document.
+Status: **DETECTED — PRODUCTION MIGRATION COMPLETE; STEADY-STATE RELEASE CANDIDATE**
 
-## Release invariant
+## Immutable migration
 
-**DETECTED:** the candidate carries byte-identical migration `0025_casino_market_profile_architecture` at SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99` (7,954 bytes). It imports no research data and creates no commercial authority. The serving Prisma schema and application remain the pre-#111 runtime. The Production build preflight preserves the complete 0023/0024 checksum and Programme/MCP invariant checks, then requires 0025 to be applied and structurally valid.
+`0025_casino_market_profile_architecture` remains the final repository migration. Its SQL is 7,954 bytes with SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`. It adds the exact-market architecture without importing factual casino data or creating commercial authority.
 
-**FOUNDER_DECISION_REQUIRED:** this candidate contains no automatic Production mutation path. A separately reviewed, one-time mechanism and exact operator authority are required to execute `prisma migrate deploy` against Production. The read-only guard deliberately stops deployment while 0025 is pending.
+## Production execution evidence
 
-## Ordered release
+Founder-authorised execution completed on 1 September 2026 from release commit `61f52542339590e2f9b0b6a6a27ea0630d34f14d` in temporary Vercel deployment `dpl_HAU77Wih5w52nhNfWqaTWwJY7Y8X` for project `prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb`.
 
-0. Record current `main`, current Production deployment, exact Release-03 head, the checksum above, and read-only Production migration state. Confirm 0024 is completed, its checksum matches, no unresolved row exists, and the only repository-pending suffix is 0025.
-1. Founder gives an explicit GO for the exact DB-first release and separately approves the reviewed one-time migration mechanism. HOLD if either authority is absent.
-2. Merge only the exact reviewed Release-03 head. Do not enable auto-merge.
-3. Before mutation, capture the bounded counts for Casino, CasinoCountry, CasinoLicense, CasinoPaymentMethod, CasinoGameProvider, CasinoGameCategory, CasinoBonus, MediaAsset, and AffiliateTrackingLinkCountry. Run the partial-schema and legacy-index preflight. Do not log Programme/customer content.
-4. Apply exactly migration 0025. Evidence must show: `0024 verified → exact 0025 pending → hazard/count preflight passed → 0025 applied → postflight passed`.
-5. Verify the 0025 migration row and checksum, zero unresolved/pending migrations, exact enums/columns/composite foreign keys/partial and market indexes, MediaAsset ownership check, and `productionEligible` default false. Prove preserved counts, zero invented evidence/licence links/scoped legacy rows, and zero real route eligibility.
-6. Keep the pre-#111 runtime serving and run public/application smoke. The disposable old-client proof is `casino-market-release:postgres-test`.
-7. Founder reviews migration evidence. Only then merge Release-04, which retains read-only 0025 verification and contains no mutation runner.
-8. Rebase/update PR #111 onto the resulting main. Keep the already-applied 0025 file byte-identical; do not create a duplicate 0026. Run exact-head CI and Preview.
-9. Founder separately decides #111 runtime promotion.
-10. After runtime verification, update/rebase #112. Founder separately decides ingestion-tooling promotion.
-11. Founder separately decides any real Betsson factual import. Commercial activation remains a later independent gate.
+The executor verified pooled `DATABASE_URL`, direct `DIRECT_URL`, and the same database identity before using the direct binding. Preflight found effective 0023 and 0024 completions with repository checksums, 0025 pending with no attempt row, no partial 0025 schema, and only safely superseded historical rollback attempts for `0002_program_builder` and `0015_active_control_program_flow`.
 
-## Stop conditions
+Postflight emitted `casino_market_0025_execution_succeeded` and verified:
 
-Stop on unknown database identity, non-Production mutation context, missing/mismatched/rolled-back 0023 or 0024, any unresolved migration, a pending suffix other than exact 0025, target checksum mismatch, partial manual 0025 objects, changed preservation counts, missing postflight object, or any `productionEligible=true` route. Never auto-repair schema drift.
+- 0023, 0024, and 0025 completed with repository checksums;
+- no pending or unresolved repository migration;
+- complete 0025 schema, index, constraint, enum, and authority invariants;
+- preservation counts unchanged: Casino 26, CasinoCountry 25, CasinoLicense 25, CasinoPaymentMethod 56, CasinoGameProvider 50, CasinoGameCategory 50, CasinoBonus 25, MediaAsset 1, AffiliateTrackingLinkCountry 0;
+- zero migration-created evidence, licence links, market-scoped legacy relations, or Production-eligible routes.
 
-## Rollback and failure response
+The temporary build stopped intentionally at `CASINO_MARKET_0025_MIGRATION_COMPLETE_STOP` and finished `ERROR`; it was never promoted. The prior runtime deployment `dpl_pe8Jgh28b6J2yLpbe8aeKJmgNybg` continued serving `b4gamble.com`.
 
-- **Before 0025 completes:** do not deploy the new runtime. Keep the current Production deployment. Inspect Prisma history; do not manually drop partial objects without a separately reviewed recovery procedure.
-- **After 0025 completes, application release issue:** roll the application deployment back to the previous known-good runtime and keep the additive 0025 expansion.
-- **Later #111 runtime failure:** return to the pre-#111 deployment; 0025 remains.
-- **Later import failure:** use a separate ingestion recovery procedure. Do not mix factual-row recovery with schema rollback.
+## Durable steady-state contract
 
+Normal Production builds are read-only for this release boundary. They require:
+
+1. exact effective migration history with no unknown, unresolved, ambiguous, or unsuperseded rollback state;
+2. 0023, 0024, and 0025 completed with repository checksums;
+3. no pending repository migrations;
+4. pooled/direct readiness and same database identity;
+5. administrative inspection through `DIRECT_URL` in a PostgreSQL-enforced read-only, repeatable-read transaction;
+6. 20-second statement, 5-second lock, and 60-second idle-in-transaction timeouts;
+7. complete 0025 schema invariants and zero unexpected Production eligibility.
+
+The durable branch contains no Production migration executor, probe launcher, ephemeral migration authority, or migration application path.
+
+## Remaining release order
+
+1. Merge the reconciled post-migration steady-state PR #114 after exact-head CI and Preview pass.
+2. Rebase and validate PR #111 against that `main`, preserving this migration byte-for-byte and creating no 0026 duplicate.
+3. Promote the exact-market runtime only after its own exact-head and Production acceptance gates.
+4. Rebase and validate PR #112, then separately execute only an explicitly authorised, checksum-bound factual import.
+
+Commercial route activation remains independent and fail-closed.
+
+## Failure handling
+
+Application/runtime failure uses a known-good Vercel runtime while retaining the additive 0025 schema. Database recovery remains forward-fix or isolated restore under RFC-024; never improvise reverse SQL, migration-history repair, or automatic schema rollback.
