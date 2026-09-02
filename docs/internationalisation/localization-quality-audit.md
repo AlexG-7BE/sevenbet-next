@@ -13,7 +13,7 @@
 > every market-first public-path example in this historical audit. Canonical
 > public presentation paths are now lowercase `/{locale-market}` (for example
 > `/en-gb`, `/sv-se`, `/es-pe`); unprefixed paths are neutral resolver inputs.
-> PE / `es-PE` is a `PUBLIC_CORE_READY`, AI-QA-passed, noindex, Preview-only
+> PE / `es-PE` is a `PUBLIC_CORE_READY`, AI-QA-passed, noindex public
 > presentation with bounded MINCETUR-backed Help/RG copy and no commercial
 > action. The current implementation record and exact route rules are in
 > [GEO-LOCALIZATION-01](GEO-LOCALIZATION-01.md). Programme paths remain governed
@@ -32,8 +32,8 @@ For the route matrix, these exact locale sets are used:
 
 - `EUROPE_AUTHORED`: `en-GB`, `de-DE`, `es-ES`, `sv-SE`, `da-DK`, `el-GR`,
   `it-IT`, `pt-PT`, `nl-NL`, `fi-FI`, `nb-NO`.
-- `PUBLICATION_SET`: `en-GB`, `de-DE`, `es-ES`, `sv-SE`, `da-DK`, `el-GR`.
-- `FIRST_WAVE_SAFETY`: `en-GB`, `de-DE`, `es-ES`, `sv-SE`, `da-DK`,
+- `PUBLICATION_SET`: `en-GB`, `de-DE`, `es-ES`, `es-PE`, `sv-SE`, `da-DK`, `el-GR`.
+- `FIRST_WAVE_SAFETY`: `en-GB`, `de-DE`, `es-ES`, `es-PE`, `sv-SE`, `da-DK`,
   `el-GR`.
 - `GB_ONLY`: `en-GB` on the existing unprefixed contract.
 
@@ -56,6 +56,7 @@ fail-closed.
 | GB | `en-GB` | `PUBLIC_CORE_READY` | Existing unprefixed baseline | Source baseline; not applicable | Source-baseline authority | yes | yes | yes | existing baseline | Existing GB route policy; demo, empty and unsafe states remain route-level `noindex` | `DENIED_FAIL_CLOSED`; current GB jurisdiction/partner/action gates do not permit referral |
 | DE | `de-DE` | `PUBLIC_CORE_READY` | Full localizable public core plus first-wave safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after ordinary merge/deploy; not deployed by this PR state | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; translation and market evidence grant no action |
 | ES | `es-ES` | `PUBLIC_CORE_READY` | Full localizable public core plus first-wave safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after ordinary merge/deploy; not deployed by this PR state | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; operator/advertising/copy and ordinary commercial evidence remain required |
+| PE | `es-PE` | `PUBLIC_CORE_READY` | Full localizable public core plus bounded MINCETUR-backed safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after the scoped release correction | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; exact operator/domain, partner, offer, tracking and ordinary commercial evidence remain required |
 | SE | `sv-SE` | `PUBLIC_CORE_READY` | Full localizable public core plus first-wave safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after ordinary merge/deploy; not deployed by this PR state | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; current licence/partner/offer/action evidence remains required |
 | DK | `da-DK` | `PUBLIC_CORE_READY` | Full localizable public core plus first-wave safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after ordinary merge/deploy; not deployed by this PR state | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; current licence/partner/offer/action evidence remains required |
 | GR | `el-GR` | `PUBLIC_CORE_READY` | Full localizable public core plus first-wave safety | `AI_LANGUAGE_QA_PASSED` | accepted | yes | yes | yes | yes after ordinary merge/deploy; not deployed by this PR state | `NOT_ACTIVATED`; `noindex, follow`; sitemap-excluded | `DENIED_FAIL_CLOSED`; HGC Affiliate Suitability and every ordinary commercial gate remain unverified/required |

@@ -3,11 +3,10 @@ import { expect, test, type Page } from "@playwright/test";
 import { homeTranslation } from "../lib/i18n/home-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
+import { INITIAL_EUROPEAN_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const coreCountries = new Set(["GB", "DE", "ES", "GR", "SE", "DK"]);
-const coreProfiles = INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => coreCountries.has(profile.countryCode));
+const coreProfiles = PUBLICATION_APPROVED_MARKET_PROFILES;
 const viewportWidths = [360, 375, 390, 412, 430, 768, 1024, 1280, 1366, 1440, 1536, 1920] as const;
 const unresolvedToken = /\{\{?[a-z][a-z0-9_-]*\}?\}/i;
 const fakeControl = /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i;
