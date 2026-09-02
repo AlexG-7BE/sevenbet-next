@@ -20,6 +20,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
       AFFILIATE_HEALTH_MONITOR_TOKEN: ${{ secrets.AFFILIATE_HEALTH_MONITOR_TOKEN }}
       HEALTH_ENDPOINT: https://b4gamble.com/api/internal/affiliate/route-health
       ALERT_TITLE: "[Production] Affiliate route health alert"

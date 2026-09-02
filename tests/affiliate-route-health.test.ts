@@ -131,6 +131,7 @@ test("claim selection is active-only and automation alerts through one deduplica
   assert.match(service, /destinationUrl/);
   const workflow = readFileSync(".github/workflows/affiliate-route-health.yml", "utf8");
   assert.match(workflow, /schedule:/);
+  assert.match(workflow, /GH_REPO: \$\{\{ github\.repository \}\}/);
   assert.match(workflow, /gh issue list --state open/);
   assert.match(workflow, /gh issue edit/);
   assert.match(workflow, /gh issue close/);
