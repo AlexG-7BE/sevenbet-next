@@ -187,8 +187,21 @@ export class AffiliateOfferRepository implements AffiliateOfferStore {
         if (link.id) {
           const existing = current.trackingLinks.find((item) => item.id === link.id);
           if (!existing) throw new Error("AFFILIATE_TRACKING_LINK_OWNERSHIP");
+          const countries = link.countries.map((rule) => {
+            const authority = rule.mode === AffiliateGeoMode.ALLOW
+              ? existing.countries.find((entry) => entry.countryCode === rule.countryCode && entry.mode === AffiliateGeoMode.ALLOW)
+              : null;
+            return {
+              ...rule,
+              productionEligible: authority?.productionEligible ?? false,
+              productionEligibilityVerifiedAt: authority?.productionEligibilityVerifiedAt ?? null,
+              productionEligibilityExpiresAt: authority?.productionEligibilityExpiresAt ?? null,
+              productionEligibilityEvidence: authority?.productionEligibilityEvidence ?? null,
+              productionEligibilityNotes: authority?.productionEligibilityNotes ?? null,
+            };
+          });
           await createTrackingRevision(tx, existing, actorId, "Updated tracking destination");
-          await tx.affiliateTrackingLink.update({ where: { id: link.id }, data: { ...linkData(link, actorId), countries: { deleteMany: {}, create: link.countries } } });
+          await tx.affiliateTrackingLink.update({ where: { id: link.id }, data: { ...linkData(link, actorId), countries: { deleteMany: {}, create: countries } } });
         } else {
           await tx.affiliateTrackingLink.create({ data: { offerId: id, ...linkData(link, actorId), createdBy: actorId, countries: { create: link.countries } } });
         }

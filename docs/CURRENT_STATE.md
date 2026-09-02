@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 24 August 2026
+**Evidence date:** 2 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (Founder/runtime evidence):** `9d7ba9169df43f914a1fb05f44cfc10af87118e2`
-**Verified post-migration runtime baseline SHA:** `f6f520340d67e4f2aac44142437962b287794a66`  
-**Verified post-migration runtime deployment:** `dpl_A4a22TFc2bERP74gu5y3PMwfvS43`
+**Current Production application SHA (live provider evidence):** `5d16a2615a642625c916f63899ba1748e895d689`
+**Verified post-migration runtime baseline SHA:** `5d16a2615a642625c916f63899ba1748e895d689`
+**Verified post-migration runtime deployment:** `dpl_GTK12YtMs1xsaNGMq8SeNgxA2f1h`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -34,8 +34,11 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
+| Casino market schema | **PRODUCTION MIGRATION COMPLETE; RUNTIME CANDIDATE GATED** | Migration 0025 is checksum-valid in Production; #111 remains an exact-market runtime candidate until its own merge/deployment gates pass. No factual casino import or commercial route activation has occurred. |
 
-### Unmerged internationalisation candidate
+### Unmerged implementation candidates
+
+**PROPOSED UNTIL MERGE — Casino market data architecture candidate, updated 2 September 2026:** explicit Founder instruction `CASINO-DATA-ARCH-01` authorises the bounded architecture candidate now based on post-migration main `5d16a2615a642625c916f63899ba1748e895d689`. It keeps `Casino` as global identity, makes `CasinoCountry` the canonical factual market grain, scopes licence/payment/bonus/provider/product facts, adds typed provenance, and resolves commercial routes through the existing normalized Affiliate records with exact country/tracking Production authority defaulting false. Production migration 0025 is already complete; this candidate does not re-execute it. It imports no research, activates no real route, publishes no asset, and performs no additional Production database change. See [RFC-038](06_RFC/RFC-038-Casino-Market-Data-Architecture.md) and the [technical baseline](05_Engineering/Technical_Baseline/13_Casino_Market_Data_Architecture.md).
 
 **PROPOSED UNTIL MERGE — PR #105 feature-branch evidence, 30 August 2026:** the current internationalisation candidate defines `HOME_READY`, `PUBLIC_CORE_READY` and `ARCHITECTURE_ONLY` presentation states; limits both Preview and Production selectors to the GB baseline plus Founder-accepted DE/ES/SE/DK/GR public-core locales; and adds rendered localization, interpolation, curated-control and responsive-overflow regression coverage. The detailed route/locale matrix is recorded in [Localization quality and route coverage](internationalisation/localization-quality-audit.md).
 
@@ -46,6 +49,12 @@ This entry does not change the Production SHA above. It does not activate indexi
 **PROPOSED UNTIL MERGE — systemic Programme access candidate, 31 August 2026:** the explicit Founder instruction `B4GAMBLE — SYSTEMIC PROGRAMME ACCESS FIX` supersedes the old authenticated one-hour browser-authority lifecycle. The candidate adds one purpose-specific `ProgrammeAccessAcceptance` row per accepted User, keeps anonymous access behind the existing signed journey/header/session boundary, binds claim acceptance atomically, and requires Better Auth plus durable acceptance on every authenticated Programme route. Empty `sessionStorage`, marker expiry, new tab/browser/device, logout/login, locale changes and later Terms/Privacy metadata changes do not re-prompt an accepted user. Migration `0024` backfills only the narrowly provable PROGRAM-AI claim/Starting-Point path; generic historical enrollments remain explicitly unknown. No Production database change, deployment or merge is represented by this entry. See [Programme Access Authorization](05_Engineering/Technical_Baseline/12_Programme_Access_Authorization.md).
 
 ## Detected release evidence
+
+### Casino market schema release 0025
+
+- Migration `0025_casino_market_profile_architecture` completed on 1 September 2026 from exact release commit `61f52542339590e2f9b0b6a6a27ea0630d34f14d` with SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`.
+- PR #114 merged the durable read-only steady-state guard as `5d16a2615a642625c916f63899ba1748e895d689`; normal Production deployment `dpl_GTK12YtMs1xsaNGMq8SeNgxA2f1h` is Ready and serves `b4gamble.com`.
+- The normal build proved pooled/direct identity, accepted 0025 as already applied, and performed no migration execution. No Casino factual import, affiliate route, tracking-country authority, or `productionEligible=true` state was introduced by the schema release.
 
 ### Public product and legal baseline
 

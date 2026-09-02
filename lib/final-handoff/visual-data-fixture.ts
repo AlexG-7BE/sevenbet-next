@@ -153,6 +153,7 @@ function casinoFixtureFacets(locale: SupportedLocale): CasinoDiscoveryResult["fa
   const market = fixtureMarket(locale);
   return {
     countries: [{ key: market.countryCode, label: market.seoDisplayName, count: casinoDirectorySamples.length }],
+    currencies: market.currencyHints.map((currency) => ({ key: currency, label: currency, count: casinoDirectorySamples.length })),
     licenses: [],
     payments: [
       { key: "visa", label: "Visa", count: casinoDirectorySamples.length },

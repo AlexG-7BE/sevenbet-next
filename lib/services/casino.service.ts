@@ -136,7 +136,11 @@ function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
   }));
   serialized.countries = serialized.countries
     .map((record) => ({
-      ...record,
+      id: record.id,
+      countryCode: record.countryCode,
+      availability: record.availability,
+      minimumAge: record.minimumAge,
+      notes: record.notes,
       currency: metadata.countries[record.id]?.currency ?? null,
       language: metadata.countries[record.id]?.language ?? null,
       priority: metadata.countries[record.id]?.priority ?? 0,
@@ -550,6 +554,15 @@ export class CasinoService {
     if (issues.length) {
       throw new ValidationError("Casino draft contains invalid fields", issues);
     }
+    const scopedFactIds = await casinoRepository.findMarketScopedFactIds({
+      paymentIds: draft.paymentMethods.map((record) => record.id),
+      providerIds: draft.gameProviders.map((record) => record.id),
+      categoryIds: draft.gameCategories.map((record) => record.id),
+      bonusIds: draft.casinoBonuses.map((record) => record.id),
+    });
+    if (scopedFactIds.length) {
+      throw new ValidationError("Market-scoped facts must be edited through the market profile contract", { scopedFactIds });
+    }
     if (await casinoRepository.existsBySlug(draft.slug, id)) {
       throw new ConflictError("A casino with this slug already exists", { slug: draft.slug });
     }
@@ -606,73 +619,132 @@ export class CasinoService {
           reviewBlocks: writeCasinoEditorMetadata(current.reviewBlocks, metadata),
           updatedBy: actorId,
           licenses: {
-            deleteMany: {},
-            create: draft.licenses.map((record) => ({
-              id: record.id,
-              authority: record.authority,
-              licenseNumber: record.licenseNumber,
-              jurisdiction: record.jurisdiction,
-              status: record.archived ? "ARCHIVED" : record.status,
-              verificationUrl: record.verificationUrl,
-              issuedAt: record.issuedAt ? new Date(record.issuedAt) : null,
-              expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
-              lastVerifiedAt: currentLicenses.get(record.id)?.lastVerifiedAt ?? null,
-              notes: record.notes,
+            upsert: draft.licenses.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                authority: record.authority,
+                licenseNumber: record.licenseNumber,
+                jurisdiction: record.jurisdiction,
+                status: record.archived ? "ARCHIVED" : record.status,
+                verificationUrl: record.verificationUrl,
+                issuedAt: record.issuedAt ? new Date(record.issuedAt) : null,
+                expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+                lastVerifiedAt: currentLicenses.get(record.id)?.lastVerifiedAt ?? null,
+                notes: record.notes,
+              },
+              update: {
+                authority: record.authority,
+                licenseNumber: record.licenseNumber,
+                jurisdiction: record.jurisdiction,
+                status: record.archived ? "ARCHIVED" : record.status,
+                verificationUrl: record.verificationUrl,
+                issuedAt: record.issuedAt ? new Date(record.issuedAt) : null,
+                expiresAt: record.expiresAt ? new Date(record.expiresAt) : null,
+                notes: record.notes,
+              },
             })),
           },
           countries: {
-            deleteMany: {},
-            create: draft.countries.map((record) => ({
-              id: record.id,
-              countryCode: record.countryCode,
-              availability: record.availability as CasinoCountryAvailability,
-              minimumAge: record.minimumAge,
-              notes: record.notes,
+            upsert: draft.countries.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                countryCode: record.countryCode,
+                availability: record.availability as CasinoCountryAvailability,
+                minimumAge: record.minimumAge,
+                notes: record.notes,
+              },
+              update: {
+                countryCode: record.countryCode,
+                availability: record.availability as CasinoCountryAvailability,
+                minimumAge: record.minimumAge,
+                notes: record.notes,
+              },
             })),
           },
           paymentMethods: {
-            deleteMany: {},
-            create: draft.paymentMethods.map((record) => ({
-              id: record.id,
-              methodKey: record.methodKey,
-              name: record.name,
-              supportsDeposits: record.supportsDeposits,
-              supportsWithdrawals: record.supportsWithdrawals,
-              currencies: record.currencies,
-              minimumDeposit: record.minimumDeposit,
-              minimumWithdrawal: record.minimumWithdrawal,
-              maximumWithdrawal: record.maximumWithdrawal,
-              depositProcessingTime: record.depositProcessingTime,
-              withdrawalTime: record.withdrawalTime,
-              fees: record.fees,
-              crypto: record.type === "CRYPTO" || record.crypto,
-              sortOrder: record.sortOrder,
+            upsert: draft.paymentMethods.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                methodKey: record.methodKey,
+                name: record.name,
+                supportsDeposits: record.supportsDeposits,
+                supportsWithdrawals: record.supportsWithdrawals,
+                currencies: record.currencies,
+                minimumDeposit: record.minimumDeposit,
+                minimumWithdrawal: record.minimumWithdrawal,
+                maximumWithdrawal: record.maximumWithdrawal,
+                depositProcessingTime: record.depositProcessingTime,
+                withdrawalTime: record.withdrawalTime,
+                fees: record.fees,
+                crypto: record.type === "CRYPTO" || record.crypto,
+                sortOrder: record.sortOrder,
+              },
+              update: {
+                methodKey: record.methodKey,
+                name: record.name,
+                supportsDeposits: record.supportsDeposits,
+                supportsWithdrawals: record.supportsWithdrawals,
+                currencies: record.currencies,
+                minimumDeposit: record.minimumDeposit,
+                minimumWithdrawal: record.minimumWithdrawal,
+                maximumWithdrawal: record.maximumWithdrawal,
+                depositProcessingTime: record.depositProcessingTime,
+                withdrawalTime: record.withdrawalTime,
+                fees: record.fees,
+                crypto: record.type === "CRYPTO" || record.crypto,
+                sortOrder: record.sortOrder,
+              },
             })),
           },
           gameProviders: {
-            deleteMany: {},
-            create: draft.gameProviders.map((record) => ({
-              id: record.id,
-              providerKey: record.providerKey,
-              name: record.name,
-              websiteUrl: record.websiteUrl,
-              gameCount: record.gameCount,
-              liveCasino: record.liveCasino,
-              verifiedAt: record.verified
-                ? currentProviders.get(record.id)?.verifiedAt ?? new Date()
-                : null,
-              sortOrder: record.sortOrder,
+            upsert: draft.gameProviders.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                providerKey: record.providerKey,
+                name: record.name,
+                websiteUrl: record.websiteUrl,
+                gameCount: record.gameCount,
+                liveCasino: record.liveCasino,
+                verifiedAt: record.verified
+                  ? currentProviders.get(record.id)?.verifiedAt ?? new Date()
+                  : null,
+                sortOrder: record.sortOrder,
+              },
+              update: {
+                providerKey: record.providerKey,
+                name: record.name,
+                websiteUrl: record.websiteUrl,
+                gameCount: record.gameCount,
+                liveCasino: record.liveCasino,
+                verifiedAt: record.verified
+                  ? currentProviders.get(record.id)?.verifiedAt ?? new Date()
+                  : null,
+                sortOrder: record.sortOrder,
+              },
             })),
           },
           gameCategories: {
-            deleteMany: {},
-            create: draft.gameCategories.map((record) => ({
-              id: record.id,
-              categoryKey: record.categoryKey,
-              name: record.name,
-              gameCount: record.gameCount,
-              featured: record.featured,
-              sortOrder: record.sortOrder,
+            upsert: draft.gameCategories.map((record) => ({
+              where: { id: record.id },
+              create: {
+                id: record.id,
+                categoryKey: record.categoryKey,
+                name: record.name,
+                gameCount: record.gameCount,
+                featured: record.featured,
+                sortOrder: record.sortOrder,
+              },
+              update: {
+                categoryKey: record.categoryKey,
+                name: record.name,
+                gameCount: record.gameCount,
+                featured: record.featured,
+                sortOrder: record.sortOrder,
+              },
             })),
           },
           casinoBonuses: {

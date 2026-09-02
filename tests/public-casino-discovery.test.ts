@@ -14,31 +14,53 @@ import { commercialAuthorityForPresentation } from "../lib/market/product-contex
 const now = new Date("2030-06-01T00:00:00.000Z");
 
 function record(id: string, slug: string, title: string, patch: Record<string, unknown> = {}): PublishedCasinoSnapshotRecord {
+  const snapshot = {
+    id, slug, title, internalName: `${title} canonical`, domain: `${slug}.example`, summary: `${title} review`, description: `${title} description`,
+    status: "PUBLISHED", editorScore: slug === "alpha" ? 9 : 8, publishedAt: "2030-05-01T00:00:00.000Z", pros: ["Clear terms"], responsibleGamblingTools: ["Deposit limits"],
+    reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: slug === "alpha", recommended: false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
+    licenses: [{ id: `${id}-license`, authority: slug === "alpha" ? "UKGC" : "MGA", status: "ACTIVE" }],
+    countries: [{ id: `${id}-country`, countryCode: slug === "alpha" ? "GB" : "CA", availability: "AVAILABLE" }],
+    paymentMethods: [{ id: `${id}-payment`, methodKey: slug === "alpha" ? "visa" : "bitcoin", name: slug === "alpha" ? "Visa" : "Bitcoin", crypto: slug !== "alpha" }],
+    gameProviders: [{ id: `${id}-provider`, providerKey: "evolution", name: "Evolution" }],
+    gameCategories: [{ id: `${id}-category`, categoryKey: slug === "alpha" ? "slots" : "live", name: slug === "alpha" ? "Slots" : "Live Casino" }],
+    casinoBonuses: [{ id: `${id}-bonus`, slug: `${slug}-welcome`, title: `${title} welcome`, summary: "Terms apply", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
+    ...patch,
+  } as Record<string, unknown>;
+  const scopedLicenses = (snapshot.licenses as Array<Record<string, unknown>>).map((license) => ({ license }));
+  snapshot.countries = (snapshot.countries as Array<Record<string, unknown>>).map((country) => ({
+    primaryLanguage: "en",
+    supportedLanguages: ["en"],
+    primaryCurrency: country.countryCode === "CA" ? "CAD" : "GBP",
+    supportedCurrencies: [country.countryCode === "CA" ? "CAD" : "GBP"],
+    licenses: scopedLicenses,
+    paymentMethods: snapshot.paymentMethods,
+    gameProviders: snapshot.gameProviders,
+    gameCategories: snapshot.gameCategories,
+    bonuses: snapshot.casinoBonuses,
+    ...country,
+  }));
   return {
     casinoId: id, version: 1, status: "PUBLISHED", publishedAt: new Date("2030-05-01T00:00:00.000Z"), archivedAt: null,
-    snapshot: {
-      id, slug, title, internalName: `${title} canonical`, domain: `${slug}.example`, summary: `${title} review`, description: `${title} description`,
-      status: "PUBLISHED", editorScore: slug === "alpha" ? 9 : 8, publishedAt: "2030-05-01T00:00:00.000Z", pros: ["Clear terms"], responsibleGamblingTools: ["Deposit limits"],
-      reviewBlocks: { __sevenbetCasinoEditor: { general: { featured: slug === "alpha", recommended: false }, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
-      licenses: [{ id: `${id}-license`, authority: slug === "alpha" ? "UKGC" : "MGA", status: "ACTIVE" }],
-      countries: [{ id: `${id}-country`, countryCode: slug === "alpha" ? "GB" : "CA", availability: "AVAILABLE" }],
-      paymentMethods: [{ id: `${id}-payment`, methodKey: slug === "alpha" ? "visa" : "bitcoin", name: slug === "alpha" ? "Visa" : "Bitcoin", crypto: slug !== "alpha" }],
-      gameProviders: [{ id: `${id}-provider`, providerKey: "evolution", name: "Evolution" }],
-      gameCategories: [{ id: `${id}-category`, categoryKey: slug === "alpha" ? "slots" : "live", name: slug === "alpha" ? "Slots" : "Live Casino" }],
-      casinoBonuses: [{ id: `${id}-bonus`, slug: `${slug}-welcome`, title: `${title} welcome`, summary: "Terms apply", type: "WELCOME", status: "PUBLISHED", offerStatus: "ACTIVE" }],
-      ...patch,
-    },
+    snapshot,
   };
 }
 
 function activeOffer(casinoId: string, patch: Record<string, unknown> = {}): DiscoveryContext["offers"][number] {
+  const countryCode = casinoId.startsWith("de-") ? "DE" : "GB";
   return {
     id: `${casinoId}-offer`, casinoId, casinoBonusId: null, status: "ACTIVE", archivedAt: null, startAt: null, expiresAt: null,
-    featured: false, priority: 10, geoMode: "GLOBAL", countries: [],
-    program: { status: "ACTIVE", archivedAt: null, network: { active: true, archivedAt: null } },
-    trackingLinks: [{ id: `${casinoId}-link`, active: true, archivedAt: null, validFrom: null, expiresAt: null, priority: 10, geoMode: "GLOBAL", countries: [] }],
+    featured: false, priority: 10, geoMode: "ALLOW", countries: [{ countryCode, mode: "ALLOW" }],
+    program: { casinoId, status: "ACTIVE", workflowStatus: "PUBLISHED", supportedCountries: [countryCode], archivedAt: null, network: { active: true, archivedAt: null } },
+    trackingLinks: [{
+      id: `${casinoId}-link`, active: true, archivedAt: null, validFrom: null, expiresAt: null,
+      verifiedAt: now, lastCheckedAt: now, destinationUrl: "https://casino.example/welcome", trackingUrl: "https://tracking.example/click",
+      priority: 10, geoMode: "ALLOW", countries: [{
+        countryCode, mode: "ALLOW", productionEligible: true, productionEligibilityVerifiedAt: now,
+        productionEligibilityExpiresAt: new Date("2030-06-08T00:00:00.000Z"), productionEligibilityEvidence: "Synthetic explicit authority",
+      }],
+    }],
     ...patch,
-  } as DiscoveryContext["offers"][number];
+  };
 }
 
 function store(records: PublishedCasinoSnapshotRecord[], context: Partial<DiscoveryContext> = {}): PublicCasinoDiscoveryStore {
@@ -46,20 +68,21 @@ function store(records: PublishedCasinoSnapshotRecord[], context: Partial<Discov
 }
 
 test("query parser normalizes, deduplicates, bounds, and serializes deterministically", () => {
-  const params = new URLSearchParams("q=%20%20Crypto%20%20Casino%20&country=gb&country=GB&payment=bitcoin&sort=name_desc&page=-5&pageSize=999&visualFixture=true&__proto__=x");
+  const params = new URLSearchParams("q=%20%20Crypto%20%20Casino%20&country=gb&country=GB&currency=gbp&payment=bitcoin&sort=name_desc&page=-5&pageSize=999&visualFixture=true&__proto__=x");
   const query = parseCasinoDiscoveryQuery(params);
   assert.equal(query.search, "Crypto Casino");
   assert.deepEqual(query.country, ["GB"]);
+  assert.deepEqual(query.currency, ["GBP"]);
   assert.equal(query.page, 1);
   assert.equal(query.pageSize, 12);
   assert.equal(query.sort, "NAME_DESC");
-  assert.equal(serializeCasinoDiscoveryQuery(query).toString(), "q=Crypto+Casino&country=GB&payment=bitcoin&sort=NAME_DESC&visualFixture=true");
+  assert.equal(serializeCasinoDiscoveryQuery(query).toString(), "q=Crypto+Casino&country=GB&currency=GBP&payment=bitcoin&sort=NAME_DESC&visualFixture=true");
 });
 
 test("directory links preserve every public control while pagination can reset", () => {
-  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24&visualFixture=true"));
-  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24&visualFixture=true");
-  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24&visualFixture=true");
+  const query = parseCasinoDiscoveryQuery(new URLSearchParams("q=live&country=GB&currency=GBP&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=3&pageSize=24&visualFixture=true"));
+  assert.equal(discoveryHref(query, { page: 4 }), "/casinos?q=live&country=GB&currency=GBP&license=ukgc&payment=visa&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&page=4&pageSize=24&visualFixture=true");
+  assert.equal(discoveryHref(query, { payment: [], page: 1 }), "/casinos?q=live&country=GB&currency=GBP&license=ukgc&gameProvider=evolution&category=slots&bonusType=WELCOME&hasBonus=true&hasAvailableVisitAction=true&hasResponsibleGambling=true&supportsCrypto=true&supportsMobile=true&sort=NAME_ASC&pageSize=24&visualFixture=true");
 });
 
 test("unavailable visit actions have safe public explanations", () => {
@@ -135,6 +158,7 @@ test("every directory filter returns the expected classified identities and coun
   }), () => now, allowOperatorAuthority, () => true);
   const cases: Array<[CasinoDiscoveryQuery, string[]]> = [
     [{ country: ["GB"] }, ["alpha"]],
+    [{ currency: ["GBP"] }, ["alpha"]],
     [{ license: ["ukgc"] }, ["alpha"]],
     [{ payment: ["visa"] }, ["alpha"]],
     [{ gameProvider: ["evolution"] }, ["alpha", "beta"]],
@@ -251,7 +275,10 @@ test("discovery architecture is provider-independent and catalog is canonical", 
   for (const forbidden of ["affiliate-integrations", "adapter", "registry", "credentials", "providerType", "externalMapping", "trackingUrl", "destinationUrl"]) {
     assert.doesNotMatch(service, new RegExp(forbidden, "i"));
   }
-  assert.doesNotMatch(repository, /externalMapping|providerType|trackingUrl|destinationUrl/);
+  assert.doesNotMatch(repository, /externalMapping|providerType/);
+  const commercialEligibility = readFileSync("lib/public-casino-discovery/commercial-eligibility.ts", "utf8");
+  assert.match(repository, /trackingUrl: true/);
+  assert.match(commercialEligibility, /safeHttps\(link\.trackingUrl\)/);
   assert.match(readFileSync("app/(public)/catalog/page.tsx", "utf8"), /permanentRedirect/);
   assert.doesNotMatch(readFileSync("lib/site.ts", "utf8"), /"\/catalog"/);
 });

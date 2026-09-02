@@ -13,11 +13,30 @@ const casinoAggregateInclude = {
     orderBy: [{ kind: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }],
   },
   mediaAssets: {
-    where: { status: "ACTIVE" },
+    where: { status: "ACTIVE", casinoCountryId: null },
     orderBy: [{ type: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }, { createdAt: Prisma.SortOrder.asc }],
   },
   countries: {
     orderBy: { countryCode: Prisma.SortOrder.asc },
+    include: {
+      operatorProfile: true,
+      evidence: { orderBy: [{ observedAt: Prisma.SortOrder.desc }, { createdAt: Prisma.SortOrder.desc }] },
+      licenses: {
+        include: {
+          license: {
+            include: { evidence: { orderBy: { observedAt: Prisma.SortOrder.desc } } },
+          },
+        },
+      },
+      paymentMethods: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+      gameProviders: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+      gameCategories: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+      bonuses: { orderBy: { sortOrder: Prisma.SortOrder.asc } },
+      mediaAssets: {
+        where: { status: "ACTIVE" },
+        orderBy: [{ type: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }],
+      },
+    },
   },
   licenses: {
     orderBy: { authority: Prisma.SortOrder.asc },
@@ -28,15 +47,19 @@ const casinoAggregateInclude = {
     },
   },
   paymentMethods: {
+    where: { casinoCountryId: null },
     orderBy: { sortOrder: Prisma.SortOrder.asc },
   },
   gameProviders: {
+    where: { casinoCountryId: null },
     orderBy: { sortOrder: Prisma.SortOrder.asc },
   },
   gameCategories: {
+    where: { casinoCountryId: null },
     orderBy: { sortOrder: Prisma.SortOrder.asc },
   },
   casinoBonuses: {
+    where: { casinoCountryId: null },
     orderBy: { sortOrder: Prisma.SortOrder.asc },
     include: {
       affiliateLinks: {
@@ -127,6 +150,7 @@ export interface CasinoStore {
   existsBySlug(slug: string, excludeCasinoId?: string): Promise<boolean>;
   existsByDomain(domain: string, excludeCasinoId?: string): Promise<boolean>;
   findBonusIdentities(ids: string[], slugs: string[]): Promise<CasinoBonusIdentity[]>;
+  findMarketScopedFactIds(input: { paymentIds: string[]; providerIds: string[]; categoryIds: string[]; bonusIds: string[] }): Promise<string[]>;
   updateWithRevision(
     id: string,
     data: Prisma.CasinoUpdateInput,
@@ -309,6 +333,16 @@ export class CasinoRepository implements CasinoStore {
       },
       select: { id: true, casinoId: true, slug: true },
     });
+  }
+
+  async findMarketScopedFactIds(input: { paymentIds: string[]; providerIds: string[]; categoryIds: string[]; bonusIds: string[] }) {
+    const [payments, providers, categories, bonuses] = await Promise.all([
+      input.paymentIds.length ? prisma.casinoPaymentMethod.findMany({ where: { id: { in: input.paymentIds }, casinoCountryId: { not: null } }, select: { id: true } }) : [],
+      input.providerIds.length ? prisma.casinoGameProvider.findMany({ where: { id: { in: input.providerIds }, casinoCountryId: { not: null } }, select: { id: true } }) : [],
+      input.categoryIds.length ? prisma.casinoGameCategory.findMany({ where: { id: { in: input.categoryIds }, casinoCountryId: { not: null } }, select: { id: true } }) : [],
+      input.bonusIds.length ? prisma.casinoBonus.findMany({ where: { id: { in: input.bonusIds }, casinoCountryId: { not: null } }, select: { id: true } }) : [],
+    ]);
+    return [...new Set([...payments, ...providers, ...categories, ...bonuses].map((record) => record.id))];
   }
 
   async updateWithRevision(

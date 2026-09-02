@@ -24,11 +24,15 @@ export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoverySto
           id: true, casinoId: true, casinoBonusId: true, status: true, archivedAt: true, startAt: true, expiresAt: true,
           featured: true, priority: true, geoMode: true,
           countries: { select: { countryCode: true, mode: true } },
-          program: { select: { status: true, archivedAt: true, network: { select: { active: true, archivedAt: true } } } },
+          program: { select: { casinoId: true, status: true, workflowStatus: true, supportedCountries: true, archivedAt: true, network: { select: { active: true, archivedAt: true } } } },
           trackingLinks: {
             select: {
               id: true, active: true, archivedAt: true, validFrom: true, expiresAt: true, priority: true, geoMode: true,
-              countries: { select: { countryCode: true, mode: true } },
+              verifiedAt: true, lastCheckedAt: true, destinationUrl: true, trackingUrl: true,
+              countries: { select: {
+                countryCode: true, mode: true, productionEligible: true, productionEligibilityVerifiedAt: true,
+                productionEligibilityExpiresAt: true, productionEligibilityEvidence: true,
+              } },
             },
           },
         },

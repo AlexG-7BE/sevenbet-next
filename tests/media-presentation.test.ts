@@ -119,7 +119,7 @@ test("casino discovery fixtures include the required wide, landscape, square and
     page: 1,
     pageSize: 1,
     pageCount: 1,
-    facets: { countries: [], licenses: [], payments: [], gameProviders: [], categories: [], bonusTypes: [] },
+    facets: { countries: [], currencies: [], licenses: [], payments: [], gameProviders: [], categories: [], bonusTypes: [] },
     appliedFilters: {},
   };
 
@@ -222,7 +222,7 @@ test("all European visual fixtures localize reader-facing copy and expose only t
     page: 1,
     pageSize: 1,
     pageCount: 0,
-    facets: { countries: [], licenses: [], payments: [], gameProviders: [], categories: [], bonusTypes: [] },
+    facets: { countries: [], currencies: [], licenses: [], payments: [], gameProviders: [], categories: [], bonusTypes: [] },
     appliedFilters: {},
   };
   const bonusSeed = {

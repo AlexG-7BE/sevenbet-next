@@ -42,6 +42,7 @@ function casino(patch: Partial<PublicCasinoDTO> = {}): PublicCasinoDTO {
       wageringText: "30× wagering on bonus funds", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
       startsAt: null, expiresAt: null, affiliate: { href: "/r/published-bonus", available: true },
     }],
+    marketProfiles: [],
     media: { logo: { id: "logo", type: "logo", url: "https://media.example/logo.png", alt: "Published Casino logo", width: 320, height: 160, caption: null }, hero: null, screenshots: [], gallery: [], socialImage: null },
     affiliate: { href: "/r/published-casino", available: true },
     ...patch,

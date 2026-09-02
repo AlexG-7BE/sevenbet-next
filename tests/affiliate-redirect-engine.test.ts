@@ -9,7 +9,7 @@ import { requestCountrySignalFromHeaders } from "../lib/jurisdiction/request-cou
 import type { AffiliateRedirectStore } from "../lib/repositories/affiliate-redirect.repository";
 import { AffiliateRedirectService } from "../lib/services/affiliate-redirect.service";
 import { getAdminAccessStatus } from "../lib/auth/policy";
-import { allowGbCommercialReadinessAuthority, allowJurisdictionResolver } from "./market-authority.fixtures";
+import { allowGbCommercialReadinessAuthority, allowJurisdictionResolver, allowPartnerRouteProductionAuthority } from "./market-authority.fixtures";
 
 const now = new Date("2030-06-01T00:00:00.000Z");
 
@@ -188,15 +188,33 @@ test("redirect service selects only stored safe tracking URLs", async () => {
     defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
     createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
   };
-  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority);
+  const safeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [offer("safe")] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, allowPartnerRouteProductionAuthority);
   const safe = await safeService.resolve("casino-offer", { now });
   assert.equal(safe.ok, true);
   if (safe.ok) assert.equal(safe.destination.toString(), "https://tracking.example/link-safe");
   const unsafeOffer = offer("unsafe", { trackingLinks: [link("unsafe", { trackingUrl: "javascript:alert(1)" })] });
-  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority);
+  const unsafeService = new AffiliateRedirectService(redirectStore(mapping), { activeCandidates: async () => [unsafeOffer] as never }, allowJurisdictionResolver, allowGbCommercialReadinessAuthority, allowPartnerRouteProductionAuthority);
   const unsafe = await unsafeService.resolve("casino-offer", { now });
   assert.equal(unsafe.ok, false);
   if (!unsafe.ok) assert.equal(unsafe.reason, "UNSAFE_REDIRECT_URL");
+});
+
+test("direct redirect resolution denies a route without exact Production authority", async () => {
+  const mapping = {
+    id: "redirect-id", slug: "casino-offer", casinoId: "casino", casinoBonusId: null, affiliateOfferId: "safe",
+    defaultCurrency: null, defaultLanguage: null, active: true, archivedAt: null, createdAt: now, updatedAt: now,
+    createdBy: "actor", updatedBy: "actor", casino: { id: "casino", title: "Casino", slug: "casino" }, casinoBonus: null, affiliateOffer: null, revisions: [],
+  };
+  const service = new AffiliateRedirectService(
+    redirectStore(mapping),
+    { activeCandidates: async () => [offer("safe")] as never },
+    allowJurisdictionResolver,
+    allowGbCommercialReadinessAuthority,
+    { async isProductionEligible() { return false; } },
+  );
+  const result = await service.resolve("casino-offer", { now });
+  assert.equal(result.ok, false);
+  if (!result.ok) assert.equal(result.reason, "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE");
 });
 
 test("admin routes require affiliate.manage and public requests are not audited", () => {

@@ -5,7 +5,7 @@ import { publicCasinoRepository, type PublicCasinoStore } from "@/lib/repositori
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 
 export interface PublicOfferStore {
-  listOffers(options?: { includeCommercial?: boolean }): Promise<PublicOfferDTO[]>;
+  listOffers(options?: { includeCommercial?: boolean; countryCode?: string }): Promise<PublicOfferDTO[]>;
 }
 
 export class PublicOfferRepository implements PublicOfferStore {
@@ -14,19 +14,19 @@ export class PublicOfferRepository implements PublicOfferStore {
     private readonly options: { redirectEnabled?: boolean; now?: Date } = {},
   ) {}
 
-  async listOffers(options: { includeCommercial?: boolean } = {}) {
+  async listOffers(options: { includeCommercial?: boolean; countryCode?: string } = {}) {
     const published = await this.casinoStore.listPublished();
     const redirectEnabled = (options.includeCommercial ?? true) && (this.options.redirectEnabled ?? isAffiliateRedirectEnabled());
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (redirectEnabled && published.length) {
       try {
-        routes = await this.casinoStore.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId));
+        routes = await this.casinoStore.listActiveAffiliateRoutes(published.map((entry) => entry.casinoId), options.countryCode, this.options.now);
       } catch {
         // Published editorial offers remain visible without commercial actions.
       }
     }
     return published.flatMap((entry) => {
-      const casino = mapPublishedCasino(entry, routes, { redirectEnabled, now: this.options.now });
+      const casino = mapPublishedCasino(entry, routes, { redirectEnabled, now: this.options.now, countryCode: options.countryCode });
       return casino ? publicCasinoToOffers(casino) : [];
     });
   }

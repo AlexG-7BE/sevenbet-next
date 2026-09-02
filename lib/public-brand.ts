@@ -13,6 +13,15 @@ export function currentPublicBrandText(value: string) {
 export function currentPublicCasinoBrand(casino: PublicCasinoDTO) {
   if (!isTemporaryDemoCasinoId(casino.id)) return casino;
   const brand = (value: string) => currentPublicBrandText(value);
+  const brandedBonus = (bonus: PublicCasinoDTO["bonuses"][number]) => ({
+    ...bonus,
+    title: brand(bonus.title),
+    summary: brand(bonus.summary),
+    wageringText: bonus.wageringText ? brand(bonus.wageringText) : null,
+    eligibility: bonus.eligibility ? brand(bonus.eligibility) : null,
+    importantConditions: bonus.importantConditions.map(brand),
+    affiliate: { href: null, available: false },
+  });
   return {
     ...casino,
     summary: brand(casino.summary),
@@ -37,14 +46,14 @@ export function currentPublicCasinoBrand(casino: PublicCasinoDTO) {
       socialImage: casino.media.socialImage ? { ...casino.media.socialImage, alt: brand(casino.media.socialImage.alt), caption: casino.media.socialImage.caption ? brand(casino.media.socialImage.caption) : null } : null,
     },
     affiliate: { href: null, available: false },
-    bonuses: casino.bonuses.map((bonus) => ({
-      ...bonus,
-      title: brand(bonus.title),
-      summary: brand(bonus.summary),
-      wageringText: bonus.wageringText ? brand(bonus.wageringText) : null,
-      eligibility: bonus.eligibility ? brand(bonus.eligibility) : null,
-      importantConditions: bonus.importantConditions.map(brand),
-      affiliate: { href: null, available: false },
+    bonuses: casino.bonuses.map(brandedBonus),
+    marketProfiles: casino.marketProfiles.map((profile) => ({
+      ...profile,
+      kycSummary: profile.kycSummary ? brand(profile.kycSummary) : null,
+      withdrawalSummary: profile.withdrawalSummary ? brand(profile.withdrawalSummary) : null,
+      supportSummary: profile.supportSummary ? brand(profile.supportSummary) : null,
+      bonuses: profile.bonuses.map(brandedBonus),
+      media: profile.media.map((item) => ({ ...item, alt: brand(item.alt), caption: item.caption ? brand(item.caption) : null })),
     })),
   };
 }

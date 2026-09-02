@@ -2,7 +2,7 @@
 
 ## Persistence foundation
 
-**Detected at current main `c525954`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 19 ordered SQL migrations (`0001_cms_foundation` through `0019_programme_runtime_hardening`). The schema currently declares 68 Prisma models and 38 enums. Application repositories/services directly use this persistence layer.
+**DETECTED on the `CASINO-DATA-ARCH-01` candidate updated onto authoritative post-migration main `5d16a2615a642625c916f63899ba1748e895d689`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 25 ordered SQL migrations (`0001_cms_foundation` through `0025_casino_market_profile_architecture`). The candidate schema declares 89 Prisma models and 61 enums. Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
@@ -12,11 +12,12 @@
 | Program/progress/rewards | `Program`, `ProgramStep`, `Lesson`, `LessonBlock`, `ProgramVersion`, `ProgramEnrollment`, `ProgramReflection`, `ProgramProgressEvent`, `XpRule`, `UserXpEvent`, `Achievement`, `UserAchievement` |
 | Active-control private flow | `AnonymousProgrammeSession`, `PendingProgrammeClaim`, `ProgrammeMissionProgress`, `MomentMap`, `CurrentGoal`, `ProgrammeActiveDay`, `ProgrammeSensitiveInputAuthority`, `ProgrammeStartingPoint`, transient `ProgrammeRuntimeRateLimitBucket` |
 | Editorial/CMS | `Article`, `ContentRevision`, `SiteSetting` |
-| Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
+| Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoCountryEvidence`, `CasinoCountryLicense`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
 | Affiliate | `AffiliateNetwork`, `AffiliateProgram`, `AffiliateOffer`, `AffiliateOfferCountry`, `AffiliateOfferCurrency`, `AffiliateTrackingLink`, `AffiliateTrackingLinkCountry`, `AffiliateOfferRevision`, `AffiliateTrackingLinkRevision`, `AffiliateRedirectSlug`, `AffiliateRedirectRevision`, `AffiliateExternalMapping`, `AffiliateImportJob`, `AffiliateImportItem` |
+| Commercial operations | `CommercialOpportunity` aggregate and its evidence, contact, activity, application, term, task, agent-run, agent-operation, activation-packet and related workflow records |
 | Media | `MediaAsset` |
 
-Major relationships are explicit: users own sessions/accounts and progress/reward records; programs own steps, lessons, blocks, versions and enrollments; casinos own rich catalog/compliance/editorial records; affiliate offers connect a network/program to a casino/bonus and tracking links; media can attach to casino, bonus, or affiliate offer. Program/casino/affiliate version and revision records support snapshots/history.
+Major relationships are explicit: users own sessions/accounts and progress/reward records; programs own steps, lessons, blocks, versions and enrollments; casinos own rich catalog/compliance/editorial records; `CasinoCountry` is the canonical exact-market factual grain; affiliate offers connect a network/program to a casino/bonus and tracking links; media can attach to casino, market profile, bonus, or affiliate offer. Program/casino/affiliate version and revision records support snapshots/history.
 
 ## Enums
 
@@ -43,5 +44,11 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 17. Mission 04 active-boundary vertical slice
 18. PROGRAM-AI M1 narrow authority and confirmed Starting Point
 19. Programme runtime hardening shared fixed-window rate-limit buckets
+20. Commercial CRM and operations foundation
+21. Partner Operations work bridge
+22. Better Auth 1.7 schema upgrade
+23. MCP dynamic-client-registration runtime compatibility fix
+24. Durable Programme access acceptance
+25. Casino market-profile architecture
 
-**Detected:** all migration directories contain `migration.sql`. Migration 0019 creates only the transient rate-limit bucket and expiry index; bounded purge code uses it together with expired anonymous sessions and unconsumed claims. Whether every migration is applied to any particular deployed database is **not detected** from the repository. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.
+**DETECTED:** all migration directories contain `migration.sql`. Disposable verification replays all 25 and verifies an upgrade to 0025. Production migration 0025 is completed and checksum-valid under the bounded evidence recorded in [Casino Market 0025 Post-Migration Steady State](../Casino-Market-0025-Post-Migration-Steady-State.md); the #111 runtime reconciliation does not re-execute it. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.

@@ -2,16 +2,19 @@ import { EditorialStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/db/prisma";
 import type { PublicAffiliateRoute, PublishedCasinoSnapshotRecord } from "@/lib/public-casino/public-casino.types";
+import { partnerRouteService, type PartnerRouteService } from "@/lib/services/partner-route.service";
 
 export interface PublicCasinoStore {
   findPublishedBySlug(slug: string): Promise<PublishedCasinoSnapshotRecord | null>;
   hasManagedSlug(slug: string): Promise<boolean>;
   listPublished(): Promise<PublishedCasinoSnapshotRecord[]>;
   listManagedSlugs(): Promise<string[]>;
-  listActiveAffiliateRoutes(casinoIds: string[]): Promise<PublicAffiliateRoute[]>;
+  listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date): Promise<PublicAffiliateRoute[]>;
 }
 
 export class PublicCasinoRepository implements PublicCasinoStore {
+  constructor(private readonly partnerRoutes: Pick<PartnerRouteService, "resolve"> = partnerRouteService) {}
+
   async hasManagedSlug(slug: string) {
     return (await prisma.casino.count({ where: { slug } })) > 0;
   }
@@ -76,13 +79,15 @@ export class PublicCasinoRepository implements PublicCasinoStore {
     } : null;
   }
 
-  async listActiveAffiliateRoutes(casinoIds: string[]) {
-    if (!casinoIds.length) return [];
-    return prisma.affiliateRedirectSlug.findMany({
-      where: { casinoId: { in: casinoIds }, active: true, archivedAt: null },
-      orderBy: [{ casinoId: "asc" }, { casinoBonusId: "desc" }, { createdAt: "asc" }],
-      select: { casinoId: true, casinoBonusId: true, slug: true },
-    });
+  async listActiveAffiliateRoutes(casinoIds: string[], countryCode?: string, now?: Date) {
+    if (!casinoIds.length || !countryCode) return [];
+    const candidates = await this.partnerRoutes.resolve(casinoIds, countryCode, { now, redirectEnabled: true });
+    const eligible = candidates.filter((route) => route.productionEligible);
+    return [...new Map(eligible.map((route) => [`${route.redirect.casinoId}:${route.redirect.casinoBonusId ?? ""}:${route.redirect.slug}`, {
+      casinoId: route.redirect.casinoId,
+      casinoBonusId: route.redirect.casinoBonusId,
+      slug: route.redirect.slug,
+    }])).values()];
   }
 }
 

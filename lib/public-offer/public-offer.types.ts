@@ -26,12 +26,12 @@ export interface PublicOfferDTO {
       key: string;
       name: string;
       minimumDeposit: number | null;
-      supportsWithdrawals: boolean;
+      supportsWithdrawals: boolean | null;
       withdrawalTime: string | null;
       minimumWithdrawal: number | null;
       maximumWithdrawal: number | null;
       fees: string | null;
-      crypto: boolean;
+      crypto: boolean | null;
     }>;
     responsibleGamblingTools: string[];
   };

@@ -27,6 +27,8 @@ export * from "./xp.repository";
 export * from "./achievement.repository";
 export * from "./reward-transaction.repository";
 export * from "./casino.repository";
+export * from "./casino-market.repository";
+export * from "./partner-route.repository";
 export * from "./casino-domain.repository";
 export * from "./editorial-review.repository";
 export * from "./affiliate-network.repository";

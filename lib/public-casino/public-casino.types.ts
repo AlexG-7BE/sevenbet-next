@@ -37,6 +37,67 @@ export interface PublicCasinoBonus {
   affiliate: PublicCasinoAffiliate;
 }
 
+export interface PublicCasinoLicense {
+  authority: string;
+  licenseNumber: string | null;
+  jurisdiction: string | null;
+  status: string;
+  verificationUrl: string | null;
+  expiresAt: string | null;
+  lastVerifiedAt: string | null;
+}
+
+export interface PublicCasinoPayment {
+  key: string;
+  name: string;
+  supportsDeposits: boolean | null;
+  supportsWithdrawals: boolean | null;
+  currencies: string[];
+  minimumDeposit: number | null;
+  minimumWithdrawal: number | null;
+  maximumWithdrawal: number | null;
+  depositProcessingTime: string | null;
+  withdrawalTime: string | null;
+  fees: string | null;
+  crypto: boolean | null;
+}
+
+export interface PublicCasinoMarketProfile {
+  id: string;
+  countryCode: string;
+  availability: string;
+  localDomain: string | null;
+  localWebsiteUrl: string | null;
+  operatingLegalEntity: string | null;
+  termsUrl: string | null;
+  privacyUrl: string | null;
+  responsibleGamblingUrl: string | null;
+  primaryLanguage: string | null;
+  supportedLanguages: string[];
+  supportLanguages: string[];
+  primaryCurrency: string | null;
+  supportedCurrencies: string[];
+  minimumAge: number | null;
+  kycSummary: string | null;
+  withdrawalSummary: string | null;
+  supportSummary: string | null;
+  lastVerifiedAt: string | null;
+  evidence: Array<{
+    classification: "DETECTED" | "INFERRED" | "PROPOSED" | "UNKNOWN" | "CONTRADICTION";
+    sourceType: string;
+    sourceUrl: string | null;
+    fieldKeys: string[];
+    observedAt: string | null;
+    lastVerifiedAt: string | null;
+  }>;
+  licenses: PublicCasinoLicense[];
+  payments: PublicCasinoPayment[];
+  providers: Array<{ key: string; name: string; gameCount: number | null; liveCasino: boolean | null }>;
+  categories: Array<{ key: string; name: string; gameCount: number | null; featured: boolean }>;
+  bonuses: PublicCasinoBonus[];
+  media: PublicCasinoMedia[];
+}
+
 export interface PublicCasinoDTO {
   source: PublicCasinoSource;
   id: string;
@@ -70,15 +131,7 @@ export interface PublicCasinoDTO {
     socialImage: string | null;
     structuredData: Record<string, unknown> | Array<Record<string, unknown>> | null;
   };
-  licenses: Array<{
-    authority: string;
-    licenseNumber: string | null;
-    jurisdiction: string | null;
-    status: string;
-    verificationUrl: string | null;
-    expiresAt: string | null;
-    lastVerifiedAt: string | null;
-  }>;
+  licenses: PublicCasinoLicense[];
   countries: Array<{
     countryCode: string;
     availability: string;
@@ -86,23 +139,11 @@ export interface PublicCasinoDTO {
     currency: string | null;
     language: string | null;
   }>;
-  payments: Array<{
-    key: string;
-    name: string;
-    supportsDeposits: boolean;
-    supportsWithdrawals: boolean;
-    currencies: string[];
-    minimumDeposit: number | null;
-    minimumWithdrawal: number | null;
-    maximumWithdrawal: number | null;
-    depositProcessingTime: string | null;
-    withdrawalTime: string | null;
-    fees: string | null;
-    crypto: boolean;
-  }>;
-  providers: Array<{ key: string; name: string; gameCount: number | null; liveCasino: boolean }>;
+  payments: PublicCasinoPayment[];
+  providers: Array<{ key: string; name: string; gameCount: number | null; liveCasino: boolean | null }>;
   categories: Array<{ key: string; name: string; gameCount: number | null; featured: boolean }>;
   bonuses: PublicCasinoBonus[];
+  marketProfiles: PublicCasinoMarketProfile[];
   media: {
     logo: PublicCasinoMedia | null;
     hero: PublicCasinoMedia | null;
