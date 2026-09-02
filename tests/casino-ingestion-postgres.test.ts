@@ -9,6 +9,7 @@ import { parseCasinoIngestionBundle } from "../lib/casino-ingestion/contract";
 import { deterministicCasinoIngestionId, ingestCasinoBundle } from "../lib/casino-ingestion/importer";
 import { verifyCasinoIngestionSources } from "../lib/casino-ingestion/source-verification";
 import { assertCasinoIngestionWriteAuthority } from "../lib/casino-ingestion/write-guard";
+import { inspectCasinoMarket0025Release } from "../lib/db/casino-market-0025-release";
 import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "../lib/public-casino-discovery/public-casino-discovery.types";
 import type { PublishedCasinoSnapshotRecord } from "../lib/public-casino/public-casino.types";
 import type { PublicCasinoStore } from "../lib/repositories/public-casino.repository";
@@ -128,6 +129,11 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     assert.equal(pe.evidence.some((evidence) => evidence.classification === "CONTRADICTION" && evidence.notes?.includes("21002586020000")), true);
     assert.equal([...pe.evidence, ...se.evidence].some((evidence) => evidence.classification === "UNKNOWN"), true);
     assert.equal([...pe.evidence, ...se.evidence].every((evidence) => evidence.sourceReference && evidence.fieldKeys.length > 0), true);
+    assert.deepEqual(
+      await inspectCasinoMarket0025Release(prisma),
+      { state: "already_applied_and_verified" },
+      "ordinary Production preflight must accept evidence-backed factual rows while retaining the commercial firewall",
+    );
 
     const firstCanonical = json(stateAfterFirst);
     const second = await ingestCasinoBundle(prisma, bundle);

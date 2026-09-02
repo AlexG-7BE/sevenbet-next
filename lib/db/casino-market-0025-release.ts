@@ -342,6 +342,12 @@ export function assertEmptyCasinoMarket0025Authority(snapshot: CasinoMarket0025A
   }
 }
 
+function assertCasinoMarket0025CommercialFirewall(snapshot: CasinoMarket0025AuthoritySnapshot) {
+  if (snapshot.eligibleRouteCountries !== 0n || snapshot.ineligibleRouteCountries !== snapshot.routeCountries) {
+    releaseFail("UNEXPECTED_PRODUCTION_ELIGIBILITY", "Casino market steady state found unexpected productionEligible authority.");
+  }
+}
+
 function safeErrorMetadata(error: unknown) {
   if (error instanceof CasinoMarket0025ReleaseError) {
     return {
@@ -512,8 +518,18 @@ export async function inspectCasinoMarket0025Release(
   prisma: PrismaClient,
   repositoryMigrations = casinoMarketRepositoryMigrations(),
 ) {
-  const snapshot = await inspectCasinoMarket0025ReleaseSnapshot(prisma, repositoryMigrations);
-  return { state: snapshot.state };
+  return runCasinoMarket0025ReadOnlyTransaction(prisma, async ({ transaction, stage }) => {
+    const rows = await stage("migration_history", () => casinoMarketMigrationRows(transaction));
+    await stage("effective_history", async () => planCasinoMarket0025Release(rows, repositoryMigrations));
+    await stage("postflight_schema", () => assertCasinoMarket0025Schema(transaction));
+    await stage("authority_state", async () => {
+      const authority = await casinoMarket0025AuthoritySnapshot(transaction);
+      assertCasinoMarket0025CommercialFirewall(authority);
+      return authority;
+    });
+    await stage("post_read_verification", () => readCasinoMarket0025TransactionSafety(transaction));
+    return { state: "already_applied_and_verified" as const };
+  });
 }
 
 export async function runCasinoMarket0025Readiness() {
