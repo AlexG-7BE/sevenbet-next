@@ -217,7 +217,11 @@ export class PublicCasinoDiscoveryService {
       && (!query.hasResponsibleGambling || item.hasResponsibleGambling)
       && (!query.supportsCrypto || item.supportsCrypto)
       && (!query.supportsMobile || item.supportsMobile));
-    const filtered = [...new Map(matchingProfiles.map((item) => [item.card.id, item])).values()];
+    const filteredByCasino = new Map<string, WorkingCard>();
+    for (const item of matchingProfiles) {
+      if (!filteredByCasino.has(item.card.id)) filteredByCasino.set(item.card.id, item);
+    }
+    const filtered = [...filteredByCasino.values()];
     const sort = query.sort ?? (normalizedSearch ? "RELEVANCE" : "FEATURED");
     filtered.sort((a, b) => {
       if (sort === "RELEVANCE") return b.relevance - a.relevance || a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);

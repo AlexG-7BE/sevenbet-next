@@ -81,6 +81,7 @@
     "casino-builder:test": "node --import tsx --test tests/casino-builder-shell.test.ts",
     "casino-editor:test": "node --import tsx --test tests/casino-core-editors.test.ts",
     "casino-market:test": "node --import tsx --test tests/casino-market-architecture.test.ts tests/public-casino-discovery.test.ts tests/public-casino-service.test.ts tests/public-offer-service.test.ts tests/public-comparison.test.ts tests/affiliate-redirect-engine.test.ts",
+    "casino-market:postgres-test": "node --import tsx --test tests/casino-market-architecture-postgres.test.ts",
     "casino-bonus:test": "node --import tsx --test tests/casino-bonus-builder.test.ts",
     "affiliate:test": "node --import tsx --test tests/affiliate-platform-foundation.test.ts",
     "affiliate-builder:test": "node --import tsx --test tests/affiliate-builder.test.ts",

@@ -350,6 +350,7 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/migrations/0025_casino_market_profile_architecture/migration.sql",
         "prisma/schema.prisma",
       ],
+      ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(
       (approved) => JSON.stringify(schemaChanges) === JSON.stringify(approved),

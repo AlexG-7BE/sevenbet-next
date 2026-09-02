@@ -2,7 +2,7 @@
 
 ## Audit scope and evidence
 
-**DETECTED:** repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` was confirmed before implementation. The active repository scan covered 1,990 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative base is `f12d5f35dd5ec36257dd7e1d29a3ca38b16d1e73`; this document describes the `CASINO-DATA-ARCH-01` implementation candidate layered on that base.
+**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` was confirmed before implementation and the isolated release worktree was re-confirmed before reconciliation. The active repository scan covered 2,014 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative post-migration base is `5d16a2615a642625c916f63899ba1748e895d689`; this document describes the `CASINO-DATA-ARCH-01` implementation candidate layered on that base.
 
 **DETECTED:** the frozen research staging directories were inspected read-only for representability. Their records and binaries are not imported, changed, published, or committed by this workstream.
 
@@ -34,6 +34,8 @@
 
 **DETECTED:** disposable PostgreSQL verification applies all 25 migrations cleanly. A staged 0024→0025 fixture preserves one Casino, one existing CasinoCountry, and one each of legacy licence/payment/provider/category/bonus records. All product facts remain unscoped, no licence join is inferred, no duplicate market profile appears, new unknown fields remain null/empty, and a second `migrate deploy` is a no-op.
 
+**DETECTED:** Production migration 0025 is already completed with immutable repository checksum `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`. This runtime candidate changes the Prisma schema/client and application behavior only; it adds no migration after 0025 and contains no Production mutation path.
+
 ## Remaining boundary
 
-**PROPOSED:** `CASINO-DATA-INGEST-02` will map the frozen Phase 1/1.5 corpus, including distinct Betsson PE and SE profiles, into a non-Production database after this architecture is accepted. It must not activate routes or publish staged affiliate assets.
+**PROPOSED:** the separate `CASINO-DATA-INGEST-02` release maps the frozen Phase 1/1.5 corpus, including distinct Betsson PE and SE profiles, only after this runtime architecture passes its release gates. It must not activate routes or publish staged affiliate assets.
