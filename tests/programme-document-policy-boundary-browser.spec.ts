@@ -40,7 +40,8 @@ test("crossing public and Programme boundaries reloads the top-level document so
   await learnLink.click();
   const returnResponse = await publicNavigation;
 
-  expect(new URL(page.url()).pathname).toBe(learnHref);
+  const expectedPublicPathname = learnHref === "/learn" ? "/en-gb/learn" : learnHref;
+  expect(new URL(page.url()).pathname).toBe(expectedPublicPathname);
   expect(returnResponse?.headers()["permissions-policy"]).toBe(denied);
   expect(await page.evaluate(() => "__programmePolicyDocumentMarker" in window)).toBe(false);
 });
