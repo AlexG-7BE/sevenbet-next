@@ -2,11 +2,11 @@
 
 ## Audit scope and evidence
 
-**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and the isolated ingestion worktree were confirmed before reconciliation. The active worktree scan covered 2,054 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative corrected runtime base is `ae775cab11e54caf4c1805193c26baf0c9bb5861`; this document describes the `CASINO-DATA-INGEST-02` candidate layered on that base.
+**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and isolated release worktrees were confirmed before reconciliation. The original ingestion scan covered 2,054 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The released factual-publication runtime baseline is `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`.
 
 **DETECTED:** the frozen research staging directories were inspected read-only for representability. Their records and binaries are not imported, changed, published, or committed by this workstream.
 
-## Implemented candidate data boundary
+## Implemented data boundary
 
 **DETECTED:** `Casino` remains one global brand/editorial identity. `CasinoCountry` is extended as the Casino × ISO country factual boundary. `CasinoCountryLicense` associates existing licences with exact profiles; payment, provider, category, bonus, and media records can carry an optional exact profile association. Composite constraints prevent a scoped licence/payment/provider/category/bonus from naming a market owned by another Casino.
 
@@ -42,6 +42,12 @@
 
 **DETECTED:** the disposable PostgreSQL acceptance test exercises persisted Betsson PE and SE facts against public profile/discovery services, including idempotent retry, targeted evidence update, exact market filtering, visible contradictions/unknowns, and commercial fail-closed behavior. See `docs/05_Engineering/Casino-Market-Ingestion-Runbook.md`.
 
-## Remaining boundary
+## Production release outcome
 
-**PROPOSED:** Production use requires a separate, exact-authority, one-time execution mechanism after this importer passes release gates. Factual publication remains separate from affiliate route, commercial eligibility, and asset-publication authority.
+**DETECTED:** after exact CI, Preview, Production identity, migration-history, collision and backup gates passed, execution-only PR #119 ran the exact nine-file bundle once from head `3a48739d668d5005eb2c4cdabfa2f23103549007`. Reconciliation was `78 created / 0 updated / 0 unchanged`; an immediate read-only comparison was `0 created / 0 updated / 78 unchanged`. One global Betsson Casino and independent PE/SE profiles were published as version 1 with `editorScore=null`; incomplete bonuses stayed `DRAFT`.
+
+**DETECTED:** the Production-targeted `--skip-domain` executor deployment `dpl_Fk23XAokr33hjubGsFKRSTdEFhRo` emitted the success record and `CASINO_BETSSON_PE_SE_FACTUAL_RELEASE_COMPLETE_STOP`, then ended `Error` intentionally. `b4gamble.com` stayed on Ready runtime `dpl_6CRSFtbV4kZwhVurucV7jtKp4QoZ`. PR #119 was closed without merge, so no Production executor entered `main`.
+
+**DETECTED:** PE/SE public projections preserve exact-market domains, currencies, payments, licences, `UNKNOWN` facts and `CONTRADICTION` evidence. The unqualified projection contains no PE/SE market facts. Affiliate action is unavailable, commercial writes are zero, route-country rows remain zero, `productionEligibleRoutes` remains zero, and no asset was published.
+
+**PROPOSED:** any correction, second import, other operator/market, asset publication or commercial activation requires separate current authority and a newly reviewed bounded path. The completed release grants no standing Production mutation capability.

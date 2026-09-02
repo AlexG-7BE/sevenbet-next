@@ -2,6 +2,8 @@
 
 Status: **DETECTED** on `CASINO-DATA-INGEST-02`; the importer is not a Production release mechanism.
 
+**Production outcome — DETECTED 2 September 2026:** a separate exact-authority, execution-only mechanism in PR #119 imported and published the checksum-bound Betsson PE/SE bundle exactly once. PR #119 was then closed without merge. The ordinary importer described below remains non-Production and no reusable Production executor exists on `main`. See the [bounded release record](../06_Operations/Casino-Market-Data-Release-Record-2026-09-02.md).
+
 ## Authority and boundaries
 
 **DETECTED:** `scripts/casino-market-ingest.ts` accepts one explicit, reviewed bundle. It does not scan research directories. Its default is a database-free dry run. Write mode requires all of: `--write`, `--confirm-disposable=CASINO_DATA_INGEST_02`, `CI=true`, matching `DATABASE_URL` and `DIRECT_URL`, a loopback host, and a database name ending `_ci`. Vercel Production and `NODE_ENV=production` are refused.
@@ -57,4 +59,4 @@ Disposable write mode additionally requires the explicit confirmation and safe e
 
 **DETECTED:** `tests/casino-ingestion-postgres.test.ts` requires migration 0025, ingests the real reviewed bundle, verifies database cardinality and ownership, retries with no business-field changes, updates one evidence row only, preserves an unrelated Casino, exercises public profile/discovery services from persisted relations, and proves no commercial authority is created.
 
-**PROPOSED:** a future Production release may promote migration 0025 only through `CASINO-DATA-ARCH-RELEASE-03`. This runbook does not authorize a Production import.
+**DETECTED:** migration 0025 and the one authorised Betsson PE/SE factual import/publication are complete. This runbook still does not authorise another Production import, a correction, asset publication or any commercial activation.

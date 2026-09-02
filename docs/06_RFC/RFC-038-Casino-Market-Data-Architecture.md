@@ -4,6 +4,8 @@
 
 `ACTIVE`. Approved by the explicit Founder instruction `CASINO-DATA-ARCH-01` on 1 September 2026. Implementation is developed through a reviewable feature-branch PR; this RFC does not authorise merge, deployment, a Production migration, research ingestion, asset publication, or commercial activation.
 
+**Implementation outcome — DETECTED 2 September 2026:** later explicit Founder authority approved the ordinary release sequence and exactly one factual Betsson PE/SE Production import/publication. Migration 0025, the architecture/runtime and the checksum-bound importer are now released. The one-time executor ran from PR #119 head `3a48739d668d5005eb2c4cdabfa2f23103549007`, then PR #119 was closed without merge. This outcome does not create standing Production-import authority and does not alter the commercial gate: no affiliate route was activated and `productionEligible` remains false. See the [Production release record](../06_Operations/Casino-Market-Data-Release-Record-2026-09-02.md).
+
 ## Decision
 
 B4GAMBLE separates three grains:
