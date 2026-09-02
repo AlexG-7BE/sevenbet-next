@@ -1,0 +1,603 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "casino-data-ingest-02",
+  "sourceFiles": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/casino.json",
+      "sha256": "f2b99cba65cd72816f6c2d7707b4c5a6fde9df659f39dd0d147cbde1b243f32a"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json",
+      "sha256": "b0d714eba28ef2eb8397528cc2e868f67fc056df81eb5092947c224ec662a9df"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json",
+      "sha256": "5e23abfeb207c4e4e4643be0250bb4896db0c9cff5147be7dfa6fe28f5a8ce8e"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/markets/PE.json",
+      "sha256": "800b02161b6bcf39b821484e2f9eb7ea31af9c756de7790dfed099953a97095a"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/markets/SE.json",
+      "sha256": "b38659a7afd5beac5e0e81a99fabb635272d154726c3bd8112b2e7e651972a1b"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/commercial/betsson/betsson/PE.json",
+      "sha256": "5453d540753b3e94b59d781f8c9e1170cb8462238e1d1376f95be97225186f84"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/commercial/betsson/betsson/SE.json",
+      "sha256": "74275f513ae91c14703681d932d18331b518e8c1d0176dcebdefedcbc96b02f1"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/manifest.json",
+      "sha256": "1b93aa7b6b28fa120e06ca49bfba8708230183707bb94ce0f2b04ca9350c16c0"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31_phase1_5/quality-control.json",
+      "sha256": "19a4a512d32ac51f6331eee4a760cfdd32ffa804cec6e37bf4788d77fe7a163b"
+    }
+  ],
+  "casino": {
+    "key": "betsson",
+    "slug": "betsson",
+    "internalName": "Betsson",
+    "title": "Betsson",
+    "domain": "betsson.com",
+    "websiteUrl": "https://www.betsson.com/",
+    "summary": "Betsson Group's primary global brand offering casino and sports betting products.",
+    "brand": {
+      "key": "betsson",
+      "name": "Betsson",
+      "domain": "betsson.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "PE",
+      "availability": "AVAILABLE",
+      "localDomain": "www.betsson.pe",
+      "localWebsiteUrl": "https://www.betsson.pe/es",
+      "operator": {
+        "key": "sftg-limited",
+        "name": "SFTG Limited",
+        "legalName": "SFTG Limited",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "SFTG Limited (Malta C96916)",
+      "termsUrl": "https://www.betsson.pe/es/terminos-y-condiciones",
+      "privacyUrl": "https://www.betsson.pe/es/politica-de-privacidad",
+      "responsibleGamblingUrl": "https://www.betsson.pe/es/juego-responsable/informacion",
+      "primaryLanguage": "es",
+      "supportedLanguages": ["es", "en"],
+      "supportLanguages": [],
+      "primaryCurrency": "PEN",
+      "supportedCurrencies": ["PEN"],
+      "minimumAge": null,
+      "kycSummary": "Identity verification (KYC) is required; official local guidance states an identity document showing fiscal address may be requested and uploaded.",
+      "withdrawalSummary": "Operator review is within 24 hours; bank transfer is 1-5 business days, Visa is 3-5 business days, and e-wallets are instant or next business day. Published minimum withdrawals are PEN 60 and USD 20, which cannot be represented losslessly as one per-method scalar.",
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "READY research profile. Exact bonus terms and universal logged-in payment availability remain unresolved.",
+      "evidence": [
+        {
+          "key": "global-brand",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_OPERATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://betssongroup.com/about-us/products-and-brands/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-brand",
+          "fieldKeys": ["casino.title", "casino.summary", "casino.brandProfile"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Global Betsson identity is shared by the PE and SE market profiles."
+        },
+        {
+          "key": "global-operators",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_TERMS",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/en/about-us",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-operators",
+          "fieldKeys": ["operatorProfile", "operatingLegalEntity"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The operator varies by player residence; the exact PE operator is established separately."
+        },
+        {
+          "key": "pe-mincetur-live",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://consultasenlinea.mincetur.gob.pe/webCasinos/Index.aspx?po=frmRegistros_AD.aspx%3Fopr%3D3",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-mincetur-live",
+          "fieldKeys": ["availability", "localDomain", "localWebsiteUrl", "operatorProfile", "operatingLegalEntity", "licenses.11002586010000", "licenses.21002586010000"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Live MINCETUR result for www.betsson.pe and SFTG Limited."
+        },
+        {
+          "key": "pe-site-conflict",
+          "classification": "CONTRADICTION",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/casino/proveedores",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-site",
+          "fieldKeys": ["licenses.21002586010000", "evidence.operatorPublishedLicence.21002586020000"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "MINCETUR maps Betsson sports reference 21002586010000; the Betsson footer showed 21002586020000, which the live regulator associates with Betsafe."
+        },
+        {
+          "key": "pe-terms",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_TERMS",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/terminos-y-condiciones",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-pe-terms",
+          "fieldKeys": ["termsUrl", "operatorProfile", "operatingLegalEntity"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The original detected footer claim is retained; its conflicting sports reference is represented separately as CONTRADICTION."
+        },
+        {
+          "key": "pe-privacy",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": "OFFICIAL_PRIVACY",
+          "sourceUrl": "https://www.betsson.pe/es/politica-de-privacidad",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-privacy",
+          "fieldKeys": ["privacyUrl", "operatorProfile", "operatingLegalEntity", "kycSummary"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Raw frozen source category is retained in rawSourceType because the architecture groups specialist official pages under OTHER."
+        },
+        {
+          "key": "pe-responsible-gambling",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": "OFFICIAL_RESPONSIBLE_GAMBLING",
+          "sourceUrl": "https://www.betsson.pe/es/juego-responsable/informacion",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-pe-rg",
+          "fieldKeys": ["responsibleGamblingUrl"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Raw frozen source category is retained in rawSourceType."
+        },
+        {
+          "key": "pe-payments",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/blog/sobre-betsson/como-depositar-y-retirar-dinero-en-betsson-peru-tutorial/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-payments",
+          "fieldKeys": ["primaryCurrency", "supportedCurrencies", "paymentMethods", "withdrawalSummary"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Peru-only official tutorial; exact logged-in availability can vary."
+        },
+        {
+          "key": "pe-kyc",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/blog/casino/como-jugar-en-un-casino-por-primera-vez-en-peru-guia-para-principiantes/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-kyc",
+          "fieldKeys": ["kycSummary"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": null
+        },
+        {
+          "key": "pe-bonus-current",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/promociones",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-bonus-current",
+          "fieldKeys": ["bonuses.betsson-pe-casino-welcome-observation"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Current promotions copy says automatic credit and a PEN 40 minimum, but complete terms were not established."
+        },
+        {
+          "key": "pe-bonus-guide-conflict",
+          "classification": "CONTRADICTION",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.pe/es/blog/sobre-betsson/como-registrarse-en-betsson-peru-paso-a-paso/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-bonus-guide",
+          "fieldKeys": ["bonuses.betsson-pe-casino-welcome-observation.minimumDeposit", "bonuses.betsson-pe-casino-welcome-observation.materialTerms"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official guide says PEN 50 and additional headline details; the exact current offer is unresolved."
+        },
+        {
+          "key": "pe-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/markets/PE.json#criticalUnknowns",
+          "fieldKeys": ["minimumAge", "supportSummary", "bonuses.betsson-pe-casino-welcome-observation.materialTerms", "paymentMethods.accountAvailability"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Unknown values remain null or non-published."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "mincetur-games-11002586010000",
+          "authority": "MINCETUR",
+          "licenseNumber": "11002586010000",
+          "jurisdiction": "PE",
+          "status": "ACTIVE",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://consultasenlinea.mincetur.gob.pe/webCasinos/Index.aspx?po=frmRegistros_AD.aspx%3Fopr%3D3",
+          "issuedAt": "2024-06-17T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Source status VIGENTE; type JUEGOS; resolution 3219-2024; expediente 1644113; exact expiry was not published in the frozen result.",
+          "evidence": [
+            {
+              "key": "mincetur-live",
+              "sourceUrl": "https://consultasenlinea.mincetur.gob.pe/webCasinos/Index.aspx?po=frmRegistros_AD.aspx%3Fopr%3D3",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-mincetur-live",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "Exact domain, operator, activity, status, resolution, date and expediente detected."
+            }
+          ]
+        },
+        {
+          "key": "mincetur-sports-21002586010000",
+          "authority": "MINCETUR",
+          "licenseNumber": "21002586010000",
+          "jurisdiction": "PE",
+          "status": "ACTIVE",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://consultasenlinea.mincetur.gob.pe/webCasinos/Index.aspx?po=frmRegistros_AD.aspx%3Fopr%3D3",
+          "issuedAt": "2024-06-17T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Source status VIGENTE; type APUESTAS DEPORTIVAS; resolution 3220-2024; expediente 1644121. Footer conflict 21002586020000 is evidence only and is not canonicalised as a Betsson licence.",
+          "evidence": [
+            {
+              "key": "mincetur-live",
+              "sourceUrl": "https://consultasenlinea.mincetur.gob.pe/webCasinos/Index.aspx?po=frmRegistros_AD.aspx%3Fopr%3D3",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-pe-mincetur-live",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "Regulator result controls the canonical exact reference."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {"key":"pagoeffectivo","name":"PagoEfectivo","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":0},
+        {"key":"pagodirecto","name":"PagoDirecto","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":1},
+        {"key":"visa","name":"Visa","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":"3-5 business days","fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Operator review within 24 hours; exact account availability can vary.","sortOrder":2},
+        {"key":"mastercard","name":"Mastercard","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":3},
+        {"key":"pagum","name":"Pagum","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":4},
+        {"key":"paysafecard","name":"Paysafecard","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":5},
+        {"key":"neteller","name":"Neteller","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":"Instant or next business day","fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Operator review within 24 hours; exact account availability can vary.","sortOrder":6},
+        {"key":"skrill","name":"Skrill","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":"Instant or next business day","fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Operator review within 24 hours; exact account availability can vary.","sortOrder":7},
+        {"key":"bank-transfer","name":"Bank transfer","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":"1-5 business days","fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Operator review within 24 hours; exact account availability can vary.","sortOrder":8},
+        {"key":"yape","name":"Yape","supportsDeposits":true,"supportsWithdrawals":false,"currencies":["PEN"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability can vary.","sortOrder":9}
+      ],
+      "bonuses": [
+        {
+          "key": "casino-welcome-observation",
+          "slug": "betsson-pe-casino-welcome-observation",
+          "title": "Betsson Peru casino welcome offer observation",
+          "summary": "A current promotions page described an automatically credited casino welcome bonus, while another official guide published conflicting minimum-deposit and headline details.",
+          "type": "WELCOME",
+          "percentage": null,
+          "minimumDeposit": null,
+          "maximumBonus": null,
+          "currency": "PEN",
+          "freeSpins": null,
+          "wageringMultiplier": null,
+          "wageringText": null,
+          "eligibility": null,
+          "importantConditions": ["DRAFT evidence observation only", "Material terms are incomplete", "PEN 40 and PEN 50 minimum-deposit evidence conflicts", "Not eligible for public or commercial activation"],
+          "termsUrl": "https://www.betsson.pe/es/promociones",
+          "startsAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "sortOrder": 0
+        }
+      ],
+      "providers": [],
+      "categories": [
+        {"key":"casino","name":"Casino","gameCount":null,"featured":true,"sortOrder":0},
+        {"key":"live-casino","name":"Live casino","gameCount":null,"featured":true,"sortOrder":1},
+        {"key":"slots","name":"Slots","gameCount":null,"featured":false,"sortOrder":2},
+        {"key":"table-games","name":"Table games","gameCount":null,"featured":false,"sortOrder":3},
+        {"key":"blackjack","name":"Blackjack","gameCount":null,"featured":false,"sortOrder":4},
+        {"key":"roulette","name":"Roulette","gameCount":null,"featured":false,"sortOrder":5},
+        {"key":"poker","name":"Poker","gameCount":null,"featured":false,"sortOrder":6},
+        {"key":"baccarat","name":"Baccarat","gameCount":null,"featured":false,"sortOrder":7},
+        {"key":"game-shows","name":"Game shows","gameCount":null,"featured":false,"sortOrder":8}
+      ]
+    },
+    {
+      "countryCode": "SE",
+      "availability": "AVAILABLE",
+      "localDomain": "www.betsson.com/sv",
+      "localWebsiteUrl": "https://www.betsson.com/sv",
+      "operator": {
+        "key": "betsson-nordic-ltd",
+        "name": "Betsson Nordic Ltd",
+        "legalName": "Betsson Nordic Ltd",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "Betsson Nordic Ltd (C-87620; Swedish organisation number 502081-1401)",
+      "termsUrl": null,
+      "privacyUrl": "https://www.betsson.com/sv/integritetspolicy",
+      "responsibleGamblingUrl": "https://www.betsson.com/sv/ansvarsfullt-spelande/information",
+      "primaryLanguage": "sv",
+      "supportedLanguages": ["sv"],
+      "supportLanguages": [],
+      "primaryCurrency": "SEK",
+      "supportedCurrencies": ["SEK"],
+      "minimumAge": null,
+      "kycSummary": "Initial identity and age verification uses BankID; additional KYC documents may be requested and uploaded through the account.",
+      "withdrawalSummary": null,
+      "supportSummary": null,
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "READY research profile. Full withdrawal timing, bonus material terms, and the Spin Nordic register mapping remain unresolved.",
+      "evidence": [
+        {
+          "key": "global-brand",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_OPERATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://betssongroup.com/about-us/products-and-brands/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-brand",
+          "fieldKeys": ["casino.title", "casino.summary", "casino.brandProfile"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Global Betsson identity is shared by the PE and SE market profiles."
+        },
+        {
+          "key": "global-operators",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_TERMS",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/en/about-us",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-operators",
+          "fieldKeys": ["operatorProfile", "operatingLegalEntity"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The operator varies by player residence; the exact SE operator is established separately."
+        },
+        {
+          "key": "se-operator-page",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/sv/ansvarsfullt-spelande",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-operator-page",
+          "fieldKeys": ["availability", "localWebsiteUrl", "operatorProfile", "operatingLegalEntity", "primaryLanguage", "supportedLanguages", "licenses.23Si2176", "gameCategories"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official Swedish operator and licence statement."
+        },
+        {
+          "key": "se-reg-domain",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=betsson.com/sv",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-reg-domain",
+          "fieldKeys": ["availability", "localDomain", "localWebsiteUrl", "operatorProfile", "licenses.23Si2176"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Live domain register lists both Betsson Nordic Ltd and Spin Nordic Ltd."
+        },
+        {
+          "key": "se-reg-domain-ambiguity",
+          "classification": "CONTRADICTION",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=betsson.com/sv",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/markets/SE.json#regulatoryAmbiguity",
+          "fieldKeys": ["operatorProfile", "licenses.unassignedSpinNordicLine"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "A 2026-08-24 through 2031-08-23 commercial-online period cannot be mapped unambiguously to a named licensee and is not assigned."
+        },
+        {
+          "key": "se-payments",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/sv/logga-in",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-payments",
+          "fieldKeys": ["paymentMethods", "kycSummary"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Common methods are published; exact account availability requires login."
+        },
+        {
+          "key": "se-app-payments",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/sv/blogg/casino/casino-app/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-app-payments",
+          "fieldKeys": ["paymentMethods.swish", "paymentMethods.trustly", "paymentMethods.bank-card", "paymentMethods.bank-transfer"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Directly supports deposits and withdrawals for the four named methods."
+        },
+        {
+          "key": "se-kyc",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/sv/casino",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-kyc",
+          "fieldKeys": ["kycSummary"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": null
+        },
+        {
+          "key": "se-bonus",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.betsson.com/sv/casino",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-bonus",
+          "fieldKeys": ["primaryCurrency", "bonuses.betsson-se-casino-welcome-observation"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Headline is detected, but material terms remain incomplete."
+        },
+        {
+          "key": "se-privacy",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": "OFFICIAL_PRIVACY",
+          "sourceUrl": "https://www.betsson.com/sv/integritetspolicy",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-se-privacy",
+          "fieldKeys": ["privacyUrl", "operatorProfile", "operatingLegalEntity"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Raw frozen source category is retained in rawSourceType."
+        },
+        {
+          "key": "se-responsible-gambling",
+          "classification": "DETECTED",
+          "sourceType": "OTHER",
+          "rawSourceType": "OFFICIAL_RESPONSIBLE_GAMBLING",
+          "sourceUrl": "https://www.betsson.com/sv/ansvarsfullt-spelande/information",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/betsson/evidence.json#betsson-se-rg",
+          "fieldKeys": ["responsibleGamblingUrl"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Raw frozen source category is retained in rawSourceType."
+        },
+        {
+          "key": "se-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/markets/SE.json#criticalUnknowns",
+          "fieldKeys": ["termsUrl", "minimumAge", "withdrawalSummary", "supportSummary", "bonuses.betsson-se-casino-welcome-observation.materialTerms"],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Unknown values remain null or non-published."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "spelinspektionen-23si2176",
+          "authority": "Spelinspektionen",
+          "licenseNumber": "23Si2176",
+          "jurisdiction": "SE",
+          "status": "ACTIVE",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=betsson.com/sv",
+          "issuedAt": "2024-01-01T00:00:00.000Z",
+          "expiresAt": "2028-12-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Type: Commercial online gaming. The separate Spin Nordic Ltd line is not assigned because the frozen live result did not map it unambiguously.",
+          "evidence": [
+            {
+              "key": "official-operator-page",
+              "sourceUrl": "https://www.betsson.com/sv/ansvarsfullt-spelande",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-operator-page",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": "2028-12-31T00:00:00.000Z",
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "Official Swedish page identifies Betsson Nordic Ltd and exact licence 23Si2176."
+            },
+            {
+              "key": "spelinspektionen-domain-register",
+              "sourceUrl": "https://www.spelinspektionen.se/licens-o-tillstand/licensregister/licensurl/?url=betsson.com/sv",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/casinos/betsson/evidence.json#betsson-se-reg-domain",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": "2028-12-31T00:00:00.000Z",
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "Regulator domain result supports the active 2024-2028 line; ambiguity for another line remains separate."
+            }
+          ]
+        }
+      ],
+      "payments": [
+        {"key":"swish","name":"Swish","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability requires login.","sortOrder":0},
+        {"key":"trustly","name":"Trustly","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability requires login.","sortOrder":1},
+        {"key":"bank-card","name":"Bank card","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability requires login.","sortOrder":2},
+        {"key":"bank-transfer","name":"Bank transfer","supportsDeposits":true,"supportsWithdrawals":true,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Exact account availability requires login.","sortOrder":3},
+        {"key":"visa","name":"Visa","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":4},
+        {"key":"mastercard","name":"Mastercard","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":5},
+        {"key":"apple-pay","name":"Apple Pay","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":6},
+        {"key":"google-pay","name":"Google Pay","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":7},
+        {"key":"skrill","name":"Skrill","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":8},
+        {"key":"neteller","name":"Neteller","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":9},
+        {"key":"paypal","name":"PayPal","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":10},
+        {"key":"paysafecard","name":"Paysafecard","supportsDeposits":true,"supportsWithdrawals":null,"currencies":["SEK"],"minimumDeposit":null,"minimumWithdrawal":null,"maximumWithdrawal":null,"depositProcessingTime":null,"withdrawalTime":null,"fees":null,"crypto":false,"lastVerifiedAt":"2026-08-31T00:00:00.000Z","notes":"Withdrawal support remains unknown; exact account availability requires login.","sortOrder":11}
+      ],
+      "bonuses": [
+        {
+          "key": "casino-welcome-observation",
+          "slug": "betsson-se-casino-welcome-observation",
+          "title": "100% up to SEK 1,000 in casino plus 50 free spins in Pirots 4",
+          "summary": "The official Swedish casino surface published this headline, but minimum deposit, wagering, validity and maximum-win terms were not all established.",
+          "type": "WELCOME",
+          "percentage": 100,
+          "minimumDeposit": null,
+          "maximumBonus": 1000,
+          "currency": "SEK",
+          "freeSpins": 50,
+          "wageringMultiplier": null,
+          "wageringText": null,
+          "eligibility": null,
+          "importantConditions": ["DRAFT evidence observation only", "Material terms are incomplete", "Not eligible for public or commercial activation"],
+          "termsUrl": null,
+          "startsAt": null,
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "sortOrder": 0
+        }
+      ],
+      "providers": [],
+      "categories": [
+        {"key":"casino","name":"Casino","gameCount":null,"featured":true,"sortOrder":0},
+        {"key":"live-casino","name":"Live casino","gameCount":null,"featured":true,"sortOrder":1},
+        {"key":"slots","name":"Slots","gameCount":null,"featured":false,"sortOrder":2},
+        {"key":"table-games","name":"Table games","gameCount":null,"featured":false,"sortOrder":3},
+        {"key":"jackpots","name":"Jackpots","gameCount":null,"featured":false,"sortOrder":4}
+      ]
+    }
+  ],
+  "commercialMappings": [
+    {
+      "countryCode": "PE",
+      "routeSetupId": "9721",
+      "portalMarketState": "APPROVED_IN_PORTAL",
+      "productionEligible": false,
+      "trackingVerifiedEndToEnd": false,
+      "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/commercial/betsson/betsson/PE.json"
+    },
+    {
+      "countryCode": "SE",
+      "routeSetupId": "38112",
+      "portalMarketState": "PENDING_APPROVAL",
+      "productionEligible": false,
+      "trackingVerifiedEndToEnd": false,
+      "sourceReference": "research_staging/casino_ingestion_2026-08-31_phase1_5/commercial/betsson/betsson/SE.json"
+    }
+  ]
+}

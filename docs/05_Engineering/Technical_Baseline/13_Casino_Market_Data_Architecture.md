@@ -2,7 +2,7 @@
 
 ## Audit scope and evidence
 
-**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` was confirmed before implementation and the isolated release worktree was re-confirmed before reconciliation. The active repository scan covered 2,014 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative post-migration base is `5d16a2615a642625c916f63899ba1748e895d689`; this document describes the `CASINO-DATA-ARCH-01` implementation candidate layered on that base.
+**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and the isolated ingestion worktree were confirmed before reconciliation. The active worktree scan covered 2,054 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative corrected runtime base is `ae775cab11e54caf4c1805193c26baf0c9bb5861`; this document describes the `CASINO-DATA-INGEST-02` candidate layered on that base.
 
 **DETECTED:** the frozen research staging directories were inspected read-only for representability. Their records and binaries are not imported, changed, published, or committed by this workstream.
 
@@ -28,14 +28,20 @@
 
 **PROPOSED:** a dedicated Admin market-profile form is not part of this candidate. The authenticated server contract is usable by later ingestion/admin integration; explicit UI controls for retiring ambiguous legacy facts remain later work.
 
-**UNKNOWN:** no real Casino market profile or route correctness is established by synthetic fixture coverage. No real partner agreement, programme/account, offer, tracking authority, or production eligibility is established.
+**DETECTED:** real frozen Betsson PE/SE factual profiles have been exercised in disposable PostgreSQL and through the public profile/discovery services. No real partner agreement, programme/account, offer, tracking authority, or production eligibility is established.
 
 ## Migration evidence
 
 **DETECTED:** disposable PostgreSQL verification applies all 25 migrations cleanly. A staged 0024→0025 fixture preserves one Casino, one existing CasinoCountry, and one each of legacy licence/payment/provider/category/bonus records. All product facts remain unscoped, no licence join is inferred, no duplicate market profile appears, new unknown fields remain null/empty, and a second `migrate deploy` is a no-op.
 
-**DETECTED:** Production migration 0025 is already completed with immutable repository checksum `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`. This runtime candidate changes the Prisma schema/client and application behavior only; it adds no migration after 0025 and contains no Production mutation path.
+**DETECTED:** Production migration 0025 is already completed with immutable repository checksum `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`. This ingestion candidate adds no migration after 0025 and contains no Production mutation path.
+
+## Controlled ingestion validation
+
+**DETECTED:** `data/casino-ingestion/betsson-pe-se.v1.json` is an explicit, checksum-bound Betsson PE/SE bundle. `scripts/casino-market-ingest.ts` defaults to database-free dry run and permits writes only to an explicitly confirmed loopback `_ci` database. It reconciles one global Casino and both market profiles in one transaction without deleting unrelated data, overwriting editorial workflow state, or writing affiliate/commercial authority.
+
+**DETECTED:** the disposable PostgreSQL acceptance test exercises persisted Betsson PE and SE facts against public profile/discovery services, including idempotent retry, targeted evidence update, exact market filtering, visible contradictions/unknowns, and commercial fail-closed behavior. See `docs/05_Engineering/Casino-Market-Ingestion-Runbook.md`.
 
 ## Remaining boundary
 
-**PROPOSED:** the separate `CASINO-DATA-INGEST-02` release maps the frozen Phase 1/1.5 corpus, including distinct Betsson PE and SE profiles, only after this runtime architecture passes its release gates. It must not activate routes or publish staged affiliate assets.
+**PROPOSED:** Production use requires a separate, exact-authority, one-time execution mechanism after this importer passes release gates. Factual publication remains separate from affiliate route, commercial eligibility, and asset-publication authority.

@@ -1,0 +1,52 @@
+{
+  "authority": "NON_AUTHORITATIVE_GENERATED_REPORT",
+  "schemaVersion": "casino-ingestion-validation.v1",
+  "validatedAt": "2026-09-01",
+  "environment": {
+    "database": "disposable loopback PostgreSQL database ending _ci",
+    "migration0025Applied": true,
+    "productionAccess": false
+  },
+  "sourceVerification": {
+    "explicitFilesVerified": 9,
+    "checksumMismatches": 0,
+    "databaseConnectedDuringDryRun": false
+  },
+  "database": {
+    "betssonCasinoCount": 1,
+    "markets": {
+      "PE": {"profileCount":1,"licenceLinks":2,"payments":10,"bonuses":1,"evidence":12,"categories":9,"providers":0},
+      "SE": {"profileCount":1,"licenceLinks":1,"payments":12,"bonuses":1,"evidence":12,"categories":5,"providers":0}
+    },
+    "allPaymentsExactlyScoped": true,
+    "allBonusesExactlyScoped": true,
+    "allLicenceRelationsExactlyScoped": true,
+    "contradictionVisible": true,
+    "unknownsRemainNullOrDraft": true,
+    "unrelatedCasinoPreserved": true
+  },
+  "idempotency": {
+    "firstWrite": {"created":78,"updated":0,"scope":"one Casino, one brand, two operators, two market profiles and their exact scoped facts/provenance"},
+    "secondIdenticalWrite": {"created":0,"updated":0,"unchanged":78},
+    "targetedChangedEvidence": {"updatedRows":1,"updatedModel":"CasinoCountryEvidence","unrelatedRowsChanged":0}
+  },
+  "sameProfileFilters": {
+    "positive": ["PE + PEN + Yape + MINCETUR", "SE + SEK + Swish + Spelinspektionen"],
+    "negative": ["PE + SEK", "SE + PEN", "PE + Swish", "SE + Yape", "PE + Spelinspektionen", "SE + MINCETUR"],
+    "result": "PASS"
+  },
+  "publicProfiles": {
+    "PE": {"domain":"www.betsson.pe","languages":["es","en"],"currencies":["PEN"],"publicBonuses":0},
+    "SE": {"domain":"www.betsson.com/sv","languages":["sv"],"currencies":["SEK"],"publicBonuses":0},
+    "draftBonusObservationsExcluded": true,
+    "legacyGlobalFactsOverrodeMarket": false
+  },
+  "commercial": {
+    "affiliatePrograms": 0,
+    "affiliateOffers": 0,
+    "commercialOpportunities": 0,
+    "productionEligibleWrites": 0,
+    "outboundAuthorityCreated": false
+  },
+  "result": "PASS_WITH_VISIBLE_UNKNOWNS_AND_CONTRADICTIONS"
+}
