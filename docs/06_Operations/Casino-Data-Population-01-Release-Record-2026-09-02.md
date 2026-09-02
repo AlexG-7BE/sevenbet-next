@@ -1,6 +1,6 @@
 # CASINO-DATA-POPULATION-01 Release Record — 2 September 2026
 
-**Status:** PROPOSED UNTIL EXACT MERGE AND BOUNDED PRODUCTION EXECUTION
+**Status:** DETECTED — COMPLETE
 
 **Authority:** current explicit Founder instruction `FOUNDER EXECUTION — MERGE GEO LOCALIZATION AND MOVE DIRECTLY TO CASINO POPULATION`
 
@@ -10,9 +10,9 @@ No credential, connection URL, token, private portal record or private source va
 
 ## Frozen corpus decision
 
-Nine named casinos were considered. The exact proposed factual import set is seven GB profiles:
+Nine named casinos were considered. The exact imported factual set is seven GB profiles:
 
-| Casino | Market | Proposed factual state | Material omissions retained |
+| Casino | Market | Imported factual state | Material omissions retained |
 | --- | --- | --- | --- |
 | Hello Casino | GB | exact domain, White Hat operator, active Gambling Commission remote-casino licence, Casino category | legal/safety links, language, currency, payments, KYC, withdrawals, bonuses, providers and assets remain `UNKNOWN` |
 | Skol Casino | GB | exact domain, White Hat operator, active Gambling Commission remote-casino licence, Casino category | legal/safety links, language, currency, payments, KYC, withdrawals, bonuses, providers and assets remain `UNKNOWN` |
@@ -27,7 +27,7 @@ Skipped:
 - Betsson — `UNCHANGED_ALREADY_PRESENT`: PE and SE were already imported and published in Production; the Founder instruction forbids re-import.
 - Gentleman Jim — `BLOCKED_NO_CURRENT_ACTIVE_GB_CASINO`: its GB remote-casino licence is surrendered, exact domain is inactive, site returned HTTP 503, affiliate account is disabled and portal inventory is stale/contradictory.
 
-## Exact candidate artifacts
+## Exact frozen artifacts
 
 - Manifest SHA-256: `5c11dc16eb20807fa20a705f0d58d6a64045b95d803f1447c051780d2213c8d2`.
 - Hello Casino bundle: `9996b4c6ea195bcd259a4b84ade3276057e3a9e17110c71470555b9bc6e94d40`.
@@ -39,7 +39,7 @@ Skipped:
 - DragonBet bundle: `3b8ebaae872deadaa364159cc31333a5dc660e5dae5ba64841db289c63742092`.
 - Twenty-eight bundle source-file hashes and five decision-record hashes reproduce from the frozen corpus.
 
-Planned factual rows: seven Casinos; seven market profiles; seven licences; 14 licence-evidence rows; 53 market-evidence rows; zero payments; zero bonuses; three DragonBet-only providers; 14 scoped categories; zero commercial writes.
+Imported factual rows: seven Casinos; seven market profiles; seven licences; 14 licence-evidence rows; 53 market-evidence rows; zero payments; zero bonuses; three DragonBet-only providers; 14 scoped categories; zero commercial writes.
 
 ## Disposable acceptance
 
@@ -52,19 +52,51 @@ Planned factual rows: seven Casinos; seven market profiles; seven licences; 14 l
 - no payment, bonus, image, media, affiliate route-country, Casino affiliate-link or legacy affiliate-link row was created;
 - the earlier Betsson PE/SE PostgreSQL regression remained green.
 
+## Durable merge and bounded Production execution
+
+**DETECTED:** the checksum-bound importer, frozen bundles, execution guard and regression coverage merged through PR #123 as `ae17cdd5384f185545c5ed7e5e9493bcb721824a`. Its cold Preview deployment `dpl_Gdry15omMNUSXNZMbWZB96g763SF` and post-merge Production deployment `dpl_GzNDBNViJN7NDXRmGpijrQ1BW6fG` reached Ready before Production mutation.
+
+**DETECTED:** the one-shot execution branch was fixed at `f6a0c289693133b8505ef62be6847a1636daf2e5`. PR #124 passed Quality, Agent Core, Database / Migration Verification, Build / Browser and Vercel Preview, then the exact Production executor `dpl_6GR4ggFz8vYKvuUeoCeyB7dSJmjT` performed the bounded transaction. Preflight confirmed the exact Vercel project and Production environment, the same database identity for pooled and direct connections, all 25 migrations applied, the expected baseline, no candidate collisions and unchanged Betsson PE/SE records.
+
+The committed reconciliation was exactly:
+
+| Model | Created | Updated | Unchanged |
+| --- | ---: | ---: | ---: |
+| CasinoBrand | 7 | 0 | 0 |
+| Casino | 7 | 0 | 0 |
+| CasinoOperator | 2 | 0 | 5 |
+| CasinoCountry | 7 | 0 | 0 |
+| CasinoCountryEvidence | 53 | 0 | 0 |
+| CasinoLicense | 7 | 0 | 0 |
+| CasinoCountryLicense | 7 | 0 | 0 |
+| CasinoLicenseEvidence | 14 | 0 | 0 |
+| CasinoGameCategory | 14 | 0 | 0 |
+| CasinoGameProvider | 3 | 0 | 0 |
+| **Total** | **121** | **0** | **5** |
+
+The in-transaction idempotency comparison and the final post-commit read-only comparison were both exactly `0 created / 0 updated / 126 unchanged`. The executor then stopped at the intentional `CASINO_DATA_POPULATION_01_COMPLETE_STOP`; its deployment is `Error` by design and was never promoted or assigned the public domain. PR #124 was closed unmerged after the committed database result was verified.
+
+The exact post-commit Production inventory reported by the executor was: 34 Casinos, 34 markets, four operators, eight brands, 35 licences, 18 licence-evidence rows, 77 market-evidence rows, ten market-licence links, 78 payments, 53 providers, 78 categories, 27 bonuses, one media row, 75 images, 52 versions, 249 revisions, 25 SEO rows, 25 editorial reviews, five affiliate programmes, five affiliate offers, five affiliate tracking links, zero affiliate route countries, five affiliate redirects, zero Casino affiliate links, zero legacy affiliate links, 60 commercial opportunities and zero Production-eligible routes.
+
 ## Asset and commercial boundary
 
-No asset is proposed for publication. Frozen asset evidence marks every candidate `publicationEligible=false`; Diamond7 creative GEO is unknown, and the other eligible profiles have no authorised binary. The existing verified fallback is therefore required on each new profile.
+No asset was published. Frozen asset evidence marks every candidate `publicationEligible=false`; Diamond7 creative GEO is unknown, and the other eligible profiles have no authorised binary. All seven Production profiles therefore use the existing verified fallback.
 
-No outbound route is proposed. The six Superfly GB plans are denied for the B4GAMBLE account and the DragonBet affiliate account is disabled. No campaign, tracker, destination, offer or `productionEligible=true` authority is fabricated.
+No outbound route was published. The six Superfly GB plans are denied for the B4GAMBLE account and the DragonBet affiliate account is disabled. No campaign, tracker, destination, offer or `productionEligible=true` authority was fabricated. All seven public records expose `affiliate.available=false` and `affiliate.href=null`.
 
-## Remaining gates
+## Final Production acceptance
 
-Before this record can become `DETECTED — COMPLETE`:
+**DETECTED:** the scoreless-profile comparison defect discovered during live acceptance was fixed through PR #125. Merge `8e4cc093f5bbd9775ad60d586101aabd07308b78` passed all six CI/Preview gates and deployed as Ready Production deployment `dpl_7Y4v58gkALDRNjkprNxCRhtzRLfR`, aliased to `b4gamble.com` and `www.b4gamble.com`.
 
-1. exact-head CI and Vercel Preview must pass;
-2. the durable importer/bundle PR must merge and its exact `main` deployment must reach Ready;
-3. a separate checksum/commit/environment-bound execution-only path must verify Production identity, migration history, baseline inventory, collision freedom and commercial preservation;
-4. the seven bundles must import and publish exactly once, followed by a read-only idempotency comparison;
-5. public GB localized directory/detail/compare/bonus/best-offer surfaces, database-backed filters, fallbacks, no affiliate action and non-GB leakage must pass;
-6. the one-time executor must be closed unmerged and exact Production evidence must replace this proposed section.
+Live acceptance against that exact release confirmed:
+
+- `/api/public/casinos?country=GB` returns 25 records, including exactly the seven imported slugs; PE returns one record (`betsson`) and SE returns two (`demo-prism`, `betsson`), with none of the seven leaking outside GB;
+- GB search for Hello Casino returns only `hello-casino`; the Inspired and Live Casino filters each return only `dragonbet`; the Gambling Commission filter returns exactly the seven imported profiles;
+- all seven `/en-gb/casino/{slug}` routes return 200 with exact names, self-canonicals, `Suitable artwork unavailable`, `Offer unavailable` and no `/r/` or `/go/` route;
+- explicit Hello Casino / DragonBet comparison returns `available`, retains both null editorial scores as `Unknown`, retains all other missing evidence as `Unknown` or `Unavailable`, and exposes no commercial action;
+- legacy `/compare` resolves to the canonical localized Casino directory with the exact selection;
+- the GB bonus API returns zero records, while `/en-gb/bonuses`, `/en-gb/best-offers` and `/program` return 200 with no imported casino name or commercial route.
+
+## Retained gaps
+
+This release does not claim completeness where evidence is absent. The material omissions in the frozen-corpus table remain `UNKNOWN`; DragonBet's legacy trading-name evidence remains `CONTRADICTION`; all seven profiles remain without an authorised image, evidenced bonus, evidenced payment method or commercial route. Gentleman Jim remains blocked rather than imported. Betsson remains the unchanged pre-existing PE/SE record. These are explicit evidence boundaries, not failed release gates.
