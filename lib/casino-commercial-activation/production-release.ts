@@ -193,7 +193,7 @@ async function candidateMatrix(prisma: PrismaClient) {
 }
 
 async function commercialEvidenceSummary(prisma: PrismaClient) {
-  const needles = ["hello", "skol", "diamond7", "g'day", "gday", "21 privé", "21 prive", "slotnite", "dragonbet", "betsson"];
+  const needles = ["hello", "skol", "diamond7", "g'day", "gday", "21 privé", "21 prive", "slotnite", "dragonbet", "betsson", "superfly", "brothers bet"];
   const opportunities = await prisma.commercialOpportunity.findMany({
     where: { OR: needles.map((needle) => ({ normalizedName: { contains: needle, mode: "insensitive" as const } })) },
     orderBy: [{ normalizedName: "asc" }, { updatedAt: "desc" }],
@@ -233,20 +233,58 @@ async function commercialEvidenceSummary(prisma: PrismaClient) {
     },
   });
   return opportunities.map((opportunity) => ({
-    ...opportunity,
-    evidence: opportunity.evidence.map((evidence) => ({
-      ...evidence,
-      sourceUrl: evidence.sourceUrl ? safeUrlShape(evidence.sourceUrl) : null,
-      hasSourceReference: Boolean(evidence.sourceReference?.trim()),
-      sourceReference: undefined,
-    })),
+    id: opportunity.id,
+    displayName: opportunity.displayName,
+    normalizedName: opportunity.normalizedName,
+    stage: opportunity.stage,
+    waitingOn: opportunity.waitingOn,
+    updatedAt: opportunity.updatedAt,
+    casinoLinked: Boolean(opportunity.casinoId),
+    affiliateNetworkLinked: Boolean(opportunity.affiliateNetworkId),
+    affiliateProgramLinked: Boolean(opportunity.affiliateProgramId),
+    evidence: Object.values(opportunity.evidence.reduce<Record<string, {
+      category: string;
+      classification: string;
+      sourceAuthority: string | null;
+      sourceType: string;
+      status: string;
+      count: number;
+      latestObservedAt: Date | null;
+      latestRecheckAt: Date | null;
+      latestExpiresAt: Date | null;
+      sourceReferencePresent: boolean;
+    }>>((summary, evidence) => {
+      const key = [evidence.category, evidence.classification, evidence.sourceAuthority ?? "NONE", evidence.sourceType, evidence.status].join("|");
+      const current = summary[key];
+      summary[key] = {
+        category: evidence.category,
+        classification: evidence.classification,
+        sourceAuthority: evidence.sourceAuthority,
+        sourceType: evidence.sourceType,
+        status: evidence.status,
+        count: (current?.count ?? 0) + 1,
+        latestObservedAt: !current?.latestObservedAt || (evidence.observedAt && evidence.observedAt > current.latestObservedAt) ? evidence.observedAt : current.latestObservedAt,
+        latestRecheckAt: !current?.latestRecheckAt || (evidence.recheckAt && evidence.recheckAt > current.latestRecheckAt) ? evidence.recheckAt : current.latestRecheckAt,
+        latestExpiresAt: !current?.latestExpiresAt || (evidence.expiresAt && evidence.expiresAt > current.latestExpiresAt) ? evidence.expiresAt : current.latestExpiresAt,
+        sourceReferencePresent: (current?.sourceReferencePresent ?? false) || Boolean(evidence.sourceReference?.trim()),
+      };
+      return summary;
+    }, {})),
     terms: opportunity.terms.map((term) => ({
-      ...term,
+      model: term.model,
+      status: term.status,
+      territoryMatches: {
+        GB: /(^|\W)GB(\W|$)|united kingdom|great britain/i.test(term.territory ?? ""),
+        PE: /(^|\W)PE(\W|$)|peru/i.test(term.territory ?? ""),
+        SE: /(^|\W)SE(\W|$)|sweden/i.test(term.territory ?? ""),
+      },
+      effectiveAt: term.effectiveAt,
+      expiresAt: term.expiresAt,
+      trafficRestrictionCount: term.trafficRestrictions.length,
       hasTrackingRequirements: Boolean(term.trackingRequirements?.trim()),
       hasEntityRequirements: Boolean(term.entityRequirements?.trim()),
-      trackingRequirements: undefined,
-      entityRequirements: undefined,
     })),
+    activationPackets: opportunity.activationPackets,
   }));
 }
 
@@ -266,7 +304,11 @@ export async function runCasinoCommercialActivation01Preflight(environment: Rele
     });
     writeEvent({ event: "casino_commercial_activation_01_inventory", ...(await inventory(prisma)) });
     writeEvent({ event: "casino_commercial_activation_01_candidate_matrix", candidates: await candidateMatrix(prisma) });
-    writeEvent({ event: "casino_commercial_activation_01_commercial_evidence", opportunities: await commercialEvidenceSummary(prisma) });
+    const opportunities = await commercialEvidenceSummary(prisma);
+    writeEvent({ event: "casino_commercial_activation_01_commercial_evidence_count", opportunityCount: opportunities.length });
+    for (const opportunity of opportunities) {
+      writeEvent({ event: "casino_commercial_activation_01_commercial_evidence", opportunity });
+    }
     writeEvent({ event: "casino_commercial_activation_01_production_audit_complete", mutationCount: 0 });
   } finally {
     await prisma.$disconnect().catch(() => undefined);
