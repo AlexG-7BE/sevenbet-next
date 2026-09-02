@@ -266,6 +266,23 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     assert.deepEqual(casinos.map((casino) => casino.slug), expected.map((casino) => casino.slug));
   });
 
+  await t.test("an exact country listing excludes identities without that market profile", async () => {
+    const record = publishedRecord();
+    (record.snapshot as Record<string, unknown>).countries = [{
+      id: `${record.casinoId}-gb`,
+      countryCode: "GB",
+      availability: "AVAILABLE",
+      primaryLanguage: "en-GB",
+      supportedLanguages: ["en-GB"],
+      primaryCurrency: "GBP",
+      supportedCurrencies: ["GBP"],
+    }];
+
+    assert.equal((await service(store([record])).listCasinos(null, "GB")).length, 1);
+    assert.deepEqual(await service(store([record])).listCasinos(null, "PE"), []);
+    assert.deepEqual(await service(store([record])).listCasinos(null, "SE"), []);
+  });
+
   await t.test("listCasinoViews does not reintroduce a managed legacy profile", async () => {
     const repository = store([], [managedSlug], [], {
       listPublished: async () => { throw new Error("published list unavailable"); },
