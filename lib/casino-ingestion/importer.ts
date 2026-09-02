@@ -433,18 +433,23 @@ function orderedBatch(bundles: CasinoIngestionBundle[]) {
 
 export async function ingestCasinoBundles(prisma: PrismaClient, bundles: CasinoIngestionBundle[]): Promise<CasinoIngestionResult[]> {
   const ordered = orderedBatch(bundles);
-  const results: CasinoIngestionResult[] = [];
-  await prisma.$transaction(async (tx) => {
-    for (const bundle of ordered) {
-      const counts = blankCounts();
-      await reconcileCasinoBundle(tx, bundle, counts);
-      results.push({ ...planCasinoIngestion(bundle), mode: "WRITE", reconciliation: counts });
-    }
-  }, {
+  return prisma.$transaction((tx) => ingestCasinoBundlesInTransaction(tx, ordered), {
     isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     maxWait: 5_000,
     timeout: 65_000,
   });
+}
+
+export async function ingestCasinoBundlesInTransaction(
+  transaction: Prisma.TransactionClient,
+  bundles: CasinoIngestionBundle[],
+): Promise<CasinoIngestionResult[]> {
+  const results: CasinoIngestionResult[] = [];
+  for (const bundle of orderedBatch(bundles)) {
+    const counts = blankCounts();
+    await reconcileCasinoBundle(transaction, bundle, counts);
+    results.push({ ...planCasinoIngestion(bundle), mode: "WRITE", reconciliation: counts });
+  }
   return results;
 }
 
@@ -453,18 +458,25 @@ export async function ingestCasinoBundle(prisma: PrismaClient, bundle: CasinoIng
 }
 
 export async function verifyCasinoBundlesIdempotency(prisma: PrismaClient, bundles: CasinoIngestionBundle[]) {
-  const counts = blankCounts();
-  await prisma.$transaction(async (tx) => {
+  return prisma.$transaction(async (tx) => {
     await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
     await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '20s'");
     await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '5s'");
     await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '60s'");
-    for (const bundle of orderedBatch(bundles)) await reconcileCasinoBundle(tx, bundle, counts);
+    return verifyCasinoBundlesIdempotencyInTransaction(tx, bundles);
   }, {
     isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
     maxWait: 5_000,
     timeout: 65_000,
   });
+}
+
+export async function verifyCasinoBundlesIdempotencyInTransaction(
+  transaction: Prisma.TransactionClient,
+  bundles: CasinoIngestionBundle[],
+) {
+  const counts = blankCounts();
+  for (const bundle of orderedBatch(bundles)) await reconcileCasinoBundle(transaction, bundle, counts);
   if (counts.created !== 0 || counts.updated !== 0) {
     throw new Error("Casino ingestion idempotency verification detected a pending write.");
   }
