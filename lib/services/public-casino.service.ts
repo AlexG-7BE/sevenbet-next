@@ -135,6 +135,7 @@ export class PublicCasinoService {
     const cms = published.flatMap((entry) => {
       const casino = mapPublishedCasino(entry, routes, { redirectEnabled: referralAllowed(entry.casinoId), now: this.options.now });
       const projected = casino ? projectRequestedMarket(casino, countryCode) : null;
+      if (countryCode && !projected?.marketProfiles.some((profile) => profile.countryCode === countryCode.toUpperCase())) return [];
       return projected ? [enforceTemporaryDemoReviewOnly(projected)] : [];
     });
     const bySlug = new Map<string, PublicCasinoDTO>();

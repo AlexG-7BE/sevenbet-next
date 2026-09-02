@@ -157,7 +157,6 @@ async function reconcileCasino(tx: Transaction, bundle: CasinoIngestionBundle, b
     currencies: [],
     license: null,
     country: null,
-    status: EditorialStatus.DRAFT,
     updatedBy: bundle.actor,
   };
   const domainOwner = await tx.casino.findUnique({ where: { domain: bundle.casino.domain }, select: { id: true, slug: true } });
@@ -169,6 +168,7 @@ async function reconcileCasino(tx: Transaction, bundle: CasinoIngestionBundle, b
         id: deterministicCasinoIngestionId(`${bundle.casino.key}:casino`),
         slug: bundle.casino.slug,
         ...desired,
+        status: EditorialStatus.DRAFT,
         createdBy: bundle.actor,
       },
     });
@@ -241,6 +241,9 @@ async function reconcileMarket(
       notes: evidence.rawSourceType ? `[rawSourceType=${evidence.rawSourceType}] ${evidence.notes ?? ""}`.trim() : evidence.notes,
     };
     const currentEvidence = await tx.casinoCountryEvidence.findUnique({ where: { id } });
+    if (currentEvidence && currentEvidence.casinoCountryId !== casinoCountryId) {
+      throw new Error(`Casino market evidence identity conflict for ${id}.`);
+    }
     if (!currentEvidence) {
       await tx.casinoCountryEvidence.create({ data: { id, ...desiredEvidence } });
       mark(counts, "CasinoCountryEvidence", "created");
@@ -298,6 +301,9 @@ async function reconcileMarket(
         notes: evidence.notes,
       };
       const currentLicenseEvidence = await tx.casinoLicenseEvidence.findUnique({ where: { id } });
+      if (currentLicenseEvidence && currentLicenseEvidence.casinoLicenseId !== casinoLicenseId) {
+        throw new Error(`Casino licence evidence identity conflict for ${id}.`);
+      }
       if (!currentLicenseEvidence) {
         await tx.casinoLicenseEvidence.create({ data: { id, ...desiredLicenseEvidence } });
         mark(counts, "CasinoLicenseEvidence", "created");
@@ -381,16 +387,24 @@ async function reconcileMarket(
       termsUrl: bonus.termsUrl,
       startsAt: date(bonus.startsAt),
       expiresAt: date(bonus.expiresAt),
-      status: EditorialStatus.DRAFT,
       domainLifecycleStatus: CasinoLifecycleStatus.ACTIVE,
-      offerStatus: OfferStatus.DRAFT,
       lastVerifiedAt: date(bonus.lastVerifiedAt),
       sortOrder: bonus.sortOrder,
       updatedBy: bundle.actor,
     };
     const currentBonus = await tx.casinoBonus.findUnique({ where: { slug: bonus.slug } });
+    if (currentBonus && (currentBonus.casinoId !== casinoId || currentBonus.casinoCountryId !== casinoCountryId)) {
+      throw new Error(`Casino bonus slug conflict for ${bonus.slug}.`);
+    }
     if (!currentBonus) {
-      await tx.casinoBonus.create({ data: { id: deterministicCasinoIngestionId(`${bundle.casino.key}:market:${market.countryCode}:bonus:${bonus.key}`), slug: bonus.slug, ...desiredBonus, createdBy: bundle.actor } });
+      await tx.casinoBonus.create({ data: {
+        id: deterministicCasinoIngestionId(`${bundle.casino.key}:market:${market.countryCode}:bonus:${bonus.key}`),
+        slug: bonus.slug,
+        ...desiredBonus,
+        status: EditorialStatus.DRAFT,
+        offerStatus: OfferStatus.DRAFT,
+        createdBy: bundle.actor,
+      } });
       mark(counts, "CasinoBonus", "created");
     } else if (!equivalent(currentBonus, desiredBonus)) {
       await tx.casinoBonus.update({ where: { id: currentBonus.id }, data: desiredBonus });
@@ -402,12 +416,12 @@ async function reconcileMarket(
 export async function ingestCasinoBundle(prisma: PrismaClient, bundle: CasinoIngestionBundle): Promise<CasinoIngestionResult> {
   const result = planCasinoIngestion(bundle);
   const counts = blankCounts();
-  const casinoId = await prisma.$transaction(async (tx) => {
+  await prisma.$transaction(async (tx) => {
     const brandProfileId = await reconcileBrand(tx, bundle, counts);
-    return reconcileCasino(tx, bundle, brandProfileId, counts);
+    const casinoId = await reconcileCasino(tx, bundle, brandProfileId, counts);
+    for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
+      await reconcileMarket(tx, bundle, casinoId, market, counts);
+    }
   });
-  for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
-    await prisma.$transaction((tx) => reconcileMarket(tx, bundle, casinoId, market, counts));
-  }
   return { ...result, mode: "WRITE", reconciliation: counts };
 }

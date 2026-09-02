@@ -135,6 +135,11 @@ test("country and product predicates compose within one market profile", async (
   assert.equal((await service.discover({ country: ["SE"], currency: ["PEN"] })).total, 0);
   assert.equal((await service.discover({ country: ["PE"], gameProvider: ["evolution"] })).total, 0);
   assert.deepEqual((await service.discover({ country: ["SE"], license: ["swedish-test-authority"], payment: ["swish"], gameProvider: ["evolution"] })).items.map((item) => item.id), ["reference-casino"]);
+
+  const unqualified = await service.discover();
+  assert.deepEqual(unqualified.items[0]?.countries.map((country) => country.key), ["PE"]);
+  assert.deepEqual(unqualified.items[0]?.paymentMethods.map((payment) => payment.key), ["visa"]);
+  assert.doesNotMatch(JSON.stringify(unqualified.items[0]), /SEK|Swish|Swedish Test Authority/);
 });
 
 function explicitRoute(): PartnerRouteCandidate {

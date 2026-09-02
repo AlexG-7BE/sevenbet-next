@@ -2,7 +2,7 @@
 
 ## Persistence foundation
 
-**DETECTED on the `CASINO-DATA-ARCH-01` candidate based on authoritative main `f12d5f35dd5ec36257dd7e1d29a3ca38b16d1e73`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 25 ordered SQL migrations (`0001_cms_foundation` through `0025_casino_market_profile_architecture`). The candidate schema declares 89 Prisma models and 61 enums. Application repositories/services directly use this persistence layer.
+**DETECTED on the `CASINO-DATA-ARCH-01` candidate updated onto authoritative post-migration main `5d16a2615a642625c916f63899ba1748e895d689`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 25 ordered SQL migrations (`0001_cms_foundation` through `0025_casino_market_profile_architecture`). The candidate schema declares 89 Prisma models and 61 enums. Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
@@ -51,4 +51,4 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 24. Durable Programme access acceptance
 25. Casino market-profile architecture
 
-**DETECTED:** all migration directories contain `migration.sql`. Disposable verification replays all 25 and verifies an upgrade to 0025. Whether migration 0025 is applied to any deployed database is **UNKNOWN** from repository evidence and is not claimed. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.
+**DETECTED:** all migration directories contain `migration.sql`. Disposable verification replays all 25 and verifies an upgrade to 0025. Production migration 0025 is completed and checksum-valid under the bounded evidence recorded in [Casino Market 0025 Post-Migration Steady State](../Casino-Market-0025-Post-Migration-Steady-State.md); the #111 runtime reconciliation does not re-execute it. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.

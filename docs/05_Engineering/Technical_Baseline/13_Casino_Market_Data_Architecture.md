@@ -2,7 +2,7 @@
 
 ## Audit scope and evidence
 
-**DETECTED:** repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` was confirmed before implementation. The active repository scan covered 1,990 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative base is `f12d5f35dd5ec36257dd7e1d29a3ca38b16d1e73`; this document describes the `CASINO-DATA-ARCH-01` implementation candidate layered on that base.
+**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and the isolated ingestion worktree were confirmed before reconciliation. The active worktree scan covered 2,054 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The authoritative corrected runtime base is `ae775cab11e54caf4c1805193c26baf0c9bb5861`; this document describes the `CASINO-DATA-INGEST-02` candidate layered on that base.
 
 **DETECTED:** the frozen research staging directories were inspected read-only for representability. Their records and binaries are not imported, changed, published, or committed by this workstream.
 
@@ -34,12 +34,14 @@
 
 **DETECTED:** disposable PostgreSQL verification applies all 25 migrations cleanly. A staged 0024→0025 fixture preserves one Casino, one existing CasinoCountry, and one each of legacy licence/payment/provider/category/bonus records. All product facts remain unscoped, no licence join is inferred, no duplicate market profile appears, new unknown fields remain null/empty, and a second `migrate deploy` is a no-op.
 
+**DETECTED:** Production migration 0025 is already completed with immutable repository checksum `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`. This ingestion candidate adds no migration after 0025 and contains no Production mutation path.
+
 ## Controlled ingestion validation
 
-**DETECTED:** `data/casino-ingestion/betsson-pe-se.v1.json` is an explicit, checksum-bound Betsson PE/SE bundle. `scripts/casino-market-ingest.ts` defaults to database-free dry run and permits writes only to an explicitly confirmed loopback `_ci` database. It reconciles one global Casino and transaction-bounded market profiles without deleting unrelated data or writing affiliate/commercial authority.
+**DETECTED:** `data/casino-ingestion/betsson-pe-se.v1.json` is an explicit, checksum-bound Betsson PE/SE bundle. `scripts/casino-market-ingest.ts` defaults to database-free dry run and permits writes only to an explicitly confirmed loopback `_ci` database. It reconciles one global Casino and both market profiles in one transaction without deleting unrelated data, overwriting editorial workflow state, or writing affiliate/commercial authority.
 
 **DETECTED:** the disposable PostgreSQL acceptance test exercises persisted Betsson PE and SE facts against public profile/discovery services, including idempotent retry, targeted evidence update, exact market filtering, visible contradictions/unknowns, and commercial fail-closed behavior. See `docs/05_Engineering/Casino-Market-Ingestion-Runbook.md`.
 
 ## Remaining boundary
 
-**PROPOSED:** `CASINO-DATA-ARCH-RELEASE-03` may release migration 0025 DB-first, verify the Production schema, and only then promote compatible runtime. This ingestion evidence does not authorize a Production data import, route activation, or asset publication.
+**PROPOSED:** Production use requires a separate, exact-authority, one-time execution mechanism after this importer passes release gates. Factual publication remains separate from affiliate route, commercial eligibility, and asset-publication authority.

@@ -64,6 +64,21 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     });
     const sentinelBefore = json(sentinel);
 
+    await prisma.casinoBonus.create({
+      data: {
+        casinoId: sentinel.id,
+        slug: bundle.markets.find((market) => market.countryCode === "SE")!.bonuses[0]!.slug,
+        title: "Atomicity conflict sentinel",
+        summary: "Forces the second market reconciliation to fail.",
+        createdBy: "casino-data-ingest-02-test",
+        updatedBy: "casino-data-ingest-02-test",
+      },
+    });
+    await assert.rejects(() => ingestCasinoBundle(prisma, bundle));
+    assert.equal(await prisma.casino.count({ where: { slug: bundle.casino.slug } }), 0, "a later market failure must roll back the global Casino and PE market");
+    assert.equal(await prisma.casinoCountry.count({ where: { countryCode: "PE", casino: { slug: bundle.casino.slug } } }), 0);
+    await prisma.casinoBonus.delete({ where: { slug: bundle.markets.find((market) => market.countryCode === "SE")!.bonuses[0]!.slug } });
+
     const first = await ingestCasinoBundle(prisma, bundle);
     assert.equal(first.reconciliation?.byModel.Casino?.created, 1);
     assert.equal(first.reconciliation?.byModel.CasinoCountry?.created, 2);
@@ -119,6 +134,13 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     assert.equal(second.reconciliation?.created, 0);
     assert.equal(second.reconciliation?.updated, 0);
     assert.deepEqual(json(await loadState()), firstCanonical);
+
+    await prisma.casino.update({ where: { id: stateAfterFirst.id }, data: { status: "PUBLISHED" } });
+    await prisma.casinoBonus.updateMany({ where: { casinoId: stateAfterFirst.id }, data: { status: "PUBLISHED", offerStatus: "PAUSED" } });
+    const editorialRetry = await ingestCasinoBundle(prisma, bundle);
+    assert.equal(editorialRetry.reconciliation?.updated, 0);
+    assert.equal((await prisma.casino.findUniqueOrThrow({ where: { id: stateAfterFirst.id } })).status, "PUBLISHED");
+    assert.equal((await prisma.casinoBonus.findMany({ where: { casinoId: stateAfterFirst.id } })).every((bonus) => bonus.status === "PUBLISHED" && bonus.offerStatus === "PAUSED"), true);
 
     const targetEvidenceId = deterministicCasinoIngestionId("betsson:market:PE:evidence:pe-kyc");
     const unchangedEvidenceBefore = json(await prisma.casinoCountryEvidence.findMany({
