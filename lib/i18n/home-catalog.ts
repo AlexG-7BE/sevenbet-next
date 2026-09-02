@@ -90,8 +90,9 @@ type HomeCopySections = {
 };
 
 type EuropeanHomeLocale = Exclude<SupportedLocale, "en-GB" | "en-CA" | "fr-CA">;
+type BaseEuropeanHomeLocale = Exclude<EuropeanHomeLocale, "es-PE">;
 
-const translations = {
+const baseTranslations = {
   "de-DE": {
     hero: ["Ein selbstbestimmtes Programm in 10 Schritten", "Kontrolle", "beginnt hier.", "Glücksspiel soll deine Entscheidung bleiben, keine Gewohnheit: Zehn kurze Missionen helfen dir, Muster zu erkennen und Grenzen zu setzen, die wirklich halten. Kostenlos nutzbar. Datenschutz erklärt.", "Programm starten", "Missionen 02–10 · jeweils 5–8 Minuten", "Aktuelles Programm: kostenlos, ohne Bezahlschranke", "Deine Worte beeinflussen niemals Preise oder Angebote", "Weiter ↓"],
     recognition: ["Wird Glücksspiel", "schwerer zu kontrollieren?", "Du musst uns nicht antworten — achte nur darauf, was dir bekannt vorkommt.", "Du gibst mehr aus oder riskierst mehr als geplant.", "Du kehrst zurück, um Verluste zurückzugewinnen.", "Du empfindest Schuld oder Stress wegen Geld oder Beziehungen."],
@@ -182,13 +183,21 @@ const translations = {
     final: ["Begynn med én", "situasjon.", "Beskriv én situasjon. Utgangspunktet ditt tar form derfra.", "Ingen registrering før utgangspunktet ditt er klart."],
     imageAlts: ["Person i arbeid", "Selvtillit", "Skrive planen", "Resultat", "Legge merke til øyeblikket", "Skrive regelen", "Bruke planen"],
   },
-} as const satisfies Record<EuropeanHomeLocale, HomeCopySections>;
+} as const satisfies Record<BaseEuropeanHomeLocale, HomeCopySections>;
+
+// Peru deliberately shares the reviewed Spanish source pack for generic product
+// language. Market-specific facts and safety copy live in governed market data.
+const translations: Record<EuropeanHomeLocale, HomeCopySections> = {
+  ...baseTranslations,
+  "es-PE": baseTranslations["es-ES"],
+};
 
 const metadata = {
   "en-GB": { title: "B4GAMBLE | Know your limits before you play", description: "Educational tools, private self-checks and transparent casino comparison to help adults understand risks and set personal limits before they play." },
   "de-DE": { title: "B4GAMBLE | Kenne deine Grenzen, bevor du spielst", description: "Lernangebote, private Selbstchecks und transparente Casino-Vergleiche helfen Erwachsenen, Risiken zu verstehen und persönliche Grenzen zu setzen, bevor sie spielen." },
   "it-IT": { title: "B4GAMBLE | Conosci i tuoi limiti prima di giocare", description: "Strumenti educativi, autovalutazioni private e confronti trasparenti aiutano gli adulti a comprendere i rischi e a fissare limiti personali prima di giocare." },
   "es-ES": { title: "B4GAMBLE | Conoce tus límites antes de jugar", description: "Herramientas educativas, autoevaluaciones privadas y comparaciones transparentes ayudan a las personas adultas a comprender los riesgos y fijar límites antes de jugar." },
+  "es-PE": { title: "B4GAMBLE Perú | Conoce tus límites antes de jugar", description: "Herramientas educativas, autoevaluaciones privadas y comparaciones transparentes para que las personas adultas en Perú comprendan los riesgos y definan límites antes de jugar." },
   "pt-PT": { title: "B4GAMBLE | Conhece os teus limites antes de jogar", description: "Ferramentas educativas, autoavaliações privadas e comparações transparentes ajudam adultos a compreender os riscos e a definir limites pessoais antes de jogar." },
   "el-GR": { title: "B4GAMBLE | Γνώρισε τα όριά σου πριν παίξεις", description: "Εκπαιδευτικά εργαλεία, ιδιωτικοί αυτοέλεγχοι και διαφανείς συγκρίσεις βοηθούν τους ενήλικες να κατανοούν τους κινδύνους και να θέτουν προσωπικά όρια πριν παίξουν." },
   "nl-NL": { title: "B4GAMBLE | Ken je grenzen voordat je speelt", description: "Educatieve hulpmiddelen, private zelfchecks en transparante casinovergelijkingen helpen volwassenen risico's te begrijpen en persoonlijke grenzen te stellen voordat zij spelen." },

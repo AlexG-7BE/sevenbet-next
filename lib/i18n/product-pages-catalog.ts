@@ -815,6 +815,7 @@ const catalog: Record<SupportedLocale, ProductPageMessages> = {
   "de-DE": applyProductPageOverrides(de, languageQualityOverrides["de-DE"]),
   "it-IT": IT_PRODUCT_PAGE_MESSAGES,
   "es-ES": applyProductPageOverrides(reviewedLocaleVariant("es-ES", firstWaveEditorialOverrides["es-ES"]), languageQualityOverrides["es-ES"]),
+  "es-PE": applyProductPageOverrides(reviewedLocaleVariant("es-ES", firstWaveEditorialOverrides["es-ES"]), languageQualityOverrides["es-ES"]),
   "pt-PT": PT_PRODUCT_PAGE_MESSAGES,
   "el-GR": applyProductPageOverrides(reviewedLocaleVariant("el-GR", firstWaveEditorialOverrides["el-GR"]), languageQualityOverrides["el-GR"]),
   "nl-NL": NL_PRODUCT_PAGE_MESSAGES,

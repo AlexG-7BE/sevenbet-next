@@ -20,11 +20,17 @@ import {
 } from "@/lib/market/routing";
 import { homeTranslationReady } from "@/lib/i18n/review-state";
 import {
+  DEFAULT_MARKET_PROFILE,
+  localeMarketRoute,
   localeForLanguageSegment,
   marketEditorialPublicationApproved,
+  marketProfileByCountry,
   marketProfileByRouteMarket,
   publicMarketPath,
 } from "@/lib/market/registry";
+import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "@/lib/market/presentation-preference";
+import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
+import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import {
   isProgrammeLocale,
   programmeLocaleFromPath,
@@ -193,6 +199,17 @@ function privateAdminResponse(response: NextResponse) {
   return response;
 }
 
+function publicPresentationAvailable(market: NonNullable<ReturnType<typeof marketProfileByCountry>>, locale: Parameters<typeof homeTranslationReady>[0]) {
+  return Boolean(localeMarketRoute(market, locale)?.enabled)
+    && homeTranslationReady(locale)
+    && (process.env.VERCEL_ENV !== "production" || marketEditorialPublicationApproved(market));
+}
+
+function withoutCountryQuery(url: URL) {
+  url.searchParams.delete("country");
+  return url;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;
   const nonce = createCspNonce();
@@ -324,27 +341,68 @@ export async function middleware(request: NextRequest) {
   ) {
     return secureResponse(nextResponse());
   }
-  if (publicMarketRoute.kind === "LEGACY_REDUNDANT_LOCALE" || publicMarketRoute.kind === "DEFAULT_MARKET_ALIAS") {
-    const destination = new URL(request.url);
+  if (publicMarketRoute.kind === "LEGACY_MARKET_ROUTE") {
+    const destination = withoutCountryQuery(new URL(request.url));
     destination.pathname = publicMarketRoute.canonicalPath;
     return secureResponse(NextResponse.redirect(destination, 308));
   }
 
-  if (publicMarketRoute.kind !== "INVALID") {
+  if (publicMarketRoute.kind === "MARKET_NEUTRAL") {
+    // `/compare` is a retired public destination. Fold it into the canonical
+    // market directory in the resolver hop so callers never traverse a
+    // neutral-locale redirect followed by the page-level permanent redirect.
+    const equivalentPathname = publicMarketRoute.pathname === "/compare"
+      ? "/casinos"
+      : publicMarketRoute.pathname;
+    const countryValues = searchParams.getAll("country");
+    const explicitCountry = countryValues.length === 1 ? marketProfileByCountry(countryValues[0]) : null;
+    const explicitCountryLocale = explicitCountry?.defaultLocale ?? null;
+    if (
+      explicitCountry
+      && explicitCountryLocale
+      && publicPresentationAvailable(explicitCountry, explicitCountryLocale)
+      && isLocalizedPublicDestination(equivalentPathname, explicitCountry)
+    ) {
+      const destination = withoutCountryQuery(new URL(request.url));
+      destination.pathname = publicMarketPath(explicitCountry, explicitCountryLocale, equivalentPathname);
+      return secureResponse(NextResponse.redirect(destination, 308));
+    }
+
+    const preference = parsePresentationPreference(request.cookies.get(PRESENTATION_PREFERENCE_COOKIE)?.value);
+    const resolution = resolvePresentationContext({
+      preference,
+      trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
+      acceptLanguage: request.headers.get("accept-language"),
+    });
+    const resolved = publicPresentationAvailable(resolution.market, resolution.locale)
+      ? resolution
+      : resolvePresentationContext({
+          routeMarket: DEFAULT_MARKET_PROFILE.routeMarket,
+          routeLanguage: DEFAULT_MARKET_PROFILE.defaultLocale.split("-")[0],
+        });
+    const destination = withoutCountryQuery(new URL(request.url));
+    destination.pathname = publicMarketPath(resolved.market, resolved.locale, equivalentPathname);
+    return secureResponse(NextResponse.redirect(
+      destination,
+      publicMarketRoute.pathname === "/compare" ? 308 : 307,
+    ));
+  }
+
+  if (publicMarketRoute.kind === "CANONICAL_LOCALE") {
     const canonicalPathname = publicMarketPath(
       publicMarketRoute.market,
       publicMarketRoute.locale,
       publicMarketRoute.pathname,
     );
-    if (pathname !== canonicalPathname) {
-      const destination = new URL(request.url);
+    if (pathname !== canonicalPathname || searchParams.has("country")) {
+      const destination = withoutCountryQuery(new URL(request.url));
       destination.pathname = canonicalPathname;
       return secureResponse(NextResponse.redirect(destination, 308));
     }
     requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
     requestHeaders.set(PRESENTATION_MARKET_HEADER, publicMarketRoute.market.routeMarket);
     requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, publicMarketRoute.locale.split("-")[0].toLowerCase());
-    const rewriteUrl = publicMarketRoute.kind === "UNPREFIXED_DEFAULT" ? undefined : request.nextUrl.clone();
+    const rewriteUrl = request.nextUrl.clone();
     if (rewriteUrl) {
       rewriteUrl.pathname = publicMarketRoute.pathname;
       const token = await signInternalPresentation(
@@ -359,6 +417,12 @@ export async function middleware(request: NextRequest) {
     const response = nextResponse(rewriteUrl);
     response.headers.set("Content-Language", publicMarketRoute.locale);
     return secureResponse(response);
+  }
+
+  // Disabled locale architecture stays an HTTP 404 even when the attempted
+  // URL has a trailing slash. Do not normalize it into a second request.
+  if (publicMarketRoute.kind === "INVALID" && publicMarketRoute.reason === "LOCALE_DISABLED") {
+    return secureResponse(nextResponse());
   }
 
   // `skipTrailingSlashRedirect` lets market homes keep `/de/`. Preserve the

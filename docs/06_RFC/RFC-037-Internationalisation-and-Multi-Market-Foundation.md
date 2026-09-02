@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The canonical URL architecture was superseded by the explicit Founder market-first URL decision on 2026-08-30. A later explicit Founder instruction on 2026-08-30 removed human/native-speaker linguistic review as a publication-state requirement, required actual bounded AI language QA, retained Founder publication acceptance as separate non-automatic authority, and authorised the first-wave DE/ES/SE/DK/GR evidence implementation described below. The current Founder publication-acceptance instruction on 2026-08-30 accepts the localized editorial versions for DE/de-DE, ES/es-ES, SE/sv-SE, DK/da-DK and GR/el-GR for public Production presentation, with indexing not activated and commercial authority still fail-closed.
+Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The market-first URL architecture selected on 2026-08-30 is superseded by the explicit `GEO-LOCALIZATION-01` Founder instruction of 2026-09-02, which makes lowercase BCP-47 locale-market segments canonical, initially requires `en-gb`, `sv-se` and `es-pe`, and authorises Peru only as a noindex Preview presentation. The 2026-08-30 publication decision continues to accept DE/de-DE, ES/es-ES, SE/sv-SE, DK/da-DK and GR/el-GR for public Production presentation; the new URL decision does not extend Production publication, indexing or commercial authority.
 
 ## Decision
 
@@ -99,36 +99,22 @@ Programme, Help, self-check, limits, vulnerability or other protected/safety dat
 
 ## URL architecture
 
-Market is the primary public URL dimension. The default locale of a market is omitted from its canonical URL. Market and locale remain separate typed runtime concepts; omitting a default language segment does not merge them.
-
-The existing unprefixed root remains the canonical default-market/default-locale baseline, avoiding an unnecessary Production SEO move:
+The canonical public presentation URL has one lowercase BCP-47 locale-market segment. The segment makes both dimensions explicit while the server continues to model and authorise them independently:
 
 ```text
-/                       = GB / en-GB
-/casinos                = GB / en-GB
-/casino/example         = GB / en-GB
+/en-gb                  = GB / en-GB
+/sv-se                  = SE / sv-SE
+/es-pe                  = PE / es-PE
+/es-pe/casinos          = Peru casino discovery in Spanish
 ```
 
-Other markets using their default locale use one market segment:
+Every enabled presentation locale uses the same rule (`/de-de`, `/es-es`, `/el-gr`, `/da-dk`, and so on). A market with more than one enabled language receives one canonical route per locale; a future Canadian pair would be `/en-ca` and `/fr-ca`, not a market-only URL with an optional language child. Locale case is normalized in a permanent redirect, and the canonical spelling is always lowercase in the path.
 
-```text
-/de/
-/it/
-/es/
-/pt/
-/gr/
-/nl/
-/se/
-/dk/
-/fi/
-/no/
-```
+Unprefixed localizable routes such as `/`, `/casinos` and `/learn` are market-neutral resolver inputs, not competing canonicals. Resolution precedence is: explicit locale-market route; explicit first-party presentation preference; trusted Vercel country signal; language preference only within an already known market; deterministic GB/en-GB fallback. `Accept-Language` never chooses a market. A neutral resolver redirect is temporary (`307`); canonical normalization and legacy migrations are permanent (`308`).
 
-Only a secondary locale adds its BCP-47 language subtag. This rule is generic rather than Canada-specific. For example, Canada default `en-CA` is `/ca/` and secondary `fr-CA` is `/ca/fr/`; a future Switzerland profile with default `de-CH` and secondary `fr-CH`/`it-CH` would use `/ch/`, `/ch/fr/` and `/ch/it/`.
+Old market-first routes and redundant language routes are compatibility inputs and permanently redirect in exactly one hop while preserving safe query parameters: `/se/casinos` and `/se/sv/casinos` become `/sv-se/casinos`; `/gb/en/` becomes `/en-gb`. A legacy `?country=PE` on a localizable unprefixed path becomes the equivalent `/es-pe/...` canonical and the `country` parameter is removed. An explicit canonical URL cannot be overridden by cookies, geo or query parameters.
 
-This shape provides shorter, clearer partner-facing links and removes redundant paths such as `/de/de/`, while retaining multi-language flexibility and an explicit market for every non-default market. It does not change the commercial-authority model: a market segment, secondary-language segment, selected language or translated page remains presentation context only.
-
-The Preview-only two-segment default-language routes are compatibility inputs, never canonical copies. They permanently redirect in one hop while preserving the equivalent path and query: `/de/de/...` to `/de/...`, `/gr/el/...` to `/gr/...`, and `/gb/en/...` to the unprefixed GB equivalent. A default-market alias such as `/gb/...` likewise redirects to the unprefixed canonical. Secondary locale routes such as `/ca/fr/...` remain canonical. Unsupported combinations such as `/de/en/...`, unknown markets and market-prefixed protected/internal routes fail closed without a public rewrite.
+Programme routing remains governed separately and retains its established market-first localized paths. Operative legal documents and protected/internal subtrees remain unprefixed or otherwise governed by their own route authority. Unknown, disabled or invalid locale-market combinations fail closed without a localized rewrite.
 
 The central typed public-route policy is the only allowlist for market prefixes. Admin, API, MCP, authentication/integration callbacks, editorial Preview, affiliate redirects, outbound actions and other internal or mutation families are never localized by this routing layer. Geo-based presentation must never mutate an explicit URL, produce a redirect loop or create commercial authority.
 
@@ -231,6 +217,7 @@ The implementation uses one typed review-state record per supported locale. Revi
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `en-GB` | `PUBLIC_CORE_READY` | `SOURCE_BASELINE` | not applicable to source baseline | source-baseline authority | GB source reviewed | GB baseline | existing English routes retain their existing indexing policy |
 | `de-DE`, `es-ES`, `el-GR`, `sv-SE`, `da-DK` | `PUBLIC_CORE_READY` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_ACCEPTED` | required for legal or jurisdiction-sensitive copy | first-wave evidence reviewed | `noindex, follow`; excluded from the indexable sitemap |
+| `es-PE` | `PUBLIC_CORE_READY` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required | authoritative MINCETUR evidence reviewed for the bounded Preview copy | `noindex, follow`; excluded from the indexable sitemap |
 | `it-IT`, `pt-PT`, `nl-NL`, `fi-FI`, `nb-NO` | `HOME_READY` | `MACHINE_TRANSLATED` | `AI_LANGUAGE_QA_PASSED` | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required for legal or jurisdiction-sensitive copy | required | `noindex, follow`; excluded from the indexable sitemap |
 | `en-CA`, `fr-CA` | `ARCHITECTURE_ONLY` | architecture-only machine translation | required | `FOUNDER_PUBLICATION_NOT_ACCEPTED` | required | required | not approved for publication/indexing |
 
@@ -265,10 +252,11 @@ The implementation stores bounded typed evidence profiles rather than a legal-ru
 | Sweden | [Swedish Gambling Act, regulator-hosted unofficial translation](https://www.spelinspektionen.se/globalassets/dokument/engelsk/oversatt-spellagen/english-spellagen-sfs-2018_1138-uppdat-sfs-2024_255.pdf), [Spelinspektionen illegal-gambling guidance](https://www.spelinspektionen.se/lagar-regler/olagligt-spel/vad-ar-olaglig-spelverksamhet/) | Do not promote an operator without current Swedish licence evidence; preserve moderation, self-exclusion, age and support-information considerations for later promotional review. |
 | Denmark | [Spillemyndigheden illegal gambling and advertising](https://spillemyndigheden.dk/en-us/public-and-players/illegal-gambling-and-advertising), [operator guideline v9](https://www.spillemyndigheden.dk/uploads/2025-06/Guidelines%20for%20operators%20of%20betting%20and%20online%20casino%20version%209.0%202025.pdf) | Affiliate-only marketing does not by itself create a B4GAMBLE gambling-licence claim; future promotion still needs licensed-operator and ordinary commercial evidence. |
 | Greece | [HGC Affiliate Suitability regulation](https://licensing.gamingcommission.gov.gr/shared%20documents/FEK-2020-B-04140.pdf), [HGC Affiliate Registry](https://certifications.gamingcommission.gov.gr/publicRecordsOnline/SitePages/AffiliatesOnline.aspx) | `HGC_AFFILIATE_SUITABILITY_REQUIRED`. Current B4GAMBLE evidence is explicitly `NOT VERIFIED / REQUIRED`; operator or network evidence cannot substitute for it. |
+| Peru | [Law 31557](https://consultasenlinea.mincetur.gob.pe/casinos/archivos/2022LEY31557.pdf), [MINCETUR platform-authorisation procedure](https://www.gob.pe/institucion/mincetur/pages/94255-autorizacion-y-o-renovacion-de-explotacion-de-plataformas-tecnologicas-de-juegos-a-distancia-y-apuestas-deportivas-a-distancia), [MINCETUR unauthorized-platform enforcement](https://www.gob.pe/institucion/mincetur/noticias/1421604-mincetur-bloquea-36-plataformas-de-juegos-a-distancia-y-apuestas-deportivas-que-operaban-sin-autorizacion) | Preview editorial context only. Exact operator/domain authorisation, B4GAMBLE commercial authority, partner, active offer and tracking remain separate and fail closed. |
 
 ### Local safety presentation
 
-The exact DE/ES/SE/DK/GR Help and Responsible Gambling pages use their evidence profile for local self-exclusion, support and information routes. The page visibly attributes each external provider, shows the evidence review date, identifies external navigation, and states that B4GAMBLE is not the regulator, emergency service or treatment provider. Greece identifies BetBlocker as an independent non-profit rather than a government service. No official source logos are copied.
+The exact DE/ES/SE/DK/GR and Preview-only PE Help and Responsible Gambling pages use their evidence profile for local self-exclusion, support and information routes. The page visibly attributes each external provider, shows the evidence review date, identifies external navigation, and states that B4GAMBLE is not the regulator, emergency service or treatment provider. Greece identifies BetBlocker as an independent non-profit rather than a government service. Peru states that MINCETUR's verified voluntary-exclusion route covers casino and slot-machine premises and does not present it as universal online exclusion. No official source logos are copied, and no Peru hotline or treatment provider is invented where an authoritative source was not verified.
 
 The localized safety pages contain no operator cards, offers, bonuses, affiliate redirects, Programme actions or safety-derived commercial personalisation. They never substitute GAMSTOP, GamCare, NHS or another UK resource for a missing local resource. Missing local resource categories render a neutral unavailable state.
 
@@ -280,14 +268,15 @@ Evidence evaluation is cumulative and fail-closed. All five markets require exis
 
 For a public request:
 
-1. parse and validate an explicit market-first route when present;
-2. resolve a supported unprefixed public route explicitly as `GB` / `en-GB`;
-3. use an explicit user presentation preference to navigate to its canonical market route;
-4. use the trusted request-country observation only as a bounded presentation default where no canonical route has already fixed context;
-5. resolve the presentation market and locale through the market registry;
-6. resolve jurisdiction/commercial authority independently;
-7. render localized editorial/service content;
-8. project casino and offer actions only if the independent commercial/referral authority passes.
+1. parse and validate an explicit locale-market route when present;
+2. otherwise apply a valid first-party presentation preference;
+3. otherwise use a trusted request-country observation as a bounded presentation default;
+4. use browser language only to select among enabled locales of that already known market;
+5. fall back deterministically to GB / `en-GB`;
+6. redirect a neutral input to its canonical locale-market URL;
+7. resolve jurisdiction/commercial authority independently;
+8. render localized editorial/service content;
+9. project casino and offer actions only if the independent commercial/referral authority passes.
 
 Priority rules must prevent a manually selected presentation market from becoming a force-allow mechanism.
 

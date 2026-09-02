@@ -184,10 +184,10 @@ test("Production-style canonical, robots and sitemap output use b4gamble.com", a
     publicComparisonService.compare = originalCompare;
   }
   assert.ok(entries.length > 10);
-  assert.ok(entries.some((entry) => entry.url === "https://b4gamble.com/10-steps"));
+  assert.ok(entries.some((entry) => entry.url === "https://b4gamble.com/en-gb/10-steps"));
   assert.ok(entries.every((entry) => !temporaryDemoCasinoIds.some((id) => entry.url.includes(id))));
   assert.ok(entries.every((entry) => !/\/casino\/demo-/.test(entry.url)));
-  assert.ok(entries.every((entry) => !["https://b4gamble.com/casinos", "https://b4gamble.com/bonuses"].includes(entry.url)));
+  assert.ok(entries.every((entry) => !["https://b4gamble.com/en-gb/casinos", "https://b4gamble.com/en-gb/bonuses"].includes(entry.url)));
   for (const entry of entries) {
     assert.match(entry.url, /^https:\/\/b4gamble\.com(?:\/|$)/);
     assert.doesNotMatch(entry.url, /sevenbet-next\.vercel\.app/);
@@ -217,23 +217,23 @@ test("sitemap keeps final static and learning routes when casino discovery throw
   }
 
   const urls = entries.map((entry) => entry.url);
-  assert.ok(urls.includes("https://b4gamble.com/10-steps"));
-  assert.ok(urls.includes("https://b4gamble.com/learn"));
-  assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/learn/") && url !== "https://b4gamble.com/learn/"));
-  assert.ok(urls.includes("https://b4gamble.com/responsible-gambling"));
-  assert.ok(urls.includes("https://b4gamble.com/help"));
-  assert.ok(!urls.some((url) => url.startsWith("https://b4gamble.com/help/")));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/10-steps"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/learn"));
+  assert.ok(urls.some((url) => url.startsWith("https://b4gamble.com/en-gb/learn/") && url !== "https://b4gamble.com/en-gb/learn/"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/responsible-gambling"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/help"));
+  assert.ok(!urls.some((url) => url.startsWith("https://b4gamble.com/en-gb/help/")));
   for (const educationalHelpPath of ["budgeting", "time-management", "bonus-terms", "casino-licenses", "payment-safety", "faq"]) {
     assert.ok(!urls.includes(`https://b4gamble.com/help/${educationalHelpPath}`));
   }
-  assert.ok(urls.includes("https://b4gamble.com/learn/responsible-gambling/responsible-gambling-tools"));
-  assert.ok(urls.includes("https://b4gamble.com/learn/casino-bonuses/welcome-bonus-terms"));
-  assert.ok(urls.includes("https://b4gamble.com/learn/licensing/casino-licenses-explained"));
-  assert.ok(urls.includes("https://b4gamble.com/learn/payments/casino-payment-methods"));
-  assert.ok(urls.includes("https://b4gamble.com/best-offers"));
-  assert.ok(!urls.includes("https://b4gamble.com/compare"));
-  assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/casino/")));
-  assert.ok(urls.every((url) => !["https://b4gamble.com/casinos", "https://b4gamble.com/bonuses"].includes(url)));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/learn/responsible-gambling/responsible-gambling-tools"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/learn/casino-bonuses/welcome-bonus-terms"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/learn/licensing/casino-licenses-explained"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/learn/payments/casino-payment-methods"));
+  assert.ok(urls.includes("https://b4gamble.com/en-gb/best-offers"));
+  assert.ok(!urls.includes("https://b4gamble.com/en-gb/compare"));
+  assert.ok(urls.every((url) => !url.startsWith("https://b4gamble.com/en-gb/casino/")));
+  assert.ok(urls.every((url) => !["https://b4gamble.com/en-gb/casinos", "https://b4gamble.com/en-gb/bonuses"].includes(url)));
 });
 
 test("home-only canonical and social metadata do not leak into auth, outbound or admin routes", () => {

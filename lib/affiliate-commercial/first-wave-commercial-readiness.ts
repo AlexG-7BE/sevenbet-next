@@ -34,6 +34,7 @@ const common: readonly FirstWaveCommercialRequirement[] = [
 const requirements: Record<FirstWaveMarketCode, readonly FirstWaveCommercialRequirement[]> = {
   DE: [...common, "EXACT_OPERATOR_DOMAIN_MATCH"],
   ES: [...common, "ADVERTISING_WITHIN_OPERATOR_AUTHORITY", "PROMOTIONAL_COPY_REVIEW"],
+  PE: [...common, "EXACT_OPERATOR_DOMAIN_MATCH", "ADVERTISING_WITHIN_OPERATOR_AUTHORITY", "PROMOTIONAL_COPY_REVIEW"],
   SE: common,
   DK: common,
   GR: [...common, "HGC_AFFILIATE_SUITABILITY_REQUIRED"],

@@ -14,6 +14,7 @@ import {
   type MarketProfile,
 } from "@/lib/market/registry";
 import { localizedProductIndexingApproved } from "@/lib/market/product-context";
+import { isLocalizedPublicDestination } from "@/lib/market/routing";
 
 export const dynamic = "force-dynamic";
 
@@ -90,10 +91,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const localizedSnapshots = await Promise.all(INITIAL_EUROPEAN_MARKET_PROFILES
     .filter((market) => localizedProductIndexingApproved(market.defaultLocale))
     .map((market) => failClosed(() => loadMarketSitemapSnapshot(market))));
-  const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, false) : { routes: [], casinoRoutes: [] };
+  const baseProducts = baseSnapshot ? indexableMarketProductPaths(baseSnapshot, true) : { routes: [], casinoRoutes: [] };
   const localizedProducts = localizedSnapshots.flatMap((snapshot) => snapshot ? [indexableMarketProductPaths(snapshot, true)] : []);
   const learningArticleRoutes = centerArticles.map((article) => ({
-    url: absoluteUrl(getArticlePath(article)),
+    url: absoluteUrl(publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, getArticlePath(article))),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
@@ -112,11 +113,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })));
 
   return [
-    ...coreRoutes.map((route) => ({
-      url: absoluteUrl(route || "/"),
-      changeFrequency: "weekly" as const,
-      priority: route === "" ? 1 : 0.8,
-    })),
+    ...coreRoutes.map((route) => {
+      const pathname = route || "/";
+      const canonicalPath = isLocalizedPublicDestination(pathname, DEFAULT_MARKET_PROFILE)
+        ? publicMarketPath(DEFAULT_MARKET_PROFILE, DEFAULT_MARKET_PROFILE.defaultLocale, pathname)
+        : pathname;
+      return {
+        url: absoluteUrl(canonicalPath),
+        changeFrequency: "weekly" as const,
+        priority: route === "" ? 1 : 0.8,
+      };
+    }),
     ...[...baseProducts.routes, ...localizedProducts.flatMap((entry) => entry.routes)].map((route) => ({
       url: absoluteUrl(route),
       changeFrequency: "weekly" as const,

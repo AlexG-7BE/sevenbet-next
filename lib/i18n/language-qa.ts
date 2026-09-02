@@ -16,7 +16,7 @@ import type { SupportedLocale } from "@/lib/market/registry";
 import { FIRST_WAVE_MARKET_EVIDENCE } from "@/lib/market/first-wave-evidence";
 
 export const EUROPEAN_MACHINE_TRANSLATED_LOCALES = [
-  "de-DE", "it-IT", "es-ES", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO",
+  "de-DE", "it-IT", "es-ES", "es-PE", "pt-PT", "el-GR", "nl-NL", "sv-SE", "da-DK", "fi-FI", "nb-NO",
 ] as const satisfies readonly SupportedLocale[];
 
 export type EuropeanMachineTranslatedLocale = typeof EUROPEAN_MACHINE_TRANSLATED_LOCALES[number];
@@ -42,7 +42,7 @@ export type LanguageQaLocaleResult = Readonly<{
 
 export type LanguageQaReport = Readonly<{
   schemaVersion: 1;
-  generatedAt: "2026-08-30";
+  generatedAt: "2026-09-02";
   assurance: "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW";
   sourceLocale: "en-GB";
   catalogDigest: string;
@@ -89,6 +89,7 @@ function hasMalformedUnicode(value: string) {
 const englishUiLeakage = /\b(?:Skip to main content|Best Offers|Start Programme|No guides match|This choice changes|Casino offer comparison|Casino reviews for|Open protected Help|Name \(optional\)|Research|discovery|paywall)\b/i;
 const localeMarkers: Record<EuropeanMachineTranslatedLocale, string> = {
   "de-DE": "verantwortungsvolles glücksspiel", "it-IT": "gioco responsabile", "es-ES": "juego responsable",
+  "es-PE": "juego responsable",
   "pt-PT": "jogo responsável", "el-GR": "υπεύθυνο παιχνίδι", "nl-NL": "verantwoord gokken", "sv-SE": "ansvarsfullt spel",
   "da-DK": "ansvarligt spil", "fi-FI": "vastuullinen pelaaminen", "nb-NO": "ansvarlig spill",
 };
@@ -96,6 +97,7 @@ const semanticTerms: Record<EuropeanMachineTranslatedLocale, Readonly<{ programm
   "de-DE": { programme: /programm/i, commercial: /kommerziell/i, clinical: /klinisch/i, affiliate: /affiliate/i, editorial: /redaktionell/i },
   "it-IT": { programme: /programma/i, commercial: /commercial/i, clinical: /clinic/i, affiliate: /affiliat/i, editorial: /editorial/i },
   "es-ES": { programme: /programa/i, commercial: /comercial/i, clinical: /clínic/i, affiliate: /afili/i, editorial: /editorial/i },
+  "es-PE": { programme: /programa/i, commercial: /comercial/i, clinical: /clínic/i, affiliate: /afili/i, editorial: /editorial/i },
   "pt-PT": { programme: /programa/i, commercial: /comercial/i, clinical: /clínic/i, affiliate: /afili/i, editorial: /editorial/i },
   "el-GR": { programme: /πρόγραμμα/i, commercial: /εμπορ/i, clinical: /κλινικ/i, affiliate: /συνεργατ/i, editorial: /συντακτικ/i },
   "nl-NL": { programme: /programma/i, commercial: /commerci/i, clinical: /klinisch/i, affiliate: /affiliate/i, editorial: /redaction/i },
@@ -109,6 +111,7 @@ const internalRoutingLanguage: Record<EuropeanMachineTranslatedLocale, readonly 
   "de-DE": [/Anfrage-Autorität/i, /rohe Ziel-URL/i, /Autorität aus dem Browser/i, /Verfügbarkeit bleibt geschlossen/i, /abgeleitete Aktionen/i, /Beanspruchungsaktionen/i, /Weiterleitungsautorität/i, /kontrolliert freigegebene Anmelderoute/i, /kontrollierten kommerziellen Link/i, /Produktgrenze/i],
   "it-IT": [/autorizzazione separata al momento della richiesta/i, /URL di destinazione/i, /fornita dal browser/i, /disponibilità resta chiusa/i, /per questa richiesta/i, /percorso di registrazione autorizzato/i, /link commerciale controllato/i, /confine del prodotto/i],
   "es-ES": [/autorizzación independiente en el momento de la solicitud/i, /la disponibilidad falla de forma segura/i, /acciones (?:inferidas|supuestas|de oferta)/i, /ruta de registro autorizada/i, /autoridad de redirección/i, /enlace comercial controlado/i, /límite del producto/i],
+  "es-PE": [/autorizzación independiente en el momento de la solicitud/i, /la disponibilidad falla de forma segura/i, /acciones (?:inferidas|supuestas|de oferta)/i, /ruta de registro autorizada/i, /autoridad de redirección/i, /enlace comercial controlado/i, /límite del producto/i],
   "pt-PT": [/autorização separada no momento do pedido/i, /URL de destino/i, /fornecida pelo navegador/i, /disponibilidade permanece bloqueada/i, /para este pedido/i, /rota de registo autorizada/i, /ligação comercial controlada/i, /limite do produto/i],
   "el-GR": [/ξεχωριστή έγκριση τη στιγμή του αιτήματος/i, /υποτιθέμενες ενέργειες/i, /ενέργειες προσφοράς/i, /εγκεκριμένη διαδρομή εγγραφής/i, /έγκριση ανακατεύθυνσης/i, /ελεγχόμενο εμπορικό σύνδεσμο/i, /όριο του προϊόντος/i],
   "nl-NL": [/afzonderlijke toestemming nodig op het moment van de aanvraag/i, /bestemmings-URL/i, /toestemming vanuit de browser/i, /actie geblokkeerd/i, /voor deze aanvraag/i, /beheerste aanmeldroute/i, /beheerste commerciële link/i, /productgrens/i],
@@ -157,7 +160,12 @@ function evaluateLocale(locale: EuropeanMachineTranslatedLocale, source: Record<
       }
     }
   }
-  for (const [otherLocale, marker] of Object.entries(localeMarkers)) if (otherLocale !== locale && corpus.toLocaleLowerCase(locale).includes(marker)) fail("WRONG_LOCALE_LEAKAGE", `contains ${otherLocale} marker: ${marker}`);
+  for (const [otherLocale, marker] of Object.entries(localeMarkers)) {
+    const sameLanguage = otherLocale.split("-")[0] === locale.split("-")[0];
+    if (otherLocale !== locale && !sameLanguage && corpus.toLocaleLowerCase(locale).includes(marker)) {
+      fail("WRONG_LOCALE_LEAKAGE", `contains ${otherLocale} marker: ${marker}`);
+    }
+  }
   if (locale === "de-DE") {
     const genericCasinoPaths = Object.entries(target)
       .filter(([path, value]) => /\b(?:Online-Casino|Casinos?)\b/i.test(value)
@@ -190,5 +198,5 @@ export function generateLanguageQaReport(): LanguageQaReport {
       supplemental: supplementalSnapshot(locale),
     })),
   })).digest("hex");
-  return { schemaVersion: 1, generatedAt: "2026-08-30", assurance: "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW", sourceLocale: "en-GB", catalogDigest, status: locales.every((locale) => locale.status === "PASS") ? "PASS" : "FAIL", locales };
+  return { schemaVersion: 1, generatedAt: "2026-09-02", assurance: "BOUNDED_AUTOMATED_LANGUAGE_QA_NOT_HUMAN_OR_LEGAL_REVIEW", sourceLocale: "en-GB", catalogDigest, status: locales.every((locale) => locale.status === "PASS") ? "PASS" : "FAIL", locales };
 }

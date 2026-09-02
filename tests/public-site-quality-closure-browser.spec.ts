@@ -410,7 +410,7 @@ test("reported localized critical surfaces have unclipped, non-overlapping conte
   const page = await context.newPage();
 
   try {
-    await gotoOk(page, "/de/responsible-gambling");
+    await gotoOk(page, "/de-de/responsible-gambling");
     const safetyHeading = page.locator('[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1');
     const safetyLead = page.locator('[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1 + p');
     await expect(safetyHeading).toBeVisible();
@@ -426,20 +426,20 @@ test("reported localized critical surfaces have unclipped, non-overlapping conte
     const germany = INITIAL_EUROPEAN_MARKET_PROFILES.find((profile) => profile.countryCode === "DE");
     expect(germany, "DE market profile").toBeDefined();
     const emptyBonusTitle = formatProductMessage(deMessages.bonuses.noMatchesTitle, { market: germany?.seoDisplayName ?? "Deutschland" });
-    await gotoOk(page, "/de/bonuses?payment=localization-visual-no-match");
+    await gotoOk(page, "/de-de/bonuses?payment=localization-visual-no-match");
     const emptyBonus = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
     await expect(emptyBonus).toBeVisible();
     const emptyBonusHeading = emptyBonus.locator("h2").filter({ hasText: emptyBonusTitle });
     await expect(emptyBonusHeading).toBeVisible();
     const activeBonusFilters = page.locator('[data-active-filter-state="bonuses"]');
     await expect(activeBonusFilters).toContainText("localization-visual-no-match");
-    await expect(emptyBonus.locator("[data-empty-reset]")).toHaveAttribute("href", "/de/bonuses");
+    await expect(emptyBonus.locator("[data-empty-reset]")).toHaveAttribute("href", "/de-de/bonuses");
     await expect(activeBonusFilters.locator("[data-empty-reset]")).toHaveCount(0);
     await expectCriticalTextFits(page, ['[data-runtime-renderer="bonuses"] h2'], "DE Bonuses empty heading 390x844");
     await expectNoDocumentOverflow(page, "DE Bonuses empty state 390x844");
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await gotoOk(page, "/de/learn/responsible-gambling/responsible-gambling-tools");
+    await gotoOk(page, "/de-de/learn/responsible-gambling/responsible-gambling-tools");
     const articleHeading = page.locator('[data-learning-article] header h1');
     const articleSummary = page.locator('[data-learning-article] header [class*="heroSummary"]');
     await expect(articleHeading).toBeVisible();
@@ -459,7 +459,7 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   try {
-    await gotoOk(page, "/es/best-offers");
+    await gotoOk(page, "/es-es/best-offers");
     const messages = productPageMessages("es-ES");
     const methodology = page.getByRole("link", { name: messages.common.reviewMethodology, exact: true });
     const reviews = page.getByRole("link", { name: messages.common.browseReviews, exact: true });
@@ -487,7 +487,7 @@ test("German demo profile localizes system UI while preserving source-controlled
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   try {
-    await gotoOk(page, "/de/casino/demo-plume");
+    await gotoOk(page, "/de-de/casino/demo-plume");
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     const systemUi = await page.locator([

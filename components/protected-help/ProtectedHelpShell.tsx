@@ -8,6 +8,7 @@ import styles from "./ProtectedHelp.module.css";
 const localizedShellCopy = {
   "de-DE": { skip: "Zum Hauptinhalt", badge: "Geschützte Hilfe", help: "Hilfe", back: "Zur Website", exit: "Zurück", privacy: "Datenschutz", terms: "Bedingungen", about: "Über uns" },
   "es-ES": { skip: "Saltar al contenido principal", badge: "Ayuda protegida", help: "Ayuda", back: "Volver al sitio", exit: "Salir", privacy: "Privacidad", terms: "Términos", about: "Quiénes somos" },
+  "es-PE": { skip: "Saltar al contenido principal", badge: "Ayuda protegida", help: "Ayuda", back: "Volver al sitio", exit: "Salir", privacy: "Privacidad", terms: "Términos", about: "Quiénes somos" },
   "sv-SE": { skip: "Gå till huvudinnehållet", badge: "Skyddad hjälp", help: "Hjälp", back: "Till webbplatsen", exit: "Lämna", privacy: "Integritet", terms: "Villkor", about: "Om oss" },
   "da-DK": { skip: "Gå til hovedindhold", badge: "Beskyttet hjælp", help: "Hjælp", back: "Tilbage til siden", exit: "Forlad", privacy: "Privatliv", terms: "Vilkår", about: "Om os" },
   "el-GR": { skip: "Μετάβαση στο κύριο περιεχόμενο", badge: "Προστατευμένη βοήθεια", help: "Βοήθεια", back: "Επιστροφή στον ιστότοπο", exit: "Έξοδος", privacy: "Απόρρητο", terms: "Όροι", about: "Σχετικά" },

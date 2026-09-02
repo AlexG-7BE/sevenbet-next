@@ -21,7 +21,7 @@ test("every supported URL filter and sort is server owned", async ({ page }) => 
   ] as const;
   for (const [label, parameter] of selectCases) {
     await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
-    const form = page.locator('form[action="/bonuses"]').first();
+    const form = page.locator('form[action$="/bonuses"]').first();
     const select = form.getByLabel(label);
     const value = await select.locator("option").nth(1).getAttribute("value");
     expect(value).toBeTruthy();

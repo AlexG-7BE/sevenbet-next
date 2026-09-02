@@ -151,13 +151,13 @@ test("Home renders all four canonical hero crops and the primary CTA works", asy
 test("localized Home chapter titles remain inside the shared responsive mask at full display scale", async ({ page }) => {
   test.setTimeout(60_000);
   const cases = [
-    { chapter: "04-07" as const, height: 700, path: "/de/", width: 320 },
-    { chapter: "04-07" as const, height: 768, path: "/de/", width: 1366 },
-    { chapter: "04-07" as const, height: 900, path: "/de/", width: 1440 },
-    { chapter: "04-07" as const, height: 960, path: "/de/", width: 1536 },
-    { chapter: "04-07" as const, height: 1080, path: "/de/", width: 1920 },
-    { chapter: "08-10" as const, height: 700, path: "/gr/", width: 320 },
-    { chapter: "08-10" as const, height: 800, path: "/gr/", width: 360 },
+    { chapter: "04-07" as const, height: 700, path: "/de-de", width: 320 },
+    { chapter: "04-07" as const, height: 768, path: "/de-de", width: 1366 },
+    { chapter: "04-07" as const, height: 900, path: "/de-de", width: 1440 },
+    { chapter: "04-07" as const, height: 960, path: "/de-de", width: 1536 },
+    { chapter: "04-07" as const, height: 1080, path: "/de-de", width: 1920 },
+    { chapter: "08-10" as const, height: 700, path: "/el-gr", width: 320 },
+    { chapter: "08-10" as const, height: 800, path: "/el-gr", width: 360 },
   ];
 
   for (const item of cases) {
@@ -177,7 +177,7 @@ test("localized Home chapter titles remain inside the shared responsive mask at 
 
 test("localized tablet Home hero keeps opening photos outside the copy plane", async ({ page }) => {
   await page.setViewportSize({ width: 768, height: 1024 });
-  const response = await page.goto(`${baseUrl}/gr/`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/el-gr`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
   await page.evaluate(() => document.fonts.ready);
   expect(await homeHeroPhotoTextOverlaps(page)).toEqual([]);

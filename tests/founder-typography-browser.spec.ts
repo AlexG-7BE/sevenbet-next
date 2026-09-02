@@ -146,7 +146,7 @@ test("Casinos and Bonuses filter fields use the functional scale at every Founde
       await expectMinimum(page.getByRole("dialog", { name: /Filter Casinos/i }).locator("select,input"), 16, `mobile casino fields at ${viewport.width}px`);
       await page.keyboard.press("Escape");
     } else {
-      await expectMinimum(page.locator('form[action="/casinos"]').first().locator("select,input"), 15, `desktop casino fields at ${viewport.width}px`);
+      await expectMinimum(page.locator('form[action$="/casinos"]').first().locator("select,input"), 15, `desktop casino fields at ${viewport.width}px`);
     }
     await expectNoOverflow(page, `Casinos overflow at ${viewport.width}px`);
 
@@ -163,7 +163,7 @@ test("Casinos and Bonuses filter fields use the functional scale at every Founde
       await expectMinimum(page.getByRole("dialog", { name: /Filter Bonuses/i }).locator("select,input"), 16, `mobile bonus fields at ${viewport.width}px`);
       await page.keyboard.press("Escape");
     } else {
-      await expectMinimum(page.locator('form[action="/bonuses"]').first().locator("select,input"), 15, `desktop bonus fields at ${viewport.width}px`);
+      await expectMinimum(page.locator('form[action$="/bonuses"]').first().locator("select,input"), 15, `desktop bonus fields at ${viewport.width}px`);
     }
     if (viewport.width <= 430) {
       await expectMinimum(page.locator('article[class*="comparisonRow"] [class*="compactTerms"] dt'), 13, `mobile bonus comparison labels at ${viewport.width}px`);

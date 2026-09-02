@@ -146,10 +146,10 @@ test("localized schema projection translates demo chrome, omits unsafe FAQ chrom
   const demo = casino({ id: temporaryDemoCasinoIds[0], name: "Fictional Demo" });
   const demoSchemas = projectCasinoProfileSchemas(casinoProfileSchemas(demo, editorial), {
     casino: demo,
-    casinoDirectoryUrl: absoluteUrl("/de/casinos"),
+    casinoDirectoryUrl: absoluteUrl("/de-de/casinos"),
     locale: "de-DE",
     messages,
-    profileUrl: absoluteUrl("/de/casino/published-casino"),
+    profileUrl: absoluteUrl("/de-de/casino/published-casino"),
   });
   const demoSerialized = JSON.stringify(demoSchemas);
   assert.match(demoSerialized, new RegExp(messages.profile.demoReview));
@@ -160,10 +160,10 @@ test("localized schema projection translates demo chrome, omits unsafe FAQ chrom
   const published = casino();
   const publishedSchemas = projectCasinoProfileSchemas(casinoProfileSchemas(published, editorial), {
     casino: published,
-    casinoDirectoryUrl: absoluteUrl("/de/casinos"),
+    casinoDirectoryUrl: absoluteUrl("/de-de/casinos"),
     locale: "de-DE",
     messages,
-    profileUrl: absoluteUrl("/de/casino/published-casino"),
+    profileUrl: absoluteUrl("/de-de/casino/published-casino"),
   });
   const publishedSerialized = JSON.stringify(publishedSchemas);
   assert.match(publishedSerialized, /Published editorial review/);

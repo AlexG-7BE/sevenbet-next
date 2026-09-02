@@ -3,7 +3,7 @@ import Link from "next/link";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { publicCoreTranslationReady } from "@/lib/i18n/review-state";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "@/lib/market/registry";
+import { ENABLED_PRESENTATION_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "@/lib/market/registry";
 import type { PublicAccountNavigation } from "@/lib/public-shell";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
@@ -27,7 +27,7 @@ export function PublicHeader({
     : "/";
   const selectableMarkets = process.env.VERCEL_ENV === "production"
     ? PUBLICATION_APPROVED_MARKET_PROFILES
-    : INITIAL_EUROPEAN_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale));
+    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale));
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>

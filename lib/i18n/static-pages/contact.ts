@@ -1,6 +1,6 @@
 import type { SupportedLocale } from "@/lib/market/registry";
 
-type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA">;
+type EuropeanLocale = Exclude<SupportedLocale, "en-CA" | "fr-CA" | "es-PE">;
 
 export type ContactMessages = Readonly<{
   metadataTitle: string;
@@ -89,5 +89,6 @@ const catalog: Record<EuropeanLocale, ContactMessages> = {
 };
 
 export function contactMessages(locale: SupportedLocale): ContactMessages {
+  if (locale === "es-PE") return catalog["es-ES"];
   return catalog[locale as EuropeanLocale] ?? catalog["en-GB"];
 }

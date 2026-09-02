@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
-import { publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
+import { publicCoreTranslationReady, publicTranslationIndexingApproved, TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
 import { FIRST_WAVE_MARKETS } from "./first-wave-evidence";
-import { PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
+import { ENABLED_PRESENTATION_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, marketProfileByCountry, publicMarketPath, type SupportedLocale } from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
@@ -37,8 +37,11 @@ export function productCanonicalPath(presentation: PresentationResolution, pathn
 }
 
 export function productLanguageAlternates(pathname: string) {
+  const profiles = process.env.VERCEL_ENV === "production"
+    ? PUBLICATION_APPROVED_MARKET_PROFILES
+    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale));
   return Object.fromEntries([
-    ...PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => [
+    ...profiles.map((profile) => [
       profile.defaultLocale,
       absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
     ]),
@@ -49,7 +52,8 @@ export function productLanguageAlternates(pathname: string) {
 export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling") {
   const profiles = ["GB", ...FIRST_WAVE_MARKETS]
     .map((countryCode) => marketProfileByCountry(countryCode))
-    .filter((profile) => profile !== null);
+    .filter((profile) => profile !== null)
+    .filter((profile) => process.env.VERCEL_ENV !== "production" || profile.editorialState !== "PREVIEW_LOCALIZED");
   return Object.fromEntries([
     ...profiles.map((profile) => [
       profile.defaultLocale,
@@ -81,7 +85,9 @@ export function productMetadata(input: {
     ? { index: false, follow: true }
     : input.robots;
   const locale = openGraphLocale(input.presentation.locale);
-  const alternateLocale = PUBLICATION_APPROVED_MARKET_PROFILES
+  const alternateLocale = (process.env.VERCEL_ENV === "production"
+    ? PUBLICATION_APPROVED_MARKET_PROFILES
+    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale)))
     .map((profile) => openGraphLocale(profile.defaultLocale))
     .filter((candidate) => candidate !== locale);
 

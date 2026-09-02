@@ -1,10 +1,11 @@
-export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "CA";
+export type MarketCode = "GB" | "DE" | "IT" | "ES" | "PE" | "PT" | "GR" | "NL" | "SE" | "DK" | "FI" | "NO" | "CA";
 
 export type SupportedLocale =
   | "en-GB"
   | "de-DE"
   | "it-IT"
   | "es-ES"
+  | "es-PE"
   | "pt-PT"
   | "el-GR"
   | "nl-NL"
@@ -15,9 +16,16 @@ export type SupportedLocale =
   | "en-CA"
   | "fr-CA";
 
-export type MarketEditorialState = "LIVE_BASELINE" | "LIVE_LOCALIZED" | "LOCALIZATION_REQUIRED";
+export type MarketEditorialState = "LIVE_BASELINE" | "LIVE_LOCALIZED" | "PREVIEW_LOCALIZED" | "LOCALIZATION_REQUIRED";
 export type MarketLegalContentState = "GB_REVIEWED" | "LOCAL_REVIEW_REQUIRED";
 export type MarketCommercialPresentationState = "AUTHORITY_REQUIRED";
+
+export type LocaleMarketRouteProfile = Readonly<{
+  locale: SupportedLocale;
+  publicSlug: Lowercase<SupportedLocale>;
+  enabled: boolean;
+  defaultForMarket: boolean;
+}>;
 
 export type MarketProfile = Readonly<{
   countryCode: MarketCode;
@@ -25,6 +33,7 @@ export type MarketProfile = Readonly<{
   seoDisplayName: string;
   defaultLocale: SupportedLocale;
   supportedLocales: readonly SupportedLocale[];
+  localeRoutes: readonly LocaleMarketRouteProfile[];
   currencyHints: readonly string[];
   editorialState: MarketEditorialState;
   legalContentState: MarketLegalContentState;
@@ -40,6 +49,7 @@ const profiles = [
     seoDisplayName: "United Kingdom",
     defaultLocale: "en-GB",
     supportedLocales: ["en-GB"],
+    localeRoutes: [{ locale: "en-GB", publicSlug: "en-gb", enabled: true, defaultForMarket: true }],
     currencyHints: ["GBP"],
     editorialState: "LIVE_BASELINE",
     legalContentState: "GB_REVIEWED",
@@ -53,6 +63,7 @@ const profiles = [
     seoDisplayName: "Deutschland",
     defaultLocale: "de-DE",
     supportedLocales: ["de-DE"],
+    localeRoutes: [{ locale: "de-DE", publicSlug: "de-de", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -66,6 +77,7 @@ const profiles = [
     seoDisplayName: "Italia",
     defaultLocale: "it-IT",
     supportedLocales: ["it-IT"],
+    localeRoutes: [{ locale: "it-IT", publicSlug: "it-it", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -79,6 +91,7 @@ const profiles = [
     seoDisplayName: "España",
     defaultLocale: "es-ES",
     supportedLocales: ["es-ES"],
+    localeRoutes: [{ locale: "es-ES", publicSlug: "es-es", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -87,11 +100,26 @@ const profiles = [
     partnerReadinessNotes: "First European partner-readiness tranche; Spain is a market profile while Spanish-language expansion to other countries remains separate.",
   },
   {
+    countryCode: "PE",
+    routeMarket: "pe",
+    seoDisplayName: "Perú",
+    defaultLocale: "es-PE",
+    supportedLocales: ["es-PE"],
+    localeRoutes: [{ locale: "es-PE", publicSlug: "es-pe", enabled: true, defaultForMarket: true }],
+    currencyHints: ["PEN"],
+    editorialState: "PREVIEW_LOCALIZED",
+    legalContentState: "LOCAL_REVIEW_REQUIRED",
+    commercialPresentationState: "AUTHORITY_REQUIRED",
+    helpResourceProfile: "pe",
+    partnerReadinessNotes: "GEO-LOCALIZATION-01 Preview presentation; factual publication and commercial authority remain independent.",
+  },
+  {
     countryCode: "PT",
     routeMarket: "pt",
     seoDisplayName: "Portugal",
     defaultLocale: "pt-PT",
     supportedLocales: ["pt-PT"],
+    localeRoutes: [{ locale: "pt-PT", publicSlug: "pt-pt", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -105,6 +133,7 @@ const profiles = [
     seoDisplayName: "Ελλάδα",
     defaultLocale: "el-GR",
     supportedLocales: ["el-GR"],
+    localeRoutes: [{ locale: "el-GR", publicSlug: "el-gr", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -118,6 +147,7 @@ const profiles = [
     seoDisplayName: "Nederland",
     defaultLocale: "nl-NL",
     supportedLocales: ["nl-NL"],
+    localeRoutes: [{ locale: "nl-NL", publicSlug: "nl-nl", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -131,6 +161,7 @@ const profiles = [
     seoDisplayName: "Sverige",
     defaultLocale: "sv-SE",
     supportedLocales: ["sv-SE"],
+    localeRoutes: [{ locale: "sv-SE", publicSlug: "sv-se", enabled: true, defaultForMarket: true }],
     currencyHints: ["SEK"],
     editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -144,6 +175,7 @@ const profiles = [
     seoDisplayName: "Danmark",
     defaultLocale: "da-DK",
     supportedLocales: ["da-DK"],
+    localeRoutes: [{ locale: "da-DK", publicSlug: "da-dk", enabled: true, defaultForMarket: true }],
     currencyHints: ["DKK"],
     editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -157,6 +189,7 @@ const profiles = [
     seoDisplayName: "Suomi",
     defaultLocale: "fi-FI",
     supportedLocales: ["fi-FI"],
+    localeRoutes: [{ locale: "fi-FI", publicSlug: "fi-fi", enabled: true, defaultForMarket: true }],
     currencyHints: ["EUR"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -170,6 +203,7 @@ const profiles = [
     seoDisplayName: "Norge",
     defaultLocale: "nb-NO",
     supportedLocales: ["nb-NO"],
+    localeRoutes: [{ locale: "nb-NO", publicSlug: "nb-no", enabled: true, defaultForMarket: true }],
     currencyHints: ["NOK"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -183,6 +217,10 @@ const profiles = [
     seoDisplayName: "Canada",
     defaultLocale: "en-CA",
     supportedLocales: ["en-CA", "fr-CA"],
+    localeRoutes: [
+      { locale: "en-CA", publicSlug: "en-ca", enabled: false, defaultForMarket: true },
+      { locale: "fr-CA", publicSlug: "fr-ca", enabled: false, defaultForMarket: false },
+    ],
     currencyHints: ["CAD"],
     editorialState: "LOCALIZATION_REQUIRED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
@@ -208,7 +246,7 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
   "NO",
 ] as const satisfies readonly MarketCode[];
 
-export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
+export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
 export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
@@ -224,6 +262,12 @@ export const PUBLICATION_APPROVED_MARKET_PROFILES: readonly MarketProfile[] = pr
   (profile) => profile.editorialState === "LIVE_BASELINE" || profile.editorialState === "LIVE_LOCALIZED",
 );
 
+export const ENABLED_PRESENTATION_MARKET_PROFILES: readonly MarketProfile[] = profiles.filter(
+  (profile) => profile.localeRoutes.some((route) => route.enabled),
+);
+
+export const GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS = ["en-gb", "sv-se", "es-pe"] as const;
+
 export const DEFAULT_MARKET_PROFILE = profiles[0];
 
 export function isInitialEuropeanMarket(profile: MarketProfile) {
@@ -236,6 +280,9 @@ export function marketEditorialPublicationApproved(profile: MarketProfile) {
 
 const byCountry = new Map<MarketCode, MarketProfile>(profiles.map((profile) => [profile.countryCode, profile]));
 const byRouteMarket = new Map<string, MarketProfile>(profiles.map((profile) => [profile.routeMarket, profile]));
+const byPublicSlug = new Map<string, { market: MarketProfile; route: LocaleMarketRouteProfile }>(
+  profiles.flatMap((market) => market.localeRoutes.map((route) => [route.publicSlug, { market, route }] as const)),
+);
 
 export function marketProfileByCountry(countryCode: string | null | undefined): MarketProfile | null {
   if (!countryCode) return null;
@@ -245,6 +292,15 @@ export function marketProfileByCountry(countryCode: string | null | undefined): 
 export function marketProfileByRouteMarket(routeMarket: string | null | undefined): MarketProfile | null {
   if (!routeMarket) return null;
   return byRouteMarket.get(routeMarket.trim().toLowerCase()) ?? null;
+}
+
+export function localeMarketRouteByPublicSlug(publicSlug: string | null | undefined) {
+  if (!publicSlug) return null;
+  return byPublicSlug.get(publicSlug.trim().toLowerCase()) ?? null;
+}
+
+export function localeMarketRoute(profile: MarketProfile, locale: SupportedLocale) {
+  return profile.localeRoutes.find((route) => route.locale === locale) ?? null;
 }
 
 export function languageSegmentForLocale(locale: SupportedLocale) {
@@ -259,21 +315,19 @@ export function localeForLanguageSegment(profile: MarketProfile, languageSegment
 
 /**
  * Build the one canonical public path for a market, locale and equivalent
- * pathname. The default market/default locale remains unprefixed, other market
- * defaults use one segment, and only secondary locales add a language segment.
+ * pathname. Every presentation route exposes the BCP-47 locale and market in
+ * one lowercase public slug, so the URL always determines both dimensions.
  */
 export function publicMarketPath(profile: MarketProfile, locale: SupportedLocale, pathname = "/") {
-  if (!profile.supportedLocales.includes(locale)) throw new Error(`Locale ${locale} is not supported by market ${profile.countryCode}`);
+  const route = localeMarketRoute(profile, locale);
+  if (!route) throw new Error(`Locale ${locale} is not supported by market ${profile.countryCode}`);
   const suffixIndex = pathname.search(/[?#]/);
   const rawPathname = suffixIndex >= 0 ? pathname.slice(0, suffixIndex) : pathname;
   const queryOrHash = suffixIndex >= 0 ? pathname.slice(suffixIndex) : "";
   const normalizedPathname = rawPathname === "/"
     ? "/"
     : `/${rawPathname.split("/").filter(Boolean).join("/")}`;
-  const isDefaultMarket = profile.countryCode === DEFAULT_MARKET_PROFILE.countryCode;
-  const localePrefix = locale === profile.defaultLocale ? "" : `/${languageSegmentForLocale(locale)}`;
-  const marketPrefix = isDefaultMarket ? "" : `/${profile.routeMarket}`;
-  const prefix = `${marketPrefix}${localePrefix}`;
-  const canonicalPathname = normalizedPathname === "/" ? `${prefix}/` : `${prefix}${normalizedPathname}`;
-  return `${canonicalPathname || "/"}${queryOrHash}`;
+  const prefix = `/${route.publicSlug}`;
+  const canonicalPathname = normalizedPathname === "/" ? prefix : `${prefix}${normalizedPathname}`;
+  return `${canonicalPathname}${queryOrHash}`;
 }

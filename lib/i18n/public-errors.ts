@@ -37,6 +37,7 @@ const comparisonUnavailableKickers: Partial<Record<SupportedLocale, string>> = {
 };
 
 export function publicErrorMessages(locale: SupportedLocale) {
-  const messages = catalog[locale] ?? en;
-  return { ...messages, compareKicker: comparisonUnavailableKickers[locale] ?? messages.compareKicker };
+  const effectiveLocale = locale === "es-PE" ? "es-ES" : locale;
+  const messages = catalog[effectiveLocale] ?? en;
+  return { ...messages, compareKicker: comparisonUnavailableKickers[effectiveLocale] ?? messages.compareKicker };
 }

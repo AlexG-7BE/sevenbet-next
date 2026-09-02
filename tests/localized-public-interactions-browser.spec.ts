@@ -6,8 +6,8 @@ import { faqMessages } from "../lib/i18n/static-pages/faq";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const cases = [
-  { choice: "DE|de-DE", helpHref: "/de/help", locale: "de-DE", market: "DE", prefix: "/de" },
-  { choice: "ES|es-ES", helpHref: "/es/help", locale: "es-ES", market: "ES", prefix: "/es" },
+  { choice: "DE|de-DE", helpHref: "/de-de/help", locale: "de-DE", market: "DE", prefix: "/de-de", programmeHref: "/de/program" },
+  { choice: "ES|es-ES", helpHref: "/es-es/help", locale: "es-ES", market: "ES", prefix: "/es-es", programmeHref: "/es/program" },
 ] as const;
 
 function regex(value: string) {
@@ -43,7 +43,7 @@ for (const acceptance of cases) {
     expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe("hidden");
 
     await expect(navigation.getByRole("link", { name: shell.openHelp })).toHaveAttribute("href", acceptance.helpHref);
-    await expect(navigation.getByRole("link", { name: shell.startProgramme, exact: true })).toHaveAttribute("href", `${acceptance.prefix}/program`);
+    await expect(navigation.getByRole("link", { name: shell.startProgramme, exact: true })).toHaveAttribute("href", acceptance.programmeHref);
 
     const selector = navigation.getByRole("button", { name: shell.changeMarketAndLanguage });
     await selector.click();

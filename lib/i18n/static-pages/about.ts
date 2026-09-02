@@ -20,7 +20,7 @@ export type AboutMessages = Readonly<{
   boundaries: readonly [string, string, string];
 }>;
 
-const catalog: Record<SupportedLocale, AboutMessages> = {
+const baseCatalog: Record<Exclude<SupportedLocale, "es-PE">, AboutMessages> = {
   "en-GB": {
     metadataTitle: "About B4GAMBLE | Learn, Reflect, Compare",
     metadataDescription: "How B4GAMBLE puts education before comparison and keeps Programme reflection separate from commercial information.",
@@ -103,8 +103,13 @@ const catalog: Record<SupportedLocale, AboutMessages> = {
 
 // Canada is architecture-ready but outside the required European publication
 // tranche. Keep deterministic content without exposing an incomplete body.
-catalog["en-CA"] = catalog["en-GB"];
-catalog["fr-CA"] = catalog["en-GB"];
+baseCatalog["en-CA"] = baseCatalog["en-GB"];
+baseCatalog["fr-CA"] = baseCatalog["en-GB"];
+
+const catalog: Record<SupportedLocale, AboutMessages> = {
+  ...baseCatalog,
+  "es-PE": baseCatalog["es-ES"],
+};
 
 export function aboutMessages(locale: SupportedLocale) {
   return catalog[locale];

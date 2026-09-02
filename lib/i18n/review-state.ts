@@ -6,7 +6,7 @@ export type TranslationReviewState = Readonly<{
   aiLanguageQa: "NOT_APPLICABLE_TO_SOURCE_BASELINE" | "AI_LANGUAGE_QA_REQUIRED" | "AI_LANGUAGE_QA_PASSED";
   founderPublication: "SOURCE_BASELINE_AUTHORITY" | "FOUNDER_PUBLICATION_NOT_ACCEPTED" | "FOUNDER_PUBLICATION_ACCEPTED";
   legalReview: "GB_SOURCE_REVIEWED" | "REQUIRED";
-  marketEvidenceReview: "GB_BASELINE" | "FIRST_WAVE_EVIDENCE_REVIEWED" | "REQUIRED";
+  marketEvidenceReview: "GB_BASELINE" | "FIRST_WAVE_EVIDENCE_REVIEWED" | "AUTHORITATIVE_MARKET_EVIDENCE_REVIEWED" | "REQUIRED";
   indexingAuthority: "GB_SOURCE_BASELINE" | "NOT_ACTIVATED" | "FOUNDER_INDEXING_ACTIVATED";
 }>;
 
@@ -37,6 +37,12 @@ const firstWavePublicationAccepted: TranslationReviewState = {
   marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
 };
 
+const previewLocalized: TranslationReviewState = {
+  ...machineTranslated,
+  publicExperience: "PUBLIC_CORE_READY",
+  marketEvidenceReview: "AUTHORITATIVE_MARKET_EVIDENCE_REVIEWED",
+};
+
 const architectureOnlyTranslated: TranslationReviewState = {
   ...machineTranslated,
   publicExperience: "ARCHITECTURE_ONLY",
@@ -54,6 +60,7 @@ export const TRANSLATION_REVIEW_STATE = {
   "de-DE": firstWavePublicationAccepted,
   "it-IT": machineTranslated,
   "es-ES": firstWavePublicationAccepted,
+  "es-PE": previewLocalized,
   "pt-PT": machineTranslated,
   "el-GR": firstWavePublicationAccepted,
   "nl-NL": machineTranslated,

@@ -36,19 +36,19 @@ async function assertNoHorizontalOverflow(page: Page, context: string) {
 }
 
 test("Preview and Production-grade selectors expose only public-core-ready markets", async ({ page }) => {
-  await page.goto(`${baseUrl}/de/`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/de-de`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
   await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
   const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
   const values = await menu.locator('button[name="choice"]').evaluateAll((buttons) => buttons.map((button) => (button as HTMLButtonElement).value));
-  expect(values).toEqual(["automatic", "GB|en-GB", "DE|de-DE", "ES|es-ES", "GR|el-GR", "SE|sv-SE", "DK|da-DK"]);
+  expect(values).toEqual(["automatic", "GB|en-GB", "DE|de-DE", "ES|es-ES", "PE|es-PE", "GR|el-GR", "SE|sv-SE", "DK|da-DK"]);
   for (const denied of ["IT|it-IT", "PT|pt-PT", "NL|nl-NL", "FI|fi-FI", "NO|nb-NO", "CA|en-CA", "CA|fr-CA"]) {
     await expect(menu.locator(`button[value="${denied}"]`)).toHaveCount(0);
   }
 });
 
 test("Danish Bonuses renders the five real curated controls and no raw token", async ({ page }) => {
-  await page.goto(`${baseUrl}/dk/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/da-dk/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   const labels = ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"];
   const controls = page.getByRole("group", { name: productPageMessages("da-DK").bonuses.directoryTitle }).getByRole("button");
   await expect(controls).toHaveCount(5);
@@ -74,7 +74,7 @@ for (const profile of coreProfiles) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
       for (const route of routes) {
         const fixture = ["/best-offers", "/casinos", "/bonuses"].includes(route) ? "?visualFixture=true" : "";
-        const pathname = route === "/" ? `${prefix}/` || "/" : `${prefix}${route}` || route;
+        const pathname = route === "/" ? prefix || "/" : `${prefix}${route}` || route;
         const response = await page.goto(`${baseUrl}${pathname}${fixture}`, { waitUntil: "domcontentloaded" });
         expect(response?.status(), `${profile.countryCode}:${route}:${width}`).toBe(200);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
@@ -118,7 +118,7 @@ test("every Home-ready European locale keeps its hero inside all required viewpo
 
 test("the Danish empty-state and metadata paths interpolate market names", async ({ page }) => {
   const messages = productPageMessages("da-DK");
-  await page.goto(`${baseUrl}/dk/bonuses?maxDeposit=0`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/da-dk/bonuses?maxDeposit=0`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("body")).not.toContainText("{market}");
   await expect(page).not.toHaveTitle(/\{market\}/);
   expect(messages.bonuses.noMatchesTitle).toContain("{market}");

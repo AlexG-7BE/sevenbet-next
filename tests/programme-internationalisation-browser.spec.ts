@@ -10,6 +10,7 @@ import {
   type ProgrammeMessageKey,
 } from "../lib/i18n/programme-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
+import { marketProfileByCountry, publicMarketPath } from "../lib/market/registry";
 import {
   PROGRAMME_PRIVACY_VERSION,
   PROGRAMME_TERMS_VERSION,
@@ -404,15 +405,18 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
 test("ordinary pages retain deny-all capabilities while localized public Programme entries keep their canonical locale", async ({ request }) => {
   test.setTimeout(180_000);
   const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
-  for (const ordinaryPath of ["/", "/de/", "/es/learn", "/fi/10-steps", "/help"]) {
+  for (const ordinaryPath of ["/", "/de-de", "/es-es/learn", "/fi-fi/10-steps", "/help"]) {
     const response = await request.get(`${baseUrl}${ordinaryPath}`);
     expect(response.status(), ordinaryPath).toBe(200);
     expect(response.headers()["permissions-policy"], ordinaryPath).toBe(denied);
   }
 
   for (const route of PROGRAMME_ROUTES) {
-    const prefix = route.locale === "en-GB" ? "" : `/${route.routeMarket}`;
-    for (const pathname of [`${prefix}/`, `${prefix}/10-steps`, `${prefix}/learn`]) {
+    const market = marketProfileByCountry(route.marketCode);
+    expect(market, route.marketCode).not.toBeNull();
+    const homePath = publicMarketPath(market!, route.locale, "/");
+    const prefix = homePath;
+    for (const pathname of [homePath, `${prefix}/10-steps`, `${prefix}/learn`]) {
       const response = await request.get(`${baseUrl}${pathname}`);
       expect(response.status(), pathname).toBe(200);
       const html = await response.text();
@@ -421,7 +425,7 @@ test("ordinary pages retain deny-all capabilities while localized public Program
       expect(hrefs.every((href) => href === route.path || href === `${route.path}?entry=start`), `${pathname}: ${hrefs.join(", ")}`).toBe(true);
     }
     if (route.locale !== "en-GB") {
-      const response = await request.get(`${baseUrl}${prefix}/`);
+      const response = await request.get(`${baseUrl}${homePath}`);
       const html = await response.text();
       expect(html, `${prefix}/ localized login return target`).toContain(`/login?returnTo=${encodeURIComponent(route.path)}`);
     }

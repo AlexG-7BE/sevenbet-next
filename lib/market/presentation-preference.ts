@@ -1,5 +1,5 @@
 import {
-  isInitialEuropeanMarket,
+  localeMarketRoute,
   marketProfileByCountry,
   type MarketProfile,
   type SupportedLocale,
@@ -10,7 +10,7 @@ export const PRESENTATION_PREFERENCE_COOKIE = "b4gamble_presentation";
 const preferenceVersion = "v1";
 
 export function serializePresentationPreference(profile: MarketProfile, locale: SupportedLocale) {
-  if (!isInitialEuropeanMarket(profile) || !profile.supportedLocales.includes(locale)) {
+  if (!localeMarketRoute(profile, locale)?.enabled) {
     throw new Error("Unsupported presentation preference");
   }
   return `${preferenceVersion}.${profile.countryCode}.${locale}`;
@@ -21,6 +21,6 @@ export function parsePresentationPreference(value: string | null | undefined): P
   const [version, countryCode, locale, ...unexpected] = value.split(".");
   if (version !== preferenceVersion || !countryCode || !locale || unexpected.length > 0) return null;
   const profile = marketProfileByCountry(countryCode);
-  if (!profile || !isInitialEuropeanMarket(profile) || !profile.supportedLocales.includes(locale as SupportedLocale)) return null;
+  if (!profile || !localeMarketRoute(profile, locale as SupportedLocale)?.enabled) return null;
   return { countryCode: profile.countryCode, locale: locale as SupportedLocale };
 }

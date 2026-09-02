@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
   if (typeof choice !== "string") return invalidPreference();
 
   const automatic = choice === "automatic";
-  let destinationMarket = "GB";
   let preferenceValue: string | null = null;
   let destinationProfile = marketProfileByCountry("GB");
   let destinationLocale: SupportedLocale = "en-GB";
@@ -49,7 +48,6 @@ export async function POST(request: NextRequest) {
     }
     const preference = parsePresentationPreference(preferenceValue);
     if (!preference?.locale) return invalidPreference();
-    destinationMarket = profile.countryCode;
     destinationProfile = profile;
     destinationLocale = preference.locale;
   }
@@ -75,10 +73,9 @@ export async function POST(request: NextRequest) {
   }
   const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
   const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
-  const countryFilter = returnUrl.searchParams.get("country");
-  if (countryFilter && countryFilter.trim().toUpperCase() !== destinationMarket) {
-    returnUrl.searchParams.delete("country");
-  }
+  // The selected market is carried by the canonical path and the preference
+  // cookie; retaining a legacy country filter would create a second identity.
+  returnUrl.searchParams.delete("country");
   const safeQuery = returnUrl.searchParams.toString();
   const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
   const destination = automatic
