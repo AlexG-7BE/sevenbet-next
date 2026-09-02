@@ -43,6 +43,8 @@ Founder-authorised execution completed from exact release commit `61f52542339590
 
 PR #114 merged the durable verification-only steady state as `5d16a2615a642625c916f63899ba1748e895d689`. Normal Production deployment `dpl_GTK12YtMs1xsaNGMq8SeNgxA2f1h` accepted 0025 as `already_applied_and_verified` after proving pooled/direct database identity and performing bounded read-only inspection. It did not execute a migration. Migration 0025 itself contains no data DML, created no inferred factual link or commercial authority, and did not import Casino data.
 
+A later, independently authorised factual-data release imported and published the checksum-bound Betsson PE/SE bundle exactly once without executing a migration or activating commercial authority. Its exact evidence is in the [2 September 2026 casino release record](Casino-Market-Data-Release-Record-2026-09-02.md).
+
 ## Pending Better Auth 1.7 sequence — not applied to Production
 
 **DETECTED:** Production remains applied through `0020_commercial_ops_01`. Repository migration `0021_partner_ops_work_bridge_01` is merged history but is not Production-applied. `PARTNER-OPS-WORK-BRIDGE-02` adds `0022_better_auth_17_schema_upgrade`; neither migration is applied by that implementation task.

@@ -4,9 +4,9 @@
 **Evidence date:** 2 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `5d16a2615a642625c916f63899ba1748e895d689`
-**Verified post-migration runtime baseline SHA:** `5d16a2615a642625c916f63899ba1748e895d689`
-**Verified post-migration runtime deployment:** `dpl_GTK12YtMs1xsaNGMq8SeNgxA2f1h`
+**Current Production application SHA (live provider evidence):** `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`
+**Verified post-release runtime baseline SHA:** `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`
+**Verified post-release runtime deployment:** `dpl_6CRSFtbV4kZwhVurucV7jtKp4QoZ`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -34,11 +34,9 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
-| Casino market schema | **PRODUCTION MIGRATION COMPLETE; RUNTIME CANDIDATE GATED** | Migration 0025 is checksum-valid in Production; #111 remains an exact-market runtime candidate until its own merge/deployment gates pass. No factual casino import or commercial route activation has occurred. |
+| Casino market data | **PRODUCTION ARCHITECTURE COMPLETE; BETSSON PE/SE FACTUAL DATA PUBLISHED** | Migration 0025 and the market-aware runtime are live. Exactly one non-commercial Betsson PE/SE factual bundle was imported and published; contradictions and unknowns are retained, while affiliate action and `productionEligible` remain false. |
 
 ### Unmerged implementation candidates
-
-**PROPOSED UNTIL MERGE — Casino market data architecture candidate, updated 2 September 2026:** explicit Founder instruction `CASINO-DATA-ARCH-01` authorises the bounded architecture candidate now based on post-migration main `5d16a2615a642625c916f63899ba1748e895d689`. It keeps `Casino` as global identity, makes `CasinoCountry` the canonical factual market grain, scopes licence/payment/bonus/provider/product facts, adds typed provenance, and resolves commercial routes through the existing normalized Affiliate records with exact country/tracking Production authority defaulting false. Production migration 0025 is already complete; this candidate does not re-execute it. It imports no research, activates no real route, publishes no asset, and performs no additional Production database change. See [RFC-038](06_RFC/RFC-038-Casino-Market-Data-Architecture.md) and the [technical baseline](05_Engineering/Technical_Baseline/13_Casino_Market_Data_Architecture.md).
 
 **PROPOSED UNTIL MERGE — PR #105 feature-branch evidence, 30 August 2026:** the current internationalisation candidate defines `HOME_READY`, `PUBLIC_CORE_READY` and `ARCHITECTURE_ONLY` presentation states; limits both Preview and Production selectors to the GB baseline plus Founder-accepted DE/ES/SE/DK/GR public-core locales; and adds rendered localization, interpolation, curated-control and responsive-overflow regression coverage. The detailed route/locale matrix is recorded in [Localization quality and route coverage](internationalisation/localization-quality-audit.md).
 
@@ -50,11 +48,14 @@ This entry does not change the Production SHA above. It does not activate indexi
 
 ## Detected release evidence
 
-### Casino market schema release 0025
+### Casino market schema and Betsson PE/SE factual release
 
 - Migration `0025_casino_market_profile_architecture` completed on 1 September 2026 from exact release commit `61f52542339590e2f9b0b6a6a27ea0630d34f14d` with SHA-256 `bcf32c072c9451fca3e5eccd315db6106a5dca68bd97bb3607c1bc84c35d2d99`.
-- PR #114 merged the durable read-only steady-state guard as `5d16a2615a642625c916f63899ba1748e895d689`; normal Production deployment `dpl_GTK12YtMs1xsaNGMq8SeNgxA2f1h` is Ready and serves `b4gamble.com`.
-- The normal build proved pooled/direct identity, accepted 0025 as already applied, and performed no migration execution. No Casino factual import, affiliate route, tracking-country authority, or `productionEligible=true` state was introduced by the schema release.
+- PRs #114, #111, #117, #112 and #118 then delivered the steady-state guard, market architecture, exact-country public read fix, checksum-bound disposable importer and null-safe factual publication runtime. Their merge SHAs and Production deployment identifiers are preserved in the [2 September casino release record](06_Operations/Casino-Market-Data-Release-Record-2026-09-02.md).
+- The one-time execution-only PR #119 ran from exact head `3a48739d668d5005eb2c4cdabfa2f23103549007`, imported the exact nine-file bundle once and published one Betsson identity with independent PE and SE market profiles. It was closed without merge; its Production-targeted `--skip-domain` build `dpl_Fk23XAokr33hjubGsFKRSTdEFhRo` ended `Error` intentionally after the success sentinel.
+- Import reconciliation was `78 created / 0 updated / 0 unchanged`; the immediate read-only idempotency comparison was `0 created / 0 updated / 78 unchanged`. The published Casino is version 1 with `editorScore=null`; both incomplete bonus observations remain `DRAFT` and are absent from public projections.
+- Live postflight found Betsson alone in PE and alongside fictional Demo Prism in SE. PE projects PEN, Yape and two MINCETUR licences; SE projects SEK, Swish and Spelinspektionen licence `23Si2176`. Both retain typed `UNKNOWN` and `CONTRADICTION` evidence, expose no affiliate action and do not leak market facts into the other or unqualified projection.
+- Production commercial state stayed fail-closed: no commercial write occurred; `AffiliateTrackingLinkCountry` remained zero; `productionEligibleRoutes` remained zero; no asset was published. `b4gamble.com` remained on Ready runtime deployment `dpl_6CRSFtbV4kZwhVurucV7jtKp4QoZ` at SHA `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`.
 
 ### Public product and legal baseline
 
