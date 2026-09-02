@@ -192,5 +192,6 @@ jobs:
       - run: npm run casino-market-release:postgres-test
       - run: npm run casino-market:postgres-test
       - run: npm run casino-ingest:postgres-test
+      - run: npm run casino-population:postgres-test
       - run: npm run mvp-runtime:postgres-test
       - run: npm run mcp-bridge:postgres-test

@@ -8,9 +8,11 @@ Status: **DETECTED** on `CASINO-DATA-INGEST-02`; the importer is not a Productio
 
 **DETECTED:** `scripts/casino-market-ingest.ts` accepts one explicit, reviewed bundle. It does not scan research directories. Its default is a database-free dry run. Write mode requires all of: `--write`, `--confirm-disposable=CASINO_DATA_INGEST_02`, `CI=true`, matching `DATABASE_URL` and `DIRECT_URL`, a loopback host, and a database name ending `_ci`. Vercel Production and `NODE_ENV=production` are refused.
 
-**DETECTED:** the Betsson bundle maps exactly one global `Casino` and independent PE and SE `CasinoCountry` records. Global legacy country, currency, language, licence, and operator fields are not populated with market facts. Each market is reconciled in its own Prisma transaction after the global identity transaction.
+**DETECTED:** the contract accepts one to 50 exact factual markets per Casino. Commercial mappings are optional, report-only, unique and must name a factual market; the importer never writes them. The Betsson bundle remains backward compatible. `ingestCasinoBundles` validates unique Casino keys/slugs/domains and reconciles a reviewed multi-Casino batch in one serializable transaction, so a late collision rolls back the entire batch.
 
 **DETECTED:** retries compare normalized business fields before updating. The importer neither deletes omitted/unrelated rows nor performs commercial, affiliate, tracking, asset, publication, deployment, or Production writes.
+
+**DETECTED on CASINO-DATA-POPULATION-01:** `data/casino-ingestion/casino-data-population-01/manifest.v1.json` checksum-binds seven single-market GB factual bundles to 28 frozen bundle sources and five decision records. All seven preserve explicit `UNKNOWN` evidence and zero commercial mappings. Whole-batch disposable PostgreSQL verification creates 121 factual rows, reuses the shared White Hat operator five times, rolls back all seven Casinos on a last-bundle collision, and yields a read-only idempotency comparison of `0 created / 0 updated / 126 unchanged`.
 
 ## Explicit mapping contract
 
@@ -59,4 +61,6 @@ Disposable write mode additionally requires the explicit confirmation and safe e
 
 **DETECTED:** `tests/casino-ingestion-postgres.test.ts` requires migration 0025, ingests the real reviewed bundle, verifies database cardinality and ownership, retries with no business-field changes, updates one evidence row only, preserves an unrelated Casino, exercises public profile/discovery services from persisted relations, and proves no commercial authority is created.
 
-**DETECTED:** migration 0025 and the one authorised Betsson PE/SE factual import/publication are complete. This runbook still does not authorise another Production import, a correction, asset publication or any commercial activation.
+**DETECTED:** `tests/casino-data-population.test.ts` verifies the seven bundle hashes, 28 frozen bundle-source hashes, five decision-record hashes, exact-market scope, skipped records, explicit unknowns, asset fallback and zero commercial mappings. `tests/casino-data-population-postgres.test.ts` proves whole-batch atomicity, exact model counts, shared-operator reuse, writable retry equivalence, read-only idempotency and zero commercial-table change.
+
+**DETECTED:** migration 0025 and the one authorised Betsson PE/SE factual import/publication are complete. The current Founder instruction separately authorises the bounded CASINO-DATA-POPULATION-01 Production factual release after its exact CI/Preview/preflight gates. The ordinary importer remains non-Production and grants no reusable Production execution, asset-publication or commercial-activation authority.

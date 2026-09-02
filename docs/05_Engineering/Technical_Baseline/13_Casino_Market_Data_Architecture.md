@@ -2,7 +2,7 @@
 
 ## Audit scope and evidence
 
-**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and isolated release worktrees were confirmed before reconciliation. The original ingestion scan covered 2,054 files while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The released factual-publication runtime baseline is `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`.
+**DETECTED:** canonical repository root `/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next` and isolated release worktrees were confirmed before reconciliation. The active repository scan covered 2,033 source/artifact paths while excluding dependencies, generated output, build artefacts, caches, and `tsconfig.tsbuildinfo` from source claims. The verified GEO runtime baseline is `1392829c5823354ed9e3cb7d04d29b963e96262c`; the database factual baseline still contains only the previously published Betsson PE/SE identity before CASINO-DATA-POPULATION-01 executes.
 
 **DETECTED:** the frozen research staging directories were inspected read-only for representability. Their records and binaries are not imported, changed, published, or committed by this workstream.
 
@@ -40,7 +40,11 @@
 
 **DETECTED:** `data/casino-ingestion/betsson-pe-se.v1.json` is an explicit, checksum-bound Betsson PE/SE bundle. `scripts/casino-market-ingest.ts` defaults to database-free dry run and permits writes only to an explicitly confirmed loopback `_ci` database. It reconciles one global Casino and both market profiles in one transaction without deleting unrelated data, overwriting editorial workflow state, or writing affiliate/commercial authority.
 
+**DETECTED on the CASINO-DATA-POPULATION-01 implementation branch:** the ingestion contract now accepts a positive bounded market set and factual-only bundles with no commercial mapping. Seven GB bundles are listed by a checksum-bound manifest. `ingestCasinoBundles` validates unique Casino identity keys and runs the entire set in one serializable transaction; its read-only verifier replays reconciliation under a read-only repeatable-read transaction and refuses any pending write.
+
 **DETECTED:** the disposable PostgreSQL acceptance test exercises persisted Betsson PE and SE facts against public profile/discovery services, including idempotent retry, targeted evidence update, exact market filtering, visible contradictions/unknowns, and commercial fail-closed behavior. See `docs/05_Engineering/Casino-Market-Ingestion-Runbook.md`.
+
+**DETECTED:** the seven-profile disposable acceptance creates exactly seven Casinos, seven GB profiles, seven licences, 14 licence-evidence rows, 53 market-evidence rows, 14 scoped categories and three DragonBet-only providers. It creates no payment, bonus, image, media or commercial row; six White Hat brands share one operator row without sharing brand-local facts. See the [CASINO-DATA-POPULATION-01 release record](../../06_Operations/Casino-Data-Population-01-Release-Record-2026-09-02.md).
 
 ## Production release outcome
 

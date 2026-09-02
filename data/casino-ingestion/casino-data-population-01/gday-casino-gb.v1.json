@@ -1,0 +1,310 @@
+{
+  "schemaVersion": "casino-market-ingestion.v1",
+  "actor": "casino-data-population-01",
+  "sourceFiles": [
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/casino.json",
+      "sha256": "0b1ddb3ed05156c3f883a252778ae27ae1e8777cc6071a2f0da03f9a43f86b67"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/markets/GB.json",
+      "sha256": "9074c6d1052e93c68ccaddc0ef1b36618439a2045549c3bca383234bb15fe2ff"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json",
+      "sha256": "7f2fdf459c25d83d8fc7a5373eca0c69f75d4b64d2953bb2bf78e62103864da9"
+    },
+    {
+      "path": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/assets.json",
+      "sha256": "8e3b6a57aec59ec1644891bcfa0419d0e1c3dd21cac409d4eeb3dd20bd166e8a"
+    }
+  ],
+  "casino": {
+    "key": "gday-casino",
+    "slug": "gday-casino",
+    "internalName": "G'day Casino",
+    "title": "G'day Casino",
+    "domain": "gdaycasino.com",
+    "websiteUrl": "https://www.gdaycasino.com/",
+    "summary": "G'day Casino is a casino brand on the exact domain www.gdaycasino.com, which the Gambling Commission lists as active under White Hat Gaming Limited's remote casino licence.",
+    "brand": {
+      "key": "gday-casino",
+      "name": "G'day Casino",
+      "domain": "gdaycasino.com"
+    }
+  },
+  "markets": [
+    {
+      "countryCode": "GB",
+      "availability": "AVAILABLE",
+      "localDomain": "www.gdaycasino.com",
+      "localWebsiteUrl": "https://www.gdaycasino.com/",
+      "operator": {
+        "key": "white-hat-gaming-limited",
+        "name": "White Hat Gaming Limited",
+        "legalName": "White Hat Gaming Limited",
+        "websiteUrl": null
+      },
+      "operatingLegalEntity": "White Hat Gaming Limited (Malta C73232)",
+      "termsUrl": "https://www.gdaycasino.com/terms",
+      "privacyUrl": null,
+      "responsibleGamblingUrl": "https://www.gdaycasino.com/index.php?page=playerprotection",
+      "primaryLanguage": "en",
+      "supportedLanguages": [],
+      "supportLanguages": [
+        "en"
+      ],
+      "primaryCurrency": null,
+      "supportedCurrencies": [],
+      "minimumAge": 18,
+      "kycSummary": "Automated checks against registration details verify age 18+, identity and address; further documents may include identity, address, payment-account/card or e-wallet evidence.",
+      "withdrawalSummary": "UKGC withdrawals may remain under review for a minimum of 24 hours; time after approval depends on the withdrawal method. Available methods are account-specific, and the operator states it charges no withdrawal fee while third-party charges may apply.",
+      "supportSummary": "The official G'day Casino support centre provides English-language help at https://gdaycasino.zendesk.com/hc/en-us.",
+      "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+      "notes": "PARTIAL exact-market factual profile from the frozen 31 August 2026 corpus. Missing fields remain explicit UNKNOWN values; no commercial eligibility or cross-market fallback is implied.",
+      "evidence": [
+        {
+          "key": "gday-ukgc-domain",
+          "classification": "DETECTED",
+          "sourceType": "REGULATOR",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-ukgc-domain",
+          "fieldKeys": [
+            "casino.title",
+            "casino.domain",
+            "availability",
+            "localDomain",
+            "localWebsiteUrl",
+            "operatorProfile",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The Gambling Commission register lists www.gdaycasino.com as an Active domain of White Hat Gaming Limited, account 52894. Supports the GB market profile and exact-domain relationship."
+        },
+        {
+          "key": "gday-official-support",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-official-support",
+          "fieldKeys": [
+            "termsUrl",
+            "responsibleGamblingUrl",
+            "primaryLanguage",
+            "supportLanguages",
+            "supportSummary",
+            "operatingLegalEntity"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The official support centre identifies GDay Casino as a brand managed by White Hat Gaming Limited, registration C73232, links the official domain and responsible-gambling page, and provides English support. The support footer also states UKGC account 52894 and MGA/B2C/370/2017; regulator records were checked separately."
+        },
+        {
+          "key": "gday-verification",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9679957505938-How-do-I-verify-my-account",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-verification",
+          "fieldKeys": [
+            "minimumAge",
+            "kycSummary",
+            "termsUrl"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support says automated checks verify that customers are 18+, match their identity and live at the registered address, and links the player terms at https://www.gdaycasino.com/terms. Exact timing and all GB-specific triggers remain unknown."
+        },
+        {
+          "key": "gday-document-requirements",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9679820927890-Document-requirements",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-document-requirements",
+          "fieldKeys": [
+            "kycSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support describes possible proof of bank account, identity document, proof of address issued within three months, card and e-wallet ownership evidence. The article says documents may be requested; it does not establish that every document is required in every case."
+        },
+        {
+          "key": "gday-withdrawal-timing",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9718482301842-How-long-do-withdrawals-take",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-withdrawal-timing",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support states that UKGC withdrawals may remain under review for a minimum of 24 hours, after which delivery time depends on the withdrawal method. No method-specific delivery time was published."
+        },
+        {
+          "key": "gday-withdrawal-methods",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9718164244242-What-withdrawal-methods-do-you-offer",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-withdrawal-methods",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support says withdrawal methods are displayed in the account, generally reuse supported deposit methods, and fall back to bank-transfer details when a deposit method cannot be used for withdrawal. The exact GB/account-specific method set remains unknown."
+        },
+        {
+          "key": "gday-withdrawal-fees",
+          "classification": "DETECTED",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9718528924306-Are-there-any-fees-for-withdrawal",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-withdrawal-fees",
+          "fieldKeys": [
+            "withdrawalSummary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support states that GDay charges no withdrawal fees, while card issuers, banks, financial institutions or currency conversion may produce charges. The article is not separately labelled GB."
+        },
+        {
+          "key": "gday-general-payments",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9716607012498-What-payment-methods-can-I-use",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-general-payments",
+          "fieldKeys": [
+            "payments"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Official support lists Visa, Mastercard, Paysafecard, Skrill, Neteller and bank transfer as general deposit methods, while explicitly requiring the casino deposit page for country-specific availability. Not promoted to the GB method list because same-market availability was not verified."
+        },
+        {
+          "key": "gday-current-bonus-unknown",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://gdaycasino.zendesk.com/hc/en-us/articles/9716442638866-Welcome-Bonuses-How-to-Claim-Your-Welcome-Bonus",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-current-bonus-unknown",
+          "fieldKeys": [
+            "bonuses"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The official welcome-bonus support article contains generic examples but no current local amount, percentage, free-spin count, wagering requirement, expiry or maximum conversion. No bonus record should be ingested from this article."
+        },
+        {
+          "key": "gday-site-access-limited",
+          "classification": "UNKNOWN",
+          "sourceType": "OFFICIAL_CASINO",
+          "rawSourceType": null,
+          "sourceUrl": "https://www.gdaycasino.com/",
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-site-access-limited",
+          "fieldKeys": [
+            "privacyUrl",
+            "primaryCurrency",
+            "supportedCurrencies",
+            "supportedLanguages",
+            "providers"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Direct web fetch of the official domain returned HTTP 403, while the operator-linked support centre and regulator records remained accessible. This is an evidence-access limitation, not proof the casino is generally unavailable."
+        },
+        {
+          "key": "factual-summary-synthesis",
+          "classification": "INFERRED",
+          "sourceType": "INTERNAL_RECORD",
+          "rawSourceType": null,
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/markets/GB.json",
+          "fieldKeys": [
+            "casino.summary"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The public summary is a concise synthesis of the exact-domain Gambling Commission relationship and active remote-casino licence. It is not a bonus, commercial, or wider-country claim."
+        },
+        {
+          "key": "explicit-unknowns",
+          "classification": "UNKNOWN",
+          "sourceType": "OTHER",
+          "rawSourceType": "FROZEN_RESEARCH_PROFILE",
+          "sourceUrl": null,
+          "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/markets/GB.json",
+          "fieldKeys": [
+            "privacyUrl",
+            "primaryCurrency",
+            "supportedCurrencies",
+            "supportedLanguages",
+            "payments",
+            "bonuses",
+            "providers"
+          ],
+          "observedAt": "2026-08-31T00:00:00.000Z",
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "The frozen exact-market research did not establish these fields. Null values and empty scoped arrays are intentional and must not be backfilled from another market, operator-wide assumptions, creative labels, or commercial portal state."
+        }
+      ],
+      "licenses": [
+        {
+          "key": "ukgc-052894-r-329546-008",
+          "authority": "Gambling Commission",
+          "licenseNumber": "052894-R-329546-008",
+          "jurisdiction": "GB",
+          "status": "Active",
+          "canonicalStatus": "ACTIVE",
+          "verificationUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+          "issuedAt": "2018-10-29T00:00:00.000Z",
+          "expiresAt": null,
+          "lastVerifiedAt": "2026-08-31T00:00:00.000Z",
+          "notes": "Remote casino licence for account 52894; exact-domain evidence is retained separately.",
+          "evidence": [
+            {
+              "key": "licence-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-ukgc-licence",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "White Hat Gaming Limited, account 52894, holds Active Casino Remote licence 052894-R-329546-008, current from 29 October 2018."
+            },
+            {
+              "key": "exact-domain-register",
+              "sourceUrl": "https://www.gamblingcommission.gov.uk/public-register/business/detail/domain-names/52894",
+              "sourceReference": "research_staging/casino_ingestion_2026-08-31/casinos/gday-casino/evidence.json#gday-ukgc-domain",
+              "status": "VERIFIED",
+              "observedAt": "2026-08-31T00:00:00.000Z",
+              "expiresAt": null,
+              "reviewedAt": "2026-08-31T00:00:00.000Z",
+              "notes": "The Gambling Commission register lists www.gdaycasino.com as an Active domain of White Hat Gaming Limited, account 52894."
+            }
+          ]
+        }
+      ],
+      "payments": [],
+      "bonuses": [],
+      "providers": [],
+      "categories": [
+        {
+          "key": "casino",
+          "name": "Casino",
+          "gameCount": null,
+          "featured": true,
+          "sortOrder": 0
+        }
+      ]
+    }
+  ],
+  "commercialMappings": []
+}

@@ -4,7 +4,7 @@ import {
   CasinoLifecycleStatus,
   EditorialStatus,
   OfferStatus,
-  type Prisma,
+  Prisma,
   type PrismaClient,
 } from "@prisma/client";
 
@@ -413,15 +413,64 @@ async function reconcileMarket(
   }
 }
 
+async function reconcileCasinoBundle(tx: Transaction, bundle: CasinoIngestionBundle, counts: ReconciliationCounts) {
+  const brandProfileId = await reconcileBrand(tx, bundle, counts);
+  const casinoId = await reconcileCasino(tx, bundle, brandProfileId, counts);
+  for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
+    await reconcileMarket(tx, bundle, casinoId, market, counts);
+  }
+}
+
+function orderedBatch(bundles: CasinoIngestionBundle[]) {
+  if (bundles.length === 0) throw new Error("Casino ingestion batch must contain at least one bundle.");
+  const ordered = [...bundles].sort((left, right) => left.casino.key.localeCompare(right.casino.key));
+  for (const field of ["key", "slug", "domain"] as const) {
+    const values = ordered.map((bundle) => bundle.casino[field]);
+    if (new Set(values).size !== values.length) throw new Error(`Casino ingestion batch ${field} values must be unique.`);
+  }
+  return ordered;
+}
+
+export async function ingestCasinoBundles(prisma: PrismaClient, bundles: CasinoIngestionBundle[]): Promise<CasinoIngestionResult[]> {
+  const ordered = orderedBatch(bundles);
+  const results: CasinoIngestionResult[] = [];
+  await prisma.$transaction(async (tx) => {
+    for (const bundle of ordered) {
+      const counts = blankCounts();
+      await reconcileCasinoBundle(tx, bundle, counts);
+      results.push({ ...planCasinoIngestion(bundle), mode: "WRITE", reconciliation: counts });
+    }
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    maxWait: 5_000,
+    timeout: 65_000,
+  });
+  return results;
+}
+
 export async function ingestCasinoBundle(prisma: PrismaClient, bundle: CasinoIngestionBundle): Promise<CasinoIngestionResult> {
-  const result = planCasinoIngestion(bundle);
+  return (await ingestCasinoBundles(prisma, [bundle]))[0]!;
+}
+
+export async function verifyCasinoBundlesIdempotency(prisma: PrismaClient, bundles: CasinoIngestionBundle[]) {
   const counts = blankCounts();
   await prisma.$transaction(async (tx) => {
-    const brandProfileId = await reconcileBrand(tx, bundle, counts);
-    const casinoId = await reconcileCasino(tx, bundle, brandProfileId, counts);
-    for (const market of [...bundle.markets].sort((left, right) => left.countryCode.localeCompare(right.countryCode))) {
-      await reconcileMarket(tx, bundle, casinoId, market, counts);
-    }
+    await tx.$executeRawUnsafe("SET TRANSACTION READ ONLY");
+    await tx.$executeRawUnsafe("SET LOCAL statement_timeout = '20s'");
+    await tx.$executeRawUnsafe("SET LOCAL lock_timeout = '5s'");
+    await tx.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '60s'");
+    for (const bundle of orderedBatch(bundles)) await reconcileCasinoBundle(tx, bundle, counts);
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead,
+    maxWait: 5_000,
+    timeout: 65_000,
   });
-  return { ...result, mode: "WRITE", reconciliation: counts };
+  if (counts.created !== 0 || counts.updated !== 0) {
+    throw new Error("Casino ingestion idempotency verification detected a pending write.");
+  }
+  return counts;
+}
+
+export async function verifyCasinoBundleIdempotency(prisma: PrismaClient, bundle: CasinoIngestionBundle) {
+  return verifyCasinoBundlesIdempotency(prisma, [bundle]);
 }

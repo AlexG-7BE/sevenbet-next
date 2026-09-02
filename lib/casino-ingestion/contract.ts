@@ -184,8 +184,8 @@ export const casinoIngestionBundleSchema = z.object({
       domain: nullableText,
     }).strict(),
   }).strict(),
-  markets: z.array(marketSchema).length(2),
-  commercialMappings: z.array(commercialMappingSchema).length(2),
+  markets: z.array(marketSchema).min(1).max(50),
+  commercialMappings: z.array(commercialMappingSchema).max(50),
 }).strict().superRefine((bundle, context) => {
   const countryCodes = bundle.markets.map((market) => market.countryCode);
   if (new Set(countryCodes).size !== countryCodes.length) context.addIssue({ code: "custom", message: "Market country codes must be unique", path: ["markets"] });
@@ -195,9 +195,13 @@ export const casinoIngestionBundleSchema = z.object({
       if (new Set(keys).size !== keys.length) context.addIssue({ code: "custom", message: `${field} keys must be unique within ${market.countryCode}`, path: ["markets", countryCodes.indexOf(market.countryCode), field] });
     }
   }
-  const commercialCountries = new Set(bundle.commercialMappings.map((entry) => entry.countryCode));
-  if (commercialCountries.size !== 2 || countryCodes.some((countryCode) => !commercialCountries.has(countryCode))) {
-    context.addIssue({ code: "custom", message: "Commercial mapping countries must exactly match factual markets", path: ["commercialMappings"] });
+  const commercialCountryCodes = bundle.commercialMappings.map((entry) => entry.countryCode);
+  const commercialCountries = new Set(commercialCountryCodes);
+  if (
+    commercialCountries.size !== commercialCountryCodes.length
+    || commercialCountryCodes.some((countryCode) => !countryCodes.includes(countryCode))
+  ) {
+    context.addIssue({ code: "custom", message: "Commercial mappings must be unique and scoped to a factual market", path: ["commercialMappings"] });
   }
 });
 
