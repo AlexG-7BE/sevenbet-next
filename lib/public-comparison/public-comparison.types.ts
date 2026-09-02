@@ -32,7 +32,7 @@ export interface PublicComparisonCandidate {
   slug: string;
   name: string;
   logo: PublicCasinoMedia | null;
-  editorScore: number;
+  editorScore: number | null;
   marketState: PublicComparisonMarketState;
   marketLabel: string;
 }
@@ -57,7 +57,7 @@ export interface PublicComparisonCasino {
   name: string;
   summary: string;
   logo: PublicCasinoMedia | null;
-  editorScore: number;
+  editorScore: number | null;
   publishedAt: string | null;
   lastReviewedAt: string | null;
   reviewHref: string;
