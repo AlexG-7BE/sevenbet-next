@@ -31,11 +31,11 @@ test("public error boundary renders safe recovery without exposing the local har
 test("final handoff Contact link reaches the canonical Contact page", async ({ page }) => {
   await page.goto(`${baseUrl}/terms`, { waitUntil: "domcontentloaded" });
   await page.getByRole("link", { name: "Contact", exact: true }).first().click();
-  await expect(page).toHaveURL(`${baseUrl}/contact`);
+  await expect(page).toHaveURL(`${baseUrl}/en-gb/contact`);
   await expect(page.getByRole("heading", { level: 1, name: "Talk to us." })).toBeVisible();
   await expect(page.locator('link[rel="canonical"][href$="/contact"]')).toHaveCount(1);
   await expect(page.getByRole("link", { name: "support@b4gamble.com" }).first()).toHaveAttribute("href", "mailto:support@b4gamble.com");
-  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/help");
+  await expect(page.getByRole("link", { name: "Open Help" }).last()).toHaveAttribute("href", "/en-gb/help");
 });
 
 test("Contact form has accessible adjacent validation", async ({ page }) => {

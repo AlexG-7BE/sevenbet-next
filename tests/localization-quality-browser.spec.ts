@@ -41,7 +41,7 @@ test("Preview and Production-grade selectors expose only public-core-ready marke
   await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
   const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
   const values = await menu.locator('button[name="choice"]').evaluateAll((buttons) => buttons.map((button) => (button as HTMLButtonElement).value));
-  expect(values).toEqual(["automatic", "GB|en-GB", "DE|de-DE", "ES|es-ES", "GR|el-GR", "SE|sv-SE", "DK|da-DK"]);
+  expect(values).toEqual(["automatic", "GB|en-GB", "DE|de-DE", "ES|es-ES", "PE|es-PE", "GR|el-GR", "SE|sv-SE", "DK|da-DK"]);
   for (const denied of ["IT|it-IT", "PT|pt-PT", "NL|nl-NL", "FI|fi-FI", "NO|nb-NO", "CA|en-CA", "CA|fr-CA"]) {
     await expect(menu.locator(`button[value="${denied}"]`)).toHaveCount(0);
   }
@@ -74,7 +74,7 @@ for (const profile of coreProfiles) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
       for (const route of routes) {
         const fixture = ["/best-offers", "/casinos", "/bonuses"].includes(route) ? "?visualFixture=true" : "";
-        const pathname = route === "/" ? `${prefix}/` || "/" : `${prefix}${route}` || route;
+        const pathname = route === "/" ? prefix || "/" : `${prefix}${route}` || route;
         const response = await page.goto(`${baseUrl}${pathname}${fixture}`, { waitUntil: "domcontentloaded" });
         expect(response?.status(), `${profile.countryCode}:${route}:${width}`).toBe(200);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);

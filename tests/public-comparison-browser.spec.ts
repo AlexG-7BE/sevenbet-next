@@ -4,7 +4,7 @@ import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const messages = productPageMessages("en-GB");
-const fixtureDirectoryUrl = `${baseUrl}/casinos?visualFixture=true`;
+const fixtureDirectoryUrl = `${baseUrl}/en-gb/casinos?visualFixture=true`;
 
 async function clearComparison(page: Page) {
   await page.goto(fixtureDirectoryUrl, { waitUntil: "networkidle" });
@@ -18,10 +18,10 @@ async function clearComparison(page: Page) {
 test("legacy Compare route permanently consolidates into the casino directory", async ({ page, request }) => {
   const response = await request.get(`${baseUrl}/compare?casino=demo-northstar&casino=demo-summit&country=GB`, { maxRedirects: 0 });
   expect(response.status()).toBe(308);
-  expect(response.headers().location).toBe("/casinos?casino=demo-northstar&casino=demo-summit&country=GB");
+  expect(response.headers().location).toBe("/en-gb/casinos?casino=demo-northstar&casino=demo-summit");
 
   await page.goto(`${baseUrl}/compare?casino=demo-northstar&casino=demo-summit&country=GB`, { waitUntil: "networkidle" });
-  await expect(page).toHaveURL(/\/casinos\?casino=demo-northstar&casino=demo-summit&country=GB/);
+  await expect(page).toHaveURL(/\/en-gb\/casinos\?casino=demo-northstar&casino=demo-summit/);
   await expect(page.getByRole("heading", { name: messages.comparison.title })).toBeVisible();
   await expect(page.getByRole("link", { name: messages.comparison.add, exact: true })).toHaveCount(0);
 });
@@ -108,9 +108,9 @@ test("comparison review links keep deterministic fixture transport", async ({ pa
   const dialog = page.locator('dialog[data-runtime-renderer="contextual-comparison"]');
   const reviews = dialog.getByRole("link", { name: messages.comparison.fullReview, exact: true });
   await expect(reviews).toHaveCount(2);
-  await expect(reviews.first()).toHaveAttribute("href", "/casino/demo-plume?visualFixture=true");
+  await expect(reviews.first()).toHaveAttribute("href", "/en-gb/casino/demo-plume?visualFixture=true");
   await reviews.first().click();
-  await expect(page).toHaveURL(`${baseUrl}/casino/demo-plume?visualFixture=true`);
+  await expect(page).toHaveURL(`${baseUrl}/en-gb/casino/demo-plume?visualFixture=true`);
   await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
 });
 

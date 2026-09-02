@@ -78,6 +78,21 @@ test("legacy country query redirects once and explicit canonical route cannot be
   assert.equal(`${explicitLocation.pathname}${explicitLocation.search}`, "/sv-se/casinos?sort=score");
 });
 
+test("retired comparison canonicalizes in one hop and disabled locales are not normalized", async () => {
+  const comparison = await middleware(new NextRequest(
+    "http://127.0.0.1:4173/compare?casino=demo-northstar&casino=demo-summit&country=GB",
+  ));
+  assert.equal(comparison.status, 308);
+  const comparisonLocation = new URL(comparison.headers.get("location") ?? "http://invalid");
+  assert.equal(
+    `${comparisonLocation.pathname}${comparisonLocation.search}`,
+    "/en-gb/casinos?casino=demo-northstar&casino=demo-summit",
+  );
+
+  const disabledLocale = await middleware(new NextRequest("http://127.0.0.1:4173/ca/"));
+  assert.equal(disabledLocale.headers.get("location"), null);
+});
+
 test("Peru metadata is self-canonical, reciprocal, noindex and keeps safety non-commercial", () => {
   const presentation = resolvePresentationContext({ routeMarket: "pe", routeLanguage: "es" });
   const metadata = productMetadata({

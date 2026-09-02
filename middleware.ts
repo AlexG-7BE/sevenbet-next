@@ -348,6 +348,12 @@ export async function middleware(request: NextRequest) {
   }
 
   if (publicMarketRoute.kind === "MARKET_NEUTRAL") {
+    // `/compare` is a retired public destination. Fold it into the canonical
+    // market directory in the resolver hop so callers never traverse a
+    // neutral-locale redirect followed by the page-level permanent redirect.
+    const equivalentPathname = publicMarketRoute.pathname === "/compare"
+      ? "/casinos"
+      : publicMarketRoute.pathname;
     const countryValues = searchParams.getAll("country");
     const explicitCountry = countryValues.length === 1 ? marketProfileByCountry(countryValues[0]) : null;
     const explicitCountryLocale = explicitCountry?.defaultLocale ?? null;
@@ -355,10 +361,10 @@ export async function middleware(request: NextRequest) {
       explicitCountry
       && explicitCountryLocale
       && publicPresentationAvailable(explicitCountry, explicitCountryLocale)
-      && isLocalizedPublicDestination(publicMarketRoute.pathname, explicitCountry)
+      && isLocalizedPublicDestination(equivalentPathname, explicitCountry)
     ) {
       const destination = withoutCountryQuery(new URL(request.url));
-      destination.pathname = publicMarketPath(explicitCountry, explicitCountryLocale, publicMarketRoute.pathname);
+      destination.pathname = publicMarketPath(explicitCountry, explicitCountryLocale, equivalentPathname);
       return secureResponse(NextResponse.redirect(destination, 308));
     }
 
@@ -375,8 +381,11 @@ export async function middleware(request: NextRequest) {
           routeLanguage: DEFAULT_MARKET_PROFILE.defaultLocale.split("-")[0],
         });
     const destination = withoutCountryQuery(new URL(request.url));
-    destination.pathname = publicMarketPath(resolved.market, resolved.locale, publicMarketRoute.pathname);
-    return secureResponse(NextResponse.redirect(destination, 307));
+    destination.pathname = publicMarketPath(resolved.market, resolved.locale, equivalentPathname);
+    return secureResponse(NextResponse.redirect(
+      destination,
+      publicMarketRoute.pathname === "/compare" ? 308 : 307,
+    ));
   }
 
   if (publicMarketRoute.kind === "CANONICAL_LOCALE") {
@@ -408,6 +417,12 @@ export async function middleware(request: NextRequest) {
     const response = nextResponse(rewriteUrl);
     response.headers.set("Content-Language", publicMarketRoute.locale);
     return secureResponse(response);
+  }
+
+  // Disabled locale architecture stays an HTTP 404 even when the attempted
+  // URL has a trailing slash. Do not normalize it into a second request.
+  if (publicMarketRoute.kind === "INVALID" && publicMarketRoute.reason === "LOCALE_DISABLED") {
+    return secureResponse(nextResponse());
   }
 
   // `skipTrailingSlashRedirect` lets market homes keep `/de/`. Preserve the

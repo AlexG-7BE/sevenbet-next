@@ -216,21 +216,21 @@ test("casino profile breadcrumb clears the fixed public header across responsive
 
     const header = page.locator('[data-public-shell="header"]');
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
-    const casinosLink = breadcrumb.locator('a[href="/casinos"]');
+    const casinosLink = breadcrumb.locator('a[href="/en-gb/casinos"]');
     const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
 
     await expect(header, `${viewport.width}px public header`).toBeVisible();
     await expect(breadcrumb, `${viewport.width}px breadcrumb`).toBeVisible();
     await expect(casinosLink, `${viewport.width}px Casinos link`).toBeVisible();
     await expect(casinosLink, `${viewport.width}px Casinos link target`).toBeEnabled();
-    await expect(casinosLink, `${viewport.width}px Casinos href`).toHaveAttribute("href", "/casinos");
+    await expect(casinosLink, `${viewport.width}px Casinos href`).toHaveAttribute("href", "/en-gb/casinos");
     await expect(hero, `${viewport.width}px hero`).toBeVisible();
     await expect(hero.getByRole("heading", { level: 1, name: "Demo Northstar Casino" }), `${viewport.width}px hero heading`).toBeVisible();
 
     const geometry = await page.evaluate(() => {
       const headerElement = document.querySelector<HTMLElement>('[data-public-shell="header"]')!;
       const breadcrumbElement = document.querySelector<HTMLElement>('nav[aria-label="Breadcrumb"]')!;
-      const linkElement = breadcrumbElement.querySelector<HTMLAnchorElement>('a[href="/casinos"]')!;
+      const linkElement = breadcrumbElement.querySelector<HTMLAnchorElement>('a[href="/en-gb/casinos"]')!;
       const headerRect = headerElement.getBoundingClientRect();
       const breadcrumbRect = breadcrumbElement.getBoundingClientRect();
       const linkRect = linkElement.getBoundingClientRect();
@@ -368,9 +368,9 @@ test("outbound confirmation is absent while market authority denies referral", a
 test("every rendered Best Offers demo detail action resolves to a disclosed review-only page", async ({ page }) => {
   const shortlist = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(shortlist?.status()).toBe(200);
-  const hrefs = [...new Set(await page.locator('a[href^="/casino/"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")).filter((href): href is string => Boolean(href))))];
+  const hrefs = [...new Set(await page.locator('a[href^="/en-gb/casino/"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")).filter((href): href is string => Boolean(href))))];
   expect(hrefs.length).toBeGreaterThanOrEqual(3);
-  expect(hrefs.every((href) => /^\/casino\/demo-/.test(href))).toBe(true);
+  expect(hrefs.every((href) => /^\/en-gb\/casino\/demo-/.test(href))).toBe(true);
   const shortlistCopy = await page.locator("body").textContent() ?? "";
   for (const falsePublicationClaim of [
     "Published ranking method",

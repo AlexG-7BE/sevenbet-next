@@ -916,8 +916,8 @@ test("accepted and draft comparison fixtures use localized catalog copy and stay
 
 test("accepted and draft bonus fixtures preserve localized page-two navigation", async ({ page }) => {
   for (const { locale, route } of [
-    { locale: "de-DE", route: "de" },
-    { locale: "fi-FI", route: "fi" },
+    { locale: "de-DE", route: "de-de" },
+    { locale: "fi-FI", route: "fi-fi" },
   ] as const) {
     const messages = productPageMessages(locale);
     const response = await page.goto(`${baseUrl}/${route}/bonuses?page=2&sort=editorial&visualFixture=true`, { waitUntil: "networkidle" });

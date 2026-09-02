@@ -38,7 +38,7 @@ test("selector persists Peru and keeps the equivalent path on desktop and mobile
     if (viewport.width < 600) {
       await page.locator('[data-public-shell="header"] button[aria-controls="public-mobile-navigation"]').click();
     }
-    const trigger = page.locator('button[aria-haspopup="menu"]').filter({ hasText: "SV · SE" }).first();
+    const trigger = page.locator('button[aria-haspopup="menu"]:visible').filter({ hasText: "SV · SE" }).first();
     await trigger.click();
     await page.locator('button[value="PE|es-PE"]:visible').first().click();
     await expect(page).toHaveURL(/\/es-pe\/casinos$/);

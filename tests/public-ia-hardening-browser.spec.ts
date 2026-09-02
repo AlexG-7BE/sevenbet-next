@@ -31,20 +31,20 @@ test("final public Responsible Gambling hub and Protected Help remain separate",
   for (const name of ["Read the guides", "Start Programme", "Open Help"]) {
     await expect(page.getByRole("link", { name: new RegExp(name, "i") }).first()).toBeVisible();
   }
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/responsible-gambling");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/en-gb/responsible-gambling");
   await expect(page.getByRole("navigation", { name: "Primary navigation" }).getByRole("link", { name: "Help" })).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/responsible-gambling"]')).toHaveCount(1);
+  await expect(page.locator('footer[data-public-shell] a[href="/en-gb/responsible-gambling"]')).toHaveCount(1);
   await expect(page.locator('footer[data-public-shell] a[href="/self-check"]')).toHaveCount(0);
   await expect(page.locator('footer[data-public-shell] a[href="/tools/budget-calculator"]')).toHaveCount(0);
-  await expect(page.locator('footer[data-public-shell] a[href="/help"]')).toHaveCount(1);
+  await expect(page.locator('footer[data-public-shell] a[href="/en-gb/help"]')).toHaveCount(1);
 
   const helpResponse = await page.goto(`${baseUrl}/help`, { waitUntil: "networkidle" });
   expect(helpResponse?.status()).toBe(200);
   await expect(page.locator("[data-protected-help-shell]")).toHaveCount(1);
   await expect(page.locator("[data-public-shell]")).toHaveCount(0);
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/help");
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", "https://b4gamble.com/en-gb/help");
   await expect(page.getByText(/Your activity here is never used for offers, rankings or ads/)).toBeVisible();
-  await expect(page.locator('a[href^="/casinos"], a[href^="/bonuses"], a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
+  await expect(page.locator('a[href*="/casinos"], a[href*="/bonuses"], a[href^="/r/"], a[href^="/go/"]')).toHaveCount(0);
 
   for (const [slug, destination] of Object.entries(formerResponsibleGamblingRoutes)) {
     const legacy = await request.get(`${baseUrl}/responsible-gambling/${slug}`, { maxRedirects: 0 });
@@ -64,7 +64,7 @@ test("retired destinations are redirects and absent from canonical discovery", a
   const redirects = [
     ["/self-check", "/responsible-gambling"],
     ["/tools/budget-calculator", "/responsible-gambling"],
-    ["/compare", "/casinos"],
+    ["/compare", "/en-gb/casinos"],
   ] as const;
   for (const [route, destination] of redirects) {
     const response = await request.get(`${baseUrl}${route}`, { maxRedirects: 0 });
@@ -82,9 +82,9 @@ test("retired destinations are redirects and absent from canonical discovery", a
 
 test("SEO identities remain distinct and public article API matches Learn pages", async ({ page, request }) => {
   const identities = [
-    ["/responsible-gambling", "/responsible-gambling", /Responsible Gambling \| B4GAMBLE/],
-    ["/help", "/help", /Gambling Help & Support \| B4GAMBLE/],
-    ["/learn/responsible-gambling", "/learn?category=responsible-gambling", /Learn/],
+    ["/responsible-gambling", "/en-gb/responsible-gambling", /Responsible Gambling \| B4GAMBLE/],
+    ["/help", "/en-gb/help", /Gambling Help & Support \| B4GAMBLE/],
+    ["/learn/responsible-gambling", "/en-gb/learn?category=responsible-gambling", /Learn/],
   ] as const;
   for (const [route, destination, title] of identities) {
     await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
