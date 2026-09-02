@@ -38,6 +38,40 @@ function safeUrlShape(value: string) {
   }
 }
 
+const SEMANTIC_BRANDS = [
+  ["Hello Casino", /\bhello(?: casino)?\b/i],
+  ["Skol Casino", /\bskol(?: casino)?\b/i],
+  ["Diamond7", /\bdiamond\s*7\b/i],
+  ["G'day Casino", /\bg[’']?day(?: casino)?\b/i],
+  ["21 Privé", /\b21\s+priv[eé]\b/i],
+  ["Slotnite", /\bslotnite\b/i],
+  ["DragonBet", /\bdragon\s*bet\b/i],
+  ["Betsson", /\bbetsson\b/i],
+] as const;
+
+function evidenceSemanticTags(values: Array<string | null>) {
+  const text = values.filter(Boolean).join(" \n ");
+  const negative = /\b(disabled|denied|rejected|revoked|suspended|not approved|not authorised|not authorized|cannot accept)\b/i.test(text);
+  const pending = /\b(pending|awaiting approval|under review)\b/i.test(text);
+  const positive = !negative && !pending && /\b(approved|accepted|activated|active|live|allowed|authorised|authorized|can accept)\b/i.test(text);
+  return {
+    brands: SEMANTIC_BRANDS.filter(([, pattern]) => pattern.test(text)).map(([brand]) => brand),
+    geos: [
+      ["GB", /\b(GB|UK|United Kingdom|Great Britain)\b/i],
+      ["PE", /\b(PE|Peru|Peruvian)\b/i],
+      ["SE", /\b(SE|Sweden|Swedish)\b/i],
+    ].filter(([, pattern]) => (pattern as RegExp).test(text)).map(([geo]) => geo),
+    stateSignals: { negative, pending, positive },
+    routeSignals: {
+      campaign: /\bcampaign\b/i.test(text),
+      tracker: /\btracker|tracking\b/i.test(text),
+      affiliateLink: /\baffiliate (?:link|url)|tracking (?:link|url)|direct link\b/i.test(text),
+      clickId: /\bclick[ _-]?id\b/i.test(text),
+      destination: /\bdestination|landing (?:page|url)|target url\b/i.test(text),
+    },
+  };
+}
+
 function assertProductionAuditAuthority(environment: ReleaseEnvironment) {
   if (environment.CASINO_COMMERCIAL_ACTIVATION_01_MODE !== "AUDIT") {
     throw new Error("Casino commercial activation audit requires the exact AUDIT mode.");
@@ -208,6 +242,7 @@ async function commercialEvidenceSummary(prisma: PrismaClient) {
       affiliateNetworkId: true,
       affiliateProgramId: true,
       evidence: { orderBy: { recordedAt: "desc" }, select: {
+        id: true,
         category: true,
         classification: true,
         sourceAuthority: true,
@@ -216,8 +251,12 @@ async function commercialEvidenceSummary(prisma: PrismaClient) {
         observedAt: true,
         expiresAt: true,
         recheckAt: true,
+        recordedAt: true,
         sourceUrl: true,
         sourceReference: true,
+        title: true,
+        claim: true,
+        notes: true,
       } },
       terms: { orderBy: { createdAt: "desc" }, select: {
         model: true,
@@ -242,6 +281,22 @@ async function commercialEvidenceSummary(prisma: PrismaClient) {
     casinoLinked: Boolean(opportunity.casinoId),
     affiliateNetworkLinked: Boolean(opportunity.affiliateNetworkId),
     affiliateProgramLinked: Boolean(opportunity.affiliateProgramId),
+    semanticEvidence: opportunity.evidence
+      .map((evidence) => ({
+        id: evidence.id,
+        category: evidence.category,
+        classification: evidence.classification,
+        sourceAuthority: evidence.sourceAuthority,
+        sourceType: evidence.sourceType,
+        status: evidence.status,
+        observedAt: evidence.observedAt,
+        recordedAt: evidence.recordedAt,
+        expiresAt: evidence.expiresAt,
+        recheckAt: evidence.recheckAt,
+        sourceReferencePresent: Boolean(evidence.sourceReference?.trim()),
+        tags: evidenceSemanticTags([evidence.title, evidence.claim, evidence.notes, evidence.sourceReference]),
+      }))
+      .filter((evidence) => evidence.tags.brands.length > 0 || evidence.tags.geos.length > 0 || Object.values(evidence.tags.stateSignals).some(Boolean) || Object.values(evidence.tags.routeSignals).some(Boolean)),
     evidence: Object.values(opportunity.evidence.reduce<Record<string, {
       category: string;
       classification: string;
