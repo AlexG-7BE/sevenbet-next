@@ -96,7 +96,7 @@ test("Best Offers static handoff picks expose keyboard-accessible review routes"
 test("bonus filters remain URL-authoritative and server rendered", async ({ page }) => {
   const response = await page.goto(`${baseUrl}/bonuses?country=GB&type=WELCOME&featured=false&recommended=true&sort=lowest-wagering&visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  const form = page.locator('form[action="/bonuses"]').first();
+  const form = page.locator('form[action$="/bonuses"]').first();
   await expect(form.getByLabel(messages.common.countryPreference)).toHaveValue("GB");
   await expect(form.getByLabel(messages.common.bonusType)).toHaveValue("WELCOME");
   const url = new URL(page.url());
