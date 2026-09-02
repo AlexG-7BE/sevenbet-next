@@ -1,8 +1,9 @@
 import { createHash } from "node:crypto";
 import { readdirSync, readFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
-import { PrismaClient } from "@prisma/client";
+import type { PrismaClient } from "@prisma/client";
 
+import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
+import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -255,13 +256,13 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
   }
 
-  const prisma = new PrismaClient();
+  const prisma = createCasinoMarket0025AdminClient();
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
@@ -275,8 +276,11 @@ async function maybeApplyProgrammeAccessMigration() {
     await assertMcpDcrInvariants(prisma);
 
     const applied = new Set(completed.map((row) => row.migration_name));
+    if (!applied.has(TARGET_MIGRATION)) {
+      throw new Error(`Production migration guard requires completed ${TARGET_MIGRATION}; DB-first 0025 will not apply an older migration.`);
+    }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
-    const expectedPending = applied.has(TARGET_MIGRATION) ? [] : [TARGET_MIGRATION];
+    const expectedPending = applied.has(CASINO_MARKET_TARGET_MIGRATION) ? [] : [CASINO_MARKET_TARGET_MIGRATION];
 
     if (
       pending.length !== expectedPending.length
@@ -287,69 +291,20 @@ async function maybeApplyProgrammeAccessMigration() {
       );
     }
 
-    if (applied.has(TARGET_MIGRATION)) {
-      assertChecksum(completedByName.get(TARGET_MIGRATION), TARGET_MIGRATION);
-      await assertProgrammeAccessPostMigrationInvariants(prisma);
-      writeEvent({
-        event: "production_programme_access_migration",
-        state: "already_applied_and_verified",
-        migration: TARGET_MIGRATION,
-      });
-      return;
-    }
-
     await assertProgrammeAccessPreMigrationInvariants(prisma);
+    assertChecksum(completedByName.get(TARGET_MIGRATION), TARGET_MIGRATION);
+    await assertProgrammeAccessPostMigrationInvariants(prisma);
     writeEvent({
       event: "production_programme_access_migration",
-      state: "applying",
-      migration: TARGET_MIGRATION,
-    });
-
-    await prisma.$disconnect();
-
-    const executable = process.platform === "win32" ? "npx.cmd" : "npx";
-    const deployment = spawnSync(executable, ["prisma", "migrate", "deploy"], {
-      cwd: process.cwd(),
-      env: process.env,
-      encoding: "utf-8",
-    });
-
-    if (deployment.status !== 0) {
-      throw new Error(
-        `prisma migrate deploy failed with exit code ${deployment.status ?? "unknown"}; Production build stopped before application deployment.`,
-      );
-    }
-
-    const verifier = new PrismaClient();
-    try {
-      const verifiedRows = await readMigrationRows(verifier);
-      const unresolvedAfter = verifiedRows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
-      if (unresolvedAfter.length > 0) {
-        throw new Error("Production Programme access migration guard found an unresolved migration after deploy.");
-      }
-      const verifiedCompletedRows = completedRows(verifiedRows);
-      const verifiedCompleted = new Map(verifiedCompletedRows.map((row) => [row.migration_name, row]));
-      assertChecksum(verifiedCompleted.get(BASELINE_MIGRATION), BASELINE_MIGRATION);
-      assertChecksum(verifiedCompleted.get(TARGET_MIGRATION), TARGET_MIGRATION);
-      const verifiedApplied = new Set(verifiedCompletedRows.map((row) => row.migration_name));
-      const verifiedPending = repositoryMigrations.filter((name) => !verifiedApplied.has(name));
-      if (verifiedPending.length > 0) {
-        throw new Error(`Production Programme access migration guard still found pending migrations: ${verifiedPending.join(", ")}.`);
-      }
-      await assertMcpDcrInvariants(verifier);
-      await assertProgrammeAccessPostMigrationInvariants(verifier);
-    } finally {
-      await verifier.$disconnect();
-    }
-
-    writeEvent({
-      event: "production_programme_access_migration",
-      state: "applied_and_verified",
+      state: "baseline_verified_read_only",
       migration: TARGET_MIGRATION,
     });
   } finally {
     await prisma.$disconnect().catch(() => undefined);
   }
+
+  const casinoMarketReadiness = await runCasinoMarket0025Readiness();
+  writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {
