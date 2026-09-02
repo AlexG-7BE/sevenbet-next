@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 2 September 2026
+**Evidence date:** 3 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `1392829c5823354ed9e3cb7d04d29b963e96262c`
-**Verified post-release runtime baseline SHA:** `1392829c5823354ed9e3cb7d04d29b963e96262c`
-**Verified post-release runtime deployment:** `dpl_2Wey6EznxUqnnRUYd7QVRbwQJ9ud`
+**Current Production application SHA (live provider evidence):** `c7bd89946bde2c11f1e051776877fb6eb3f3b147`
+**Verified post-release runtime baseline SHA:** `c7bd89946bde2c11f1e051776877fb6eb3f3b147`
+**Verified post-release runtime deployment:** Ready; provider-internal reference retained outside public documentation
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -33,10 +33,21 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
-| Commercial partner activation | **READY FOR FIRST REAL PARTNER — NOT ACTIVE** | No real partner, offer or outbound commercial route is authorised by this checkpoint. |
+| Commercial partner activation | **PLATFORM READY IN PRODUCTION — NO ACTIVE ROUTE** | Normal exact Casino × GEO campaign/link/asset ingestion is operational; current evidence still authorises no outbound route. |
 | Casino market data | **PRODUCTION ARCHITECTURE COMPLETE; BETSSON PE/SE FACTUAL DATA PUBLISHED** | Migration 0025 and the market-aware runtime are live. Exactly one non-commercial Betsson PE/SE factual bundle was imported and published; contradictions and unknowns are retained, while affiliate action and `productionEligible` remain false. |
 
-### Unmerged implementation candidates
+### Recent implementation state
+
+**DETECTED — COMMERCIAL PLATFORM CODE COMPLETION, 3 September 2026:** PR #131
+merged the exact Casino × GEO activation and asset adapters, aggregate-only
+outbound-click accounting/reporting, read-only route health automation and
+central market publication/indexability policy. Additive migration
+`0026_commercial_platform_completion` is applied and checksum-verified. PR #132
+fixed the monitor's repository context; the final manual Production health run
+passed with no open alert. GB is centrally indexable, while its current Casino
+directory applies a stricter inventory truthfulness `noindex`; SE and PE remain
+centrally `noindex` on the documented data/content/legal blockers. No route was
+activated. See the [commercial-platform completion release record](06_Operations/Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
 **DETECTED — PR #105 merged:** merge `f457099` delivered the typed internationalisation foundation, `HOME_READY` / `PUBLIC_CORE_READY` / `ARCHITECTURE_ONLY` presentation states and Founder-accepted DE/ES/SE/DK/GR public-core presentations. PR #106 subsequently merged the separately governed Programme internationalisation architecture at `4184c4f`. The old description of PR #105 as unmerged was stale and is corrected here from repository history.
 
@@ -48,7 +59,15 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 **DETECTED — Programme internationalisation PR #106 merged:** merge `4184c4f` presents one language-neutral Programme through its separately governed localized Programme routes while keeping locale out of Programme state, identity, rewards and persistence. It introduced no Prisma migration and did not extend public-market legal, indexing or commercial authority. Its runtime evidence and historical acceptance gates remain in [Programme internationalisation](internationalisation/programme-internationalisation.md).
 
-**PROPOSED UNTIL MERGE — systemic Programme access candidate, 31 August 2026:** the explicit Founder instruction `B4GAMBLE — SYSTEMIC PROGRAMME ACCESS FIX` supersedes the old authenticated one-hour browser-authority lifecycle. The candidate adds one purpose-specific `ProgrammeAccessAcceptance` row per accepted User, keeps anonymous access behind the existing signed journey/header/session boundary, binds claim acceptance atomically, and requires Better Auth plus durable acceptance on every authenticated Programme route. Empty `sessionStorage`, marker expiry, new tab/browser/device, logout/login, locale changes and later Terms/Privacy metadata changes do not re-prompt an accepted user. Migration `0024` backfills only the narrowly provable PROGRAM-AI claim/Starting-Point path; generic historical enrollments remain explicitly unknown. No Production database change, deployment or merge is represented by this entry. See [Programme Access Authorization](05_Engineering/Technical_Baseline/12_Programme_Access_Authorization.md).
+**DETECTED — systemic Programme access merged and deployed:** PR #109 merged as
+`be5641f90174b6200892274e5fd48000988091c5`, replacing the old authenticated
+one-hour browser-authority lifecycle with one purpose-specific durable
+`ProgrammeAccessAcceptance` per accepted User. Migration `0024` is effective in
+Production and backfilled only the narrowly provable PROGRAM-AI
+claim/Starting-Point path; generic historical enrollments remain explicitly
+unknown. Later 0025/0026 preservation checks left Programme acceptance,
+Enrollment, progress, reward, `currentStep` and Starting-Point projections
+unchanged. See [Programme Access Authorization](05_Engineering/Technical_Baseline/12_Programme_Access_Authorization.md).
 
 ## Detected release evidence
 

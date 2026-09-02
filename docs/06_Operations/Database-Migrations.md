@@ -27,13 +27,21 @@ Execution evidence:
 
 This was a bounded one-time execution path. It does **not** establish a permanent policy of running migrations during every Vercel build. Future Production migrations require a new explicit controlled execution decision appropriate to their risk and migration shape.
 
-## Pending Programme access migration 0024 — not applied to Production
+## Production Programme access migration 0024 — applied
 
-**PROPOSED / NOT DEPLOYED:** `0024_programme_access_acceptance` is an additive table and enum only. It does not alter `ProgramEnrollment`, Mission progress, rewards, `currentStep`, Starting Point, account identity or commercial data. The application change depends on this table, so Production migration and application promotion require an explicit ordered release decision; this implementation task does not run either action.
+**DETECTED / APPLIED:** `0024_programme_access_acceptance` is an additive table
+and enum only. It does not alter `ProgramEnrollment`, Mission progress, rewards,
+`currentStep`, Starting Point, account identity or commercial data. Current
+Production migration history through 0026 verifies 0024 as effective.
 
 The compatibility insert marks only a user whose consumed `PendingProgrammeClaim` joins to a `program-ai-01:v1` anonymous session and to a `ProgrammeStartingPoint` with the same user, exact version and `confirmedAt = consumedAt` transaction timestamp. Repository route/service evidence establishes that this narrow session type was created only after signed 18+/Terms/Privacy proof verification. It uses the session creation time as the closest truthful lower-bound timestamp and leaves historical Terms/Privacy versions `NULL`. A generic `ProgramEnrollment`, Mission progress or XP row is not evidence and is never backfilled.
 
-Disposable CI stages all history through `0023`, loads both a provable claim fixture and an unknown generic-enrollment fixture, runs the `0024` preflight, deploys and replays migrations, then verifies one safe acceptance, zero unknown-user acceptances, and byte-equivalent selected Enrollment/progress/reward/currentStep/Starting-Point projections. Production execution remains prohibited without separate Founder authority and a verified pending-migration plan.
+Disposable CI stages all history through `0023`, loads both a provable claim
+fixture and an unknown generic-enrollment fixture, runs the `0024` preflight,
+deploys and replays migrations, then verifies one safe acceptance, zero
+unknown-user acceptances, and byte-equivalent selected
+Enrollment/progress/reward/currentStep/Starting-Point projections. The later
+0025 and 0026 Production postflights preserved those Programme projections.
 
 ## Production Casino market-profile migration 0025 — completed 1 September 2026
 
@@ -45,9 +53,27 @@ PR #114 merged the durable verification-only steady state as `5d16a2615a642625c9
 
 A later, independently authorised factual-data release imported and published the checksum-bound Betsson PE/SE bundle exactly once without executing a migration or activating commercial authority. Its exact evidence is in the [2 September 2026 casino release record](Casino-Market-Data-Release-Record-2026-09-02.md).
 
-## Pending Better Auth 1.7 sequence — not applied to Production
+## Production commercial-platform migration 0026 — completed 3 September 2026
 
-**DETECTED:** Production remains applied through `0020_commercial_ops_01`. Repository migration `0021_partner_ops_work_bridge_01` is merged history but is not Production-applied. `PARTNER-OPS-WORK-BRIDGE-02` adds `0022_better_auth_17_schema_upgrade`; neither migration is applied by that implementation task.
+**DETECTED / APPLIED:** `0026_commercial_platform_completion` creates the
+aggregate-only `AffiliateOutboundClickDaily` table, its identity key, bounded
+indexes, checks and restrictive foreign keys. It performs no backfill and does
+not alter Programme, visitor, Casino, market or affiliate-authority records. Its
+immutable SHA-256 is
+`20bda96af8753a18ebfa43aa9d2cb96a688c4eedd29d3e74d23c032b861e3130`.
+
+The bounded Production preflight accepted 0026 as the only pending migration.
+Postflight verified the committed checksum, aggregate privacy contract and
+preservation invariants. Normal Production builds now perform read-only 0026
+readiness verification; they do not run migrations. See the
+[commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
+
+## Production Better Auth 1.7 sequence — applied
+
+**DETECTED / APPLIED:** `0021_partner_ops_work_bridge_01` and
+`0022_better_auth_17_schema_upgrade` are both effective in current Production
+migration history. The sequence below is retained as the compatibility design
+that governed their release, not as a pending execution plan.
 
 Migration 0022 is the additive compatibility step for `better-auth`, `@better-auth/core` and `@better-auth/oauth-provider` `1.7.1`. It:
 
@@ -60,14 +86,19 @@ Migration 0022 is the additive compatibility step for `better-auth`, `@better-au
 
 **DETECTED COMPATIBILITY:** the disposable staged test builds exact post-0020 state with two Users, credential and Google Accounts, one linked `AdminUser`, one Commercial opportunity and one Commercial evidence row. It applies 0021, inserts a 1.6 DCR/token/consent fixture, then applies 0022. It verifies preservation of every representative row, both exact issuers, the one resource/client relation, token/consent resource backfills, empty client-credentials scopes, legacy 1.6 credential/Google inserts after 0022, and issuer/account collision rejection. A separate disposable replay inserts an unsupported legacy provider, proves that 0022 refuses the migration, and verifies that the existing Account row remains unchanged.
 
-Required future Production order:
+Required release order, now historical:
 
-1. Keep `COMMERCIAL_MCP_ENABLED=false`; approve the exact candidate head and obtain a separate Founder migration GO.
-2. With the current Better Auth 1.6.30 application still deployed, fail closed unless the only pending migrations are exactly 0021 then 0022; apply them in that order and verify `_prisma_migrations` plus existing auth.
-3. Only after 0022 is verified, merge/promote the Better Auth 1.7.1 application and reverify consumer, Google, Admin and Programme auth while MCP remains disabled.
-4. Enable the Commercial MCP only under a later explicit decision and run the documented connection smoke.
+1. Keep `COMMERCIAL_MCP_ENABLED=false` while applying 0021 then 0022 to the
+   Better Auth 1.6-compatible application.
+2. Verify migration state and existing authentication before promoting Better
+   Auth 1.7.1.
+3. Reverify consumer, Google, Admin and Programme authentication before the
+   separately governed Commercial MCP enablement.
 
-The migration-before-code order is required. The 1.7 application is not compatible with a database through only 0020 or 0021 because `Account.issuer` and the 1.7 OAuth schema are missing. The old 1.6 application is compatible with schema through 0022 for the bounded overlap because ordinary auth issuer writes are filled deterministically and the MCP feature stays off. No standard auto-deploy should promote the 1.7 code before the migration verification.
+The migration-before-code compatibility rule remains applicable to future
+equivalent auth upgrades. The current Better Auth refresh-lifecycle regression
+is tracked separately in `docs/CURRENT_STATE.md`; it does not make the applied
+0021/0022 migration state pending.
 
 ## Expand/contract rule
 
