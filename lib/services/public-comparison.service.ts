@@ -24,7 +24,7 @@ import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authorit
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
-type ReviewedPublicCasinoDTO = PublicCasinoDTO & { editorScore: number };
+type ComparablePublicCasinoDTO = PublicCasinoDTO;
 
 function marketState(casino: PublicCasinoDTO, country: string): PublicComparisonMarketState {
   const market = casino.countries.find((entry) => entry.countryCode === country);
@@ -38,10 +38,10 @@ function marketLabel(state: PublicComparisonMarketState, country: string) {
   return `${country} availability not published`;
 }
 
-function comparisonCompleteness(casino: ReviewedPublicCasinoDTO) {
+function comparisonCompleteness(casino: ComparablePublicCasinoDTO) {
   const bonus = selectComparisonBonus(casino);
   return Number(Boolean(casino.summary))
-    + Number(casino.editorScore > 0)
+    + Number(casino.editorScore !== null && casino.editorScore > 0)
     + Number(Boolean(casino.publishedAt || casino.lastReviewedAt))
     + Number(casino.licenses.length > 0)
     + Number(casino.payments.length > 0)
@@ -51,12 +51,12 @@ function comparisonCompleteness(casino: ReviewedPublicCasinoDTO) {
     + Number(casino.responsibleGamblingTools.length > 0);
 }
 
-function defaultCandidates(casinos: ReviewedPublicCasinoDTO[], country: string) {
+function defaultCandidates(casinos: ComparablePublicCasinoDTO[], country: string) {
   return casinos
     .filter((casino) => marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
     .sort((a, b) => Number(b.featured) - Number(a.featured)
       || Number(b.recommended) - Number(a.recommended)
-      || b.editorScore - a.editorScore
+      || (b.editorScore ?? -1) - (a.editorScore ?? -1)
       || comparisonCompleteness(b) - comparisonCompleteness(a)
       || a.name.localeCompare(b.name, "en", { sensitivity: "base" })
       || a.slug.localeCompare(b.slug))
@@ -121,9 +121,9 @@ function listValue(items: string[], status: PublicComparisonEvidenceStatus, miss
   return value(items.length ? items.join(" · ") : null, status, missing);
 }
 
-function buildGroups(casinos: ReviewedPublicCasinoDTO[], projected: PublicComparisonCasino[], country: string): PublicComparisonGroup[] {
+function buildGroups(casinos: ComparablePublicCasinoDTO[], projected: PublicComparisonCasino[], country: string): PublicComparisonGroup[] {
   const bySlug = new Map(projected.map((casino) => [casino.slug, casino]));
-  const rows = (definitions: Array<{ id: string; label: string; description: string; get: (casino: ReviewedPublicCasinoDTO) => PublicComparisonValue }>) => definitions.map((definition) => ({
+  const rows = (definitions: Array<{ id: string; label: string; description: string; get: (casino: ComparablePublicCasinoDTO) => PublicComparisonValue }>) => definitions.map((definition) => ({
     id: definition.id,
     label: definition.label,
     description: definition.description,
@@ -135,7 +135,7 @@ function buildGroups(casinos: ReviewedPublicCasinoDTO[], projected: PublicCompar
       id: "identity",
       label: "Identity and editorial context",
       rows: rows([
-        { id: "editor-score", label: "Editorial score", description: "B4GAMBLE editorial assessment, not an operator rating.", get: (casino) => value(`${casino.editorScore.toFixed(1)}/10`, "Editorial") },
+        { id: "editor-score", label: "Editorial score", description: "B4GAMBLE editorial assessment, not an operator rating.", get: (casino) => value(casino.editorScore === null ? null : `${casino.editorScore.toFixed(1)}/10`, "Editorial") },
         { id: "summary", label: "Review summary", description: "Summary supplied by the selected profile source.", get: (casino) => value(casino.summary, "Editorial") },
         { id: "freshness", label: "Profile date", description: "Review or snapshot date supplied by the selected source.", get: (casino) => value(date(casino.lastReviewedAt) ?? date(casino.publishedAt), "Published") },
       ]),
@@ -245,11 +245,10 @@ export class PublicComparisonService {
     }
 
     const now = this.now();
-    const all: ReviewedPublicCasinoDTO[] = published.flatMap((record) => {
+    const all: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
       const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now, countryCode: query.country });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
-      if (casino?.source !== "cms" || casino.editorScore === null) return [];
-      return [{ ...casino, editorScore: casino.editorScore }];
+      return casino?.source === "cms" ? [casino] : [];
     });
     const demoCount = all.filter((casino) => isTemporaryDemoCasinoId(casino.id)).length;
     const inventoryMode: PublicCasinoInventoryMode = demoCount === 0
@@ -263,7 +262,7 @@ export class PublicComparisonService {
     const candidates: PublicComparisonCandidate[] = all.map((casino): PublicComparisonCandidate => {
       const state = marketState(casino, query.country);
       return { dataClassification: isTemporaryDemoCasinoId(casino.id) ? "DEMO_FIXTURE" : "PUBLISHED_RECORD", slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
-    }).sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
+    }).sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
 
     const selected = query.selectionMode === "default" ? defaultCandidates(all, query.country) : query.casinos.flatMap((slug) => {
       const casino = all.find((entry) => entry.slug === slug);

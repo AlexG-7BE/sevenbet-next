@@ -151,7 +151,7 @@ function ComparisonMatrix({ result }: { result: PublicComparisonResult }) {
       <div aria-label={`Comparison of ${result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => casino.name).join(", ")}`} className={styles.desktopMatrix} data-columns={result.casinos.filter((casino) => casino.marketState === "AVAILABLE").length} role="table">
         <div className={styles.operatorHeader} role="row">
           <div role="columnheader">Criterion</div>
-          {result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => <div id={`operator-${casino.slug}`} key={casino.slug} role="columnheader"><strong>{casino.name}</strong><span>{casino.editorScore.toFixed(1)}/10 {casino.dataClassification === "DEMO_FIXTURE" ? "fictional editorial field" : "editorial"}</span></div>)}
+          {result.casinos.filter((casino) => casino.marketState === "AVAILABLE").map((casino) => <div id={`operator-${casino.slug}`} key={casino.slug} role="columnheader"><strong>{casino.name}</strong><span>{casino.editorScore === null ? "Editorial score unknown" : `${casino.editorScore.toFixed(1)}/10 ${casino.dataClassification === "DEMO_FIXTURE" ? "fictional editorial field" : "editorial"}`}</span></div>)}
         </div>
         {result.groups.map((group) => <div className={styles.desktopGroup} key={group.id} role="rowgroup">
           <h3>{group.label}</h3>

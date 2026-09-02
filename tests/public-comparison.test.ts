@@ -44,7 +44,7 @@ function snapshotBonus(casinoSlug: string, bonusSlug: string, patch: {
 
 function record(slug: string, patch: {
   id?: string;
-  score?: number;
+  score?: number | null;
   country?: string;
   availability?: string;
   featured?: boolean;
@@ -73,7 +73,7 @@ function record(slug: string, patch: {
       domain: `${slug}.fictional.test`,
       summary: `Published summary for ${slug}`,
       status: patch.status ?? "PUBLISHED",
-      editorScore: patch.score ?? 8,
+      editorScore: patch.score === undefined ? 8 : patch.score,
       publishedAt: "2030-05-01T00:00:00.000Z",
       lastReviewedAt: "2030-05-02T00:00:00.000Z",
       languages: ["English"],
@@ -238,6 +238,22 @@ test("explicit empty, one, two and three selections are represented without auto
   const three = await service.compare(parsePublicComparisonQuery({ casino: ["gamma", "beta", "alpha"] }));
   assert.equal(three.status, "available");
   assert.deepEqual(three.selectedSlugs, ["gamma", "beta", "alpha"]);
+});
+
+test("explicit comparison preserves published profiles whose editorial score is unknown", async () => {
+  const service = new PublicComparisonService(store([
+    record("scoreless-alpha", { score: null }),
+    record("scoreless-beta", { score: null }),
+  ]), () => now);
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["scoreless-alpha", "scoreless-beta"], country: "GB" }));
+
+  assert.equal(result.status, "available");
+  assert.deepEqual(result.selectedSlugs, ["scoreless-alpha", "scoreless-beta"]);
+  assert.deepEqual(result.casinos.map((casino) => casino.editorScore), [null, null]);
+  assert.deepEqual(result.reasons, []);
+  assert.deepEqual(result.candidates.map((candidate) => candidate.slug), ["scoreless-alpha", "scoreless-beta"]);
+  const score = result.groups.flatMap((group) => group.rows).find((row) => row.id === "editor-score");
+  assert.deepEqual(score?.values["scoreless-alpha"], { text: "Unknown", status: "Unknown" });
 });
 
 test("unknown and unpublished selections stay visible as unavailable reasons", async () => {

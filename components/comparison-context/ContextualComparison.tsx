@@ -141,7 +141,8 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
       const row = comparisonRows.find((candidate) => candidate.id === id);
       return row ? [row] : [];
     });
-  const highestScore = names.length ? Math.max(...names.map((casino) => casino.editorScore)) : null;
+  const publishedScores = names.flatMap((casino) => casino.editorScore === null ? [] : [casino.editorScore]);
+  const highestScore = publishedScores.length ? Math.max(...publishedScores) : null;
 
   return <>
     <aside aria-label={messages.comparison.trayLabel} className={styles.tray} data-comparison-count={slugs.length} data-comparison-tray>
@@ -166,8 +167,8 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
                 <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
                 <div><h3>{displayName}</h3><small>{casino?.summary || messages.common.reviewOnly}</small></div>
               </div>
-              {casino && casino.editorScore === highestScore && <strong className={styles.topScore}>{messages.comparison.topScore}</strong>}
-              <div className={styles.editorScore}><strong>{casino ? formatProfileScore(casino.editorScore, presentation.locale) : "—"}</strong><span>/10</span><span aria-hidden="true">★★★★★</span></div>
+              {casino && casino.editorScore !== null && casino.editorScore === highestScore && <strong className={styles.topScore}>{messages.comparison.topScore}</strong>}
+              <div className={styles.editorScore}><strong>{casino?.editorScore === null || !casino ? "—" : formatProfileScore(casino.editorScore, presentation.locale)}</strong>{casino?.editorScore !== null && casino ? <span>/10</span> : null}<span aria-hidden="true">★★★★★</span></div>
               <div className={styles.factList}>
                 {presentationRows.map((row) => <dl key={row.id} title={row.description}>
                   <dt>{row.id === "withdrawal-time" ? messages.common.payout : row.id === "methods" ? messages.common.paymentMethods : row.id === "control-tools" ? messages.profile.controlTools : row.label}</dt>
