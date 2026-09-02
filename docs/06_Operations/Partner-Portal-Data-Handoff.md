@@ -1,6 +1,6 @@
 # Partner Portal Data Handoff
 
-**DETECTED / RELEASE CANDIDATE — 3 September 2026:** operational input guide for
+**DETECTED / PRODUCTION — 3 September 2026:** operational input guide for
 `commercial-activation-bundle.v1` and `commercial-asset-manifest.v1`.
 
 This is the one morning handoff. No Prisma knowledge is required. Work on one exact Casino × GEO record at a time; never infer one market’s authority from another.

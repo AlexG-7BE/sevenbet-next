@@ -1,9 +1,8 @@
 # Affiliate Route Health Runbook
 
-**DETECTED / RELEASE CANDIDATE — 3 September 2026:** the checker, protected
-endpoint and deduplicated workflow described here exist on the
-commercial-platform code completion branch. Production enablement is recorded
-only after the corresponding release is verified.
+**DETECTED / PRODUCTION — 3 September 2026:** the checker, protected endpoint
+and deduplicated workflow are deployed and final manual dispatch passed. See the
+[commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
 ## Scope
 

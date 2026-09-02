@@ -1,9 +1,8 @@
 # Commercial Platform Operations
 
-**DETECTED / RELEASE CANDIDATE — 3 September 2026:** the implementation and
-disposable verification described here exist on the commercial-platform code
-completion branch. Production application and migration state must be taken
-from the final release record after promotion.
+**DETECTED / PRODUCTION — 3 September 2026:** the implementation and migration
+described here are deployed and verified. See the
+[commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
 ## Activation and assets
 
@@ -38,6 +37,11 @@ Current decision (2026-09-03):
 | es-PE | yes | yes | no | local legal/privacy review plus sufficient real inventory |
 
 SE and PE remain accessible, correctly localized, self-canonical, and `noindex, follow`; they are excluded from the sitemap and indexable hreflang graph. After the stated non-code conditions are evidenced, changing the one registry `indexable` value is sufficient; no new SEO architecture is needed.
+
+GB is centrally indexable. Individual GB product routes may still apply a
+stricter truthfulness guard when their current inventory is filtered, empty or
+not published-only; such a route remains out of the sitemap until its data
+qualifies.
 
 ## Migration and rollback
 
