@@ -562,6 +562,132 @@ async function verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigra
   }
 }
 
+async function verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrationIndex) {
+  const migration = "0026_commercial_platform_completion";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  if (migrationIndex < 1) throw new Error(`Expected migration ${migration}`);
+  const schema = "commercial_platform_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+
+  const beforeProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeProgramme, "schema.prisma")], environment);
+    run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeProgramme, "schema.prisma"), "--file", "prisma/preflight/0015_active_control_program_flow.sql"], environment);
+  } finally {
+    await rm(beforeProgramme, { recursive: true, force: true });
+  }
+
+  const beforeCommercialPlatform = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeCommercialPlatform, "schema.prisma")], environment);
+    for (const fixture of [
+      "prisma/fixtures/0024_pre_programme_access_acceptance.sql",
+      "prisma/fixtures/0025_pre_casino_market_profile.sql",
+      "prisma/fixtures/0026_pre_commercial_platform_completion.sql",
+    ]) {
+      run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeCommercialPlatform, "schema.prisma"), "--file", fixture], environment);
+    }
+  } finally {
+    await rm(beforeCommercialPlatform, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  try {
+    const snapshot = async () => JSON.parse(JSON.stringify(await Promise.all([
+      prisma.programEnrollment.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        orderBy: { id: "asc" },
+        select: { id: true, userId: true, currentStepId: true, programVersionId: true },
+      }),
+      prisma.programmeMissionProgress.findMany({
+        where: { enrollment: { userId: { in: ["access-safe-user", "access-unknown-user"] } } },
+        orderBy: { id: "asc" },
+        select: { id: true, enrollmentId: true, missionNumber: true, status: true, taskStates: true, completedAt: true },
+      }),
+      prisma.userXpEvent.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        orderBy: { id: "asc" },
+        select: { id: true, userId: true, awardKey: true, xp: true },
+      }),
+      prisma.programmeStartingPoint.findMany({
+        where: { userId: { in: ["access-safe-user", "access-unknown-user"] } },
+        orderBy: { id: "asc" },
+        select: { id: true, userId: true, enrollmentId: true, startingPoint: true, confirmedAt: true },
+      }),
+      prisma.casino.findMany({
+        where: { id: "25000000-0000-4000-8000-000000000001" },
+        select: { id: true, slug: true, status: true, publishedVersion: true, draftVersion: true },
+      }),
+      prisma.casinoCountry.findMany({
+        where: { id: "25000000-0000-4000-8000-000000000002" },
+        select: { id: true, casinoId: true, countryCode: true, availability: true },
+      }),
+      prisma.affiliateNetwork.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000001" },
+        select: { id: true, slug: true, type: true, active: true },
+      }),
+      prisma.affiliateProgram.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000002" },
+        select: { id: true, networkId: true, casinoId: true, status: true, supportedCountries: true, supportedCurrencies: true },
+      }),
+      prisma.affiliateOffer.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000003" },
+        select: { id: true, programId: true, casinoId: true, casinoBonusId: true, status: true, payoutAmount: true, metadata: true },
+      }),
+      prisma.affiliateTrackingLink.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000006" },
+        select: { id: true, offerId: true, externalLinkId: true, trackingUrl: true, active: true, metadata: true },
+      }),
+      prisma.affiliateTrackingLinkCountry.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000007" },
+        select: { id: true, trackingLinkId: true, countryCode: true, mode: true, productionEligible: true },
+      }),
+      prisma.affiliateRedirectSlug.findMany({
+        where: { id: "26000000-0000-4000-8000-000000000008" },
+        select: { id: true, slug: true, casinoId: true, casinoBonusId: true, affiliateOfferId: true, active: true },
+      }),
+    ])));
+
+    const before = await snapshot();
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const after = await snapshot();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error("Commercial platform migration changed protected Programme or existing affiliate routing data");
+    }
+
+    const aggregate = await prisma.affiliateOutboundClickDaily.create({
+      data: {
+        id: "26000000-0000-4000-8000-000000000009",
+        day: new Date("2026-09-02T00:00:00.000Z"),
+        casinoId: "25000000-0000-4000-8000-000000000001",
+        countryCode: "GB",
+        redirectSlugId: "26000000-0000-4000-8000-000000000008",
+        affiliateOfferId: "26000000-0000-4000-8000-000000000003",
+        trackingLinkId: "26000000-0000-4000-8000-000000000006",
+        clickCount: 3,
+        lastClickedAt: new Date("2026-09-02T12:00:00.000Z"),
+      },
+      select: { countryCode: true, clickCount: true },
+    });
+    if (aggregate.countryCode !== "GB" || aggregate.clickCount !== 3) {
+      throw new Error("Commercial platform aggregate click table did not accept a valid exact-market counter");
+    }
+
+    console.info("Commercial platform staged migration smoke passed", {
+      protectedProgrammeDataPreserved: true,
+      existingAffiliateRoutingDataPreserved: true,
+      aggregateOnlyTableOperational: true,
+      replayIdempotent: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -632,6 +758,7 @@ async function main() {
   await verifyUnsupportedAccountRefusal(migrationEntries, programmeMigrationIndex);
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrationIndex);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();

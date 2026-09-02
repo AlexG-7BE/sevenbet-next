@@ -9,6 +9,7 @@ import { prisma } from "@/lib/db/prisma";
 
 const mediaInclude = {
   casino: { select: { id: true, title: true, slug: true } },
+  marketProfile: { select: { id: true, casinoId: true, countryCode: true } },
   casinoBonus: { select: { id: true, casinoId: true, title: true, slug: true } },
   affiliateOffer: { select: { id: true, casinoId: true, internalName: true, publicLabel: true } },
 } satisfies Prisma.MediaAssetInclude;
@@ -17,6 +18,7 @@ export type MediaAssetRecord = Prisma.MediaAssetGetPayload<{ include: typeof med
 
 export interface MediaListFilters {
   casinoId?: string;
+  casinoCountryId?: string;
   casinoBonusId?: string;
   affiliateOfferId?: string;
   type?: MediaAssetType;
@@ -47,6 +49,7 @@ export interface CreateMediaRecordInput {
   variants?: Prisma.InputJsonValue;
   createdBy: string;
   casinoId?: string | null;
+  casinoCountryId?: string | null;
   casinoBonusId?: string | null;
   affiliateOfferId?: string | null;
 }
@@ -64,6 +67,7 @@ export interface UpdateMediaRecordInput {
 
 export interface MediaOwnership {
   casino: { id: string } | null;
+  marketProfile: { id: string; casinoId: string; countryCode: string } | null;
   casinoBonus: { id: string; casinoId: string } | null;
   affiliateOffer: { id: string; casinoId: string; casinoBonusId: string | null } | null;
 }
@@ -79,10 +83,11 @@ async function audit(
   await tx.auditLog.create({ data: { actorId, action, entityType: "media-asset", entityId, summary, metadata } });
 }
 
-function ownerWhere(asset: Pick<MediaAssetRecord, "casinoId" | "casinoBonusId" | "affiliateOfferId" | "type">, excludeId?: string): Prisma.MediaAssetWhereInput {
+function ownerWhere(asset: Pick<MediaAssetRecord, "casinoId" | "casinoCountryId" | "casinoBonusId" | "affiliateOfferId" | "type">, excludeId?: string): Prisma.MediaAssetWhereInput {
   return {
     id: excludeId ? { not: excludeId } : undefined,
     casinoId: asset.casinoId,
+    casinoCountryId: asset.casinoCountryId,
     casinoBonusId: asset.casinoBonusId,
     affiliateOfferId: asset.affiliateOfferId,
     type: asset.type,
@@ -99,6 +104,7 @@ export class MediaRepository {
   async list(filters: MediaListFilters = {}) {
     const where: Prisma.MediaAssetWhereInput = {
       ...(filters.casinoId ? { casinoId: filters.casinoId } : {}),
+      ...(filters.casinoCountryId ? { casinoCountryId: filters.casinoCountryId } : {}),
       ...(filters.casinoBonusId ? { casinoBonusId: filters.casinoBonusId } : {}),
       ...(filters.affiliateOfferId ? { affiliateOfferId: filters.affiliateOfferId } : {}),
       ...(filters.type ? { type: filters.type } : {}),
@@ -121,11 +127,12 @@ export class MediaRepository {
     return prisma.mediaAsset.findUnique({ where: { id }, include: mediaInclude });
   }
 
-  async findDuplicateChecksum(checksum: string, input: { casinoId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }) {
+  async findDuplicateChecksum(checksum: string, input: { casinoId?: string | null; casinoCountryId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }) {
     return prisma.mediaAsset.findFirst({
       where: {
         checksum,
         casinoId: input.casinoId ?? null,
+        casinoCountryId: input.casinoCountryId ?? null,
         casinoBonusId: input.casinoBonusId ?? null,
         affiliateOfferId: input.affiliateOfferId ?? null,
         type: input.type,
@@ -136,18 +143,19 @@ export class MediaRepository {
     });
   }
 
-  async resolveOwnership(casinoId?: string | null, casinoBonusId?: string | null, affiliateOfferId?: string | null): Promise<MediaOwnership> {
-    const [casino, casinoBonus, affiliateOffer] = await Promise.all([
+  async resolveOwnership(casinoId?: string | null, casinoCountryId?: string | null, casinoBonusId?: string | null, affiliateOfferId?: string | null): Promise<MediaOwnership> {
+    const [casino, marketProfile, casinoBonus, affiliateOffer] = await Promise.all([
       casinoId ? prisma.casino.findUnique({ where: { id: casinoId }, select: { id: true } }) : null,
+      casinoCountryId ? prisma.casinoCountry.findUnique({ where: { id: casinoCountryId }, select: { id: true, casinoId: true, countryCode: true } }) : null,
       casinoBonusId ? prisma.casinoBonus.findUnique({ where: { id: casinoBonusId }, select: { id: true, casinoId: true } }) : null,
       affiliateOfferId ? prisma.affiliateOffer.findUnique({ where: { id: affiliateOfferId }, select: { id: true, casinoId: true, casinoBonusId: true } }) : null,
     ]);
-    return { casino, casinoBonus, affiliateOffer };
+    return { casino, marketProfile, casinoBonus, affiliateOffer };
   }
 
-  async nextSortOrder(input: { casinoId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }) {
+  async nextSortOrder(input: { casinoId?: string | null; casinoCountryId?: string | null; casinoBonusId?: string | null; affiliateOfferId?: string | null; type: MediaAssetType }) {
     const record = await prisma.mediaAsset.findFirst({
-      where: { casinoId: input.casinoId ?? null, casinoBonusId: input.casinoBonusId ?? null, affiliateOfferId: input.affiliateOfferId ?? null, type: input.type },
+      where: { casinoId: input.casinoId ?? null, casinoCountryId: input.casinoCountryId ?? null, casinoBonusId: input.casinoBonusId ?? null, affiliateOfferId: input.affiliateOfferId ?? null, type: input.type },
       orderBy: { sortOrder: "desc" },
       select: { sortOrder: true },
     });
@@ -158,7 +166,7 @@ export class MediaRepository {
     return prisma.$transaction(async (tx) => {
       if (input.featured) {
         await tx.mediaAsset.updateMany({
-          where: { casinoId: input.casinoId ?? null, casinoBonusId: input.casinoBonusId ?? null, affiliateOfferId: input.affiliateOfferId ?? null, type: input.type, featured: true },
+          where: { casinoId: input.casinoId ?? null, casinoCountryId: input.casinoCountryId ?? null, casinoBonusId: input.casinoBonusId ?? null, affiliateOfferId: input.affiliateOfferId ?? null, type: input.type, featured: true },
           data: { featured: false },
         });
       }
@@ -192,6 +200,7 @@ export class MediaRepository {
       if (expectedUpdatedAt && current.updatedAt.getTime() !== expectedUpdatedAt.getTime()) throw new Error("MEDIA_EDIT_CONFLICT");
       const nextOwner = {
         casinoId: current.casinoId,
+        casinoCountryId: current.casinoCountryId,
         casinoBonusId: input.casinoBonusId !== undefined ? input.casinoBonusId : current.casinoBonusId,
         affiliateOfferId: input.affiliateOfferId !== undefined ? input.affiliateOfferId : current.affiliateOfferId,
         type: current.type,
@@ -242,7 +251,7 @@ export class MediaRepository {
       const records = await tx.mediaAsset.findMany({ where: { id: { in: ids } }, include: mediaInclude });
       if (records.length !== ids.length) throw new Error("MEDIA_NOT_FOUND");
       const owner = records[0];
-      if (records.some((record) => record.casinoId !== owner.casinoId || record.casinoBonusId !== owner.casinoBonusId || record.affiliateOfferId !== owner.affiliateOfferId || record.type !== owner.type)) {
+      if (records.some((record) => record.casinoId !== owner.casinoId || record.casinoCountryId !== owner.casinoCountryId || record.casinoBonusId !== owner.casinoBonusId || record.affiliateOfferId !== owner.affiliateOfferId || record.type !== owner.type)) {
         throw new Error("MEDIA_REORDER_OWNERSHIP_MISMATCH");
       }
       await Promise.all(ids.map((id, index) => tx.mediaAsset.update({ where: { id }, data: { sortOrder: (index + 1) * 1000 } })));

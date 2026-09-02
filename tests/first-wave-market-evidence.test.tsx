@@ -49,7 +49,6 @@ test("review states distinguish source, machine translation, AI QA and Founder a
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
-    assert.equal(state.indexingAuthority, "NOT_ACTIVATED", locale);
     assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), false, locale);
   }
   assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
@@ -135,7 +134,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
   }
   assert.equal(parsePublicMarketRoute("/de/help/article").kind, "INVALID");
   const alternates = firstWaveSafetyLanguageAlternates("/help");
-  assert.deepEqual(Object.keys(alternates).sort(), ["da-DK", "de-DE", "el-GR", "en-GB", "es-ES", "es-PE", "sv-SE", "x-default"].sort());
+  assert.deepEqual(Object.keys(alternates).sort(), ["en-GB", "x-default"]);
 });
 
 test("first-wave safety presentation is localized, attributed and has no commercial or Programme action", () => {

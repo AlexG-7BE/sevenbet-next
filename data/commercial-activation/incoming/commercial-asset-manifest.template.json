@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "commercial-asset-manifest.v1",
+  "manifestId": "replace-with-source-and-date",
+  "activationBundleId": "replace-with-activation-bundle-id",
+  "generatedAt": null,
+  "assets": [
+    {
+      "sourcePath": null,
+      "creativeId": null,
+      "sha256": null,
+      "mimeType": null,
+      "width": null,
+      "height": null,
+      "type": null,
+      "altText": null,
+      "title": null,
+      "caption": null,
+      "credit": null,
+      "featured": false,
+      "casinoSlug": null,
+      "countryCode": null,
+      "languageCode": null,
+      "networkSlug": null,
+      "externalProgramId": null,
+      "externalOfferId": null,
+      "publicationEvidence": {
+        "status": null,
+        "sourceType": null,
+        "sourceReference": null,
+        "observedAt": null,
+        "verifiedAt": null,
+        "expiresAt": null,
+        "restrictions": null
+      }
+    }
+  ]
+}

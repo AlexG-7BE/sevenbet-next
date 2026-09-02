@@ -93,7 +93,7 @@ test("retired comparison canonicalizes in one hop and disabled locales are not n
   assert.equal(disabledLocale.headers.get("location"), null);
 });
 
-test("Peru metadata is self-canonical, reciprocal, noindex and keeps safety non-commercial", () => {
+test("Peru metadata is self-canonical, noindex, outside hreflang, and keeps safety non-commercial", () => {
   const presentation = resolvePresentationContext({ routeMarket: "pe", routeLanguage: "es" });
   const metadata = productMetadata({
     presentation,
@@ -102,7 +102,7 @@ test("Peru metadata is self-canonical, reciprocal, noindex and keeps safety non-
     description: "Registros publicados para Perú",
   });
   assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/es-pe/casinos");
-  assert.equal(new URL((metadata.alternates?.languages as Record<string, string>)["sv-SE"]).pathname, "/sv-se/casinos");
+  assert.equal(metadata.alternates?.languages, undefined);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 
   const peru = firstWaveMarketEvidence("PE");

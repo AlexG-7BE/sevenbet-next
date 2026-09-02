@@ -92,6 +92,7 @@ export interface PartnerRouteCandidate {
     validFrom: Date | string | null;
     expiresAt: Date | string | null;
     archivedAt: Date | string | null;
+    metadata?: unknown;
     countryAuthority: (ExactCountryAuthority & {
       productionEligible: boolean;
       productionEligibilityVerifiedAt: Date | string | null;

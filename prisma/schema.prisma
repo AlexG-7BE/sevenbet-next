@@ -1450,9 +1450,10 @@ model Casino {
   aliases                 CasinoAlias[]
   seo                     CasinoSeo?
   editorialReview         EditorialReview?
-  operatorProfile         CasinoOperator?         @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  brandProfile            CasinoBrand?            @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  operatorProfile         CasinoOperator?               @relation(fields: [operatorProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  brandProfile            CasinoBrand?                  @relation(fields: [brandProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   commercialOpportunities CommercialOpportunity[]
+  outboundClickDaily      AffiliateOutboundClickDaily[]
 
   @@index([operatorProfileId])
   @@index([brandProfileId])
@@ -1993,15 +1994,16 @@ model AffiliateOffer {
   createdBy              String
   updatedBy              String
 
-  program       AffiliateProgram         @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casino        Casino                   @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casinoBonus   CasinoBonus?             @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  countries     AffiliateOfferCountry[]
-  currencies    AffiliateOfferCurrency[]
-  trackingLinks AffiliateTrackingLink[]
-  revisions     AffiliateOfferRevision[]
-  redirectSlugs AffiliateRedirectSlug[]
-  mediaAssets   MediaAsset[]
+  program            AffiliateProgram              @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino             Casino                        @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus        CasinoBonus?                  @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  countries          AffiliateOfferCountry[]
+  currencies         AffiliateOfferCurrency[]
+  trackingLinks      AffiliateTrackingLink[]
+  revisions          AffiliateOfferRevision[]
+  redirectSlugs      AffiliateRedirectSlug[]
+  mediaAssets        MediaAsset[]
+  outboundClickDaily AffiliateOutboundClickDaily[]
 
   @@unique([programId, externalOfferId])
   @@index([casinoId, status, priority])
@@ -2063,9 +2065,10 @@ model AffiliateTrackingLink {
   createdBy         String
   updatedBy         String
 
-  offer     AffiliateOffer                  @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  countries AffiliateTrackingLinkCountry[]
-  revisions AffiliateTrackingLinkRevision[]
+  offer              AffiliateOffer                  @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  countries          AffiliateTrackingLinkCountry[]
+  revisions          AffiliateTrackingLinkRevision[]
+  outboundClickDaily AffiliateOutboundClickDaily[]
 
   @@unique([offerId, externalLinkId])
   @@index([offerId, active, priority])
@@ -2217,10 +2220,11 @@ model AffiliateRedirectSlug {
   createdBy        String
   updatedBy        String
 
-  casino         Casino                      @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casinoBonus    CasinoBonus?                @relation(fields: [casinoBonusId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  affiliateOffer AffiliateOffer?             @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  revisions      AffiliateRedirectRevision[]
+  casino             Casino                        @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus        CasinoBonus?                  @relation(fields: [casinoBonusId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  affiliateOffer     AffiliateOffer?               @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  revisions          AffiliateRedirectRevision[]
+  outboundClickDaily AffiliateOutboundClickDaily[]
 
   @@index([casinoId, active])
   @@index([casinoBonusId, active])
@@ -2240,6 +2244,35 @@ model AffiliateRedirectRevision {
 
   @@unique([redirectSlugId, revisionNumber])
   @@index([redirectSlugId, createdAt])
+}
+
+/// First-party aggregate commercial measurement. Each row is a UTC-day
+/// counter for one exact Casino × GEO × route × tracking-link identity. It
+/// deliberately contains no visitor, account, session, IP, user-agent,
+/// referrer, query-string, Programme, pause, or Help data.
+model AffiliateOutboundClickDaily {
+  id               String   @id @default(uuid()) @db.Uuid
+  day              DateTime @db.Date
+  casinoId         String   @db.Uuid
+  countryCode      String
+  redirectSlugId   String   @db.Uuid
+  affiliateOfferId String   @db.Uuid
+  trackingLinkId   String   @db.Uuid
+  clickCount       Int      @default(0)
+  lastClickedAt    DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  casino       Casino                @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  redirectSlug AffiliateRedirectSlug @relation(fields: [redirectSlugId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  offer        AffiliateOffer        @relation(fields: [affiliateOfferId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  trackingLink AffiliateTrackingLink @relation(fields: [trackingLinkId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([day, casinoId, countryCode, redirectSlugId, trackingLinkId], map: "AffiliateOutboundClickDaily_identity_key")
+  @@index([day, countryCode])
+  @@index([casinoId, day])
+  @@index([redirectSlugId, day])
+  @@index([affiliateOfferId, day])
 }
 
 model CasinoSeo {

@@ -1,4 +1,4 @@
-import type { SupportedLocale } from "@/lib/market/registry";
+import { marketIndexingApproved, marketProfileByLocale, type SupportedLocale } from "@/lib/market/registry";
 
 export type TranslationReviewState = Readonly<{
   content: "SOURCE_BASELINE" | "MACHINE_TRANSLATED";
@@ -7,7 +7,6 @@ export type TranslationReviewState = Readonly<{
   founderPublication: "SOURCE_BASELINE_AUTHORITY" | "FOUNDER_PUBLICATION_NOT_ACCEPTED" | "FOUNDER_PUBLICATION_ACCEPTED";
   legalReview: "GB_SOURCE_REVIEWED" | "REQUIRED";
   marketEvidenceReview: "GB_BASELINE" | "FIRST_WAVE_EVIDENCE_REVIEWED" | "AUTHORITATIVE_MARKET_EVIDENCE_REVIEWED" | "REQUIRED";
-  indexingAuthority: "GB_SOURCE_BASELINE" | "NOT_ACTIVATED" | "FOUNDER_INDEXING_ACTIVATED";
 }>;
 
 const sourceBaseline: TranslationReviewState = {
@@ -17,7 +16,6 @@ const sourceBaseline: TranslationReviewState = {
   founderPublication: "SOURCE_BASELINE_AUTHORITY",
   legalReview: "GB_SOURCE_REVIEWED",
   marketEvidenceReview: "GB_BASELINE",
-  indexingAuthority: "GB_SOURCE_BASELINE",
 };
 
 const machineTranslated: TranslationReviewState = {
@@ -27,7 +25,6 @@ const machineTranslated: TranslationReviewState = {
   founderPublication: "FOUNDER_PUBLICATION_NOT_ACCEPTED",
   legalReview: "REQUIRED",
   marketEvidenceReview: "REQUIRED",
-  indexingAuthority: "NOT_ACTIVATED",
 };
 
 const firstWavePublicationAccepted: TranslationReviewState = {
@@ -91,13 +88,8 @@ export function publicCoreTranslationReady(locale: SupportedLocale) {
 }
 
 export function publicTranslationIndexingApproved(locale: SupportedLocale) {
-  const state = translationReviewState(locale);
-  if (state.content === "SOURCE_BASELINE") return state.indexingAuthority === "GB_SOURCE_BASELINE";
-  return state.aiLanguageQa === "AI_LANGUAGE_QA_PASSED"
-    && state.founderPublication === "FOUNDER_PUBLICATION_ACCEPTED"
-    && state.marketEvidenceReview !== "REQUIRED"
-    && state.legalReview !== "REQUIRED"
-    && state.indexingAuthority === "FOUNDER_INDEXING_ACTIVATED";
+  const profile = marketProfileByLocale(locale);
+  return profile ? marketIndexingApproved(profile) : false;
 }
 
 export function legalBodyPublicationApproved(locale: SupportedLocale) {

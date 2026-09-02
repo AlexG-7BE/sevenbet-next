@@ -8,6 +8,7 @@ import {
 } from "@/lib/casino-commercial-activation/production-release";
 import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
+import { COMMERCIAL_PLATFORM_TARGET_MIGRATION, runCommercialPlatform0026Readiness } from "@/lib/db/commercial-platform-0026-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -264,7 +265,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -302,6 +303,7 @@ async function maybeApplyProgrammeAccessMigration() {
     await assertProgrammeAccessPreMigrationInvariants(prisma);
     assertChecksum(completedByName.get(TARGET_MIGRATION), TARGET_MIGRATION);
     await assertProgrammeAccessPostMigrationInvariants(prisma);
+    assertChecksum(completedByName.get(COMMERCIAL_PLATFORM_TARGET_MIGRATION), COMMERCIAL_PLATFORM_TARGET_MIGRATION);
     writeEvent({
       event: "production_programme_access_migration",
       state: "baseline_verified_read_only",
@@ -313,6 +315,8 @@ async function maybeApplyProgrammeAccessMigration() {
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
+  const commercialPlatformReadiness = await runCommercialPlatform0026Readiness();
+  writeEvent({ event: "production_commercial_platform_readiness", ...commercialPlatformReadiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {
