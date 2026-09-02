@@ -197,6 +197,8 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), undefined, () => false);
     const peProfile = await publicService.getCasino("betsson", undefined, "PE");
     const seProfile = await publicService.getCasino("betsson", undefined, "SE");
+    assert.equal(peProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
+    assert.equal(seProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
     assert.equal(peProfile?.domain, "www.betsson.pe");
     assert.deepEqual(peProfile?.languages, ["es", "en"]);
     assert.deepEqual(peProfile?.currencies, ["PEN"]);
@@ -224,7 +226,11 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
       ["PE + Swedish licence", { country: ["PE"], license: ["spelinspektionen"] }, 0],
       ["SE + Peru licence", { country: ["SE"], license: ["mincetur"] }, 0],
     ];
-    for (const [label, query, expected] of cases) assert.equal((await discovery.discover(query)).total, expected, label);
+    for (const [label, query, expected] of cases) {
+      const result = await discovery.discover(query);
+      assert.equal(result.total, expected, label);
+      if (expected > 0) assert.equal(result.items[0]?.rating, null, `${label} must not manufacture an editorial score`);
+    }
 
     assert.equal(await prisma.affiliateProgram.count({ where: { casinoId: persisted.id } }), 0);
     assert.equal(await prisma.affiliateOffer.count({ where: { casinoId: persisted.id } }), 0);

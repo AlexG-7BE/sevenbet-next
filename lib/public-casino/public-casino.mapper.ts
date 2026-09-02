@@ -431,6 +431,7 @@ export function mapPublishedCasino(
   const socialImage = allMedia.find((item) => item.type === "social") ?? null;
   const redirectHref = options.redirectEnabled ? routeFor(routes, published.casinoId, null) : null;
   const summary = text(snapshot.summary, `${name} casino profile and editorial review.`);
+  const editorScore = number(snapshot.editorScore);
   const mapped: PublicCasinoDTO = {
     source: "cms",
     id,
@@ -442,7 +443,9 @@ export function mapPublishedCasino(
     reviewContent: text(reviewBlocks.reviewContent, text(snapshot.description, summary)),
     operator: nullableText(snapshot.operator),
     foundedYear: integer(snapshot.foundedYear),
-    editorScore: Math.max(0, Math.min(10, number(snapshot.editorScore) ?? 0)),
+    editorScore: editorScore === null
+      ? null
+      : Math.max(0, Math.min(10, editorScore)),
     trustScore: number(general.trustScore),
     featured: bool(general.featured),
     recommended: bool(general.recommended),
@@ -535,7 +538,8 @@ function hours(value: string | null) {
   return match ? Number(match[0]) : 48;
 }
 
-export function publicCasinoToLegacy(casino: PublicCasinoDTO): Casino {
+export function publicCasinoToLegacy(casino: PublicCasinoDTO): Casino | null {
+  if (casino.editorScore === null) return null;
   const bonus = casino.bonuses[0];
   const withdrawal = casino.payments.find((payment) => payment.withdrawalTime)?.withdrawalTime ?? null;
   const license = casino.licenses[0];

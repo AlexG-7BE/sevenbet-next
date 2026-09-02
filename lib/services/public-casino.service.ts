@@ -142,7 +142,7 @@ export class PublicCasinoService {
     for (const casino of cms.sort((a, b) => (b.publishedAt ?? "").localeCompare(a.publishedAt ?? "") || b.version - a.version)) {
       if (!bySlug.has(casino.slug)) bySlug.set(casino.slug, casino);
     }
-    return [...bySlug.values()].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
+    return [...bySlug.values()].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
   }
 
   async getCasinoView(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
@@ -151,13 +151,16 @@ export class PublicCasinoService {
   }
 
   async listCasinoViews(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
-    return (await this.listCasinos(authority, countryCode)).map(publicCasinoToLegacy);
+    return (await this.listCasinos(authority, countryCode)).flatMap((casino) => {
+      const legacy = publicCasinoToLegacy(casino);
+      return legacy ? [legacy] : [];
+    });
   }
 
   async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
     const casinos = await this.listCasinos(authority, countryCode);
     return casinos.flatMap((casino) => casino.bonuses.map((bonus) => ({ casino, bonus })))
-      .sort((a, b) => b.casino.editorScore - a.casino.editorScore || a.casino.slug.localeCompare(b.casino.slug) || a.bonus.slug.localeCompare(b.bonus.slug));
+      .sort((a, b) => (b.casino.editorScore ?? -1) - (a.casino.editorScore ?? -1) || a.casino.slug.localeCompare(b.casino.slug) || a.bonus.slug.localeCompare(b.bonus.slug));
   }
 }
 

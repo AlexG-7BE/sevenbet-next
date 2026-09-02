@@ -262,7 +262,7 @@ test("listCasinos never expands visibility beyond published CMS records", async 
 
   await t.test("18. catalogue sorting remains deterministic", async () => {
     const casinos = await service(store([publishedRecord()], [managedSlug])).listCasinos();
-    const expected = [...casinos].sort((a, b) => b.editorScore - a.editorScore || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
+    const expected = [...casinos].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
     assert.deepEqual(casinos.map((casino) => casino.slug), expected.map((casino) => casino.slug));
   });
 

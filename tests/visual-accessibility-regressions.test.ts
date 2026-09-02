@@ -78,7 +78,8 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(curated, /casino\.logo \? <img alt=""/);
   assert.match(profile, /casino\.media\.logo \? <img alt=""/);
   assert.match(profile, /<nav aria-label=\{messages\.profile\.currentReview\}/);
-  assert.match(profile, /<strong aria-label=\{`\$\{messages\.common\.editorScore\} \$\{formattedEditorScore\} \/ 10`\}>\{formattedEditorScore\}<\/strong>/);
+  assert.match(profile, /aria-label=\{hasEditorScore \? `\$\{messages\.common\.editorScore\} \$\{formattedEditorScore\} \/ 10` : `\$\{messages\.common\.editorScore\} \$\{messages\.common\.notListed\}`\}/);
+  assert.match(profile, /\{hasEditorScore \? <span aria-hidden="true">★★★★★<\/span> : null\}/);
   assert.match(profile, /<details className=\{styles\.evidenceDisclosure\}>\s*<summary>\{messages\.profile\.evidencePaymentsTools\}<\/summary>/);
   assert.match(profile, /<dl className=\{`\$\{styles\.facts\} \$\{styles\.checkCard\}`\}>/);
   assert.match(profileStyles, /\.decisionBar > div a\s*\{[^}]*min-height: 44px;/);
