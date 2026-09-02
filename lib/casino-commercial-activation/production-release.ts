@@ -29,12 +29,11 @@ function safeUrlShape(value: string) {
     return {
       protocol: url.protocol,
       hostname: url.hostname,
-      pathname: url.pathname,
       queryKeys: [...url.searchParams.keys()].sort(),
       hasCredentials: Boolean(url.username || url.password),
     };
   } catch {
-    return { protocol: null, hostname: null, pathname: null, queryKeys: [], hasCredentials: false };
+    return { protocol: null, hostname: null, queryKeys: [], hasCredentials: false };
   }
 }
 
