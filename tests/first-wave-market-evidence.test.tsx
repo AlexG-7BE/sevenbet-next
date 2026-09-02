@@ -40,7 +40,7 @@ test("bounded automated language QA passes every European machine-translated cat
 
 test("review states distinguish source, machine translation, AI QA and Founder authority without human-review claims", () => {
   const source = readFileSync("lib/i18n/review-state.ts", "utf8");
-  const acceptedLocales = new Set(["de-DE", "es-ES", "sv-SE", "da-DK", "el-GR"]);
+  const acceptedLocales = new Set(["de-DE", "es-ES", "es-PE", "sv-SE", "da-DK", "el-GR"]);
   assert.doesNotMatch(source, /linguisticReview|HUMAN_REVIEW_REQUIRED|NATIVE_SPEAKER_REQUIRED/);
   for (const [locale, state] of Object.entries(TRANSLATION_REVIEW_STATE)) {
     if (locale === "en-GB") continue;
@@ -52,8 +52,8 @@ test("review states distinguish source, machine translation, AI QA and Founder a
     assert.equal(state.indexingAuthority, "NOT_ACTIVATED", locale);
     assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), false, locale);
   }
-  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "SE", "DK", "GR"]);
-  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "GR", "SE", "DK"]);
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
 });
 
 test("first-wave profiles contain dated detected evidence and market-specific safety resources", () => {

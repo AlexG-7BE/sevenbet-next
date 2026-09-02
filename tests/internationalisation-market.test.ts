@@ -169,13 +169,11 @@ test("initial market registry exposes the partner-readiness tranche without impl
   for (const profile of MARKET_PROFILES) {
     assert.equal(profile.commercialPresentationState, "AUTHORITY_REQUIRED");
   }
-  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "SE", "DK", "GR"]);
-  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "GR", "SE", "DK"]);
+  assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
+  assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
   for (const profile of MARKET_PROFILES) {
     const expected: "LIVE_BASELINE" | "LIVE_LOCALIZED" | "PREVIEW_LOCALIZED" | "LOCALIZATION_REQUIRED" = profile.countryCode === "GB"
       ? "LIVE_BASELINE"
-      : profile.countryCode === "PE"
-        ? "PREVIEW_LOCALIZED"
       : (FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES as readonly string[]).includes(profile.countryCode)
         ? "LIVE_LOCALIZED"
         : "LOCALIZATION_REQUIRED";
@@ -295,7 +293,7 @@ test("localized product links, canonicals and reciprocal alternates preserve exp
   assert.equal(new URL(languages["de-DE"]).pathname, "/de-de/casinos");
   assert.equal(new URL(languages["es-ES"]).pathname, "/es-es/casinos");
   assert.equal(new URL(languages["es-PE"]).pathname, "/es-pe/casinos");
-  assert.equal(Object.keys(languages).length, PUBLICATION_APPROVED_MARKET_PROFILES.length + 2);
+  assert.equal(Object.keys(languages).length, PUBLICATION_APPROVED_MARKET_PROFILES.length + 1);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
 
@@ -480,11 +478,13 @@ test("every European Home locale has complete localized copy and metadata", () =
 });
 
 test("Home and public-core readiness are explicit and selector-safe", () => {
-  const core = new Set(["GB", "DE", "ES", "GR", "SE", "DK"]);
+  const core = new Set(["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
   for (const profile of INITIAL_EUROPEAN_MARKET_PROFILES) {
     assert.equal(homeTranslationReady(profile.defaultLocale), true, profile.countryCode);
     assert.equal(publicCoreTranslationReady(profile.defaultLocale), core.has(profile.countryCode), profile.countryCode);
   }
+  assert.equal(homeTranslationReady("es-PE"), true);
+  assert.equal(publicCoreTranslationReady("es-PE"), true);
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
   assert.match(header, /publicCoreTranslationReady\(profile\.defaultLocale\)/);
   assert.match(header, /VERCEL_ENV === "production"[\s\S]*PUBLICATION_APPROVED_MARKET_PROFILES/);
@@ -900,6 +900,14 @@ test("Production routing and preference selection expose only Founder-publicatio
     assert.equal(new URL(approved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
     assert.equal(approved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
 
+    const peruApproved = await middleware(new NextRequest("https://b4gamble.com/es-pe/casinos"));
+    assert.equal(new URL(peruApproved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
+    assert.equal(peruApproved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "pe");
+
+    const peruLegacy = await middleware(new NextRequest("https://b4gamble.com/pe/casinos"));
+    assert.equal(peruLegacy.status, 308);
+    assert.equal(new URL(peruLegacy.headers.get("location") ?? "http://invalid").pathname, "/es-pe/casinos");
+
     const approvedHeaders = middlewareRequestHeaders(approved);
     const mutatedHeaders = new Headers(approvedHeaders);
     mutatedHeaders.set(PRESENTATION_MARKET_HEADER, "it");
@@ -916,7 +924,7 @@ test("Production routing and preference selection expose only Founder-publicatio
     assert.equal(crossHostReplay.status, 308);
     assert.equal(crossHostReplay.headers.get("location"), "https://b4gamble.com/casinos");
 
-    for (const market of ["it", "pe", "pt", "nl", "fi", "no", "ca"]) {
+    for (const market of ["it", "pt", "nl", "fi", "no", "ca"]) {
       const denied = await middleware(new NextRequest(`https://b4gamble.com/${market}/`));
       assert.equal(denied.headers.get("x-middleware-rewrite"), null, market);
       assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, market);

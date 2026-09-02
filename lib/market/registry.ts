@@ -107,11 +107,11 @@ const profiles = [
     supportedLocales: ["es-PE"],
     localeRoutes: [{ locale: "es-PE", publicSlug: "es-pe", enabled: true, defaultForMarket: true }],
     currencyHints: ["PEN"],
-    editorialState: "PREVIEW_LOCALIZED",
+    editorialState: "LIVE_LOCALIZED",
     legalContentState: "LOCAL_REVIEW_REQUIRED",
     commercialPresentationState: "AUTHORITY_REQUIRED",
     helpResourceProfile: "pe",
-    partnerReadinessNotes: "GEO-LOCALIZATION-01 Preview presentation; factual publication and commercial authority remain independent.",
+    partnerReadinessNotes: "GEO-LOCALIZATION-01 Production presentation; indexing, factual publication and commercial authority remain independent.",
   },
   {
     countryCode: "PT",
@@ -249,7 +249,7 @@ export const INITIAL_EUROPEAN_MARKET_CODES = [
 export const FIRST_WAVE_EVIDENCE_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR", "PE"] as const satisfies readonly MarketCode[];
 export type FirstWaveEvidenceMarketCode = typeof FIRST_WAVE_EVIDENCE_MARKET_CODES[number];
 
-export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
+export const FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES = ["DE", "ES", "PE", "SE", "DK", "GR"] as const satisfies readonly MarketCode[];
 export type FounderPublicationAcceptedMarketCode = typeof FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES[number];
 
 const initialEuropeanMarketCodes = new Set<MarketCode>(INITIAL_EUROPEAN_MARKET_CODES);

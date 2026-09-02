@@ -4,9 +4,9 @@
 **Evidence date:** 2 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`
-**Verified post-release runtime baseline SHA:** `86470b8f05a9bc10f22fd7b18a09588319bfe2e0`
-**Verified post-release runtime deployment:** `dpl_6CRSFtbV4kZwhVurucV7jtKp4QoZ`
+**Current Production application SHA (live provider evidence):** `c27b94d22f50fd4822e61d6ae6353b01072d4682`
+**Verified post-release runtime baseline SHA:** `c27b94d22f50fd4822e61d6ae6353b01072d4682`
+**Verified post-release runtime deployment:** `dpl_2RioUxbR838XZr8wGytPqrajgQVX`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -40,9 +40,9 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 **DETECTED — PR #105 merged:** merge `f457099` delivered the typed internationalisation foundation, `HOME_READY` / `PUBLIC_CORE_READY` / `ARCHITECTURE_ONLY` presentation states and Founder-accepted DE/ES/SE/DK/GR public-core presentations. PR #106 subsequently merged the separately governed Programme internationalisation architecture at `4184c4f`. The old description of PR #105 as unmerged was stale and is corrected here from repository history.
 
-**PROPOSED UNTIL MERGE — GEO-LOCALIZATION-01 feature branch, 2 September 2026:** the explicit Founder instruction supersedes RFC-037's market-first public URL shape with one lowercase BCP-47 locale-market segment. The candidate makes `/en-gb`, `/sv-se` and Preview-only `/es-pe` directly reviewable, applies the same canonical rule to every already enabled presentation locale, retains unprefixed localizable URLs as temporary resolver inputs, adds one-hop permanent redirects from old market-first and `?country=` inputs, and persists an explicit presentation-only preference. Resolution precedence is explicit canonical route, valid preference, trusted Vercel country, language within an already known market, then GB/en-GB.
+**DETECTED — GEO-LOCALIZATION-01 PR #121 merged, 2 September 2026:** merge `c27b94d22f50fd4822e61d6ae6353b01072d4682` deployed as `dpl_2RioUxbR838XZr8wGytPqrajgQVX`. The exact release made lowercase BCP-47 locale-market paths canonical and passed the ordinary Production smoke. `/en-gb`, `/en-gb/casinos`, `/sv-se` and `/sv-se/casinos` returned 200.
 
-**DETECTED IN THE FEATURE BRANCH:** `es-PE` is `PUBLIC_CORE_READY`, passes the bounded automated language QA, is `noindex, follow`, is excluded from the indexable sitemap and is rejected as a localized presentation in Production. Its Help and Responsible Gambling copy is backed by dated MINCETUR evidence; no unsupported hotline or treatment provider is claimed. The existing exact-country casino projection remains the source for the already published Betsson PE/SE facts. No database, casino, affiliate, offer, tracking, asset or Production mutation is part of this candidate. See [GEO-LOCALIZATION-01 implementation record](internationalisation/GEO-LOCALIZATION-01.md).
+**CONTRADICTION / SCOPED RELEASE FIX IN PROGRESS:** the same exact release returned 404 for `/es-pe` and `/es-pe/casinos` because the older Preview-only Peru publication state remained encoded. The current Founder instruction explicitly requires Peru Production verification, so the scoped correction records `es-PE` publication acceptance while retaining `noindex, follow`, sitemap exclusion, exact-country factual projection and fail-closed commercial authority. See [GEO-LOCALIZATION-01 implementation record](internationalisation/GEO-LOCALIZATION-01.md).
 
 **DETECTED — Programme internationalisation PR #106 merged:** merge `4184c4f` presents one language-neutral Programme through its separately governed localized Programme routes while keeping locale out of Programme state, identity, rewards and persistence. It introduced no Prisma migration and did not extend public-market legal, indexing or commercial authority. Its runtime evidence and historical acceptance gates remain in [Programme internationalisation](internationalisation/programme-internationalisation.md).
 

@@ -37,9 +37,10 @@ const firstWavePublicationAccepted: TranslationReviewState = {
   marketEvidenceReview: "FIRST_WAVE_EVIDENCE_REVIEWED",
 };
 
-const previewLocalized: TranslationReviewState = {
+const authoritativeMarketPublicationAccepted: TranslationReviewState = {
   ...machineTranslated,
   publicExperience: "PUBLIC_CORE_READY",
+  founderPublication: "FOUNDER_PUBLICATION_ACCEPTED",
   marketEvidenceReview: "AUTHORITATIVE_MARKET_EVIDENCE_REVIEWED",
 };
 
@@ -53,14 +54,14 @@ const architectureOnlyTranslated: TranslationReviewState = {
  * AI_LANGUAGE_QA_PASSED records the bounded automated catalog report in
  * `docs/internationalisation/ai-language-qa-report.json`. It is not human,
  * native-speaker, legal or publication review. Founder publication acceptance
- * is separately recorded only for the five explicitly accepted locales.
+ * is separately recorded only for the explicitly accepted locales.
  */
 export const TRANSLATION_REVIEW_STATE = {
   "en-GB": sourceBaseline,
   "de-DE": firstWavePublicationAccepted,
   "it-IT": machineTranslated,
   "es-ES": firstWavePublicationAccepted,
-  "es-PE": previewLocalized,
+  "es-PE": authoritativeMarketPublicationAccepted,
   "pt-PT": machineTranslated,
   "el-GR": firstWavePublicationAccepted,
   "nl-NL": machineTranslated,

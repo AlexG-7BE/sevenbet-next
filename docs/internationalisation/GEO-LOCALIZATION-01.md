@@ -3,7 +3,7 @@
 **Evidence date:** 2 September 2026
 **Branch:** `codex/geo-localization-routing-01`
 **Base:** detected `origin/main` `fe27d899638d2ca2b55461a75ae869d5db9163b1`
-**State:** Preview candidate; no Production deployment or data mutation
+**State:** PR #121 merged; initial Production release detected; scoped Peru publication correction in progress
 
 ## Evidence classification
 
@@ -12,7 +12,9 @@
 - **DETECTED:** Next.js 15 App Router, one `middleware.ts`, the typed market registry, typed translation catalogs, market-aware casino services and `CasinoCountry` factual projection already existed.
 - **DETECTED:** the active Programme has separately governed market-first routes such as `/se/program`; GEO-LOCALIZATION-01 does not change Programme state, rewards, prerequisites, persistence or routing.
 - **DETECTED:** operative legal pages remain unprefixed and are not presented as Peru-localized law.
-- **PROPOSED UNTIL MERGE:** the route, resolver, selector, SEO and `es-PE` changes described below.
+- **DETECTED:** PR #121 merged at `c27b94d22f50fd4822e61d6ae6353b01072d4682`; Vercel Production deployment `dpl_2RioUxbR838XZr8wGytPqrajgQVX` reached Ready and the nine-route read-only smoke passed.
+- **CONTRADICTION:** `/es-pe` and `/es-pe/casinos` returned 404 in that exact release because the older Preview-only publication state remained encoded after the current Founder instruction required Production verification.
+- **PROPOSED UNTIL MERGE:** the scoped release correction records the newer Peru publication authority while retaining `noindex, follow` and every factual/commercial fail-closed boundary.
 
 ## Canonical route contract
 
@@ -34,7 +36,7 @@ Unprefixed localizable URLs are neutral resolver inputs and use `307`. Canonical
 | --- | --- | --- | --- | --- |
 | `/en-gb` | GB / `en-GB` | Preview and Production | existing route-level policy | exact GB projection |
 | `/sv-se` | SE / `sv-SE` | Preview and Production under existing Founder acceptance | `noindex, follow` | exact SE projection; SEK, Swish and Spelinspektionen facts remain market-scoped |
-| `/es-pe` | PE / `es-PE` | Preview only | `noindex, follow`; sitemap-excluded | exact PE projection; PEN, Yape and MINCETUR facts remain market-scoped |
+| `/es-pe` | PE / `es-PE` | Preview and Production under the current Founder instruction | `noindex, follow`; sitemap-excluded | exact PE projection; PEN, Yape and MINCETUR facts remain market-scoped |
 
 The product routes supported by the existing localizable manifest include Home, Casinos, Best Offers, Bonuses, Casino detail, contextual Compare redirect, Learning, About, FAQ, Contact and Methodology. Exact Help and Responsible Gambling are additionally enabled for the governed PE evidence profile. Invalid, disabled, protected or internal combinations fail closed.
 
@@ -63,7 +65,7 @@ The existing Production Betsson PE/SE release is read-only input to this feature
 3. Add authoritative local safety evidence before enabling localized Help or Responsible Gambling. Keep unverified categories unavailable.
 4. Verify the existing exact-country casino projection for the new market. Do not add a global factual fallback.
 5. Add resolver, canonical, legacy, metadata, selector, responsive, real-data isolation and fail-closed commercial tests.
-6. Keep the route Preview-only and `noindex` until the separate Founder publication, indexing, legal and commercial authorities are recorded.
+6. Keep the route Preview-only and `noindex` until Founder publication authority is recorded. Publication never implies indexing, legal or commercial authority.
 
 Adding another language to an existing country creates another locale route under that market. Adding the same language to a different country creates a separate market entry and public slug. Neither case changes the resolver or factual data model.
 
