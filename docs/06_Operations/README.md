@@ -12,6 +12,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [Database Migrations](Database-Migrations.md) | Expand/contract policy and fresh-database verification |
 | [Casino Market Data Release — 2 September 2026](Casino-Market-Data-Release-Record-2026-09-02.md) | Exact migration, runtime, one-time Betsson PE/SE import/publication and commercial-firewall evidence |
 | [Casino Data Population 01 — 2 September 2026](Casino-Data-Population-01-Release-Record-2026-09-02.md) | Frozen-corpus eligibility, checksum-bound GB factual bundles, guarded release gates and exact exclusions |
+| [Casino Commercial Activation 01 — 2 September 2026](Casino-Commercial-Activation-01-Release-Record-2026-09-02.md) | Current partner-route reconciliation, fail-closed activation matrix, tracking/asset evidence and Production acceptance |
 | [Backup and Restore](Backup-and-Restore.md) | Required recovery capabilities and evidence gates |
 | [Monitoring and Incident Response](Monitoring-and-Incident-Response.md) | Detection, severity, ownership, containment and recovery |
 | [GB Partner Onboarding](GB-Partner-Onboarding-Runbook.md) | Contract evidence, due diligence, activation, review and pause controls |
