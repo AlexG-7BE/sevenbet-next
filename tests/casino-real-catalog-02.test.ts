@@ -346,6 +346,13 @@ test("the bounded reconciler is guarded, idempotent, auditable and never writes 
   assert.equal(CASINO_REAL_CATALOG_RELEASE, "CASINO-REAL-CATALOG-02");
   assert.match(source, /ALLOW_PRODUCTION_CASINO_REAL_CATALOG_WRITE/);
   assert.match(source, /CASINO_REAL_CATALOG_TARGET !== "production"/);
+  assert.match(source, /CASINO_REAL_CATALOG_DATABASE_FINGERPRINT/);
+  assert.match(source, /target\.username, target\.pathname, target\.port/);
+  assert.match(source, /ALLOW_PREVIEW_CASINO_REAL_CATALOG_WRITE/);
+  assert.match(source, /CASINO_REAL_CATALOG_PRODUCTION_DATABASE_FINGERPRINT/);
+  assert.match(source, /productionFingerprint === actualFingerprint/);
+  assert.match(source, /ingestCasinoBundles\(prisma, bundles\)/);
+  assert.match(source, /verifyCasinoBundlesIdempotency\(prisma, bundles\)/);
   assert.match(source, /alreadyApplied/);
   assert.match(source, /catalogRowCounts/);
   assert.match(source, /migrationState/);

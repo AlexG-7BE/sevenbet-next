@@ -85,6 +85,7 @@
     "casino-market:postgres-test": "node --import tsx --test tests/casino-market-architecture-postgres.test.ts",
     "casino-market:ingest": "tsx scripts/casino-market-ingest.ts",
     "casino-real-catalog:audit": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts audit",
+    "casino-real-catalog:preview-seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts preview-seed",
     "casino-real-catalog:seed": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts seed",
     "casino-real-catalog:verify": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/casino-real-catalog-02.ts verify",
     "casino-real-catalog:test": "node --import tsx --test tests/casino-real-catalog-02.test.ts",

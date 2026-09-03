@@ -13,12 +13,17 @@ import {
   casinoRealCatalog,
   type CasinoCatalogDefinition,
 } from "../lib/casino-real-catalog/catalog";
+import { parseCasinoIngestionBundle } from "../lib/casino-ingestion/contract";
 import prisma from "../lib/db/prisma";
-import { deterministicCasinoIngestionId } from "../lib/casino-ingestion/importer";
+import {
+  deterministicCasinoIngestionId,
+  ingestCasinoBundles,
+  verifyCasinoBundlesIdempotency,
+} from "../lib/casino-ingestion/importer";
 import { editorialReviewService } from "../lib/services/editorial-review.service";
 import { casinoService } from "../lib/services/casino.service";
 
-type Mode = "audit" | "seed" | "verify";
+type Mode = "audit" | "preview-seed" | "seed" | "verify";
 
 type MigrationState = {
   completed: bigint;
@@ -37,6 +42,21 @@ type ReleaseCorpus = {
 };
 
 const TARGET_MIGRATION = "0026_commercial_platform_completion";
+const PREVIEW_ACTOR = {
+  id: "00000000-0000-4000-8000-000000000202",
+  email: "casino-real-catalog-02-preview@invalid.example",
+  name: "CASINO-REAL-CATALOG-02 Preview executor",
+} as const;
+const PREVIEW_FACTUAL_BUNDLES = [
+  "data/casino-ingestion/betsson-pe-se.v1.json",
+  "data/casino-ingestion/casino-data-population-01/21-prive-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/diamond7-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/dragonbet-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/gday-casino-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/hello-casino-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/skol-casino-gb.v1.json",
+  "data/casino-ingestion/casino-data-population-01/slotnite-gb.v1.json",
+] as const;
 
 function assertWriteAuthority() {
   if (process.env.CASINO_REAL_CATALOG_CONFIRM !== CASINO_REAL_CATALOG_RELEASE) {
@@ -49,14 +69,41 @@ function assertWriteAuthority() {
     throw new Error("Write refused. Set CASINO_REAL_CATALOG_TARGET=production after verifying the Vercel project and database target.");
   }
   if (!process.env.DATABASE_URL) throw new Error("Write refused without DATABASE_URL.");
+  const expectedFingerprint = process.env.CASINO_REAL_CATALOG_DATABASE_FINGERPRINT?.trim();
+  const actualFingerprint = databaseTargetFingerprint();
+  if (!expectedFingerprint || expectedFingerprint !== actualFingerprint) {
+    throw new Error(`Write refused. Set CASINO_REAL_CATALOG_DATABASE_FINGERPRINT=${actualFingerprint} after independently verifying this exact database target.`);
+  }
+}
+
+function assertPreviewWriteAuthority() {
+  if (process.env.CASINO_REAL_CATALOG_CONFIRM !== CASINO_REAL_CATALOG_RELEASE) {
+    throw new Error(`Preview write refused. Set CASINO_REAL_CATALOG_CONFIRM=${CASINO_REAL_CATALOG_RELEASE}.`);
+  }
+  if (process.env.ALLOW_PREVIEW_CASINO_REAL_CATALOG_WRITE !== "true") {
+    throw new Error("Preview write refused. Set ALLOW_PREVIEW_CASINO_REAL_CATALOG_WRITE=true.");
+  }
+  if (process.env.CASINO_REAL_CATALOG_TARGET !== "preview" || process.env.VERCEL_ENV !== "preview") {
+    throw new Error("Preview write refused unless both the explicit target and VERCEL_ENV are preview.");
+  }
+  if (!process.env.DATABASE_URL) throw new Error("Preview write refused without DATABASE_URL.");
+  const actualFingerprint = databaseTargetFingerprint();
+  const expectedFingerprint = process.env.CASINO_REAL_CATALOG_DATABASE_FINGERPRINT?.trim();
+  const productionFingerprint = process.env.CASINO_REAL_CATALOG_PRODUCTION_DATABASE_FINGERPRINT?.trim();
+  if (!expectedFingerprint || expectedFingerprint !== actualFingerprint) {
+    throw new Error(`Preview write refused. Set CASINO_REAL_CATALOG_DATABASE_FINGERPRINT=${actualFingerprint} after independently verifying this exact Preview target.`);
+  }
+  if (!productionFingerprint || productionFingerprint === actualFingerprint) {
+    throw new Error("Preview write refused without a verified, different Production database fingerprint.");
+  }
 }
 
 function databaseTargetFingerprint() {
   const raw = process.env.DATABASE_URL;
   if (!raw) return "UNAVAILABLE";
   const target = new URL(raw);
-  const identity = `${target.protocol}//${target.hostname}:${target.port || "default"}${target.pathname}`;
-  return createHash("sha256").update(identity).digest("hex").slice(0, 20);
+  const identity = [target.username, target.pathname, target.port || "5432"].join("\n");
+  return createHash("sha256").update(identity).digest("hex");
 }
 
 function stable(value: unknown): unknown {
@@ -119,6 +166,11 @@ async function assertReleaseCorpus() {
     if (checksum !== source.sha256) throw new Error(`Release corpus checksum mismatch: ${source.path}`);
   }
   return corpus;
+}
+
+async function loadPreviewFactualBundles() {
+  return Promise.all(PREVIEW_FACTUAL_BUNDLES.map(async (bundlePath) =>
+    parseCasinoIngestionBundle(JSON.parse(await readFile(path.join(process.cwd(), bundlePath), "utf8")))));
 }
 
 async function catalogRowCounts(casinoIds: string[]) {
@@ -453,6 +505,56 @@ async function audit() {
   if (factualDrift.length) throw new Error(`Current factual rows differ from the checksum-bound corpus: ${factualDrift.join("; ")}`);
 }
 
+async function previewSeed() {
+  assertPreviewWriteAuthority();
+  assertCasinoRealCatalog();
+  const [migrations, corpus, existingCasinos, existingActors] = await Promise.all([
+    migrationState(),
+    assertReleaseCorpus(),
+    prisma.casino.findMany({ select: { id: true, slug: true }, orderBy: { slug: "asc" } }),
+    prisma.adminUser.findMany({ select: { id: true, email: true }, orderBy: { email: "asc" } }),
+  ]);
+  if (migrations.unfinished || !migrations.targetApplied || !migrations.targetChecksumMatches) {
+    throw new Error("Preview write refused because the isolated Preview database is not migration-current.");
+  }
+  const approvedSlugs = new Set<string>(casinoRealCatalog.map((casino) => casino.slug));
+  const unexpectedCasinos = existingCasinos.filter((casino) => !approvedSlugs.has(casino.slug));
+  const unexpectedActors = existingActors.filter((actor) => actor.id !== PREVIEW_ACTOR.id || actor.email !== PREVIEW_ACTOR.email);
+  if (unexpectedCasinos.length || ![0, casinoRealCatalog.length].includes(existingCasinos.length)) {
+    throw new Error("Preview write refused because the Casino inventory is neither empty nor the exact bounded release set.");
+  }
+  if (unexpectedActors.length || existingActors.length > 1) {
+    throw new Error("Preview write refused because the AdminUser inventory is not empty or the exact Preview executor.");
+  }
+
+  const bundles = await loadPreviewFactualBundles();
+  const ingestion = existingCasinos.length === 0 ? await ingestCasinoBundles(prisma, bundles) : [];
+  const ingestionIdempotency = existingCasinos.length === 0
+    ? await verifyCasinoBundlesIdempotency(prisma, bundles)
+    : { state: "exact-release-identities-already-present" };
+  await prisma.adminUser.upsert({
+    where: { email: PREVIEW_ACTOR.email },
+    create: { ...PREVIEW_ACTOR, role: "SUPER_ADMIN" },
+    update: { name: PREVIEW_ACTOR.name, role: "SUPER_ADMIN" },
+  });
+  await audit();
+  const editorial = [];
+  for (const definition of casinoRealCatalog) editorial.push(await seedCasino(definition, PREVIEW_ACTOR.id));
+  console.info(JSON.stringify({
+    release: CASINO_REAL_CATALOG_RELEASE,
+    environment: "preview",
+    databaseTargetFingerprint: databaseTargetFingerprint(),
+    productionDatabaseTargetFingerprint: process.env.CASINO_REAL_CATALOG_PRODUCTION_DATABASE_FINGERPRINT,
+    corpus: { release: corpus.release, sourceFiles: corpus.sourceFiles.length, assets: corpus.assets.length },
+    ingestion: ingestion.map((result) => ({ casinoKey: result.casinoKey, reconciliation: result.reconciliation })),
+    ingestionIdempotency,
+    editorial,
+    productionAffiliateWrites: 0,
+    destructiveWrites: 0,
+  }, null, 2));
+  await verify();
+}
+
 async function seed() {
   assertWriteAuthority();
   await audit();
@@ -511,9 +613,10 @@ async function verify() {
 
 async function main() {
   const mode = process.argv[2] as Mode | undefined;
-  if (!mode || !["audit", "seed", "verify"].includes(mode)) throw new Error("Use audit, seed or verify.");
+  if (!mode || !["audit", "preview-seed", "seed", "verify"].includes(mode)) throw new Error("Use audit, preview-seed, seed or verify.");
   try {
     if (mode === "audit") await audit();
+    if (mode === "preview-seed") await previewSeed();
     if (mode === "seed") await seed();
     if (mode === "verify") await verify();
   } finally {

@@ -207,8 +207,9 @@
     "rule": "Fail closed unless exact CasinoCountry, legal/operator, programme/account, offer, tracking-link country and route verification all pass cumulatively."
   },
   "mutationPolicy": {
-    "scope": "Existing eight casino identities only",
-    "createsCasinoIdentities": false,
+    "scope": "Production reconciles the existing eight identities only; an empty, fingerprint-isolated Preview database may bootstrap the exact eight checksum-bound factual identities for acceptance",
+    "createsProductionCasinoIdentities": false,
+    "createsIsolatedPreviewCasinoIdentities": true,
     "deletesOrArchives": false,
     "writesAffiliateState": false,
     "idempotent": true,
