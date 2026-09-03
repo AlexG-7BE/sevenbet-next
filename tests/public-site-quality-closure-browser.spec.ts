@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { formatProductMessage, productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import {
   INITIAL_EUROPEAN_MARKET_PROFILES,
   publicMarketPath,
@@ -410,36 +410,33 @@ test("reported localized critical surfaces have unclipped, non-overlapping conte
   const page = await context.newPage();
 
   try {
-    await gotoOk(page, "/de-de/responsible-gambling");
-    const safetyHeading = page.locator('[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1');
-    const safetyLead = page.locator('[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1 + p');
+    await gotoOk(page, "/de/responsible-gambling");
+    const safetyHeading = page.locator("main h1").first();
+    const safetyLead = page.locator("main h1 + p").first();
     await expect(safetyHeading).toBeVisible();
     await expect(safetyLead).toBeVisible();
     await expectTextDoesNotOverlap(page, safetyHeading, safetyLead, "DE Responsible Gambling heading/lead");
     await expectCriticalTextFits(page, [
-      '[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1',
-      '[data-first-wave-safety="DE"][data-safety-variant="responsible"] header h1 + p',
+      "main h1",
+      "main h1 + p",
     ], "DE Responsible Gambling mobile hero");
     await expectNoDocumentOverflow(page, "DE Responsible Gambling 390x844");
 
-    const deMessages = productPageMessages("de-DE");
-    const germany = INITIAL_EUROPEAN_MARKET_PROFILES.find((profile) => profile.countryCode === "DE");
-    expect(germany, "DE market profile").toBeDefined();
-    const emptyBonusTitle = formatProductMessage(deMessages.bonuses.noMatchesTitle, { market: germany?.seoDisplayName ?? "Deutschland" });
-    await gotoOk(page, "/de-de/bonuses?payment=localization-visual-no-match");
+    await gotoOk(page, "/de/bonuses?payment=localization-visual-no-match");
     const emptyBonus = page.locator('[data-public-empty-state="filtered"][data-result-count="0"]');
     await expect(emptyBonus).toBeVisible();
-    const emptyBonusHeading = emptyBonus.locator("h2").filter({ hasText: emptyBonusTitle });
+    const emptyBonusHeading = emptyBonus.locator("h2");
     await expect(emptyBonusHeading).toBeVisible();
+    await expect(emptyBonusHeading).not.toContainText("{market}");
     const activeBonusFilters = page.locator('[data-active-filter-state="bonuses"]');
     await expect(activeBonusFilters).toContainText("localization-visual-no-match");
-    await expect(emptyBonus.locator("[data-empty-reset]")).toHaveAttribute("href", "/de-de/bonuses");
+    await expect(emptyBonus.locator("[data-empty-reset]")).toHaveAttribute("href", "/de/bonuses");
     await expect(activeBonusFilters.locator("[data-empty-reset]")).toHaveCount(0);
     await expectCriticalTextFits(page, ['[data-runtime-renderer="bonuses"] h2'], "DE Bonuses empty heading 390x844");
     await expectNoDocumentOverflow(page, "DE Bonuses empty state 390x844");
 
     await page.setViewportSize({ width: 1440, height: 900 });
-    await gotoOk(page, "/de-de/learn/responsible-gambling/responsible-gambling-tools");
+    await gotoOk(page, "/de/learn/responsible-gambling/responsible-gambling-tools");
     const articleHeading = page.locator('[data-learning-article] header h1');
     const articleSummary = page.locator('[data-learning-article] header [class*="heroSummary"]');
     await expect(articleHeading).toBeVisible();
@@ -459,7 +456,7 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   try {
-    await gotoOk(page, "/es-es/best-offers");
+    await gotoOk(page, "/es/best-offers");
     const messages = productPageMessages("es-ES");
     const methodology = page.getByRole("link", { name: messages.common.reviewMethodology, exact: true });
     const reviews = page.getByRole("link", { name: messages.common.browseReviews, exact: true });
@@ -483,11 +480,14 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
   }
 });
 
-test("German demo profile localizes system UI while preserving source-controlled evidence", async ({ browser }) => {
+test("German global profile localizes system UI while remaining information-only", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   try {
-    await gotoOk(page, "/de-de/casino/demo-plume");
+    await gotoOk(page, "/de/casinos");
+    const profileHref = await page.locator('main a[href^="/de/casino/"]').first().getAttribute("href");
+    expect(profileHref, "published global profile").not.toBeNull();
+    await gotoOk(page, profileHref ?? "/de/casino/missing");
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     const systemUi = await page.locator([
@@ -500,9 +500,9 @@ test("German demo profile localizes system UI while preserving source-controlled
       "[class*='relatedLinks']",
     ].join(",")).allInnerTexts();
     expect(systemUi.join("\n"), "localized profile system UI").not.toMatch(/\b(?:Why|Demonstration)\b/);
-    const sourceEvidence = page.getByText("Demonstration content only; nobody is eligible to claim it.", { exact: true });
-    expect(await sourceEvidence.count()).toBeGreaterThan(0);
-    await expect(sourceEvidence.first()).toBeVisible();
+    const messages = productPageMessages("de-DE");
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.reviewAvailableNoAction);
+    await expect(page.locator('[data-runtime-renderer="casino-review"] a[href^="/r/"]')).toHaveCount(0);
     await expectCriticalTextFits(page, [
       "[data-casino-decision-bar]",
       "#overview > [class*='sectionHeading']",

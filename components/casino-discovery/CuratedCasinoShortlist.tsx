@@ -22,7 +22,8 @@ import { productHref } from "@/lib/market/product-context";
 import styles from "./CuratedCasinoShortlist.module.css";
 
 function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
-  return casino.dataClassification !== "DEMO_FIXTURE"
+  return casino.disposition === "PROMOTABLE"
+    && casino.dataClassification !== "DEMO_FIXTURE"
     && casino.visitAction.available
     && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
 }
@@ -78,13 +79,14 @@ function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto
 
 export function CuratedCasinoShortlist({ casinos, messages, presentation }: { casinos: PublicCasinoCardDto[]; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const [selector, setSelector] = useState<Selector>("Best Overall");
-  const top = useMemo(() => selectCuratedCasinos(casinos, selector), [casinos, selector]);
+  const promotableCasinos = useMemo(() => casinos.filter((casino) => casino.disposition === "PROMOTABLE"), [casinos]);
+  const top = useMemo(() => selectCuratedCasinos(promotableCasinos, selector), [promotableCasinos, selector]);
   const selectedLabel = selectorLabel(selector, messages);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
 
   return <section className={styles.section} aria-labelledby="curated-title" data-motion-reveal data-nav-theme="light">
     <div className={styles.shell}>
-      {casinos.length ? <div className={styles.tabs} aria-label={messages.casinos.directoryTitle} data-selector-group="curated-casinos" role="group">
+      {promotableCasinos.length ? <div className={styles.tabs} aria-label={messages.casinos.directoryTitle} data-selector-group="curated-casinos" role="group">
         {selectors.map((label) => <button aria-pressed={selector === label} key={label} onClick={() => setSelector(label)} type="button">{selectorLabel(label, messages)}</button>)}
       </div> : null}
       <p className={styles.context} id="curated-title"><strong>{selectedLabel}</strong><span>{messages.casinos.proofLimit} · {messages.casinos.proofEvidence}</span></p>

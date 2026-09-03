@@ -6,8 +6,8 @@ import { faqMessages } from "../lib/i18n/static-pages/faq";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const cases = [
-  { choice: "DE|de-DE", helpHref: "/de-de/help", locale: "de-DE", market: "DE", prefix: "/de-de", programmeHref: "/de/program" },
-  { choice: "ES|es-ES", helpHref: "/es-es/help", locale: "es-ES", market: "ES", prefix: "/es-es", programmeHref: "/es/program" },
+  { choice: "de", helpHref: "/de/help", locale: "de-DE", language: "de", prefix: "/de", programmeHref: "/de/program" },
+  { choice: "es", helpHref: "/es/help", locale: "es-ES", language: "es", prefix: "/es", programmeHref: "/es/program" },
 ] as const;
 
 function regex(value: string) {
@@ -15,7 +15,7 @@ function regex(value: string) {
 }
 
 for (const acceptance of cases) {
-  test(`${acceptance.market} mobile navigation, selector, FAQ and protected boundaries remain operable`, async ({ browser }) => {
+  test(`${acceptance.language} mobile navigation, selector, FAQ and protected boundaries remain operable`, async ({ browser }) => {
     const context = await browser.newContext({
       hasTouch: true,
       isMobile: true,
@@ -69,7 +69,7 @@ for (const acceptance of cases) {
     await context.close();
   });
 
-  test(`${acceptance.market} mobile casino filters preserve state, reset and browser history`, async ({ browser }) => {
+  test(`${acceptance.language} mobile casino filters preserve state, reset and browser history`, async ({ browser }) => {
     const context = await browser.newContext({
       hasTouch: true,
       isMobile: true,

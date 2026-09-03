@@ -405,7 +405,7 @@ test("all 11 Programme routes render localized anonymous, access, voice, text, s
 test("ordinary pages retain deny-all capabilities while localized public Programme entries keep their canonical locale", async ({ request }) => {
   test.setTimeout(180_000);
   const denied = "camera=(), microphone=(), geolocation=(), payment=(), usb=()";
-  for (const ordinaryPath of ["/", "/de-de", "/es-es/learn", "/fi-fi/10-steps", "/help"]) {
+  for (const ordinaryPath of ["/", "/de", "/es/learn", "/fi/10-steps", "/help"]) {
     const response = await request.get(`${baseUrl}${ordinaryPath}`);
     expect(response.status(), ordinaryPath).toBe(200);
     expect(response.headers()["permissions-policy"], ordinaryPath).toBe(denied);

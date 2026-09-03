@@ -5,8 +5,8 @@ import type { DiscoveryContext, PublicCasinoDiscoveryStore } from "@/lib/public-
 import { publicCasinoRepository } from "@/lib/repositories/public-casino.repository";
 
 export class PublicCasinoDiscoveryRepository implements PublicCasinoDiscoveryStore {
-  listPublished() {
-    return publicCasinoRepository.listPublished();
+  listPublished(countryCode?: string | null) {
+    return publicCasinoRepository.listPublished(countryCode);
   }
 
   async loadContext(casinoIds: string[], options: { includeAliases?: boolean; includeCommercial?: boolean } = {}): Promise<DiscoveryContext> {

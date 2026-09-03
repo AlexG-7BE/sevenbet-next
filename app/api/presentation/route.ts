@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
 import {
-  parsePresentationPreference,
   PRESENTATION_PREFERENCE_COOKIE,
   serializePresentationPreference,
 } from "@/lib/market/presentation-preference";
+import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { isLocalizedPublicDestination, localizePublicPath, parsePublicMarketRoute } from "@/lib/market/routing";
-import { marketEditorialPublicationApproved, marketProfileByCountry, type SupportedLocale } from "@/lib/market/registry";
+import { languageRouteByPublicSlug, marketProfileByLocale } from "@/lib/market/registry";
 
 const oneYearInSeconds = 365 * 24 * 60 * 60;
 const maximumReturnPathLength = 2_048;
@@ -31,28 +32,18 @@ export async function POST(request: NextRequest) {
   if (typeof choice !== "string") return invalidPreference();
 
   const automatic = choice === "automatic";
-  let preferenceValue: string | null = null;
-  let destinationProfile = marketProfileByCountry("GB");
-  let destinationLocale: SupportedLocale = "en-GB";
+  const requestedLanguage = automatic ? null : languageRouteByPublicSlug(choice);
+  if (!automatic && (!requestedLanguage || !requestedLanguage.published)) return invalidPreference();
 
-  if (!automatic) {
-    const [countryCode, locale, ...unexpected] = choice.split("|");
-    if (!countryCode || !locale || unexpected.length > 0) return invalidPreference();
-    const profile = marketProfileByCountry(countryCode);
-    if (!profile) return invalidPreference();
-    if (process.env.VERCEL_ENV === "production" && !marketEditorialPublicationApproved(profile)) return invalidPreference();
-    try {
-      preferenceValue = serializePresentationPreference(profile, locale as SupportedLocale);
-    } catch {
-      return invalidPreference();
-    }
-    const preference = parsePresentationPreference(preferenceValue);
-    if (!preference?.locale) return invalidPreference();
-    destinationProfile = profile;
-    destinationLocale = preference.locale;
-  }
+  const resolution = resolvePresentationContext({
+    routeLanguage: requestedLanguage?.language,
+    trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
+    acceptLanguage: request.headers.get("accept-language"),
+  });
+  const destinationLanguage = languageRouteByPublicSlug(resolution.language);
+  const destinationProfile = marketProfileByLocale(resolution.locale);
+  if (!destinationLanguage?.published || !destinationProfile) return invalidPreference();
 
-  if (!destinationProfile) return invalidPreference();
   const rawReturnPath = typeof requestedReturnPath === "string" ? requestedReturnPath : "/";
   if (
     rawReturnPath.length > maximumReturnPathLength
@@ -73,25 +64,25 @@ export async function POST(request: NextRequest) {
   }
   const equivalentPathname = parsedReturnPath.kind === "INVALID" ? "/" : parsedReturnPath.pathname;
   const returnPath = isLocalizedPublicDestination(equivalentPathname, destinationProfile) ? equivalentPathname : "/";
-  // The selected market is carried by the canonical path and the preference
-  // cookie; retaining a legacy country filter would create a second identity.
   returnUrl.searchParams.delete("country");
   const safeQuery = returnUrl.searchParams.toString();
   const equivalentReturnPath = `${returnPath}${safeQuery ? `?${safeQuery}` : ""}`;
-  const destination = automatic
-    ? equivalentReturnPath
-    : localizePublicPath(destinationProfile, destinationLocale, equivalentReturnPath);
+  const destination = localizePublicPath(destinationProfile, resolution.locale, equivalentReturnPath);
 
   const response = new NextResponse(null, {
     status: 303,
     headers: { "Cache-Control": "no-store", Location: destination },
   });
-  response.cookies.set(PRESENTATION_PREFERENCE_COOKIE, preferenceValue ?? "", {
-    httpOnly: true,
-    maxAge: automatic ? 0 : oneYearInSeconds,
-    path: "/",
-    sameSite: "lax",
-    secure: request.nextUrl.protocol === "https:",
-  });
+  response.cookies.set(
+    PRESENTATION_PREFERENCE_COOKIE,
+    automatic ? "" : serializePresentationPreference(destinationLanguage.language),
+    {
+      httpOnly: true,
+      maxAge: automatic ? 0 : oneYearInSeconds,
+      path: "/",
+      sameSite: "lax",
+      secure: request.nextUrl.protocol === "https:",
+    },
+  );
   return response;
 }

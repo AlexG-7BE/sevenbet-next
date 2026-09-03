@@ -66,7 +66,7 @@ const sections = [
       <li><strong>Account and identity data:</strong> name, email address, profile image, sign-in provider identifiers, account and session records. If you choose Google sign-in, Google supplies identity information for sign-in. It does not provide B4GAMBLE with your date of birth, contacts, mailbox contents or a gambling profile, and it does not verify your age. Google credentials are used transiently by the server to verify the sign-in and are stripped before the application account relationship is stored. Google sign-in, age confirmation, Terms acceptance and Programme participation do not create reminder or marketing permission.</li>
       <li><strong>Programme data:</strong> your access confirmations, progress, XP, saved structured plan fields and the Starting Point that you confirm. What you type or say may reveal health or other special-category information.</li>
       <li><strong>Transient Programme input:</strong> text, clarifications, audio and transcripts used to create a suggested Starting Point. Audio is held in short-lived memory for transcription and is not saved by B4GAMBLE. Draft text remains in the browser session unless and until you choose to save the confirmed output.</li>
-      <li><strong>Technical and security data:</strong> session token, expiry, IP address, user agent, request and security records.</li>
+      <li><strong>Technical and security data:</strong> session token, expiry, IP address, the coarse country/region derived by our hosting provider for the request, user agent, language preference, request and security records.</li>
       <li><strong>Contact data:</strong> the name, email, subject and message you send through Contact.</li>
     </ul></>,
   },
@@ -77,6 +77,7 @@ const sections = [
       <div><dt>Provide accounts and the Programme</dt><dd>To authenticate you, maintain a session, save the output you choose to keep, show progress and deliver requested features. Legal basis: performance of our contract with you.</dd></div>
       <div><dt>Process optional personal Programme input</dt><dd>To transcribe voice input and use AI to suggest a personalised Starting Point. Legal basis: consent. Where the input reveals special-category data, we rely on your explicit consent. You can use protected Help without giving this consent.</dd></div>
       <div><dt>Security and service integrity</dt><dd>To prevent abuse, diagnose failures, protect accounts, keep bounded operational records and establish or defend legal claims. Legal basis: our legitimate interests in operating a secure and reliable service.</dd></div>
+      <div><dt>Language and regional presentation</dt><dd>To show a language you request and apply the coarse request-country context needed for locally appropriate information and commercial safeguards. The language preference does not select a commercial country. Legal basis: performance of our contract with you and our legitimate interests in providing a safe, relevant service.</dd></div>
       <div><dt>Respond to you</dt><dd>To receive and answer a Contact message or privacy request. Legal basis: steps at your request and our legitimate interests in communicating and keeping an appropriate record.</dd></div>
       <div><dt>Comply with law</dt><dd>To meet legal, regulatory and lawful disclosure duties. Legal basis: legal obligation.</dd></div>
     </dl><p>Our legitimate interests do not override your rights. We do not use Programme, Help, pause, self-check or vulnerability information to select, rank or personalise casinos, bonuses, affiliate links or advertising.</p></>,
@@ -118,7 +119,7 @@ const sections = [
   {
     id: "cookies",
     title: "Cookies and similar technology",
-    content: <><p>This GB launch uses only cookies or browser storage needed for a service you request, authentication, security, access confirmation, same-tab comparison selection and temporary Programme continuity. We do not run non-essential product analytics, advertising trackers, tracking pixels or session replay, so there is no optional cookie choice to present.</p><p>Necessary storage is not reused for advertising, affiliate measurement or commercial personalisation. Browser controls can remove stored data, but disabling necessary storage may prevent account or Programme features from working. We will reassess this notice and the required choice controls before introducing any non-essential storage or access technology.</p></>,
+    content: <><p>This service uses only cookies or browser storage needed for a service you request, authentication, security, access confirmation, language preference, same-tab comparison selection and temporary Programme continuity. The presentation cookie stores language only; it does not store your country, raw IP address or commercial eligibility. We do not run non-essential product analytics, advertising trackers, tracking pixels or session replay, so there is no optional cookie choice to present.</p><p>Necessary storage is not reused for advertising, affiliate measurement or commercial personalisation. Browser controls can remove stored data, but disabling necessary storage may prevent requested language, account or Programme features from working. We will reassess this notice and the required choice controls before introducing any non-essential storage or access technology.</p></>,
   },
   {
     id: "affiliate",
@@ -150,6 +151,6 @@ export default function PrivacyPage() {
     lead="This notice explains what B4GAMBLE processes, why, who receives it, how long it is kept and the choices available to you."
     legalContact={controller}
     sections={sections}
-    updated="24 August 2026"
+    updated="3 September 2026"
   />;
 }

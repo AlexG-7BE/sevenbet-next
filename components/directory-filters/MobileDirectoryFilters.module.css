@@ -190,8 +190,7 @@
   }
 
   .body form > div:last-of-type:not(:has(> label)) {
-    position: sticky !important;
-    bottom: 0 !important;
+    position: static !important;
     z-index: 3 !important;
     min-height: 84px !important;
     display: flex !important;

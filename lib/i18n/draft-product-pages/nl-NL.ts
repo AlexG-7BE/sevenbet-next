@@ -36,7 +36,7 @@ export const NL_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     pageOf: "Pagina {page} van {pages}",
     demoData: "DEMONSTRATIEGEGEVENS",
     demoDisclosure: "Fictieve productvermeldingen zijn geen actuele aanbieders, partneraanbiedingen of lopende promoties. Er is geen link naar een gokaanbieder of affiliatepartner beschikbaar.",
-    marketPresentationNotice: "Een andere markt kiezen verandert alleen de redactionele inhoud die je ziet. Het bevestigt niet waar je bent, of je aan de voorwaarden voldoet of dat er een aanbieding beschikbaar is.",
+    marketPresentationNotice: "De presentatie volgt de regio die voor dit verzoek is gedetecteerd. Dit bevestigt niet waar je bent, of je aan de voorwaarden voldoet of dat er een aanbieding beschikbaar is.",
     reviewAvailableNoAction: "De review blijft beschikbaar, maar er is geen partnerlink.",
     affiliateDisclosure: "Affiliateverklaring",
     methodology: "Methodologie",

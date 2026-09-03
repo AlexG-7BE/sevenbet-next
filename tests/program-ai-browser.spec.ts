@@ -522,7 +522,7 @@ test("voice recording produces an editable transcript, releases tracks and can b
   await page.getByRole("button", { name: "Tap to speak" }).click();
   await expect(page.locator('[data-state="recording"]')).toHaveCount(1);
   await page.goto("/");
-  await expect(page).toHaveURL("/en-gb");
+  await expect(page).toHaveURL("/en");
   expect(transcriptionCalls).toBe(2);
   expect(await page.evaluate(() => (window as unknown as { __programAiStoppedTracks: number }).__programAiStoppedTracks)).toBe(6);
   await noHorizontalOverflow(page);

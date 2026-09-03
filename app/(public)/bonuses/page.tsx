@@ -30,17 +30,17 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
-const loadBonusDirectoryResult = cache(async (queryKey: string, presentationCountry: string) => {
+const loadBonusDirectoryResult = cache(async (queryKey: string, presentationCountry: string | null) => {
   const query = JSON.parse(queryKey) as PublicOfferQuery;
-  const authority = await resolveServerJurisdiction({ userSelectedCountry: query.country ?? null });
+  const authority = await resolveServerJurisdiction();
   return publicOfferService.searchOffers(
-    query,
+    { ...query, country: presentationCountry ?? undefined },
     commercialAuthorityForPresentation(authority, presentationCountry),
-    { defaultEditorialCountry: presentationCountry },
+    { ...(presentationCountry ? { defaultEditorialCountry: presentationCountry } : {}) },
   );
 });
 
-function loadBonusDirectory(query: PublicOfferQuery, presentationCountry: string) {
+function loadBonusDirectory(query: PublicOfferQuery, presentationCountry: string | null) {
   return loadBonusDirectoryResult(JSON.stringify(query), presentationCountry);
 }
 
@@ -48,9 +48,9 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const query = parsePublicOfferQuery(await searchParams, 24);
   const presentation = await resolveServerPresentationContext();
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const filtered = hasPublicOfferFilters(query);
-  const result = await loadBonusDirectory(query, presentation.market.countryCode);
+  const result = await loadBonusDirectory(query, presentation.marketCountryCode);
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const empty = result.total === 0;
@@ -68,15 +68,15 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const query = parsePublicOfferQuery(raw, 24);
   const presentation = await resolveServerPresentationContext();
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
   const result = withHandoffBonusDirectoryData(
-    await loadBonusDirectory(query, presentation.market.countryCode),
+    await loadBonusDirectory(query, presentation.marketCountryCode),
     visualFixture,
     presentation.locale,
     query,
   );
-  const activeCount = [query.country, query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability, query.featured, query.recommended].filter((value) => value !== undefined).length;
+  const activeCount = [query.type, query.payment, query.crypto, query.maxDeposit, query.maxWagering, query.availability, query.featured, query.recommended].filter((value) => value !== undefined).length;
   const startPosition = (result.page - 1) * result.pageSize + 1;
   const schema = result.inventoryMode === "PUBLISHED_ONLY" && result.total > 0 ? {
     "@context": "https://schema.org",

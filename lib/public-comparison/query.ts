@@ -15,7 +15,7 @@ function trueValue(value: string | undefined) {
   return value === "true" || value === "1";
 }
 
-export function parsePublicComparisonQuery(input: ComparisonSearchParams, defaultCountry = "GB"): PublicComparisonQuery {
+export function parsePublicComparisonQuery(input: ComparisonSearchParams, defaultCountry = "ZZ"): PublicComparisonQuery {
   const issues: PublicComparisonQuery["issues"] = [];
   const requested = rawValues(input, "casino").flatMap((value) => value.split(","));
   const casinos: string[] = [];
@@ -32,10 +32,9 @@ export function parsePublicComparisonQuery(input: ComparisonSearchParams, defaul
     else issues.push("TOO_MANY_CASINOS");
   }
 
-  const requestedCountry = rawValues(input, "country")[0]?.normalize("NFKC").trim().toUpperCase();
-  const normalizedDefaultCountry = /^[A-Z]{2}$/.test(defaultCountry) ? defaultCountry : "GB";
-  const country = requestedCountry && /^[A-Z]{2}$/.test(requestedCountry) ? requestedCountry : normalizedDefaultCountry;
-  if (requestedCountry && !/^[A-Z]{2}$/.test(requestedCountry)) issues.push("INVALID_COUNTRY");
+  // Query state never selects market. The caller supplies the trusted request
+  // country; direct `country` parameters are deliberately ignored.
+  const country = /^[A-Z]{2}$/.test(defaultCountry) ? defaultCountry : "ZZ";
 
   const requestedDifferences = rawValues(input, "differences")[0]?.trim().toLowerCase();
   const differences = trueValue(requestedDifferences);
@@ -55,7 +54,6 @@ export function parsePublicComparisonQuery(input: ComparisonSearchParams, defaul
 export function serializePublicComparisonQuery(query: Pick<PublicComparisonQuery, "casinos" | "country" | "differences" | "selectionMode">) {
   const params = new URLSearchParams();
   for (const slug of query.casinos) params.append("casino", slug);
-  if (query.country !== "GB" || query.casinos.length || query.selectionMode !== "default") params.set("country", query.country);
   if (query.differences) params.set("differences", "true");
   if (query.selectionMode === "empty" && !query.casinos.length) params.set("empty", "true");
   return params;

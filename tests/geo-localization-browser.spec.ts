@@ -2,108 +2,138 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("canonical market homes expose route-owned language, SEO and selector state", async ({ page }) => {
-  for (const [path, locale, trigger] of [
-    ["/en-gb", "en-GB", "EN · GB"],
-    ["/sv-se", "sv-SE", "SV · SE"],
-    ["/es-pe", "es-PE", "ES · PE"],
-  ] as const) {
+const publishedLanguages = [
+  ["/en", "en-GB", "EN", false],
+  ["/de", "de-DE", "DE", true],
+  ["/es", "es-ES", "ES", true],
+  ["/el", "el-GR", "EL", true],
+  ["/sv", "sv-SE", "SV", true],
+  ["/da", "da-DK", "DA", true],
+] as const;
+
+test("published language homes own canonical identity without a country selector", async ({ page }) => {
+  for (const [path, locale, code, noindex] of publishedLanguages) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
     expect(response?.status(), path).toBe(200);
     await expect(page.locator("html")).toHaveAttribute("lang", locale);
-    await expect(page.locator('[data-public-shell="header"] button[aria-haspopup="menu"]').first()).toContainText(trigger);
+    const selector = page.locator('[data-public-shell="header"] button[aria-haspopup="menu"]').first();
+    await expect(selector).toContainText(code);
+    expect((await selector.innerText()).trim()).toBe(code);
     expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(path);
-    if (locale !== "en-GB") await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+    if (noindex) await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   }
 });
 
-test("Peru public core and safety routes are coherent without noindex hreflang", async ({ page }) => {
-  for (const path of ["/es-pe/casinos", "/es-pe/best-offers", "/es-pe/bonuses", "/es-pe/help", "/es-pe/responsible-gambling"] as const) {
-    const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "domcontentloaded" });
-    expect(response?.status(), path).toBe(200);
-    await expect(page.locator("html")).toHaveAttribute("lang", "es-PE");
-    expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(path);
-    await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
-    expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
-  }
-  await expect(page.locator('link[rel="alternate"][hreflang]')).toHaveCount(0);
-  await expect(page.locator("main")).toContainText("MINCETUR");
-  await expect(page.locator("main")).not.toContainText(/GAMSTOP|GamCare|Spelpaus|Stödlinjen/);
-});
-
-test("selector persists Peru and keeps the equivalent path on desktop and mobile", async ({ browser }) => {
+test("language switch preserves path and safe query while persisting language only", async ({ browser }) => {
   for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }] as const) {
-    const page = await browser.newPage({ viewport, isMobile: viewport.width < 600 });
-    await page.goto(`${baseUrl}/sv-se/casinos`, { waitUntil: "domcontentloaded" });
+    const context = await browser.newContext({ viewport, isMobile: viewport.width < 600 });
+    const page = await context.newPage();
+    await page.goto(`${baseUrl}/sv/casinos?q=slot&country=PE`, { waitUntil: "domcontentloaded" });
+    await expect(page).toHaveURL(/\/sv\/casinos\?q=slot$/);
     if (viewport.width < 600) {
       await page.locator('[data-public-shell="header"] button[aria-controls="public-mobile-navigation"]').click();
     }
-    const trigger = page.locator('button[aria-haspopup="menu"]:visible').filter({ hasText: "SV · SE" }).first();
+    const trigger = page.locator('button[aria-haspopup="menu"]:visible').filter({ hasText: "SV" }).first();
     await trigger.click();
-    await page.locator('button[value="PE|es-PE"]:visible').first().click();
-    await expect(page).toHaveURL(/\/es-pe\/casinos$/);
-    await expect(page.locator("html")).toHaveAttribute("lang", "es-PE");
-    await page.close();
+    const menu = page.locator('[role="menu"]:visible').first();
+    await expect(menu.locator('button[value="sv"]')).toHaveAttribute("aria-checked", "true");
+    await menu.locator('button[value="de"]').click();
+    await expect(page).toHaveURL(/\/de\/casinos\?q=slot$/);
+    await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
+    const cookie = (await context.cookies()).find((entry) => entry.name === "b4gamble_presentation");
+    expect(cookie?.value).toBe("v2.de");
+    expect(cookie?.value).not.toMatch(/GB|DE|ES|PE|GR|SE|DK/);
+    await context.close();
   }
 });
 
-test("legacy URLs canonicalize in exactly one hop without retaining country", async ({ request }) => {
+test("legacy country-qualified URLs migrate in one permanent hop and strip country", async ({ request }) => {
   for (const [legacy, canonical] of [
-    ["/casinos?country=PE&sort=score", "/es-pe/casinos?sort=score"],
-    ["/se/casinos?country=PE", "/sv-se/casinos"],
-    ["/gb/en/", "/en-gb"],
+    ["/es-es/casinos?country=PE&sort=score", "/es/casinos?sort=score"],
+    ["/es-pe/casinos?country=PE", "/es/casinos"],
+    ["/se/casinos?country=PE", "/sv/casinos"],
+    ["/gb/en/", "/en"],
+    ["/es/casinos?country=PE&q=slot", "/es/casinos?q=slot"],
   ] as const) {
     const response = await request.get(`${baseUrl}${legacy}`, { maxRedirects: 0 });
     expect(response.status(), legacy).toBe(308);
     expect(response.headers().location, legacy).toBe(canonical);
-    expect((await request.get(`${baseUrl}${canonical}`, { maxRedirects: 0 })).status(), canonical).toBe(200);
+    const destination = await request.get(`${baseUrl}${canonical}`, { maxRedirects: 0 });
+    expect(destination.status(), canonical).toBe(200);
+    expect(destination.headers().location, canonical).toBeUndefined();
   }
 });
 
-test("canonical shells do not overflow on representative mobile and desktop widths", async ({ browser }) => {
-  for (const width of [360, 390, 430, 768, 1024, 1440] as const) {
-    const page = await browser.newPage({ viewport: { width, height: width < 600 ? 900 : 1_000 }, isMobile: width < 600 });
-    const response = await page.goto(`${baseUrl}/es-pe/casinos`, { waitUntil: "domcontentloaded" });
+test("unprefixed resolution is private, strips country and never treats query state as market", async ({ request }) => {
+  const response = await request.get(`${baseUrl}/casinos?country=PE&q=slot`, {
+    headers: { "accept-language": "de-DE,de;q=0.9" },
+    maxRedirects: 0,
+  });
+  expect(response.status()).toBe(307);
+  expect(response.headers().location).toBe("/de/casinos?q=slot");
+  expect(response.headers()["cache-control"]).toMatch(/private.*no-store/i);
+  expect(response.headers().vary).toMatch(/X-Vercel-IP-Country/i);
+  expect(response.headers().vary).toMatch(/Accept-Language/i);
+  expect(response.headers().vary).toMatch(/Cookie/i);
+});
+
+test("market-sensitive language routes isolate caches and expose no commercial fallback without trusted GEO", async ({ page, request }) => {
+  for (const pathname of ["/es/casinos", "/es/bonuses", "/es/best-offers", "/es/help", "/es/responsible-gambling"] as const) {
+    const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), pathname).toBe(200);
+    expect(response?.headers()["cache-control"], pathname).toMatch(/private.*no-store/i);
+    await expect(page.locator("html")).toHaveAttribute("lang", "es-ES");
+    expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count(), pathname).toBe(0);
+    expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(pathname);
+  }
+
+  const response = await request.get(`${baseUrl}/es/casinos`, { maxRedirects: 0 });
+  expect(response.status()).toBe(200);
+  expect(response.headers()["cache-control"]).toMatch(/private.*no-store/i);
+  expect(response.headers()["content-language"]).toBe("es-ES");
+});
+
+test("global catalogue remains neutral, excludes demos and keeps detail/comparison safe", async ({ page, request }) => {
+  await page.goto(`${baseUrl}/es/casinos`, { waitUntil: "domcontentloaded" });
+  await expect(page.locator("main")).not.toContainText(/Demo Northstar|Demo Solvane|Fictional casino/i);
+  expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
+
+  const profileHref = await page.locator('main a[href^="/es/casino/"]').first().getAttribute("href").catch(() => null);
+  if (profileHref) {
+    const response = await page.goto(`${baseUrl}${profileHref}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${width}px`).toBe(0);
-    await page.close();
+    expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
+    expect(new URL(await page.locator('link[rel="canonical"]').getAttribute("href") ?? "http://invalid").pathname).toBe(profileHref);
   }
+
+  const comparison = await request.get(`${baseUrl}/es/compare?casino=alpha&casino=beta&country=PE&differences=true`, { maxRedirects: 0 });
+  expect(comparison.status()).toBe(308);
+  expect(comparison.headers().location).toBe("/es/casinos?casino=alpha&casino=beta&differences=true");
 });
 
-test("hosted real data keeps exact Peru and Sweden casino facts isolated and non-commercial", async ({ request }) => {
-  const dataOrigin = process.env.GEO_REAL_DATA_API_ORIGIN?.replace(/\/$/, "");
-  test.skip(!dataOrigin, "Real-data assertions require an explicit read-only public API origin.");
+test("public API ignores country query and returns an isolated non-commercial projection", async ({ request }) => {
+  const withSpoof = await request.get(`${baseUrl}/api/public/casinos?country=PE&limit=10`);
+  const withoutSpoof = await request.get(`${baseUrl}/api/public/casinos?limit=10`);
+  expect(withSpoof.status()).toBe(200);
+  expect(withoutSpoof.status()).toBe(200);
+  const spoofPayload = await withSpoof.json();
+  const neutralPayload = await withoutSpoof.json();
+  expect(spoofPayload).toEqual(neutralPayload);
+  expect(withSpoof.headers()["cache-control"]).toMatch(/private.*no-store/i);
+  expect(withSpoof.headers().vary).toMatch(/X-Vercel-IP-Country/i);
+  expect(JSON.stringify(spoofPayload)).not.toMatch(/"href":"\/r\/|"available":true/);
+});
 
-  const [peruResponse, swedenResponse] = await Promise.all([
-    request.get(`${dataOrigin}/api/public/casinos?country=PE&limit=10`),
-    request.get(`${dataOrigin}/api/public/casinos?country=SE&limit=10`),
-  ]);
-  expect(peruResponse.status()).toBe(200);
-  expect(swedenResponse.status()).toBe(200);
-  const peruPayload = await peruResponse.json() as { records: Array<Record<string, unknown>> };
-  const swedenPayload = await swedenResponse.json() as { records: Array<Record<string, unknown>> };
-  const peru = peruPayload.records.find((record) => record.slug === "betsson");
-  const sweden = swedenPayload.records.find((record) => record.slug === "betsson");
-  expect(peru).toBeTruthy();
-  expect(sweden).toBeTruthy();
-
-  const peruJson = JSON.stringify(peru);
-  const swedenJson = JSON.stringify(sweden);
-  expect(peruJson).toContain("PEN");
-  expect(peruJson).toContain("Yape");
-  expect(peruJson).toContain("MINCETUR");
-  expect(peruJson).toContain("11002586010000");
-  expect(peruJson).toContain("21002586010000");
-  expect(peruJson).toContain('"classification":"UNKNOWN"');
-  expect(peruJson).toContain('"classification":"CONTRADICTION"');
-  expect(peruJson).not.toMatch(/SEK|Swish|Spelinspektionen|23Si2176/);
-
-  expect(swedenJson).toContain("SEK");
-  expect(swedenJson).toContain("Swish");
-  expect(swedenJson).toContain("Spelinspektionen");
-  expect(swedenJson).toContain("23Si2176");
-  expect(swedenJson).not.toMatch(/PEN|Yape|MINCETUR|11002586010000|21002586010000/);
-  for (const record of [peru, sweden]) {
-    expect(record?.affiliate).toEqual({ href: null, available: false });
+test("published language shells and Programme boundary do not overflow or cross-contaminate", async ({ browser }) => {
+  for (const [width, pathname] of [[360, "/el/casinos"], [390, "/de/program?entry=start"], [768, "/es/bonuses"], [1440, "/sv/best-offers"]] as const) {
+    const page = await browser.newPage({ viewport: { width, height: width < 600 ? 900 : 1_000 }, isMobile: width < 600 });
+    const runtimeErrors: string[] = [];
+    page.on("pageerror", (error) => runtimeErrors.push(error.message));
+    const response = await page.goto(`${baseUrl}${pathname}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), pathname).toBe(200);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), `${pathname} at ${width}px`).toBe(0);
+    expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count(), pathname).toBe(0);
+    expect(runtimeErrors, pathname).toEqual([]);
+    await page.close();
   }
 });

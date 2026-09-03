@@ -64,7 +64,7 @@
     "internationalisation:browser": "PLAYWRIGHT_COMMERCIAL_MCP_ENABLED=false playwright test --config=playwright.ci.config.ts tests/geo-localization-browser.spec.ts tests/internationalisation-browser.spec.ts tests/localization-quality-browser.spec.ts tests/public-site-quality-closure-browser.spec.ts tests/localization-visible-defects-browser.spec.ts tests/localized-public-interactions-browser.spec.ts tests/about-hero-focal-position-browser.spec.ts tests/casino-profile-definition-list-browser.spec.ts",
     "geo-localization:preview": "playwright test --config=playwright.geo-preview.config.ts tests/geo-localization-browser.spec.ts",
     "internationalisation:visual": "node scripts/localization-visual-review.mjs",
-    "i18n:qa": "tsx scripts/generate-language-qa-report.ts",
+    "i18n:qa": "node --import tsx scripts/generate-language-qa-report.ts",
     "programme:i18n:qa": "node --import tsx scripts/generate-programme-language-qa-report.ts",
     "home:images": "node scripts/generate-home-responsive-images.mjs",
     "home-performance:test": "node --import tsx --test tests/home-performance.test.ts",

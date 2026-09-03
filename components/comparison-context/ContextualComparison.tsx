@@ -49,16 +49,15 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
     sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next));
     const params = new URLSearchParams(searchParams.toString());
     params.delete("casino");
+    params.delete("country");
     for (const slug of next) params.append("casino", slug);
-    if (next.length) params.set("country", params.get("country") || presentation.market.countryCode);
-    else {
+    if (!next.length) {
       params.delete("differences");
-      if (params.get("country") === presentation.market.countryCode) params.delete("country");
     }
     window.history.replaceState(window.history.state, "", `${pathname}${params.size ? `?${params}` : ""}`);
     if (autoOpen && next.length === 2 && previousCount.current < 2) setOpen(true);
     previousCount.current = next.length;
-  }, [announce, pathname, presentation.market.countryCode, searchParams]);
+  }, [announce, pathname, searchParams]);
 
   useEffect(() => {
     const fromUrl = urlSlugs(new URLSearchParams(searchParams.toString()));
@@ -94,7 +93,6 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
     const controller = new AbortController();
     const params = new URLSearchParams();
     for (const slug of slugs) params.append("casino", slug);
-    params.set("country", searchParams.get("country") || presentation.market.countryCode);
     params.set("presentationLocale", presentation.locale);
     if (searchParams.get("differences") === "true") params.set("differences", "true");
     if (searchParams.get("visualFixture") === "true") params.set("visualFixture", "true");
@@ -105,7 +103,7 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
       .catch((error: Error) => { if (error.name !== "AbortError") setResult(null); })
       .finally(() => setLoading(false));
     return () => controller.abort();
-  }, [presentation.locale, presentation.market.countryCode, searchParams, slugs]);
+  }, [presentation.locale, searchParams, slugs]);
 
   useEffect(() => {
     const dialog = dialogRef.current;

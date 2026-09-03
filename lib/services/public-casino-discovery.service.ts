@@ -13,6 +13,7 @@ import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-val
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { eligibleDiscoveryOffers } from "@/lib/public-casino-discovery/commercial-eligibility";
+import { decidePublicCasinoDisposition } from "@/lib/public-casino/presentation-disposition";
 
 export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
   const demoCount = casinos.filter((casino) => casino.dataClassification === "DEMO_FIXTURE").length;
@@ -26,10 +27,6 @@ function object(value: unknown): Record<string, unknown> {
 function text(value: unknown) { return typeof value === "string" ? value.trim() : ""; }
 function bool(value: unknown) { return value === true; }
 function key(value: string) { return normalizeDiscoverySearch(value).replace(/\s+/g, "-"); }
-function casinoAllowsCountry(countries: PublicCasinoCardDto["countries"], countryCode?: string) {
-  if (!countryCode) return true;
-  return countries.some((country) => country.key === countryCode.toUpperCase());
-}
 
 export function resolvePublicVisitAction(
   context: DiscoveryContext,
@@ -127,7 +124,8 @@ export class PublicCasinoDiscoveryService {
     options: { defaultEditorialCountry?: string } = {},
   ): Promise<CasinoDiscoveryResult> {
     const now = this.now();
-    const published = await this.store.listPublished();
+    const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;
+    const published = (await this.store.listPublished(requestCountryContext)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
     const redirectEnabled = this.redirectEnabled();
     const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
     const context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: true, includeCommercial: commercialProjection });
@@ -136,9 +134,9 @@ export class PublicCasinoDiscoveryService {
       : new Map<string, GbOperatorEligibilityDecision>();
     const aliasesByCasino = new Map<string, string[]>();
     for (const alias of context.aliases) aliasesByCasino.set(alias.casinoId, [...(aliasesByCasino.get(alias.casinoId) ?? []), alias.value]);
-    const requestedCountries = input.country ?? [];
-    const defaultCountryContext = requestedCountries.length ? undefined : options.defaultEditorialCountry;
-    const commercialCountryContext = commercialProjection ? authority?.countryCode ?? undefined : undefined;
+    const commercialCountryContext = commercialProjection && authority?.countryCode === requestCountryContext
+      ? authority.countryCode
+      : null;
     const working = published.flatMap((record): WorkingCard[] => {
       const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
@@ -146,43 +144,67 @@ export class PublicCasinoDiscoveryService {
       const snapshot = object(record.snapshot);
       const editor = object(object(snapshot.reviewBlocks).__sevenbetCasinoEditor);
       const general = object(editor.general);
-      const profileCountries = casino.marketProfiles
-        .filter((profile) => profile.availability === "AVAILABLE")
-        .map((profile) => profile.countryCode)
-        .filter((countryCode) => !requestedCountries.length || requestedCountries.includes(countryCode))
-        .filter((countryCode) => !defaultCountryContext || countryCode === defaultCountryContext)
-        .sort();
-      return profileCountries.map((marketCountry) => {
-        const scoped = projectPublicCasinoMarket(casino, marketCountry);
-        const visit = commercialCountryContext === marketCountry
-          && casinoAllowsCountry(scoped.countries.filter((country) => country.availability === "AVAILABLE").map((country) => ({ key: country.countryCode, label: country.countryCode })), marketCountry)
-          ? resolvePublicVisitAction(context, scoped.id, null, marketCountry, now, authority, operatorDecisions.get(scoped.id), redirectEnabled)
-          : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
-        const bonus = scoped.bonuses[0] ?? null;
-        const demo = isTemporaryDemoCasinoId(scoped.id);
-        const card: PublicCasinoCardDto = {
-          id: scoped.id, dataClassification: demo ? "DEMO_FIXTURE" : "PUBLISHED_RECORD", slug: scoped.slug, name: scoped.name,
-          logo: scoped.media.logo ? { url: scoped.media.logo.url, alt: scoped.media.logo.alt || `${scoped.name} logo`, width: scoped.media.logo.width, height: scoped.media.logo.height } : null,
-          hero: scoped.media.hero ? { url: scoped.media.hero.url, alt: scoped.media.hero.alt || `${scoped.name} campaign media`, width: scoped.media.hero.width, height: scoped.media.hero.height } : null,
-          shortDescription: scoped.summary || null, rating: scoped.editorScore || null, reviewCount: null,
-          licenses: scoped.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
-          countries: [{ key: marketCountry, label: marketCountry }],
-          paymentMethods: scoped.payments.map((payment) => ({ key: payment.key.toLowerCase(), label: payment.name })),
-          gameProviders: scoped.providers.map((provider) => ({ key: provider.key.toLowerCase(), label: provider.name })),
-          categories: scoped.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
-          highlights: scoped.pros.slice(0, 3),
-          supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
-          supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
-          featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
-          visitAction: demo ? { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "DEMO_FIXTURE" } : visit,
-          responsibleGamblingLabel: scoped.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
-          publishedAt: scoped.publishedAt, editorialUpdatedAt: scoped.lastReviewedAt ?? scoped.publishedAt,
-        };
-        return { card, marketCountry, marketCurrencies: scoped.currencies, aliases: aliasesByCasino.get(scoped.id) ?? [], canonicalName: text(snapshot.internalName) || scoped.name, domain: casino.domain, featured: scoped.featured, recommended: scoped.recommended,
-          supportsCrypto: scoped.payments.some((payment) => payment.crypto === true), supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
-          hasResponsibleGambling: scoped.responsibleGamblingTools.length > 0,
-          bonusTypes: scoped.bonuses.map((entry) => entry.type), relevance: 0 };
+      const exactProfile = requestCountryContext
+        ? casino.marketProfiles.find((profile) => profile.countryCode === requestCountryContext) ?? null
+        : null;
+      const scoped = projectPublicCasinoMarket(casino, requestCountryContext ?? "");
+      const visit = commercialCountryContext && exactProfile?.availability === "AVAILABLE"
+        ? resolvePublicVisitAction(context, scoped.id, null, commercialCountryContext, now, authority, operatorDecisions.get(scoped.id), redirectEnabled)
+        : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: "CASINO_COUNTRY_NOT_SUPPORTED" } satisfies PublicVisitAction;
+      const decision = decidePublicCasinoDisposition({
+        casinoId: scoped.id,
+        requestCountryCode: requestCountryContext,
+        marketProfile: exactProfile,
+        governedVisitAvailable: visit.available,
       });
+      if (decision.disposition === "HIDDEN") return [];
+      const promotional = decision.disposition === "PROMOTABLE";
+      const bonus = promotional ? scoped.bonuses[0] ?? null : null;
+      const boundedVisit = promotional
+        ? visit
+        : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: decision.reasonCode } satisfies PublicVisitAction;
+      const marketCountry = exactProfile?.countryCode ?? requestCountryContext ?? "UNKNOWN";
+      const card: PublicCasinoCardDto = {
+        id: scoped.id,
+        dataClassification: "PUBLISHED_RECORD",
+        slug: scoped.slug,
+        name: scoped.name,
+        disposition: decision.disposition,
+        dispositionReason: decision.reasonCode,
+        logo: scoped.media.logo ? { url: scoped.media.logo.url, alt: scoped.media.logo.alt || `${scoped.name} logo`, width: scoped.media.logo.width, height: scoped.media.logo.height } : null,
+        hero: promotional && scoped.media.hero ? { url: scoped.media.hero.url, alt: scoped.media.hero.alt || `${scoped.name} campaign media`, width: scoped.media.hero.width, height: scoped.media.hero.height } : null,
+        shortDescription: scoped.summary || null,
+        rating: promotional ? scoped.editorScore ?? null : null,
+        reviewCount: null,
+        licenses: scoped.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
+        countries: exactProfile ? [{ key: exactProfile.countryCode, label: exactProfile.countryCode }] : [],
+        paymentMethods: scoped.payments.map((payment) => ({ key: payment.key.toLowerCase(), label: payment.name })),
+        gameProviders: scoped.providers.map((provider) => ({ key: provider.key.toLowerCase(), label: provider.name })),
+        categories: scoped.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
+        highlights: promotional ? scoped.pros.slice(0, 3) : [],
+        supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
+        supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
+        featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
+        visitAction: boundedVisit,
+        responsibleGamblingLabel: scoped.responsibleGamblingTools.length ? "Responsible gambling tools available" : null,
+        publishedAt: scoped.publishedAt,
+        editorialUpdatedAt: scoped.lastReviewedAt ?? scoped.publishedAt,
+      };
+      return [{
+        card,
+        marketCountry,
+        marketCurrencies: scoped.currencies,
+        aliases: aliasesByCasino.get(scoped.id) ?? [],
+        canonicalName: text(snapshot.internalName) || scoped.name,
+        domain: casino.domain,
+        featured: promotional && scoped.featured,
+        recommended: promotional && scoped.recommended,
+        supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
+        supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
+        hasResponsibleGambling: scoped.responsibleGamblingTools.length > 0,
+        bonusTypes: promotional ? scoped.bonuses.map((entry) => entry.type) : [],
+        relevance: 0,
+      }];
     });
 
     const normalizedSearch = normalizeDiscoverySearch(input.search);
@@ -200,13 +222,12 @@ export class PublicCasinoDiscoveryService {
     };
     const query: CasinoDiscoveryQuery = {
       ...input,
-      country: input.country ?? [], currency: input.currency ?? [], license: input.license ?? [], payment: input.payment ?? [],
+      // A filter must never be able to replace trusted request GEO.
+      country: [], currency: input.currency ?? [], license: input.license ?? [], payment: input.payment ?? [],
       gameProvider: input.gameProvider ?? [], category: input.category ?? [], bonusType: input.bonusType ?? [],
       page: Math.max(1, input.page ?? 1), pageSize: Math.min(48, Math.max(1, input.pageSize ?? 12)),
     };
-    const matchingProfiles = searched.filter((item) => (!defaultCountryContext || item.marketCountry === defaultCountryContext)
-      && (!query.country?.length || query.country.includes(item.marketCountry))
-      && matchesAny(query.currency, item.marketCurrencies)
+    const matchingProfiles = searched.filter((item) => matchesAny(query.currency, item.marketCurrencies)
       && matchesAny(query.license, item.card.licenses.map((entry) => entry.key))
       && matchesAny(query.payment, item.card.paymentMethods.map((entry) => entry.key))
       && matchesAny(query.gameProvider, item.card.gameProviders.map((entry) => entry.key))
@@ -228,6 +249,11 @@ export class PublicCasinoDiscoveryService {
       if (sort === "NEWEST") return (Date.parse(b.card.publishedAt ?? "") || 0) - (Date.parse(a.card.publishedAt ?? "") || 0) || a.card.id.localeCompare(b.card.id);
       if (sort === "NAME_ASC") return a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
       if (sort === "NAME_DESC") return b.card.name.localeCompare(a.card.name) || a.card.id.localeCompare(b.card.id);
+      const dispositionOrder = Number(b.card.disposition === "PROMOTABLE") - Number(a.card.disposition === "PROMOTABLE");
+      if (dispositionOrder) return dispositionOrder;
+      if (a.card.disposition === "INFORMATIONAL_ONLY" && b.card.disposition === "INFORMATIONAL_ONLY") {
+        return a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
+      }
       return Number(b.featured) - Number(a.featured) || Number(b.recommended) - Number(a.recommended) || (b.card.rating ?? 0) - (a.card.rating ?? 0) || a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
     });
     const total = filtered.length;

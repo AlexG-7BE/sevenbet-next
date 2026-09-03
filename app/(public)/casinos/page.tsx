@@ -25,14 +25,14 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const filtered = hasDiscoveryFilters(query);
   const [presentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
-    resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null }),
+    resolveServerJurisdiction(),
   ]);
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const result = await publicCasinoDiscoveryService.discover(
     query,
-    commercialAuthorityForPresentation(authority, presentation.market.countryCode),
-    { defaultEditorialCountry: presentation.market.countryCode },
+    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+    { ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}) },
   );
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
   const empty = result.total === 0;
@@ -50,18 +50,18 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const query = parseCasinoDiscoveryQuery(raw);
   const [presentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
-    resolveServerJurisdiction({ userSelectedCountry: query.country?.[0] ?? null }),
+    resolveServerJurisdiction(),
   ]);
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const result = withHandoffCasinoDiscoveryData(
     await publicCasinoDiscoveryService.discover(
       query,
-      commercialAuthorityForPresentation(authority, presentation.market.countryCode),
-      { defaultEditorialCountry: presentation.market.countryCode },
+      commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+      { ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}) },
     ),
     isLocalHandoffVisualDataFixture(raw.visualFixture),
-    presentation.market.countryCode === "GB",
+    presentation.marketCountryCode === "GB",
     presentation.locale,
     query,
   );

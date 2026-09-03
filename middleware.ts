@@ -21,12 +21,13 @@ import {
 import { homeTranslationReady } from "@/lib/i18n/review-state";
 import {
   DEFAULT_MARKET_PROFILE,
-  localeMarketRoute,
+  languageRouteByLocale,
+  languageRouteByPublicSlug,
   localeForLanguageSegment,
-  marketEditorialPublicationApproved,
-  marketProfileByCountry,
+  marketProfileByLocale,
   marketProfileByRouteMarket,
   publicMarketPath,
+  type SupportedLanguage,
 } from "@/lib/market/registry";
 import { parsePresentationPreference, PRESENTATION_PREFERENCE_COOKIE } from "@/lib/market/presentation-preference";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
@@ -199,15 +200,38 @@ function privateAdminResponse(response: NextResponse) {
   return response;
 }
 
-function publicPresentationAvailable(market: NonNullable<ReturnType<typeof marketProfileByCountry>>, locale: Parameters<typeof homeTranslationReady>[0]) {
-  return Boolean(localeMarketRoute(market, locale)?.enabled)
+function publicPresentationAvailable(language: SupportedLanguage, locale: Parameters<typeof homeTranslationReady>[0]) {
+  const route = languageRouteByPublicSlug(language);
+  return Boolean(route)
+    && route!.localeVariants.includes(locale)
     && homeTranslationReady(locale)
-    && (process.env.VERCEL_ENV !== "production" || marketEditorialPublicationApproved(market));
+    && (process.env.VERCEL_ENV !== "production" || route!.published);
 }
 
 function withoutCountryQuery(url: URL) {
   url.searchParams.delete("country");
   return url;
+}
+
+function marketDependentPublicPath(pathname: string) {
+  return pathname === "/best-offers"
+    || pathname === "/bonuses"
+    || pathname === "/casinos"
+    || pathname === "/compare"
+    || pathname === "/help"
+    || pathname === "/responsible-gambling"
+    || pathname.startsWith("/casino/");
+}
+
+function isolateMarketResponse(response: NextResponse, equivalentPathname: string) {
+  const vary = response.headers.get("Vary");
+  const values = new Set((vary ?? "").split(",").map((value) => value.trim()).filter(Boolean));
+  values.add("X-Vercel-IP-Country");
+  response.headers.set("Vary", [...values].join(", "));
+  if (marketDependentPublicPath(equivalentPathname)) {
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  }
+  return response;
 }
 
 export async function middleware(request: NextRequest) {
@@ -263,7 +287,7 @@ export async function middleware(request: NextRequest) {
   if (
     inherited?.context === "public-v1"
     && process.env.VERCEL_ENV === "production"
-    && !marketEditorialPublicationApproved(inherited.market)
+    && !languageRouteByLocale(inherited.locale).published
   ) {
     return secureResponse(nextResponse());
   }
@@ -273,6 +297,14 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set(PRESENTATION_MARKET_HEADER, inherited.market.routeMarket);
     requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, inherited.locale.split("-")[0].toLowerCase());
     const response = nextResponse();
+    if (inherited.context === "public-v1") {
+      const publicResolution = resolvePresentationContext({
+        routeLanguage: inherited.locale.split("-")[0],
+        trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
+      });
+      response.headers.set("Content-Language", publicResolution.locale);
+      return secureResponse(isolateMarketResponse(response, pathname));
+    }
     response.headers.set("Content-Language", inherited.locale);
     return secureResponse(response);
   }
@@ -328,6 +360,11 @@ export async function middleware(request: NextRequest) {
   }
 
   const publicMarketRoute = parsePublicMarketRoute(pathname);
+  if (publicMarketRoute.kind === "LEGACY_MARKET_ROUTE") {
+    const destination = withoutCountryQuery(new URL(request.url));
+    destination.pathname = publicMarketRoute.canonicalPath;
+    return secureResponse(NextResponse.redirect(destination, 308));
+  }
   if (
     publicMarketRoute.kind !== "INVALID"
     && !homeTranslationReady(publicMarketRoute.locale)
@@ -337,14 +374,9 @@ export async function middleware(request: NextRequest) {
   if (
     publicMarketRoute.kind !== "INVALID"
     && process.env.VERCEL_ENV === "production"
-    && !marketEditorialPublicationApproved(publicMarketRoute.market)
+    && !languageRouteByPublicSlug(publicMarketRoute.language)?.published
   ) {
     return secureResponse(nextResponse());
-  }
-  if (publicMarketRoute.kind === "LEGACY_MARKET_ROUTE") {
-    const destination = withoutCountryQuery(new URL(request.url));
-    destination.pathname = publicMarketRoute.canonicalPath;
-    return secureResponse(NextResponse.redirect(destination, 308));
   }
 
   if (publicMarketRoute.kind === "MARKET_NEUTRAL") {
@@ -354,45 +386,37 @@ export async function middleware(request: NextRequest) {
     const equivalentPathname = publicMarketRoute.pathname === "/compare"
       ? "/casinos"
       : publicMarketRoute.pathname;
-    const countryValues = searchParams.getAll("country");
-    const explicitCountry = countryValues.length === 1 ? marketProfileByCountry(countryValues[0]) : null;
-    const explicitCountryLocale = explicitCountry?.defaultLocale ?? null;
-    if (
-      explicitCountry
-      && explicitCountryLocale
-      && publicPresentationAvailable(explicitCountry, explicitCountryLocale)
-      && isLocalizedPublicDestination(equivalentPathname, explicitCountry)
-    ) {
-      const destination = withoutCountryQuery(new URL(request.url));
-      destination.pathname = publicMarketPath(explicitCountry, explicitCountryLocale, equivalentPathname);
-      return secureResponse(NextResponse.redirect(destination, 308));
-    }
-
     const preference = parsePresentationPreference(request.cookies.get(PRESENTATION_PREFERENCE_COOKIE)?.value);
     const resolution = resolvePresentationContext({
       preference,
       trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
       acceptLanguage: request.headers.get("accept-language"),
     });
-    const resolved = publicPresentationAvailable(resolution.market, resolution.locale)
+    const resolved = publicPresentationAvailable(resolution.language, resolution.locale)
       ? resolution
       : resolvePresentationContext({
-          routeMarket: DEFAULT_MARKET_PROFILE.routeMarket,
-          routeLanguage: DEFAULT_MARKET_PROFILE.defaultLocale.split("-")[0],
+          routeLanguage: "en",
         });
+    const editorialMarket = marketProfileByLocale(resolved.locale) ?? DEFAULT_MARKET_PROFILE;
     const destination = withoutCountryQuery(new URL(request.url));
-    destination.pathname = publicMarketPath(resolved.market, resolved.locale, equivalentPathname);
-    return secureResponse(NextResponse.redirect(
+    destination.pathname = publicMarketPath(editorialMarket, resolved.locale, equivalentPathname);
+    const response = NextResponse.redirect(
       destination,
       publicMarketRoute.pathname === "/compare" ? 308 : 307,
-    ));
+    );
+    response.headers.set("Cache-Control", "private, no-store, max-age=0");
+    response.headers.set("Vary", "X-Vercel-IP-Country, Accept-Language, Cookie");
+    return secureResponse(response);
   }
 
   if (publicMarketRoute.kind === "CANONICAL_LOCALE") {
+    const equivalentPathname = publicMarketRoute.pathname === "/compare"
+      ? "/casinos"
+      : publicMarketRoute.pathname;
     const canonicalPathname = publicMarketPath(
       publicMarketRoute.market,
       publicMarketRoute.locale,
-      publicMarketRoute.pathname,
+      equivalentPathname,
     );
     if (pathname !== canonicalPathname || searchParams.has("country")) {
       const destination = withoutCountryQuery(new URL(request.url));
@@ -401,7 +425,7 @@ export async function middleware(request: NextRequest) {
     }
     requestHeaders.set(PRESENTATION_CONTEXT_HEADER, "public-v1");
     requestHeaders.set(PRESENTATION_MARKET_HEADER, publicMarketRoute.market.routeMarket);
-    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, publicMarketRoute.locale.split("-")[0].toLowerCase());
+    requestHeaders.set(PRESENTATION_LANGUAGE_HEADER, publicMarketRoute.language);
     const rewriteUrl = request.nextUrl.clone();
     if (rewriteUrl) {
       rewriteUrl.pathname = publicMarketRoute.pathname;
@@ -415,8 +439,12 @@ export async function middleware(request: NextRequest) {
       requestHeaders.set(internalPresentationTokenHeader, token);
     }
     const response = nextResponse(rewriteUrl);
-    response.headers.set("Content-Language", publicMarketRoute.locale);
-    return secureResponse(response);
+    const publicResolution = resolvePresentationContext({
+      routeLanguage: publicMarketRoute.language,
+      trustedCountryCode: requestCountrySignalFromHeaders(request.headers)?.countryCode,
+    });
+    response.headers.set("Content-Language", publicResolution.locale);
+    return secureResponse(isolateMarketResponse(response, equivalentPathname));
   }
 
   // Disabled locale architecture stays an HTTP 404 even when the attempted

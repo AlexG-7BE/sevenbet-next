@@ -66,7 +66,6 @@ export function OfferComparisonList({ offers, startRank = 1 }: { offers: PublicO
 
 export function OfferFilters({ facets, query }: { facets: PublicOfferFacets; query: PublicOfferQuery }) {
   return <form action="/bonuses" className={styles.filters} method="get">
-    <label><span>Country</span><select defaultValue={query.country || ""} name="country"><option value="">All countries</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} ({item.count})</option>)}</select></label>
     <label><span>Bonus type</span><select defaultValue={query.type || ""} name="type"><option value="">All types</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} ({item.count})</option>)}</select></label>
     <label><span>Payment</span><select defaultValue={query.payment || ""} name="payment"><option value="">All payments</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} ({item.count})</option>)}</select></label>
     <label><span>Crypto</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">Any support</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.label} ({item.count})</option>)}</select></label>
@@ -80,7 +79,7 @@ export function OfferFilters({ facets, query }: { facets: PublicOfferFacets; que
 }
 
 export function ActiveOfferFilters({ query }: { query: PublicOfferQuery }) {
-  const values = [query.country, query.type?.replaceAll("_", " "), query.payment, query.crypto === undefined ? null : query.crypto ? "Crypto" : "No crypto", query.maxDeposit === undefined ? null : `Deposit ≤ ${query.maxDeposit}`, query.maxWagering === undefined ? null : `Wagering ≤ ${query.maxWagering}`, query.availability?.replaceAll("_", " ")].filter(Boolean);
+  const values = [query.type?.replaceAll("_", " "), query.payment, query.crypto === undefined ? null : query.crypto ? "Crypto" : "No crypto", query.maxDeposit === undefined ? null : `Deposit ≤ ${query.maxDeposit}`, query.maxWagering === undefined ? null : `Wagering ≤ ${query.maxWagering}`, query.availability?.replaceAll("_", " ")].filter(Boolean);
   if (!values.length) return <p className={styles.filterSummary}>Showing all eligible published offers.</p>;
   return <div className={styles.activeFilters}><p>Active filters</p>{values.map((value) => <span key={value}>{value}</span>)}<Link href="/bonuses">Clear</Link></div>;
 }
@@ -90,7 +89,7 @@ export function OfferPagination({ page, pageCount, searchParams }: { page: numbe
   const href = (target: number) => {
     const params = new URLSearchParams();
     for (const [key, value] of Object.entries(searchParams)) {
-      for (const item of Array.isArray(value) ? value : value ? [value] : []) if (key !== "page") params.append(key, item);
+      for (const item of Array.isArray(value) ? value : value ? [value] : []) if (key !== "page" && key !== "country") params.append(key, item);
     }
     if (target > 1) params.set("page", String(target));
     return `/bonuses${params.size ? `?${params}` : ""}`;

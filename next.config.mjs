@@ -18,9 +18,8 @@ const programmeBrowserCapabilities = "camera=(), microphone=(self), geolocation=
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {},
-  // Market home canonicals intentionally retain their slash (`/de/`). The
-  // middleware owns normalization so nested and unprefixed routes still use
-  // the existing no-trailing-slash convention without redirect loops.
+  // Middleware owns canonical trailing-slash normalization for language,
+  // protected and internal routes.
   skipTrailingSlashRedirect: true,
   async headers() {
     return [

@@ -108,8 +108,10 @@ test("draft and archived CMS slugs cannot reappear through legacy fallback or si
 
 test("the repository exposes a published version only while its current casino is published", () => {
   const repository = readFileSync("lib/repositories/public-casino.repository.ts", "utf8");
-  const publicationGuard = /casino: \{ archivedAt: null, status: EditorialStatus\.PUBLISHED \}/g;
-  assert.equal(repository.match(publicationGuard)?.length, 2);
+  assert.equal(repository.match(/cv\.status = 'PUBLISHED'::"EditorialStatus"/g)?.length, 2);
+  assert.equal(repository.match(/c\.status = 'PUBLISHED'::"EditorialStatus"/g)?.length, 2);
+  assert.equal(repository.match(/c\."archivedAt" IS NULL/g)?.length, 2);
+  assert.equal(repository.match(/INNER JOIN "Casino" c ON c\.id = cv\."casinoId"/g)?.length, 2);
   assert.doesNotMatch(repository, /status: \{ not: EditorialStatus\.ARCHIVED \}/);
 });
 

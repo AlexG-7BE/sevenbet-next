@@ -26,9 +26,9 @@ const loadBestOffersPageData = cache(async () => {
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
   ]);
-  const commercialAuthority = commercialAuthorityForPresentation(authority, presentation.market.countryCode);
+  const commercialAuthority = commercialAuthorityForPresentation(authority, presentation.marketCountryCode);
   const result = await publicOfferService.getBestOffersPageData(
-    { country: presentation.market.countryCode, limit: 12 },
+    { country: presentation.marketCountryCode ?? undefined, limit: 12 },
     commercialAuthority,
   );
   return { commercialAuthority, presentation, result };
@@ -37,7 +37,7 @@ const loadBestOffersPageData = cache(async () => {
 export async function generateMetadata(): Promise<Metadata> {
   const { presentation, result } = await loadBestOffersPageData();
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const unavailable = result.status === "unavailable";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const title = formatProductMessage(unavailable ? messages.bestOffers.unavailableTitle : messages.bestOffers.title, { market });
@@ -57,7 +57,7 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   const loaded = await loadBestOffersPageData();
   const { presentation } = loaded;
   const messages = productPageMessages(presentation.locale);
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const result = withHandoffOfferData(loaded.result, isLocalHandoffVisualDataFixture(raw.visualFixture), presentation.locale);
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const demoOnly = result.inventoryMode === "DEMO_ONLY";
@@ -73,12 +73,12 @@ export default async function BestOffersPage({ searchParams }: { searchParams: P
   } : containsDemo ? {
     copy: messages.bestOffers.demoCopy,
     kicker: `${messages.common.sourceStatus} · ${messages.common.classified}`,
-    stats: [[String(result.records.length), messages.common.records], [presentation.market.countryCode, messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    stats: [[String(result.records.length), messages.common.records], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
     ticker: [messages.common.sourceStatus, messages.common.materialTerms, actionAvailabilityLabel],
   } : {
     copy: formatProductMessage(messages.bestOffers.heroCopy, { market }),
     kicker: formatProductMessage(messages.bestOffers.heroKicker, { market }),
-    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.market.countryCode, messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
+    stats: [[String(result.records.length), messages.bestOffers.eligibleRecords], [presentation.marketCountryCode ?? "—", messages.bestOffers.currentMarket], [String(governedActionCount), messages.bestOffers.inferredActions]],
     ticker: [messages.common.published, messages.common.materialTerms, actionAvailabilityLabel],
   };
   const schema = result.status === "available" && result.inventoryMode === "PUBLISHED_ONLY" ? {

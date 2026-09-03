@@ -1,12 +1,16 @@
 import {
   DEFAULT_MARKET_PROFILE,
   FIRST_WAVE_EVIDENCE_MARKET_CODES,
+  languageForLocale,
+  languageRouteByPublicSlug,
   localeMarketRoute,
   localeMarketRouteByPublicSlug,
   localeForLanguageSegment,
+  marketProfileByLocale,
   marketProfileByRouteMarket,
   publicMarketPath,
   type MarketProfile,
+  type SupportedLanguage,
   type SupportedLocale,
 } from "./registry";
 
@@ -109,6 +113,7 @@ export function isLocalizedPublicDestination(pathname: string, profile: MarketPr
 
 type PublicMarketRoute = Readonly<{
   market: MarketProfile;
+  language: SupportedLanguage;
   locale: SupportedLocale;
   pathname: string;
 }>;
@@ -131,19 +136,56 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
   const clean = cleanPathname(pathname);
   if (/%2f|%5c/i.test(clean)) return invalid(clean, "ENCODED_SEPARATOR");
   const segments = routeSegments(clean);
+  const canonicalLanguage = languageRouteByPublicSlug(segments[0]);
+
+  if (canonicalLanguage) {
+    const legacyOuterMarket = marketProfileByRouteMarket(segments[0]);
+    const legacyInnerLocale = legacyOuterMarket
+      ? localeForLanguageSegment(legacyOuterMarket, segments[1])
+      : null;
+    if (legacyInnerLocale) {
+      const equivalentPathname = unprefixedPath(segments.slice(2));
+      if (!isLocalizedPublicDestination(equivalentPathname, legacyOuterMarket!)) {
+        return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+      }
+      return {
+        kind: "LEGACY_MARKET_ROUTE",
+        market: legacyOuterMarket!,
+        language: languageForLocale(legacyInnerLocale),
+        locale: legacyInnerLocale,
+        pathname: equivalentPathname,
+        canonicalPath: publicMarketPath(legacyOuterMarket!, legacyInnerLocale, equivalentPathname),
+      };
+    }
+
+    const equivalentPathname = unprefixedPath(segments.slice(1));
+    const editorialMarket = marketProfileByLocale(canonicalLanguage.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+    if (!isLocalizedPublicDestination(equivalentPathname, editorialMarket)) {
+      return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
+    }
+    return {
+      kind: "CANONICAL_LOCALE",
+      market: editorialMarket,
+      language: canonicalLanguage.language,
+      locale: canonicalLanguage.defaultLocale,
+      pathname: equivalentPathname,
+    };
+  }
+
   const canonical = localeMarketRouteByPublicSlug(segments[0]);
 
   if (canonical) {
-    if (!canonical.route.enabled) return invalid(clean, "LOCALE_DISABLED");
     const equivalentPathname = unprefixedPath(segments.slice(1));
     if (!isLocalizedPublicDestination(equivalentPathname, canonical.market)) {
       return invalid(clean, "ROUTE_NOT_LOCALIZABLE");
     }
     return {
-      kind: "CANONICAL_LOCALE",
+      kind: "LEGACY_MARKET_ROUTE",
       market: canonical.market,
+      language: languageForLocale(canonical.route.locale),
       locale: canonical.route.locale,
       pathname: equivalentPathname,
+      canonicalPath: publicMarketPath(canonical.market, canonical.route.locale, equivalentPathname),
     };
   }
 
@@ -157,6 +199,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
     return {
       kind: "MARKET_NEUTRAL",
       market: DEFAULT_MARKET_PROFILE,
+      language: languageForLocale(DEFAULT_MARKET_PROFILE.defaultLocale),
       locale: DEFAULT_MARKET_PROFILE.defaultLocale,
       pathname: clean,
     };
@@ -178,6 +221,7 @@ export function parsePublicMarketRoute(pathname: string): PublicMarketRouteParse
   return {
     kind: "LEGACY_MARKET_ROUTE",
     market: routeMarket,
+    language: languageForLocale(locale),
     locale,
     pathname: equivalentPathname,
     canonicalPath: publicMarketPath(routeMarket, locale, equivalentPathname),

@@ -16,7 +16,7 @@ import styles from "./CasinoDiscovery.module.css";
 
 const sortValues = ["FEATURED", "RELEVANCE", "NEWEST", "NAME_ASC", "NAME_DESC"] as const;
 const pageSizes = [12, 24, 48] as const;
-const arrayFields = [["country", "country"], ["currency", "currency"], ["license", "license"], ["payment", "payment"], ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"]] as const;
+const arrayFields = [["currency", "currency"], ["license", "license"], ["payment", "payment"], ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"]] as const;
 const booleanFields = [["hasBonus", "Published bonus"], ["hasAvailableVisitAction", "Visit action available"], ["hasResponsibleGambling", "Responsible gambling information"], ["supportsCrypto", "Cryptocurrency support"], ["supportsMobile", "Mobile support"]] as const;
 const cardClassNames = styles as unknown as CasinoCardClassNames;
 
@@ -42,7 +42,6 @@ function BooleanSelect({ active, activeLabel, className = styles.filterSelect, e
 function FilterFields({ result, messages }: { result: CasinoDiscoveryResult; messages: ProductPageMessages }) {
   const query = result.appliedFilters;
   return <div className={styles.filterGrid}>
-    <FilterSelect emptyLabel={messages.common.countryPreference} label={messages.common.countryPreference} name="country" selected={query.country ?? []} values={result.facets.countries} />
     <FilterSelect emptyLabel={messages.common.licence} label={messages.common.licence} name="license" selected={query.license ?? []} values={result.facets.licenses} />
     <FilterSelect emptyLabel={messages.common.paymentMethods} label={messages.common.paymentMethods} name="payment" selected={query.payment ?? []} values={result.facets.payments} />
     <FilterSelect emptyLabel={messages.profile.providers} label={messages.profile.providers} name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
@@ -59,7 +58,6 @@ function FilterFields({ result, messages }: { result: CasinoDiscoveryResult; mes
 function PrimaryFilterFields({ result, messages }: { result: CasinoDiscoveryResult; messages: ProductPageMessages }) {
   const query = result.appliedFilters;
   return <div className={filterStyles.primaryGrid}>
-    <FilterSelect className={filterStyles.field} emptyLabel={messages.common.countryPreference} label={messages.common.countryPreference} name="country" selected={query.country ?? []} values={result.facets.countries} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.licence} label={messages.common.licence} name="license" selected={query.license ?? []} values={result.facets.licenses} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.paymentMethods} label={messages.common.paymentMethods} name="payment" selected={query.payment ?? []} values={result.facets.payments} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.bonusType} label={messages.common.bonusType} name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
@@ -100,7 +98,7 @@ function FilterForm({ result, messages, presentation, mobile = false, noScript =
 function PrimaryFilterForm({ result, messages, presentation }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={filterStyles.primaryForm} key={`casino-primary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["country", "license", "payment", "bonusType"]} query={query} />
+    <HiddenQuery except={["license", "payment", "bonusType"]} query={query} />
     <PrimaryFilterFields messages={messages} result={result} />
   </InstantDiscoveryForm>;
 }
@@ -141,7 +139,7 @@ function removeValue(query: CasinoDiscoveryQuery, field: keyof CasinoDiscoveryQu
 
 function facetLabels(result: CasinoDiscoveryResult) {
   const values: Record<string, Map<string, string>> = {};
-  for (const [field, facet] of [["country", result.facets.countries], ["currency", result.facets.currencies], ["license", result.facets.licenses], ["payment", result.facets.payments], ["gameProvider", result.facets.gameProviders], ["category", result.facets.categories], ["bonusType", result.facets.bonusTypes]] as const) values[field] = new Map(facet.map((item) => [item.key, item.label]));
+  for (const [field, facet] of [["currency", result.facets.currencies], ["license", result.facets.licenses], ["payment", result.facets.payments], ["gameProvider", result.facets.gameProviders], ["category", result.facets.categories], ["bonusType", result.facets.bonusTypes]] as const) values[field] = new Map(facet.map((item) => [item.key, item.label]));
   return values;
 }
 
@@ -179,7 +177,7 @@ export function DiscoveryResults({ result, messages, presentation }: { result: C
   return <div className={styles.results} data-result-count={result.total} id="casino-results">
     <div className={styles.resultsHeader}><div><span>{messages.casinos.directoryTitle}</span><h2>{result.total} {result.total === 1 ? messages.common.record : messages.common.records}</h2></div><p aria-atomic="true" aria-live="polite" role="status">{result.total} {result.total === 1 ? messages.common.result : messages.common.results} · {messages.common.pageOf.replace("{page}", String(result.page)).replace("{pages}", String(result.pageCount))}</p></div>
     {noVisitActions && <div className={styles.reviewOnlyNotice} role="note"><strong>{messages.common.reviewAvailableNoAction}</strong><span>{messages.casinos.reviewOnlyNotice}</span></div>}
-    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} messages={messages} position={firstPosition + index} presentation={presentation} />)}</div> : hasActiveFilters ? <div className={styles.emptyState} data-public-empty-state="filtered" data-result-count="0"><span>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</span><h2>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.market.seoDisplayName })}</h2><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.market.seoDisplayName })}</p><Link data-empty-reset href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link></div> : <div className={styles.emptyState} data-public-empty-state="unfiltered" data-result-count="0"><span>{messages.casinos.directoryTitle}</span><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</h2></div>}
+    {result.items.length ? <div className={styles.cards}>{result.items.map((casino, index) => <CasinoDiscoveryCard casino={casino} key={casino.id} messages={messages} position={firstPosition + index} presentation={presentation} />)}</div> : hasActiveFilters ? <div className={styles.emptyState} data-public-empty-state="filtered" data-result-count="0"><span>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.marketDisplayName })}</span><h2>{formatProductMessage(messages.casinos.noMatchesTitle, { market: presentation.marketDisplayName })}</h2><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.marketDisplayName })}</p><Link data-empty-reset href={productHref(presentation, "/casinos")}>{messages.common.clearAll}</Link></div> : <div className={styles.emptyState} data-public-empty-state="unfiltered" data-result-count="0"><span>{messages.casinos.directoryTitle}</span><h2>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.marketDisplayName })}</h2></div>}
     <DirectoryPagination
       ariaLabel={messages.casinos.directoryTitle}
       currentPage={result.page}

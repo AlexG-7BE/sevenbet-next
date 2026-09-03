@@ -11,7 +11,7 @@ const description = "Practical control information and protected support routes.
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
-  const profile = firstWaveMarketEvidence(presentation.market.countryCode);
+  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
   return productMetadata({
     presentation,
     pathname: "/responsible-gambling",
@@ -24,7 +24,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ResponsibleGamblingPage() {
   const presentation = await resolveServerPresentationContext();
-  const profile = firstWaveMarketEvidence(presentation.market.countryCode);
+  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
   return profile
     ? <FirstWaveSafetyPage presentation={presentation} profile={profile} variant="responsible" />
     : <HandoffPage name="responsibleGambling" transform={transformResponsibleGamblingHandoff} />;

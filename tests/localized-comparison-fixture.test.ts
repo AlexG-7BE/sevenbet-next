@@ -17,6 +17,7 @@ function comparisonSeed(country: string): PublicComparisonResult {
     selectedSlugs,
     candidates: selectedSlugs.map((slug, index) => ({
       dataClassification: "DEMO_FIXTURE",
+      disposition: "INFORMATIONAL_ONLY",
       slug,
       name: `Seed ${index}`,
       logo: null,
@@ -116,7 +117,7 @@ test("comparison locale transport is explicit and local preview actions require 
   assert.match(client, /params\.set\("presentationLocale", presentation\.locale\)/);
   assert.match(route, /comparisonFixtureLocale\(request\.nextUrl\.searchParams\.get\("presentationLocale"\)\)/);
   assert.match(route, /MARKET_PROFILES\.some/);
-  assert.match(casinosPage, /withHandoffCasinoDiscoveryData[\s\S]*presentation\.market\.countryCode === "GB"/);
+  assert.match(casinosPage, /withHandoffCasinoDiscoveryData[\s\S]*presentation\.marketCountryCode === "GB"/);
 
   const seed = comparisonSeed("DE");
   assert.equal(withHandoffComparisonData(seed, false, "de-DE"), seed);

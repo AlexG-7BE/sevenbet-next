@@ -11,7 +11,7 @@ import { resolveServerPresentationContext } from "@/lib/market/server";
 
 export default async function ProtectedHelpLayout({ children }: { children: ReactNode }) {
   const presentation = await resolveServerPresentationContext();
-  const profile = presentation.source === "EXPLICIT_ROUTE" ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
+  const profile = presentation.source === "EXPLICIT_ROUTE" && presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
   const copy = protectedHelpShellCopy(profile);
   return (
     <div className={styles.shell} data-protected-help-shell="true">

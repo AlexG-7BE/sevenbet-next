@@ -196,7 +196,7 @@ test("all eleven European runtime profiles exist in their approved order", () =>
   );
 });
 
-test("canonical paths expose one lowercase BCP-47 locale-market segment", () => {
+test("canonical paths expose one language-only segment", () => {
   const germany = marketProfileByCountry("DE");
   const italy = marketProfileByCountry("IT");
   const spain = marketProfileByCountry("ES");
@@ -213,20 +213,20 @@ test("canonical paths expose one lowercase BCP-47 locale-market segment", () => 
   assert.ok(canada);
   const gb = marketProfileByCountry("GB");
   assert.ok(gb);
-  assert.equal(publicMarketPath(gb, "en-GB"), "/en-gb");
-  assert.equal(publicMarketPath(germany, "de-DE"), "/de-de");
-  assert.equal(publicMarketPath(italy, "it-IT"), "/it-it");
-  assert.equal(publicMarketPath(spain, "es-ES"), "/es-es");
-  assert.equal(publicMarketPath(portugal, "pt-PT"), "/pt-pt");
-  assert.equal(publicMarketPath(greece, "el-GR"), "/el-gr");
-  assert.equal(publicMarketPath(netherlands, "nl-NL"), "/nl-nl");
-  assert.equal(publicMarketPath(germany, "de-DE", "/casinos"), "/de-de/casinos");
-  assert.equal(publicMarketPath(canada, "en-CA", "/casinos"), "/en-ca/casinos");
-  assert.equal(publicMarketPath(canada, "fr-CA", "/casinos"), "/fr-ca/casinos");
-  assert.throws(() => publicMarketPath(germany, "en-GB"));
+  assert.equal(publicMarketPath(gb, "en-GB"), "/en");
+  assert.equal(publicMarketPath(germany, "de-DE"), "/de");
+  assert.equal(publicMarketPath(italy, "it-IT"), "/it");
+  assert.equal(publicMarketPath(spain, "es-ES"), "/es");
+  assert.equal(publicMarketPath(portugal, "pt-PT"), "/pt");
+  assert.equal(publicMarketPath(greece, "el-GR"), "/el");
+  assert.equal(publicMarketPath(netherlands, "nl-NL"), "/nl");
+  assert.equal(publicMarketPath(germany, "de-DE", "/casinos"), "/de/casinos");
+  assert.equal(publicMarketPath(canada, "en-CA", "/casinos"), "/en/casinos");
+  assert.equal(publicMarketPath(canada, "fr-CA", "/casinos"), "/fr/casinos");
+  assert.equal(publicMarketPath(germany, "en-GB"), "/en");
 });
 
-test("locale-market parser distinguishes canonical, market-neutral, legacy and invalid paths", () => {
+test("language parser distinguishes canonical, market-neutral, legacy and invalid paths", () => {
   const germany = marketProfileByCountry("DE");
   const portugal = marketProfileByCountry("PT");
   const spain = marketProfileByCountry("ES");
@@ -235,12 +235,18 @@ test("locale-market parser distinguishes canonical, market-neutral, legacy and i
   assert.ok(spain);
   const canada = marketProfileByCountry("CA");
   assert.ok(canada);
-  assert.deepEqual(parsePublicMarketRoute("/de-de/casinos"), { kind: "CANONICAL_LOCALE", market: germany, locale: "de-DE", pathname: "/casinos" });
-  assert.deepEqual(parsePublicMarketRoute("/de/casinos"), { kind: "LEGACY_MARKET_ROUTE", market: germany, locale: "de-DE", pathname: "/casinos", canonicalPath: "/de-de/casinos" });
-  assert.deepEqual(parsePublicMarketRoute("/pt/faq"), { kind: "LEGACY_MARKET_ROUTE", market: portugal, locale: "pt-PT", pathname: "/faq", canonicalPath: "/pt-pt/faq" });
-  assert.deepEqual(parsePublicMarketRoute("/de/contact"), { kind: "LEGACY_MARKET_ROUTE", market: germany, locale: "de-DE", pathname: "/contact", canonicalPath: "/de-de/contact" });
-  assert.deepEqual(parsePublicMarketRoute("/de/learn/casino-basics/online-casino-basics"), { kind: "LEGACY_MARKET_ROUTE", market: germany, locale: "de-DE", pathname: "/learn/casino-basics/online-casino-basics", canonicalPath: "/de-de/learn/casino-basics/online-casino-basics" });
-  assert.deepEqual(parsePublicMarketRoute("/de/de/casinos"), { kind: "LEGACY_MARKET_ROUTE", market: germany, locale: "de-DE", pathname: "/casinos", canonicalPath: "/de-de/casinos" });
+  const canonical = parsePublicMarketRoute("/de/casinos");
+  assert.equal(canonical.kind, "CANONICAL_LOCALE");
+  if (canonical.kind === "CANONICAL_LOCALE") {
+    assert.equal(canonical.language, "de");
+    assert.equal(canonical.locale, "de-DE");
+    assert.equal(canonical.pathname, "/casinos");
+  }
+  for (const [path, canonicalPath] of [["/de-de/casinos", "/de/casinos"], ["/pt-pt/faq", "/pt/faq"], ["/de/de/casinos", "/de/casinos"]] as const) {
+    const legacy = parsePublicMarketRoute(path);
+    assert.equal(legacy.kind, "LEGACY_MARKET_ROUTE");
+    if (legacy.kind === "LEGACY_MARKET_ROUTE") assert.equal(legacy.canonicalPath, canonicalPath);
+  }
   assert.equal(parsePublicMarketRoute("/casinos").kind, "MARKET_NEUTRAL");
   assert.equal(parsePublicMarketRoute("/ca/fr/casinos").kind, "INVALID");
   assert.equal(parsePublicMarketRoute("/de/en/").kind, "INVALID");
@@ -249,12 +255,12 @@ test("locale-market parser distinguishes canonical, market-neutral, legacy and i
   assert.equal(parsePublicMarketRoute("/de/admin").kind, "INVALID");
   assert.equal(parsePublicMarketRoute("/de/api/private").kind, "INVALID");
   assert.equal(stripPublicMarketPrefix("/de/de/casinos"), "/casinos");
-  assert.equal(localizePublicPath(spain, "es-ES", "/de/de/casinos"), "/es-es/casinos");
-  assert.equal(localizePublicPath(germany, "de-DE", "/compare?casino=alpha&casino=beta"), "/de-de/compare?casino=alpha&casino=beta");
-  assert.equal(localizePublicPath(spain, "es-ES", "/privacy"), "/es-es");
-  assert.equal(localizePublicHref("/casinos", "/de-de", germany, "de-DE"), "/de-de/casinos");
-  assert.equal(localizePublicHref("/help", "/de-de", germany, "de-DE"), "/de-de/help");
-  assert.equal(localizePublicPath(portugal, "pt-PT", "/help"), "/pt-pt");
+  assert.equal(localizePublicPath(spain, "es-ES", "/de/de/casinos"), "/es/casinos");
+  assert.equal(localizePublicPath(germany, "de-DE", "/compare?casino=alpha&casino=beta"), "/de/compare?casino=alpha&casino=beta");
+  assert.equal(localizePublicPath(spain, "es-ES", "/privacy"), "/es");
+  assert.equal(localizePublicHref("/casinos", "/de", germany, "de-DE"), "/de/casinos");
+  assert.equal(localizePublicHref("/help", "/de", germany, "de-DE"), "/de/help");
+  assert.equal(localizePublicPath(portugal, "pt-PT", "/help"), "/pt");
   assert.ok(PUBLIC_LOCALIZATION_ROUTE_MANIFEST.some((entry) => entry.root === "api" && entry.policy === "INTERNAL"));
   assert.ok(PUBLIC_LOCALIZATION_ROUTE_MANIFEST.some((entry) => entry.root === "privacy" && entry.policy === "LEGAL_REVIEW_GATED"));
 });
@@ -284,10 +290,10 @@ test("all eleven European product catalogs are complete Preview drafts without E
 
 test("localized product links and canonicals preserve explicit presentation while noindex stays outside hreflang", () => {
   const presentation = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "GB" });
-  assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de-de/casino/example?from=compare");
-  assert.equal(productHref(presentation, "/methodology"), "/de-de/methodology");
+  assert.equal(productHref(presentation, "/casino/example?from=compare"), "/de/casino/example?from=compare");
+  assert.equal(productHref(presentation, "/methodology"), "/de/methodology");
   const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
-  assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de-de/casinos");
+  assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/de/casinos");
   assert.equal(metadata.alternates?.languages, undefined);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
   assert.equal(metadata.openGraph && "locale" in metadata.openGraph ? metadata.openGraph.locale : null, "de_DE");
@@ -301,7 +307,7 @@ test("localized product links and canonicals preserve explicit presentation whil
     robots: { index: true, follow: true },
   });
   assert.deepEqual(gbMetadata.robots, { index: true, follow: true }, "the approved English baseline must retain its data-driven indexing policy");
-  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["en-GB", "x-default"]);
+  assert.deepEqual(Object.keys(gbMetadata.alternates?.languages ?? {}).sort(), ["en", "x-default"]);
 
   const differentGeo = resolvePresentationContext({ routeMarket: "de", routeLanguage: "de", trustedCountryCode: "NO" });
   const second = productMetadata({ presentation: differentGeo, pathname: "/casinos", title: "Titel", description: "Beschreibung" });
@@ -321,15 +327,15 @@ test("Methodology, Contact, Learning and generic-error catalogs cover all eleven
   const methodology = transformMethodologyHandoff(
     transformCommonHandoff(generatedPages.methodology.html),
     methodologyMessages("de-DE"),
-    (href) => `/de-de${href}`,
+    (href) => `/de${href}`,
   );
   const methodologyText = [...methodology.matchAll(/>([^<>]+)</g)].map((match) => match[1]).join(" ");
   for (const source of METHODOLOGY_SOURCE_COPY) {
     assert.equal(methodologyText.includes(source.replaceAll("&", "&amp;")), false, `German Methodology leaked: ${source}`);
   }
   assert.match(methodology, /data-methodology-list-copy="" style="min-width: 0; overflow-wrap: anywhere;"/);
-  const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html, "/de/program"), "de-DE", (href) => `/de-de${href}`);
-  assert.match(learn, /href="\/de-de\/learn\/casino-basics\/online-casino-basics"/);
+  const learn = transformLearnHandoff(transformCommonHandoff(generatedPages.learn.html, "/de/program"), "de-DE", (href) => `/de${href}`);
+  assert.match(learn, /href="\/de\/learn\/casino-basics\/online-casino-basics"/);
   assert.match(learn, /href="\/de\/program\?entry=start"/);
   assert.doesNotMatch(learn, /href="\/program(?:\?entry=start)?"/);
   assert.match(learn, /data-learn-topic="all topics"/);
@@ -348,13 +354,13 @@ test("presentation and commercial jurisdiction must match before any authority r
   assert.equal("commercialAllowed" in presentation, false);
 });
 
-test("localized Compare defaults to its presentation country and preserves selection query", () => {
+test("localized Compare takes trusted market from its caller and never serializes market in query state", () => {
   const query = parsePublicComparisonQuery({ casino: ["alpha", "beta"], differences: "true" }, "DE");
   assert.equal(query.country, "DE");
-  assert.equal(serializePublicComparisonQuery(query).toString(), "casino=alpha&casino=beta&country=DE&differences=true");
+  assert.equal(serializePublicComparisonQuery(query).toString(), "casino=alpha&casino=beta&differences=true");
   const germany = marketProfileByCountry("DE");
   assert.ok(germany);
-  assert.equal(localizePublicPath(germany, "de-DE", `/casinos?${serializePublicComparisonQuery(query)}`), "/de-de/casinos?casino=alpha&casino=beta&country=DE&differences=true");
+  assert.equal(localizePublicPath(germany, "de-DE", `/casinos?${serializePublicComparisonQuery(query)}`), "/de/casinos?casino=alpha&casino=beta&differences=true");
 });
 
 test("localized sitemap publication is review-gated and its market loader has no request-path GB literal", () => {
@@ -367,25 +373,27 @@ test("localized sitemap publication is review-gated and its market loader has no
   assert.match(source, /marketIndexingApproved/);
 });
 
-test("explicit localized route wins over preference and trusted geo", () => {
+test("explicit language wins for language while trusted geo remains market authority", () => {
   const result = resolvePresentationContext({
     routeMarket: "se",
     routeLanguage: "sv",
-    preference: { countryCode: "DE", locale: "de-DE" },
+    preference: { language: "de" },
     trustedCountryCode: "GB",
   });
-  assert.equal(result.market.countryCode, "SE");
+  assert.equal(result.market?.countryCode, "GB");
+  assert.equal(result.language, "sv");
   assert.equal(result.locale, "sv-SE");
   assert.equal(result.source, "EXPLICIT_ROUTE");
   assert.equal(result.explicitRouteValid, true);
 });
 
-test("user presentation preference can select presentation but is not a commercial authority object", () => {
+test("user presentation preference selects language but not market", () => {
   const result = resolvePresentationContext({
-    preference: { countryCode: "FI", locale: "fi-FI" },
+    preference: { language: "fi" },
     trustedCountryCode: "GB",
   });
-  assert.equal(result.market.countryCode, "FI");
+  assert.equal(result.market?.countryCode, "GB");
+  assert.equal(result.language, "fi");
   assert.equal(result.locale, "fi-FI");
   assert.equal(result.source, "USER_PREFERENCE");
   assert.equal("commercialAllowed" in result, false);
@@ -393,11 +401,10 @@ test("user presentation preference can select presentation but is not a commerci
 });
 
 test("presentation preference serialization is strict, stale-safe and contains no authority", () => {
-  const germany = marketProfileByCountry("DE");
-  assert.ok(germany);
-  const serialized = serializePresentationPreference(germany, "de-DE");
-  assert.equal(serialized, "v1.DE.de-DE");
-  assert.deepEqual(parsePresentationPreference(serialized), { countryCode: "DE", locale: "de-DE" });
+  const serialized = serializePresentationPreference("de");
+  assert.equal(serialized, "v2.de");
+  assert.deepEqual(parsePresentationPreference(serialized), { language: "de" });
+  assert.deepEqual(parsePresentationPreference("v1.DE.de-DE"), { language: "de" });
   assert.equal(parsePresentationPreference("v1.DE.en-GB"), null);
   assert.equal(parsePresentationPreference("v0.DE.de-DE"), null);
   assert.equal(parsePresentationPreference("commercialAllowed=true"), null);
@@ -405,7 +412,7 @@ test("presentation preference serialization is strict, stale-safe and contains n
 
 test("a presentation preference cannot grant jurisdiction commercial or referral authority", async () => {
   const presentation = resolvePresentationContext({
-    preference: { countryCode: "DE", locale: "de-DE" },
+    preference: { language: "de" },
     trustedCountryCode: "GB",
   });
   const now = new Date("2026-08-29T12:00:00.000Z");
@@ -416,25 +423,27 @@ test("a presentation preference cannot grant jurisdiction commercial or referral
     routeCountryOrMarketSlug: null,
     userSelectedCountry: null,
   });
-  assert.equal(presentation.market.countryCode, "DE");
+  assert.equal(presentation.market?.countryCode, "GB");
+  assert.equal(presentation.language, "de");
   assert.equal(authority.countryCode, "GB");
   assert.equal(authority.commercialAllowed, false);
   assert.equal(authority.referralAllowed, false);
 });
 
-test("trusted geo selects expanded partner-ready markets and unsupported geo falls back deterministically to GB", () => {
+test("trusted geo selects configured markets and unsupported geo retains no fabricated market", () => {
   const supported = INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => resolvePresentationContext({ trustedCountryCode: profile.countryCode }));
   const unsupported = resolvePresentationContext({ trustedCountryCode: "US" });
   assert.deepEqual(supported.map((result) => result.locale), INITIAL_EUROPEAN_MARKET_PROFILES.map((profile) => profile.defaultLocale));
   for (const result of supported) assert.equal(result.source, "TRUSTED_GEO");
-  assert.equal(unsupported.market.countryCode, "GB");
+  assert.equal(unsupported.market, null);
+  assert.equal(unsupported.marketCountryCode, "US");
   assert.equal(unsupported.locale, "en-GB");
   assert.equal(unsupported.source, "DEFAULT");
 });
 
 test("invalid explicit route never force-enables an unsupported market", () => {
   const result = resolvePresentationContext({ routeMarket: "xx", routeLanguage: "xx", trustedCountryCode: "DK" });
-  assert.equal(result.market.countryCode, "DK");
+  assert.equal(result.market?.countryCode, "DK");
   assert.equal(result.source, "TRUSTED_GEO");
   assert.equal(result.explicitRouteValid, false);
 });
@@ -483,8 +492,8 @@ test("Home and public-core readiness are explicit and selector-safe", () => {
   assert.equal(homeTranslationReady("es-PE"), true);
   assert.equal(publicCoreTranslationReady("es-PE"), true);
   const header = readFileSync("components/public-shell/PublicHeader.tsx", "utf8");
-  assert.match(header, /publicCoreTranslationReady\(profile\.defaultLocale\)/);
-  assert.match(header, /VERCEL_ENV === "production"[\s\S]*PUBLICATION_APPROVED_MARKET_PROFILES/);
+  assert.match(header, /PUBLISHED_LANGUAGE_ROUTE_PROFILES/);
+  assert.doesNotMatch(header, /countryCode/);
 });
 
 test("curated bonus selectors keep stable semantics and exact localized labels", () => {
@@ -702,13 +711,13 @@ test("FAQ provides complete localized trust copy without changing commercial or 
   }
 });
 
-test("locale-market middleware redirects legacy paths and rewrites only validated canonical routes", async () => {
+test("language middleware redirects legacy paths and rewrites only validated canonical routes", async () => {
   const legacy = await middleware(new NextRequest("http://127.0.0.1:4173/de/de/casinos?sort=score"));
   assert.equal(legacy.status, 308);
   const legacyLocation = new URL(legacy.headers.get("location") ?? "http://invalid");
-  assert.equal(`${legacyLocation.pathname}${legacyLocation.search}`, "/de-de/casinos?sort=score");
+  assert.equal(`${legacyLocation.pathname}${legacyLocation.search}`, "/de/casinos?sort=score");
 
-  const response = await middleware(new NextRequest("http://127.0.0.1:4173/de-de/casinos?sort=score"));
+  const response = await middleware(new NextRequest("http://127.0.0.1:4173/de/casinos?sort=score"));
   assert.equal(response.status, 200);
   const rewrite = new URL(response.headers.get("x-middleware-rewrite") ?? "http://invalid");
   assert.equal(`${rewrite.pathname}${rewrite.search}`, "/casinos?sort=score");
@@ -718,7 +727,7 @@ test("locale-market middleware redirects legacy paths and rewrites only validate
   assert.ok(localCsp);
   assert.doesNotMatch(localCsp, /upgrade-insecure-requests/);
 
-  const secureResponse = await middleware(new NextRequest("https://b4gamble.com/en-gb/casinos"));
+  const secureResponse = await middleware(new NextRequest("https://b4gamble.com/en/casinos"));
   assert.match(secureResponse.headers.get("content-security-policy") ?? "", /upgrade-insecure-requests/);
 
   const inheritedHeaders = middlewareRequestHeaders(response);
@@ -729,7 +738,7 @@ test("locale-market middleware redirects legacy paths and rewrites only validate
   assert.equal(rewrittenResponse.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "de");
   assert.equal(rewrittenResponse.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
 
-  const spoofedInternalRewrite = await middleware(new NextRequest("http://127.0.0.1:4173/en-gb/casinos", {
+  const spoofedInternalRewrite = await middleware(new NextRequest("http://127.0.0.1:4173/en/casinos", {
     headers: {
       [PRESENTATION_CONTEXT_HEADER]: "public-v1",
       [PRESENTATION_MARKET_HEADER]: "de",
@@ -740,20 +749,20 @@ test("locale-market middleware redirects legacy paths and rewrites only validate
   assert.equal(spoofedInternalRewrite.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "gb");
   assert.equal(spoofedInternalRewrite.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), "en");
 
-  const marketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de-de"));
+  const marketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de"));
   assert.equal(marketHome.status, 200);
   assert.equal(new URL(marketHome.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/");
-  const unslashedMarketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de-de/"));
+  const unslashedMarketHome = await middleware(new NextRequest("http://127.0.0.1:4173/de/"));
   assert.equal(unslashedMarketHome.status, 308);
-  assert.equal(new URL(unslashedMarketHome.headers.get("location") ?? "http://invalid").pathname, "/de-de");
+  assert.equal(new URL(unslashedMarketHome.headers.get("location") ?? "http://invalid").pathname, "/de");
 
   const gb = await middleware(new NextRequest("http://127.0.0.1:4173/casinos"));
   assert.equal(gb.status, 307);
-  assert.equal(new URL(gb.headers.get("location") ?? "http://invalid").pathname, "/en-gb/casinos");
+  assert.equal(new URL(gb.headers.get("location") ?? "http://invalid").pathname, "/en/casinos");
 
   const gbAlias = await middleware(new NextRequest("http://127.0.0.1:4173/gb/en/"));
   assert.equal(gbAlias.status, 308);
-  assert.equal(new URL(gbAlias.headers.get("location") ?? "http://invalid").pathname, "/en-gb");
+  assert.equal(new URL(gbAlias.headers.get("location") ?? "http://invalid").pathname, "/en");
 
   const invalid = await middleware(new NextRequest("http://127.0.0.1:4173/de/en/"));
   assert.equal(invalid.headers.get("x-middleware-rewrite"), null);
@@ -785,7 +794,7 @@ test("signed presentation continuations are bound to the exact query and a narro
   Date.now = () => issuedAt;
 
   try {
-    const firstPass = await middleware(new NextRequest("https://b4gamble.com/de-de/casinos?sort=score&page=2"));
+    const firstPass = await middleware(new NextRequest("https://b4gamble.com/de/casinos?sort=score&page=2"));
     const rewrite = new URL(firstPass.headers.get("x-middleware-rewrite") ?? "http://invalid");
     assert.equal(`${rewrite.pathname}${rewrite.search}`, "/casinos?sort=score&page=2");
 
@@ -805,7 +814,7 @@ test("signed presentation continuations are bound to the exact query and a narro
     }));
     assert.equal(queryMutation.headers.get("x-middleware-rewrite"), null);
     assert.equal(queryMutation.status, 307);
-    assert.equal(new URL(queryMutation.headers.get("location") ?? "http://invalid").pathname, "/en-gb/casinos");
+    assert.equal(new URL(queryMutation.headers.get("location") ?? "http://invalid").pathname, "/en/casinos");
     assert.equal(queryMutation.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
 
     Date.now = () => issuedAt + 30_001;
@@ -814,7 +823,7 @@ test("signed presentation continuations are bound to the exact query and a narro
     }));
     assert.equal(expiredReplay.headers.get("x-middleware-rewrite"), null);
     assert.equal(expiredReplay.status, 307);
-    assert.equal(new URL(expiredReplay.headers.get("location") ?? "http://invalid").pathname, "/en-gb/casinos");
+    assert.equal(new URL(expiredReplay.headers.get("location") ?? "http://invalid").pathname, "/en/casinos");
     assert.equal(expiredReplay.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
 
     Date.now = () => issuedAt - 5_001;
@@ -823,7 +832,7 @@ test("signed presentation continuations are bound to the exact query and a narro
     }));
     assert.equal(futureReplay.headers.get("x-middleware-rewrite"), null);
     assert.equal(futureReplay.status, 307);
-    assert.equal(new URL(futureReplay.headers.get("location") ?? "http://invalid").pathname, "/en-gb/casinos");
+    assert.equal(new URL(futureReplay.headers.get("location") ?? "http://invalid").pathname, "/en/casinos");
     assert.equal(futureReplay.headers.get("x-middleware-request-x-b4gamble-internal-presentation-token"), null);
   } finally {
     Date.now = previousDateNow;
@@ -845,11 +854,11 @@ test("Preview and Production fail closed when the presentation signing secret is
     const scenarios = [
       {
         environment: "production",
-        url: "https://b4gamble.com/de-de/casinos?sort=score",
+        url: "https://b4gamble.com/de/casinos?sort=score",
       },
       {
         environment: "preview",
-        url: "https://sevenbet-next-git-i18n.vercel.app/de-de/casinos?sort=score",
+        url: "https://sevenbet-next-git-i18n.vercel.app/de/casinos?sort=score",
       },
     ] as const;
 
@@ -885,23 +894,25 @@ test("Preview and Production fail closed when the presentation signing secret is
   }
 });
 
-test("Production routing and preference selection expose only Founder-publication-approved markets", async () => {
+test("Production routing and preference selection expose only published languages", async () => {
   const previousVercelEnvironment = process.env.VERCEL_ENV;
+  const previousVercel = process.env.VERCEL;
   const previousBetterAuthSecret = process.env.BETTER_AUTH_SECRET;
   process.env.VERCEL_ENV = "production";
+  process.env.VERCEL = "1";
   process.env.BETTER_AUTH_SECRET = "internationalisation-middleware-test-secret";
   try {
-    const approved = await middleware(new NextRequest("https://b4gamble.com/de-de/casinos"));
+    const approved = await middleware(new NextRequest("https://b4gamble.com/de/casinos"));
     assert.equal(new URL(approved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
     assert.equal(approved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "de");
 
-    const peruApproved = await middleware(new NextRequest("https://b4gamble.com/es-pe/casinos"));
+    const peruApproved = await middleware(new NextRequest("https://b4gamble.com/es/casinos", { headers: { "x-vercel-ip-country": "PE" } }));
     assert.equal(new URL(peruApproved.headers.get("x-middleware-rewrite") ?? "http://invalid").pathname, "/casinos");
-    assert.equal(peruApproved.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), "pe");
+    assert.equal(peruApproved.headers.get("content-language"), "es-PE");
 
     const peruLegacy = await middleware(new NextRequest("https://b4gamble.com/pe/casinos"));
     assert.equal(peruLegacy.status, 308);
-    assert.equal(new URL(peruLegacy.headers.get("location") ?? "http://invalid").pathname, "/es-pe/casinos");
+    assert.equal(new URL(peruLegacy.headers.get("location") ?? "http://invalid").pathname, "/es/casinos");
 
     const approvedHeaders = middlewareRequestHeaders(approved);
     const mutatedHeaders = new Headers(approvedHeaders);
@@ -909,40 +920,42 @@ test("Production routing and preference selection expose only Founder-publicatio
     mutatedHeaders.set(PRESENTATION_LANGUAGE_HEADER, "it");
     const mutated = await middleware(new NextRequest("https://b4gamble.com/casinos", { headers: mutatedHeaders }));
     assert.equal(mutated.status, 307);
-    assert.equal(new URL(mutated.headers.get("location") ?? "http://invalid").pathname, "/en-gb/casinos");
+    assert.equal(new URL(mutated.headers.get("location") ?? "http://invalid").pathname, "/en/casinos");
 
     const crossPathReplay = await middleware(new NextRequest("https://b4gamble.com/bonuses", { headers: approvedHeaders }));
     assert.equal(crossPathReplay.status, 307);
-    assert.equal(new URL(crossPathReplay.headers.get("location") ?? "http://invalid").pathname, "/en-gb/bonuses");
+    assert.equal(new URL(crossPathReplay.headers.get("location") ?? "http://invalid").pathname, "/en/bonuses");
 
     const crossHostReplay = await middleware(new NextRequest("https://attacker.example/casinos", { headers: approvedHeaders }));
     assert.equal(crossHostReplay.status, 308);
     assert.equal(crossHostReplay.headers.get("location"), "https://b4gamble.com/casinos");
 
-    for (const market of ["it", "pt", "nl", "fi", "no", "ca"]) {
-      const denied = await middleware(new NextRequest(`https://b4gamble.com/${market}/`));
-      assert.equal(denied.headers.get("x-middleware-rewrite"), null, market);
-      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, market);
-      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null, market);
+    for (const language of ["it", "pt", "nl", "fi", "nb", "fr"]) {
+      const denied = await middleware(new NextRequest(`https://b4gamble.com/${language}`));
+      assert.equal(denied.headers.get("x-middleware-rewrite"), null, language);
+      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_MARKET_HEADER}`), null, language);
+      assert.equal(denied.headers.get(`x-middleware-request-${PRESENTATION_LANGUAGE_HEADER}`), null, language);
     }
 
     const acceptedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
       method: "POST",
-      body: new URLSearchParams({ choice: "DE|de-DE", returnTo: "/casinos" }),
+      body: new URLSearchParams({ choice: "de", returnTo: "/casinos" }),
       headers: { "content-type": "application/x-www-form-urlencoded" },
     }));
     assert.equal(acceptedSelection.status, 303);
-    assert.equal(acceptedSelection.headers.get("location"), "/de-de/casinos");
+    assert.equal(acceptedSelection.headers.get("location"), "/de/casinos");
 
     const unapprovedSelection = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
       method: "POST",
-      body: new URLSearchParams({ choice: "IT|it-IT", returnTo: "/casinos" }),
+      body: new URLSearchParams({ choice: "it", returnTo: "/casinos" }),
       headers: { "content-type": "application/x-www-form-urlencoded" },
     }));
     assert.equal(unapprovedSelection.status, 400);
   } finally {
     if (previousVercelEnvironment === undefined) delete process.env.VERCEL_ENV;
     else process.env.VERCEL_ENV = previousVercelEnvironment;
+    if (previousVercel === undefined) delete process.env.VERCEL;
+    else process.env.VERCEL = previousVercel;
     if (previousBetterAuthSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
     else process.env.BETTER_AUTH_SECRET = previousBetterAuthSecret;
   }
@@ -951,13 +964,13 @@ test("Production routing and preference selection expose only Founder-publicatio
 test("preference endpoint persists only a validated presentation choice and can clear it", async () => {
   const selected = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
     method: "POST",
-    body: new URLSearchParams({ choice: "ES|es-ES", returnTo: "/de/casinos?page=2&country=DE&sort=score" }),
+    body: new URLSearchParams({ choice: "es", returnTo: "/de/casinos?page=2&country=DE&sort=score" }),
     headers: { "content-type": "application/x-www-form-urlencoded" },
   }));
   assert.equal(selected.status, 303);
-  assert.equal(selected.headers.get("location"), "/es-es/casinos?page=2&sort=score");
+  assert.equal(selected.headers.get("location"), "/es/casinos?page=2&sort=score");
   const selectedCookie = selected.headers.get("set-cookie") ?? "";
-  assert.match(selectedCookie, new RegExp(`${PRESENTATION_PREFERENCE_COOKIE}=v1\\.ES\\.es-ES`));
+  assert.match(selectedCookie, new RegExp(`${PRESENTATION_PREFERENCE_COOKIE}=v2\\.es`));
   assert.match(selectedCookie, /HttpOnly/);
   assert.doesNotMatch(selectedCookie, /commercial|referral|programme|help/i);
 
@@ -967,19 +980,19 @@ test("preference endpoint persists only a validated presentation choice and can 
     headers: { "content-type": "application/x-www-form-urlencoded" },
   }));
   assert.equal(cleared.status, 303);
-  assert.equal(cleared.headers.get("location"), "/bonuses?type=welcome");
+  assert.equal(cleared.headers.get("location"), "/en/bonuses?type=welcome");
   assert.match(cleared.headers.get("set-cookie") ?? "", /Max-Age=0/);
 
   const invalid = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
     method: "POST",
-    body: new URLSearchParams({ choice: "DE|en-GB", returnTo: "/" }),
+    body: new URLSearchParams({ choice: "de-DE", returnTo: "/" }),
     headers: { "content-type": "application/x-www-form-urlencoded" },
   }));
   assert.equal(invalid.status, 400);
 
   const external = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
     method: "POST",
-    body: new URLSearchParams({ choice: "DE|de-DE", returnTo: "https://evil.example/steal" }),
+    body: new URLSearchParams({ choice: "de", returnTo: "https://evil.example/steal" }),
     headers: { "content-type": "application/x-www-form-urlencoded" },
   }));
   assert.equal(external.status, 400);
@@ -987,7 +1000,7 @@ test("preference endpoint persists only a validated presentation choice and can 
   for (const returnTo of ["/de%2Fadmin", "/de\\admin", `/casinos?${"x".repeat(2_100)}`]) {
     const unsafe = await updatePresentationPreference(new NextRequest("https://b4gamble.com/api/presentation", {
       method: "POST",
-      body: new URLSearchParams({ choice: "DE|de-DE", returnTo }),
+      body: new URLSearchParams({ choice: "de", returnTo }),
       headers: { "content-type": "application/x-www-form-urlencoded" },
     }));
     assert.equal(unsafe.status, 400, returnTo.slice(0, 80));

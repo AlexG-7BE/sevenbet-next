@@ -41,11 +41,11 @@ const loadCasinoPage = cache(async (slug: string) => {
   ]);
   const candidate = await publicCasinoService.getCasino(
     slug,
-    commercialAuthorityForPresentation(authority, presentation.market.countryCode),
-    presentation.market.countryCode,
+    commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
+    presentation.marketCountryCode,
   );
   const availableForPresentation = candidate
-    ? marketAvailability(candidate.countries, presentation.market.countryCode)
+    ? marketAvailability(candidate.countries, presentation.marketCountryCode)
     : false;
   const boundedCandidate = candidate && !availableForPresentation
     ? {
@@ -56,7 +56,7 @@ const loadCasinoPage = cache(async (slug: string) => {
     : candidate;
   return {
     casino: boundedCandidate?.source === "cms" ? boundedCandidate : null,
-    editorialResult,
+    editorialResult: boundedCandidate?.presentationDisposition === "PROMOTABLE" ? editorialResult : null,
     presentation,
     availableForPresentation,
   };
@@ -68,7 +68,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
   const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
-  const market = presentation.market.seoDisplayName;
+  const market = presentation.marketDisplayName;
   const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
   const description = availableForPresentation
     ? `${messages.profile.currentReview}: ${casino.name}. ${messages.common.originalSourceCopy}`
@@ -87,11 +87,13 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const { slug } = await params;
-  const { casino, editorialResult, presentation, availableForPresentation } = await loadCasinoPage(slug);
-  if (!casino) notFound();
   const visualDataFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
+  const loaded = await loadCasinoPage(slug);
+  const casino = loaded.casino ?? (visualDataFixture ? publicCasinoService.getLocalVisualFixture(slug) : null);
+  if (!casino) notFound();
+  const { presentation } = loaded;
   const runtimeCasino = withHandoffCasinoProfileData(casino, visualDataFixture, presentation.locale);
-  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(editorialResult, casino.id), visualDataFixture, presentation.locale);
+  const editorial = withHandoffCasinoEditorialData(profileEditorialDocument(loaded.editorialResult, casino.id), visualDataFixture, loaded.presentation.locale);
   const messages = productPageMessages(presentation.locale);
   const profileUrl = absoluteUrl(productHref(presentation, `/casino/${runtimeCasino.slug}`));
   const casinoDirectoryUrl = absoluteUrl(productHref(presentation, "/casinos"));
@@ -106,6 +108,6 @@ export default async function CasinoPage({ params, searchParams }: { params: Pro
   return <>
     <CommercialSurfaceView surface="casino_review" />
     {schemas.map((schema, index) => <JsonLd data={schema} key={index} />)}
-    <CasinoProfile availableForPresentation={availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
+    <CasinoProfile availableForPresentation={loaded.availableForPresentation} casino={runtimeCasino} editorial={editorial} messages={messages} presentation={presentation} />
   </>;
 }

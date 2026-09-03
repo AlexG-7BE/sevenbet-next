@@ -17,7 +17,7 @@ export default async function ProgrammeLayout({ children }: { children: ReactNod
   const authenticated = Boolean(session?.user);
   const locale = isProgrammeLocale(presentation.locale) ? presentation.locale : "en-GB";
   const path = programmePath(locale);
-  const localizePublicLinks = marketEditorialPublicationApproved(presentation.market);
+  const localizePublicLinks = presentation.market ? marketEditorialPublicationApproved(presentation.market) : false;
   const account = accountNavigationFor({ authenticated, programmePath: path });
   const messages = publicShellMessages(locale);
 

@@ -1,6 +1,7 @@
 # GB PECR and Analytics Decision
 
 - **Decision date:** 19 August 2026
+- **Language-preference clarification:** 3 September 2026
 - **Status:** PUBLIC LEGAL IMPLEMENTATION: COMPLETE
 - **Owner:** Privacy / Engineering
 
@@ -17,6 +18,7 @@ This is a narrower product decision than the 2026 statutory statistical-purpose 
 - Before RFC-036, `@vercel/analytics` was a runtime dependency, a root component could emit page views and a public environment flag could enable client/server events.
 - No CMP, public analytics objection control or consent record exists.
 - Necessary storage supports authentication/security, anonymous Programme session and claim continuity, access authority, exact-subject same-tab Programme drafts and user-requested same-tab comparison selection.
+- The public presentation cookie stores only a requested language. It stores no country, raw IP or commercial authority and is not reused for analytics, affiliate measurement or personalisation.
 - Staff-only editorial draft recovery uses local storage on an authenticated admin surface; it is not consumer tracking.
 - No advertising pixel, behavioural advertising SDK or session-replay SDK is present.
 
@@ -42,6 +44,7 @@ This is a narrower product decision than the 2026 statutory statistical-purpose 
 | Better Auth/session cookies | Sign-in, session integrity and security | Necessary; disclose; no reuse |
 | Anonymous Programme session cookie | Deliver the requested anonymous Programme flow | Necessary; short-lived; HTTP-only |
 | Pending Programme claim cookie | Complete the requested account claim | Necessary; short-lived; HTTP-only |
+| Language-preference cookie | Preserve the public language explicitly requested by the user | Necessary to the requested presentation; language only; no country/commercial authority; no reuse |
 | Programme `sessionStorage` | Same-tab exact-subject draft/access continuity | Necessary to the requested flow; clears on lifecycle/withdrawal |
 | Comparison `sessionStorage` | Remember the user's same-tab comparison selection | User-requested functionality; no profiling |
 | Vercel operational/security logs | Hosting, security and fault handling; not browser storage controlled by the application | Minimise and govern under UK GDPR/provider terms |

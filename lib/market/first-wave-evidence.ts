@@ -10,7 +10,7 @@ export type MarketEvidenceRecord = Readonly<{
   authority: string;
   title: string;
   url: string;
-  reviewedAt: "2026-08-30" | "2026-09-02";
+  reviewedAt: "2026-09-03";
   nextReviewAt: string;
   classification: EvidenceClassification;
   materialFact: string;
@@ -58,14 +58,14 @@ export type FirstWaveMarketEvidenceProfile = Readonly<{
   copy: FirstWaveSafetyCopy;
 }>;
 
-const reviewedAt = "2026-08-30" as const;
+const reviewedAt = "2026-09-03" as const;
 
 function evidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
   return { ...input, reviewedAt, classification: "DETECTED" };
 }
 
 function peruEvidence(input: Omit<MarketEvidenceRecord, "reviewedAt" | "classification">): MarketEvidenceRecord {
-  return { ...input, reviewedAt: "2026-09-02", classification: "DETECTED" };
+  return { ...input, reviewedAt, classification: "DETECTED" };
 }
 
 export const FIRST_WAVE_MARKET_EVIDENCE = {

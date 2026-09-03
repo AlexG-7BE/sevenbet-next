@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent }
 
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
-import type { MarketProfile } from "@/lib/market/registry";
+import type { LanguageRouteProfile } from "@/lib/market/registry";
 import styles from "./PublicShell.module.css";
 
 function languageName(locale: string, activeLocale: string) {
@@ -45,19 +45,19 @@ function CheckIcon() {
 export function MarketLanguageSelector({
   messages,
   presentation,
-  selectableMarkets,
+  selectableLanguages,
   variant,
 }: {
   messages: PublicShellMessages;
   presentation: PresentationResolution;
-  selectableMarkets: readonly MarketProfile[];
+  selectableLanguages: readonly LanguageRouteProfile[];
   variant: "desktop" | "mobile";
 }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const returnTo = `${pathname}${searchParams.size ? `?${searchParams}` : ""}`;
   const menuId = `market-language-menu-${variant}`;
-  const activeChoice = `${presentation.market.countryCode}|${presentation.locale}`;
+  const activeChoice = presentation.language;
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -120,14 +120,14 @@ export function MarketLanguageSelector({
         aria-controls={menuId}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`${messages.changeMarketAndLanguage}: ${languageName(presentation.locale, presentation.locale)} · ${presentation.market.seoDisplayName}`}
+        aria-label={`${messages.changeMarketAndLanguage}: ${languageName(presentation.locale, presentation.locale)}`}
         className={styles.selectorTrigger}
         onClick={() => setOpen((current) => !current)}
         ref={triggerRef}
         type="button"
       >
         <GlobeIcon />
-        <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)} · {presentation.market.countryCode}</span>
+        <span className={styles.selectorTriggerCode}>{languageCode(presentation.locale)}</span>
         <ChevronIcon />
       </button>
       <input name="returnTo" type="hidden" value={returnTo} />
@@ -152,8 +152,8 @@ export function MarketLanguageSelector({
             <span className={styles.selectorOptionCopy}><strong>{messages.automaticPresentation}</strong></span>
             <span aria-hidden="true" className={styles.selectorCheckSlot} />
           </button>
-          {selectableMarkets.flatMap((profile) => profile.localeRoutes.filter((route) => route.enabled).map(({ locale }) => {
-            const choice = `${profile.countryCode}|${locale}`;
+          {selectableLanguages.map((profile) => {
+            const choice = profile.language;
             const selected = choice === activeChoice;
             return (
               <button
@@ -165,18 +165,17 @@ export function MarketLanguageSelector({
                 type="submit"
                 value={choice}
               >
-                <span aria-hidden="true" className={styles.languageBadge}>{languageCode(locale)}</span>
+                <span aria-hidden="true" className={styles.languageBadge}>{profile.language.toUpperCase()}</span>
                 <span className={styles.selectorOptionCopy}>
-                  <strong>{languageName(locale, presentation.locale)}</strong>
-                  <small>{profile.seoDisplayName}</small>
+                  <strong>{languageName(profile.defaultLocale, presentation.locale)}</strong>
                 </span>
                 <span aria-hidden="true" className={styles.selectorCheckSlot}>{selected ? <CheckIcon /> : null}</span>
               </button>
             );
-          }))}
+          })}
+          <p className={styles.selectorStatus}>{messages.presentationOnlyNotice} <strong>{presentation.marketDisplayName}</strong></p>
         </div>
       ) : null}
-      {variant === "mobile" ? <p>{messages.presentationOnlyNotice}</p> : null}
     </form>
   );
 }

@@ -4,6 +4,7 @@ import { publicFooterMessages, publicShellMessages } from "@/lib/i18n/public-she
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { resolvePresentationContext } from "@/lib/market/presentation-resolver";
 import { isLocalizedPublicDestination, localizePublicPath } from "@/lib/market/routing";
+import { DEFAULT_MARKET_PROFILE, marketProfileByLocale } from "@/lib/market/registry";
 import styles from "./PublicShell.module.css";
 
 export function PublicFooter({
@@ -15,6 +16,7 @@ export function PublicFooter({
 }) {
   const shell = publicShellMessages(presentation.locale);
   const footer = publicFooterMessages(presentation.locale);
+  const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const groups = [
     { title: footer.explore, links: [[shell.bestOffers, "/best-offers"], [shell.casinos, "/casinos"], [shell.bonuses, "/bonuses"], [shell.learn, "/learn"]] },
     { title: footer.programmeAndSupport, links: [[shell.startProgramme, "/program"], [footer.tenSteps, "/10-steps"], [footer.responsibleGambling, "/responsible-gambling"], [footer.protectedHelp, "/help"]] },
@@ -24,8 +26,8 @@ export function PublicFooter({
     if (href === "/program" && programme) return programme.path;
     return presentation.source === "EXPLICIT_ROUTE"
       && (!programme || programme.localizePublicLinks)
-      && isLocalizedPublicDestination(href, presentation.market)
-      ? localizePublicPath(presentation.market, presentation.locale, href)
+      && isLocalizedPublicDestination(href, editorialProfile)
+      ? localizePublicPath(editorialProfile, presentation.locale, href)
       : href;
   };
   return (

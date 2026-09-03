@@ -93,6 +93,8 @@ test("casino discovery fixtures include the required wide, landscape, square and
   const seed: PublicCasinoCardDto = {
     id: "seed",
     dataClassification: "DEMO_FIXTURE",
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: "seed",
     name: "Seed Casino",
     logo: null,

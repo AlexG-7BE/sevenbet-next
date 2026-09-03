@@ -93,8 +93,9 @@ function record(slug: string, patch: {
 }
 
 async function selectedOfferTitle(bonuses: ReturnType<typeof snapshotBonus>[]) {
-  const result = await new PublicComparisonService(store([record("alpha", { bonuses }), record("beta")]), () => now)
-    .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  const context = commercialContext(["alpha", "beta"]);
+  const result = await new PublicComparisonService(store([record("alpha", { bonuses }), record("beta")], context), () => now, allowOperatorAuthority, () => true)
+    .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   return result.groups.flatMap((group) => group.rows).find((row) => row.id === "offer-title")?.values.alpha.text;
 }
 
@@ -111,6 +112,14 @@ function activeOffer(casinoId: string): DiscoveryContext["offers"][number] {
   };
 }
 
+function commercialContext(slugs: string[]): Pick<DiscoveryContext, "offers" | "redirects"> {
+  const offers = slugs.map((slug) => activeOffer(`${slug}-id`));
+  return {
+    offers,
+    redirects: offers.map((offer) => ({ casinoId: offer.casinoId, casinoBonusId: null, affiliateOfferId: offer.id, slug: `${offer.casinoId}-governed` })),
+  };
+}
+
 function store(records: PublishedCasinoSnapshotRecord[], context: Partial<DiscoveryContext> = {}, fail = false): PublicCasinoDiscoveryStore {
   return {
     listPublished: async () => { if (fail) throw new Error("database unavailable"); return records; },
@@ -120,33 +129,34 @@ function store(records: PublishedCasinoSnapshotRecord[], context: Partial<Discov
 
 test("query parser accepts repeated slugs, removes duplicates, preserves order and caps three", () => {
   const params = new URLSearchParams("casino=charlie&casino=alpha&casino=charlie&casino=beta&casino=delta&country=gb&differences=true");
-  const query = parsePublicComparisonQuery(params);
+  const query = parsePublicComparisonQuery(params, "GB");
   assert.deepEqual(query.casinos, ["charlie", "alpha", "beta"]);
   assert.equal(query.country, "GB");
   assert.equal(query.differences, true);
   assert.equal(query.selectionMode, "explicit");
   assert.ok(query.issues.includes("TOO_MANY_CASINOS"));
-  assert.equal(serializePublicComparisonQuery(query).toString(), "casino=charlie&casino=alpha&casino=beta&country=GB&differences=true");
+  assert.equal(serializePublicComparisonQuery(query).toString(), "casino=charlie&casino=alpha&casino=beta&differences=true");
 });
 
 test("query parser safely normalizes malformed values and supports an explicit empty state", () => {
-  const malformed = parsePublicComparisonQuery({ casino: ["../unsafe", "valid-slug"], country: "GBR", differences: "maybe" });
+  const malformed = parsePublicComparisonQuery({ casino: ["../unsafe", "valid-slug"], country: "GBR", differences: "maybe" }, "GB");
   assert.deepEqual(malformed.casinos, ["valid-slug"]);
   assert.equal(malformed.country, "GB");
-  assert.deepEqual(malformed.issues.sort(), ["INVALID_CASINO", "INVALID_COUNTRY", "INVALID_DIFFERENCES"].sort());
-  const empty = parsePublicComparisonQuery({ empty: "true", country: "GB" });
+  assert.deepEqual(malformed.issues.sort(), ["INVALID_CASINO", "INVALID_DIFFERENCES"].sort());
+  const empty = parsePublicComparisonQuery({ empty: "true", country: "PE" }, "GB");
   assert.equal(empty.selectionMode, "empty");
-  assert.equal(comparisonHref(empty, [], { empty: true }), "/compare?country=GB&empty=true");
+  assert.equal(comparisonHref(empty, [], { empty: true }), "/compare?empty=true");
 });
 
 test("clean comparison uses a generic deterministic GB default without slug rules", async () => {
-  const service = new PublicComparisonService(store([
+  const records = [
     record("zulu", { score: 9.2, featured: true }),
     record("alpha", { score: 9.2, featured: true }),
     record("bravo", { score: 9.8, recommended: true }),
     record("canada", { score: 10, featured: true, country: "CA" }),
-  ]), () => now);
-  const result = await service.compare(parsePublicComparisonQuery({}));
+  ];
+  const service = new PublicComparisonService(store(records, commercialContext(["zulu", "alpha", "bravo"])), () => now, allowOperatorAuthority, () => true);
+  const result = await service.compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
   assert.equal(result.defaulted, true);
   assert.equal(result.status, "available");
   assert.deepEqual(result.selectedSlugs, ["alpha", "zulu", "bravo"]);
@@ -154,16 +164,15 @@ test("clean comparison uses a generic deterministic GB default without slug rule
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
 });
 
-test("exact-ID demonstrations remain classified, non-commercial and SEO-safe", async () => {
+test("exact-ID demonstrations are absent from comparison", async () => {
   const result = await new PublicComparisonService(store([
     record("fictional-one", { id: temporaryDemoCasinoIds[0], score: 9 }),
     record("fictional-two", { id: temporaryDemoCasinoIds[1], score: 8 }),
-  ]), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({}), allowJurisdictionAuthority);
-  assert.equal(result.status, "available");
-  assert.equal(result.inventoryMode, "DEMO_ONLY");
-  assert.ok(result.candidates.every((candidate) => candidate.dataClassification === "DEMO_FIXTURE"));
-  assert.ok(result.casinos.every((casino) => casino.dataClassification === "DEMO_FIXTURE"));
-  assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
+  ]), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
+  assert.equal(result.status, "no-comparable");
+  assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
+  assert.deepEqual(result.candidates, []);
+  assert.deepEqual(result.casinos, []);
 });
 
 test("offer completeness treats zero minimum deposit as present and null as missing", async () => {
@@ -226,16 +235,16 @@ test("changing zero to null can change the selected offer without slug rules", a
 
 test("explicit empty, one, two and three selections are represented without auto-fill", async () => {
   const service = new PublicComparisonService(store([record("alpha"), record("beta"), record("gamma")]), () => now);
-  const empty = await service.compare(parsePublicComparisonQuery({ empty: "true" }));
+  const empty = await service.compare(parsePublicComparisonQuery({ empty: "true" }, "GB"));
   assert.equal(empty.status, "empty");
   assert.deepEqual(empty.selectedSlugs, []);
-  const one = await service.compare(parsePublicComparisonQuery({ casino: "beta" }));
+  const one = await service.compare(parsePublicComparisonQuery({ casino: "beta" }, "GB"));
   assert.equal(one.status, "one-selected");
   assert.deepEqual(one.selectedSlugs, ["beta"]);
-  const two = await service.compare(parsePublicComparisonQuery({ casino: ["beta", "alpha"] }));
+  const two = await service.compare(parsePublicComparisonQuery({ casino: ["beta", "alpha"] }, "GB"));
   assert.equal(two.status, "available");
   assert.deepEqual(two.casinos.map((casino) => casino.slug), ["beta", "alpha"]);
-  const three = await service.compare(parsePublicComparisonQuery({ casino: ["gamma", "beta", "alpha"] }));
+  const three = await service.compare(parsePublicComparisonQuery({ casino: ["gamma", "beta", "alpha"] }, "GB"));
   assert.equal(three.status, "available");
   assert.deepEqual(three.selectedSlugs, ["gamma", "beta", "alpha"]);
 });
@@ -245,7 +254,7 @@ test("explicit comparison preserves published profiles whose editorial score is 
     record("scoreless-alpha", { score: null }),
     record("scoreless-beta", { score: null }),
   ]), () => now);
-  const result = await service.compare(parsePublicComparisonQuery({ casino: ["scoreless-alpha", "scoreless-beta"], country: "GB" }));
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["scoreless-alpha", "scoreless-beta"], country: "PE" }, "GB"));
 
   assert.equal(result.status, "available");
   assert.deepEqual(result.selectedSlugs, ["scoreless-alpha", "scoreless-beta"]);
@@ -258,27 +267,33 @@ test("explicit comparison preserves published profiles whose editorial score is 
 
 test("unknown and unpublished selections stay visible as unavailable reasons", async () => {
   const service = new PublicComparisonService(store([record("alpha"), record("draft", { status: "DRAFT" }), record("archived", { archived: true })]), () => now);
-  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "missing", "draft"] }));
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "missing", "draft"] }, "GB"));
   assert.equal(result.status, "no-comparable");
   assert.deepEqual(result.casinos.map((casino) => casino.slug), ["alpha"]);
   assert.deepEqual(result.reasons.map((reason) => reason.slug), ["missing", "draft"]);
   assert.ok(result.reasons.every((reason) => reason.code === "UNKNOWN_OR_UNPUBLISHED"));
 });
 
-test("declared market state does not claim location and blocks unavailable records from the matrix", async () => {
+test("declared unavailable and missing-market states remain neutral, explicit comparison facts", async () => {
   const service = new PublicComparisonService(store([record("alpha"), record("beta", { availability: "UNAVAILABLE" }), record("gamma", { country: "CA" })]), () => now);
-  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta", "gamma"], country: "GB" }));
-  assert.equal(result.status, "no-comparable");
-  assert.deepEqual(result.reasons.map((reason) => reason.code), ["DECLARED_MARKET_UNAVAILABLE", "DECLARED_MARKET_UNKNOWN"]);
-  assert.ok(result.casinos.slice(1).every((casino) => !casino.action.available && casino.action.href === null));
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta", "gamma"], country: "CA" }, "GB"));
+  assert.equal(result.status, "available");
+  assert.deepEqual(result.reasons, []);
+  assert.deepEqual(result.casinos.map((casino) => casino.marketState), ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]);
+  assert.ok(result.casinos.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore === null));
+  assert.ok(result.candidates.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore === null));
+  assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
+  const offerRows = result.groups.find((group) => group.id === "offer")?.rows ?? [];
+  assert.ok(offerRows.every((row) => Object.values(row.values).every((cell) => ["Unknown", "Unavailable"].includes(cell.status))));
+  assert.doesNotMatch(JSON.stringify(offerRows), /published offer|Synthetic demonstration only|New fictional customers/i);
 });
 
 test("show differences hides only identical text and status pairs", async () => {
   const alpha = record("alpha", { score: 9, wagering: null, withdrawal: null });
   const beta = record("beta", { score: 8, wagering: 30, withdrawal: null });
-  const service = new PublicComparisonService(store([alpha, beta]), () => now);
-  const all = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
-  const differences = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"], differences: "true" }));
+  const service = new PublicComparisonService(store([alpha, beta], commercialContext(["alpha", "beta"])), () => now, allowOperatorAuthority, () => true);
+  const all = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
+  const differences = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"], differences: "true" }, "GB"), allowJurisdictionAuthority);
   const allRows = all.groups.flatMap((group) => group.rows);
   const differenceRows = differences.groups.flatMap((group) => group.rows);
   assert.ok(differences.hiddenEqualRows > 0);
@@ -290,7 +305,8 @@ test("show differences hides only identical text and status pairs", async () => 
 test("missing values remain truthful evidence states", async () => {
   const alpha = record("alpha", { wagering: null, withdrawal: null, responsibleTools: [] });
   const beta = record("beta");
-  const result = await new PublicComparisonService(store([alpha, beta]), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  const result = await new PublicComparisonService(store([alpha, beta], commercialContext(["alpha", "beta"])), () => now, allowOperatorAuthority, () => true)
+    .compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   const rows = new Map(result.groups.flatMap((group) => group.rows).map((row) => [row.id, row]));
   assert.deepEqual(rows.get("wagering")?.values.alpha, { text: "Unknown", status: "Unknown" });
   assert.deepEqual(rows.get("withdrawal-time")?.values.alpha, { text: "Unknown", status: "Unknown" });
@@ -302,7 +318,7 @@ test("commercial action requires an active governed offer and safe internal redi
   const beta = record("beta");
   const offer = activeOffer("alpha-id");
   const context = { offers: [offer], redirects: [{ casinoId: "alpha-id", casinoBonusId: null, affiliateOfferId: offer.id, slug: "alpha-governed" }] };
-  const result = await new PublicComparisonService(store([alpha, beta], context), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }), allowJurisdictionAuthority);
+  const result = await new PublicComparisonService(store([alpha, beta], context), () => now, allowOperatorAuthority, () => true).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"), allowJurisdictionAuthority);
   assert.deepEqual(result.casinos[0].action, { available: true, href: "/r/alpha-governed", label: "Visit Casino alpha", reason: "Rechecked by the governed internal redirect route." });
   assert.equal(result.casinos[1].action.available, false);
   assert.equal(result.casinos[1].action.href, null);
@@ -322,7 +338,7 @@ test("commercial denial omits aliases, affiliate context and operator evaluation
     async evaluate() { operatorCalls += 1; throw new Error("must not evaluate"); },
     async evaluateMany() { operatorCalls += 1; return new Map(); },
   }, () => true);
-  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  const result = await service.compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"));
   assert.deepEqual(contextOptions, { includeAliases: false, includeCommercial: false });
   assert.equal(operatorCalls, 0);
   assert.equal(result.status, "available");
@@ -330,7 +346,7 @@ test("commercial denial omits aliases, affiliate context and operator evaluation
 });
 
 test("repository failures fail closed without legacy or fabricated records", async () => {
-  const result = await new PublicComparisonService(store([], {}, true), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }));
+  const result = await new PublicComparisonService(store([], {}, true), () => now).compare(parsePublicComparisonQuery({ casino: ["alpha", "beta"] }, "GB"));
   assert.equal(result.status, "projection-unavailable");
   assert.deepEqual(result.casinos, []);
   assert.deepEqual(result.candidates, []);

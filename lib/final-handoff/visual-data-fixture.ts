@@ -339,6 +339,8 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
     ...seed,
     id: previewAction ? "local-commercial-phase-preview" : temporaryDemoCasinoIds[index % temporaryDemoCasinoIds.length],
     dataClassification: previewAction ? "LOCAL_PREVIEW_FIXTURE" : "DEMO_FIXTURE",
+    disposition: previewAction ? "PROMOTABLE" : "INFORMATIONAL_ONLY",
+    dispositionReason: previewAction ? "EXACT_MARKET_AND_ROUTE_ELIGIBLE" : "NON_PUBLIC_SYNTHETIC_IDENTITY",
     slug: key,
     reviewHref: index === 0 ? "/casino/demo-plume?visualFixture=true" : null,
     name: sample.name,
@@ -375,6 +377,8 @@ function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPrevi
 const casinoFixtureSeed: PublicCasinoCardDto = {
   id: temporaryDemoCasinoIds[0],
   dataClassification: "DEMO_FIXTURE",
+  disposition: "INFORMATIONAL_ONLY",
+  dispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
   slug: "local-visual-fixture",
   name: "B4GAMBLE visual fixture",
   logo: null,
@@ -601,6 +605,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     return {
       id: `visual-comparison-${index}`,
       dataClassification: "DEMO_FIXTURE" as const,
+      disposition: "INFORMATIONAL_ONLY" as const,
       slug,
       name: offerSamples[index % offerSamples.length].name,
       summary: copy.summary,
@@ -618,6 +623,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
       ...casino,
       id: `visual-comparison-${index}`,
       dataClassification: "DEMO_FIXTURE" as const,
+      disposition: "INFORMATIONAL_ONLY" as const,
       reviewHref: "/casino/demo-plume?visualFixture=true",
       name: sample.name,
       summary: copy.summary,
@@ -670,6 +676,7 @@ export function withHandoffComparisonData(result: PublicComparisonResult, enable
     candidates: result.candidates.map((candidate, index) => ({
       ...candidate,
       dataClassification: "DEMO_FIXTURE",
+      disposition: "INFORMATIONAL_ONLY",
       name: offerSamples[index % offerSamples.length].name,
       logo: null,
       editorScore: offerSamples[index % offerSamples.length].score,

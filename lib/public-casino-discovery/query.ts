@@ -47,7 +47,8 @@ export function parseCasinoDiscoveryQuery(input: DiscoverySearchParams): CasinoD
   const requestedPageSize = integer(input, "pageSize", DEFAULT_DISCOVERY_PAGE_SIZE);
   return {
     ...(search ? { search } : {}),
-    country: tokens(input, "country", true),
+    // The market is request authority, never query state.
+    country: [],
     currency: tokens(input, "currency", true),
     license: tokens(input, "license"),
     payment: tokens(input, "payment"),
@@ -70,7 +71,7 @@ export function serializeCasinoDiscoveryQuery(query: CasinoDiscoveryQuery, optio
   const params = new URLSearchParams();
   if (query.search) params.set("q", query.search);
   const arrays: Array<[keyof CasinoDiscoveryQuery, string]> = [
-    ["country", "country"], ["currency", "currency"], ["license", "license"], ["payment", "payment"],
+    ["currency", "currency"], ["license", "license"], ["payment", "payment"],
     ["gameProvider", "gameProvider"], ["category", "category"], ["bonusType", "bonusType"],
   ];
   for (const [field, key] of arrays) for (const value of [...((query[field] as string[] | undefined) ?? [])].sort()) params.append(key, value);
@@ -89,5 +90,5 @@ export function discoveryHref(query: CasinoDiscoveryQuery, patch: Partial<Casino
 }
 
 export function hasDiscoveryFilters(query: CasinoDiscoveryQuery) {
-  return Boolean(query.search || query.country?.length || query.currency?.length || query.license?.length || query.payment?.length || query.gameProvider?.length || query.category?.length || query.bonusType?.length || query.hasBonus || query.hasAvailableVisitAction || query.hasResponsibleGambling || query.supportsCrypto || query.supportsMobile);
+  return Boolean(query.search || query.currency?.length || query.license?.length || query.payment?.length || query.gameProvider?.length || query.category?.length || query.bonusType?.length || query.hasBonus || query.hasAvailableVisitAction || query.hasResponsibleGambling || query.supportsCrypto || query.supportsMobile);
 }
