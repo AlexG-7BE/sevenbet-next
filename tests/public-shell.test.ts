@@ -106,13 +106,14 @@ test("the presentation selector applies one-tap choices with an accessible selec
   assert.doesNotMatch(selector, /<select|applyPreference/);
 });
 
-test("the public layout owns one landmark and reads auth on the server", () => {
+test("the public layout owns one landmark and reads only session-cookie presence", () => {
   const rootLayout = readFileSync("app/layout.tsx", "utf8");
   const publicLayout = readFileSync("app/(public)/layout.tsx", "utf8");
   const navigation = readFileSync("components/public-shell/PublicNavigation.tsx", "utf8");
 
   assert.doesNotMatch(rootLayout, /<Header|<Footer|<main id="main-content"/);
-  assert.match(publicLayout, /getServerSession/);
+  assert.match(publicLayout, /hasBetterAuthSessionCookie\(requestHeaders\)/);
+  assert.doesNotMatch(publicLayout, /getServerSession/);
   assert.match(publicLayout, /<main id="main-content"/);
   assert.match(navigation, /showModal\(\)/);
   assert.match(navigation, /event\.key === "Escape"/);
