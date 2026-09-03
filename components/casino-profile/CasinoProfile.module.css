@@ -11,6 +11,7 @@
   --teal: var(--sb-teal);
   --field: var(--sb-field);
   min-height: 100vh;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-seven-sans), Arial, sans-serif;
