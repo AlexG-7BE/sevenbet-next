@@ -87,21 +87,21 @@ test("search filters eligible public offers and returns deterministic pagination
   assert.equal(all.records[0].casino.slug, "beta");
 });
 
-test("trusted presentation country owns offer selection without a query override", async () => {
+test("trusted presentation country owns action projection without hiding global offers", async () => {
   const service = new PublicOfferService(store([
     offer("great-britain", { country: "GB", available: true }),
     offer("germany", { country: "DE", featured: true, available: true }),
   ]), { cmsEnabled: true, redirectEnabled: true }, allowOperatorAuthority);
   const baseQuery = parsePublicOfferQuery({});
   const deAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
-  assert.deepEqual((await service.searchOffers(baseQuery, deAuthority, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany"]);
-  assert.deepEqual((await service.searchOffers(baseQuery, { ...allowJurisdictionAuthority, countryCode: "ES" }, { defaultEditorialCountry: "ES" })).records, []);
-  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "GB" }), deAuthority, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany"]);
+  assert.deepEqual((await service.searchOffers(baseQuery, deAuthority, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany", "great-britain"]);
+  assert.deepEqual((await service.searchOffers(baseQuery, { ...allowJurisdictionAuthority, countryCode: "ES" }, { defaultEditorialCountry: "ES" })).records.map((item) => item.casino.slug), ["germany", "great-britain"]);
+  assert.deepEqual((await service.searchOffers(parsePublicOfferQuery({ country: "GB" }), deAuthority, { defaultEditorialCountry: "DE" })).records.map((item) => item.casino.slug), ["germany", "great-britain"]);
   const bestOffers = await service.getBestOffersPageData({ country: "DE" }, deAuthority);
-  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["germany"]);
+  assert.deepEqual(bestOffers.records.map((item) => item.casino.slug), ["germany", "great-britain"]);
 });
 
-test("DE/GB and GB/DE presentation-authority mismatches suppress commercial offers", async () => {
+test("DE/GB and GB/DE authority mismatches preserve offers but suppress actions", async () => {
   const service = new PublicOfferService(store([
     offer("de-offer", { country: "DE", available: true }),
     offer("gb-offer", { country: "GB", available: true }),
@@ -111,14 +111,16 @@ test("DE/GB and GB/DE presentation-authority mismatches suppress commercial offe
     commercialAuthorityForPresentation(allowJurisdictionAuthority, "DE"),
     { defaultEditorialCountry: "DE" },
   );
-  assert.deepEqual(deWithGbAuthority.records, []);
+  assert.equal(deWithGbAuthority.records.length, 2);
+  assert.ok(deWithGbAuthority.records.every((record) => !record.action.available));
   const assertedDeAuthority = { ...allowJurisdictionAuthority, countryCode: "DE" };
   const gbWithDeAuthority = await service.searchOffers(
     parsePublicOfferQuery({}),
     commercialAuthorityForPresentation(assertedDeAuthority, "GB"),
     { defaultEditorialCountry: "GB" },
   );
-  assert.deepEqual(gbWithDeAuthority.records, []);
+  assert.equal(gbWithDeAuthority.records.length, 2);
+  assert.ok(gbWithDeAuthority.records.every((record) => !record.action.available));
 });
 
 test("default page contains 24 records and page two preserves the twenty-fifth", async () => {
@@ -181,7 +183,7 @@ test("best-offer shortlist applies market, completeness, score, flags and term o
   const nonGb = offer("non-gb", { country: "IE", score: 10, featured: true });
   const featured = offer("featured", { score: 8, featured: true, wagering: 35 });
   const lowerWagering = offer("lower", { score: 8, featured: true, wagering: 20 });
-  assert.deepEqual(selectOverallShortlist([nonGb, featured, lowerWagering]).map((item) => item.casino.slug), ["lower", "featured"]);
+  assert.deepEqual(selectOverallShortlist([nonGb, featured, lowerWagering]).map((item) => item.casino.slug), ["lower", "non-gb", "featured"]);
 });
 
 test("Best Offers selectors produce generic deterministic winners without slug rules", () => {
@@ -192,9 +194,9 @@ test("Best Offers selectors produce generic deterministic winners without slug r
   const incomplete = offer("incomplete", { score: 10, featured: true });
   incomplete.bonus.eligibility = null;
   const shortlist = selectOverallShortlist([unknown, payout, incomplete, wagering, overall]);
-  assert.deepEqual(shortlist.map((item) => item.casino.slug), ["north", "unknown", "harbour", "atlas"]);
+  assert.deepEqual(shortlist.map((item) => item.casino.slug), ["unknown", "harbour", "north", "atlas"]);
   const winners = bestFitWinners(shortlist);
-  assert.equal(winners.overall?.casino.slug, "north");
+  assert.equal(winners.overall?.casino.slug, "unknown");
   assert.equal(winners.wagering?.casino.slug, "unknown");
   assert.equal(winners.payout?.casino.slug, "atlas");
 
@@ -219,15 +221,15 @@ test("withdrawal normalization is deterministic and missing signals never outran
   assert.equal(selectFasterPayout([missing, signalled])?.casino.slug, "zulu");
 });
 
-test("overall shortlist is GB-only, complete and capped at twelve with stable ties", () => {
+test("overall shortlist is global, complete and capped at twelve with stable ties", () => {
   const records = Array.from({ length: 14 }, (_, index) => offer(`offer-${String(index).padStart(2, "0")}`, { score: 8, featured: true }));
   records.push(offer("non-gb", { country: "IE", score: 10, featured: true }));
   records.push(offer("missing", { score: 10, featured: true }));
   records.at(-1)!.bonus.wageringMultiplier = null;
+  records.at(-1)!.bonus.wageringText = null;
   const shortlist = selectOverallShortlist(records);
   assert.equal(shortlist.length, 12);
-  assert.deepEqual(shortlist.slice(0, 2).map((item) => item.casino.slug), ["offer-00", "offer-01"]);
-  assert.ok(shortlist.every((item) => item.casino.countries.some((country) => country.countryCode === "GB" && country.availability === "AVAILABLE")));
+  assert.deepEqual(shortlist.slice(0, 2).map((item) => item.casino.slug), ["non-gb", "offer-00"]);
   assert.ok(shortlist.every((item) => item.bonus.wageringMultiplier !== null));
 });
 
@@ -309,7 +311,7 @@ test("redirect authority failure preserves published editorial offers without ac
   assert.equal(records[0].action.href, null);
 });
 
-test("commercial denial prevents affiliate route projection and operator evaluation", async () => {
+test("commercial denial prevents affiliate actions and operator evaluation without hiding offers", async () => {
   let includeCommercial: boolean | undefined;
   let operatorCalls = 0;
   const repository: PublicOfferStore = {
@@ -325,7 +327,8 @@ test("commercial denial prevents affiliate route projection and operator evaluat
   const result = await service.searchOffers(parsePublicOfferQuery({}));
   assert.equal(includeCommercial, false);
   assert.equal(operatorCalls, 0);
-  assert.deepEqual(result.records, []);
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].action.available, false);
 });
 
 test("public offer pages use the service boundary and expose no raw destination contract", () => {

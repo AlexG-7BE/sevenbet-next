@@ -36,21 +36,20 @@ test("media dimensions map to the supported presentation classes", () => {
   assert.equal(classifyMediaRatio({ width: 0, height: 0 }), "unknown");
 });
 
-test("surface compatibility rejects destructive aspect-ratio mismatches", () => {
-  for (const ratio of ["square", "landscape", "wide-landscape", "unknown"] as const) {
+test("card media stays horizontal while detail stages contain every controlled ratio", () => {
+  for (const ratio of ["square", "landscape", "wide-landscape", "ultra-wide", "unknown"] as const) {
     assert.equal(isFeaturedCardMediaCompatible(ratio), true, ratio);
   }
-  for (const ratio of ["portrait", "tall", "ultra-wide"] as const) {
+  for (const ratio of ["portrait", "tall"] as const) {
     assert.equal(isFeaturedCardMediaCompatible(ratio), false, ratio);
   }
-  for (const ratio of ["square", "landscape", "wide-landscape", "portrait", "tall", "unknown"] as const) {
+  for (const ratio of ["square", "landscape", "wide-landscape", "portrait", "tall", "ultra-wide", "unknown"] as const) {
     assert.equal(isCasinoHeroMediaCompatible(ratio), true, ratio);
   }
-  assert.equal(isCasinoHeroMediaCompatible("ultra-wide"), false);
 });
 
-test("real promotional media fails closed without a governed action", () => {
-  assert.equal(mayPresentPromotionalMedia({ demonstration: false, governedActionAvailable: false }), false);
+test("controlled promotional media stays editorially visible independently of its governed action", () => {
+  assert.equal(mayPresentPromotionalMedia({ demonstration: false, governedActionAvailable: false }), true);
   assert.equal(mayPresentPromotionalMedia({ demonstration: false, governedActionAvailable: true }), true);
   assert.equal(mayPresentPromotionalMedia({ demonstration: true, governedActionAvailable: false }), true);
 });

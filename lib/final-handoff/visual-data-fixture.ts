@@ -259,7 +259,13 @@ function handoffOffer(
   const asset = ["northstar", "aurora", "beacon", "canopy", "cedar"][index % 5];
   const hero = mediaMode === "best-offers"
     ? [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.landscape, phaseTwoMediaFixtures.square, null][index % 4]
-    : [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.square, null][index % 3];
+    : index === 0
+      ? phaseTwoMediaFixtures.wide
+      : index === 1
+        ? phaseTwoMediaFixtures.square
+        : index === 3
+          ? null
+          : [phaseTwoMediaFixtures.wide, phaseTwoMediaFixtures.square, null][index % 3];
   return {
     ...seed,
     casino: {
@@ -446,6 +452,8 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
+    presentationDisposition: "INFORMATIONAL_ONLY",
+    presentationDispositionReason: "NON_PUBLIC_SYNTHETIC_IDENTITY",
     domain: "example.invalid",
     name: sample.name,
     title: copy.title,

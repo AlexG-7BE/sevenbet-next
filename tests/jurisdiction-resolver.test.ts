@@ -17,20 +17,22 @@ test("supported country with an eligible local market permits all capabilities",
   assert.equal(result.referralAllowed, true);
 });
 
-test("commercial approval, unknown, conflicting, and unsupported contexts fail closed while preserving editorial access", async () => {
+test("explicit denials fail closed while an absent country policy uses the Founder global default", async () => {
   const noCommercial = await new JurisdictionResolver(store({ ...policy, commercialAllowed: false })).resolve(input());
   const unknown = await new JurisdictionResolver(store(policy)).resolve(input({ requestCountrySignal: null }));
   const conflict = await new JurisdictionResolver(store(policy)).resolve(input({ userSelectedCountry: "IE" }));
   const unsupported = await new JurisdictionResolver(store(null)).resolve(input());
   const invalid = await new JurisdictionResolver(store(policy)).resolve(input({ requestCountrySignal: { countryCode: "ZZ", trust: "TRUSTED", observedAt: now } }));
-  for (const result of [noCommercial, unknown, conflict, unsupported, invalid]) {
+  for (const result of [noCommercial, unknown, conflict, invalid]) {
     assert.equal(result.commercialAllowed, false);
     assert.equal(result.referralAllowed, false);
     assert.equal(result.editorialAllowed, true);
   }
   assert.equal(unknown.reasonCode, "UNKNOWN_LOCATION");
   assert.equal(conflict.reasonCode, "LOCATION_CONFLICT");
-  assert.equal(unsupported.reasonCode, "UNSUPPORTED_MARKET");
+  assert.equal(unsupported.reasonCode, "FOUNDER_GLOBAL_DEFAULT");
+  assert.equal(unsupported.commercialAllowed, true);
+  assert.equal(unsupported.referralAllowed, true);
   assert.equal(invalid.reasonCode, "UNKNOWN_LOCATION");
 });
 

@@ -68,7 +68,19 @@ export class JurisdictionResolver {
 
     let policy: JurisdictionPolicy | null;
     try { policy = await this.store.findByCountry(countryCode); } catch { return deny(input, "POLICY_UNAVAILABLE", countryCode); }
-    if (!policy) return deny(input, "UNSUPPORTED_MARKET", countryCode);
+    if (!policy) {
+      return decision(input, {
+        countryCode,
+        marketId: null,
+        jurisdictionId: null,
+        editorialAllowed: true,
+        commercialAllowed: true,
+        referralAllowed: true,
+        reasonCode: "FOUNDER_GLOBAL_DEFAULT",
+        policyVersion: "CASINO-COMMERCIAL-VISIBILITY-03",
+        revalidateAt: null,
+      });
+    }
     if (normalizeCountry(policy.countryCode) !== countryCode) return deny(input, "POLICY_UNAVAILABLE", countryCode, policy);
     if (input.policyVersion && input.policyVersion !== policy.policyVersion) return deny(input, "POLICY_STALE", countryCode, policy);
     if (

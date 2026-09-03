@@ -1,6 +1,4 @@
-import { getCasinos, type Casino } from "@/lib/data";
-import { mapLegacyCasino } from "@/lib/public-casino/public-casino.mapper";
-import { publicCasinoToOffers } from "@/lib/public-offer/public-offer.mapper";
+import type { Casino } from "@/lib/data";
 import { selectOverallShortlist } from "@/lib/public-offer/best-offer-ranking";
 import type {
   PublicOfferDTO,
@@ -57,15 +55,6 @@ export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
   return fixtures === offers.length ? "DEMO_ONLY" as const : "MIXED" as const;
 }
 
-function promotableOffers(offers: PublicOfferDTO[]) {
-  return offers.filter((offer) => (
-    offer.dataClassification === "PUBLISHED_RECORD"
-    && offer.commercialAvailability === "AVAILABLE"
-    && offer.action.available
-    && Boolean(offer.action.href && /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(offer.action.href))
-  ));
-}
-
 function textCompare(a: string, b: string) {
   return a.localeCompare(b, "en", { sensitivity: "base" });
 }
@@ -91,7 +80,8 @@ function sortOffers(offers: PublicOfferDTO[], sort: PublicOfferQuery["sort"]) {
 }
 
 function matches(offer: PublicOfferDTO, query: PublicOfferQuery) {
-  if (query.country && !offer.casino.countries.some((item) => item.countryCode === query.country && item.availability === "AVAILABLE")) return false;
+  // Trusted GEO controls the outbound action, not publication of researched
+  // offer content. Exact-market availability is therefore not a content filter.
   if (query.type && offer.bonus.type !== query.type) return false;
   if (query.payment && !offer.casino.payments.some((item) => item.key.toLowerCase() === query.payment || item.name.toLowerCase() === query.payment)) return false;
   if (query.crypto !== undefined && offer.casino.payments.some((item) => item.crypto) !== query.crypto) return false;
@@ -153,14 +143,7 @@ export class PublicOfferService {
 
   private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string } = {}) {
     if (!this.cmsEnabled()) {
-      return promotableOffers((this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
-        const legacy = mapLegacyCasino(casino);
-        return publicCasinoToOffers({
-          ...legacy,
-          affiliate: { href: null, available: false },
-          bonuses: legacy.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
-        });
-      }).map(classifyOffer));
+      return [];
     }
     try {
       const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
@@ -171,11 +154,12 @@ export class PublicOfferService {
         && authority?.countryCode === options.countryCode,
       );
       const records = await this.repository.listOffers({ includeCommercial: commercialProjection, countryCode: options.countryCode });
-      if (!commercialProjection) return [];
+      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
+      if (options.countryCode !== "GB") return records.map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
-      return promotableOffers(records
+      return records
         .map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
-        .map(classifyOffer));
+        .map(classifyOffer);
     } catch (cause) {
       if (options.throwOnError) throw cause;
       return [];
@@ -225,7 +209,6 @@ export class PublicOfferService {
 
   async getFeaturedOffers(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
-    if (!country) return [];
     const offers = await this.listEligibleOffers(authority, { countryCode: country });
     return selectOverallShortlist(offers, { country, limit: options.limit ?? 12 });
   }
@@ -233,7 +216,6 @@ export class PublicOfferService {
   async getBestOffersPageData(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
     const country = options.country;
     const limit = options.limit ?? 12;
-    if (!country) return { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     if (!this.cmsEnabled()) {
       const records = await this.getFeaturedOffers({ country, limit }, authority);
       return records.length

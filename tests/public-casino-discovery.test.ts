@@ -99,7 +99,7 @@ test("search ranking covers canonical name, alias, domain, punctuation, and stru
   assert.equal((await service.discover({ search: "b town" })).items[0]?.slug, "beta");
   assert.equal((await service.discover({ search: "beta.example" })).items[0]?.slug, "beta");
   assert.equal((await service.discover({ search: "evolution" }, null, { defaultEditorialCountry: "GB" })).items[0]?.slug, "alpha");
-  assert.equal((await service.discover({ search: "evolution" }, null, { defaultEditorialCountry: "CA" })).items[0]?.slug, "beta");
+  assert.deepEqual((await service.discover({ search: "evolution" }, null, { defaultEditorialCountry: "CA" })).items.map((item) => item.slug), ["alpha", "beta"]);
 });
 
 test("filters compose inside the trusted market and cannot aggregate countries", async () => {
@@ -180,10 +180,10 @@ test("Founder disposition matrix A-G is deterministic and cross-market safe", as
   assert.deepEqual([bySlug.get("matrix-a")?.disposition, bySlug.get("matrix-a")?.visitAction.available], ["PROMOTABLE", true], "A");
   assert.deepEqual([bySlug.get("matrix-b")?.disposition, bySlug.get("matrix-b")?.visitAction.available, bySlug.get("matrix-b")?.visitAction.redirectSlug], ["INFORMATIONAL_ONLY", false, null], "B");
   assert.deepEqual([bySlug.get("matrix-b")?.rating, bySlug.get("matrix-b")?.hero, bySlug.get("matrix-b")?.highlights], [8, null, ["Clear terms"]], "B preserves editorial substance while stripping promotional presentation");
-  assert.equal(bySlug.has("matrix-c"), false, "C");
+  assert.deepEqual([bySlug.get("matrix-c")?.disposition, bySlug.get("matrix-c")?.visitAction.available], ["INFORMATIONAL_ONLY", false], "C");
   assert.equal(bySlug.get("matrix-d")?.disposition, "INFORMATIONAL_ONLY", "D");
-  assert.deepEqual(bySlug.get("matrix-d")?.paymentMethods, [], "D must not borrow PE payments");
-  assert.deepEqual(bySlug.get("matrix-d")?.licenses, [], "D must not borrow PE licences");
+  assert.deepEqual(bySlug.get("matrix-d")?.paymentMethods.map((entry) => entry.label), ["Bitcoin"], "D preserves global payments without borrowing PE-only payments");
+  assert.deepEqual(bySlug.get("matrix-d")?.licenses.map((entry) => entry.label), ["MGA"], "D preserves global licences without borrowing PE-only licences");
   assert.equal(bySlug.get("matrix-f")?.dispositionReason, "EXACT_MARKET_STATUS_UNKNOWN_INFORMATION_ONLY", "F");
   assert.doesNotMatch(JSON.stringify(bySlug.get("matrix-f")), /not available/i, "F must preserve UNKNOWN");
   assert.equal(bySlug.has("matrix-g-demo"), false, "G demo");
@@ -240,13 +240,13 @@ test("every directory filter returns the expected classified identities and coun
     [{ currency: ["GBP"] }, ["alpha"]],
     [{ license: ["ukgc"] }, ["alpha"]],
     [{ payment: ["visa"] }, ["alpha"]],
-    [{ gameProvider: ["evolution"] }, ["alpha"]],
+    [{ gameProvider: ["evolution"] }, ["alpha", "beta"]],
     [{ category: ["slots"] }, ["alpha"]],
     [{ bonusType: ["WELCOME"] }, ["alpha"]],
     [{ hasBonus: true }, ["alpha"]],
     [{ hasAvailableVisitAction: true }, ["alpha"]],
     [{ hasResponsibleGambling: true }, ["alpha"]],
-    [{ supportsCrypto: true }, []],
+    [{ supportsCrypto: true }, ["beta"]],
     [{ supportsMobile: true }, ["alpha"]],
     [{ country: ["GB"], supportsMobile: true }, ["alpha"]],
   ];
@@ -303,7 +303,7 @@ test("GEO rules remove the action without removing the published review", async 
   assert.equal((await service.discover()).total, 1);
 });
 
-test("commercial denial strips bonus promotion while preserving neutral identity", async () => {
+test("commercial denial preserves researched bonus content while disabling its action", async () => {
   const casino = record("alpha-id", "alpha", "Alpha");
   const bonusId = "alpha-id-bonus";
   const context = {
@@ -312,7 +312,7 @@ test("commercial denial strips bonus promotion while preserving neutral identity
   };
   const result = await new PublicCasinoDiscoveryService(store([casino], context), () => now).discover();
   assert.equal(result.items[0].visitAction.available, false);
-  assert.equal(result.items[0].featuredBonus, null);
+  assert.equal(result.items[0].featuredBonus?.title, "Alpha welcome");
 });
 
 test("commercial denial omits affiliate context and operator evaluation while retaining aliases", async () => {

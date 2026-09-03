@@ -116,12 +116,14 @@ export interface DiscoveryOffer {
   countries: DiscoveryGeoRule[];
   program: {
     casinoId: string | null; status: string; workflowStatus: string; supportedCountries: string[]; archivedAt: Date | null;
+    metadata?: unknown;
     network: { active: boolean; archivedAt: Date | null };
   };
   trackingLinks: Array<{
     id: string; active: boolean; archivedAt: Date | null; validFrom: Date | null; expiresAt: Date | null;
     verifiedAt: Date | null; lastCheckedAt: Date | null; destinationUrl: string; trackingUrl: string;
     priority: number; geoMode: "GLOBAL" | "ALLOW" | "BLOCK"; countries: DiscoveryGeoRule[];
+    metadata?: unknown;
   }>;
 }
 export interface DiscoveryContext {

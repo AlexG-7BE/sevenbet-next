@@ -1,6 +1,8 @@
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 
 export const PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+export const CASINO_COMMERCIAL_VISIBILITY_AUTHORITY = "CASINO-COMMERCIAL-VISIBILITY-03";
+export const SUPERFLY_DETECTED_BLOCKED_COUNTRIES = ["DK", "ES", "FI", "NO", "CL", "SE", "GB"] as const;
 
 export type PartnerRouteReason =
   | "COMMERCIAL_POLICY_DENIED"
@@ -52,6 +54,7 @@ export interface PartnerRouteCandidate {
     domainLifecycleStatus: string | null;
     supportedCountries: string[];
     supportedCurrencies: string[];
+    metadata?: unknown;
     archivedAt: Date | string | null;
   };
   offer: {
@@ -133,6 +136,39 @@ function exactAllow(authority: ExactCountryAuthority | null, countryCode: string
   return authority?.mode === "ALLOW" && authority.countryCode.toUpperCase() === countryCode;
 }
 
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
+
+function strings(value: unknown) {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string").map((entry) => entry.toUpperCase()) : [];
+}
+
+export function hasFounderGlobalProductionAuthority(programMetadata: unknown, trackingMetadata: unknown, countryCode: string) {
+  const program = object(object(programMetadata).commercialVisibility);
+  const tracking = object(object(trackingMetadata).commercialVisibility);
+  const normalizedCountry = countryCode.toUpperCase();
+  const requiredBlocks = new Set<string>(SUPERFLY_DETECTED_BLOCKED_COUNTRIES);
+  const programBlocks = new Set(strings(program.blockedCountries));
+  const blockedCountries = strings(tracking.blockedCountries);
+  return program.authority === CASINO_COMMERCIAL_VISIBILITY_AUTHORITY
+    && program.productionEligibleByDefault === true
+    && [...requiredBlocks].every((country) => programBlocks.has(country) && blockedCountries.includes(country))
+    && tracking.authority === CASINO_COMMERCIAL_VISIBILITY_AUTHORITY
+    && tracking.productionEligibleByDefault === true
+    && typeof tracking.evidenceId === "string" && Boolean(tracking.evidenceId.trim())
+    && typeof tracking.canonicalUrlSha256 === "string" && /^[a-f0-9]{64}$/.test(tracking.canonicalUrlSha256)
+    && !requiredBlocks.has(normalizedCountry)
+    && !blockedCountries.includes(normalizedCountry);
+}
+
+function geoAllows(mode: string, authority: ExactCountryAuthority | null, countryCode: string) {
+  if (mode === "GLOBAL") return true;
+  if (mode === "ALLOW") return exactAllow(authority, countryCode);
+  if (mode === "BLOCK") return !(authority?.countryCode.toUpperCase() === countryCode && authority.mode === "BLOCK");
+  return false;
+}
+
 function intersects(left: string[], right: string[]) {
   const normalized = new Set(left.map((value) => value.toUpperCase()));
   return right.some((value) => normalized.has(value.toUpperCase()));
@@ -161,18 +197,22 @@ export function projectPartnerRoute(
   const market = candidate.marketProfile;
   const offerCountry = candidate.offer.countryAuthority;
   const trackingCountry = candidate.tracking.countryAuthority;
+  const globalAuthority = hasFounderGlobalProductionAuthority(candidate.program.metadata, candidate.tracking.metadata, countryCode);
 
   if (options.commercialAllowed === false) reasons.push("COMMERCIAL_POLICY_DENIED");
   if (options.referralAllowed === false) reasons.push("REFERRAL_POLICY_DENIED");
   if (options.redirectEnabled === false) reasons.push("REDIRECT_ENGINE_DISABLED");
-  if (!market || market.casinoId !== candidate.casino.id || market.countryCode.toUpperCase() !== countryCode || market.availability !== "AVAILABLE") {
+  if ((!market || market.casinoId !== candidate.casino.id || market.countryCode.toUpperCase() !== countryCode) && !globalAuthority) {
+    reasons.push("MARKET_PROFILE_MISSING_OR_UNAVAILABLE");
+  } else if (market && ["UNAVAILABLE", "NOT_AVAILABLE", "RESTRICTED"].includes(market.availability.toUpperCase())) {
     reasons.push("MARKET_PROFILE_MISSING_OR_UNAVAILABLE");
   }
   if (!candidate.network.active || candidate.network.archivedAt) reasons.push("NETWORK_INACTIVE");
   if (candidate.program.status !== "ACTIVE" || candidate.program.archivedAt || isInactiveLifecycle(candidate.program.domainLifecycleStatus)
     || candidate.program.casinoId !== candidate.casino.id) reasons.push("PROGRAM_INACTIVE");
   if (candidate.program.workflowStatus !== "PUBLISHED") reasons.push("PROGRAM_NOT_PUBLISHED");
-  if (!candidate.program.supportedCountries.some((value) => value.toUpperCase() === countryCode)) reasons.push("PROGRAM_MARKET_NOT_EXPLICITLY_SUPPORTED");
+  if (candidate.program.supportedCountries.length > 0
+    && !candidate.program.supportedCountries.some((value) => value.toUpperCase() === countryCode)) reasons.push("PROGRAM_MARKET_NOT_EXPLICITLY_SUPPORTED");
 
   const offerStart = asDate(candidate.offer.startAt);
   const offerEnd = asDate(candidate.offer.expiresAt);
@@ -180,7 +220,7 @@ export function projectPartnerRoute(
     || candidate.offer.casinoId !== candidate.casino.id || (offerStart && offerStart > now) || (offerEnd && offerEnd <= now)) {
     reasons.push("OFFER_INACTIVE_OR_EXPIRED");
   }
-  if (candidate.offer.geoMode !== "ALLOW" || !exactAllow(offerCountry, countryCode)) reasons.push("OFFER_MARKET_NOT_EXPLICITLY_ALLOWED");
+  if (!geoAllows(candidate.offer.geoMode, offerCountry, countryCode)) reasons.push("OFFER_MARKET_NOT_EXPLICITLY_ALLOWED");
   if (market) {
     const marketCurrencies = [market.primaryCurrency, ...market.supportedCurrencies].filter((value): value is string => Boolean(value));
     const marketLanguages = [market.primaryLanguage, ...market.supportedLanguages].filter((value): value is string => Boolean(value));
@@ -202,7 +242,7 @@ export function projectPartnerRoute(
   if (!candidate.tracking.active || candidate.tracking.archivedAt || candidate.tracking.offerId !== candidate.offer.id
     || (linkStart && linkStart > now) || (linkEnd && linkEnd <= now)) reasons.push("TRACKING_INACTIVE_OR_EXPIRED");
   if (!safeHttps(candidate.tracking.destinationUrl) || !safeHttps(candidate.tracking.trackingUrl)) reasons.push("TRACKING_UNSAFE");
-  if (candidate.tracking.geoMode !== "ALLOW" || !exactAllow(trackingCountry, countryCode)) reasons.push("TRACKING_MARKET_NOT_EXPLICITLY_ALLOWED");
+  if (!geoAllows(candidate.tracking.geoMode, trackingCountry, countryCode)) reasons.push("TRACKING_MARKET_NOT_EXPLICITLY_ALLOWED");
   const verifiedAt = asDate(candidate.tracking.verifiedAt);
   const lastCheckedAt = asDate(candidate.tracking.lastCheckedAt);
   if (!verifiedAt || !lastCheckedAt || verifiedAt > now || lastCheckedAt > now
@@ -211,11 +251,13 @@ export function projectPartnerRoute(
     reasons.push("TRACKING_VERIFICATION_MISSING_OR_STALE");
   }
 
-  const productionVerifiedAt = asDate(trackingCountry?.productionEligibilityVerifiedAt ?? null);
-  const productionExpiresAt = asDate(trackingCountry?.productionEligibilityExpiresAt ?? null);
-  if (!trackingCountry?.productionEligible || !productionVerifiedAt || productionVerifiedAt > now
-    || !trackingCountry.productionEligibilityEvidence?.trim()) reasons.push("PRODUCTION_AUTHORITY_ABSENT");
-  if (productionExpiresAt && productionExpiresAt <= now) reasons.push("PRODUCTION_AUTHORITY_EXPIRED");
+  if (!globalAuthority) {
+    const productionVerifiedAt = asDate(trackingCountry?.productionEligibilityVerifiedAt ?? null);
+    const productionExpiresAt = asDate(trackingCountry?.productionEligibilityExpiresAt ?? null);
+    if (!trackingCountry?.productionEligible || !productionVerifiedAt || productionVerifiedAt > now
+      || !trackingCountry.productionEligibilityEvidence?.trim()) reasons.push("PRODUCTION_AUTHORITY_ABSENT");
+    if (productionExpiresAt && productionExpiresAt <= now) reasons.push("PRODUCTION_AUTHORITY_EXPIRED");
+  }
 
   if (!candidate.redirect.active || candidate.redirect.archivedAt || candidate.redirect.casinoId !== candidate.casino.id
     || candidate.redirect.affiliateOfferId !== candidate.offer.id || candidate.redirect.casinoBonusId !== candidate.offer.casinoBonusId

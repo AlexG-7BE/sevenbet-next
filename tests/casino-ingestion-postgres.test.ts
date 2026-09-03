@@ -203,8 +203,13 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), undefined, () => false);
     const peProfile = await publicService.getCasino("betsson", undefined, "PE");
     const seProfile = await publicService.getCasino("betsson", undefined, "SE");
-    assert.equal(peProfile, null, "PE contradiction evidence must hide the exact-market public profile");
-    assert.equal(seProfile, null, "SE contradiction evidence must hide the exact-market public profile");
+    for (const [countryCode, profile] of [["PE", peProfile], ["SE", seProfile]] as const) {
+      assert.ok(profile, `${countryCode} contradiction evidence must preserve the editorial profile`);
+      assert.equal(profile.presentationDisposition, "INFORMATIONAL_ONLY");
+      assert.equal(profile.presentationDispositionReason, "EXACT_MARKET_EVIDENCE_CONTRADICTED");
+      assert.equal(profile.affiliate.available, false, `${countryCode} contradiction evidence must keep the CTA off`);
+      assert.equal(profile.affiliate.href, null);
+    }
 
     const globalProfile = await publicService.getCasino("betsson");
     assert.equal(globalProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
@@ -218,13 +223,17 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     assert.deepEqual(globalProfile?.bonuses, []);
     assert.equal(globalProfile?.affiliate.available, false);
 
-    const hiddenDiscoveryCases: Array<[string, Parameters<typeof discovery.discover>[0]]> = [
+    const informationalDiscoveryCases: Array<[string, Parameters<typeof discovery.discover>[0]]> = [
       ["PE", { country: ["SE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"] }],
       ["SE", { country: ["PE"], currency: ["SEK"], payment: ["swish"], license: ["spelinspektionen"] }],
     ];
-    for (const [countryCode, query] of hiddenDiscoveryCases) {
+    for (const [countryCode, query] of informationalDiscoveryCases) {
       const result = await discovery.discover(query, null, { defaultEditorialCountry: countryCode });
-      assert.equal(result.total, 0, `${countryCode} contradiction evidence must hide the exact-market discovery card`);
+      assert.equal(result.total, 1, `${countryCode} contradiction evidence must preserve the exact-market discovery card`);
+      assert.equal(result.items[0]?.slug, "betsson");
+      assert.equal(result.items[0]?.disposition, "INFORMATIONAL_ONLY");
+      assert.equal(result.items[0]?.dispositionReason, "EXACT_MARKET_EVIDENCE_CONTRADICTED");
+      assert.equal(result.items[0]?.visitAction.available, false, `${countryCode} contradiction evidence must keep the CTA off`);
     }
 
     const globalDiscovery = await discovery.discover({ country: ["PE"] });

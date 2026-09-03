@@ -1,0 +1,15 @@
+{
+  "release": "CASINO-COMMERCIAL-VISIBILITY-03",
+  "observedAt": "2026-09-03T10:48:03.928Z",
+  "brands": [
+    { "slug": "diamond7", "catalogEvidenceId": "7381a728-f834-4a5c-946e-3c852972f9b4", "offerEvidenceId": "c02eaa93-1ba0-4272-a7c5-f9badcbe629b", "routeEvidenceId": "afee713e-0d73-4276-8fce-fe79bf6d7b30", "routeSha256": "df2aaa6d61ecb0e6f62de629313fa0e1940417ea30f835feadb8f4bbe75c085b", "mediaSha256": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61", "payments": 10, "providers": 10, "categories": 3, "bonuses": 1 },
+    { "slug": "gday-casino", "catalogEvidenceId": "70591321-fee8-4be9-a75c-276b50c60576", "offerEvidenceId": "2de7ac4d-e348-41a6-a12a-fa088e641f29", "routeEvidenceId": "0f5e6c60-8db9-46d3-a2e5-237ded899ca4", "routeSha256": "cfb4358a622cfc2ef3a8669112ea57e0fd94b78334708c9b2dbca3b375b4670e", "mediaSha256": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671", "payments": 12, "providers": 11, "categories": 5, "bonuses": 1 },
+    { "slug": "21-prive", "catalogEvidenceId": "6f952894-2b74-4a06-8fba-405696d0a13c", "offerEvidenceId": "f92cbaf2-2608-4c31-a0ee-d19ce7138ac5", "routeEvidenceId": "9fa35fb8-c6b2-452c-9776-146777001502", "routeSha256": "34d4f3a8319d811e3a647aedb02bad4c3fe7ca840d9ce76a256db4383eaee275", "mediaSha256": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef", "payments": 14, "providers": 16, "categories": 3, "bonuses": 1 },
+    { "slug": "skol-casino", "catalogEvidenceId": "f59aff7c-e830-4fc8-aeda-1755b745ccf7", "offerEvidenceId": "47327f39-d0fb-4b20-87bb-bf8a5ffb914d", "routeEvidenceId": "09c6424d-2d3e-4cff-a78f-36a56d97954a", "routeSha256": "0291cbf9628461454f5c794533cf2af223f71b2dbafca408f15bee76344f9b7c", "mediaSha256": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48", "payments": 10, "providers": 8, "categories": 4, "bonuses": 1 },
+    { "slug": "slotnite", "catalogEvidenceId": "98a97b0a-5f68-40fe-ba21-f52fae8da192", "offerEvidenceId": "53f4a9cb-8c8d-457f-8f5c-33554fc15189", "routeEvidenceId": "5774fd82-1ebc-4a6e-9252-8c0add384a91", "routeSha256": "d3e597395afa17ffcc95133560cce21ffb1f625717b69505ea4400829a8051f3", "mediaSha256": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3", "payments": 14, "providers": 13, "categories": 3, "bonuses": 1 },
+    { "slug": "hello-casino", "catalogEvidenceId": "7221c80f-07ff-47f3-99ee-d26f98ee2aaa", "offerEvidenceId": "f1281703-218a-43fd-a850-58fee12e2d88", "routeEvidenceId": "bd47f0ea-9e44-40d9-8b36-e487fd96d4de", "routeSha256": "af40b20544662bb848f1ade77f708dab7f6f449d9c95059b43b4e63681a0cd6a", "mediaSha256": null, "payments": 12, "providers": 17, "categories": 3, "bonuses": 1 }
+  ],
+  "superflyBlockedCountries": ["DK", "ES", "FI", "NO", "CL", "SE", "GB"],
+  "helloObsoleteOfferForbidden": "EUR 100 + 25 spins",
+  "expected": { "realCasinos": 8, "superflyBrands": 6, "superflyBonuses": 6, "superflyPrograms": 6, "superflyOffers": 6, "superflyTrackingLinks": 6, "superflyRedirects": 6, "superflyCountryBlocksPerOffer": 7 }
+}

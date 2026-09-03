@@ -57,6 +57,7 @@ export class PartnerRouteRepository implements PartnerRouteStore {
           domainLifecycleStatus: offer.program.domainLifecycleStatus,
           supportedCountries: offer.program.supportedCountries,
           supportedCurrencies: offer.program.supportedCurrencies,
+          metadata: offer.program.metadata,
           archivedAt: offer.program.archivedAt,
         },
         offer: {

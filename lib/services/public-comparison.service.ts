@@ -57,9 +57,9 @@ function comparisonCompleteness(casino: ComparablePublicCasinoDTO) {
     + Number(casino.responsibleGamblingTools.length > 0);
 }
 
-function defaultCandidates(casinos: DispositionedCasino[], country: string) {
+function defaultCandidates(casinos: DispositionedCasino[]) {
   return casinos
-    .filter(({ casino, disposition }) => disposition === "PROMOTABLE" && marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
+    .filter(({ casino }) => comparisonCompleteness(casino) >= 7)
     .sort((a, b) => Number(b.casino.featured) - Number(a.casino.featured)
       || Number(b.casino.recommended) - Number(a.casino.recommended)
       || (b.casino.editorScore ?? -1) - (a.casino.editorScore ?? -1)
@@ -86,7 +86,6 @@ function selectComparisonBonus(casino: PublicCasinoDTO) {
 function safeAction(
   casino: PublicCasinoDTO,
   country: string,
-  state: PublicComparisonMarketState,
   context: DiscoveryContext,
   now: Date,
   authority?: CommercialJurisdictionAuthority | null,
@@ -94,10 +93,9 @@ function safeAction(
   redirectEnabled = isAffiliateRedirectEnabled(),
 ): PublicComparisonAction {
   if (isTemporaryDemoCasinoId(casino.id)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Fictional demonstration records never expose a commercial action." };
-  if (state !== "AVAILABLE") return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Declared market availability does not permit a commercial action." };
   if (!jurisdictionAllowsReferral(authority)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Current market authority does not permit a commercial action." };
-  if (!operatorEligibility?.referralEligible) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Required operator and commercial evidence is not currently complete." };
-  const visit = resolvePublicVisitAction(context, casino.id, null, country, now, authority, operatorEligibility, redirectEnabled);
+  if (country === "GB" && !operatorEligibility?.referralEligible) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "Required operator and commercial evidence is not currently complete." };
+  const visit = resolvePublicVisitAction(context, casino.id, selectComparisonBonus(casino)?.id ?? null, country, now, authority, operatorEligibility, redirectEnabled);
   const href = visit.available && visit.redirectSlug ? `/r/${visit.redirectSlug}` : null;
   if (!href || !internalRedirect.test(href)) return { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed internal action is currently available." };
   return { available: true, href, label: `Visit ${casino.name}`, reason: "Rechecked by the governed internal redirect route." };
@@ -245,15 +243,14 @@ export class PublicComparisonService {
       return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
     });
     const inventoryMode: PublicCasinoInventoryMode = "PUBLISHED_ONLY";
-    const operatorDecisions = commercialProjection
+    const operatorDecisions = commercialProjection && query.country === "GB"
       ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now)
       : new Map<string, GbOperatorEligibilityDecision>();
     const all: DispositionedCasino[] = globalCasinos.flatMap((globalCasino): DispositionedCasino[] => {
       const exactProfile = globalCasino.marketProfiles.find((profile) => profile.countryCode === query.country) ?? null;
       const casino = projectPublicCasinoMarket(globalCasino, query.country);
-      const state = marketState(casino, query.country);
-      const action = exactProfile?.availability === "AVAILABLE" && commercialProjection
-        ? safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), redirectEnabled)
+      const action = commercialProjection
+        ? safeAction(casino, query.country, context, now, authority, operatorDecisions.get(casino.id), redirectEnabled)
         : { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed action is available for the exact trusted market." } satisfies PublicComparisonAction;
       const decision = decidePublicCasinoDisposition({
         casinoId: casino.id,
@@ -262,24 +259,14 @@ export class PublicComparisonService {
         governedVisitAvailable: action.available,
       });
       if (decision.disposition === "HIDDEN") return [];
-      const boundedCasino = decision.disposition === "PROMOTABLE"
-        ? casino
-        : {
-            ...casino,
-            featured: false,
-            recommended: false,
-            bonuses: [],
-            affiliate: { href: null, available: false },
-            media: { ...casino.media, hero: null },
-          };
-      return [{ casino: boundedCasino, disposition: decision.disposition, action: decision.disposition === "PROMOTABLE" ? action : { ...action, available: false, href: null } }];
+      return [{ casino, disposition: decision.disposition, action: decision.disposition === "PROMOTABLE" ? action : { ...action, available: false, href: null } }];
     });
     const candidates: PublicComparisonCandidate[] = all.map(({ casino, disposition }): PublicComparisonCandidate => {
       const state = marketState(casino, query.country);
       return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
     }).sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
 
-    const selected = query.selectionMode === "default" ? defaultCandidates(all, query.country) : query.casinos.flatMap((slug) => {
+    const selected = query.selectionMode === "default" ? defaultCandidates(all) : query.casinos.flatMap((slug) => {
       const entry = all.find(({ casino }) => casino.slug === slug);
       return entry ? [entry] : [];
     });

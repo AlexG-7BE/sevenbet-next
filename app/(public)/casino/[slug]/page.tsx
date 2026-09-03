@@ -14,7 +14,6 @@ import { isLocalHandoffVisualDataFixture, withHandoffCasinoEditorialData, withHa
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import {
   commercialAuthorityForPresentation,
-  marketAvailability,
   productHref,
   productMetadata,
 } from "@/lib/market/product-context";
@@ -45,18 +44,11 @@ const loadCasinoPage = cache(async (slug: string) => {
     presentation.marketCountryCode,
   );
   const availableForPresentation = candidate
-    ? marketAvailability(candidate.countries, presentation.marketCountryCode)
+    ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))
     : false;
-  const boundedCandidate = candidate && !availableForPresentation
-    ? {
-        ...candidate,
-        affiliate: { href: null, available: false },
-        bonuses: candidate.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
-      }
-    : candidate;
   return {
-    casino: boundedCandidate?.source === "cms" ? boundedCandidate : null,
-    editorialResult: boundedCandidate ? editorialResult : null,
+    casino: candidate?.source === "cms" ? candidate : null,
+    editorialResult: candidate ? editorialResult : null,
     presentation,
     availableForPresentation,
   };
