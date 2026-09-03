@@ -29,7 +29,8 @@ export function isFeaturedCardMediaCompatible(ratio: MediaRatioClass) {
 }
 
 export function isCasinoHeroMediaCompatible(ratio: MediaRatioClass) {
-  return ratio !== "tall" && ratio !== "portrait";
+  void ratio;
+  return true;
 }
 
 export function mayPresentPromotionalMedia({

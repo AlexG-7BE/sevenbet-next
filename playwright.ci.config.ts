@@ -29,6 +29,7 @@ export default defineConfig({
     timeout: 120_000,
     env: {
       ...process.env,
+      VERCEL: "",
       VERCEL_ENV: "",
       DATABASE_URL: ciDatabaseUrl,
       DIRECT_URL: ciDatabaseUrl,
