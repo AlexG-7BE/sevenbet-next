@@ -4,9 +4,9 @@
 **Evidence date:** 3 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `f7f1251558ca6be773863023f01d2a8a1a054543`
-**Verified post-release runtime baseline SHA:** `f7f1251558ca6be773863023f01d2a8a1a054543`
-**Verified post-release runtime deployment:** Ready; `dpl_Guy4E9LLYKQpws5MHWjQ7GYTibKZ`
+**Current Production application SHA (live provider evidence):** `769bf26317aab408eee3a3026f64822e09317608`
+**Verified post-release runtime baseline SHA:** `769bf26317aab408eee3a3026f64822e09317608`
+**Verified post-release runtime deployment:** Ready; `dpl_3JgZXZSPvv2HHud9shXJJiqh9EaW`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -34,10 +34,28 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **PLATFORM READY IN PRODUCTION — NO ACTIVE ROUTE** | Normal exact Casino × GEO campaign/link/asset ingestion is operational; current evidence still authorises no outbound route. |
-| Casino market data | **PRODUCTION ARCHITECTURE COMPLETE; BETSSON PE/SE FACTUAL DATA PUBLISHED** | Migration 0025 and the market-aware runtime are live. Exactly one non-commercial Betsson PE/SE factual bundle was imported and published; contradictions and unknowns are retained, while affiliate action and `productionEligible` remain false. |
+| Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; NO ACTIVE ROUTE** | The checksum-bound nine-profile factual set now has eight complete global editorial identities, exact Founder-approved scores, published reviews, SEO and controlled real brand marks. Contradictions and unknowns remain explicit; all commercial routes remain absent. |
 | Public language / market presentation | **READY IN PRODUCTION — INDEPENDENT DIMENSIONS** | Six published language-only routes share one real global Casino identity layer; trusted request GEO alone controls market projection, and all current routes remain non-commercial. |
 
 ### Recent implementation state
+
+**DETECTED — CASINO-REAL-CATALOG-02 COMPLETE, 3 September 2026:**
+[PR #136](https://github.com/AlexG-7BE/sevenbet-next/pull/136) merged as
+`68c9a8160d642c8795b3b7206fb8e67100978773` after all required checks and
+actual Preview acceptance passed. A fingerprint-guarded Production
+reconciliation published complete reviews, Founder-approved Editor Scores, SEO
+and controlled real brand marks for Betsson, Skol Casino, Hello Casino, G'day
+Casino, Diamond7, DragonBet, 21 Privé and Slotnite. The immediate repeat was a
+no-op; exact final scoped counts are eight Casinos, nine profiles, ten licences,
+95 evidence rows, 22 payments, three providers, 28 categories, two factual
+bonus rows, eight published reviews/scores/SEO/media assets and zero commercial
+routes. [PR #137](https://github.com/AlexG-7BE/sevenbet-next/pull/137)
+then merged the live-acceptance overflow correction as
+`769bf26317aab408eee3a3026f64822e09317608`; Ready deployment
+`dpl_3JgZXZSPvv2HHud9shXJJiqh9EaW` serves the canonical aliases. Full
+desktop/mobile/browser/API/GEO/redirect/Programme acceptance and final
+read-only database/route-health postflight passed. See the
+[CASINO-REAL-CATALOG-02 release record](06_Operations/Casino-Real-Catalog-02-Release-Record-2026-09-03.md).
 
 **DETECTED — GEO-LANGUAGE-GLOBAL-CATALOG-01 COMPLETE, 3 September 2026:**
 [PR #134](https://github.com/AlexG-7BE/sevenbet-next/pull/134) merged as
