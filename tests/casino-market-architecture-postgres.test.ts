@@ -180,19 +180,35 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     assert.deepEqual(se?.categories.map((category) => category.key), ["live-se"]);
     assert.doesNotMatch(JSON.stringify(se), /PEN|Yape|MINCETUR|PE slots|legacy-global-language/);
 
-    assert.deepEqual(unqualified?.marketProfiles.map((profile) => profile.countryCode), ["PE"]);
-    assert.deepEqual(unqualified?.payments.map((payment) => payment.key), ["yape"]);
-    assert.doesNotMatch(JSON.stringify(unqualified), /SEK|Swish|Spelinspektionen|SE live casino|legacy-global-language/);
+    assert.deepEqual(unqualified?.marketProfiles, []);
+    assert.deepEqual(unqualified?.countries, []);
+    assert.deepEqual(unqualified?.currencies, []);
+    assert.deepEqual(unqualified?.languages, []);
+    assert.deepEqual(unqualified?.payments, []);
+    assert.deepEqual(unqualified?.licenses, []);
+    assert.deepEqual(unqualified?.categories, []);
+    assert.doesNotMatch(JSON.stringify(unqualified), /PEN|Yape|MINCETUR|PE slots|SEK|Swish|Spelinspektionen|SE live casino|legacy-global-language/);
     assert.equal(unqualified?.affiliate.available, false);
 
-    assert.equal((await discovery.discover({ country: ["PE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"], category: ["slots-pe"] })).total, 1);
-    assert.equal((await discovery.discover({ country: ["SE"], currency: ["SEK"], payment: ["swish"], license: ["spelinspektionen"], category: ["live-se"] })).total, 1);
-    assert.equal((await discovery.discover({ country: ["PE"], payment: ["swish"] })).total, 0);
-    assert.equal((await discovery.discover({ country: ["SE"], currency: ["PEN"] })).total, 0);
+    assert.equal((await discovery.discover(
+      { country: ["SE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"], category: ["slots-pe"] },
+      null,
+      { defaultEditorialCountry: "PE" },
+    )).total, 1);
+    assert.equal((await discovery.discover(
+      { country: ["PE"], currency: ["SEK"], payment: ["swish"], license: ["spelinspektionen"], category: ["live-se"] },
+      null,
+      { defaultEditorialCountry: "SE" },
+    )).total, 1);
+    assert.equal((await discovery.discover({ payment: ["swish"] }, null, { defaultEditorialCountry: "PE" })).total, 0);
+    assert.equal((await discovery.discover({ currency: ["PEN"] }, null, { defaultEditorialCountry: "SE" })).total, 0);
 
     const unqualifiedDiscovery = await discovery.discover();
     assert.equal(unqualifiedDiscovery.total, 1);
-    assert.deepEqual(unqualifiedDiscovery.items[0]?.countries.map((country) => country.key), ["PE"]);
+    assert.deepEqual(unqualifiedDiscovery.items[0]?.countries, []);
+    assert.deepEqual(unqualifiedDiscovery.items[0]?.licenses, []);
+    assert.deepEqual(unqualifiedDiscovery.items[0]?.paymentMethods, []);
+    assert.deepEqual(unqualifiedDiscovery.items[0]?.categories, []);
     assert.equal(unqualifiedDiscovery.items[0]?.visitAction.available, false);
 
     assert.equal(await prisma.affiliateProgram.count({ where: { casinoId: CASINO_ID } }), 0);
