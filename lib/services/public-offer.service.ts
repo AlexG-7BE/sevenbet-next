@@ -153,7 +153,8 @@ export class PublicOfferService {
         && jurisdictionAllowsReferral(authority)
         && authority?.countryCode === options.countryCode,
       );
-      const records = await this.repository.listOffers({ includeCommercial: commercialProjection, countryCode: options.countryCode });
+      const records = (await this.repository.listOffers({ includeCommercial: commercialProjection, countryCode: options.countryCode }))
+        .filter((record) => !isTemporaryDemoCasinoId(record.casino.id));
       if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
       if (options.countryCode !== "GB") return records.map(classifyOffer);
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());

@@ -22,6 +22,7 @@ async function openOk(page: import("@playwright/test").Page, pathname: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), pathname).toBeLessThanOrEqual(1);
   const html = await page.content();
   expect(html, `${pathname}: raw Superfly route`).not.toMatch(/go\.superflypartners\.net/i);
+  expect(html, `${pathname}: temporary demonstration identity`).not.toMatch(/\/casino\/demo-|Demo (?:Tide|Vale) Casino|Fictional operator/i);
   expect(html, `${pathname}: runtime error`).not.toMatch(/Application error|Internal Server Error|This page could not be found/i);
 }
 
