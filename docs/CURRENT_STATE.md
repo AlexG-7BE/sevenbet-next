@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 3 September 2026
+**Evidence date:** 4 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `769bf26317aab408eee3a3026f64822e09317608`
-**Verified post-release runtime baseline SHA:** `769bf26317aab408eee3a3026f64822e09317608`
-**Verified post-release runtime deployment:** Ready; `dpl_3JgZXZSPvv2HHud9shXJJiqh9EaW`
+**Current Production application SHA (live provider evidence):** `2507043cb945f2b920b73522763f51f36b3c246c`
+**Verified post-release runtime baseline SHA:** `2507043cb945f2b920b73522763f51f36b3c246c`
+**Verified post-release runtime deployment:** Ready; `dpl_7RFc2zonoZ9Upp9Fw5YtAmsvR8Ax`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -33,11 +33,29 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Legal / administrative compliance | **READY WITH FOUNDER-ACCEPTED DEFERRALS** | Public legal work is closed for current scope; specified administrative items remain open. |
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
-| Commercial partner activation | **PLATFORM READY IN PRODUCTION — NO ACTIVE ROUTE** | Normal exact Casino × GEO campaign/link/asset ingestion is operational; current evidence still authorises no outbound route. |
-| Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; NO ACTIVE ROUTE** | The checksum-bound nine-profile factual set now has eight complete global editorial identities, exact Founder-approved scores, published reviews, SEO and controlled real brand marks. Contradictions and unknowns remain explicit; all commercial routes remain absent. |
-| Public language / market presentation | **READY IN PRODUCTION — INDEPENDENT DIMENSIONS** | Six published language-only routes share one real global Casino identity layer; trusted request GEO alone controls market projection, and all current routes remain non-commercial. |
+| Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
+| Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
+| Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — CASINO-COMMERCIAL-VISIBILITY-03 COMPLETE, 3 September 2026:**
+[PR #139](https://github.com/AlexG-7BE/sevenbet-next/pull/139) merged as
+`e418d894d3f7156f60b2742c2c9389e11e8d7432` after all required CI and exact
+Preview acceptance passed. A fingerprint-guarded Production reconciliation
+published complete global catalog facts and one welcome offer for Diamond7,
+G'day Casino, 21 Privé, Skol Casino, Slotnite and Hello Casino, plus six exact
+Superfly programme/offer/link/redirect graphs carrying the seven-country block
+set. The repeated write was a no-op. Live acceptance then detected that older
+RFC-012 demo offers were still entering the shared offer repository; release
+was held, [PR #140](https://github.com/AlexG-7BE/sevenbet-next/pull/140)
+excluded them at the service boundary and merged as
+`2507043cb945f2b920b73522763f51f36b3c246c`. Ready Production deployment
+`dpl_7RFc2zonoZ9Upp9Fw5YtAmsvR8Ax` is sourced from that exact merge and serves
+the canonical aliases. Final Production browser/database acceptance reports
+eight real profiles, six real offers/routes, 42 detected route blocks, zero
+demo identities, zero raw tracking URLs, zero issues and zero destructive
+writes. See the [CASINO-COMMERCIAL-VISIBILITY-03 release record](06_Operations/Casino-Commercial-Visibility-03-Release-Record-2026-09-03.md).
 
 **DETECTED — CASINO-REAL-CATALOG-02 COMPLETE, 3 September 2026:**
 [PR #136](https://github.com/AlexG-7BE/sevenbet-next/pull/136) merged as

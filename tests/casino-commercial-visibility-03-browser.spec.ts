@@ -47,14 +47,17 @@ test("live catalog, bonuses and Best Offers contain real records without synthet
 test("all eight live profiles expose scores, reviews and populated global facts", async ({ page }) => {
   for (const [slug, name] of realCasinos) {
     await openOk(page, `/en/casino/${slug}`);
-    await expect(page.getByRole("heading", { level: 1, name: new RegExp(name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") })).toBeVisible();
+    const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    await expect(page.getByRole("heading", { level: 1, name: new RegExp(escapedName, "i") })).toBeVisible();
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
     await expect(page.getByText(/editor score/i).first()).toBeVisible();
-    await expect(page.getByText(/published review/i).first()).toBeVisible();
+    await expect(page.getByRole("region", { name: new RegExp(`${escapedName}: the B4GAMBLE review`, "i") })).toBeVisible();
     if (slug !== "betsson" && slug !== "dragonbet") {
-      await expect(page.getByText(/payment records/i).first()).toBeVisible();
-      await expect(page.getByText(/providers/i).first()).toBeVisible();
-      await expect(page.getByText(/offer terms/i).first()).toBeVisible();
+      const evidence = page.locator("main details").filter({ has: page.locator("summary", { hasText: "Evidence, payments & control tools" }) }).first();
+      await evidence.locator("summary").click();
+      await expect(evidence.getByText("Payment records", { exact: true })).toBeVisible();
+      await expect(evidence.getByText("Providers", { exact: true })).toBeVisible();
+      await expect(page.getByRole("region", { name: "Offer & terms" })).toBeVisible();
     }
     if (slug === "hello-casino") {
       await expect(page.getByText("Bonus expires after 30 days; spins expire after 10 days.", { exact: true })).toBeVisible();

@@ -1,5 +1,12 @@
 # Temporary Production Demo Casinos
 
+> **Current public-state amendment — DETECTED, 3 September 2026:** this file
+> records the historical RFC-012 dataset and its exact cleanup controls.
+> `CASINO-COMMERCIAL-VISIBILITY-03` supersedes its public-presentation use.
+> Temporary demo rows may remain as controlled database artifacts, but current
+> public discovery, profiles, comparison, Best Offers and Bonuses must exclude
+> them. The exact-ID cleanup safety contract below remains operative.
+
 ## Governing decision
 
 RFC-012 authorises exactly 25 temporary synthetic casino aggregates in the current production database and a public-offer projection for `/best-offers` and `/bonuses`. Separate Demo infrastructure and the future RFC-011 fixture adapter remain out of scope.
