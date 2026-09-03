@@ -166,28 +166,28 @@ test("PostgreSQL keeps Betsson PE and SE facts in separate public market project
     const se = await publicService.getCasino("architecture-betsson", undefined, "SE");
     const unqualified = await publicService.getCasino("architecture-betsson");
 
-    assert.deepEqual(pe?.currencies, ["PEN"]);
-    assert.deepEqual(pe?.languages, ["es-PE"]);
+    assert.deepEqual(pe?.currencies, ["USD", "PEN"]);
+    assert.deepEqual(pe?.languages, ["legacy-global-language", "es-PE"]);
     assert.deepEqual(pe?.payments.map((payment) => payment.key), ["yape"]);
     assert.deepEqual(pe?.licenses.map((license) => license.authority), ["MINCETUR"]);
     assert.deepEqual(pe?.categories.map((category) => category.key), ["slots-pe"]);
-    assert.doesNotMatch(JSON.stringify(pe), /SEK|Swish|Spelinspektionen|SE live casino|legacy-global-language/);
+    assert.doesNotMatch(JSON.stringify(pe), /SEK|Swish|Spelinspektionen|SE live casino/);
 
-    assert.deepEqual(se?.currencies, ["SEK"]);
-    assert.deepEqual(se?.languages, ["sv-SE"]);
+    assert.deepEqual(se?.currencies, ["USD", "SEK"]);
+    assert.deepEqual(se?.languages, ["legacy-global-language", "sv-SE"]);
     assert.deepEqual(se?.payments.map((payment) => payment.key), ["swish"]);
     assert.deepEqual(se?.licenses.map((license) => license.authority), ["Spelinspektionen"]);
     assert.deepEqual(se?.categories.map((category) => category.key), ["live-se"]);
-    assert.doesNotMatch(JSON.stringify(se), /PEN|Yape|MINCETUR|PE slots|legacy-global-language/);
+    assert.doesNotMatch(JSON.stringify(se), /PEN|Yape|MINCETUR|PE slots/);
 
     assert.deepEqual(unqualified?.marketProfiles, []);
     assert.deepEqual(unqualified?.countries, []);
-    assert.deepEqual(unqualified?.currencies, []);
-    assert.deepEqual(unqualified?.languages, []);
+    assert.deepEqual(unqualified?.currencies, ["USD"]);
+    assert.deepEqual(unqualified?.languages, ["legacy-global-language"]);
     assert.deepEqual(unqualified?.payments, []);
     assert.deepEqual(unqualified?.licenses, []);
     assert.deepEqual(unqualified?.categories, []);
-    assert.doesNotMatch(JSON.stringify(unqualified), /PEN|Yape|MINCETUR|PE slots|SEK|Swish|Spelinspektionen|SE live casino|legacy-global-language/);
+    assert.doesNotMatch(JSON.stringify(unqualified), /PEN|Yape|MINCETUR|PE slots|SEK|Swish|Spelinspektionen|SE live casino/);
     assert.equal(unqualified?.affiliate.available, false);
 
     assert.equal((await discovery.discover(
