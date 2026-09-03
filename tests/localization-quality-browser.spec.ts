@@ -3,10 +3,14 @@ import { expect, test, type Page } from "@playwright/test";
 import { homeTranslation } from "../lib/i18n/home-catalog";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
 import { publicShellMessages } from "../lib/i18n/public-shell-catalog";
-import { INITIAL_EUROPEAN_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "../lib/market/registry";
+import {
+  INITIAL_EUROPEAN_MARKET_PROFILES,
+  PUBLISHED_LANGUAGE_ROUTE_PROFILES,
+  publicMarketPath,
+} from "../lib/market/registry";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
-const coreProfiles = PUBLICATION_APPROVED_MARKET_PROFILES;
+const coreProfiles = PUBLISHED_LANGUAGE_ROUTE_PROFILES;
 const viewportWidths = [360, 375, 390, 412, 430, 768, 1024, 1280, 1366, 1440, 1536, 1920] as const;
 const unresolvedToken = /\{\{?[a-z][a-z0-9_-]*\}?\}/i;
 const fakeControl = /\b(?:Filter|Filtre|Filtro|Suodatin)\s*[1-5]\b/i;
@@ -34,20 +38,20 @@ async function assertNoHorizontalOverflow(page: Page, context: string) {
   ).toBeLessThanOrEqual(geometry.viewportWidth + 1);
 }
 
-test("Preview and Production-grade selectors expose only public-core-ready markets", async ({ page }) => {
-  await page.goto(`${baseUrl}/de-de`, { waitUntil: "domcontentloaded" });
+test("Preview and Production-grade selectors expose only published languages", async ({ page }) => {
+  await page.goto(`${baseUrl}/de`, { waitUntil: "domcontentloaded" });
   const messages = publicShellMessages("de-DE");
   await page.getByRole("button", { name: messages.changeMarketAndLanguage }).first().click();
   const menu = page.getByRole("menu", { name: messages.changeMarketAndLanguage }).first();
   const values = await menu.locator('button[name="choice"]').evaluateAll((buttons) => buttons.map((button) => (button as HTMLButtonElement).value));
-  expect(values).toEqual(["automatic", "GB|en-GB", "DE|de-DE", "ES|es-ES", "PE|es-PE", "GR|el-GR", "SE|sv-SE", "DK|da-DK"]);
-  for (const denied of ["IT|it-IT", "PT|pt-PT", "NL|nl-NL", "FI|fi-FI", "NO|nb-NO", "CA|en-CA", "CA|fr-CA"]) {
+  expect(values).toEqual(["automatic", "en", "de", "es", "el", "sv", "da"]);
+  for (const denied of ["it", "pt", "nl", "fi", "nb", "fr"]) {
     await expect(menu.locator(`button[value="${denied}"]`)).toHaveCount(0);
   }
 });
 
 test("Danish Bonuses renders the five real curated controls and no raw token", async ({ page }) => {
-  await page.goto(`${baseUrl}/da-dk/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/da/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   const labels = ["Bedst samlet", "Lavt omsætningskrav", "Lav indbetaling", "Krypto", "Nyeste"];
   const controls = page.getByRole("group", { name: productPageMessages("da-DK").bonuses.directoryTitle }).getByRole("button");
   await expect(controls).toHaveCount(5);
@@ -64,10 +68,10 @@ test("Danish Bonuses renders the five real curated controls and no raw token", a
 
 for (const profile of coreProfiles) {
   const locale = profile.defaultLocale;
-  const prefix = publicMarketPath(profile, locale).replace(/\/$/, "");
+  const prefix = `/${profile.publicSlug}`;
   const routes = ["/", "/best-offers", "/casinos", "/bonuses", "/10-steps", "/about", "/contact", "/faq", "/learn", "/methodology"] as const;
 
-  test(`${profile.countryCode} public-core routes have resolved copy, metadata and responsive geometry`, async ({ page }) => {
+  test(`${profile.language} public-core routes have resolved copy, metadata and responsive geometry`, async ({ page }) => {
     test.setTimeout(180_000);
     for (const width of [390, 1536]) {
       await page.setViewportSize({ width, height: width === 390 ? 844 : 1000 });
@@ -75,19 +79,19 @@ for (const profile of coreProfiles) {
         const fixture = ["/best-offers", "/casinos", "/bonuses"].includes(route) ? "?visualFixture=true" : "";
         const pathname = route === "/" ? prefix || "/" : `${prefix}${route}` || route;
         const response = await page.goto(`${baseUrl}${pathname}${fixture}`, { waitUntil: "domcontentloaded" });
-        expect(response?.status(), `${profile.countryCode}:${route}:${width}`).toBe(200);
+        expect(response?.status(), `${profile.language}:${route}:${width}`).toBe(200);
         await expect(page.locator("html")).toHaveAttribute("lang", locale);
         const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
         expect(new URL(canonical ?? "http://invalid").pathname).toBe(pathname);
-        if (profile.countryCode !== "GB") await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
+        if (!profile.indexable) await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
         const [bodyText, title, description] = await Promise.all([
           page.locator("body").innerText(),
           page.title(),
           page.locator('meta[name="description"]').getAttribute("content"),
         ]);
-        expect(`${bodyText}\n${title}\n${description ?? ""}`, `${profile.countryCode}:${route}:token`).not.toMatch(unresolvedToken);
-        expect(bodyText, `${profile.countryCode}:${route}:fake control`).not.toMatch(fakeControl);
-        await assertNoHorizontalOverflow(page, `${profile.countryCode}:${route}:${width}`);
+        expect(`${bodyText}\n${title}\n${description ?? ""}`, `${profile.language}:${route}:token`).not.toMatch(unresolvedToken);
+        expect(bodyText, `${profile.language}:${route}:fake control`).not.toMatch(fakeControl);
+        await assertNoHorizontalOverflow(page, `${profile.language}:${route}:${width}`);
       }
     }
   });
@@ -117,7 +121,7 @@ test("every Home-ready European locale keeps its hero inside all required viewpo
 
 test("the Danish empty-state and metadata paths interpolate market names", async ({ page }) => {
   const messages = productPageMessages("da-DK");
-  await page.goto(`${baseUrl}/da-dk/bonuses?maxDeposit=0`, { waitUntil: "domcontentloaded" });
+  await page.goto(`${baseUrl}/da/bonuses?maxDeposit=0`, { waitUntil: "domcontentloaded" });
   await expect(page.locator("body")).not.toContainText("{market}");
   await expect(page).not.toHaveTitle(/\{market\}/);
   expect(messages.bonuses.noMatchesTitle).toContain("{market}");

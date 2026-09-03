@@ -1,0 +1,165 @@
+# RFC-039 — Language-Only Public Routing and Global Casino Catalog
+
+## Status
+
+`ACTIVE`. Approved for implementation and ordinary release by the explicit
+Founder execution instruction `GEO-LANGUAGE-GLOBAL-CATALOG-01` on 3 September
+2026.
+
+This RFC supersedes only the conflicting public URL, user-control, request
+resolution, SEO-alternate and unqualified public-casino query semantics in
+RFC-037 and RFC-038. Their durable language/market separation, exact factual
+market grain, evidence, publication, Programme/privacy firewall and cumulative
+commercial-authority requirements remain active.
+
+## Decision
+
+Public presentation has two independent dimensions:
+
+```text
+language = explicit public language path or language-only preference
+market   = trusted request-time country/jurisdiction signal
+```
+
+The public URL expresses language only. Market never appears in the canonical
+public URL and cannot be granted by a path, query, cookie, `Accept-Language` or
+client-supplied country value.
+
+Canonical examples are `/en`, `/de`, `/es`, `/el`, `/sv` and `/da`, followed by
+the unchanged localizable route suffix. BCP-47 remains useful for internal
+catalog selection, `<html lang>` and content variants; it is not public market
+authority.
+
+## Resolution and preference contract
+
+For an explicit language URL, the language path wins. For an unprefixed
+localizable URL, a valid first-party language preference wins, followed by the
+trusted market's default language, `Accept-Language`, then English. None of
+those language inputs selects a market.
+
+The public preference cookie is versioned and stores language only. Legacy
+locale/market cookie values cannot grant country authority. The selector lists
+only published languages, preserves the route suffix and safe query state, and
+changes language only. A passive detected-region explanation may be shown, but
+there is no public country/market control.
+
+The Programme retains its separately governed route-owned presentation
+compatibility. Admin, API, authentication/callback, MCP, affiliate redirect,
+outbound, operative legal and other excluded route families remain outside the
+public language rewrite.
+
+## Legacy URL migration
+
+Legacy BCP-47 and market-first paths are compatibility inputs only and
+permanently redirect in one hop to the language path:
+
+```text
+/en-gb/casinos  -> /en/casinos
+/de-de/casinos  -> /de/casinos
+/es-es/casinos  -> /es/casinos
+/es-pe/casinos  -> /es/casinos
+/pe/casinos     -> /es/casinos
+```
+
+Safe query state survives. Any legacy `country` presentation parameter is
+removed and never reaches market or commercial resolution. Explicit canonical
+language paths remain stable across request countries.
+
+## Global public casino catalog
+
+`Casino` remains the global published identity. `CasinoCountry` remains the
+exact factual Casino × market profile. The logical partner route remains the
+exact Casino × market × programme/offer/tracking authority described by
+RFC-038.
+
+Public catalog reads combine:
+
+```text
+latest real published Casino identities
++ only the exact current-market CasinoCountry profile, when present
++ one server-owned presentation disposition
++ exact current-market governed partner routes, when eligible
+```
+
+Demo, synthetic, test, unpublished, inactive, archived and deliberately
+excluded identities never enter the global public catalog. Missing market data
+remains distinct from explicit unavailability. No Casino × country Cartesian
+data is created and no fact from another country is borrowed.
+
+## Presentation disposition
+
+Every Casino × current market resolves server-side to exactly one disposition:
+
+- `PROMOTABLE` — exact available market facts plus a currently eligible,
+  governed partner route and all independent legal/operator/commercial gates;
+- `INFORMATIONAL_ONLY` — neutral global identity and only safely available
+  exact-market facts, with no offer, bonus, promotional ranking, raw
+  destination, tracking data or outbound action; or
+- `HIDDEN` — public presentation is not authorised, evidence is contradicted,
+  the state is prohibited, or the identity is synthetic/non-public.
+
+An unavailable state is stated only when exact evidence says unavailable.
+Unknown or missing evidence cannot be relabelled as unavailable. Promotional
+surfaces such as Best Offers and Bonuses require `PROMOTABLE`; they are not
+global unavailable-casino directories.
+
+The bounded neutral-information policy is maintained in
+`docs/04_Compliance/Global-Casino-Market-Presentation-Policy.md`. It is public
+presentation policy, not operator, advertising, partner or route authority.
+
+## Exact-country commercial authority
+
+Language, cookie, query and global identity are never commercial inputs.
+Commercial action still requires the exact trusted request country to match the
+jurisdiction authority, operator authority, available `CasinoCountry`, active
+programme and offer country rules, tracking-link country association,
+`productionEligible` evidence, active internal redirect and final redirect-time
+checks. Reusing one physical tracking URL across countries is permitted only
+when each country has its own explicit passing authority.
+
+Responsible Gambling and Help use the trusted market, not the selected
+language, and remain isolated from affiliate targeting and personalisation.
+
+## Data access and performance
+
+The publication repository projects only the requested country profile from
+the immutable JSON snapshot in PostgreSQL. Global identities without that
+profile receive an empty market-profile array rather than every country's
+facts. Discovery loads the publication set once and batches public context once
+for the selected identities; it performs no per-Casino market query. Pagination
+and market-neutral identity caching remain possible without materialising
+Casino × country rows.
+
+## Cache and privacy
+
+Language-level pages that do not vary by market may remain publicly cacheable.
+Market-sensitive public HTML is private/no-store; correctness does not depend
+on a CDN-specific header cache key. Market-sensitive public APIs are likewise
+private/no-store and vary on the trusted request-country header. Unprefixed
+language negotiation additionally varies on `Accept-Language` and the
+language-preference cookie. A future cacheable market projection must be keyed
+by exact market and proven against Vercel's cache contract before activation.
+
+The service consumes only the coarse country code already required for product
+delivery. It stores no raw IP and persists no country in the presentation
+cookie. Programme, Help, self-check, vulnerability and account data remain
+prohibited market/commercial targeting inputs.
+
+## SEO
+
+Each language path is self-canonical. Canonicals, OpenGraph URLs, structured
+data, internal navigation and sitemap entries use language-only paths and never
+include request country. `hreflang` represents distinct published languages,
+not duplicate regional URLs. Existing publication/indexability authority is
+unchanged: English retains its current policy; every currently published
+non-English language remains `noindex, follow` until separate Founder indexing
+authority.
+
+## Implementation evidence
+
+**DETECTED on the isolated implementation candidate based on
+`da36c3f85fd59c4e28efa9e279bb70e9f66608fb`:** the language registry, resolver,
+versioned preference, middleware migration, metadata, public shell, global
+catalog projection, three-state disposition, exact-country offer/comparison
+paths, response cache policy and deterministic security/performance tests
+implement this decision without a Prisma migration or Production data mutation.

@@ -6,6 +6,7 @@
 - [Processor and International-Transfer Register](Processor-and-International-Transfer-Register.md)
 - [Personal-Data Breach Runbook](Personal-Data-Breach-Runbook.md)
 - [Draft DPIA — Active Control Programme](DPIA-Active-Control-Programme-Draft.md)
+- [Global Casino Market Presentation Policy](Global-Casino-Market-Presentation-Policy.md)
 
 ## Purpose
 

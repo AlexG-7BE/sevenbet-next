@@ -16,6 +16,7 @@ function casino(dataClassification: PublicComparisonCasino["dataClassification"]
   return {
     id: dataClassification === "DEMO_FIXTURE" ? "demo-id" : "published-id",
     dataClassification,
+    disposition: "INFORMATIONAL_ONLY",
     slug: dataClassification === "DEMO_FIXTURE" ? "fictional-profile" : "published-profile",
     name: dataClassification === "DEMO_FIXTURE" ? "Fictional Profile" : "Published Profile",
     summary: "Profile summary.",

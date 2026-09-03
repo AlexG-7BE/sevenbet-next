@@ -38,14 +38,15 @@ test("GB, SE, and PE expose one explicit routable/published/indexable policy", (
   assert.deepEqual(INDEXABLE_MARKET_PROFILES.map((market) => market.countryCode), ["GB"]);
 });
 
-test("noindex markets keep self canonicals and language identity without contradictory hreflang", () => {
+test("noindex languages keep self canonicals without contradictory hreflang", () => {
   const previous = process.env.VERCEL_ENV;
   process.env.VERCEL_ENV = "production";
   try {
-    for (const [market, language, canonical] of [["SE", "sv", "/sv-se/casinos"], ["PE", "es", "/es-pe/casinos"]] as const) {
+    for (const [market, language, locale, canonical] of [["SE", "sv", "sv-SE", "/sv/casinos"], ["PE", "es", "es-ES", "/es/casinos"]] as const) {
       const presentation = resolvePresentationContext({ routeMarket: market.toLowerCase(), routeLanguage: language });
       const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Casinos", description: "Localized casinos" });
-      assert.equal(presentation.locale, market === "SE" ? "sv-SE" : "es-PE");
+      assert.equal(presentation.locale, locale);
+      assert.equal(presentation.market, null);
       assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, canonical);
       assert.deepEqual(metadata.robots, { index: false, follow: true });
       assert.equal(metadata.alternates?.languages, undefined);
@@ -61,18 +62,18 @@ test("GB is indexable with canonical, reciprocal-ready hreflang, and x-default",
   try {
     const presentation = resolvePresentationContext({ routeMarket: "gb", routeLanguage: "en" });
     const metadata = productMetadata({ presentation, pathname: "/casinos", title: "Casinos", description: "Casinos", robots: { index: true, follow: true } });
-    assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/en-gb/casinos");
+    assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/en/casinos");
     assert.deepEqual(metadata.robots, { index: true, follow: true });
     const languages = metadata.alternates?.languages as Record<string, string>;
-    assert.equal(new URL(languages["en-GB"]).pathname, "/en-gb/casinos");
+    assert.equal(new URL(languages.en).pathname, "/en/casinos");
     assert.equal(new URL(languages["x-default"]).pathname, "/casinos");
-    assert.deepEqual(Object.keys(languages).sort(), ["en-GB", "x-default"]);
+    assert.deepEqual(Object.keys(languages).sort(), ["en", "x-default"]);
   } finally {
     if (previous === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous;
   }
 });
 
-test("a future policy-only INDEX switch automatically updates sitemap and reciprocal hreflang inputs", () => {
+test("a future policy-only INDEX switch updates sitemap inputs while hreflang stays language-level", () => {
   const gb = profile("GB");
   const se = withIndexable(profile("SE"));
   const pe = withIndexable(profile("PE"));
@@ -80,9 +81,9 @@ test("a future policy-only INDEX switch automatically updates sitemap and recipr
   assert.equal(marketIndexingApproved(pe), true);
   assert.deepEqual(localizedIndexableMarketProfiles([gb, se, pe]).map((market) => market.countryCode), ["SE", "PE"]);
   const languages = productLanguageAlternatesForProfiles("/casinos", [gb, se, pe]);
-  assert.equal(new URL(languages["en-GB"]).pathname, "/en-gb/casinos");
-  assert.equal(new URL(languages["sv-SE"]).pathname, "/sv-se/casinos");
-  assert.equal(new URL(languages["es-PE"]).pathname, "/es-pe/casinos");
+  assert.equal(new URL(languages.en).pathname, "/en/casinos");
+  assert.equal(new URL(languages.sv).pathname, "/sv/casinos");
+  assert.equal(new URL(languages.es).pathname, "/es/casinos");
   assert.equal(new URL(languages["x-default"]).pathname, "/casinos");
 });
 
@@ -91,7 +92,8 @@ test("layout, sitemap, robots metadata, and canonicalization use the centralized
   assert.match(readFileSync("app/sitemap.ts", "utf8"), /localizedIndexableMarketProfiles/);
   assert.match(readFileSync("lib/market/product-context.ts", "utf8"), /productIndexingApproved/);
   const middleware = readFileSync("middleware.ts", "utf8");
-  assert.match(middleware, /marketEditorialPublicationApproved/);
-  assert.match(middleware, /country/);
+  assert.match(middleware, /publicPresentationAvailable/);
+  assert.match(middleware, /languageRouteByPublicSlug/);
+  assert.match(middleware, /withoutCountryQuery/);
   assert.match(readFileSync("app/robots.ts", "utf8"), /sitemap: absoluteUrl\("\/sitemap\.xml"\)/);
 });

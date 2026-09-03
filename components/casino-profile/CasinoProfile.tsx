@@ -86,10 +86,17 @@ function EditorialEvidence({ document, demonstration, messages, locale }: { docu
 
 export function CasinoProfile({ casino, editorial, messages, presentation, availableForPresentation }: { casino: PublicCasinoDTO; editorial: CasinoEditorialDocument | null; messages: ProductPageMessages; presentation: PresentationResolution; availableForPresentation: boolean }) {
   const demo = isTemporaryDemoCasinoId(casino.id);
+  const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
-  const projectedAction = availableForPresentation ? profileAction(casino, bonus) : null;
+  const projectedAction = availableForPresentation && !informationalOnly ? profileAction(casino, bonus) : null;
   const action = projectedAction ? { ...projectedAction, label: `${messages.common.actionAvailable}: ${casino.name}` } : null;
-  const faq = presentation.locale === "en-GB"
+  const faq = informationalOnly
+    ? [
+        { question: messages.casinos.faqReviewOnlyQuestion, answer: messages.casinos.faqReviewOnlyAnswer },
+        { question: messages.casinos.faqDifferenceQuestion, answer: messages.casinos.faqDifferenceAnswer },
+        { question: messages.casinos.faqCommissionQuestion, answer: messages.casinos.faqCommissionAnswer },
+      ]
+    : presentation.locale === "en-GB"
     ? profileFaqItems(casino, bonus, editorial)
     : [
         { question: messages.casinos.faqReviewOnlyQuestion, answer: messages.casinos.faqReviewOnlyAnswer },
@@ -106,7 +113,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
   const age = Math.max(18, ...casino.countries.flatMap((country) => country.minimumAge ? [country.minimumAge] : []));
   const scoreCategories = editorial?.trustScore?.categories ?? [];
-  const reviewEvidence = editorial?.trustScore?.evidence?.slice(0, 3) ?? casino.pros.slice(0, 3);
+  const reviewEvidence = informationalOnly ? [] : editorial?.trustScore?.evidence?.slice(0, 3) ?? casino.pros.slice(0, 3);
   const offerHeadline = bonus
     ? presentation.locale === "en-GB" ? profileOfferHeadline(bonus, presentation.locale) : bonus.title
     : null;
@@ -135,7 +142,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <div className={styles.heroReview}>
           <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} {messages.profile.review}</span></nav>
           {demo ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.demoData}.</strong> {messages.profile.demoDisclosure}</p> : null}
-          {!availableForPresentation ? <p className={styles.demoDisclosure} role="note"><strong>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.market.seoDisplayName })}.</strong> {formatProductMessage(messages.profile.marketUnavailableCopy, { market: presentation.market.seoDisplayName })}</p> : null}
+          {!availableForPresentation ? <p className={styles.demoDisclosure} role="note"><strong>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}.</strong> {formatProductMessage(messages.profile.marketUnavailableCopy, { market: presentation.marketDisplayName })}</p> : null}
+          {informationalOnly ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.reviewOnly}.</strong> {messages.common.reviewAvailableNoAction}</p> : null}
           <p className={styles.heroKicker}>B4GAMBLE · {messages.profile.review} · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt, presentation.locale) || messages.common.current}</p>
           <div className={styles.identityRow}>
             <div className={styles.logo}>
@@ -147,7 +155,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <h1 id="casino-profile-title">{casino.name}</h1>
           <div className={styles.scoreVerdict}>
             <div><strong aria-label={hasEditorScore ? `${messages.common.editorScore} ${formattedEditorScore} / 10` : `${messages.common.editorScore} ${messages.common.notListed}`}>{formattedEditorScore}</strong>{hasEditorScore ? <span aria-hidden="true">★★★★★</span> : null}<small>{messages.common.editorScore}</small></div>
-            <p><em>{messages.profile.verdict}</em> {editorial?.summary || casino.summary}</p>
+            <p><em>{messages.profile.verdict}</em> {informationalOnly ? messages.common.reviewAvailableNoAction : editorial?.summary || casino.summary}</p>
           </div>
           <div aria-label={demo ? messages.common.demoData : messages.common.sourceStatus} className={styles.signals}>
             {licence ? <Signal verified={!demo && licenceChecked}>{demo ? messages.profile.demoLicenceField : `${messages.common.licence} · ${licenceChecked ? messages.common.current : messages.common.notListed}`}</Signal> : null}
@@ -163,7 +171,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             </dl></div>
             <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</div>
           </div> : null}
-          <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : messages.bestOffers.commissionNote}</p>
+          <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
 
         <aside aria-label={heroMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-ratio={casino.media.hero ? heroRatio : "missing"}>
@@ -184,9 +192,9 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <span>{messages.profile.quickCheckCopy}</span>
         </div>
         <div className={styles.overviewGrid}>
-          <section className={styles.checkCard}><h3>{messages.profile.bestFor}</h3><ul>{casino.pros.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
-          <section className={styles.checkCard}><h3>{messages.profile.whyWeLikeIt}</h3><ul>{reviewEvidence.map((item) => <li key={item}>✓ {item}</li>)}</ul></section>
-          <section className={styles.checkCard}><h3>{messages.profile.thingsToKnow}</h3><ul>{casino.cons.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
+          {!informationalOnly ? <section className={styles.checkCard}><h3>{messages.profile.bestFor}</h3><ul>{casino.pros.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section> : null}
+          {!informationalOnly ? <section className={styles.checkCard}><h3>{messages.profile.whyWeLikeIt}</h3><ul>{reviewEvidence.map((item) => <li key={item}>✓ {item}</li>)}</ul></section> : null}
+          {!informationalOnly ? <section className={styles.checkCard}><h3>{messages.profile.thingsToKnow}</h3><ul>{casino.cons.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section> : null}
           <dl className={`${styles.facts} ${styles.checkCard}`}>
             <div><dt>{messages.profile.founded}</dt><dd>{casino.foundedYear ?? messages.common.notListed}</dd></div>
             <div><dt>{messages.common.licence}</dt><dd>{licence?.authority ?? messages.common.notListed}</dd></div>
@@ -239,7 +247,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <div>
           <p>B4GAMBLE · {messages.profile.verdict}</p>
           <h2 id="verdict-heading">{hasEditorScore ? <>{presentation.locale === "en-GB" ? "Why" : messages.profile.verdict.replace(/:\s*$/, "")} {formattedEditorScore}</> : casino.name}</h2>
-          <span>{scoreCategories.length ? messages.profile.scoreExplanation : editorial?.summary || casino.reviewContent}</span>
+          <span>{informationalOnly ? messages.common.reviewAvailableNoAction : scoreCategories.length ? messages.profile.scoreExplanation : editorial?.summary || casino.reviewContent}</span>
           {!scoreCategories.length && casino.cons.length ? <div className={styles.verdictLimit}><strong>{messages.profile.keepInView}</strong><span>{casino.cons[0]}</span></div> : null}
         </div>
         {scoreCategories.length ? <div className={styles.scoreBreakdown}>
@@ -273,7 +281,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
 
       <nav aria-label={messages.profile.relatedTitle} className={styles.relatedLinks}>
         <div><span>{messages.profile.relatedTitle}</span><h2>{messages.profile.relatedCopy}</h2></div>
-        <div><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/bonuses")}>{demo ? messages.profile.exploreBonusInformation : messages.profile.compareBonusTerms} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/help")}>{messages.common.protectedHelp} <span aria-hidden="true">→</span></Link></div>
+        <div><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews} <span aria-hidden="true">→</span></Link>{!informationalOnly ? <Link href={productHref(presentation, "/bonuses")}>{demo ? messages.profile.exploreBonusInformation : messages.profile.compareBonusTerms} <span aria-hidden="true">→</span></Link> : null}<Link href={productHref(presentation, "/methodology")}>{messages.common.reviewMethodology} <span aria-hidden="true">→</span></Link><Link href={productHref(presentation, "/help")}>{messages.common.protectedHelp} <span aria-hidden="true">→</span></Link></div>
       </nav>
     </div>
   </article>;

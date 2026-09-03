@@ -13,7 +13,7 @@ import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client
 import type { PublicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { localizePublicHref, stripPublicMarketPrefix } from "@/lib/market/routing";
-import { publicMarketPath, type MarketProfile } from "@/lib/market/registry";
+import { DEFAULT_MARKET_PROFILE, marketProfileByLocale, publicMarketPath, type LanguageRouteProfile } from "@/lib/market/registry";
 import { MarketLanguageSelector } from "./MarketLanguageSelector";
 import { ProgrammeLanguageSelector } from "@/components/programme/ProgrammeLanguageSelector";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
@@ -41,23 +41,24 @@ export function PublicNavigation({
   messages,
   presentation,
   programme,
-  selectableMarkets,
+  selectableLanguages,
 }: {
   account: PublicAccountNavigation;
   authenticated: boolean;
   messages: PublicShellMessages;
   presentation: PresentationResolution;
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
-  selectableMarkets: readonly MarketProfile[];
+  selectableLanguages: readonly LanguageRouteProfile[];
 }) {
   const pathname = usePathname();
   const unprefixedPathname = stripPublicMarketPrefix(pathname);
+  const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
-    ? publicMarketPath(presentation.market, presentation.locale)
+    ? publicMarketPath(editorialProfile, presentation.locale)
     : "/";
   const publicHref = (href: string) => programme && !programme.localizePublicLinks
     ? href
-    : localizePublicHref(href, pathname, presentation.market, presentation.locale);
+    : localizePublicHref(href, pathname, editorialProfile, presentation.locale);
   const isProgrammeHref = (href: string) => href === "/program" || /^\/[a-z]{2}\/program(?:[/?#]|$)/.test(href);
   const navigationLabels: Record<string, string> = {
     "/best-offers": messages.bestOffers,
@@ -124,7 +125,7 @@ export function PublicNavigation({
         <div className={styles.accountNavigation}>
           {programme
             ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="desktop" />
-            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="desktop" />}
+            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableLanguages={selectableLanguages} variant="desktop" />}
           {account.xpLabel ? <span className={styles.xpPill}>{account.xpLabel}</span> : null}
           {!authenticated ? <Link className={styles.accountLink} href={account.accountHref}>{accountLabel}</Link> : null}
           <Link className={styles.primaryAction} href={account.primaryHref} onClick={() => {
@@ -178,7 +179,7 @@ export function PublicNavigation({
           </nav>
           {programme
             ? <ProgrammeLanguageSelector locale={programme.locale} messages={messages} variant="mobile" />
-            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableMarkets={selectableMarkets} variant="mobile" />}
+            : <MarketLanguageSelector messages={messages} presentation={presentation} selectableLanguages={selectableLanguages} variant="mobile" />}
           <div className={styles.mobileHelp}>
             <span>{messages.controlAndSupport}</span>
             <Link href={publicHref("/help")} onClick={() => closeMenu({ restoreFocus: false })}>{messages.openHelp}</Link>

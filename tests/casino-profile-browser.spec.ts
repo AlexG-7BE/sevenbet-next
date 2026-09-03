@@ -7,11 +7,11 @@ test("demo profile renders one disclosed SSR review without governed actions", a
   page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
   page.on("pageerror", (error) => errors.push(error.message));
 
-  const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("region", { exact: true, name: "Demo Northstar Casino" })).toBeVisible();
+  await expect(page.getByRole("region", { exact: true, name: "Solvane Casino" })).toBeVisible();
   expect(await page.locator("h1").count()).toBe(1);
   const profile = page.locator('[data-runtime-renderer="casino-review"]');
   expect(await profile.locator('a[href^="http"]').count()).toBe(0);
@@ -33,7 +33,7 @@ test("demo profile renders one disclosed SSR review without governed actions", a
 test("casino profile has no horizontal overflow across approved and defensive widths", async ({ browser }) => {
   for (const width of [1440, 1280, 900, 768, 430, 390, 375, 320]) {
     const page = await browser.newPage({ viewport: { width, height: width <= 430 ? 844 : 900 }, isMobile: width <= 430 });
-    const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${width}px`).toBe(200);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth), `${width}px`).toBe(false);
     expect(await page.locator("h1").count(), `${width}px`).toBe(1);
@@ -44,7 +44,7 @@ test("casino profile has no horizontal overflow across approved and defensive wi
 test("localized profile facts preserve whole words at the tablet composition and on long desktop terms", async ({ browser }) => {
   const tabletContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 768, height: 1024 } });
   const tabletPage = await tabletContext.newPage();
-  const tabletResponse = await tabletPage.goto(`${baseUrl}/el-gr/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const tabletResponse = await tabletPage.goto(`${baseUrl}/el/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(tabletResponse?.status()).toBe(200);
   await expect(tabletPage.locator("html")).toHaveAttribute("lang", "el-GR");
   await expect(tabletPage.locator("#overview-heading")).toContainText("Έλεγχος 30 δευτερολέπτων");
@@ -120,7 +120,7 @@ test("localized profile facts preserve whole words at the tablet composition and
   expect(tabletLayout.fragmentedTerms).toEqual([]);
   expect(tabletLayout.horizontalOverflow).toBe(0);
 
-  const spanishResponse = await tabletPage.goto(`${baseUrl}/es-es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const spanishResponse = await tabletPage.goto(`${baseUrl}/es/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(spanishResponse?.status()).toBe(200);
   await expect(tabletPage.locator("html")).toHaveAttribute("lang", "es-ES");
   const spanishHeroTerms = tabletPage.locator('section[aria-labelledby="casino-profile-title"] [class*="heroOfferCopy"] dl');
@@ -164,7 +164,7 @@ test("localized profile facts preserve whole words at the tablet composition and
 
   const desktopContext = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 1440, height: 900 } });
   const desktopPage = await desktopContext.newPage();
-  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl-nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
+  const desktopResponse = await desktopPage.goto(`${baseUrl}/nl/casino/demo-plume?visualFixture=true`, { waitUntil: "networkidle" });
   expect(desktopResponse?.status()).toBe(200);
   await expect(desktopPage.locator("html")).toHaveAttribute("lang", "nl-NL");
 
@@ -211,26 +211,26 @@ test("casino profile breadcrumb clears the fixed public header across responsive
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
-    const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${viewport.width}px status`).toBe(200);
 
     const header = page.locator('[data-public-shell="header"]');
     const breadcrumb = page.getByRole("navigation", { name: "Breadcrumb" });
-    const casinosLink = breadcrumb.locator('a[href="/en-gb/casinos"]');
-    const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
+    const casinosLink = breadcrumb.locator('a[href="/en/casinos"]');
+    const hero = page.getByRole("region", { exact: true, name: "Solvane Casino" });
 
     await expect(header, `${viewport.width}px public header`).toBeVisible();
     await expect(breadcrumb, `${viewport.width}px breadcrumb`).toBeVisible();
     await expect(casinosLink, `${viewport.width}px Casinos link`).toBeVisible();
     await expect(casinosLink, `${viewport.width}px Casinos link target`).toBeEnabled();
-    await expect(casinosLink, `${viewport.width}px Casinos href`).toHaveAttribute("href", "/en-gb/casinos");
+    await expect(casinosLink, `${viewport.width}px Casinos href`).toHaveAttribute("href", "/en/casinos");
     await expect(hero, `${viewport.width}px hero`).toBeVisible();
-    await expect(hero.getByRole("heading", { level: 1, name: "Demo Northstar Casino" }), `${viewport.width}px hero heading`).toBeVisible();
+    await expect(hero.getByRole("heading", { level: 1, name: "Solvane Casino" }), `${viewport.width}px hero heading`).toBeVisible();
 
     const geometry = await page.evaluate(() => {
       const headerElement = document.querySelector<HTMLElement>('[data-public-shell="header"]')!;
       const breadcrumbElement = document.querySelector<HTMLElement>('nav[aria-label="Breadcrumb"]')!;
-      const linkElement = breadcrumbElement.querySelector<HTMLAnchorElement>('a[href="/en-gb/casinos"]')!;
+      const linkElement = breadcrumbElement.querySelector<HTMLAnchorElement>('a[href="/en/casinos"]')!;
       const headerRect = headerElement.getBoundingClientRect();
       const breadcrumbRect = breadcrumbElement.getBoundingClientRect();
       const linkRect = linkElement.getBoundingClientRect();
@@ -267,7 +267,7 @@ test("shared casino profile composition joins the final offer to the footer and 
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
-    const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${viewport.width}px status`).toBe(200);
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
@@ -275,18 +275,17 @@ test("shared casino profile composition joins the final offer to the footer and 
     const geometry = await page.evaluate(() => {
       const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
-      const limit = document.querySelector<HTMLElement>('#verdict [class*="verdictLimit"]');
-      const score = document.querySelector<HTMLElement>('#verdict [class*="scorePanel"]');
+      const verdictColumns = Array.from(document.querySelectorAll<HTMLElement>("#verdict > div"));
       const decisionBar = document.querySelector<HTMLElement>("[data-casino-decision-bar]")!;
       const finalRect = finalOffer.getBoundingClientRect();
       const footerRect = footer.getBoundingClientRect();
-      const limitRect = limit?.getBoundingClientRect() ?? null;
-      const scoreRect = score?.getBoundingClientRect() ?? null;
+      const verdictCopyRect = verdictColumns[0]?.getBoundingClientRect() ?? null;
+      const verdictEvidenceRect = verdictColumns[1]?.getBoundingClientRect() ?? null;
       const decisionRect = decisionBar.getBoundingClientRect();
       return {
         finalToFooterGap: footerRect.top - finalRect.bottom,
         horizontalOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-        scoreGap: limitRect && scoreRect ? scoreRect.top - limitRect.bottom : null,
+        scoreGap: verdictCopyRect && verdictEvidenceRect ? verdictEvidenceRect.top - verdictCopyRect.bottom : null,
         decisionBottomGap: innerHeight - decisionRect.bottom,
         decisionPosition: getComputedStyle(decisionBar).position,
         mobileVisible: decisionBar.dataset.mobileVisible,
@@ -312,7 +311,7 @@ test("shared casino profile composition joins the final offer to the footer and 
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
-    const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/casino/demo-meadow?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `shared profile ${viewport.width}px status`).toBe(200);
     const gap = await page.evaluate(() => {
       const finalOffer = document.querySelector<HTMLElement>('[data-runtime-renderer="casino-review"] [data-demo-state="fictional"]')!;
@@ -325,16 +324,16 @@ test("shared casino profile composition joins the final offer to the footer and 
 });
 
 test("commercially unavailable state keeps editorial review and removes visit actions", async ({ page }) => {
-  const response = await page.goto(`${baseUrl}/casino/demo-meadow`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/casino/demo-meadow?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Meadow Casino" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
   await expect(page.getByText("Offer unavailable").first()).toBeVisible();
   expect(await page.locator('a[href^="/r/"]').count()).toBe(0);
   await expect(page.getByRole("contentinfo").getByRole("link", { name: /Help — protected support/ })).toBeVisible();
 });
 
 test("demo profile suppresses review, FAQ and commercial structured data", async ({ page }) => {
-  const response = await page.goto(`${baseUrl}/casino/demo-lantern`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/casino/demo-lantern?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
   const schemas = await page.locator('script[type="application/ld+json"]').evaluateAll((nodes) => nodes.map((node) => JSON.parse(node.textContent || "{}")));
@@ -342,7 +341,7 @@ test("demo profile suppresses review, FAQ and commercial structured data", async
 });
 
 test("localized demo profile keeps generic English chrome out of structured data", async ({ page }) => {
-  const response = await page.goto(`${baseUrl}/de-de/casino/demo-northstar`, { waitUntil: "networkidle" });
+  const response = await page.goto(`${baseUrl}/de/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
   await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
   await expect(page.getByText("Fiktive Bewertungsdemonstration").first()).toBeVisible();
@@ -357,21 +356,21 @@ test("localized demo profile keeps generic English chrome out of structured data
 
 test("outbound confirmation is absent while market authority denies referral", async ({ browser }) => {
   const page = await browser.newPage({ viewport: { width: 375, height: 812 }, isMobile: true });
-  await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
-  const hero = page.getByRole("region", { exact: true, name: "Demo Northstar Casino" });
-  await expect(hero.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
+  await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
+  const hero = page.getByRole("region", { exact: true, name: "Solvane Casino" });
+  await expect(hero.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
   await expect(hero.getByText("Offer unavailable")).toBeVisible();
   await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
   await page.close();
 });
 
-test("every rendered Best Offers demo detail action resolves to a disclosed review-only page", async ({ page }) => {
+test("global Best Offers never reintroduces demo records or ungoverned actions", async ({ page }) => {
   const shortlist = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
   expect(shortlist?.status()).toBe(200);
-  const hrefs = [...new Set(await page.locator('a[href^="/en-gb/casino/"]').evaluateAll((links) => links.map((link) => link.getAttribute("href")).filter((href): href is string => Boolean(href))))];
-  expect(hrefs.length).toBeGreaterThanOrEqual(3);
-  expect(hrefs.every((href) => /^\/en-gb\/casino\/demo-/.test(href))).toBe(true);
+  await expect(page.locator('main a[href*="/casino/demo-"]')).toHaveCount(0);
+  await expect(page.locator('main a[href^="/r/"], main a[href^="/go/"]')).toHaveCount(0);
   const shortlistCopy = await page.locator("body").textContent() ?? "";
+  expect(shortlistCopy).not.toMatch(/Demo Northstar|Demo Meadow|Demo Lantern|Fictional casino/i);
   for (const falsePublicationClaim of [
     "Published ranking method",
     "Only active, current records explicitly available",
@@ -386,22 +385,15 @@ test("every rendered Best Offers demo detail action resolves to a disclosed revi
     "It is a set of facts a user can compare",
     "Read the evidence",
   ]) expect(shortlistCopy).not.toContain(falsePublicationClaim);
-
-  for (const href of hrefs) {
-    const response = await page.goto(`${baseUrl}${href}`, { waitUntil: "networkidle" });
-    expect(response?.status(), href).toBe(200);
-    await expect(page.getByText("DEMONSTRATION DATA.", { exact: true })).toBeVisible();
-    expect(await page.locator('[data-runtime-renderer="casino-review"] a[href^="http"], [data-runtime-renderer="casino-review"] a[href^="/r/"]').count()).toBe(0);
-  }
 });
 
 test("server HTML remains useful with JavaScript disabled", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
-  const response = await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "domcontentloaded" });
+  const response = await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "domcontentloaded" });
   expect(response?.status()).toBe(200);
-  await expect(page.getByRole("heading", { level: 1, name: "Demo Northstar Casino" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Visit Demo Northstar Casino" })).toHaveCount(0);
+  await expect(page.getByRole("heading", { level: 1, name: "Solvane Casino" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Visit Solvane Casino" })).toHaveCount(0);
   await expect(page.getByText("Offer unavailable").first()).toBeVisible();
   await context.close();
 });

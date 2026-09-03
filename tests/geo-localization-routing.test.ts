@@ -9,105 +9,132 @@ import { resolvePresentationContext } from "../lib/market/presentation-resolver"
 import { productMetadata } from "../lib/market/product-context";
 import {
   GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS,
-  localeMarketRouteByPublicSlug,
-  marketProfileByCountry,
+  languageRouteByPublicSlug,
 } from "../lib/market/registry";
+import { parsePublicMarketRoute } from "../lib/market/routing";
 
-test("initial canonical registry binds the requested language and market identities", () => {
-  assert.deepEqual(GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS, ["en-gb", "sv-se", "es-pe"]);
-  for (const [slug, country, locale] of [
-    ["en-gb", "GB", "en-GB"],
-    ["sv-se", "SE", "sv-SE"],
-    ["es-pe", "PE", "es-PE"],
+test("public identity is language-only while BCP-47 variants remain registered internally", () => {
+  assert.deepEqual(GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS, ["en", "sv", "es"]);
+  assert.deepEqual(languageRouteByPublicSlug("es")?.localeVariants, ["es-ES", "es-PE"]);
+  assert.equal(languageRouteByPublicSlug("en")?.published, true);
+  assert.equal(languageRouteByPublicSlug("fr")?.published, false);
+});
+
+test("language and trusted market resolve independently for the required matrix", () => {
+  const cases = [
+    ["DE", "de", "DE", "de", "de-DE"],
+    ["DE", "el", "DE", "el", "el-GR"],
+    ["DE", "es", "DE", "es", "es-ES"],
+    ["ES", "es", "ES", "es", "es-ES"],
+    ["PE", "es", "PE", "es", "es-PE"],
+  ] as const;
+  for (const [geo, routeLanguage, market, language, locale] of cases) {
+    const result = resolvePresentationContext({ routeLanguage, trustedCountryCode: geo });
+    assert.equal(result.marketCountryCode, market);
+    assert.equal(result.market?.countryCode, market);
+    assert.equal(result.language, language);
+    assert.equal(result.locale, locale);
+    assert.equal(result.source, "EXPLICIT_ROUTE");
+  }
+
+  const preferred = resolvePresentationContext({ preference: { language: "el" }, trustedCountryCode: "DE" });
+  assert.equal(preferred.market?.countryCode, "DE");
+  assert.equal(preferred.language, "el");
+  assert.equal(preferred.locale, "el-GR");
+  assert.equal(preferred.source, "USER_PREFERENCE");
+
+  const unknown = resolvePresentationContext({ acceptLanguage: "es-PE,es;q=0.9" });
+  assert.equal(unknown.market, null);
+  assert.equal(unknown.marketCountryCode, null);
+  assert.equal(unknown.language, "es");
+  assert.equal(unknown.locale, "es-ES");
+  assert.equal(unknown.marketSource, "UNKNOWN");
+});
+
+test("URL, language preference and Accept-Language never grant another market", () => {
+  const routeAttempt = resolvePresentationContext({ routeMarket: "pe", routeLanguage: "es", trustedCountryCode: "DE" });
+  const cookieAttempt = resolvePresentationContext({ preference: { language: "es" }, trustedCountryCode: "DE" });
+  const acceptAttempt = resolvePresentationContext({ trustedCountryCode: "DE", acceptLanguage: "es-PE" });
+  for (const result of [routeAttempt, cookieAttempt, acceptAttempt]) {
+    assert.equal(result.market?.countryCode, "DE");
+    assert.equal(result.marketCountryCode, "DE");
+  }
+});
+
+test("legacy BCP-47 and market paths migrate directly to language canonicals", () => {
+  for (const [path, canonical] of [
+    ["/es-es/casinos", "/es/casinos"],
+    ["/es-pe/casinos", "/es/casinos"],
+    ["/de/de/casinos", "/de/casinos"],
+    ["/pe/casinos", "/es/casinos"],
+    ["/gb/casinos", "/en/casinos"],
   ] as const) {
-    const entry = localeMarketRouteByPublicSlug(slug);
-    assert.equal(entry?.market.countryCode, country);
-    assert.equal(entry?.route.locale, locale);
-    assert.equal(entry?.route.enabled, true);
+    const result = parsePublicMarketRoute(path);
+    assert.equal(result.kind, "LEGACY_MARKET_ROUTE", path);
+    if (result.kind === "LEGACY_MARKET_ROUTE") assert.equal(result.canonicalPath, canonical, path);
   }
 });
 
-test("resolver precedence is explicit route, preference, trusted geo, then GB fallback", () => {
-  assert.deepEqual(
-    resolvePresentationContext({
-      routeMarket: "se",
-      routeLanguage: "sv",
-      preference: { countryCode: "PE", locale: "es-PE" },
-      trustedCountryCode: "GB",
-      acceptLanguage: "es-PE,es;q=0.9",
-    }),
-    { market: marketProfileByCountry("SE"), locale: "sv-SE", source: "EXPLICIT_ROUTE", explicitRouteValid: true },
-  );
-  assert.equal(resolvePresentationContext({ preference: { countryCode: "PE", locale: "es-PE" }, trustedCountryCode: "SE" }).market.countryCode, "PE");
-  assert.equal(resolvePresentationContext({ trustedCountryCode: "SE", acceptLanguage: "es-PE" }).locale, "sv-SE");
-  assert.deepEqual(
-    ["SE", "PE", "GB"].map((countryCode) => {
-      const resolution = resolvePresentationContext({ trustedCountryCode: countryCode });
-      return [resolution.market.countryCode, resolution.locale, resolution.source];
-    }),
-    [
-      ["SE", "sv-SE", "TRUSTED_GEO"],
-      ["PE", "es-PE", "TRUSTED_GEO"],
-      ["GB", "en-GB", "TRUSTED_GEO"],
-    ],
-  );
-  assert.deepEqual(
-    { market: resolvePresentationContext({ trustedCountryCode: "ZZ" }).market.countryCode, locale: resolvePresentationContext({ trustedCountryCode: "ZZ" }).locale },
-    { market: "GB", locale: "en-GB" },
-  );
-  assert.deepEqual(
-    { market: resolvePresentationContext({ acceptLanguage: "es-PE,es;q=0.9" }).market.countryCode, locale: resolvePresentationContext({ acceptLanguage: "es-PE,es;q=0.9" }).locale },
-    { market: "GB", locale: "en-GB" },
-    "Accept-Language must never choose a market",
-  );
+test("legacy redirects are permanent, one-hop, strip country and preserve safe query", async () => {
+  const response = await middleware(new NextRequest("http://127.0.0.1:4173/es-pe/casinos?country=PE&sort=score"));
+  assert.equal(response.status, 308);
+  const location = new URL(response.headers.get("location") ?? "http://invalid");
+  assert.equal(`${location.pathname}${location.search}`, "/es/casinos?sort=score");
+  assert.equal(parsePublicMarketRoute(location.pathname).kind, "CANONICAL_LOCALE");
+
+  const retiredComparison = await middleware(new NextRequest("http://127.0.0.1:4173/es/compare?casino=alpha&country=PE"));
+  assert.equal(retiredComparison.status, 308);
+  const comparisonLocation = new URL(retiredComparison.headers.get("location") ?? "http://invalid");
+  assert.equal(`${comparisonLocation.pathname}${comparisonLocation.search}`, "/es/casinos?casino=alpha");
 });
 
-test("legacy country query redirects once and explicit canonical route cannot be overridden", async () => {
-  for (const [countryCode, expected] of [["SE", "/sv-se/casinos?sort=score"], ["PE", "/es-pe/casinos?sort=score"], ["GB", "/en-gb/casinos?sort=score"]] as const) {
-    const legacy = await middleware(new NextRequest(`http://127.0.0.1:4173/casinos?country=${countryCode}&sort=score`));
-    assert.equal(legacy.status, 308);
-    const legacyLocation = new URL(legacy.headers.get("location") ?? "http://invalid");
-    assert.equal(`${legacyLocation.pathname}${legacyLocation.search}`, expected);
+test("market-sensitive responses and negotiation redirects isolate cache keys", async () => {
+  const previous = {
+    secret: process.env.BETTER_AUTH_SECRET,
+    vercel: process.env.VERCEL,
+    vercelEnv: process.env.VERCEL_ENV,
+  };
+  process.env.BETTER_AUTH_SECRET = "geo-language-cache-isolation-test-secret";
+  process.env.VERCEL = "1";
+  process.env.VERCEL_ENV = "production";
+  try {
+    const canonical = await middleware(new NextRequest("https://b4gamble.com/es/casinos", {
+      headers: { "x-vercel-ip-country": "PE" },
+    }));
+    assert.equal(canonical.status, 200);
+    assert.equal(canonical.headers.get("content-language"), "es-PE");
+    assert.match(canonical.headers.get("vary") ?? "", /X-Vercel-IP-Country/i);
+    assert.match(canonical.headers.get("cache-control") ?? "", /private, no-store/);
+
+    const negotiated = await middleware(new NextRequest("https://b4gamble.com/casinos", {
+      headers: { "accept-language": "el", "x-vercel-ip-country": "DE" },
+    }));
+    assert.equal(negotiated.status, 307);
+    assert.equal(new URL(negotiated.headers.get("location") ?? "http://invalid").pathname, "/el/casinos");
+    assert.match(negotiated.headers.get("vary") ?? "", /X-Vercel-IP-Country/i);
+    assert.match(negotiated.headers.get("vary") ?? "", /Accept-Language/i);
+    assert.match(negotiated.headers.get("vary") ?? "", /Cookie/i);
+  } finally {
+    if (previous.secret === undefined) delete process.env.BETTER_AUTH_SECRET; else process.env.BETTER_AUTH_SECRET = previous.secret;
+    if (previous.vercel === undefined) delete process.env.VERCEL; else process.env.VERCEL = previous.vercel;
+    if (previous.vercelEnv === undefined) delete process.env.VERCEL_ENV; else process.env.VERCEL_ENV = previous.vercelEnv;
   }
-
-  const explicit = await middleware(new NextRequest("http://127.0.0.1:4173/sv-SE/casinos?country=PE&sort=score", {
-    headers: { cookie: "b4gamble_presentation=v1.PE.es-PE", "accept-language": "es-PE" },
-  }));
-  assert.equal(explicit.status, 308);
-  const explicitLocation = new URL(explicit.headers.get("location") ?? "http://invalid");
-  assert.equal(`${explicitLocation.pathname}${explicitLocation.search}`, "/sv-se/casinos?sort=score");
 });
 
-test("retired comparison canonicalizes in one hop and disabled locales are not normalized", async () => {
-  const comparison = await middleware(new NextRequest(
-    "http://127.0.0.1:4173/compare?casino=demo-northstar&casino=demo-summit&country=GB",
-  ));
-  assert.equal(comparison.status, 308);
-  const comparisonLocation = new URL(comparison.headers.get("location") ?? "http://invalid");
-  assert.equal(
-    `${comparisonLocation.pathname}${comparisonLocation.search}`,
-    "/en-gb/casinos?casino=demo-northstar&casino=demo-summit",
-  );
-
-  const disabledLocale = await middleware(new NextRequest("http://127.0.0.1:4173/ca/"));
-  assert.equal(disabledLocale.headers.get("location"), null);
-});
-
-test("Peru metadata is self-canonical, noindex, outside hreflang, and keeps safety non-commercial", () => {
-  const presentation = resolvePresentationContext({ routeMarket: "pe", routeLanguage: "es" });
+test("language metadata is canonical, language-level and preserves noindex authority", () => {
+  const presentation = resolvePresentationContext({ routeLanguage: "es", trustedCountryCode: "PE" });
   const metadata = productMetadata({
     presentation,
     pathname: "/casinos",
-    title: "Casinos en Perú",
-    description: "Registros publicados para Perú",
+    title: "Casinos",
+    description: "Registros publicados",
   });
-  assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/es-pe/casinos");
+  assert.equal(new URL(String(metadata.alternates?.canonical)).pathname, "/es/casinos");
   assert.equal(metadata.alternates?.languages, undefined);
   assert.deepEqual(metadata.robots, { index: false, follow: true });
 
   const peru = firstWaveMarketEvidence("PE");
   assert.ok(peru);
   assert.equal(peru.commercialState, "NOT_VERIFIED_FAIL_CLOSED");
-  assert.equal(peru.resources.some((resource) => resource.kind === "SUPPORT"), false);
-  assert.match(peru.copy.unavailable, /no se inventa uno/i);
+  assert.equal(peru.evidence.every((entry) => entry.reviewedAt === "2026-09-03"), true);
 });

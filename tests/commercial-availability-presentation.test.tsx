@@ -40,6 +40,8 @@ function casino(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
     id: "truth-casino",
     dataClassification: "PUBLISHED_RECORD",
+    disposition: "PROMOTABLE",
+    dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
     slug: "truth-casino",
     name: "Truth Casino",
     logo: null,

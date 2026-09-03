@@ -38,3 +38,4 @@ This baseline describes the observed implementation, not a target architecture o
 - [11_External_Media_Provenance.md](11_External_Media_Provenance.md) — production-facing image/embed inventory, Pexels-to-first-party mapping, privacy effects and unresolved provenance evidence.
 - [12_Programme_Access_Authorization.md](12_Programme_Access_Authorization.md) — candidate durable Programme acceptance, complete mutation classification, anonymous/authenticated boundaries and conservative migration evidence.
 - [13_Casino_Market_Data_Architecture.md](13_Casino_Market_Data_Architecture.md) — global Casino, exact-market facts, provenance, public projection, commercial-route separation and migration evidence.
+- [14_Geo_Language_Global_Catalog.md](14_Geo_Language_Global_Catalog.md) — language-only public routing, trusted request market, global published Casino projection and three-state presentation.

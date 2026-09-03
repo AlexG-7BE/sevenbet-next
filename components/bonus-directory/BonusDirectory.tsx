@@ -114,7 +114,6 @@ export function FeaturedBonusCard({ offer, position, primary = false, messages =
 
 function BonusHiddenQuery({ query, except = [] }: { query: PublicOfferQuery; except?: string[] }) {
   return <>
-    {query.country && !except.includes("country") ? <input name="country" type="hidden" value={query.country} /> : null}
     {query.type && !except.includes("type") ? <input name="type" type="hidden" value={query.type} /> : null}
     {query.payment && !except.includes("payment") ? <input name="payment" type="hidden" value={query.payment} /> : null}
     {query.crypto !== undefined && !except.includes("crypto") ? <input name="crypto" type="hidden" value={String(query.crypto)} /> : null}
@@ -129,7 +128,6 @@ function BonusHiddenQuery({ query, except = [] }: { query: PublicOfferQuery; exc
 
 function FilterFields({ facets, query, messages }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages }) {
   return <div className={styles.filterGrid}>
-    <label><span>{messages.common.countryPreference}</span><select defaultValue={query.country || ""} name="country"><option value="">{messages.common.countryPreference}</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label><span>{messages.common.bonusType}</span><select defaultValue={query.type || ""} name="type"><option value="">{messages.common.bonusType}</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label><span>{messages.common.paymentMethods}</span><select defaultValue={query.payment || ""} name="payment"><option value="">{messages.common.paymentMethods}</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label><span>{messages.common.cryptoSupport}</span><select defaultValue={query.crypto === undefined ? "" : String(query.crypto)} name="crypto"><option value="">{messages.common.cryptoSupport}</option>{facets.crypto.map((item) => <option key={item.value} value={item.value}>{item.value === "true" ? messages.common.cryptoSupported : messages.common.cryptoUnsupported} · {item.count}</option>)}</select></label>
@@ -144,7 +142,6 @@ function FilterFields({ facets, query, messages }: { facets: PublicOfferFacets; 
 
 function PrimaryBonusFields({ facets, query, messages }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages }) {
   return <div className={filterStyles.primaryGrid}>
-    <label className={filterStyles.field}><span>{messages.common.countryPreference}</span><select defaultValue={query.country || ""} name="country"><option value="">{messages.common.countryPreference}</option>{facets.countries.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label className={filterStyles.field}><span>{messages.common.bonusType}</span><select defaultValue={query.type || ""} name="type"><option value="">{messages.common.bonusType}</option>{facets.types.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label className={filterStyles.field}><span>{messages.common.paymentMethods}</span><select defaultValue={query.payment || ""} name="payment"><option value="">{messages.common.paymentMethods}</option>{facets.payments.map((item) => <option key={item.value} value={item.value}>{item.label} · {item.count}</option>)}</select></label>
     <label className={filterStyles.field}><span>{messages.common.wagering}</span><input aria-label={messages.common.wagering} defaultValue={query.maxWagering} inputMode="decimal" min="0" name="maxWagering" placeholder={messages.common.wagering} step="1" type="number" /></label>
@@ -174,7 +171,7 @@ function BonusFilterForm({ facets, query, total, messages, presentation, visualF
 function PrimaryBonusFilterForm({ facets, query, messages, presentation, visualFixture }: { facets: PublicOfferFacets; query: PublicOfferQuery; messages: ProductPageMessages; presentation: PresentationResolution; visualFixture: boolean }) {
   return <InstantDiscoveryForm action={productHref(presentation, "/bonuses")} className={filterStyles.primaryForm} debouncedFields={["maxWagering"]} key={`bonus-primary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
     {visualFixture ? <input name="visualFixture" type="hidden" value="true" /> : null}
-    <BonusHiddenQuery except={["country", "type", "payment", "maxWagering"]} query={query} />
+    <BonusHiddenQuery except={["type", "payment", "maxWagering"]} query={query} />
     <PrimaryBonusFields facets={facets} messages={messages} query={query} />
   </InstantDiscoveryForm>;
 }
@@ -218,7 +215,7 @@ function filterHref(raw: PublicOfferSearchParams, omitted: string) {
 
 export function ActiveBonusFilters({ facets, query, raw, messages, presentation, total }: { facets: PublicOfferFacets; query: PublicOfferQuery; raw: PublicOfferSearchParams; messages: ProductPageMessages; presentation: PresentationResolution; total: number }) {
   const values = [
-    ["country", query.country], ["type", query.type && (facets.types.find((item) => item.value === query.type)?.label ?? bonusType(query.type))], ["payment", query.payment],
+    ["type", query.type && (facets.types.find((item) => item.value === query.type)?.label ?? bonusType(query.type))], ["payment", query.payment],
     ["crypto", query.crypto === undefined ? null : query.crypto ? messages.common.cryptoSupported : messages.common.cryptoUnsupported],
     ["maxDeposit", query.maxDeposit === undefined ? null : `${messages.common.minimumDeposit} ≤ ${query.maxDeposit}`],
     ["maxWagering", query.maxWagering === undefined ? null : `${messages.common.wagering} ≤ ${query.maxWagering}`],

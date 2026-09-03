@@ -26,7 +26,8 @@ test("empty curated shortlists omit selector controls but preserve their truthfu
 
   assert.match(bonuses, /\{offers\.length \? <div[^>]+data-selector-group="curated-bonuses"[^>]+role="group"/);
   assert.match(bonuses, /!top\.length \? <div[^>]+role="status"/);
-  assert.match(casinos, /\{casinos\.length \? <div[^>]+data-selector-group="curated-casinos"[^>]+role="group"/);
+  assert.match(casinos, /\{promotableCasinos\.length \? <div[^>]+data-selector-group="curated-casinos"[^>]+role="group"/);
+  assert.match(casinos, /casinos\.filter\(\(casino\) => casino\.disposition === "PROMOTABLE"\)/);
   assert.match(casinos, /!top\.length \? <div[^>]+role="status"/);
   for (const shortlist of [bonuses, casinos]) {
     assert.match(shortlist, /aria-pressed=\{selector === label\}/);

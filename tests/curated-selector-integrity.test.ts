@@ -10,6 +10,8 @@ function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicC
   return {
     id: slug,
     dataClassification: "PUBLISHED_RECORD",
+    disposition: "INFORMATIONAL_ONLY",
+    dispositionReason: "EXACT_MARKET_INFORMATION_ONLY",
     slug,
     name: slug,
     logo: null,

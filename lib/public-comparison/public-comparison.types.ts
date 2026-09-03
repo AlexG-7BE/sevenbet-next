@@ -1,4 +1,5 @@
 import type { PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 import type { PublicCasinoDataClassification, PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 
 export type PublicComparisonEvidenceStatus =
@@ -29,6 +30,7 @@ export interface PublicComparisonQuery {
 
 export interface PublicComparisonCandidate {
   dataClassification: PublicCasinoDataClassification;
+  disposition: PublicCasinoPresentationDisposition;
   slug: string;
   name: string;
   logo: PublicCasinoMedia | null;
@@ -53,6 +55,7 @@ export interface PublicComparisonAction {
 export interface PublicComparisonCasino {
   id: string;
   dataClassification: PublicCasinoDataClassification;
+  disposition: PublicCasinoPresentationDisposition;
   slug: string;
   name: string;
   summary: string;

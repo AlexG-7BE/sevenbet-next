@@ -16,6 +16,19 @@ export type SupportedLocale =
   | "en-CA"
   | "fr-CA";
 
+export type SupportedLanguage = "en" | "de" | "es" | "el" | "sv" | "da" | "it" | "pt" | "nl" | "fi" | "nb" | "fr";
+
+export type LanguageRouteProfile = Readonly<{
+  language: SupportedLanguage;
+  publicSlug: SupportedLanguage;
+  defaultLocale: SupportedLocale;
+  localeVariants: readonly SupportedLocale[];
+  label: string;
+  published: boolean;
+  indexable: boolean;
+  publicationBlocker: string | null;
+}>;
+
 export type MarketEditorialState = "LIVE_BASELINE" | "LIVE_LOCALIZED" | "PREVIEW_LOCALIZED" | "LOCALIZATION_REQUIRED";
 export type MarketLegalContentState = "GB_REVIEWED" | "LOCAL_REVIEW_REQUIRED";
 export type MarketCommercialPresentationState = "AUTHORITY_REQUIRED";
@@ -270,6 +283,29 @@ const profiles = [
 
 export const MARKET_PROFILES: readonly MarketProfile[] = profiles;
 
+/**
+ * Public identity is language-only. Market-specific BCP-47 locales remain
+ * internal content variants and are selected after trusted request GEO is
+ * resolved; they are never public market authority.
+ */
+export const LANGUAGE_ROUTE_PROFILES = [
+  { language: "en", publicSlug: "en", defaultLocale: "en-GB", localeVariants: ["en-GB", "en-CA"], label: "English", published: true, indexable: true, publicationBlocker: null },
+  { language: "de", publicSlug: "de", defaultLocale: "de-DE", localeVariants: ["de-DE"], label: "Deutsch", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "es", publicSlug: "es", defaultLocale: "es-ES", localeVariants: ["es-ES", "es-PE"], label: "Español", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "el", publicSlug: "el", defaultLocale: "el-GR", localeVariants: ["el-GR"], label: "Ελληνικά", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "sv", publicSlug: "sv", defaultLocale: "sv-SE", localeVariants: ["sv-SE"], label: "Svenska", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "da", publicSlug: "da", defaultLocale: "da-DK", localeVariants: ["da-DK"], label: "Dansk", published: true, indexable: false, publicationBlocker: "LOCAL_LEGAL_REVIEW_REQUIRED" },
+  { language: "it", publicSlug: "it", defaultLocale: "it-IT", localeVariants: ["it-IT"], label: "Italiano", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "pt", publicSlug: "pt", defaultLocale: "pt-PT", localeVariants: ["pt-PT"], label: "Português", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "nl", publicSlug: "nl", defaultLocale: "nl-NL", localeVariants: ["nl-NL"], label: "Nederlands", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "fi", publicSlug: "fi", defaultLocale: "fi-FI", localeVariants: ["fi-FI"], label: "Suomi", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "nb", publicSlug: "nb", defaultLocale: "nb-NO", localeVariants: ["nb-NO"], label: "Norsk bokmål", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+  { language: "fr", publicSlug: "fr", defaultLocale: "fr-CA", localeVariants: ["fr-CA"], label: "Français", published: false, indexable: false, publicationBlocker: "LOCALIZATION_AND_PUBLICATION_REQUIRED" },
+] as const satisfies readonly LanguageRouteProfile[];
+
+export const PUBLISHED_LANGUAGE_ROUTE_PROFILES = LANGUAGE_ROUTE_PROFILES.filter((profile) => profile.published);
+export const INDEXABLE_LANGUAGE_ROUTE_PROFILES = LANGUAGE_ROUTE_PROFILES.filter((profile) => profile.published && profile.indexable);
+
 export const INITIAL_EUROPEAN_MARKET_CODES = [
   "GB",
   "DE",
@@ -308,7 +344,7 @@ export const INDEXABLE_MARKET_PROFILES: readonly MarketProfile[] = profiles.filt
   (profile) => profile.publication.routable && profile.publication.published && profile.publication.indexable,
 );
 
-export const GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS = ["en-gb", "sv-se", "es-pe"] as const;
+export const GEO_LOCALIZATION_INITIAL_PUBLIC_SLUGS = ["en", "sv", "es"] as const;
 
 export const DEFAULT_MARKET_PROFILE = profiles[0];
 
@@ -330,6 +366,8 @@ const byPublicSlug = new Map<string, { market: MarketProfile; route: LocaleMarke
   profiles.flatMap((market) => market.localeRoutes.map((route) => [route.publicSlug, { market, route }] as const)),
 );
 const byLocale = new Map<SupportedLocale, MarketProfile>(profiles.flatMap((profile) => profile.supportedLocales.map((locale) => [locale, profile] as const)));
+const languageBySlug = new Map<string, LanguageRouteProfile>(LANGUAGE_ROUTE_PROFILES.map((profile) => [profile.publicSlug, profile]));
+const languageByLocale = new Map<SupportedLocale, LanguageRouteProfile>(LANGUAGE_ROUTE_PROFILES.flatMap((profile) => profile.localeVariants.map((locale) => [locale, profile] as const)));
 
 export function marketProfileByCountry(countryCode: string | null | undefined): MarketProfile | null {
   if (!countryCode) return null;
@@ -343,6 +381,31 @@ export function marketProfileByRouteMarket(routeMarket: string | null | undefine
 
 export function marketProfileByLocale(locale: SupportedLocale): MarketProfile | null {
   return byLocale.get(locale) ?? null;
+}
+
+export function languageRouteByPublicSlug(publicSlug: string | null | undefined): LanguageRouteProfile | null {
+  if (!publicSlug) return null;
+  return languageBySlug.get(publicSlug.trim().toLowerCase()) ?? null;
+}
+
+export function languageRouteByLocale(locale: SupportedLocale): LanguageRouteProfile {
+  const profile = languageByLocale.get(locale);
+  if (!profile) throw new Error(`Language route for ${locale} is missing`);
+  return profile;
+}
+
+export function languageForLocale(locale: SupportedLocale): SupportedLanguage {
+  return languageRouteByLocale(locale).language;
+}
+
+export function localeForLanguageAndMarket(language: SupportedLanguage, market: MarketProfile | null | undefined): SupportedLocale {
+  const languageProfile = languageRouteByPublicSlug(language);
+  if (!languageProfile) throw new Error(`Language route ${language} is missing`);
+  const exactMarketVariant = market?.localeRoutes.find((route) => (
+    route.enabled
+    && languageProfile.localeVariants.includes(route.locale)
+  ));
+  return exactMarketVariant?.locale ?? languageProfile.defaultLocale;
 }
 
 export function localeMarketRouteByPublicSlug(publicSlug: string | null | undefined) {
@@ -364,14 +427,12 @@ export function localeForLanguageSegment(profile: MarketProfile, languageSegment
   return profile.supportedLocales.find((locale) => languageSegmentForLocale(locale) === normalized) ?? null;
 }
 
-/**
- * Build the one canonical public path for a market, locale and equivalent
- * pathname. Every presentation route exposes the BCP-47 locale and market in
- * one lowercase public slug, so the URL always determines both dimensions.
- */
+/** Build the language-only public path for an internal locale variant. */
 export function publicMarketPath(profile: MarketProfile, locale: SupportedLocale, pathname = "/") {
-  const route = localeMarketRoute(profile, locale);
-  if (!route) throw new Error(`Locale ${locale} is not supported by market ${profile.countryCode}`);
+  // `profile` remains in this compatibility signature for Programme and older
+  // callers. It does not contribute to the public URL.
+  void profile;
+  const route = languageRouteByLocale(locale);
   const suffixIndex = pathname.search(/[?#]/);
   const rawPathname = suffixIndex >= 0 ? pathname.slice(0, suffixIndex) : pathname;
   const queryOrHash = suffixIndex >= 0 ? pathname.slice(suffixIndex) : "";

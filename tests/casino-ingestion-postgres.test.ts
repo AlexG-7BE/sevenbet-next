@@ -203,40 +203,38 @@ test("real frozen Betsson PE/SE bundle passes disposable PostgreSQL and public-s
     const discovery = new PublicCasinoDiscoveryService(discoveryStore, () => new Date("2026-09-01T00:00:00.000Z"), undefined, () => false);
     const peProfile = await publicService.getCasino("betsson", undefined, "PE");
     const seProfile = await publicService.getCasino("betsson", undefined, "SE");
-    assert.equal(peProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
-    assert.equal(seProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
-    assert.equal(peProfile?.domain, "www.betsson.pe");
-    assert.deepEqual(peProfile?.languages, ["es", "en"]);
-    assert.deepEqual(peProfile?.currencies, ["PEN"]);
-    assert.equal(peProfile?.payments.some((payment) => payment.key === "yape"), true);
-    assert.equal(peProfile?.licenses.every((license) => license.authority === "MINCETUR"), true);
-    assert.equal(seProfile?.domain, "www.betsson.com/sv");
-    assert.deepEqual(seProfile?.languages, ["sv"]);
-    assert.deepEqual(seProfile?.currencies, ["SEK"]);
-    assert.equal(seProfile?.payments.some((payment) => payment.key === "swish"), true);
-    assert.equal(seProfile?.licenses.every((license) => license.authority === "Spelinspektionen"), true);
-    assert.deepEqual(peProfile?.bonuses, []);
-    assert.deepEqual(seProfile?.bonuses, []);
-    assert.equal(peProfile?.affiliate.available, false);
-    assert.equal(seProfile?.affiliate.available, false);
+    assert.equal(peProfile, null, "PE contradiction evidence must hide the exact-market public profile");
+    assert.equal(seProfile, null, "SE contradiction evidence must hide the exact-market public profile");
 
-    const cases: Array<[string, Parameters<typeof discovery.discover>[0], number]> = [
-      ["PE", { country: ["PE"] }, 1],
-      ["SE", { country: ["SE"] }, 1],
-      ["PE + PEN + Yape + MINCETUR", { country: ["PE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"] }, 1],
-      ["SE + SEK + Swish + Spelinspektionen", { country: ["SE"], currency: ["SEK"], payment: ["swish"], license: ["spelinspektionen"] }, 1],
-      ["PE + SEK", { country: ["PE"], currency: ["SEK"] }, 0],
-      ["SE + PEN", { country: ["SE"], currency: ["PEN"] }, 0],
-      ["PE + Swish", { country: ["PE"], payment: ["swish"] }, 0],
-      ["SE + Yape", { country: ["SE"], payment: ["yape"] }, 0],
-      ["PE + Swedish licence", { country: ["PE"], license: ["spelinspektionen"] }, 0],
-      ["SE + Peru licence", { country: ["SE"], license: ["mincetur"] }, 0],
+    const globalProfile = await publicService.getCasino("betsson");
+    assert.equal(globalProfile?.editorScore, null, "missing editorial score must remain null rather than becoming a false 0/10");
+    assert.equal(globalProfile?.domain, "betsson.com");
+    assert.deepEqual(globalProfile?.marketProfiles, []);
+    assert.deepEqual(globalProfile?.countries, []);
+    assert.deepEqual(globalProfile?.languages, []);
+    assert.deepEqual(globalProfile?.currencies, []);
+    assert.deepEqual(globalProfile?.payments, []);
+    assert.deepEqual(globalProfile?.licenses, []);
+    assert.deepEqual(globalProfile?.bonuses, []);
+    assert.equal(globalProfile?.affiliate.available, false);
+
+    const hiddenDiscoveryCases: Array<[string, Parameters<typeof discovery.discover>[0]]> = [
+      ["PE", { country: ["SE"], currency: ["PEN"], payment: ["yape"], license: ["mincetur"] }],
+      ["SE", { country: ["PE"], currency: ["SEK"], payment: ["swish"], license: ["spelinspektionen"] }],
     ];
-    for (const [label, query, expected] of cases) {
-      const result = await discovery.discover(query);
-      assert.equal(result.total, expected, label);
-      if (expected > 0) assert.equal(result.items[0]?.rating, null, `${label} must not manufacture an editorial score`);
+    for (const [countryCode, query] of hiddenDiscoveryCases) {
+      const result = await discovery.discover(query, null, { defaultEditorialCountry: countryCode });
+      assert.equal(result.total, 0, `${countryCode} contradiction evidence must hide the exact-market discovery card`);
     }
+
+    const globalDiscovery = await discovery.discover({ country: ["PE"] });
+    assert.equal(globalDiscovery.total, 1, "a query country is not trusted GEO authority");
+    assert.equal(globalDiscovery.items[0]?.disposition, "INFORMATIONAL_ONLY");
+    assert.equal(globalDiscovery.items[0]?.rating, null);
+    assert.deepEqual(globalDiscovery.items[0]?.countries, []);
+    assert.deepEqual(globalDiscovery.items[0]?.licenses, []);
+    assert.deepEqual(globalDiscovery.items[0]?.paymentMethods, []);
+    assert.equal(globalDiscovery.items[0]?.visitAction.available, false);
 
     assert.equal(await prisma.affiliateProgram.count({ where: { casinoId: persisted.id } }), 0);
     assert.equal(await prisma.affiliateOffer.count({ where: { casinoId: persisted.id } }), 0);

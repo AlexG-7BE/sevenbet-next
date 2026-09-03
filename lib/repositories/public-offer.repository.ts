@@ -15,7 +15,7 @@ export class PublicOfferRepository implements PublicOfferStore {
   ) {}
 
   async listOffers(options: { includeCommercial?: boolean; countryCode?: string } = {}) {
-    const published = await this.casinoStore.listPublished();
+    const published = await this.casinoStore.listPublished(options.countryCode);
     const redirectEnabled = (options.includeCommercial ?? true) && (this.options.redirectEnabled ?? isAffiliateRedirectEnabled());
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (redirectEnabled && published.length) {

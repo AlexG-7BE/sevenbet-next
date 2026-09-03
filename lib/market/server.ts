@@ -27,8 +27,9 @@ export const resolveServerPresentationContext = cache(async function resolveServ
     ? requestCountrySignalFromHeaders(requestHeaders)?.countryCode
     : null;
   const resolution = resolvePresentationContext({
-    routeMarket: publicPresentation || programmePresentation ? routeMarket : null,
+    routeMarket: programmePresentation ? routeMarket : null,
     routeLanguage: publicPresentation || programmePresentation ? routeLanguage : null,
+    routeControlsMarket: programmePresentation,
     preference,
     trustedCountryCode,
     acceptLanguage: requestHeaders.get("accept-language"),

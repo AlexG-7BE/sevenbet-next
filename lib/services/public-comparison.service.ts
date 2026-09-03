@@ -1,4 +1,4 @@
-import { mapPublishedCasino } from "@/lib/public-casino/public-casino.mapper";
+import { mapPublishedCasino, projectPublicCasinoMarket } from "@/lib/public-casino/public-casino.mapper";
 import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import type {
   PublicComparisonAction,
@@ -22,9 +22,15 @@ import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-val
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
+import { decidePublicCasinoDisposition, type PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 type ComparablePublicCasinoDTO = PublicCasinoDTO;
+type DispositionedCasino = {
+  casino: ComparablePublicCasinoDTO;
+  disposition: PublicCasinoPresentationDisposition;
+  action: PublicComparisonAction;
+};
 
 function marketState(casino: PublicCasinoDTO, country: string): PublicComparisonMarketState {
   const market = casino.countries.find((entry) => entry.countryCode === country);
@@ -51,15 +57,15 @@ function comparisonCompleteness(casino: ComparablePublicCasinoDTO) {
     + Number(casino.responsibleGamblingTools.length > 0);
 }
 
-function defaultCandidates(casinos: ComparablePublicCasinoDTO[], country: string) {
+function defaultCandidates(casinos: DispositionedCasino[], country: string) {
   return casinos
-    .filter((casino) => marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
-    .sort((a, b) => Number(b.featured) - Number(a.featured)
-      || Number(b.recommended) - Number(a.recommended)
-      || (b.editorScore ?? -1) - (a.editorScore ?? -1)
-      || comparisonCompleteness(b) - comparisonCompleteness(a)
-      || a.name.localeCompare(b.name, "en", { sensitivity: "base" })
-      || a.slug.localeCompare(b.slug))
+    .filter(({ casino, disposition }) => disposition === "PROMOTABLE" && marketState(casino, country) === "AVAILABLE" && comparisonCompleteness(casino) >= 7)
+    .sort((a, b) => Number(b.casino.featured) - Number(a.casino.featured)
+      || Number(b.casino.recommended) - Number(a.casino.recommended)
+      || (b.casino.editorScore ?? -1) - (a.casino.editorScore ?? -1)
+      || comparisonCompleteness(b.casino) - comparisonCompleteness(a.casino)
+      || a.casino.name.localeCompare(b.casino.name, "en", { sensitivity: "base" })
+      || a.casino.slug.localeCompare(b.casino.slug))
     .slice(0, 3);
 }
 
@@ -145,7 +151,7 @@ function buildGroups(casinos: ComparablePublicCasinoDTO[], projected: PublicComp
       label: "Licensing and declared market context",
       rows: rows([
         { id: "licences", label: "Licence context", description: "Authority, jurisdiction and source verification state.", get: (casino) => listValue(casino.licenses.map((licence) => [licence.authority, licence.jurisdiction, licence.status, licence.lastVerifiedAt ? `checked ${date(licence.lastVerifiedAt)}` : null].filter(Boolean).join(" · ")), casino.licenses.some((licence) => licence.lastVerifiedAt) ? "Published" : "Operator-published") },
-        { id: "market", label: `${country} availability`, description: "Declared comparison preference, not detected location or legal eligibility.", get: (casino) => value(marketLabel(marketState(casino, country), country), "Operator-published") },
+        { id: "market", label: `${country} availability`, description: "Exact published availability for the trusted request market; not a legal-eligibility guarantee.", get: (casino) => value(marketLabel(marketState(casino, country), country), "Operator-published") },
         { id: "minimum-age", label: "Minimum-age field", description: "Shown only when the profile supplies a market-specific value.", get: (casino) => { const age = casino.countries.find((entry) => entry.countryCode === country)?.minimumAge; return value(age === null || age === undefined ? null : `${age}+`, "Operator-published"); } },
         { id: "languages", label: "Languages", description: "Languages supplied by the profile source.", get: (casino) => listValue(casino.languages, "Operator-published") },
         { id: "currencies", label: "Currencies", description: "Profile and payment currencies supplied by the source.", get: (casino) => listValue([...new Set([...casino.currencies, ...casino.payments.flatMap((payment) => payment.currencies)])], "Operator-published") },
@@ -208,22 +214,6 @@ function filterDifferences(groups: PublicComparisonGroup[], slugs: string[]) {
   return { groups: filtered, hidden };
 }
 
-function reasonForMarket(casino: PublicCasinoDTO, country: string): PublicComparisonReason | null {
-  const state = marketState(casino, country);
-  if (state === "AVAILABLE") return null;
-  return {
-    slug: casino.slug,
-    code: state === "UNAVAILABLE" ? "DECLARED_MARKET_UNAVAILABLE" : "DECLARED_MARKET_UNKNOWN",
-    message: isTemporaryDemoCasinoId(casino.id)
-      ? state === "UNAVAILABLE"
-        ? `${casino.name} is marked fictionally unavailable for the declared ${country} context.`
-        : `${casino.name} has no fictional ${country} availability field.`
-      : state === "UNAVAILABLE"
-        ? `${casino.name} is published as unavailable for the declared ${country} context.`
-        : `${casino.name} has no published ${country} availability decision.`,
-  };
-}
-
 export class PublicComparisonService {
   constructor(
     private readonly store: PublicCasinoDiscoveryStore = publicCasinoDiscoveryRepository,
@@ -236,55 +226,81 @@ export class PublicComparisonService {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     let context: DiscoveryContext;
     const redirectEnabled = this.redirectEnabled();
-    const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
+    const commercialProjection = Boolean(
+      redirectEnabled
+      && jurisdictionAllowsReferral(authority)
+      && authority?.countryCode === query.country,
+    );
     try {
-      published = await this.store.listPublished();
+      published = (await this.store.listPublished(query.country)).filter((record) => !isTemporaryDemoCasinoId(record.casinoId));
       context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: false, includeCommercial: commercialProjection });
     } catch {
       return { status: "projection-unavailable", query, selectedSlugs: query.casinos, candidates: [], casinos: [], reasons: query.casinos.map((slug) => ({ slug, code: "PROJECTION_UNAVAILABLE", message: "The governed comparison projection is temporarily unavailable." })), groups: [], hiddenEqualRows: 0, defaulted: false, inventoryMode: "UNAVAILABLE" };
     }
 
     const now = this.now();
-    const all: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
-      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now, countryCode: query.country });
+    const globalCasinos: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
+      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
-      return casino?.source === "cms" ? [casino] : [];
+      return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
     });
-    const demoCount = all.filter((casino) => isTemporaryDemoCasinoId(casino.id)).length;
-    const inventoryMode: PublicCasinoInventoryMode = demoCount === 0
-      ? "PUBLISHED_ONLY"
-      : demoCount === all.length
-        ? "DEMO_ONLY"
-        : "MIXED";
+    const inventoryMode: PublicCasinoInventoryMode = "PUBLISHED_ONLY";
     const operatorDecisions = commercialProjection
-      ? await this.operatorEligibility.evaluateMany(all.map((casino) => casino.id), now)
+      ? await this.operatorEligibility.evaluateMany(globalCasinos.map((casino) => casino.id), now)
       : new Map<string, GbOperatorEligibilityDecision>();
-    const candidates: PublicComparisonCandidate[] = all.map((casino): PublicComparisonCandidate => {
+    const all: DispositionedCasino[] = globalCasinos.flatMap((globalCasino): DispositionedCasino[] => {
+      const exactProfile = globalCasino.marketProfiles.find((profile) => profile.countryCode === query.country) ?? null;
+      const casino = projectPublicCasinoMarket(globalCasino, query.country);
       const state = marketState(casino, query.country);
-      return { dataClassification: isTemporaryDemoCasinoId(casino.id) ? "DEMO_FIXTURE" : "PUBLISHED_RECORD", slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
+      const action = exactProfile?.availability === "AVAILABLE" && commercialProjection
+        ? safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), redirectEnabled)
+        : { available: false, href: null, label: `Visit ${casino.name}`, reason: "No governed action is available for the exact trusted market." } satisfies PublicComparisonAction;
+      const decision = decidePublicCasinoDisposition({
+        casinoId: casino.id,
+        requestCountryCode: query.country,
+        marketProfile: exactProfile,
+        governedVisitAvailable: action.available,
+      });
+      if (decision.disposition === "HIDDEN") return [];
+      const boundedCasino = decision.disposition === "PROMOTABLE"
+        ? casino
+        : {
+            ...casino,
+            editorScore: null,
+            trustScore: null,
+            featured: false,
+            recommended: false,
+            pros: [],
+            cons: [],
+            bonuses: [],
+            affiliate: { href: null, available: false },
+            media: { ...casino.media, hero: null },
+          };
+      return [{ casino: boundedCasino, disposition: decision.disposition, action: decision.disposition === "PROMOTABLE" ? action : { ...action, available: false, href: null } }];
+    });
+    const candidates: PublicComparisonCandidate[] = all.map(({ casino, disposition }): PublicComparisonCandidate => {
+      const state = marketState(casino, query.country);
+      return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
     }).sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
 
     const selected = query.selectionMode === "default" ? defaultCandidates(all, query.country) : query.casinos.flatMap((slug) => {
-      const casino = all.find((entry) => entry.slug === slug);
-      return casino ? [casino] : [];
+      const entry = all.find(({ casino }) => casino.slug === slug);
+      return entry ? [entry] : [];
     });
-    const selectedSlugs = query.selectionMode === "default" ? selected.map((casino) => casino.slug) : query.casinos;
+    const selectedSlugs = query.selectionMode === "default" ? selected.map(({ casino }) => casino.slug) : query.casinos;
     const reasons: PublicComparisonReason[] = [];
     if (query.selectionMode === "explicit") for (const slug of query.casinos) {
-      const casino = all.find((entry) => entry.slug === slug);
-      if (!casino) reasons.push({ slug, code: "UNKNOWN_OR_UNPUBLISHED", message: `${slug} is unknown, archived, unavailable or absent from the public projection.` });
-      else {
-        const marketReason = reasonForMarket(casino, query.country);
-        if (marketReason) reasons.push(marketReason);
-      }
+      const entry = all.find(({ casino }) => casino.slug === slug);
+      if (!entry) reasons.push({ slug, code: "UNKNOWN_OR_UNPUBLISHED", message: `${slug} is unknown, archived, hidden or absent from the exact-market public projection.` });
     }
 
-    const comparable = selected.filter((casino) => marketState(casino, query.country) === "AVAILABLE");
-    const projected = selected.map((casino): PublicComparisonCasino => {
+    const comparable = selected.map(({ casino }) => casino);
+    const projected = selected.map(({ casino, disposition, action }): PublicComparisonCasino => {
       const state = marketState(casino, query.country);
       return {
         id: casino.id,
-        dataClassification: isTemporaryDemoCasinoId(casino.id) ? "DEMO_FIXTURE" : "PUBLISHED_RECORD",
+        dataClassification: "PUBLISHED_RECORD",
+        disposition,
         slug: casino.slug,
         name: casino.name,
         summary: casino.summary,
@@ -294,11 +310,10 @@ export class PublicComparisonService {
         lastReviewedAt: casino.lastReviewedAt,
         reviewHref: `/casino/${casino.slug}`,
         marketState: state,
-        action: safeAction(casino, query.country, state, context, now, authority, operatorDecisions.get(casino.id), redirectEnabled),
+        action,
       };
     });
-    const comparableProjected = projected.filter((casino) => casino.marketState === "AVAILABLE");
-    const rawGroups = comparable.length >= 2 ? buildGroups(comparable, comparableProjected, query.country) : [];
+    const rawGroups = comparable.length >= 2 ? buildGroups(comparable, projected, query.country) : [];
     const differenceResult = query.differences ? filterDifferences(rawGroups, comparable.map((casino) => casino.slug)) : { groups: rawGroups, hidden: 0 };
     const status = query.selectionMode === "empty" || (query.selectionMode === "explicit" && !selectedSlugs.length)
       ? "empty"

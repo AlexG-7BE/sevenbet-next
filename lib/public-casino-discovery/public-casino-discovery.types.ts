@@ -1,4 +1,5 @@
 import type { PublishedCasinoSnapshotRecord } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoDispositionReason, PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
 export type CasinoDiscoverySort = "FEATURED" | "RELEVANCE" | "NEWEST" | "NAME_ASC" | "NAME_DESC";
 
@@ -47,6 +48,8 @@ export interface PublicCasinoCardDto {
   slug: string;
   reviewHref?: string | null;
   name: string;
+  disposition: PublicCasinoPresentationDisposition;
+  dispositionReason: PublicCasinoDispositionReason;
   logo: PublicMediaDto | null;
   hero?: PublicMediaDto | null;
   shortDescription: string | null;
@@ -128,6 +131,6 @@ export interface DiscoveryContext {
 }
 
 export interface PublicCasinoDiscoveryStore {
-  listPublished(): Promise<PublishedCasinoSnapshotRecord[]>;
+  listPublished(countryCode?: string | null): Promise<PublishedCasinoSnapshotRecord[]>;
   loadContext(casinoIds: string[], options?: { includeAliases?: boolean; includeCommercial?: boolean }): Promise<DiscoveryContext>;
 }

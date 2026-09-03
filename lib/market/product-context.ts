@@ -4,8 +4,15 @@ import type { CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commerc
 import { TRANSLATION_REVIEW_STATE } from "@/lib/i18n/review-state";
 import { absoluteUrl } from "@/lib/site";
 import type { PresentationResolution } from "./presentation-resolver";
-import { FIRST_WAVE_MARKETS } from "./first-wave-evidence";
-import { INDEXABLE_MARKET_PROFILES, marketIndexingApproved, marketProfileByCountry, marketProfileByLocale, publicMarketPath, type MarketProfile, type SupportedLocale } from "./registry";
+import {
+  DEFAULT_MARKET_PROFILE,
+  INDEXABLE_LANGUAGE_ROUTE_PROFILES,
+  languageRouteByLocale,
+  marketProfileByLocale,
+  publicMarketPath,
+  type MarketProfile,
+  type SupportedLocale,
+} from "./registry";
 import { isLocalizedPublicDestination, localizePublicPath } from "./routing";
 
 export const PRODUCT_TRANSLATION_REVIEW_STATE = {
@@ -25,48 +32,51 @@ export function localizedProductIndexingApproved(locale: SupportedLocale) {
 }
 
 export function productIndexingApproved(locale: SupportedLocale) {
-  const profile = marketProfileByLocale(locale);
-  return profile ? marketIndexingApproved(profile) : false;
+  const profile = languageRouteByLocale(locale);
+  return profile.published && profile.indexable;
+}
+
+function editorialProfile(presentation: PresentationResolution) {
+  return marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
 }
 
 export function productHref(presentation: PresentationResolution, href: string) {
-  return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, presentation.market)
-    ? localizePublicPath(presentation.market, presentation.locale, href)
+  const profile = editorialProfile(presentation);
+  return presentation.source === "EXPLICIT_ROUTE" && isLocalizedPublicDestination(href, profile)
+    ? localizePublicPath(profile, presentation.locale, href)
     : href;
 }
 
 export function productCanonicalPath(presentation: PresentationResolution, pathname: string) {
+  const profile = editorialProfile(presentation);
   return presentation.source === "EXPLICIT_ROUTE"
-    ? localizePublicPath(presentation.market, presentation.locale, pathname)
+    ? localizePublicPath(profile, presentation.locale, pathname)
     : pathname;
 }
 
 export function productLanguageAlternatesForProfiles(pathname: string, profiles: readonly MarketProfile[]) {
+  const byLanguage = new Map(profiles.map((profile) => {
+    const language = languageRouteByLocale(profile.defaultLocale);
+    return [language.language, [language.language, absoluteUrl(publicMarketPath(profile, language.defaultLocale, pathname))] as const];
+  }));
   return Object.fromEntries([
-    ...profiles.map((profile) => [
-      profile.defaultLocale,
-      absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
-    ]),
+    ...byLanguage.values(),
     ["x-default", absoluteUrl(pathname)],
   ]);
 }
 
 export function productLanguageAlternates(pathname: string) {
-  return productLanguageAlternatesForProfiles(pathname, INDEXABLE_MARKET_PROFILES);
+  return Object.fromEntries([
+    ...INDEXABLE_LANGUAGE_ROUTE_PROFILES.map((language) => {
+      const profile = marketProfileByLocale(language.defaultLocale) ?? DEFAULT_MARKET_PROFILE;
+      return [language.language, absoluteUrl(publicMarketPath(profile, language.defaultLocale, pathname))] as const;
+    }),
+    ["x-default", absoluteUrl(pathname)],
+  ]);
 }
 
 export function firstWaveSafetyLanguageAlternates(pathname: "/help" | "/responsible-gambling") {
-  const profiles = ["GB", ...FIRST_WAVE_MARKETS]
-    .map((countryCode) => marketProfileByCountry(countryCode))
-    .filter((profile) => profile !== null)
-    .filter(marketIndexingApproved);
-  return Object.fromEntries([
-    ...profiles.map((profile) => [
-      profile.defaultLocale,
-      absoluteUrl(publicMarketPath(profile, profile.defaultLocale, pathname)),
-    ]),
-    ["x-default", absoluteUrl(pathname)],
-  ]);
+  return productLanguageAlternates(pathname);
 }
 
 export function openGraphLocale(locale: SupportedLocale) {
@@ -93,7 +103,7 @@ export function productMetadata(input: {
     ? input.languageAlternates ?? productLanguageAlternates(input.pathname)
     : undefined;
   const locale = openGraphLocale(input.presentation.locale);
-  const alternateLocale = INDEXABLE_MARKET_PROFILES
+  const alternateLocale = INDEXABLE_LANGUAGE_ROUTE_PROFILES
     .map((profile) => openGraphLocale(profile.defaultLocale))
     .filter((candidate) => candidate !== locale);
 
@@ -126,14 +136,14 @@ export function productMetadata(input: {
 
 export function commercialAuthorityForPresentation(
   authority: CommercialJurisdictionAuthority | null | undefined,
-  presentationCountry: string,
+  presentationCountry: string | null,
 ) {
-  return authority?.countryCode === presentationCountry ? authority : null;
+  return presentationCountry && authority?.countryCode === presentationCountry ? authority : null;
 }
 
 export function marketAvailability(
   countries: ReadonlyArray<{ countryCode: string; availability: string }>,
-  presentationCountry: string,
+  presentationCountry: string | null,
 ) {
-  return countries.some((country) => country.countryCode === presentationCountry && country.availability === "AVAILABLE");
+  return Boolean(presentationCountry && countries.some((country) => country.countryCode === presentationCountry && country.availability === "AVAILABLE"));
 }

@@ -2,7 +2,16 @@
 
 ## Status
 
-Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The market-first URL architecture selected on 2026-08-30 is superseded by the explicit `GEO-LOCALIZATION-01` Founder instruction of 2026-09-02, which makes lowercase BCP-47 locale-market segments canonical and initially requires `en-gb`, `sv-se` and `es-pe`. The subsequent explicit `FOUNDER EXECUTION — MERGE GEO LOCALIZATION AND MOVE DIRECTLY TO CASINO POPULATION` instruction of 2026-09-02 accepts Peru's existing bounded `es-PE` presentation for public Production verification. Peru remains `noindex, follow`; this publication decision does not grant indexing, casino-fact, partner, offer, tracking, commercial or referral authority.
+Approved by Founder instruction on 2026-08-29 for implementation planning and controlled execution on a feature branch. The market-first URL architecture selected on 2026-08-30 was superseded by `GEO-LOCALIZATION-01` on 2026-09-02. The later explicit Founder execution instruction `GEO-LANGUAGE-GLOBAL-CATALOG-01` on 2026-09-03 supersedes this RFC's BCP-47 public canonical, combined market/language selector, manual market-presentation and request-resolution semantics with [RFC-039](RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md). The durable internationalisation foundation, publication review states, internal BCP-47 catalogues, language/market separation and cumulative commercial-authority boundaries remain active.
+
+## Current replacement boundary
+
+For current implementation, read RFC-039 before applying this document. Public
+canonicals are `/{language}`, the user control selects language only, and market
+comes only from trusted request-time country/jurisdiction authority. Any
+conflicting examples below using canonical `/en-gb`, `/sv-se`, `/es-pe`, a
+manual market selection, or `?country=` as presentation state are historical
+decision context rather than current architecture.
 
 ## Decision
 

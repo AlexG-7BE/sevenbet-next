@@ -36,7 +36,7 @@ export const PT_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     pageOf: "Página {page} de {pages}",
     demoData: "DADOS DE DEMONSTRAÇÃO",
     demoDisclosure: "Os registos fictícios não representam operadores atuais, ofertas de parceiros nem promoções ativas. Não está disponível qualquer link para um operador de jogo ou parceiro afiliado.",
-    marketPresentationNotice: "Alterar o mercado selecionado modifica apenas o conteúdo editorial apresentado. Não confirma a tua localização, se cumpres os requisitos ou se existe uma oferta disponível.",
+    marketPresentationNotice: "A apresentação reflete a região detetada. Não confirma a tua localização, se cumpres os requisitos ou se existe uma oferta disponível.",
     reviewAvailableNoAction: "A análise continua disponível, mas não existe qualquer link de parceiro.",
     affiliateDisclosure: "Informação sobre afiliação",
     methodology: "Metodologia",

@@ -36,7 +36,7 @@ export const FI_PRODUCT_PAGE_MESSAGES: ProductPageMessages = {
     pageOf: "Sivu {page}/{pages}",
     demoData: "ESITTELYTIETOJA",
     demoDisclosure: "Kuvitteelliset tuotetiedot eivät kuvaa nykyisiä rahapelitoimijoita, kumppanitarjouksia tai voimassa olevia kampanjoita. Rahapeli- tai kumppanisivustolle ei voi siirtyä.",
-    marketPresentationNotice: "Valittu markkina muuttaa vain toimituksellista esitystapaa. Se ei osoita sijaintiasi tai kelpoisuuttasi eikä tuo tarjouslinkkejä saataville.",
+    marketPresentationNotice: "Esitys seuraa tunnistettua aluetta. Se ei osoita sijaintiasi tai kelpoisuuttasi eikä tuo tarjouslinkkejä saataville.",
     reviewAvailableNoAction: "Arvion voi lukea, mutta vahvistettua tarjouslinkkiä ei ole saatavilla.",
     affiliateDisclosure: "Kumppanuusseloste",
     methodology: "Menetelmä",

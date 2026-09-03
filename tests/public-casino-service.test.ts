@@ -16,6 +16,15 @@ const unmanagedSlug = legacy[1].slug;
 
 function publishedRecord(slug = managedSlug): PublishedCasinoSnapshotRecord {
   const casinoId = `cms-${slug}`;
+  const casinoBonus = {
+    id: `bonus-${slug}`,
+    slug: `${slug}-offer`,
+    title: `${slug} offer`,
+    summary: "Published offer",
+    status: "PUBLISHED",
+    offerStatus: "ACTIVE",
+    expiresAt: "2031-01-01T00:00:00.000Z",
+  };
   return {
     casinoId,
     version: 2,
@@ -32,14 +41,13 @@ function publishedRecord(slug = managedSlug): PublishedCasinoSnapshotRecord {
       editorScore: 8.5,
       status: "PUBLISHED",
       publishedAt: "2030-05-01T00:00:00.000Z",
-      casinoBonuses: [{
-        id: `bonus-${slug}`,
-        slug: `${slug}-offer`,
-        title: `${slug} offer`,
-        summary: "Published offer",
-        status: "PUBLISHED",
-        offerStatus: "ACTIVE",
-        expiresAt: "2031-01-01T00:00:00.000Z",
+      casinoBonuses: [casinoBonus],
+      countries: [{
+        id: `${casinoId}-gb`, countryCode: "GB", availability: "AVAILABLE",
+        primaryLanguage: "en-GB", supportedLanguages: ["en-GB"],
+        primaryCurrency: "GBP", supportedCurrencies: ["GBP"],
+        licenses: [], paymentMethods: [], gameProviders: [], gameCategories: [],
+        bonuses: [casinoBonus], evidence: [], mediaAssets: [],
       }],
     },
   };
@@ -99,7 +107,7 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
       { casinoId: record.casinoId, casinoBonusId: null, slug: "cms-route" },
       { casinoId: record.casinoId, casinoBonusId: `bonus-${managedSlug}`, slug: "cms-bonus-route" },
     ];
-    const casino = await authorizedService(store([record], [managedSlug], routes)).getCasino(managedSlug, allowJurisdictionAuthority);
+    const casino = await authorizedService(store([record], [managedSlug], routes)).getCasino(managedSlug, allowJurisdictionAuthority, "GB");
     assert.equal(casino?.source, "cms");
     assert.equal(casino?.affiliate.href, "/r/cms-route");
     assert.equal(casino?.bonuses[0]?.affiliate.href, "/r/cms-bonus-route");
@@ -185,18 +193,44 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     });
   }
 
-  await t.test("a route lookup failure preserves published editorial content without actions", async () => {
+  await t.test("a route lookup failure preserves neutral identity and strips promotion", async () => {
     const record = publishedRecord();
     const repository = store([record], [managedSlug], [], {
       listActiveAffiliateRoutes: async () => { throw new Error("route lookup unavailable"); },
     });
-    const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority);
+    const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority, "GB");
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
+    assert.deepEqual(casino?.bonuses, []);
   });
 
-  await t.test("exact-ID demo profiles remain review-only under otherwise permissive authority", async () => {
+  await t.test("commercial authority for another country cannot unlock an exact-market route", async () => {
+    const record = publishedRecord();
+    const countries = (record.snapshot as { countries: Array<Record<string, unknown>> }).countries;
+    countries.push({
+      ...countries[0],
+      id: `${record.casinoId}-de`,
+      countryCode: "DE",
+      primaryLanguage: "de-DE",
+      supportedLanguages: ["de-DE"],
+      primaryCurrency: "EUR",
+      supportedCurrencies: ["EUR"],
+    });
+    let routeLookups = 0;
+    const repository = store([record], [managedSlug], [], {
+      listActiveAffiliateRoutes: async () => {
+        routeLookups += 1;
+        return [{ casinoId: record.casinoId, casinoBonusId: null, slug: "cross-geo-route" }];
+      },
+    });
+
+    const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority, "DE");
+    assert.equal(routeLookups, 0);
+    assert.deepEqual(casino?.affiliate, { href: null, available: false });
+    assert.deepEqual(casino?.bonuses, []);
+  });
+
+  await t.test("exact-ID demo profiles remain hidden under otherwise permissive authority", async () => {
     const record = publishedRecord("fictional-demo");
     record.casinoId = temporaryDemoCasinoIds[0];
     (record.snapshot as Record<string, unknown>).id = temporaryDemoCasinoIds[0];
@@ -204,10 +238,8 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
       { casinoId: record.casinoId, casinoBonusId: null, slug: "fictional-demo-route" },
       { casinoId: record.casinoId, casinoBonusId: "bonus-fictional-demo", slug: "fictional-demo-bonus-route" },
     ];
-    const result = await authorizedService(store([record], ["fictional-demo"], routes)).getCasino("fictional-demo", allowJurisdictionAuthority);
-    assert.ok(result);
-    assert.deepEqual(result.affiliate, { href: null, available: false });
-    assert.deepEqual(result.bonuses[0]?.affiliate, { href: null, available: false });
+    const result = await authorizedService(store([record], ["fictional-demo"], routes)).getCasino("fictional-demo", allowJurisdictionAuthority, "GB");
+    assert.equal(result, null);
   });
 });
 
@@ -235,15 +267,31 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     assert.equal((await service(repository).listCasinos())[0]?.source, "cms");
   });
 
-  await t.test("15. affiliate-route failure preserves published profiles without actions", async () => {
+  await t.test("15. affiliate-route failure preserves published identity without promotion", async () => {
     const record = publishedRecord();
     const repository = store([record], [managedSlug], [], {
       listActiveAffiliateRoutes: async () => { throw new Error("route list unavailable"); },
     });
-    const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority)).find((entry) => entry.slug === managedSlug);
+    const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority, "GB")).find((entry) => entry.slug === managedSlug);
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
+    assert.deepEqual(casino?.bonuses, []);
+  });
+
+  await t.test("a country-mismatched authority cannot unlock listing actions", async () => {
+    const record = publishedRecord();
+    let routeLookups = 0;
+    const repository = store([record], [managedSlug], [], {
+      listActiveAffiliateRoutes: async () => {
+        routeLookups += 1;
+        return [{ casinoId: record.casinoId, casinoBonusId: null, slug: "cross-geo-list-route" }];
+      },
+    });
+
+    const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority, "DE"))[0];
+    assert.equal(routeLookups, 0);
+    assert.deepEqual(casino?.affiliate, { href: null, available: false });
+    assert.deepEqual(casino?.bonuses, []);
   });
 
   await t.test("16. a managed legacy slug never appears during published retrieval failure", async () => {

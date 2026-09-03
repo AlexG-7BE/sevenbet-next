@@ -26,7 +26,7 @@ test("Privacy is the substantive final handoff document and stays noindex/follow
   assert.match(privacy, /title:\s*"Privacy Policy \| B4GAMBLE"/);
   assert.match(privacy, /canonical:\s*absoluteUrl\("\/privacy"\)/);
   assert.match(privacy, /robots:\s*\{\s*index:\s*false,\s*follow:\s*true\s*\}/);
-  for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"24 August 2026\""]) assert.ok(privacyDocument.includes(content), content);
+  for (const content of ["Information we use", "Why we use it and our legal bases", "Cookies and similar technology", "Your UK data-protection rights", "How long we keep information", "We do not sell personal data", "updated=\"3 September 2026\""]) assert.ok(privacyDocument.includes(content), content);
   assert.match(handoffLegalPage, /Privacy[\s\S]*by default/);
   assert.doesNotMatch(privacyDocument, placeholders);
   assert.doesNotMatch(privacyDocument + handoffLegalPage, /Accept Privacy Policy|cookie banner|consent checkbox/iu);

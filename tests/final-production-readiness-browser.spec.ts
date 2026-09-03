@@ -155,7 +155,7 @@ test("representative major surfaces keep the public shell and intended runtime r
   }
 });
 
-test("Best Offers preserves decision hierarchy and demo records stay non-claimable", async ({ page }) => {
+test("Best Offers local visual fixture preserves decision hierarchy and remains non-claimable", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await open(page, "/best-offers?visualFixture=true");
   await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);

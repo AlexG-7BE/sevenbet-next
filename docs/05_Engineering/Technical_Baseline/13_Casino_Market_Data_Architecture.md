@@ -16,7 +16,15 @@
 
 ## Read and publication path
 
-**DETECTED:** the Casino aggregate includes nested market profiles in version snapshots. The public mapper exposes those profiles and exact-country projection clears market facts when no exact profile exists. Discovery constructs one working record per explicit available profile, composes all market-sensitive filters on that record, then de-duplicates the Casino identity. Comparison, detail, bonus, and best-offer services pass the selected presentation country into the same projection.
+**DETECTED on the `GEO-LANGUAGE-GLOBAL-CATALOG-01` implementation candidate:**
+[RFC-039](../../06_RFC/RFC-039-Language-Only-Public-Routing-and-Global-Casino-Catalog.md)
+supersedes the earlier unqualified/stable-first-profile public query behavior.
+Public pages now read all legitimate global published Casino identities while
+the repository projects only the exact trusted request-market profile, or an
+empty profile array. Language and legacy `country` query state cannot select
+that profile. See [Technical Baseline 14](14_Geo_Language_Global_Catalog.md).
+
+**DETECTED:** the Casino aggregate includes nested market profiles in version snapshots. The public mapper exposes only the exact trusted request-country profile and clears market facts when no exact profile exists. Discovery evaluates market-sensitive filters on that single projection while preserving the global Casino identity; it never aggregates separate country profiles. Comparison, detail, bonus, and best-offer services pass the trusted request country into the same boundary, and public query state cannot override it.
 
 **INFERRED:** legacy already-published snapshots without nested scoped facts can continue to render global editorial identity, but their unscoped product/compliance facts are not sufficient for an arbitrary country projection. Separate verified ingestion/republication is required to make them market-complete.
 

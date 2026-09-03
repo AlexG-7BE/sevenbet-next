@@ -1,9 +1,8 @@
 import Link from "next/link";
 
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
-import { publicCoreTranslationReady } from "@/lib/i18n/review-state";
 import { resolvePresentationContext, type PresentationResolution } from "@/lib/market/presentation-resolver";
-import { ENABLED_PRESENTATION_MARKET_PROFILES, PUBLICATION_APPROVED_MARKET_PROFILES, publicMarketPath } from "@/lib/market/registry";
+import { DEFAULT_MARKET_PROFILE, PUBLISHED_LANGUAGE_ROUTE_PROFILES, marketProfileByLocale, publicMarketPath } from "@/lib/market/registry";
 import type { PublicAccountNavigation } from "@/lib/public-shell";
 import type { ProgrammeLocale } from "@/lib/programme/presentation";
 import { PublicHeaderThemeController } from "./PublicHeaderThemeController";
@@ -22,19 +21,17 @@ export function PublicHeader({
   programme?: Readonly<{ locale: ProgrammeLocale; localizePublicLinks: boolean }>;
 }) {
   const messages = publicShellMessages(presentation.locale);
+  const editorialProfile = marketProfileByLocale(presentation.locale) ?? DEFAULT_MARKET_PROFILE;
   const homeHref = presentation.source === "EXPLICIT_ROUTE" && (!programme || programme.localizePublicLinks)
-    ? publicMarketPath(presentation.market, presentation.locale)
+    ? publicMarketPath(editorialProfile, presentation.locale)
     : "/";
-  const selectableMarkets = process.env.VERCEL_ENV === "production"
-    ? PUBLICATION_APPROVED_MARKET_PROFILES
-    : ENABLED_PRESENTATION_MARKET_PROFILES.filter((profile) => publicCoreTranslationReady(profile.defaultLocale));
   return (
     <header className={styles.header} data-public-shell="header" data-shell-theme="dark">
       <div className={styles.headerInner}>
         <Link className={styles.brand} href={homeHref} aria-label={messages.homeLabel} translate="no">
           B4GAMBLE
         </Link>
-        <PublicNavigation account={account} authenticated={authenticated} messages={messages} presentation={presentation} programme={programme} selectableMarkets={selectableMarkets} />
+        <PublicNavigation account={account} authenticated={authenticated} messages={messages} presentation={presentation} programme={programme} selectableLanguages={PUBLISHED_LANGUAGE_ROUTE_PROFILES} />
       </div>
       <PublicHeaderThemeController />
     </header>

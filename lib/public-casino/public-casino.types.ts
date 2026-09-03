@@ -152,6 +152,8 @@ export interface PublicCasinoDTO {
     socialImage: PublicCasinoMedia | null;
   };
   affiliate: PublicCasinoAffiliate;
+  presentationDisposition?: import("./presentation-disposition").PublicCasinoPresentationDisposition;
+  presentationDispositionReason?: import("./presentation-disposition").PublicCasinoDispositionReason;
 }
 
 export interface PublishedCasinoSnapshotRecord {

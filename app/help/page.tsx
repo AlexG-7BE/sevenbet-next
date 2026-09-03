@@ -14,7 +14,7 @@ const description = "Find practical pause, self-exclusion and access-control opt
 
 export async function generateMetadata(): Promise<Metadata> {
   const presentation = await resolveServerPresentationContext();
-  const profile = firstWaveMarketEvidence(presentation.market.countryCode);
+  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
   return productMetadata({
     presentation,
     pathname: "/help",
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HelpPage() {
   const presentation = await resolveServerPresentationContext();
-  const profile = firstWaveMarketEvidence(presentation.market.countryCode);
+  const profile = presentation.market ? firstWaveMarketEvidence(presentation.market.countryCode) : null;
   const pageTitle = profile?.copy.helpTitle ?? title;
   const pageDescription = profile?.copy.helpLead ?? description;
   const pageUrl = absoluteUrl(productCanonicalPath(presentation, "/help"));

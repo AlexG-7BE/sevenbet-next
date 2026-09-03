@@ -17,6 +17,8 @@ function card(patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
   return {
     id: "casino-full",
     dataClassification: "PUBLISHED_RECORD",
+    disposition: "PROMOTABLE",
+    dispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
     slug: "full-casino",
     name: "Full Casino",
     logo: { url: "https://media.example/full.png", alt: "Full Casino logo", width: 320, height: 160 },

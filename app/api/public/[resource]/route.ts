@@ -3,6 +3,8 @@ import { isPublicCmsResource, listPublishedContent, publicEntityForResource } fr
 import { PUBLIC_RESOURCE_LIMIT_ERROR, resolvePublicResourceLimit } from "@/lib/http/public-resource-limit";
 import { learningArticles } from "@/lib/learning-center";
 import { publicCasinoService } from "@/lib/services/public-casino.service";
+import { requestCountrySignalFromHeaders } from "@/lib/jurisdiction/request-country";
+import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,21 +19,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (limit === null) {
     return NextResponse.json(PUBLIC_RESOURCE_LIMIT_ERROR, { status: 400 });
   }
-  const requestedCountry = request.nextUrl.searchParams.get("country")?.trim().toUpperCase() ?? null;
-  if (requestedCountry !== null && !/^[A-Z]{2}$/.test(requestedCountry)) {
-    return NextResponse.json({ ok: false, error: "country must use ISO 3166-1 alpha-2 format" }, { status: 400 });
-  }
+  // Market authority comes only from Vercel's trusted GEO header in Preview
+  // and Production. A `country` query parameter is intentionally ignored.
+  const requestCountry = requestCountrySignalFromHeaders(request.headers)?.countryCode ?? null;
+  const marketResponseHeaders = {
+    "Cache-Control": "private, no-store",
+    "Vary": "X-Vercel-IP-Country",
+  };
   if (resource === "casinos") {
-    const records = (await publicCasinoService.listCasinos(null, requestedCountry)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
+    const authority = await resolveServerJurisdiction();
+    const records = (await publicCasinoService.listCasinos(authority, requestCountry)).filter((casino) => casino.source === "cms").slice(0, limit).map((casino) => ({
       ...casino,
       affiliate: casino.affiliate.href?.startsWith("/r/") ? casino.affiliate : { href: null, available: false },
       bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } })),
     }));
-    return NextResponse.json({ ok: true, resource, entity: "casino", count: records.length, records });
+    return NextResponse.json({ ok: true, resource, entity: "casino", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "bonuses") {
-    const records = (await publicCasinoService.listBonuses(null, requestedCountry)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
-    return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records });
+    const authority = await resolveServerJurisdiction();
+    const records = (await publicCasinoService.listBonuses(authority, requestCountry)).filter(({ casino }) => casino.source === "cms" && casino.presentationDisposition === "PROMOTABLE").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
+    return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "articles") {
     const records = learningArticles.slice(0, limit);

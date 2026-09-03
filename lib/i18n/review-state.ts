@@ -1,4 +1,4 @@
-import { marketIndexingApproved, marketProfileByLocale, type SupportedLocale } from "@/lib/market/registry";
+import { languageRouteByLocale, type SupportedLocale } from "@/lib/market/registry";
 
 export type TranslationReviewState = Readonly<{
   content: "SOURCE_BASELINE" | "MACHINE_TRANSLATED";
@@ -88,8 +88,8 @@ export function publicCoreTranslationReady(locale: SupportedLocale) {
 }
 
 export function publicTranslationIndexingApproved(locale: SupportedLocale) {
-  const profile = marketProfileByLocale(locale);
-  return profile ? marketIndexingApproved(profile) : false;
+  const profile = languageRouteByLocale(locale);
+  return profile.published && profile.indexable;
 }
 
 export function legalBodyPublicationApproved(locale: SupportedLocale) {

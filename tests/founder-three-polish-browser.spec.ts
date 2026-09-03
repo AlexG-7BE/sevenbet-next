@@ -123,7 +123,7 @@ for (const viewport of [
     const mobile = viewport.width <= 430;
     const context = await browser.newContext({ hasTouch: mobile, isMobile: mobile, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
-    await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
 
@@ -134,7 +134,7 @@ for (const viewport of [
       const inner = final.querySelector<HTMLElement>('[class*="finalOfferInner"]')!;
       const footer = document.querySelector<HTMLElement>('[data-public-shell="footer"]')!;
       const verdictCopy = document.querySelector<HTMLElement>("#verdict > div:first-child")!;
-      const score = document.querySelector<HTMLElement>('#verdict [class*="scorePanel"]')!;
+      const score = document.querySelector<HTMLElement>("#verdict > div:nth-child(2)")!;
       const finalRect = final.getBoundingClientRect();
       const center = (element: Element) => {
         const rect = element.getBoundingClientRect();

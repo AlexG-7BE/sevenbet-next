@@ -33,14 +33,14 @@ function boolean(value: SearchValue) {
 }
 
 export function parsePublicOfferQuery(searchParams: PublicOfferSearchParams, pageSize = 24): PublicOfferQuery {
-  const country = safeToken(searchParams.country, /^[A-Za-z]{2}$/)?.toUpperCase();
   const type = safeToken(searchParams.type, /^[A-Za-z_]{2,32}$/)?.toUpperCase();
   const payment = safeToken(searchParams.payment, /^[A-Za-z0-9 -]{2,64}$/)?.toLowerCase();
   const availabilityToken = first(searchParams.availability)?.toUpperCase();
   const availability = availabilityToken === "AVAILABLE" || availabilityToken === "UNAVAILABLE" ? availabilityToken : undefined;
   const sortToken = first(searchParams.sort) as PublicOfferSort | undefined;
   return {
-    country,
+    // Request GEO, not a query parameter, owns the market dimension.
+    country: undefined,
     type,
     payment,
     crypto: boolean(searchParams.crypto),
@@ -57,7 +57,7 @@ export function parsePublicOfferQuery(searchParams: PublicOfferSearchParams, pag
 
 export function hasPublicOfferFilters(query: PublicOfferQuery) {
   return Boolean(
-    query.country || query.type || query.payment || query.crypto !== undefined
+    query.type || query.payment || query.crypto !== undefined
     || query.maxDeposit !== undefined || query.maxWagering !== undefined
     || query.availability || query.featured !== undefined || query.recommended !== undefined
     || query.sort !== "editorial" || query.page > 1,

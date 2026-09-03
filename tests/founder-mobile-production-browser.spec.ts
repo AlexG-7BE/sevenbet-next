@@ -19,7 +19,7 @@ const routes = [
   "/",
   "/best-offers",
   "/casinos",
-  "/casino/demo-northstar",
+  "/casino/demo-northstar?visualFixture=true",
   "/bonuses",
   "/program",
   "/10-steps",
@@ -260,7 +260,7 @@ test("mobile visible bounds, text clipping, touch targets and fixed controls pas
       const response = await page.goto(`${baseUrl}${route}`, { waitUntil: "domcontentloaded" });
       expect(response?.status(), `${route} at ${viewport.width}px`).toBe(200);
       await page.waitForTimeout(40);
-      if (route === "/casino/demo-northstar") {
+      if (route === "/casino/demo-northstar?visualFixture=true") {
         await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
         await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
       }
@@ -293,15 +293,19 @@ test("mobile navigation, filters and contextual comparison remain bounded sheets
 
     await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
     const filterTrigger = page.getByRole("button", { name: /Open bonus filters|Filters/i });
-    await filterTrigger.click();
-    const filters = await expectBoundedDialog(page, "#bonus-filter-dialog");
-    const filterInputs = filters.locator("input,select");
-    for (let index = 0; index < await filterInputs.count(); index += 1) {
-      expect(await filterInputs.nth(index).evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    if (await filterTrigger.count()) {
+      await filterTrigger.click();
+      const filters = await expectBoundedDialog(page, "#bonus-filter-dialog");
+      const filterInputs = filters.locator("input,select");
+      for (let index = 0; index < await filterInputs.count(); index += 1) {
+        expect(await filterInputs.nth(index).evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+      }
+      await page.keyboard.press("Escape");
+      await expect(filters).toBeHidden();
+      await expect(filterTrigger).toBeFocused();
+    } else {
+      await expect(page.locator("main")).toContainText(/No comparison records match/i);
     }
-    await page.keyboard.press("Escape");
-    await expect(filters).toBeHidden();
-    await expect(filterTrigger).toBeFocused();
 
     await page.goto(`${baseUrl}/casinos`, { waitUntil: "networkidle" });
     await page.evaluate(() => sessionStorage.removeItem("b4gamble:public-comparison:v1"));
@@ -338,7 +342,7 @@ test("390px touch journeys preserve commercial, learning and canonical Programme
   await selectTwoCasinosForComparison(page);
   await expect(page.locator('dialog[data-runtime-renderer="contextual-comparison"]')).toBeVisible();
 
-  await page.goto(`${baseUrl}/casino/demo-northstar`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
   await page.locator("#faq").scrollIntoViewIfNeeded();
   const faq = page.locator("#faq details").first();
   await faq.locator("summary").click();

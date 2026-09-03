@@ -49,7 +49,7 @@ test("review states distinguish source, machine translation, AI QA and Founder a
     assert.equal(state.aiLanguageQa, ["en-CA", "fr-CA"].includes(locale) ? "AI_LANGUAGE_QA_REQUIRED" : "AI_LANGUAGE_QA_PASSED", locale);
     assert.equal(state.founderPublication, acceptedLocales.has(locale) ? "FOUNDER_PUBLICATION_ACCEPTED" : "FOUNDER_PUBLICATION_NOT_ACCEPTED", locale);
     assert.equal(founderEditorialPublicationAccepted(locale as keyof typeof TRANSLATION_REVIEW_STATE), acceptedLocales.has(locale), locale);
-    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), false, locale);
+    assert.equal(publicTranslationIndexingApproved(locale as keyof typeof TRANSLATION_REVIEW_STATE), locale === "en-CA", locale);
   }
   assert.deepEqual(FOUNDER_PUBLICATION_ACCEPTED_MARKET_CODES, ["DE", "ES", "PE", "SE", "DK", "GR"]);
   assert.deepEqual(PUBLICATION_APPROVED_MARKET_PROFILES.map((profile) => profile.countryCode), ["GB", "DE", "ES", "PE", "GR", "SE", "DK"]);
@@ -66,7 +66,7 @@ test("first-wave profiles contain dated detected evidence and market-specific sa
     assert.ok(profile.evidence.length >= 4, market);
     for (const record of profile.evidence) {
       assert.equal(record.classification, "DETECTED", `${market}:${record.id}`);
-      assert.equal(record.reviewedAt, market === "PE" ? "2026-09-02" : "2026-08-30", `${market}:${record.id}`);
+      assert.equal(record.reviewedAt, "2026-09-03", `${market}:${record.id}`);
       assert.match(record.url, /^https:\/\//, `${market}:${record.id}`);
       assert.ok(record.nextReviewAt > record.reviewedAt, `${market}:${record.id}`);
     }
@@ -121,10 +121,11 @@ test("only GB and the governed safety markets receive localized Help and Respons
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
-    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/help`).kind, "LEGACY_MARKET_ROUTE", market);
-    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/help`).kind, "CANONICAL_LOCALE", market);
-    assert.equal(parsePublicMarketRoute(`/${profile.routeMarket}/responsible-gambling`).kind, "LEGACY_MARKET_ROUTE", market);
-    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/responsible-gambling`).kind, "CANONICAL_LOCALE", market);
+    const language = profile.defaultLocale.split("-")[0].toLowerCase();
+    assert.equal(parsePublicMarketRoute(`/${language}/help`).kind, "CANONICAL_LOCALE", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/help`).kind, "LEGACY_MARKET_ROUTE", market);
+    assert.equal(parsePublicMarketRoute(`/${language}/responsible-gambling`).kind, "CANONICAL_LOCALE", market);
+    assert.equal(parsePublicMarketRoute(`/${profile.defaultLocale.toLowerCase()}/responsible-gambling`).kind, "LEGACY_MARKET_ROUTE", market);
   }
   for (const market of ["IT", "PT", "NL", "FI", "NO", "CA"] as const) {
     const profile = marketProfileByCountry(market);
@@ -134,7 +135,7 @@ test("only GB and the governed safety markets receive localized Help and Respons
   }
   assert.equal(parsePublicMarketRoute("/de/help/article").kind, "INVALID");
   const alternates = firstWaveSafetyLanguageAlternates("/help");
-  assert.deepEqual(Object.keys(alternates).sort(), ["en-GB", "x-default"]);
+  assert.deepEqual(Object.keys(alternates).sort(), ["en", "x-default"]);
 });
 
 test("first-wave safety presentation is localized, attributed and has no commercial or Programme action", () => {
@@ -146,9 +147,10 @@ test("first-wave safety presentation is localized, attributed and has no commerc
   assert.doesNotMatch(component, /<img|<svg/i);
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = FIRST_WAVE_MARKET_EVIDENCE[market];
-    const presentation = resolvePresentationContext({ routeMarket: market.toLowerCase(), routeLanguage: profile.locale.split("-")[0] });
-    assert.equal(productHref(presentation, "/help"), `/${profile.locale.toLowerCase()}/help`);
-    assert.equal(productHref(presentation, "/responsible-gambling"), `/${profile.locale.toLowerCase()}/responsible-gambling`);
+    const language = profile.locale.split("-")[0].toLowerCase();
+    const presentation = resolvePresentationContext({ routeLanguage: language, trustedCountryCode: market });
+    assert.equal(productHref(presentation, "/help"), `/${language}/help`);
+    assert.equal(productHref(presentation, "/responsible-gambling"), `/${language}/responsible-gambling`);
     assert.doesNotMatch(JSON.stringify(profile), /GAMSTOP|GamCare|NHS/, market);
     assert.ok(profile.copy.helpTitle.length > 0 && profile.copy.responsibleTitle.length > 0, market);
   }
@@ -158,7 +160,7 @@ test("first-wave metadata remains noindex and German product terminology avoids 
   for (const market of FIRST_WAVE_MARKETS) {
     const profile = marketProfileByCountry(market);
     assert.ok(profile);
-    const presentation = resolvePresentationContext({ routeMarket: profile.routeMarket, routeLanguage: profile.defaultLocale.split("-")[0] });
+    const presentation = resolvePresentationContext({ routeLanguage: profile.defaultLocale.split("-")[0], trustedCountryCode: market });
     const metadata = productMetadata({ presentation, pathname: "/help", title: "Safety", description: "Safety", robots: { index: true, follow: true }, languageAlternates: firstWaveSafetyLanguageAlternates("/help") });
     assert.deepEqual(metadata.robots, { index: false, follow: true }, market);
   }

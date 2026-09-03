@@ -78,7 +78,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
   const featured = top[0] ?? null;
   const hasAnyGovernedAction = shortlist.some(hasGovernedAction);
 
-  if (!featured) return <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel}><h2>{formatProductMessage(messages.bestOffers.emptyTitle, { market: presentation.market.seoDisplayName })}</h2><p>{messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>;
+  if (!featured) return <section className={styles.statePage} data-nav-theme="light" id="shortlist"><div className={styles.shell}><div className={styles.statePanel}><h2>{formatProductMessage(messages.bestOffers.emptyTitle, { market: presentation.marketDisplayName })}</h2><p>{messages.bestOffers.emptyCopy}</p><div className={styles.stateActions}><Link href={productHref(presentation, "/casinos")}>{messages.common.browseReviews}</Link></div></div></div></section>;
 
   return <>
     <section className={styles.topThree} id="shortlist" aria-labelledby="top-three-title" data-inventory-mode={inventoryMode} data-motion-reveal data-nav-theme="light">

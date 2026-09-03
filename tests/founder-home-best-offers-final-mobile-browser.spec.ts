@@ -155,10 +155,10 @@ for (const viewport of mobileViewports) {
 }
 
 for (const viewport of mobileViewports) {
-  test(`Best Offers mobile decision hierarchy is compact and complete at ${viewport.width}px`, async ({ browser }) => {
+  test(`Best Offers local visual fixture is compact and complete at ${viewport.width}px`, async ({ browser }) => {
     const context = await browser.newContext({ hasTouch: true, isMobile: true, reducedMotion: "reduce", viewport });
     const page = await context.newPage();
-    const response = await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
     await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);
     await expect(page.locator("[data-handoff-page]")).toHaveCount(0);
@@ -259,9 +259,9 @@ for (const viewport of [
   { width: 1024, height: 900 },
   { width: 1440, height: 1000 },
 ] as const) {
-  test(`Best Offers desktop/tablet information architecture remains present at ${viewport.width}px`, async ({ page }) => {
+  test(`Best Offers local visual fixture remains present at ${viewport.width}px`, async ({ page }) => {
     await page.setViewportSize(viewport);
-    await page.goto(`${baseUrl}/best-offers`, { waitUntil: "networkidle" });
+    await page.goto(`${baseUrl}/best-offers?visualFixture=true`, { waitUntil: "networkidle" });
     await expect(page.locator('[data-runtime-renderer="best-offers"]')).toHaveCount(1);
     await expect(page.locator(".does-not-exist")).toHaveCount(0);
     const recordLabel = page.getByText("fictional records", { exact: true });

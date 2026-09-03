@@ -9,7 +9,7 @@ export default async function CompareRedirect({ searchParams }: { searchParams: 
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const presentation = await resolveServerPresentationContext();
-  const query = parsePublicComparisonQuery(raw, presentation.market.countryCode);
+  const query = parsePublicComparisonQuery(raw, presentation.marketCountryCode ?? "ZZ");
   const params = serializePublicComparisonQuery(query);
   if (raw.country === undefined) params.delete("country");
   permanentRedirect(productHref(presentation, `/casinos${params.size ? `?${params}` : ""}`));

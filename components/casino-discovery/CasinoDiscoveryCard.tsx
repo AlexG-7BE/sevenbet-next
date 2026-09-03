@@ -38,7 +38,8 @@ function Signal({ children, classNames }: { children: ReactNode; classNames: Cas
 }
 
 function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
-  return casino.dataClassification !== "DEMO_FIXTURE"
+  return casino.disposition === "PROMOTABLE"
+    && casino.dataClassification !== "DEMO_FIXTURE"
     && casino.visitAction.available
     && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
 }
@@ -51,7 +52,9 @@ function ReviewCardContents({ casino, position, classNames, messages, presentati
   const freshness = formatDate(casino.editorialUpdatedAt ?? casino.publishedAt, presentation.locale);
   const formattedRating = casino.rating === null ? null : formatProfileScore(casino.rating, presentation.locale);
   const disclosure = casino.dataClassification === "PUBLISHED_RECORD"
-    ? messages.bestOffers.commissionNote
+    ? casino.disposition === "PROMOTABLE"
+      ? messages.bestOffers.commissionNote
+      : messages.common.reviewAvailableNoAction
     : casino.dataClassification === "DEMO_FIXTURE"
       ? messages.common.demoDisclosure
       : messages.common.marketPresentationNotice;
@@ -84,13 +87,13 @@ export function CasinoDiscoveryCardMarkup({ casino, position, classNames, messag
 }
 
 export function DirectoryFeaturedTheatreMarkup({ casino, classNames, messages = productPageMessages("en-GB"), presentation = resolvePresentationContext({}) }: { casino: PublicCasinoCardDto | undefined; classNames: CasinoCardClassNames; messages?: ProductPageMessages; presentation?: PresentationResolution }) {
-  if (!casino) return <div className={classNames.featurePlaceholder}><span>{messages.casinos.directoryTitle}</span><strong>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.market.seoDisplayName })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.market.seoDisplayName })}</p></div>;
+  if (!casino) return <div className={classNames.featurePlaceholder}><span>{messages.casinos.directoryTitle}</span><strong>{formatProductMessage(messages.casinos.noPublishedTitle, { market: presentation.marketDisplayName })}</strong><p>{formatProductMessage(messages.casinos.noMatchesCopy, { market: presentation.marketDisplayName })}</p></div>;
   const formattedRating = casino.rating === null ? messages.common.notListed : `${formatProfileScore(casino.rating, presentation.locale)} / 10`;
   const visitAvailability = hasGovernedVisitAction(casino) ? messages.common.actionAvailable : messages.common.reviewOnly;
   return <section aria-label={messages.casinos.directoryTitle} className={classNames.featureTheatre}>
     <Image alt="" aria-hidden="true" className={classNames.featureMedia} fill priority sizes="(max-width: 760px) 1px, (max-width: 1280px) 100vw, 1280px" src={DIRECTORY_EDITORIAL_MEDIA} />
     <div aria-hidden="true" className={classNames.featureOverlay} />
-    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>{casino.dataClassification !== "PUBLISHED_RECORD" ? messages.common.demoData : messages.common.published} · 18+</span><h2>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h2><p>{formatProductMessage(messages.casinos.heroCopy, { market: presentation.market.seoDisplayName })}</p><div className={classNames.featureMetrics}><span><b>{formattedRating}</b> {messages.common.editorScore}</span><span><b>{messages.common.sourceStatus}</b></span><span><b>{visitAvailability}</b></span></div></div>
+    <div className={classNames.featureCopy}><span className={classNames.featureEyebrow}>{casino.dataClassification !== "PUBLISHED_RECORD" ? messages.common.demoData : messages.common.published} · 18+</span><h2>{messages.casinos.heroLead}<br /><em>{messages.casinos.heroEmphasis}</em></h2><p>{formatProductMessage(messages.casinos.heroCopy, { market: presentation.marketDisplayName })}</p><div className={classNames.featureMetrics}><span><b>{formattedRating}</b> {messages.common.editorScore}</span><span><b>{messages.common.sourceStatus}</b></span><span><b>{visitAvailability}</b></span></div></div>
     <article className={classNames.featureCard}><ReviewCardContents casino={casino} classNames={classNames} messages={messages} presentation={presentation} /></article>
   </section>;
 }

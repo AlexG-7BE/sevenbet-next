@@ -16,7 +16,6 @@ import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } fro
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
-import { temporaryDemoBestOffers } from "@/lib/demo-data/temporary-demo-best-offers";
 
 const missingHigh = Number.POSITIVE_INFINITY;
 const missingLow = Number.NEGATIVE_INFINITY;
@@ -56,6 +55,15 @@ export function publicOfferInventoryMode(offers: PublicOfferDTO[]) {
   const fixtures = offers.filter((offer) => offer.dataClassification === "DEMO_FIXTURE").length;
   if (!fixtures) return "PUBLISHED_ONLY" as const;
   return fixtures === offers.length ? "DEMO_ONLY" as const : "MIXED" as const;
+}
+
+function promotableOffers(offers: PublicOfferDTO[]) {
+  return offers.filter((offer) => (
+    offer.dataClassification === "PUBLISHED_RECORD"
+    && offer.commercialAvailability === "AVAILABLE"
+    && offer.action.available
+    && Boolean(offer.action.href && /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/i.test(offer.action.href))
+  ));
 }
 
 function textCompare(a: string, b: string) {
@@ -145,22 +153,29 @@ export class PublicOfferService {
 
   private async listEligibleOffers(authority?: CommercialJurisdictionAuthority | null, options: { throwOnError?: boolean; countryCode?: string } = {}) {
     if (!this.cmsEnabled()) {
-      return (this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
+      return promotableOffers((this.options.legacyCasinos ?? getCasinos()).flatMap((casino) => {
         const legacy = mapLegacyCasino(casino);
         return publicCasinoToOffers({
           ...legacy,
           affiliate: { href: null, available: false },
           bonuses: legacy.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
         });
-      }).map(classifyOffer);
+      }).map(classifyOffer));
     }
     try {
       const redirectEnabled = this.options.redirectEnabled ?? isAffiliateRedirectEnabled();
-      const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
+      const commercialProjection = Boolean(
+        redirectEnabled
+        && options.countryCode
+        && jurisdictionAllowsReferral(authority)
+        && authority?.countryCode === options.countryCode,
+      );
       const records = await this.repository.listOffers({ includeCommercial: commercialProjection, countryCode: options.countryCode });
-      if (!commercialProjection) return records.map(withoutAction).map(classifyOffer);
+      if (!commercialProjection) return [];
       const decisions = await this.operatorEligibility.evaluateMany(records.map((record) => record.casino.id), new Date());
-      return records.map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record)).map(classifyOffer);
+      return promotableOffers(records
+        .map((record) => decisions.get(record.casino.id)?.referralEligible ? record : withoutAction(record))
+        .map(classifyOffer));
     } catch (cause) {
       if (options.throwOnError) throw cause;
       return [];
@@ -172,9 +187,10 @@ export class PublicOfferService {
     authority?: CommercialJurisdictionAuthority | null,
     options: { defaultEditorialCountry?: string } = {},
   ): Promise<PublicOfferSearchResult> {
+    const requestCountry = options.defaultEditorialCountry?.trim().toUpperCase();
     let all: PublicOfferDTO[];
     try {
-      all = await this.listEligibleOffers(authority, { throwOnError: true, countryCode: query.country ?? options.defaultEditorialCountry });
+      all = await this.listEligibleOffers(authority, { throwOnError: true, countryCode: requestCountry });
     } catch {
       return {
         records: [],
@@ -187,11 +203,9 @@ export class PublicOfferService {
         inventoryMode: "UNAVAILABLE",
       };
     }
-    const editorialQuery = query.country
-      ? query
-      : options.defaultEditorialCountry
-        ? { ...query, country: options.defaultEditorialCountry }
-        : query;
+    // A public query parameter is never market authority. The caller supplies
+    // the trusted request GEO separately.
+    const editorialQuery = { ...query, country: requestCountry };
     const filtered = all.filter((offer) => matches(offer, editorialQuery));
     const sorted = sortOffers(filtered, query.sort);
     const pageCount = Math.max(1, Math.ceil(sorted.length / query.pageSize));
@@ -210,29 +224,27 @@ export class PublicOfferService {
   }
 
   async getFeaturedOffers(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
-    const country = options.country ?? "GB";
+    const country = options.country;
+    if (!country) return [];
     const offers = await this.listEligibleOffers(authority, { countryCode: country });
     return selectOverallShortlist(offers, { country, limit: options.limit ?? 12 });
   }
 
   async getBestOffersPageData(options: { country?: string; limit?: number } = {}, authority?: CommercialJurisdictionAuthority | null) {
-    const country = options.country ?? "GB";
+    const country = options.country;
     const limit = options.limit ?? 12;
-    const demonstration = () => {
-      const records = selectOverallShortlist(temporaryDemoBestOffers().map(classifyOffer), { country, limit });
-      return { status: records.length ? "available" : "no-eligible", records, inventoryMode: publicOfferInventoryMode(records) } as const;
-    };
+    if (!country) return { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     if (!this.cmsEnabled()) {
       const records = await this.getFeaturedOffers({ country, limit }, authority);
       return records.length
         ? { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const
-        : demonstration();
+        : { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     }
     try {
       const publishedRecords = await this.listEligibleOffers(authority, { throwOnError: true, countryCode: country });
       const records = selectOverallShortlist(publishedRecords, { country, limit });
       if (records.length) return { status: "available", records, inventoryMode: publicOfferInventoryMode(records) } as const;
-      return demonstration();
+      return { status: "no-eligible", records: [], inventoryMode: "PUBLISHED_ONLY" as const } as const;
     } catch {
       return { status: "unavailable", records: [], inventoryMode: "UNAVAILABLE" as const } as const;
     }
