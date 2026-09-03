@@ -11,7 +11,7 @@ import { editorialReviewService } from "@/lib/services/editorial-review.service"
 import { publicCasinoService } from "@/lib/services/public-casino.service";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { isLocalHandoffVisualDataFixture, withHandoffCasinoEditorialData, withHandoffCasinoProfileData } from "@/lib/final-handoff/visual-data-fixture";
-import { formatProductMessage, productPageMessages } from "@/lib/i18n/product-pages-catalog";
+import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import {
   commercialAuthorityForPresentation,
   marketAvailability,
@@ -56,7 +56,7 @@ const loadCasinoPage = cache(async (slug: string) => {
     : candidate;
   return {
     casino: boundedCandidate?.source === "cms" ? boundedCandidate : null,
-    editorialResult: boundedCandidate?.presentationDisposition === "PROMOTABLE" ? editorialResult : null,
+    editorialResult: boundedCandidate ? editorialResult : null,
     presentation,
     availableForPresentation,
   };
@@ -64,15 +64,12 @@ const loadCasinoPage = cache(async (slug: string) => {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const { casino, editorialResult, presentation, availableForPresentation } = await loadCasinoPage(slug);
+  const { casino, editorialResult, presentation } = await loadCasinoPage(slug);
   const messages = productPageMessages(presentation.locale);
   if (!casino) return productMetadata({ presentation, pathname: `/casino/${slug}`, title: messages.profile.unavailableTitle, description: messages.profile.unavailableDescription, robots: { index: false, follow: false }, openGraphType: "article" });
   const base = casinoProfileMetadata(casino, profileEditorialDocument(editorialResult, casino.id));
-  const market = presentation.marketDisplayName;
   const title = `${casino.name} ${messages.profile.review} | B4GAMBLE`;
-  const description = availableForPresentation
-    ? `${messages.profile.currentReview}: ${casino.name}. ${messages.common.originalSourceCopy}`
-    : formatProductMessage(messages.profile.marketUnavailableCopy, { market });
+  const description = `${messages.profile.currentReview}: ${casino.name}. ${casino.summary || messages.common.originalSourceCopy}`;
   return productMetadata({
     presentation,
     pathname: `/casino/${casino.slug}`,

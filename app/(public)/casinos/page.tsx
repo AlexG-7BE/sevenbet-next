@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { cache } from "react";
 
 import { CommercialSurfaceView } from "@/components/analytics/CommercialSurfaceView";
 import { ActiveDiscoveryFilters, DiscoveryControls, DiscoveryResults } from "@/components/casino-discovery/CasinoDiscovery";
@@ -9,6 +10,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import styles from "@/components/casino-discovery/CasinoDiscovery.module.css";
 import { resolveServerJurisdiction } from "@/lib/jurisdiction/server";
 import { hasDiscoveryFilters, parseCasinoDiscoveryQuery } from "@/lib/public-casino-discovery/query";
+import type { CasinoDiscoveryQuery } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { publicCasinoDiscoveryService } from "@/lib/services/public-casino-discovery.service";
 import { absoluteUrl } from "@/lib/site";
 import { isLocalHandoffVisualDataFixture, withHandoffCasinoDiscoveryData } from "@/lib/final-handoff/visual-data-fixture";
@@ -20,20 +22,26 @@ import { triggerPublicCommercialErrorHarness } from "@/lib/qa/public-commercial-
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
-  const query = parseCasinoDiscoveryQuery(await searchParams);
-  const filtered = hasDiscoveryFilters(query);
+const loadCasinoDirectoryPage = cache(async (queryKey: string) => {
+  const query = JSON.parse(queryKey) as CasinoDiscoveryQuery;
   const [presentation, authority] = await Promise.all([
     resolveServerPresentationContext(),
     resolveServerJurisdiction(),
   ]);
-  const messages = productPageMessages(presentation.locale);
-  const market = presentation.marketDisplayName;
   const result = await publicCasinoDiscoveryService.discover(
     query,
     commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
     { ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}) },
   );
+  return { presentation, result };
+});
+
+export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
+  const query = parseCasinoDiscoveryQuery(await searchParams);
+  const filtered = hasDiscoveryFilters(query);
+  const { presentation, result } = await loadCasinoDirectoryPage(JSON.stringify(query));
+  const messages = productPageMessages(presentation.locale);
+  const market = presentation.marketDisplayName;
   const containsDemo = result.inventoryMode !== "PUBLISHED_ONLY";
   const empty = result.total === 0;
   const canonicalParams = new URLSearchParams();
@@ -48,18 +56,12 @@ export default async function CasinosPage({ searchParams }: PageProps) {
   const raw = await searchParams;
   triggerPublicCommercialErrorHarness(raw.errorFixture);
   const query = parseCasinoDiscoveryQuery(raw);
-  const [presentation, authority] = await Promise.all([
-    resolveServerPresentationContext(),
-    resolveServerJurisdiction(),
-  ]);
+  const loaded = await loadCasinoDirectoryPage(JSON.stringify(query));
+  const { presentation } = loaded;
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const result = withHandoffCasinoDiscoveryData(
-    await publicCasinoDiscoveryService.discover(
-      query,
-      commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
-      { ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}) },
-    ),
+    loaded.result,
     isLocalHandoffVisualDataFixture(raw.visualFixture),
     presentation.marketCountryCode === "GB",
     presentation.locale,

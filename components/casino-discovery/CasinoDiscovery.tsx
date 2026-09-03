@@ -42,6 +42,7 @@ function BooleanSelect({ active, activeLabel, className = styles.filterSelect, e
 function FilterFields({ result, messages }: { result: CasinoDiscoveryResult; messages: ProductPageMessages }) {
   const query = result.appliedFilters;
   return <div className={styles.filterGrid}>
+    <FilterSelect emptyLabel="Currency" label="Currency" name="currency" selected={query.currency ?? []} values={result.facets.currencies} />
     <FilterSelect emptyLabel={messages.common.licence} label={messages.common.licence} name="license" selected={query.license ?? []} values={result.facets.licenses} />
     <FilterSelect emptyLabel={messages.common.paymentMethods} label={messages.common.paymentMethods} name="payment" selected={query.payment ?? []} values={result.facets.payments} />
     <FilterSelect emptyLabel={messages.profile.providers} label={messages.profile.providers} name="gameProvider" selected={query.gameProvider ?? []} values={result.facets.gameProviders} />
@@ -58,6 +59,7 @@ function FilterFields({ result, messages }: { result: CasinoDiscoveryResult; mes
 function PrimaryFilterFields({ result, messages }: { result: CasinoDiscoveryResult; messages: ProductPageMessages }) {
   const query = result.appliedFilters;
   return <div className={filterStyles.primaryGrid}>
+    <FilterSelect className={filterStyles.field} emptyLabel="Currency" label="Currency" name="currency" selected={query.currency ?? []} values={result.facets.currencies} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.licence} label={messages.common.licence} name="license" selected={query.license ?? []} values={result.facets.licenses} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.paymentMethods} label={messages.common.paymentMethods} name="payment" selected={query.payment ?? []} values={result.facets.payments} />
     <FilterSelect className={filterStyles.field} emptyLabel={messages.common.bonusType} label={messages.common.bonusType} name="bonusType" selected={query.bonusType ?? []} values={result.facets.bonusTypes} />
@@ -87,7 +89,7 @@ function activeFilterCount(query: CasinoDiscoveryQuery) {
 function FilterForm({ result, messages, presentation, mobile = false, noScript = false }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution; mobile?: boolean; noScript?: boolean }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={mobile ? styles.mobileFilterForm : styles.filterForm} key={`filters:${mobile}:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["country", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
+    <HiddenQuery except={["country", "currency", "license", "payment", "gameProvider", "category", "bonusType", ...booleanFields.map(([name]) => name)]} query={query} />
     <div className={styles.filterPrompt}><span>{messages.common.allFilters}</span><strong>{messages.comparison.subtitle}</strong></div>
     <FilterFields messages={messages} result={result} />
     <p className={styles.preferenceNote}>{messages.common.marketPresentationNotice}</p>
@@ -98,7 +100,7 @@ function FilterForm({ result, messages, presentation, mobile = false, noScript =
 function PrimaryFilterForm({ result, messages, presentation }: { result: CasinoDiscoveryResult; messages: ProductPageMessages; presentation: PresentationResolution }) {
   const query = result.appliedFilters;
   return <InstantDiscoveryForm action={productHref(presentation, "/casinos")} className={filterStyles.primaryForm} key={`casino-primary:${JSON.stringify(query)}`} pendingLabel={messages.common.updatingResults}>
-    <HiddenQuery except={["license", "payment", "bonusType"]} query={query} />
+    <HiddenQuery except={["currency", "license", "payment", "bonusType"]} query={query} />
     <PrimaryFilterFields messages={messages} result={result} />
   </InstantDiscoveryForm>;
 }

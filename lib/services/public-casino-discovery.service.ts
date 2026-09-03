@@ -174,14 +174,14 @@ export class PublicCasinoDiscoveryService {
         logo: scoped.media.logo ? { url: scoped.media.logo.url, alt: scoped.media.logo.alt || `${scoped.name} logo`, width: scoped.media.logo.width, height: scoped.media.logo.height } : null,
         hero: promotional && scoped.media.hero ? { url: scoped.media.hero.url, alt: scoped.media.hero.alt || `${scoped.name} campaign media`, width: scoped.media.hero.width, height: scoped.media.hero.height } : null,
         shortDescription: scoped.summary || null,
-        rating: promotional ? scoped.editorScore ?? null : null,
+        rating: scoped.editorScore ?? null,
         reviewCount: null,
         licenses: scoped.licenses.map((license) => ({ key: key(license.authority), label: license.authority })),
         countries: exactProfile ? [{ key: exactProfile.countryCode, label: exactProfile.countryCode }] : [],
         paymentMethods: scoped.payments.map((payment) => ({ key: payment.key.toLowerCase(), label: payment.name })),
         gameProviders: scoped.providers.map((provider) => ({ key: provider.key.toLowerCase(), label: provider.name })),
         categories: scoped.categories.map((category) => ({ key: category.key.toLowerCase(), label: category.name })),
-        highlights: promotional ? scoped.pros.slice(0, 3) : [],
+        highlights: scoped.pros.slice(0, 3),
         supportsCrypto: scoped.payments.some((payment) => payment.crypto === true),
         supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
         featuredBonus: bonus ? { title: bonus.title, summary: bonus.summary, type: bonus.type, keyTerms: bonus.importantConditions.slice(0, 3), wageringRequirement: bonus.wageringMultiplier, minimumDeposit: bonus.minimumDeposit, currency: bonus.currency, validUntil: bonus.expiresAt, termsApply: true } : null,
@@ -251,9 +251,6 @@ export class PublicCasinoDiscoveryService {
       if (sort === "NAME_DESC") return b.card.name.localeCompare(a.card.name) || a.card.id.localeCompare(b.card.id);
       const dispositionOrder = Number(b.card.disposition === "PROMOTABLE") - Number(a.card.disposition === "PROMOTABLE");
       if (dispositionOrder) return dispositionOrder;
-      if (a.card.disposition === "INFORMATIONAL_ONLY" && b.card.disposition === "INFORMATIONAL_ONLY") {
-        return a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
-      }
       return Number(b.featured) - Number(a.featured) || Number(b.recommended) - Number(a.recommended) || (b.card.rating ?? 0) - (a.card.rating ?? 0) || a.card.name.localeCompare(b.card.name) || a.card.id.localeCompare(b.card.id);
     });
     const total = filtered.length;

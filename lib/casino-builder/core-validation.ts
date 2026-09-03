@@ -26,6 +26,17 @@ export function isIsoCountryCode(value: string) {
   return isoCountries.has(value);
 }
 
+export function canonicalCasinoLicenseStatus(
+  status: string,
+  canonicalStatus?: string | null,
+) {
+  const rawStatus = status.trim().toUpperCase();
+  if (rawStatus === "ARCHIVED") return rawStatus;
+  const preferredStatus = canonicalStatus?.trim().toUpperCase();
+  if (preferredStatus && licenseStatuses.has(preferredStatus)) return preferredStatus;
+  return licenseStatuses.has(rawStatus) ? rawStatus : "UNKNOWN";
+}
+
 function issue(path: string, message: string, code: string, severity: "error" | "warning" = "error"): CasinoBuilderValidationIssue {
   return { path, message, code, severity };
 }

@@ -1,19 +1,23 @@
 import type { ReactNode } from "react";
+import { headers } from "next/headers";
 
 import { PublicFooter } from "@/components/public-shell/PublicFooter";
 import { PublicHeader } from "@/components/public-shell/PublicHeader";
-import { getServerSession } from "@/lib/auth/session";
+import { hasBetterAuthSessionCookie } from "@/lib/auth/session-cookie";
 import { publicShellMessages } from "@/lib/i18n/public-shell-catalog";
 import { resolveServerPresentationContext } from "@/lib/market/server";
 import { programmePathForPresentationLocale } from "@/lib/programme/presentation";
 import { accountNavigationFor } from "@/lib/public-shell";
 
 export default async function PublicLayout({ children }: { children: ReactNode }) {
-  const [session, presentation] = await Promise.all([
-    getServerSession(),
+  const [requestHeaders, presentation] = await Promise.all([
+    headers(),
     resolveServerPresentationContext(),
   ]);
-  const authenticated = Boolean(session?.user);
+  // The shell only chooses navigation copy. Authoritative identity is resolved
+  // by protected pages and APIs; keeping that database read out of the shared
+  // layout prevents it competing with public projections on small pools.
+  const authenticated = hasBetterAuthSessionCookie(requestHeaders);
   const programmePath = programmePathForPresentationLocale(presentation.locale);
   const account = accountNavigationFor({ authenticated, programmePath });
   const messages = publicShellMessages(presentation.locale);

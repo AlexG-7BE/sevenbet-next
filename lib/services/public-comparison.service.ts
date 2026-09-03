@@ -266,12 +266,8 @@ export class PublicComparisonService {
         ? casino
         : {
             ...casino,
-            editorScore: null,
-            trustScore: null,
             featured: false,
             recommended: false,
-            pros: [],
-            cons: [],
             bonuses: [],
             affiliate: { href: null, available: false },
             media: { ...casino.media, hero: null },

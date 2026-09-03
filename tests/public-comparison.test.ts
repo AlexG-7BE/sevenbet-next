@@ -280,8 +280,8 @@ test("declared unavailable and missing-market states remain neutral, explicit co
   assert.equal(result.status, "available");
   assert.deepEqual(result.reasons, []);
   assert.deepEqual(result.casinos.map((casino) => casino.marketState), ["AVAILABLE", "UNAVAILABLE", "UNKNOWN"]);
-  assert.ok(result.casinos.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore === null));
-  assert.ok(result.candidates.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore === null));
+  assert.ok(result.casinos.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore !== null));
+  assert.ok(result.candidates.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore !== null));
   assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
   const offerRows = result.groups.find((group) => group.id === "offer")?.rows ?? [];
   assert.ok(offerRows.every((row) => Object.values(row.values).every((cell) => ["Unknown", "Unavailable"].includes(cell.status))));

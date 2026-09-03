@@ -9,11 +9,27 @@ import {
   identityOnlyOAuthAccountDatabaseHooks,
   sanitizeIdentityOnlyOAuthAccount,
 } from "../lib/auth/identity-only-oauth";
+import { hasBetterAuthSessionCookie } from "../lib/auth/session-cookie";
 
 const BASE_URL = "http://localhost:3000";
 const GOOGLE_ACCESS_SECRET_SENTINEL = "GOOGLE_ACCESS_SECRET_SENTINEL";
 const GOOGLE_REFRESH_SECRET_SENTINEL = "GOOGLE_REFRESH_SECRET_SENTINEL";
 const GOOGLE_ID_SECRET_SENTINEL = "GOOGLE_ID_SECRET_SENTINEL";
+
+test("anonymous requests skip Better Auth session initialization", () => {
+  assert.equal(hasBetterAuthSessionCookie(new Headers()), false);
+  assert.equal(hasBetterAuthSessionCookie(new Headers({ cookie: "presentation=en" })), false);
+  assert.equal(hasBetterAuthSessionCookie(new Headers({ cookie: "better-auth.session_token=signed" })), true);
+  assert.equal(hasBetterAuthSessionCookie(new Headers({ cookie: "__Secure-better-auth.session_token=signed" })), true);
+});
+
+test("public and Programme shells do not open Better Auth for navigation copy", () => {
+  for (const relativePath of ["app/(public)/layout.tsx", "app/program/layout.tsx"]) {
+    const source = readFileSync(new URL(`../${relativePath}`, import.meta.url), "utf8");
+    assert.match(source, /hasBetterAuthSessionCookie\(requestHeaders\)/);
+    assert.doesNotMatch(source, /getServerSession/);
+  }
+});
 
 function createIdentityOnlyTestAuth() {
   return betterAuth({

@@ -84,7 +84,8 @@ test("Home Programme entry stays internal and commercial acquisition stays outsi
   assert.equal((home.match(/href="\/program\?entry=start"/g) ?? []).length, 2);
   assert.doesNotMatch(home, /href="\/(?:r|go)\//);
   assert.doesNotMatch(home, /casino card|bonus card|best offers|affiliate cta/iu);
-  assert.match(layout, /getServerSession/);
+  assert.match(layout, /hasBetterAuthSessionCookie\(requestHeaders\)/);
+  assert.doesNotMatch(layout, /getServerSession/);
   assert.match(layout, /accountNavigationFor\(\{ authenticated, programmePath \}\)/);
   assert.match(layout, /programme=\{\{ path: programmePath, localizePublicLinks: true \}\}/);
 });
