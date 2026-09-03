@@ -273,9 +273,10 @@ GitHub's dependency view showed six pre-existing dependency notices (four high,
 two moderate). They were not introduced, changed or auto-fixed in this scoped
 release and remain a separate maintenance concern.
 
-This release record and the Current State update are documentation-only closure.
-Their merge may advance `main` and trigger an equivalent Vercel rebuild after
-the accepted application runtime above; it does not change the verified runtime
+This release record and the Current State update are delivered by documentation-
+only [closure PR #135](https://github.com/AlexG-7BE/sevenbet-next/pull/135).
+Its merge may advance `main` and trigger an equivalent Vercel rebuild after the
+accepted application runtime above; it does not change the verified runtime
 behavior, schema or data state.
 
 **GEO-LANGUAGE-GLOBAL-CATALOG-01 — COMPLETE**
