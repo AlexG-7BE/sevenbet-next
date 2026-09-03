@@ -190,6 +190,7 @@ export interface CasinoBuilderGeneralMetadata {
   responsibleGamblingScore: number | null;
   featured: boolean;
   recommended: boolean;
+  supportsMobile?: boolean;
   internalNotes: string | null;
 }
 

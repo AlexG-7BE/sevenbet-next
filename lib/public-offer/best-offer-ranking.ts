@@ -12,7 +12,7 @@ function textCompare(a: string, b: string) {
 
 export function materialTermCompleteness(offer: PublicOfferDTO) {
   return Number(offer.bonus.minimumDeposit !== null)
-    + Number(offer.bonus.wageringMultiplier !== null)
+    + Number(offer.bonus.wageringMultiplier !== null || Boolean(offer.bonus.wageringText?.trim()))
     + Number(Boolean(offer.bonus.eligibility?.trim()))
     + Number(offer.bonus.importantConditions.length > 0);
 }
@@ -53,14 +53,28 @@ function editorialTieBreak(a: PublicOfferDTO, b: PublicOfferDTO) {
   return textCompare(a.casino.slug, b.casino.slug) || textCompare(a.bonus.slug, b.bonus.slug);
 }
 
+function overallOfferBalance(offer: PublicOfferDTO) {
+  const wagering = offer.bonus.wageringMultiplier;
+  // Wagering contributes meaningfully without allowing an unusually low value
+  // to overwhelm the rest of the researched editorial record. Values below
+  // 20x receive no extra lift and values above 35x receive no lift.
+  const boundedWageringContribution = wagering === null
+    ? 0
+    : (35 - Math.min(35, Math.max(20, wagering))) / 5;
+  return offer.casino.editorScore + boundedWageringContribution;
+}
+
 export function rankOverallOffers(offers: PublicOfferDTO[], country = "GB") {
-  return [...offers].sort((a, b) => Number(isMarketAvailable(b, country)) - Number(isMarketAvailable(a, country))
-    || materialTermCompleteness(b) - materialTermCompleteness(a)
+  void country;
+  return [...offers].sort((a, b) => materialTermCompleteness(b) - materialTermCompleteness(a)
+    || (b.bonus.freeSpins ?? 0) - (a.bonus.freeSpins ?? 0)
+    || (b.bonus.percentage ?? 0) - (a.bonus.percentage ?? 0)
+    || (a.bonus.minimumDeposit ?? missingHigh) - (b.bonus.minimumDeposit ?? missingHigh)
+    || overallOfferBalance(b) - overallOfferBalance(a)
+    || (a.bonus.wageringMultiplier ?? missingHigh) - (b.bonus.wageringMultiplier ?? missingHigh)
     || b.casino.editorScore - a.casino.editorScore
     || Number(b.casino.featured) - Number(a.casino.featured)
     || Number(b.casino.recommended) - Number(a.casino.recommended)
-    || (a.bonus.wageringMultiplier ?? missingHigh) - (b.bonus.wageringMultiplier ?? missingHigh)
-    || (a.bonus.minimumDeposit ?? missingHigh) - (b.bonus.minimumDeposit ?? missingHigh)
     || Number(hasPayoutEvidence(b)) - Number(hasPayoutEvidence(a))
     || editorialTieBreak(a, b));
 }
@@ -68,7 +82,7 @@ export function rankOverallOffers(offers: PublicOfferDTO[], country = "GB") {
 export function selectOverallShortlist(offers: PublicOfferDTO[], options: { country?: string; limit?: number } = {}) {
   const country = options.country ?? "GB";
   const limit = Math.min(Math.max(options.limit ?? 12, 1), 12);
-  return rankOverallOffers(offers.filter((offer) => isMarketAvailable(offer, country) && hasCompleteMaterialTerms(offer)), country).slice(0, limit);
+  return rankOverallOffers(offers.filter((offer) => offer.dataClassification === "PUBLISHED_RECORD" && hasCompleteMaterialTerms(offer)), country).slice(0, limit);
 }
 
 export function selectBestOverall(offers: PublicOfferDTO[]) {

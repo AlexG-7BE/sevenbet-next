@@ -193,7 +193,7 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     });
   }
 
-  await t.test("a route lookup failure preserves neutral identity and strips promotion", async () => {
+  await t.test("a route lookup failure preserves identity and researched bonus content without an action", async () => {
     const record = publishedRecord();
     const repository = store([record], [managedSlug], [], {
       listActiveAffiliateRoutes: async () => { throw new Error("route lookup unavailable"); },
@@ -201,7 +201,8 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority, "GB");
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses, []);
+    assert.equal(casino?.bonuses.length, 1);
+    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
   });
 
   await t.test("commercial authority for another country cannot unlock an exact-market route", async () => {
@@ -227,7 +228,8 @@ test("getCasino fails closed outside immutable published CMS records", async (t)
     const casino = await authorizedService(repository).getCasino(managedSlug, allowJurisdictionAuthority, "DE");
     assert.equal(routeLookups, 0);
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses, []);
+    assert.equal(casino?.bonuses.length, 1);
+    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
   });
 
   await t.test("exact-ID demo profiles remain hidden under otherwise permissive authority", async () => {
@@ -275,7 +277,8 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority, "GB")).find((entry) => entry.slug === managedSlug);
     assert.equal(casino?.source, "cms");
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses, []);
+    assert.equal(casino?.bonuses.length, 1);
+    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
   });
 
   await t.test("a country-mismatched authority cannot unlock listing actions", async () => {
@@ -291,7 +294,8 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     const casino = (await authorizedService(repository).listCasinos(allowJurisdictionAuthority, "DE"))[0];
     assert.equal(routeLookups, 0);
     assert.deepEqual(casino?.affiliate, { href: null, available: false });
-    assert.deepEqual(casino?.bonuses, []);
+    assert.equal(casino?.bonuses.length, 1);
+    assert.deepEqual(casino?.bonuses[0]?.affiliate, { href: null, available: false });
   });
 
   await t.test("16. a managed legacy slug never appears during published retrieval failure", async () => {
@@ -314,7 +318,7 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     assert.deepEqual(casinos.map((casino) => casino.slug), expected.map((casino) => casino.slug));
   });
 
-  await t.test("an exact country listing excludes identities without that market profile", async () => {
+  await t.test("an exact country listing preserves global identities without that market profile", async () => {
     const record = publishedRecord();
     (record.snapshot as Record<string, unknown>).countries = [{
       id: `${record.casinoId}-gb`,
@@ -327,8 +331,12 @@ test("listCasinos never expands visibility beyond published CMS records", async 
     }];
 
     assert.equal((await service(store([record])).listCasinos(null, "GB")).length, 1);
-    assert.deepEqual(await service(store([record])).listCasinos(null, "PE"), []);
-    assert.deepEqual(await service(store([record])).listCasinos(null, "SE"), []);
+    for (const country of ["PE", "SE"]) {
+      const [casino] = await service(store([record])).listCasinos(null, country);
+      assert.equal(casino?.slug, managedSlug);
+      assert.equal(casino?.presentationDisposition, "INFORMATIONAL_ONLY");
+      assert.equal(casino?.bonuses.length, 1);
+    }
   });
 
   await t.test("listCasinoViews does not reintroduce a managed legacy profile", async () => {

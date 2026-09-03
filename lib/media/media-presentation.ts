@@ -25,19 +25,21 @@ export function classifyMediaRatio({ width, height }: MediaDimensions): MediaRat
 }
 
 export function isFeaturedCardMediaCompatible(ratio: MediaRatioClass) {
-  return ratio === "square" || ratio === "landscape" || ratio === "wide-landscape" || ratio === "unknown";
+  return ratio !== "tall" && ratio !== "portrait";
 }
 
 export function isCasinoHeroMediaCompatible(ratio: MediaRatioClass) {
-  return ratio !== "ultra-wide";
+  return ratio !== "tall" && ratio !== "portrait";
 }
 
 export function mayPresentPromotionalMedia({
-  demonstration,
-  governedActionAvailable,
+  demonstration: _demonstration,
+  governedActionAvailable: _governedActionAvailable,
 }: {
   demonstration: boolean;
   governedActionAvailable: boolean;
 }) {
-  return demonstration || governedActionAvailable;
+  // Controlled editorial/partner media is public content. The outbound CTA is
+  // governed separately and must never erase an otherwise valid asset.
+  return true;
 }

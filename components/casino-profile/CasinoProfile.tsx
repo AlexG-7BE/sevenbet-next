@@ -88,7 +88,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const demo = isTemporaryDemoCasinoId(casino.id);
   const informationalOnly = casino.presentationDisposition === "INFORMATIONAL_ONLY";
   const bonus = selectProfileBonus(casino);
-  const projectedAction = availableForPresentation && !informationalOnly ? profileAction(casino, bonus) : null;
+  const projectedAction = !informationalOnly ? profileAction(casino, bonus) : null;
   const action = projectedAction ? { ...projectedAction, label: `${messages.common.actionAvailable}: ${casino.name}` } : null;
   const faq = informationalOnly
     ? [
@@ -105,9 +105,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       ];
   const freshness = profileReviewFreshness(casino, presentation.locale);
   const licence = casino.licenses[0] ?? null;
+  const licenceEvidence = casino.licenses.map((entry) => entry.licenseNumber ? `${entry.authority} ${entry.licenseNumber}` : entry.authority).join(" · ");
   const licenceChecked = Boolean(licence?.lastVerifiedAt);
   const payments = casino.payments.slice(0, 2).map((payment) => payment.name);
-  const withdrawal = casino.payments.find((payment) => payment.withdrawalTime)?.withdrawalTime ?? null;
+  const withdrawal = [...new Set(casino.payments.filter((payment) => payment.supportsWithdrawals && payment.withdrawalTime).map((payment) => payment.withdrawalTime))].filter(Boolean).join(" · ") || null;
   const minimumDeposit = bonus ? formatProfileMoney(bonus.minimumDeposit, bonus.currency, presentation.locale) : null;
   const maximumBet = bonus ? formatProfileMoney(bonus.maximumBet, bonus.currency, presentation.locale) : null;
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
@@ -143,7 +144,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         <div className={styles.heroReview}>
           <nav aria-label={messages.common.breadcrumb} className={styles.breadcrumb}><Link href={productHref(presentation, "/casinos")}>{messages.casinos.directoryTitle}</Link><span aria-hidden="true">/</span><span aria-current="page">{casino.name} {messages.profile.review}</span></nav>
           {demo ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.demoData}.</strong> {messages.profile.demoDisclosure}</p> : null}
-          {!availableForPresentation ? <p className={styles.demoDisclosure} role="note"><strong>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}.</strong> {formatProductMessage(messages.profile.marketUnavailableCopy, { market: presentation.marketDisplayName })}</p> : null}
+          {!availableForPresentation ? <p className={styles.demoDisclosure} role="note"><strong>{formatProductMessage(messages.profile.marketUnavailable, { market: presentation.marketDisplayName })}.</strong> {messages.profile.marketUnavailableCopy}</p> : null}
           {informationalOnly ? <p className={styles.demoDisclosure} role="note"><strong>{messages.common.reviewOnly}.</strong> {messages.common.reviewAvailableNoAction}</p> : null}
           <p className={styles.heroKicker}>B4GAMBLE · {messages.profile.review} · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt, presentation.locale) || messages.common.current}</p>
           <div className={styles.identityRow}>
@@ -198,9 +199,13 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <section className={styles.checkCard}><h3>{messages.profile.thingsToKnow}</h3><ul>{casino.cons.slice(0, 3).map((item) => <li key={item}>{item}</li>)}</ul></section>
           <dl className={`${styles.facts} ${styles.checkCard}`}>
             <div><dt>{messages.profile.founded}</dt><dd>{casino.foundedYear ?? messages.common.notListed}</dd></div>
-            <div><dt>{messages.common.licence}</dt><dd>{licence?.authority ?? messages.common.notListed}</dd></div>
-            <div><dt>{messages.profile.games}</dt><dd>{publishedGameCount ? `${new Intl.NumberFormat(presentation.locale).format(publishedGameCount)}+` : messages.common.notListed}</dd></div>
+            <div><dt>{messages.common.licence}</dt><dd>{licenceEvidence || messages.common.notListed}</dd></div>
+            <div><dt>{messages.profile.games}</dt><dd>{publishedGameCount ? `${new Intl.NumberFormat(presentation.locale).format(publishedGameCount)}+` : casino.categories.map((category) => category.name).join(" · ") || messages.common.notListed}</dd></div>
             <div><dt>{messages.common.payout}</dt><dd>{withdrawal ?? messages.common.notListed}</dd></div>
+            <div><dt>Languages</dt><dd>{casino.languages.join(" · ") || messages.common.notListed}</dd></div>
+            <div><dt>Currencies</dt><dd>{casino.currencies.join(" · ") || messages.common.notListed}</dd></div>
+            <div><dt>Mobile</dt><dd>{casino.supportsMobile ? messages.common.supported : messages.common.notListed}</dd></div>
+            <div><dt>{messages.profile.providers}</dt><dd>{casino.providers.map((provider) => provider.name).join(" · ") || messages.common.notListed}</dd></div>
           </dl>
         </div>
       </section>
@@ -233,8 +238,15 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
               <summary>{messages.profile.evidencePaymentsTools}</summary>
               <dl>
                 {licence ? <div><dt>{messages.profile.licenceRecord}</dt><dd>{licence.authority}</dd></div> : null}
-                {casino.payments.length ? <div><dt>{messages.profile.paymentRecords}</dt><dd>{casino.payments.map((payment) => payment.name).join(", ")}</dd></div> : null}
+                {casino.payments.length ? <div><dt>{messages.profile.paymentRecords}</dt><dd>{casino.payments.map((payment) => {
+                  const timing = payment.withdrawalTime ? ` · ${payment.withdrawalTime}` : "";
+                  const limit = payment.maximumWithdrawal !== null ? ` · ${formatProfileMoney(payment.maximumWithdrawal, payment.currencies[0] ?? null, presentation.locale)} reported maximum` : "";
+                  return `${payment.name}${timing}${limit}`;
+                }).join("; ")}</dd></div> : null}
                 {casino.providers.length ? <div><dt>{messages.profile.providers}</dt><dd>{casino.providers.map((provider) => provider.name).join(", ")}</dd></div> : null}
+                {casino.categories.length ? <div><dt>{messages.profile.games}</dt><dd>{casino.categories.map((category) => category.name).join(", ")}</dd></div> : null}
+                {casino.languages.length ? <div><dt>Languages</dt><dd>{casino.languages.join(", ")}</dd></div> : null}
+                {casino.currencies.length ? <div><dt>Currencies</dt><dd>{casino.currencies.join(", ")}</dd></div> : null}
                 {casino.responsibleGamblingTools.length ? <div><dt>{messages.profile.controlTools}</dt><dd>{casino.responsibleGamblingTools.join(", ")}</dd></div> : null}
               </dl>
             </details>

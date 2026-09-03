@@ -15,7 +15,7 @@ import { ConflictError, NotFoundError, ValidationError } from "./service-error";
 export type RedirectFailureReason = "JURISDICTION_DENIED" | "OPERATOR_EVIDENCE_DENIED" | "COMMERCIAL_CONTRACT_DENIED" | "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE" | "SLUG_NOT_FOUND" | "SLUG_INACTIVE" | "NO_ACTIVE_OFFER" | "NO_ELIGIBLE_TRACKING_LINK" | "UNSAFE_REDIRECT_URL";
 
 export type AffiliateRedirectResolution =
-  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility: GbOperatorEligibilityDecision; commercialReadiness: GbCommercialReadinessDecision }
+  | { ok: true; destination: URL; slugId: string; casinoId: string; offerId: string; trackingLinkId: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision }
   | { ok: false; reason: RedirectFailureReason; slugId?: string; casinoId?: string; candidates: ReturnType<typeof resolveAffiliateCandidates>["candidates"]; jurisdictionDecision?: JurisdictionDecision; operatorEligibility?: GbOperatorEligibilityDecision; commercialReadiness?: GbCommercialReadinessDecision };
 
 export type AffiliateRedirectPreviewResolution =
@@ -188,6 +188,11 @@ export class AffiliateRedirectService {
     }
     if (!productionEligible) {
       return { ok: false, reason: "COMMERCIAL_ROUTE_NOT_PRODUCTION_ELIGIBLE", slugId: routing.slugId, casinoId: routing.casinoId, candidates: routing.candidates, jurisdictionDecision };
+    }
+
+    if (jurisdictionDecision.countryCode !== "GB") {
+      const { selectedOffer: _selectedOffer, ...resolution } = routing;
+      return { ...resolution, jurisdictionDecision };
     }
 
     const commercialReadiness = await this.commercialReadiness.evaluate({

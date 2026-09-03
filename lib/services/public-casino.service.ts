@@ -24,21 +24,19 @@ function projectRequestedMarket(casino: PublicCasinoDTO, countryCode: string | n
 }
 
 function boundForDisposition(casino: PublicCasinoDTO, decision: PublicCasinoDispositionDecision): PublicCasinoDTO {
-  if (decision.disposition === "PROMOTABLE") return {
-    ...casino,
-    presentationDisposition: decision.disposition,
-    presentationDispositionReason: decision.reasonCode,
-  };
   return {
     ...casino,
-    featured: false,
-    recommended: false,
-    bonuses: [],
-    affiliate: { href: null, available: false },
-    media: { ...casino.media, hero: null },
+    ...(decision.disposition === "PROMOTABLE" ? {} : {
+      affiliate: { href: null, available: false },
+      bonuses: casino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } })),
+    }),
     presentationDisposition: decision.disposition,
     presentationDispositionReason: decision.reasonCode,
   };
+}
+
+function operatorEvidenceRequired(countryCode: string | null) {
+  return countryCode === "GB";
 }
 
 type PublicCasinoCmsEnvironment = {
@@ -120,10 +118,11 @@ export class PublicCasinoService {
       const exactAuthority = normalizedCountry && authority?.countryCode === normalizedCountry
         ? authority
         : null;
-      const operatorDecision = jurisdictionAllowsReferral(exactAuthority)
+      const operatorDecision = jurisdictionAllowsReferral(exactAuthority) && operatorEvidenceRequired(normalizedCountry)
         ? await this.operatorEligibility.evaluate(published.casinoId, this.options.now ?? new Date())
         : null;
-      const referralAllowed = this.redirectEnabled() && jurisdictionAllowsReferral(exactAuthority) && operatorDecision?.referralEligible === true;
+      const referralAllowed = this.redirectEnabled() && jurisdictionAllowsReferral(exactAuthority)
+        && (!operatorEvidenceRequired(normalizedCountry) || operatorDecision?.referralEligible === true);
       if (referralAllowed) {
         try {
           routes = await this.repository.listActiveAffiliateRoutes([published.casinoId], normalizedCountry ?? undefined, this.options.now);
@@ -174,12 +173,12 @@ export class PublicCasinoService {
     const exactAuthority = normalizedCountry && authority?.countryCode === normalizedCountry
       ? authority
       : null;
-    const operatorDecisions = jurisdictionAllowsReferral(exactAuthority)
+    const operatorDecisions = jurisdictionAllowsReferral(exactAuthority) && operatorEvidenceRequired(normalizedCountry)
       ? await this.operatorEligibility.evaluateMany(published.map((entry) => entry.casinoId), this.options.now ?? new Date())
       : new Map<string, GbOperatorEligibilityDecision>();
     const referralAllowed = (casinoId: string) => this.redirectEnabled()
       && jurisdictionAllowsReferral(exactAuthority)
-      && operatorDecisions.get(casinoId)?.referralEligible === true;
+      && (!operatorEvidenceRequired(normalizedCountry) || operatorDecisions.get(casinoId)?.referralEligible === true);
     let routes: Awaited<ReturnType<PublicCasinoStore["listActiveAffiliateRoutes"]>> = [];
     if (published.some((entry) => referralAllowed(entry.casinoId))) {
       try {

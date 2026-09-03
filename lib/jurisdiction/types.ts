@@ -1,5 +1,6 @@
 export type JurisdictionReasonCode =
   | "POLICY_APPROVED"
+  | "FOUNDER_GLOBAL_DEFAULT"
   | "UNKNOWN_LOCATION"
   | "LOCATION_CONFLICT"
   | "LOCATION_STALE"

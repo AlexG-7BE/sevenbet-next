@@ -37,7 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
   if (resource === "bonuses") {
     const authority = await resolveServerJurisdiction();
-    const records = (await publicCasinoService.listBonuses(authority, requestCountry)).filter(({ casino }) => casino.source === "cms" && casino.presentationDisposition === "PROMOTABLE").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
+    const records = (await publicCasinoService.listBonuses(authority, requestCountry)).filter(({ casino }) => casino.source === "cms").slice(0, limit).map(({ casino, bonus }) => ({ casino: { id: casino.id, slug: casino.slug, name: casino.name }, ...bonus, affiliate: bonus.affiliate.href?.startsWith("/r/") ? bonus.affiliate : { href: null, available: false } }));
     return NextResponse.json({ ok: true, resource, entity: "bonus", count: records.length, records }, { headers: marketResponseHeaders });
   }
   if (resource === "articles") {

@@ -148,7 +148,7 @@ test("query parser safely normalizes malformed values and supports an explicit e
   assert.equal(comparisonHref(empty, [], { empty: true }), "/compare?empty=true");
 });
 
-test("clean comparison uses a generic deterministic GB default without slug rules", async () => {
+test("clean comparison uses global editorial candidates without requiring an exact GB row", async () => {
   const records = [
     record("zulu", { score: 9.2, featured: true }),
     record("alpha", { score: 9.2, featured: true }),
@@ -159,8 +159,8 @@ test("clean comparison uses a generic deterministic GB default without slug rule
   const result = await service.compare(parsePublicComparisonQuery({}, "GB"), allowJurisdictionAuthority);
   assert.equal(result.defaulted, true);
   assert.equal(result.status, "available");
-  assert.deepEqual(result.selectedSlugs, ["alpha", "zulu", "bravo"]);
-  assert.ok(result.casinos.every((casino) => casino.marketState === "AVAILABLE"));
+  assert.deepEqual(result.selectedSlugs, ["canada", "alpha", "zulu"]);
+  assert.deepEqual(result.casinos.map((casino) => casino.marketState), ["UNKNOWN", "AVAILABLE", "AVAILABLE"]);
   assert.equal(result.inventoryMode, "PUBLISHED_ONLY");
 });
 
@@ -284,8 +284,9 @@ test("declared unavailable and missing-market states remain neutral, explicit co
   assert.ok(result.candidates.every((casino) => casino.disposition === "INFORMATIONAL_ONLY" && casino.editorScore !== null));
   assert.ok(result.casinos.every((casino) => !casino.action.available && casino.action.href === null));
   const offerRows = result.groups.find((group) => group.id === "offer")?.rows ?? [];
-  assert.ok(offerRows.every((row) => Object.values(row.values).every((cell) => ["Unknown", "Unavailable"].includes(cell.status))));
-  assert.doesNotMatch(JSON.stringify(offerRows), /published offer|Synthetic demonstration only|New fictional customers/i);
+  assert.ok(offerRows.length > 0);
+  assert.ok(offerRows.some((row) => row.id === "offer-title" && Object.values(row.values).every((cell) => cell.status === "Operator-published")));
+  assert.match(JSON.stringify(offerRows), /published offer/i);
 });
 
 test("show differences hides only identical text and status pairs", async () => {

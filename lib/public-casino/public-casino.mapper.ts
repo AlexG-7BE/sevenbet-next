@@ -63,7 +63,7 @@ function metadata(snapshot: Record<string, unknown>) {
 
 function routeFor(routes: PublicAffiliateRoute[], casinoId: string, casinoBonusId: string | null) {
   const route = routes.find((entry) => entry.casinoId === casinoId && entry.casinoBonusId === casinoBonusId)
-    ?? (casinoBonusId ? routes.find((entry) => entry.casinoId === casinoId && entry.casinoBonusId === null) : undefined);
+    ?? routes.find((entry) => entry.casinoId === casinoId && (casinoBonusId ? entry.casinoBonusId === null : true));
   return route && isSafePublicSlug(route.slug) ? `/r/${route.slug}` : null;
 }
 
@@ -215,18 +215,19 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
   const profile = casino.marketProfiles.find((entry) => entry.countryCode === normalized);
   if (!profile) return {
     ...casino,
-    languages: [], currencies: [], countries: [], licenses: [], payments: [], providers: [], categories: [], bonuses: [],
+    countries: [],
     marketProfiles: [],
-    affiliate: { href: null, available: false },
   };
   const localMedia = profile.media;
   const logo = localMedia.find((item) => item.type === "logo") ?? casino.media.logo;
   const hero = localMedia.find((item) => item.type === "hero") ?? casino.media.hero;
+  const mergeBy = <T,>(global: T[], local: T[], identity: (value: T) => string) =>
+    [...new Map([...global, ...local].map((value) => [identity(value), value])).values()];
   return {
     ...casino,
-    domain: profile.localDomain ?? "",
-    languages: unique([profile.primaryLanguage, ...profile.supportedLanguages]),
-    currencies: unique([profile.primaryCurrency, ...profile.supportedCurrencies]),
+    domain: profile.localDomain ?? casino.domain,
+    languages: unique([...casino.languages, profile.primaryLanguage, ...profile.supportedLanguages]),
+    currencies: unique([...casino.currencies, profile.primaryCurrency, ...profile.supportedCurrencies]),
     countries: [{
       countryCode: profile.countryCode,
       availability: profile.availability,
@@ -234,11 +235,11 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
       currency: profile.primaryCurrency,
       language: profile.primaryLanguage,
     }],
-    licenses: profile.licenses,
-    payments: profile.payments,
-    providers: profile.providers,
-    categories: profile.categories,
-    bonuses: profile.bonuses,
+    licenses: mergeBy(casino.licenses, profile.licenses, (entry) => `${entry.authority}:${entry.licenseNumber ?? ""}`),
+    payments: mergeBy(casino.payments, profile.payments, (entry) => entry.key),
+    providers: mergeBy(casino.providers, profile.providers, (entry) => entry.key),
+    categories: mergeBy(casino.categories, profile.categories, (entry) => entry.key),
+    bonuses: mergeBy(casino.bonuses, profile.bonuses, (entry) => entry.id),
     marketProfiles: [profile],
     media: {
       logo,
@@ -247,7 +248,7 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
       gallery: [...localMedia.filter((item) => item.type === "gallery"), ...casino.media.gallery],
       socialImage: localMedia.find((item) => item.type === "social") ?? casino.media.socialImage,
     },
-    affiliate: profile.availability === "AVAILABLE" ? casino.affiliate : { href: null, available: false },
+    affiliate: casino.affiliate,
   };
 }
 
@@ -346,6 +347,7 @@ export function mapPublishedCasino(
     const bonusSlug = text(record.slug);
     const title = text(record.title);
     if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
+    const bonusState = object(object(editorMetadata.bonuses)[bonusId]);
     const affiliateHref = options.redirectEnabled ? routeFor(routes, published.casinoId, bonusId) : null;
     return [{
       id: bonusId,
@@ -356,7 +358,7 @@ export function mapPublishedCasino(
       percentage: number(record.percentage),
       minimumDeposit: number(record.minimumDeposit),
       maximumBonus: number(record.maximumBonus),
-      maximumBet: number(record.maximumBet),
+      maximumBet: number(record.maximumBet) ?? number(bonusState.maximumBet),
       currency: nullableText(record.currency),
       freeSpins: integer(record.freeSpins),
       wageringMultiplier: number(record.wageringMultiplier),
@@ -454,6 +456,7 @@ export function mapPublishedCasino(
     version: published.version,
     languages: strings(snapshot.languages),
     currencies: strings(snapshot.currencies),
+    supportsMobile: bool(snapshot.mobileApp) || bool(general.supportsMobile),
     pros: strings(snapshot.pros),
     cons: strings(snapshot.cons),
     responsibleGamblingTools: strings(snapshot.responsibleGamblingTools),
@@ -508,6 +511,7 @@ export function mapLegacyCasino(casino: Casino): PublicCasinoDTO {
     version: 0,
     languages: casino.languages,
     currencies: casino.currencies,
+    supportsMobile: casino.mobileApp,
     pros: casino.pros,
     cons: casino.cons,
     responsibleGamblingTools: [],
@@ -572,7 +576,7 @@ export function publicCasinoToLegacy(casino: PublicCasinoDTO): Casino | null {
     languages: casino.languages,
     crypto: casino.payments.some((payment) => payment.crypto),
     liveChat: false,
-    mobileApp: false,
+    mobileApp: Boolean(casino.supportsMobile),
     isVerified: false,
     reviewNeeded: !license || !casino.lastReviewedAt,
     pros: casino.pros,

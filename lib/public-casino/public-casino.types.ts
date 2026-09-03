@@ -118,6 +118,7 @@ export interface PublicCasinoDTO {
   version: number;
   languages: string[];
   currencies: string[];
+  supportsMobile?: boolean;
   pros: string[];
   cons: string[];
   responsibleGamblingTools: string[];

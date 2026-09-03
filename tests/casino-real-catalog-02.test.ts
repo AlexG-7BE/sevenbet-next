@@ -155,11 +155,15 @@ test("12. Betsson Sweden facts cannot leak into Peru", () => {
   assert.deepEqual(se.licenses.map(({ licenseNumber }) => licenseNumber), ["23Si2176"]);
 });
 
-test("13. Superfly GB profiles and MGA partner labels do not create exact-country authority", () => {
+test("13. legacy GB profiles do not erase the newer bounded global commercial authority", () => {
   assert.ok(populationBundles.every(({ markets }) => markets.length === 1 && markets[0]?.countryCode === "GB"));
   for (const casino of casinoRealCatalog.filter(({ slug }) => !["betsson", "dragonbet"].includes(slug))) {
-    assert.ok(casino.previewOffers.every(({ availabilityNote }) => /No exact-country commercial activation|No exact-country B4GAMBLE route/.test(availabilityNote)));
+    assert.ok(casino.previewOffers.every(({ availabilityNote }) => /independent of the governed CTA/.test(availabilityNote)));
   }
+  const projection = read("lib/affiliate-routing/partner-route-projection.ts");
+  assert.match(projection, /CASINO_COMMERCIAL_VISIBILITY_AUTHORITY/);
+  assert.match(projection, /requiredBlocks/);
+  assert.match(projection, /!requiredBlocks\.has\(normalizedCountry\)/);
 });
 
 test("14. route language cannot replace trusted GEO authority", () => {
@@ -183,7 +187,7 @@ test("16. a presentation cookie cannot create commercial authority", () => {
 test("17. information-only casinos keep editorial substance but have no governed action", () => {
   const publicService = read("lib/services/public-casino.service.ts");
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(publicService, /bonuses: \[\]/);
+  assert.match(publicService, /bonuses: casino\.bonuses\.map\(\(bonus\) => \(\{ \.\.\.bonus, affiliate: \{ href: null, available: false \} \}\)\)/);
   assert.match(publicService, /affiliate: \{ href: null, available: false \}/);
   assert.match(discovery, /rating: scoped\.editorScore \?\? null/);
   assert.match(discovery, /highlights: scoped\.pros\.slice\(0, 3\)/);
@@ -197,13 +201,17 @@ test("18. hidden identities do not render through list or detail services", () =
   assert.match(discovery, /if \(decision\.disposition === "HIDDEN"\) return \[\]/);
 });
 
-test("19. promotable presentation requires cumulative exact route authority", () => {
+test("19. promotable presentation requires cumulative governed route authority", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(discovery, /commercialCountryContext && exactProfile\?\.availability === "AVAILABLE"/);
+  const projection = read("lib/affiliate-routing/partner-route-projection.ts");
+  assert.match(discovery, /commercialCountryContext/);
   assert.match(discovery, /jurisdictionAllowsReferral\(authority\)/);
   assert.match(discovery, /operatorEligibility\?\.referralEligible/);
   assert.match(discovery, /eligibleDiscoveryOffers/);
   assert.match(discovery, /isSafePublicSlug\(redirect\.slug\)/);
+  assert.match(projection, /hasFounderGlobalProductionAuthority/);
+  assert.match(projection, /SUPERFLY_DETECTED_BLOCKED_COUNTRIES/);
+  assert.match(projection, /TRACKING_VERIFICATION_MISSING_OR_STALE/);
 });
 
 test("20. stale Hello creative is never paired with the newer offer", () => {
@@ -273,10 +281,12 @@ test("29. every current real identity is comparison-safe", () => {
   assert.doesNotMatch(comparison, /demo-(?:northstar|harbour|atlas)/);
 });
 
-test("30. public bonus filtering uses only exact applicable promotable offer data", () => {
+test("30. public bonus filtering preserves researched content while bounding the CTA", () => {
   const discovery = read("lib/services/public-casino-discovery.service.ts");
-  assert.match(discovery, /const bonus = promotional \? scoped\.bonuses\[0\] \?\? null : null/);
-  assert.match(discovery, /bonusTypes: promotional \? scoped\.bonuses/);
+  assert.match(discovery, /const candidateBonus = scoped\.bonuses\[0\] \?\? null/);
+  assert.match(discovery, /const bonus = candidateBonus/);
+  assert.match(discovery, /const boundedVisit = promotional/);
+  assert.match(discovery, /bonusTypes: scoped\.bonuses/);
   assert.match(discovery, /matchesAny\(query\.bonusType, item\.bonusTypes\)/);
 });
 

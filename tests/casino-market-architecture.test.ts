@@ -36,12 +36,12 @@ function twoMarketRecord(): PublishedCasinoSnapshotRecord {
       domain: "global.reference.invalid",
       status: "PUBLISHED",
       editorScore: 8.5,
-      languages: ["legacy-global-language"],
+      languages: ["global-editorial-language"],
       currencies: ["USD"],
-      licenses: [{ id: "legacy-license", authority: "Legacy Global Authority", status: "ACTIVE" }, peLicense, seLicense],
-      paymentMethods: [{ id: "legacy-payment", methodKey: "legacy-pay", name: "Legacy Pay", crypto: false }],
-      gameProviders: [{ id: "legacy-provider", providerKey: "legacy-provider", name: "Legacy Provider" }],
-      casinoBonuses: [bonus("legacy-bonus", "legacy-bonus", "Legacy global bonus", "USD")],
+      licenses: [{ id: "global-license", authority: "Global Licence Evidence", status: "ACTIVE" }],
+      paymentMethods: [{ id: "global-payment", methodKey: "global-pay", name: "Global Pay", crypto: false }],
+      gameProviders: [{ id: "global-provider", providerKey: "global-provider", name: "Global Provider" }],
+      casinoBonuses: [bonus("global-bonus", "global-bonus", "Global researched bonus", "USD")],
       reviewBlocks: { __sevenbetCasinoEditor: { general: {}, licenses: {}, countries: {}, payments: {}, providers: {}, categories: {}, bonuses: {} } },
       countries: [
         {
@@ -71,7 +71,7 @@ function twoMarketRecord(): PublishedCasinoSnapshotRecord {
   };
 }
 
-test("one global casino maps two independent market profiles without legacy or cross-market leakage", () => {
+test("global editorial facts merge with exact-market facts without cross-market leakage", () => {
   const mapped = mapPublishedCasino(twoMarketRecord(), [], { redirectEnabled: false, now });
   assert.ok(mapped);
   assert.equal(mapped.id, "reference-casino");
@@ -81,24 +81,24 @@ test("one global casino maps two independent market profiles without legacy or c
   const pe = projectPublicCasinoMarket(mapped, "PE");
   assert.equal(pe.domain, "pe.reference.invalid");
   assert.deepEqual(pe.marketProfiles.map((profile) => profile.countryCode), ["PE"]);
-  assert.deepEqual(pe.languages, ["es-PE"]);
-  assert.deepEqual(pe.currencies, ["PEN"]);
-  assert.deepEqual(pe.payments.map((item) => item.key), ["visa"]);
-  assert.deepEqual(pe.licenses.map((item) => item.authority), ["Peru Test Authority"]);
-  assert.deepEqual(pe.providers.map((item) => item.key), ["playtech"]);
-  assert.deepEqual(pe.bonuses.map((item) => item.slug), ["reference-pe-welcome"]);
+  assert.deepEqual(pe.languages, ["global-editorial-language", "es-PE"]);
+  assert.deepEqual(pe.currencies, ["USD", "PEN"]);
+  assert.deepEqual(pe.payments.map((item) => item.key), ["global-pay", "visa"]);
+  assert.deepEqual(pe.licenses.map((item) => item.authority), ["Global Licence Evidence", "Peru Test Authority"]);
+  assert.deepEqual(pe.providers.map((item) => item.key), ["global-provider", "playtech"]);
+  assert.deepEqual(pe.bonuses.map((item) => item.slug), ["global-bonus", "reference-pe-welcome"]);
+  assert.doesNotMatch(JSON.stringify(pe), /Swish|reference-se-welcome|Swedish Test Authority/);
 
   const se = projectPublicCasinoMarket(mapped, "SE");
   assert.equal(se.domain, "se.reference.invalid");
   assert.deepEqual(se.marketProfiles.map((profile) => profile.countryCode), ["SE"]);
-  assert.deepEqual(se.languages, ["sv-SE"]);
-  assert.deepEqual(se.currencies, ["SEK"]);
-  assert.deepEqual(se.payments.map((item) => item.key), ["swish"]);
-  assert.deepEqual(se.licenses.map((item) => item.authority), ["Swedish Test Authority"]);
-  assert.deepEqual(se.providers.map((item) => item.key), ["evolution"]);
-  assert.deepEqual(se.bonuses.map((item) => item.slug), ["reference-se-welcome"]);
-
-  assert.doesNotMatch(JSON.stringify({ pe, se }), /Legacy Pay|Legacy Global Authority|Legacy Provider|legacy-global-language/);
+  assert.deepEqual(se.languages, ["global-editorial-language", "sv-SE"]);
+  assert.deepEqual(se.currencies, ["USD", "SEK"]);
+  assert.deepEqual(se.payments.map((item) => item.key), ["global-pay", "swish"]);
+  assert.deepEqual(se.licenses.map((item) => item.authority), ["Global Licence Evidence", "Swedish Test Authority"]);
+  assert.deepEqual(se.providers.map((item) => item.key), ["global-provider", "evolution"]);
+  assert.deepEqual(se.bonuses.map((item) => item.slug), ["global-bonus", "reference-se-welcome"]);
+  assert.doesNotMatch(JSON.stringify(se), /Visa PE|reference-pe-welcome|Peru Test Authority/);
 });
 
 test("an unqualified direct service result exposes global identity without selecting a market", async () => {
@@ -115,10 +115,12 @@ test("an unqualified direct service result exposes global identity without selec
   for (const casino of [await service.getCasino("reference-casino"), ...(await service.listCasinos())]) {
     assert.ok(casino);
     assert.deepEqual(casino.marketProfiles, []);
-    assert.deepEqual(casino.languages, []);
-    assert.deepEqual(casino.currencies, []);
-    assert.deepEqual(casino.payments, []);
-    assert.doesNotMatch(JSON.stringify(casino), /Legacy Pay|Legacy Global Authority|Legacy Provider|legacy-global-language|Peru Test Authority|Swedish Test Authority|visa|swish/);
+    assert.deepEqual(casino.languages, ["global-editorial-language"]);
+    assert.deepEqual(casino.currencies, ["USD"]);
+    assert.deepEqual(casino.payments.map((item) => item.key), ["global-pay"]);
+    assert.deepEqual(casino.providers.map((item) => item.key), ["global-provider"]);
+    assert.deepEqual(casino.bonuses.map((item) => item.slug), ["global-bonus"]);
+    assert.doesNotMatch(JSON.stringify(casino), /Peru Test Authority|Swedish Test Authority|visa|swish/);
   }
 });
 
@@ -138,7 +140,8 @@ test("trusted market and product predicates compose within one market profile wh
 
   const unqualified = await service.discover();
   assert.deepEqual(unqualified.items[0]?.countries, []);
-  assert.deepEqual(unqualified.items[0]?.paymentMethods, []);
+  assert.deepEqual(unqualified.items[0]?.paymentMethods.map((item) => item.key), ["global-pay"]);
+  assert.deepEqual(unqualified.items[0]?.gameProviders.map((item) => item.key), ["global-provider"]);
   assert.doesNotMatch(JSON.stringify(unqualified.items[0]), /PEN|SEK|Visa|Swish|Peru Test Authority|Swedish Test Authority/);
 });
 
