@@ -369,3 +369,10 @@ test("Gentleman Jim remains outside the release and explicitly blocked by the pr
   assert.match(source, /gentleman-jim/);
   assert.doesNotMatch(read("app/partner-preview/page.tsx"), /Gentleman Jim/i);
 });
+
+test("the dynamic casino directory deduplicates metadata and page data loading", () => {
+  const page = readFileSync("app/(public)/casinos/page.tsx", "utf8");
+  assert.match(page, /import \{ cache \} from "react"/);
+  assert.match(page, /const loadCasinoDirectoryPage = cache/);
+  assert.equal((page.match(/publicCasinoDiscoveryService\.discover\(/g) ?? []).length, 1);
+});

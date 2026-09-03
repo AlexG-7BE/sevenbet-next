@@ -4,10 +4,13 @@ import { headers } from "next/headers";
 
 import { AuthenticationRequiredError } from "@/lib/auth/errors";
 import { auth } from "@/lib/auth/server";
+import { hasBetterAuthSessionCookie } from "@/lib/auth/session-cookie";
 
 export async function getServerSession(requestHeaders?: Headers) {
+  const resolvedHeaders = requestHeaders ?? (await headers());
+  if (!hasBetterAuthSessionCookie(resolvedHeaders)) return null;
   return auth.api.getSession({
-    headers: requestHeaders ?? (await headers()),
+    headers: resolvedHeaders,
   });
 }
 
