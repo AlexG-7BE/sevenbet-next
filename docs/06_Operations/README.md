@@ -14,6 +14,7 @@ These runbooks implement [RFC-013](../06_RFC/RFC-013-Production-Engineering-and-
 | [Casino Data Population 01 — 2 September 2026](Casino-Data-Population-01-Release-Record-2026-09-02.md) | Frozen-corpus eligibility, checksum-bound GB factual bundles, guarded release gates and exact exclusions |
 | [Casino Commercial Activation 01 — 2 September 2026](Casino-Commercial-Activation-01-Release-Record-2026-09-02.md) | Current partner-route reconciliation, fail-closed activation matrix, tracking/asset evidence and Production acceptance |
 | [Commercial Platform Code Completion — 3 September 2026](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md) | Activation and asset adapters, aggregate click accounting, health automation, SEO publication policy and final release acceptance |
+| [GEO-LANGUAGE-GLOBAL-CATALOG-01 — 3 September 2026](GEO-LANGUAGE-GLOBAL-CATALOG-01-Release-Record-2026-09-03.md) | Language-only canonical migration, trusted-GEO separation, global real-Casino projection, fail-closed market matrix and Production acceptance |
 | [Commercial Platform Operations](Commercial-Platform-Operations.md) | Repeatable activation, aggregate click measurement, centralized SEO publication policy, migration and rollback contract |
 | [Partner Portal Data Handoff](Partner-Portal-Data-Handoff.md) | Exact Casino × GEO campaign, linking-code, tracking URL and creative ingestion procedure |
 | [Affiliate Route Health](Affiliate-Route-Health-Runbook.md) | Secret-safe daily route checks, deduplicated alerts, response and rollback |
