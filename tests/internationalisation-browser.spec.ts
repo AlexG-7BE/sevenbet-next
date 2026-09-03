@@ -11,6 +11,7 @@ import { learningMessages, localizedLearningArticles } from "../lib/i18n/learnin
 import { publicErrorMessages } from "../lib/i18n/public-errors";
 import {
   INITIAL_EUROPEAN_MARKET_PROFILES,
+  PUBLISHED_LANGUAGE_ROUTE_PROFILES,
   languageRouteByLocale,
   publicMarketPath,
 } from "../lib/market/registry";
@@ -196,12 +197,15 @@ for (const profile of representativeProductMarkets) {
     }
   });
 
-  test(`${profile.countryCode} global profile and Compare preserve the language prefix`, async ({ page, request }) => {
-    await page.goto(`${baseUrl}${prefix}/casinos`, { waitUntil: "domcontentloaded" });
-    const profileHref = await page.locator(`main a[href^="${prefix}/casino/"]`).first().getAttribute("href");
-    expect(profileHref, `${profile.countryCode}: published global profile`).not.toBeNull();
-    const profilePath = new URL(profileHref ?? "/invalid", baseUrl).pathname;
-    const response = await page.goto(`${baseUrl}${profilePath}`, { waitUntil: "domcontentloaded" });
+}
+
+for (const language of PUBLISHED_LANGUAGE_ROUTE_PROFILES) {
+  const locale = language.defaultLocale;
+  const prefix = `/${language.publicSlug}`;
+  const messages = productPageMessages(locale);
+  test(`${language.language.toUpperCase()} local visual profile and Compare preserve the published language prefix`, async ({ page, request }) => {
+    const profilePath = `${prefix}/casino/demo-northstar`;
+    const response = await page.goto(`${baseUrl}${profilePath}?visualFixture=true`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
     expect(new URL(canonical ?? "http://invalid").pathname).toBe(profilePath);

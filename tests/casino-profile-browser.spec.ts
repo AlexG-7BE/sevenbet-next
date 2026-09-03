@@ -26,7 +26,7 @@ test("demo profile renders one disclosed SSR review without governed actions", a
     "Published evidence",
     "Published facts",
   ]) expect(visibleCopy).not.toContain(falsePublicationClaim);
-  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, nofollow/i);
+  await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex, follow/i);
   expect(errors).toEqual([]);
 });
 

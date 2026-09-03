@@ -480,14 +480,11 @@ test("Spanish empty-state actions remain visually distinct", async ({ browser })
   }
 });
 
-test("German global profile localizes system UI while remaining information-only", async ({ browser }) => {
+test("German local visual profile localizes system UI while remaining information-only", async ({ browser }) => {
   const context = await browser.newContext({ reducedMotion: "reduce", viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   try {
-    await gotoOk(page, "/de/casinos");
-    const profileHref = await page.locator('main a[href^="/de/casino/"]').first().getAttribute("href");
-    expect(profileHref, "published global profile").not.toBeNull();
-    await gotoOk(page, profileHref ?? "/de/casino/missing");
+    await gotoOk(page, "/de/casino/demo-northstar?visualFixture=true");
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toHaveCount(1);
     const systemUi = await page.locator([

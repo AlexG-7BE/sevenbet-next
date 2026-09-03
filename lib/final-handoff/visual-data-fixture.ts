@@ -315,9 +315,11 @@ function handoffOffer(
 }
 
 export function withHandoffOfferData<T extends { readonly records: readonly PublicOfferDTO[]; readonly inventoryMode: unknown }>(result: T, enabled: boolean, locale: SupportedLocale = "en-GB"): T {
-  if (!enabled || !result.records.length) return result;
-  const records = offerSamples.map((_, index) => handoffOffer(result.records[index % result.records.length], index, offerSamples, "best-offers", locale));
-  return { ...result, records, inventoryMode: "DEMO_ONLY" } as unknown as T;
+  if (!enabled) return result;
+  const seeds = result.records.length ? result.records : temporaryDemoBestOffers();
+  if (!seeds.length) return result;
+  const records = offerSamples.map((_, index) => handoffOffer(seeds[index % seeds.length], index, offerSamples, "best-offers", locale));
+  return { ...result, status: "available", records, inventoryMode: "DEMO_ONLY" } as unknown as T;
 }
 
 function handoffCasino(seed: PublicCasinoCardDto, index: number, allowLocalPreviewAction: boolean, locale: SupportedLocale): PublicCasinoCardDto {

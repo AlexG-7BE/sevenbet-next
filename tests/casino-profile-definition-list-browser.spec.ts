@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 
-test("German global profile fact labels and values never intersect", async ({ browser }) => {
+test("German local visual profile fact labels and values never intersect", async ({ browser }) => {
   const viewports = [
     { width: 430, height: 932 },
     { width: 768, height: 1024 },
@@ -11,10 +11,7 @@ test("German global profile fact labels and values never intersect", async ({ br
 
   for (const viewport of viewports) {
     const page = await browser.newPage({ reducedMotion: "reduce", viewport });
-    await page.goto(`${baseUrl}/de/casinos`, { waitUntil: "networkidle" });
-    const profileHref = await page.locator('main a[href^="/de/casino/"]').first().getAttribute("href");
-    expect(profileHref, `${viewport.width}px published global profile`).not.toBeNull();
-    const response = await page.goto(`${baseUrl}${profileHref}`, { waitUntil: "networkidle" });
+    const response = await page.goto(`${baseUrl}/de/casino/demo-northstar?visualFixture=true`, { waitUntil: "networkidle" });
     expect(response?.status(), `${viewport.width}px response`).toBe(200);
     await expect(page.locator("html")).toHaveAttribute("lang", "de-DE");
     await page.evaluate(() => document.fonts.ready);

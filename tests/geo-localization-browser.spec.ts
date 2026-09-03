@@ -98,8 +98,10 @@ test("global catalogue remains neutral, excludes demos and keeps detail/comparis
   await expect(page.locator("main")).not.toContainText(/Demo Northstar|Demo Solvane|Fictional casino/i);
   expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
 
-  const profileHref = await page.locator('main a[href^="/es/casino/"]').first().getAttribute("href").catch(() => null);
-  if (profileHref) {
+  const profileLinks = page.locator('main a[href^="/es/casino/"]');
+  if (await profileLinks.count()) {
+    const profileHref = await profileLinks.first().getAttribute("href");
+    expect(profileHref).not.toBeNull();
     const response = await page.goto(`${baseUrl}${profileHref}`, { waitUntil: "domcontentloaded" });
     expect(response?.status()).toBe(200);
     expect(await page.locator('main a[href^="/r/"], main a[href^="/go/"]').count()).toBe(0);
