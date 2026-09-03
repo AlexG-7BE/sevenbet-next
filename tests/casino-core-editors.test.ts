@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 
 import {
+  canonicalCasinoLicenseStatus,
   normalizeCasinoCoreDraft,
   publicationWarnings,
   validateCasinoCoreDraft,
@@ -169,6 +170,14 @@ test("licenses reject duplicates and reversed dates, and report expiry warnings"
   const expired = normalizeCasinoCoreDraft(draft());
   expired.licenses[0].expiresAt = "2000-01-01";
   assert.equal(publicationWarnings(expired).some((entry) => entry.code === "LICENSE_EXPIRED"), true);
+});
+
+test("license records use the canonical ingestion status for publication", () => {
+  assert.equal(canonicalCasinoLicenseStatus("Active", "ACTIVE"), "ACTIVE");
+  assert.equal(canonicalCasinoLicenseStatus("active"), "ACTIVE");
+  assert.equal(canonicalCasinoLicenseStatus("source-specific", "SUSPENDED"), "SUSPENDED");
+  assert.equal(canonicalCasinoLicenseStatus("ARCHIVED", "ACTIVE"), "ARCHIVED");
+  assert.equal(canonicalCasinoLicenseStatus("source-specific"), "UNKNOWN");
 });
 
 test("country editor enforces ISO codes, unique rules, and a single availability state", () => {

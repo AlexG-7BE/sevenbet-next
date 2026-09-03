@@ -19,6 +19,7 @@ import {
   validateCasinoBonusDrafts,
 } from "@/lib/casino-builder/bonus-validation";
 import {
+  canonicalCasinoLicenseStatus,
   isValidDomain,
   normalizeCasinoCoreDraft,
   normalizeDomain,
@@ -123,17 +124,27 @@ function serializeCasino(casino: CasinoAggregate): CasinoBuilderCasino {
       .filter((record) => record.evidence.some((evidence) => evidence.status === "VERIFIED"))
       .map((record) => record.id),
   );
+  const canonicalLicenceStatuses = new Map(
+    casino.licenses.map((record) => [
+      record.id,
+      canonicalCasinoLicenseStatus(record.status, record.canonicalStatus),
+    ]),
+  );
   const metadata = readCasinoEditorMetadata(casino.reviewBlocks);
   delete serialized.reviewBlocks;
 
-  serialized.licenses = serialized.licenses.map((record) => ({
-    ...record,
-    issuedAt: record.issuedAt ?? null,
-    expiresAt: record.expiresAt ?? null,
-    notes: record.notes ?? null,
-    verified: explicitlyVerifiedLicenceIds.has(record.id),
-    archived: metadata.licenses[record.id]?.archived ?? record.status === "ARCHIVED",
-  }));
+  serialized.licenses = serialized.licenses.map((record) => {
+    const status = canonicalLicenceStatuses.get(record.id) ?? "UNKNOWN";
+    return {
+      ...record,
+      status,
+      issuedAt: record.issuedAt ?? null,
+      expiresAt: record.expiresAt ?? null,
+      notes: record.notes ?? null,
+      verified: explicitlyVerifiedLicenceIds.has(record.id),
+      archived: metadata.licenses[record.id]?.archived ?? status === "ARCHIVED",
+    };
+  });
   serialized.countries = serialized.countries
     .map((record) => ({
       id: record.id,
