@@ -18,6 +18,11 @@
   font-variation-settings: "wdth" 100;
 }
 
+:global(html):has(.page),
+:global(body):has(.page) {
+  overflow-x: clip;
+}
+
 .readProgress {
   position: fixed;
   top: 81px;

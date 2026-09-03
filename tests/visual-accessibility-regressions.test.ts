@@ -85,6 +85,7 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(profileStyles, /\.decisionBar > div a\s*\{[^}]*min-height: 44px;/);
   assert.match(profileStyles, /\.faqGrid summary\s*\{[^}]*min-height: 66px;/);
   assert.match(cssRule(profileStyles, ".page"), /overflow-x: clip/);
+  assert.match(profileStyles, /:global\(html\):has\(\.page\),\s*:global\(body\):has\(\.page\)\s*\{\s*overflow-x: clip;/);
 });
 
 test("static mission cards, global motion, denial landmarks, and login fields keep their contracts", () => {
