@@ -17,6 +17,7 @@ import type { PublicCasinoStore } from "../lib/repositories/public-casino.reposi
 import { buildOfferFacets, PublicOfferService } from "../lib/services/public-offer.service";
 import { allowJurisdictionAuthority, allowOperatorAuthority } from "./market-authority.fixtures";
 import { commercialAuthorityForPresentation } from "../lib/market/product-context";
+import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
 
 function offer(slug: string, patch: {
   score?: number; featured?: boolean; recommended?: boolean; country?: string; type?: string; payment?: string;
@@ -249,6 +250,26 @@ test("CMS retrieval failures project unavailable without conflating legitimate e
   const legacy = await new PublicOfferService(store([], true), { cmsEnabled: false }).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
   assert.equal(legacy.total, 0);
   assert.deepEqual(legacy.records, []);
+});
+
+test("temporary Production demonstrations never enter public offer inventory", async () => {
+  const published = offer("published-real", { available: true, featured: true });
+  const demonstration = temporaryDemoBestOffers()[0]!;
+  const mixed = await new PublicOfferService(
+    store([demonstration, published]),
+    { cmsEnabled: true, redirectEnabled: true },
+    allowOperatorAuthority,
+  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
+  assert.deepEqual(mixed.records.map((item) => item.casino.slug), ["published-real"]);
+  assert.equal(mixed.inventoryMode, "PUBLISHED_ONLY");
+
+  const demoOnly = await new PublicOfferService(
+    store([demonstration]),
+    { cmsEnabled: true, redirectEnabled: true },
+    allowOperatorAuthority,
+  ).searchOffers(parsePublicOfferQuery({}), allowJurisdictionAuthority, { defaultEditorialCountry: "GB" });
+  assert.equal(demoOnly.total, 0);
+  assert.equal(demoOnly.inventoryMode, "PUBLISHED_ONLY");
 });
 
 test("Best Offers returns a genuine no-eligible state when the published shortlist is empty", async () => {
