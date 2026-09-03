@@ -4,9 +4,9 @@
 **Evidence date:** 3 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `c7bd89946bde2c11f1e051776877fb6eb3f3b147`
-**Verified post-release runtime baseline SHA:** `c7bd89946bde2c11f1e051776877fb6eb3f3b147`
-**Verified post-release runtime deployment:** Ready; provider-internal reference retained outside public documentation
+**Current Production application SHA (live provider evidence):** `f7f1251558ca6be773863023f01d2a8a1a054543`
+**Verified post-release runtime baseline SHA:** `f7f1251558ca6be773863023f01d2a8a1a054543`
+**Verified post-release runtime deployment:** Ready; `dpl_Guy4E9LLYKQpws5MHWjQ7GYTibKZ`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -35,8 +35,25 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **PLATFORM READY IN PRODUCTION — NO ACTIVE ROUTE** | Normal exact Casino × GEO campaign/link/asset ingestion is operational; current evidence still authorises no outbound route. |
 | Casino market data | **PRODUCTION ARCHITECTURE COMPLETE; BETSSON PE/SE FACTUAL DATA PUBLISHED** | Migration 0025 and the market-aware runtime are live. Exactly one non-commercial Betsson PE/SE factual bundle was imported and published; contradictions and unknowns are retained, while affiliate action and `productionEligible` remain false. |
+| Public language / market presentation | **READY IN PRODUCTION — INDEPENDENT DIMENSIONS** | Six published language-only routes share one real global Casino identity layer; trusted request GEO alone controls market projection, and all current routes remain non-commercial. |
 
 ### Recent implementation state
+
+**DETECTED — GEO-LANGUAGE-GLOBAL-CATALOG-01 COMPLETE, 3 September 2026:**
+[PR #134](https://github.com/AlexG-7BE/sevenbet-next/pull/134) merged as
+`f7f1251558ca6be773863023f01d2a8a1a054543` after all required gates passed.
+Production deployment `dpl_Guy4E9LLYKQpws5MHWjQ7GYTibKZ` is Ready and serves
+the canonical aliases. Public canonical identity is now language-only (`/en`,
+`/de`, `/es`, `/el`, `/sv`, `/da`); trusted request GEO is independent of
+language, preference and query state; and the global real-Casino catalogue
+projects exact-market `PROMOTABLE`, `INFORMATIONAL_ONLY` or `HIDDEN` state.
+Production HTTP/browser acceptance, a 13-market enforced read-only database
+projection and post-acceptance logs passed. The final global projection contains
+eight real informational identities, zero referral actions and zero eligible
+routes; the database mutation count was zero. This newer Founder-authorised
+release supersedes the historical BCP-47 canonical routing described in the
+older GEO-LOCALIZATION-01 entries below. See the
+[GEO-LANGUAGE-GLOBAL-CATALOG-01 release record](06_Operations/GEO-LANGUAGE-GLOBAL-CATALOG-01-Release-Record-2026-09-03.md).
 
 **DETECTED — COMMERCIAL PLATFORM CODE COMPLETION, 3 September 2026:** PR #131
 merged the exact Casino × GEO activation and asset adapters, aggregate-only
