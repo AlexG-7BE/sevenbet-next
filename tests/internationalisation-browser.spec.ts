@@ -209,7 +209,7 @@ for (const language of PUBLISHED_LANGUAGE_ROUTE_PROFILES) {
     expect(response?.status()).toBe(200);
     const canonical = await page.locator('link[rel="canonical"]').getAttribute("href");
     expect(new URL(canonical ?? "http://invalid").pathname).toBe(profilePath);
-    await expect(page.getByText(messages.common.reviewAvailableNoAction).first()).toBeVisible();
+    await expect(page.locator('[data-runtime-renderer="casino-review"]')).toContainText(messages.common.demoDisclosure);
     await expect(page.locator(`a[href="${prefix}/casinos"]`).first()).toBeVisible();
     expect(await page.locator('main a[href^="/r/"]').count()).toBe(0);
 
