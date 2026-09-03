@@ -31,12 +31,8 @@ function boundForDisposition(casino: PublicCasinoDTO, decision: PublicCasinoDisp
   };
   return {
     ...casino,
-    editorScore: null,
-    trustScore: null,
     featured: false,
     recommended: false,
-    pros: [],
-    cons: [],
     bonuses: [],
     affiliate: { href: null, available: false },
     media: { ...casino.media, hero: null },

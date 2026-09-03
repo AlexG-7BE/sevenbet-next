@@ -593,6 +593,12 @@
 .heroMediaFallback p { max-width: 32ch; margin: 18px 0 0; color: #aaa79e; font-size: 13px; line-height: 1.5; text-align: left; }
 .heroMediaFallback i { position: absolute; top: 16%; right: -30%; z-index: -1; width: 82%; aspect-ratio: 1; border: 1px solid rgba(228,226,78,.28); border-radius: 50%; }
 .heroMediaFallback::after { position: absolute; inset: 0; z-index: -2; content: ""; background: repeating-linear-gradient(135deg,transparent 0 22px,rgba(255,255,255,.025) 22px 23px); }
+.brandMedia { position:relative; width:100%; height:100%; min-height:660px; padding:42px; align-content:center; isolation:isolate; text-align:center; }
+.brandMedia::after { position:absolute; inset:0; z-index:-1; content:""; background:radial-gradient(circle at 50% 42%,rgba(228,226,78,.12),transparent 42%),repeating-linear-gradient(135deg,transparent 0 22px,rgba(255,255,255,.025) 22px 23px); }
+.brandMedia > span { position:absolute; top:32px; left:32px; color:var(--acid); font-size:12px; font-weight:750; letter-spacing:.16em; text-transform:uppercase; }
+.brandMedia img { width:auto; height:auto; max-width:148px; max-height:148px; margin:0 auto 28px; object-fit:contain; animation:none; filter:drop-shadow(0 18px 28px rgba(0,0,0,.3)); }
+.brandMedia strong { max-width:12ch; color:var(--white); font-size:clamp(38px,4vw,58px); line-height:.92; letter-spacing:-.05em; text-transform:uppercase; text-wrap:balance; }
+.brandMedia small { color:#aaa79e; font-size:13px; line-height:1.5; }
 .decisionBar { min-height: 66px; }
 
 @media (max-width:1050px) and (min-width:761px) {
@@ -624,5 +630,9 @@
   .heroMediaFallback { min-height: clamp(220px,62vw,310px); padding: 24px; }
   .heroMediaFallback strong { font-size: 34px; }
   .heroMediaFallback p { margin-top: 12px; }
+  .brandMedia { min-height:clamp(220px,62vw,310px); padding:24px; }
+  .brandMedia > span { top:20px; left:20px; }
+  .brandMedia img { max-width:92px; max-height:92px; margin-bottom:16px; }
+  .brandMedia strong { font-size:34px; }
   .decisionBar { transition: opacity 160ms cubic-bezier(.2,.8,.2,1); }
 }

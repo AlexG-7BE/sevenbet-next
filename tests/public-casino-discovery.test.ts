@@ -179,7 +179,7 @@ test("Founder disposition matrix A-G is deterministic and cross-market safe", as
   const bySlug = new Map(deResult.items.map((item) => [item.slug, item]));
   assert.deepEqual([bySlug.get("matrix-a")?.disposition, bySlug.get("matrix-a")?.visitAction.available], ["PROMOTABLE", true], "A");
   assert.deepEqual([bySlug.get("matrix-b")?.disposition, bySlug.get("matrix-b")?.visitAction.available, bySlug.get("matrix-b")?.visitAction.redirectSlug], ["INFORMATIONAL_ONLY", false, null], "B");
-  assert.deepEqual([bySlug.get("matrix-b")?.rating, bySlug.get("matrix-b")?.hero, bySlug.get("matrix-b")?.highlights], [null, null, []], "B strips promotional presentation");
+  assert.deepEqual([bySlug.get("matrix-b")?.rating, bySlug.get("matrix-b")?.hero, bySlug.get("matrix-b")?.highlights], [8, null, ["Clear terms"]], "B preserves editorial substance while stripping promotional presentation");
   assert.equal(bySlug.has("matrix-c"), false, "C");
   assert.equal(bySlug.get("matrix-d")?.disposition, "INFORMATIONAL_ONLY", "D");
   assert.deepEqual(bySlug.get("matrix-d")?.paymentMethods, [], "D must not borrow PE payments");

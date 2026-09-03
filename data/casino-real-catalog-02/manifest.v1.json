@@ -1,0 +1,217 @@
+{
+  "schemaVersion": "casino-real-catalog-02.v1",
+  "release": "CASINO-REAL-CATALOG-02",
+  "observedAt": "2026-09-03T00:00:00.000Z",
+  "repositoryBase": "49126a932eb630248d58846b00400f95f079dcb9",
+  "authority": {
+    "kind": "FOUNDER_EXECUTION_AUTHORITY",
+    "reference": "B4GAMBLE — CASINO-REAL-CATALOG-02 FOUNDER EXECUTION AUTHORITY",
+    "sha256": "9119d608372c4b73103a66ac1d879a653ea94c29f81927df3c9bb6da4a7b417f"
+  },
+  "sourceFiles": [
+    {
+      "role": "CURRENT_EDITORIAL_RECONCILIATION_CORPUS",
+      "path": "lib/casino-real-catalog/catalog.ts",
+      "sha256": "e98077b8ccf62e2fe220195446fa777ca4c6cd9609ffa3d566089b608b78092a"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/betsson-pe-se.v1.json",
+      "sha256": "9f6d15e18e7217fbc9648c86eb8a2ba4ad8aa47fb1e8e06ac7ab60b672f3960c"
+    },
+    {
+      "role": "FROZEN_FACTUAL_PARENT_MANIFEST",
+      "path": "data/casino-ingestion/casino-data-population-01/manifest.v1.json",
+      "sha256": "5c11dc16eb20807fa20a705f0d58d6a64045b95d803f1447c051780d2213c8d2"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/21-prive-gb.v1.json",
+      "sha256": "7619d8019a1deb764a9fe1fdad44c4b8dfefc6d108e44a29ec22e513945a4f97"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/diamond7-gb.v1.json",
+      "sha256": "0abec393d1ec974a3212255c6e65ba469798a132e62ded092782d78163960940"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/dragonbet-gb.v1.json",
+      "sha256": "3b8ebaae872deadaa364159cc31333a5dc660e5dae5ba64841db289c63742092"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/gday-casino-gb.v1.json",
+      "sha256": "3e4d43d3a070e83b73b8f1fb5646e6df77ecd105a32b95cfb08e1faba9efe679"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/hello-casino-gb.v1.json",
+      "sha256": "9996b4c6ea195bcd259a4b84ade3276057e3a9e17110c71470555b9bc6e94d40"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/skol-casino-gb.v1.json",
+      "sha256": "6d934fd81f34f19e9f906bc22a41cc5dcaedfc5669833790043e39a8ca9715b8"
+    },
+    {
+      "role": "FROZEN_FACTUAL_BUNDLE",
+      "path": "data/casino-ingestion/casino-data-population-01/slotnite-gb.v1.json",
+      "sha256": "013adbd77056271856b0e4a606336fe62f8f613a9836ddab626e5116244989f1"
+    }
+  ],
+  "authoritativeLiveSources": [
+    {
+      "classification": "DETECTED",
+      "scope": "Betsson Swedish AML warning and SEK 6.5m sanction",
+      "url": "https://www.spelinspektionen.se/vara-beslut/beslutslista/betsson-nordic-ltd---varning-penningtvatt/"
+    },
+    {
+      "classification": "DETECTED",
+      "scope": "Betsson appeal dismissed in case 5093-25 on 2026-07-02",
+      "url": "https://www.domstol.se/nyheter/2026/07/spelmal/"
+    },
+    {
+      "classification": "DETECTED",
+      "scope": "Current Superfly campaign and operator-level term observations",
+      "reference": "Authenticated Superfly Partners portal inspection; account identifiers and tracking values deliberately excluded"
+    }
+  ],
+  "inventory": [
+    {
+      "slug": "betsson",
+      "editorScore": 8.8,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["PE", "SE"],
+      "rows": { "marketProfiles": 2, "licences": 3, "marketEvidence": 24, "licenceEvidence": 4, "payments": 22, "providers": 0, "categories": 14, "bonuses": 2 },
+      "logo": "/casino-brands/betsson/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "skol-casino",
+      "editorScore": 8.4,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 4, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/skol-casino/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "hello-casino",
+      "editorScore": 8.3,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 4, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/hello-casino/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "gday-casino",
+      "editorScore": 8.1,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 12, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/gday-casino/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "diamond7",
+      "editorScore": 7.9,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 4, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/diamond7/logo.jpg",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "dragonbet",
+      "editorScore": 7.7,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 5, "licenceEvidence": 2, "payments": 0, "providers": 3, "categories": 8, "bonuses": 0 },
+      "logo": "/casino-brands/dragonbet/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "21-prive",
+      "editorScore": 7.4,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 12, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/21-prive/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    },
+    {
+      "slug": "slotnite",
+      "editorScore": 7.2,
+      "publicationState": "PUBLISHED",
+      "marketProfiles": ["GB"],
+      "rows": { "marketProfiles": 1, "licences": 1, "marketEvidence": 12, "licenceEvidence": 2, "payments": 0, "providers": 0, "categories": 1, "bonuses": 0 },
+      "logo": "/casino-brands/slotnite/logo.png",
+      "review": "COMPLETE",
+      "commercialState": "INFORMATIONAL_ONLY"
+    }
+  ],
+  "expectedRows": {
+    "casinos": 8,
+    "marketProfiles": 9,
+    "licences": 10,
+    "evidence": 95,
+    "evidenceDetail": { "market": 77, "licence": 18 },
+    "payments": 22,
+    "providers": 3,
+    "categories": 28,
+    "bonuses": 2,
+    "reviews": 8,
+    "scores": 8,
+    "seoRecords": 8,
+    "controlledBrandMedia": 8,
+    "activeCommercialRoutes": 0
+  },
+  "assets": [
+    { "slug": "betsson", "path": "public/casino-brands/betsson/logo.png", "dimensions": "180x180", "sha256": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "skol-casino", "path": "public/casino-brands/skol-casino/logo.png", "dimensions": "48x48", "sha256": "ca5f337b5b02ebdef1a7a46cba902c430a53c2f7b42eb3cea7d476fee7b08d63", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "hello-casino", "path": "public/casino-brands/hello-casino/logo.png", "dimensions": "16x16", "sha256": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b", "usage": "PUBLIC_BRAND_IDENTIFICATION_AT_INTRINSIC_SIZE" },
+    { "slug": "gday-casino", "path": "public/casino-brands/gday-casino/logo.png", "dimensions": "72x72", "sha256": "b6983467b8f9273814eaee8640d935f1a0c6cc57fc39249aefc16b359060b5ad", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "diamond7", "path": "public/casino-brands/diamond7/logo.jpg", "dimensions": "72x72", "sha256": "680f205993255dfb09b655895f1eb8d04c3b20a741b8a509bbba2467c758b975", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "dragonbet", "path": "public/casino-brands/dragonbet/logo.png", "dimensions": "933x1027", "sha256": "1f5527179970f1343be6b7eead3067429726dffe2ec631ea0b4fa9d0b5e98ccf", "usage": "PUBLIC_BRAND_IDENTIFICATION", "provenance": "DragonBet rebrand agency Celf Creative" },
+    { "slug": "21-prive", "path": "public/casino-brands/21-prive/logo.png", "dimensions": "64x64", "sha256": "9f546184e05e1d25c819e62d0acfe16363c3c5461b53bff1662377a194f9a1cd", "usage": "PUBLIC_BRAND_IDENTIFICATION" },
+    { "slug": "slotnite", "path": "public/casino-brands/slotnite/logo.png", "dimensions": "32x32", "sha256": "daddd2d8fd3cec5c45d2b389b6282062094d55fa2c67b0ae6d7abf8ff98d48e3", "usage": "PUBLIC_BRAND_IDENTIFICATION_AT_INTRINSIC_SIZE" },
+    { "slug": "diamond7", "path": "public/partner-preview/diamond7-generic.jpg", "dimensions": "250x250", "sha256": "ed7231256fab2a7a50171f817c41d0f47f7e496fd20f3a07818d7af5349540bc", "usage": "PARTNER_PREVIEW_ONLY", "provenance": "Authenticated Superfly Partners generic brand creative" }
+  ],
+  "unknowns": [
+    "Full current Betsson Peru 300-free-spin mechanics remain not verified.",
+    "Exact Ireland and Mexico authority is not verified for the six Superfly brands.",
+    "Sweden local-domain targeting permission is not verified for the six Superfly brands.",
+    "The B4GAMBLE Superfly UK account KYC/access gate is not verified.",
+    "Exact-market payment and withdrawal detail is incomplete for most non-Betsson profiles.",
+    "Hello Casino has no current creative matched to the 7 August offer.",
+    "Diamond7 creative GEO scope remains unresolved."
+  ],
+  "contradictions": [
+    "Betsson Peru regulator and operator-footer sports references disagree; the regulator mapping remains authoritative.",
+    "A newer Sweden commercial-online period cannot be unambiguously mapped to a named licensee and is not assigned.",
+    "DragonBet Ltd account 64908 is the current exact-domain casino record while a legacy trading-name record remains separately visible."
+  ],
+  "commercial": {
+    "productionAffiliateWrites": 0,
+    "productionEligibleRoutes": 0,
+    "activeRedirects": 0,
+    "rule": "Fail closed unless exact CasinoCountry, legal/operator, programme/account, offer, tracking-link country and route verification all pass cumulatively."
+  },
+  "mutationPolicy": {
+    "scope": "Existing eight casino identities only",
+    "createsCasinoIdentities": false,
+    "deletesOrArchives": false,
+    "writesAffiliateState": false,
+    "idempotent": true,
+    "workflow": "Canonical Casino and EditorialReview draft-review-approve-publish services plus deterministic SEO and MediaAsset upserts"
+  }
+}

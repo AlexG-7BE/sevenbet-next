@@ -40,6 +40,12 @@ import {
   programmeRoute,
 } from "@/lib/programme/presentation";
 import { programmeMutationAccessCategory } from "@/lib/programme/mutation-access";
+import {
+  PARTNER_PREVIEW_COOKIE,
+  partnerPreviewAuthorized,
+  partnerPreviewConfiguredToken,
+  partnerPreviewEnabled,
+} from "@/lib/partner-preview/authority";
 
 const adminCookieName = "sevenbet_admin_preview";
 const chatGptWorkOrigin = "https://chatgpt.com";
@@ -274,6 +280,29 @@ export async function middleware(request: NextRequest) {
         headers: { "Cache-Control": "no-store" },
       },
     ));
+  }
+
+  if (pathname === "/partner-preview" || pathname.startsWith("/partner-preview/")) {
+    if (!partnerPreviewEnabled()) return secureResponse(nextResponse());
+    const configuredToken = partnerPreviewConfiguredToken();
+    const queryToken = searchParams.get("token");
+    if (configuredToken && partnerPreviewAuthorized(queryToken)) {
+      const destination = request.nextUrl.clone();
+      destination.searchParams.delete("token");
+      const response = NextResponse.redirect(destination);
+      response.cookies.set(PARTNER_PREVIEW_COOKIE, configuredToken, {
+        httpOnly: true,
+        sameSite: "strict",
+        secure: process.env.NODE_ENV === "production",
+        path: "/partner-preview",
+        maxAge: 4 * 60 * 60,
+      });
+      response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+      return privateAdminResponse(secureResponse(response));
+    }
+    const response = nextResponse();
+    response.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+    return privateAdminResponse(secureResponse(response));
   }
 
   // Next invokes middleware again for an internal rewrite. Carry presentation
