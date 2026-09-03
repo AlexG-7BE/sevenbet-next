@@ -17,8 +17,8 @@ import { parseCasinoIngestionBundle } from "../lib/casino-ingestion/contract";
 import prisma from "../lib/db/prisma";
 import {
   deterministicCasinoIngestionId,
-  ingestCasinoBundles,
-  verifyCasinoBundlesIdempotency,
+  ingestCasinoBundlesInTransaction,
+  verifyCasinoBundlesIdempotencyInTransaction,
 } from "../lib/casino-ingestion/importer";
 import { editorialReviewService } from "../lib/services/editorial-review.service";
 import { casinoService } from "../lib/services/casino.service";
@@ -171,6 +171,21 @@ async function assertReleaseCorpus() {
 async function loadPreviewFactualBundles() {
   return Promise.all(PREVIEW_FACTUAL_BUNDLES.map(async (bundlePath) =>
     parseCasinoIngestionBundle(JSON.parse(await readFile(path.join(process.cwd(), bundlePath), "utf8")))));
+}
+
+async function ingestPreviewFactualBundles(bundles: Awaited<ReturnType<typeof loadPreviewFactualBundles>>) {
+  return prisma.$transaction(async (transaction) => {
+    await transaction.$executeRawUnsafe("SET LOCAL statement_timeout = '150s'");
+    await transaction.$executeRawUnsafe("SET LOCAL lock_timeout = '10s'");
+    await transaction.$executeRawUnsafe("SET LOCAL idle_in_transaction_session_timeout = '180s'");
+    const ingestion = await ingestCasinoBundlesInTransaction(transaction, bundles);
+    const idempotency = await verifyCasinoBundlesIdempotencyInTransaction(transaction, bundles);
+    return { ingestion, idempotency };
+  }, {
+    isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
+    maxWait: 10_000,
+    timeout: 180_000,
+  });
 }
 
 async function catalogRowCounts(casinoIds: string[]) {
@@ -528,10 +543,9 @@ async function previewSeed() {
   }
 
   const bundles = await loadPreviewFactualBundles();
-  const ingestion = existingCasinos.length === 0 ? await ingestCasinoBundles(prisma, bundles) : [];
-  const ingestionIdempotency = existingCasinos.length === 0
-    ? await verifyCasinoBundlesIdempotency(prisma, bundles)
-    : { state: "exact-release-identities-already-present" };
+  const imported = existingCasinos.length === 0
+    ? await ingestPreviewFactualBundles(bundles)
+    : { ingestion: [], idempotency: { state: "exact-release-identities-already-present" } };
   await prisma.adminUser.upsert({
     where: { email: PREVIEW_ACTOR.email },
     create: { ...PREVIEW_ACTOR, role: "SUPER_ADMIN" },
@@ -546,8 +560,8 @@ async function previewSeed() {
     databaseTargetFingerprint: databaseTargetFingerprint(),
     productionDatabaseTargetFingerprint: process.env.CASINO_REAL_CATALOG_PRODUCTION_DATABASE_FINGERPRINT,
     corpus: { release: corpus.release, sourceFiles: corpus.sourceFiles.length, assets: corpus.assets.length },
-    ingestion: ingestion.map((result) => ({ casinoKey: result.casinoKey, reconciliation: result.reconciliation })),
-    ingestionIdempotency,
+    ingestion: imported.ingestion.map((result) => ({ casinoKey: result.casinoKey, reconciliation: result.reconciliation })),
+    ingestionIdempotency: imported.idempotency,
     editorial,
     productionAffiliateWrites: 0,
     destructiveWrites: 0,
