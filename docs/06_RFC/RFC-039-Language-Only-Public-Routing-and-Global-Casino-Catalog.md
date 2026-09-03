@@ -6,6 +6,15 @@
 Founder execution instruction `GEO-LANGUAGE-GLOBAL-CATALOG-01` on 3 September
 2026.
 
+Amended by the newer explicit Founder execution instruction
+`CASINO-COMMERCIAL-VISIBILITY-03` on 3 September 2026. For the real Casino
+scope, missing or `UNKNOWN` exact-market evidence is not a content or
+commercial prohibition. Global editorial/catalog publication, offer
+publication and outbound-action eligibility are separate decisions. A
+governed route is eligible by default only when its exact release authority is
+present and no detected legal, regulatory, contractual or account restriction
+applies to the trusted request country.
+
 This RFC supersedes only the conflicting public URL, user-control, request
 resolution, SEO-alternate and unqualified public-casino query semantics in
 RFC-037 and RFC-038. Their durable language/market separation, exact factual
@@ -76,32 +85,38 @@ Public catalog reads combine:
 
 ```text
 latest real published Casino identities
++ globally publishable editorial, catalog and offer content
 + only the exact current-market CasinoCountry profile, when present
 + one server-owned presentation disposition
-+ exact current-market governed partner routes, when eligible
++ governed partner routes independently projected for the trusted country
 ```
 
 Demo, synthetic, test, unpublished, inactive, archived and deliberately
 excluded identities never enter the global public catalog. Missing market data
 remains distinct from explicit unavailability. No Casino × country Cartesian
-data is created and no fact from another country is borrowed.
+data is created and no fact from another country is borrowed. Globally
+observed facts remain labelled as such; they do not become exact-local facts.
 
 ## Presentation disposition
 
 Every Casino × current market resolves server-side to exactly one disposition:
 
-- `PROMOTABLE` — exact available market facts plus a currently eligible,
+- `PROMOTABLE` — a real published global identity with a currently eligible,
   governed partner route and all independent legal/operator/commercial gates;
-- `INFORMATIONAL_ONLY` — neutral global identity and only safely available
-  exact-market facts, with no offer, bonus, promotional ranking, raw
-  destination, tracking data or outbound action; or
+  an exact `CasinoCountry` profile is used when present but is not required
+  merely to convert missing evidence into a prohibition;
+- `INFORMATIONAL_ONLY` — the real global editorial/catalog record and only
+  safely available exact-market facts, with no raw destination, tracking data
+  or outbound action; globally published offer information may remain visible
+  because publication is not route eligibility; or
 - `HIDDEN` — public presentation is not authorised, evidence is contradicted,
   the state is prohibited, or the identity is synthetic/non-public.
 
 An unavailable state is stated only when exact evidence says unavailable.
 Unknown or missing evidence cannot be relabelled as unavailable. Promotional
-surfaces such as Best Offers and Bonuses require `PROMOTABLE`; they are not
-global unavailable-casino directories.
+ranking and CTA projection are separate: Best Offers and Bonuses may present a
+real, globally published offer while the action is independently unavailable.
+They never admit temporary demo identities or expose a raw destination.
 
 The bounded neutral-information policy is maintained in
 `docs/04_Compliance/Global-Casino-Market-Presentation-Policy.md`. It is public
@@ -109,13 +124,23 @@ presentation policy, not operator, advertising, partner or route authority.
 
 ## Exact-country commercial authority
 
-Language, cookie, query and global identity are never commercial inputs.
-Commercial action still requires the exact trusted request country to match the
-jurisdiction authority, operator authority, available `CasinoCountry`, active
-programme and offer country rules, tracking-link country association,
-`productionEligible` evidence, active internal redirect and final redirect-time
-checks. Reusing one physical tracking URL across countries is permitted only
-when each country has its own explicit passing authority.
+Language, cookie and query values are never commercial inputs. Commercial
+action uses the exact trusted request country. Under bounded
+`CASINO-COMMERCIAL-VISIBILITY-03` authority, the six approved Superfly routes
+may use global-default Production eligibility without an exact positive
+`CasinoCountry` row only when the programme and tracking metadata carry the
+matching Founder authority, canonical-route hash/evidence, the complete
+detected block set and all active programme/offer/link, freshness, HTTPS,
+jurisdiction, referral, redirect and final redirect-time checks pass. An exact
+market state of `UNAVAILABLE`, `NOT_AVAILABLE` or `RESTRICTED` still denies the
+action. `UNKNOWN` or a missing profile alone does not.
+
+The detected Superfly block set for this release is `DK`, `ES`, `FI`, `NO`,
+`CL`, `SE` and `GB`. Adding a country to, or removing one from, that evidence
+set requires current authority and verified evidence; a public language path
+cannot change it. Reusing one physical tracking URL across countries remains a
+logical per-request-country decision even when the bounded global-default
+authority is used.
 
 Responsible Gambling and Help use the trusted market, not the selected
 language, and remain isolated from affiliate targeting and personalisation.
@@ -163,3 +188,13 @@ versioned preference, middleware migration, metadata, public shell, global
 catalog projection, three-state disposition, exact-country offer/comparison
 paths, response cache policy and deterministic security/performance tests
 implement this decision without a Prisma migration or Production data mutation.
+
+**DETECTED in Production through application merge
+`2507043cb945f2b920b73522763f51f36b3c246c`:** PRs #139 and #140 implement the
+Founder-authorised real-Casino amendment. Production contains eight real
+published Casino identities, six published offers and six governed Superfly
+routes. The complete seven-country block set is stored on each route; the
+read-only verifier returns 42 detected blocks, zero issues and zero raw
+tracking URLs. Temporary RFC-012 demo identities remain database artifacts but
+are excluded before public discovery, offer, comparison and profile
+projection. No Prisma migration was introduced.
