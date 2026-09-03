@@ -54,8 +54,18 @@ function object(value: Prisma.JsonValue | null | undefined): Prisma.JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as Prisma.JsonObject : {};
 }
 
+function stable(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stable);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => [key, stable(entry)]));
+  }
+  return value;
+}
+
 function same(left: unknown, right: unknown) {
-  return JSON.stringify(left) === JSON.stringify(right);
+  return JSON.stringify(stable(left)) === JSON.stringify(stable(right));
 }
 
 function sameNumber(left: Prisma.Decimal | number | string | null | undefined, right: number | null) {
@@ -317,7 +327,7 @@ async function syncDefinition(definition: CommercialCatalogDefinition, actorId: 
   const governedBonusMetadata = editorMetadata.bonuses[keys.bonus] ?? {
     internalName: definition.bonus.title,
     shortTerms: definition.bonus.wageringText,
-    amount: `${definition.bonus.maximumBonus} ${definition.bonus.currency}`,
+    amount: String(definition.bonus.maximumBonus),
     wageringBase: definition.slug === "hello-casino" ? "DEPOSIT_AND_BONUS" : "OTHER",
     minimumOdds: null,
     maximumBet: null,
@@ -340,6 +350,7 @@ async function syncDefinition(definition: CommercialCatalogDefinition, actorId: 
     ...editorMetadata.bonuses,
     [keys.bonus]: {
       ...governedBonusMetadata,
+      amount: String(definition.bonus.maximumBonus),
       maximumBet: definition.bonus.maximumBet === null ? null : String(definition.bonus.maximumBet),
       notes: `${CASINO_COMMERCIAL_VISIBILITY_RELEASE}; offer evidence ${definition.evidence.offerId}; global researched offer.`,
     },
@@ -427,18 +438,26 @@ async function syncDefinition(definition: CommercialCatalogDefinition, actorId: 
   return { slug: definition.slug, status: "published" as const, reconciledIssues: before.length };
 }
 
-async function preflight() {
+async function preflight(options: { allowReleaseRecovery?: boolean } = {}) {
   assertCommercialVisibilityCatalog();
   const [manifest, migrations, routes, casinos, gentlemanJim, networkCandidates, redirectConflicts] = await Promise.all([
     releaseManifest(), migrationState(), evidenceAuthority(),
-    prisma.casino.findMany({ where: { slug: { in: ["betsson", "skol-casino", "hello-casino", "gday-casino", "diamond7", "dragonbet", "21-prive", "slotnite"] } }, select: { id: true, slug: true, status: true } }),
+    prisma.casino.findMany({ where: { slug: { in: ["betsson", "skol-casino", "hello-casino", "gday-casino", "diamond7", "dragonbet", "21-prive", "slotnite"] } }, select: { id: true, slug: true, status: true, trackingMetadata: true } }),
     prisma.casino.findUnique({ where: { slug: "gentleman-jim" }, select: { status: true } }),
     prisma.affiliateNetwork.findMany({ where: { OR: [{ slug: "superfly-partners" }, { name: { equals: "Superfly Partners", mode: "insensitive" } }] }, select: { id: true, slug: true, name: true, type: true, active: true, archivedAt: true } }),
     prisma.affiliateRedirectSlug.findMany({ where: { slug: { in: superflyCommercialCatalog.map((definition) => `${definition.slug}-welcome`) } }, select: { slug: true, casino: { select: { slug: true } } } }),
   ]);
   await assertRepositoryTarget();
   if (migrations.unfinished || !migrations.targetApplied || !migrations.targetChecksumMatches) throw new Error("Database migration target is not safe.");
-  if (casinos.length !== 8 || casinos.some((casino) => casino.id.startsWith("demo-") || casino.status !== "PUBLISHED")) throw new Error("The exact eight real published casino identities are not present.");
+  const recoverableStatuses: EditorialStatus[] = [EditorialStatus.DRAFT, EditorialStatus.IN_REVIEW, EditorialStatus.APPROVED, EditorialStatus.SCHEDULED];
+  const invalidCasino = casinos.some((casino) => {
+    if (casino.id.startsWith("demo-")) return true;
+    if (casino.status === EditorialStatus.PUBLISHED) return false;
+    return !(options.allowReleaseRecovery
+      && recoverableStatuses.includes(casino.status)
+      && object(casino.trackingMetadata).commercialVisibilityRelease === CASINO_COMMERCIAL_VISIBILITY_RELEASE);
+  });
+  if (casinos.length !== 8 || invalidCasino) throw new Error("The exact eight real casino identities are not in a published or release-recoverable state.");
   if (gentlemanJim?.status === "PUBLISHED") throw new Error("Gentleman Jim is unexpectedly published.");
   if (networkCandidates.length > 1) throw new Error("Multiple Superfly network identities require manual reconciliation.");
   for (const conflict of redirectConflicts) if (conflict.casino.slug !== conflict.slug.replace(/-welcome$/, "")) throw new Error(`Redirect slug conflict: ${conflict.slug}`);
@@ -485,7 +504,7 @@ async function audit() {
 
 async function seed() {
   assertWriteAuthority();
-  const state = await preflight();
+  const state = await preflight({ allowReleaseRecovery: true });
   const pendingIssues = (await Promise.all(superflyCommercialCatalog.map(definitionIssues))).flat();
   const pendingEditorialSlugs = await catalogEditorialIssues();
   const existingNetwork = state.networkCandidates[0] ?? null;

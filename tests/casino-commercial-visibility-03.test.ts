@@ -354,5 +354,8 @@ test("the Production reconciler is checksum-bound, confirmation-gated and non-de
   assert.match(executor, /ALLOW_CASINO_COMMERCIAL_VISIBILITY_WRITE/);
   assert.match(executor, /CASINO_COMMERCIAL_VISIBILITY_DATABASE_FINGERPRINT/);
   assert.match(executor, /targetChecksumMatches/);
+  assert.match(executor, /allowReleaseRecovery/);
+  assert.match(executor, /amount: String\(definition\.bonus\.maximumBonus\)/);
+  assert.match(executor, /JSON\.stringify\(stable\(left\)\).*JSON\.stringify\(stable\(right\)\)/s);
   assert.doesNotMatch(executor, /\.(?:delete|deleteMany)\s*\(|\b(?:DROP|TRUNCATE)\b|migrate\s+reset|\$executeRawUnsafe/i);
 });
