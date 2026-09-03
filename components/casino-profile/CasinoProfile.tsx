@@ -234,6 +234,10 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
               {bonus.eligibility ? <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility}</dd></div> : null}
               <div><dt>{messages.common.payout}</dt><dd>{withdrawal ?? messages.common.notListed}</dd></div>
             </dl> : null}
+            {bonus?.importantConditions.length ? <div className={styles.conditions}>
+              <strong>{messages.common.materialTerms}</strong>
+              <ul>{bonus.importantConditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
+            </div> : null}
             <details className={styles.evidenceDisclosure}>
               <summary>{messages.profile.evidencePaymentsTools}</summary>
               <dl>

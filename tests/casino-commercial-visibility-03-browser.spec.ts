@@ -55,6 +55,9 @@ test("all eight live profiles expose scores, reviews and populated global facts"
       await expect(page.getByText(/providers/i).first()).toBeVisible();
       await expect(page.getByText(/offer terms/i).first()).toBeVisible();
     }
+    if (slug === "hello-casino") {
+      await expect(page.getByText("Bonus expires after 30 days; spins expire after 10 days.", { exact: true })).toBeVisible();
+    }
   }
 });
 
