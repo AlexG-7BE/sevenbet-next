@@ -340,18 +340,13 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
     await requireDelegatedStaff(value.userId);
   } else {
     const token = await hashCommercialMcpPresentedToken(body.refresh_token, "refresh_token");
-    const previous = token ? await prisma.oauthRefreshToken.findUnique({
-      where: { token },
-      include: { session: true },
-    }) : null;
+    const previous = token ? await prisma.oauthRefreshToken.findUnique({ where: { token } }) : null;
     if (
       !previous
       || previous.clientId !== body.client_id
       || previous.expiresAt <= new Date()
       || previous.resources.length !== 1
       || previous.resources[0] !== config.resource
-      || !previous.session
-      || previous.session.expiresAt <= new Date()
     ) {
       throw new CommercialMcpAuthError("Refresh token is invalid", 401, "invalid_grant");
     }
