@@ -23,7 +23,7 @@ technical-evidence rule.
 typed assignment tables over reusable `MediaAsset`, one deterministic resolver,
 semantic Casino/Bonus/Affiliate Offer Admin slots, immutable Casino publication
 projection, assignment-first public mapping behind an exact opt-in switch and a
-checksum-bound Production migration/backfill executor.
+checksum-bound, target-specific Preview/Production migration/backfill executor.
 
 **DETECTED:** the active repository was scanned from its confirmed root,
 `/private/tmp/sevenbet-placement-media-assignments-01`, with dependencies,
@@ -151,8 +151,11 @@ delete remain visible; deletion is refused while any typed assignment exists.
 The committed manifest is derived from the exact eight Production Casinos and
 six current global published Bonuses. It is bound to:
 
-- database target fingerprint:
+- Production database resource `store_1I4F54ETrwSKS42o` and target fingerprint:
   `ce94f1e2b465c25d62b13a8c3f2db47aa07b96b541603c818ef6219c9c970a5e`;
+- isolated Preview database resource `store_hLPkkgamL7rJNmCe` and target
+  fingerprint:
+  `cebafba022854f716ee4a92a71b5dc9e7d14600fbf144be1598cd90583a775da`;
 - legacy source-state checksum:
   `c4b1c6f169d4551ed15f39704508272a1abd97f7dab23ffc49df11c5409d220e`;
 - manifest SHA-256:
@@ -187,9 +190,11 @@ through the approved chain. Slotnite's 320×50 source remains `COMPOSED`; the
 four 300×250 current creatives remain `CONTAIN`. Compare stays on each current
 controlled logo.
 
-The executor refuses writes unless target, Vercel project/org, database
-fingerprint, exact deployed/repository SHA, manifest checksum, source checksum,
-current eight/six identities and bounded confirmation flags all agree. It
+The executor refuses writes unless target, Vercel project/org, exact
+environment-specific database resource and fingerprint, exact
+deployed/repository SHA, manifest checksum, source checksum, current eight/six
+identities and bounded confirmation flags all agree. Preview and Production
+therefore cannot authorize each other's writes. It
 requires assignment-first reads off, verifies migration 0027, runs assignments,
 resolver comparison and immutable republishing in a serializable transaction,
 and refuses unexpected pre-existing Admin assignment state.
@@ -213,10 +218,14 @@ will be recorded here before `COMPLETE`.
 
 ## Release and rollback
 
-The controlled order is compatible application with assignment-first off →
-merge/Production deploy → exact guarded migration → guarded backfill → immediate
-second no-op backfill → enable exact `true` → deploy the exact enabled main SHA →
-Production smoke/read-only verification.
+The controlled order is branch Preview with assignment-first off → prove the
+isolated Preview identity and matching source checksum → exact guarded Preview
+migration → guarded Preview backfill → immediate second no-op backfill → enable
+exact `true` only for the branch → redeploy and complete responsive Preview
+acceptance → merge/Production deploy with assignment-first off → exact guarded
+Production migration → guarded Production backfill → immediate second no-op
+backfill → enable exact `true` → deploy the exact enabled main SHA → Production
+smoke/read-only verification.
 
 Primary rollback is to remove or set
 `PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED=false` and redeploy. The old application

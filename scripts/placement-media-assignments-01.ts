@@ -14,6 +14,7 @@ import { assertPlacementMedia0027Schema } from "../lib/db/placement-media-0027-r
 import {
   buildPlacementBackfillManifest,
   comparableManifest,
+  placementMediaDatabaseTarget,
   PLACEMENT_MEDIA_ASSIGNMENTS_RELEASE,
   sha256,
   stableJson,
@@ -231,7 +232,11 @@ function assertWriteAuthority(manifest: PlacementBackfillManifest) {
     throw new Error("Write refused because the exact Vercel project identity was not confirmed.");
   }
   const fingerprint = databaseTargetFingerprint();
-  if (fingerprint !== manifest.expectedDatabaseFingerprint || process.env.PLACEMENT_MEDIA_ASSIGNMENTS_DATABASE_FINGERPRINT !== fingerprint) {
+  const expectedTarget = placementMediaDatabaseTarget(target, manifest.expectedDatabaseFingerprint);
+  if (process.env.PLACEMENT_MEDIA_ASSIGNMENTS_DATABASE_RESOURCE_ID !== expectedTarget.resourceId) {
+    throw new Error("Write refused because the exact database resource identity was not confirmed.");
+  }
+  if (fingerprint !== expectedTarget.databaseFingerprint || process.env.PLACEMENT_MEDIA_ASSIGNMENTS_DATABASE_FINGERPRINT !== fingerprint) {
     throw new Error(`Write refused. Independently verify and set PLACEMENT_MEDIA_ASSIGNMENTS_DATABASE_FINGERPRINT=${fingerprint}.`);
   }
   const sha = repositorySha();

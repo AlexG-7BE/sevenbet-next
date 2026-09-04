@@ -7,6 +7,10 @@ import { MediaAssetStatus, Prisma } from "@prisma/client";
 import {
   buildPlacementBackfillManifest,
   deterministicAssignmentId,
+  placementMediaDatabaseTarget,
+  PLACEMENT_MEDIA_PREVIEW_DATABASE_FINGERPRINT,
+  PLACEMENT_MEDIA_PREVIEW_RESOURCE_ID,
+  PLACEMENT_MEDIA_PRODUCTION_RESOURCE_ID,
   sha256,
   type LegacyPublishedCasino,
 } from "../lib/media/placement-media-backfill";
@@ -32,6 +36,22 @@ import type { MediaAssignmentRepository } from "../lib/repositories/media-assign
 import { MediaAssignmentService } from "../lib/services/media-assignment.service";
 
 const NOW = new Date("2030-06-01T00:00:00.000Z");
+
+test("the release executor binds Preview and Production to distinct exact database authorities", () => {
+  const productionFingerprint = "production-fingerprint";
+  assert.deepEqual(placementMediaDatabaseTarget("preview", productionFingerprint), {
+    databaseFingerprint: PLACEMENT_MEDIA_PREVIEW_DATABASE_FINGERPRINT,
+    resourceId: PLACEMENT_MEDIA_PREVIEW_RESOURCE_ID,
+  });
+  assert.deepEqual(placementMediaDatabaseTarget("production", productionFingerprint), {
+    databaseFingerprint: productionFingerprint,
+    resourceId: PLACEMENT_MEDIA_PRODUCTION_RESOURCE_ID,
+  });
+  assert.notEqual(
+    placementMediaDatabaseTarget("preview", productionFingerprint).databaseFingerprint,
+    placementMediaDatabaseTarget("production", productionFingerprint).databaseFingerprint,
+  );
+});
 
 function asset(id: string, type = "HERO", patch: Partial<PlacementMediaAsset> = {}): PlacementMediaAsset {
   return {

@@ -11,6 +11,25 @@ import {
 } from "./placement-media";
 
 export const PLACEMENT_MEDIA_ASSIGNMENTS_RELEASE = "PLACEMENT-MEDIA-ASSIGNMENTS-01";
+export const PLACEMENT_MEDIA_PREVIEW_RESOURCE_ID = "store_hLPkkgamL7rJNmCe";
+export const PLACEMENT_MEDIA_PRODUCTION_RESOURCE_ID = "store_1I4F54ETrwSKS42o";
+export const PLACEMENT_MEDIA_PREVIEW_DATABASE_FINGERPRINT =
+  "cebafba022854f716ee4a92a71b5dc9e7d14600fbf144be1598cd90583a775da";
+
+export function placementMediaDatabaseTarget(
+  target: "preview" | "production",
+  productionDatabaseFingerprint: string,
+) {
+  return target === "preview"
+    ? {
+        databaseFingerprint: PLACEMENT_MEDIA_PREVIEW_DATABASE_FINGERPRINT,
+        resourceId: PLACEMENT_MEDIA_PREVIEW_RESOURCE_ID,
+      }
+    : {
+        databaseFingerprint: productionDatabaseFingerprint,
+        resourceId: PLACEMENT_MEDIA_PRODUCTION_RESOURCE_ID,
+      };
+}
 
 export interface LegacyPlacementAsset extends PlacementMediaAsset {
   id: string;
