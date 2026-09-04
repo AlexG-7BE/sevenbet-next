@@ -4,7 +4,7 @@
 **Founder authority:** `B4GAMBLE — CASINO-PROMOTIONAL-MEDIA-CLICKABILITY-01`
 **Release date:** 4 September 2026
 **Implementation PR:** [#153](https://github.com/AlexG-7BE/sevenbet-next/pull/153)
-**Durable-record PR:** docs-only closeout (pending PR creation)
+**Durable-record PR:** [#154](https://github.com/AlexG-7BE/sevenbet-next/pull/154)
 
 This record contains no credential, private partner record, affiliate identifier,
 raw tracking destination, visitor data or Programme data. Claims use the
