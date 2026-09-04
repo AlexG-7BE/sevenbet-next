@@ -228,6 +228,66 @@ test("authorized creatives match CTA authority and open the same governed confir
   else test.skip(verified === 0, "No authorized local commercial inventory; Preview/Production runs set COMMERCIAL_CREATIVE_AUTHORIZED=1.");
 });
 
+test("Casino directory and review hero media share governed actions without absorbing editorial controls", async ({ page }) => {
+  test.skip(!requireAuthorized, "This assertion requires the current real governed Casino inventory.");
+
+  const directoryResponse = await page.goto(`${baseUrl}/en/casinos`, { waitUntil: "networkidle" });
+  expect(directoryResponse?.status()).toBe(200);
+  const skolCard = page.locator("article").filter({ hasText: /Skol Casino/i }).first();
+  await expect(skolCard).toBeVisible();
+  const directoryCreative = skolCard.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DIRECTORY_CARD"]');
+  const directoryCta = skolCard.locator('a[data-commercial-action-source="CTA"][data-commercial-action-placement="CASINO_DIRECTORY_CARD"]');
+  await expect(directoryCreative).toBeVisible();
+  await expect(directoryCreative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
+  await expect(directoryCreative).toHaveAttribute("aria-label", /Skol Casino.+—.+/);
+  await expect(directoryCta).toHaveAttribute("href", await directoryCreative.getAttribute("href") as string);
+  await expect(directoryCreative.locator("a,button")).toHaveCount(0);
+  await expect(skolCard.locator('[class*="mark"] a')).toHaveCount(0);
+  await expect(skolCard.getByRole("button", { name: /compare/i })).toBeAttached();
+  await expect(skolCard.getByRole("link", { name: /read review/i })).toBeAttached();
+  await expect(page.locator('main a[href^="http"]')).toHaveCount(0);
+
+  await directoryCreative.focus();
+  await expect(directoryCreative).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("dialog[open]")).toBeVisible();
+  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
+  await directoryCreative.click();
+  await expect(page.locator("dialog[open]")).toBeVisible();
+  await expect(page.locator("dialog[open]").locator('a[href^="/r/"]')).toHaveAttribute("rel", /nofollow sponsored noopener/);
+  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
+
+  const detailResponse = await page.goto(`${baseUrl}/en/casino/skol-casino`, { waitUntil: "networkidle" });
+  expect(detailResponse?.status()).toBe(200);
+  const detailCreative = page.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DETAIL_HERO"]');
+  await expect(detailCreative).toBeVisible();
+  await expect(detailCreative).toHaveAttribute("href", /^\/outbound\/[a-z0-9-]+$/);
+  await expect(detailCreative).toHaveAttribute("aria-label", /Skol Casino.+—.+/);
+  const detailHref = await detailCreative.getAttribute("href");
+  await expect(page.locator(`a[data-commercial-action-source="CTA"][data-commercial-action-placement="CASINO_OFFER_BLOCK"][href="${detailHref}"]`).first()).toBeAttached();
+  await expect(detailCreative.locator("a,button")).toHaveCount(0);
+  await detailCreative.focus();
+  await page.keyboard.press("Enter");
+  await expect(page.locator("dialog[open]")).toBeVisible();
+  await page.locator("dialog[open]").getByRole("button", { name: /Cancel|stay/i }).click();
+
+  const slotniteResponse = await page.goto(`${baseUrl}/en/casino/slotnite`, { waitUntil: "networkidle" });
+  expect(slotniteResponse?.status()).toBe(200);
+  const slotniteHero = page.locator('a[data-commercial-action-source="CREATIVE"][data-commercial-action-placement="CASINO_DETAIL_HERO"]');
+  await expect(slotniteHero).toBeVisible();
+  await expect(slotniteHero.locator('img[src*="partner-brand.gif"]')).toHaveCount(1);
+
+  for (const slug of ["betsson", "skol-casino", "hello-casino", "gday-casino", "diamond7", "dragonbet", "21-prive", "slotnite"]) {
+    const response = await page.goto(`${baseUrl}/en/casino/${slug}`, { waitUntil: "domcontentloaded" });
+    expect(response?.status(), `${slug} review status`).toBe(200);
+    await expect(page.locator('main a[href*="superflypartners"], main a[href*="track"], main a[href*="click"]')).toHaveCount(0);
+  }
+
+  await page.goto(`${baseUrl}/en/casino/dragonbet`, { waitUntil: "networkidle" });
+  await expect(page.locator('[class*="heroMedia"]').first()).toBeVisible();
+  await expect(page.locator('a[data-commercial-action-placement="CASINO_DETAIL_HERO"]')).toHaveCount(0);
+});
+
 test("the authorized Casino offer block supports a deliberate 728×90 wide mode", async ({ browser }) => {
   const paths = ["/en-gb/casino/slotnite", "/en/casino/slotnite", "/casino/slotnite"];
   let verified = 0;

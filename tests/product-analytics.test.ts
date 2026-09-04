@@ -53,6 +53,21 @@ test("the closed event taxonomy accepts every approved event and rejects unknown
   assert.throws(() => parseProductAnalyticsEvent("unknown" as never, {}));
 });
 
+test("casino promotional media origins stay bounded to governed directory and detail surfaces", () => {
+  for (const origin of [
+    "CTA_CASINO_DIRECTORY_CARD",
+    "CREATIVE_CASINO_DIRECTORY_CARD",
+    "CREATIVE_CASINO_DETAIL_HERO",
+  ] as const) {
+    assert.deepEqual(parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin }).properties, {
+      outcome: "confirmation_opened",
+      origin,
+    });
+  }
+  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin: "CREATIVE_CASINO_LOGO" }));
+  assert.throws(() => parseProductAnalyticsEvent("outbound_intent", { outcome: "confirmation_opened", origin: "CREATIVE_CASINO_COMPARE" }));
+});
+
 test("every approved custom event uses at most two Vercel Pro properties", () => {
   assert.deepEqual(Object.keys(validEvents), [...productAnalyticsEventNames]);
   for (const [name, properties] of Object.entries(validEvents)) {

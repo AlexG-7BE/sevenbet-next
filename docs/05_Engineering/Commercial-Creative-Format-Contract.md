@@ -1,7 +1,8 @@
 # Commercial Creative Format Contract
 
 **Status:** ACTIVE application and presentation contract
-**Authority:** `B4GAMBLE — COMMERCIAL-CREATIVE-FORMATS-01` Founder instruction
+**Authority:** `B4GAMBLE — COMMERCIAL-CREATIVE-FORMATS-01`, refined by
+`B4GAMBLE — CASINO-PROMOTIONAL-MEDIA-CLICKABILITY-01` Founder instruction
 **Evidence date:** 4 September 2026
 **Architecture dependency:** [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md)
 
@@ -15,7 +16,7 @@ the repository technical-evidence rule.
 **DETECTED:** the Git root was confirmed before documentation work. The complete
 active worktree was scanned with dependencies, generated output, build
 artefacts, caches and `tsconfig.tsbuildinfo` excluded. The pre-documentation
-source inventory contained 2,148 files. Implementation claims below derive from
+source inventory contained 2,150 files. Implementation claims below derive from
 that scan, focused tests, the built application and browser verification.
 
 **DETECTED:** this work does not change `prisma/schema.prisma`, any migration,
@@ -103,17 +104,26 @@ No sidebar/ad directory and no standalone `OFFER_DETAIL` page is created.
 
 ## Commercial and editorial boundary
 
-**DETECTED:** automatic governed click treatment is limited to
+**DETECTED — historical baseline:** `COMMERCIAL-CREATIVE-FORMATS-01`
+deliberately limited automatic governed click treatment to
 `BONUS_LISTING_CARD`, `BEST_OFFER_FEATURED`, `BEST_OFFER_SECONDARY`,
-`CASINO_OFFER_BLOCK`, and future `OFFER_DETAIL` only if a real surface is built.
-`CASINO_LOGO`, `CASINO_DIRECTORY_CARD`, `CASINO_DETAIL_HERO` and
-`CASINO_COMPARE` remain operator/editorial media and do not become affiliate
-links through this contract.
+`CASINO_OFFER_BLOCK`, and a future real `OFFER_DETAIL` surface. At that point
+`CASINO_DIRECTORY_CARD` and `CASINO_DETAIL_HERO` remained non-interactive.
 
-**DETECTED:** Casino review hero, Casino directory, comparison, Editor Score,
-rank, terms, responsible-gambling context and editorial copy remain separate
-from the commercial creative. The offer block may contain a partner creative;
-the review hero does not become an ad.
+**DETECTED — Founder policy refinement:**
+`CASINO-PROMOTIONAL-MEDIA-CLICKABILITY-01` now makes real promotional media at
+`CASINO_DIRECTORY_CARD` and `CASINO_DETAIL_HERO` clickable only when the same
+server-authoritative governed action used by the visible CTA exists. Media
+never creates authority. Brand/logo-only media, code or media-unavailable
+fallback compositions, and a directory composition used instead of actual
+promotional artwork remain non-interactive. `CASINO_LOGO` and `CASINO_COMPARE`
+remain non-interactive through this contract.
+
+**DETECTED:** Casino identity, comparison, Editor Score, rank, terms,
+responsible-gambling context and editorial copy remain outside the creative
+anchor. The refinement changes only the action semantics of the promotional
+media stage; it does not convert the surrounding editorial card or review hero
+copy into an affiliate link.
 
 ## Placement compatibility
 
@@ -123,6 +133,8 @@ the review hero does not become an ad.
 | `BEST_OFFER_FEATURED` | 300×250 preferred; 250×250 and 336×280 compatible | 320×100 or 320×50 preferred | controlled B4GAMBLE card around a natural-size creative; no stretched leaderboard |
 | `BEST_OFFER_SECONDARY` | 300×250 preferred; 250×250 and 336×280 compatible | 320×100 or 320×50 preferred | same deterministic card/mobile contract |
 | `CASINO_OFFER_BLOCK` | 300×250 card or deliberate 728×90 wide preferred; 250×250/336×280 and registered wide compatibility accepted | 320×100 or 320×50 preferred | card and wide family selectors reserve intentional geometry |
+| `CASINO_DIRECTORY_CARD` | current placement assignment and card compatibility contract | current responsive asset fallback | actual promotional media is governed when the card has a governed Visit action; code/composed fallback stays inert |
+| `CASINO_DETAIL_HERO` | current placement assignment | current responsive asset fallback | actual `CONTAIN`, `COVER` or offer-bearing `COMPOSED` media is governed when the review has the same governed action; brand/fallback stays inert |
 | `OFFER_DETAIL` | future 300×250 preferred; square/large rectangle/wide compatible | future 320×100 or 320×50 | contract only; no public route |
 
 **DETECTED:** `DEFAULT`, optional `DESKTOP` and optional `MOBILE` remain
@@ -178,14 +190,19 @@ the final `/r/{slug}` continuation with `target="_blank"` and
 `rel="nofollow sponsored noopener"`.
 
 **DETECTED:** when the server-authoritative CTA action is available, the whole
-commercial media stage is a semantic anchor with a verified Casino/offer
-accessible name, keyboard activation, visible focus and pointer affordance.
-The separately visible CTA remains. When action authority is absent because of
-GEO, legal, contract, account, destination or route state, no creative anchor
-is rendered. Media visibility never creates action authority.
+eligible commercial or promotional media stage is a semantic anchor with a
+Casino/offer accessible name derived from current public data, native Enter
+activation, visible focus and pointer affordance. The separately visible CTA
+remains and resolves the same `/outbound/{slug}` confirmation and final
+`/r/{slug}` continuation. When action authority is absent because of GEO,
+legal, contract, account, destination, disabled, informational-only or route
+state, no creative anchor is rendered. Media visibility never creates action
+authority.
 
 **DETECTED:** CTA and creative events use the existing closed
-`outbound_intent` taxonomy with bounded source/placement origin values and no
+`outbound_intent` taxonomy with bounded source/placement origin values. The
+refinement adds `CTA_CASINO_DIRECTORY_CARD`,
+`CREATIVE_CASINO_DIRECTORY_CARD`, and `CREATIVE_CASINO_DETAIL_HERO`; it adds no
 affiliate parameters or database migration. Public product analytics remains
 off under its current governing contract; this change does not activate it.
 

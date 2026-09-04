@@ -15,10 +15,11 @@ const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v1:";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
-export type OutboundIntentContext = {
-  source: "CTA" | "CREATIVE";
-  placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "OFFER_DETAIL" | "UNSPECIFIED";
-};
+type ExistingOutboundPlacement = "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "OFFER_DETAIL" | "UNSPECIFIED";
+
+export type OutboundIntentContext =
+  | { source: "CTA"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" }
+  | { source: "CREATIVE"; placement: ExistingOutboundPlacement | "CASINO_DIRECTORY_CARD" | "CASINO_DETAIL_HERO" };
 
 function browserStorage(): StorageLike | undefined {
   try {

@@ -129,7 +129,7 @@
     "commercial:assets:apply": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/commercial-assets.ts apply --manifest",
     "commercial-platform:test": "node --import tsx --test tests/commercial-activation-bundle.test.ts tests/commercial-asset-manifest.test.ts tests/outbound-click-analytics.test.ts tests/affiliate-route-health.test.ts tests/seo-market-indexability.test.ts tests/commercial-platform-0026-release.test.ts",
     "media:test": "node --import tsx --test tests/media-manager.test.ts",
-    "commercial-creative-formats:test": "node --import tsx --test tests/commercial-creative-formats.test.ts tests/media-manager.test.ts tests/media-presentation.test.ts tests/product-analytics.test.ts tests/curated-selector-integrity.test.ts tests/placement-media-assignments.test.ts",
+    "commercial-creative-formats:test": "node --import tsx --test tests/commercial-creative-formats.test.ts tests/commercial-availability-presentation.test.tsx tests/media-manager.test.ts tests/media-presentation.test.ts tests/product-analytics.test.ts tests/curated-selector-integrity.test.ts tests/placement-media-assignments.test.ts",
     "commercial-creative-formats:browser": "playwright test --config=playwright.ci.config.ts tests/commercial-creative-formats-browser.spec.ts",
     "public-casino:test": "node --import tsx --test tests/public-casino-rendering.test.ts",
     "public-integrity:test": "node --import tsx --test tests/public-casino-service.test.ts tests/public-comparison.test.ts tests/public-comparison-render.test.tsx tests/curated-selector-integrity.test.ts",

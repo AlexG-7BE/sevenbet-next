@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
@@ -29,6 +29,14 @@ function hasGovernedVisitAction(casino: PublicCasinoCardDto) {
     && Boolean(casino.visitAction.redirectSlug && isSafePublicSlug(casino.visitAction.redirectSlug));
 }
 
+function governedVisitAction(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
+  if (!hasGovernedVisitAction(casino) || !casino.visitAction.redirectSlug) return null;
+  return {
+    href: `/r/${casino.visitAction.redirectSlug}`,
+    label: `${messages.common.actionAvailable}: ${casino.name}`,
+  };
+}
+
 function selectorLabel(selector: Selector, messages: ProductPageMessages) {
   if (selector === "Best Overall") return messages.casinos.bestOverall;
   if (selector === "Crypto") return messages.casinos.crypto;
@@ -38,8 +46,9 @@ function selectorLabel(selector: Selector, messages: ProductPageMessages) {
 }
 
 function Visit({ casino, messages }: { casino: PublicCasinoCardDto; messages: ProductPageMessages }) {
-  if (!hasGovernedVisitAction(casino) || !casino.visitAction.redirectSlug) return <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>;
-  return <CasinoOutboundAction action={{ href: `/r/${casino.visitAction.redirectSlug}`, label: `${messages.common.actionAvailable}: ${casino.name}` }} className={styles.visit} messages={messages.outbound} />;
+  const action = governedVisitAction(casino, messages);
+  if (!action) return <span className={styles.reviewOnly}>{messages.common.reviewOnly}</span>;
+  return <CasinoOutboundAction action={action} className={styles.visit} context={{ source: "CTA", placement: "CASINO_DIRECTORY_CARD" }} messages={messages.outbound} />;
 }
 
 function minimumDeposit(casino: PublicCasinoCardDto, messages: ProductPageMessages, locale: string) {
@@ -61,15 +70,28 @@ function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto
   const demonstration = casino.dataClassification !== "PUBLISHED_RECORD";
   const mediaAllowed = mayPresentPromotionalMedia({ demonstration, governedActionAvailable: hasGovernedVisitAction(casino) });
   if (casino.hero && mediaAllowed && renderingMode !== "COMPOSED" && (renderingMode === "COVER" || isFeaturedCardMediaCompatible(ratio))) {
-    return <div aria-label={`${casino.name} · ${messages.common.controlledMedia}`} className={styles.mediaFrame} data-media-mode={renderingMode} data-media-ratio={ratio}>
-      <ResponsivePlacementImage
-        alt={casino.hero.alt || casino.name}
-        height={casino.hero.height ?? 900}
-        loading="lazy"
-        media={casino.hero}
-        style={{ objectPosition: casino.hero.focalPoint ? `${casino.hero.focalPoint.x * 100}% ${casino.hero.focalPoint.y * 100}%` : "center" }}
-        width={casino.hero.width ?? 1600}
-      />
+    const media = <ResponsivePlacementImage
+      alt={casino.hero.alt || casino.name}
+      height={casino.hero.height ?? 900}
+      loading="lazy"
+      media={casino.hero}
+      style={{ objectPosition: casino.hero.focalPoint ? `${casino.hero.focalPoint.x * 100}% ${casino.hero.focalPoint.y * 100}%` : "center" }}
+      width={casino.hero.width ?? 1600}
+    />;
+    const action = governedVisitAction(casino, messages);
+    if (action) {
+      const accessibleName = `${action.label} — ${casino.featuredBonus?.title ?? messages.profile.publishedReview}`;
+      return <GovernedCommercialAction
+        action={action}
+        anchorData={{ "data-commercial-clickable": "true", "data-media-mode": renderingMode ?? "CONTAIN", "data-media-ratio": ratio }}
+        ariaLabel={accessibleName}
+        className={styles.mediaFrame}
+        context={{ source: "CREATIVE", placement: "CASINO_DIRECTORY_CARD" }}
+        messages={messages.outbound}
+      >{media}</GovernedCommercialAction>;
+    }
+    return <div className={styles.mediaFrame} data-media-mode={renderingMode} data-media-ratio={ratio}>
+      {media}
     </div>;
   }
   return <div className={styles.mediaFallback} data-media-ratio={casino.hero ? ratio : "missing"} role="img" aria-label={`${messages.common.mediaUnavailableTitle}: ${casino.name}`}>
