@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { selectCuratedCasinos } from "../lib/public-casino-discovery/curated-selector";
 import type { PublicCasinoCardDto } from "../lib/public-casino-discovery/public-casino-discovery.types";
-import { selectCuratedBonuses } from "../lib/public-offer/curated-selector";
+import { curatedBonusSelectors, selectCuratedBonuses } from "../lib/public-offer/curated-selector";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 
 function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicCasinoCardDto {
@@ -35,7 +35,7 @@ function casino(slug: string, patch: Partial<PublicCasinoCardDto> = {}): PublicC
   };
 }
 
-function offer(slug: string, patch: { crypto?: boolean; score?: number; wagering?: number } = {}): PublicOfferDTO {
+function offer(slug: string, patch: { crypto?: boolean; deposit?: number | null; publishedAt?: string | null; score?: number; wagering?: number | null } = {}): PublicOfferDTO {
   return {
     casino: {
       id: slug,
@@ -47,7 +47,7 @@ function offer(slug: string, patch: { crypto?: boolean; score?: number; wagering
       editorScore: patch.score ?? 8,
       featured: false,
       recommended: false,
-      publishedAt: "2026-01-01T00:00:00.000Z",
+      publishedAt: patch.publishedAt === undefined ? "2026-01-01T00:00:00.000Z" : patch.publishedAt,
       lastReviewedAt: null,
       countries: [{ countryCode: "GB", availability: "AVAILABLE" }],
       licenses: [],
@@ -64,8 +64,8 @@ function offer(slug: string, patch: { crypto?: boolean; score?: number; wagering
       maximumBonus: 100,
       currency: "GBP",
       freeSpins: null,
-      minimumDeposit: 10,
-      wageringMultiplier: patch.wagering ?? 30,
+      minimumDeposit: patch.deposit === undefined ? 10 : patch.deposit,
+      wageringMultiplier: patch.wagering === undefined ? 30 : patch.wagering,
       wageringText: null,
       eligibility: "New customers only",
       importantConditions: ["Terms apply"],
@@ -108,4 +108,40 @@ test("bonus Best Overall uses the existing multi-signal ranking instead of lowes
   const lowWagering = offer("low-wagering", { score: 6, wagering: 5 });
   const strongerEditorialRecord = offer("stronger-editorial", { score: 9.5, wagering: 35 });
   assert.equal(selectCuratedBonuses([lowWagering, strongerEditorialRecord], "Best Overall")[0]?.casino.slug, "stronger-editorial");
+});
+
+test("every curated Bonus selector caps six eligible records at three without changing its ordering", () => {
+  const sixEligible = [
+    offer("alpha", { crypto: true, deposit: 60, publishedAt: "2026-01-01T00:00:00.000Z", score: 6, wagering: 10 }),
+    offer("bravo", { crypto: true, deposit: 50, publishedAt: "2026-02-01T00:00:00.000Z", score: 7, wagering: 20 }),
+    offer("charlie", { crypto: true, deposit: 40, publishedAt: "2026-03-01T00:00:00.000Z", score: 8, wagering: 30 }),
+    offer("delta", { crypto: true, deposit: 30, publishedAt: "2026-04-01T00:00:00.000Z", score: 8.5, wagering: 40 }),
+    offer("echo", { crypto: true, deposit: 20, publishedAt: "2026-05-01T00:00:00.000Z", score: 9, wagering: 50 }),
+    offer("foxtrot", { crypto: true, deposit: 10, publishedAt: "2026-06-01T00:00:00.000Z", score: 9.5, wagering: 60 }),
+  ];
+
+  for (const selector of curatedBonusSelectors) {
+    assert.ok(selectCuratedBonuses(sixEligible, selector).length <= 3, selector);
+  }
+
+  assert.deepEqual(selectCuratedBonuses(sixEligible, "Best Overall").map((item) => item.casino.slug), ["foxtrot", "echo", "delta"]);
+  assert.deepEqual(selectCuratedBonuses(sixEligible, "Low Wagering").map((item) => item.casino.slug), ["alpha", "bravo", "charlie"]);
+  assert.deepEqual(selectCuratedBonuses(sixEligible, "Low Deposit").map((item) => item.casino.slug), ["foxtrot", "echo", "delta"]);
+  assert.deepEqual(selectCuratedBonuses(sixEligible, "Crypto").map((item) => item.casino.slug), ["alpha", "bravo", "charlie"]);
+  assert.deepEqual(selectCuratedBonuses(sixEligible, "Newest").map((item) => item.casino.slug), ["foxtrot", "echo", "delta"]);
+});
+
+test("curated Bonus selectors never add ineligible records to fill three slots", () => {
+  const sparse = [
+    offer("eligible-one", { crypto: true, deposit: 5, wagering: 10 }),
+    offer("eligible-two", { crypto: true, deposit: 10, wagering: 20 }),
+    offer("ineligible-one", { crypto: false, deposit: null, wagering: null }),
+    offer("ineligible-two", { crypto: false, deposit: null, wagering: null }),
+    offer("ineligible-three", { crypto: false, deposit: null, wagering: null }),
+    offer("ineligible-four", { crypto: false, deposit: null, wagering: null }),
+  ];
+
+  for (const selector of ["Low Wagering", "Low Deposit", "Crypto"] as const) {
+    assert.deepEqual(selectCuratedBonuses(sparse, selector).map((item) => item.casino.slug), ["eligible-one", "eligible-two"], selector);
+  }
 });

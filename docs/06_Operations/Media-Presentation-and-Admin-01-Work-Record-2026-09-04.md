@@ -37,8 +37,10 @@ Classification in this record uses **DETECTED**, **INFERRED**, **PROPOSED**,
 - **DETECTED:** the profile payout mapper joined two distinct Slotnite timing
   strings after whole-string deduplication, repeating the identical “Pending
   review 24–48 hours” clause.
-- **DETECTED:** the default curated Bonuses shortlist rendered only three of the
-  six current records even though the full governed page result contained six.
+- **CONTRADICTION — corrected by `BONUSES-TOP3-REGRESSION-01`:** PR #142
+  treated the existing three-card curated shortlist as incomplete and expanded
+  it to all six records. Six is the real published inventory count; the curated
+  selector contract is intentionally a maximum of three records at a time.
 
 ## Hotfix implementation
 
@@ -52,8 +54,9 @@ Classification in this record uses **DETECTED**, **INFERRED**, **PROPOSED**,
 - Slotnite therefore retains its official 320×50 banner without stretching,
   but the stage obtains comparable visual weight through controlled identity,
   offer copy and layout.
-- The default Bonuses shortlist retains editorial ordering and renders all six
-  governed records. Other selectors still filter/sort the same six-record input.
+- The media treatment applies to whichever maximum-three records each curated
+  selector returns. All six governed records remain in the underlying public
+  offer inventory and full directory; none is deleted or unpublished.
 - Review term rows use two bounded `minmax(0, …)` columns, start alignment,
   `min-width: 0` and wrapping; existing narrow breakpoints stack the fields.
 - Withdrawal timing now splits semicolon-delimited sourced clauses and removes
@@ -247,18 +250,19 @@ Release evidence:
   `https://sevenbet-next-chx9dqv4q-alexg-7bes-projects.vercel.app`, success.
 - Preview visual acceptance: `/bonuses`, `/best-offers`, Slotnite Casino review
   hero and Material Terms were accepted at 390, 430, 768, 1024, 1280 and
-  1440 CSS pixels. All six governed Bonus records and all eight Casino review
-  routes remained available; CTA, GEO and Programme authority checks passed.
+  1440 CSS pixels. All six governed Bonus records remained in the underlying
+  inventory and all eight Casino review routes remained available; CTA, GEO and
+  Programme authority checks passed.
 - Primary Production deployment `6257732365` was accepted at all six required
   widths before the isolated 1px typography correction. The final corrective
   Production deployment `6258257627`, for merge
   `afb859ae5cd1efbf2d131983405f99d804f1c9b1`, completed successfully at
   `https://sevenbet-next-6jg6szeqt-alexg-7bes-projects.vercel.app`.
-- Final canonical Production smoke against `https://b4gamble.com` — 4/4 browser
-  scenarios passed in 1.8m: all six Bonus cards at all six required widths,
-  Best Offers and Slotnite composition at all six widths, four long Casino
-  reviews at all six widths with no term collision and deduplicated payout
-  evidence, then all eight Casino profiles plus Programme authority checks.
+- Final MEDIA-PRESENTATION-AND-ADMIN-01 canonical Production smoke against
+  `https://b4gamble.com` passed 4/4 browser scenarios in 1.8m. Its simultaneous
+  six-card curated Bonuses assertion was subsequently classified as a
+  regression by `BONUSES-TOP3-REGRESSION-01`; the media, Best Offers, review,
+  CTA, GEO and Programme results remain valid.
 
 The implementation PR was merged earlier than intended when the repository's
 GitHub configuration treated the then-visible checks as mergeable after an
@@ -266,7 +270,8 @@ auto-merge request. Its later CI exposed only public type-floor failures in the
 new renderer. Those failures were corrected through separate PR #143; no direct
 commit to `main` or unreviewed Production edit was made.
 
-Visual evidence:
+Visual evidence (the two Bonuses captures preserve the historical six-card
+regression and are not evidence of the corrected curated cardinality):
 
 - [Bonuses desktop](../02_Product_Design/qa/media-presentation-and-admin-01/bonuses-1440.png)
 - [Bonuses mobile](../02_Product_Design/qa/media-presentation-and-admin-01/bonuses-390.png)

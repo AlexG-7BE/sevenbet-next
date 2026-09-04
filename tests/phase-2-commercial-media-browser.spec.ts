@@ -59,13 +59,11 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
   await open(page, "/bonuses?visualFixture=true");
   const bonuses = page.locator('[data-runtime-renderer="bonuses"]');
   const curated = bonuses.locator('section[aria-labelledby="bonus-shortlist-title"] article');
-  await expect(curated).toHaveCount(4);
+  await expect(curated).toHaveCount(3);
   await expect(curated.nth(0).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "wide-landscape");
   await expect(curated.nth(1).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "square");
   await expect(curated.nth(2).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "missing");
   await expect(curated.nth(2).locator('[data-media-state="presented"]')).toBeVisible();
-  await expect(curated.nth(3).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "missing");
-  await expect(curated.nth(3).locator('[data-media-mode="COMPOSED"]')).toBeVisible();
   for (const card of await curated.all()) {
     expect(await card.evaluate((node) => {
       const terms = node.querySelector("dl");
