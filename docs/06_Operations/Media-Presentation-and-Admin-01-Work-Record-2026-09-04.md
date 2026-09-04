@@ -1,6 +1,6 @@
 # MEDIA-PRESENTATION-AND-ADMIN-01 Work Record
 
-**Status:** HOTFIX IMPLEMENTED — RELEASE EVIDENCE PENDING
+**Status:** COMPLETE — PRODUCTION VERIFIED
 
 **Evidence date:** 4 September 2026
 
@@ -222,18 +222,62 @@ backfill or Admin slot implementation is included in MEDIA-PRESENTATION-AND-ADMI
 Local checks detected at implementation time:
 
 - `npm run typecheck` — passed.
-- targeted Node regression suite — 29/29 passed.
+- targeted Node regression suite — 33/33 passed.
 - `npm run build` — passed; missing local auth/database warnings in the first
   environment-free build did not fail compilation.
 - read-only live database media audit — eight expected/eight detected published
   Casinos; current asset dimensions and snapshot versions matched.
+- focused 430px browser typography regression — passed after the corrective
+  mobile caption floor was raised from 11px to 12px.
 
-Responsive browser acceptance, PR, CI, Preview, merge, Production deployment
-and Production smoke identifiers will replace this pending section before the
-work record is marked complete.
+Release evidence:
+
+- Implementation PR: [#142](https://github.com/AlexG-7BE/sevenbet-next/pull/142),
+  merged as `934f8b0de4bd005af3c5d1c05b4379f554d5dca1`.
+- Corrective typography PR:
+  [#143](https://github.com/AlexG-7BE/sevenbet-next/pull/143), manually merged
+  only after all required checks were green, as
+  `afb859ae5cd1efbf2d131983405f99d804f1c9b1`.
+- Authoritative corrective CI run:
+  [33838100888](https://github.com/AlexG-7BE/sevenbet-next/actions/runs/33838100888)
+  — Agent Core, Database / Migration Verification, Quality, Build / Browser,
+  Vercel and Vercel Preview Comments all passed. Build / Browser passed in
+  16m14s and included the repository typography browser suite.
+- Final corrective Preview deployment: GitHub deployment `6258095058`,
+  `https://sevenbet-next-chx9dqv4q-alexg-7bes-projects.vercel.app`, success.
+- Preview visual acceptance: `/bonuses`, `/best-offers`, Slotnite Casino review
+  hero and Material Terms were accepted at 390, 430, 768, 1024, 1280 and
+  1440 CSS pixels. All six governed Bonus records and all eight Casino review
+  routes remained available; CTA, GEO and Programme authority checks passed.
+- Primary Production deployment `6257732365` was accepted at all six required
+  widths before the isolated 1px typography correction. The final corrective
+  Production deployment `6258257627`, for merge
+  `afb859ae5cd1efbf2d131983405f99d804f1c9b1`, completed successfully at
+  `https://sevenbet-next-6jg6szeqt-alexg-7bes-projects.vercel.app`.
+- Final canonical Production smoke against `https://b4gamble.com` — 4/4 browser
+  scenarios passed in 1.8m: all six Bonus cards at all six required widths,
+  Best Offers and Slotnite composition at all six widths, four long Casino
+  reviews at all six widths with no term collision and deduplicated payout
+  evidence, then all eight Casino profiles plus Programme authority checks.
+
+The implementation PR was merged earlier than intended when the repository's
+GitHub configuration treated the then-visible checks as mergeable after an
+auto-merge request. Its later CI exposed only public type-floor failures in the
+new renderer. Those failures were corrected through separate PR #143; no direct
+commit to `main` or unreviewed Production edit was made.
+
+Visual evidence:
+
+- [Bonuses desktop](../02_Product_Design/qa/media-presentation-and-admin-01/bonuses-1440.png)
+- [Bonuses mobile](../02_Product_Design/qa/media-presentation-and-admin-01/bonuses-390.png)
+- [Best Offers desktop](../02_Product_Design/qa/media-presentation-and-admin-01/best-offers-1440.png)
+- [Slotnite composed hero desktop](../02_Product_Design/qa/media-presentation-and-admin-01/slotnite-hero-1440.png)
+- [Slotnite composed hero mobile](../02_Product_Design/qa/media-presentation-and-admin-01/slotnite-hero-390.png)
+- [Material Terms desktop](../02_Product_Design/qa/media-presentation-and-admin-01/slotnite-terms-1440.png)
+- [Material Terms mobile](../02_Product_Design/qa/media-presentation-and-admin-01/slotnite-terms-390.png)
 
 ## Release status
 
-- MEDIA-PRESENTATION-AND-ADMIN-01 hotfix: **NOT COMPLETE — release pending**
+- MEDIA-PRESENTATION-AND-ADMIN-01 hotfix: **COMPLETE — Production verified**
 - Current Admin audit: **COMPLETE**
 - Placement-based media architecture: **PROPOSED — AWAITING FOUNDER DECISION**
