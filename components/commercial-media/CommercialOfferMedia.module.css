@@ -39,7 +39,7 @@
   .logo,.logo[data-prominent] { width:46px; height:46px; }
   .frame,.composed { min-height:210px; }
   .mediaStage { padding:16px; }
-  .frame figcaption,.composed figcaption { min-height:40px; font-size:11px; }
+  .frame figcaption,.composed figcaption { min-height:40px; font-size:12px; }
   .frame[data-offer-media="secondary"],.composed[data-offer-media="secondary"] { min-height:210px; }
   .frame[data-offer-media="bonus"],.composed[data-offer-media="bonus"] { height:auto; min-height:0; }
   .compositionBody { padding:42px 20px 18px; gap:14px; }
