@@ -53,7 +53,7 @@ async function settleImages(media: Locator) {
   }
 }
 
-test("all six Bonus records use coherent placement-aware media", async ({ browser }) => {
+test("every curated Bonus selector presents at most three records with coherent placement-aware media", async ({ browser }) => {
   test.setTimeout(180_000);
   for (const [width, height] of [[390, 844], [430, 932], [768, 1024], [1024, 900], [1280, 900], [1440, 1000]] as const) {
     const page = await newPage(browser, width, height);
@@ -61,19 +61,29 @@ test("all six Bonus records use coherent placement-aware media", async ({ browse
     const shortlist = page.locator('section[aria-labelledby="bonus-shortlist-title"]');
     const cards = shortlist.locator("article");
     const media = cards.locator("[data-offer-media=bonus]");
-    await expect(cards, `${width}px: six Bonus cards`).toHaveCount(6);
-    await expect(media, `${width}px: six media stages`).toHaveCount(6);
-    await expect(cards.locator('[data-offer-media="bonus"][data-media-mode="CONTAIN"]')).toHaveCount(4);
-    await expect(cards.locator('[data-offer-media="bonus"][data-media-mode="COMPOSED"]')).toHaveCount(2);
+    await expect(cards, `${width}px: Best Overall top three`).toHaveCount(3);
+    await expect(cards.locator("header span"), `${width}px: curated rank labels`).toHaveText(["01", "02", "03"]);
+    await expect(shortlist.getByText(/^(?:04|05|06)$/), `${width}px: no rank beyond top three`).toHaveCount(0);
+    await expect(media, `${width}px: three media stages`).toHaveCount(3);
+    await expect(cards.locator('[data-offer-media="bonus"][data-media-state="presented"]')).toHaveCount(3);
     const stageHeights = await media.evaluateAll((nodes) => nodes.map((node) => Math.round(node.getBoundingClientRect().height)));
     expect(new Set(stageHeights).size, `${width}px: coherent media heights`).toBe(1);
     for (const image of await media.locator("img").all()) {
       expect(await image.evaluate((node) => getComputedStyle(node).objectFit), `${width}px: no distorted media`).not.toBe("fill");
     }
+    const slotnite = cards.filter({ hasText: "Slotnite" });
+    await expect(slotnite, `${width}px: Slotnite remains in Best Overall`).toHaveCount(1);
+    await expect(slotnite.locator('[data-offer-media="bonus"]')).toHaveAttribute("data-media-mode", "COMPOSED");
     if (capture && (width === 390 || width === 1440)) {
       await mkdir(evidenceDirectory, { recursive: true });
       await settleImages(media);
       await shortlist.screenshot({ path: path.join(evidenceDirectory, `bonuses-${width}.png`) });
+    }
+    for (const label of ["Best Overall", "Low Wagering", "Low Deposit", "Crypto", "Newest"]) {
+      const selector = shortlist.getByRole("button", { name: label, exact: true });
+      await selector.click();
+      await expect(selector).toHaveAttribute("aria-pressed", "true");
+      await expect.poll(() => cards.count(), `${width}px: ${label} maximum three`).toBeLessThanOrEqual(3);
     }
     await page.close();
   }

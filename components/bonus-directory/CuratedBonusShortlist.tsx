@@ -53,7 +53,7 @@ export function CuratedBonusShortlist({ offers, messages, presentation }: { offe
               : messages.bonuses.selectorNewest;
       return <button aria-pressed={selector === label} key={label} onClick={() => setSelector(label)} type="button">{localizedLabel}</button>;
     })}</div> : null}
-    <p className={styles.label} id="bonus-shortlist-title">{messages.bonuses.directoryTitle} · {messages.bonuses.sortedByValue}</p>
+    <p className={styles.label} id="bonus-shortlist-title">{messages.bestOffers.sectionTitle} · {messages.bonuses.sortedByValue}</p>
     {!top.length ? <div className={styles.empty} role="status"><strong>{formatProductMessage(messages.bonuses.noMatchesTitle, { market: presentation.marketDisplayName })}</strong><p>{messages.bonuses.noMatchesCopy}</p></div> : <div className={styles.cards}>{top.map((offer, index) => <article className={index === 0 ? styles.primary : styles.card} key={`${offer.casino.id}:${offer.bonus.id}`}>
       <header><small>{offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published}</small><span className={styles.rank}>0{index + 1}</span></header>
       <strong className={styles.headline}>{offer.bonus.title}</strong>
