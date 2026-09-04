@@ -26,6 +26,7 @@ const actor = {
 };
 const displayName = "MCP PostgreSQL Fixture Partner";
 const context = { actorId: actor.id, clientId: "chatgpt-work-postgres-fixture" };
+const durableTokenTtlSeconds = 10 * 365 * 24 * 60 * 60;
 const oauthResource = resolveCommercialMcpProviderResource();
 const oauthOrigin = new URL(oauthResource).origin;
 const resolvedOauthConfig = resolveCommercialMcpConfig(`${oauthOrigin}/api/mcp/commercial`, {
@@ -257,7 +258,7 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
     const fixture = await createOAuthFixture("101");
     assert.match(fixture.issued.access_token, /^b4mcp_at_/);
     assert.match(fixture.issued.refresh_token ?? "", /^b4mcp_rt_/);
-    assert.equal(fixture.issued.expires_in, 15 * 60);
+    assert.equal(fixture.issued.expires_in, durableTokenTtlSeconds);
     assert.equal(fixture.issued.token_type, "Bearer");
     assert.equal(fixture.issued.scope, "commercial:read commercial:safe_write offline_access");
 
@@ -277,7 +278,7 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
   await t.test("authorization without offline_access does not issue or persist a refresh token", async () => {
     const fixture = await createOAuthFixture("106", ["commercial:read", "commercial:safe_write"]);
     assert.equal(fixture.issued.refresh_token, undefined);
-    assert.equal(fixture.issued.expires_in, 15 * 60);
+    assert.equal(fixture.issued.expires_in, durableTokenTtlSeconds);
     assert.equal(fixture.issued.scope, "commercial:read commercial:safe_write");
     assert.equal(await prisma.oauthRefreshToken.count({ where: { clientId: fixture.clientId } }), 0);
 
@@ -338,7 +339,7 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
     assert.equal(rotatedResponse.status, 200, rotatedText);
     const rotated = JSON.parse(rotatedText) as IssuedTokenResponse;
     assert.notEqual(rotated.refresh_token, firstRefresh);
-    assert.equal(rotated.expires_in, 15 * 60);
+    assert.equal(rotated.expires_in, durableTokenTtlSeconds);
     assert.equal(rotated.scope, "commercial:read commercial:safe_write offline_access");
 
     const rotatedAccessHash = await hashCommercialMcpPresentedToken(rotated.access_token, "access_token");
@@ -392,7 +393,7 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
     await assert.rejects(refresh(), /not B4GAMBLE staff/);
   });
 
-  await t.test("expired provider sessions and disabled clients cannot refresh", async () => {
+  await t.test("expired browser sessions preserve the delegated grant while disabled clients cannot refresh", async () => {
     const fixture = await createOAuthFixture("110");
     const refresh = () => exchangeToken(new URLSearchParams({
       grant_type: "refresh_token",
@@ -401,10 +402,18 @@ test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async 
     }));
 
     await prisma.session.update({ where: { id: fixture.sessionId }, data: { expiresAt: new Date(Date.now() - 1_000) } });
-    await assert.rejects(refresh(), /Refresh token is invalid/);
-    await prisma.session.update({ where: { id: fixture.sessionId }, data: { expiresAt: new Date(Date.now() + 60 * 60 * 1_000) } });
+    const durableResponse = await refresh();
+    const durableText = await durableResponse.text();
+    assert.equal(durableResponse.status, 200, durableText);
+    const durable = JSON.parse(durableText) as IssuedTokenResponse;
+    assert.match(durable.refresh_token ?? "", /^b4mcp_rt_/);
+
     await prisma.oauthClient.update({ where: { clientId: fixture.clientId }, data: { disabled: true } });
-    await assert.rejects(refresh(), /OAuth client is invalid/);
+    await assert.rejects(exchangeToken(new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: fixture.clientId,
+      refresh_token: durable.refresh_token!,
+    })), /OAuth client is invalid/);
   });
 
   await t.test("concurrent refresh cannot leave two independently valid access tokens", async () => {
