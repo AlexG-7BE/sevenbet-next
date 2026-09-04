@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
 
-import { expect, test, type Browser, type Page } from "@playwright/test";
+import { expect, test, type Browser, type Locator, type Page } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const capture = process.env.MEDIA_PRESENTATION_SCREENSHOTS === "1";
@@ -43,6 +43,16 @@ async function expectNoTermCollision(page: Page, pathname: string) {
   }
 }
 
+async function settleImages(media: Locator) {
+  for (const image of await media.locator("img").all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate((node) => {
+      const renderedImage = node as HTMLImageElement;
+      return renderedImage.complete && renderedImage.naturalWidth > 0;
+    })).toBe(true);
+  }
+}
+
 test("all six Bonus records use coherent placement-aware media", async ({ browser }) => {
   test.setTimeout(180_000);
   for (const [width, height] of [[390, 844], [430, 932], [768, 1024], [1024, 900], [1280, 900], [1440, 1000]] as const) {
@@ -62,6 +72,7 @@ test("all six Bonus records use coherent placement-aware media", async ({ browse
     }
     if (capture && (width === 390 || width === 1440)) {
       await mkdir(evidenceDirectory, { recursive: true });
+      await settleImages(media);
       await shortlist.screenshot({ path: path.join(evidenceDirectory, `bonuses-${width}.png`) });
     }
     await page.close();
@@ -83,6 +94,7 @@ test("Best Offers keeps all six records and composes Slotnite in the shared medi
     }
     if (capture && width === 1440) {
       await mkdir(evidenceDirectory, { recursive: true });
+      await settleImages(media);
       await page.locator('[data-runtime-renderer="best-offers"] #shortlist').screenshot({ path: path.join(evidenceDirectory, "best-offers-1440.png") });
     }
     await page.close();
@@ -96,7 +108,7 @@ test("long review evidence wraps without collisions and Slotnite payout evidence
     for (const slug of profileSlugs) {
       const pathname = `/en/casino/${slug}`;
       await open(page, pathname);
-      await expect(page.locator('nav[aria-label="Current review"]')).toBeVisible();
+      await expect(page.locator('nav[aria-label="Current review"]').last()).toBeVisible();
       await expectNoTermCollision(page, pathname);
       const actions = page.locator("main .commercialOutboundPrimary:visible");
       if (await actions.count()) {
@@ -113,7 +125,10 @@ test("long review evidence wraps without collisions and Slotnite payout evidence
         if (capture && (width === 390 || width === 1440)) {
           await mkdir(evidenceDirectory, { recursive: true });
           await hero.screenshot({ path: path.join(evidenceDirectory, `slotnite-hero-${width}.png`) });
-          await page.locator("#offer-evidence").screenshot({ path: path.join(evidenceDirectory, `slotnite-terms-${width}.png`) });
+          const terms = page.locator("#offer-evidence");
+          await terms.scrollIntoViewIfNeeded();
+          await expect(terms).toHaveAttribute("data-motion-state", "visible");
+          await terms.screenshot({ path: path.join(evidenceDirectory, `slotnite-terms-${width}.png`) });
         }
       }
     }
@@ -128,7 +143,7 @@ test("all eight real Casino profiles smoke without inventory, CTA, GEO or Progra
     await open(page, `/en/casino/${slug}`);
     await expect(page.locator('[data-runtime-renderer="casino-review"]')).toBeVisible();
   }
-  await open(page, "/en/program");
+  await open(page, "/program");
   await expect(page.locator("main")).toBeVisible();
   await page.close();
 });
