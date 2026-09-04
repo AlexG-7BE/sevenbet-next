@@ -68,6 +68,31 @@
   .frame[data-mobile-commercial-family="MOBILE_LARGE"] .mediaArtwork,
   .frame[data-mobile-commercial-family="MOBILE_BANNER"] .mediaArtwork,
   .frame[data-mobile-commercial-family="MOBILE_COMPATIBILITY"] .mediaArtwork { width:100%; height:100%; max-width:none; max-height:none; object-fit:contain; filter:none; }
+
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"],
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"],
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"],
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] { min-height:0; aspect-ratio:auto; }
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"] .compositionBody,
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"] .compositionBody,
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"] .compositionBody,
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] .compositionBody { min-height:0; flex:0 0 auto; padding:28px 12px 8px; gap:0; }
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"] .compositionSource,
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"] .compositionSource,
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"] .compositionSource,
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] .compositionSource { top:8px; left:12px; font-size:10px; line-height:12px; }
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"] .compositionIdentity,
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"] .compositionIdentity,
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"] .compositionIdentity,
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] .compositionIdentity,
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"] .compositionBody > i,
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"] .compositionBody > i,
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"] .compositionBody > i,
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] .compositionBody > i { display:none; }
+  .composed[data-mobile-commercial-family="MOBILE_LARGE"] .controlledStrip,
+  .composed[data-mobile-commercial-family="MOBILE_BANNER"] .controlledStrip,
+  .composed[data-mobile-commercial-format="MOBILE_LARGE_300_100"] .controlledStrip,
+  .composed[data-mobile-commercial-format="MOBILE_BANNER_300_50"] .controlledStrip { width:100%; height:auto; max-width:none; max-height:none; object-fit:contain; object-position:center; }
 }
 
 @media (hover:none),(prefers-reduced-motion:reduce) {

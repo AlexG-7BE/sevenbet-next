@@ -329,12 +329,16 @@ test("Admin and public components keep one format contract and no raw partner em
   const editor = readFileSync("components/admin/media/PlacementMediaEditor.tsx", "utf8");
   const selector = readFileSync("components/admin/media/MediaSelector.tsx", "utf8");
   const commercial = readFileSync("components/commercial-media/CommercialOfferMedia.tsx", "utf8");
+  const commercialStyles = readFileSync("components/commercial-media/CommercialOfferMedia.module.css", "utf8");
   const profile = readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8");
   assert.match(editor, /assessCommercialCreative/);
   assert.match(editor, /image\/gif/);
   assert.match(editor, /Valid unusual images remain assignable with a warning/);
   assert.match(selector, /image\/gif/);
   assert.match(commercial, /GovernedCommercialAction/);
+  assert.match(commercialStyles, /\.composed\[data-mobile-commercial-family="MOBILE_LARGE"\]/);
+  assert.match(commercialStyles, /\.composed\[data-mobile-commercial-family="MOBILE_BANNER"\]/);
+  assert.match(commercialStyles, /\.controlledStrip \{ width:100%; height:auto; max-width:none; max-height:none;/);
   assert.match(profile, /placement: "CASINO_OFFER_BLOCK"/);
   for (const source of [commercial, profile]) {
     assert.doesNotMatch(source, /dangerouslySetInnerHTML|<iframe|partnerClickUrl|impression(?:Pixel|Url)/i);
