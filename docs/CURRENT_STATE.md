@@ -4,9 +4,9 @@
 **Evidence date:** 4 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `2507043cb945f2b920b73522763f51f36b3c246c`
-**Verified post-release runtime baseline SHA:** `2507043cb945f2b920b73522763f51f36b3c246c`
-**Verified post-release runtime deployment:** Ready; `dpl_7RFc2zonoZ9Upp9Fw5YtAmsvR8Ax`
+**Current Production application SHA (live provider evidence):** `aaebff1eccdf0f9694791b52fb88d1d011d74a17`
+**Verified post-release runtime baseline SHA:** `aaebff1eccdf0f9694791b52fb88d1d011d74a17`
+**Verified post-release runtime deployment:** Ready; `dpl_HdqUHzodb2TNxjMjtyGBk3KnMmi2`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -35,9 +35,24 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — REFRESH LIFECYCLE REGRESSION DETECTED** | The bounded four-tool bridge is live at SHA `9d7ba91`; access works, but the current grant loses connectivity at the 15-minute access-token boundary because usable offline refresh state is not established. A repository fix is under Founder review and is not deployed by this checkpoint. |
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
+| Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — PLACEMENT-MEDIA-ASSIGNMENTS-01 COMPLETE, 4 September 2026:**
+[PR #148](https://github.com/AlexG-7BE/sevenbet-next/pull/148) activated RFC-040
+Option C and merged as `aaebff1eccdf0f9694791b52fb88d1d011d74a17` after
+exact-head Preview and full PR/merge CI passed. Additive migration
+`0027_placement_media_assignments` was applied once to the fingerprint-guarded
+Production database. The governed backfill produced 26 Casino and 20 Bonus
+assignments, zero AffiliateOffer assignments and eight immutable projections;
+the immediate rerun produced zero writes and the resolver comparison reported
+62/62 matches. Ready deployment `dpl_HdqUHzodb2TNxjMjtyGBk3KnMmi2` serves the
+canonical aliases with assignment-first reads enabled. Final 1440/390 browser,
+all-eight review, Bonus Top-3, Best Offers, comparison, terms, CTA/GEO,
+Programme/auth, canonical-route and read-only database acceptance passed. See
+the [PLACEMENT-MEDIA-ASSIGNMENTS-01 release record](06_Operations/Placement-Media-Assignments-01-Release-Record-2026-09-04.md).
 
 **DETECTED — CASINO-COMMERCIAL-VISIBILITY-03 COMPLETE, 3 September 2026:**
 [PR #139](https://github.com/AlexG-7BE/sevenbet-next/pull/139) merged as
