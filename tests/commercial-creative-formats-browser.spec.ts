@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const requireAuthorized = process.env.COMMERCIAL_CREATIVE_AUTHORIZED === "1";
+const requireBlocked = process.env.COMMERCIAL_CREATIVE_BLOCKED === "1";
 
 const formatCases = [
   { width: 300, height: 250, family: "MEDIUM_RECTANGLE", mobile: false },
@@ -81,6 +82,7 @@ test("canonical card and mobile formats keep their ratio across required widths"
 });
 
 test("blocked fixture creatives stay visible without becoming an outbound action", async ({ page }) => {
+  test.skip(requireAuthorized && !requireBlocked, "Production disables visual fixtures and its current real inventory is authorized; run this assertion in local/Preview blocked state or set COMMERCIAL_CREATIVE_BLOCKED=1 for a known blocked origin.");
   for (const path of ["/bonuses?visualFixture=true", "/best-offers?visualFixture=true"]) {
     const response = await page.goto(`${baseUrl}${path}`, { waitUntil: "networkidle" });
     expect(response?.status()).toBe(200);
@@ -98,6 +100,38 @@ test("the controlled Slotnite GIF remains a browser-decodable animated-format as
   await page.locator("img").evaluate((element) => (element as HTMLImageElement).decode());
   await expect(page.locator("img")).toHaveJSProperty("naturalWidth", 320);
   await expect(page.locator("img")).toHaveJSProperty("naturalHeight", 50);
+});
+
+test("current authorized inventory keeps native 300×250 and Slotnite 320×50 geometry", async ({ browser }) => {
+  test.skip(!requireAuthorized, "This assertion requires the current real governed inventory.");
+  for (const viewport of [{ width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    const page = await browser.newPage({ viewport });
+    const response = await page.goto(`${baseUrl}/bonuses`, { waitUntil: "networkidle" });
+    expect(response?.status()).toBe(200);
+    const medium = page.locator('figure[data-commercial-format="MEDIUM_RECTANGLE_300_250"] img:not([aria-hidden="true"])').first();
+    const slotnite = page.locator('figure[data-commercial-format="MOBILE_BANNER_320_50"] img[src*="partner-brand.gif"]').first();
+    await expect(medium).toBeVisible();
+    await expect(slotnite).toBeVisible();
+    await expect(medium).toHaveJSProperty("naturalWidth", 300);
+    await expect(medium).toHaveJSProperty("naturalHeight", 250);
+    await expect(slotnite).toHaveJSProperty("naturalWidth", 320);
+    await expect(slotnite).toHaveJSProperty("naturalHeight", 50);
+    const geometry = await slotnite.evaluate((element) => {
+      const image = element.getBoundingClientRect();
+      const figure = element.closest("figure")!.getBoundingClientRect();
+      return {
+        imageRatio: image.width / image.height,
+        figureHeight: figure.height,
+        overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      };
+    });
+    if (viewport.width < 768) {
+      expect(Math.abs(geometry.imageRatio - 320 / 50)).toBeLessThan(.05);
+      expect(geometry.figureHeight).toBeLessThan(190);
+    }
+    expect(geometry.overflow).toBe(false);
+    await page.close();
+  }
 });
 
 test("authorized creatives match CTA authority and open the same governed confirmation", async ({ page }) => {
