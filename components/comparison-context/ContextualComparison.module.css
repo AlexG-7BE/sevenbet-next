@@ -19,6 +19,8 @@
 .comparisonCard { min-width:0; padding:26px 26px 24px; border:1px solid rgba(16,15,15,.12); border-radius:20px; display:flex; flex-direction:column; background:var(--field); animation:comparisonCardIn 350ms cubic-bezier(.2,.8,.2,1) both; }
 .casinoHead { display:flex; align-items:center; gap:13px; }
 .casinoHead > span { width:50px; height:50px; flex:0 0 50px; border-radius:13px; display:grid; place-items:center; background:var(--night); color:var(--acid); font:900 23px/1 var(--font-seven-display),var(--font-seven-sans),Arial,sans-serif; }
+.casinoMedia { overflow:hidden; padding:6px; }
+.casinoMedia img { width:100%; height:100%; border-radius:8px; object-fit:contain; }
 .casinoHead h3 { margin:0; font:900 18px/1 var(--font-seven-display),var(--font-seven-sans),Arial,sans-serif; letter-spacing:-.02em; text-transform:uppercase; }
 .casinoHead small { display:block; margin-top:5px; color:var(--muted); font-size:13px; line-height:18px; }
 .topScore { width:fit-content; margin-top:16px; padding:6px 9px; border-radius:999px; background:var(--acid); font-size:13px; line-height:18px; letter-spacing:.05em; text-transform:uppercase; }

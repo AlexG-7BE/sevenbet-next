@@ -738,6 +738,10 @@ test("all required public surfaces read their dedicated semantic placement", () 
     CASINO_OFFER_BLOCK: readFileSync("components/casino-profile/CasinoProfile.tsx", "utf8"),
   } as const;
   for (const [placement, source] of Object.entries(files)) assert.match(source, new RegExp(placement));
+  const contextualComparison = readFileSync("components/comparison-context/ContextualComparison.tsx", "utf8");
+  assert.match(contextualComparison, /ResponsivePlacementImage/);
+  assert.match(contextualComparison, /data-media-placement="CASINO_COMPARE"/);
+  assert.match(contextualComparison, /casino\.logo/);
   const responsive = readFileSync("components/media/ResponsivePlacementImage.tsx", "utf8");
   assert.match(responsive, /max-width: 767px/);
   assert.match(responsive, /data-placement-variant="MOBILE"/);

@@ -8,6 +8,7 @@ import type { PublicComparisonResult } from "@/lib/public-comparison/public-comp
 import styles from "./ContextualComparison.module.css";
 import { productAnalyticsClient } from "@/lib/analytics/product-analytics-client";
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
@@ -162,7 +163,9 @@ export function ContextualComparison({ messages, presentation }: { messages: Pro
             const displayName = casino?.name ?? slug.replaceAll("-", " ");
             return <article className={styles.comparisonCard} key={slug}>
               <div className={styles.casinoHead}>
-                <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>
+                {casino?.logo
+                  ? <span className={styles.casinoMedia} data-media-placement="CASINO_COMPARE" data-media-state="presented"><ResponsivePlacementImage alt={`${displayName} comparison media`} height={casino.logo.height ?? 50} media={casino.logo} width={casino.logo.width ?? 50} /></span>
+                  : <span aria-hidden="true">{displayName.slice(0, 1).toUpperCase()}</span>}
                 <div><h3>{displayName}</h3><small>{casino?.summary || messages.common.reviewOnly}</small></div>
               </div>
               {casino && casino.editorScore !== null && casino.editorScore === highestScore && <strong className={styles.topScore}>{messages.comparison.topScore}</strong>}
