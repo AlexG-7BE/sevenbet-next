@@ -283,7 +283,7 @@ async function expectNativeArticleHeroSeparation(page: import("@playwright/test"
   expect(geometry.separationGap, `${context}: title/summary separation`).toBeGreaterThanOrEqual(1);
 }
 
-test("localized mobile controls wrap while neutral global and fallback copy stay bounded", async ({ page }) => {
+test("localized mobile controls wrap while neutral global and composed copy stay bounded", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   const response = await page.goto(`${baseUrl}/de/bonuses?visualFixture=true`, { waitUntil: "networkidle" });
   expect(response?.status()).toBe(200);
@@ -302,12 +302,12 @@ test("localized mobile controls wrap while neutral global and fallback copy stay
   expect(positionBox!.x + positionBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
   expect(positionBox!.y + positionBox!.height).toBeLessThanOrEqual(rowBox!.y + rowBox!.height + 1);
 
-  const fallback = page.locator('[data-media-state="fallback"][data-offer-media="bonus"]').first();
-  await expect(fallback).toBeVisible();
-  await expect(fallback.locator(":scope > span")).toBeVisible();
-  const fallbackGeometry = await fallback.evaluate((element) => {
+  const composed = page.locator('[data-media-state="presented"][data-media-mode="COMPOSED"][data-media-ratio="missing"][data-offer-media="bonus"]').first();
+  await expect(composed).toBeVisible();
+  await expect(composed.locator("strong").first()).toBeVisible();
+  const composedGeometry = await composed.evaluate((element) => {
     const container = element.getBoundingClientRect();
-    const children = Array.from(element.querySelectorAll(":scope > span, :scope > strong, :scope > p"));
+    const children = Array.from(element.querySelectorAll("span, strong, small"));
     const bounds = children.map((child) => {
       const range = document.createRange();
       range.selectNodeContents(child);
@@ -321,11 +321,11 @@ test("localized mobile controls wrap while neutral global and fallback copy stay
     });
     return { container: { bottom: container.bottom, left: container.left, right: container.right, top: container.top }, bounds };
   });
-  for (const bounds of fallbackGeometry.bounds) {
-    expect(bounds.left).toBeGreaterThanOrEqual(fallbackGeometry.container.left - 1);
-    expect(bounds.right).toBeLessThanOrEqual(fallbackGeometry.container.right + 1);
-    expect(bounds.top).toBeGreaterThanOrEqual(fallbackGeometry.container.top - 1);
-    expect(bounds.bottom).toBeLessThanOrEqual(fallbackGeometry.container.bottom + 1);
+  for (const bounds of composedGeometry.bounds) {
+    expect(bounds.left).toBeGreaterThanOrEqual(composedGeometry.container.left - 1);
+    expect(bounds.right).toBeLessThanOrEqual(composedGeometry.container.right + 1);
+    expect(bounds.top).toBeGreaterThanOrEqual(composedGeometry.container.top - 1);
+    expect(bounds.bottom).toBeLessThanOrEqual(composedGeometry.container.bottom + 1);
   }
 
   await page.goto(`${baseUrl}/de/casinos?visualFixture=true`, { waitUntil: "networkidle" });
