@@ -12,6 +12,7 @@ type OutboundContext = OutboundIntentContext;
 
 export function GovernedCommercialAction({
   action,
+  anchorData,
   ariaLabel,
   children,
   className,
@@ -20,6 +21,7 @@ export function GovernedCommercialAction({
   offerMediaVariant,
 }: {
   action: CasinoProfileAction;
+  anchorData?: Partial<Record<`data-${string}`, string>>;
   ariaLabel?: string;
   children: ReactNode;
   className: string;
@@ -47,6 +49,7 @@ export function GovernedCommercialAction({
   return (
     <>
       <a
+        {...anchorData}
         aria-haspopup="dialog"
         aria-label={ariaLabel}
         className={className}

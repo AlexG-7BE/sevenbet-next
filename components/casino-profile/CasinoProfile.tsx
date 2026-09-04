@@ -165,11 +165,25 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     ? `${detailPlacement.focalPoint.x * 100}% ${detailPlacement.focalPoint.y * 100}%`
     : "center";
   const brandMediaAvailable = !heroMediaAvailable && Boolean(casino.media.logo);
+  const heroMediaMode = heroMediaComposed || brandMediaAvailable ? "COMPOSED" : heroMediaCover ? "COVER" : heroMediaAvailable ? "CONTAIN" : "FALLBACK";
+  const heroMediaRatio = casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing";
+  const heroMediaSource = detailPlacement?.source ?? (casino.media.hero ? "LEGACY_HERO" : brandMediaAvailable ? "LEGACY_LOGO" : "CODE_FALLBACK");
   const offerPlacement = bonus?.media?.CASINO_OFFER_BLOCK;
   const hasEditorScore = casino.editorScore !== null;
   const formattedEditorScore = casino.editorScore === null
     ? messages.common.notListed
     : formatProfileScore(casino.editorScore, presentation.locale);
+  const heroMediaContent = heroMediaComposed && casino.media.hero ? <div className={`${styles.brandMedia} ${styles.composedMedia}`}><span>B4GAMBLE · {messages.common.controlledMedia}</span>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /> : null}<strong>{casino.name}</strong>{offerHeadline ? <em>{offerHeadline}</em> : null}<ResponsivePlacementImage className={styles.controlledStrip} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 50} media={casino.media.hero} width={casino.media.hero.width ?? 320} /></div> : heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas} data-cover={heroMediaCover || undefined}><ResponsivePlacementImage style={{ objectPosition: heroFocalPoint }} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} media={casino.media.hero} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>;
+  const heroMediaPresentation = heroMediaAvailable && action
+    ? <GovernedCommercialAction
+        action={action}
+        anchorData={{ "data-commercial-clickable": "true", "data-media-mode": heroMediaMode, "data-media-ratio": heroMediaRatio, "data-media-source": heroMediaSource }}
+        ariaLabel={`${action.label} — ${offerHeadline ?? messages.profile.publishedReview}`}
+        className={styles.heroMedia}
+        context={{ source: "CREATIVE", placement: "CASINO_DETAIL_HERO" }}
+        messages={messages.outbound}
+      >{heroMediaContent}</GovernedCommercialAction>
+    : <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-mode={heroMediaMode} data-media-ratio={heroMediaRatio} data-media-source={heroMediaSource}>{heroMediaContent}</aside>;
 
   return <article className={styles.page} data-runtime-renderer="casino-review">
     <div aria-hidden="true" className={styles.readProgress} data-casino-read-progress />
@@ -211,9 +225,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
 
-        <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-mode={heroMediaComposed || brandMediaAvailable ? "COMPOSED" : heroMediaCover ? "COVER" : heroMediaAvailable ? "CONTAIN" : "FALLBACK"} data-media-ratio={casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing"} data-media-source={detailPlacement?.source}>
-          {heroMediaComposed && casino.media.hero ? <div className={`${styles.brandMedia} ${styles.composedMedia}`}><span>B4GAMBLE · {messages.common.controlledMedia}</span>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /> : null}<strong>{casino.name}</strong>{offerHeadline ? <em>{offerHeadline}</em> : null}<ResponsivePlacementImage className={styles.controlledStrip} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 50} media={casino.media.hero} width={casino.media.hero.width ?? 320} /></div> : heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas} data-cover={heroMediaCover || undefined}><ResponsivePlacementImage style={{ objectPosition: heroFocalPoint }} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} media={casino.media.hero} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>}
-        </aside>
+        {heroMediaPresentation}
       </section>
 
       <nav aria-label={messages.profile.currentReview} className={styles.decisionBar} data-casino-decision-bar>

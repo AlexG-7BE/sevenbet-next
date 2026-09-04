@@ -59,6 +59,8 @@
 .disclosure { margin: 12px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 .mediaFrame,.mediaFallback { position: relative; min-width: 0; min-height: 100%; overflow: hidden; border-left: 1px solid rgba(16,15,15,.3); background: #171717; color: #fff; }
 .mediaFrame { padding: clamp(22px,3vw,44px); display: grid; place-items: center; background: radial-gradient(circle at 50% 45%,#292929 0,#171717 72%); }
+.mediaFrame[href] { cursor: pointer; text-decoration: none; }
+.mediaFrame[href]:focus-visible { z-index: 1; outline: 3px solid #e4e24e; outline-offset: -6px; }
 .mediaFrame img { width: 100%; height: 100%; max-width: 100%; max-height: 100%; display: block; object-fit: contain; object-position: center; filter: drop-shadow(0 18px 28px rgba(0,0,0,.24)); }
 .mediaFrame[data-media-mode="COVER"] { padding: 0; }
 .mediaFrame[data-media-mode="COVER"] img { max-width:none; max-height:none; object-fit:cover; filter:none; }

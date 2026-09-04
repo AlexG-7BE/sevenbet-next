@@ -147,6 +147,37 @@ test("curated casino cards preserve visit actions when bonus data is absent and 
   assert.doesNotMatch(demoHtml, />Current</);
 });
 
+test("casino directory promotional media follows the governed Visit action and fallbacks stay inert", async () => {
+  const { CuratedCasinoShortlist } = await import("../components/casino-discovery/CuratedCasinoShortlist");
+  const promotional = casino({
+    featuredBonus: { title: "Verified welcome offer", summary: "Current published terms", type: "WELCOME", keyTerms: ["Terms apply"], wageringRequirement: 30, minimumDeposit: 10, currency: "GBP", validUntil: null, termsApply: true },
+    hero: { url: "/controlled/truth-casino-300x250.jpg", alt: "Truth Casino verified offer creative", width: 300, height: 250, renderingMode: "CONTAIN", source: "EXPLICIT", focalPoint: null },
+  });
+  const authorized = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[promotional]} messages={messages} presentation={presentation} />);
+  assert.match(authorized, /<a[^>]+data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="\/outbound\/truth-casino-visit"/);
+  assert.match(authorized, /aria-label="[^"]*Truth Casino[^"]*—[^"]*Verified welcome offer"/);
+  assert.match(authorized, /data-commercial-action-placement="CASINO_DIRECTORY_CARD"[^>]+data-commercial-action-source="CTA"/);
+  assert.equal((authorized.match(/href="\/outbound\/truth-casino-visit"/g) ?? []).length, 2);
+  assert.doesNotMatch(authorized, /href="https?:\/\//);
+
+  const blocked = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
+    ...promotional,
+    visitAction: { available: false, redirectSlug: null, label: "Unavailable", reasonCode: "GEO_BLOCKED" },
+  })]} messages={messages} presentation={presentation} />);
+  assert.match(blocked, /src="\/controlled\/truth-casino-300x250\.jpg"/);
+  assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
+
+  const fallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({ hero: null })]} messages={messages} presentation={presentation} />);
+  assert.match(fallback, /role="img"/);
+  assert.doesNotMatch(fallback, /data-commercial-action-source="CREATIVE"/);
+
+  const composedFallback = renderToStaticMarkup(<CuratedCasinoShortlist casinos={[casino({
+    hero: { ...promotional.hero!, renderingMode: "COMPOSED" },
+  })]} messages={messages} presentation={presentation} />);
+  assert.match(composedFallback, /role="img"/);
+  assert.doesNotMatch(composedFallback, /data-commercial-action-source="CREATIVE"/);
+});
+
 test("bonus result summaries stay neutral while record labels reflect their classification", async () => {
   const { BonusComparisonList, FeaturedBonusCard } = await import("../components/bonus-directory/BonusDirectory");
   const published = offer();

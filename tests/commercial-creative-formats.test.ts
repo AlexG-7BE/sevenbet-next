@@ -15,10 +15,11 @@ import {
 import { parseCommercialAssetManifest } from "../lib/commercial-activation/asset-contract";
 import { MediaValidationError, validateMediaUpload } from "../lib/media/image-validation";
 import { processImage } from "../lib/media/image-processing";
-import type { PublicPlacementMedia } from "../lib/public-casino/public-casino.types";
+import type { PublicCasinoDTO, PublicPlacementMedia } from "../lib/public-casino/public-casino.types";
 import type { PublicOfferDTO } from "../lib/public-offer/public-offer.types";
 import { temporaryDemoBestOffers } from "../lib/demo-data/temporary-demo-best-offers";
 import { productPageMessages } from "../lib/i18n/product-pages-catalog";
+import { resolvePresentationContext } from "../lib/market/presentation-resolver";
 import type { MediaRepository } from "../lib/repositories/media.repository";
 import { MediaService } from "../lib/services/media.service";
 import type { StorageProvider } from "../lib/media/storage";
@@ -274,7 +275,7 @@ test("governed batch ingestion and local media serving retain the validated GIF 
   assert.match(readFileSync("app/api/media/local/[...key]/route.ts", "utf8"), /gif:\s*"image\/gif"/);
 });
 
-function placementMedia(placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY", url = "/api/media/local/creative.gif"): PublicPlacementMedia {
+function placementMedia(placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_DETAIL_HERO", url = "/api/media/local/creative.gif", renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN"): PublicPlacementMedia {
   const asset = { id: "creative", type: "other" as const, url, alt: "Current verified offer creative", width: 300, height: 250, caption: null };
   const resolution = {
     asset,
@@ -283,13 +284,38 @@ function placementMedia(placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" 
     resolvedPlacement: placement,
     requestedVariant: "DEFAULT" as const,
     resolvedVariant: "DEFAULT" as const,
-    renderingMode: "CONTAIN" as const,
+    renderingMode,
     source: "EXPLICIT" as const,
     fallback: false,
     effectiveAlt: asset.alt,
     focalPoint: null,
   };
   return { ...resolution, variants: { DEFAULT: resolution } };
+}
+
+function profileCasino(renderingMode: "CONTAIN" | "COVER" | "COMPOSED" = "CONTAIN"): PublicCasinoDTO {
+  const placement = placementMedia("CASINO_DETAIL_HERO", "/controlled/skol-300x250.jpg", renderingMode);
+  return {
+    source: "cms", id: "skol-id", slug: "skol-casino", name: "Skol Casino", title: "Skol Casino",
+    domain: "operator.example", summary: "Published factual summary.", reviewContent: "Published editorial review.", operator: "Skol Operator",
+    foundedYear: 2020, editorScore: 8.7, trustScore: 8.1, featured: true, recommended: true,
+    publishedAt: "2030-01-01T00:00:00.000Z", lastReviewedAt: "2030-02-03T00:00:00.000Z", version: 3,
+    languages: ["en"], currencies: ["GBP"], pros: ["Published strength"], cons: ["Published limitation"], responsibleGamblingTools: ["Deposit limits"],
+    seo: { title: "Skol review", description: "Published metadata.", canonical: "https://b4gamble.com/casino/skol-casino", robots: "index,follow", socialTitle: "Skol review", socialDescription: "Published metadata.", socialImage: null, structuredData: null },
+    licenses: [{ authority: "Published Authority", licenseNumber: null, jurisdiction: "GB", status: "ACTIVE", verificationUrl: null, expiresAt: null, lastVerifiedAt: "2030-01-15T00:00:00.000Z" }],
+    countries: [{ countryCode: "GB", availability: "AVAILABLE", minimumAge: 18, currency: "GBP", language: "en" }],
+    payments: [], providers: [], categories: [], marketProfiles: [],
+    bonuses: [{
+      id: "bonus-id", slug: "skol-welcome", title: "Verified Skol welcome offer", summary: "Current published offer", type: "WELCOME", percentage: 100,
+      minimumDeposit: 10, maximumBonus: 150, maximumBet: 5, currency: "GBP", freeSpins: 20, wageringMultiplier: 30,
+      wageringText: "30× wagering", eligibility: "New eligible customers only", importantConditions: ["Terms apply"], termsUrl: null,
+      startsAt: null, expiresAt: null, affiliate: { href: "/r/skol-current-offer", available: true },
+    }],
+    media: { logo: null, hero: placement.asset, screenshots: [], gallery: [], socialImage: null, placements: { CASINO_DETAIL_HERO: placement } },
+    affiliate: { href: "/r/skol-casino", available: true },
+    presentationDisposition: "PROMOTABLE",
+    presentationDispositionReason: "EXACT_MARKET_AND_ROUTE_ELIGIBLE",
+  };
 }
 
 test("authorized creative markup uses the governed route while blocked creative stays non-interactive", async () => {
@@ -323,6 +349,42 @@ test("authorized creative markup uses the governed route while blocked creative 
   const blockedCreative = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer: blocked, variant: "bonus" }));
   assert.match(blockedCreative, /data-media-state="presented"/);
   assert.doesNotMatch(blockedCreative, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
+});
+
+test("Casino detail hero promotional media is governed in every rendering mode while blocked and brand fallbacks stay inert", async () => {
+  const require = createRequire(import.meta.url);
+  require.extensions[".css"] = () => undefined;
+  (globalThis as typeof globalThis & { React: typeof React }).React = React;
+  const { CasinoProfile } = await import("../components/casino-profile/CasinoProfile");
+  const messages = productPageMessages("en-GB");
+  const presentation = resolvePresentationContext({});
+
+  for (const renderingMode of ["CONTAIN", "COVER", "COMPOSED"] as const) {
+    const html = renderToStaticMarkup(React.createElement(CasinoProfile, {
+      availableForPresentation: true,
+      casino: profileCasino(renderingMode),
+      editorial: null,
+      messages,
+      presentation,
+    }));
+    assert.match(html, new RegExp(`<a[^>]+data-media-mode="${renderingMode}"[^>]+data-commercial-action-placement="CASINO_DETAIL_HERO"[^>]+data-commercial-action-source="CREATIVE"[^>]+href="/outbound/skol-current-offer"`));
+    assert.match(html, /aria-label="[^"]*Skol Casino[^"]*—[^"]*(?:Verified Skol welcome offer|100%)[^"]*"/);
+    assert.match(html, /data-commercial-action-source="CTA"[^>]+href="\/outbound\/skol-current-offer"/);
+    assert.doesNotMatch(html, /href="https?:\/\/operator\.example/);
+  }
+
+  const blockedCasino = profileCasino();
+  blockedCasino.bonuses = blockedCasino.bonuses.map((bonus) => ({ ...bonus, affiliate: { href: null, available: false } }));
+  blockedCasino.affiliate = { href: null, available: false };
+  const blocked = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: blockedCasino, editorial: null, messages, presentation }));
+  assert.match(blocked, /src="\/controlled\/skol-300x250\.jpg"/);
+  assert.doesNotMatch(blocked, /data-commercial-action-source="CREATIVE"|href="\/outbound\/|href="\/r\//);
+
+  const brandOnly = profileCasino();
+  brandOnly.media = { ...brandOnly.media, hero: null, placements: undefined, logo: { id: "skol-logo", type: "logo", url: "/controlled/skol-logo.png", alt: "Skol logo", width: 200, height: 100, caption: null } };
+  const fallback = renderToStaticMarkup(React.createElement(CasinoProfile, { availableForPresentation: true, casino: brandOnly, editorial: null, messages, presentation }));
+  assert.match(fallback, /data-media-ratio="brand"/);
+  assert.doesNotMatch(fallback, /data-commercial-action-placement="CASINO_DETAIL_HERO"/);
 });
 
 test("Admin and public components keep one format contract and no raw partner embed path", () => {
