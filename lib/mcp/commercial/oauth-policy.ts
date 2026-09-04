@@ -103,14 +103,10 @@ export function validateCommercialMcpTokenRecord(
   requiredScope?: (typeof COMMERCIAL_MCP_SCOPES)[number],
   now = new Date(),
 ): CommercialMcpTokenContext {
-  if (
-    !token
-    || token.expiresAt <= now
-    || token.revoked !== null
-    || !token.sessionId
-    || !token.session
-    || token.session.expiresAt <= now
-  ) {
+  // The browser session proves identity at consent time, but the resulting MCP grant is
+  // a separately revocable integration authorization. Routine browser-session expiry
+  // must not disconnect ChatGPT from the bounded Commercial MCP.
+  if (!token || token.expiresAt <= now || token.revoked !== null) {
     throw new CommercialMcpAuthError("Bearer token is invalid or expired", 401, "invalid_token", requiredScope);
   }
   if (token.resources.length !== 1 || token.resources[0] !== config.resource) {
