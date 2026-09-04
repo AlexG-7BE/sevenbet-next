@@ -14,6 +14,8 @@ import {
   resolveCommercialMcpProviderResource,
 } from "@/lib/mcp/commercial/provider";
 
+const COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS = 10 * 365 * 24 * 60 * 60;
+
 type SevenBetAuthOptions = {
   autoSignIn?: boolean;
 };
@@ -64,8 +66,8 @@ export function createSevenBetAuth({
       oauthProvider({
         loginPage: "/admin/integrations/chatgpt-work/login",
         consentPage: "/admin/integrations/chatgpt-work/consent",
-        accessTokenExpiresIn: 15 * 60,
-        refreshTokenExpiresIn: 30 * 24 * 60 * 60,
+        accessTokenExpiresIn: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
+        refreshTokenExpiresIn: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
         codeExpiresIn: 5 * 60,
         scopes: ["commercial:read", "commercial:safe_write", "offline_access"],
         grantTypes: ["authorization_code", "refresh_token"],
@@ -82,8 +84,8 @@ export function createSevenBetAuth({
           {
             identifier: commercialMcpResource,
             name: "B4GAMBLE Commercial MCP",
-            accessTokenTtl: 15 * 60,
-            refreshTokenTtl: 30 * 24 * 60 * 60,
+            accessTokenTtl: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
+            refreshTokenTtl: COMMERCIAL_MCP_DURABLE_TOKEN_TTL_SECONDS,
             allowedScopes: [
               "commercial:read",
               "commercial:safe_write",
@@ -91,7 +93,7 @@ export function createSevenBetAuth({
             ],
           },
         ],
-        resourceSeedMode: "insertOnly",
+        resourceSeedMode: "merge",
         enforcePerClientResources: true,
         clientRegistrationDefaultResources: [commercialMcpResource],
         clientRegistrationAllowedResources: [commercialMcpResource],
