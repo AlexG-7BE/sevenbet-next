@@ -89,10 +89,17 @@ export async function processImage(input: {
   if (input.mimeType === "image/jpeg") original = stripJpegMetadata(input.data);
   else if (input.mimeType === "image/png") original = stripPngMetadata(input.data);
   else if (input.mimeType === "image/webp") original = stripWebpMetadata(input.data);
+  else if (input.mimeType === "image/gif") {
+    // Keep the validated GIF byte-for-byte. Re-encoding can collapse an
+    // animation to its first frame or change partner-supplied timing.
+    original = { data: Buffer.from(input.data), stripped: false };
+  }
   else {
     if (Buffer.from(input.data).includes(Buffer.from("Exif"))) throw new MediaValidationError("AVIF with embedded EXIF is not accepted without a metadata-safe processor", "UNSAFE_METADATA");
     original = { data: Buffer.from(input.data), stripped: false };
   }
-  const variants = input.variantProcessor ? await input.variantProcessor.createVariants(original.data, input.mimeType) : [];
+  const variants = input.mimeType !== "image/gif" && input.variantProcessor
+    ? await input.variantProcessor.createVariants(original.data, input.mimeType)
+    : [];
   return { original: original.data, metadataStripped: original.stripped, variants };
 }

@@ -2699,6 +2699,7 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .mediaSelectorGrid button.selected { border-color: var(--emerald); box-shadow: 0 0 0 2px rgba(0, 226, 138, .16); }
 .mediaSelectorGrid img { aspect-ratio: 16 / 9; border-radius: 6px; background: var(--card-soft); }
 .mediaSelectorGrid span { overflow-wrap: anywhere; font-size: .78rem; }
+.mediaSelectorGrid small { color:var(--muted); font-size:.7rem; line-height:1.35; overflow-wrap:anywhere; }
 .placementMediaEditor { display:grid; gap:20px; margin-bottom:32px; }
 .placementMediaToolbar { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.55fr) minmax(220px,.45fr); gap:16px; align-items:start; padding:18px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
 .placementMediaToolbar p { margin:5px 0 0; }
@@ -2710,6 +2711,9 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .placementMediaSlotHeader { display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:18px; align-items:start; }
 .placementMediaSlotHeader h3 { margin:10px 0 5px; }
 .placementMediaSlotHeader p { margin:0; }
+.placementFormatGuidance { display:grid; gap:5px; color:var(--muted); font-size:.82rem; line-height:1.45; }
+.placementFormatGuidance strong { color:var(--text); }
+.placementFormatGuidance small { color:var(--muted); }
 .placementMediaPreviewStack { width:150px; display:grid; gap:8px; }
 .placementMediaPreviewStack figure { margin:0; }
 .placementMediaPreviewStack img,.placementMediaCodeFallback { width:150px; height:112px; display:grid; place-items:center; object-fit:contain; border:1px solid var(--border); border-radius:10px; background:var(--card-soft); }
@@ -2721,6 +2725,8 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .placementMediaFacts > div { min-width:0; padding:8px 0; border-top:1px solid var(--border); }
 .placementMediaFacts dt { color:var(--muted); font-size:.72rem; font-weight:700; text-transform:uppercase; }
 .placementMediaFacts dd { margin:3px 0 0; overflow-wrap:anywhere; font-size:.84rem; }
+.placementMediaWarning { margin:0; padding:11px 13px; border:1px solid var(--border-gold); border-radius:10px; background:rgba(245,196,81,.08); color:var(--muted); font-size:.8rem; line-height:1.45; }
+.placementMediaWarning strong { color:var(--text); }
 .placementMediaControls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
 .placementMediaControls label:first-child,.placementMediaControls label:nth-child(3) { grid-column:1 / -1; }
 .placementMediaActions { display:flex; flex-wrap:wrap; gap:8px; }

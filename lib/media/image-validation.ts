@@ -7,22 +7,21 @@ export const mediaAssetTypes = [
 ] as const;
 
 export type MediaAssetTypeName = (typeof mediaAssetTypes)[number];
-export type SupportedImageMime = "image/jpeg" | "image/png" | "image/webp" | "image/avif";
+export type SupportedImageMime = "image/jpeg" | "image/png" | "image/webp" | "image/avif" | "image/gif";
 
 const extensionByMime: Record<SupportedImageMime, string[]> = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
   "image/webp": [".webp"],
   "image/avif": [".avif"],
+  "image/gif": [".gif"],
 };
 
 const minimumDimensions: Partial<Record<MediaAssetTypeName, [number, number]>> = {
   LOGO: [128, 64],
   FAVICON: [32, 32],
   HERO: [800, 400],
-  BONUS_CREATIVE: [300, 150],
   SOCIAL_IMAGE: [600, 315],
-  AFFILIATE_CREATIVE: [300, 150],
 };
 
 export class MediaValidationError extends Error {
@@ -36,6 +35,12 @@ function uint32(buffer: Uint8Array, offset: number, littleEndian = false) {
   if (offset < 0 || offset + 4 > buffer.length) throw new MediaValidationError("Image metadata is truncated", "INVALID_IMAGE");
   const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
   return view.getUint32(offset, littleEndian);
+}
+
+function uint16(buffer: Uint8Array, offset: number, littleEndian = false) {
+  if (offset < 0 || offset + 2 > buffer.length) throw new MediaValidationError("Image metadata is truncated", "INVALID_IMAGE");
+  const view = new DataView(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  return view.getUint16(offset, littleEndian);
 }
 
 function ascii(buffer: Uint8Array, offset: number, length: number) {
@@ -65,6 +70,7 @@ function parsePng(buffer: Uint8Array) {
   const compressed: Uint8Array[] = [];
   let offset = 8;
   let ended = false;
+  let animated = false;
   while (offset + 12 <= buffer.length) {
     const length = uint32(buffer, offset);
     const end = offset + 12 + length;
@@ -72,6 +78,7 @@ function parsePng(buffer: Uint8Array) {
     const type = ascii(buffer, offset + 4, 4);
     if (crc32(buffer.subarray(offset + 4, offset + 8 + length)) !== uint32(buffer, offset + 8 + length)) throw new MediaValidationError("PNG checksum is invalid", "INVALID_IMAGE");
     if (type === "IDAT") compressed.push(buffer.subarray(offset + 8, offset + 8 + length));
+    if (type === "acTL" && length === 8 && uint32(buffer, offset + 8) > 1) animated = true;
     if (type === "IEND") { ended = true; offset = end; break; }
     offset = end;
   }
@@ -80,7 +87,7 @@ function parsePng(buffer: Uint8Array) {
   try { decoded = inflateSync(Buffer.concat(compressed)); } catch { throw new MediaValidationError("PNG image data cannot be decoded", "INVALID_IMAGE"); }
   const rowBytes = Math.ceil((width * channels * bitDepth) / 8);
   if (decoded.length !== (rowBytes + 1) * height) throw new MediaValidationError("PNG decoded dimensions do not match its image data", "INVALID_IMAGE");
-  return { mimeType: "image/png" as const, width, height };
+  return { mimeType: "image/png" as const, width, height, animated };
 }
 
 function parseJpeg(buffer: Uint8Array) {
@@ -94,7 +101,7 @@ function parseJpeg(buffer: Uint8Array) {
     const marker = buffer[offset++];
     if (marker === 0xda) {
       if (!dimensions || offset + 2 >= buffer.length - 2) throw new MediaValidationError("JPEG scan data is incomplete", "INVALID_IMAGE");
-      return { mimeType: "image/jpeg" as const, ...dimensions };
+      return { mimeType: "image/jpeg" as const, ...dimensions, animated: false };
     }
     if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) continue;
     const length = (buffer[offset] << 8) | buffer[offset + 1];
@@ -115,14 +122,14 @@ function parseWebp(buffer: Uint8Array) {
   if (kind === "VP8X") {
     const width = 1 + buffer[24] + (buffer[25] << 8) + (buffer[26] << 16);
     const height = 1 + buffer[27] + (buffer[28] << 8) + (buffer[29] << 16);
-    return { mimeType: "image/webp" as const, width, height };
+    return { mimeType: "image/webp" as const, width, height, animated: Boolean(buffer[20] & 0x02) };
   }
   if (kind === "VP8L" && buffer[20] === 0x2f) {
     const bits = uint32(buffer, 21, true);
-    return { mimeType: "image/webp" as const, width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1 };
+    return { mimeType: "image/webp" as const, width: (bits & 0x3fff) + 1, height: ((bits >> 14) & 0x3fff) + 1, animated: false };
   }
   if (kind === "VP8 " && buffer[23] === 0x9d && buffer[24] === 0x01 && buffer[25] === 0x2a) {
-    return { mimeType: "image/webp" as const, width: ((buffer[27] << 8) | buffer[26]) & 0x3fff, height: ((buffer[29] << 8) | buffer[28]) & 0x3fff };
+    return { mimeType: "image/webp" as const, width: ((buffer[27] << 8) | buffer[26]) & 0x3fff, height: ((buffer[29] << 8) | buffer[28]) & 0x3fff, animated: false };
   }
   throw new MediaValidationError("WebP dimensions could not be decoded", "INVALID_IMAGE");
 }
@@ -135,13 +142,167 @@ function parseAvif(buffer: Uint8Array) {
     if (ascii(buffer, offset, 4) !== "ispe") continue;
     const width = uint32(buffer, offset + 8);
     const height = uint32(buffer, offset + 12);
-    if (width && height) return { mimeType: "image/avif" as const, width, height };
+    if (width && height) return { mimeType: "image/avif" as const, width, height, animated: brands.includes("avis") };
   }
   throw new MediaValidationError("AVIF dimensions could not be decoded", "INVALID_IMAGE");
 }
 
+function skipGifSubBlocks(buffer: Uint8Array, initialOffset: number) {
+  let offset = initialOffset;
+  let payloadBytes = 0;
+  const chunks: Uint8Array[] = [];
+  while (true) {
+    if (offset >= buffer.length) throw new MediaValidationError("GIF data block is truncated", "INVALID_IMAGE");
+    const size = buffer[offset++];
+    if (size === 0) return { offset, payloadBytes, data: Buffer.concat(chunks) };
+    if (offset + size > buffer.length) throw new MediaValidationError("GIF data block is truncated", "INVALID_IMAGE");
+    payloadBytes += size;
+    chunks.push(buffer.subarray(offset, offset + size));
+    offset += size;
+  }
+}
+
+function validateGifLzw(data: Uint8Array, minimumCodeSize: number, expectedPixels: number) {
+  const clearCode = 1 << minimumCodeSize;
+  const endCode = clearCode + 1;
+  const lengths = new Uint16Array(4096);
+  for (let index = 0; index < clearCode; index += 1) lengths[index] = 1;
+
+  let codeSize = minimumCodeSize + 1;
+  let nextCode = endCode + 1;
+  let previousCode = -1;
+  let bitOffset = 0;
+  let decodedPixels = 0;
+  let sawClearCode = false;
+  let sawEndCode = false;
+
+  while (bitOffset + codeSize <= data.length * 8) {
+    let code = 0;
+    for (let bit = 0; bit < codeSize; bit += 1) {
+      const absoluteBit = bitOffset + bit;
+      code |= ((data[absoluteBit >> 3] >> (absoluteBit & 7)) & 1) << bit;
+    }
+    bitOffset += codeSize;
+
+    if (code === clearCode) {
+      codeSize = minimumCodeSize + 1;
+      nextCode = endCode + 1;
+      previousCode = -1;
+      sawClearCode = true;
+      continue;
+    }
+    if (code === endCode) {
+      sawEndCode = true;
+      break;
+    }
+    if (!sawClearCode) throw new MediaValidationError("GIF LZW clear code is missing", "INVALID_IMAGE");
+
+    let sequenceLength = 0;
+    if (code < clearCode) sequenceLength = 1;
+    else if (code < nextCode && lengths[code]) sequenceLength = lengths[code];
+    else if (code === nextCode && previousCode >= 0) sequenceLength = lengths[previousCode] + 1;
+    else throw new MediaValidationError("GIF LZW code stream is invalid", "INVALID_IMAGE");
+
+    decodedPixels += sequenceLength;
+    if (decodedPixels > expectedPixels) throw new MediaValidationError("GIF decoded pixels exceed frame dimensions", "INVALID_IMAGE");
+
+    if (previousCode >= 0 && nextCode < 4096) {
+      lengths[nextCode] = lengths[previousCode] + 1;
+      nextCode += 1;
+      if (nextCode === 1 << codeSize && codeSize < 12) codeSize += 1;
+    }
+    previousCode = code;
+  }
+
+  if (!sawEndCode || decodedPixels !== expectedPixels) {
+    throw new MediaValidationError("GIF decoded pixels do not match frame dimensions", "INVALID_IMAGE");
+  }
+}
+
+function skipGifExtension(buffer: Uint8Array, label: number, initialOffset: number) {
+  if (label === 0xf9) {
+    if (initialOffset + 6 > buffer.length || buffer[initialOffset] !== 4 || buffer[initialOffset + 5] !== 0) {
+      throw new MediaValidationError("GIF graphic control extension is invalid", "INVALID_IMAGE");
+    }
+    return initialOffset + 6;
+  }
+  if (label === 0xff || label === 0x01) {
+    const requiredSize = label === 0xff ? 11 : 12;
+    if (initialOffset + requiredSize + 1 > buffer.length || buffer[initialOffset] !== requiredSize) {
+      throw new MediaValidationError("GIF extension header is invalid", "INVALID_IMAGE");
+    }
+    return skipGifSubBlocks(buffer, initialOffset + requiredSize + 1).offset;
+  }
+  return skipGifSubBlocks(buffer, initialOffset).offset;
+}
+
+function parseGif(buffer: Uint8Array) {
+  const signature = ascii(buffer, 0, 6);
+  if (signature !== "GIF87a" && signature !== "GIF89a") return null;
+  if (buffer.length < 14) throw new MediaValidationError("GIF structure is truncated", "INVALID_IMAGE");
+  const width = uint16(buffer, 6, true);
+  const height = uint16(buffer, 8, true);
+  if (!width || !height) throw new MediaValidationError("GIF dimensions are invalid", "INVALID_IMAGE");
+
+  const packed = buffer[10];
+  let offset = 13;
+  const hasGlobalColourTable = Boolean(packed & 0x80);
+  if (hasGlobalColourTable) {
+    const colourTableBytes = 3 * (2 ** ((packed & 0x07) + 1));
+    if (offset + colourTableBytes > buffer.length) throw new MediaValidationError("GIF global colour table is truncated", "INVALID_IMAGE");
+    offset += colourTableBytes;
+  }
+
+  let frameCount = 0;
+  while (offset < buffer.length) {
+    const introducer = buffer[offset++];
+    if (introducer === 0x3b) {
+      if (!frameCount || offset !== buffer.length) throw new MediaValidationError("GIF image data is incomplete", "INVALID_IMAGE");
+      return { mimeType: "image/gif" as const, width, height, animated: frameCount > 1, frameCount };
+    }
+    if (introducer === 0x21) {
+      if (offset >= buffer.length) throw new MediaValidationError("GIF extension is truncated", "INVALID_IMAGE");
+      const label = buffer[offset++];
+      offset = skipGifExtension(buffer, label, offset);
+      continue;
+    }
+    if (introducer !== 0x2c || offset + 9 > buffer.length) {
+      throw new MediaValidationError("GIF block sequence is invalid", "INVALID_IMAGE");
+    }
+
+    const left = uint16(buffer, offset, true);
+    const top = uint16(buffer, offset + 2, true);
+    const frameWidth = uint16(buffer, offset + 4, true);
+    const frameHeight = uint16(buffer, offset + 6, true);
+    const framePacked = buffer[offset + 8];
+    offset += 9;
+    if (!frameWidth || !frameHeight || left + frameWidth > width || top + frameHeight > height || (framePacked & 0x18)) {
+      throw new MediaValidationError("GIF frame dimensions are invalid", "INVALID_IMAGE");
+    }
+    const hasLocalColourTable = Boolean(framePacked & 0x80);
+    if (!hasGlobalColourTable && !hasLocalColourTable) {
+      throw new MediaValidationError("GIF frame has no colour table", "INVALID_IMAGE");
+    }
+    if (hasLocalColourTable) {
+      const localColourTableBytes = 3 * (2 ** ((framePacked & 0x07) + 1));
+      if (offset + localColourTableBytes > buffer.length) throw new MediaValidationError("GIF local colour table is truncated", "INVALID_IMAGE");
+      offset += localColourTableBytes;
+    }
+    if (offset >= buffer.length || buffer[offset] < 2 || buffer[offset] > 8) {
+      throw new MediaValidationError("GIF LZW data is invalid", "INVALID_IMAGE");
+    }
+    offset += 1;
+    const imageData = skipGifSubBlocks(buffer, offset);
+    if (!imageData.payloadBytes) throw new MediaValidationError("GIF image data is empty", "INVALID_IMAGE");
+    validateGifLzw(imageData.data, buffer[offset - 1], frameWidth * frameHeight);
+    offset = imageData.offset;
+    frameCount += 1;
+  }
+  throw new MediaValidationError("GIF trailer is missing", "INVALID_IMAGE");
+}
+
 export function detectImageMetadata(buffer: Uint8Array) {
-  return parsePng(buffer) || parseJpeg(buffer) || parseWebp(buffer) || parseAvif(buffer) || (() => {
+  return parsePng(buffer) || parseJpeg(buffer) || parseWebp(buffer) || parseAvif(buffer) || parseGif(buffer) || (() => {
     throw new MediaValidationError("File content is not a supported image", "UNSUPPORTED_MIME");
   })();
 }

@@ -126,7 +126,7 @@
 @media (max-width:900px) {
   .featuredCard,.alternativeCard { grid-template-columns:1fr; }
   .worthCards { grid-template-columns:1fr; }
-  .featuredCard > [data-offer-media="featured"] { min-height:260px; grid-row:1; }
+  .featuredCard > [data-offer-media="featured"],.featuredCard > [data-commercial-media-variant="featured"] { min-height:260px; grid-row:1; }
   .featuredCopy { grid-row:2; padding:40px 40px 138px; }
   .featuredActions { grid-row:2; padding:0 40px 40px; }
   .altCopy { padding:40px; }
@@ -155,7 +155,7 @@
   .featuredCard,.alternativeCard { width:100%; grid-template-columns:minmax(0,1fr); }
   .featuredCopy { min-width:0; grid-row:auto; padding:24px 20px 18px; }
   .altCopy { min-width:0; padding:22px 20px 24px; }
-  .featuredCard > [data-offer-media="featured"] { grid-row:3; }
+  .featuredCard > [data-offer-media="featured"],.featuredCard > [data-commercial-media-variant="featured"] { grid-row:3; }
   .featuredCard > .mobileMaterialTerms { grid-row:2; }
   .rankLine { gap:14px; }
   .rankLine > span { font-size:42px; }

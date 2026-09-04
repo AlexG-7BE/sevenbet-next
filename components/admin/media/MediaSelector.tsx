@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge, Card } from "@/components/ui";
 import { mediaJson, type MediaAssetAdminRecord, type MediaAssetTypeValue } from "@/lib/media/admin-types";
+import { commercialCreativeFormat, commercialCreativeWeightWarning } from "@/lib/media/commercial-formats";
 
 export function MediaSelector({
   casinoId,
@@ -84,13 +85,13 @@ export function MediaSelector({
 
   return (
     <Card className="mediaSelector" tone="soft">
-      <div><strong>{label}</strong><p className="muted">Choose a validated asset from this casino or upload a new one.</p></div>
+      <div><strong>{label}</strong><p className="muted">Choose a validated first-party asset or upload JPEG, PNG, WebP, AVIF or GIF. Format suitability is assessed again at placement assignment.</p></div>
       {selected && <div className="mediaSelectedSummary"><span><Badge tone="green">Selected</Badge> {selected.altText}</span><button className="button ghost" disabled={busy} type="button" onClick={() => void unlink()}>Unlink</button></div>}
-      <div className="mediaSelectorUpload"><input aria-label={`${label} alternative text`} maxLength={300} placeholder="Alternative text" value={altText} onChange={(event) => setAltText(event.target.value)} /><input ref={fileRef} accept="image/jpeg,image/png,image/webp,image/avif" aria-label={`Upload ${label}`} type="file" onChange={(event) => void upload(event.target.files?.[0] || null)} /></div>
+      <div className="mediaSelectorUpload"><input aria-label={`${label} alternative text`} maxLength={300} placeholder="Alternative text" value={altText} onChange={(event) => setAltText(event.target.value)} /><input ref={fileRef} accept="image/jpeg,image/png,image/webp,image/avif,image/gif" aria-label={`Upload ${label}`} type="file" onChange={(event) => void upload(event.target.files?.[0] || null)} /></div>
       {error && <p className="builderError" role="alert">{error}</p>}
       {loading && <p className="muted" role="status">Loading media...</p>}
       <div className="mediaSelectorGrid">
-        {records.map((record) => <button className={isSelected(record) ? "selected" : ""} disabled={busy} key={record.id} type="button" onClick={() => void select(record)}><img alt={record.altText} height={record.height || 180} loading="lazy" src={record.publicUrl} width={record.width || 320} /><span>{record.altText}</span>{isSelected(record) && <Badge tone="green">Selected</Badge>}</button>)}
+        {records.map((record) => { const format = commercialCreativeFormat(record.width, record.height); const weightWarning = commercialCreativeWeightWarning(record.sizeBytes); return <button className={isSelected(record) ? "selected" : ""} disabled={busy} key={record.id} type="button" onClick={() => void select(record)}><img alt={record.altText} height={record.height || 180} loading="lazy" src={record.publicUrl} width={record.width || 320} /><span>{record.altText}</span><small>{record.width}×{record.height} · {format?.label ?? "Unrecognised format"} · {record.metadata?.animated === true ? "animated" : "static"}{weightWarning ? " · heavy" : ""}</small>{isSelected(record) && <Badge tone="green">Selected</Badge>}</button>; })}
         {!loading && !records.length && <p className="muted">No matching assets yet.</p>}
       </div>
     </Card>

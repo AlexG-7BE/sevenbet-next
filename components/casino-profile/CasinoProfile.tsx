@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
+import { CasinoOutboundAction, GovernedCommercialAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
 import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import type { CasinoEditorialDocument, EditorialBlock, EditorialSectionKind } from "@/lib/editorial-review/types";
@@ -15,9 +15,10 @@ import {
   selectProfileBonus,
   summarizeWithdrawalTimes,
 } from "@/lib/casino-profile/presentation";
-import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import type { PublicCasinoDTO, PublicPlacementMedia } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { classifyMediaRatio, isCasinoHeroMediaCompatible, mayPresentPromotionalMedia } from "@/lib/media/media-presentation";
+import { commercialCreativeFormat } from "@/lib/media/commercial-formats";
 import { formatProductMessage, type ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import type { PresentationResolution } from "@/lib/market/presentation-resolver";
 import { productHref } from "@/lib/market/product-context";
@@ -30,6 +31,31 @@ function Signal({ children, verified = false }: { children: React.ReactNode; ver
 
 function UnavailableAction({ messages }: { messages: ProductPageMessages }) {
   return <span aria-disabled="true" className={styles.unavailableAction}>{messages.profile.offerUnavailable}</span>;
+}
+
+function CasinoOfferPlacementMedia({ casinoName, placement, messages }: { casinoName: string; placement: PublicPlacementMedia; messages: ProductPageMessages }) {
+  const format = commercialCreativeFormat(placement.asset?.width, placement.asset?.height);
+  const mobileAsset = placement.variants.MOBILE?.asset ?? placement.asset?.variants?.MOBILE ?? null;
+  const mobileFormat = commercialCreativeFormat(mobileAsset?.width, mobileAsset?.height);
+  return <figure
+    className={styles.offerPlacementMedia}
+    data-commercial-family={format?.family ?? "UNRECOGNIZED"}
+    data-commercial-format={format?.id ?? "UNRECOGNIZED"}
+    data-media-mode={placement.renderingMode}
+    data-media-source={placement.source}
+    data-mobile-commercial-family={mobileFormat?.family ?? undefined}
+    data-mobile-commercial-format={mobileFormat?.id ?? undefined}
+  >
+    {placement.asset ? <ResponsivePlacementImage
+      alt={placement.effectiveAlt}
+      height={placement.asset.height ?? 500}
+      loading="lazy"
+      media={placement.asset}
+      style={{ objectPosition: placement.focalPoint ? `${placement.focalPoint.x * 100}% ${placement.focalPoint.y * 100}%` : "center" }}
+      width={placement.asset.width ?? 600}
+    /> : <div role="img" aria-label={placement.effectiveAlt}><span>B4GAMBLE</span><strong>{casinoName}</strong></div>}
+    <figcaption>{placement.fallback ? messages.common.controlledMedia : messages.common.current}</figcaption>
+  </figure>;
 }
 
 function editorialSectionLabel(kind: EditorialSectionKind, messages: ProductPageMessages, locale: string) {
@@ -180,7 +206,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
               {bonus.eligibility ? <div><dt>{messages.common.eligibility}</dt><dd>{bonus.eligibility}</dd></div> : null}
               {bonus.expiresAt ? <div><dt>{messages.common.expiry}</dt><dd>{formatProfileDate(bonus.expiresAt, presentation.locale)}</dd></div> : null}
             </dl></div>
-            <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</div>
+            <div className={styles.heroOfferAction}>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</div>
           </div> : null}
           <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
@@ -193,7 +219,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
       <nav aria-label={messages.profile.currentReview} className={styles.decisionBar} data-casino-decision-bar>
         <span className={styles.decisionIdentity}><b>{casino.name} · {formattedEditorScore}</b><small>{offerHeadline ?? messages.profile.publishedReview}</small></span>
         <div><a href="#overview">{messages.profile.overview}</a><a href="#offer-evidence">{messages.profile.offerEvidence}</a><a href="#verdict">{messages.profile.verdict}</a><a href="#faq">{messages.profile.questions}</a></div>
-        {action ? <CasinoOutboundAction action={action} className={styles.compactAction} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
+        {action ? <CasinoOutboundAction action={action} className={styles.compactAction} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
       </nav>
 
       <section aria-labelledby="overview-heading" className={`${styles.section} ${styles.overviewSection}`} data-motion-reveal data-nav-theme="light" id="overview">
@@ -230,22 +256,19 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             {bonus ? <>
               <h3>{structuredOfferHeading ? <><span>{structuredOfferHeading.primary}</span>{structuredOfferHeading.secondary ? <em>{structuredOfferHeading.secondary}</em> : null}</> : offerHeadline}</h3>
               <p>{bonus.summary}</p>
-              {action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
+              {action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}
               <small>18+ · {messages.common.materialTerms}</small>
             </> : <div className={styles.neutralState}><strong>{messages.profile.offerUnavailable}</strong><p>{messages.common.reviewAvailableNoAction}</p></div>}
           </div>
           <div className={styles.offerTermsCard}>
-            {offerPlacement ? <figure className={styles.offerPlacementMedia} data-media-mode={offerPlacement.renderingMode} data-media-source={offerPlacement.source}>
-              {offerPlacement.asset ? <ResponsivePlacementImage
-                alt={offerPlacement.effectiveAlt}
-                height={offerPlacement.asset.height ?? 500}
-                loading="lazy"
-                media={offerPlacement.asset}
-                style={{ objectPosition: offerPlacement.focalPoint ? `${offerPlacement.focalPoint.x * 100}% ${offerPlacement.focalPoint.y * 100}%` : "center" }}
-                width={offerPlacement.asset.width ?? 600}
-              /> : <div role="img" aria-label={offerPlacement.effectiveAlt}><span>B4GAMBLE</span><strong>{casino.name}</strong></div>}
-              <figcaption>{offerPlacement.fallback ? messages.common.controlledMedia : messages.common.current}</figcaption>
-            </figure> : null}
+            {offerPlacement ? action ? <GovernedCommercialAction
+              action={action}
+              ariaLabel={`${action.label} — ${bonus?.title ?? offerPlacement.effectiveAlt}`}
+              className={styles.offerPlacementAction}
+              context={{ source: "CREATIVE", placement: "CASINO_OFFER_BLOCK" }}
+              messages={messages.outbound}
+              offerMediaVariant="casino-offer"
+            ><CasinoOfferPlacementMedia casinoName={casino.name} messages={messages} placement={offerPlacement} /></GovernedCommercialAction> : <CasinoOfferPlacementMedia casinoName={casino.name} messages={messages} placement={offerPlacement} /> : null}
             {bonus ? <dl className={styles.termRows}>
               {bonus.wageringMultiplier !== null || bonus.wageringText ? <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || `${bonus.wageringMultiplier}×`}</dd></div> : null}
               {minimumDeposit ? <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit}</dd></div> : null}
@@ -310,7 +333,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <div>{faq.slice(0, 3).map((item, index) => <details key={item.question} open={index === 0}><summary>{item.question}<span aria-hidden="true">+</span></summary><p>{item.answer}</p></details>)}</div>
           <aside className={styles.finalOffer} data-demo-state={demo ? "fictional" : undefined} data-motion-reveal data-nav-theme="dark">
             <div className={styles.finalOfferInner}>
-              {bonus ? <><span>{demo ? messages.profile.demoFinalFields : messages.profile.verdict}</span><h3>{casino.name} — <em>{formattedEditorScore}</em></h3><p>{[offerHeadline, bonus.wageringText, minimumDeposit ? `${messages.common.minimumDeposit} ${minimumDeposit}` : null, withdrawal ? `${messages.common.payout} ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</> : <><span>{messages.profile.currentReview}</span><h3>{messages.profile.offerUnavailable}</h3><p>{messages.common.reviewAvailableNoAction}</p><UnavailableAction messages={messages} /></>}
+              {bonus ? <><span>{demo ? messages.profile.demoFinalFields : messages.profile.verdict}</span><h3>{casino.name} — <em>{formattedEditorScore}</em></h3><p>{[offerHeadline, bonus.wageringText, minimumDeposit ? `${messages.common.minimumDeposit} ${minimumDeposit}` : null, withdrawal ? `${messages.common.payout} ${withdrawal}` : null].filter(Boolean).join(" · ")}</p>{action ? <CasinoOutboundAction action={action} context={{ source: "CTA", placement: "CASINO_OFFER_BLOCK" }} messages={messages.outbound} /> : <UnavailableAction messages={messages} />}</> : <><span>{messages.profile.currentReview}</span><h3>{messages.profile.offerUnavailable}</h3><p>{messages.common.reviewAvailableNoAction}</p><UnavailableAction messages={messages} /></>}
             </div>
           </aside>
         </div>

@@ -75,7 +75,22 @@ export type ProductAnalyticsEventMap = {
   commercial_surface_viewed: { surface: "best_offers" | "casinos" | "bonuses" | "casino_review" };
   casino_review_opened: { sourceSurface: "best_offers" | "casinos" | "bonuses" | "comparison" };
   comparison_opened: { selectionCount: "two" | "three" };
-  outbound_intent: { outcome: "confirmation_opened" | "continued" };
+  outbound_intent: {
+    outcome: "confirmation_opened" | "continued";
+    origin:
+      | "CTA_UNSPECIFIED"
+      | "CTA_BONUS_LISTING_CARD"
+      | "CTA_BEST_OFFER_FEATURED"
+      | "CTA_BEST_OFFER_SECONDARY"
+      | "CTA_CASINO_OFFER_BLOCK"
+      | "CTA_OFFER_DETAIL"
+      | "CREATIVE_UNSPECIFIED"
+      | "CREATIVE_BONUS_LISTING_CARD"
+      | "CREATIVE_BEST_OFFER_FEATURED"
+      | "CREATIVE_BEST_OFFER_SECONDARY"
+      | "CREATIVE_CASINO_OFFER_BLOCK"
+      | "CREATIVE_OFFER_DETAIL";
+  };
 };
 
 export type ProductAnalyticsEvent<N extends ProductAnalyticsEventName = ProductAnalyticsEventName> = {
@@ -126,6 +141,20 @@ const commercialSurfaces = ["best_offers", "casinos", "bonuses", "casino_review"
 const reviewSources = ["best_offers", "casinos", "bonuses", "comparison"] as const;
 const comparisonCounts = ["two", "three"] as const;
 const outboundOutcomes = ["confirmation_opened", "continued"] as const;
+const outboundOrigins = [
+  "CTA_UNSPECIFIED",
+  "CTA_BONUS_LISTING_CARD",
+  "CTA_BEST_OFFER_FEATURED",
+  "CTA_BEST_OFFER_SECONDARY",
+  "CTA_CASINO_OFFER_BLOCK",
+  "CTA_OFFER_DETAIL",
+  "CREATIVE_UNSPECIFIED",
+  "CREATIVE_BONUS_LISTING_CARD",
+  "CREATIVE_BEST_OFFER_FEATURED",
+  "CREATIVE_BEST_OFFER_SECONDARY",
+  "CREATIVE_CASINO_OFFER_BLOCK",
+  "CREATIVE_OFFER_DETAIL",
+] as const;
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -248,8 +277,11 @@ export function parseProductAnalyticsEvent<N extends ProductAnalyticsEventName>(
       exactKeys(value, ["selectionCount"]);
       return { name, properties: { selectionCount: closedString(value.selectionCount, comparisonCounts) } } as ProductAnalyticsEvent<N>;
     case "outbound_intent":
-      exactKeys(value, ["outcome"]);
-      return { name, properties: { outcome: closedString(value.outcome, outboundOutcomes) } } as ProductAnalyticsEvent<N>;
+      exactKeys(value, ["outcome", "origin"]);
+      return { name, properties: {
+        outcome: closedString(value.outcome, outboundOutcomes),
+        origin: closedString(value.origin, outboundOrigins),
+      } } as ProductAnalyticsEvent<N>;
   }
   throw new Error("Unknown product analytics event");
 }

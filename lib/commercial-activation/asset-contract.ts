@@ -10,7 +10,7 @@ const assetSchema = z.object({
   sourcePath: z.string().trim().min(1).max(500).refine((value) => !value.startsWith("/") && !value.includes("\\") && !value.split("/").some((segment) => !segment || segment === "." || segment === ".."), "sourcePath must be a safe relative path"),
   creativeId: boundedText,
   sha256: z.string().trim().toLowerCase().regex(/^[a-f0-9]{64}$/),
-  mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "image/avif"]),
+  mimeType: z.enum(["image/jpeg", "image/png", "image/webp", "image/avif", "image/gif"]),
   width: z.number().int().positive().max(8_000),
   height: z.number().int().positive().max(8_000),
   type: z.enum(["LOGO", "FAVICON", "HERO", "SCREENSHOT", "GALLERY", "BONUS_CREATIVE", "SOCIAL_IMAGE", "AFFILIATE_CREATIVE", "OTHER"]),
