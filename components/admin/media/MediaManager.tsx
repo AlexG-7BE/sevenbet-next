@@ -200,9 +200,9 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
           <label className="editorCheck"><input checked={featured} type="checkbox" onChange={(event) => setFeatured(event.target.checked)} /> Use as featured {type.toLowerCase().replaceAll("_", " ")}</label>
         </div>
         <div className="mediaDropzone" onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); chooseFile(event.dataTransfer.files[0] || null); }}>
-          <strong>{file ? file.name : "Drop a JPEG, PNG, WebP or AVIF image"}</strong>
+          <strong>{file ? file.name : "Drop a JPEG, PNG, WebP, AVIF or GIF image"}</strong>
           <span>Maximum 10 MB. SVG and remote URL imports are disabled.</span>
-          <input ref={inputRef} accept="image/jpeg,image/png,image/webp,image/avif" type="file" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
+          <input ref={inputRef} accept="image/jpeg,image/png,image/webp,image/avif,image/gif" type="file" onChange={(event) => chooseFile(event.target.files?.[0] || null)} />
         </div>
         {busy === "upload" && <div className="mediaProgress" aria-label={`Upload ${progress}%`} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><span style={{ width: `${progress}%` }} /></div>}
         <button className="button gold" disabled={!file || busy === "upload" || (type !== "FAVICON" && !altText.trim())} type="button" onClick={() => void upload()}>{busy === "upload" ? `Uploading ${progress}%` : "Upload asset"}</button>
@@ -224,7 +224,7 @@ export function MediaManager({ casinoId }: { casinoId: string }) {
             <Card className={`mediaCard${record.status === "ARCHIVED" ? " archived" : ""}`}>
               <div className="mediaPreview"><img alt={record.altText} height={record.height || 360} loading="lazy" src={record.publicUrl} width={record.width || 640} /></div>
               <div className="badgeCluster"><Badge tone={record.status === "ACTIVE" ? "green" : "warning"}>{record.status}</Badge><Badge>{record.type}</Badge>{record.featured && <Badge tone="warning">Featured</Badge>}</div>
-              <p className="muted mediaMeta">{record.width}x{record.height} · {bytes(record.sizeBytes)} · {record.storageProvider}</p>
+              <p className="muted mediaMeta">{record.width}x{record.height} · {record.mimeType} · {record.metadata?.animated === true ? "animated" : "static"} · {bytes(record.sizeBytes)} · {record.storageProvider}</p>
               <MediaMetadataEditor casinoId={casinoId} disabled={busy === record.id || record.status === "ARCHIVED"} onError={setError} onSaved={acceptSavedRecord} record={record}>
                 <button className="button ghost" disabled={busy === record.id || record.status === "ARCHIVED"} type="button" onClick={() => void update(record, { featured: !record.featured })}>{record.featured ? "Remove featured" : "Set featured"}</button>
                 {(record.featured || record.casinoBonusId || record.affiliateOfferId) && <button className="button ghost" disabled={busy === record.id} type="button" onClick={() => void update(record, { featured: false, casinoBonusId: null, affiliateOfferId: null })}>Unlink usages</button>}

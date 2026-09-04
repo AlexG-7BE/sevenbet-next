@@ -102,16 +102,71 @@ export const placementMediaGuidance: Record<MediaPlacementName, {
   ratio: string;
   minimum: string;
   subject: "casino" | "offer";
+  formatGuidance?: {
+    default: string;
+    mobile: string;
+    note: string;
+  };
 }> = {
   CASINO_LOGO: { label: "Logo", ratio: "1:1", minimum: "256×256", subject: "casino" },
   CASINO_DIRECTORY_CARD: { label: "Casino directory", ratio: "4:3", minimum: "800×600", subject: "casino" },
   CASINO_DETAIL_HERO: { label: "Casino detail hero", ratio: "16:10 or 16:9", minimum: "1600×1000", subject: "casino" },
   CASINO_COMPARE: { label: "Compare", ratio: "4:3", minimum: "640×480", subject: "casino" },
-  BONUS_LISTING_CARD: { label: "Bonus listing", ratio: "6:5 or 4:3", minimum: "600×500", subject: "offer" },
-  BEST_OFFER_FEATURED: { label: "Best Offer featured", ratio: "4:3", minimum: "1200×900", subject: "offer" },
-  BEST_OFFER_SECONDARY: { label: "Best Offer secondary", ratio: "4:3", minimum: "800×600", subject: "offer" },
-  CASINO_OFFER_BLOCK: { label: "Casino offer block", ratio: "6:5 or 4:3", minimum: "800×667", subject: "offer" },
-  OFFER_DETAIL: { label: "Offer detail", ratio: "16:10", minimum: "1200×750", subject: "offer" },
+  BONUS_LISTING_CARD: {
+    label: "Bonus listing",
+    ratio: "300×250 preferred; 250×250 compatible",
+    minimum: "security-valid image",
+    subject: "offer",
+    formatGuidance: {
+      default: "Preferred 300×250 · compatible 250×250",
+      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
+      note: "DEFAULT and MOBILE assignments remain independent.",
+    },
+  },
+  BEST_OFFER_FEATURED: {
+    label: "Best Offer featured",
+    ratio: "300×250 preferred; 250×250 compatible",
+    minimum: "security-valid image",
+    subject: "offer",
+    formatGuidance: {
+      default: "Preferred 300×250 · compatible 250×250",
+      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
+      note: "Wide banners are not stretched into the featured card.",
+    },
+  },
+  BEST_OFFER_SECONDARY: {
+    label: "Best Offer secondary",
+    ratio: "300×250 preferred; 250×250 compatible",
+    minimum: "security-valid image",
+    subject: "offer",
+    formatGuidance: {
+      default: "Preferred 300×250 · compatible 250×250",
+      mobile: "Preferred 320×100 or 320×50 · 300×250 remains a compatible fallback",
+      note: "Use a MOBILE assignment for a supplied mobile banner.",
+    },
+  },
+  CASINO_OFFER_BLOCK: {
+    label: "Casino offer block",
+    ratio: "300×250 card or deliberate 728×90 wide",
+    minimum: "security-valid image",
+    subject: "offer",
+    formatGuidance: {
+      default: "Preferred 300×250 card or 728×90 wide · compatible 250×250",
+      mobile: "Preferred 320×100 or 320×50 · card fallback remains supported",
+      note: "The review hero remains editorial and is not changed by this assignment.",
+    },
+  },
+  OFFER_DETAIL: {
+    label: "Offer detail",
+    ratio: "300×250 card; future wide compatibility",
+    minimum: "security-valid image",
+    subject: "offer",
+    formatGuidance: {
+      default: "Future contract: 300×250 preferred · 250×250 and 728×90 compatible",
+      mobile: "Future contract: 320×100 or 320×50 preferred",
+      note: "No public offer-detail surface is created by this contract.",
+    },
+  },
 };
 
 export const placementFallbackChains: Record<MediaPlacementName, readonly MediaPlacementName[]> = {

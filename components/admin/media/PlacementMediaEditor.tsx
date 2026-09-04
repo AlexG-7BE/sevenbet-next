@@ -5,11 +5,17 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { Badge, Card } from "@/components/ui";
 import { mediaJson, type MediaAssetAdminRecord } from "@/lib/media/admin-types";
 import {
+  assessCommercialCreative,
+  commercialCreativeFormat,
+  commercialCreativeWeightWarning,
+} from "@/lib/media/commercial-formats";
+import {
   casinoMediaPlacements,
   mediaPlacementVariants,
   mediaRenderingModes,
   offerMediaPlacements,
   placementMediaGuidance,
+  isOfferMediaPlacement,
   type MediaAssignmentSubjectType,
   type MediaPlacementName,
   type MediaPlacementVariantName,
@@ -52,6 +58,11 @@ function filename(asset: MediaAssetAdminRecord | ResolvedPlacementMedia["asset"]
 
 function assetUrl(asset: MediaAssetAdminRecord | NonNullable<ResolvedPlacementMedia["asset"]>) {
   return asset.publicUrl ?? ("url" in asset ? asset.url : null) ?? "";
+}
+
+function isAnimatedAsset(asset: MediaAssetAdminRecord | ResolvedPlacementMedia["asset"] | null) {
+  if (!asset || !("metadata" in asset) || !asset.metadata || typeof asset.metadata !== "object" || Array.isArray(asset.metadata)) return false;
+  return "animated" in asset.metadata && asset.metadata.animated === true;
 }
 
 function uploadType(subjectType: MediaAssignmentSubjectType, placement: MediaPlacementName) {
@@ -124,6 +135,9 @@ function PlacementSlot({
 
   const effectiveAsset = effective?.asset ?? null;
   const selectedAsset = data.assets.find((asset) => asset.id === selectedAssetId) ?? null;
+  const effectiveLibraryAsset = effectiveAsset
+    ? data.assets.find((asset) => asset.id === effectiveAsset.id) ?? null
+    : null;
   const relationshipAsset = relationship
     ? data.assets.find((asset) => asset.id === relationship.mediaAssetId) ?? relationship.mediaAsset ?? null
     : null;
@@ -132,12 +146,20 @@ function PlacementSlot({
     && effective?.source === "EXPLICIT"
     && effective.assignment?.id === explicit.id,
   );
-  const usageAsset = selectedAsset ?? effectiveAsset;
+  const usageAsset = selectedAsset ?? effectiveLibraryAsset ?? effectiveAsset;
   const assignmentUsage = usageAsset ? data.usage.filter((usage) => usage.mediaAssetId === usageAsset.id) : [];
   const effectiveObjectPosition = effective?.focalPoint
     ? `${effective.focalPoint.x * 100}% ${effective.focalPoint.y * 100}%`
     : "center";
   const actionKey = `${placement}:${variant}`;
+  const guidance = placementMediaGuidance[placement];
+  const commercialAssessment = usageAsset && isOfferMediaPlacement(placement)
+    ? assessCommercialCreative({ placement, variant, width: usageAsset.width, height: usageAsset.height })
+    : null;
+  const weightWarning = usageAsset && "sizeBytes" in usageAsset
+    ? commercialCreativeWeightWarning(usageAsset.sizeBytes)
+    : null;
+  const animated = isAnimatedAsset(usageAsset);
 
   async function mutate(
     action: "assign" | "unassign" | "activate" | "deactivate",
@@ -210,9 +232,14 @@ function PlacementSlot({
           {relationship && !effectiveExplicit ? <Badge tone="warning">FALLBACK EFFECTIVE</Badge> : null}
           <Badge>{variant}</Badge>
           <Badge>{effective?.renderingMode ?? "COMPOSED"}</Badge>
+          {commercialAssessment?.format ? <Badge>{commercialAssessment.format.label.toUpperCase()}</Badge> : null}
+          {commercialAssessment ? <Badge tone={commercialAssessment.state === "PREFERRED" || commercialAssessment.state === "COMPATIBLE" ? "green" : "warning"}>{commercialAssessment.label.toUpperCase()}</Badge> : null}
         </div>
-        <h3>{placementMediaGuidance[placement].label}</h3>
-        <p className="muted">Recommended {placementMediaGuidance[placement].ratio} · minimum {placementMediaGuidance[placement].minimum}. Guidance only.</p>
+        <h3>{guidance.label}</h3>
+        {guidance.formatGuidance ? <div className="placementFormatGuidance">
+          <p><strong>{variant}</strong> · {variant === "MOBILE" ? guidance.formatGuidance.mobile : guidance.formatGuidance.default}</p>
+          <small>{guidance.formatGuidance.note} Valid unusual images remain assignable with a warning.</small>
+        </div> : <p className="muted">Recommended {guidance.ratio} · minimum {guidance.minimum}. Guidance only.</p>}
       </div>
       <div className="placementMediaPreviewStack">
         <figure data-media-mode={effective?.renderingMode ?? "COMPOSED"}>{effectiveAsset ? <img alt={effective?.effectiveAlt ?? ""} height={effectiveAsset.height ?? 180} loading="lazy" src={assetUrl(effectiveAsset)} style={{ objectPosition: effectiveObjectPosition }} width={effectiveAsset.width ?? 320} /> : <div className="placementMediaCodeFallback" role="img" aria-label={effective?.effectiveAlt ?? "Code-rendered fallback"}>B4GAMBLE</div>}<figcaption>Effective preview</figcaption></figure>
@@ -227,13 +254,19 @@ function PlacementSlot({
       <div><dt>Asset</dt><dd>{filename(effectiveAsset)}</dd></div>
       <div><dt>Dimensions</dt><dd>{dimensions(effectiveAsset)} · {aspectRatio(effectiveAsset)}</dd></div>
       <div><dt>MIME</dt><dd>{effectiveAsset?.mimeType || "Not applicable"}</dd></div>
+      {commercialAssessment ? <div><dt>Commercial format</dt><dd>{commercialAssessment.format ? `${commercialAssessment.format.label} · ${commercialAssessment.format.id}` : "Unrecognised but assignable"}</dd></div> : null}
+      {commercialAssessment ? <div><dt>Compatibility</dt><dd>{commercialAssessment.label} · {commercialAssessment.detail}</dd></div> : null}
+      {usageAsset && "sizeBytes" in usageAsset ? <div><dt>File</dt><dd>{Math.max(1, Math.round(usageAsset.sizeBytes / 1024))} KB · {animated ? "animated" : "static"}</dd></div> : null}
       <div><dt>Provenance</dt><dd>{effective?.assignment?.reference || effectiveAsset?.credit || "Legacy controlled asset / repository record"}</dd></div>
       <div><dt>Usage {selectedAsset ? "for selected asset" : "for effective asset"}</dt><dd>{assignmentUsage.length} assignment record{assignmentUsage.length === 1 ? "" : "s"}</dd></div>
       <div><dt>State</dt><dd>{unavailable ? "Safe code fallback" : effectiveExplicit ? "Active explicit assignment" : relationship?.active ? "Active relationship is ineligible; fallback shown" : inactive ? "Inactive relationship; fallback shown" : "Active fallback"}</dd></div>
     </dl>
 
+    {weightWarning ? <p className="placementMediaWarning" role="note"><strong>Performance warning.</strong> {weightWarning}</p> : null}
+    {commercialAssessment?.state === "POOR_FIT" || commercialAssessment?.state === "UNRECOGNIZED" ? <p className="placementMediaWarning" role="note"><strong>{commercialAssessment.label}.</strong> {commercialAssessment.detail}</p> : null}
+
     <div className="placementMediaControls">
-      <label><span>Existing asset</span><select value={selectedAssetId} onChange={(event) => setSelectedAssetId(event.target.value)}><option value="">Choose an active asset</option>{data.assets.filter((asset) => asset.status === "ACTIVE").map((asset) => { const usageCount = data.usage.filter((usage) => usage.mediaAssetId === asset.id).length; return <option key={asset.id} value={asset.id}>{asset.originalFilename} · {dimensions(asset)} · {asset.type} · {usageCount} use{usageCount === 1 ? "" : "s"}</option>; })}</select></label>
+      <label><span>Existing asset</span><select value={selectedAssetId} onChange={(event) => setSelectedAssetId(event.target.value)}><option value="">Choose an active asset</option>{data.assets.filter((asset) => asset.status === "ACTIVE").map((asset) => { const usageCount = data.usage.filter((usage) => usage.mediaAssetId === asset.id).length; const formatLabel = commercialCreativeFormat(asset.width, asset.height)?.label; return <option key={asset.id} value={asset.id}>{asset.originalFilename} · {dimensions(asset)}{formatLabel ? ` · ${formatLabel}` : ""} · {asset.type} · {usageCount} use{usageCount === 1 ? "" : "s"}</option>; })}</select></label>
       <label><span>Rendering mode</span><select value={mode} onChange={(event) => setMode(event.target.value)}>{mediaRenderingModes.map((value) => <option key={value}>{value}</option>)}</select></label>
       <label><span>Alternative text override</span><input maxLength={300} value={altTextOverride} onChange={(event) => setAltTextOverride(event.target.value)} /></label>
       <label><span>Focal point X (0–1)</span><input max={1} min={0} step="0.01" type="number" value={focalX} onChange={(event) => setFocalX(event.target.value)} /></label>
@@ -251,9 +284,10 @@ function PlacementSlot({
       <summary>Upload new asset for this slot</summary>
       <form onSubmit={(event) => void upload(event)}>
         <label><span>Alternative text</span><input maxLength={300} value={uploadAlt} onChange={(event) => setUploadAlt(event.target.value)} /></label>
-        <label><span>Image file</span><input accept="image/jpeg,image/png,image/webp,image/avif" name="file" type="file" /></label>
+        <label><span>Image file</span><input accept="image/jpeg,image/png,image/webp,image/avif,image/gif" name="file" type="file" /></label>
         <button className="button ghost" disabled={Boolean(busy)} type="submit">Upload and assign</button>
       </form>
+      {guidance.formatGuidance ? <p className="muted">JPEG, PNG, WebP, AVIF or GIF · 10 MB maximum · secure validation reads the real MIME and dimensions.</p> : null}
     </details>
   </Card>;
 }

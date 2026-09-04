@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { CommercialOfferMedia, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
+import { CommercialOfferMedia, hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import {
@@ -27,9 +27,9 @@ function money(value: number | null, currency: string | null, locale: string, no
 }
 
 function Action({ offer, messages }: { offer: PublicOfferDTO; messages: ProductPageMessages }) {
-  const href = offer.dataClassification !== "DEMO_FIXTURE" && offer.action.available && offer.action.href && /^\/r\/[a-z0-9][a-z0-9-]*$/i.test(offer.action.href) ? offer.action.href : null;
+  const href = hasGovernedCommercialOfferAction(offer) ? offer.action.href : null;
   if (!href) return <span className={styles.unavailable}>{messages.common.reviewOnly}</span>;
-  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} messages={messages.outbound} />;
+  return <CasinoOutboundAction action={{ href, label: messages.common.actionAvailable }} className={styles.action} context={{ source: "CTA", placement: "BONUS_LISTING_CARD" }} messages={messages.outbound} />;
 }
 
 function Review({ offer, messages, presentation }: { offer: PublicOfferDTO; messages: ProductPageMessages; presentation: PresentationResolution }) {

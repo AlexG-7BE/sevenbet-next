@@ -15,6 +15,11 @@ const EVENT_MARKER_PREFIX = "b4gamble:analytics:fired:v1:";
 
 type StorageLike = Pick<Storage, "getItem" | "setItem">;
 
+export type OutboundIntentContext = {
+  source: "CTA" | "CREATIVE";
+  placement: "BONUS_LISTING_CARD" | "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "CASINO_OFFER_BLOCK" | "OFFER_DETAIL" | "UNSPECIFIED";
+};
+
 function browserStorage(): StorageLike | undefined {
   try {
     return window.sessionStorage;
@@ -122,8 +127,11 @@ export function createProductAnalyticsClient({
     comparisonOpened(selectionCount: ProductAnalyticsEventMap["comparison_opened"]["selectionCount"]) {
       emit("comparison_opened", { selectionCount });
     },
-    outboundIntent(outcome: ProductAnalyticsEventMap["outbound_intent"]["outcome"]) {
-      emit("outbound_intent", { outcome });
+    outboundIntent(
+      outcome: ProductAnalyticsEventMap["outbound_intent"]["outcome"],
+      context: OutboundIntentContext = { source: "CTA", placement: "UNSPECIFIED" },
+    ) {
+      emit("outbound_intent", { outcome, origin: `${context.source}_${context.placement}` as ProductAnalyticsEventMap["outbound_intent"]["origin"] });
     },
   };
 }

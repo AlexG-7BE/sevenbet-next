@@ -243,8 +243,8 @@ test("admin routes enforce media.manage and client integrations never import Pri
     "components/admin/casino-editors/BonusEditor.tsx", "components/admin/casino-editors/GeneralSeoEditors.tsx", "components/admin/affiliate/AffiliateEditors.tsx",
   ]) assert.doesNotMatch(readFileSync(file, "utf8"), /@prisma\/client|prisma\./);
   assert.match(readFileSync("components/admin/CasinoBuilder.tsx", "utf8"), /MediaManager/);
-  assert.match(readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8"), /BONUS_CREATIVE/);
-  assert.match(readFileSync("components/admin/affiliate/AffiliateEditors.tsx", "utf8"), /AFFILIATE_CREATIVE/);
+  assert.match(readFileSync("components/admin/casino-editors/BonusEditor.tsx", "utf8"), /subjectType="CASINO_BONUS"/);
+  assert.match(readFileSync("components/admin/affiliate/AffiliateEditors.tsx", "utf8"), /subjectType="AFFILIATE_OFFER"[\s\S]+AFFILIATE_CREATIVE/);
   assert.match(readFileSync("components/admin/casino-editors/GeneralSeoEditors.tsx", "utf8"), /SOCIAL_IMAGE/);
 });
 

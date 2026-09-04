@@ -36,7 +36,7 @@ const validEvents = {
   commercial_surface_viewed: { surface: "casinos" },
   casino_review_opened: { sourceSurface: "casinos" },
   comparison_opened: { selectionCount: "two" },
-  outbound_intent: { outcome: "confirmation_opened" },
+  outbound_intent: { outcome: "confirmation_opened", origin: "CREATIVE_BONUS_LISTING_CARD" },
 } as const;
 
 test("the closed event taxonomy accepts every approved event and rejects unknown fields", () => {

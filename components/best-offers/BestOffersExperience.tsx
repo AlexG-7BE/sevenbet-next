@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
-import { CommercialOfferMedia, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
+import { CommercialOfferMedia, hasGovernedCommercialOfferAction, OperatorLogo } from "@/components/commercial-media/CommercialOfferMedia";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
@@ -28,17 +28,17 @@ function payout(offer: PublicOfferDTO, messages: ProductPageMessages) {
 }
 
 function hasGovernedAction(offer: PublicOfferDTO) {
-  return offer.dataClassification === "PUBLISHED_RECORD" && offer.action.available && Boolean(offer.action.href);
+  return hasGovernedCommercialOfferAction(offer);
 }
 
 function offerDataLabel(offer: PublicOfferDTO, messages: ProductPageMessages) {
   return offer.dataClassification === "DEMO_FIXTURE" ? messages.common.demoData : messages.common.published;
 }
 
-function OfferAction({ offer, messages }: { offer: PublicOfferDTO; messages: ProductPageMessages }) {
+function OfferAction({ offer, messages, placement = "UNSPECIFIED" }: { offer: PublicOfferDTO; messages: ProductPageMessages; placement?: "BEST_OFFER_FEATURED" | "BEST_OFFER_SECONDARY" | "UNSPECIFIED" }) {
   const governed = hasGovernedAction(offer);
   if (!governed || !offer.action.href) return <span className={styles.unavailableAction}>{messages.common.reviewAvailableNoAction}</span>;
-  return <CasinoOutboundAction action={{ href: offer.action.href, label: `${messages.common.actionAvailable}: ${offer.casino.name}` }} className={styles.commercialCta} messages={messages.outbound} />;
+  return <CasinoOutboundAction action={{ href: offer.action.href, label: `${messages.common.actionAvailable}: ${offer.casino.name}` }} className={styles.commercialCta} context={{ source: "CTA", placement }} messages={messages.outbound} />;
 }
 
 function OfferIdentity({ offer, size = "small" }: { offer: PublicOfferDTO; size?: "small" | "large" }) {
@@ -105,7 +105,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
             <div><dt>{messages.common.readReview}</dt><dd>{messages.common.sourceStatus}</dd></div>
           </dl>
           <MobileMaterialTerms locale={presentation.locale} messages={messages} offer={featured} />
-          <div className={`${styles.actions} ${styles.featuredActions}`}><OfferAction messages={messages} offer={featured} /><OfferReview arrow messages={messages} offer={featured} presentation={presentation} /><OfferCompare messages={messages} offer={featured} /></div>
+          <div className={`${styles.actions} ${styles.featuredActions}`}><OfferAction messages={messages} offer={featured} placement="BEST_OFFER_FEATURED" /><OfferReview arrow messages={messages} offer={featured} presentation={presentation} /><OfferCompare messages={messages} offer={featured} /></div>
         </article>
 
         <div className={styles.alternatives}>
@@ -119,7 +119,7 @@ export function BestOffersExperience({ shortlist, inventoryMode, messages, prese
               <p className={styles.termSummary}>{messages.common.wagering} {offer.bonus.wageringMultiplier === null ? messages.common.notListed : `${offer.bonus.wageringMultiplier}x`} · {messages.common.minimumDeposit} {money(offer.bonus.minimumDeposit, offer.bonus.currency, presentation.locale, messages.common.notListed)} · {messages.common.payout} {payout(offer, messages)}</p>
               <p className={`${styles.reason} ${styles.altReason}`}>{offer.casino.summary}</p>
               <MobileMaterialTerms locale={presentation.locale} messages={messages} offer={offer} />
-              <div className={styles.actions}><OfferAction messages={messages} offer={offer} /><OfferReview messages={messages} offer={offer} presentation={presentation} /><OfferCompare messages={messages} offer={offer} /></div>
+              <div className={styles.actions}><OfferAction messages={messages} offer={offer} placement="BEST_OFFER_SECONDARY" /><OfferReview messages={messages} offer={offer} presentation={presentation} /><OfferCompare messages={messages} offer={offer} /></div>
             </div>
             <CommercialOfferMedia messages={messages} offer={offer} variant="secondary" />
           </article>)}
