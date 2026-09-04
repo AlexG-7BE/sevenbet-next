@@ -1,0 +1,239 @@
+# MEDIA-PRESENTATION-AND-ADMIN-01 Work Record
+
+**Status:** HOTFIX IMPLEMENTED — RELEASE EVIDENCE PENDING
+
+**Evidence date:** 4 September 2026
+
+**Founder authority:** `B4GAMBLE — MEDIA-PRESENTATION-AND-ADMIN-01`
+
+**Branch:** `codex/media-presentation-and-admin-01`
+
+**Base:** `e4c52c984b84ec5d5acbd65413b2ac349ead1345`
+
+## Scope and repository evidence
+
+The active repository was scanned from
+`/Users/alex/Documents/Codex/2026-07-09/ns/sevenbet-next`. Dependencies,
+generated build output, browser artefacts, caches and `tsconfig.tsbuildinfo` were
+excluded from source claims. The hotfix uses the current `MediaAsset`, public
+DTO and shared commercial-media renderer; it does not add a second media system
+or change the database.
+
+Classification in this record uses **DETECTED**, **INFERRED**, **PROPOSED**,
+**UNKNOWN** and **CONTRADICTION** as required by the technical evidence rule.
+
+## Original defects
+
+- **DETECTED:** Slotnite's only active controlled HERO is a 320×50 GIF. The
+  shared renderer contained it raw inside 210–635px media stages, producing a
+  thin floating strip.
+- **DETECTED:** four current offer creatives are 300×250 and contain important
+  offer/18+ copy at their edges. They are not safe for unconditional crop or
+  `object-fit: fill`.
+- **DETECTED:** Hello Casino has no active HERO; its active logo is 16×16.
+- **DETECTED:** Casino review offer terms used `grid-template-columns: 1fr auto`.
+  Long right-column values could reserve intrinsic width and collide with or
+  starve the label.
+- **DETECTED:** the profile payout mapper joined two distinct Slotnite timing
+  strings after whole-string deduplication, repeating the identical “Pending
+  review 24–48 hours” clause.
+- **DETECTED:** the default curated Bonuses shortlist rendered only three of the
+  six current records even though the full governed page result contained six.
+
+## Hotfix implementation
+
+- `CommercialOfferMedia` now resolves `CONTAIN` or `COMPOSED` from source
+  dimensions. Square/landscape/card creatives show one complete, undistorted
+  foreground over a subtle blurred duplicate of the same controlled asset.
+- Missing, portrait/tall and ultra-wide assets use a B4GAMBLE code composition
+  with the controlled Casino logo/identity and current sourced offer headline.
+  An available ultra-wide source remains visible as a secondary element at its
+  original ratio.
+- Slotnite therefore retains its official 320×50 banner without stretching,
+  but the stage obtains comparable visual weight through controlled identity,
+  offer copy and layout.
+- The default Bonuses shortlist retains editorial ordering and renders all six
+  governed records. Other selectors still filter/sort the same six-record input.
+- Review term rows use two bounded `minmax(0, …)` columns, start alignment,
+  `min-width: 0` and wrapping; existing narrow breakpoints stack the fields.
+- Withdrawal timing now splits semicolon-delimited sourced clauses and removes
+  duplicate clauses while retaining each distinct factual processing statement.
+
+No asset, score, route, GEO rule, offer amount, CTA authority, public inventory,
+raw destination handling, Programme behavior or authentication behavior changes.
+
+## Controlled asset resolution
+
+The read-only database audit detected all eight real Casinos as `PUBLISHED` and
+found each latest published snapshot version equal to `Casino.publishedVersion`.
+
+| Casino | Active controlled offer media | Dimensions | Hotfix treatment |
+| --- | --- | ---: | --- |
+| 21 Privé | `/casino-brands/21-prive/partner-offer.jpg` | 300×250 | `CONTAIN` |
+| Skol Casino | `/casino-brands/skol-casino/partner-offer.jpg` | 300×250 | `CONTAIN` |
+| Slotnite | `/casino-brands/slotnite/partner-brand.gif` | 320×50 | `COMPOSED`; source retained as secondary strip |
+| Hello Casino | no HERO; `/casino-brands/hello-casino/logo.png` | logo 16×16 | `COMPOSED`; no invented art |
+| G'day Casino | `/casino-brands/gday-casino/partner-offer.jpg` | 300×250 | `CONTAIN` |
+| Diamond7 | `/casino-brands/diamond7/partner-offer.jpg` | 300×250 | `CONTAIN` |
+
+**DETECTED:** no larger controlled Slotnite creative exists in the repository,
+current catalog importer, commercial asset manifest or live active `MediaAsset`
+rows. The code-rendered composition therefore follows the Founder-approved
+fallback order.
+
+## Current Admin media audit
+
+### A — upload a new Casino image
+
+**DETECTED:** yes. An authenticated Admin with `media.manage` can upload JPEG,
+PNG, WebP or AVIF through the Casino Builder Media section. The route validates
+actual bytes, dimensions, MIME/extension, size, owner and checksum. Production
+upload requires the S3-compatible provider; local storage is disabled in
+Production.
+
+### B — replace an existing Casino image
+
+**DETECTED:** yes as an additive replacement workflow: upload or select another
+asset, make it featured, unlink/archive the old record. Immutable storage keys
+prevent overwriting bytes in place. Permanent deletion is separate and guarded.
+
+### C — manageable concepts
+
+- **DETECTED:** logo, favicon, HERO/general Casino image, screenshot, gallery,
+  social image and other Casino media are exposed by the Casino Media Manager.
+- **DETECTED:** a `BONUS_CREATIVE` selector is exposed in the CasinoBonus editor.
+- **DETECTED:** primary `CREATIVE` and `LANDING` `AFFILIATE_CREATIVE` selectors
+  are exposed in the AffiliateOffer editor.
+- **DETECTED:** there is no Admin slot labelled Best Offer, Casino directory,
+  Casino review/detail, compare or mobile placement.
+- **DETECTED:** the current public Bonus/Best Offer/detail renderers do not read
+  the Bonus/Affiliate selector as a placement. They reuse the projected Casino
+  HERO.
+
+### D — separate assignments or reused asset
+
+**DETECTED:** current public surfaces reuse one Casino HERO DTO. Bonus and
+Affiliate creative records may have their own nullable owner foreign keys, but
+there is no normalized many-placement assignment. `MediaAsset` itself combines
+the stored asset record with optional Casino, CasinoCountry, CasinoBonus and
+AffiliateOffer ownership.
+
+### E — independent choice by public placement
+
+**DETECTED:** no. Admin cannot independently select media for `/casinos`,
+`/bonuses`, `/best-offers`, Casino review, compare and mobile. Public projection
+selects the ordered active Casino logo/HERO and the shared offer renderer uses
+that HERO.
+
+### F — Admin asset operations
+
+- **DETECTED:** preview, dimensions, file size, storage provider, type, status
+  and featured state are shown in the main Media Manager.
+- **DETECTED:** archive/restore, drag or button reorder, feature/unfeature,
+  selector link/unlink and confirmed deletion of an archived unused asset exist.
+- **DETECTED:** unlinking/removing selection does not require deleting the asset.
+- **DETECTED:** aspect ratio is not presented as a named/derived Admin field.
+- **DETECTED:** the data model supports title, caption, credit, metadata and
+  variants; the main metadata editor exposes alt text and caption, not a complete
+  provenance editor. Selectors expose less metadata than the main manager.
+- **UNKNOWN:** whether every current controlled Casino file has complete rights
+  or source documentation outside the repository.
+
+### G — current Production asset source
+
+**DETECTED:** mixed record/delivery architecture for the eight current Casinos:
+active `MediaAsset` rows and published snapshots point to versioned root-relative
+files under `public/casino-brands`, served from the deployed B4GAMBLE/Vercel
+origin. All detected rows use `storageProvider=LOCAL`. The application also
+implements an S3-compatible Admin-upload provider.
+
+**UNKNOWN:** live Production S3 environment readiness/configuration. No secret
+or provider setting was exposed or inferred from source.
+
+### H — change path
+
+**DETECTED:** changing the currently reconciled root-relative catalog assets
+requires the controlled file/catalog/importer path, a commit/deploy and
+republishing/reconciliation. A configured Admin object-storage upload can be a
+storage + DB + publication operation without a code deploy, but current
+Production S3 readiness is **UNKNOWN**. Editing a draft Casino asset alone does
+not bypass the immutable published snapshot.
+
+### I — placement-specific Admin UI
+
+**DETECTED:** no. Existing selectors are owner/type selectors, not semantic
+public-placement slots.
+
+## Admin capability matrix
+
+| Capability | Current state | Admin UI available | Separate by placement | Requires deploy | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Casino logo | Active Casino `LOGO` `MediaAsset` | DETECTED — Media Manager | No | Current reconciled file: yes; configured Admin upload: no, but republish required | One projected logo is reused wherever logo is requested |
+| Casino directory image | Shared active Casino `HERO` | DETECTED — only as generic HERO | No | Same qualification as Casino logo | No directory-specific selector |
+| Casino detail image | Shared active Casino `HERO` | DETECTED — only as generic HERO | No | Same qualification as Casino logo | Same DTO as other offer surfaces |
+| Bonus listing image | Public renderer uses Casino `HERO`; separate `BONUS_CREATIVE` owner exists but is not the public placement input | DETECTED — Bonus selector | No public placement | Yes for current reconciled HERO; selector change alone does not change this renderer | Existing Admin capability is not wired as `/bonuses` placement selection |
+| Best Offer image | Public renderer uses Casino `HERO`; Affiliate creative selector is not a Best Offer slot | DETECTED — Affiliate CREATIVE/LANDING only | No public placement | Yes for current reconciled HERO; selector change alone does not change this renderer | Media independent of CTA in public renderer |
+| Offer detail image | No standalone current placement resolver | DETECTED — Affiliate LANDING selector only | No | Not applicable to a current public placement | No current offer-detail slot |
+| Compare image | Shared Casino identity/HERO behavior; no media placement | No | No | Yes if changing the current reconciled shared asset | No compare-specific selector |
+| Mobile-specific media | Responsive CSS uses the same source | No | No | Yes if changing the current reconciled shared asset | No device variant or focal point control |
+
+## Current media data model
+
+`MediaAsset` contains the file/storage record, dimensions, alt/title/caption/
+credit, order, featured/status, checksum, metadata/variants and nullable owner
+relations. A Casino publication copies active media fields into immutable
+`CasinoVersion.snapshot`. Public repository projection then chooses the first
+ordered logo and HERO. This is typed owner-based media, not placement-based
+assignment.
+
+The old `CasinoImage` model also remains in the schema. It is not the detected
+input for the current six commercial media presentations.
+
+## Current media flow
+
+```text
+Versioned file/importer OR Admin upload
+  → MediaAsset owner/type record
+  → Casino publish creates immutable CasinoVersion snapshot
+  → public repository selects Casino logo + HERO
+  → PublicOfferDTO reuses Casino HERO
+  → Bonuses / Best Offers / Casino review renderer
+```
+
+**CONTRADICTION:** `docs/media-manager.md` preserves its original phase note
+that migration `0009_media_manager` was not applied by that phase. The current
+schema, routes, Admin components and live rows prove the Media Manager model is
+now present. The phase-history statement is not current deployment evidence.
+
+## Future placement-based architecture
+
+The detailed, non-authoritative proposal is
+[RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md).
+It recommends typed assignment tables (Option C), a shared deterministic
+resolver, semantic placements, `DEFAULT`/`DESKTOP`/`MOBILE` variants,
+`AUTO`/`COVER`/`CONTAIN`/`COMPOSED`, Admin slots, aspect targets and a
+non-destructive compatibility/backfill plan.
+
+**PROPOSED — AWAITING FOUNDER DECISION:** no placement schema, migration,
+backfill or Admin slot implementation is included in MEDIA-PRESENTATION-AND-ADMIN-01.
+
+## Verification and release evidence
+
+Local checks detected at implementation time:
+
+- `npm run typecheck` — passed.
+- targeted Node regression suite — 29/29 passed.
+- `npm run build` — passed; missing local auth/database warnings in the first
+  environment-free build did not fail compilation.
+- read-only live database media audit — eight expected/eight detected published
+  Casinos; current asset dimensions and snapshot versions matched.
+
+Responsive browser acceptance, PR, CI, Preview, merge, Production deployment
+and Production smoke identifiers will replace this pending section before the
+work record is marked complete.
+
+## Release status
+
+- MEDIA-PRESENTATION-AND-ADMIN-01 hotfix: **NOT COMPLETE — release pending**
+- Current Admin audit: **COMPLETE**
+- Placement-based media architecture: **PROPOSED — AWAITING FOUNDER DECISION**

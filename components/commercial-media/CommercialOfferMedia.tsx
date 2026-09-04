@@ -2,8 +2,8 @@ import type { PublicOfferDTO } from "@/lib/public-offer/public-offer.types";
 import type { ProductPageMessages } from "@/lib/i18n/product-pages-catalog";
 import {
   classifyMediaRatio,
-  isFeaturedCardMediaCompatible,
   mayPresentPromotionalMedia,
+  offerMediaRenderingMode,
 } from "@/lib/media/media-presentation";
 
 import styles from "./CommercialOfferMedia.module.css";
@@ -33,43 +33,41 @@ export function CommercialOfferMedia({ offer, variant, messages }: { offer: Publ
   const media = offer.casino.hero;
   const ratio = classifyMediaRatio({ width: media?.width, height: media?.height });
   const demonstration = offer.dataClassification === "DEMO_FIXTURE";
-  const allowed = Boolean(
-    media
-    && isFeaturedCardMediaCompatible(ratio)
-    && mayPresentPromotionalMedia({ demonstration, governedActionAvailable: governedActionAvailable(offer) }),
-  );
+  const allowed = mayPresentPromotionalMedia({ demonstration, governedActionAvailable: governedActionAvailable(offer) });
+  const mode = offerMediaRenderingMode({ hasMedia: Boolean(media), ratio });
   const sourceLabel = messages.common.controlledMedia.toUpperCase();
 
-  if (allowed && media) {
+  if (allowed && media && mode === "CONTAIN") {
     return <figure
       aria-label={`${offer.casino.name} · ${messages.common.controlledMedia}`}
       className={styles.frame}
+      data-media-mode={mode}
       data-media-ratio={ratio}
       data-media-state="presented"
       data-offer-media={variant}
     >
-      <div><img
-        alt={media.alt || offer.casino.name}
-        height={media.height ?? 900}
-        loading="lazy"
-        src={media.url}
-        width={media.width ?? 1600}
-      /></div>
+      <div className={styles.mediaStage}>
+        <img aria-hidden="true" className={styles.mediaBackdrop} alt="" height={media.height ?? 900} loading="lazy" src={media.url} width={media.width ?? 1600} />
+        <img className={styles.mediaArtwork} alt={media.alt || offer.casino.name} height={media.height ?? 900} loading="lazy" src={media.url} width={media.width ?? 1600} />
+      </div>
       <figcaption><span>B4GAMBLE / {sourceLabel}</span><small>{offer.casino.name}</small></figcaption>
     </figure>;
   }
 
-  return <div
-    aria-label={`${messages.common.mediaUnavailableTitle}: ${offer.casino.name}`}
-    className={styles.fallback}
+  return <figure
+    aria-label={`${offer.casino.name} · ${messages.common.controlledMedia}`}
+    className={styles.composed}
+    data-media-mode="COMPOSED"
     data-media-ratio={media ? ratio : "missing"}
-    data-media-state="fallback"
+    data-media-state="presented"
     data-offer-media={variant}
-    role="img"
   >
-    <span>B4GAMBLE / {sourceLabel}</span>
-    <strong>{messages.common.mediaUnavailableTitle}</strong>
-    <p>{messages.common.mediaUnavailableCopy}</p>
-    <i aria-hidden="true" />
-  </div>;
+    <div className={styles.compositionBody}>
+      <span className={styles.compositionSource}>B4GAMBLE / {sourceLabel}</span>
+      <div className={styles.compositionIdentity}><OperatorLogo offer={offer} prominent /><span><small>{offer.casino.name}</small><strong>{offer.bonus.title}</strong></span></div>
+      {media ? <img className={styles.controlledStrip} alt={media.alt || offer.casino.name} height={media.height ?? 50} loading="lazy" src={media.url} width={media.width ?? 320} /> : null}
+      <i aria-hidden="true" />
+    </div>
+    <figcaption><span>{messages.common.current}</span><small>{offer.casino.name}</small></figcaption>
+  </figure>;
 }

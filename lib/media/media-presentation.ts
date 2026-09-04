@@ -7,6 +7,8 @@ export type MediaRatioClass =
   | "ultra-wide"
   | "unknown";
 
+export type MediaRenderingMode = "CONTAIN" | "COMPOSED";
+
 type MediaDimensions = {
   width: number | null | undefined;
   height: number | null | undefined;
@@ -26,6 +28,19 @@ export function classifyMediaRatio({ width, height }: MediaDimensions): MediaRat
 
 export function isFeaturedCardMediaCompatible(ratio: MediaRatioClass) {
   return ratio !== "tall" && ratio !== "portrait";
+}
+
+export function offerMediaRenderingMode({
+  hasMedia,
+  ratio,
+}: {
+  hasMedia: boolean;
+  ratio: MediaRatioClass;
+}): MediaRenderingMode {
+  if (!hasMedia || ratio === "ultra-wide" || ratio === "portrait" || ratio === "tall") {
+    return "COMPOSED";
+  }
+  return "CONTAIN";
 }
 
 export function isCasinoHeroMediaCompatible(ratio: MediaRatioClass) {

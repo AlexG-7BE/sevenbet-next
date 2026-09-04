@@ -3,6 +3,15 @@ import type { PublicCasinoBonus, PublicCasinoDTO } from "@/lib/public-casino/pub
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicBrandText } from "@/lib/public-brand";
 
+export function summarizeWithdrawalTimes(payments: Array<{ supportsWithdrawals: boolean | null; withdrawalTime: string | null }>) {
+  const timings = payments
+    .filter((payment) => payment.supportsWithdrawals && payment.withdrawalTime)
+    .flatMap((payment) => payment.withdrawalTime!.split(/\s*;\s*/))
+    .map((segment) => segment.trim())
+    .filter(Boolean);
+  return [...new Set(timings)].join("; ") || null;
+}
+
 export interface CasinoProfileAction {
   href: string;
   label: string;

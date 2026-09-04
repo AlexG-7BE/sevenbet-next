@@ -339,9 +339,9 @@
 .offerCopy :global(.commercialOutboundPrimary),.offerCopy .unavailableAction { min-width:190px; }
 .offerTermsCard { padding:20px 34px 30px; border:1px solid var(--line); border-radius:20px; background:var(--white); box-shadow:0 22px 52px rgba(16,15,15,.06); }
 .offerTermsCard .termRows { margin:0; border-top:0; }
-.offerTermsCard .termRows > div { min-height:66px; grid-template-columns:1fr auto; align-items:center; }
-.offerTermsCard .termRows dt { color:var(--muted); font-size:13px; font-weight:500; text-transform:none; }
-.offerTermsCard .termRows dd { font-size:14px; font-weight:750; text-align:right; }
+.offerTermsCard .termRows > div { min-height:66px; grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr); align-items:start; }
+.offerTermsCard .termRows dt { min-width:0; color:var(--muted); font-size:13px; font-weight:500; overflow-wrap:anywhere; text-transform:none; }
+.offerTermsCard .termRows dd { min-width:0; font-size:14px; font-weight:750; overflow-wrap:anywhere; text-align:right; }
 .evidenceDisclosure { margin-top:16px; border-top:1px solid var(--line); }
 .evidenceDisclosure summary { min-height:54px; display:flex; align-items:center; justify-content:space-between; cursor:pointer; color:var(--teal); font-size:14px; line-height:20px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; }
 .evidenceDisclosure summary::after { content:"+"; color:var(--ink); font-size:18px; }
@@ -606,6 +606,10 @@
 .brandMedia img { width:auto; height:auto; max-width:148px; max-height:148px; margin:0 auto 28px; object-fit:contain; animation:none; filter:drop-shadow(0 18px 28px rgba(0,0,0,.3)); }
 .brandMedia strong { max-width:12ch; color:var(--white); font-size:clamp(38px,4vw,58px); line-height:.92; letter-spacing:-.05em; text-transform:uppercase; text-wrap:balance; }
 .brandMedia small { color:#aaa79e; font-size:13px; line-height:1.5; }
+.composedMedia { gap:12px; }
+.composedMedia > img:not(.controlledStrip) { margin-bottom:12px; }
+.composedMedia em { max-width:24ch; margin:2px auto 10px; color:#aaa79e; font-size:clamp(15px,1.5vw,20px); line-height:1.25; font-style:normal; font-weight:700; overflow-wrap:anywhere; text-wrap:balance; }
+.composedMedia .controlledStrip { width:auto; height:auto; max-width:min(100%,320px); max-height:50px; margin:8px auto 0; object-fit:contain; animation:none; filter:drop-shadow(0 12px 22px rgba(0,0,0,.28)); }
 .decisionBar { min-height: 66px; }
 
 @media (max-width:1050px) and (min-width:761px) {
@@ -641,5 +645,9 @@
   .brandMedia > span { top:20px; left:20px; }
   .brandMedia img { max-width:92px; max-height:92px; margin-bottom:16px; }
   .brandMedia strong { font-size:34px; }
+  .composedMedia { gap:7px; }
+  .composedMedia > img:not(.controlledStrip) { max-width:72px; max-height:72px; margin-bottom:4px; }
+  .composedMedia em { margin-bottom:2px; font-size:14px; }
+  .composedMedia .controlledStrip { max-width:min(100%,256px); max-height:40px; margin-top:2px; }
   .decisionBar { transition: opacity 160ms cubic-bezier(.2,.8,.2,1); }
 }

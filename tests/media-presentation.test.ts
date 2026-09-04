@@ -9,7 +9,9 @@ import {
   isCasinoHeroMediaCompatible,
   isFeaturedCardMediaCompatible,
   mayPresentPromotionalMedia,
+  offerMediaRenderingMode,
 } from "../lib/media/media-presentation";
+import { summarizeWithdrawalTimes } from "../lib/casino-profile/presentation";
 import {
   withHandoffBonusDirectoryData,
   withHandoffCasinoDiscoveryData,
@@ -48,13 +50,23 @@ test("card media stays horizontal while detail stages contain every controlled r
   }
 });
 
+test("placement-aware offer media keeps standard creatives whole and composes unsuitable ratios", () => {
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "square" }), "CONTAIN");
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "landscape" }), "CONTAIN");
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "wide-landscape" }), "CONTAIN");
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "unknown" }), "CONTAIN");
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "ultra-wide" }), "COMPOSED");
+  assert.equal(offerMediaRenderingMode({ hasMedia: true, ratio: "portrait" }), "COMPOSED");
+  assert.equal(offerMediaRenderingMode({ hasMedia: false, ratio: "unknown" }), "COMPOSED");
+});
+
 test("controlled promotional media stays editorially visible independently of its governed action", () => {
   assert.equal(mayPresentPromotionalMedia({ demonstration: false, governedActionAvailable: false }), true);
   assert.equal(mayPresentPromotionalMedia({ demonstration: false, governedActionAvailable: true }), true);
   assert.equal(mayPresentPromotionalMedia({ demonstration: true, governedActionAvailable: false }), true);
 });
 
-test("missing or incompatible artwork never contradicts an available commercial action", async () => {
+test("missing or incompatible artwork becomes a controlled composition without contradicting an available action", async () => {
   const require = createRequire(import.meta.url);
   require.extensions[".css"] = () => undefined;
   (globalThis as typeof globalThis & { React: typeof React }).React = React;
@@ -71,10 +83,20 @@ test("missing or incompatible artwork never contradicts an available commercial 
     const offer = { ...available, casino: { ...available.casino, hero } };
     const html = renderToStaticMarkup(React.createElement(CommercialOfferMedia, { messages, offer, variant: "featured" }));
     assert.equal(offer.action.available, true);
-    assert.match(html, new RegExp(messages.common.mediaUnavailableTitle));
-    assert.match(html, new RegExp(messages.common.mediaUnavailableCopy));
+    assert.match(html, /data-media-mode="COMPOSED"/);
+    assert.match(html, new RegExp(offer.casino.name));
+    assert.match(html, new RegExp(offer.bonus.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(html, new RegExp(messages.common.mediaUnavailableTitle));
     assert.doesNotMatch(html, new RegExp(messages.common.commercialUnavailable));
   }
+});
+
+test("withdrawal evidence removes repeated clauses without losing distinct processing facts", () => {
+  assert.equal(summarizeWithdrawalTimes([
+    { supportsWithdrawals: true, withdrawalTime: "Pending review 24–48 hours; bank/card processing 3–5 days" },
+    { supportsWithdrawals: true, withdrawalTime: "Pending review 24–48 hours; e-wallet processing 0–1 hour" },
+    { supportsWithdrawals: false, withdrawalTime: "Ignored" },
+  ]), "Pending review 24–48 hours; bank/card processing 3–5 days; e-wallet processing 0–1 hour");
 });
 
 test("identity logos next to the same visible casino name are decorative", async () => {
