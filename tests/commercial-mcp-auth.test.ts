@@ -187,12 +187,23 @@ test("staff without affiliate.manage is denied", () => {
   assert.throws(() => validateCommercialMcpTokenRecord(token, { ...commercialStaff, role: "AUTHOR" }, config, undefined, tokenValidAt), /affiliate\.manage/);
 });
 
-test("expired and revoked access tokens are denied", () => {
-  assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, config, undefined, new Date("2026-08-20T13:00:00.000Z")), /expired/);
-  assert.throws(() => validateCommercialMcpTokenRecord({
+test("browser session expiry does not invalidate a separately authorized MCP grant", () => {
+  const expiredSessionToken = {
     ...token,
     session: { expiresAt: new Date("2026-08-20T09:00:00.000Z") },
-  }, commercialStaff, config, undefined, new Date("2026-08-20T10:00:00.000Z")), /invalid or expired/);
+  };
+  const context = validateCommercialMcpTokenRecord(
+    expiredSessionToken,
+    commercialStaff,
+    config,
+    undefined,
+    tokenValidAt,
+  );
+  assert.equal(context.staff.id, "staff-id");
+});
+
+test("expired and revoked access tokens are denied", () => {
+  assert.throws(() => validateCommercialMcpTokenRecord(token, commercialStaff, config, undefined, new Date("2026-08-20T13:00:00.000Z")), /expired/);
   assert.throws(() => validateCommercialMcpTokenRecord({ ...token, revoked: new Date("2026-08-20T11:00:00.000Z") }, commercialStaff, config, undefined, tokenValidAt), /invalid or expired/);
   assert.throws(() => validateCommercialMcpTokenRecord(null, commercialStaff, config, undefined, tokenValidAt), /invalid or expired/);
 });
