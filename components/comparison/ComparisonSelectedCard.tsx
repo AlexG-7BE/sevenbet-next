@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import React from "react";
 
+import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { comparisonHref } from "@/lib/public-comparison/query";
 import type { PublicComparisonCasino, PublicComparisonResult } from "@/lib/public-comparison/public-comparison.types";
 
@@ -27,7 +27,7 @@ export function ComparisonSelectedCardMarkup({
 
   return <article className={classNames.selectedCard}>
     <div className={classNames.selectedIdentity}>
-      {casino.logo ? <Image alt={casino.logo.alt || `${casino.name} logo`} height={casino.logo.height ?? 72} src={casino.logo.url} width={casino.logo.width ?? 72} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}
+      {casino.logo ? <ResponsivePlacementImage alt={casino.logo.alt || `${casino.name} logo`} height={casino.logo.height ?? 72} media={casino.logo} width={casino.logo.width ?? 72} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}
       <div>
         <p>{String(index + 1).padStart(2, "0")} · SELECTED</p>
         <h3>{casino.name}</h3>

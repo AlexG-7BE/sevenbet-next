@@ -1,6 +1,15 @@
+import type {
+  CasinoMediaPlacementName,
+  MediaPlacementName,
+  MediaPlacementVariantName,
+  MediaRenderingModeName,
+  OfferMediaPlacementName,
+  PlacementMediaSource,
+} from "@/lib/media/placement-media";
+
 export type PublicCasinoSource = "cms" | "legacy";
 
-export interface PublicCasinoMedia {
+export interface PublicCasinoMediaAsset {
   id: string;
   type: "logo" | "hero" | "screenshot" | "gallery" | "social" | "other";
   url: string;
@@ -8,6 +17,28 @@ export interface PublicCasinoMedia {
   width: number | null;
   height: number | null;
   caption: string | null;
+}
+
+export interface PublicCasinoMedia extends PublicCasinoMediaAsset {
+  variants?: Partial<Record<MediaPlacementVariantName, PublicCasinoMediaAsset>>;
+}
+
+export interface PublicPlacementMediaResolution {
+  asset: PublicCasinoMedia | null;
+  assignmentId: string | null;
+  requestedPlacement: MediaPlacementName;
+  resolvedPlacement: MediaPlacementName | null;
+  requestedVariant: MediaPlacementVariantName;
+  resolvedVariant: MediaPlacementVariantName | null;
+  renderingMode: Exclude<MediaRenderingModeName, "AUTO">;
+  source: PlacementMediaSource;
+  fallback: boolean;
+  effectiveAlt: string;
+  focalPoint: { x: number; y: number } | null;
+}
+
+export interface PublicPlacementMedia extends PublicPlacementMediaResolution {
+  variants: Partial<Record<MediaPlacementVariantName, PublicPlacementMediaResolution>>;
 }
 
 export interface PublicCasinoAffiliate {
@@ -35,6 +66,7 @@ export interface PublicCasinoBonus {
   startsAt: string | null;
   expiresAt: string | null;
   affiliate: PublicCasinoAffiliate;
+  media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;
 }
 
 export interface PublicCasinoLicense {
@@ -151,6 +183,7 @@ export interface PublicCasinoDTO {
     screenshots: PublicCasinoMedia[];
     gallery: PublicCasinoMedia[];
     socialImage: PublicCasinoMedia | null;
+    placements?: Partial<Record<CasinoMediaPlacementName, PublicPlacementMedia>>;
   };
   affiliate: PublicCasinoAffiliate;
   presentationDisposition?: import("./presentation-disposition").PublicCasinoPresentationDisposition;

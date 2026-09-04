@@ -1,0 +1,1868 @@
+{
+  "release": "PLACEMENT-MEDIA-ASSIGNMENTS-01",
+  "schemaMigration": "0027_placement_media_assignments",
+  "generatedAt": "2026-09-04T07:58:13.344Z",
+  "expectedDatabaseFingerprint": "ce94f1e2b465c25d62b13a8c3f2db47aa07b96b541603c818ef6219c9c970a5e",
+  "sourceStateChecksum": "c4b1c6f169d4551ed15f39704508272a1abd97f7dab23ffc49df11c5409d220e",
+  "expectedPublishedCasinoCount": 8,
+  "expectedPublishedBonusCount": 6,
+  "expectedAssignmentCount": 46,
+  "rows": [
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "subjectSlug": "21-prive",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "type": "LOGO",
+        "dimensions": "64x64",
+        "checksum": "9f546184e05e1d25c819e62d0acfe16363c3c5461b53bff1662377a194f9a1cd",
+        "publicUrlSha256": "c0236a8132443d83c77b719c33c899485b2be16109ffbcb7b0809ab0905f2e8a"
+      },
+      "newAssignment": {
+        "id": "4f7b5138-3b0e-5f48-b1c7-a4b2bc00aba2",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "subjectSlug": "21-prive",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "404e54f3-4c2b-5168-b68d-bda2767afeb6",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "CASINO_DIRECTORY_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "subjectSlug": "21-prive",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "479c21a8-5374-53b4-b6d6-5c61b2f49d9d",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "CASINO_DETAIL_HERO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "subjectSlug": "21-prive",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "type": "LOGO",
+        "dimensions": "64x64",
+        "checksum": "9f546184e05e1d25c819e62d0acfe16363c3c5461b53bff1662377a194f9a1cd",
+        "publicUrlSha256": "c0236a8132443d83c77b719c33c899485b2be16109ffbcb7b0809ab0905f2e8a"
+      },
+      "newAssignment": {
+        "id": "b4e76b33-91cb-5a4d-92f1-b791d8f32aef",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "641e7e96-390b-557a-a115-195f01cc7a35",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "94c23a1f-11b7-5881-b84d-04c2c2034e12",
+      "subjectSlug": "21-prive-row-welcome",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "da48b45e-7a88-5d27-ba26-bbc07c493ac0",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "BONUS_LISTING_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "94c23a1f-11b7-5881-b84d-04c2c2034e12",
+      "subjectSlug": "21-prive-row-welcome",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "f4e788bf-a08f-5ff4-bdfa-7c7e3556785e",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "BEST_OFFER_FEATURED",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "94c23a1f-11b7-5881-b84d-04c2c2034e12",
+      "subjectSlug": "21-prive-row-welcome",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "0221f013-3715-50f5-b6c1-2d4631dc7fdc",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "BEST_OFFER_SECONDARY",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "94c23a1f-11b7-5881-b84d-04c2c2034e12",
+      "subjectSlug": "21-prive-row-welcome",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": {
+        "id": "eed6e248-004a-55a9-ab1e-7011fbe05f12",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "94c23a1f-11b7-5881-b84d-04c2c2034e12",
+      "subjectSlug": "21-prive-row-welcome",
+      "casinoId": "3700a627-c2a9-5686-8035-39f8a0ebeafb",
+      "casinoSlug": "21-prive",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef",
+        "publicUrlSha256": "723973edc1c0f4854f6339f4f47ce80e8d9180101e37d8a68b0d0bb9927e8d39"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "eed39b1a-12e5-527d-b862-0afda74ea882",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "PLACEMENT_FALLBACK",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "subjectSlug": "betsson",
+      "casinoId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "casinoSlug": "betsson",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "type": "LOGO",
+        "dimensions": "180x180",
+        "checksum": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b",
+        "publicUrlSha256": "7a0d757df8f492165f13f19a6428bc87d360e331697c8dda33fcec4e746e2aed"
+      },
+      "newAssignment": {
+        "id": "0da04b95-4413-5e47-be2c-6bde4ec0ee7b",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "subjectSlug": "betsson",
+      "casinoId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "casinoSlug": "betsson",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "type": "LOGO",
+        "dimensions": "180x180",
+        "checksum": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b",
+        "publicUrlSha256": "7a0d757df8f492165f13f19a6428bc87d360e331697c8dda33fcec4e746e2aed"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "subjectSlug": "betsson",
+      "casinoId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "casinoSlug": "betsson",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "type": "LOGO",
+        "dimensions": "180x180",
+        "checksum": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b",
+        "publicUrlSha256": "7a0d757df8f492165f13f19a6428bc87d360e331697c8dda33fcec4e746e2aed"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "subjectSlug": "betsson",
+      "casinoId": "2c6b8a18-5bfa-59c6-8d17-c8a43c75b081",
+      "casinoSlug": "betsson",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "type": "LOGO",
+        "dimensions": "180x180",
+        "checksum": "0c83930c9cfa42a46ce836aed8af46dd754275f7279f0c60730901e92a770c4b",
+        "publicUrlSha256": "7a0d757df8f492165f13f19a6428bc87d360e331697c8dda33fcec4e746e2aed"
+      },
+      "newAssignment": {
+        "id": "b47f8348-1a19-5c54-a3cb-4be1338cc6e7",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "94130e1e-ad8b-5917-9b96-b31783a9bd48",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "subjectSlug": "diamond7",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "type": "LOGO",
+        "dimensions": "72x72",
+        "checksum": "680f205993255dfb09b655895f1eb8d04c3b20a741b8a509bbba2467c758b975",
+        "publicUrlSha256": "fc2ecda9d56ff6765c408bdf87063cfdd66966634e6ef4e06fde5390a5ce3804"
+      },
+      "newAssignment": {
+        "id": "6ecd3b25-b689-57ab-b137-3127c2e2f9a0",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "subjectSlug": "diamond7",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "728ce109-19a4-5c06-be5a-cdc57462a7f4",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "CASINO_DIRECTORY_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "subjectSlug": "diamond7",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "3a623c60-c35b-5c4f-bdb1-e4665a3c20c8",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "CASINO_DETAIL_HERO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "subjectSlug": "diamond7",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "type": "LOGO",
+        "dimensions": "72x72",
+        "checksum": "680f205993255dfb09b655895f1eb8d04c3b20a741b8a509bbba2467c758b975",
+        "publicUrlSha256": "fc2ecda9d56ff6765c408bdf87063cfdd66966634e6ef4e06fde5390a5ce3804"
+      },
+      "newAssignment": {
+        "id": "52d6df4f-90d4-53ba-afc6-d06bec5b3933",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "13493962-400f-51be-abc0-ec0da357fb4e",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "5cea4726-4121-5ca6-ab83-bacd451a0798",
+      "subjectSlug": "diamond7-row-welcome",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "7a59a1c6-c8b2-5aa6-9b73-6ed7158e58fb",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "BONUS_LISTING_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "5cea4726-4121-5ca6-ab83-bacd451a0798",
+      "subjectSlug": "diamond7-row-welcome",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "a1f35a19-3fb4-5847-8abd-aa131d4d7ce2",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "BEST_OFFER_FEATURED",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "5cea4726-4121-5ca6-ab83-bacd451a0798",
+      "subjectSlug": "diamond7-row-welcome",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "408d7c88-3765-5ca2-8f31-edc60e2f172f",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "BEST_OFFER_SECONDARY",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "5cea4726-4121-5ca6-ab83-bacd451a0798",
+      "subjectSlug": "diamond7-row-welcome",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": {
+        "id": "aff0d09d-0209-520f-a268-f2d064ca5e53",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "5cea4726-4121-5ca6-ab83-bacd451a0798",
+      "subjectSlug": "diamond7-row-welcome",
+      "casinoId": "eb9fb559-8734-5a60-b391-0d8185138dd0",
+      "casinoSlug": "diamond7",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61",
+        "publicUrlSha256": "bf3ce333b6b277e4e482be8748c7bdf4715790b9b08fd63a947238a9673a4992"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "477da08a-02a9-5b29-b396-dc8dc890d1c8",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "PLACEMENT_FALLBACK",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "subjectSlug": "dragonbet",
+      "casinoId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "casinoSlug": "dragonbet",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "type": "LOGO",
+        "dimensions": "933x1027",
+        "checksum": "1f5527179970f1343be6b7eead3067429726dffe2ec631ea0b4fa9d0b5e98ccf",
+        "publicUrlSha256": "96d9b7651e30c505bf2cc790875e2a1b62383c4b7203affb812c73683b1c91ca"
+      },
+      "newAssignment": {
+        "id": "06cbb318-ba7d-578e-ae49-6e25d62579fd",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "subjectSlug": "dragonbet",
+      "casinoId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "casinoSlug": "dragonbet",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "type": "LOGO",
+        "dimensions": "933x1027",
+        "checksum": "1f5527179970f1343be6b7eead3067429726dffe2ec631ea0b4fa9d0b5e98ccf",
+        "publicUrlSha256": "96d9b7651e30c505bf2cc790875e2a1b62383c4b7203affb812c73683b1c91ca"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "subjectSlug": "dragonbet",
+      "casinoId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "casinoSlug": "dragonbet",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "type": "LOGO",
+        "dimensions": "933x1027",
+        "checksum": "1f5527179970f1343be6b7eead3067429726dffe2ec631ea0b4fa9d0b5e98ccf",
+        "publicUrlSha256": "96d9b7651e30c505bf2cc790875e2a1b62383c4b7203affb812c73683b1c91ca"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "subjectSlug": "dragonbet",
+      "casinoId": "7f5e23ca-4e0a-5ca5-a871-83293ebf5e15",
+      "casinoSlug": "dragonbet",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "type": "LOGO",
+        "dimensions": "933x1027",
+        "checksum": "1f5527179970f1343be6b7eead3067429726dffe2ec631ea0b4fa9d0b5e98ccf",
+        "publicUrlSha256": "96d9b7651e30c505bf2cc790875e2a1b62383c4b7203affb812c73683b1c91ca"
+      },
+      "newAssignment": {
+        "id": "531fdedd-206e-51eb-8477-c65ce4cfc78d",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "5732cdc2-1aa7-5dd4-baa9-9b7407e871bb",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "subjectSlug": "gday-casino",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "type": "LOGO",
+        "dimensions": "72x72",
+        "checksum": "b6983467b8f9273814eaee8640d935f1a0c6cc57fc39249aefc16b359060b5ad",
+        "publicUrlSha256": "e8df02eb55ce8d6414c9f3489d7ea59a285c46f0f3fb41de02f17db3fd9463c2"
+      },
+      "newAssignment": {
+        "id": "1a1c9e79-201a-55f3-8ba6-0a6dcacbafdd",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "subjectSlug": "gday-casino",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "d1638e6d-f583-57f1-a446-3bbeeb34ba65",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "CASINO_DIRECTORY_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "subjectSlug": "gday-casino",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "12d247db-fe32-5d75-8331-08bf46166e7a",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "CASINO_DETAIL_HERO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "subjectSlug": "gday-casino",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "type": "LOGO",
+        "dimensions": "72x72",
+        "checksum": "b6983467b8f9273814eaee8640d935f1a0c6cc57fc39249aefc16b359060b5ad",
+        "publicUrlSha256": "e8df02eb55ce8d6414c9f3489d7ea59a285c46f0f3fb41de02f17db3fd9463c2"
+      },
+      "newAssignment": {
+        "id": "456e76d4-ed69-50e0-a7a6-bbaccb097bdf",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "038eac47-793e-55f1-a2a0-ae9f15b4430a",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "1bc79d4b-78c0-5f8c-b304-7624ef91c017",
+      "subjectSlug": "gday-casino-row-welcome",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "13982baa-5b11-5445-8f88-cd6bd8a18aaa",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "BONUS_LISTING_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "1bc79d4b-78c0-5f8c-b304-7624ef91c017",
+      "subjectSlug": "gday-casino-row-welcome",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "62852e2e-15df-5c17-b361-59818826b43c",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "BEST_OFFER_FEATURED",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "1bc79d4b-78c0-5f8c-b304-7624ef91c017",
+      "subjectSlug": "gday-casino-row-welcome",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "7692c2f4-d59f-59ba-a157-83203a8d52e2",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "BEST_OFFER_SECONDARY",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "1bc79d4b-78c0-5f8c-b304-7624ef91c017",
+      "subjectSlug": "gday-casino-row-welcome",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": {
+        "id": "bedffbea-7d3b-5d95-9315-cb2cecf4731f",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "1bc79d4b-78c0-5f8c-b304-7624ef91c017",
+      "subjectSlug": "gday-casino-row-welcome",
+      "casinoId": "b448e5cf-7479-5e87-b353-b8ac9b5e21e8",
+      "casinoSlug": "gday-casino",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671",
+        "publicUrlSha256": "7e20011afd0d5311e28d6ed38b19a8c9d908ad434846dbbb23fc3f11679cd8c4"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "ddeb005f-3578-5c6c-bf8d-79e56fbad404",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "PLACEMENT_FALLBACK",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "subjectSlug": "hello-casino",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": {
+        "id": "0c7cf074-4b1a-5ea7-8182-47eaad165ecd",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "subjectSlug": "hello-casino",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "subjectSlug": "hello-casino",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "LOGO_COMPOSITION"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "subjectSlug": "hello-casino",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": {
+        "id": "71802b63-ca14-594a-bc83-9f3b8c90e6a5",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "2adb9e6c-c507-54d4-90de-f1d2c98e518c",
+      "subjectSlug": "hello-casino-current-mga-welcome",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "2adb9e6c-c507-54d4-90de-f1d2c98e518c",
+      "subjectSlug": "hello-casino-current-mga-welcome",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "2adb9e6c-c507-54d4-90de-f1d2c98e518c",
+      "subjectSlug": "hello-casino-current-mga-welcome",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "2adb9e6c-c507-54d4-90de-f1d2c98e518c",
+      "subjectSlug": "hello-casino-current-mga-welcome",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "2adb9e6c-c507-54d4-90de-f1d2c98e518c",
+      "subjectSlug": "hello-casino-current-mga-welcome",
+      "casinoId": "cff675ef-48ac-5fdd-b160-7907bd1429ae",
+      "casinoSlug": "hello-casino",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "type": "LOGO",
+        "dimensions": "16x16",
+        "checksum": "41d108713281967e0a270972832d56b16240ef0f8d29254afcc3d9020b58878b",
+        "publicUrlSha256": "639517072f269883f7e6cb0e888bec5e053aa674b916ecf3af536389aed00125"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "4a55c1b1-8fb1-51b4-abfc-f76e941f17b5",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "LOGO_COMPOSITION",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "subjectSlug": "skol-casino",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "type": "LOGO",
+        "dimensions": "48x48",
+        "checksum": "ca5f337b5b02ebdef1a7a46cba902c430a53c2f7b42eb3cea7d476fee7b08d63",
+        "publicUrlSha256": "4e792d0599be885bfe990f3f809be774d0c5738dd9c5b932f8c5924bb79615f8"
+      },
+      "newAssignment": {
+        "id": "4730d356-ea67-52a0-98eb-486d1cd08824",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "subjectSlug": "skol-casino",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "14fef276-1517-5440-bee2-ec3e02aa15c8",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "CASINO_DIRECTORY_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "subjectSlug": "skol-casino",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "f5904c84-64a3-5c10-b068-6d16ac1c4d4e",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "CASINO_DETAIL_HERO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "subjectSlug": "skol-casino",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "type": "LOGO",
+        "dimensions": "48x48",
+        "checksum": "ca5f337b5b02ebdef1a7a46cba902c430a53c2f7b42eb3cea7d476fee7b08d63",
+        "publicUrlSha256": "4e792d0599be885bfe990f3f809be774d0c5738dd9c5b932f8c5924bb79615f8"
+      },
+      "newAssignment": {
+        "id": "5dbce7d4-8b6a-568a-8333-d00137974b20",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "bfca4e22-7d51-5b08-ab95-9e2edfb97712",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "839bc26f-3f2d-5c0e-8617-5ae4fb9d6296",
+      "subjectSlug": "skol-casino-row-welcome",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "964bdd2c-8041-52f4-82bd-33c638ff07b8",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "BONUS_LISTING_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "839bc26f-3f2d-5c0e-8617-5ae4fb9d6296",
+      "subjectSlug": "skol-casino-row-welcome",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "1871cfc9-8dba-5309-8399-d93208bb5c2c",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "BEST_OFFER_FEATURED",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "839bc26f-3f2d-5c0e-8617-5ae4fb9d6296",
+      "subjectSlug": "skol-casino-row-welcome",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "f319a842-06c8-5758-9de0-aae6c83fed18",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "BEST_OFFER_SECONDARY",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "839bc26f-3f2d-5c0e-8617-5ae4fb9d6296",
+      "subjectSlug": "skol-casino-row-welcome",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": {
+        "id": "a0268b68-f2b9-55c8-b7ca-4f95cddba672",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "839bc26f-3f2d-5c0e-8617-5ae4fb9d6296",
+      "subjectSlug": "skol-casino-row-welcome",
+      "casinoId": "3d1b243f-f3f4-57b1-975e-2a41d70b5ea3",
+      "casinoSlug": "skol-casino",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "type": "HERO",
+        "dimensions": "300x250",
+        "checksum": "a1961759af4bf5dcef74c6145ab6df3a510c2926f781cea5655c2ed1610e3d48",
+        "publicUrlSha256": "c55920b6649ea9a14917567c73210e7c6f2b559b3359036af1ec504e7f1d4615"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "6716d8b1-9351-5083-8a4a-2ab91b7415d6",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "PLACEMENT_FALLBACK",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "subjectSlug": "slotnite",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "CASINO_LOGO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "type": "LOGO",
+        "dimensions": "32x32",
+        "checksum": "daddd2d8fd3cec5c45d2b389b6282062094d55fa2c67b0ae6d7abf8ff98d48e3",
+        "publicUrlSha256": "cf2debae219ef475a0b5e41edcacb050548d1c72a49346c5c4b2eb46d8e17cdc"
+      },
+      "newAssignment": {
+        "id": "f803991c-77fc-5754-929f-fbbcee549c87",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "resolvedPlacement": "CASINO_LOGO",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "subjectSlug": "slotnite",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "CASINO_DIRECTORY_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "03abf184-9671-5bc3-a25f-3cbe6b78e458",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "CASINO_DIRECTORY_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "subjectSlug": "slotnite",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "CASINO_DETAIL_HERO",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "265f6e7f-7052-5f5a-b820-5aaa7378aacf",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "CASINO_DETAIL_HERO",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO",
+      "subjectId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "subjectSlug": "slotnite",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "CASINO_COMPARE",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "type": "LOGO",
+        "dimensions": "32x32",
+        "checksum": "daddd2d8fd3cec5c45d2b389b6282062094d55fa2c67b0ae6d7abf8ff98d48e3",
+        "publicUrlSha256": "cf2debae219ef475a0b5e41edcacb050548d1c72a49346c5c4b2eb46d8e17cdc"
+      },
+      "newAssignment": {
+        "id": "e8f93975-6364-540b-b5ac-f35ec4e167c7",
+        "table": "CasinoMediaAssignment",
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "renderingMode": "CONTAIN",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "78043e24-3a64-57a8-afbd-bfab122e5308",
+        "resolvedPlacement": "CASINO_COMPARE",
+        "source": "EXPLICIT",
+        "renderingMode": "CONTAIN"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "afbe7586-e79d-560d-b4d2-0fb1ba8d2cb8",
+      "subjectSlug": "slotnite-row-welcome",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "BONUS_LISTING_CARD",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "e50e0c99-fb2f-5db6-99bd-720011417b03",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "BONUS_LISTING_CARD",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "afbe7586-e79d-560d-b4d2-0fb1ba8d2cb8",
+      "subjectSlug": "slotnite-row-welcome",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "BEST_OFFER_FEATURED",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "bfe37e87-a0f5-5d36-86c5-16cc7e0f996f",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "BEST_OFFER_FEATURED",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "afbe7586-e79d-560d-b4d2-0fb1ba8d2cb8",
+      "subjectSlug": "slotnite-row-welcome",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "BEST_OFFER_SECONDARY",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "99e51960-2e4e-5f2e-8cb9-b77252795890",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "BEST_OFFER_SECONDARY",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "afbe7586-e79d-560d-b4d2-0fb1ba8d2cb8",
+      "subjectSlug": "slotnite-row-welcome",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "CASINO_OFFER_BLOCK",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": {
+        "id": "ab588b13-f8eb-5072-8e48-4e5869cd3c85",
+        "table": "CasinoBonusMediaAssignment",
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "renderingMode": "COMPOSED",
+        "sortOrder": 1000,
+        "active": true,
+        "reference": "PLACEMENT-MEDIA-ASSIGNMENTS-01"
+      },
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "EXPLICIT",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "EXPLICIT"
+    },
+    {
+      "subjectType": "CASINO_BONUS",
+      "subjectId": "afbe7586-e79d-560d-b4d2-0fb1ba8d2cb8",
+      "subjectSlug": "slotnite-row-welcome",
+      "casinoId": "a2ee5d5b-b5ed-51b1-a35e-6bbef292b03c",
+      "casinoSlug": "slotnite",
+      "placement": "OFFER_DETAIL",
+      "variant": "DEFAULT",
+      "legacyEffectiveMedia": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "type": "HERO",
+        "dimensions": "320x50",
+        "checksum": "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3",
+        "publicUrlSha256": "5f279fee15330fe44cfadd75ceab6138bb97b3a56e24f7ad1464f620a3ab1fb5"
+      },
+      "newAssignment": null,
+      "expectedResolution": {
+        "mediaAssetId": "2688e110-2c3b-5360-8d98-c0c80d2020d4",
+        "resolvedPlacement": "CASINO_OFFER_BLOCK",
+        "source": "PLACEMENT_FALLBACK",
+        "renderingMode": "COMPOSED"
+      },
+      "fallbackExpectation": "PLACEMENT_OR_LOGO_FALLBACK"
+    }
+  ]
+}

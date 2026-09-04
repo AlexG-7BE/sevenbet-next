@@ -586,6 +586,7 @@ async function verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrat
       "prisma/fixtures/0024_pre_programme_access_acceptance.sql",
       "prisma/fixtures/0025_pre_casino_market_profile.sql",
       "prisma/fixtures/0026_pre_commercial_platform_completion.sql",
+      "prisma/fixtures/0027_pre_placement_media_assignments.sql",
     ]) {
       run("npx", ["prisma", "db", "execute", "--schema", path.join(beforeCommercialPlatform, "schema.prisma"), "--file", fixture], environment);
     }
@@ -649,6 +650,10 @@ async function verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrat
         where: { id: "26000000-0000-4000-8000-000000000008" },
         select: { id: true, slug: true, casinoId: true, casinoBonusId: true, affiliateOfferId: true, active: true },
       }),
+      prisma.mediaAsset.findMany({
+        where: { id: "27000000-0000-4000-8000-000000000090" },
+        select: { id: true, casinoId: true, type: true, storageKey: true, publicUrl: true, checksum: true, status: true },
+      }),
     ])));
 
     const before = await snapshot();
@@ -680,6 +685,7 @@ async function verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrat
     console.info("Commercial platform staged migration smoke passed", {
       protectedProgrammeDataPreserved: true,
       existingAffiliateRoutingDataPreserved: true,
+      existingMediaDataPreservedAcross0027: true,
       aggregateOnlyTableOperational: true,
       replayIdempotent: true,
     });

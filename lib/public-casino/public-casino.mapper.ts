@@ -1,10 +1,25 @@
 import type { Casino } from "@/lib/data";
+import {
+  casinoMediaPlacements,
+  isMediaPlacement,
+  isMediaPlacementVariant,
+  isMediaRenderingMode,
+  isPlacementMediaAssignmentsEnabled,
+  offerMediaPlacements,
+  resolveMedia,
+  type PlacementMediaAsset,
+  type PlacementMediaAssignment,
+  type PlacementMediaResolutionContext,
+  type ResolvedPlacementMedia,
+} from "@/lib/media/placement-media";
 import type {
   PublicAffiliateRoute,
   PublicCasinoDTO,
   PublicCasinoLicense,
   PublicCasinoMarketProfile,
   PublicCasinoMedia,
+  PublicPlacementMedia,
+  PublicPlacementMediaResolution,
   PublicCasinoPayment,
   PublishedCasinoSnapshotRecord,
 } from "@/lib/public-casino/public-casino.types";
@@ -105,6 +120,126 @@ function mediaFromSnapshot(snapshot: Record<string, unknown>) {
   });
 }
 
+function placementAsset(value: unknown): PlacementMediaAsset | null {
+  const record = object(value);
+  const id = text(record.id);
+  const type = text(record.type);
+  const publicUrl = safePublicUrl(record.publicUrl ?? record.url, { allowInternal: true });
+  if (!id || !type || !publicUrl) return null;
+  return {
+    id,
+    type,
+    publicUrl,
+    originalFilename: nullableText(record.originalFilename),
+    mimeType: nullableText(record.mimeType),
+    width: integer(record.width),
+    height: integer(record.height),
+    altText: nullableText(record.altText ?? record.alt),
+    title: nullableText(record.title),
+    caption: nullableText(record.caption),
+    credit: nullableText(record.credit),
+    status: text(record.status),
+    archivedAt: date(record.archivedAt),
+    checksum: nullableText(record.checksum),
+    sortOrder: integer(record.sortOrder),
+    createdAt: date(record.createdAt),
+  };
+}
+
+function placementAssignments(value: unknown): PlacementMediaAssignment[] {
+  return list(value).flatMap((entry) => {
+    const record = object(entry);
+    const id = text(record.id);
+    const mediaAssetId = text(record.mediaAssetId);
+    const placement = text(record.placement);
+    const variant = text(record.variant);
+    const renderingMode = text(record.renderingMode);
+    const asset = placementAsset(record.mediaAsset);
+    if (!id || !mediaAssetId || !isMediaPlacement(placement) || !isMediaPlacementVariant(variant) || !isMediaRenderingMode(renderingMode) || !asset) return [];
+    return [{
+      id,
+      mediaAssetId,
+      placement,
+      variant,
+      renderingMode,
+      sortOrder: integer(record.sortOrder) ?? 0,
+      active: bool(record.active),
+      cropSafe: bool(record.cropSafe),
+      altTextOverride: nullableText(record.altTextOverride),
+      focalPointX: number(record.focalPointX),
+      focalPointY: number(record.focalPointY),
+      validFrom: date(record.validFrom),
+      validUntil: date(record.validUntil),
+      reference: nullableText(record.reference),
+      mediaAsset: asset,
+    }];
+  });
+}
+
+function legacyPlacementAssets(snapshot: Record<string, unknown>): PlacementMediaAsset[] {
+  const modern = list(snapshot.mediaAssets).flatMap((entry) => placementAsset(entry) ?? []);
+  if (modern.length) return modern;
+  return list(snapshot.images).flatMap((entry) => {
+    const record = object(entry);
+    const asset = placementAsset({
+      ...record,
+      type: record.kind,
+      publicUrl: record.url,
+      altText: record.alt,
+      status: "ACTIVE",
+    });
+    return asset ? [asset] : [];
+  });
+}
+
+function publicPlacementMedia(resolution: ResolvedPlacementMedia): PublicPlacementMediaResolution {
+  const asset = resolution.asset;
+  const url = asset ? safePublicUrl(asset.publicUrl ?? asset.url, { allowInternal: true }) : null;
+  return {
+    asset: asset && url ? {
+      id: asset.id,
+      type: mediaType(asset.type),
+      url,
+      alt: resolution.effectiveAlt,
+      width: asset.width ?? null,
+      height: asset.height ?? null,
+      caption: asset.caption?.trim() || null,
+    } : null,
+    assignmentId: resolution.assignment?.id ?? null,
+    requestedPlacement: resolution.requestedPlacement,
+    resolvedPlacement: resolution.resolvedPlacement,
+    requestedVariant: resolution.requestedVariant,
+    resolvedVariant: resolution.resolvedVariant,
+    renderingMode: resolution.renderingMode,
+    source: resolution.source,
+    fallback: resolution.fallback,
+    effectiveAlt: resolution.effectiveAlt,
+    focalPoint: resolution.focalPoint,
+  };
+}
+
+function resolvedPlacementMap(
+  placements: readonly (typeof casinoMediaPlacements[number] | typeof offerMediaPlacements[number])[],
+  context: PlacementMediaResolutionContext,
+  now: Date,
+) {
+  return Object.fromEntries(placements.map((placement) => {
+    const variants = Object.fromEntries((["DEFAULT", "DESKTOP", "MOBILE"] as const).map((requestedVariant) => [
+      requestedVariant,
+      publicPlacementMedia(resolveMedia({ placement, requestedVariant, context, now })),
+    ])) as PublicPlacementMedia["variants"];
+    const primary = variants.DEFAULT!;
+    const variantAssets = Object.fromEntries(Object.entries(variants).flatMap(([variant, resolution]) =>
+      resolution?.asset ? [[variant, resolution.asset]] : [],
+    ));
+    return [placement, {
+      ...primary,
+      asset: primary.asset ? { ...primary.asset, variants: variantAssets } : null,
+      variants,
+    } satisfies PublicPlacementMedia];
+  }));
+}
+
 function mapScopedLicenses(entries: unknown[], now: Date): PublicCasinoLicense[] {
   return entries.flatMap((entry) => {
     const relation = object(entry);
@@ -169,6 +304,8 @@ function mapScopedBonuses(
   routes: PublicAffiliateRoute[],
   redirectEnabled: boolean,
   now: Date,
+  placementContext: PlacementMediaResolutionContext,
+  placementMediaEnabled: boolean,
 ) {
   return entries.flatMap((entry) => {
     const record = object(entry);
@@ -182,6 +319,10 @@ function mapScopedBonuses(
     const title = text(record.title);
     if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
     const affiliateHref = redirectEnabled ? routeFor(routes, casinoId, bonusId) : null;
+    const bonusPlacementMedia = resolvedPlacementMap(offerMediaPlacements, {
+      ...placementContext,
+      casinoBonusAssignments: placementAssignments(record.mediaAssignments),
+    }, now);
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -202,6 +343,7 @@ function mapScopedBonuses(
       startsAt,
       expiresAt,
       affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
+      ...(placementMediaEnabled ? { media: bonusPlacementMedia } : {}),
     }];
   });
 }
@@ -219,8 +361,12 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
     marketProfiles: [],
   };
   const localMedia = profile.media;
-  const logo = localMedia.find((item) => item.type === "logo") ?? casino.media.logo;
-  const hero = localMedia.find((item) => item.type === "hero") ?? casino.media.hero;
+  const logo = casino.media.placements?.CASINO_LOGO?.asset
+    ?? localMedia.find((item) => item.type === "logo")
+    ?? casino.media.logo;
+  const hero = casino.media.placements?.CASINO_DETAIL_HERO?.asset
+    ?? localMedia.find((item) => item.type === "hero")
+    ?? casino.media.hero;
   const mergeBy = <T,>(global: T[], local: T[], identity: (value: T) => string) =>
     [...new Map([...global, ...local].map((value) => [identity(value), value])).values()];
   return {
@@ -247,6 +393,7 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
       screenshots: [...localMedia.filter((item) => item.type === "screenshot"), ...casino.media.screenshots],
       gallery: [...localMedia.filter((item) => item.type === "gallery"), ...casino.media.gallery],
       socialImage: localMedia.find((item) => item.type === "social") ?? casino.media.socialImage,
+      ...(casino.media.placements ? { placements: casino.media.placements } : {}),
     },
     affiliate: casino.affiliate,
   };
@@ -255,7 +402,7 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
 export function mapPublishedCasino(
   published: PublishedCasinoSnapshotRecord,
   routes: PublicAffiliateRoute[],
-  options: { redirectEnabled: boolean; now?: Date; countryCode?: string | null } = { redirectEnabled: false },
+  options: { redirectEnabled: boolean; now?: Date; countryCode?: string | null; placementMediaEnabled?: boolean } = { redirectEnabled: false },
 ): PublicCasinoDTO | null {
   const snapshot = object(published.snapshot);
   const slug = text(snapshot.slug);
@@ -265,6 +412,13 @@ export function mapPublishedCasino(
   const domain = text(snapshot.domain).toLowerCase();
   if (!id || !name || !domain) return null;
   const now = options.now ?? new Date();
+  const placementMediaEnabled = options.placementMediaEnabled ?? isPlacementMediaAssignmentsEnabled();
+  const placementContext: PlacementMediaResolutionContext = {
+    casinoName: name,
+    casinoAssignments: placementAssignments(snapshot.mediaAssignments),
+    legacyMediaAssets: legacyPlacementAssets(snapshot),
+  };
+  const casinoPlacementMedia = resolvedPlacementMap(casinoMediaPlacements, placementContext, now);
   const editorMetadata = metadata(snapshot);
   const general = object(editorMetadata.general);
   const licenseMetadata = object(editorMetadata.licenses);
@@ -349,6 +503,10 @@ export function mapPublishedCasino(
     if (!bonusId || !isSafePublicSlug(bonusSlug) || !title) return [];
     const bonusState = object(object(editorMetadata.bonuses)[bonusId]);
     const affiliateHref = options.redirectEnabled ? routeFor(routes, published.casinoId, bonusId) : null;
+    const bonusPlacementMedia = resolvedPlacementMap(offerMediaPlacements, {
+      ...placementContext,
+      casinoBonusAssignments: placementAssignments(record.mediaAssignments),
+    }, now);
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -369,6 +527,7 @@ export function mapPublishedCasino(
       startsAt,
       expiresAt,
       affiliate: { href: affiliateHref, available: Boolean(affiliateHref) },
+      ...(placementMediaEnabled ? { media: bonusPlacementMedia } : {}),
     }];
   });
 
@@ -424,7 +583,15 @@ export function mapPublishedCasino(
       payments: mapScopedPayments([...list(record.paymentMethods), ...explicitLegacyPayments]),
       providers: mapScopedProviders(list(record.gameProviders)),
       categories: mapScopedCategories(list(record.gameCategories)),
-      bonuses: mapScopedBonuses([...list(record.bonuses), ...explicitLegacyBonuses], published.casinoId, routes, options.redirectEnabled, now),
+      bonuses: mapScopedBonuses(
+        [...list(record.bonuses), ...explicitLegacyBonuses],
+        published.casinoId,
+        routes,
+        options.redirectEnabled,
+        now,
+        placementContext,
+        placementMediaEnabled,
+      ),
       media: mediaFromSnapshot(record),
     }];
   });
@@ -478,11 +645,12 @@ export function mapPublishedCasino(
     bonuses,
     marketProfiles,
     media: {
-      logo: allMedia.find((item) => item.type === "logo") ?? null,
-      hero: allMedia.find((item) => item.type === "hero") ?? null,
+      logo: placementMediaEnabled ? casinoPlacementMedia.CASINO_LOGO.asset : allMedia.find((item) => item.type === "logo") ?? null,
+      hero: placementMediaEnabled ? casinoPlacementMedia.CASINO_DETAIL_HERO.asset : allMedia.find((item) => item.type === "hero") ?? null,
       screenshots: allMedia.filter((item) => item.type === "screenshot"),
       gallery: allMedia.filter((item) => item.type === "gallery"),
       socialImage,
+      ...(placementMediaEnabled ? { placements: casinoPlacementMedia } : {}),
     },
     affiliate: { href: redirectHref, available: Boolean(redirectHref) },
   };

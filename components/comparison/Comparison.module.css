@@ -38,7 +38,7 @@
 .selectedGrid { margin-top: 28px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .selectedCard, .addCard { min-width: 0; min-height: 180px; padding: 22px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--sb-metal); border-radius: 20px; background: var(--card); }
 .selectedIdentity { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 15px; align-items: center; }
-.selectedIdentity > img, .selectedIdentity > span { width: 58px; height: 58px; object-fit: contain; display: grid; place-items: center; border-radius: 14px; background: var(--white); color: var(--ink); font-size: 26px; font-weight: 800; }
+.selectedIdentity img, .selectedIdentity > span { width: 58px; height: 58px; object-fit: contain; display: grid; place-items: center; border-radius: 14px; background: var(--white); color: var(--ink); font-size: 26px; font-weight: 800; }
 .selectedCard p, .selectedCard h3, .selectedCard small, .addCard span, .addCard strong, .addCard small { margin: 0; overflow-wrap: anywhere; }
 .selectedCard p, .addCard span { color: var(--acid); font-size: 13px; line-height: 18px; font-weight: 750; letter-spacing: .05em; }
 .selectedCard h3, .addCard strong { font-size: 24px; line-height: 29px; letter-spacing: -.03em; }
@@ -217,7 +217,7 @@
   .selectedGrid, .slotGrid, .decisionCards, .commercialCards { grid-template-columns: 1fr; }
   .selectedCard, .addCard { min-height: 0; padding: 16px; border-radius: 16px; }
   .selectedIdentity { grid-template-columns: 48px minmax(0, 1fr); }
-  .selectedIdentity > img, .selectedIdentity > span { width: 48px; height: 48px; }
+  .selectedIdentity img, .selectedIdentity > span { width: 48px; height: 48px; }
   .selectedCard h3, .addCard strong { font-size: 22px; }
   .selectionForm { padding: 16px; }
   .selectionActions { display: grid; grid-template-columns: 1fr; }

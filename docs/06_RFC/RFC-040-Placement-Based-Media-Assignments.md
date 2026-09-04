@@ -1,19 +1,27 @@
 # RFC-040 — Placement-Based Media Assignments
 
-**Lifecycle:** `PROPOSED`
+**Lifecycle:** `ACTIVE`
 
 **Decision owner:** B4GAMBLE Founder
 
 **Proposal date:** 4 September 2026
 
-**Implementation authority:** None. This RFC does not authorise a schema migration.
+**Implementation authority:** explicit Founder instruction `B4GAMBLE —
+PLACEMENT-MEDIA-ASSIGNMENTS-01 / RFC-040 OPTION C IMPLEMENTATION`, issued 4
+September 2026.
 
-## Decision requested
+## Decision and history
 
-Approve a future additive migration from owner-bound media selection to reusable
-`MediaAsset` records with placement-specific assignments. The recommended
-relational design is Option C: separate assignment tables for Casino,
-CasinoBonus and AffiliateOffer subjects, exposed through one resolver contract.
+RFC-040 was originally recorded as `PROPOSED`, recommended Option C and carried
+no implementation authority. On 4 September 2026 the Founder explicitly chose
+**GO — APPROVE RFC-040 OPTION C** and authorised its additive migration,
+Production backfill, resolver, Admin slots, publication integration and
+controlled release. This lifecycle change records that later decision; it does
+not rewrite Options A or B or imply that the RFC had always been approved.
+
+The active architecture keeps reusable `MediaAsset` records and uses separate
+placement-assignment tables for Casino, CasinoBonus and AffiliateOffer subjects,
+exposed through one resolver contract.
 
 This proposal follows the MEDIA-PRESENTATION-AND-ADMIN-01 Founder instruction.
 The visible Slotnite, Bonuses and review-layout hotfix does not depend on this
@@ -30,7 +38,11 @@ proposal and is delivered through the current architecture.
   normalized public placement assignments.
 - **DETECTED:** no current public resolver selects media by placement or device
   variant.
-- **PROPOSED:** the models, enums, resolution chain and Admin slots below.
+- **DETECTED:** the Founder approved Option C through the explicit instruction
+  identified above.
+- **DETECTED:** migration `0027_placement_media_assignments`, the typed models,
+  resolver, immutable publication projection, Admin slots and guarded backfill
+  implement the approved design in the release branch.
 
 ## Goals
 
@@ -44,7 +56,7 @@ proposal and is delivered through the current architecture.
 
 ## Non-goals
 
-- No migration, backfill or Admin implementation in this workstream.
+- No removal of legacy owner fields or compatibility reads in this release.
 - No change to Editor Scores, offer terms, ranking, routes or GEO authority.
 - No arbitrary device matrix beyond `DEFAULT`, `DESKTOP` and `MOBILE`.
 - No random asset choice and no implicit use of an ultra-wide banner in a card.
@@ -65,7 +77,7 @@ constraint requiring exactly one. This preserves foreign keys but creates a
 wide table, placement/subject combinations need further constraints, and each
 new domain changes a shared table.
 
-### Option C — typed tables by domain — recommended
+### Option C — typed tables by domain — approved
 
 Use `CasinoMediaAssignment`, `CasinoBonusMediaAssignment` and, only where a
 partner-specific asset is genuinely needed, `AffiliateOfferMediaAssignment`.
@@ -73,15 +85,17 @@ All reference the same `MediaAsset` and implement one application resolver
 interface. Each table has a non-null subject foreign key, a non-null asset
 foreign key, domain-valid placement constraints and predictable cascades.
 
-**Recommendation:** Option C. B4GAMBLE has only three real media-owning domains,
+**Decision:** Option C. B4GAMBLE has only three real media-owning domains,
 and strong database integrity is more valuable than a theoretically elegant
 polymorphic table. `CasinoBonus` remains the public editorial-offer subject;
 `AffiliateOffer` remains separate commercial-partner evidence and must not
 become necessary for editorial media visibility.
 
-## Recommended data model
+## Approved data model
 
-The following is conceptual Prisma, not migration-ready authority:
+The following preserves the original conceptual shape. The exact implemented
+schema is migration `0027_placement_media_assignments`; its SQL constraints and
+indexes are authoritative for the released database shape.
 
 ```prisma
 enum MediaPlacement {
@@ -115,9 +129,10 @@ model CasinoMediaAssignment {
   mediaAssetId    String                @db.Uuid
   placement       MediaPlacement
   variant         MediaPlacementVariant @default(DEFAULT)
-  renderingMode   MediaRenderingMode     @default(AUTO)
-  sortOrder       Int                    @default(1000)
-  active          Boolean                @default(true)
+  renderingMode   MediaRenderingMode    @default(AUTO)
+  sortOrder       Int                   @default(0)
+  active          Boolean               @default(true)
+  cropSafe        Boolean               @default(false)
   altTextOverride String?
   focalPointX     Decimal?               @db.Decimal(5, 4)
   focalPointY     Decimal?               @db.Decimal(5, 4)
@@ -126,11 +141,10 @@ model CasinoMediaAssignment {
   reference       String?
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
-  casino          Casino                 @relation(fields: [casinoId], references: [id], onDelete: Cascade)
-  mediaAsset      MediaAsset              @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
+  casino          Casino                @relation(fields: [casinoId], references: [id], onDelete: Cascade)
+  mediaAsset      MediaAsset             @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict)
 
-  @@unique([casinoId, placement, variant, sortOrder])
-  @@index([casinoId, placement, variant, active])
+  @@index([casinoId, placement, variant, active, sortOrder, id])
   @@index([mediaAssetId])
 }
 ```
@@ -138,9 +152,12 @@ model CasinoMediaAssignment {
 `CasinoBonusMediaAssignment` and `AffiliateOfferMediaAssignment` use the same
 assignment fields with a non-null typed subject relation. Database check
 constraints restrict each table to its allowed placement values and focal
-points to `0…1`. An active primary assignment uses `sortOrder=1000`; additional
-ordered gallery-like candidates are permitted only where a placement contract
-explicitly supports them.
+points to `0…1`. Admin-created relationships default to `sortOrder=0`; the
+compatibility backfill deliberately uses `1000`, so a later explicit Founder
+choice can win without deleting its provenance row. The service deactivates the
+previous active relationship for the same subject/placement/variant, while the
+database keeps deterministic multiple-candidate support for history and
+controlled reconciliation.
 
 `MOBILE_CARD` is not recommended as a placement: `MOBILE` is a variant of the
 semantic placement. Keeping both would create two ways to represent the same
@@ -250,10 +267,10 @@ copy rather than requiring edge-to-edge crops.
 | Offer detail | 16:10 | 1200×750 | Conditional | Only reviewed text-free art may cover |
 | Mobile variant | 4:3 | 720×540 | Conditional | Variant of the semantic placement, not `MOBILE_CARD` |
 
-## Non-destructive migration plan
+## Non-destructive migration and compatibility contract
 
-1. Finalize enums, typed tables, SQL constraints and resolver contract in a new
-   Founder-approved RFC revision.
+1. Finalize enums, typed tables, SQL constraints and resolver contract under the
+   4 September 2026 Founder approval.
 2. Add the models and additive migration; do not remove current owner fields.
 3. Backfill active Casino `LOGO` and `HERO` assets deterministically. Create
    Casino logo/directory/detail/compare assignments and CasinoBonus placement
@@ -283,16 +300,11 @@ copy rather than requiring edge-to-edge crops.
 - `COVER` can hide mandatory text; it defaults off for current offer art.
 - Variants increase content workload; use `DEFAULT` unless a reviewed mobile or
   desktop override materially improves presentation.
-- Current publication snapshots need an explicit assignment projection design;
+- Publication snapshots contain the assignment and referenced-asset projection;
   live draft assignments must not silently alter a published Casino.
 
 ## Founder decision
 
-Choose one:
-
-1. **Approve Option C for detailed migration design** (recommended).
-2. Request a revised Option B design.
-3. Defer placement assignments and retain the current shared-hero model.
-
-Until that decision, this RFC remains `PROPOSED` and no database/schema change
-is authorised.
+**APPROVED / ACTIVE — Option C.** The implementation authority is the explicit
+4 September 2026 Founder instruction. Options A and B remain above as preserved
+alternatives analysis, not current architecture.

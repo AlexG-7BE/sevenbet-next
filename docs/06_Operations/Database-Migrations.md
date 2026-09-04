@@ -68,6 +68,25 @@ preservation invariants. Normal Production builds now perform read-only 0026
 readiness verification; they do not run migrations. See the
 [commercial-platform completion release record](Commercial-Platform-Code-Completion-Release-Record-2026-09-03.md).
 
+## Placement-media migration 0027 — approved release pending
+
+**DETECTED / NOT YET APPLIED TO PRODUCTION AT THIS RECORD REVISION:**
+`0027_placement_media_assignments` is the additive RFC-040 Option C migration.
+It adds three enums and the typed `CasinoMediaAssignment`,
+`CasinoBonusMediaAssignment` and `AffiliateOfferMediaAssignment` tables with
+domain checks, paired normalized focal bounds, validity/COVER/order checks,
+subject cascades, restrictive asset foreign keys and resolver/usage indexes. It
+does not alter or remove a legacy media row or owner field. Immutable SHA-256:
+`415f7295e92cd7b3992e7065bbfab3eccd1a5609c5dc584f3035d31756b1d348`.
+
+The compatible application treats exactly 0027-pending plus
+`PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED` absent/off as a permitted staged state and
+continues legacy reads. The guarded release command separately verifies the
+exact Vercel project/environment, database fingerprint, repository/deployed
+SHA, migration history/checksums and current source manifest before applying
+only 0027. Assignment backfill and public-read enablement are separate later
+steps. See the [PLACEMENT-MEDIA-ASSIGNMENTS-01 release record](Placement-Media-Assignments-01-Release-Record-2026-09-04.md).
+
 ## Production Better Auth 1.7 sequence — applied
 
 **DETECTED / APPLIED:** `0021_partner_ops_work_bridge_01` and

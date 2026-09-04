@@ -263,7 +263,7 @@ export class PublicComparisonService {
     });
     const candidates: PublicComparisonCandidate[] = all.map(({ casino, disposition }): PublicComparisonCandidate => {
       const state = marketState(casino, query.country);
-      return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
+      return { dataClassification: "PUBLISHED_RECORD", disposition, slug: casino.slug, name: casino.name, logo: casino.media.placements?.CASINO_COMPARE?.asset ?? casino.media.logo, editorScore: casino.editorScore, marketState: state, marketLabel: marketLabel(state, query.country) };
     }).sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name, "en", { sensitivity: "base" }) || a.slug.localeCompare(b.slug));
 
     const selected = query.selectionMode === "default" ? defaultCandidates(all) : query.casinos.flatMap((slug) => {
@@ -287,7 +287,7 @@ export class PublicComparisonService {
         slug: casino.slug,
         name: casino.name,
         summary: casino.summary,
-        logo: casino.media.logo,
+        logo: casino.media.placements?.CASINO_COMPARE?.asset ?? casino.media.logo,
         editorScore: casino.editorScore,
         publishedAt: casino.publishedAt,
         lastReviewedAt: casino.lastReviewedAt,

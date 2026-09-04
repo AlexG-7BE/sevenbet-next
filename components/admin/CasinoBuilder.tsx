@@ -11,6 +11,7 @@ import { CountryEditor, LicenseEditor } from "@/components/admin/casino-editors/
 import { EditorField } from "@/components/admin/casino-editors/EditorFields";
 import { GeneralEditor, SeoEditor } from "@/components/admin/casino-editors/GeneralSeoEditors";
 import { MediaManager } from "@/components/admin/media/MediaManager";
+import { PlacementMediaEditor } from "@/components/admin/media/PlacementMediaEditor";
 import { CasinoAffiliatePanel } from "@/components/admin/affiliate/AffiliateAdmin";
 import { EditorialReviewBuilder } from "@/components/admin/EditorialReviewBuilder";
 import { casinoBuilderSections } from "@/lib/casino-builder/sections";
@@ -217,7 +218,9 @@ export function CasinoSaveBar({
 
 function MediaSection({ casinoId }: { casinoId: string }) {
   return (
-    <CasinoSectionLayout title="Media" description="Logo, hero and screenshot assets.">
+    <CasinoSectionLayout title="Media" description="Semantic public placements and the reusable controlled asset library.">
+      <PlacementMediaEditor casinoId={casinoId} subjectId={casinoId} subjectType="CASINO" />
+      <div className="placementMediaLibraryHeading"><h3>Reusable asset library</h3><p className="muted">Archiving and deletion are separate from placement assignment. Referenced assets cannot be permanently deleted.</p></div>
       <MediaManager casinoId={casinoId} />
     </CasinoSectionLayout>
   );

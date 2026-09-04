@@ -1,4 +1,5 @@
-import type { PublicCasinoAffiliate, PublicCasinoMedia } from "@/lib/public-casino/public-casino.types";
+import type { CasinoMediaPlacementName, OfferMediaPlacementName } from "@/lib/media/placement-media";
+import type { PublicCasinoAffiliate, PublicCasinoMedia, PublicPlacementMedia } from "@/lib/public-casino/public-casino.types";
 
 export type PublicOfferAvailability = "AVAILABLE" | "UNAVAILABLE";
 export type PublicOfferSort = "editorial" | "newest" | "highest-bonus" | "lowest-wagering" | "lowest-deposit";
@@ -15,6 +16,7 @@ export interface PublicOfferDTO {
     summary: string;
     logo: PublicCasinoMedia | null;
     hero: PublicCasinoMedia | null;
+    placementMedia?: Partial<Record<CasinoMediaPlacementName, PublicPlacementMedia>>;
     editorScore: number;
     featured: boolean;
     recommended: boolean;
@@ -52,6 +54,7 @@ export interface PublicOfferDTO {
     importantConditions: string[];
     startsAt: string | null;
     expiresAt: string | null;
+    media?: Partial<Record<OfferMediaPlacementName, PublicPlacementMedia>>;
   };
   action: PublicCasinoAffiliate;
   commercialAvailability: PublicOfferAvailability;

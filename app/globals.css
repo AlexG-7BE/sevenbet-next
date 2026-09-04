@@ -2699,13 +2699,51 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .mediaSelectorGrid button.selected { border-color: var(--emerald); box-shadow: 0 0 0 2px rgba(0, 226, 138, .16); }
 .mediaSelectorGrid img { aspect-ratio: 16 / 9; border-radius: 6px; background: var(--card-soft); }
 .mediaSelectorGrid span { overflow-wrap: anywhere; font-size: .78rem; }
+.placementMediaEditor { display:grid; gap:20px; margin-bottom:32px; }
+.placementMediaToolbar { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.55fr) minmax(220px,.45fr); gap:16px; align-items:start; padding:18px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+.placementMediaToolbar p { margin:5px 0 0; }
+.placementMediaToolbar label,.placementMediaControls label,.placementMediaUpload label { display:grid; gap:6px; color:var(--muted); font-size:.82rem; font-weight:700; }
+.placementMediaToolbar details summary,.placementMediaUpload summary { min-height:40px; cursor:pointer; color:var(--text); font-weight:750; }
+.placementMediaToolbar details label { margin-top:10px; }
+.placementMediaGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.placementMediaSlot { min-width:0; display:grid; align-content:start; gap:16px; }
+.placementMediaSlotHeader { display:grid; grid-template-columns:minmax(0,1fr) 150px; gap:18px; align-items:start; }
+.placementMediaSlotHeader h3 { margin:10px 0 5px; }
+.placementMediaSlotHeader p { margin:0; }
+.placementMediaPreviewStack { width:150px; display:grid; gap:8px; }
+.placementMediaPreviewStack figure { margin:0; }
+.placementMediaPreviewStack img,.placementMediaCodeFallback { width:150px; height:112px; display:grid; place-items:center; object-fit:contain; border:1px solid var(--border); border-radius:10px; background:var(--card-soft); }
+.placementMediaPreviewStack figure[data-media-mode="COVER"] img { object-fit:cover; }
+.placementMediaPreviewStack figure[data-media-mode="COMPOSED"] img { padding:14px; background:#171616; }
+.placementMediaPreviewStack figcaption { margin-top:4px; color:var(--muted); font-size:.7rem; }
+.placementMediaCodeFallback { color:var(--muted); font-size:.75rem; font-weight:850; letter-spacing:.1em; }
+.placementMediaFacts { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 16px; }
+.placementMediaFacts > div { min-width:0; padding:8px 0; border-top:1px solid var(--border); }
+.placementMediaFacts dt { color:var(--muted); font-size:.72rem; font-weight:700; text-transform:uppercase; }
+.placementMediaFacts dd { margin:3px 0 0; overflow-wrap:anywhere; font-size:.84rem; }
+.placementMediaControls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.placementMediaControls label:first-child,.placementMediaControls label:nth-child(3) { grid-column:1 / -1; }
+.placementMediaActions { display:flex; flex-wrap:wrap; gap:8px; }
+.placementMediaUpload { border-top:1px solid var(--border); padding-top:10px; }
+.placementMediaUpload form { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; }
+.placementMediaLibraryHeading { margin:8px 0 18px; padding-top:26px; border-top:1px solid var(--border); }
+.placementMediaLibraryHeading h3,.placementMediaLibraryHeading p { margin:0; }
+.placementMediaLibraryHeading p { margin-top:5px; }
 .affiliateMediaGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .casinoPreviewLogo { width: min(220px, 60%); max-height: 90px; object-fit: contain; object-position: left center; margin-bottom: 20px; }
 .casinoPreviewMediaHero { margin: 0 0 48px; }
-.casinoPreviewMediaHero img { width: 100%; max-height: 520px; object-fit: cover; border-radius: 16px; border: 1px solid var(--border); }
+.casinoPreviewMediaHero img { width: 100%; max-height: 520px; object-fit: contain; border-radius: 16px; border: 1px solid var(--border); background:var(--card-soft); }
+.casinoPreviewMediaHero[data-media-mode="COVER"] img { height:520px; object-fit:cover; }
+.casinoPreviewMediaHero[data-media-mode="COMPOSED"] img { padding:clamp(24px,5vw,72px); background:#171616; }
 .casinoPreviewMediaHero figcaption, .casinoPreviewMedia figcaption { margin-top: 8px; color: var(--muted); font-size: .85rem; }
 .casinoPreviewMedia { margin-bottom: 48px; }
 .casinoPreviewMediaGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.casinoPreviewPlacementGrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
+.casinoPreviewPlacementGrid .card { min-width:0; display:grid; align-content:start; gap:10px; }
+.casinoPreviewPlacementGrid img { width:100%; aspect-ratio:4/3; object-fit:contain; border-radius:8px; background:var(--card-soft); }
+.casinoPreviewPlacementGrid .card[data-media-mode="COVER"] img { object-fit:cover; }
+.casinoPreviewPlacementGrid .card[data-media-mode="COMPOSED"] img { padding:18px; background:#171616; }
+.casinoPreviewPlacementList { display:grid; gap:6px; margin-top:10px; font-size:.8rem; }
 .casinoPreviewMediaGrid figure { margin: 0; }
 .casinoPreviewMediaGrid img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 10px; border: 1px solid var(--border); }
 .casinoPreviewBonusMedia, .casinoPreviewSocialMedia { width: 100%; aspect-ratio: 16 / 9; object-fit: contain; border-radius: 8px; margin-bottom: 14px; background: var(--card-soft); }
@@ -2718,7 +2756,12 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .casinoPublicGallery figcaption { margin-top: 8px; color: var(--muted); font-size: .85rem; }
 
 @media (max-width: 760px) {
-  .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid, .casinoPublicGallery { grid-template-columns: 1fr; }
+  .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid, .casinoPreviewPlacementGrid, .casinoPublicGallery { grid-template-columns: 1fr; }
+  .placementMediaToolbar,.placementMediaGrid,.placementMediaSlotHeader,.placementMediaControls,.placementMediaUpload form { grid-template-columns:1fr; }
+  .placementMediaControls label:first-child,.placementMediaControls label:nth-child(3) { grid-column:auto; }
+  .placementMediaPreviewStack,.placementMediaPreviewStack img,.placementMediaCodeFallback { width:100%; }
+  .placementMediaPreviewStack img,.placementMediaCodeFallback { height:auto; min-height:160px; }
+  .placementMediaFacts { grid-template-columns:1fr; }
   .mediaToolbar { align-items: stretch; flex-direction: column; }
   .mediaSelectorUpload { grid-template-columns: 1fr; }
   .mediaSelectorGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
