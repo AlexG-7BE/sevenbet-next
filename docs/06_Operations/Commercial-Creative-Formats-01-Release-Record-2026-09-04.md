@@ -10,7 +10,7 @@ acceptance pending
 
 **Branch:** `codex/commercial-creative-formats-01`
 
-**Pull request:** **UNKNOWN — branch not yet published at this checkpoint**
+**Pull request:** [#150](https://github.com/AlexG-7BE/sevenbet-next/pull/150)
 
 **Accepted head:** **UNKNOWN — exact PR head pending**
 
@@ -200,7 +200,7 @@ Release must remain **HOLD** if exact-head Preview or Production fails either:
 
 ## Pending release evidence
 
-- **UNKNOWN:** exact PR number, accepted head and required GitHub checks.
+- **UNKNOWN:** exact accepted PR head and required GitHub checks.
 - **UNKNOWN:** Ready exact-head Vercel Preview and responsive/interactive
   acceptance against real governed inventory.
 - **UNKNOWN:** merge SHA and exact-merge CI.
