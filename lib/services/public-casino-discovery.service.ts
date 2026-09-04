@@ -3,8 +3,9 @@ import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 import { normalizeDiscoverySearch } from "@/lib/public-casino-discovery/query";
 import type {
   CasinoDiscoveryFacetValue, CasinoDiscoveryFacets, CasinoDiscoveryQuery, CasinoDiscoveryResult,
-  DiscoveryContext, PublicCasinoCardDto, PublicCasinoDiscoveryStore, PublicVisitAction,
+  DiscoveryContext, PublicCasinoCardDto, PublicCasinoDiscoveryStore, PublicMediaDto, PublicVisitAction,
 } from "@/lib/public-casino-discovery/public-casino-discovery.types";
+import type { PublicCasinoMedia, PublicPlacementMedia } from "@/lib/public-casino/public-casino.types";
 import { publicCasinoDiscoveryRepository } from "@/lib/repositories/public-casino-discovery.repository";
 import { jurisdictionAllowsReferral, type CommercialJurisdictionAuthority } from "@/lib/jurisdiction/commercial-authority";
 import type { GbOperatorEligibilityDecision } from "@/lib/jurisdiction/gb-operator-eligibility";
@@ -27,6 +28,29 @@ function object(value: unknown): Record<string, unknown> {
 function text(value: unknown) { return typeof value === "string" ? value.trim() : ""; }
 function bool(value: unknown) { return value === true; }
 function key(value: string) { return normalizeDiscoverySearch(value).replace(/\s+/g, "-"); }
+
+function publicMediaDto(media: PublicCasinoMedia | null, fallbackAlt: string, placement?: PublicPlacementMedia): PublicMediaDto | null {
+  if (!media) return null;
+  const mapAsset = (asset: PublicCasinoMedia) => ({
+    url: asset.url,
+    alt: asset.alt || fallbackAlt,
+    width: asset.width,
+    height: asset.height,
+  });
+  return {
+    ...mapAsset(media),
+    ...(placement ? {
+      renderingMode: placement.renderingMode,
+      source: placement.source,
+      focalPoint: placement.focalPoint,
+    } : {}),
+    ...(media.variants ? {
+      variants: Object.fromEntries(Object.entries(media.variants).flatMap(([variant, asset]) =>
+        asset ? [[variant, mapAsset(asset)]] : [],
+      )),
+    } : {}),
+  };
+}
 
 export function resolvePublicVisitAction(
   context: DiscoveryContext,
@@ -170,6 +194,12 @@ export class PublicCasinoDiscoveryService {
         ? visit
         : { available: false, redirectSlug: null, label: "Visit casino", reasonCode: decision.reasonCode } satisfies PublicVisitAction;
       const marketCountry = exactProfile?.countryCode ?? requestCountryContext ?? "UNKNOWN";
+      const directoryPlacement = scoped.media.placements?.CASINO_DIRECTORY_CARD;
+      const directoryMedia = directoryPlacement?.asset ?? scoped.media.logo;
+      const directoryMediaDto = publicMediaDto(directoryMedia, `${scoped.name} directory media`, directoryPlacement);
+      const logoPlacement = scoped.media.placements?.CASINO_LOGO;
+      const logoMedia = logoPlacement?.asset ?? scoped.media.logo;
+      const logoMediaDto = publicMediaDto(logoMedia, `${scoped.name} logo`, logoPlacement);
       const card: PublicCasinoCardDto = {
         id: scoped.id,
         dataClassification: "PUBLISHED_RECORD",
@@ -177,8 +207,8 @@ export class PublicCasinoDiscoveryService {
         name: scoped.name,
         disposition: decision.disposition,
         dispositionReason: decision.reasonCode,
-        logo: scoped.media.logo ? { url: scoped.media.logo.url, alt: scoped.media.logo.alt || `${scoped.name} logo`, width: scoped.media.logo.width, height: scoped.media.logo.height } : null,
-        hero: scoped.media.hero ? { url: scoped.media.hero.url, alt: scoped.media.hero.alt || `${scoped.name} controlled media`, width: scoped.media.hero.width, height: scoped.media.hero.height } : null,
+        logo: logoMediaDto,
+        hero: directoryMediaDto,
         shortDescription: scoped.summary || null,
         rating: scoped.editorScore ?? null,
         reviewCount: null,

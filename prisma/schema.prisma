@@ -70,6 +70,31 @@ enum MediaAssetStatus {
   STORAGE_DELETE_FAILED
 }
 
+enum MediaPlacement {
+  CASINO_LOGO
+  CASINO_DIRECTORY_CARD
+  CASINO_DETAIL_HERO
+  CASINO_COMPARE
+  BONUS_LISTING_CARD
+  BEST_OFFER_FEATURED
+  BEST_OFFER_SECONDARY
+  CASINO_OFFER_BLOCK
+  OFFER_DETAIL
+}
+
+enum MediaPlacementVariant {
+  DEFAULT
+  DESKTOP
+  MOBILE
+}
+
+enum MediaRenderingMode {
+  AUTO
+  COVER
+  CONTAIN
+  COMPOSED
+}
+
 enum CasinoCountryAvailability {
   AVAILABLE
   RESTRICTED
@@ -1437,6 +1462,7 @@ model Casino {
   revisions               CasinoRevision[]
   images                  CasinoImage[]
   mediaAssets             MediaAsset[]
+  mediaAssignments        CasinoMediaAssignment[]
   countries               CasinoCountry[]
   licenses                CasinoLicense[]
   paymentMethods          CasinoPaymentMethod[]
@@ -1837,12 +1863,13 @@ model CasinoBonus {
   createdBy             String
   updatedBy             String
 
-  casino          Casino                  @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  marketProfile   CasinoCountry?          @relation(fields: [casinoCountryId, casinoId], references: [id, casinoId], onDelete: Cascade, onUpdate: Cascade)
-  affiliateLinks  CasinoAffiliateLink[]
-  affiliateOffers AffiliateOffer[]
-  redirectSlugs   AffiliateRedirectSlug[]
-  mediaAssets     MediaAsset[]
+  casino           Casino                       @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  marketProfile    CasinoCountry?               @relation(fields: [casinoCountryId, casinoId], references: [id, casinoId], onDelete: Cascade, onUpdate: Cascade)
+  affiliateLinks   CasinoAffiliateLink[]
+  affiliateOffers  AffiliateOffer[]
+  redirectSlugs    AffiliateRedirectSlug[]
+  mediaAssets      MediaAsset[]
+  mediaAssignments CasinoBonusMediaAssignment[]
 
   @@index([casinoId, status, offerStatus])
   @@index([casinoId, sortOrder])
@@ -1994,15 +2021,16 @@ model AffiliateOffer {
   createdBy              String
   updatedBy              String
 
-  program            AffiliateProgram              @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casino             Casino                        @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  casinoBonus        CasinoBonus?                  @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  program            AffiliateProgram                @relation(fields: [programId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casino             Casino                          @relation(fields: [casinoId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus        CasinoBonus?                    @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
   countries          AffiliateOfferCountry[]
   currencies         AffiliateOfferCurrency[]
   trackingLinks      AffiliateTrackingLink[]
   revisions          AffiliateOfferRevision[]
   redirectSlugs      AffiliateRedirectSlug[]
   mediaAssets        MediaAsset[]
+  mediaAssignments   AffiliateOfferMediaAssignment[]
   outboundClickDaily AffiliateOutboundClickDaily[]
 
   @@unique([programId, externalOfferId])
@@ -2712,10 +2740,13 @@ model MediaAsset {
   casinoBonusId    String?              @db.Uuid
   affiliateOfferId String?              @db.Uuid
 
-  casino         Casino?         @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  marketProfile  CasinoCountry?  @relation(fields: [casinoCountryId, casinoId], references: [id, casinoId], onDelete: Restrict, onUpdate: Cascade)
-  casinoBonus    CasinoBonus?    @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
-  affiliateOffer AffiliateOffer? @relation(fields: [affiliateOfferId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casino                         Casino?                         @relation(fields: [casinoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  marketProfile                  CasinoCountry?                  @relation(fields: [casinoCountryId, casinoId], references: [id, casinoId], onDelete: Restrict, onUpdate: Cascade)
+  casinoBonus                    CasinoBonus?                    @relation(fields: [casinoBonusId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  affiliateOffer                 AffiliateOffer?                 @relation(fields: [affiliateOfferId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  casinoMediaAssignments         CasinoMediaAssignment[]
+  casinoBonusMediaAssignments    CasinoBonusMediaAssignment[]
+  affiliateOfferMediaAssignments AffiliateOfferMediaAssignment[]
 
   @@index([casinoId, type, status, sortOrder])
   @@index([casinoCountryId, type, status, sortOrder])
@@ -2723,6 +2754,84 @@ model MediaAsset {
   @@index([affiliateOfferId, type, status])
   @@index([checksum])
   @@index([status, updatedAt])
+}
+
+model CasinoMediaAssignment {
+  id              String                @id @default(uuid()) @db.Uuid
+  casinoId        String                @db.Uuid
+  mediaAssetId    String                @db.Uuid
+  placement       MediaPlacement
+  variant         MediaPlacementVariant @default(DEFAULT)
+  renderingMode   MediaRenderingMode    @default(AUTO)
+  sortOrder       Int                   @default(0)
+  active          Boolean               @default(true)
+  cropSafe        Boolean               @default(false)
+  altTextOverride String?
+  focalPointX     Decimal?              @db.Decimal(5, 4)
+  focalPointY     Decimal?              @db.Decimal(5, 4)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  reference       String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  casino     Casino     @relation(fields: [casinoId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([casinoId, placement, variant, active, sortOrder, id], map: "CasinoMediaAssignment_subject_resolver_idx")
+  @@index([mediaAssetId])
+}
+
+model CasinoBonusMediaAssignment {
+  id              String                @id @default(uuid()) @db.Uuid
+  casinoBonusId   String                @db.Uuid
+  mediaAssetId    String                @db.Uuid
+  placement       MediaPlacement
+  variant         MediaPlacementVariant @default(DEFAULT)
+  renderingMode   MediaRenderingMode    @default(AUTO)
+  sortOrder       Int                   @default(0)
+  active          Boolean               @default(true)
+  cropSafe        Boolean               @default(false)
+  altTextOverride String?
+  focalPointX     Decimal?              @db.Decimal(5, 4)
+  focalPointY     Decimal?              @db.Decimal(5, 4)
+  validFrom       DateTime?
+  validUntil      DateTime?
+  reference       String?
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  casinoBonus CasinoBonus @relation(fields: [casinoBonusId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAsset  MediaAsset  @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([casinoBonusId, placement, variant, active, sortOrder, id], map: "CasinoBonusMediaAssignment_subject_resolver_idx")
+  @@index([mediaAssetId])
+}
+
+model AffiliateOfferMediaAssignment {
+  id               String                @id @default(uuid()) @db.Uuid
+  affiliateOfferId String                @db.Uuid
+  mediaAssetId     String                @db.Uuid
+  placement        MediaPlacement
+  variant          MediaPlacementVariant @default(DEFAULT)
+  renderingMode    MediaRenderingMode    @default(AUTO)
+  sortOrder        Int                   @default(0)
+  active           Boolean               @default(true)
+  cropSafe         Boolean               @default(false)
+  altTextOverride  String?
+  focalPointX      Decimal?              @db.Decimal(5, 4)
+  focalPointY      Decimal?              @db.Decimal(5, 4)
+  validFrom        DateTime?
+  validUntil       DateTime?
+  reference        String?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+
+  affiliateOffer AffiliateOffer @relation(fields: [affiliateOfferId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAsset     MediaAsset     @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([affiliateOfferId, placement, variant, active, sortOrder, id], map: "AffiliateOfferMediaAssignment_subject_resolver_idx")
+  @@index([mediaAssetId])
 }
 
 model SiteSetting {

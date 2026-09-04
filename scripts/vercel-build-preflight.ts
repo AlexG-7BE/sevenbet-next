@@ -9,6 +9,11 @@ import {
 import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-admin-client";
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
 import { COMMERCIAL_PLATFORM_TARGET_MIGRATION, runCommercialPlatform0026Readiness } from "@/lib/db/commercial-platform-0026-release";
+import {
+  PLACEMENT_MEDIA_TARGET_MIGRATION,
+  planPlacementMedia0027Preflight,
+  runPlacementMedia0027Readiness,
+} from "@/lib/db/placement-media-0027-release";
 import { assertVercelDatabaseReadiness } from "@/lib/db/vercel-database-readiness";
 import { assertProgrammeReleaseRuntime } from "@/lib/programme/program-ai/release-runtime";
 
@@ -265,13 +270,14 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
   }
 
   const prisma = createCasinoMarket0025AdminClient();
+  let placementMediaState: ReturnType<typeof planPlacementMedia0027Preflight> | null = null;
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
@@ -289,7 +295,7 @@ async function maybeApplyProgrammeAccessMigration() {
       throw new Error(`Production migration guard requires completed ${TARGET_MIGRATION}; DB-first 0025 will not apply an older migration.`);
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
-    const expectedPending = applied.has(CASINO_MARKET_TARGET_MIGRATION) ? [] : [CASINO_MARKET_TARGET_MIGRATION];
+    const expectedPending = applied.has(PLACEMENT_MEDIA_TARGET_MIGRATION) ? [] : [PLACEMENT_MEDIA_TARGET_MIGRATION];
 
     if (
       pending.length !== expectedPending.length
@@ -303,7 +309,14 @@ async function maybeApplyProgrammeAccessMigration() {
     await assertProgrammeAccessPreMigrationInvariants(prisma);
     assertChecksum(completedByName.get(TARGET_MIGRATION), TARGET_MIGRATION);
     await assertProgrammeAccessPostMigrationInvariants(prisma);
+    assertChecksum(completedByName.get(CASINO_MARKET_TARGET_MIGRATION), CASINO_MARKET_TARGET_MIGRATION);
     assertChecksum(completedByName.get(COMMERCIAL_PLATFORM_TARGET_MIGRATION), COMMERCIAL_PLATFORM_TARGET_MIGRATION);
+    placementMediaState = planPlacementMedia0027Preflight({
+      rows,
+      repositoryMigrations,
+      assignmentFirstEnabled: process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED === "true",
+    });
+    writeEvent({ event: "production_placement_media_preflight", ...placementMediaState });
     writeEvent({
       event: "production_programme_access_migration",
       state: "baseline_verified_read_only",
@@ -313,10 +326,22 @@ async function maybeApplyProgrammeAccessMigration() {
     await prisma.$disconnect().catch(() => undefined);
   }
 
+  if (placementMediaState?.state === "schema_pending_legacy_reads") {
+    writeEvent({
+      event: "production_placement_media_staged_deploy",
+      migration: PLACEMENT_MEDIA_TARGET_MIGRATION,
+      assignmentFirstEnabled: false,
+      state: "legacy_reads_only_until_governed_migration",
+    });
+    return;
+  }
+
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
   const commercialPlatformReadiness = await runCommercialPlatform0026Readiness();
   writeEvent({ event: "production_commercial_platform_readiness", ...commercialPlatformReadiness });
+  const placementMediaReadiness = await runPlacementMedia0027Readiness();
+  writeEvent({ event: "production_placement_media_readiness", ...placementMediaReadiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {

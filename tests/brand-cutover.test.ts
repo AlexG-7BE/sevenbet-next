@@ -354,6 +354,10 @@ test("legacy compatibility identifiers and data architecture remain intact", () 
         "prisma/migrations/0026_commercial_platform_completion/migration.sql",
         "prisma/schema.prisma",
       ],
+      [
+        "prisma/migrations/0027_placement_media_assignments/migration.sql",
+        "prisma/schema.prisma",
+      ],
       ["prisma/schema.prisma"],
     ];
     assert.ok(approvedExactSchemaChangeSets.some(

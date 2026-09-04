@@ -1,4 +1,5 @@
 import type { PublishedCasinoSnapshotRecord } from "@/lib/public-casino/public-casino.types";
+import type { MediaPlacementVariantName, MediaRenderingModeName, PlacementMediaSource } from "@/lib/media/placement-media";
 import type { PublicCasinoDispositionReason, PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
 
 export type CasinoDiscoverySort = "FEATURED" | "RELEVANCE" | "NEWEST" | "NAME_ASC" | "NAME_DESC";
@@ -25,7 +26,16 @@ export interface CasinoDiscoveryQuery {
 }
 
 export interface PublicLabelDto { key: string; label: string }
-export interface PublicMediaDto { url: string; alt: string; width: number | null; height: number | null }
+export interface PublicMediaDto {
+  url: string;
+  alt: string;
+  width: number | null;
+  height: number | null;
+  variants?: Partial<Record<MediaPlacementVariantName, Omit<PublicMediaDto, "variants">>>;
+  renderingMode?: Exclude<MediaRenderingModeName, "AUTO">;
+  source?: PlacementMediaSource;
+  focalPoint?: { x: number; y: number } | null;
+}
 export interface PublicVisitAction { available: boolean; redirectSlug: string | null; label: string; reasonCode: string | null }
 export type PublicCasinoDataClassification = "DEMO_FIXTURE" | "LOCAL_PREVIEW_FIXTURE" | "PUBLISHED_RECORD";
 export type PublicCasinoInventoryMode = "DEMO_ONLY" | "MIXED" | "PUBLISHED_ONLY";

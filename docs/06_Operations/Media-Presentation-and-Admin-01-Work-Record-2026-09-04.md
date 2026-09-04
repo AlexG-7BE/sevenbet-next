@@ -208,17 +208,22 @@ that migration `0009_media_manager` was not applied by that phase. The current
 schema, routes, Admin components and live rows prove the Media Manager model is
 now present. The phase-history statement is not current deployment evidence.
 
-## Future placement-based architecture
+## Successor placement-based architecture
 
-The detailed, non-authoritative proposal is
+The original non-authoritative proposal was
 [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md).
-It recommends typed assignment tables (Option C), a shared deterministic
-resolver, semantic placements, `DEFAULT`/`DESKTOP`/`MOBILE` variants,
-`AUTO`/`COVER`/`CONTAIN`/`COMPOSED`, Admin slots, aspect targets and a
-non-destructive compatibility/backfill plan.
+At the time of this audit it correctly remained `PROPOSED`; no placement schema,
+migration, backfill or Admin slot implementation was included in
+MEDIA-PRESENTATION-AND-ADMIN-01.
 
-**PROPOSED — AWAITING FOUNDER DECISION:** no placement schema, migration,
-backfill or Admin slot implementation is included in MEDIA-PRESENTATION-AND-ADMIN-01.
+**DETECTED SUCCESSOR DECISION, 4 September 2026:** the later explicit Founder
+instruction `PLACEMENT-MEDIA-ASSIGNMENTS-01` approved RFC-040 Option C. RFC-040
+is now `ACTIVE`, and the successor release implements typed assignment tables,
+one deterministic resolver, semantic placements,
+`DEFAULT`/`DESKTOP`/`MOBILE`, `AUTO`/`COVER`/`CONTAIN`/`COMPOSED`, Admin slots,
+immutable publication projection and non-destructive compatibility/backfill.
+This does not rewrite the historical audit findings above; it records their
+approved successor. See the [PLACEMENT-MEDIA-ASSIGNMENTS-01 release record](Placement-Media-Assignments-01-Release-Record-2026-09-04.md).
 
 ## Verification and release evidence
 
@@ -285,4 +290,5 @@ regression and are not evidence of the corrected curated cardinality):
 
 - MEDIA-PRESENTATION-AND-ADMIN-01 hotfix: **COMPLETE — Production verified**
 - Current Admin audit: **COMPLETE**
-- Placement-based media architecture: **PROPOSED — AWAITING FOUNDER DECISION**
+- Placement-based media architecture: **APPROVED / ACTIVE — successor release
+  tracked in PLACEMENT-MEDIA-ASSIGNMENTS-01**

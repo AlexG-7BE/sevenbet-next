@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui";
-import { MediaSelector } from "@/components/admin/media/MediaSelector";
+import { PlacementMediaEditor } from "@/components/admin/media/PlacementMediaEditor";
 import {
   casinoBonusGeoModes,
   casinoBonusOfferStatuses,
@@ -138,7 +138,7 @@ export function BonusEditor({ casino, onChange }: { casino: CasinoBuilderCasino;
             </div>
 
             <div className="builderForm">
-              {mediaBonusId === record.id && <MediaSelector casinoBonusId={record.id} casinoId={casino.id} label="Bonus creative" type="BONUS_CREATIVE" />}
+              {mediaBonusId === record.id && <PlacementMediaEditor casinoId={casino.id} subjectId={record.id} subjectType="CASINO_BONUS" />}
               {expired && <p className="casinoEditorWarning">The configured expiry date is in the past.</p>}
               <div className="builderTwoCol">
                 <EditorField label="Internal name" value={record.internalName} onChange={(value) => update({ ...record, internalName: value })} />

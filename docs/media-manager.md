@@ -47,9 +47,44 @@ Ordering uses normalized increments of 1000 and falls back to `createdAt` and UU
 
 Archive is the default removal action. Physical delete requires an archived asset with no featured, bonus, affiliate, or SEO usage. Storage deletion failure retains the record as `STORAGE_DELETE_FAILED`. Upload, update, reorder, archive, restore, delete, link, and unlink actions use the real AdminUser UUID in `AuditLog`.
 
-## Migration rollout
+## Placement assignments — RFC-040 Option C
 
-Migration `0009_media_manager` is additive and is intentionally not applied by this phase.
+**DETECTED:** migration `0027_placement_media_assignments` adds
+`CasinoMediaAssignment`, `CasinoBonusMediaAssignment` and
+`AffiliateOfferMediaAssignment` while retaining every legacy `MediaAsset`
+owner field and selector. The typed tables reference reusable `MediaAsset`
+records with `ON DELETE RESTRICT`; removing an assignment never removes the
+asset. Permanent deletion checks all three assignment tables in addition to the
+legacy usage rules.
+
+**DETECTED:** the Casino editor exposes Logo, Casino directory, Casino detail
+hero and Compare slots. The CasinoBonus editor exposes Bonus listing, Best
+Offer featured, Best Offer secondary, Casino offer block and Offer detail. The
+existing AffiliateOffer editor exposes the same offer-placement set only for
+optional partner-specific creative. Each slot distinguishes explicit from
+fallback state, shows the effective asset and provenance, supports existing
+asset selection or upload, activation/deactivation, unassign, rendering mode,
+normalized focal point and optional `DESKTOP`/`MOBILE` overrides.
+
+**DETECTED:** Casino and CasinoBonus placement edits require the Casino draft
+lifecycle. Authenticated draft preview resolves the live draft relationships;
+publish copies assignments and referenced asset facts into an immutable
+`CasinoVersion.snapshot`. Public readers resolve only that snapshot. An active
+AffiliateOffer may manage optional partner-specific assignments under its own
+lifecycle, but current public editorial Bonus media does not require an
+AffiliateOffer, route, CTA or tracking destination.
+
+`PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED=true` selects assignment-first public
+projection. Any other or absent value selects the legacy logo/HERO path. This
+bounded compatibility switch is the primary rollback; migration 0027 and
+backfilled relationships may remain in place.
+
+## Historical migration 0009 rollout
+
+The following was the original phase-3.8 rollout plan. **DETECTED CURRENT
+STATE:** migration `0009_media_manager` is now present in the applied repository
+history; the old “not applied” phase statement is historical, not current
+deployment evidence.
 
 1. Review the SQL and back up production.
 2. Configure production storage and test it outside the application.

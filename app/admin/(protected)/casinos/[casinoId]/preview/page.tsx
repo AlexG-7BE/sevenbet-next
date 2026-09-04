@@ -6,28 +6,47 @@ import { AdminPermissionDenied } from "@/components/admin/AdminPermissionDenied"
 import { Badge, Card, Container } from "@/components/ui";
 import { getAdminPageAccess } from "@/lib/auth/admin";
 import { loadCasinoBuilderData } from "@/lib/casino-builder/server";
-import { mediaService } from "@/lib/services";
+import { casinoMediaPlacements, isMediaPlacementVariant, offerMediaPlacements } from "@/lib/media/placement-media";
+import { mediaAssignmentService, mediaService } from "@/lib/services";
 
 export const metadata: Metadata = {
   title: "Draft Casino Preview | B4GAMBLE CMS",
   robots: { index: false, follow: false },
 };
 
-export default async function CasinoPreviewPage({ params }: { params: Promise<{ casinoId: string }> }) {
+function mediaUrl(asset: { publicUrl?: string | null; url?: string | null }) {
+  return asset.publicUrl || asset.url || "";
+}
+
+export default async function CasinoPreviewPage({ params, searchParams }: { params: Promise<{ casinoId: string }>; searchParams: Promise<{ variant?: string }> }) {
   if (!await getAdminPageAccess(await headers(), "casinos")) return <AdminPermissionDenied />;
   const { casinoId } = await params;
-  const [{ casino, validation }, mediaResult] = await Promise.all([
+  const [{ casino, validation }, mediaResult, placementSchemaReady] = await Promise.all([
     loadCasinoBuilderData(casinoId),
     mediaService.list({ casinoId, includeArchived: false, take: 200 }),
+    mediaAssignmentService.schemaReady(),
   ]);
   const blockers = validation.issues.filter((issue) => issue.severity === "error");
   const activeBonuses = casino.casinoBonuses.filter((bonus) => bonus.offerStatus === "ACTIVE");
+  const requestedVariantInput = (await searchParams).variant || "DEFAULT";
+  const requestedVariant = isMediaPlacementVariant(requestedVariantInput) ? requestedVariantInput : "DEFAULT";
+  const [casinoPlacements, bonusPlacementEntries] = placementSchemaReady
+    ? await Promise.all([
+      mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO", subjectId: casinoId, requestedVariant }),
+      Promise.all(activeBonuses.map(async (bonus) => [bonus.id, await mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO_BONUS", subjectId: bonus.id, requestedVariant })] as const)),
+    ])
+    : [null, []] as const;
+  const bonusPlacements = new Map(bonusPlacementEntries);
   const media = mediaResult.records;
-  const logo = media.find((asset) => asset.type === "LOGO" && asset.featured) || media.find((asset) => asset.type === "LOGO");
-  const hero = media.find((asset) => asset.type === "HERO" && asset.featured) || media.find((asset) => asset.type === "HERO");
+  const legacyLogo = media.find((asset) => asset.type === "LOGO" && asset.featured) || media.find((asset) => asset.type === "LOGO");
+  const legacyHero = media.find((asset) => asset.type === "HERO" && asset.featured) || media.find((asset) => asset.type === "HERO");
+  const logo = casinoPlacements?.resolved.CASINO_LOGO.asset ?? legacyLogo;
+  const hero = casinoPlacements?.resolved.CASINO_DETAIL_HERO.asset ?? legacyHero;
   const socialImage = media.find((asset) => asset.type === "SOCIAL_IMAGE" && asset.featured);
   const gallery = media.filter((asset) => asset.type === "GALLERY" || asset.type === "SCREENSHOT");
-  const bonusCreative = (bonusId: string) => media.find((asset) => asset.type === "BONUS_CREATIVE" && asset.casinoBonusId === bonusId && asset.featured);
+  const bonusCreative = (bonusId: string) => bonusPlacements.get(bonusId)?.resolved.BONUS_LISTING_CARD.asset
+    ?? media.find((asset) => asset.type === "BONUS_CREATIVE" && asset.casinoBonusId === bonusId && asset.featured)
+    ?? null;
 
   return (
     <div className="adminPreview casinoDraftPreview">
@@ -41,7 +60,7 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
       <Container>
         <header className="casinoPreviewHero">
           <div>
-            {logo && <img className="casinoPreviewLogo" alt={logo.altText} height={logo.height || 90} src={logo.publicUrl} width={logo.width || 220} />}
+            {logo && <img className="casinoPreviewLogo" alt={casinoPlacements?.resolved.CASINO_LOGO.effectiveAlt ?? logo.altText ?? ""} height={logo.height || 90} src={mediaUrl(logo)} width={logo.width || 220} />}
             <p className="eyebrow">Editorial casino preview</p>
             <h1>{casino.title}</h1>
             <p className="lead">{casino.summary || "No editorial summary has been added yet."}</p>
@@ -58,7 +77,9 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
           </Card>
         </header>
 
-        {hero && <figure className="casinoPreviewMediaHero"><img alt={hero.altText} height={hero.height || 520} src={hero.publicUrl} width={hero.width || 1200} />{hero.caption && <figcaption>{hero.caption}</figcaption>}</figure>}
+        {hero && <figure className="casinoPreviewMediaHero" data-media-mode={casinoPlacements?.resolved.CASINO_DETAIL_HERO.renderingMode ?? "CONTAIN"}><img alt={casinoPlacements?.resolved.CASINO_DETAIL_HERO.effectiveAlt ?? hero.altText ?? ""} height={hero.height || 520} src={mediaUrl(hero)} style={{ objectPosition: casinoPlacements?.resolved.CASINO_DETAIL_HERO.focalPoint ? `${casinoPlacements.resolved.CASINO_DETAIL_HERO.focalPoint.x * 100}% ${casinoPlacements.resolved.CASINO_DETAIL_HERO.focalPoint.y * 100}%` : "center" }} width={hero.width || 1200} />{hero.caption && <figcaption>{hero.caption}</figcaption>}</figure>}
+
+        {casinoPlacements ? <section className="casinoPreviewMedia" aria-labelledby="draft-placement-title"><div><p className="eyebrow">Draft assignment projection · {requestedVariant}</p><h2 id="draft-placement-title">Casino placement previews</h2></div><div className="casinoPreviewPlacementGrid">{casinoMediaPlacements.map((placement) => { const resolved = casinoPlacements.resolved[placement]; return <Card data-media-mode={resolved.renderingMode} key={placement}><div className="badgeCluster"><Badge tone={resolved.fallback ? "warning" : "green"}>{resolved.fallback ? "FALLBACK" : "EXPLICIT"}</Badge><Badge>{resolved.renderingMode}</Badge></div><h3>{placement.replaceAll("_", " ")}</h3>{resolved.asset ? <img alt={resolved.effectiveAlt} height={resolved.asset.height || 360} loading="lazy" src={resolved.asset.publicUrl || resolved.asset.url || ""} style={{ objectPosition: resolved.focalPoint ? `${resolved.focalPoint.x * 100}% ${resolved.focalPoint.y * 100}%` : "center" }} width={resolved.asset.width || 640} /> : <div className="placementMediaCodeFallback">B4GAMBLE</div>}<p className="muted">{resolved.source.replaceAll("_", " ")} · {resolved.resolvedPlacement?.replaceAll("_", " ") || "code fallback"}</p></Card>; })}</div></section> : <Card><p className="muted">Semantic placement preview becomes available after migration 0027 is verified. Legacy draft media remains active during the staged deployment.</p></Card>}
 
         {gallery.length > 0 && <section className="casinoPreviewMedia" aria-labelledby="draft-media-title"><div><p className="eyebrow">Managed assets</p><h2 id="draft-media-title">Gallery and screenshots</h2></div><div className="casinoPreviewMediaGrid">{gallery.map((asset) => <figure key={asset.id}><img alt={asset.altText} height={asset.height || 400} loading="lazy" src={asset.publicUrl} width={asset.width || 640} />{asset.caption && <figcaption>{asset.caption}</figcaption>}</figure>)}</div></section>}
 
@@ -69,9 +90,10 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
           </div>
           {!activeBonuses.length && <Card><p className="muted">No active bonus offers are configured.</p></Card>}
           <div className="casinoPreviewGrid">
-            {activeBonuses.map((bonus) => (
-              <Card key={bonus.id}>
-                {bonusCreative(bonus.id) && <img className="casinoPreviewBonusMedia" alt={bonusCreative(bonus.id)!.altText} height={bonusCreative(bonus.id)!.height || 360} loading="lazy" src={bonusCreative(bonus.id)!.publicUrl} width={bonusCreative(bonus.id)!.width || 640} />}
+            {activeBonuses.map((bonus) => {
+              const creative = bonusCreative(bonus.id);
+              return <Card key={bonus.id}>
+                {creative && <img className="casinoPreviewBonusMedia" alt={bonusPlacements.get(bonus.id)?.resolved.BONUS_LISTING_CARD.effectiveAlt ?? creative.altText ?? ""} height={creative.height || 360} loading="lazy" src={mediaUrl(creative)} width={creative.width || 640} />}
                 <div className="badgeCluster">
                   <Badge>{bonus.type.replaceAll("_", " ")}</Badge>
                   {bonus.featured && <Badge tone="warning">Featured</Badge>}
@@ -95,8 +117,9 @@ export default async function CasinoPreviewPage({ params }: { params: Promise<{ 
                 </div>
                 <p>{bonus.shortTerms || "No short terms recorded."}</p>
                 {bonus.importantConditions.length > 0 && <p className="muted">{bonus.importantConditions.join(" · ")}</p>}
-              </Card>
-            ))}
+                {bonusPlacements.get(bonus.id) ? <details><summary>All semantic offer placements</summary><div className="casinoPreviewPlacementList">{offerMediaPlacements.map((placement) => { const resolved = bonusPlacements.get(bonus.id)!.resolved[placement]; return <span key={placement}><strong>{placement.replaceAll("_", " ")}</strong> · {resolved.fallback ? "FALLBACK" : "EXPLICIT"} · {resolved.source.replaceAll("_", " ")}</span>; })}</div></details> : null}
+              </Card>;
+            })}
           </div>
         </section>
 

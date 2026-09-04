@@ -263,14 +263,28 @@ export class MediaRepository {
   async usage(id: string) {
     const asset = await this.findById(id);
     if (!asset) return null;
-    const seoCount = asset.casinoId ? await prisma.casinoSeo.count({ where: { casinoId: asset.casinoId, socialImage: asset.publicUrl } }) : 0;
+    const [placementSchema] = await prisma.$queryRaw<Array<{ table_count: number }>>`
+      SELECT COUNT(*)::int AS table_count
+      FROM information_schema.tables
+      WHERE table_schema = current_schema()
+        AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+    `;
+    const placementSchemaReady = placementSchema?.table_count === 3;
+    const [seoCount, casinoAssignments, bonusAssignments, offerAssignments] = await Promise.all([
+      asset.casinoId ? prisma.casinoSeo.count({ where: { casinoId: asset.casinoId, socialImage: asset.publicUrl } }) : 0,
+      placementSchemaReady ? prisma.casinoMediaAssignment.count({ where: { mediaAssetId: id } }) : 0,
+      placementSchemaReady ? prisma.casinoBonusMediaAssignment.count({ where: { mediaAssetId: id } }) : 0,
+      placementSchemaReady ? prisma.affiliateOfferMediaAssignment.count({ where: { mediaAssetId: id } }) : 0,
+    ]);
+    const assignmentCount = casinoAssignments + bonusAssignments + offerAssignments;
     const reasons = [
       asset.featured ? "featured media" : null,
       asset.casinoBonusId ? "casino bonus creative" : null,
       asset.affiliateOfferId ? "affiliate offer creative" : null,
       seoCount ? "casino SEO social image" : null,
+      assignmentCount ? `${assignmentCount} placement assignment${assignmentCount === 1 ? "" : "s"}` : null,
     ].filter((value): value is string => Boolean(value));
-    return { asset, inUse: reasons.length > 0, reasons };
+    return { asset, inUse: reasons.length > 0, reasons, assignmentCount };
   }
 
   async markStorageDeleteFailed(id: string, actorId: string) {

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { ContextualCompareToggle } from "@/components/comparison-context/ContextualCompareToggle";
+import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import { formatProfileScore } from "@/lib/casino-profile/presentation";
 import { publicCasinoReviewHref } from "@/lib/public-casino/review-href";
 import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
@@ -56,15 +57,17 @@ function wagering(casino: PublicCasinoCardDto, messages: ProductPageMessages) {
 
 function RecommendationMedia({ casino, messages }: { casino: PublicCasinoCardDto; messages: ProductPageMessages }) {
   const ratio = classifyMediaRatio({ width: casino.hero?.width, height: casino.hero?.height });
+  const renderingMode = casino.hero?.renderingMode;
   const demonstration = casino.dataClassification !== "PUBLISHED_RECORD";
   const mediaAllowed = mayPresentPromotionalMedia({ demonstration, governedActionAvailable: hasGovernedVisitAction(casino) });
-  if (casino.hero && mediaAllowed && isFeaturedCardMediaCompatible(ratio)) {
-    return <div aria-label={`${casino.name} · ${messages.common.controlledMedia}`} className={styles.mediaFrame} data-media-ratio={ratio}>
-      <img
+  if (casino.hero && mediaAllowed && renderingMode !== "COMPOSED" && (renderingMode === "COVER" || isFeaturedCardMediaCompatible(ratio))) {
+    return <div aria-label={`${casino.name} · ${messages.common.controlledMedia}`} className={styles.mediaFrame} data-media-mode={renderingMode} data-media-ratio={ratio}>
+      <ResponsivePlacementImage
         alt={casino.hero.alt || casino.name}
         height={casino.hero.height ?? 900}
         loading="lazy"
-        src={casino.hero.url}
+        media={casino.hero}
+        style={{ objectPosition: casino.hero.focalPoint ? `${casino.hero.focalPoint.x * 100}% ${casino.hero.focalPoint.y * 100}%` : "center" }}
         width={casino.hero.width ?? 1600}
       />
     </div>;
@@ -101,7 +104,7 @@ export function CuratedCasinoShortlist({ casinos, messages, presentation }: { ca
               <div className={styles.recommendationContext}><span>{selectedLabel}</span><b>{String(index + 1).padStart(2, "0")} / {String(top.length).padStart(2, "0")}</b></div>
               {fixture ? <p className={styles.demoLabel}><strong>{messages.common.demoData}</strong> · {fixtureDisclosure}</p> : null}
               <div className={styles.cardHead}>
-                <div className={styles.mark}>{casino.logo ? <img alt="" height={casino.logo.height ?? 120} src={casino.logo.url} width={casino.logo.width ?? 240} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
+                <div className={styles.mark}>{casino.logo ? <ResponsivePlacementImage alt="" height={casino.logo.height ?? 120} media={casino.logo} width={casino.logo.width ?? 240} /> : <span aria-hidden="true">{casino.name.slice(0, 1)}</span>}</div>
                 <div className={styles.identity}><small>{messages.profile.operatorReview}</small><h2>{casino.name}</h2></div>
                 <div className={styles.score} aria-label={`${messages.common.editorScore} ${casino.rating === null ? messages.common.notListed : formatProfileScore(casino.rating, presentation.locale)} / 10`}><small>{messages.common.editorScore}</small><strong>{casino.rating === null ? "—" : formatProfileScore(casino.rating, presentation.locale)}<span>/10</span></strong></div>
               </div>

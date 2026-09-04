@@ -72,11 +72,11 @@ test("casino discovery and profile preserve touch, scroll, and document semantic
   assert.match(discovery, /\.readingGuide \.sectionIntro > p, \.compare p\s*\{\s*color: #4f4e48;\s*\}/);
 
   assert.match(profile, /<article className=\{styles\.page\} data-runtime-renderer="casino-review">/);
-  assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <img\s+alt=""/);
-  assert.match(discoveryCard, /casino\.logo \? <img alt=""/);
+  assert.match(offerMedia, /export function OperatorLogo[\s\S]*?offer\.casino\.logo \? <ResponsivePlacementImage\s+alt=""/);
+  assert.match(discoveryCard, /casino\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(bonusDirectory, /return offer\.casino\.logo \? <img\s+alt=""/);
-  assert.match(curated, /casino\.logo \? <img alt=""/);
-  assert.match(profile, /casino\.media\.logo \? <img alt=""/);
+  assert.match(curated, /casino\.logo \? <ResponsivePlacementImage alt=""/);
+  assert.match(profile, /casino\.media\.logo \? <ResponsivePlacementImage alt=""/);
   assert.match(profile, /<nav aria-label=\{messages\.profile\.currentReview\}/);
   assert.match(profile, /aria-label=\{hasEditorScore \? `\$\{messages\.common\.editorScore\} \$\{formattedEditorScore\} \/ 10` : `\$\{messages\.common\.editorScore\} \$\{messages\.common\.notListed\}`\}/);
   assert.match(profile, /\{hasEditorScore \? <span aria-hidden="true">★★★★★<\/span> : null\}/);

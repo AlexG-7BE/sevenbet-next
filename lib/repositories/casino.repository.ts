@@ -8,7 +8,17 @@ import {
 
 import { prisma } from "@/lib/db/prisma";
 
-const casinoAggregateInclude = {
+const mediaAssignmentInclude = {
+  include: { mediaAsset: true },
+  orderBy: [
+    { placement: Prisma.SortOrder.asc },
+    { variant: Prisma.SortOrder.asc },
+    { sortOrder: Prisma.SortOrder.asc },
+    { id: Prisma.SortOrder.asc },
+  ],
+};
+
+export const casinoAggregateInclude = {
   images: {
     orderBy: [{ kind: Prisma.SortOrder.asc }, { sortOrder: Prisma.SortOrder.asc }],
   },
@@ -85,6 +95,28 @@ const casinoAggregateInclude = {
   },
 } satisfies Prisma.CasinoInclude;
 
+export const casinoPlacementAggregateInclude = {
+  ...casinoAggregateInclude,
+  mediaAssignments: mediaAssignmentInclude,
+  countries: {
+    ...casinoAggregateInclude.countries,
+    include: {
+      ...casinoAggregateInclude.countries.include,
+      bonuses: {
+        ...casinoAggregateInclude.countries.include.bonuses,
+        include: { mediaAssignments: mediaAssignmentInclude },
+      },
+    },
+  },
+  casinoBonuses: {
+    ...casinoAggregateInclude.casinoBonuses,
+    include: {
+      ...casinoAggregateInclude.casinoBonuses.include,
+      mediaAssignments: mediaAssignmentInclude,
+    },
+  },
+} satisfies Prisma.CasinoInclude;
+
 const casinoListSelect = {
   id: true,
   slug: true,
@@ -103,6 +135,10 @@ const casinoListSelect = {
 
 export type CasinoAggregate = Prisma.CasinoGetPayload<{
   include: typeof casinoAggregateInclude;
+}>;
+
+export type CasinoPlacementAggregate = Prisma.CasinoGetPayload<{
+  include: typeof casinoPlacementAggregateInclude;
 }>;
 
 export type CasinoListItem = Prisma.CasinoGetPayload<{
@@ -179,6 +215,104 @@ function snapshot(value: unknown): Prisma.InputJsonValue {
   return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
 }
 
+function snapshotMediaAsset(asset: CasinoPlacementAggregate["mediaAssets"][number]) {
+  return {
+    id: asset.id,
+    type: asset.type,
+    publicUrl: asset.publicUrl,
+    originalFilename: asset.originalFilename,
+    mimeType: asset.mimeType,
+    altText: asset.altText,
+    title: asset.title,
+    caption: asset.caption,
+    credit: asset.credit,
+    width: asset.width,
+    height: asset.height,
+    sortOrder: asset.sortOrder,
+    featured: asset.featured,
+    status: asset.status,
+    archivedAt: asset.archivedAt,
+    checksum: asset.checksum,
+    createdAt: asset.createdAt,
+  };
+}
+
+type SnapshotAssignment = CasinoPlacementAggregate["mediaAssignments"][number]
+  | CasinoPlacementAggregate["casinoBonuses"][number]["mediaAssignments"][number]
+  | CasinoPlacementAggregate["countries"][number]["bonuses"][number]["mediaAssignments"][number];
+
+function snapshotMediaAssignment(assignment: SnapshotAssignment) {
+  return {
+    id: assignment.id,
+    mediaAssetId: assignment.mediaAssetId,
+    placement: assignment.placement,
+    variant: assignment.variant,
+    renderingMode: assignment.renderingMode,
+    sortOrder: assignment.sortOrder,
+    active: assignment.active,
+    cropSafe: assignment.cropSafe,
+    altTextOverride: assignment.altTextOverride,
+    focalPointX: assignment.focalPointX,
+    focalPointY: assignment.focalPointY,
+    validFrom: assignment.validFrom,
+    validUntil: assignment.validUntil,
+    reference: assignment.reference,
+    createdAt: assignment.createdAt,
+    updatedAt: assignment.updatedAt,
+    mediaAsset: snapshotMediaAsset(assignment.mediaAsset),
+  };
+}
+
+export function buildPublishedCasinoSnapshot(
+  current: CasinoPlacementAggregate,
+  input: { actorId: string; publishedAt: Date; versionNumber: number },
+) {
+  return snapshot({
+    ...current,
+    mediaAssets: current.mediaAssets.map(snapshotMediaAsset),
+    mediaAssignments: current.mediaAssignments.map(snapshotMediaAssignment),
+    countries: current.countries.map((country) => ({
+      ...country,
+      mediaAssets: country.mediaAssets.map(snapshotMediaAsset),
+      bonuses: country.bonuses.map((bonus) => ({
+        ...bonus,
+        mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
+      })),
+    })),
+    status: EditorialStatus.PUBLISHED,
+    casinoBonuses: current.casinoBonuses.map((bonus) => ({
+      ...bonus,
+      mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
+      status: EditorialStatus.PUBLISHED,
+    })),
+    publishedVersion: input.versionNumber,
+    publishedAt: input.publishedAt,
+    scheduledPublishAt: null,
+    updatedAt: input.publishedAt,
+    updatedBy: input.actorId,
+  });
+}
+
+function buildLegacyPublishedCasinoSnapshot(
+  current: CasinoAggregate,
+  input: { actorId: string; publishedAt: Date; versionNumber: number },
+) {
+  return snapshot({
+    ...current,
+    mediaAssets: current.mediaAssets.map(snapshotMediaAsset),
+    status: EditorialStatus.PUBLISHED,
+    casinoBonuses: current.casinoBonuses.map((bonus) => ({
+      ...bonus,
+      status: EditorialStatus.PUBLISHED,
+    })),
+    publishedVersion: input.versionNumber,
+    publishedAt: input.publishedAt,
+    scheduledPublishAt: null,
+    updatedAt: input.publishedAt,
+    updatedBy: input.actorId,
+  });
+}
+
 async function findAggregate(
   database: Prisma.TransactionClient,
   id: string,
@@ -187,6 +321,26 @@ async function findAggregate(
     where: { id },
     include: casinoAggregateInclude,
   });
+}
+
+async function findPlacementAggregate(
+  database: Prisma.TransactionClient,
+  id: string,
+): Promise<CasinoPlacementAggregate | null> {
+  return database.casino.findUnique({
+    where: { id },
+    include: casinoPlacementAggregateInclude,
+  });
+}
+
+async function placementMediaSchemaAvailable(database: Prisma.TransactionClient) {
+  const [result] = await database.$queryRaw<Array<{ table_count: number }>>`
+    SELECT COUNT(*)::int AS table_count
+    FROM information_schema.tables
+    WHERE table_schema = current_schema()
+      AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+  `;
+  return result?.table_count === 3;
 }
 
 async function createRevision(
@@ -421,39 +575,21 @@ export class CasinoRepository implements CasinoStore {
       const publishedAt = new Date();
       const versionNumber = current.draftVersion;
       await createRevision(tx, current, actorId, `Published version ${versionNumber}`);
+      const placementCurrent = await placementMediaSchemaAvailable(tx)
+        ? await findPlacementAggregate(tx, id)
+        : null;
+      if (placementCurrent && placementCurrent.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+        throw new Error("CASINO_EDIT_CONFLICT");
+      }
 
       const version = await tx.casinoVersion.create({
         data: {
           casinoId: id,
           version: versionNumber,
           status: EditorialStatus.PUBLISHED,
-          snapshot: snapshot({
-            ...current,
-            mediaAssets: current.mediaAssets.map((asset) => ({
-              id: asset.id,
-              type: asset.type,
-              publicUrl: asset.publicUrl,
-              altText: asset.altText,
-              title: asset.title,
-              caption: asset.caption,
-              credit: asset.credit,
-              width: asset.width,
-              height: asset.height,
-              sortOrder: asset.sortOrder,
-              featured: asset.featured,
-              status: asset.status,
-            })),
-            status: EditorialStatus.PUBLISHED,
-            casinoBonuses: current.casinoBonuses.map((bonus) => ({
-              ...bonus,
-              status: EditorialStatus.PUBLISHED,
-            })),
-            publishedVersion: versionNumber,
-            publishedAt,
-            scheduledPublishAt: null,
-            updatedAt: publishedAt,
-            updatedBy: actorId,
-          }),
+          snapshot: placementCurrent
+            ? buildPublishedCasinoSnapshot(placementCurrent, { actorId, publishedAt, versionNumber })
+            : buildLegacyPublishedCasinoSnapshot(current, { actorId, publishedAt, versionNumber }),
           publishedAt,
           createdBy: actorId,
         },

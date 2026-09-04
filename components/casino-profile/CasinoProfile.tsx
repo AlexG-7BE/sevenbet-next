@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { CasinoOutboundAction } from "@/components/casino-profile/CasinoOutboundAction";
 import { CasinoProfileInteractions } from "@/components/casino-profile/CasinoProfileInteractions";
+import { ResponsivePlacementImage } from "@/components/media/ResponsivePlacementImage";
 import type { CasinoEditorialDocument, EditorialBlock, EditorialSectionKind } from "@/lib/editorial-review/types";
 import {
   formatProfileDate,
@@ -125,14 +126,20 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
         secondary: bonus.freeSpins ? `+ ${bonus.freeSpins} Free Spins` : null,
       }
     : null;
+  const detailPlacement = casino.media.placements?.CASINO_DETAIL_HERO;
   const heroRatio = classifyMediaRatio({ width: casino.media.hero?.width, height: casino.media.hero?.height });
   const heroMediaAvailable = Boolean(
     casino.media.hero
     && isCasinoHeroMediaCompatible(heroRatio)
     && mayPresentPromotionalMedia({ demonstration: demo, governedActionAvailable: Boolean(action) }),
   );
-  const heroMediaComposed = heroMediaAvailable && heroRatio === "ultra-wide";
+  const heroMediaComposed = heroMediaAvailable && (detailPlacement?.renderingMode === "COMPOSED" || (!detailPlacement && heroRatio === "ultra-wide"));
+  const heroMediaCover = heroMediaAvailable && detailPlacement?.renderingMode === "COVER";
+  const heroFocalPoint = detailPlacement?.focalPoint
+    ? `${detailPlacement.focalPoint.x * 100}% ${detailPlacement.focalPoint.y * 100}%`
+    : "center";
   const brandMediaAvailable = !heroMediaAvailable && Boolean(casino.media.logo);
+  const offerPlacement = bonus?.media?.CASINO_OFFER_BLOCK;
   const hasEditorScore = casino.editorScore !== null;
   const formattedEditorScore = casino.editorScore === null
     ? messages.common.notListed
@@ -151,7 +158,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <p className={styles.heroKicker}>B4GAMBLE · {messages.profile.review} · {formatProfileDate(casino.lastReviewedAt || casino.publishedAt, presentation.locale) || messages.common.current}</p>
           <div className={styles.identityRow}>
             <div className={styles.logo}>
-              {casino.media.logo ? <img alt="" height={casino.media.logo.height || 80} src={casino.media.logo.url} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
+              {casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height || 80} media={casino.media.logo} width={casino.media.logo.width || 80} /> : <span aria-hidden="true">{casino.name.slice(0, 1).toUpperCase()}</span>}
             </div>
             <div><small>{messages.profile.operatorReview}</small><strong>{casino.name}</strong>{freshness ? <span>{demo ? messages.profile.demoReview : `${messages.common.current} ${freshness.value}`}</span> : <span>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</span>}</div>
             <Signal>{demo ? messages.profile.demoAgeField : `${age}+`}</Signal>
@@ -178,8 +185,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
 
-        <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-mode={heroMediaComposed || brandMediaAvailable ? "COMPOSED" : heroMediaAvailable ? "CONTAIN" : "FALLBACK"} data-media-ratio={casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing"}>
-          {heroMediaComposed && casino.media.hero ? <div className={`${styles.brandMedia} ${styles.composedMedia}`}><span>B4GAMBLE · {messages.common.controlledMedia}</span>{casino.media.logo ? <img alt="" height={casino.media.logo.height ?? 80} src={casino.media.logo.url} width={casino.media.logo.width ?? 80} /> : null}<strong>{casino.name}</strong>{offerHeadline ? <em>{offerHeadline}</em> : null}<img className={styles.controlledStrip} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 50} src={casino.media.hero.url} width={casino.media.hero.width ?? 320} /></div> : heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas}><img alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} src={casino.media.hero.url} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><img alt="" height={casino.media.logo.height ?? 80} src={casino.media.logo.url} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>}
+        <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-mode={heroMediaComposed || brandMediaAvailable ? "COMPOSED" : heroMediaCover ? "COVER" : heroMediaAvailable ? "CONTAIN" : "FALLBACK"} data-media-ratio={casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing"} data-media-source={detailPlacement?.source}>
+          {heroMediaComposed && casino.media.hero ? <div className={`${styles.brandMedia} ${styles.composedMedia}`}><span>B4GAMBLE · {messages.common.controlledMedia}</span>{casino.media.logo ? <ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /> : null}<strong>{casino.name}</strong>{offerHeadline ? <em>{offerHeadline}</em> : null}<ResponsivePlacementImage className={styles.controlledStrip} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 50} media={casino.media.hero} width={casino.media.hero.width ?? 320} /></div> : heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas} data-cover={heroMediaCover || undefined}><ResponsivePlacementImage style={{ objectPosition: heroFocalPoint }} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} media={casino.media.hero} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><ResponsivePlacementImage alt="" height={casino.media.logo.height ?? 80} media={casino.media.logo} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>}
         </aside>
       </section>
 
@@ -228,6 +235,17 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
             </> : <div className={styles.neutralState}><strong>{messages.profile.offerUnavailable}</strong><p>{messages.common.reviewAvailableNoAction}</p></div>}
           </div>
           <div className={styles.offerTermsCard}>
+            {offerPlacement ? <figure className={styles.offerPlacementMedia} data-media-mode={offerPlacement.renderingMode} data-media-source={offerPlacement.source}>
+              {offerPlacement.asset ? <ResponsivePlacementImage
+                alt={offerPlacement.effectiveAlt}
+                height={offerPlacement.asset.height ?? 500}
+                loading="lazy"
+                media={offerPlacement.asset}
+                style={{ objectPosition: offerPlacement.focalPoint ? `${offerPlacement.focalPoint.x * 100}% ${offerPlacement.focalPoint.y * 100}%` : "center" }}
+                width={offerPlacement.asset.width ?? 600}
+              /> : <div role="img" aria-label={offerPlacement.effectiveAlt}><span>B4GAMBLE</span><strong>{casino.name}</strong></div>}
+              <figcaption>{offerPlacement.fallback ? messages.common.controlledMedia : messages.common.current}</figcaption>
+            </figure> : null}
             {bonus ? <dl className={styles.termRows}>
               {bonus.wageringMultiplier !== null || bonus.wageringText ? <div><dt>{messages.common.wagering}</dt><dd>{bonus.wageringText || `${bonus.wageringMultiplier}×`}</dd></div> : null}
               {minimumDeposit ? <div><dt>{messages.common.minimumDeposit}</dt><dd>{minimumDeposit}</dd></div> : null}
