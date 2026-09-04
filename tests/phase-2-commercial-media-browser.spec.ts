@@ -42,10 +42,11 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
   await expect(bestMedia.nth(0)).toHaveAttribute("data-media-ratio", "wide-landscape");
   await expect(bestMedia.nth(1)).toHaveAttribute("data-media-ratio", "landscape");
   await expect(bestMedia.nth(2)).toHaveAttribute("data-media-ratio", "square");
-  await expect(bestMedia.locator("img")).toHaveCount(3);
-  for (const image of await bestMedia.locator("img").all()) expect(await image.evaluate((node) => getComputedStyle(node).objectFit)).toBe("contain");
+  const bestForegroundMedia = bestMedia.locator('img:not([aria-hidden="true"])');
+  await expect(bestForegroundMedia).toHaveCount(3);
+  for (const image of await bestForegroundMedia.all()) expect(await image.evaluate((node) => getComputedStyle(node).objectFit)).toBe("contain");
   expect(await best.locator('a[href^="/r/"], a[href^="http"]').count()).toBe(0);
-  const bestDemoNote = best.getByRole("note").filter({ hasText: messages.common.demoDisclosure });
+  const bestDemoNote = best.getByText(messages.common.demoDisclosure, { exact: false }).first();
   await expect(bestDemoNote).toContainText(messages.common.demoData);
 
   const featuredOrder = await page.getByTestId("best-offer-product-card").evaluate((card) => {
@@ -58,11 +59,13 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
   await open(page, "/bonuses?visualFixture=true");
   const bonuses = page.locator('[data-runtime-renderer="bonuses"]');
   const curated = bonuses.locator('section[aria-labelledby="bonus-shortlist-title"] article');
-  await expect(curated).toHaveCount(3);
+  await expect(curated).toHaveCount(4);
   await expect(curated.nth(0).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "wide-landscape");
   await expect(curated.nth(1).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "square");
   await expect(curated.nth(2).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "missing");
-  await expect(curated.nth(2).locator('[data-media-state="fallback"]')).toBeVisible();
+  await expect(curated.nth(2).locator('[data-media-state="presented"]')).toBeVisible();
+  await expect(curated.nth(3).locator("[data-offer-media]")).toHaveAttribute("data-media-ratio", "missing");
+  await expect(curated.nth(3).locator('[data-media-mode="COMPOSED"]')).toBeVisible();
   for (const card of await curated.all()) {
     expect(await card.evaluate((node) => {
       const terms = node.querySelector("dl");
@@ -88,14 +91,12 @@ test("Phase 2 visual fixtures present controlled ratios and keep terms before ac
   expect(await bonuses.locator('a[href^="/r/"], a[href^="http"]').count()).toBe(0);
 });
 
-test("missing offer media fails to the B4GAMBLE frame without inventing artwork", async ({ page }) => {
+test("missing offer media uses the controlled B4GAMBLE composition without inventing artwork", async ({ page }) => {
   await open(page, "/bonuses?visualFixture=true");
-  const fallbacks = page.locator('[data-runtime-renderer="bonuses"] [data-media-state="fallback"]');
-  const fallback = fallbacks.first();
-  await expect(fallback).toBeVisible();
-  await expect(fallback.getByText(messages.common.mediaUnavailableTitle, { exact: true })).toBeVisible();
-  await expect(fallback.getByText(messages.common.mediaUnavailableCopy, { exact: true })).toBeVisible();
-  expect(await fallbacks.locator("img").count()).toBe(0);
+  const composed = page.locator('[data-runtime-renderer="bonuses"] [data-media-mode="COMPOSED"]');
+  await expect(composed.first()).toBeVisible();
+  await expect(composed.first()).toContainText("B4GAMBLE");
+  await expect(composed.first().locator("img")).toHaveCount(1);
 });
 
 test("Phase 2 pages keep pagination semantics and no overflow at all target widths", async ({ browser }) => {

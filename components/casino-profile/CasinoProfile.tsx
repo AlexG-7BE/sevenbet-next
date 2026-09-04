@@ -12,6 +12,7 @@ import {
   profileOfferHeadline,
   profileReviewFreshness,
   selectProfileBonus,
+  summarizeWithdrawalTimes,
 } from "@/lib/casino-profile/presentation";
 import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
@@ -108,7 +109,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
   const licenceEvidence = casino.licenses.map((entry) => entry.licenseNumber ? `${entry.authority} ${entry.licenseNumber}` : entry.authority).join(" · ");
   const licenceChecked = Boolean(licence?.lastVerifiedAt);
   const payments = casino.payments.slice(0, 2).map((payment) => payment.name);
-  const withdrawal = [...new Set(casino.payments.filter((payment) => payment.supportsWithdrawals && payment.withdrawalTime).map((payment) => payment.withdrawalTime))].filter(Boolean).join(" · ") || null;
+  const withdrawal = summarizeWithdrawalTimes(casino.payments);
   const minimumDeposit = bonus ? formatProfileMoney(bonus.minimumDeposit, bonus.currency, presentation.locale) : null;
   const maximumBet = bonus ? formatProfileMoney(bonus.maximumBet, bonus.currency, presentation.locale) : null;
   const publishedGameCount = Math.max(0, ...casino.categories.map((category) => category.gameCount ?? 0), ...casino.providers.map((provider) => provider.gameCount ?? 0));
@@ -130,6 +131,7 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
     && isCasinoHeroMediaCompatible(heroRatio)
     && mayPresentPromotionalMedia({ demonstration: demo, governedActionAvailable: Boolean(action) }),
   );
+  const heroMediaComposed = heroMediaAvailable && heroRatio === "ultra-wide";
   const brandMediaAvailable = !heroMediaAvailable && Boolean(casino.media.logo);
   const hasEditorScore = casino.editorScore !== null;
   const formattedEditorScore = casino.editorScore === null
@@ -176,8 +178,8 @@ export function CasinoProfile({ casino, editorial, messages, presentation, avail
           <p className={styles.profileDisclosure}>{demo ? messages.common.demoDisclosure : informationalOnly ? messages.common.reviewAvailableNoAction : messages.bestOffers.commissionNote}</p>
         </div>
 
-        <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-ratio={casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing"}>
-          {heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas}><img alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} src={casino.media.hero.url} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><img alt="" height={casino.media.logo.height ?? 80} src={casino.media.logo.url} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{demo ? messages.profile.demoReview : messages.profile.publishedReview}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>}
+        <aside aria-label={heroMediaAvailable || brandMediaAvailable ? casino.name : messages.common.mediaUnavailableTitle} className={styles.heroMedia} data-media-mode={heroMediaComposed || brandMediaAvailable ? "COMPOSED" : heroMediaAvailable ? "CONTAIN" : "FALLBACK"} data-media-ratio={casino.media.hero ? heroRatio : brandMediaAvailable ? "brand" : "missing"}>
+          {heroMediaComposed && casino.media.hero ? <div className={`${styles.brandMedia} ${styles.composedMedia}`}><span>B4GAMBLE · {messages.common.controlledMedia}</span>{casino.media.logo ? <img alt="" height={casino.media.logo.height ?? 80} src={casino.media.logo.url} width={casino.media.logo.width ?? 80} /> : null}<strong>{casino.name}</strong>{offerHeadline ? <em>{offerHeadline}</em> : null}<img className={styles.controlledStrip} alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 50} src={casino.media.hero.url} width={casino.media.hero.width ?? 320} /></div> : heroMediaAvailable && casino.media.hero ? <div className={styles.heroMediaCanvas}><img alt={casino.media.hero.alt || casino.name} height={casino.media.hero.height ?? 900} src={casino.media.hero.url} width={casino.media.hero.width ?? 1600} /></div> : brandMediaAvailable && casino.media.logo ? <div className={styles.brandMedia}><span>B4GAMBLE · {messages.profile.operatorReview}</span><img alt="" height={casino.media.logo.height ?? 80} src={casino.media.logo.url} width={casino.media.logo.width ?? 80} /><strong>{casino.name}</strong><small>{offerHeadline ?? (demo ? messages.profile.demoReview : messages.profile.publishedReview)}</small></div> : <div className={styles.heroMediaFallback}><span>B4GAMBLE</span><strong>{messages.common.mediaUnavailableTitle}</strong><p>{messages.common.mediaUnavailableCopy}</p><i aria-hidden="true" /></div>}
         </aside>
       </section>
 
