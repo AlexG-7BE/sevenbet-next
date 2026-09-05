@@ -30,6 +30,12 @@ public-integrity acceptance passed
 
 **Production origin:** `https://b4gamble.com`
 
+**Release-record branch:**
+`codex/media-ingestion-autoplacement-01-release-record`
+
+**Release-record pull request:**
+[#158](https://github.com/AlexG-7BE/sevenbet-next/pull/158)
+
 This record contains no credential value, signed request, OAuth token/code,
 raw affiliate destination, visitor data or Programme data. Claims are
 classified as **DETECTED**, **INFERRED**, **PROPOSED**, **UNKNOWN** or
