@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="50" viewBox="0 0 320 50" role="img" aria-labelledby="title description">
+  <title id="title">B4GAMBLE strip creative fixture</title>
+  <desc id="description">A controlled 320 by 50 visual fixture used only for local layout verification.</desc>
+  <rect width="320" height="50" fill="#100f0f"/>
+  <path d="M0 0h8v50H0z" fill="#e4e24e"/>
+  <text x="22" y="21" fill="#e4e24e" font-family="Arial,sans-serif" font-size="8" font-weight="700" letter-spacing="1.4">B4GAMBLE / DEMO</text>
+  <text x="22" y="38" fill="#fafaf7" font-family="Arial,sans-serif" font-size="14" font-weight="800">STRIP · 320 × 50</text>
+</svg>

@@ -1,4 +1,9 @@
-import type { PublicCasinoDTO } from "@/lib/public-casino/public-casino.types";
+import type {
+  PublicCasinoDTO,
+  PublicCasinoMedia,
+  PublicPlacementMedia,
+  PublicPlacementMediaResolution,
+} from "@/lib/public-casino/public-casino.types";
 import type {
   CasinoDiscoveryQuery,
   CasinoDiscoveryResult,
@@ -18,6 +23,7 @@ import { demoProfileCopy } from "@/lib/i18n/demo-profile-catalog";
 import { productPageMessages } from "@/lib/i18n/product-pages-catalog";
 import { visualFixtureCopy } from "@/lib/i18n/visual-fixture-catalog";
 import { MARKET_PROFILES, type SupportedLocale } from "@/lib/market/registry";
+import type { MediaPlacementName, MediaPlacementVariantName } from "@/lib/media/placement-media";
 
 /**
  * Enables deterministic data for local reference comparison. This flag may only
@@ -244,6 +250,73 @@ const phaseTwoMediaFixtures = {
   square: { url: "/demo-casinos/phase-11-square.svg", width: 1000, height: 1000, label: "1:1" },
 } as const;
 
+const adaptiveCreativeMediaFixtures = {
+  card: { url: "/demo-casinos/adaptive-card-300x250.svg", width: 300, height: 250, label: "CARD 300×250", mediaType: "hero" },
+  square: { url: "/demo-casinos/adaptive-square-250x250.svg", width: 250, height: 250, label: "CARD 250×250", mediaType: "hero" },
+  mobile: { url: "/demo-casinos/adaptive-mobile-320x100.svg", width: 320, height: 100, label: "MOBILE LANDSCAPE 320×100", mediaType: "hero" },
+  strip: { url: "/demo-casinos/adaptive-strip-320x50.svg", width: 320, height: 50, label: "STRIP 320×50", mediaType: "hero" },
+  wide: { url: "/demo-casinos/adaptive-wide-728x90.svg", width: 728, height: 90, label: "WIDE 728×90", mediaType: "hero" },
+  logo: { url: "/demo-casinos/demo-northstar-logo.svg", width: 560, height: 240, label: "LOGO ONLY", mediaType: "logo" },
+} as const;
+
+type AdaptiveCreativeFixture = (typeof adaptiveCreativeMediaFixtures)[keyof typeof adaptiveCreativeMediaFixtures];
+
+function adaptiveCreativeAsset(fixture: AdaptiveCreativeFixture, index: number, variant: MediaPlacementVariantName): PublicCasinoMedia {
+  return {
+    id: `visual-adaptive-${index}-${variant.toLowerCase()}-${fixture.width}x${fixture.height}`,
+    type: fixture.mediaType,
+    url: fixture.url,
+    alt: `B4GAMBLE controlled ${fixture.label} layout fixture`,
+    width: fixture.width,
+    height: fixture.height,
+    caption: null,
+  };
+}
+
+function adaptiveCreativePlacement(placement: MediaPlacementName, index: number): PublicPlacementMedia {
+  const defaults = [
+    adaptiveCreativeMediaFixtures.card,
+    adaptiveCreativeMediaFixtures.strip,
+    adaptiveCreativeMediaFixtures.wide,
+    adaptiveCreativeMediaFixtures.mobile,
+    adaptiveCreativeMediaFixtures.square,
+    adaptiveCreativeMediaFixtures.logo,
+  ] as const;
+  const mobiles = [
+    adaptiveCreativeMediaFixtures.mobile,
+    adaptiveCreativeMediaFixtures.strip,
+    adaptiveCreativeMediaFixtures.strip,
+    adaptiveCreativeMediaFixtures.mobile,
+    adaptiveCreativeMediaFixtures.square,
+    adaptiveCreativeMediaFixtures.logo,
+  ] as const;
+  const defaultFixture = defaults[index % defaults.length];
+  const mobileFixture = mobiles[index % mobiles.length];
+  const resolution = (fixture: AdaptiveCreativeFixture, variant: MediaPlacementVariantName): PublicPlacementMediaResolution => ({
+    asset: adaptiveCreativeAsset(fixture, index, variant),
+    assignmentId: `visual-adaptive-${placement.toLowerCase()}-${index}-${variant.toLowerCase()}`,
+    requestedPlacement: placement,
+    resolvedPlacement: placement,
+    requestedVariant: variant,
+    resolvedVariant: variant,
+    renderingMode: fixture === adaptiveCreativeMediaFixtures.strip ? "COMPOSED" : "CONTAIN",
+    source: "EXPLICIT",
+    fallback: false,
+    effectiveAlt: `B4GAMBLE controlled ${fixture.label} layout fixture`,
+    focalPoint: null,
+  });
+  const defaultResolution = resolution(defaultFixture, "DEFAULT");
+  const mobileResolution = resolution(mobileFixture, "MOBILE");
+  return {
+    ...defaultResolution,
+    asset: defaultResolution.asset ? {
+      ...defaultResolution.asset,
+      variants: mobileResolution.asset ? { MOBILE: mobileResolution.asset } : undefined,
+    } : null,
+    variants: { MOBILE: mobileResolution },
+  };
+}
+
 function handoffOffer(
   seed: PublicOfferDTO,
   index: number,
@@ -313,6 +386,12 @@ function handoffOffer(
       importantConditions: [...copy.bonus.conditions],
       startsAt: null,
       expiresAt: null,
+      media: {
+        BONUS_LISTING_CARD: adaptiveCreativePlacement("BONUS_LISTING_CARD", index),
+        BEST_OFFER_FEATURED: adaptiveCreativePlacement("BEST_OFFER_FEATURED", index),
+        BEST_OFFER_SECONDARY: adaptiveCreativePlacement("BEST_OFFER_SECONDARY", index),
+        CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", index),
+      },
     },
     action: { available: false, href: null },
     commercialAvailability: "UNAVAILABLE",
@@ -449,6 +528,9 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
     aurora: { url: "/demo-casinos/phase-11-wide-16x9.svg", width: 1600, height: 900, label: "16:9" },
   } as const;
   const profileRatioFixture = mediaKey in profileRatioFixtures ? profileRatioFixtures[mediaKey as keyof typeof profileRatioFixtures] : null;
+  const profileHeroFixture = casino.slug.includes("demo-plume")
+    ? adaptiveCreativeMediaFixtures.card
+    : profileRatioFixture;
   return {
     ...casino,
     id: temporaryDemoCasinoIds[0],
@@ -516,10 +598,11 @@ export function withHandoffCasinoProfileData(casino: PublicCasinoDTO, enabled: b
       startsAt: null,
       expiresAt: null,
       affiliate: { available: false, href: null },
+      media: { CASINO_OFFER_BLOCK: adaptiveCreativePlacement("CASINO_OFFER_BLOCK", 1) },
     }] : [],
     media: {
       logo: profileHasLogo ? { id: `visual-${mediaKey}-logo`, type: "logo", url: `/demo-casinos/demo-${mediaKey}-logo.svg`, alt: `${sample.name} ${copy.media.logo}`, width: 320, height: 160, caption: null } : null,
-      hero: profileRatioFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileRatioFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", profileRatioFixture.label)}`, width: profileRatioFixture.width, height: profileRatioFixture.height, caption: null } : null,
+      hero: profileHeroFixture ? { id: `visual-${mediaKey}-hero`, type: "hero", url: profileHeroFixture.url, alt: `${sample.name} ${copy.media.hero.replace("{ratio}", profileHeroFixture.label)}`, width: profileHeroFixture.width, height: profileHeroFixture.height, caption: null } : null,
       screenshots: [],
       gallery: [],
       socialImage: null,

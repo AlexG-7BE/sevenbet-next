@@ -123,10 +123,27 @@
 .stateActions button { padding:0 22px; border:0; background:var(--acid); color:var(--ink); cursor:pointer; font:inherit; font-weight:800; }
 .loadingCard { min-height:600px; background:var(--field); }
 
+/* Landscape inventory belongs to a deliberate banner band. It must not float
+   in a tall two-column media well whose geometry was designed for card art. */
+@media (min-width:901px) {
+  .featuredCard:has(> [data-presentation-family="MOBILE_LANDSCAPE"]),
+  .featuredCard:has(> [data-presentation-family="STRIP"]),
+  .featuredCard:has(> [data-presentation-family="WIDE"]),
+  .alternativeCard:has(> [data-presentation-family="MOBILE_LANDSCAPE"]),
+  .alternativeCard:has(> [data-presentation-family="STRIP"]),
+  .alternativeCard:has(> [data-presentation-family="WIDE"]) { grid-template-columns:minmax(0,1fr); }
+  .featuredCard:has(> [data-presentation-family="MOBILE_LANDSCAPE"]) > [data-presentation-family],
+  .featuredCard:has(> [data-presentation-family="STRIP"]) > [data-presentation-family],
+  .featuredCard:has(> [data-presentation-family="WIDE"]) > [data-presentation-family] { grid-column:1; grid-row:2; border-top:1px solid rgba(16,15,15,.1); }
+}
+
 @media (max-width:900px) {
   .featuredCard,.alternativeCard { grid-template-columns:1fr; }
   .worthCards { grid-template-columns:1fr; }
   .featuredCard > [data-offer-media="featured"],.featuredCard > [data-commercial-media-variant="featured"] { min-height:260px; grid-row:1; }
+  .featuredCard > [data-presentation-family="MOBILE_LANDSCAPE"],
+  .featuredCard > [data-presentation-family="STRIP"],
+  .featuredCard > [data-presentation-family="WIDE"] { min-height:0; }
   .featuredCopy { grid-row:2; padding:40px 40px 138px; }
   .featuredActions { grid-row:2; padding:0 40px 40px; }
   .altCopy { padding:40px; }

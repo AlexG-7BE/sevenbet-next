@@ -8,6 +8,8 @@ import {
   assessCommercialCreative,
   commercialCreativeFormat,
   commercialCreativeWeightWarning,
+  creativePresentationFamily,
+  creativePresentationGuidance,
 } from "@/lib/media/commercial-formats";
 import {
   casinoMediaPlacements,
@@ -160,6 +162,14 @@ function PlacementSlot({
     ? commercialCreativeWeightWarning(usageAsset.sizeBytes)
     : null;
   const animated = isAnimatedAsset(usageAsset);
+  const presentationFamily = creativePresentationFamily({
+    height: usageAsset?.height,
+    mediaType: usageAsset?.type,
+    placement,
+    source: usageAsset?.id === effectiveAsset?.id ? effective?.source : null,
+    width: usageAsset?.width,
+  });
+  const expectedPresentation = creativePresentationGuidance({ family: presentationFamily, placement });
 
   async function mutate(
     action: "assign" | "unassign" | "activate" | "deactivate",
@@ -232,6 +242,7 @@ function PlacementSlot({
           {relationship && !effectiveExplicit ? <Badge tone="warning">FALLBACK EFFECTIVE</Badge> : null}
           <Badge>{variant}</Badge>
           <Badge>{effective?.renderingMode ?? "COMPOSED"}</Badge>
+          <Badge>{presentationFamily.replaceAll("_", " ")}</Badge>
           {commercialAssessment?.format ? <Badge>{commercialAssessment.format.label.toUpperCase()}</Badge> : null}
           {commercialAssessment ? <Badge tone={commercialAssessment.state === "PREFERRED" || commercialAssessment.state === "COMPATIBLE" ? "green" : "warning"}>{commercialAssessment.label.toUpperCase()}</Badge> : null}
         </div>
@@ -256,6 +267,7 @@ function PlacementSlot({
       <div><dt>MIME</dt><dd>{effectiveAsset?.mimeType || "Not applicable"}</dd></div>
       {commercialAssessment ? <div><dt>Commercial format</dt><dd>{commercialAssessment.format ? `${commercialAssessment.format.label} · ${commercialAssessment.format.id}` : "Unrecognised but assignable"}</dd></div> : null}
       {commercialAssessment ? <div><dt>Compatibility</dt><dd>{commercialAssessment.label} · {commercialAssessment.detail}</dd></div> : null}
+      <div><dt>Expected presentation</dt><dd><strong>{presentationFamily.replaceAll("_", " ")}</strong> · {expectedPresentation}</dd></div>
       {usageAsset && "sizeBytes" in usageAsset ? <div><dt>File</dt><dd>{Math.max(1, Math.round(usageAsset.sizeBytes / 1024))} KB · {animated ? "animated" : "static"}</dd></div> : null}
       <div><dt>Provenance</dt><dd>{effective?.assignment?.reference || effectiveAsset?.credit || "Legacy controlled asset / repository record"}</dd></div>
       <div><dt>Usage {selectedAsset ? "for selected asset" : "for effective asset"}</dt><dd>{assignmentUsage.length} assignment record{assignmentUsage.length === 1 ? "" : "s"}</dd></div>
@@ -263,6 +275,7 @@ function PlacementSlot({
     </dl>
 
     {weightWarning ? <p className="placementMediaWarning" role="note"><strong>Performance warning.</strong> {weightWarning}</p> : null}
+    {presentationFamily === "PORTRAIT_INVENTORY" ? <p className="placementMediaWarning" role="note"><strong>Unsupported public presentation.</strong> {expectedPresentation}</p> : null}
     {commercialAssessment?.state === "POOR_FIT" || commercialAssessment?.state === "UNRECOGNIZED" ? <p className="placementMediaWarning" role="note"><strong>{commercialAssessment.label}.</strong> {commercialAssessment.detail}</p> : null}
 
     <div className="placementMediaControls">

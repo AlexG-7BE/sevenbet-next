@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Badge, Card } from "@/components/ui";
 import { mediaJson, type MediaAssetAdminRecord, type MediaAssetTypeValue } from "@/lib/media/admin-types";
-import { commercialCreativeFormat, commercialCreativeWeightWarning } from "@/lib/media/commercial-formats";
+import {
+  commercialCreativeFormat,
+  commercialCreativePresentationFamily,
+  commercialCreativeWeightWarning,
+} from "@/lib/media/commercial-formats";
 
 export function MediaSelector({
   casinoId,
@@ -91,7 +95,17 @@ export function MediaSelector({
       {error && <p className="builderError" role="alert">{error}</p>}
       {loading && <p className="muted" role="status">Loading media...</p>}
       <div className="mediaSelectorGrid">
-        {records.map((record) => { const format = commercialCreativeFormat(record.width, record.height); const weightWarning = commercialCreativeWeightWarning(record.sizeBytes); return <button className={isSelected(record) ? "selected" : ""} disabled={busy} key={record.id} type="button" onClick={() => void select(record)}><img alt={record.altText} height={record.height || 180} loading="lazy" src={record.publicUrl} width={record.width || 320} /><span>{record.altText}</span><small>{record.width}×{record.height} · {format?.label ?? "Unrecognised format"} · {record.metadata?.animated === true ? "animated" : "static"}{weightWarning ? " · heavy" : ""}</small>{isSelected(record) && <Badge tone="green">Selected</Badge>}</button>; })}
+        {records.map((record) => {
+          const format = commercialCreativeFormat(record.width, record.height);
+          const presentationFamily = commercialCreativePresentationFamily(record.width, record.height);
+          const weightWarning = commercialCreativeWeightWarning(record.sizeBytes);
+          return <button className={isSelected(record) ? "selected" : ""} disabled={busy} key={record.id} type="button" onClick={() => void select(record)}>
+            <img alt={record.altText} height={record.height || 180} loading="lazy" src={record.publicUrl} width={record.width || 320} />
+            <span>{record.altText}</span>
+            <small>{record.width}×{record.height} · {format?.label ?? "Unrecognised format"} · {presentationFamily?.replaceAll("_", " ") ?? "placement review"} · {record.metadata?.animated === true ? "animated" : "static"}{weightWarning ? " · heavy" : ""}</small>
+            {isSelected(record) && <Badge tone="green">Selected</Badge>}
+          </button>;
+        })}
         {!loading && !records.length && <p className="muted">No matching assets yet.</p>}
       </div>
     </Card>

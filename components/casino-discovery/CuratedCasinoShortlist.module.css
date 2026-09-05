@@ -121,3 +121,128 @@
   .terms div:last-child { grid-column: auto; }
 }
 @media (prefers-reduced-motion:reduce) { .tabs button { transition: none; } }
+
+/* Adaptive creative layouts: media family changes the card's geometry, not
+   merely object-fit inside one fixed panel. */
+.card {
+  min-height:0;
+  grid-template-columns:minmax(0,1fr) 416px;
+  align-items:stretch;
+}
+.mediaFrame,.mediaFallback {
+  min-height:0;
+  max-height:none;
+}
+.mediaFrame .mediaArtwork {
+  width:auto;
+  height:auto;
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 14px 24px rgba(0,0,0,.24));
+}
+
+.card[data-presentation-family="CARD"] .mediaFrame,
+.card[data-presentation-family="BRAND_ART"] .mediaFrame {
+  width:min(calc(100% - 24px),392px);
+  height:336px;
+  min-height:0;
+  margin:auto;
+  padding:28px;
+  align-self:center;
+  justify-self:center;
+  border:1px solid rgba(16,15,15,.3);
+}
+.card[data-presentation-family="BRAND_ART"] .mediaFrame { padding:0; }
+.card[data-presentation-family="BRAND_ART"] .mediaFrame[data-media-mode="COVER"] .mediaArtwork {
+  width:100%;
+  height:100%;
+  max-width:none;
+  max-height:none;
+  object-fit:cover;
+  filter:none;
+}
+
+.card[data-presentation-family="STRIP"],
+.card[data-presentation-family="MOBILE_LANDSCAPE"],
+.card[data-presentation-family="WIDE"],
+.card[data-presentation-family="LOGO_ONLY"],
+.card[data-presentation-family="PORTRAIT_INVENTORY"] {
+  grid-template-columns:minmax(0,1fr);
+}
+.card[data-presentation-family="STRIP"] .mediaFrame,
+.card[data-presentation-family="MOBILE_LANDSCAPE"] .mediaFrame,
+.card[data-presentation-family="WIDE"] .mediaFrame {
+  width:100%;
+  margin:0;
+  align-self:stretch;
+  border-top:1px solid rgba(16,15,15,.3);
+  border-left:0;
+}
+.card[data-presentation-family="STRIP"] .mediaFrame { height:96px; padding:20px; }
+.card[data-presentation-family="MOBILE_LANDSCAPE"] .mediaFrame { height:136px; padding:18px; }
+.card[data-presentation-family="WIDE"] .mediaFrame { height:132px; padding:20px; }
+
+.card .mediaFallback {
+  width:100%;
+  height:104px;
+  min-height:104px;
+  padding:20px 24px;
+  border-top:1px solid rgba(16,15,15,.3);
+  border-left:0;
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+}
+.card .mediaFallback > span { margin:0; }
+.card .mediaFallback strong { max-width:28ch; font-size:18px; line-height:1.1; }
+.card .mediaFallback p { display:none; }
+.card .mediaFallback i { inset:auto 8% -90% auto; width:190px; }
+
+@media (max-width:1050px) {
+  .card { grid-template-columns:minmax(0,1fr); }
+  .card[data-presentation-family="CARD"] .mediaFrame,
+  .card[data-presentation-family="BRAND_ART"] .mediaFrame {
+    margin:0 auto 24px;
+  }
+}
+
+@media (max-width:767px) {
+  .card[data-mobile-presentation-family] { grid-template-columns:minmax(0,1fr); }
+  .card[data-mobile-presentation-family="CARD"] .mediaFrame,
+  .card[data-mobile-presentation-family="BRAND_ART"] .mediaFrame {
+    width:min(calc(100% - 32px),392px);
+    height:auto;
+    min-height:0;
+    aspect-ratio:392/336;
+    margin:0 auto 16px;
+    padding:20px;
+    border:1px solid rgba(16,15,15,.3);
+  }
+  .card[data-mobile-presentation-family="BRAND_ART"] .mediaFrame { padding:0; }
+  .card[data-mobile-presentation-family="STRIP"] .mediaFrame,
+  .card[data-mobile-presentation-family="MOBILE_LANDSCAPE"] .mediaFrame,
+  .card[data-mobile-presentation-family="WIDE"] .mediaFrame {
+    width:100%;
+    min-height:0;
+    max-height:none;
+    margin:0;
+    border-top:1px solid rgba(16,15,15,.3);
+    border-left:0;
+  }
+  .card[data-mobile-presentation-family="STRIP"] .mediaFrame { height:82px; padding:15px; }
+  .card[data-mobile-presentation-family="MOBILE_LANDSCAPE"] .mediaFrame { height:126px; padding:13px; }
+  .card[data-mobile-presentation-family="WIDE"] .mediaFrame { height:110px; padding:14px; }
+  .card .mediaFallback {
+    height:92px;
+    min-height:92px;
+    padding:17px 20px;
+    align-items:flex-start;
+    flex-direction:column;
+    justify-content:center;
+    gap:7px;
+  }
+  .card .mediaFallback strong { font-size:16px; }
+}
