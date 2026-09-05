@@ -94,19 +94,19 @@ after verification. Ready activation deployment
 readiness checks; it does not run the migration. See the
 [PLACEMENT-MEDIA-ASSIGNMENTS-01 release record](Placement-Media-Assignments-01-Release-Record-2026-09-04.md).
 
-## Production GEO-localized creative migration 0028 — authorised candidate
+## Production GEO-localized creative migration 0028 — completed 5 September 2026
 
-**DETECTED / NOT YET CLAIMED AS APPLIED:**
+**DETECTED / APPLIED:**
 `0028_geo_localized_creative_assignments` adds nullable `countryCode` and
 `languageCode` text columns to each of the three RFC-040 assignment tables, a
 bounded shape check for every column, and one target-resolver index per table.
 It contains no default, data update, table replacement, deletion or destructive
-operation. Its candidate SHA-256 is
+operation. Its immutable SHA-256 is
 `4511b403f4e7d72fcec972870bca0f3c61eaf673ad8b9b4ab28cf3120493ffc7`.
 
 Compatibility is explicit: old application semantics remain representable
 because every pre-existing row acquires `NULL/NULL`, meaning global and
-language-neutral. Candidate application public reads remain snapshot-bound and
+language-neutral. Released application public reads remain snapshot-bound and
 historical JSON without target fields also resolves as global-neutral. Admin
 assignment mutation is held unavailable when the six columns are absent.
 
@@ -121,6 +121,16 @@ PostgreSQL staged-upgrade test inserts rows into all three assignment tables
 under 0027, applies 0028, verifies preservation and null targets, persists valid
 `FI/fi`, `GLOBAL/en` and `SE/neutral`, rejects malformed shapes, and replays
 `migrate deploy` idempotently.
+
+Exact merge-SHA CI passed before the fingerprint-guarded Production executor
+applied the sole pending 0028 migration. Preflight and postflight retained 34
+Casinos, 33 Bonuses, 11 Offers, 11 redirect routes, 15 MediaAssets, 74
+CasinoVersions and assignment counts `26 / 20 / 0`. Independent verification
+confirmed the six nullable columns, checks/indexes, checksum, no pending
+migration, all 46 existing assignment rows `NULL/NULL` and zero targeted rows.
+Ready post-migration deployment `dpl_ANq5SXZAGB8XnE7ZQ9RuckN2gLhu` reports
+`schema_ready` and `already_applied_and_verified`. See the
+[GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01 release record](GEO-Localized-Creative-Assignments-01-Release-Record-2026-09-05.md).
 
 Application rollback remains a protected code release; columns are not dropped.
 A bad future targeted relationship is deactivated and republished through the
