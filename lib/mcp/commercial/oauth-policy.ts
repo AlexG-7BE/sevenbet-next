@@ -6,6 +6,11 @@ import {
   COMMERCIAL_MCP_SCOPES,
   type CommercialMcpConfig,
 } from "@/lib/mcp/commercial/config";
+import {
+  operationalMcpDefaultScope,
+  operationalMcpPermission,
+  operationalMcpScopes,
+} from "@/lib/mcp/operational-policy";
 
 const CHATGPT_PLATFORM_REDIRECT = "https://chatgpt.com/connector_platform_oauth_redirect";
 
@@ -67,6 +72,15 @@ export function parseCommercialMcpScopes(value: string | undefined) {
   return scopes;
 }
 
+export function parseOperationalMcpScopes(value: string | undefined, config: CommercialMcpConfig) {
+  const scopes = new Set((value ?? operationalMcpDefaultScope(config)).split(/\s+/).filter(Boolean));
+  const permitted = new Set(operationalMcpScopes(config));
+  if (!scopes.size || [...scopes].some((scope) => !permitted.has(scope))) {
+    throw new CommercialMcpAuthError("Requested OAuth scope is not permitted", 400, "invalid_scope");
+  }
+  return scopes;
+}
+
 export function validateCommercialMcpDelegatedStaff(
   userId: string | null | undefined,
   adminUser: DelegatedStaff | null,
@@ -76,6 +90,21 @@ export function validateCommercialMcpDelegatedStaff(
   }
   if (!canPerformAction({ role: adminUser.role, permissions: permissionsForRole(adminUser.role) }, "affiliate.manage")) {
     throw new CommercialMcpAuthError("Delegated staff lacks affiliate.manage", 403, "insufficient_permission");
+  }
+  return adminUser;
+}
+
+export function validateOperationalMcpDelegatedStaff(
+  userId: string | null | undefined,
+  adminUser: DelegatedStaff | null,
+  config: CommercialMcpConfig,
+) {
+  if (!userId || !adminUser || adminUser.userId !== userId) {
+    throw new CommercialMcpAuthError("Delegated user is not B4GAMBLE staff", 403, "staff_required");
+  }
+  const permission = operationalMcpPermission(config);
+  if (!canPerformAction({ role: adminUser.role, permissions: permissionsForRole(adminUser.role) }, permission)) {
+    throw new CommercialMcpAuthError(`Delegated staff lacks ${permission}`, 403, "insufficient_permission");
   }
   return adminUser;
 }
@@ -128,5 +157,23 @@ export function validateCommercialMcpTokenRecord(
     throw new CommercialMcpAuthError("Bearer token has insufficient scope", 403, "insufficient_scope", requiredScope);
   }
   const staff = validateCommercialMcpDelegatedStaff(token.userId, adminUser);
+  return { tokenId: token.id, clientId: token.clientId, staff, scopes };
+}
+
+export function validateOperationalMcpTokenRecord(
+  token: Parameters<typeof validateCommercialMcpTokenRecord>[0],
+  adminUser: DelegatedStaff | null,
+  config: CommercialMcpConfig,
+  requiredScope?: string,
+  now = new Date(),
+): CommercialMcpTokenContext {
+  if (!token || token.expiresAt <= now || token.revoked !== null) throw new CommercialMcpAuthError("Bearer token is invalid or expired", 401, "invalid_token", requiredScope);
+  if (token.resources.length !== 1 || token.resources[0] !== config.resource) throw new CommercialMcpAuthError("Bearer token has the wrong resource", 401, "invalid_token", requiredScope);
+  if (token.client.disabled || token.client.tokenEndpointAuthMethod !== "none" || token.client.applicationType !== "web") throw new CommercialMcpAuthError("OAuth client is disabled", 401, "invalid_token", requiredScope);
+  const metadata = parseCommercialMcpClientMetadata(token.client.metadata);
+  if (metadata.b4gambleMcpResource !== config.resource) throw new CommercialMcpAuthError("Bearer token has the wrong resource", 401, "invalid_token", requiredScope);
+  const scopes = parseOperationalMcpScopes(token.scopes.join(" "), config);
+  if (requiredScope && !scopes.has(requiredScope)) throw new CommercialMcpAuthError("Bearer token has insufficient scope", 403, "insufficient_scope", requiredScope);
+  const staff = validateOperationalMcpDelegatedStaff(token.userId, adminUser, config);
   return { tokenId: token.id, clientId: token.clientId, staff, scopes };
 }

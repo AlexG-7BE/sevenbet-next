@@ -1,12 +1,13 @@
-import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
+import { commercialMcpDisabledResponse } from "@/lib/mcp/commercial/config";
 import { commercialMcpAuthErrorResponse, exchangeCommercialMcpToken } from "@/lib/mcp/commercial/oauth";
+import { resolveOperationalMcpRequestConfig } from "@/lib/mcp/operational-routing";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let config;
   try {
-    config = resolveCommercialMcpConfig(request.url);
+    config = await resolveOperationalMcpRequestConfig(request, "token");
   } catch {
     return commercialMcpDisabledResponse();
   }

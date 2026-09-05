@@ -20,6 +20,7 @@ export const adminNav: Array<{ href: string; label: string; area: AdminArea }> =
   { href: "/admin/bonuses", label: "Bonuses", area: "bonuses" },
   { href: "/admin/affiliate", label: "Affiliate", area: "affiliate" },
   { href: "/admin/commercial", label: "Commercial", area: "commercial" },
+  { href: "/admin/media-operations", label: "Media Operations", area: "media-operations" },
   { href: "/admin/users", label: "Users", area: "users" },
   { href: "/admin/analytics", label: "Analytics", area: "analytics" },
   { href: "/admin/settings", label: "Settings", area: "settings" },

@@ -95,7 +95,7 @@ export function commercialMcpDisabledResponse() {
   );
 }
 
-export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpConfig) {
+export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpConfig, additionalScopes: readonly string[] = []) {
   return {
     issuer: config.issuer,
     authorization_endpoint: config.authorizationEndpoint,
@@ -107,7 +107,7 @@ export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpCo
     token_endpoint_auth_methods_supported: ["none"],
     code_challenge_methods_supported: ["S256"],
     authorization_response_iss_parameter_supported: true,
-    scopes_supported: [...COMMERCIAL_MCP_AUTHORIZATION_SCOPES],
+    scopes_supported: [...new Set([...COMMERCIAL_MCP_AUTHORIZATION_SCOPES, ...additionalScopes])],
     resource_parameter_supported: true,
   };
 }

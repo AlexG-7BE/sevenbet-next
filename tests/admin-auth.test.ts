@@ -263,12 +263,12 @@ function staffForRole(role: AdminRole): CmsUser {
 
 test("admin page areas enforce the role matrix and any-of editorial access", () => {
   const allowed: Record<AdminRole, AdminArea[]> = {
-    SUPER_ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "program-settings", "learning", "casinos", "bonuses", "affiliate", "users", "analytics", "settings"],
-    ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "bonuses", "affiliate", "users", "analytics"],
-    EDITOR: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "learning", "casinos", "bonuses"],
+    SUPER_ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "program-settings", "learning", "casinos", "bonuses", "affiliate", "media-operations", "users", "analytics", "settings"],
+    ADMIN: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "achievements", "xp-rules", "learning", "casinos", "bonuses", "affiliate", "media-operations", "users", "analytics"],
+    EDITOR: ["dashboard", "programs", "program-create", "program-edit", "program-preview", "learning", "casinos", "bonuses", "media-operations"],
     AUTHOR: ["dashboard", "learning"],
     REVIEWER: ["dashboard", "programs", "program-preview", "learning", "casinos", "bonuses"],
-    AFFILIATE_MANAGER: ["dashboard", "casinos", "bonuses", "affiliate"],
+    AFFILIATE_MANAGER: ["dashboard", "casinos", "bonuses", "affiliate", "media-operations"],
     ANALYST: ["dashboard", "analytics"],
     SUPPORT: ["dashboard", "users"],
   };

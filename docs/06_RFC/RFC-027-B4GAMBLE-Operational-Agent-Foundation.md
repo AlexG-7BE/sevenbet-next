@@ -1,9 +1,9 @@
 # RFC-027: B4GAMBLE Operational Agent Foundation
 
-- **Status:** Approved for bounded implementation; Partner Operations application adapter and ChatGPT Work MCP bridge amendments approved
-- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01` and `PARTNER-OPS-WORK-BRIDGE-01` instructions
+- **Status:** Approved for bounded implementation; Partner Operations, ChatGPT Work Commercial and separate Media Operations bridge amendments approved
+- **Decision authority:** Founder Office `AGENT-CORE-01`; amended by `COMMERCIAL-OPS-01`, `PARTNER-OPS-WORK-BRIDGE-01`, `PARTNER-OPS-WORK-BRIDGE-02` and `MEDIA-INGESTION-AUTOPLACEMENT-01` instructions
 - **Approved:** 2026-08-13
-- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, one narrow application-side Partner Operations CRM executor, and one separately authenticated Commercial CRM remote MCP adapter
+- **Scope:** Isolated internal OpenAI Agents SDK foundation, eight specialist definitions, shared policy/result contracts, explicit cost-aware routing, bounded manual runner, no-key structural evaluation, one narrow application-side Partner Operations CRM executor, one Commercial CRM remote MCP resource, and one separate exact-resource Media Operations MCP adapter
 - **Implementation:** merged to `main` by PR #69 at `7c36bffb901db62863b02cb8c2cf771cdadaaf89`
 - **Depends on:** Product Vision & Principles v2.0, Project State, Roadmap, RFC-013, RFC-014, RFC-015, RFC-017, RFC-022, RFC-023 and RFC-025
 - **Supersedes:** nothing in the consumer product, Programme, authentication, commercial, data or Production runtime
@@ -23,7 +23,7 @@ B4GAMBLE will add a separate top-level `agents/` Node/TypeScript package for bou
 
 The system reads supplied evidence, analyses it and drafts a recommendation. It has no authority to publish, mutate repositories, change CMS content, send communications, activate affiliates, deploy, alter Production or act on a recommendation.
 
-At original approval this RFC did not authorise consumer product changes, page-structure changes, Programme progression or XP changes, authentication changes, database/schema/migration changes, commercial availability, affiliate activation, Production configuration, scheduled execution, external OAuth, a queue, a service, a dashboard, a vector database, memory persistence or autonomous recursion. Section 17 records the newer explicit Founder decision that supersedes only the bounded external-OAuth/MCP and additive-provider-storage parts of that ceiling.
+At original approval this RFC did not authorise consumer product changes, page-structure changes, Programme progression or XP changes, authentication changes, database/schema/migration changes, commercial availability, affiliate activation, Production configuration, scheduled execution, external OAuth, a queue, a service, a dashboard, a vector database, memory persistence or autonomous recursion. Sections 17–19 record newer explicit Founder decisions that supersede only their bounded application-side adapter, external-OAuth/MCP, provider-storage and Media Operations parts of that ceiling.
 
 ## 2. Runtime isolation
 
@@ -282,3 +282,73 @@ Founder instruction on 2026-08-20 authorises a coordinated dependency, schema an
 7. The new 1.7 application requires schema through 0022 and therefore must not be promoted against Production through only 0020 or 0021. A future controlled release must apply 0021 then 0022 while the current 1.6 application and disabled MCP remain in place, verify existing auth and migration state, and only then promote 1.7 code. This amendment does not authorise that Production migration, deployment or feature enablement.
 
 The four tools, `affiliate.manage`, `commercial:read`, `commercial:safe_write`, explicit consent, PKCE S256, safe CRM transaction, commercial/private-data firewall and all section 17 forbidden powers remain unchanged. This amendment creates no APPROVED/ACTIVE/send/submit/terms/tracking/affiliate/deployment/Production capability.
+
+## 19. `MEDIA-INGESTION-AUTOPLACEMENT-01` Media Operations amendment
+
+Founder instruction on 5 September 2026 authorises a second, separately
+bounded application-side MCP resource for creative-media ingestion and draft
+placement planning. The durable implementation contract is
+[Media Ingestion Contract](../05_Engineering/Media-Ingestion-Contract.md).
+
+1. The exact protected resource is the environment-bounded
+   `/api/mcp/media`, separate from `/api/mcp/commercial`. It has exactly five
+   tools: snippet ingestion, analysis/planning, draft-plan apply/rollback,
+   single-plan read and bounded recent-plan read. It is not a generic Admin,
+   browser, HTML executor, HTTP proxy, SQL/Prisma or deployment surface.
+2. The shared Better Auth 1.7 OAuth issuer may advertise both exact resources.
+   This supersedes sections 17–18 only where they described the Commercial
+   resource as the provider's sole resource. It does not authorise a
+   multi-resource client or token: every client, code, access token, refresh
+   token, consent and request remains bound to exactly one resource.
+3. Media scopes are only `media:read`, `media:safe_write` and optional
+   `offline_access`. Commercial scopes cannot access Media tools and Media
+   scopes cannot access Commercial tools. Delegated staff additionally need
+   `media.manage` at authorization, token/refresh and resource use. DCR remains
+   public, allowlisted, secretless and zero-authority by itself.
+4. Pasted HTML/code is untrusted bounded text. The application may extract
+   structural image evidence but cannot execute partner JavaScript, event
+   handlers, iframe/HTML5 content or browser DOM. Raw pasted code and complete
+   partner tracking/image URLs are not durable plan fields; bounded
+   hashed/structural provenance is retained.
+5. Remote image retrieval is server-only and fail-closed: HTTPS/port/userinfo,
+   pre-connect DNS, pinned address, private/link-local/metadata/multicast and
+   internal IPv4/IPv6 exclusions, redirect revalidation/count, timeout/byte,
+   content-encoding/type/signature and decoder checks are ordinary code. No
+   Founder cookie, session, Authorization header or pasted header is sent.
+6. Validated JPEG, PNG, WebP, AVIF and GIF bytes may create or reuse existing
+   first-party `MediaAsset` records. Content checksum governs deduplication;
+   declared dimensions never override decoded dimensions. Existing strict GIF
+   preservation/validation remains authoritative.
+7. Deterministic context and planning may read relevant Casino, Bonus,
+   AffiliateOffer, partner-network/program, current tracking-destination and
+   assignment evidence. Explicit consistent Founder context outranks fuzzy
+   matching. Ambiguous identity, tracking mismatch, offer mismatch,
+   market/language clues, incomplete semantics and unsafe crop remain review or
+   reject states.
+8. The existing approved Responses runtime may provide bounded structured
+   visual evidence with no tools and `store:false`. Model output is advisory;
+   it cannot establish commercial, route, publication or assignment authority.
+   Missing provider access leaves a deterministic `NEEDS_VISUAL_REVIEW` result.
+9. Automatic application is limited to current high-confidence draft subjects
+   and RFC-040 assignment rows. Existing explicit assignments are protected
+   unless an eligible replacement is separately and explicitly requested.
+   Immutable publication snapshots remain unchanged until the existing human
+   publication workflow.
+10. The bridge has no authority to publish/republish, activate or create an
+    AffiliateOffer/PartnerRoute/tracking route/CTA, alter GEO, offer terms or
+    Editor Score, send external communication, delete a MediaAsset, mutate
+    repository code or deploy. Rollback removes only the exact plan-owned draft
+    assignment and may restore its prior draft assignment; assets remain.
+11. Durable plans use strict versioned JSON in existing `SiteSetting`, while
+    every mutation uses existing `AuditLog` with Media Operations source,
+    delegated actor/channel, plan, subject, checksum/provider reference,
+    previous/result and timestamp. No Prisma schema or migration is authorised
+    or required by this amendment.
+12. RFC-040 has no market/language assignment dimension. A market-specific
+    creative may be ingested but cannot be globally auto-assigned by abusing a
+    responsive variant. A durable locale/market resolver extension requires a
+    separate Founder decision.
+
+This amendment does not add a tool to the isolated `agents/` package and does
+not broaden Commercial CRM authority. Release remains subject to RFC-013's
+branch, PR, CI, Preview, Production acceptance and rollback evidence.

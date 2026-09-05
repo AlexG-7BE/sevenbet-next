@@ -31,6 +31,8 @@ export interface UploadMediaInput {
   affiliateOfferId?: string | null;
   metadata?: unknown;
   actorId: string;
+  auditMetadata?: Prisma.InputJsonValue;
+  dedupeScope?: "OWNER_CONTEXT" | "GLOBAL";
 }
 
 export interface UpdateMediaInput {
@@ -83,6 +85,7 @@ function extensionFor(mimeType: string) {
 }
 
 function storageKey(input: UploadMediaInput, checksum: string, mimeType: string) {
+  if (input.dedupeScope === "GLOBAL") return `media-ingestion/by-checksum/${checksum}.${extensionFor(mimeType)}`;
   const owner = [input.casinoCountryId, input.casinoBonusId, input.affiliateOfferId].filter(Boolean).join("/") || "catalog";
   return `casino/${input.casinoId}/${owner}/${input.type.toLowerCase()}/${checksum.slice(0, 32)}.${extensionFor(mimeType)}`;
 }
@@ -143,7 +146,9 @@ export class MediaService {
       if (error instanceof MediaValidationError) throw new ValidationError(error.message, { code: error.code });
       throw error;
     }
-    const duplicate = await this.repository.findDuplicateChecksum(validated.checksum, { casinoId: input.casinoId, casinoCountryId: input.casinoCountryId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
+    const duplicate = input.dedupeScope === "GLOBAL"
+      ? await this.repository.findReusableChecksum(validated.checksum, input.casinoId)
+      : await this.repository.findDuplicateChecksum(validated.checksum, { casinoId: input.casinoId, casinoCountryId: input.casinoCountryId, casinoBonusId: input.casinoBonusId, affiliateOfferId: input.affiliateOfferId, type });
     if (duplicate) return { record: duplicate, duplicate: true };
     const provider = this.storageFactory();
     await provider.validate();
@@ -184,9 +189,14 @@ export class MediaService {
         casinoCountryId: input.casinoCountryId,
         casinoBonusId: input.casinoBonusId,
         affiliateOfferId: input.affiliateOfferId,
+        auditMetadata: input.auditMetadata,
       });
       return { record, duplicate: false };
     } catch (error) {
+      if (input.dedupeScope === "GLOBAL") {
+        const racedDuplicate = await this.repository.findReusableChecksum(validated.checksum, input.casinoId).catch(() => null);
+        if (racedDuplicate) return { record: racedDuplicate, duplicate: true };
+      }
       try {
         if (upload.created) await provider.delete(upload.key);
       } catch {

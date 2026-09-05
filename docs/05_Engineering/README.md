@@ -35,6 +35,11 @@ GB market and commercial authority are governed by:
 - [`Great-Britain-Market-Authority.md`](Great-Britain-Market-Authority.md)
 - [`GB-Commercial-Partner-Authority.md`](GB-Commercial-Partner-Authority.md)
 
+Media ingestion and commercial creative handling are governed by:
+
+- [`Commercial-Creative-Format-Contract.md`](Commercial-Creative-Format-Contract.md)
+- [`Media-Ingestion-Contract.md`](Media-Ingestion-Contract.md)
+
 ## When this folder should be updated
 
 Update `Technical_Baseline/` when documenting a newly observed implementation state. Update standards and practices when an approved engineering standard, delivery practice, or shared technical convention changes.

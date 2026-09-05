@@ -2,8 +2,9 @@
 
 **Status:** ACTIVE application and presentation contract
 **Authority:** `B4GAMBLE — COMMERCIAL-CREATIVE-FORMATS-01`, refined by
-`B4GAMBLE — CASINO-PROMOTIONAL-MEDIA-CLICKABILITY-01` Founder instruction
-**Evidence date:** 4 September 2026
+`B4GAMBLE — CASINO-PROMOTIONAL-MEDIA-CLICKABILITY-01` and
+`B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` Founder instructions
+**Evidence date:** 5 September 2026
 **Architecture dependency:** [RFC-040 — Placement-Based Media Assignments](../06_RFC/RFC-040-Placement-Based-Media-Assignments.md)
 
 This contract contains no credential, affiliate identifier, raw partner click
@@ -220,12 +221,15 @@ click URL, `showURL`, impression macro, iframe or JavaScript into public HTML.
 This avoids an unapproved visitor-data disclosure and third-party performance
 cost.
 
-**PROPOSED — separate future decision:** if commercial operations later need a
-remote-image importer, it must use HTTPS, strict redirect/timeout/byte limits,
-content-type plus signature validation, DNS rebinding/private/link-local
-blocking, no credentials or executable content, first-party persistence and
-recorded provenance. No importer is introduced here. Third-party impression
-measurement requires separate privacy, consent and commercial authority.
+**DETECTED — newer bounded implementation:**
+`MEDIA-INGESTION-AUTOPLACEMENT-01` adds the separately governed
+[Media Ingestion Contract](Media-Ingestion-Contract.md). Its server-only
+importer implements the previously proposed HTTPS, redirect/timeout/byte,
+content-type/signature/decode, DNS-pinning/private/link-local/metadata,
+credential/execution, first-party storage, checksum-deduplication and
+provenance controls. Partner HTML remains unexecuted and partner hrefs remain
+evidence only. Third-party impression measurement still requires separate
+privacy, consent and commercial authority.
 
 ## Administration and rollback
 

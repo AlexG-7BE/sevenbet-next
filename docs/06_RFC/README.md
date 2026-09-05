@@ -54,7 +54,7 @@ orientation.
 | [RFC-024 — Database Recovery and Isolated Restore](RFC-024-Database-Recovery-and-Isolated-Restore.md) | `ACTIVE` | Restore-to-new-target, identity-guard and Production read-only recovery architecture. |
 | [RFC-025 — PROGRAM-AI Missions 02–10](RFC-025-PROGRAM-AI-Missions-02-10-MVP.md) | `ACTIVE` | Mission, prerequisite, reward, Review and Programme/commercial-separation authority. |
 | [RFC-026 — Analytics and Programme Runtime Hardening](RFC-026-MVP-Analytics-and-Programme-Runtime-Hardening.md) | `HISTORICAL` | Records the delivered analytics and Programme runtime-hardening workstream. |
-| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability and authority ceiling. |
+| [RFC-027 — Operational Agent Foundation](RFC-027-B4GAMBLE-Operational-Agent-Foundation.md) | `ACTIVE` | Isolated internal-agent capability plus exact-resource Commercial and Media Operations adapter authority ceilings. |
 | [RFC-028 — Public Contact and Transactional Mail](RFC-028-Public-Contact-and-Transactional-Mail-Boundary.md) | `ACTIVE` | Contact purpose, no-database handling and delivery separation from other communications. |
 | [RFC-029 — Runtime Product Polish](RFC-029-Runtime-Product-Polish.md) | `HISTORICAL` | Records the completed microphone, account-linking, login and demo-fallback fixes. |
 | [RFC-030 — Production Canonical Host Enforcement](RFC-030-Production-Canonical-Host-Enforcement.md) | `HISTORICAL` | Records the delivered Production canonical-host fix. |

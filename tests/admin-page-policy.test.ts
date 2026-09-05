@@ -25,6 +25,7 @@ test("every direct-data admin page checks its area before reading records", () =
     "app/admin/(protected)/casinos/[casinoId]/builder/page.tsx",
     "app/admin/(protected)/casinos/[casinoId]/preview/page.tsx",
     "app/admin/(protected)/casinos/[casinoId]/revisions/page.tsx",
+    "app/admin/(protected)/media-operations/page.tsx",
   ];
   for (const path of guardedPages) {
     const text = source(path);
@@ -40,6 +41,7 @@ test("admin navigation is role-filtered and the dashboard filters record and aud
   assert.match(shell, /visibleNavigation = adminNav\.filter/);
   assert.match(shell, /canAccessAdminArea\(staff, item\.area\)/);
   assert.match(shell, /\/admin\/program-settings/);
+  assert.match(shell, /\/admin\/media-operations/);
   assert.match(dashboard, /legacyEntities\.filter\(canReadEntity\)/);
   assert.match(dashboard, /listAuditEntries\(\)\.filter/);
 });
