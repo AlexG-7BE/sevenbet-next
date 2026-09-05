@@ -68,6 +68,14 @@ test("mixed commercial fixtures preserve physical geometry at every required wid
       ).toBeLessThan(.025);
       expect(geometry.figureHeight, `${width}px ${effectiveFamily} stage`).toBeLessThan(familyHeightLimit(effectiveFamily));
       await expect(figure.locator("figcaption")).toBeVisible();
+      if (family === "STRIP" && width >= 768) {
+        const cardGap = await figure.evaluate((element) => {
+          const actions = element.nextElementSibling;
+          if (!actions) throw new Error("Commercial figure is missing its action row");
+          return actions.getBoundingClientRect().top - element.getBoundingClientRect().bottom;
+        });
+        expect(cardGap, `${width}px STRIP dead card space`).toBeLessThan(32);
+      }
     }
     await page.close();
   }
