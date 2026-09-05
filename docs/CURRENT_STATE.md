@@ -4,9 +4,9 @@
 **Evidence date:** 5 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `edf191f9c52912fb1637b1f5952bf4f0e7830dfb`
-**Verified post-release runtime baseline SHA:** `edf191f9c52912fb1637b1f5952bf4f0e7830dfb`
-**Verified post-release runtime deployment:** Ready; `dpl_F5s4pBxa4jkkRg2hv3CD6grcam9g`
+**Current Production application SHA (live provider evidence):** `aedfaee48cefea34ac9b1fac71315ba7c8c3df19`
+**Verified post-release runtime baseline SHA:** `aedfaee48cefea34ac9b1fac71315ba7c8c3df19`
+**Verified post-release runtime deployment:** Ready; `dpl_ANq5SXZAGB8XnE7ZQ9RuckN2gLhu`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -37,11 +37,29 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
 | Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
+| GEO-localized creative assignments | **CAPABILITY READY IN PRODUCTION — REAL LOCALIZED INVENTORY NOT INSTALLED** | Additive migration 0028 is applied and verified. Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. All 46 existing assignments remain global-neutral and targeted rows remain zero. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
 | Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, REVIEW-SAFE DRAFT AUTHORITY** | Validated partner media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; checksum dedupe, bounded analysis, protected draft plans and the separate five-tool Media MCP are active with no publish authority. |
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01 COMPLETE, 5 September
+2026:** [PR #163](https://github.com/AlexG-7BE/sevenbet-next/pull/163)
+merged as `aedfaee48cefea34ac9b1fac71315ba7c8c3df19` after exact-head
+CI, isolated Preview migration and hosted acceptance passed. Additive migration
+`0028_geo_localized_creative_assignments` was then applied once to the exact
+fingerprinted Production resource and independently verified: protected counts
+remained 34 Casinos, 33 Bonuses, 11 Offers, 11 routes, 15 assets, 74 versions
+and `26/20/0` typed assignments; all 46 existing assignments remain
+`NULL/NULL`, with zero targeted rows. Ready deployment
+`dpl_ANq5SXZAGB8XnE7ZQ9RuckN2gLhu` serves the canonical aliases from the
+exact merge SHA and reports schema-ready build preflight. Public/API,
+eight-review, 390/1440 adaptive media, cache/privacy, separate four-tool
+Commercial/five-tool Media MCP and exact-deployment log acceptance passed. The
+capability is Ready; no real localized partner creative has been installed or
+published. See the [GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01 release
+record](06_Operations/GEO-Localized-Creative-Assignments-01-Release-Record-2026-09-05.md).
 
 **DETECTED — MEDIA-MCP-DCR-RESOURCE-FIX-01 COMPLETE, 5 September 2026:**
 [PR #161](https://github.com/AlexG-7BE/sevenbet-next/pull/161) merged as
