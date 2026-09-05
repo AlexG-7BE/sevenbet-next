@@ -107,7 +107,7 @@ export const superflyCommercialCatalog: readonly CommercialCatalogDefinition[] =
     providers: providers(["NetEnt", "Evolution", "Play'n GO", "Red Tiger", "Quickspin", "Push", "Relax", "Hacksaw", "IGT", "Stakelogic"]),
     categories: [{ key: "slots", name: "Slots", gameCount: null }, { key: "live-casino", name: "Live casino", gameCount: null }, { key: "table-games", name: "Table games", gameCount: null }],
     bonus: { slug: "diamond7-row-welcome", title: "100% up to €100 + 25 free spins", summary: "Current researched ROW first-deposit offer.", percentage: 100, maximumBonus: 100, currency: "EUR", freeSpins: 25, minimumDeposit: 20, wageringMultiplier: null, wageringText: unknownWagering, maximumBet: null, eligibility: generalEligibility, importantConditions: ["Minimum deposit €20.", unknownWagering, "Offer visibility does not claim local regulatory or partner approval."] },
-    evidence: { catalogId: "7381a728-f834-4a5c-946e-3c852972f9b4", offerId: "c02eaa93-1ba0-4272-a7c5-f9badcbe629b", routeId: "afee713e-0d73-4276-8fce-fe79bf6d7b30", canonicalUrlSha256: "df2aaa6d61ecb0e6f62de629313fa0e1940417ea30f835feadb8f4bbe75c085b" },
+    evidence: { catalogId: "7381a728-f834-4a5c-946e-3c852972f9b4", offerId: "c02eaa93-1ba0-4272-a7c5-f9badcbe629b", routeId: "afee713e-0d73-4276-8fce-fe79bf6d7b30", canonicalUrlSha256: "4ee6551dbb5d8eb821885b8151f2a6a74cc13125455955218c608496eefbe83f" },
     media: { path: "/casino-brands/diamond7/partner-offer.jpg", mimeType: "image/jpeg", width: 300, height: 250, checksum: "fa02113bb6f4df0cfe9d626663a99f0df0d56499651149304d91570465b61e61", evidenceId: "8eb3e843-9aa4-4c62-8b8b-ed00ef570843", role: "CURRENT_OFFER_CREATIVE" },
   },
   {
@@ -122,7 +122,7 @@ export const superflyCommercialCatalog: readonly CommercialCatalogDefinition[] =
     providers: providers(["Games Global", "NetEnt", "Evolution", "Betsoft", "NYX", "NextGen", "Aristocrat", "Quickspin", "Ezugi", "Thunderkick", "ELK"]),
     categories: [{ key: "slots", name: "Slots", gameCount: null }, { key: "table-games", name: "Table games", gameCount: null }, { key: "blackjack", name: "Blackjack", gameCount: null }, { key: "roulette", name: "Roulette", gameCount: null }, { key: "live-games", name: "Live games", gameCount: null }],
     bonus: { slug: "gday-casino-row-welcome", title: "100% up to €100 + 25 free spins", summary: "Current researched ROW first-deposit offer.", percentage: 100, maximumBonus: 100, currency: "EUR", freeSpins: 25, minimumDeposit: 20, wageringMultiplier: null, wageringText: unknownWagering, maximumBet: null, eligibility: generalEligibility, importantConditions: ["Minimum deposit €20.", unknownWagering, "Offer visibility does not claim local regulatory or partner approval."] },
-    evidence: { catalogId: "70591321-fee8-4be9-a75c-276b50c60576", offerId: "2de7ac4d-e348-41a6-a12a-fa088e641f29", routeId: "0f5e6c60-8db9-46d3-a2e5-237ded899ca4", canonicalUrlSha256: "cfb4358a622cfc2ef3a8669112ea57e0fd94b78334708c9b2dbca3b375b4670e" },
+    evidence: { catalogId: "70591321-fee8-4be9-a75c-276b50c60576", offerId: "2de7ac4d-e348-41a6-a12a-fa088e641f29", routeId: "0f5e6c60-8db9-46d3-a2e5-237ded899ca4", canonicalUrlSha256: "23aabbab21c2da76dccf590e9c8d33b3550cce539932b2b58cbe1d36f29fd27c" },
     media: { path: "/casino-brands/gday-casino/partner-offer.jpg", mimeType: "image/jpeg", width: 300, height: 250, checksum: "9d47439a24e46ffb8b7a98822d4a7568e57da5b4b5b12d47ca3f460014888671", evidenceId: "85ba58d3-67fc-46d3-87c8-f6ab3cd95a06", role: "CURRENT_OFFER_CREATIVE" },
   },
   {
@@ -137,7 +137,7 @@ export const superflyCommercialCatalog: readonly CommercialCatalogDefinition[] =
     providers: providers(["Games Global", "NetEnt", "Evolution", "Play'n GO", "Red Tiger", "Big Time Gaming", "ELK", "Light & Wonder", "Nolimit City", "Push", "Relax", "Quickspin", "Blueprint", "Stakelogic", "Greentube", "Hacksaw"]),
     categories: [{ key: "slots", name: "Slots", gameCount: null }, { key: "table-games", name: "Table games", gameCount: null }, { key: "live-casino", name: "Live casino", gameCount: null }],
     bonus: { slug: "21-prive-row-welcome", title: "100% up to €300 + 200 free spins", summary: "Current researched ROW first-deposit offer.", percentage: 100, maximumBonus: 300, currency: "EUR", freeSpins: 200, minimumDeposit: 20, wageringMultiplier: null, wageringText: unknownWagering, maximumBet: null, eligibility: generalEligibility, importantConditions: ["Minimum deposit €20.", unknownWagering, "Historical withdrawal complaints remain an editorial limitation."] },
-    evidence: { catalogId: "6f952894-2b74-4a06-8fba-405696d0a13c", offerId: "f92cbaf2-2608-4c31-a0ee-d19ce7138ac5", routeId: "9fa35fb8-c6b2-452c-9776-146777001502", canonicalUrlSha256: "34d4f3a8319d811e3a647aedb02bad4c3fe7ca840d9ce76a256db4383eaee275" },
+    evidence: { catalogId: "6f952894-2b74-4a06-8fba-405696d0a13c", offerId: "f92cbaf2-2608-4c31-a0ee-d19ce7138ac5", routeId: "9fa35fb8-c6b2-452c-9776-146777001502", canonicalUrlSha256: "03f7ab1ab931a94531b2ad72ed8d14384e8e064cc6c43c6bfc9630eb59e43260" },
     media: { path: "/casino-brands/21-prive/partner-offer.jpg", mimeType: "image/jpeg", width: 300, height: 250, checksum: "11b098d6893a460f9bc79cfd3fba4b8644471d442ae5bdbdff5eb718694c1cef", evidenceId: "34670c6b-68ad-487e-b863-83f26f7a2383", role: "CURRENT_OFFER_CREATIVE" },
   },
   {
@@ -167,7 +167,7 @@ export const superflyCommercialCatalog: readonly CommercialCatalogDefinition[] =
     providers: providers(["Evolution", "Blueprint", "Games Global", "Play'n GO", "Push", "Quickspin", "Red Tiger", "Relax", "Light & Wonder", "NetEnt", "Nolimit City", "Hacksaw", "Stakelogic"]),
     categories: [{ key: "slots", name: "Slots", gameCount: null }, { key: "live-casino", name: "Live casino", gameCount: null }, { key: "table-games", name: "Table games", gameCount: null }],
     bonus: { slug: "slotnite-row-welcome", title: "100% up to €250 + 100 free spins", summary: "Current researched ROW first-deposit offer.", percentage: 100, maximumBonus: 250, currency: "EUR", freeSpins: 100, minimumDeposit: 10, wageringMultiplier: null, wageringText: unknownWagering, maximumBet: null, eligibility: generalEligibility, importantConditions: ["Minimum deposit €10.", unknownWagering, "Recent payout-delay complaints remain an editorial limitation."] },
-    evidence: { catalogId: "98a97b0a-5f68-40fe-ba21-f52fae8da192", offerId: "53f4a9cb-8c8d-457f-8f5c-33554fc15189", routeId: "5774fd82-1ebc-4a6e-9252-8c0add384a91", canonicalUrlSha256: "d3e597395afa17ffcc95133560cce21ffb1f625717b69505ea4400829a8051f3" },
+    evidence: { catalogId: "98a97b0a-5f68-40fe-ba21-f52fae8da192", offerId: "53f4a9cb-8c8d-457f-8f5c-33554fc15189", routeId: "5774fd82-1ebc-4a6e-9252-8c0add384a91", canonicalUrlSha256: "3547a9232c71605aaf6ad22351d11a6d37bf6d8f3a4ab3335eee5085efeaf365" },
     media: { path: "/casino-brands/slotnite/partner-brand.gif", mimeType: "image/gif", width: 320, height: 50, checksum: "fa47b6a8655b37749d6658ac51ff67e58bcc6cfd812e36f19f9eccbc6eb4e3a3", evidenceId: "aa9fe01e-e395-4288-882d-552b9aadd19d", role: "GENERIC_PARTNER_CREATIVE" },
   },
   {
@@ -182,7 +182,7 @@ export const superflyCommercialCatalog: readonly CommercialCatalogDefinition[] =
     providers: providers(["Games Global", "NetEnt", "Evolution", "Betsoft", "Big Time Gaming", "Blueprint", "ELK", "Hacksaw", "IGT", "Nolimit City", "Play'n GO", "Push", "Quickspin", "Red Tiger", "Relax", "Light & Wonder", "Stakelogic"]),
     categories: [{ key: "slots", name: "Slots", gameCount: null }, { key: "live-casino", name: "Live casino", gameCount: null }, { key: "table-games", name: "Table games", gameCount: null }],
     bonus: { slug: "hello-casino-current-mga-welcome", title: "100% up to €300 + 100 free spins", summary: "Current August MGA first-deposit offer.", percentage: 100, maximumBonus: 300, currency: "EUR", freeSpins: 100, minimumDeposit: 20, wageringMultiplier: 35, wageringText: "35× bonus plus deposit unless otherwise specified.", maximumBet: 5, eligibility: generalEligibility, importantConditions: ["Minimum deposit €20.", "35× bonus plus deposit unless otherwise specified.", "Bonus expires after 30 days; spins expire after 10 days.", "Maximum bonus bet €5."] },
-    evidence: { catalogId: "7221c80f-07ff-47f3-99ee-d26f98ee2aaa", offerId: "f1281703-218a-43fd-a850-58fee12e2d88", routeId: "bd47f0ea-9e44-40d9-8b36-e487fd96d4de", canonicalUrlSha256: "af40b20544662bb848f1ade77f708dab7f6f449d9c95059b43b4e63681a0cd6a" },
+    evidence: { catalogId: "7221c80f-07ff-47f3-99ee-d26f98ee2aaa", offerId: "f1281703-218a-43fd-a850-58fee12e2d88", routeId: "bd47f0ea-9e44-40d9-8b36-e487fd96d4de", canonicalUrlSha256: "b39386bf458c6d5cdcbfe8314c730a6b5eb703cbf5479f93a42c9f2d836dea6b" },
     // Current captured Hello offer artwork is stale. The controlled logo and
     // code-rendered current offer are intentionally used instead.
     media: null,
