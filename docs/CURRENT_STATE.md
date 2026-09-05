@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 5 September 2026
+**Evidence date:** 6 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `aedfaee48cefea34ac9b1fac71315ba7c8c3df19`
-**Verified post-release runtime baseline SHA:** `aedfaee48cefea34ac9b1fac71315ba7c8c3df19`
-**Verified post-release runtime deployment:** Ready; `dpl_ANq5SXZAGB8XnE7ZQ9RuckN2gLhu`
+**Current Production application SHA (live provider evidence):** `02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5`
+**Verified post-release runtime baseline SHA:** `02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5`
+**Verified post-release runtime deployment:** Ready; `dpl_DcAiTyArEtqLYQZpNco1yrKymU47`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -44,19 +44,26 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 
 ### Recent implementation state
 
-**DETECTED — DIRECT-GOVERNED-OUTBOUND-01 RELEASE CANDIDATE, 6 September
-2026:** the protected implementation branch changes normal authorized
-commercial CTA and promotional-creative anchors from the two-step
-`/outbound/{slug}` confirmation journey to direct `/r/{slug}` navigation in a
-new tab. The existing server-owned `/r` route remains the only external redirect
-authority and retains its feature flag, trusted request GEO, cumulative
-commercial resolution, jurisdiction logging, safe 302 response and best-effort
-outbound-click recording. `/outbound/{valid-slug}` is compatibility-only and
-redirects internally to `/r/{slug}`; `/outbound/unavailable` remains the
-fail-closed terminal surface. The client event uses the backward-safe `direct`
-outcome; historical confirmation outcomes remain parseable, and public product
-analytics remains disabled. Preview, merge, Production and runtime evidence are
-not claimed until the release record is finalized.
+**DETECTED — DIRECT-GOVERNED-OUTBOUND-01 COMPLETE, 6 September 2026:**
+[PR #165](https://github.com/AlexG-7BE/sevenbet-next/pull/165) merged as
+`02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5` after focused regression,
+exact-head CI and Ready Preview acceptance. Normal authorized commercial CTA
+and promotional-creative anchors now use direct `/r/{slug}` navigation in a new
+tab without a confirmation popup/page or second user activation. The existing
+server-owned `/r` route remains the only external redirect authority and retains
+its feature flag, trusted request GEO, cumulative commercial resolution,
+jurisdiction logging, safe 302 response and best-effort outbound-click
+recording. `/outbound/{valid-slug}` redirects internally to `/r/{slug}` for
+compatibility; invalid input and ineligible requests retain the unavailable
+terminal surface. Ready Production deployment
+`dpl_DcAiTyArEtqLYQZpNco1yrKymU47` passed six-width responsive acceptance,
+real CTA and creative click-through, three governed 302 probes, legacy route
+acceptance, nine-route smoke and exact-deployment log review with zero 5xx or
+error-level entries. The backward-safe analytics `direct` outcome is active;
+historical confirmation outcomes remain parseable and public product analytics
+remains disabled. No destination, ID, GEO/legal gate, database, MCP or Media
+authority changed. See the [DIRECT-GOVERNED-OUTBOUND-01 release
+record](06_Operations/Direct-Governed-Outbound-01-Release-Record-2026-09-06.md).
 
 **DETECTED — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01 COMPLETE, 5 September
 2026:** [PR #163](https://github.com/AlexG-7BE/sevenbet-next/pull/163)
