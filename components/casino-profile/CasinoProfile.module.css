@@ -781,11 +781,11 @@
   }
   .heroMediaCanvas { min-height:0; }
   .brandMedia { min-height:0; padding:22px; gap:5px; }
-  .brandMedia > span { top:16px; left:18px; font-size:10px; }
+  .brandMedia > span { top:16px; left:18px; font-size:12px; }
   .brandMedia img { max-width:62px; max-height:62px; margin:8px auto 6px; }
   .brandMedia > i { width:52px; height:52px; margin:8px auto 6px; }
   .brandMedia strong { font-size:26px; }
-  .brandMedia small { font-size:11px; }
+  .brandMedia small { font-size:12px; }
 
   .offerPlacementMedia,
   .offerPlacementMedia[data-mobile-presentation-family] { aspect-ratio:auto; }
