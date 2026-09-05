@@ -1,6 +1,8 @@
 import { toNextJsHandler } from "better-auth/next-js";
 
-import { auth } from "@/lib/auth/server";
+import { getAuth } from "@/lib/auth/server";
+import { withAuthDatabaseAvailabilityCapture } from "@/lib/auth/database-availability";
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { GOOGLE_AUTH_CALLBACK, isAllowedGoogleLinkRequest, isAllowedGoogleSignInRequest } from "@/lib/auth/google-flow";
 import { programmeAuthAccessDenial } from "@/lib/auth/programme-access-policy";
 import { programmeAccessSigningSecret } from "@/lib/auth/programme-access-proof";
@@ -8,8 +10,23 @@ import { readBoundedRequestText } from "@/lib/programme/http";
 import { ServiceError } from "@/lib/services/service-error";
 import { isCommercialMcpInternalAuthPath } from "@/lib/mcp/commercial/config";
 
-const handlers = toNextJsHandler(auth);
 const authJsonPayloadLimit = 32 * 1024;
+
+async function dispatchAuth(method: "GET" | "POST", request: Request) {
+  try {
+    const handlers = toNextJsHandler(await getAuth());
+    return await withAuthDatabaseAvailabilityCapture(() => handlers[method](request));
+  } catch (error) {
+    if (!isTransientDatabaseAvailabilityError(error)) throw error;
+    return Response.json(
+      {
+        code: "AUTH_SERVICE_UNAVAILABLE",
+        message: "Authentication is temporarily unavailable",
+      },
+      { status: 503, headers: { "Retry-After": "3" } },
+    );
+  }
+}
 
 function privateAuthResponse(response: Response) {
   response.headers.set("Cache-Control", "private, no-store, max-age=0");
@@ -24,7 +41,7 @@ export async function GET(request: Request) {
   if (isCommercialMcpInternalAuthPath(new URL(request.url).pathname)) {
     return privateAuthResponse(Response.json({ code: "NOT_FOUND" }, { status: 404 }));
   }
-  return privateAuthResponse(await handlers.GET(request));
+  return privateAuthResponse(await dispatchAuth("GET", request));
 }
 
 export async function POST(request: Request) {
@@ -100,5 +117,5 @@ export async function POST(request: Request) {
     ));
   }
   if (accessDenial) return privateAuthResponse(accessDenial);
-  return privateAuthResponse(await handlers.POST(downstreamRequest));
+  return privateAuthResponse(await dispatchAuth("POST", downstreamRequest));
 }

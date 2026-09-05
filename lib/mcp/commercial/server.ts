@@ -14,6 +14,7 @@ import {
   CommercialMcpResearchBundleSchema,
 } from "@/lib/commercial/commercial-mcp-contract";
 import { commercialMcpService } from "@/lib/commercial/commercial-mcp-service";
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { commercialMcpAuthenticateHeader, type CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import type { CommercialMcpTokenContext } from "@/lib/mcp/commercial/oauth";
 import { consumeCommercialMcpRateLimit } from "@/lib/mcp/commercial/rate-limit";
@@ -113,6 +114,7 @@ export function createCommercialMcpServer(
   config: CommercialMcpConfig,
   service: CommercialMcpServiceAdapter = commercialMcpService,
   rateLimiter: CommercialMcpRateLimiter = consumeCommercialMcpRateLimit,
+  onTransientDatabaseFailure: (error: unknown) => void = () => {},
 ) {
   const server = new Server(
     { name: "b4gamble-commercial-ops", version: "1.0.0" },
@@ -130,20 +132,20 @@ export function createCommercialMcpServer(
     const requiredScope = write ? "commercial:safe_write" : "commercial:read";
     if (!token.scopes.has(requiredScope)) return insufficientScope(config, requiredScope) as never;
 
-    const rate = await rateLimiter({
-      bucket: write ? "write" : "read",
-      key: `${token.staff.id}:${token.clientId}`,
-      limit: write ? 20 : 120,
-      windowMs: 10 * 60 * 1_000,
-    });
-    if (!rate.allowed) {
-      return {
-        content: [{ type: "text" as const, text: "Commercial MCP tool rate limit exceeded" }],
-        isError: true,
-      };
-    }
-
     try {
+      const rate = await rateLimiter({
+        bucket: write ? "write" : "read",
+        key: `${token.staff.id}:${token.clientId}`,
+        limit: write ? 20 : 120,
+        windowMs: 10 * 60 * 1_000,
+      });
+      if (!rate.allowed) {
+        return {
+          content: [{ type: "text" as const, text: "Commercial MCP tool rate limit exceeded" }],
+          isError: true,
+        };
+      }
+
       const args = request.params.arguments ?? {};
       switch (tool.name) {
         case "commercial_list_opportunities": return toolResult(await service.list(args));
@@ -153,6 +155,7 @@ export function createCommercialMcpServer(
         default: throw new McpError(ErrorCode.MethodNotFound, "Unknown Commercial MCP tool");
       }
     } catch (error) {
+      if (isTransientDatabaseAvailabilityError(error)) onTransientDatabaseFailure(error);
       return toolError(error);
     }
   });

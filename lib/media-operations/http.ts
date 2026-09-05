@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ZodError } from "zod";
 
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import { adminAuthErrorResponse } from "@/lib/http/admin-auth-error";
 import { ServiceError, ValidationError } from "@/lib/services/service-error";
 
@@ -27,6 +28,16 @@ export function mediaOperationsJson(value: unknown, init?: ResponseInit) {
 }
 
 export function mediaOperationsErrorResponse(error: unknown, fallback: string) {
+  if (isTransientDatabaseAvailabilityError(error)) {
+    return mediaOperationsJson(
+      {
+        ok: false,
+        error: "Media Operations is temporarily unavailable",
+        code: "SERVICE_UNAVAILABLE",
+      },
+      { status: 503, headers: { "Retry-After": "3" } },
+    );
+  }
   const auth = adminAuthErrorResponse(error);
   if (auth) return auth;
   if (error instanceof ZodError) return mediaOperationsJson({ ok: false, error: "Media Operations input failed validation", code: "VALIDATION_ERROR", details: error.issues }, { status: 422 });

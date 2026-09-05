@@ -1,7 +1,9 @@
 import { z } from "zod";
 
-import { auth } from "@/lib/auth/instance";
+import { withAuthDatabaseAvailabilityCapture } from "@/lib/auth/database-availability";
+import { getOperationalMcpAuth } from "@/lib/auth/instance";
 import prisma from "@/lib/db/prisma";
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import type { CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { privateNoStore, readBoundedBody } from "@/lib/mcp/commercial/http";
 import {
@@ -126,6 +128,11 @@ function rewriteForInternalAuth(
   });
 }
 
+async function operationalMcpAuthHandler(request: Request) {
+  const auth = await getOperationalMcpAuth();
+  return withAuthDatabaseAvailabilityCapture(() => auth.handler(request));
+}
+
 export async function registerCommercialMcpClient(request: Request, config: CommercialMcpConfig) {
   const rate = await consumeCommercialMcpRateLimit({
     bucket: "dcr",
@@ -155,7 +162,7 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
     scope: operationalMcpScopes(config).join(" "),
     resources: [config.resource],
   });
-  const response = await auth.handler(rewriteForInternalAuth(
+  const response = await operationalMcpAuthHandler(rewriteForInternalAuth(
     request,
     "/oauth2/register",
     body,
@@ -215,7 +222,7 @@ export async function authorizeCommercialMcpRequest(
   url.pathname = "/api/auth/oauth2/authorize";
   url.searchParams.set("prompt", "consent");
   url.searchParams.set("scope", [...scopes].join(" "));
-  return privateNoStore(await auth.handler(new Request(url, { headers: request.headers, redirect: "manual" })));
+  return privateNoStore(await operationalMcpAuthHandler(new Request(url, { headers: request.headers, redirect: "manual" })));
 }
 
 type AuthorizationCodeVerification = {
@@ -249,7 +256,7 @@ export async function getCommercialMcpConsent(
     method: "POST",
     headers: requestHeaders,
   });
-  const verificationResponse = await auth.handler(rewriteForInternalAuth(
+  const verificationResponse = await operationalMcpAuthHandler(rewriteForInternalAuth(
     validationRequest,
     "/oauth2/public-client-prelogin",
     JSON.stringify({ client_id: signedQuery.client_id, oauth_query: oauthQuery }),
@@ -284,7 +291,7 @@ export async function completeCommercialMcpConsent(
   const decision = z.enum(["authorize", "deny"]).parse(form.get("decision"));
   const consent = await getCommercialMcpConsent(oauthQuery, expectedUserId, config, request.headers);
   const body = JSON.stringify({ accept: decision === "authorize", oauth_query: oauthQuery });
-  const response = await auth.handler(rewriteForInternalAuth(
+  const response = await operationalMcpAuthHandler(rewriteForInternalAuth(
     request,
     "/oauth2/consent",
     body,
@@ -365,7 +372,7 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
 
   const forwarded = new URLSearchParams();
   for (const [key, value] of Object.entries(body)) if (value) forwarded.set(key, value);
-  return privateNoStore(await auth.handler(rewriteForInternalAuth(
+  return privateNoStore(await operationalMcpAuthHandler(rewriteForInternalAuth(
     request,
     "/oauth2/token",
     forwarded.toString(),
@@ -415,7 +422,7 @@ export async function revokeCommercialMcpToken(request: Request, config: Commerc
     client_id: body.client_id,
   });
   if (body.token_type_hint) forwarded.set("token_type_hint", body.token_type_hint);
-  return privateNoStore(await auth.handler(rewriteForInternalAuth(
+  return privateNoStore(await operationalMcpAuthHandler(rewriteForInternalAuth(
     request,
     "/oauth2/revoke",
     forwarded.toString(),
@@ -442,6 +449,15 @@ export function commercialMcpAuthErrorResponse(error: unknown, config: Commercia
     return privateNoStore(Response.json(
       { error: error.code, error_description: error.message },
       { status: error.status, headers },
+    ));
+  }
+  if (isTransientDatabaseAvailabilityError(error)) {
+    return privateNoStore(Response.json(
+      {
+        error: "temporarily_unavailable",
+        error_description: "Operational authentication data is temporarily unavailable",
+      },
+      { status: 503, headers: { "Retry-After": "3" } },
     ));
   }
   return privateNoStore(Response.json({ error: "server_error", error_description: "OAuth request could not be completed" }, { status: 500 }));

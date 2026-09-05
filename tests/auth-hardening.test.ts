@@ -24,7 +24,7 @@ test("anonymous requests skip Better Auth session initialization", () => {
 
   const sessionSource = readFileSync(new URL("../lib/auth/session.ts", import.meta.url), "utf8");
   assert.doesNotMatch(sessionSource, /import\s*\{\s*auth\s*\}\s*from/);
-  assert.match(sessionSource, /if \(!hasBetterAuthSessionCookie\(resolvedHeaders\)\) return null;\s*const \{ auth \} = await import\("@\/lib\/auth\/server"\)/);
+  assert.match(sessionSource, /if \(!hasBetterAuthSessionCookie\(resolvedHeaders\)\) return null;\s*const \{ getAuth \} = await import\("@\/lib\/auth\/server"\);\s*const auth = await getAuth\(\)/);
 });
 
 test("public and Programme shells do not open Better Auth for navigation copy", () => {

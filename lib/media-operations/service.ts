@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 
 import type { MediaAssetTypeName, SupportedImageMime } from "@/lib/media/image-validation";
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import {
   MEDIA_INGESTION_PLAN_VERSION,
   mediaAnalyzeAndPlanInputSchema,
@@ -81,11 +82,15 @@ async function existingAssignments(plan: MediaIngestionPlan): Promise<ExistingMe
   const casinoId = plan.resolvedContext.casinoId;
   const bonusId = plan.resolvedContext.bonusId;
   const offerId = plan.resolvedContext.affiliateOfferId;
-  const [casino, bonus, offer] = await Promise.all([
-    casinoId ? prisma.casinoMediaAssignment.findMany({ where: { casinoId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
-    bonusId ? prisma.casinoBonusMediaAssignment.findMany({ where: { casinoBonusId: bonusId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
-    offerId ? prisma.affiliateOfferMediaAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } }) : [],
-  ]);
+  const casino = casinoId
+    ? await prisma.casinoMediaAssignment.findMany({ where: { casinoId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
+    : [];
+  const bonus = bonusId
+    ? await prisma.casinoBonusMediaAssignment.findMany({ where: { casinoBonusId: bonusId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
+    : [];
+  const offer = offerId
+    ? await prisma.affiliateOfferMediaAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
+    : [];
   return [
     ...casino.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, mediaAsset: item.mediaAsset })),
     ...bonus.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, mediaAsset: item.mediaAsset })),
@@ -218,6 +223,7 @@ export class MediaOperationsService {
         });
         if (duplicateOwnerConflict) addWarning(plan, "DUPLICATE_OWNER_REVIEW_REQUIRED");
       } catch (error) {
+        if (isTransientDatabaseAvailabilityError(error)) throw error;
         const rejected = failure(error);
         plan.assets.push({
           creativeId: creative.id, state: "REJECTED", assetId: null, firstPartyUrl: null,

@@ -1,7 +1,7 @@
 import "server-only";
 
-import { auth } from "@/lib/auth/instance";
+import { getAuth, type SevenBetAuth } from "@/lib/auth/instance";
 
-export { auth };
+export { getAuth };
 
-export type AuthSession = typeof auth.$Infer.Session;
+export type AuthSession = SevenBetAuth["$Infer"]["Session"];
