@@ -18,6 +18,7 @@ import { casinoCatalogEditorialDocument, casinoRealCatalog, casinoRealCatalogByS
 import prisma from "../lib/db/prisma";
 import { deterministicCasinoIngestionId } from "../lib/casino-ingestion/importer";
 import { projectPartnerRoutes } from "../lib/affiliate-routing/partner-route-projection";
+import { extractHashBoundSuperflyCampaignDestination } from "../lib/affiliate-routing/superfly-destination-evidence";
 import { partnerRouteRepository } from "../lib/repositories/partner-route.repository";
 import { casinoService } from "../lib/services/casino.service";
 import { editorialReviewService } from "../lib/services/editorial-review.service";
@@ -38,7 +39,7 @@ type MigrationState = { unfinished: bigint; targetApplied: bigint; targetChecksu
 const TARGET_MIGRATION = "0026_commercial_platform_completion";
 const PROJECT_ID = "prj_LcIIeqCpeTiBjWSxiwSsMu5jNLhb";
 const ORG_ID = "team_WhkUGuXZeIMlU1uFHtowNUqa";
-const MANIFEST_SHA256 = "a21d03412edeae1f6ae7dcc7034e6673d2a6a24176ac15f9a1d51cfa52b0d3dd";
+const MANIFEST_SHA256 = "92b6bffa53da62e4d7971267f991f9a8abbf3ab3bae7299409c0269209a43aaa";
 const MANIFEST_PATH = "data/casino-commercial-visibility-03/manifest.v1.json";
 const allowedCountries = ["KZ", "US", "DE", "IE", "MX"] as const;
 
@@ -124,14 +125,6 @@ async function releaseManifest() {
   return manifest;
 }
 
-function oneHttpsUrl(claim: string | null) {
-  const urls = [...(claim ?? "").matchAll(/https:\/\/[^\s\"'<>]+/gi)].map((match) => match[0]);
-  if (urls.length !== 1) throw new Error("Canonical route evidence must contain exactly one HTTPS destination.");
-  const parsed = new URL(urls[0]);
-  if (parsed.protocol !== "https:" || parsed.hostname !== "go.superflypartners.net" || parsed.username || parsed.password) throw new Error("Canonical route evidence is outside the governed Superfly host.");
-  return urls[0];
-}
-
 async function evidenceAuthority() {
   const blockIds = Object.values(superflyBlockEvidence).flat();
   const expectedIds = [...new Set(superflyCommercialCatalog.flatMap((definition) => [
@@ -151,8 +144,10 @@ async function evidenceAuthority() {
   }
   const routeUrls = new Map<string, string>();
   for (const definition of superflyCommercialCatalog) {
-    const url = oneHttpsUrl(byId.get(definition.evidence.routeId)?.claim ?? null);
-    if (hash(url) !== definition.evidence.canonicalUrlSha256) throw new Error(`${definition.slug} canonical route checksum mismatch.`);
+    const url = extractHashBoundSuperflyCampaignDestination(
+      byId.get(definition.evidence.routeId)?.claim ?? "",
+      definition.evidence.canonicalUrlSha256,
+    );
     routeUrls.set(definition.slug, url);
   }
   return routeUrls;
