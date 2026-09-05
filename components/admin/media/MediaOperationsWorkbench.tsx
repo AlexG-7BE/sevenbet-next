@@ -24,12 +24,21 @@ export function MediaOperationsWorkbench({ casinos }: { casinos: CasinoReference
   const [casinoId, setCasinoId] = useState("");
   const [bonusId, setBonusId] = useState("");
   const [partnerIdentifier, setPartnerIdentifier] = useState("");
+  const [targetCountries, setTargetCountries] = useState("");
+  const [creativeLanguageState, setCreativeLanguageState] = useState<"UNKNOWN" | "NEUTRAL" | "EXPLICIT">("UNKNOWN");
+  const [creativeLanguage, setCreativeLanguage] = useState("");
   const [semantic, setSemantic] = useState(true);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [plan, setPlan] = useState<MediaIngestionPlan | null>(null);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
   const bonuses = useMemo(() => casinos.find((casino) => casino.id === casinoId)?.casinoBonuses ?? [], [casinoId, casinos]);
+  const normalizedTargetCountries = targetCountries.split(/[\s,]+/).map((value) => value.trim().toUpperCase()).filter(Boolean);
+  const previewScope = plan?.recommendations.find((recommendation) => recommendation.countryCode || recommendation.languageCode)
+    ?? plan?.recommendations[0];
+  const previewQuery = new URLSearchParams({ variant: "DEFAULT" });
+  if (previewScope?.countryCode) previewQuery.set("countryCode", previewScope.countryCode);
+  if (previewScope?.languageCode) previewQuery.set("languageCode", previewScope.languageCode);
 
   async function analyze() {
     setBusy("analyze"); setError(""); setPlan(null);
@@ -41,6 +50,10 @@ export function MediaOperationsWorkbench({ casinos }: { casinos: CasinoReference
             ...(casinoId ? { casinoId } : {}),
             ...(bonusId ? { bonusId } : {}),
             ...(partnerIdentifier.trim() ? { partnerIdentifier: partnerIdentifier.trim() } : {}),
+            ...(normalizedTargetCountries.length ? { targetCountryCodes: normalizedTargetCountries } : {}),
+            creativeLanguageState,
+            ...(creativeLanguageState === "EXPLICIT" ? { creativeLanguage: creativeLanguage.trim() } : {}),
+            ...(creativeLanguageState === "NEUTRAL" ? { creativeLanguage: null } : {}),
           },
         }),
       });
@@ -77,9 +90,12 @@ export function MediaOperationsWorkbench({ casinos }: { casinos: CasinoReference
         <label><span>Casino (optional)</span><select value={casinoId} onChange={(event) => { setCasinoId(event.target.value); setBonusId(""); }}><option value="">Detect from evidence</option>{casinos.map((casino) => <option key={casino.id} value={casino.id}>{casino.title}</option>)}</select></label>
         <label><span>Bonus (optional)</span><select disabled={!casinoId} value={bonusId} onChange={(event) => setBonusId(event.target.value)}><option value="">Detect or leave unassigned</option>{bonuses.map((bonus) => <option key={bonus.id} value={bonus.id}>{bonus.title}</option>)}</select></label>
         <label><span>Partner identifier (optional)</span><input maxLength={200} onChange={(event) => setPartnerIdentifier(event.target.value)} placeholder="Network, program, or reference" value={partnerIdentifier} /></label>
+        <label><span>Target countries (optional)</span><input autoComplete="off" maxLength={80} onChange={(event) => setTargetCountries(event.target.value)} placeholder="FI or EE, LV, LT" spellCheck={false} value={targetCountries} /><small>Exact ISO country codes. Blank means global.</small></label>
+        <label><span>Creative language status</span><select value={creativeLanguageState} onChange={(event) => setCreativeLanguageState(event.target.value as "UNKNOWN" | "NEUTRAL" | "EXPLICIT")}><option value="UNKNOWN">Unknown — review required</option><option value="NEUTRAL">Neutral — no material language</option><option value="EXPLICIT">Explicit language</option></select></label>
+        {creativeLanguageState === "EXPLICIT" ? <label><span>Creative language</span><input autoComplete="off" maxLength={8} onChange={(event) => setCreativeLanguage(event.target.value.toLowerCase())} placeholder="fi" spellCheck={false} value={creativeLanguage} /><small>BCP 47 primary language subtag.</small></label> : null}
       </div>
       <label className="editorCheck"><input checked={semantic} type="checkbox" onChange={(event) => setSemantic(event.target.checked)} /> Use approved visual analysis when available</label>
-      <button className="button gold" disabled={!snippet.trim() || Boolean(busy)} onClick={() => void analyze()} type="button">{busy === "analyze" ? "Ingesting and analyzing…" : "Analyze"}</button>
+      <button className="button gold" disabled={!snippet.trim() || Boolean(busy) || (creativeLanguageState === "EXPLICIT" && !creativeLanguage.trim())} onClick={() => void analyze()} type="button">{busy === "analyze" ? "Ingesting and analyzing…" : "Analyze"}</button>
       {error ? <p className="builderError" role="alert">{error}</p> : null}
     </Card>
 
@@ -92,6 +108,7 @@ export function MediaOperationsWorkbench({ casinos }: { casinos: CasinoReference
       <div className="mediaOperationsFacts">
         <Card><span className="muted">Resolved context</span><strong>{plan.resolvedContext.casinoTitle || "Review required"}</strong><small>{plan.resolvedContext.bonusTitle || "No bonus selected"} · {plan.resolvedContext.source}</small></Card>
         <Card><span className="muted">Tracking evidence</span><strong>{plan.resolvedContext.trackingDestinationState.replaceAll("_", " ")}</strong><small>No partner href becomes a route or CTA.</small></Card>
+        <Card><span className="muted">Authored target</span><strong>{plan.requestedContext.targetCountryCodes?.join(", ") || "Global"} · {plan.requestedContext.creativeLanguage ?? (plan.requestedContext.creativeLanguageState === "NEUTRAL" || plan.requestedContext.creativeLanguage === null ? "neutral" : "unknown language")}</strong><small>Country scope controls eligibility; language controls presentation only.</small></Card>
         <Card><span className="muted">Input checksum</span><strong className="mediaOperationsChecksum">{plan.snippetChecksum.slice(0, 16)}…</strong><small>Raw pasted code is not stored.</small></Card>
       </div>
 
@@ -118,14 +135,14 @@ export function MediaOperationsWorkbench({ casinos }: { casinos: CasinoReference
         <div><p className="eyebrow">Reasoned recommendations</p><h2 id="placement-plan-heading">Placement plan</h2></div>
         {plan.recommendations.length ? <div className="mediaOperationsPlanTable" role="table" aria-label="Draft media placement recommendations">
           <div className="mediaOperationsPlanRow mediaOperationsPlanHead" role="row"><span>Creative</span><span>Placement</span><span>Decision</span><span>Score</span><span>Reason</span></div>
-          {plan.recommendations.map((recommendation) => <div className="mediaOperationsPlanRow" key={recommendation.id} role="row"><span>{recommendation.subjectType.replaceAll("_", " ")} · {recommendation.variant}</span><strong>{recommendation.placement.replaceAll("_", " ")}</strong><span><Badge tone={tone(recommendation.state)}>{recommendation.state}</Badge><small>{recommendation.offerMatch.replaceAll("_", " ")} · {recommendation.marketHandling.replaceAll("_", " ")} · {recommendation.existingComparison.replaceAll("_", " ")}</small></span><strong>{recommendation.score}</strong><span>{recommendation.reasons.join(" ")}</span></div>)}
+          {plan.recommendations.map((recommendation) => <div className="mediaOperationsPlanRow" key={recommendation.id} role="row"><span>{recommendation.subjectType.replaceAll("_", " ")} · {recommendation.variant}<small>{recommendation.countryCode ?? "GLOBAL"} · {recommendation.languageCode ?? "neutral"}</small></span><strong>{recommendation.placement.replaceAll("_", " ")}</strong><span><Badge tone={tone(recommendation.state)}>{recommendation.state}</Badge><small>{recommendation.offerMatch.replaceAll("_", " ")} · {recommendation.marketHandling.replaceAll("_", " ")} · {recommendation.existingComparison.replaceAll("_", " ")}</small></span><strong>{recommendation.score}</strong><span>{recommendation.reasons.join(" ")}</span></div>)}
         </div> : <Card><p className="muted">No assignment is eligible. The validated media remains review-only or could not be tied to a governed casino subject.</p></Card>}
       </section>
 
       <Card className="mediaOperationsActions">
         <div><h2>Draft action</h2><p className="muted">Applies only auto-eligible recommendations to current draft records. Public snapshots stay unchanged until the existing publication action.</p></div>
         <label className="editorCheck"><input checked={replaceExisting} type="checkbox" onChange={(event) => setReplaceExisting(event.target.checked)} /> Explicitly replace eligible existing draft assignments</label>
-        <div className="mediaCardActions"><button className="button gold" disabled={Boolean(busy) || !plan.recommendations.some((item) => item.state === "AUTO_ASSIGN_DRAFT" || item.replacementEligible)} onClick={() => void mutate("APPLY")} type="button">{busy === "apply" ? "Applying…" : "Apply to draft"}</button><button className="button ghost" disabled={Boolean(busy) || !plan.recommendations.some((item) => item.appliedAssignmentId && !item.rolledBackAt)} onClick={() => void mutate("ROLLBACK")} type="button">{busy === "rollback" ? "Rolling back…" : "Rollback plan-owned drafts"}</button>{plan.resolvedContext.casinoId ? <><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?variant=DEFAULT`} target="_blank">Draft default</Link><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?variant=MOBILE`} target="_blank">Draft mobile</Link><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?variant=DESKTOP`} target="_blank">Draft desktop</Link></> : null}</div>
+        <div className="mediaCardActions"><button className="button gold" disabled={Boolean(busy) || !plan.recommendations.some((item) => item.state === "AUTO_ASSIGN_DRAFT" || item.replacementEligible)} onClick={() => void mutate("APPLY")} type="button">{busy === "apply" ? "Applying…" : "Apply to draft"}</button><button className="button ghost" disabled={Boolean(busy) || !plan.recommendations.some((item) => item.appliedAssignmentId && !item.rolledBackAt)} onClick={() => void mutate("ROLLBACK")} type="button">{busy === "rollback" ? "Rolling back…" : "Rollback plan-owned drafts"}</button>{plan.resolvedContext.casinoId ? <><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?${previewQuery}`} target="_blank">Simulate target · default</Link><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?${new URLSearchParams({ ...Object.fromEntries(previewQuery), variant: "MOBILE" })}`} target="_blank">Simulate target · mobile</Link><Link className="button ghost" href={`/admin/casinos/${plan.resolvedContext.casinoId}/preview?${new URLSearchParams({ ...Object.fromEntries(previewQuery), variant: "DESKTOP" })}`} target="_blank">Simulate target · desktop</Link></> : null}</div>
         <div className="mediaCardActions"><span className="muted">Current published state (unchanged until publication):</span><Link href="/casinos" target="_blank">Casinos</Link><Link href="/bonuses" target="_blank">Bonuses</Link><Link href="/best-offers" target="_blank">Best Offers</Link>{plan.resolvedContext.casinoSlug ? <Link href={`/casino/${plan.resolvedContext.casinoSlug}`} target="_blank">Casino review</Link> : null}</div>
       </Card>
     </> : null}

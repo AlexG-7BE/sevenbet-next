@@ -2,7 +2,8 @@
 
 **Status:** ACTIVE Founder-authorised application, security and operations
 contract
-**Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01`
+**Authority:** `B4GAMBLE — MEDIA-INGESTION-AUTOPLACEMENT-01` and the additive
+`B4GAMBLE — GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01`
 **Evidence date:** 5 September 2026
 **Architecture dependencies:**
 [RFC-027 — B4GAMBLE Operational Agent Foundation](../06_RFC/RFC-027-B4GAMBLE-Operational-Agent-Foundation.md),
@@ -19,13 +20,14 @@ evidence rule.
 **DETECTED:** the Git root was confirmed before documentation work. The full
 active repository was scanned with dependencies, generated output, build
 artefacts, caches and `tsconfig.tsbuildinfo` excluded. The pre-documentation
-inventory contained 2,157 active files.
+inventory contained 2,200 active files at the start of this documentation pass.
 
 **DETECTED:** the implementation uses the existing `MediaAsset`,
 `CasinoMediaAssignment`, `CasinoBonusMediaAssignment`,
 `AffiliateOfferMediaAssignment`, `SiteSetting` and `AuditLog` structures. It
-does not change `prisma/schema.prisma`, add a migration, add an RFC-040
-placement/variant, or change the immutable `CasinoVersion` publication
+does not add an RFC-040 placement/variant. The 5 September extension adds only
+nullable `countryCode` and `languageCode` assignment fields through migration
+0028 and includes them in the existing immutable `CasinoVersion` publication
 projection.
 
 **DETECTED:** public media rendering, governed clicks, CTA/GEO authority,
@@ -137,10 +139,14 @@ snippet.
 
 ## Context detection
 
-Optional context accepts `casinoId`, `casinoSlug`, `bonusId`, `opportunityId`
-and a bounded partner/network identifier. Explicit, internally consistent
-Founder context outranks inference. Conflicting or missing explicit records
-produce `CONFLICT` and no MediaAsset write.
+Optional context accepts `casinoId`, `casinoSlug`, `bonusId`, `opportunityId`,
+a bounded partner/network identifier, up to 20 exact `targetCountryCodes`, a
+nullable primary `creativeLanguage`, and explicit language state
+`EXPLICIT | NEUTRAL | UNKNOWN`. Explicit, internally consistent Founder context
+outranks inference. Country codes normalize to uppercase and deduplicate;
+language normalizes to lowercase. Omitted language means unknown, while an
+explicit null means genuinely language-neutral. Conflicting or missing subject
+records produce `CONFLICT` and no MediaAsset write.
 
 Without explicit context, deterministic matching compares bounded source/alt/
 title/identifier evidence with current Casino domain, title, aliases, brand
@@ -213,6 +219,8 @@ and only when the Founder sends the explicit replace flag. A lower-priority
 320×50 candidate cannot replace an existing 320×100 mobile asset. If the
 active assignment changes or disappears after plan creation, apply fails that
 recommendation with `ASSIGNMENT_CHANGED_SINCE_PLAN` and requires a fresh plan.
+Slot identity includes exact country and language scope. `GLOBAL/en`, `FI/en`
+and `FI/fi` are independent slots; none is a replacement conflict for another.
 
 Plan decisions are:
 
@@ -226,17 +234,25 @@ Plan decisions are:
 - `REJECT`: unsafe, conflicting, wrong-subject or stale/mismatched promotional
   evidence.
 
-## Market and language limitation
+## Exact-country and creative-language targeting
 
-RFC-040 has no locale/market assignment dimension. `DEFAULT`, `DESKTOP` and
-`MOBILE` remain responsive variants and are never used as a market surrogate.
-Any detected language, market or currency clue makes the recommendation
-`MARKET_SPECIFIC_REVIEW`; the asset may remain in the library, but it cannot be
-auto-assigned globally.
+**DETECTED IN THE AUTHORISED RELEASE CANDIDATE:** RFC-040 assignments now carry
+exact nullable country/language dimensions. `DEFAULT`, `DESKTOP` and `MOBILE`
+remain responsive variants and are never used as market surrogates.
 
-**PROPOSED — future decision only:** add a governed market/language media
-resolution dimension if operational evidence shows a continuing need. That is
-not implemented or authorised here.
+Founder-supplied target context is preserved as runtime authority for the draft
+recommendation. Strong semantic evidence may identify a language, country,
+currency or wording contradiction; the planner then retains the supplied scope,
+records a clear reason and changes the recommendation to review-only. It never
+auto-retargets to a detected market or makes a legal conclusion. Offer matching
+is independent: correct target scope does not hide a stale/mismatched offer.
+
+One stored asset expands to one recommendation per supplied exact country. The
+global checksum path still creates/reuses one R2 object and one `MediaAsset`;
+EE/en, LV/en and LT/en therefore reuse the same physical record. Unknown
+language is not treated as neutral. Only strong text-free logo/brand-art
+evidence can establish neutral identity media without an explicit neutral
+declaration.
 
 ## Durable plan, draft authority and rollback
 
@@ -257,9 +273,16 @@ creates or activates an offer/route/CTA, alters GEO, score or terms, contacts a
 partner, deletes media, changes code or deploys. Public pages continue reading
 their prior immutable snapshot until the existing publication workflow runs.
 
-Rollback deletes only the exact plan-owned assignment. If that assignment
-explicitly replaced an older draft assignment and the slot is free, the older
-assignment is restored. MediaAssets are retained, including shared assets.
+An asset referenced by any country- or language-targeted assignment is
+target-scoped inventory. The resolver excludes it from legacy Casino
+`HERO`/`LOGO` compatibility fallback, including when the targeted
+assignment is inactive, expired or malformed, so legacy asset lookup cannot
+bypass the targeting boundary.
+
+Rollback deletes only the exact plan-owned assignment in the same country and
+language scope. If that assignment explicitly replaced an older draft
+assignment and that exact scoped slot is free, the older assignment is
+restored. MediaAssets are retained, including multi-country shared assets.
 
 ## Admin workflow and design lock
 
@@ -269,14 +292,16 @@ and placement-preview hierarchy. No new public design language or public
 navigation entry is introduced.
 
 The page provides `PASTE PARTNER CREATIVE CODE`, optional Casino/Bonus/partner
-context, analysis controls, first-party previews, declared and decoded
+context, exact target-country input, explicit/neutral/unknown language state,
+analysis controls, first-party previews, declared and decoded
 dimensions, MIME/animation/family, source provider, semantic brand/purpose/
 confidence/crop evidence, market clues, offer match, assignment comparison,
 score/reasons, `APPLY TO DRAFT`, explicit replacement and plan-owned rollback.
 There is no automatic-publish action.
 
-Authenticated draft-preview links expose DEFAULT, MOBILE and DESKTOP projection
-through the existing Casino draft preview. Separate links show the unchanged
+Authenticated target-simulation links expose DEFAULT, MOBILE and DESKTOP
+projection with requested/resolved country-language diagnostics through the
+existing Casino draft preview. Separate links show the unchanged
 current `/casinos`, `/bonuses`, `/best-offers` and Casino-review state.
 
 ## B4GAMBLE Media Operations bridge
@@ -288,8 +313,9 @@ required at authorization, token/refresh and resource use.
 
 The surface contains exactly five tools:
 
-1. `media_ingest_partner_snippet` — parse, fetch, validate, deduplicate and
-   create/reuse first-party media when context permits;
+1. `media_ingest_partner_snippet` — parse, retain bounded explicit target
+   context, fetch, validate, deduplicate and create/reuse first-party media when
+   context permits;
 2. `media_analyze_and_plan` — classify and generate the draft recommendation;
 3. `media_apply_draft_plan` — apply eligible draft recommendations or explicit
    plan rollback;
@@ -332,7 +358,12 @@ must remain:
 `fixture/draft-only proof → durable release record`.
 
 No direct push to `main`, destructive migration or `prisma migrate reset` is
-permitted. There is no schema migration in the detected implementation.
+permitted. Migration 0028 is an additive six-nullable-column extension and must
+follow the guarded migration-before-final-activation path.
+
+Editorial publication is explicitly unavailable during the brief code-first
+state where the 0027 assignment tables exist but the six 0028 target columns do
+not; existing public snapshots continue to serve unchanged.
 
 **DETECTED:** exact PR/head/merge, Preview and Production deployments, live
 bounded creative result, duplicate replay, draft authority, resource isolation
@@ -345,7 +376,8 @@ and final Production acceptance are preserved in the
   semantic model is claimed.
 - An image whose Casino cannot be resolved from explicit or textual evidence
   can be fetched/validated but is not stored or sent for visual analysis.
-- Market/language-specific assignments need a separately approved resolver
-  dimension before automatic localized placement is possible.
+- Real localized inventory is not installed by the architecture release; each
+  actual creative still needs governed intake, review, assignment and
+  publication.
 - Semantic analysis is advisory and dependent on configured provider access;
   deterministic ingestion and review status remain usable without it.

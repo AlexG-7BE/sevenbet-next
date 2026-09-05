@@ -81,10 +81,11 @@ test("Production preflight requires verified 0027 before assignment-first enable
 test("build preflight retains an exact pending-suffix guard and steady-state verification is read-only", () => {
   const preflight = readFileSync("scripts/vercel-build-preflight.ts", "utf8");
   const release = readFileSync("lib/db/placement-media-0027-release.ts", "utf8");
-  assert.match(preflight, /const expectedPending = applied\.has\(PLACEMENT_MEDIA_TARGET_MIGRATION\) \? \[\] : \[PLACEMENT_MEDIA_TARGET_MIGRATION\]/);
+  assert.match(preflight, /const expectedPending = applied\.has\(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION\) \? \[\] : \[GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION\]/);
   assert.match(preflight, /pending\.length !== expectedPending\.length/);
   assert.match(preflight, /planPlacementMedia0027Preflight/);
   assert.match(preflight, /runPlacementMedia0027Readiness/);
+  assert.match(preflight, /planGeoLocalizedCreative0028Preflight/);
   assert.match(release, /SET TRANSACTION READ ONLY/);
   assert.doesNotMatch(release + preflight, /prisma migrate deploy|migrate reset|DROP TABLE|TRUNCATE/);
 });

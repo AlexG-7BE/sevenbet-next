@@ -2737,6 +2737,9 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .placementMediaToolbar { display:grid; grid-template-columns:minmax(0,1fr) minmax(220px,.55fr) minmax(220px,.45fr); gap:16px; align-items:start; padding:18px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
 .placementMediaToolbar p { margin:5px 0 0; }
 .placementMediaToolbar label,.placementMediaControls label,.placementMediaUpload label { display:grid; gap:6px; color:var(--muted); font-size:.82rem; font-weight:700; }
+.placementMediaTargeting { min-width:0; margin:0; padding:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 10px; border:0; }
+.placementMediaTargeting legend { grid-column:1 / -1; margin-bottom:4px; color:var(--text); font-size:.78rem; font-weight:850; text-transform:uppercase; letter-spacing:.06em; }
+.placementMediaTargeting small { grid-column:1 / -1; color:var(--subtle); font-size:.7rem; font-weight:500; line-height:1.4; }
 .placementMediaToolbar details summary,.placementMediaUpload summary { min-height:40px; cursor:pointer; color:var(--text); font-weight:750; }
 .placementMediaToolbar details label { margin-top:10px; }
 .placementMediaGrid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
@@ -2798,7 +2801,8 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
   .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid, .casinoPreviewPlacementGrid, .casinoPublicGallery, .mediaOperationsContext, .mediaOperationsFacts, .mediaOperationsAssetList article { grid-template-columns: 1fr; }
   .mediaOperationsOrientation,.mediaOperationsStatus { flex-direction:column; }
   .mediaOperationsAssetEvidence dl { grid-template-columns:1fr; }
-  .placementMediaToolbar,.placementMediaGrid,.placementMediaSlotHeader,.placementMediaControls,.placementMediaUpload form { grid-template-columns:1fr; }
+  .placementMediaToolbar,.placementMediaGrid,.placementMediaSlotHeader,.placementMediaControls,.placementMediaUpload form,.placementMediaTargeting { grid-template-columns:1fr; }
+  .placementMediaTargeting legend,.placementMediaTargeting small { grid-column:auto; }
   .placementMediaControls label:first-child,.placementMediaControls label:nth-child(3) { grid-column:auto; }
   .placementMediaPreviewStack,.placementMediaPreviewStack img,.placementMediaCodeFallback { width:100%; }
   .placementMediaPreviewStack img,.placementMediaCodeFallback { height:auto; min-height:160px; }

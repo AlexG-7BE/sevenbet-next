@@ -32,6 +32,8 @@ type UsageRecord = {
   subjectId: string;
   placement: MediaPlacementName;
   variant: MediaPlacementVariantName;
+  countryCode: string | null;
+  languageCode: string | null;
   active: boolean;
 };
 
@@ -41,6 +43,8 @@ type PlacementResponse = {
   assets: MediaAssetAdminRecord[];
   usage: UsageRecord[];
   requestedVariant: MediaPlacementVariantName;
+  requestedCountryCode: string | null;
+  requestedLanguageCode: string | null;
 };
 
 function dimensions(asset: MediaAssetAdminRecord | ResolvedPlacementMedia["asset"]) {
@@ -79,6 +83,8 @@ function PlacementSlot({
   subjectType,
   placement,
   variant,
+  countryCode,
+  languageCode,
   data,
   busy,
   onBusy,
@@ -90,6 +96,8 @@ function PlacementSlot({
   subjectType: MediaAssignmentSubjectType;
   placement: MediaPlacementName;
   variant: MediaPlacementVariantName;
+  countryCode: string;
+  languageCode: string;
   data: PlacementResponse;
   busy: string;
   onBusy: (value: string) => void;
@@ -97,11 +105,19 @@ function PlacementSlot({
   onReload: () => Promise<void>;
 }) {
   const activeAssignments = data.assignments
-    .filter((assignment) => assignment.active && assignment.placement === placement && assignment.variant === variant)
+    .filter((assignment) => assignment.active
+      && assignment.placement === placement
+      && assignment.variant === variant
+      && (assignment.countryCode ?? "") === countryCode
+      && (assignment.languageCode ?? "") === languageCode)
     .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id));
   const explicit = activeAssignments[0] ?? null;
   const inactive = data.assignments
-    .filter((assignment) => !assignment.active && assignment.placement === placement && assignment.variant === variant)
+    .filter((assignment) => !assignment.active
+      && assignment.placement === placement
+      && assignment.variant === variant
+      && (assignment.countryCode ?? "") === countryCode
+      && (assignment.languageCode ?? "") === languageCode)
     .sort((left, right) => {
       const leftUpdated = new Date(left.updatedAt ?? left.createdAt ?? 0).getTime();
       const rightUpdated = new Date(right.updatedAt ?? right.createdAt ?? 0).getTime();
@@ -153,7 +169,7 @@ function PlacementSlot({
   const effectiveObjectPosition = effective?.focalPoint
     ? `${effective.focalPoint.x * 100}% ${effective.focalPoint.y * 100}%`
     : "center";
-  const actionKey = `${placement}:${variant}`;
+  const actionKey = `${placement}:${variant}:${countryCode || "GLOBAL"}:${languageCode || "neutral"}`;
   const guidance = placementMediaGuidance[placement];
   const commercialAssessment = usageAsset && isOfferMediaPlacement(placement)
     ? assessCommercialCreative({ placement, variant, width: usageAsset.width, height: usageAsset.height })
@@ -188,6 +204,8 @@ function PlacementSlot({
           subjectId,
           placement,
           variant,
+          countryCode: countryCode || null,
+          languageCode: languageCode || null,
           ...(action === "assign" ? {
             mediaAssetId: options.mediaAssetId,
             renderingMode: mode,
@@ -241,6 +259,8 @@ function PlacementSlot({
           <Badge tone={effectiveExplicit ? "green" : "warning"}>{effectiveExplicit ? "EXPLICIT" : relationship ? relationship.active ? "INELIGIBLE" : "INACTIVE" : "FALLBACK"}</Badge>
           {relationship && !effectiveExplicit ? <Badge tone="warning">FALLBACK EFFECTIVE</Badge> : null}
           <Badge>{variant}</Badge>
+          <Badge>{countryCode || "GLOBAL"}</Badge>
+          <Badge>{languageCode || "NEUTRAL"}</Badge>
           <Badge>{effective?.renderingMode ?? "COMPOSED"}</Badge>
           <Badge>{presentationFamily.replaceAll("_", " ")}</Badge>
           {commercialAssessment?.format ? <Badge>{commercialAssessment.format.label.toUpperCase()}</Badge> : null}
@@ -261,6 +281,8 @@ function PlacementSlot({
     <dl className="placementMediaFacts">
       <div><dt>Effective source</dt><dd>{effective?.source.replaceAll("_", " ") ?? "CODE FALLBACK"}</dd></div>
       <div><dt>Resolved slot</dt><dd>{effective?.resolvedPlacement?.replaceAll("_", " ") ?? "Code fallback"}</dd></div>
+      <div><dt>Simulated request</dt><dd>{effective?.requestedCountryCode ?? "UNKNOWN GEO"} · {effective?.requestedLanguageCode ?? "no language"}</dd></div>
+      <div><dt>Resolved target</dt><dd>{effective?.resolvedCountryCode ?? "GLOBAL"} · {effective?.resolvedLanguageCode ?? "neutral"} · {effective?.targetingResolution.replaceAll("_", " ") ?? "CONTROLLED FALLBACK"}</dd></div>
       <div><dt>Assigned relationship</dt><dd>{relationshipAsset ? filename(relationshipAsset) : "None"}</dd></div>
       <div><dt>Asset</dt><dd>{filename(effectiveAsset)}</dd></div>
       <div><dt>Dimensions</dt><dd>{dimensions(effectiveAsset)} · {aspectRatio(effectiveAsset)}</dd></div>
@@ -291,7 +313,7 @@ function PlacementSlot({
       {explicit ? <button className="button ghost" disabled={Boolean(busy)} type="button" onClick={() => void mutate("deactivate", { assignmentId: explicit.id })}>Deactivate assignment</button> : null}
       {inactive ? <button className="button ghost" disabled={Boolean(busy)} type="button" onClick={() => void mutate("activate", { assignmentId: inactive.id })}>Reactivate assignment</button> : null}
       {relationship ? <button className="button ghost" disabled={Boolean(busy)} type="button" onClick={() => void mutate("unassign", { assignmentId: relationship.id })}>Remove assignment relationship</button> : null}
-      <a className="button ghost" href={`/admin/casinos/${casinoId}/preview?placement=${placement}&variant=${variant}`} target="_blank">Preview draft</a>
+      <a className="button ghost" href={`/admin/casinos/${casinoId}/preview?${new URLSearchParams({ placement, variant, ...(countryCode ? { countryCode } : {}), ...(languageCode ? { languageCode } : {}) })}`} target="_blank">Simulate target in draft</a>
     </div>
     <details className="placementMediaUpload">
       <summary>Upload new asset for this slot</summary>
@@ -315,6 +337,8 @@ export function PlacementMediaEditor({
   subjectType: MediaAssignmentSubjectType;
 }) {
   const [variant, setVariant] = useState<MediaPlacementVariantName>("DEFAULT");
+  const [countryCode, setCountryCode] = useState("");
+  const [languageCode, setLanguageCode] = useState("");
   const [data, setData] = useState<PlacementResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
@@ -322,12 +346,19 @@ export function PlacementMediaEditor({
   const [search, setSearch] = useState("");
 
   const load = useCallback(async () => {
-    const query = new URLSearchParams({ casinoId, subjectType, subjectId, variant });
+    const query = new URLSearchParams({
+      casinoId,
+      subjectType,
+      subjectId,
+      variant,
+      ...(countryCode ? { countryCode } : {}),
+      ...(languageCode ? { languageCode } : {}),
+    });
     const result = await mediaJson<PlacementResponse>(`/api/admin/media/assignments?${query}`);
     setData(result);
     setLoading(false);
     setError("");
-  }, [casinoId, subjectId, subjectType, variant]);
+  }, [casinoId, countryCode, languageCode, subjectId, subjectType, variant]);
 
   useEffect(() => {
     setLoading(true);
@@ -353,6 +384,12 @@ export function PlacementMediaEditor({
         <strong>Semantic placement assignments</strong>
         <p className="muted">Assignment changes affect authenticated draft preview now and public pages only after the Casino is published.</p>
       </div>
+      <fieldset className="placementMediaTargeting">
+        <legend>Target scope</legend>
+        <label><span>Country</span><input autoComplete="off" maxLength={2} onChange={(event) => setCountryCode(event.target.value.trim().toUpperCase())} placeholder="Global" spellCheck={false} value={countryCode} /></label>
+        <label><span>Language</span><input autoComplete="off" maxLength={8} onChange={(event) => setLanguageCode(event.target.value.trim().toLowerCase())} placeholder="Neutral" spellCheck={false} value={languageCode} /></label>
+        <small>Country is the eligibility boundary. Blank country means Global; blank language means genuinely language-neutral.</small>
+      </fieldset>
       <label><span>Search assets</span><input type="search" placeholder="Filename, alt text or type" value={search} onChange={(event) => setSearch(event.target.value)} /></label>
       <details>
         <summary>Optional Desktop/Mobile overrides</summary>
@@ -364,12 +401,14 @@ export function PlacementMediaEditor({
     {!loading && filtered ? <div className="placementMediaGrid">{placements.map((placement) => <PlacementSlot
       busy={busy}
       casinoId={casinoId}
+      countryCode={countryCode}
       data={filtered}
-      key={`${placement}:${variant}`}
+      key={`${placement}:${variant}:${countryCode || "GLOBAL"}:${languageCode || "neutral"}`}
       onBusy={setBusy}
       onError={setError}
       onReload={load}
       placement={placement}
+      languageCode={languageCode}
       subjectId={subjectId}
       subjectType={subjectType}
       variant={variant}

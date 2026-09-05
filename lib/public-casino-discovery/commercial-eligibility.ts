@@ -1,5 +1,7 @@
 import { hasFounderGlobalProductionAuthority, PARTNER_ROUTE_VERIFICATION_MAX_AGE_MS } from "@/lib/affiliate-routing/partner-route-projection";
 import type { DiscoveryContext } from "@/lib/public-casino-discovery/public-casino-discovery.types";
+import type { PublicAffiliateRoute } from "@/lib/public-casino/public-casino.types";
+import { isSafePublicSlug } from "@/lib/public-casino/public-casino-validation";
 
 function time(value: Date | null) {
   return value?.getTime() ?? null;
@@ -48,4 +50,23 @@ export function eligibleDiscoveryOffers(context: DiscoveryContext, casinoId: str
         ));
     });
   }).sort((a, b) => Number(b.featured) - Number(a.featured) || b.priority - a.priority || a.id.localeCompare(b.id));
+}
+
+export function eligibleDiscoveryMediaRoutes(
+  context: DiscoveryContext,
+  countryCode: string | undefined,
+  now: Date,
+): PublicAffiliateRoute[] {
+  if (!countryCode) return [];
+  return context.redirects.flatMap((redirect) => {
+    if (!redirect.affiliateOfferId || !isSafePublicSlug(redirect.slug)) return [];
+    const eligible = eligibleDiscoveryOffers(context, redirect.casinoId, redirect.casinoBonusId, countryCode, now)
+      .some((offer) => offer.id === redirect.affiliateOfferId);
+    return eligible ? [{
+      casinoId: redirect.casinoId,
+      casinoBonusId: redirect.casinoBonusId,
+      affiliateOfferId: redirect.affiliateOfferId,
+      slug: redirect.slug,
+    }] : [];
+  });
 }

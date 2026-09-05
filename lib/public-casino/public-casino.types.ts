@@ -3,6 +3,7 @@ import type {
   MediaPlacementName,
   MediaPlacementVariantName,
   MediaRenderingModeName,
+  MediaTargetingResolution,
   OfferMediaPlacementName,
   PlacementMediaSource,
 } from "@/lib/media/placement-media";
@@ -30,6 +31,11 @@ export interface PublicPlacementMediaResolution {
   resolvedPlacement: MediaPlacementName | null;
   requestedVariant: MediaPlacementVariantName;
   resolvedVariant: MediaPlacementVariantName | null;
+  requestedCountryCode: string | null;
+  requestedLanguageCode: string | null;
+  resolvedCountryCode: string | null;
+  resolvedLanguageCode: string | null;
+  targetingResolution: MediaTargetingResolution;
   renderingMode: Exclude<MediaRenderingModeName, "AUTO">;
   source: PlacementMediaSource;
   fallback: boolean;
@@ -202,5 +208,6 @@ export interface PublishedCasinoSnapshotRecord {
 export interface PublicAffiliateRoute {
   casinoId: string;
   casinoBonusId: string | null;
+  affiliateOfferId?: string | null;
   slug: string;
 }

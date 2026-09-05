@@ -14,6 +14,7 @@ const ids = {
   oldAsset: "58000000-0000-4000-8000-000000000005",
   explicitAssignment: "58000000-0000-4000-8000-000000000006",
   changedAssignment: "58000000-0000-4000-8000-000000000007",
+  globalScopedAssignment: "58000000-0000-4000-8000-000000000008",
 };
 
 function assertDisposablePostgres() {
@@ -34,7 +35,12 @@ async function cleanup(prisma: PrismaClient) {
   await prisma.adminUser.deleteMany({ where: { id: ids.actor } });
 }
 
-function plan(planId: string, state: "AUTO_ASSIGN_DRAFT" | "SUGGEST_REVIEW", replacementEligible: boolean): MediaIngestionPlan {
+function plan(
+  planId: string,
+  state: "AUTO_ASSIGN_DRAFT" | "SUGGEST_REVIEW",
+  replacementEligible: boolean,
+  target: { countryCode?: string | null; languageCode?: string | null } = {},
+): MediaIngestionPlan {
   const creativeId = `${planId.slice(0, -1)}7`;
   const recommendationId = `${planId.slice(0, -1)}8`;
   return mediaIngestionPlanSchema.parse({
@@ -46,13 +52,18 @@ function plan(planId: string, state: "AUTO_ASSIGN_DRAFT" | "SUGGEST_REVIEW", rep
     actorId: ids.actor,
     source: "ADMIN",
     providerReference: "postgres-fixture",
-    requestedContext: { casinoId: ids.casino, bonusId: ids.bonus },
+    requestedContext: {
+      casinoId: ids.casino,
+      bonusId: ids.bonus,
+      ...(target.countryCode ? { targetCountryCodes: [target.countryCode] } : {}),
+      ...(target.languageCode ? { creativeLanguage: target.languageCode, creativeLanguageState: "EXPLICIT" } : {}),
+    },
     resolvedContext: { state: "RESOLVED", source: "EXPLICIT", casinoId: ids.casino, casinoSlug: "media-ingestion-postgres", casinoTitle: "Media ingestion PostgreSQL", bonusId: ids.bonus, bonusTitle: "Fixture bonus", affiliateOfferId: null, opportunityId: null, partnerIdentifier: "fixture", trackingDestinationState: "NOT_PRESENT", notes: [] },
     creatives: [{ id: creativeId, sourceKind: "IMAGE", source: { urlHash: "b".repeat(64), origin: "https://cdn.example", pathname: "/creative.png", queryKeys: [] }, anchor: null, declaredWidth: 300, declaredHeight: 250, alt: "Fixture", title: null, providerDomain: "cdn.example", providerReference: "creative:fixture", identifiers: {}, languageClues: [], marketClues: [], currencyClues: [], warnings: [] }],
     unsupportedElements: [],
     assets: [{ creativeId, state: "INGESTED", assetId: ids.asset, firstPartyUrl: "https://media.example/creative.png", checksum: "c".repeat(64), mimeType: "image/png", width: 300, height: 250, animated: false, formatFamily: "CARD", resolvedSource: { urlHash: "d".repeat(64), origin: "https://cdn.example", pathname: "/creative.png", queryKeys: [] }, redirectCount: 0, duplicate: false, failureCode: null, failureMessage: null }],
     semanticResults: [{ creativeId, state: "COMPLETED", provider: "TEST", model: "TEST", brandName: "Fixture", assetPurpose: "PROMO", language: null, market: null, currency: null, offerText: "100% + 50 spins", offerAmount: null, offerPercentage: 100, freeSpins: 50, promoCode: null, callToActionText: "Join", containsPromotionalText: true, containsFinePrint: true, containsResponsibleGamblingText: false, cropSafety: "SAFE", textReadability: "READABLE", likelyMarkets: [], complianceConcerns: [], confidence: 1, explanation: "Fixture" }],
-    recommendations: [{ id: recommendationId, creativeId, assetId: ids.asset, subjectType: "CASINO_BONUS", subjectId: ids.bonus, placement: "BONUS_LISTING_CARD", variant: "DEFAULT", renderingMode: "CONTAIN", cropSafe: false, state, score: 98, offerMatch: "MATCH", marketHandling: "GLOBAL_SAFE", existingAssignmentId: state === "SUGGEST_REVIEW" ? ids.explicitAssignment : null, existingComparison: state === "SUGGEST_REVIEW" ? "EQUIVALENT" : "NEW_SLOT", replacementEligible, reasons: ["PostgreSQL fixture"], appliedAssignmentId: null, replacedAssignmentId: null, appliedAt: null, rolledBackAt: null }],
+    recommendations: [{ id: recommendationId, creativeId, assetId: ids.asset, subjectType: "CASINO_BONUS", subjectId: ids.bonus, placement: "BONUS_LISTING_CARD", variant: "DEFAULT", countryCode: target.countryCode ?? null, languageCode: target.languageCode ?? null, renderingMode: "CONTAIN", cropSafe: false, state, score: 98, offerMatch: "MATCH", marketHandling: target.countryCode ? "TARGETED" : "GLOBAL_SAFE", existingAssignmentId: state === "SUGGEST_REVIEW" ? ids.explicitAssignment : null, existingComparison: state === "SUGGEST_REVIEW" ? "EQUIVALENT" : "NEW_SLOT", replacementEligible, reasons: ["PostgreSQL fixture"], appliedAssignmentId: null, replacedAssignmentId: null, appliedAt: null, rolledBackAt: null }],
     warnings: [], operations: [], createdAt: "2026-09-05T00:00:00.000Z", updatedAt: "2026-09-05T00:00:00.000Z", analyzedAt: "2026-09-05T00:00:00.000Z",
   });
 }
@@ -84,6 +95,31 @@ test("PostgreSQL persists plans, applies only draft assignments, protects explic
     assert.equal(rolledBack.rolledBack, 1);
     assert.equal(await prisma.casinoBonusMediaAssignment.count({ where: { casinoBonusId: ids.bonus } }), 0);
     assert.equal(await prisma.mediaAsset.count({ where: { id: ids.asset } }), 1);
+
+    await prisma.casinoBonusMediaAssignment.create({
+      data: {
+        id: ids.globalScopedAssignment,
+        casinoBonusId: ids.bonus,
+        mediaAssetId: ids.oldAsset,
+        placement: "BONUS_LISTING_CARD",
+        countryCode: null,
+        languageCode: "en",
+        reference: "Existing GLOBAL/en assignment",
+      },
+    });
+    const finland = plan("58000000-0000-4000-8000-000000000040", "AUTO_ASSIGN_DRAFT", false, { countryCode: "FI", languageCode: "en" });
+    await mediaIngestionRepository.savePlan(finland, { operation: "TEST_CREATE", result: { fixture: true } });
+    const finlandApplied = await mediaIngestionRepository.applyDraftPlan({ planId: finland.id, replaceExisting: false, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(finlandApplied.applied, 1);
+    assert.equal((await prisma.casinoBonusMediaAssignment.findUniqueOrThrow({ where: { id: ids.globalScopedAssignment } })).active, true);
+    const finlandAssignment = await prisma.casinoBonusMediaAssignment.findFirstOrThrow({
+      where: { casinoBonusId: ids.bonus, countryCode: "FI", languageCode: "en", active: true },
+    });
+    assert.match(finlandAssignment.reference ?? "", new RegExp(`^MEDIA_OPERATIONS:${finland.id}:`));
+    const finlandRolledBack = await mediaIngestionRepository.rollbackDraftPlan({ planId: finland.id, actorId: ids.actor, source: "ADMIN" });
+    assert.equal(finlandRolledBack.rolledBack, 1);
+    assert.equal(await prisma.casinoBonusMediaAssignment.count({ where: { casinoBonusId: ids.bonus, countryCode: "FI", languageCode: "en" } }), 0);
+    assert.equal((await prisma.casinoBonusMediaAssignment.findUniqueOrThrow({ where: { id: ids.globalScopedAssignment } })).active, true);
 
     await prisma.casinoBonusMediaAssignment.create({ data: { id: ids.explicitAssignment, casinoBonusId: ids.bonus, mediaAssetId: ids.oldAsset, placement: "BONUS_LISTING_CARD", reference: "Explicit Admin assignment" } });
     const replacement = plan("58000000-0000-4000-8000-000000000020", "SUGGEST_REVIEW", true);

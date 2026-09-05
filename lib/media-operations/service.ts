@@ -9,6 +9,7 @@ import {
   mediaGetPlanInputSchema,
   mediaIngestPartnerSnippetInputSchema,
   mediaListRecentIngestionsInputSchema,
+  normalizeMediaIngestionContext,
   type MediaIngestionPlan,
   type MediaOperationsSource,
 } from "@/lib/media-operations/contracts";
@@ -92,9 +93,9 @@ async function existingAssignments(plan: MediaIngestionPlan): Promise<ExistingMe
     ? await prisma.affiliateOfferMediaAssignment.findMany({ where: { affiliateOfferId: offerId, active: true }, include: { mediaAsset: { select: { width: true, height: true } } } })
     : [];
   return [
-    ...casino.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, mediaAsset: item.mediaAsset })),
-    ...bonus.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, mediaAsset: item.mediaAsset })),
-    ...offer.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "AFFILIATE_OFFER" as const, subjectId: offerId!, placement: item.placement, variant: item.variant, mediaAsset: item.mediaAsset })),
+    ...casino.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO" as const, subjectId: casinoId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...bonus.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "CASINO_BONUS" as const, subjectId: bonusId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
+    ...offer.map((item) => ({ id: item.id, mediaAssetId: item.mediaAssetId, subjectType: "AFFILIATE_OFFER" as const, subjectId: offerId!, placement: item.placement, variant: item.variant, countryCode: item.countryCode, languageCode: item.languageCode, mediaAsset: item.mediaAsset })),
   ];
 }
 
@@ -105,9 +106,10 @@ export class MediaOperationsService {
   ) {}
 
   async ingest(rawInput: unknown, actor: MediaOperationsActor) {
-    const input = mediaIngestPartnerSnippetInputSchema.parse(rawInput);
+    const parsedInput = mediaIngestPartnerSnippetInputSchema.parse(rawInput);
+    const requestedContext = normalizeMediaIngestionContext(parsedInput.context ?? {});
+    const input = { ...parsedInput, context: requestedContext };
     const parsed = parsePartnerSnippet(input.snippet);
-    const requestedContext = input.context ?? {};
     const context = await resolveMediaIngestionContext(requestedContext, parsed.creatives);
     const timestamp = new Date().toISOString();
     const plan: MediaIngestionPlan = {
@@ -130,7 +132,15 @@ export class MediaOperationsService {
       operations: [{
         id: randomUUID(), operation: "INGEST", recommendationId: null,
         subject: context.persisted.casinoId ? `CASINO:${context.persisted.casinoId}` : "UNRESOLVED",
-        previous: null, result: { creativesDetected: parsed.creatives.length, dryRun: input.dryRun },
+        previous: null,
+        result: {
+          creativesDetected: parsed.creatives.length,
+          dryRun: input.dryRun,
+          targetCountryCodes: requestedContext.targetCountryCodes ?? [],
+          creativeLanguage: requestedContext.creativeLanguage ?? null,
+          creativeLanguageState: requestedContext.creativeLanguageState
+            ?? (Object.prototype.hasOwnProperty.call(requestedContext, "creativeLanguage") ? "NEUTRAL" : "UNKNOWN"),
+        },
         actorId: actor.actorId, source: actor.source, timestamp,
       }],
       createdAt: timestamp,
@@ -184,6 +194,10 @@ export class MediaOperationsService {
             languageClues: creative.languageClues,
             marketClues: creative.marketClues,
             currencyClues: creative.currencyClues,
+            targetCountryCodes: requestedContext.targetCountryCodes ?? [],
+            creativeLanguage: requestedContext.creativeLanguage ?? null,
+            creativeLanguageState: requestedContext.creativeLanguageState
+              ?? (Object.prototype.hasOwnProperty.call(requestedContext, "creativeLanguage") ? "NEUTRAL" : "UNKNOWN"),
             resolvedSource: safeUrlEvidence(fetched.finalUrl),
             redirectCount: fetched.redirects.length,
           },
@@ -197,7 +211,12 @@ export class MediaOperationsService {
             providerReference: plan.providerReference,
             operation: "CREATE_MEDIA_ASSET",
             previous: null,
-            result: { sourceUrlHash: creative.source.urlHash, firstPartyStorage: true },
+            result: {
+              sourceUrlHash: creative.source.urlHash,
+              firstPartyStorage: true,
+              targetCountryCodes: requestedContext.targetCountryCodes ?? [],
+              creativeLanguage: requestedContext.creativeLanguage ?? null,
+            },
             timestamp: new Date().toISOString(),
           },
           dedupeScope: "GLOBAL",

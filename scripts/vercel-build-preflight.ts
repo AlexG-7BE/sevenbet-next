@@ -10,6 +10,11 @@ import { createCasinoMarket0025AdminClient } from "@/lib/db/casino-market-0025-a
 import { CASINO_MARKET_TARGET_MIGRATION, runCasinoMarket0025Readiness } from "@/lib/db/casino-market-0025-release";
 import { COMMERCIAL_PLATFORM_TARGET_MIGRATION, runCommercialPlatform0026Readiness } from "@/lib/db/commercial-platform-0026-release";
 import {
+  GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION,
+  planGeoLocalizedCreative0028Preflight,
+  runGeoLocalizedCreative0028Readiness,
+} from "@/lib/db/geo-localized-creative-0028-release";
+import {
   PLACEMENT_MEDIA_TARGET_MIGRATION,
   planPlacementMedia0027Preflight,
   runPlacementMedia0027Readiness,
@@ -270,7 +275,7 @@ async function maybeApplyProgrammeAccessMigration() {
     .map((entry) => entry.name)
     .sort();
 
-  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION]) {
+  for (const name of [BASELINE_MIGRATION, TARGET_MIGRATION, CASINO_MARKET_TARGET_MIGRATION, COMMERCIAL_PLATFORM_TARGET_MIGRATION, PLACEMENT_MEDIA_TARGET_MIGRATION, GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION]) {
     if (!repositoryMigrations.includes(name)) {
       throw new Error(`Production migration guard missing repository migration ${name}.`);
     }
@@ -278,6 +283,7 @@ async function maybeApplyProgrammeAccessMigration() {
 
   const prisma = createCasinoMarket0025AdminClient();
   let placementMediaState: ReturnType<typeof planPlacementMedia0027Preflight> | null = null;
+  let geoLocalizedCreativeState: ReturnType<typeof planGeoLocalizedCreative0028Preflight> | null = null;
   try {
     const rows = await readMigrationRows(prisma);
     const unresolved = rows.filter((row) => row.finished_at === null && row.rolled_back_at === null);
@@ -295,7 +301,7 @@ async function maybeApplyProgrammeAccessMigration() {
       throw new Error(`Production migration guard requires completed ${TARGET_MIGRATION}; DB-first 0025 will not apply an older migration.`);
     }
     const pending = repositoryMigrations.filter((name) => !applied.has(name));
-    const expectedPending = applied.has(PLACEMENT_MEDIA_TARGET_MIGRATION) ? [] : [PLACEMENT_MEDIA_TARGET_MIGRATION];
+    const expectedPending = applied.has(GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION) ? [] : [GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION];
 
     if (
       pending.length !== expectedPending.length
@@ -313,10 +319,12 @@ async function maybeApplyProgrammeAccessMigration() {
     assertChecksum(completedByName.get(COMMERCIAL_PLATFORM_TARGET_MIGRATION), COMMERCIAL_PLATFORM_TARGET_MIGRATION);
     placementMediaState = planPlacementMedia0027Preflight({
       rows,
-      repositoryMigrations,
+      repositoryMigrations: repositoryMigrations.slice(0, repositoryMigrations.indexOf(PLACEMENT_MEDIA_TARGET_MIGRATION) + 1),
       assignmentFirstEnabled: process.env.PLACEMENT_MEDIA_ASSIGNMENTS_ENABLED === "true",
     });
     writeEvent({ event: "production_placement_media_preflight", ...placementMediaState });
+    geoLocalizedCreativeState = planGeoLocalizedCreative0028Preflight({ rows, repositoryMigrations });
+    writeEvent({ event: "production_geo_localized_creative_preflight", ...geoLocalizedCreativeState });
     writeEvent({
       event: "production_programme_access_migration",
       state: "baseline_verified_read_only",
@@ -335,6 +343,14 @@ async function maybeApplyProgrammeAccessMigration() {
     });
     return;
   }
+  if (geoLocalizedCreativeState?.state === "schema_pending_global_compatibility") {
+    writeEvent({
+      event: "production_geo_localized_creative_staged_deploy",
+      migration: GEO_LOCALIZED_CREATIVE_TARGET_MIGRATION,
+      state: "existing_null_targets_remain_global_neutral_until_governed_migration",
+    });
+    return;
+  }
 
   const casinoMarketReadiness = await runCasinoMarket0025Readiness();
   writeEvent({ event: "production_casino_market_readiness", ...casinoMarketReadiness });
@@ -342,6 +358,8 @@ async function maybeApplyProgrammeAccessMigration() {
   writeEvent({ event: "production_commercial_platform_readiness", ...commercialPlatformReadiness });
   const placementMediaReadiness = await runPlacementMedia0027Readiness();
   writeEvent({ event: "production_placement_media_readiness", ...placementMediaReadiness });
+  const geoLocalizedCreativeReadiness = await runGeoLocalizedCreative0028Readiness();
+  writeEvent({ event: "production_geo_localized_creative_readiness", ...geoLocalizedCreativeReadiness });
 }
 
 maybeApplyProgrammeAccessMigration().catch((error) => {

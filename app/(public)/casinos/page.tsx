@@ -31,7 +31,10 @@ const loadCasinoDirectoryPage = cache(async (queryKey: string) => {
   const result = await publicCasinoDiscoveryService.discover(
     query,
     commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
-    { ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}) },
+    {
+      ...(presentation.marketCountryCode ? { defaultEditorialCountry: presentation.marketCountryCode } : {}),
+      presentationLanguage: presentation.language,
+    },
   );
   return { presentation, result };
 });

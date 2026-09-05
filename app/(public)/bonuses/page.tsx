@@ -30,18 +30,21 @@ const instrumentSerif = Instrument_Serif({ subsets: ["latin"], weight: "400", st
 
 export const dynamic = "force-dynamic";
 type PageProps = { searchParams: Promise<PublicOfferSearchParams> };
-const loadBonusDirectoryResult = cache(async (queryKey: string, presentationCountry: string | null) => {
+const loadBonusDirectoryResult = cache(async (queryKey: string, presentationCountry: string | null, presentationLanguage: string) => {
   const query = JSON.parse(queryKey) as PublicOfferQuery;
   const authority = await resolveServerJurisdiction();
   return publicOfferService.searchOffers(
     { ...query, country: presentationCountry ?? undefined },
     commercialAuthorityForPresentation(authority, presentationCountry),
-    { ...(presentationCountry ? { defaultEditorialCountry: presentationCountry } : {}) },
+    {
+      ...(presentationCountry ? { defaultEditorialCountry: presentationCountry } : {}),
+      presentationLanguage,
+    },
   );
 });
 
-function loadBonusDirectory(query: PublicOfferQuery, presentationCountry: string | null) {
-  return loadBonusDirectoryResult(JSON.stringify(query), presentationCountry);
+function loadBonusDirectory(query: PublicOfferQuery, presentationCountry: string | null, presentationLanguage: string) {
+  return loadBonusDirectoryResult(JSON.stringify(query), presentationCountry, presentationLanguage);
 }
 
 export async function generateMetadata({ searchParams }: PageProps): Promise<Metadata> {
@@ -50,7 +53,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const messages = productPageMessages(presentation.locale);
   const market = presentation.marketDisplayName;
   const filtered = hasPublicOfferFilters(query);
-  const result = await loadBonusDirectory(query, presentation.marketCountryCode);
+  const result = await loadBonusDirectory(query, presentation.marketCountryCode, presentation.language);
   const unavailable = result.inventoryMode === "UNAVAILABLE";
   const containsDemo = result.inventoryMode === "DEMO_ONLY" || result.inventoryMode === "MIXED";
   const empty = result.total === 0;
@@ -71,7 +74,7 @@ export default async function BonusesPage({ searchParams }: PageProps) {
   const market = presentation.marketDisplayName;
   const visualFixture = isLocalHandoffVisualDataFixture(raw.visualFixture);
   const result = withHandoffBonusDirectoryData(
-    await loadBonusDirectory(query, presentation.marketCountryCode),
+    await loadBonusDirectory(query, presentation.marketCountryCode, presentation.language),
     visualFixture,
     presentation.locale,
     query,

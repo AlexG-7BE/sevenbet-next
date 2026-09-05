@@ -2762,6 +2762,8 @@ model CasinoMediaAssignment {
   mediaAssetId    String                @db.Uuid
   placement       MediaPlacement
   variant         MediaPlacementVariant @default(DEFAULT)
+  countryCode     String?
+  languageCode    String?
   renderingMode   MediaRenderingMode    @default(AUTO)
   sortOrder       Int                   @default(0)
   active          Boolean               @default(true)
@@ -2779,6 +2781,7 @@ model CasinoMediaAssignment {
   mediaAsset MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([casinoId, placement, variant, active, sortOrder, id], map: "CasinoMediaAssignment_subject_resolver_idx")
+  @@index([casinoId, placement, countryCode, languageCode, variant, active, sortOrder, id], map: "CasinoMediaAssignment_target_resolver_idx")
   @@index([mediaAssetId])
 }
 
@@ -2788,6 +2791,8 @@ model CasinoBonusMediaAssignment {
   mediaAssetId    String                @db.Uuid
   placement       MediaPlacement
   variant         MediaPlacementVariant @default(DEFAULT)
+  countryCode     String?
+  languageCode    String?
   renderingMode   MediaRenderingMode    @default(AUTO)
   sortOrder       Int                   @default(0)
   active          Boolean               @default(true)
@@ -2805,6 +2810,7 @@ model CasinoBonusMediaAssignment {
   mediaAsset  MediaAsset  @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([casinoBonusId, placement, variant, active, sortOrder, id], map: "CasinoBonusMediaAssignment_subject_resolver_idx")
+  @@index([casinoBonusId, placement, countryCode, languageCode, variant, active, sortOrder, id], map: "CasinoBonusMediaAssignment_target_resolver_idx")
   @@index([mediaAssetId])
 }
 
@@ -2814,6 +2820,8 @@ model AffiliateOfferMediaAssignment {
   mediaAssetId     String                @db.Uuid
   placement        MediaPlacement
   variant          MediaPlacementVariant @default(DEFAULT)
+  countryCode      String?
+  languageCode     String?
   renderingMode    MediaRenderingMode    @default(AUTO)
   sortOrder        Int                   @default(0)
   active           Boolean               @default(true)
@@ -2831,6 +2839,7 @@ model AffiliateOfferMediaAssignment {
   mediaAsset     MediaAsset     @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([affiliateOfferId, placement, variant, active, sortOrder, id], map: "AffiliateOfferMediaAssignment_subject_resolver_idx")
+  @@index([affiliateOfferId, placement, countryCode, languageCode, variant, active, sortOrder, id], map: "AffiliateOfferMediaAssignment_target_resolver_idx")
   @@index([mediaAssetId])
 }
 

@@ -13,7 +13,7 @@ test("recovery verification derives the exact repository migration set", () => {
   assert.ok(names.length > 0);
   assert.equal(names[0], "0001_cms_foundation");
   assert.ok(names.includes("0019_programme_runtime_hardening"));
-  assert.equal(names.at(-1), "0027_placement_media_assignments");
+  assert.equal(names.at(-1), "0028_geo_localized_creative_assignments");
   assert.equal(new Set(names).size, names.length);
 });
 

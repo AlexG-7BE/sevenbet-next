@@ -42,6 +42,7 @@ const loadCasinoPage = cache(async (slug: string) => {
     slug,
     commercialAuthorityForPresentation(authority, presentation.marketCountryCode),
     presentation.marketCountryCode,
+    presentation.language,
   );
   const availableForPresentation = candidate
     ? Boolean(presentation.marketCountryCode && candidate.countries.some((country) => country.countryCode === presentation.marketCountryCode && country.availability === "AVAILABLE"))

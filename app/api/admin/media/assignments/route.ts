@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   try {
     await requireAdminPermission(request, "media.manage");
     if (!await mediaAssignmentService.schemaReady()) {
-      throw new ServiceError("Placement media is unavailable until migration 0027 is verified", "SERVICE_UNAVAILABLE", 503);
+      throw new ServiceError("Localized placement media is unavailable until migration 0028 is verified", "SERVICE_UNAVAILABLE", 503);
     }
     const query = request.nextUrl.searchParams;
     const requestedVariant = query.get("variant") || "DEFAULT";
@@ -48,6 +48,8 @@ export async function GET(request: NextRequest) {
       subjectType: subjectType(query.get("subjectType")),
       subjectId: requiredUuid(query.get("subjectId"), "subjectId"),
       requestedVariant,
+      trustedCountryCode: query.get("countryCode"),
+      presentationLanguage: query.get("languageCode"),
     });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
@@ -59,12 +61,12 @@ export async function POST(request: NextRequest) {
   try {
     const actor = await requireAdminPermission(request, "media.manage");
     if (!await mediaAssignmentService.schemaReady()) {
-      throw new ServiceError("Placement media is unavailable until migration 0027 is verified", "SERVICE_UNAVAILABLE", 503);
+      throw new ServiceError("Localized placement media is unavailable until migration 0028 is verified", "SERVICE_UNAVAILABLE", 503);
     }
     const body = await readLimitedJson(request);
     const allowed = new Set([
       "action", "casinoId", "subjectType", "subjectId", "assignmentId", "mediaAssetId", "placement", "variant",
-      "renderingMode", "sortOrder", "active", "cropSafe", "altTextOverride", "focalPointX",
+      "countryCode", "languageCode", "renderingMode", "sortOrder", "active", "cropSafe", "altTextOverride", "focalPointX",
       "focalPointY", "validFrom", "validUntil", "reference",
     ]);
     const unknown = Object.keys(body).filter((key) => !allowed.has(key));
@@ -97,6 +99,8 @@ export async function POST(request: NextRequest) {
       ...subject,
       placement: typeof body.placement === "string" ? body.placement : "",
       variant: typeof body.variant === "string" ? body.variant : "DEFAULT",
+      countryCode: body.countryCode === null ? null : typeof body.countryCode === "string" ? body.countryCode : undefined,
+      languageCode: body.languageCode === null ? null : typeof body.languageCode === "string" ? body.languageCode : undefined,
       mediaAssetId: requiredUuid(body.mediaAssetId, "mediaAssetId"),
       renderingMode: typeof body.renderingMode === "string" ? body.renderingMode : "AUTO",
       sortOrder: body.sortOrder === undefined ? 0 : Number(body.sortOrder),

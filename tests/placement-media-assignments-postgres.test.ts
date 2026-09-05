@@ -13,6 +13,7 @@ import {
 } from "@prisma/client";
 
 import appPrisma from "../lib/db/prisma";
+import { assertGeoLocalizedCreative0028Schema } from "../lib/db/geo-localized-creative-0028-release";
 import { assertPlacementMedia0027Schema } from "../lib/db/placement-media-0027-release";
 import { mediaAssignmentService } from "../lib/services/media-assignment.service";
 
@@ -81,6 +82,8 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
       "CasinoBonusMediaAssignment",
       "AffiliateOfferMediaAssignment",
     ]);
+    const targetingSchema = await assertGeoLocalizedCreative0028Schema(prisma);
+    assert.equal(targetingSchema.columns.length, 6);
     await cleanup(prisma);
     await prisma.casino.create({
       data: {
@@ -181,6 +184,8 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
         mediaAssetId: IDS.casinoAsset,
         placement: MediaPlacement.CASINO_DIRECTORY_CARD,
         variant: MediaPlacementVariant.MOBILE,
+        countryCode: "FI",
+        languageCode: "fi",
         renderingMode: MediaRenderingMode.COVER,
         cropSafe: true,
         focalPointX: new Prisma.Decimal("0.2"),
@@ -192,6 +197,8 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
         casinoBonusId: IDS.bonus,
         mediaAssetId: IDS.bonusAsset,
         placement: MediaPlacement.OFFER_DETAIL,
+        countryCode: null,
+        languageCode: "en",
       },
     });
     const offerAssignment = await prisma.affiliateOfferMediaAssignment.create({
@@ -199,11 +206,29 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
         affiliateOfferId: IDS.offer,
         mediaAssetId: IDS.offerAsset,
         placement: MediaPlacement.OFFER_DETAIL,
+        countryCode: "SE",
+        languageCode: null,
       },
     });
     assert.equal(casinoAssignment.variant, MediaPlacementVariant.MOBILE);
+    assert.deepEqual([casinoAssignment.countryCode, casinoAssignment.languageCode], ["FI", "fi"]);
     assert.equal(bonusAssignment.placement, MediaPlacement.OFFER_DETAIL);
+    assert.deepEqual([bonusAssignment.countryCode, bonusAssignment.languageCode], [null, "en"]);
     assert.equal(offerAssignment.placement, MediaPlacement.OFFER_DETAIL);
+    assert.deepEqual([offerAssignment.countryCode, offerAssignment.languageCode], ["SE", null]);
+
+    for (const [id, countryCode, languageCode] of [
+      ["27000000-0000-4000-8000-000000000091", "fi", "en"],
+      ["27000000-0000-4000-8000-000000000092", "F1", "en"],
+      ["27000000-0000-4000-8000-000000000093", "FI", "EN"],
+      ["27000000-0000-4000-8000-000000000094", "FI", "e"],
+    ] as const) {
+      await assert.rejects(() => prisma.$executeRawUnsafe(`
+        INSERT INTO "CasinoMediaAssignment" (
+          "id", "casinoId", "mediaAssetId", "placement", "countryCode", "languageCode", "updatedAt"
+        ) VALUES ($1::uuid, $2::uuid, $3::uuid, 'CASINO_DIRECTORY_CARD', $4, $5, CURRENT_TIMESTAMP)
+      `, id, IDS.casino, IDS.unassignedAsset, countryCode, languageCode), /constraint|check/i);
+    }
 
     await assert.rejects(() => prisma.casinoBonusMediaAssignment.create({
       data: { casinoBonusId: IDS.bonus, mediaAssetId: IDS.unassignedAsset, placement: MediaPlacement.CASINO_LOGO },
@@ -274,6 +299,34 @@ test("PostgreSQL enforces Option C typed ownership, checks, safe delete and non-
       placement: "CASINO_DIRECTORY_CARD",
       actorId: IDS.actor,
     });
+    const finlandDirectory = await mediaAssignmentService.assignMedia({
+      casinoId: IDS.casino,
+      subjectType: "CASINO",
+      subjectId: IDS.casino,
+      mediaAssetId: IDS.directoryC,
+      placement: "CASINO_DIRECTORY_CARD",
+      countryCode: "FI",
+      languageCode: "en",
+      actorId: IDS.actor,
+    });
+    assert.equal((await prisma.casinoMediaAssignment.findUniqueOrThrow({ where: { id: directoryA.id } })).active, true);
+    const finlandScoped = await mediaAssignmentService.listEffectivePlacements({
+      casinoId: IDS.casino,
+      subjectType: "CASINO",
+      subjectId: IDS.casino,
+      trustedCountryCode: "FI",
+      presentationLanguage: "en",
+    });
+    assert.equal(finlandScoped.resolved.CASINO_DIRECTORY_CARD.assignment?.id, finlandDirectory.id);
+    assert.equal(finlandScoped.resolved.CASINO_DIRECTORY_CARD.targetingResolution, "EXACT_COUNTRY_LANGUAGE");
+    const globalScoped = await mediaAssignmentService.listEffectivePlacements({
+      casinoId: IDS.casino,
+      subjectType: "CASINO",
+      subjectId: IDS.casino,
+      trustedCountryCode: null,
+      presentationLanguage: "en",
+    });
+    assert.equal(globalScoped.resolved.CASINO_DIRECTORY_CARD.assignment?.id, directoryA.id);
     await mediaAssignmentService.assignMedia({
       casinoId: IDS.casino,
       subjectType: "CASINO",

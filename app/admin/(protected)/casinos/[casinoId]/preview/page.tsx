@@ -18,7 +18,10 @@ function mediaUrl(asset: { publicUrl?: string | null; url?: string | null }) {
   return asset.publicUrl || asset.url || "";
 }
 
-export default async function CasinoPreviewPage({ params, searchParams }: { params: Promise<{ casinoId: string }>; searchParams: Promise<{ variant?: string }> }) {
+export default async function CasinoPreviewPage({ params, searchParams }: {
+  params: Promise<{ casinoId: string }>;
+  searchParams: Promise<{ variant?: string; countryCode?: string; languageCode?: string }>;
+}) {
   if (!await getAdminPageAccess(await headers(), "casinos")) return <AdminPermissionDenied />;
   const { casinoId } = await params;
   const [{ casino, validation }, mediaResult, placementSchemaReady] = await Promise.all([
@@ -28,12 +31,15 @@ export default async function CasinoPreviewPage({ params, searchParams }: { para
   ]);
   const blockers = validation.issues.filter((issue) => issue.severity === "error");
   const activeBonuses = casino.casinoBonuses.filter((bonus) => bonus.offerStatus === "ACTIVE");
-  const requestedVariantInput = (await searchParams).variant || "DEFAULT";
+  const simulated = await searchParams;
+  const requestedVariantInput = simulated.variant || "DEFAULT";
   const requestedVariant = isMediaPlacementVariant(requestedVariantInput) ? requestedVariantInput : "DEFAULT";
+  const trustedCountryCode = simulated.countryCode || null;
+  const presentationLanguage = simulated.languageCode || null;
   const [casinoPlacements, bonusPlacementEntries] = placementSchemaReady
     ? await Promise.all([
-      mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO", subjectId: casinoId, requestedVariant }),
-      Promise.all(activeBonuses.map(async (bonus) => [bonus.id, await mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO_BONUS", subjectId: bonus.id, requestedVariant })] as const)),
+      mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO", subjectId: casinoId, requestedVariant, trustedCountryCode, presentationLanguage }),
+      Promise.all(activeBonuses.map(async (bonus) => [bonus.id, await mediaAssignmentService.listEffectivePlacements({ casinoId, subjectType: "CASINO_BONUS", subjectId: bonus.id, requestedVariant, trustedCountryCode, presentationLanguage })] as const)),
     ])
     : [null, []] as const;
   const bonusPlacements = new Map(bonusPlacementEntries);
@@ -52,7 +58,7 @@ export default async function CasinoPreviewPage({ params, searchParams }: { para
     <div className="adminPreview casinoDraftPreview">
       <div className="adminPreviewBar">
         <div>
-          <strong>Authenticated draft preview · v{casino.draftVersion}</strong>
+          <strong>Authenticated simulated draft preview · v{casino.draftVersion} · {casinoPlacements?.requestedCountryCode ?? "UNKNOWN GEO"} · {casinoPlacements?.requestedLanguageCode ?? "no language"}</strong>
           <Badge tone={casino.status === "PUBLISHED" ? "green" : "warning"}>{casino.status}</Badge>
         </div>
         <Link className="button ghost" href={`/admin/casinos/${casinoId}/builder`}>Back to builder</Link>
@@ -79,7 +85,7 @@ export default async function CasinoPreviewPage({ params, searchParams }: { para
 
         {hero && <figure className="casinoPreviewMediaHero" data-media-mode={casinoPlacements?.resolved.CASINO_DETAIL_HERO.renderingMode ?? "CONTAIN"}><img alt={casinoPlacements?.resolved.CASINO_DETAIL_HERO.effectiveAlt ?? hero.altText ?? ""} height={hero.height || 520} src={mediaUrl(hero)} style={{ objectPosition: casinoPlacements?.resolved.CASINO_DETAIL_HERO.focalPoint ? `${casinoPlacements.resolved.CASINO_DETAIL_HERO.focalPoint.x * 100}% ${casinoPlacements.resolved.CASINO_DETAIL_HERO.focalPoint.y * 100}%` : "center" }} width={hero.width || 1200} />{hero.caption && <figcaption>{hero.caption}</figcaption>}</figure>}
 
-        {casinoPlacements ? <section className="casinoPreviewMedia" aria-labelledby="draft-placement-title"><div><p className="eyebrow">Draft assignment projection · {requestedVariant}</p><h2 id="draft-placement-title">Casino placement previews</h2></div><div className="casinoPreviewPlacementGrid">{casinoMediaPlacements.map((placement) => { const resolved = casinoPlacements.resolved[placement]; return <Card data-media-mode={resolved.renderingMode} key={placement}><div className="badgeCluster"><Badge tone={resolved.fallback ? "warning" : "green"}>{resolved.fallback ? "FALLBACK" : "EXPLICIT"}</Badge><Badge>{resolved.renderingMode}</Badge></div><h3>{placement.replaceAll("_", " ")}</h3>{resolved.asset ? <img alt={resolved.effectiveAlt} height={resolved.asset.height || 360} loading="lazy" src={resolved.asset.publicUrl || resolved.asset.url || ""} style={{ objectPosition: resolved.focalPoint ? `${resolved.focalPoint.x * 100}% ${resolved.focalPoint.y * 100}%` : "center" }} width={resolved.asset.width || 640} /> : <div className="placementMediaCodeFallback">B4GAMBLE</div>}<p className="muted">{resolved.source.replaceAll("_", " ")} · {resolved.resolvedPlacement?.replaceAll("_", " ") || "code fallback"}</p></Card>; })}</div></section> : <Card><p className="muted">Semantic placement preview becomes available after migration 0027 is verified. Legacy draft media remains active during the staged deployment.</p></Card>}
+        {casinoPlacements ? <section className="casinoPreviewMedia" aria-labelledby="draft-placement-title"><div><p className="eyebrow">Simulated assignment projection · {requestedVariant} · {casinoPlacements.requestedCountryCode ?? "UNKNOWN GEO"} · {casinoPlacements.requestedLanguageCode ?? "no language"}</p><h2 id="draft-placement-title">Casino placement previews</h2></div><div className="casinoPreviewPlacementGrid">{casinoMediaPlacements.map((placement) => { const resolved = casinoPlacements.resolved[placement]; return <Card data-media-mode={resolved.renderingMode} key={placement}><div className="badgeCluster"><Badge tone={resolved.fallback ? "warning" : "green"}>{resolved.fallback ? "FALLBACK" : "EXPLICIT"}</Badge><Badge>{resolved.renderingMode}</Badge><Badge>{resolved.targetingResolution.replaceAll("_", " ")}</Badge></div><h3>{placement.replaceAll("_", " ")}</h3>{resolved.asset ? <img alt={resolved.effectiveAlt} height={resolved.asset.height || 360} loading="lazy" src={resolved.asset.publicUrl || resolved.asset.url || ""} style={{ objectPosition: resolved.focalPoint ? `${resolved.focalPoint.x * 100}% ${resolved.focalPoint.y * 100}%` : "center" }} width={resolved.asset.width || 640} /> : <div className="placementMediaCodeFallback">B4GAMBLE</div>}<p className="muted">{resolved.source.replaceAll("_", " ")} · {resolved.resolvedPlacement?.replaceAll("_", " ") || "code fallback"} · {resolved.resolvedCountryCode ?? "GLOBAL"}/{resolved.resolvedLanguageCode ?? "neutral"}</p></Card>; })}</div></section> : <Card><p className="muted">Localized placement preview becomes available after migration 0028 is verified. Legacy draft media remains active during the staged deployment.</p></Card>}
 
         {gallery.length > 0 && <section className="casinoPreviewMedia" aria-labelledby="draft-media-title"><div><p className="eyebrow">Managed assets</p><h2 id="draft-media-title">Gallery and screenshots</h2></div><div className="casinoPreviewMediaGrid">{gallery.map((asset) => <figure key={asset.id}><img alt={asset.altText} height={asset.height || 400} loading="lazy" src={asset.publicUrl} width={asset.width || 640} />{asset.caption && <figcaption>{asset.caption}</figcaption>}</figure>)}</div></section>}
 

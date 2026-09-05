@@ -40,6 +40,10 @@ function planSubject(plan: MediaIngestionPlan) {
     bonusId: plan.resolvedContext.bonusId,
     affiliateOfferId: plan.resolvedContext.affiliateOfferId,
     opportunityId: plan.resolvedContext.opportunityId,
+    targetCountryCodes: plan.requestedContext.targetCountryCodes ?? [],
+    creativeLanguage: plan.requestedContext.creativeLanguage ?? null,
+    creativeLanguageState: plan.requestedContext.creativeLanguageState
+      ?? (Object.prototype.hasOwnProperty.call(plan.requestedContext, "creativeLanguage") ? "NEUTRAL" : "UNKNOWN"),
   };
 }
 
@@ -83,7 +87,18 @@ function planFromValue(value: Prisma.JsonValue) {
   return mediaIngestionPlanSchema.parse(value);
 }
 
-type AssignmentIdentity = { id: string; reference: string | null; active: boolean; mediaAssetId: string };
+type AssignmentIdentity = {
+  id: string;
+  reference: string | null;
+  active: boolean;
+  mediaAssetId: string;
+  countryCode: string | null;
+  languageCode: string | null;
+};
+
+function targetScope(recommendation: MediaPlanRecommendation) {
+  return { countryCode: recommendation.countryCode, languageCode: recommendation.languageCode };
+}
 
 async function subjectState(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation) {
   if (recommendation.subjectType === "CASINO") {
@@ -99,16 +114,23 @@ async function subjectState(tx: Prisma.TransactionClient, recommendation: MediaP
 }
 
 async function activeAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation): Promise<AssignmentIdentity | null> {
-  const where = { placement: recommendation.placement as MediaPlacement, variant: recommendation.variant as MediaPlacementVariant, active: true };
-  if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...where }, select: { id: true, reference: true, active: true, mediaAssetId: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
-  if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...where }, select: { id: true, reference: true, active: true, mediaAssetId: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
-  return tx.affiliateOfferMediaAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...where }, select: { id: true, reference: true, active: true, mediaAssetId: true }, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  const where = {
+    placement: recommendation.placement as MediaPlacement,
+    variant: recommendation.variant as MediaPlacementVariant,
+    ...targetScope(recommendation),
+    active: true,
+  };
+  const select = { id: true, reference: true, active: true, mediaAssetId: true, countryCode: true, languageCode: true } as const;
+  if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.findFirst({ where: { casinoId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.findFirst({ where: { casinoBonusId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
+  return tx.affiliateOfferMediaAssignment.findFirst({ where: { affiliateOfferId: recommendation.subjectId, ...where }, select, orderBy: [{ sortOrder: "asc" }, { id: "asc" }] });
 }
 
 async function deactivateAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string) {
-  if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.update({ where: { id }, data: { active: false } });
-  if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.update({ where: { id }, data: { active: false } });
-  return tx.affiliateOfferMediaAssignment.update({ where: { id }, data: { active: false } });
+  const scope = { id, ...targetScope(recommendation), active: true };
+  if (recommendation.subjectType === "CASINO") return tx.casinoMediaAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: false } });
+  if (recommendation.subjectType === "CASINO_BONUS") return tx.casinoBonusMediaAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: false } });
+  return tx.affiliateOfferMediaAssignment.updateMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope }, data: { active: false } });
 }
 
 async function createAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, reference: string) {
@@ -116,6 +138,8 @@ async function createAssignment(tx: Prisma.TransactionClient, recommendation: Me
     mediaAssetId: recommendation.assetId,
     placement: recommendation.placement as MediaPlacement,
     variant: recommendation.variant as MediaPlacementVariant,
+    countryCode: recommendation.countryCode,
+    languageCode: recommendation.languageCode,
     renderingMode: recommendation.renderingMode as MediaRenderingMode,
     sortOrder: 0,
     active: true,
@@ -128,17 +152,19 @@ async function createAssignment(tx: Prisma.TransactionClient, recommendation: Me
 }
 
 async function deleteOwnedAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string, reference: string) {
-  if (recommendation.subjectType === "CASINO") return (await tx.casinoMediaAssignment.deleteMany({ where: { id, casinoId: recommendation.subjectId, reference } })).count;
-  if (recommendation.subjectType === "CASINO_BONUS") return (await tx.casinoBonusMediaAssignment.deleteMany({ where: { id, casinoBonusId: recommendation.subjectId, reference } })).count;
-  return (await tx.affiliateOfferMediaAssignment.deleteMany({ where: { id, affiliateOfferId: recommendation.subjectId, reference } })).count;
+  const scope = { id, reference, ...targetScope(recommendation) };
+  if (recommendation.subjectType === "CASINO") return (await tx.casinoMediaAssignment.deleteMany({ where: { casinoId: recommendation.subjectId, ...scope } })).count;
+  if (recommendation.subjectType === "CASINO_BONUS") return (await tx.casinoBonusMediaAssignment.deleteMany({ where: { casinoBonusId: recommendation.subjectId, ...scope } })).count;
+  return (await tx.affiliateOfferMediaAssignment.deleteMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope } })).count;
 }
 
 async function restoreAssignment(tx: Prisma.TransactionClient, recommendation: MediaPlanRecommendation, id: string) {
   const current = await activeAssignment(tx, recommendation);
   if (current) return false;
-  if (recommendation.subjectType === "CASINO") return Boolean(await tx.casinoMediaAssignment.updateMany({ where: { id, casinoId: recommendation.subjectId, active: false }, data: { active: true } }).then((result) => result.count));
-  if (recommendation.subjectType === "CASINO_BONUS") return Boolean(await tx.casinoBonusMediaAssignment.updateMany({ where: { id, casinoBonusId: recommendation.subjectId, active: false }, data: { active: true } }).then((result) => result.count));
-  return Boolean(await tx.affiliateOfferMediaAssignment.updateMany({ where: { id, affiliateOfferId: recommendation.subjectId, active: false }, data: { active: true } }).then((result) => result.count));
+  const scope = { id, ...targetScope(recommendation), active: false };
+  if (recommendation.subjectType === "CASINO") return Boolean(await tx.casinoMediaAssignment.updateMany({ where: { casinoId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
+  if (recommendation.subjectType === "CASINO_BONUS") return Boolean(await tx.casinoBonusMediaAssignment.updateMany({ where: { casinoBonusId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
+  return Boolean(await tx.affiliateOfferMediaAssignment.updateMany({ where: { affiliateOfferId: recommendation.subjectId, ...scope }, data: { active: true } }).then((result) => result.count));
 }
 
 async function auditAssignment(
@@ -166,7 +192,12 @@ async function auditAssignment(
         channel: source,
         planId: plan.id,
         recommendationId: recommendation.id,
-        subject: { type: recommendation.subjectType, id: recommendation.subjectId },
+        subject: {
+          type: recommendation.subjectType,
+          id: recommendation.subjectId,
+          countryCode: recommendation.countryCode,
+          languageCode: recommendation.languageCode,
+        },
         checksum: asset?.checksum ?? null,
         providerReference: plan.providerReference,
         operation,
@@ -252,12 +283,22 @@ export class MediaIngestionRepository {
         const operation = current ? "REPLACE_ASSIGNMENT" : "APPLY_ASSIGNMENT";
         plan.operations.push({
           id: randomUUID(), operation, recommendationId: recommendation.id,
-          subject: `${recommendation.subjectType}:${recommendation.subjectId}`,
-          previous: current ? { assignmentId: current.id, mediaAssetId: current.mediaAssetId, active: true } : null,
-          result: { assignmentId: created.id, mediaAssetId: recommendation.assetId, active: true },
+          subject: `${recommendation.subjectType}:${recommendation.subjectId}:${recommendation.countryCode ?? "GLOBAL"}:${recommendation.languageCode ?? "neutral"}`,
+          previous: current ? { assignmentId: current.id, mediaAssetId: current.mediaAssetId, countryCode: current.countryCode, languageCode: current.languageCode, active: true } : null,
+          result: { assignmentId: created.id, mediaAssetId: recommendation.assetId, countryCode: recommendation.countryCode, languageCode: recommendation.languageCode, active: true },
           actorId: input.actorId, source: input.source, timestamp: now,
         });
-        await auditAssignment(tx, plan, recommendation, operation, created.id, current ? { assignmentId: current.id, active: true } : null, { assignmentId: created.id, active: true }, input.actorId, input.source);
+        await auditAssignment(tx, plan, recommendation, operation, created.id, current ? {
+          assignmentId: current.id,
+          countryCode: current.countryCode,
+          languageCode: current.languageCode,
+          active: true,
+        } : null, {
+          assignmentId: created.id,
+          countryCode: recommendation.countryCode,
+          languageCode: recommendation.languageCode,
+          active: true,
+        }, input.actorId, input.source);
         applied += 1;
       }
       plan.operations = plan.operations.slice(-300);
@@ -295,12 +336,23 @@ export class MediaIngestionRepository {
         recommendation.rolledBackAt = now;
         plan.operations.push({
           id: randomUUID(), operation: "ROLLBACK_ASSIGNMENT", recommendationId: recommendation.id,
-          subject: `${recommendation.subjectType}:${recommendation.subjectId}`,
-          previous: { assignmentId: removedId, active: true },
-          result: { assignmentRemoved: true, restoredAssignmentId: restored ? recommendation.replacedAssignmentId : null, assetRetained: true },
+          subject: `${recommendation.subjectType}:${recommendation.subjectId}:${recommendation.countryCode ?? "GLOBAL"}:${recommendation.languageCode ?? "neutral"}`,
+          previous: { assignmentId: removedId, countryCode: recommendation.countryCode, languageCode: recommendation.languageCode, active: true },
+          result: { assignmentRemoved: true, restoredAssignmentId: restored ? recommendation.replacedAssignmentId : null, countryCode: recommendation.countryCode, languageCode: recommendation.languageCode, assetRetained: true },
           actorId: input.actorId, source: input.source, timestamp: now,
         });
-        await auditAssignment(tx, plan, recommendation, "ROLLBACK_ASSIGNMENT", removedId, { assignmentId: removedId, active: true }, { assignmentRemoved: true, restoredAssignmentId: restored ? recommendation.replacedAssignmentId : null, assetRetained: true }, input.actorId, input.source);
+        await auditAssignment(tx, plan, recommendation, "ROLLBACK_ASSIGNMENT", removedId, {
+          assignmentId: removedId,
+          countryCode: recommendation.countryCode,
+          languageCode: recommendation.languageCode,
+          active: true,
+        }, {
+          assignmentRemoved: true,
+          restoredAssignmentId: restored ? recommendation.replacedAssignmentId : null,
+          countryCode: recommendation.countryCode,
+          languageCode: recommendation.languageCode,
+          assetRetained: true,
+        }, input.actorId, input.source);
         rolledBack += 1;
       }
       plan.operations = plan.operations.slice(-300);

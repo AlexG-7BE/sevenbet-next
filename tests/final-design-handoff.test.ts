@@ -35,7 +35,10 @@ test("casino comparison is contextual, capped and backed by the existing public 
   assert.match(controller, /dialog\.showModal\(\)/);
   assert.doesNotMatch(controller, /localStorage|programme|email|userId/i);
   const route = read("app/api/public/comparison/route.ts");
-  assert.match(route, /publicComparisonService\.compare\(query, authority\)/);
+  assert.match(
+    route,
+    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\)\)/,
+  );
   assert.match(route, /private, no-store/);
   assert.match(route, /noindex, nofollow/);
   assert.match(route, /COMPARISON_UNAVAILABLE/);

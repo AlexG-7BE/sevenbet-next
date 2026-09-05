@@ -94,6 +94,38 @@ after verification. Ready activation deployment
 readiness checks; it does not run the migration. See the
 [PLACEMENT-MEDIA-ASSIGNMENTS-01 release record](Placement-Media-Assignments-01-Release-Record-2026-09-04.md).
 
+## Production GEO-localized creative migration 0028 — authorised candidate
+
+**DETECTED / NOT YET CLAIMED AS APPLIED:**
+`0028_geo_localized_creative_assignments` adds nullable `countryCode` and
+`languageCode` text columns to each of the three RFC-040 assignment tables, a
+bounded shape check for every column, and one target-resolver index per table.
+It contains no default, data update, table replacement, deletion or destructive
+operation. Its candidate SHA-256 is
+`4511b403f4e7d72fcec972870bca0f3c61eaf673ad8b9b4ab28cf3120493ffc7`.
+
+Compatibility is explicit: old application semantics remain representable
+because every pre-existing row acquires `NULL/NULL`, meaning global and
+language-neutral. Candidate application public reads remain snapshot-bound and
+historical JSON without target fields also resolves as global-neutral. Admin
+assignment mutation is held unavailable when the six columns are absent.
+
+The governed executor requires verified 0027, exact untouched 0028 pending
+state, repository checksum, Vercel project/org, database resource and
+fingerprint, explicit Preview/Production target, exact deployed SHA and bounded
+write confirmation. Preflight requires current assignment counts `26 / 20 / 0`.
+Postflight requires the same counts, all 46 rows still `NULL/NULL`, unchanged
+Casino/Bonus/Offer/route/MediaAsset/CasinoVersion counts, exactly one effective
+checksum-matched migration attempt, and complete checks/indexes. A disposable
+PostgreSQL staged-upgrade test inserts rows into all three assignment tables
+under 0027, applies 0028, verifies preservation and null targets, persists valid
+`FI/fi`, `GLOBAL/en` and `SE/neutral`, rejects malformed shapes, and replays
+`migrate deploy` idempotently.
+
+Application rollback remains a protected code release; columns are not dropped.
+A bad future targeted relationship is deactivated and republished through the
+existing governed assignment workflow without deleting its `MediaAsset`.
+
 ## Production Better Auth 1.7 sequence — applied
 
 **DETECTED / APPLIED:** `0021_partner_ops_work_bridge_01` and
