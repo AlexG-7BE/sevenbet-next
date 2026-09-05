@@ -75,7 +75,6 @@ export function createSevenBetAuth({
             ],
             resourceSeedMode: "merge",
             enforcePerClientResources: true,
-            clientRegistrationDefaultResources: [commercialMcpResource],
             clientRegistrationAllowedResources: [commercialMcpResource, mediaMcpResource],
             refreshTokenReuseInterval: 0,
             clientPrivileges: () => false,

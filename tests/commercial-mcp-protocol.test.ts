@@ -8,6 +8,7 @@ import { createCommercialMcpServer, commercialMcpTools } from "../lib/mcp/commer
 
 const config = {
   issuer: "https://b4gamble.com",
+  authorizationServer: "https://b4gamble.com",
   resource: "https://b4gamble.com/api/mcp/commercial",
   authorizationEndpoint: "https://b4gamble.com/api/mcp/oauth/authorize",
   tokenEndpoint: "https://b4gamble.com/api/mcp/oauth/token",

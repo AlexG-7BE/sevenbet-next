@@ -18,7 +18,9 @@ import {
   isAllowedChatGptRedirect,
   validateCommercialMcpTokenRecord,
 } from "../lib/mcp/commercial/oauth-policy";
+import { withOperationalMcpAuthorizationIssuer } from "../lib/mcp/commercial/oauth";
 import { resolveCommercialMcpProviderResource } from "../lib/mcp/commercial/provider";
+import { resolveMediaMcpConfig } from "../lib/mcp/media/config";
 import { buildContentSecurityPolicy } from "../lib/security/content-security-policy";
 
 const config = resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
@@ -52,6 +54,7 @@ test("OAuth discovery advertises PKCE, DCR, refresh, revocation, resource, and e
   const resource = commercialMcpProtectedResourceMetadata(config);
   assert.deepEqual(server.code_challenge_methods_supported, ["S256"]);
   assert.equal(server.authorization_response_iss_parameter_supported, true);
+  assert.equal(server.issuer, config.authorizationServer);
   assert.deepEqual(server.grant_types_supported, ["authorization_code", "refresh_token"]);
   assert.equal(server.token_endpoint_auth_methods_supported.includes("none"), true);
   assert.deepEqual(server.scopes_supported, ["commercial:read", "commercial:safe_write", "offline_access"]);
@@ -67,6 +70,7 @@ test("configuration enables Production by default, preserves an explicit kill sw
   });
   assert.ok(production);
   assert.equal(production.issuer, "https://b4gamble.com");
+  assert.equal(production.authorizationServer, "https://b4gamble.com");
   assert.equal(production.resource, "https://b4gamble.com/api/mcp/commercial");
 
   assert.equal(resolveCommercialMcpConfig("https://b4gamble.com/api/mcp/commercial", {
@@ -102,6 +106,30 @@ test("DCR accepts only current ChatGPT callback shapes", () => {
   assert.equal(isAllowedChatGptRedirect("https://chatgpt.com/connector/oauth/abcdefgh"), true);
   assert.equal(isAllowedChatGptRedirect("https://evil.example/connector/oauth/abcdefgh"), false);
   assert.equal(isAllowedChatGptRedirect("https://chatgpt.com/connector/oauth/abcdefgh?next=evil"), false);
+});
+
+test("resource-specific authorization responses retain RFC 9207 issuer identification", () => {
+  const mediaConfig = resolveMediaMcpConfig("https://b4gamble.com/api/mcp/media", {
+    MEDIA_OPERATIONS_MCP_ENABLED: "true",
+    MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: "https://b4gamble.com",
+  });
+  assert.ok(mediaConfig);
+  const response = withOperationalMcpAuthorizationIssuer(new Response(null, {
+    status: 303,
+    headers: {
+      Location: "https://chatgpt.com/connector_platform_oauth_redirect?code=fixture&state=fixture&iss=https%3A%2F%2Fb4gamble.com",
+    },
+  }), mediaConfig);
+  assert.equal(
+    new URL(response.headers.get("location")!).searchParams.get("iss"),
+    "https://b4gamble.com/api/mcp/media",
+  );
+
+  const internal = withOperationalMcpAuthorizationIssuer(new Response(null, {
+    status: 303,
+    headers: { Location: "/admin/integrations/chatgpt-work/consent?fixture=1" },
+  }), mediaConfig);
+  assert.equal(internal.headers.get("location"), "/admin/integrations/chatgpt-work/consent?fixture=1");
 });
 
 test("ChatGPT authorize presentation extensions are ignored without changing authority bindings", () => {

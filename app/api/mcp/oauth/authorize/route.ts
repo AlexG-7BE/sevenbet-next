@@ -2,7 +2,12 @@ import { getServerSession } from "@/lib/auth/session";
 import { getCurrentStaff } from "@/lib/auth/staff";
 import { normalizeCommercialMcpAuthorizationRequest } from "@/lib/mcp/commercial/authorization-request";
 import { commercialMcpDisabledResponse } from "@/lib/mcp/commercial/config";
-import { authorizeCommercialMcpRequest, CommercialMcpAuthError, commercialMcpAuthErrorResponse } from "@/lib/mcp/commercial/oauth";
+import {
+  authorizeCommercialMcpRequest,
+  CommercialMcpAuthError,
+  commercialMcpAuthErrorResponse,
+  validateOperationalMcpAuthorizationRequest,
+} from "@/lib/mcp/commercial/oauth";
 import { resolveOperationalMcpRequestConfig } from "@/lib/mcp/operational-routing";
 import { operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
 
@@ -17,6 +22,8 @@ export async function GET(request: Request) {
   }
   if (!config) return commercialMcpDisabledResponse();
   try {
+    const normalizedRequest = normalizeCommercialMcpAuthorizationRequest(request);
+    const validatedRequest = await validateOperationalMcpAuthorizationRequest(normalizedRequest, config);
     const session = await getServerSession(request.headers);
     if (!session) {
       const current = new URL(request.url);
@@ -33,8 +40,7 @@ export async function GET(request: Request) {
     if (!staff || !staff.permissions.includes(operationalMcpPermission(config))) {
       throw new CommercialMcpAuthError(`B4GAMBLE ${operationalMcpLabel(config)} staff access is required`, 403, "access_denied");
     }
-    const normalizedRequest = normalizeCommercialMcpAuthorizationRequest(request);
-    return await authorizeCommercialMcpRequest(normalizedRequest, config, session.user.id);
+    return await authorizeCommercialMcpRequest(normalizedRequest, config, session.user.id, validatedRequest);
   } catch (error) {
     return commercialMcpAuthErrorResponse(error, config);
   }

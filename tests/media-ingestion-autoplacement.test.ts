@@ -400,7 +400,14 @@ test("Media Operations is a separate exact-resource MCP surface with only five b
   const config = resolveMediaMcpConfig("https://b4gamble.com/api/mcp/media", { MEDIA_OPERATIONS_MCP_ENABLED: "true", MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: "https://b4gamble.com" });
   assert.ok(config);
   assert.equal(config.resource, "https://b4gamble.com/api/mcp/media");
-  assert.deepEqual(mediaMcpProtectedResourceMetadata(config).scopes_supported, ["media:read", "media:safe_write", "offline_access"]);
+  assert.equal(config.authorizationServer, "https://b4gamble.com/api/mcp/media");
+  assert.equal(config.registrationEndpoint, "https://b4gamble.com/api/mcp/oauth/register/media");
+  assert.deepEqual(mediaMcpProtectedResourceMetadata(config), {
+    resource: "https://b4gamble.com/api/mcp/media",
+    authorization_servers: ["https://b4gamble.com/api/mcp/media"],
+    scopes_supported: ["media:read", "media:safe_write", "offline_access"],
+    bearer_methods_supported: ["header"],
+  });
   assert.deepEqual(mediaMcpTools.map((tool) => tool.name), ["media_ingest_partner_snippet", "media_analyze_and_plan", "media_apply_draft_plan", "media_get_plan", "media_list_recent_ingestions"]);
   assert.deepEqual(MEDIA_MCP_SCOPES, ["media:read", "media:safe_write"]);
 
