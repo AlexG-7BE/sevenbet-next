@@ -343,7 +343,7 @@ introducing per-request clients or explicit disconnects.
 
 ## Tests and CI
 
-**DETECTED — focused local acceptance:** 
+**DETECTED — focused local acceptance:**
 
 - transient/import reliability: 8/8;
 - targeted auth/MCP/Admin/Media/product regressions: 117/117;
