@@ -1,12 +1,12 @@
 # B4GAMBLE Current State
 
 **Status:** CURRENT AUTHORITATIVE CHECKPOINT  
-**Evidence date:** 4 September 2026
+**Evidence date:** 5 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `96cd546bf14a32fda0632f58382089aac4c7b905`
-**Verified post-release runtime baseline SHA:** `96cd546bf14a32fda0632f58382089aac4c7b905`
-**Verified post-release runtime deployment:** Ready; `dpl_9PzTzpLcao3jveamPS9Dq4EVKF82`
+**Current Production application SHA (live provider evidence):** `b9965d5ca2744bdc510baadaad48fde3c1d39fba`
+**Verified post-release runtime baseline SHA:** `b9965d5ca2744bdc510baadaad48fde3c1d39fba`
+**Verified post-release runtime deployment:** Ready; `dpl_AWTHUgp2fp4XsVwRe4v25NKrcQoL`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -37,9 +37,27 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
 | Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
 | Commercial creative formats | **READY IN PRODUCTION** | Common affiliate formats, security-valid animated GIF ingestion, native responsive commercial geometry and governed creative actions are active without changing editorial media or expanding commercial authority. |
+| Media ingestion / Media Operations | **READY IN PRODUCTION — FIRST-PARTY R2, REVIEW-SAFE DRAFT AUTHORITY** | Validated partner media persists through the existing S3 provider to approved Cloudflare R2 Standard and `media.b4gamble.com`; checksum dedupe, bounded analysis, protected draft plans and the separate five-tool Media MCP are active with no publish authority. |
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — MEDIA-INGESTION-AUTOPLACEMENT-01 COMPLETE, 5 September 2026:**
+[PR #157](https://github.com/AlexG-7BE/sevenbet-next/pull/157) merged as
+`b9965d5ca2744bdc510baadaad48fde3c1d39fba` after exact-head CI and Preview,
+bucket-scoped Cloudflare R2 Standard transport preflight and custom-domain
+verification passed. Ready Production deployment
+`dpl_AWTHUgp2fp4XsVwRe4v25NKrcQoL` then completed one controlled current
+Diamond7 ingestion and immediate replay: one 250×250 JPEG became first-party
+`MediaAsset` `fb0a9f46-fb70-430e-a799-fc2cbf939f07` at
+`media.b4gamble.com`, while the replay reused that exact object/row. Both plans
+remained `SUGGEST_REVIEW`; no assignment or publication occurred. Read-only
+postflight retained 8 real Casinos, 6 published Bonuses, 30 publication
+snapshots and all 46 RFC-040 assignments with exact editorial/score, terms,
+CTA/routes, GEO and Programme digests. The separate Media MCP exposes exactly
+five read/safe-write tools, cross-resource scope probes failed closed, and
+runtime logs were error-free and secret-safe. See the
+[MEDIA-INGESTION-AUTOPLACEMENT-01 release record](06_Operations/Media-Ingestion-Autoplacement-01-Release-Record-2026-09-05.md).
 
 **DETECTED — COMMERCIAL-CREATIVE-FORMATS-01 COMPLETE, 4 September 2026:**
 [PR #150](https://github.com/AlexG-7BE/sevenbet-next/pull/150) delivered the

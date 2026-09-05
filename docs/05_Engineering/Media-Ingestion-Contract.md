@@ -334,9 +334,10 @@ must remain:
 No direct push to `main`, destructive migration or `prisma migrate reset` is
 permitted. There is no schema migration in the detected implementation.
 
-**UNKNOWN until release evidence is recorded:** exact PR/head/merge, Preview
-deployment, Production deployment, live bounded fixture result and final
-Production acceptance.
+**DETECTED:** exact PR/head/merge, Preview and Production deployments, live
+bounded creative result, duplicate replay, draft authority, resource isolation
+and final Production acceptance are preserved in the
+[MEDIA-INGESTION-AUTOPLACEMENT-01 release record](../06_Operations/Media-Ingestion-Autoplacement-01-Release-Record-2026-09-05.md).
 
 ## Known limitations
 
