@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { deflateSync } from "node:zlib";
@@ -208,14 +209,21 @@ test("remote fetch re-vets every redirect, bounds redirects and bytes, rejects e
   }), (error: unknown) => error instanceof RemoteImageFetchError && error.code === "FILE_TOO_LARGE");
 });
 
-test("Media Operations global checksum mode reuses identical first-party media before storage regardless of source URL metadata", async () => {
+test("Media Operations global checksum mode reuses identical source bytes before metadata processing or storage", async () => {
   const casino = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
-  const existing = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", casinoId: casino, checksum: "f".repeat(64), publicUrl: "/media/existing.png" };
+  const data = readFileSync("public/casino-brands/diamond7/partner-offer.jpg");
+  const sourceChecksum = createHash("sha256").update(data).digest("hex");
+  const existing = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", casinoId: casino, checksum: sourceChecksum, publicUrl: "/media/existing.jpg" };
   let globalLookup = false;
+  const lookupChecksums: string[] = [];
   let storageTouched = false;
   const repository = {
     resolveOwnership: async () => ({ casino: { id: casino }, marketProfile: null, casinoBonus: null, affiliateOffer: null }),
-    findReusableChecksum: async (_checksum: string, casinoId: string) => { globalLookup = casinoId === casino; return existing; },
+    findReusableChecksum: async (checksum: string, casinoId: string) => {
+      lookupChecksums.push(checksum);
+      globalLookup = casinoId === casino;
+      return checksum === sourceChecksum ? existing : null;
+    },
     findDuplicateChecksum: async () => { throw new Error("owner-context lookup must not run"); },
   } as unknown as MediaRepository;
   const provider: StorageProvider = {
@@ -228,12 +236,47 @@ test("Media Operations global checksum mode reuses identical first-party media b
     metadata: async () => null,
   };
   const service = new MediaService(repository, () => provider);
-  const data = png(300, 250);
   const result = await service.upload({
-    file: { name: "same-bytes-different-url.png", type: "image/png", size: data.length, arrayBuffer: async () => data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer },
+    file: { name: "same-bytes-different-url.jpg", type: "image/jpeg", size: data.length, arrayBuffer: async () => data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer },
     type: "OTHER", altText: "Reusable creative", casinoId: casino, actorId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", dedupeScope: "GLOBAL",
   });
   assert.equal(globalLookup, true);
+  assert.deepEqual(lookupChecksums, [sourceChecksum]);
+  assert.equal(result.duplicate, true);
+  assert.equal(result.record.id, existing.id);
+  assert.equal(storageTouched, false);
+});
+
+test("Media Operations global checksum mode retains the processed-byte duplicate fallback", async () => {
+  const casino = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const existing = { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", casinoId: casino, checksum: "f".repeat(64), publicUrl: "/media/processed.jpg" };
+  const data = readFileSync("public/casino-brands/diamond7/partner-offer.jpg");
+  const lookupChecksums: string[] = [];
+  let storageTouched = false;
+  const repository = {
+    resolveOwnership: async () => ({ casino: { id: casino }, marketProfile: null, casinoBonus: null, affiliateOffer: null }),
+    findReusableChecksum: async (checksum: string) => {
+      lookupChecksums.push(checksum);
+      return lookupChecksums.length === 2 ? existing : null;
+    },
+    findDuplicateChecksum: async () => { throw new Error("owner-context lookup must not run"); },
+  } as unknown as MediaRepository;
+  const provider: StorageProvider = {
+    name: "LOCAL",
+    validate: async () => { storageTouched = true; },
+    upload: async () => { throw new Error("duplicate bytes must not upload"); },
+    delete: async () => undefined,
+    getPublicUrl: () => "",
+    exists: async () => true,
+    metadata: async () => null,
+  };
+  const service = new MediaService(repository, () => provider);
+  const result = await service.upload({
+    file: { name: "metadata-bearing.jpg", type: "image/jpeg", size: data.length, arrayBuffer: async () => data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength) as ArrayBuffer },
+    type: "OTHER", altText: "Processed duplicate", casinoId: casino, actorId: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", dedupeScope: "GLOBAL",
+  });
+  assert.equal(lookupChecksums.length, 2);
+  assert.notEqual(lookupChecksums[0], lookupChecksums[1]);
   assert.equal(result.duplicate, true);
   assert.equal(result.record.id, existing.id);
   assert.equal(storageTouched, false);

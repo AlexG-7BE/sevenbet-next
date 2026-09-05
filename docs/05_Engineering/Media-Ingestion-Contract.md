@@ -118,11 +118,13 @@ The original validated GIF is stored without a frame-flattening transform, and
 animation/frame metadata remains available.
 
 **DETECTED:** stored media uses the configured first-party provider. Public
-renderers never hotlink the partner source. Media Operations uses a global
-SHA-256 lookup and a checksum-derived unique storage key. Repeated bytes reuse
-the earliest active same-Casino asset regardless of changed source URL,
-creative ID or typed owner. A same-checksum asset owned by another Casino is
-retained without creating another object/row, but the plan becomes
+renderers never hotlink the partner source. Media Operations checks the
+validated source-byte SHA-256 before metadata processing, then checks the
+processed-byte SHA-256 before using a checksum-derived unique storage key.
+Repeated bytes therefore reuse the earliest active same-Casino asset regardless
+of changed source URL, creative ID or typed owner. A same-checksum asset owned
+by another Casino is retained without creating another object/row, but the plan
+becomes
 `DUPLICATE_OWNER_REVIEW_REQUIRED` and cannot auto-assign it. A post-upload
 lookup closes the concurrent unique-key race without deleting a shared object.
 

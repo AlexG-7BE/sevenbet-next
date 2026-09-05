@@ -138,6 +138,10 @@ export class MediaService {
       if (error instanceof MediaValidationError) throw new ValidationError(error.message, { code: error.code });
       throw error;
     }
+    if (input.dedupeScope === "GLOBAL") {
+      const sourceDuplicate = await this.repository.findReusableChecksum(firstValidation.checksum, input.casinoId);
+      if (sourceDuplicate) return { record: sourceDuplicate, duplicate: true };
+    }
     const processed = await processImage({ data: original, mimeType: firstValidation.mimeType });
     let validated;
     try {
