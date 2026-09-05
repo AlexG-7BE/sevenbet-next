@@ -4,9 +4,9 @@
 **Evidence date:** 6 September 2026
 **Owner:** 7BE Inc. / B4GAMBLE Founder Office  
 **Production:** `https://b4gamble.com`  
-**Current Production application SHA (live provider evidence):** `02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5`
-**Verified post-release runtime baseline SHA:** `02034b520ecd2c0c6f2ebd1605baa4c4b7275cb5`
-**Verified post-release runtime deployment:** Ready; `dpl_DcAiTyArEtqLYQZpNco1yrKymU47`
+**Current Production application SHA (live provider evidence):** `0fc312db5bfbf4f6064454b94bb3a1e00f61dd59`
+**Verified post-release runtime baseline SHA:** `0fc312db5bfbf4f6064454b94bb3a1e00f61dd59`
+**Verified post-release runtime deployment:** Ready; `dpl_8GB8majgeNzx7v9wHdCVHZ16oxGb`
 
 Documentation-only commits may advance `main` and trigger equivalent Vercel rebuilds after this runtime baseline. Use live GitHub/Vercel evidence for the exact current head/deployment when that distinction matters.
 
@@ -34,7 +34,7 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Commercial CRM / Partner Operations | **READY IN PRODUCTION** | COMMERCIAL-OPS-01 code is deployed and Production migration `0020_commercial_ops_01` is applied and verified. |
 | ChatGPT Work MCP / Better Auth 1.7 | **ENABLED IN PRODUCTION — RESOURCE-SPECIFIC DCR, DURABLE GRANTS AND DB FAILURE BOUNDARY DEPLOYED** | Commercial retains four tools; Media retains five. PR #161 binds standards-shaped DCR through resource-specific discovery while preserving strict one-resource clients and invalidating cross-resource use. PR #159 keeps unsupported methods DB-free and authenticated transient DB failures bounded. |
 | Production DB / MCP reliability | **READY IN PRODUCTION** | The intentional pooled one-connection runtime remains unchanged. Public discovery no longer competes with itself or concurrent discovery work inside a warm function; transient DB availability receives narrow, secret-safe 503 behavior without an unhandled initialization rejection or process exit. |
-| Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
+| Commercial partner activation | **READY IN PRODUCTION — SIX GOVERNED ACTIVE ROUTES, DESTINATIONS VERIFIED** | Six exact Superfly programme/offer/link graphs use bounded Founder global-default authority and checksum-matched canonical campaigns. Trusted request GEO independently denies the detected `DK`, `ES`, `FI`, `NO`, `CL`, `SE` and `GB` block set; missing or `UNKNOWN` exact-market evidence alone is not a prohibition. |
 | Casino market data | **REAL CATALOG COMPLETE IN PRODUCTION — EIGHT SCORED/REVIEWED IDENTITIES; SIX PUBLISHED OFFERS** | Eight real global editorial identities remain published with their scores, reviews, SEO and controlled marks. Six have complete global catalog facts, a published welcome offer and a governed route; Betsson and DragonBet remain review-only. Temporary demo identities are excluded from every released catalog and offer surface. |
 | Placement media | **RFC-040 OPTION C ACTIVE IN PRODUCTION** | Nine semantic placements resolve through typed Casino, Bonus and optional AffiliateOffer relationships, responsive variants and immutable publication snapshots. Production has 26 Casino and 20 Bonus assignments, zero partner-context assignments, and a strict rollback switch. |
 | GEO-localized creative assignments | **CAPABILITY READY IN PRODUCTION — REAL LOCALIZED INVENTORY NOT INSTALLED** | Additive migration 0028 is applied and verified. Trusted request GEO plus presentation language resolve exact-country/language, global/language and neutral assignment scopes without client-side inventory selection. All 46 existing assignments remain global-neutral and targeted rows remain zero. |
@@ -43,6 +43,26 @@ The [Decision & Documentation Governance](GOVERNANCE.md) defines the authority, 
 | Public language / market presentation | **READY IN PRODUCTION — PUBLICATION AND CTA ARE INDEPENDENT** | Six language-only route families share the real global Casino layer. Trusted request GEO never comes from language, and independently controls outbound eligibility; global editorial/catalog and offer publication do not claim exact-local availability. |
 
 ### Recent implementation state
+
+**DETECTED — SUPERFLY-ROUTE-DESTINATION-INTEGRITY-01 COMPLETE, 6 September
+2026:** [PR #167](https://github.com/AlexG-7BE/sevenbet-next/pull/167)
+and [PR #168](https://github.com/AlexG-7BE/sevenbet-next/pull/168) merged as
+`b28c43a2d77bdb520a857ddbc6f53738159e03e9` and
+`0fc312db5bfbf4f6064454b94bb3a1e00f61dd59` after exact-head CI and Ready
+Preview smoke. Authenticated portal and Production CRM evidence found five
+campaign destinations with a sentence-ending period and one already-clean Skol
+route. A guarded Serializable transaction repaired only the five affected
+tracking-link values and checksum provenance, created revisions/audit records
+and left Skol unchanged. The first execution hit the default remote transaction
+timeout and rolled back cleanly; a bounded timeout safeguard passed a second PR
+before the single successful retry. Independent verification found all six
+routes `CURRENT`, allowed GEO projections ON, the preserved seven-country block
+set OFF and no issues. Ready Production deployment
+`dpl_8GB8majgeNzx7v9wHdCVHZ16oxGb` served six checksum-matched `/r` 302s and
+nine successful public smoke routes with no acceptance-window 500/error logs.
+No creative fallback, schema, GEO, offer, score, media, MCP, eligibility or UX
+change occurred. See the [SUPERFLY-ROUTE-DESTINATION-INTEGRITY-01 release
+record](06_Operations/Superfly-Route-Destination-Integrity-01-Release-Record-2026-09-06.md).
 
 **DETECTED — DIRECT-GOVERNED-OUTBOUND-01 COMPLETE, 6 September 2026:**
 [PR #165](https://github.com/AlexG-7BE/sevenbet-next/pull/165) merged as
