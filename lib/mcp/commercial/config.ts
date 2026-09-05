@@ -32,7 +32,10 @@ type CommercialMcpEnvironment = Record<string, string | undefined> & {
 };
 
 export type CommercialMcpConfig = {
+  /** Public origin used by the application and the existing Commercial issuer. */
   issuer: string;
+  /** RFC 8414 authorization-server issuer advertised for this exact resource. */
+  authorizationServer: string;
   resource: string;
   authorizationEndpoint: string;
   tokenEndpoint: string;
@@ -77,6 +80,7 @@ export function resolveCommercialMcpConfig(
 
   return {
     issuer: origin,
+    authorizationServer: origin,
     resource: `${origin}${COMMERCIAL_MCP_PATH}`,
     authorizationEndpoint: `${origin}/api/mcp/oauth/authorize`,
     tokenEndpoint: `${origin}/api/mcp/oauth/token`,
@@ -97,7 +101,7 @@ export function commercialMcpDisabledResponse() {
 
 export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpConfig, additionalScopes: readonly string[] = []) {
   return {
-    issuer: config.issuer,
+    issuer: config.authorizationServer,
     authorization_endpoint: config.authorizationEndpoint,
     token_endpoint: config.tokenEndpoint,
     registration_endpoint: config.registrationEndpoint,
@@ -115,7 +119,7 @@ export function commercialMcpAuthorizationServerMetadata(config: CommercialMcpCo
 export function commercialMcpProtectedResourceMetadata(config: CommercialMcpConfig) {
   return {
     resource: config.resource,
-    authorization_servers: [config.issuer],
+    authorization_servers: [config.authorizationServer],
     scopes_supported: [...COMMERCIAL_MCP_AUTHORIZATION_SCOPES],
     bearer_methods_supported: ["header"],
   };

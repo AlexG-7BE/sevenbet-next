@@ -16,7 +16,7 @@ test("Commercial MCP exposes bounded OAuth discovery and fails closed without a 
     token_endpoint_auth_methods_supported: ["none"],
     code_challenge_methods_supported: ["S256"],
     authorization_response_iss_parameter_supported: true,
-    scopes_supported: ["commercial:read", "commercial:safe_write", "offline_access", "media:read", "media:safe_write"],
+    scopes_supported: ["commercial:read", "commercial:safe_write", "offline_access"],
   });
 
   const resource = await request.get(`${baseUrl}/.well-known/oauth-protected-resource/api/mcp/commercial`);

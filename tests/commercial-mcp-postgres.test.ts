@@ -7,8 +7,10 @@ import { CommercialMcpResearchBundleSchema } from "../lib/commercial/commercial-
 import prisma from "../lib/db/prisma";
 import {
   exchangeCommercialMcpToken,
+  registerCommercialMcpClient,
   revokeCommercialMcpToken,
   validateCommercialMcpAccessToken,
+  validateOperationalMcpAuthorizationRequest,
 } from "../lib/mcp/commercial/oauth";
 import { resolveCommercialMcpConfig } from "../lib/mcp/commercial/config";
 import {
@@ -17,6 +19,7 @@ import {
   resolveCommercialMcpProviderResource,
 } from "../lib/mcp/commercial/provider";
 import { consumeCommercialMcpRateLimit } from "../lib/mcp/commercial/rate-limit";
+import { MEDIA_MCP_AUTHORIZATION_SCOPES, resolveMediaMcpConfig } from "../lib/mcp/media/config";
 import { commercialRepository } from "../lib/repositories/commercial.repository";
 
 const actor = {
@@ -35,6 +38,12 @@ const resolvedOauthConfig = resolveCommercialMcpConfig(`${oauthOrigin}/api/mcp/c
 });
 if (!resolvedOauthConfig) throw new Error("Commercial MCP OAuth test configuration is unavailable");
 const oauthConfig = resolvedOauthConfig;
+const resolvedMediaOauthConfig = resolveMediaMcpConfig(`${oauthOrigin}/api/mcp/media`, {
+  MEDIA_OPERATIONS_MCP_ENABLED: "true",
+  MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: oauthOrigin,
+});
+if (!resolvedMediaOauthConfig) throw new Error("Media MCP OAuth test configuration is unavailable");
+const mediaOauthConfig = resolvedMediaOauthConfig;
 
 function assertDisposablePostgres() {
   assert.equal(process.env.CI, "true");
@@ -132,6 +141,38 @@ function tokenRequest(body: URLSearchParams, config = oauthConfig) {
 
 async function exchangeToken(body: URLSearchParams, config = oauthConfig) {
   return exchangeCommercialMcpToken(tokenRequest(body, config), config);
+}
+
+function dcrRequest(endpoint: string, clientName: string) {
+  return new Request(endpoint, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-forwarded-for": "127.0.0.41",
+    },
+    body: JSON.stringify({
+      redirect_uris: ["https://chatgpt.com/connector_platform_oauth_redirect"],
+      token_endpoint_auth_method: "none",
+      application_type: "web",
+      grant_types: ["authorization_code", "refresh_token"],
+      response_types: ["code"],
+      client_name: clientName,
+    }),
+  });
+}
+
+function authorizationRequest(clientId: string, resource: string, scopes: readonly string[]) {
+  const query = new URLSearchParams({
+    response_type: "code",
+    client_id: clientId,
+    redirect_uri: "https://chatgpt.com/connector_platform_oauth_redirect",
+    scope: scopes.join(" "),
+    state: "postgres-dcr-resource-fixture",
+    code_challenge: "A".repeat(43),
+    code_challenge_method: "S256",
+    resource,
+  });
+  return new Request(`${oauthOrigin}/api/mcp/oauth/authorize?${query}`);
 }
 
 async function createOAuthFixture(
@@ -248,6 +289,74 @@ test("real PostgreSQL atomically enforces hashed fixed-window MCP rate limits", 
   assert.equal(rows[0].count, 30);
   assert.match(rows[0].bucketKey, /^[a-f0-9]{64}$/);
   assert.doesNotMatch(JSON.stringify(rows), new RegExp(source.replaceAll(".", "\\.")));
+});
+
+test("real PostgreSQL binds discriminator-free DCR clients to exactly one discovery resource", async () => {
+  assertDisposablePostgres();
+  const clientIds: string[] = [];
+  try {
+    const mediaResponse = await registerCommercialMcpClient(
+      dcrRequest(mediaOauthConfig.registrationEndpoint, "ChatGPT"),
+      mediaOauthConfig,
+    );
+    const mediaText = await mediaResponse.text();
+    assert.equal(mediaResponse.status, 201, mediaText);
+    const mediaRegistration = JSON.parse(mediaText) as { client_id: string; scope: string };
+    clientIds.push(mediaRegistration.client_id);
+    assert.equal(mediaRegistration.scope, MEDIA_MCP_AUTHORIZATION_SCOPES.join(" "));
+
+    const commercialResponse = await registerCommercialMcpClient(
+      dcrRequest(oauthConfig.registrationEndpoint, "ChatGPT"),
+      oauthConfig,
+    );
+    const commercialText = await commercialResponse.text();
+    assert.equal(commercialResponse.status, 201, commercialText);
+    const commercialRegistration = JSON.parse(commercialText) as { client_id: string; scope: string };
+    clientIds.push(commercialRegistration.client_id);
+    assert.equal(commercialRegistration.scope, "commercial:read commercial:safe_write offline_access");
+
+    for (const [clientId, expectedResource, expectedScopes] of [
+      [mediaRegistration.client_id, mediaOauthConfig.resource, MEDIA_MCP_AUTHORIZATION_SCOPES],
+      [commercialRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]],
+    ] as const) {
+      const client = await prisma.oauthClient.findUniqueOrThrow({
+        where: { clientId },
+        include: { resources: { select: { resourceId: true } } },
+      });
+      assert.deepEqual(client.resources.map((relation) => relation.resourceId), [expectedResource]);
+      assert.deepEqual(client.scopes, [...expectedScopes]);
+      assert.deepEqual(client.metadata, {
+        integration: "CHATGPT_WORK",
+        b4gambleMcpResource: expectedResource,
+      });
+    }
+
+    await validateOperationalMcpAuthorizationRequest(
+      authorizationRequest(mediaRegistration.client_id, mediaOauthConfig.resource, MEDIA_MCP_AUTHORIZATION_SCOPES),
+      mediaOauthConfig,
+    );
+    await assert.rejects(
+      validateOperationalMcpAuthorizationRequest(
+        authorizationRequest(mediaRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]),
+        oauthConfig,
+      ),
+      /resource does not match/,
+    );
+
+    await validateOperationalMcpAuthorizationRequest(
+      authorizationRequest(commercialRegistration.client_id, oauthConfig.resource, ["commercial:read", "commercial:safe_write", "offline_access"]),
+      oauthConfig,
+    );
+    await assert.rejects(
+      validateOperationalMcpAuthorizationRequest(
+        authorizationRequest(commercialRegistration.client_id, mediaOauthConfig.resource, MEDIA_MCP_AUTHORIZATION_SCOPES),
+        mediaOauthConfig,
+      ),
+      /resource does not match/,
+    );
+  } finally {
+    if (clientIds.length) await prisma.oauthClient.deleteMany({ where: { clientId: { in: clientIds } } });
+  }
 });
 
 test("real PostgreSQL enforces the provider-owned OAuth token lifecycle", async (t) => {

@@ -21,7 +21,6 @@ function registrationResource(body: unknown) {
   const record = body as Record<string, unknown>;
   if (typeof record.resource === "string") return record.resource;
   if (Array.isArray(record.resources) && record.resources.length === 1 && typeof record.resources[0] === "string") return record.resources[0];
-  if (typeof record.scope === "string" && record.scope.split(/\s+/).some((scope) => scope.startsWith("media:"))) return "MEDIA_SCOPE";
   return null;
 }
 
@@ -33,7 +32,6 @@ export async function resolveOperationalMcpRequestConfig(request: Request, endpo
     let body: unknown;
     try { body = JSON.parse(raw); } catch { return exactResource(requestUrl, null); }
     const selected = registrationResource(body);
-    if (selected === "MEDIA_SCOPE") return configs(requestUrl).find((config) => new URL(config.resource).pathname === "/api/mcp/media") ?? null;
     return exactResource(requestUrl, selected);
   }
   const form = new URLSearchParams(raw);

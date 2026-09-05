@@ -80,6 +80,10 @@ const TokenBodySchema = z.discriminatedUnion("grant_type", [
   }).strict(),
 ]);
 
+export type ValidatedOperationalMcpAuthorizationRequest = {
+  scopes: Set<string>;
+};
+
 async function requireRegisteredClient(clientId: string, config: CommercialMcpConfig) {
   const client = await prisma.oauthClient.findUnique({ where: { clientId } });
   if (
@@ -131,6 +135,23 @@ function rewriteForInternalAuth(
 async function operationalMcpAuthHandler(request: Request) {
   const auth = await getOperationalMcpAuth();
   return withAuthDatabaseAvailabilityCapture(() => auth.handler(request));
+}
+
+export function withOperationalMcpAuthorizationIssuer(response: Response, config: CommercialMcpConfig) {
+  if (config.authorizationServer === config.issuer) return response;
+  const location = response.headers.get("location");
+  if (!location) return response;
+  let redirect: URL;
+  try {
+    redirect = new URL(location, config.issuer);
+  } catch {
+    return response;
+  }
+  if (!isAllowedChatGptRedirect(`${redirect.origin}${redirect.pathname}`)) return response;
+  redirect.searchParams.set("iss", config.authorizationServer);
+  const headers = new Headers(response.headers);
+  headers.set("location", redirect.toString());
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 export async function registerCommercialMcpClient(request: Request, config: CommercialMcpConfig) {
@@ -205,7 +226,23 @@ export async function authorizeCommercialMcpRequest(
   request: Request,
   config: CommercialMcpConfig,
   delegatedUserId: string,
+  validated?: ValidatedOperationalMcpAuthorizationRequest,
 ) {
+  const authorization = validated ?? await validateOperationalMcpAuthorizationRequest(request, config);
+  await requireDelegatedStaff(delegatedUserId, config);
+
+  const url = new URL(request.url);
+  url.pathname = "/api/auth/oauth2/authorize";
+  url.searchParams.set("prompt", "consent");
+  url.searchParams.set("scope", [...authorization.scopes].join(" "));
+  const response = await operationalMcpAuthHandler(new Request(url, { headers: request.headers, redirect: "manual" }));
+  return privateNoStore(withOperationalMcpAuthorizationIssuer(response, config));
+}
+
+export async function validateOperationalMcpAuthorizationRequest(
+  request: Request,
+  config: CommercialMcpConfig,
+): Promise<ValidatedOperationalMcpAuthorizationRequest> {
   const rawQuery = Object.fromEntries(new URL(request.url).searchParams.entries());
   const query = AuthorizationQuerySchema.parse(rawQuery);
   if (query.resource !== config.resource) {
@@ -216,13 +253,7 @@ export async function authorizeCommercialMcpRequest(
     throw new CommercialMcpAuthError("OAuth redirect URI is not registered", 400, "invalid_redirect_uri");
   }
   const scopes = parseOperationalMcpScopes(query.scope, config);
-  await requireDelegatedStaff(delegatedUserId, config);
-
-  const url = new URL(request.url);
-  url.pathname = "/api/auth/oauth2/authorize";
-  url.searchParams.set("prompt", "consent");
-  url.searchParams.set("scope", [...scopes].join(" "));
-  return privateNoStore(await operationalMcpAuthHandler(new Request(url, { headers: request.headers, redirect: "manual" })));
+  return { scopes };
 }
 
 type AuthorizationCodeVerification = {
@@ -306,6 +337,7 @@ export async function completeCommercialMcpConsent(
   if (redirect.origin !== registeredRedirect.origin || redirect.pathname !== registeredRedirect.pathname || redirect.hash) {
     throw new CommercialMcpAuthError("OAuth consent produced an invalid redirect", 400, "server_error");
   }
+  redirect.searchParams.set("iss", config.authorizationServer);
   return privateNoStore(new Response(null, { status: 303, headers: { Location: redirect.toString() } }));
 }
 

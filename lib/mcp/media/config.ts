@@ -38,10 +38,11 @@ export function resolveMediaMcpConfig(requestUrl: string, environment: MediaMcpE
   else origin = originOnly(new URL(requestUrl).origin);
   return {
     issuer: origin,
+    authorizationServer: `${origin}${MEDIA_MCP_PATH}`,
     resource: `${origin}${MEDIA_MCP_PATH}`,
     authorizationEndpoint: `${origin}/api/mcp/oauth/authorize`,
     tokenEndpoint: `${origin}/api/mcp/oauth/token`,
-    registrationEndpoint: `${origin}/api/mcp/oauth/register`,
+    registrationEndpoint: `${origin}/api/mcp/oauth/register/media`,
     revocationEndpoint: `${origin}/api/mcp/oauth/revoke`,
   };
 }
@@ -53,7 +54,7 @@ export function mediaMcpDisabledResponse() {
 export function mediaMcpProtectedResourceMetadata(config: MediaMcpConfig) {
   return {
     resource: config.resource,
-    authorization_servers: [config.issuer],
+    authorization_servers: [config.authorizationServer],
     scopes_supported: [...MEDIA_MCP_AUTHORIZATION_SCOPES],
     bearer_methods_supported: ["header"],
   };
