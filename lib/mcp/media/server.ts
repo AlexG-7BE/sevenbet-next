@@ -10,6 +10,7 @@ import {
   mediaListRecentIngestionsInputSchema,
 } from "@/lib/media-operations/contracts";
 import { mediaOperationsService } from "@/lib/media-operations/service";
+import { isTransientDatabaseAvailabilityError } from "@/lib/db/transient-availability";
 import type { CommercialMcpTokenContext } from "@/lib/mcp/commercial/oauth";
 import { consumeCommercialMcpRateLimit } from "@/lib/mcp/commercial/rate-limit";
 import { mediaMcpAuthenticateHeader, type MediaMcpConfig } from "@/lib/mcp/media/config";
@@ -48,7 +49,13 @@ function failure(error: unknown) {
   return { content: [{ type: "text" as const, text: error instanceof ServiceError ? error.message : "Media Operations MCP tool call failed" }], isError: true };
 }
 
-export function createMediaMcpServer(token: CommercialMcpTokenContext, config: MediaMcpConfig, service: Adapter = mediaOperationsService, rateLimiter: RateLimiter = consumeCommercialMcpRateLimit) {
+export function createMediaMcpServer(
+  token: CommercialMcpTokenContext,
+  config: MediaMcpConfig,
+  service: Adapter = mediaOperationsService,
+  rateLimiter: RateLimiter = consumeCommercialMcpRateLimit,
+  onTransientDatabaseFailure: (error: unknown) => void = () => {},
+) {
   const server = new Server({ name: "b4gamble-media-operations", version: "1.0.0" }, { capabilities: { tools: {} } });
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: mediaMcpTools } as never));
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -57,11 +64,11 @@ export function createMediaMcpServer(token: CommercialMcpTokenContext, config: M
     const write = !["media_get_plan", "media_list_recent_ingestions"].includes(tool.name);
     const requiredScope = write ? "media:safe_write" : "media:read";
     if (!token.scopes.has(requiredScope)) return { content: [{ type: "text" as const, text: `OAuth scope ${requiredScope} is required` }], isError: true, _meta: { "mcp/www_authenticate": [mediaMcpAuthenticateHeader(config, requiredScope)] } } as never;
-    const rate = await rateLimiter({ bucket: write ? "media-write" : "media-read", key: `${token.staff.id}:${token.clientId}`, limit: write ? 20 : 120, windowMs: 10 * 60 * 1_000 });
-    if (!rate.allowed) return { content: [{ type: "text" as const, text: "Media Operations MCP tool rate limit exceeded" }], isError: true };
-    const args = request.params.arguments ?? {};
-    const actor = { actorId: token.staff.id, source: "CHATGPT_WORK" as const };
     try {
+      const rate = await rateLimiter({ bucket: write ? "media-write" : "media-read", key: `${token.staff.id}:${token.clientId}`, limit: write ? 20 : 120, windowMs: 10 * 60 * 1_000 });
+      if (!rate.allowed) return { content: [{ type: "text" as const, text: "Media Operations MCP tool rate limit exceeded" }], isError: true };
+      const args = request.params.arguments ?? {};
+      const actor = { actorId: token.staff.id, source: "CHATGPT_WORK" as const };
       switch (tool.name) {
         case "media_ingest_partner_snippet": return result(await service.ingest(args, actor));
         case "media_analyze_and_plan": return result(await service.analyze(args, actor));
@@ -70,7 +77,10 @@ export function createMediaMcpServer(token: CommercialMcpTokenContext, config: M
         case "media_list_recent_ingestions": return result({ plans: await service.listRecent(args) });
         default: throw new McpError(ErrorCode.MethodNotFound, "Unknown Media Operations MCP tool");
       }
-    } catch (error) { return failure(error); }
+    } catch (error) {
+      if (isTransientDatabaseAvailabilityError(error)) onTransientDatabaseFailure(error);
+      return failure(error);
+    }
   });
   return server;
 }

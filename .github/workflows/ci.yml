@@ -197,3 +197,13 @@ jobs:
       - run: npm run media-ingestion:postgres-test
       - run: npm run mvp-runtime:postgres-test
       - run: npm run mcp-bridge:postgres-test
+      - name: Run one-connection Production DB reliability acceptance
+        env:
+          DATABASE_URL: "postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci?connection_limit=1&pool_timeout=1"
+          DIRECT_URL: postgresql://sevenbet:sevenbet@127.0.0.1:5432/sevenbet_ci
+          BETTER_AUTH_URL: http://127.0.0.1:4173
+          COMMERCIAL_MCP_ENABLED: "true"
+          COMMERCIAL_MCP_PUBLIC_ORIGIN: http://127.0.0.1:4173
+          MEDIA_OPERATIONS_MCP_ENABLED: "true"
+          MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: http://127.0.0.1:4173
+        run: npm run production-db-reliability:postgres-test

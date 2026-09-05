@@ -50,15 +50,21 @@ export async function resolveMediaIngestionContext(
 ): Promise<MediaResolvedContextRuntime> {
   const notes: string[] = [];
   let conflict = false;
-  const [casinoById, casinoBySlug, explicitBonus, opportunity] = await Promise.all([
-    requested.casinoId ? prisma.casino.findUnique({ where: { id: requested.casinoId }, include: { aliases: true, brandProfile: true, operatorProfile: true } }) : null,
-    requested.casinoSlug ? prisma.casino.findUnique({ where: { slug: requested.casinoSlug }, include: { aliases: true, brandProfile: true, operatorProfile: true } }) : null,
-    requested.bonusId ? prisma.casinoBonus.findUnique({ where: { id: requested.bonusId } }) : null,
-    requested.opportunityId ? prisma.commercialOpportunity.findUnique({
+  const casinoById = requested.casinoId
+    ? await prisma.casino.findUnique({ where: { id: requested.casinoId }, include: { aliases: true, brandProfile: true, operatorProfile: true } })
+    : null;
+  const casinoBySlug = requested.casinoSlug
+    ? await prisma.casino.findUnique({ where: { slug: requested.casinoSlug }, include: { aliases: true, brandProfile: true, operatorProfile: true } })
+    : null;
+  const explicitBonus = requested.bonusId
+    ? await prisma.casinoBonus.findUnique({ where: { id: requested.bonusId } })
+    : null;
+  const opportunity = requested.opportunityId
+    ? await prisma.commercialOpportunity.findUnique({
       where: { id: requested.opportunityId },
       include: { affiliateNetwork: true, affiliateProgram: true, casino: { include: { aliases: true, brandProfile: true, operatorProfile: true } } },
-    }) : null,
-  ]);
+    })
+    : null;
 
   if (requested.casinoId && !casinoById) { notes.push("Explicit casinoId was not found."); conflict = true; }
   if (requested.casinoSlug && !casinoBySlug) { notes.push("Explicit casinoSlug was not found."); conflict = true; }
@@ -132,10 +138,8 @@ export async function resolveMediaIngestionContext(
   let partnerProgramId = opportunity?.affiliateProgramId ?? null;
   if (requested.partnerIdentifier && !partnerProgramId) {
     const identifier = requested.partnerIdentifier;
-    const [network, program] = await Promise.all([
-      prisma.affiliateNetwork.findFirst({ where: { OR: [...(uuid(identifier) ? [{ id: identifier }] : []), { slug: { equals: identifier, mode: "insensitive" } }, { name: { equals: identifier, mode: "insensitive" } }] } }),
-      prisma.affiliateProgram.findFirst({ where: { OR: [...(uuid(identifier) ? [{ id: identifier }] : []), { externalProgramId: identifier }, { name: { equals: identifier, mode: "insensitive" } }] } }),
-    ]);
+    const network = await prisma.affiliateNetwork.findFirst({ where: { OR: [...(uuid(identifier) ? [{ id: identifier }] : []), { slug: { equals: identifier, mode: "insensitive" } }, { name: { equals: identifier, mode: "insensitive" } }] } });
+    const program = await prisma.affiliateProgram.findFirst({ where: { OR: [...(uuid(identifier) ? [{ id: identifier }] : []), { externalProgramId: identifier }, { name: { equals: identifier, mode: "insensitive" } }] } });
     if (program) partnerProgramId = program.id;
     else if (network) {
       const programs = await prisma.affiliateProgram.findMany({ where: { networkId: network.id, ...(casino ? { casinoId: casino.id } : {}) }, select: { id: true }, take: 3 });

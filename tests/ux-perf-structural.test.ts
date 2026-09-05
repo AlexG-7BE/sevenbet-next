@@ -66,8 +66,8 @@ test("query projections can omit commercial relations after policy denial", () =
   const comparisonPage = readFileSync("app/(public)/compare/page.tsx", "utf8");
   const comparisonApi = readFileSync("app/api/public/comparison/route.ts", "utf8");
   assert.match(types, /includeCommercial\?: boolean/);
-  assert.match(casinoRepository, /includeCommercial \? prisma\.affiliateOffer\.findMany/);
-  assert.match(casinoRepository, /includeCommercial \? prisma\.affiliateRedirectSlug\.findMany/);
+  assert.match(casinoRepository, /includeCommercial \? await this\.database\.affiliateOffer\.findMany/);
+  assert.match(casinoRepository, /includeCommercial \? await this\.database\.affiliateRedirectSlug\.findMany/);
   assert.match(offerRepository, /options\.includeCommercial \?\? true/);
   assert.match(comparisonPage, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(comparisonApi, /resolveServerJurisdiction/);
