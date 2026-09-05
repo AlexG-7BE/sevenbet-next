@@ -2671,6 +2671,39 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 }
 
 .mediaManager { display: grid; gap: 24px; }
+.mediaOperationsWorkbench { display:grid; gap:28px; }
+.mediaOperationsIntake { display:grid; gap:18px; }
+.mediaOperationsOrientation,.mediaOperationsStatus { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; }
+.mediaOperationsOrientation h2,.mediaOperationsStatus h2,.mediaOperationsSection h2,.mediaOperationsActions h2 { margin:6px 0 0; }
+.mediaOperationsSnippet,.mediaOperationsContext label { display:grid; gap:7px; color:var(--muted); font-size:.82rem; font-weight:750; }
+.mediaOperationsSnippet textarea,.mediaOperationsContext input,.mediaOperationsContext select { width:100%; padding:11px 13px; border:1px solid var(--border); border-radius:10px; color:var(--text); background:rgba(255,255,255,.045); font:inherit; }
+.mediaOperationsSnippet textarea { min-height:210px; resize:vertical; font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace); font-size:.78rem; line-height:1.55; }
+.mediaOperationsSnippet small { color:var(--subtle); font-weight:500; }
+.mediaOperationsContext { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.mediaOperationsFacts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+.mediaOperationsFacts .card { display:grid; gap:7px; align-content:start; }
+.mediaOperationsFacts small { color:var(--muted); }
+.mediaOperationsChecksum { font-family:var(--font-mono,ui-monospace,SFMono-Regular,Menlo,monospace); font-size:.92rem; }
+.mediaOperationsWarnings { display:grid; gap:5px; padding:15px 17px; border:1px solid var(--border-gold); border-radius:12px; background:rgba(245,196,81,.07); color:var(--muted); font-size:.82rem; overflow-wrap:anywhere; }
+.mediaOperationsWarnings strong { color:var(--text); }
+.mediaOperationsSection { display:grid; gap:16px; }
+.mediaOperationsAssetList { display:grid; gap:12px; }
+.mediaOperationsAssetList article { display:grid; grid-template-columns:minmax(220px,.65fr) minmax(0,1.35fr); gap:18px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+.mediaOperationsAssetPreview { min-height:170px; display:grid; place-items:center; overflow:hidden; border-radius:10px; background:var(--card-soft); color:var(--muted); }
+.mediaOperationsAssetPreview img { width:100%; height:100%; max-height:260px; object-fit:contain; }
+.mediaOperationsAssetEvidence { min-width:0; display:grid; align-content:start; gap:11px; }
+.mediaOperationsAssetEvidence h3 { margin:0; }
+.mediaOperationsAssetEvidence dl { margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 14px; }
+.mediaOperationsAssetEvidence dl div { padding:8px 0; border-top:1px solid var(--border); }
+.mediaOperationsAssetEvidence dt { color:var(--subtle); font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+.mediaOperationsAssetEvidence dd { margin:3px 0 0; overflow-wrap:anywhere; font-size:.82rem; }
+.mediaOperationsPlanTable { display:grid; overflow-x:auto; border:1px solid var(--border); border-radius:14px; }
+.mediaOperationsPlanRow { display:grid; grid-template-columns:150px minmax(150px,.8fr) minmax(180px,1fr) 54px minmax(260px,1.6fr); gap:13px; align-items:center; min-width:980px; padding:12px 14px; border-top:1px solid var(--border); color:var(--muted); font-size:.78rem; }
+.mediaOperationsPlanRow:first-child { border-top:0; }
+.mediaOperationsPlanRow > span { display:grid; gap:5px; }
+.mediaOperationsPlanRow strong { color:var(--text); }
+.mediaOperationsPlanHead { color:var(--subtle); background:rgba(255,255,255,.035); font-weight:850; }
+.mediaOperationsActions { display:grid; gap:16px; border-color:var(--border-gold); }
 .mediaUploadPanel { display: grid; gap: 18px; }
 .mediaUploadFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .mediaUploadFields label, .mediaCard label { display: grid; gap: 6px; color: var(--muted); font-size: .82rem; font-weight: 700; }
@@ -2762,7 +2795,9 @@ h3 { margin: 0; line-height: 1.22; overflow-wrap: anywhere; }
 .casinoPublicGallery figcaption { margin-top: 8px; color: var(--muted); font-size: .85rem; }
 
 @media (max-width: 760px) {
-  .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid, .casinoPreviewPlacementGrid, .casinoPublicGallery { grid-template-columns: 1fr; }
+  .mediaUploadFields, .mediaGrid, .affiliateMediaGrid, .casinoPreviewMediaGrid, .casinoPreviewPlacementGrid, .casinoPublicGallery, .mediaOperationsContext, .mediaOperationsFacts, .mediaOperationsAssetList article { grid-template-columns: 1fr; }
+  .mediaOperationsOrientation,.mediaOperationsStatus { flex-direction:column; }
+  .mediaOperationsAssetEvidence dl { grid-template-columns:1fr; }
   .placementMediaToolbar,.placementMediaGrid,.placementMediaSlotHeader,.placementMediaControls,.placementMediaUpload form { grid-template-columns:1fr; }
   .placementMediaControls label:first-child,.placementMediaControls label:nth-child(3) { grid-column:auto; }
   .placementMediaPreviewStack,.placementMediaPreviewStack img,.placementMediaCodeFallback { width:100%; }

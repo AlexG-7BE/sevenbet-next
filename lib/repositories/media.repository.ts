@@ -52,6 +52,7 @@ export interface CreateMediaRecordInput {
   casinoCountryId?: string | null;
   casinoBonusId?: string | null;
   affiliateOfferId?: string | null;
+  auditMetadata?: Prisma.InputJsonValue;
 }
 
 export interface UpdateMediaRecordInput {
@@ -143,6 +144,20 @@ export class MediaRepository {
     });
   }
 
+  async findReusableChecksum(checksum: string, casinoId?: string | null) {
+    const where = { checksum, status: { not: MediaAssetStatus.ARCHIVED }, archivedAt: null } satisfies Prisma.MediaAssetWhereInput;
+    const sameCasino = casinoId ? await prisma.mediaAsset.findFirst({
+      where: { ...where, casinoId },
+      include: mediaInclude,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    }) : null;
+    return sameCasino ?? prisma.mediaAsset.findFirst({
+      where,
+      include: mediaInclude,
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+    });
+  }
+
   async resolveOwnership(casinoId?: string | null, casinoCountryId?: string | null, casinoBonusId?: string | null, affiliateOfferId?: string | null): Promise<MediaOwnership> {
     const [casino, marketProfile, casinoBonus, affiliateOffer] = await Promise.all([
       casinoId ? prisma.casino.findUnique({ where: { id: casinoId }, select: { id: true } }) : null,
@@ -176,9 +191,10 @@ export class MediaRepository {
           data: { affiliateOfferId: null },
         });
       }
+      const { auditMetadata, ...recordInput } = input;
       const record = await tx.mediaAsset.create({
         data: {
-          ...input,
+          ...recordInput,
           status: MediaAssetStatus.ACTIVE,
           metadata: input.metadata ?? Prisma.JsonNull,
           variants: input.variants ?? Prisma.JsonNull,
@@ -188,7 +204,11 @@ export class MediaRepository {
       if (record.type === MediaAssetType.SOCIAL_IMAGE && record.featured && record.casinoId) {
         await tx.casinoSeo.updateMany({ where: { casinoId: record.casinoId }, data: { socialImage: record.publicUrl } });
       }
-      await audit(tx, input.createdBy, "upload", record.id, `Uploaded ${record.type.toLowerCase().replaceAll("_", " ")} media`, { type: record.type, storageProvider: record.storageProvider });
+      await audit(tx, input.createdBy, "upload", record.id, `Uploaded ${record.type.toLowerCase().replaceAll("_", " ")} media`, {
+        type: record.type,
+        storageProvider: record.storageProvider,
+        ...(auditMetadata && typeof auditMetadata === "object" && !Array.isArray(auditMetadata) ? auditMetadata : {}),
+      });
       return record;
     });
   }

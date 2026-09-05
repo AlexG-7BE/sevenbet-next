@@ -4,15 +4,17 @@ import {
   areAllowedCommercialMcpConsentHeaders,
   commercialMcpInternalAuthHeaders,
 } from "@/lib/mcp/commercial/consent-browser";
-import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
+import { commercialMcpDisabledResponse } from "@/lib/mcp/commercial/config";
 import { CommercialMcpAuthError, commercialMcpAuthErrorResponse, completeCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
+import { resolveOperationalMcpRequestConfig } from "@/lib/mcp/operational-routing";
+import { operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let config;
   try {
-    config = resolveCommercialMcpConfig(request.url);
+    config = await resolveOperationalMcpRequestConfig(request, "consent");
   } catch {
     return commercialMcpDisabledResponse();
   }
@@ -24,8 +26,8 @@ export async function POST(request: Request) {
     const authHeaders = commercialMcpInternalAuthHeaders(request.headers, config.issuer);
     const session = await getServerSession(authHeaders);
     const staff = await getCurrentStaffFromSession(session);
-    if (!session || !staff || !staff.permissions.includes("affiliate.manage")) {
-      throw new CommercialMcpAuthError("B4GAMBLE commercial staff access is required", 403, "access_denied");
+    if (!session || !staff || !staff.permissions.includes(operationalMcpPermission(config))) {
+      throw new CommercialMcpAuthError(`B4GAMBLE ${operationalMcpLabel(config)} staff access is required`, 403, "access_denied");
     }
     const consentRequest = new Request(request, { headers: authHeaders });
     return await completeCommercialMcpConsent(consentRequest, config, session.user.id);

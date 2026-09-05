@@ -2,12 +2,7 @@ import { z } from "zod";
 
 import { auth } from "@/lib/auth/instance";
 import prisma from "@/lib/db/prisma";
-import {
-  COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE,
-  COMMERCIAL_MCP_SCOPES,
-  commercialMcpAuthenticateHeader,
-  type CommercialMcpConfig,
-} from "@/lib/mcp/commercial/config";
+import type { CommercialMcpConfig } from "@/lib/mcp/commercial/config";
 import { privateNoStore, readBoundedBody } from "@/lib/mcp/commercial/http";
 import {
   commercialMcpRateLimitKey,
@@ -19,11 +14,12 @@ import {
   type DelegatedStaff,
   isAllowedChatGptRedirect,
   parseCommercialMcpClientMetadata,
-  parseCommercialMcpScopes,
-  validateCommercialMcpDelegatedStaff,
-  validateCommercialMcpTokenRecord,
+  parseOperationalMcpScopes,
+  validateOperationalMcpDelegatedStaff,
+  validateOperationalMcpTokenRecord,
 } from "@/lib/mcp/commercial/oauth-policy";
 import { hashCommercialMcpPresentedToken } from "@/lib/mcp/commercial/provider";
+import { operationalMcpProtectedResourceUrl, operationalMcpScopes } from "@/lib/mcp/operational-policy";
 
 export {
   CommercialMcpAuthError,
@@ -47,6 +43,8 @@ const DcrSchema = z.object({
   policy_uri: z.string().url().optional(),
   software_id: z.string().max(200).optional(),
   software_version: z.string().max(80).optional(),
+  resource: z.string().url().optional(),
+  resources: z.array(z.string().url()).max(1).optional(),
 }).strict();
 
 const AuthorizationQuerySchema = z.object({
@@ -99,10 +97,10 @@ async function requireRegisteredClient(clientId: string, config: CommercialMcpCo
   return client;
 }
 
-async function requireDelegatedStaff(userId: string | null | undefined): Promise<DelegatedStaff> {
+async function requireDelegatedStaff(userId: string | null | undefined, config: CommercialMcpConfig): Promise<DelegatedStaff> {
   if (!userId) throw new CommercialMcpAuthError("OAuth token has no delegated user", 401, "invalid_token");
   const adminUser = await prisma.adminUser.findUnique({ where: { userId } });
-  return validateCommercialMcpDelegatedStaff(userId, adminUser as DelegatedStaff | null);
+  return validateOperationalMcpDelegatedStaff(userId, adminUser as DelegatedStaff | null, config);
 }
 
 function rewriteForInternalAuth(
@@ -139,16 +137,22 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
 
   const raw = await readBoundedBody(request, 16 * 1_024);
   const input = DcrSchema.parse(JSON.parse(raw));
+  const requestedResources = [...(input.resources ?? []), ...(input.resource ? [input.resource] : [])];
+  if (requestedResources.length && (new Set(requestedResources).size !== 1 || requestedResources[0] !== config.resource)) {
+    throw new CommercialMcpAuthError("OAuth client resource does not match", 400, "invalid_target");
+  }
+  if (input.scope) parseOperationalMcpScopes(input.scope, config);
   if (!input.grant_types.includes("authorization_code") || input.redirect_uris.some((uri) => !isAllowedChatGptRedirect(uri))) {
     throw new CommercialMcpAuthError("Only ChatGPT public authorization-code clients are accepted", 400, "invalid_client_metadata");
   }
+  const { resource: _resource, resources: _resources, ...registrationInput } = input;
   const body = JSON.stringify({
-    ...input,
+    ...registrationInput,
     token_endpoint_auth_method: "none",
     application_type: "web",
     grant_types: ["authorization_code", "refresh_token"],
     response_types: ["code"],
-    scope: [...COMMERCIAL_MCP_SCOPES, COMMERCIAL_MCP_OPTIONAL_REFRESH_SCOPE].join(" "),
+    scope: operationalMcpScopes(config).join(" "),
     resources: [config.resource],
   });
   const response = await auth.handler(rewriteForInternalAuth(
@@ -167,11 +171,13 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
     token_endpoint_auth_method: z.literal("none"),
     application_type: z.literal("web"),
   }).passthrough().parse(await response.json());
+  const exactScopes = [...operationalMcpScopes(config)];
   try {
     await prisma.oauthClient.update({
       where: { clientId: result.client_id },
       data: {
         requirePKCE: true,
+        scopes: exactScopes,
         metadata: {
           integration: "CHATGPT_WORK",
           b4gambleMcpResource: config.resource,
@@ -182,7 +188,10 @@ export async function registerCommercialMcpClient(request: Request, config: Comm
     await prisma.oauthClient.deleteMany({ where: { clientId: result.client_id } });
     throw error;
   }
-  return privateNoStore(Response.json(result, { status: 201 }));
+  return privateNoStore(Response.json({
+    ...result,
+    scope: exactScopes.join(" "),
+  }, { status: 201 }));
 }
 
 export async function authorizeCommercialMcpRequest(
@@ -199,8 +208,8 @@ export async function authorizeCommercialMcpRequest(
   if (!client.redirectUris.includes(query.redirect_uri)) {
     throw new CommercialMcpAuthError("OAuth redirect URI is not registered", 400, "invalid_redirect_uri");
   }
-  const scopes = parseCommercialMcpScopes(query.scope);
-  await requireDelegatedStaff(delegatedUserId);
+  const scopes = parseOperationalMcpScopes(query.scope, config);
+  await requireDelegatedStaff(delegatedUserId, config);
 
   const url = new URL(request.url);
   url.pathname = "/api/auth/oauth2/authorize";
@@ -255,8 +264,8 @@ export async function getCommercialMcpConsent(
   if (!client.redirectUris.includes(signedQuery.redirect_uri)) {
     throw new CommercialMcpAuthError("OAuth consent redirect is invalid", 400, "invalid_redirect_uri");
   }
-  const scopes = parseCommercialMcpScopes(signedQuery.scope);
-  await requireDelegatedStaff(expectedUserId);
+  const scopes = parseOperationalMcpScopes(signedQuery.scope, config);
+  await requireDelegatedStaff(expectedUserId, config);
   return { client, scopes: [...scopes], redirectURI: signedQuery.redirect_uri };
 }
 
@@ -336,8 +345,8 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
     ) {
       throw new CommercialMcpAuthError("Authorization code binding is invalid", 401, "invalid_grant");
     }
-    parseCommercialMcpScopes(value.query.scope);
-    await requireDelegatedStaff(value.userId);
+    parseOperationalMcpScopes(value.query.scope, config);
+    await requireDelegatedStaff(value.userId, config);
   } else {
     const token = await hashCommercialMcpPresentedToken(body.refresh_token, "refresh_token");
     const previous = token ? await prisma.oauthRefreshToken.findUnique({ where: { token } }) : null;
@@ -350,8 +359,8 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
     ) {
       throw new CommercialMcpAuthError("Refresh token is invalid", 401, "invalid_grant");
     }
-    parseCommercialMcpScopes(previous.scopes.join(" "));
-    await requireDelegatedStaff(previous.userId);
+    parseOperationalMcpScopes(previous.scopes.join(" "), config);
+    await requireDelegatedStaff(previous.userId, config);
   }
 
   const forwarded = new URLSearchParams();
@@ -369,7 +378,7 @@ export async function exchangeCommercialMcpToken(request: Request, config: Comme
 export async function validateCommercialMcpAccessToken(
   request: Request,
   config: CommercialMcpConfig,
-  requiredScope?: (typeof COMMERCIAL_MCP_SCOPES)[number],
+  requiredScope?: string,
 ): Promise<CommercialMcpTokenContext> {
   const match = /^Bearer ([A-Za-z0-9_-]+)$/i.exec(request.headers.get("authorization") ?? "");
   if (!match) throw new CommercialMcpAuthError("Bearer token is required", 401, "invalid_token", requiredScope);
@@ -381,7 +390,7 @@ export async function validateCommercialMcpAccessToken(
   const adminUser = token?.userId
     ? await prisma.adminUser.findUnique({ where: { userId: token.userId } })
     : null;
-  return validateCommercialMcpTokenRecord(token, adminUser as DelegatedStaff | null, config, requiredScope);
+  return validateOperationalMcpTokenRecord(token, adminUser as DelegatedStaff | null, config, requiredScope);
 }
 
 export async function revokeCommercialMcpToken(request: Request, config: CommercialMcpConfig) {
@@ -426,7 +435,7 @@ export function commercialMcpAuthErrorResponse(error: unknown, config: Commercia
   if (error instanceof CommercialMcpAuthError) {
     const headers = new Headers();
     if (error.status === 401 || error.status === 403) {
-      headers.set("WWW-Authenticate", commercialMcpAuthenticateHeader(config, error.requiredScope));
+      headers.set("WWW-Authenticate", `Bearer resource_metadata="${operationalMcpProtectedResourceUrl(config)}"${error.requiredScope ? `, scope="${error.requiredScope}"` : ""}`);
       headers.set("Access-Control-Expose-Headers", "WWW-Authenticate");
     }
     if (error.status === 429) headers.set("Retry-After", String(error.retryAfterSeconds));

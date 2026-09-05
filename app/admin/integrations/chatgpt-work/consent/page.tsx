@@ -12,8 +12,10 @@ import {
   areAllowedCommercialMcpConsentHeaders,
   commercialMcpInternalAuthHeaders,
 } from "@/lib/mcp/commercial/consent-browser";
-import { commercialMcpDisabledResponse, resolveCommercialMcpConfig } from "@/lib/mcp/commercial/config";
+import { commercialMcpDisabledResponse } from "@/lib/mcp/commercial/config";
 import { getCommercialMcpConsent } from "@/lib/mcp/commercial/oauth";
+import { resolveOperationalMcpResourceConfig } from "@/lib/mcp/operational-routing";
+import { isMediaMcpConfig, operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +38,8 @@ export default async function CommercialMcpConsentPage({
   }
   const returnTo = `/admin/integrations/chatgpt-work/consent?${oauthQuery}`;
   const requestUrl = `${requestHeaders.get("x-forwarded-proto") ?? "https"}://${requestHeaders.get("host") ?? "b4gamble.com"}${returnTo}`;
-  const config = resolveCommercialMcpConfig(requestUrl);
+  const requestedResource = typeof params.resource === "string" ? params.resource : null;
+  const config = resolveOperationalMcpResourceConfig(requestUrl, requestedResource);
   if (!config) {
     const response = commercialMcpDisabledResponse();
     return <CommercialMcpConsentError message={(await response.json()).error_description} />;
@@ -52,7 +55,7 @@ export default async function CommercialMcpConsentPage({
 
   if (!session) redirect(`/admin/integrations/chatgpt-work/login?returnTo=${encodeURIComponent(returnTo)}`);
   if (!staff) return <AdminAccessDenied />;
-  if (!staff.permissions.includes("affiliate.manage")) return <AdminPermissionDenied />;
+  if (!staff.permissions.includes(operationalMcpPermission(config))) return <AdminPermissionDenied />;
 
   let consent;
   try {
@@ -65,10 +68,10 @@ export default async function CommercialMcpConsentPage({
     <main className="pageShell mcpAuthShell">
       <Container className="narrow">
         <Card className="adminLogin mcpAuthCard">
-          <Badge tone="green">Delegated commercial access</Badge>
+          <Badge tone="green">Delegated {isMediaMcpConfig(config) ? "media" : "commercial"} access</Badge>
           <div>
             <p className="mcpAuthEyebrow">{consent.client.name ?? "ChatGPT Work"}</p>
-            <h1>Allow access to B4GAMBLE Commercial Ops?</h1>
+            <h1>Allow access to B4GAMBLE {operationalMcpLabel(config)}?</h1>
           </div>
           <p className="lead">
             Signed in as {staff.name}. This grants the integration only the
@@ -89,6 +92,18 @@ export default async function CommercialMcpConsentPage({
                 <span>Create or update prospects, provenance, notes, tasks, next actions, drafts, evidenced received terms, and review proposals.</span>
               </article>
             ) : null}
+            {consent.scopes.includes("media:read") ? (
+              <article>
+                <strong>Read Media Operations plans</strong>
+                <span>Inspect audit-safe ingestion evidence, first-party previews, analysis, recommendations, and plan-owned draft operations.</span>
+              </article>
+            ) : null}
+            {consent.scopes.includes("media:safe_write") ? (
+              <article>
+                <strong>Prepare bounded draft media</strong>
+                <span>Ingest validated raster media, analyze it, create draft plans, and apply or roll back only plan-owned draft assignments.</span>
+              </article>
+            ) : null}
             {consent.scopes.includes("offline_access") ? (
               <article>
                 <strong>Stay connected</strong>
@@ -99,7 +114,7 @@ export default async function CommercialMcpConsentPage({
 
           <aside className="mcpAuthorityBoundary">
             <strong>Not granted</strong>
-            <p>Approval, ACTIVE status, sending, submission, terms acceptance, tracking activation, Production administration, and Programme/private data.</p>
+            <p>{isMediaMcpConfig(config) ? "Publishing, routes, CTAs, tracking activation, GEO or offer changes, asset deletion, deployment, and Programme/private data." : "Approval, ACTIVE status, sending, submission, terms acceptance, tracking activation, Production administration, and Programme/private data."}</p>
           </aside>
 
           <form className="mcpConsentActions" action="/api/mcp/oauth/consent" method="post">

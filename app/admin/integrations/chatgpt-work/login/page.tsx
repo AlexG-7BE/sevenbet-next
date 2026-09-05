@@ -9,6 +9,8 @@ import { Badge, Button, Card, Container } from "@/components/ui";
 import { getServerSession } from "@/lib/auth/session";
 import { getCurrentStaff } from "@/lib/auth/staff";
 import { safeCommercialMcpReturnTo } from "@/lib/mcp/commercial/ui";
+import { resolveOperationalMcpResourceConfig } from "@/lib/mcp/operational-routing";
+import { operationalMcpLabel, operationalMcpPermission } from "@/lib/mcp/operational-policy";
 
 export const dynamic = "force-dynamic";
 
@@ -24,10 +26,13 @@ export default async function CommercialMcpLoginPage({
 }) {
   const returnTo = safeCommercialMcpReturnTo((await searchParams).returnTo);
   const requestHeaders = await headers();
+  const requestUrl = `${requestHeaders.get("x-forwarded-proto") ?? "https"}://${requestHeaders.get("host") ?? "b4gamble.com"}${returnTo}`;
+  const requestedResource = new URL(returnTo, "https://b4gamble.com").searchParams.get("resource");
+  const config = resolveOperationalMcpResourceConfig(requestUrl, requestedResource);
   const session = await getServerSession(requestHeaders);
   const staff = await getCurrentStaff(requestHeaders);
 
-  if (staff?.permissions.includes("affiliate.manage")) redirect(returnTo);
+  if (staff && config && staff.permissions.includes(operationalMcpPermission(config))) redirect(returnTo);
   if (session && !staff) return <AdminAccessDenied />;
   if (staff) return <AdminPermissionDenied />;
 
@@ -37,12 +42,12 @@ export default async function CommercialMcpLoginPage({
         <Card className="adminLogin mcpAuthCard">
           <Badge tone="green">Secure staff authorization</Badge>
           <div>
-            <p className="mcpAuthEyebrow">B4GAMBLE Commercial Ops</p>
+            <p className="mcpAuthEyebrow">B4GAMBLE {config ? operationalMcpLabel(config) : "Operations"}</p>
             <h1>Sign in to continue to ChatGPT Work</h1>
           </div>
           <p className="lead">
             Use the Better Auth account linked to your B4GAMBLE staff profile.
-            Commercial permission is checked before consent and on every tool call.
+            The exact operational permission is checked before consent and on every tool call.
           </p>
           <AdminLoginForm callbackUrl={returnTo} />
           <p className="muted">

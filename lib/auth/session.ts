@@ -3,12 +3,13 @@ import "server-only";
 import { headers } from "next/headers";
 
 import { AuthenticationRequiredError } from "@/lib/auth/errors";
-import { auth } from "@/lib/auth/server";
 import { hasBetterAuthSessionCookie } from "@/lib/auth/session-cookie";
+import type { AuthSession } from "@/lib/auth/server";
 
 export async function getServerSession(requestHeaders?: Headers) {
   const resolvedHeaders = requestHeaders ?? (await headers());
   if (!hasBetterAuthSessionCookie(resolvedHeaders)) return null;
+  const { auth } = await import("@/lib/auth/server");
   return auth.api.getSession({
     headers: resolvedHeaders,
   });
@@ -29,8 +30,6 @@ export async function requireCurrentUser(requestHeaders?: Headers) {
   return session.user;
 }
 
-export type ServerSession = NonNullable<
-  Awaited<ReturnType<typeof getServerSession>>
->;
+export type ServerSession = AuthSession;
 
 export { AuthenticationRequiredError } from "@/lib/auth/errors";
