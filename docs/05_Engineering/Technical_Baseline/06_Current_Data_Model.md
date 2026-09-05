@@ -2,7 +2,14 @@
 
 ## Persistence foundation
 
-**DETECTED on the `CASINO-DATA-ARCH-01` candidate updated onto authoritative post-migration main `5d16a2615a642625c916f63899ba1748e895d689`:** PostgreSQL with Prisma (`prisma/schema.prisma`) and 25 ordered SQL migrations (`0001_cms_foundation` through `0025_casino_market_profile_architecture`). The candidate schema declares 89 Prisma models and 61 enums. Application repositories/services directly use this persistence layer.
+**DETECTED in a full active-repository scan on the
+`GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` candidate based on authoritative main
+`4c7e6814247556dd61beeff8b33fcba9c4551c57`:** PostgreSQL with Prisma
+(`prisma/schema.prisma`) and 28 ordered SQL migrations (`0001_cms_foundation`
+through candidate `0028_geo_localized_creative_assignments`). The schema
+declares 93 Prisma models and 64 enums. Dependencies, generated output, build
+artefacts, caches and `tsconfig.tsbuildinfo` were excluded from source analysis.
+Application repositories/services directly use this persistence layer.
 
 ## Model groups (high level)
 
@@ -15,9 +22,9 @@
 | Casino | `Casino`, `EditorialReview`, `EditorialReviewRevision`, `EditorialPreviewToken`, `CasinoOperator`, `CasinoBrand`, `CasinoAlias`, `CasinoVersion`, `CasinoRevision`, `CasinoImage`, `CasinoCountry`, `CasinoCountryEvidence`, `CasinoCountryLicense`, `CasinoLicense`, `CasinoLicenseEvidence`, `CasinoPaymentMethod`, `CasinoGameProvider`, `CasinoGameCategory`, `CasinoBonus`, `CasinoAffiliateLink`, `CasinoSeo`, legacy `Bonus` and `AffiliateLink` |
 | Affiliate | `AffiliateNetwork`, `AffiliateProgram`, `AffiliateOffer`, `AffiliateOfferCountry`, `AffiliateOfferCurrency`, `AffiliateTrackingLink`, `AffiliateTrackingLinkCountry`, `AffiliateOfferRevision`, `AffiliateTrackingLinkRevision`, `AffiliateRedirectSlug`, `AffiliateRedirectRevision`, `AffiliateExternalMapping`, `AffiliateImportJob`, `AffiliateImportItem` |
 | Commercial operations | `CommercialOpportunity` aggregate and its evidence, contact, activity, application, term, task, agent-run, agent-operation, activation-packet and related workflow records |
-| Media | `MediaAsset` |
+| Media | `MediaAsset`, `CasinoMediaAssignment`, `CasinoBonusMediaAssignment`, `AffiliateOfferMediaAssignment` |
 
-Major relationships are explicit: users own sessions/accounts and progress/reward records; programs own steps, lessons, blocks, versions and enrollments; casinos own rich catalog/compliance/editorial records; `CasinoCountry` is the canonical exact-market factual grain; affiliate offers connect a network/program to a casino/bonus and tracking links; media can attach to casino, market profile, bonus, or affiliate offer. Program/casino/affiliate version and revision records support snapshots/history.
+Major relationships are explicit: users own sessions/accounts and progress/reward records; programs own steps, lessons, blocks, versions and enrollments; casinos own rich catalog/compliance/editorial records; `CasinoCountry` is the canonical exact-market factual grain; affiliate offers connect a network/program to a casino/bonus and tracking links; physical media can attach to casino, market profile, bonus, or affiliate offer. Typed placement assignments reuse `MediaAsset` and attach presentation to a Casino, CasinoBonus or AffiliateOffer. Candidate migration 0028 adds nullable exact country and primary-language scope to each assignment; it does not move GEO authority into `MediaAsset`. Program/casino/affiliate version and revision records support snapshots/history.
 
 ## Enums
 
@@ -50,5 +57,22 @@ Major relationships are explicit: users own sessions/accounts and progress/rewar
 23. MCP dynamic-client-registration runtime compatibility fix
 24. Durable Programme access acceptance
 25. Casino market-profile architecture
+26. Commercial platform completion and aggregate-only outbound click counts
+27. RFC-040 typed placement-media assignments
+28. Candidate additive GEO/localized creative assignment dimensions
 
-**DETECTED:** all migration directories contain `migration.sql`. Disposable verification replays all 25 and verifies an upgrade to 0025. Production migration 0025 is completed and checksum-valid under the bounded evidence recorded in [Casino Market 0025 Post-Migration Steady State](../Casino-Market-0025-Post-Migration-Steady-State.md); the #111 runtime reconciliation does not re-execute it. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and `SiteSetting` are schema-present; their active application use is less evident than the program/casino/affiliate/media models and must not be assumed.
+**DETECTED:** all 28 migration directories contain `migration.sql`.
+Disposable verification replays the complete history, including a staged
+0027→0028 upgrade with pre-existing assignments. Production migrations through
+0027 are recorded as applied in current operational evidence. **PROPOSED RELEASE
+STATE:** 0028 remains the exact additive candidate until the guarded Production
+step and postflight are recorded; this baseline does not present it as already
+applied. `Article`, legacy `Bonus`/`AffiliateLink`, `ContentRevision`, and
+`SiteSetting` are schema-present; their active application use is less evident
+than the program/casino/affiliate/media models and must not be assumed.
+
+**DETECTED:** placement resolution treats every asset referenced by any
+country- or language-targeted assignment as target-scoped inventory and
+excludes it from legacy Casino `HERO`/`LOGO` compatibility fallback. The
+exclusion includes inactive, expired and malformed targeted assignments so
+legacy asset lookup cannot bypass the eligibility boundary.

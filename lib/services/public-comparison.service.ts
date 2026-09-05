@@ -23,6 +23,7 @@ import { currentPublicCasinoBrand } from "@/lib/public-brand";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import type { PublicCasinoInventoryMode } from "@/lib/public-casino-discovery/public-casino-discovery.types";
 import { decidePublicCasinoDisposition, type PublicCasinoPresentationDisposition } from "@/lib/public-casino/presentation-disposition";
+import { eligibleDiscoveryMediaRoutes } from "@/lib/public-casino-discovery/commercial-eligibility";
 
 const internalRedirect = /^\/r\/[a-z0-9]+(?:-[a-z0-9]+)*$/;
 type ComparablePublicCasinoDTO = PublicCasinoDTO;
@@ -220,7 +221,11 @@ export class PublicComparisonService {
     private readonly redirectEnabled = isAffiliateRedirectEnabled,
   ) {}
 
-  async compare(query: PublicComparisonQuery, authority?: CommercialJurisdictionAuthority | null): Promise<PublicComparisonResult> {
+  async compare(
+    query: PublicComparisonQuery,
+    authority?: CommercialJurisdictionAuthority | null,
+    presentationLanguage?: string | null,
+  ): Promise<PublicComparisonResult> {
     let published: Awaited<ReturnType<PublicCasinoDiscoveryStore["listPublished"]>>;
     let context: DiscoveryContext;
     const redirectEnabled = this.redirectEnabled();
@@ -237,8 +242,14 @@ export class PublicComparisonService {
     }
 
     const now = this.now();
+    const mediaRoutes = eligibleDiscoveryMediaRoutes(context, query.country, now);
     const globalCasinos: ComparablePublicCasinoDTO[] = published.flatMap((record) => {
-      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const mapped = mapPublishedCasino(record, mediaRoutes, {
+        redirectEnabled: false,
+        now,
+        countryCode: query.country,
+        presentationLanguage,
+      });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
       return casino?.source === "cms" && !isTemporaryDemoCasinoId(casino.id) ? [casino] : [];
     });

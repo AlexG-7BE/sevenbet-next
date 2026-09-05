@@ -71,5 +71,8 @@ test("query projections can omit commercial relations after policy denial", () =
   assert.match(offerRepository, /options\.includeCommercial \?\? true/);
   assert.match(comparisonPage, /permanentRedirect\(productHref\(presentation, `\/casinos/);
   assert.match(comparisonApi, /resolveServerJurisdiction/);
-  assert.match(comparisonApi, /publicComparisonService\.compare\(query, authority\)/);
+  assert.match(
+    comparisonApi,
+    /publicComparisonService\.compare\(query, authority, languageForLocale\(locale\)\)/,
+  );
 });

@@ -15,6 +15,8 @@ import {
   isMediaPlacementVariant,
   isMediaRenderingMode,
   isOfferMediaPlacement,
+  normalizeMediaCountryCode,
+  normalizeMediaLanguageCode,
   offerMediaPlacements,
   resolveMedia,
   type MediaAssignmentSubjectType,
@@ -34,6 +36,8 @@ export interface AssignMediaInput {
   mediaAssetId: string;
   placement: string;
   variant?: string;
+  countryCode?: string | null;
+  languageCode?: string | null;
   renderingMode?: string;
   sortOrder?: number;
   active?: boolean;
@@ -68,6 +72,22 @@ function decimal(value: number | null | undefined, field: string) {
   if (value === null || value === undefined) return null;
   if (!Number.isFinite(value) || value < 0 || value > 1) throw new ValidationError(`${field} must be between 0 and 1`);
   return new Prisma.Decimal(value);
+}
+
+function targetCountryCode(value: string | null | undefined) {
+  const supplied = value?.trim() ?? "";
+  if (!supplied) return null;
+  const normalized = normalizeMediaCountryCode(supplied);
+  if (!normalized) throw new ValidationError("countryCode must be an ISO 3166-1 alpha-2 country code");
+  return normalized;
+}
+
+function targetLanguageCode(value: string | null | undefined) {
+  const supplied = value?.trim() ?? "";
+  if (!supplied) return null;
+  const normalized = normalizeMediaLanguageCode(supplied);
+  if (!normalized) throw new ValidationError("languageCode must contain a valid BCP 47 primary language subtag");
+  return normalized;
 }
 
 export class MediaAssignmentService {
@@ -109,6 +129,8 @@ export class MediaAssignmentService {
     const subject = await this.validateMutableSubject(input.casinoId, input.subjectType, input.subjectId);
     const placement = placementForSubject(input.subjectType, input.placement);
     const variant = input.variant ?? "DEFAULT";
+    const countryCode = targetCountryCode(input.countryCode);
+    const languageCode = targetLanguageCode(input.languageCode);
     const renderingMode = input.renderingMode ?? "AUTO";
     if (!isMediaPlacementVariant(variant)) throw new ValidationError("Unsupported media placement variant");
     if (!isMediaRenderingMode(renderingMode)) throw new ValidationError("Unsupported media rendering mode");
@@ -132,6 +154,8 @@ export class MediaAssignmentService {
       mediaAssetId: input.mediaAssetId,
       placement: placement as MediaPlacement,
       variant: variant as MediaPlacementVariant,
+      countryCode,
+      languageCode,
       renderingMode: renderingMode as MediaRenderingMode,
       sortOrder,
       active: input.active ?? true,
@@ -188,11 +212,15 @@ export class MediaAssignmentService {
     subjectType: MediaAssignmentSubjectType;
     subjectId: string;
     requestedVariant?: string;
+    trustedCountryCode?: string | null;
+    presentationLanguage?: string | null;
     now?: Date;
   }) {
     await this.validateSubject(input.casinoId, input.subjectType, input.subjectId);
     const requestedVariant = input.requestedVariant ?? "DEFAULT";
     if (!isMediaPlacementVariant(requestedVariant)) throw new ValidationError("Unsupported media placement variant");
+    const trustedCountryCode = targetCountryCode(input.trustedCountryCode);
+    const presentationLanguage = targetLanguageCode(input.presentationLanguage);
     const context = await this.repository.loadResolutionContext(input);
     if (!context) throw new NotFoundError("Casino", { id: input.casinoId });
     const placements = input.subjectType === "CASINO" ? casinoMediaPlacements : offerMediaPlacements;
@@ -201,6 +229,8 @@ export class MediaAssignmentService {
       resolveMedia({
         placement,
         requestedVariant,
+        trustedCountryCode,
+        presentationLanguage,
         context,
         now: input.now,
       }),
@@ -211,7 +241,15 @@ export class MediaAssignmentService {
         ? context.casinoBonusAssignments
         : context.affiliateOfferAssignments;
     const usage = await this.repository.listAssetUsage(context.assets.map((asset) => asset.id));
-    return { resolved, assignments, assets: context.assets, usage, requestedVariant };
+    return {
+      resolved,
+      assignments,
+      assets: context.assets,
+      usage,
+      requestedVariant,
+      requestedCountryCode: trustedCountryCode,
+      requestedLanguageCode: presentationLanguage,
+    };
   }
 
   async listAssetUsage(assetIds: string[]) {

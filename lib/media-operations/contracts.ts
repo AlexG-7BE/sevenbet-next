@@ -5,6 +5,7 @@ import {
   mediaPlacementVariants,
   mediaRenderingModes,
 } from "@/lib/media/placement-media";
+import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
 
 export const MEDIA_INGESTION_PLAN_VERSION = 1 as const;
 export const MEDIA_INGESTION_PLAN_KEY_PREFIX = "media-ingestion-plan:";
@@ -16,7 +17,24 @@ export const mediaIngestionContextSchema = z.object({
   bonusId: z.string().uuid().optional(),
   opportunityId: z.string().uuid().optional(),
   partnerIdentifier: z.string().trim().min(1).max(200).optional(),
-}).strict();
+  targetCountryCodes: z.array(
+    z.string().trim().regex(/^[A-Za-z]{2}$/, "Target countries must use exact ISO 3166-1 alpha-2 codes")
+      .refine(isIsoCountryCode, "Target countries must use exact ISO 3166-1 alpha-2 codes"),
+  ).min(1).max(20).optional(),
+  creativeLanguage: z.string().trim().regex(/^[A-Za-z]{2,8}$/, "Creative language must be a BCP 47 primary language subtag")
+    .nullable().optional(),
+  creativeLanguageState: z.enum(["EXPLICIT", "NEUTRAL", "UNKNOWN"]).optional(),
+}).strict().superRefine((context, issue) => {
+  if (context.creativeLanguageState === "EXPLICIT" && typeof context.creativeLanguage !== "string") {
+    issue.addIssue({ code: "custom", path: ["creativeLanguage"], message: "EXPLICIT creative language state requires a language code" });
+  }
+  if (typeof context.creativeLanguage === "string" && context.creativeLanguageState && context.creativeLanguageState !== "EXPLICIT") {
+    issue.addIssue({ code: "custom", path: ["creativeLanguageState"], message: "A language code requires EXPLICIT creative language state" });
+  }
+  if (context.creativeLanguage === null && context.creativeLanguageState === "EXPLICIT") {
+    issue.addIssue({ code: "custom", path: ["creativeLanguageState"], message: "Null creative language cannot be EXPLICIT" });
+  }
+});
 
 export const mediaIngestPartnerSnippetInputSchema = z.object({
   snippet: z.string().min(1).max(128 * 1024),
@@ -163,12 +181,14 @@ export const mediaPlanRecommendationSchema = z.object({
   subjectId: z.string().uuid(),
   placement: z.enum(mediaPlacements),
   variant: z.enum(mediaPlacementVariants),
+  countryCode: z.string().regex(/^[A-Z]{2}$/).nullable().default(null),
+  languageCode: z.string().regex(/^[a-z]{2,8}$/).nullable().default(null),
   renderingMode: z.enum(mediaRenderingModes),
   cropSafe: z.boolean(),
   state: z.enum(["AUTO_ASSIGN_DRAFT", "SUGGEST_REVIEW", "LIBRARY_ONLY", "REJECT"]),
   score: z.number().min(0).max(100),
   offerMatch: z.enum(["MATCH", "LIKELY_MATCH", "MISMATCH", "UNKNOWN"]),
-  marketHandling: z.enum(["GLOBAL_SAFE", "MARKET_SPECIFIC_REVIEW", "UNKNOWN"]),
+  marketHandling: z.enum(["GLOBAL_SAFE", "TARGETED", "MARKET_SPECIFIC_REVIEW", "UNKNOWN"]),
   existingAssignmentId: z.string().uuid().nullable(),
   existingComparison: z.enum(["NEW_SLOT", "BETTER_CANDIDATE", "EQUIVALENT", "LOWER_PRIORITY", "CONFLICT"]),
   replacementEligible: z.boolean(),
@@ -222,6 +242,27 @@ export type MediaIngestionPlan = z.infer<typeof mediaIngestionPlanSchema>;
 export type MediaPlanRecommendation = z.infer<typeof mediaPlanRecommendationSchema>;
 export type MediaSemanticResult = z.infer<typeof mediaSemanticResultSchema>;
 export type MediaOperationsSource = MediaIngestionPlan["source"];
+
+export function normalizeMediaIngestionContext(
+  context: z.infer<typeof mediaIngestionContextSchema>,
+): MediaIngestionContextInput {
+  const creativeLanguageState = context.creativeLanguageState
+    ?? (typeof context.creativeLanguage === "string"
+      ? "EXPLICIT"
+      : Object.prototype.hasOwnProperty.call(context, "creativeLanguage")
+        ? "NEUTRAL"
+        : "UNKNOWN");
+  return {
+    ...context,
+    creativeLanguageState,
+    ...(context.targetCountryCodes ? {
+      targetCountryCodes: [...new Set(context.targetCountryCodes.map((countryCode) => countryCode.toUpperCase()))],
+    } : {}),
+    ...(typeof context.creativeLanguage === "string" ? {
+      creativeLanguage: context.creativeLanguage.toLowerCase(),
+    } : {}),
+  };
+}
 
 export function mediaIngestionPlanKey(planId: string) {
   return `${MEDIA_INGESTION_PLAN_KEY_PREFIX}${planId}`;

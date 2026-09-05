@@ -101,7 +101,12 @@ export class PublicCasinoService {
     return this.sourceControlledDemo(slug) ?? this.legacy(slug);
   }
 
-  async getCasino(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null): Promise<PublicCasinoDTO | null> {
+  async getCasino(
+    slug: string,
+    authority?: CommercialJurisdictionAuthority | null,
+    countryCode?: string | null,
+    presentationLanguage?: string | null,
+  ): Promise<PublicCasinoDTO | null> {
     if (!isSafePublicSlug(slug)) return null;
     if (!this.cmsEnabled()) return this.localFixturesAllowed() ? this.legacy(slug) ?? this.sourceControlledDemo(slug) : null;
 
@@ -131,7 +136,12 @@ export class PublicCasinoService {
         }
       }
 
-      const casino = mapPublishedCasino(published, routes, { redirectEnabled: referralAllowed, now: this.options.now });
+      const casino = mapPublishedCasino(published, routes, {
+        redirectEnabled: referralAllowed,
+        now: this.options.now,
+        countryCode: normalizedCountry,
+        presentationLanguage,
+      });
       if (casino) {
         const exactProfile = normalizedCountry
           ? casino.marketProfiles.find((profile) => profile.countryCode === normalizedCountry) ?? null
@@ -157,7 +167,11 @@ export class PublicCasinoService {
     return this.localFixturesAllowed() ? this.sourceControlledDemo(slug) : null;
   }
 
-  async listCasinos(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null): Promise<PublicCasinoDTO[]> {
+  async listCasinos(
+    authority?: CommercialJurisdictionAuthority | null,
+    countryCode?: string | null,
+    presentationLanguage?: string | null,
+  ): Promise<PublicCasinoDTO[]> {
     if (!this.cmsEnabled()) return this.localFixturesAllowed()
       ? this.legacyCasinos.map((casino) => this.legacyForMode(casino))
       : [];
@@ -189,7 +203,12 @@ export class PublicCasinoService {
     }
 
     const cms = published.flatMap((entry) => {
-      const casino = mapPublishedCasino(entry, routes, { redirectEnabled: referralAllowed(entry.casinoId), now: this.options.now });
+      const casino = mapPublishedCasino(entry, routes, {
+        redirectEnabled: referralAllowed(entry.casinoId),
+        now: this.options.now,
+        countryCode: normalizedCountry,
+        presentationLanguage,
+      });
       if (!casino) return [];
       const exactProfile = normalizedCountry
         ? casino.marketProfiles.find((profile) => profile.countryCode === normalizedCountry) ?? null
@@ -210,20 +229,20 @@ export class PublicCasinoService {
     return [...bySlug.values()].sort((a, b) => (b.editorScore ?? -1) - (a.editorScore ?? -1) || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug));
   }
 
-  async getCasinoView(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
-    const casino = await this.getCasino(slug, authority, countryCode);
+  async getCasinoView(slug: string, authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null) {
+    const casino = await this.getCasino(slug, authority, countryCode, presentationLanguage);
     return casino ? publicCasinoToLegacy(casino) : null;
   }
 
-  async listCasinoViews(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
-    return (await this.listCasinos(authority, countryCode)).flatMap((casino) => {
+  async listCasinoViews(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null) {
+    return (await this.listCasinos(authority, countryCode, presentationLanguage)).flatMap((casino) => {
       const legacy = publicCasinoToLegacy(casino);
       return legacy ? [legacy] : [];
     });
   }
 
-  async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null) {
-    const casinos = await this.listCasinos(authority, countryCode);
+  async listBonuses(authority?: CommercialJurisdictionAuthority | null, countryCode?: string | null, presentationLanguage?: string | null) {
+    const casinos = await this.listCasinos(authority, countryCode, presentationLanguage);
     return casinos.flatMap((casino) => casino.bonuses.map((bonus) => ({ casino, bonus })))
       .sort((a, b) => (b.casino.editorScore ?? -1) - (a.casino.editorScore ?? -1) || a.casino.slug.localeCompare(b.casino.slug) || a.bonus.slug.localeCompare(b.bonus.slug));
   }

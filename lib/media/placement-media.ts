@@ -1,3 +1,5 @@
+import { isIsoCountryCode } from "@/lib/jurisdiction/country-code";
+
 export const casinoMediaPlacements = [
   "CASINO_LOGO",
   "CASINO_DIRECTORY_CARD",
@@ -23,6 +25,13 @@ export type OfferMediaPlacementName = (typeof offerMediaPlacements)[number];
 export type MediaPlacementVariantName = (typeof mediaPlacementVariants)[number];
 export type MediaRenderingModeName = (typeof mediaRenderingModes)[number];
 export type MediaAssignmentSubjectType = "CASINO" | "CASINO_BONUS" | "AFFILIATE_OFFER";
+
+export type MediaTargetingResolution =
+  | "EXACT_COUNTRY_LANGUAGE"
+  | "GLOBAL_LANGUAGE"
+  | "EXACT_COUNTRY_NEUTRAL"
+  | "GLOBAL_NEUTRAL"
+  | "CONTROLLED_FALLBACK";
 
 export type PlacementMediaSource =
   | "EXPLICIT"
@@ -60,6 +69,8 @@ export interface PlacementMediaAssignment {
   mediaAssetId: string;
   placement: string;
   variant: string;
+  countryCode?: string | null;
+  languageCode?: string | null;
   renderingMode: string;
   sortOrder: number;
   active: boolean;
@@ -81,6 +92,7 @@ export interface PlacementMediaResolutionContext {
   casinoBonusAssignments?: PlacementMediaAssignment[];
   affiliateOfferAssignments?: PlacementMediaAssignment[];
   legacyMediaAssets: PlacementMediaAsset[];
+  targetScopedAssetIds?: readonly string[];
 }
 
 export interface ResolvedPlacementMedia {
@@ -90,6 +102,11 @@ export interface ResolvedPlacementMedia {
   resolvedPlacement: MediaPlacementName | null;
   requestedVariant: MediaPlacementVariantName;
   resolvedVariant: MediaPlacementVariantName | null;
+  requestedCountryCode: string | null;
+  requestedLanguageCode: string | null;
+  resolvedCountryCode: string | null;
+  resolvedLanguageCode: string | null;
+  targetingResolution: MediaTargetingResolution;
   renderingMode: Exclude<MediaRenderingModeName, "AUTO">;
   source: PlacementMediaSource;
   fallback: boolean;
@@ -201,6 +218,53 @@ export function isMediaRenderingMode(value: string): value is MediaRenderingMode
   return (mediaRenderingModes as readonly string[]).includes(value);
 }
 
+export function normalizeMediaCountryCode(value: string | null | undefined) {
+  const normalized = value?.trim().toUpperCase() ?? "";
+  return normalized && isIsoCountryCode(normalized) ? normalized : null;
+}
+
+export function isMediaLanguageCode(value: string) {
+  return /^[a-z]{2,8}$/.test(value);
+}
+
+export function normalizeMediaLanguageCode(value: string | null | undefined) {
+  const primary = value?.trim().toLowerCase().split(/[-_]/, 1)[0] ?? "";
+  return primary && isMediaLanguageCode(primary) ? primary : null;
+}
+
+type MediaTargetBucket = {
+  countryCode: string | null;
+  languageCode: string | null;
+  resolution: Exclude<MediaTargetingResolution, "CONTROLLED_FALLBACK">;
+};
+
+export function mediaTargetBuckets(input: {
+  trustedCountryCode?: string | null;
+  presentationLanguage?: string | null;
+}): MediaTargetBucket[] {
+  const countryCode = normalizeMediaCountryCode(input.trustedCountryCode);
+  const languageCode = normalizeMediaLanguageCode(input.presentationLanguage);
+  const candidates: MediaTargetBucket[] = countryCode
+    ? languageCode
+      ? [
+          { countryCode, languageCode, resolution: "EXACT_COUNTRY_LANGUAGE" },
+          { countryCode: null, languageCode, resolution: "GLOBAL_LANGUAGE" },
+          { countryCode, languageCode: null, resolution: "EXACT_COUNTRY_NEUTRAL" },
+          { countryCode: null, languageCode: null, resolution: "GLOBAL_NEUTRAL" },
+        ]
+      : [
+          { countryCode, languageCode: null, resolution: "EXACT_COUNTRY_NEUTRAL" },
+          { countryCode: null, languageCode: null, resolution: "GLOBAL_NEUTRAL" },
+        ]
+    : languageCode
+      ? [
+          { countryCode: null, languageCode, resolution: "GLOBAL_LANGUAGE" },
+          { countryCode: null, languageCode: null, resolution: "GLOBAL_NEUTRAL" },
+        ]
+      : [{ countryCode: null, languageCode: null, resolution: "GLOBAL_NEUTRAL" }];
+  return candidates;
+}
+
 function dateValue(value: Date | string | null | undefined) {
   if (!value) return null;
   const parsed = value instanceof Date ? value : new Date(value);
@@ -224,9 +288,28 @@ function activeAssignment(assignment: PlacementMediaAssignment, now: number) {
   return (validFrom === null || validFrom <= now) && (validUntil === null || validUntil > now);
 }
 
-function stableCandidates(assignments: PlacementMediaAssignment[], placement: MediaPlacementName, variant: MediaPlacementVariantName, now: number) {
+function stableCandidates(
+  assignments: PlacementMediaAssignment[],
+  placement: MediaPlacementName,
+  variant: MediaPlacementVariantName,
+  target: MediaTargetBucket,
+  now: number,
+) {
   return assignments
-    .filter((assignment) => assignment.placement === placement && assignment.variant === variant && activeAssignment(assignment, now))
+    .filter((assignment) => {
+      if (assignment.placement !== placement || assignment.variant !== variant || !activeAssignment(assignment, now)) return false;
+      const hasCountryTarget = assignment.countryCode !== null && assignment.countryCode !== undefined;
+      const hasLanguageTarget = assignment.languageCode !== null && assignment.languageCode !== undefined;
+      const assignmentCountry = !hasCountryTarget
+        ? null
+        : normalizeMediaCountryCode(assignment.countryCode);
+      const assignmentLanguage = !hasLanguageTarget
+        ? null
+        : normalizeMediaLanguageCode(assignment.languageCode);
+      if (hasCountryTarget && !assignmentCountry) return false;
+      if (hasLanguageTarget && !assignmentLanguage) return false;
+      return assignmentCountry === target.countryCode && assignmentLanguage === target.languageCode;
+    })
     .sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id));
 }
 
@@ -239,21 +322,38 @@ function resolveAssignment(
   context: PlacementMediaResolutionContext,
   placement: MediaPlacementName,
   requestedVariant: MediaPlacementVariantName,
+  target: MediaTargetBucket,
   now: number,
 ) {
   const variants = requestedVariant === "DEFAULT" ? ["DEFAULT"] as const : [requestedVariant, "DEFAULT"] as const;
   for (const assignments of assignmentGroups(context, placement)) {
     for (const variant of variants) {
-      const assignment = stableCandidates(assignments, placement, variant, now)[0];
+      const assignment = stableCandidates(assignments, placement, variant, target, now)[0];
       if (assignment) return { assignment, variant };
     }
   }
   return null;
 }
 
+function targetScopedAssetIds(context: PlacementMediaResolutionContext) {
+  const ids = new Set(context.targetScopedAssetIds ?? []);
+  for (const assignment of [
+    ...context.casinoAssignments,
+    ...(context.casinoBonusAssignments ?? []),
+    ...(context.affiliateOfferAssignments ?? []),
+  ]) {
+    if (assignment.countryCode !== null && assignment.countryCode !== undefined
+      || assignment.languageCode !== null && assignment.languageCode !== undefined) {
+      ids.add(assignment.mediaAssetId);
+    }
+  }
+  return ids;
+}
+
 function legacyAsset(context: PlacementMediaResolutionContext, type: "HERO" | "LOGO") {
+  const restrictedAssetIds = targetScopedAssetIds(context);
   return context.legacyMediaAssets
-    .filter((asset) => asset.type === type && activeAsset(asset))
+    .filter((asset) => asset.type === type && activeAsset(asset) && !restrictedAssetIds.has(asset.id))
     .sort((left, right) => {
       const sortOrder = (left.sortOrder ?? 0) - (right.sortOrder ?? 0);
       if (sortOrder) return sortOrder;
@@ -293,38 +393,50 @@ function focalPoint(assignment: PlacementMediaAssignment | null) {
 export function resolveMedia(input: {
   placement: MediaPlacementName;
   requestedVariant?: MediaPlacementVariantName;
+  trustedCountryCode?: string | null;
+  presentationLanguage?: string | null;
   context: PlacementMediaResolutionContext;
   now?: Date;
 }): ResolvedPlacementMedia {
   const requestedVariant = input.requestedVariant ?? "DEFAULT";
+  const requestedCountryCode = normalizeMediaCountryCode(input.trustedCountryCode);
+  const requestedLanguageCode = normalizeMediaLanguageCode(input.presentationLanguage);
   const now = (input.now ?? new Date()).getTime();
   const chain = [input.placement, ...placementFallbackChains[input.placement]];
+  const targets = mediaTargetBuckets(input);
 
-  for (const placement of chain) {
-    const resolved = resolveAssignment(input.context, placement, requestedVariant, now);
-    if (!resolved?.assignment.mediaAsset) continue;
-    const directPlacement = placement === input.placement;
-    const directVariant = resolved.variant === requestedVariant;
-    const source: PlacementMediaSource = directPlacement
-      ? directVariant ? "EXPLICIT" : "VARIANT_FALLBACK"
-      : "PLACEMENT_FALLBACK";
-    const inheritedLogoComposition = !directPlacement
-      && (resolved.assignment.mediaAsset.type === "LOGO" || resolved.assignment.mediaAsset.type === "FAVICON");
-    return {
-      asset: resolved.assignment.mediaAsset,
-      assignment: resolved.assignment,
-      requestedPlacement: input.placement,
-      resolvedPlacement: placement,
-      requestedVariant,
-      resolvedVariant: resolved.variant,
-      renderingMode: inheritedLogoComposition
-        ? "COMPOSED"
-        : effectiveMode(resolved.assignment.renderingMode, placement, resolved.assignment.mediaAsset),
-      source,
-      fallback: source !== "EXPLICIT",
-      effectiveAlt: effectiveAlt(input.context, resolved.assignment.mediaAsset, resolved.assignment),
-      focalPoint: focalPoint(resolved.assignment),
-    };
+  for (const target of targets) {
+    for (const placement of chain) {
+      const resolved = resolveAssignment(input.context, placement, requestedVariant, target, now);
+      if (!resolved?.assignment.mediaAsset) continue;
+      const directPlacement = placement === input.placement;
+      const directVariant = resolved.variant === requestedVariant;
+      const source: PlacementMediaSource = directPlacement
+        ? directVariant ? "EXPLICIT" : "VARIANT_FALLBACK"
+        : "PLACEMENT_FALLBACK";
+      const inheritedLogoComposition = !directPlacement
+        && (resolved.assignment.mediaAsset.type === "LOGO" || resolved.assignment.mediaAsset.type === "FAVICON");
+      return {
+        asset: resolved.assignment.mediaAsset,
+        assignment: resolved.assignment,
+        requestedPlacement: input.placement,
+        resolvedPlacement: placement,
+        requestedVariant,
+        resolvedVariant: resolved.variant,
+        requestedCountryCode,
+        requestedLanguageCode,
+        resolvedCountryCode: target.countryCode,
+        resolvedLanguageCode: target.languageCode,
+        targetingResolution: target.resolution,
+        renderingMode: inheritedLogoComposition
+          ? "COMPOSED"
+          : effectiveMode(resolved.assignment.renderingMode, placement, resolved.assignment.mediaAsset),
+        source,
+        fallback: source !== "EXPLICIT",
+        effectiveAlt: effectiveAlt(input.context, resolved.assignment.mediaAsset, resolved.assignment),
+        focalPoint: focalPoint(resolved.assignment),
+      };
+    }
   }
 
   if (input.placement !== "CASINO_LOGO" && input.placement !== "OFFER_DETAIL") {
@@ -336,6 +448,11 @@ export function resolveMedia(input: {
       resolvedPlacement: null,
       requestedVariant,
       resolvedVariant: null,
+      requestedCountryCode,
+      requestedLanguageCode,
+      resolvedCountryCode: null,
+      resolvedLanguageCode: null,
+      targetingResolution: "CONTROLLED_FALLBACK",
       renderingMode: effectiveMode("AUTO", input.placement, hero),
       source: "LEGACY_HERO",
       fallback: true,
@@ -346,22 +463,28 @@ export function resolveMedia(input: {
 
   const logoAssignment = input.placement === "CASINO_LOGO"
     ? null
-    : resolveAssignment(input.context, "CASINO_LOGO", requestedVariant, now);
-  const logo = logoAssignment?.assignment.mediaAsset ?? legacyAsset(input.context, "LOGO");
+    : targets.map((target) => ({ target, resolved: resolveAssignment(input.context, "CASINO_LOGO", requestedVariant, target, now) }))
+      .find((candidate) => candidate.resolved?.assignment.mediaAsset) ?? null;
+  const logo = logoAssignment?.resolved?.assignment.mediaAsset ?? legacyAsset(input.context, "LOGO");
   if (logo) {
     const directLogo = input.placement === "CASINO_LOGO";
     return {
       asset: logo,
-      assignment: logoAssignment?.assignment ?? null,
+      assignment: logoAssignment?.resolved?.assignment ?? null,
       requestedPlacement: input.placement,
       resolvedPlacement: "CASINO_LOGO",
       requestedVariant,
-      resolvedVariant: logoAssignment?.variant ?? null,
+      resolvedVariant: logoAssignment?.resolved?.variant ?? null,
+      requestedCountryCode,
+      requestedLanguageCode,
+      resolvedCountryCode: logoAssignment?.target.countryCode ?? null,
+      resolvedLanguageCode: logoAssignment?.target.languageCode ?? null,
+      targetingResolution: logoAssignment?.target.resolution ?? "CONTROLLED_FALLBACK",
       renderingMode: directLogo ? "CONTAIN" : "COMPOSED",
       source: directLogo ? "LEGACY_LOGO" : "LOGO_COMPOSITION",
       fallback: true,
-      effectiveAlt: effectiveAlt(input.context, logo, logoAssignment?.assignment ?? null),
-      focalPoint: focalPoint(logoAssignment?.assignment ?? null),
+      effectiveAlt: effectiveAlt(input.context, logo, logoAssignment?.resolved?.assignment ?? null),
+      focalPoint: focalPoint(logoAssignment?.resolved?.assignment ?? null),
     };
   }
 
@@ -372,6 +495,11 @@ export function resolveMedia(input: {
     resolvedPlacement: null,
     requestedVariant,
     resolvedVariant: null,
+    requestedCountryCode,
+    requestedLanguageCode,
+    resolvedCountryCode: null,
+    resolvedLanguageCode: null,
+    targetingResolution: "CONTROLLED_FALLBACK",
     renderingMode: "COMPOSED",
     source: "CODE_FALLBACK",
     fallback: true,

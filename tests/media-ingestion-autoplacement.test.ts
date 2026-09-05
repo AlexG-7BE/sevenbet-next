@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import test from "node:test";
 import { deflateSync } from "node:zlib";
 
-import { firstPartyMediaReferenceSchema, MEDIA_INGESTION_PLAN_VERSION, mediaIngestionPlanSchema, type MediaIngestionPlan, type MediaSemanticResult } from "../lib/media-operations/contracts";
+import { firstPartyMediaReferenceSchema, MEDIA_INGESTION_PLAN_VERSION, mediaIngestionContextSchema, mediaIngestionPlanSchema, normalizeMediaIngestionContext, type MediaIngestionPlan, type MediaSemanticResult } from "../lib/media-operations/contracts";
 import { parsePartnerSnippet, persistedCreativeEvidence } from "../lib/media-operations/parser";
 import { buildMediaPlacementPlan } from "../lib/media-operations/planner";
 import { createPinnedLookup, fetchRemoteImage, isBlockedRemoteAddress, RemoteImageFetchError, type RemoteImageTransport } from "../lib/media-operations/remote-image-fetch";
@@ -298,7 +298,11 @@ function semantic(creativeId: string, values: Partial<MediaSemanticResult> = {})
   return { creativeId, state: "COMPLETED", provider: "TEST", model: "TEST", brandName: "Example", assetPurpose: "PROMO", language: null, market: null, currency: null, offerText: "100% and 50 spins", offerAmount: null, offerPercentage: 100, freeSpins: 50, promoCode: null, callToActionText: "Join", containsPromotionalText: true, containsFinePrint: true, containsResponsibleGamblingText: false, cropSafety: "SAFE", textReadability: "READABLE", likelyMarkets: [], complianceConcerns: [], confidence: 0.98, explanation: "Fixture", ...values };
 }
 
-function planFixture(dimensions: Array<[number, number]>, semanticValues: Partial<MediaSemanticResult>[] = []): MediaIngestionPlan {
+function planFixture(
+  dimensions: Array<[number, number]>,
+  semanticValues: Partial<MediaSemanticResult>[] = [],
+  requestedContext: Record<string, unknown> = {},
+): MediaIngestionPlan {
   const creatives = dimensions.map((_, index) => ({
     id: `00000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
     sourceKind: "IMAGE" as const,
@@ -309,7 +313,7 @@ function planFixture(dimensions: Array<[number, number]>, semanticValues: Partia
   return mediaIngestionPlanSchema.parse({
     version: MEDIA_INGESTION_PLAN_VERSION,
     id: "99999999-9999-4999-8999-999999999999",
-    snippetChecksum: "b".repeat(64), state: "INGESTED", dryRun: false, actorId: "33333333-3333-4333-8333-333333333333", source: "ADMIN", providerReference: "fixture", requestedContext: { casinoId, bonusId },
+    snippetChecksum: "b".repeat(64), state: "INGESTED", dryRun: false, actorId: "33333333-3333-4333-8333-333333333333", source: "ADMIN", providerReference: "fixture", requestedContext: { casinoId, bonusId, ...requestedContext },
     resolvedContext: { state: "RESOLVED", source: "EXPLICIT", casinoId, casinoSlug: "example", casinoTitle: "Example", bonusId, bonusTitle: "Welcome", affiliateOfferId: null, opportunityId: null, partnerIdentifier: null, trackingDestinationState: "NOT_PRESENT", notes: [] },
     creatives,
     unsupportedElements: [],
@@ -396,6 +400,109 @@ test("market clues, mismatched offers, and existing explicit assignments block a
   assert.equal(protectedSlot?.existingComparison, "EQUIVALENT");
 });
 
+test("Founder-authored target context is normalized while unknown and neutral language remain distinct", () => {
+  const explicit = normalizeMediaIngestionContext(mediaIngestionContextSchema.parse({
+    targetCountryCodes: ["ee", "LV", "ee", "lt"],
+    creativeLanguage: "EN",
+  }));
+  assert.deepEqual(explicit.targetCountryCodes, ["EE", "LV", "LT"]);
+  assert.equal(explicit.creativeLanguage, "en");
+  assert.equal(explicit.creativeLanguageState, "EXPLICIT");
+  const neutral = normalizeMediaIngestionContext(mediaIngestionContextSchema.parse({ creativeLanguage: null }));
+  assert.equal(neutral.creativeLanguage, null);
+  assert.equal(neutral.creativeLanguageState, "NEUTRAL");
+  const unknown = normalizeMediaIngestionContext(mediaIngestionContextSchema.parse({}));
+  assert.equal(unknown.creativeLanguage, undefined);
+  assert.equal(unknown.creativeLanguageState, "UNKNOWN");
+  assert.throws(() => mediaIngestionContextSchema.parse({ targetCountryCodes: ["EU"] }), /ISO 3166/);
+  assert.throws(() => mediaIngestionContextSchema.parse({ creativeLanguage: "e", creativeLanguageState: "EXPLICIT" }), /language/);
+  assert.throws(() => mediaIngestionContextSchema.parse({ creativeLanguage: "fi", creativeLanguageState: "NEUTRAL" }), /language state/);
+});
+
+test("one ingested asset expands into isolated EE/en, LV/en and LT/en assignment recommendations", () => {
+  const targeted = planFixture([[300, 250]], [], {
+    targetCountryCodes: ["EE", "LV", "LT"],
+    creativeLanguage: "en",
+    creativeLanguageState: "EXPLICIT",
+  });
+  const result = buildMediaPlacementPlan(targeted, {
+    bonus: { percentage: 100, maximumBonus: null, currency: null, freeSpins: 50 },
+    existingAssignments: [],
+  });
+  const listing = result.filter((item) => item.placement === "BONUS_LISTING_CARD" && item.variant === "DEFAULT");
+  assert.deepEqual(listing.map((item) => `${item.countryCode}/${item.languageCode}`).sort(), ["EE/en", "LT/en", "LV/en"]);
+  assert.equal(new Set(listing.map((item) => item.assetId)).size, 1);
+  assert.ok(listing.every((item) => item.marketHandling === "TARGETED"));
+  assert.ok(listing.every((item) => item.state === "AUTO_ASSIGN_DRAFT"));
+});
+
+test("assignment conflict and replacement identity includes exact country and language scope", () => {
+  const targeted = planFixture([[300, 250]], [], {
+    targetCountryCodes: ["FI"],
+    creativeLanguage: "en",
+    creativeLanguageState: "EXPLICIT",
+  });
+  const baseExisting = {
+    id: "66666666-6666-4666-8666-666666666666",
+    mediaAssetId: "77777777-7777-4777-8777-777777777777",
+    subjectType: "CASINO_BONUS" as const,
+    subjectId: bonusId,
+    placement: "BONUS_LISTING_CARD" as const,
+    variant: "DEFAULT" as const,
+    mediaAsset: { width: 300, height: 250 },
+  };
+  const candidate = (existingAssignments: Array<typeof baseExisting & { countryCode: string | null; languageCode: string | null }>) => buildMediaPlacementPlan(targeted, {
+    bonus: { percentage: 100, maximumBonus: null, currency: null, freeSpins: 50 },
+    existingAssignments,
+  }).find((item) => item.placement === "BONUS_LISTING_CARD" && item.variant === "DEFAULT");
+  assert.equal(candidate([{ ...baseExisting, countryCode: null, languageCode: "en" }])?.existingComparison, "NEW_SLOT");
+  assert.equal(candidate([{ ...baseExisting, countryCode: "FI", languageCode: "fi" }])?.existingComparison, "NEW_SLOT");
+  const sameScope = candidate([{ ...baseExisting, countryCode: "FI", languageCode: "en" }]);
+  assert.equal(sameScope?.existingComparison, "EQUIVALENT");
+  assert.equal(sameScope?.existingAssignmentId, baseExisting.id);
+  assert.equal(sameScope?.replacementEligible, true);
+});
+
+test("strong semantic country, language and currency contradiction preserves FI/fi but blocks automatic assignment", () => {
+  const targeted = planFixture([[300, 250]], [{
+    language: "en",
+    market: "GB",
+    currency: "GBP",
+    likelyMarkets: ["GB"],
+    explanation: "English and GBP UK-specific visual evidence",
+  }], {
+    targetCountryCodes: ["FI"],
+    creativeLanguage: "fi",
+    creativeLanguageState: "EXPLICIT",
+  });
+  const result = buildMediaPlacementPlan(targeted, {
+    bonus: { percentage: 100, maximumBonus: null, currency: null, freeSpins: 50 },
+    existingAssignments: [],
+  });
+  assert.ok(result.length > 0);
+  assert.ok(result.every((item) => item.countryCode === "FI" && item.languageCode === "fi"));
+  assert.ok(result.every((item) => item.marketHandling === "MARKET_SPECIFIC_REVIEW"));
+  assert.ok(result.every((item) => item.state !== "AUTO_ASSIGN_DRAFT"));
+  assert.match(result.flatMap((item) => item.reasons).join(" "), /conflict/i);
+  assert.doesNotMatch(JSON.stringify(result), /"countryCode":"GB"/);
+});
+
+test("offer mismatch stays independent from otherwise valid FI/en targeting", () => {
+  const targeted = planFixture([[300, 250]], [{ offerPercentage: 200 }], {
+    targetCountryCodes: ["FI"],
+    creativeLanguage: "en",
+    creativeLanguageState: "EXPLICIT",
+  });
+  const result = buildMediaPlacementPlan(targeted, {
+    bonus: { percentage: 100, maximumBonus: null, currency: null, freeSpins: 50 },
+    existingAssignments: [],
+  });
+  assert.ok(result.every((item) => item.countryCode === "FI" && item.languageCode === "en"));
+  assert.ok(result.every((item) => item.marketHandling === "TARGETED"));
+  assert.ok(result.every((item) => item.offerMatch === "MISMATCH"));
+  assert.ok(result.every((item) => item.state !== "AUTO_ASSIGN_DRAFT"));
+});
+
 test("Media Operations is a separate exact-resource MCP surface with only five bounded tools", () => {
   const config = resolveMediaMcpConfig("https://b4gamble.com/api/mcp/media", { MEDIA_OPERATIONS_MCP_ENABLED: "true", MEDIA_OPERATIONS_MCP_PUBLIC_ORIGIN: "https://b4gamble.com" });
   assert.ok(config);
@@ -409,6 +516,10 @@ test("Media Operations is a separate exact-resource MCP surface with only five b
     bearer_methods_supported: ["header"],
   });
   assert.deepEqual(mediaMcpTools.map((tool) => tool.name), ["media_ingest_partner_snippet", "media_analyze_and_plan", "media_apply_draft_plan", "media_get_plan", "media_list_recent_ingestions"]);
+  const ingestSchema = JSON.stringify(mediaMcpTools[0].inputSchema);
+  assert.match(ingestSchema, /targetCountryCodes/);
+  assert.match(ingestSchema, /creativeLanguage/);
+  assert.match(ingestSchema, /creativeLanguageState/);
   assert.deepEqual(MEDIA_MCP_SCOPES, ["media:read", "media:safe_write"]);
 
   const staff = { id: "33333333-3333-4333-8333-333333333333", userId: "user-1", email: "staff@example.com", name: "Staff", role: "ADMIN" as const };

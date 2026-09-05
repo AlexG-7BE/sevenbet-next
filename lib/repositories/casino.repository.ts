@@ -115,6 +115,18 @@ export const casinoPlacementAggregateInclude = {
       mediaAssignments: mediaAssignmentInclude,
     },
   },
+  affiliatePrograms: {
+    ...casinoAggregateInclude.affiliatePrograms,
+    include: {
+      offers: {
+        ...casinoAggregateInclude.affiliatePrograms.include.offers,
+        include: {
+          ...casinoAggregateInclude.affiliatePrograms.include.offers.include,
+          mediaAssignments: mediaAssignmentInclude,
+        },
+      },
+    },
+  },
 } satisfies Prisma.CasinoInclude;
 
 const casinoListSelect = {
@@ -239,7 +251,8 @@ function snapshotMediaAsset(asset: CasinoPlacementAggregate["mediaAssets"][numbe
 
 type SnapshotAssignment = CasinoPlacementAggregate["mediaAssignments"][number]
   | CasinoPlacementAggregate["casinoBonuses"][number]["mediaAssignments"][number]
-  | CasinoPlacementAggregate["countries"][number]["bonuses"][number]["mediaAssignments"][number];
+  | CasinoPlacementAggregate["countries"][number]["bonuses"][number]["mediaAssignments"][number]
+  | CasinoPlacementAggregate["affiliatePrograms"][number]["offers"][number]["mediaAssignments"][number];
 
 function snapshotMediaAssignment(assignment: SnapshotAssignment) {
   return {
@@ -247,6 +260,8 @@ function snapshotMediaAssignment(assignment: SnapshotAssignment) {
     mediaAssetId: assignment.mediaAssetId,
     placement: assignment.placement,
     variant: assignment.variant,
+    countryCode: assignment.countryCode,
+    languageCode: assignment.languageCode,
     renderingMode: assignment.renderingMode,
     sortOrder: assignment.sortOrder,
     active: assignment.active,
@@ -284,6 +299,13 @@ export function buildPublishedCasinoSnapshot(
       ...bonus,
       mediaAssignments: bonus.mediaAssignments.map(snapshotMediaAssignment),
       status: EditorialStatus.PUBLISHED,
+    })),
+    affiliatePrograms: (current.affiliatePrograms ?? []).map((program) => ({
+      ...program,
+      offers: program.offers.map((offer) => ({
+        ...offer,
+        mediaAssignments: offer.mediaAssignments.map(snapshotMediaAssignment),
+      })),
     })),
     publishedVersion: input.versionNumber,
     publishedAt: input.publishedAt,
@@ -333,14 +355,27 @@ async function findPlacementAggregate(
   });
 }
 
-async function placementMediaSchemaAvailable(database: Prisma.TransactionClient) {
-  const [result] = await database.$queryRaw<Array<{ table_count: number }>>`
-    SELECT COUNT(*)::int AS table_count
-    FROM information_schema.tables
-    WHERE table_schema = current_schema()
-      AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+async function placementMediaSchemaState(database: Prisma.TransactionClient) {
+  const [result] = await database.$queryRaw<Array<{ table_count: number; column_count: number }>>`
+    SELECT
+      (
+        SELECT COUNT(*)::int
+        FROM information_schema.tables
+        WHERE table_schema = current_schema()
+          AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+      ) AS table_count,
+      (
+        SELECT COUNT(*)::int
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+          AND column_name IN ('countryCode', 'languageCode')
+      ) AS column_count
   `;
-  return result?.table_count === 3;
+  return {
+    typedAssignments: result?.table_count === 3,
+    localizedAssignments: result?.column_count === 6,
+  };
 }
 
 async function createRevision(
@@ -575,7 +610,11 @@ export class CasinoRepository implements CasinoStore {
       const publishedAt = new Date();
       const versionNumber = current.draftVersion;
       await createRevision(tx, current, actorId, `Published version ${versionNumber}`);
-      const placementCurrent = await placementMediaSchemaAvailable(tx)
+      const placementSchema = await placementMediaSchemaState(tx);
+      if (placementSchema.typedAssignments && !placementSchema.localizedAssignments) {
+        throw new Error("GEO_LOCALIZED_CREATIVE_SCHEMA_PENDING");
+      }
+      const placementCurrent = placementSchema.localizedAssignments
         ? await findPlacementAggregate(tx, id)
         : null;
       if (placementCurrent && placementCurrent.updatedAt.getTime() !== expectedUpdatedAt.getTime()) {

@@ -14,6 +14,8 @@ export interface MediaAssignmentMutationRecord {
   mediaAssetId: string;
   placement: MediaPlacement;
   variant: MediaPlacementVariant;
+  countryCode: string | null;
+  languageCode: string | null;
   renderingMode: MediaRenderingMode;
   sortOrder: number;
   active: boolean;
@@ -75,13 +77,14 @@ export class MediaAssignmentRepository {
   }
 
   async schemaReady() {
-    const [record] = await prisma.$queryRaw<Array<{ table_count: number }>>`
-      SELECT COUNT(*)::int AS table_count
-      FROM information_schema.tables
+    const [record] = await prisma.$queryRaw<Array<{ column_count: number }>>`
+      SELECT COUNT(*)::int AS column_count
+      FROM information_schema.columns
       WHERE table_schema = current_schema()
         AND table_name IN ('CasinoMediaAssignment', 'CasinoBonusMediaAssignment', 'AffiliateOfferMediaAssignment')
+        AND column_name IN ('countryCode', 'languageCode')
     `;
-    return record?.table_count === 3;
+    return record?.column_count === 6;
   }
 
   async findAsset(id: string) {
@@ -102,6 +105,11 @@ export class MediaAssignmentRepository {
           mediaAssets: {
             where: { casinoCountryId: null },
             orderBy: [{ sortOrder: "asc" }, { createdAt: "asc" }, { id: "asc" }],
+            include: {
+              casinoMediaAssignments: { select: { countryCode: true, languageCode: true } },
+              casinoBonusMediaAssignments: { select: { countryCode: true, languageCode: true } },
+              affiliateOfferMediaAssignments: { select: { countryCode: true, languageCode: true } },
+            },
           },
           mediaAssignments: { include: assignmentInclude },
         },
@@ -123,13 +131,30 @@ export class MediaAssignmentRepository {
         : null,
     ]);
     if (!casino) return null;
+    const targetScopedAssetIds = casino.mediaAssets.flatMap((asset) => {
+      const assignments = [
+        ...asset.casinoMediaAssignments,
+        ...asset.casinoBonusMediaAssignments,
+        ...asset.affiliateOfferMediaAssignments,
+      ];
+      return assignments.some((assignment) =>
+        assignment.countryCode !== null || assignment.languageCode !== null,
+      ) ? [asset.id] : [];
+    });
+    const assets = casino.mediaAssets.map(({
+      affiliateOfferMediaAssignments: _affiliateAssignments,
+      casinoBonusMediaAssignments: _bonusAssignments,
+      casinoMediaAssignments: _casinoAssignments,
+      ...asset
+    }) => asset);
     return {
       casinoName: casino.title,
       casinoAssignments: casino.mediaAssignments,
       casinoBonusAssignments: bonusAssignments?.mediaAssignments ?? offer?.casinoBonus?.mediaAssignments ?? [],
       affiliateOfferAssignments: offer?.mediaAssignments ?? [],
-      legacyMediaAssets: casino.mediaAssets,
-      assets: casino.mediaAssets,
+      legacyMediaAssets: assets,
+      targetScopedAssetIds,
+      assets,
     };
   }
 
@@ -140,7 +165,13 @@ export class MediaAssignmentRepository {
     actorId: string,
   ) {
     return prisma.$transaction(async (tx) => {
-      const where = { placement: input.placement, variant: input.variant, active: true };
+      const where = {
+        placement: input.placement,
+        variant: input.variant,
+        countryCode: input.countryCode,
+        languageCode: input.languageCode,
+        active: true,
+      };
       if (subjectType === "CASINO") {
         const replaced = input.active
           ? await tx.casinoMediaAssignment.updateMany({ where: { casinoId: subjectId, ...where }, data: { active: false } })
@@ -151,7 +182,8 @@ export class MediaAssignmentRepository {
         });
         await audit(tx, actorId, "assign", record.id, `Assigned ${input.placement} media`, {
           subjectType, subjectId, mediaAssetId: input.mediaAssetId, placement: input.placement,
-          variant: input.variant, replacedAssignments: replaced.count,
+          variant: input.variant, countryCode: input.countryCode, languageCode: input.languageCode,
+          replacedAssignments: replaced.count,
         });
         return record;
       }
@@ -165,7 +197,8 @@ export class MediaAssignmentRepository {
         });
         await audit(tx, actorId, "assign", record.id, `Assigned ${input.placement} media`, {
           subjectType, subjectId, mediaAssetId: input.mediaAssetId, placement: input.placement,
-          variant: input.variant, replacedAssignments: replaced.count,
+          variant: input.variant, countryCode: input.countryCode, languageCode: input.languageCode,
+          replacedAssignments: replaced.count,
         });
         return record;
       }
@@ -178,7 +211,8 @@ export class MediaAssignmentRepository {
       });
       await audit(tx, actorId, "assign", record.id, `Assigned ${input.placement} partner media`, {
         subjectType, subjectId, mediaAssetId: input.mediaAssetId, placement: input.placement,
-        variant: input.variant, replacedAssignments: replaced.count,
+        variant: input.variant, countryCode: input.countryCode, languageCode: input.languageCode,
+        replacedAssignments: replaced.count,
       });
       return record;
     });
@@ -222,6 +256,8 @@ export class MediaAssignmentRepository {
             casinoId: subjectId,
             placement: current.placement,
             variant: current.variant,
+            countryCode: current.countryCode,
+            languageCode: current.languageCode,
             active: true,
             id: { not: assignmentId },
           },
@@ -234,6 +270,7 @@ export class MediaAssignmentRepository {
         });
         await audit(tx, actorId, active ? "activate" : "deactivate", assignmentId, `${active ? "Activated" : "Deactivated"} media assignment`, {
           subjectType, subjectId, assignmentId, placement: current.placement, variant: current.variant,
+          countryCode: current.countryCode, languageCode: current.languageCode,
         });
         return record;
       }
@@ -245,6 +282,8 @@ export class MediaAssignmentRepository {
             casinoBonusId: subjectId,
             placement: current.placement,
             variant: current.variant,
+            countryCode: current.countryCode,
+            languageCode: current.languageCode,
             active: true,
             id: { not: assignmentId },
           },
@@ -257,6 +296,7 @@ export class MediaAssignmentRepository {
         });
         await audit(tx, actorId, active ? "activate" : "deactivate", assignmentId, `${active ? "Activated" : "Deactivated"} media assignment`, {
           subjectType, subjectId, assignmentId, placement: current.placement, variant: current.variant,
+          countryCode: current.countryCode, languageCode: current.languageCode,
         });
         return record;
       }
@@ -267,6 +307,8 @@ export class MediaAssignmentRepository {
           affiliateOfferId: subjectId,
           placement: current.placement,
           variant: current.variant,
+          countryCode: current.countryCode,
+          languageCode: current.languageCode,
           active: true,
           id: { not: assignmentId },
         },
@@ -279,6 +321,7 @@ export class MediaAssignmentRepository {
       });
       await audit(tx, actorId, active ? "activate" : "deactivate", assignmentId, `${active ? "Activated" : "Deactivated"} partner media assignment`, {
         subjectType, subjectId, assignmentId, placement: current.placement, variant: current.variant,
+        countryCode: current.countryCode, languageCode: current.languageCode,
       });
       return record;
     });
@@ -289,15 +332,15 @@ export class MediaAssignmentRepository {
     const [casino, bonuses, offers] = await Promise.all([
       prisma.casinoMediaAssignment.findMany({
         where: { mediaAssetId: { in: assetIds } },
-        select: { id: true, mediaAssetId: true, casinoId: true, placement: true, variant: true, active: true },
+        select: { id: true, mediaAssetId: true, casinoId: true, placement: true, variant: true, countryCode: true, languageCode: true, active: true },
       }),
       prisma.casinoBonusMediaAssignment.findMany({
         where: { mediaAssetId: { in: assetIds } },
-        select: { id: true, mediaAssetId: true, casinoBonusId: true, placement: true, variant: true, active: true },
+        select: { id: true, mediaAssetId: true, casinoBonusId: true, placement: true, variant: true, countryCode: true, languageCode: true, active: true },
       }),
       prisma.affiliateOfferMediaAssignment.findMany({
         where: { mediaAssetId: { in: assetIds } },
-        select: { id: true, mediaAssetId: true, affiliateOfferId: true, placement: true, variant: true, active: true },
+        select: { id: true, mediaAssetId: true, affiliateOfferId: true, placement: true, variant: true, countryCode: true, languageCode: true, active: true },
       }),
     ]);
     return [

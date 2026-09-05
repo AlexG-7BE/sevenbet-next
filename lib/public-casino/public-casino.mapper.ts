@@ -5,6 +5,8 @@ import {
   isMediaPlacementVariant,
   isMediaRenderingMode,
   isPlacementMediaAssignmentsEnabled,
+  normalizeMediaCountryCode,
+  normalizeMediaLanguageCode,
   offerMediaPlacements,
   resolveMedia,
   type PlacementMediaAsset,
@@ -76,9 +78,13 @@ function metadata(snapshot: Record<string, unknown>) {
   return object(reviewBlocks.__sevenbetCasinoEditor);
 }
 
-function routeFor(routes: PublicAffiliateRoute[], casinoId: string, casinoBonusId: string | null) {
-  const route = routes.find((entry) => entry.casinoId === casinoId && entry.casinoBonusId === casinoBonusId)
+function routeRecordFor(routes: PublicAffiliateRoute[], casinoId: string, casinoBonusId: string | null) {
+  return routes.find((entry) => entry.casinoId === casinoId && entry.casinoBonusId === casinoBonusId)
     ?? routes.find((entry) => entry.casinoId === casinoId && (casinoBonusId ? entry.casinoBonusId === null : true));
+}
+
+function routeFor(routes: PublicAffiliateRoute[], casinoId: string, casinoBonusId: string | null) {
+  const route = routeRecordFor(routes, casinoId, casinoBonusId);
   return route && isSafePublicSlug(route.slug) ? `/r/${route.slug}` : null;
 }
 
@@ -154,13 +160,27 @@ function placementAssignments(value: unknown): PlacementMediaAssignment[] {
     const placement = text(record.placement);
     const variant = text(record.variant);
     const renderingMode = text(record.renderingMode);
+    const suppliedCountry = record.countryCode !== undefined && record.countryCode !== null;
+    const suppliedLanguage = record.languageCode !== undefined && record.languageCode !== null;
+    const countryCode = suppliedCountry && typeof record.countryCode === "string"
+      ? normalizeMediaCountryCode(record.countryCode)
+      : null;
+    const languageCode = suppliedLanguage && typeof record.languageCode === "string"
+      ? normalizeMediaLanguageCode(record.languageCode)
+      : null;
     const asset = placementAsset(record.mediaAsset);
-    if (!id || !mediaAssetId || !isMediaPlacement(placement) || !isMediaPlacementVariant(variant) || !isMediaRenderingMode(renderingMode) || !asset) return [];
+    if (
+      !id || !mediaAssetId || !isMediaPlacement(placement) || !isMediaPlacementVariant(variant)
+      || !isMediaRenderingMode(renderingMode) || !asset
+      || (suppliedCountry && !countryCode) || (suppliedLanguage && !languageCode)
+    ) return [];
     return [{
       id,
       mediaAssetId,
       placement,
       variant,
+      countryCode,
+      languageCode,
       renderingMode,
       sortOrder: integer(record.sortOrder) ?? 0,
       active: bool(record.active),
@@ -174,6 +194,18 @@ function placementAssignments(value: unknown): PlacementMediaAssignment[] {
       mediaAsset: asset,
     }];
   });
+}
+
+function affiliateOfferAssignmentMap(snapshot: Record<string, unknown>) {
+  const result = new Map<string, PlacementMediaAssignment[]>();
+  for (const programEntry of list(snapshot.affiliatePrograms)) {
+    for (const offerEntry of list(object(programEntry).offers)) {
+      const offer = object(offerEntry);
+      const offerId = text(offer.id);
+      if (offerId) result.set(offerId, placementAssignments(offer.mediaAssignments));
+    }
+  }
+  return result;
 }
 
 function legacyPlacementAssets(snapshot: Record<string, unknown>): PlacementMediaAsset[] {
@@ -190,6 +222,35 @@ function legacyPlacementAssets(snapshot: Record<string, unknown>): PlacementMedi
     });
     return asset ? [asset] : [];
   });
+}
+
+function targetScopedAssignmentAssetIds(snapshot: Record<string, unknown>) {
+  const ids = new Set<string>();
+  const collect = (entries: unknown[]) => {
+    for (const entry of entries) {
+      const record = object(entry);
+      if (record.countryCode === null || record.countryCode === undefined) {
+        if (record.languageCode === null || record.languageCode === undefined) continue;
+      }
+      const mediaAssetId = text(record.mediaAssetId) || text(object(record.mediaAsset).id);
+      if (mediaAssetId) ids.add(mediaAssetId);
+    }
+  };
+  collect(list(snapshot.mediaAssignments));
+  for (const bonusEntry of list(snapshot.casinoBonuses)) {
+    collect(list(object(bonusEntry).mediaAssignments));
+  }
+  for (const countryEntry of list(snapshot.countries)) {
+    for (const bonusEntry of list(object(countryEntry).bonuses)) {
+      collect(list(object(bonusEntry).mediaAssignments));
+    }
+  }
+  for (const programEntry of list(snapshot.affiliatePrograms)) {
+    for (const offerEntry of list(object(programEntry).offers)) {
+      collect(list(object(offerEntry).mediaAssignments));
+    }
+  }
+  return [...ids];
 }
 
 function publicPlacementMedia(resolution: ResolvedPlacementMedia): PublicPlacementMediaResolution {
@@ -210,6 +271,11 @@ function publicPlacementMedia(resolution: ResolvedPlacementMedia): PublicPlaceme
     resolvedPlacement: resolution.resolvedPlacement,
     requestedVariant: resolution.requestedVariant,
     resolvedVariant: resolution.resolvedVariant,
+    requestedCountryCode: resolution.requestedCountryCode,
+    requestedLanguageCode: resolution.requestedLanguageCode,
+    resolvedCountryCode: resolution.resolvedCountryCode,
+    resolvedLanguageCode: resolution.resolvedLanguageCode,
+    targetingResolution: resolution.targetingResolution,
     renderingMode: resolution.renderingMode,
     source: resolution.source,
     fallback: resolution.fallback,
@@ -222,11 +288,12 @@ function resolvedPlacementMap(
   placements: readonly (typeof casinoMediaPlacements[number] | typeof offerMediaPlacements[number])[],
   context: PlacementMediaResolutionContext,
   now: Date,
+  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null } = {},
 ) {
   return Object.fromEntries(placements.map((placement) => {
     const variants = Object.fromEntries((["DEFAULT", "DESKTOP", "MOBILE"] as const).map((requestedVariant) => [
       requestedVariant,
-      publicPlacementMedia(resolveMedia({ placement, requestedVariant, context, now })),
+      publicPlacementMedia(resolveMedia({ placement, requestedVariant, context, now, ...targeting })),
     ])) as PublicPlacementMedia["variants"];
     const primary = variants.DEFAULT!;
     const variantAssets = Object.fromEntries(Object.entries(variants).flatMap(([variant, resolution]) =>
@@ -306,6 +373,8 @@ function mapScopedBonuses(
   now: Date,
   placementContext: PlacementMediaResolutionContext,
   placementMediaEnabled: boolean,
+  targeting: { trustedCountryCode?: string | null; presentationLanguage?: string | null },
+  affiliateAssignmentsFor: (casinoBonusId: string) => PlacementMediaAssignment[],
 ) {
   return entries.flatMap((entry) => {
     const record = object(entry);
@@ -322,7 +391,8 @@ function mapScopedBonuses(
     const bonusPlacementMedia = resolvedPlacementMap(offerMediaPlacements, {
       ...placementContext,
       casinoBonusAssignments: placementAssignments(record.mediaAssignments),
-    }, now);
+      affiliateOfferAssignments: affiliateAssignmentsFor(bonusId),
+    }, now, targeting);
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -402,7 +472,13 @@ export function projectPublicCasinoMarket(casino: PublicCasinoDTO, countryCode: 
 export function mapPublishedCasino(
   published: PublishedCasinoSnapshotRecord,
   routes: PublicAffiliateRoute[],
-  options: { redirectEnabled: boolean; now?: Date; countryCode?: string | null; placementMediaEnabled?: boolean } = { redirectEnabled: false },
+  options: {
+    redirectEnabled: boolean;
+    now?: Date;
+    countryCode?: string | null;
+    presentationLanguage?: string | null;
+    placementMediaEnabled?: boolean;
+  } = { redirectEnabled: false },
 ): PublicCasinoDTO | null {
   const snapshot = object(published.snapshot);
   const slug = text(snapshot.slug);
@@ -417,8 +493,18 @@ export function mapPublishedCasino(
     casinoName: name,
     casinoAssignments: placementAssignments(snapshot.mediaAssignments),
     legacyMediaAssets: legacyPlacementAssets(snapshot),
+    targetScopedAssetIds: targetScopedAssignmentAssetIds(snapshot),
   };
-  const casinoPlacementMedia = resolvedPlacementMap(casinoMediaPlacements, placementContext, now);
+  const affiliateAssignmentsByOffer = affiliateOfferAssignmentMap(snapshot);
+  const affiliateAssignmentsFor = (casinoBonusId: string) => {
+    const route = routeRecordFor(routes, published.casinoId, casinoBonusId);
+    return route?.affiliateOfferId ? affiliateAssignmentsByOffer.get(route.affiliateOfferId) ?? [] : [];
+  };
+  const targeting = {
+    trustedCountryCode: options.countryCode,
+    presentationLanguage: options.presentationLanguage,
+  };
+  const casinoPlacementMedia = resolvedPlacementMap(casinoMediaPlacements, placementContext, now, targeting);
   const editorMetadata = metadata(snapshot);
   const general = object(editorMetadata.general);
   const licenseMetadata = object(editorMetadata.licenses);
@@ -506,7 +592,8 @@ export function mapPublishedCasino(
     const bonusPlacementMedia = resolvedPlacementMap(offerMediaPlacements, {
       ...placementContext,
       casinoBonusAssignments: placementAssignments(record.mediaAssignments),
-    }, now);
+      affiliateOfferAssignments: affiliateAssignmentsFor(bonusId),
+    }, now, targeting);
     return [{
       id: bonusId,
       slug: bonusSlug,
@@ -591,6 +678,8 @@ export function mapPublishedCasino(
         now,
         placementContext,
         placementMediaEnabled,
+        targeting,
+        affiliateAssignmentsFor,
       ),
       media: mediaFromSnapshot(record),
     }];

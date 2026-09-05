@@ -8,7 +8,8 @@
 
 **Implementation authority:** explicit Founder instruction `B4GAMBLE —
 PLACEMENT-MEDIA-ASSIGNMENTS-01 / RFC-040 OPTION C IMPLEMENTATION`, issued 4
-September 2026.
+September 2026, plus the additive `B4GAMBLE —
+GEO-LOCALIZED-CREATIVE-ASSIGNMENTS-01` instruction issued 5 September 2026.
 
 ## Decision and history
 
@@ -36,13 +37,18 @@ proposal and is delivered through the current architecture.
   reuse it for Bonuses, Best Offers and Casino detail presentation.
 - **DETECTED:** current Bonus and Affiliate Offer media selectors do not create
   normalized public placement assignments.
-- **DETECTED:** no current public resolver selects media by placement or device
-  variant.
+- **DETECTED AT THE ORIGINAL OPTION C DECISION:** no public resolver then
+  selected media by placement or device variant. Migration 0027 and its
+  subsequent release superseded that implementation gap.
 - **DETECTED:** the Founder approved Option C through the explicit instruction
   identified above.
 - **DETECTED:** migration `0027_placement_media_assignments`, the typed models,
   resolver, immutable publication projection, Admin slots and guarded backfill
   implement the approved design in the release branch.
+- **DETECTED IN THE 5 SEPTEMBER RELEASE CANDIDATE:** additive migration
+  `0028_geo_localized_creative_assignments` adds nullable country and language
+  dimensions to each Option C assignment table without changing the Option C
+  subject model or any existing row.
 
 ## Goals
 
@@ -129,6 +135,8 @@ model CasinoMediaAssignment {
   mediaAssetId    String                @db.Uuid
   placement       MediaPlacement
   variant         MediaPlacementVariant @default(DEFAULT)
+  countryCode     String?                // NULL = GLOBAL
+  languageCode    String?                // NULL = language-neutral
   renderingMode   MediaRenderingMode    @default(AUTO)
   sortOrder       Int                   @default(0)
   active          Boolean               @default(true)
@@ -163,6 +171,77 @@ controlled reconciliation.
 semantic placement. Keeping both would create two ways to represent the same
 choice. `DESKTOP` is an exceptional override; `DEFAULT` remains sufficient for
 most assets.
+
+## Founder-authorised GEO/language extension — 5 September 2026
+
+This is a newer additive extension to approved Option C. It does not replace
+Option C, alter typed subject ownership, or imply GEO/language targeting was
+part of the original 4 September approval.
+
+Each typed assignment now carries nullable `countryCode` and `languageCode`:
+
+- `countryCode = NULL` means `GLOBAL`; a non-null value is one exact ISO
+  3166-1 alpha-2 eligibility scope.
+- `languageCode = NULL` means genuinely language-neutral; a non-null value is
+  one lowercase BCP 47 primary language subtag.
+- Trusted request GEO is the eligibility boundary. Language, URL path, query,
+  cookie, `Accept-Language`, model output and creative metadata cannot grant a
+  country.
+- Language is only a presentation preference inside the trusted GEO boundary.
+  A creative in another explicit language is never an automatic fallback.
+- An assignment for another explicit country is never eligible. Unknown GEO
+  can use only global assignments.
+
+For trusted country `C` and presentation language `L`, target buckets are
+evaluated in this order:
+
+1. `C/L`;
+2. `GLOBAL/L`;
+3. `C/neutral`;
+4. `GLOBAL/neutral`; and
+5. the existing controlled fallback.
+
+For unknown GEO, only `GLOBAL/L`, `GLOBAL/neutral` and controlled fallback are
+eligible. Within each target bucket the existing requested placement,
+requested variant, `DEFAULT` variant and placement-fallback rules apply. The
+target bucket is the outer priority: an exact-country/default-variant candidate
+therefore wins before a global/mobile candidate, and an exact-country placement
+fallback wins before a global direct-placement candidate.
+
+Once an asset is referenced by any country- or language-targeted assignment,
+that asset is target-scoped inventory. It cannot re-enter resolution through
+the legacy Casino `HERO` or `LOGO` compatibility fallback. This exclusion
+also applies when the targeted assignment is inactive, expired or malformed;
+otherwise a request outside its target could bypass the eligibility boundary.
+
+The active assignment identity used for conflict, replacement and rollback is:
+
+`typed subject + placement + variant + countryCode + languageCode`.
+
+One `MediaAsset` may back many assignment scopes. Multi-country intake reuses
+the same checksum/object/row and creates one recommendation/relationship per
+exact country; it does not duplicate physical media. Semantic evidence may
+block automatic assignment when it contradicts Founder-supplied scope, but it
+cannot rewrite that scope or create a different country's authority.
+
+Publication snapshots embed the target fields with each assignment. Historical
+snapshots without them read as `GLOBAL/neutral`, so no JSON rewrite is
+required. The server resolves and emits only effective media; the browser is
+not sent the full country inventory to choose from. Media targeting grants
+presentation only and never creates a CTA, redirect, commercial eligibility,
+publication, ranking or legal authority.
+
+Migration `0028_geo_localized_creative_assignments` is the authoritative SQL
+shape for this extension. It adds six nullable text columns, six bounded shape
+checks and three target-resolver indexes. It has no default, backfill, update,
+delete, table replacement or destructive operation. Existing rows remain
+`NULL/NULL`, which preserves the current global-neutral presentation until real
+localized inventory is separately supplied and published.
+
+During the compatible code-first window, existing immutable public snapshots
+remain readable, but a new editorial publication fails closed while the typed
+0027 tables exist without all six 0028 columns. This prevents a staged publish
+from silently omitting established placement assignments.
 
 ## Placement ownership
 
@@ -223,6 +302,8 @@ Placement-specific chains:
 
 Each candidate is reclassified for the requested placement. An incompatible
 ultra-wide candidate resolves to `COMPOSED`, never accidental raw card media.
+Legacy `HERO` and `LOGO` candidates exclude every asset referenced by a
+country- or language-targeted assignment.
 Archived/inactive assets, inactive assignments and out-of-validity assignments
 are skipped. No score, action availability, compensation or user/Programme data
 participates in resolution.

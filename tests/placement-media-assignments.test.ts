@@ -162,6 +162,174 @@ test("requested variants use MOBILE exactly and then fall back to DEFAULT", () =
   assert.equal(fallback.source, "VARIANT_FALLBACK");
 });
 
+test("trusted GEO bounds the full language priority matrix without cross-country or wrong-language fallback", () => {
+  const targeted = (
+    id: string,
+    countryCode: string | null,
+    languageCode: string | null,
+    patch: Partial<PlacementMediaAssignment> = {},
+  ) => assignment(id, "BEST_OFFER_FEATURED", asset(id, "BONUS_CREATIVE"), {
+    countryCode,
+    languageCode,
+    ...patch,
+  });
+  const resolutionContext = context({
+    casinoBonusAssignments: [
+      targeted("global-en", null, "en"),
+      targeted("global-it", null, "it"),
+      targeted("global-neutral", null, null),
+      targeted("fi-fi", "FI", "fi"),
+      targeted("fi-en", "FI", "en"),
+      targeted("fi-neutral", "FI", null),
+      targeted("se-sv", "SE", "sv"),
+      targeted("se-en", "SE", "en"),
+      targeted("se-neutral", "SE", null),
+      targeted("it-it", "IT", "it"),
+      targeted("ee-et", "EE", "et"),
+      targeted("ee-en", "EE", "en"),
+      targeted("lv-lv", "LV", "lv"),
+      targeted("lv-en", "LV", "en"),
+    ],
+  });
+  const resolve = (trustedCountryCode: string | null, presentationLanguage: string) => resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    context: resolutionContext,
+    trustedCountryCode,
+    presentationLanguage,
+    now: NOW,
+  });
+
+  const fiFinnish = resolve("FI", "fi");
+  assert.equal(fiFinnish.asset?.id, "fi-fi");
+  assert.equal(fiFinnish.targetingResolution, "EXACT_COUNTRY_LANGUAGE");
+  assert.deepEqual([fiFinnish.requestedCountryCode, fiFinnish.requestedLanguageCode], ["FI", "fi"]);
+
+  assert.equal(resolve("FI", "en").asset?.id, "fi-en");
+  assert.equal(resolve("SE", "sv").asset?.id, "se-sv");
+  assert.equal(resolve("SE", "en").asset?.id, "se-en");
+  assert.equal(resolve("EE", "en").asset?.id, "ee-en");
+  assert.equal(resolve("LV", "en").asset?.id, "lv-en");
+  assert.equal(resolve("FI", "sv").asset?.id, "fi-neutral");
+  assert.equal(resolve(null, "it").asset?.id, "global-it");
+  assert.equal(resolve("ZZ", "it").asset?.id, "global-it");
+  assert.notEqual(resolve("FI", "sv").asset?.id, "se-sv");
+  assert.notEqual(resolve(null, "it").asset?.id, "it-it");
+});
+
+test("same-language global media outranks exact-country neutral, while explicit other languages never become fallback", () => {
+  const globalEnglish = asset("global-en", "BONUS_CREATIVE");
+  const finlandNeutral = asset("fi-neutral", "BONUS_CREATIVE");
+  const globalNeutral = asset("global-neutral", "BONUS_CREATIVE");
+  const contextWithNeutral = context({ casinoBonusAssignments: [
+    assignment("global-en", "BEST_OFFER_FEATURED", globalEnglish, { languageCode: "en" }),
+    assignment("fi-neutral", "BEST_OFFER_FEATURED", finlandNeutral, { countryCode: "FI" }),
+    assignment("global-neutral", "BEST_OFFER_FEATURED", globalNeutral),
+  ] });
+  const english = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: contextWithNeutral, now: NOW });
+  assert.equal(english.asset?.id, "global-en");
+  assert.equal(english.targetingResolution, "GLOBAL_LANGUAGE");
+  const italian = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "it", context: contextWithNeutral, now: NOW });
+  assert.equal(italian.asset?.id, "fi-neutral");
+  assert.equal(italian.targetingResolution, "EXACT_COUNTRY_NEUTRAL");
+
+  const wrongLanguagesOnly = context({ casinoBonusAssignments: [
+    assignment("fi-fi", "BEST_OFFER_FEATURED", asset("fi-fi", "BONUS_CREATIVE"), { countryCode: "FI", languageCode: "fi" }),
+    assignment("global-de", "BEST_OFFER_FEATURED", asset("global-de", "BONUS_CREATIVE"), { languageCode: "de" }),
+  ] });
+  const rejected = resolveMedia({ placement: "BEST_OFFER_FEATURED", trustedCountryCode: "FI", presentationLanguage: "en", context: wrongLanguagesOnly, now: NOW });
+  assert.equal(rejected.asset, null);
+  assert.equal(rejected.source, "CODE_FALLBACK");
+  assert.equal(rejected.targetingResolution, "CONTROLLED_FALLBACK");
+});
+
+test("target-scoped assets never re-enter through unscoped HERO or LOGO fallback", () => {
+  const finlandHero = asset("fi-hero", "HERO");
+  const globalItalianLogo = asset("global-it-logo", "LOGO");
+  const safeLegacyHero = asset("safe-legacy-hero", "HERO", { sortOrder: 20 });
+  const resolutionContext = context({
+    casinoAssignments: [
+      assignment("fi-hero-assignment", "CASINO_DIRECTORY_CARD", finlandHero, { countryCode: "FI", languageCode: "fi" }),
+      assignment("global-it-logo-assignment", "CASINO_LOGO", globalItalianLogo, { languageCode: "it" }),
+    ],
+    legacyMediaAssets: [finlandHero, globalItalianLogo, safeLegacyHero],
+  });
+  const unknownEnglish = resolveMedia({
+    placement: "CASINO_DIRECTORY_CARD",
+    presentationLanguage: "en",
+    context: resolutionContext,
+    now: NOW,
+  });
+  assert.equal(unknownEnglish.asset?.id, "safe-legacy-hero");
+  assert.equal(unknownEnglish.source, "LEGACY_HERO");
+
+  const noSafeLegacy = resolveMedia({
+    placement: "CASINO_DIRECTORY_CARD",
+    presentationLanguage: "en",
+    context: { ...resolutionContext, legacyMediaAssets: [finlandHero, globalItalianLogo] },
+    now: NOW,
+  });
+  assert.equal(noSafeLegacy.asset, null);
+  assert.equal(noSafeLegacy.source, "CODE_FALLBACK");
+});
+
+test("target specificity is evaluated before device and placement fallback specificity", () => {
+  const exactDefault = assignment("fi-default", "BEST_OFFER_FEATURED", asset("fi-default", "BONUS_CREATIVE"), {
+    countryCode: "FI", languageCode: "fi", variant: "DEFAULT",
+  });
+  const globalMobile = assignment("global-mobile", "BEST_OFFER_FEATURED", asset("global-mobile", "BONUS_CREATIVE"), {
+    languageCode: "fi", variant: "MOBILE",
+  });
+  const device = resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    requestedVariant: "MOBILE",
+    trustedCountryCode: "FI",
+    presentationLanguage: "fi",
+    context: context({ casinoBonusAssignments: [globalMobile, exactDefault] }),
+    now: NOW,
+  });
+  assert.equal(device.asset?.id, "fi-default");
+  assert.equal(device.resolvedVariant, "DEFAULT");
+  assert.equal(device.source, "VARIANT_FALLBACK");
+  assert.equal(device.targetingResolution, "EXACT_COUNTRY_LANGUAGE");
+
+  const exactPlacementFallback = assignment("fi-listing", "BONUS_LISTING_CARD", asset("fi-listing", "BONUS_CREATIVE"), {
+    countryCode: "FI", languageCode: "en", variant: "DEFAULT",
+  });
+  const globalDirect = assignment("global-featured", "BEST_OFFER_FEATURED", asset("global-featured", "BONUS_CREATIVE"), {
+    languageCode: "en", variant: "MOBILE",
+  });
+  const placement = resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    requestedVariant: "MOBILE",
+    trustedCountryCode: "FI",
+    presentationLanguage: "en",
+    context: context({ casinoBonusAssignments: [globalDirect, exactPlacementFallback] }),
+    now: NOW,
+  });
+  assert.equal(placement.asset?.id, "fi-listing");
+  assert.equal(placement.resolvedPlacement, "BONUS_LISTING_CARD");
+  assert.equal(placement.resolvedVariant, "DEFAULT");
+  assert.equal(placement.source, "PLACEMENT_FALLBACK");
+  assert.equal(placement.targetingResolution, "EXACT_COUNTRY_LANGUAGE");
+});
+
+test("malformed explicit assignment targets fail closed instead of becoming global inventory", () => {
+  const malformedCountry = assignment("malformed-country", "BEST_OFFER_FEATURED", asset("malformed-country"), { countryCode: "F1", languageCode: "en" });
+  const malformedLanguage = assignment("malformed-language", "BEST_OFFER_FEATURED", asset("malformed-language"), { countryCode: "FI", languageCode: "e" });
+  const emptyCountry = assignment("empty-country", "BEST_OFFER_FEATURED", asset("empty-country"), { countryCode: "", languageCode: "en" });
+  const emptyLanguage = assignment("empty-language", "BEST_OFFER_FEATURED", asset("empty-language"), { countryCode: "FI", languageCode: "" });
+  const safeGlobal = assignment("safe-global", "BEST_OFFER_FEATURED", asset("safe-global"));
+  const result = resolveMedia({
+    placement: "BEST_OFFER_FEATURED",
+    trustedCountryCode: "FI",
+    presentationLanguage: "en",
+    context: context({ casinoBonusAssignments: [malformedCountry, malformedLanguage, emptyCountry, emptyLanguage, safeGlobal] }),
+    now: NOW,
+  });
+  assert.equal(result.asset?.id, "safe-global");
+  assert.equal(result.targetingResolution, "GLOBAL_NEUTRAL");
+});
+
 test("every approved placement fallback chain resolves its first eligible assignment", () => {
   for (const placement of mediaPlacements) {
     const fallbackPlacement = placementFallbackChains[placement][0];
@@ -301,7 +469,13 @@ function snapshotAsset(id: string, type: string) {
   };
 }
 
-function snapshotAssignment(id: string, placement: MediaPlacementName, media: ReturnType<typeof snapshotAsset>, variant = "DEFAULT") {
+function snapshotAssignment(
+  id: string,
+  placement: MediaPlacementName,
+  media: ReturnType<typeof snapshotAsset>,
+  variant = "DEFAULT",
+  target: { countryCode?: string | null; languageCode?: string | null } = {},
+) {
   return {
     id,
     mediaAssetId: media.id,
@@ -318,6 +492,7 @@ function snapshotAssignment(id: string, placement: MediaPlacementName, media: Re
     validUntil: null,
     reference: "fixture",
     mediaAsset: media,
+    ...target,
   };
 }
 
@@ -397,6 +572,139 @@ test("public projection proves six independently assigned surface assets and res
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.asset?.id, "asset-a-directory");
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.variants.DESKTOP?.source, "VARIANT_FALLBACK");
   assert.equal(mapped.media.placements?.CASINO_DIRECTORY_CARD?.asset?.variants?.MOBILE?.id, "asset-a-mobile");
+});
+
+test("one immutable publication snapshot resolves per request and exposes only the effective target", () => {
+  const record = independenceRecord();
+  const snapshot = record.snapshot as Record<string, unknown>;
+  const bonuses = snapshot.casinoBonuses as Array<Record<string, unknown>>;
+  const targets = [
+    ["global-en", null, "en"],
+    ["global-neutral", null, null],
+    ["fi-fi", "FI", "fi"],
+    ["fi-en", "FI", "en"],
+    ["se-sv", "SE", "sv"],
+    ["se-en", "SE", "en"],
+  ] as const;
+  bonuses[0].mediaAssignments = targets.map(([id, countryCode, languageCode]) => snapshotAssignment(
+    id,
+    "BEST_OFFER_FEATURED",
+    snapshotAsset(id, "BONUS_CREATIVE"),
+    "DEFAULT",
+    { countryCode, languageCode },
+  ));
+  const resolve = (countryCode: string | null, presentationLanguage: string) => mapPublishedCasino(record, [], {
+    redirectEnabled: false,
+    placementMediaEnabled: true,
+    countryCode,
+    presentationLanguage,
+    now: NOW,
+  });
+  assert.equal(resolve("FI", "fi")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-fi");
+  assert.equal(resolve("FI", "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-en");
+  assert.equal(resolve("SE", "sv")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "se-sv");
+  assert.equal(resolve("SE", "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "se-en");
+  assert.equal(resolve(null, "en")?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "global-en");
+  const sweden = resolve("SE", "sv");
+  const publicPayload = JSON.stringify(sweden?.bonuses[0]?.media);
+  assert.match(publicPayload, /se-sv/);
+  assert.doesNotMatch(publicPayload, /fi-fi|fi-en/);
+});
+
+test("targeted creative presentation remains independent from governed CTA authority", () => {
+  const record = independenceRecord();
+  const snapshot = record.snapshot as Record<string, unknown>;
+  const bonuses = snapshot.casinoBonuses as Array<Record<string, unknown>>;
+  bonuses[0].mediaAssignments = [snapshotAssignment(
+    "fi-targeted-creative",
+    "BEST_OFFER_FEATURED",
+    snapshotAsset("fi-targeted-creative", "BONUS_CREATIVE"),
+    "DEFAULT",
+    { countryCode: "FI", languageCode: "fi" },
+  )];
+  const blocked = mapPublishedCasino(record, [], {
+    redirectEnabled: true,
+    placementMediaEnabled: true,
+    countryCode: "FI",
+    presentationLanguage: "fi",
+    now: NOW,
+  });
+  assert.equal(blocked?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-targeted-creative");
+  assert.deepEqual(blocked?.bonuses[0]?.affiliate, { href: null, available: false });
+
+  const eligible = mapPublishedCasino(record, [{
+    casinoId: record.casinoId,
+    casinoBonusId: "22222222-2222-4222-8222-222222222222",
+    slug: "governed-fi-offer",
+  }], {
+    redirectEnabled: true,
+    placementMediaEnabled: true,
+    countryCode: "FI",
+    presentationLanguage: "fi",
+    now: NOW,
+  });
+  assert.equal(eligible?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "fi-targeted-creative");
+  assert.deepEqual(eligible?.bonuses[0]?.affiliate, { href: "/r/governed-fi-offer", available: true });
+  assert.doesNotMatch(JSON.stringify(eligible), /trackingUrl|destinationUrl|partner\.example/i);
+});
+
+test("historical snapshots without target fields remain global-neutral and malformed new targets fail closed", () => {
+  const historical = mapPublishedCasino(independenceRecord(), [], {
+    redirectEnabled: false,
+    placementMediaEnabled: true,
+    countryCode: "FI",
+    presentationLanguage: "en",
+    now: NOW,
+  });
+  assert.equal(historical?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset?.id, "asset-e-featured");
+  assert.equal(historical?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.targetingResolution, "GLOBAL_NEUTRAL");
+
+  const malformed = independenceRecord();
+  const malformedSnapshot = malformed.snapshot as Record<string, unknown>;
+  const bonuses = malformedSnapshot.casinoBonuses as Array<Record<string, unknown>>;
+  bonuses[0].mediaAssignments = [snapshotAssignment(
+    "invalid-target",
+    "BEST_OFFER_FEATURED",
+    snapshotAsset("invalid-target", "BONUS_CREATIVE"),
+    "DEFAULT",
+    { countryCode: "Finland", languageCode: "EN" },
+  )];
+  malformedSnapshot.mediaAssets = [];
+  malformedSnapshot.images = [];
+  malformedSnapshot.mediaAssignments = [];
+  const result = mapPublishedCasino(malformed, [], {
+    redirectEnabled: false,
+    placementMediaEnabled: true,
+    countryCode: "FI",
+    presentationLanguage: "en",
+    now: NOW,
+  });
+  assert.equal(result?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.asset, null);
+  assert.equal(result?.bonuses[0]?.media?.BEST_OFFER_FEATURED?.source, "CODE_FALLBACK");
+});
+
+test("published target-scoped assets cannot bypass targeting through historical media fallback", () => {
+  const record = independenceRecord();
+  const snapshot = record.snapshot as Record<string, unknown>;
+  const targetedHero = snapshotAsset("published-fi-only-hero", "HERO");
+  snapshot.mediaAssets = [targetedHero];
+  snapshot.mediaAssignments = [snapshotAssignment(
+    "published-fi-only-assignment",
+    "CASINO_DIRECTORY_CARD",
+    targetedHero,
+    "DEFAULT",
+    { countryCode: "FI", languageCode: "fi" },
+  )];
+  const unknownEnglish = mapPublishedCasino(record, [], {
+    redirectEnabled: false,
+    placementMediaEnabled: true,
+    countryCode: null,
+    presentationLanguage: "en",
+    now: NOW,
+  });
+  assert.equal(unknownEnglish?.media.placements?.CASINO_DIRECTORY_CARD?.asset, null);
+  assert.equal(unknownEnglish?.media.placements?.CASINO_DIRECTORY_CARD?.source, "CODE_FALLBACK");
+  assert.doesNotMatch(JSON.stringify(unknownEnglish?.media.placements), /published-fi-only-hero/);
 });
 
 test("legacy mode ignores assignment arrays and preserves the previous HERO/LOGO projection", () => {
@@ -511,6 +819,9 @@ test("central assignment validation enforces ownership, domain, mode, focal, arc
   await assert.rejects(() => harness.service.assignMedia({ ...base, variant: "TABLET" }), /variant/);
   await assert.rejects(() => harness.service.assignMedia({ ...base, renderingMode: "STRETCH" }), /rendering mode/);
   await assert.rejects(() => harness.service.assignMedia({ ...base, renderingMode: "COVER" }), /crop-safe/);
+  await assert.rejects(() => harness.service.assignMedia({ ...base, countryCode: "F1" }), /ISO 3166/);
+  await assert.rejects(() => harness.service.assignMedia({ ...base, countryCode: "EU" }), /ISO 3166/);
+  await assert.rejects(() => harness.service.assignMedia({ ...base, languageCode: "e" }), /language/);
   await assert.rejects(() => harness.service.assignMedia({ ...base, focalPointX: 0.5 }), /Both focal/);
   await assert.rejects(() => harness.service.assignMedia({ ...base, focalPointX: -0.1, focalPointY: 0.5 }), /between 0 and 1/);
   await assert.rejects(() => harness.service.assignMedia({ ...base, validFrom: new Date("2030-02-01"), validUntil: new Date("2030-01-01") }), /later than/);
@@ -537,6 +848,8 @@ test("central assignment mutation accepts safe COVER metadata and unassign remai
     mediaAssetId: "asset",
     placement: "BONUS_LISTING_CARD",
     variant: "MOBILE",
+    countryCode: "fi",
+    languageCode: "EN",
     renderingMode: "COVER",
     cropSafe: true,
     focalPointX: 0.2,
@@ -545,11 +858,13 @@ test("central assignment mutation accepts safe COVER metadata and unassign remai
     actorId: "actor",
   });
   assert.equal(harness.calls.length, 1);
-  const input = harness.calls[0]?.input as { focalPointX: Prisma.Decimal; focalPointY: Prisma.Decimal; reference: string; cropSafe: boolean };
+  const input = harness.calls[0]?.input as { focalPointX: Prisma.Decimal; focalPointY: Prisma.Decimal; reference: string; cropSafe: boolean; countryCode: string; languageCode: string };
   assert.equal(input.focalPointX.toString(), "0.2");
   assert.equal(input.focalPointY.toString(), "0.8");
   assert.equal(input.reference, "governed source");
   assert.equal(input.cropSafe, true);
+  assert.equal(input.countryCode, "FI");
+  assert.equal(input.languageCode, "en");
 
   const removed = await harness.service.unassignMedia({
     casinoId: "casino",
@@ -639,6 +954,22 @@ test("0027 is an additive typed migration with domain, focal, validity, COVER an
   assert.match(migration, /Legacy MediaAsset[\s\S]+remain intact/);
   assert.match(schema, /mediaAssets\s+MediaAsset\[\]/);
   assert.doesNotMatch(schema, /model\s+MediaAssignment\s*\{[\s\S]*subjectType[\s\S]*subjectId/);
+});
+
+test("0028 adds nullable assignment targeting with bounded checks and resolver indexes only", () => {
+  const migration = readFileSync("prisma/migrations/0028_geo_localized_creative_assignments/migration.sql", "utf8");
+  const schema = readFileSync("prisma/schema.prisma", "utf8");
+  for (const table of ["CasinoMediaAssignment", "CasinoBonusMediaAssignment", "AffiliateOfferMediaAssignment"]) {
+    assert.match(migration, new RegExp(`ALTER TABLE "${table}"[\\s\\S]+ADD COLUMN "countryCode" TEXT[\\s\\S]+ADD COLUMN "languageCode" TEXT`));
+    assert.match(migration, new RegExp(`${table}_countryCode_check`));
+    assert.match(migration, new RegExp(`${table}_languageCode_check`));
+    assert.match(migration, new RegExp(`${table}_target_resolver_idx`));
+    assert.match(schema, new RegExp(`model ${table}[\\s\\S]+countryCode\\s+String\\?[\\s\\S]+languageCode\\s+String\\?`));
+  }
+  assert.match(migration, /\^\[A-Z\]\{2\}\$/);
+  assert.match(migration, /\^\[a-z\]\{2,8\}\$/);
+  assert.doesNotMatch(migration, /DROP\s+(TABLE|COLUMN|TYPE)|TRUNCATE|DELETE\s+FROM|UPDATE\s+/i);
+  assert.doesNotMatch(migration, /DEFAULT\s+/i);
 });
 
 test("the governed live manifest is exact, checksummed, deterministic and covers every current subject/placement", () => {

@@ -95,6 +95,7 @@ export class PublicCasinoRepository implements PublicCasinoStore {
     return [...new Map(eligible.map((route) => [`${route.redirect.casinoId}:${route.redirect.casinoBonusId ?? ""}:${route.redirect.slug}`, {
       casinoId: route.redirect.casinoId,
       casinoBonusId: route.redirect.casinoBonusId,
+      affiliateOfferId: route.redirect.affiliateOfferId,
       slug: route.redirect.slug,
     }])).values()];
   }

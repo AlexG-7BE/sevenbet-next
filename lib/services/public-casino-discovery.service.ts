@@ -13,7 +13,7 @@ import { gbOperatorEligibilityService, type GbOperatorEligibilityAuthority } fro
 import { isAffiliateRedirectEnabled } from "@/lib/affiliate-routing/redirect-validation";
 import { isTemporaryDemoCasinoId } from "@/lib/demo-data/temporary-demo-authority";
 import { currentPublicCasinoBrand } from "@/lib/public-brand";
-import { eligibleDiscoveryOffers } from "@/lib/public-casino-discovery/commercial-eligibility";
+import { eligibleDiscoveryMediaRoutes, eligibleDiscoveryOffers } from "@/lib/public-casino-discovery/commercial-eligibility";
 import { decidePublicCasinoDisposition } from "@/lib/public-casino/presentation-disposition";
 
 export function publicCasinoInventoryMode(casinos: PublicCasinoCardDto[]) {
@@ -131,7 +131,7 @@ function usesSingleConnectionPool() {
 function discoveryRequestKey(
   input: CasinoDiscoveryQuery,
   authority: CommercialJurisdictionAuthority | null | undefined,
-  options: { defaultEditorialCountry?: string },
+  options: { defaultEditorialCountry?: string; presentationLanguage?: string },
 ) {
   return JSON.stringify({ input, authority: authority ?? null, options });
 }
@@ -191,7 +191,7 @@ export class PublicCasinoDiscoveryService {
   async discover(
     input: CasinoDiscoveryQuery = {},
     authority?: CommercialJurisdictionAuthority | null,
-    options: { defaultEditorialCountry?: string } = {},
+    options: { defaultEditorialCountry?: string; presentationLanguage?: string } = {},
   ): Promise<CasinoDiscoveryResult> {
     return this.databaseCoordinator.run(
       discoveryRequestKey(input, authority, options),
@@ -202,7 +202,7 @@ export class PublicCasinoDiscoveryService {
   private async performDiscovery(
     input: CasinoDiscoveryQuery,
     authority: CommercialJurisdictionAuthority | null | undefined,
-    options: { defaultEditorialCountry?: string },
+    options: { defaultEditorialCountry?: string; presentationLanguage?: string },
   ): Promise<CasinoDiscoveryResult> {
     const now = this.now();
     const requestCountryContext = options.defaultEditorialCountry?.trim().toUpperCase() || null;
@@ -210,6 +210,7 @@ export class PublicCasinoDiscoveryService {
     const redirectEnabled = this.redirectEnabled();
     const commercialProjection = redirectEnabled && jurisdictionAllowsReferral(authority);
     const context = await this.store.loadContext(published.map((record) => record.casinoId), { includeAliases: true, includeCommercial: commercialProjection });
+    const mediaRoutes = eligibleDiscoveryMediaRoutes(context, requestCountryContext ?? undefined, now);
     const operatorDecisions = commercialProjection && requestCountryContext === "GB"
       ? await this.operatorEligibility.evaluateMany(published.map((record) => record.casinoId), now)
       : new Map<string, GbOperatorEligibilityDecision>();
@@ -219,7 +220,12 @@ export class PublicCasinoDiscoveryService {
       ? authority.countryCode
       : null;
     const working = published.flatMap((record): WorkingCard[] => {
-      const mapped = mapPublishedCasino(record, [], { redirectEnabled: false, now });
+      const mapped = mapPublishedCasino(record, mediaRoutes, {
+        redirectEnabled: false,
+        now,
+        countryCode: requestCountryContext,
+        presentationLanguage: options.presentationLanguage,
+      });
       const casino = mapped ? currentPublicCasinoBrand(mapped) : null;
       if (!casino) return [];
       const snapshot = object(record.snapshot);

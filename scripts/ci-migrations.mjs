@@ -694,6 +694,137 @@ async function verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrat
   }
 }
 
+async function verifyGeoLocalizedCreativeUpgrade(migrationEntries) {
+  const migration = "0028_geo_localized_creative_assignments";
+  const migrationIndex = migrationEntries.indexOf(migration);
+  const programmeMigrationIndex = migrationEntries.indexOf("0015_active_control_program_flow");
+  if (migrationIndex < 1 || migrationEntries[migrationIndex - 1] !== "0027_placement_media_assignments") {
+    throw new Error(`Expected ${migration} immediately after 0027`);
+  }
+  const schema = "geo_localized_creative_upgrade_ci";
+  const databaseUrl = databaseUrlForSchema(process.env.DATABASE_URL, schema);
+  const directUrl = databaseUrlForSchema(process.env.DIRECT_URL, schema);
+  const environment = { DATABASE_URL: databaseUrl, DIRECT_URL: directUrl };
+  const beforeProgramme = await stageMigrations(migrationEntries.slice(0, programmeMigrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(beforeProgramme, "schema.prisma")], environment);
+    run("npx", [
+      "prisma", "db", "execute", "--schema", path.join(beforeProgramme, "schema.prisma"),
+      "--file", "prisma/preflight/0015_active_control_program_flow.sql",
+    ], environment);
+  } finally {
+    await rm(beforeProgramme, { recursive: true, force: true });
+  }
+  const through0027 = await stageMigrations(migrationEntries.slice(0, migrationIndex));
+  try {
+    run("npx", ["prisma", "migrate", "deploy", "--schema", path.join(through0027, "schema.prisma")], environment);
+    for (const fixture of [
+      "prisma/fixtures/0025_pre_casino_market_profile.sql",
+      "prisma/fixtures/0026_pre_commercial_platform_completion.sql",
+      "prisma/fixtures/0027_pre_placement_media_assignments.sql",
+      "prisma/fixtures/0028_pre_geo_localized_creative_assignments.sql",
+    ]) {
+      run("npx", ["prisma", "db", "execute", "--schema", path.join(through0027, "schema.prisma"), "--file", fixture], environment);
+    }
+  } finally {
+    await rm(through0027, { recursive: true, force: true });
+  }
+
+  const { PrismaClient } = await import("@prisma/client");
+  const prisma = new PrismaClient({ datasourceUrl: databaseUrl });
+  const protectedCounts = async () => {
+    const [row] = await prisma.$queryRawUnsafe(`
+      SELECT
+        (SELECT COUNT(*)::int FROM "${schema}"."Casino") AS casinos,
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoBonus") AS bonuses,
+        (SELECT COUNT(*)::int FROM "${schema}"."AffiliateOffer") AS offers,
+        (SELECT COUNT(*)::int FROM "${schema}"."MediaAsset") AS assets,
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoMediaAssignment") AS casino_assignments,
+        (SELECT COUNT(*)::int FROM "${schema}"."CasinoBonusMediaAssignment") AS bonus_assignments,
+        (SELECT COUNT(*)::int FROM "${schema}"."AffiliateOfferMediaAssignment") AS offer_assignments
+    `);
+    return row;
+  };
+  try {
+    const before = await protectedCounts();
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+    const after = await protectedCounts();
+    if (JSON.stringify(after) !== JSON.stringify(before)) {
+      throw new Error("0028 changed protected entity or assignment counts");
+    }
+    run("npx", ["prisma", "migrate", "deploy"], environment);
+
+    const legacy = await prisma.$queryRawUnsafe(`
+      SELECT "id", "countryCode", "languageCode"
+      FROM "${schema}"."CasinoMediaAssignment"
+      WHERE "reference" = '0028-preservation-fixture'
+      UNION ALL
+      SELECT "id", "countryCode", "languageCode"
+      FROM "${schema}"."CasinoBonusMediaAssignment"
+      WHERE "reference" = '0028-preservation-fixture'
+      UNION ALL
+      SELECT "id", "countryCode", "languageCode"
+      FROM "${schema}"."AffiliateOfferMediaAssignment"
+      WHERE "reference" = '0028-preservation-fixture'
+      ORDER BY "id"
+    `);
+    if (legacy.length !== 3 || legacy.some((row) => row.countryCode !== null || row.languageCode !== null)) {
+      throw new Error("0028 did not preserve existing assignments as NULL/NULL global-neutral rows");
+    }
+
+    await prisma.$executeRawUnsafe(`
+      INSERT INTO "${schema}"."CasinoMediaAssignment"
+        ("id", "casinoId", "mediaAssetId", "placement", "countryCode", "languageCode", "updatedAt")
+      VALUES
+        ('28000000-0000-4000-8000-000000000011', '25000000-0000-4000-8000-000000000001', '27000000-0000-4000-8000-000000000090', 'CASINO_DIRECTORY_CARD', 'FI', 'fi', CURRENT_TIMESTAMP),
+        ('28000000-0000-4000-8000-000000000012', '25000000-0000-4000-8000-000000000001', '27000000-0000-4000-8000-000000000090', 'CASINO_DIRECTORY_CARD', NULL, 'en', CURRENT_TIMESTAMP),
+        ('28000000-0000-4000-8000-000000000013', '25000000-0000-4000-8000-000000000001', '27000000-0000-4000-8000-000000000090', 'CASINO_DIRECTORY_CARD', 'SE', NULL, CURRENT_TIMESTAMP)
+    `);
+    const validTargets = await prisma.$queryRawUnsafe(`
+      SELECT "countryCode", "languageCode" FROM "${schema}"."CasinoMediaAssignment"
+      WHERE "id" IN (
+        '28000000-0000-4000-8000-000000000011',
+        '28000000-0000-4000-8000-000000000012',
+        '28000000-0000-4000-8000-000000000013'
+      ) ORDER BY "id"
+    `);
+    if (JSON.stringify(validTargets) !== JSON.stringify([
+      { countryCode: "FI", languageCode: "fi" },
+      { countryCode: null, languageCode: "en" },
+      { countryCode: "SE", languageCode: null },
+    ])) throw new Error("0028 valid targeting matrix did not persist exactly");
+
+    for (const [id, countryCode, languageCode] of [
+      ["28000000-0000-4000-8000-000000000021", "fi", "en"],
+      ["28000000-0000-4000-8000-000000000022", "F1", "en"],
+      ["28000000-0000-4000-8000-000000000023", "FI", "EN"],
+      ["28000000-0000-4000-8000-000000000024", "FI", "e"],
+    ]) {
+      let rejected = false;
+      try {
+        await prisma.$executeRawUnsafe(`
+          INSERT INTO "${schema}"."CasinoMediaAssignment"
+            ("id", "casinoId", "mediaAssetId", "placement", "countryCode", "languageCode", "updatedAt")
+          VALUES ($1::uuid, '25000000-0000-4000-8000-000000000001', '27000000-0000-4000-8000-000000000090', 'CASINO_DIRECTORY_CARD', $2, $3, CURRENT_TIMESTAMP)
+        `, id, countryCode, languageCode);
+      } catch {
+        rejected = true;
+      }
+      if (!rejected) throw new Error(`0028 accepted malformed target ${countryCode}/${languageCode}`);
+    }
+
+    console.info("Geo-localized creative staged migration smoke passed", {
+      protectedCountsPreserved: true,
+      existingAssignmentsGlobalNeutral: legacy.length,
+      validTargetShapes: validTargets.length,
+      malformedTargetsRejected: 4,
+      replayIdempotent: true,
+    });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 async function main() {
   if (process.env.CI !== "true") {
     throw new Error("Migration verification is restricted to an explicit CI environment");
@@ -765,6 +896,7 @@ async function main() {
   await verifyProgrammeAccessUpgrade(migrationEntries);
   await verifyCasinoMarketProfileUpgrade(migrationEntries, programmeMigrationIndex);
   await verifyCommercialPlatformUpgrade(migrationEntries, programmeMigrationIndex);
+  await verifyGeoLocalizedCreativeUpgrade(migrationEntries);
 
   const { PrismaClient } = await import("@prisma/client");
   const prisma = new PrismaClient();
